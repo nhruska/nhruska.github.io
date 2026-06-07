@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" class="ps-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nik Hruska — Problem Solutions</title>
+<meta name="description" content="Nik Hruska — software engineer and co-founder at Problem Solutions. Builds, experiments and tools, shipped in the open.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-primary:#29AAE1;--brand-primary-soft:#4FC0F1;--brand-secondary:#2075BC;--brand-tertiary:#105480;
+  --brand-blue-office:#0070C0;--brand-slate:#354254;
+  --brand-white:#FFFFFF;--brand-mid-gray:#9CA3AF;--brand-dark:#1A1F2E;
+}
+.ps-dark{
+  --bg:#1A1F2E;--bg-2:#252B3B;--card:#2A3044;
+  --txt:#FFFFFF;--txt-soft:rgba(255,255,255,.72);--txt-dim:rgba(255,255,255,.52);
+  --accent:#29AAE1;--accent-soft:#4FC0F1;--accent-2:#2075BC;
+  --border:rgba(41,170,225,.20);--border-soft:rgba(255,255,255,.10);
+  --glow:rgba(41,170,225,.25);
+  --ease:cubic-bezier(.25,.1,.25,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{min-height:100%;scroll-behavior:smooth;}
+body{
+  font-family:'Poppins',sans-serif;font-weight:400;color:var(--txt);background:var(--bg);
+  min-height:100vh;display:flex;flex-direction:column;align-items:stretch;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;-webkit-font-smoothing:antialiased;line-height:1.55;
+}
+
+/* ===== hero / header ===== */
+header.hero{
+  position:relative;overflow:hidden;
+  padding:calc(env(safe-area-inset-top,0px) + 26px) 22px 56px;
+  background:
+    radial-gradient(ellipse 80% 50% at 18% 0%, rgba(41,170,225,.20), transparent 60%),
+    radial-gradient(ellipse 70% 40% at 92% 30%, rgba(79,192,241,.13), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 50% 100%, rgba(32,117,188,.18), transparent 60%),
+    linear-gradient(160deg,#1A1F2E 0%,#0E1320 100%);
+}
+header.hero::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 56px),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.020) 0 1px,transparent 1px 56px);
+  mask-image:linear-gradient(180deg,#000 0%,transparent 92%);
+}
+.shell{max-width:980px;margin:0 auto;width:100%;position:relative;z-index:1;}
+
+/* brand row */
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:48px;}
+.wordmark{display:flex;align-items:center;gap:11px;font-size:13px;letter-spacing:.10em;font-weight:700;color:rgba(255,255,255,.94);}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 3px 10px rgba(41,170,225,.34));}
+.wordmark .light{font-weight:300;opacity:.88;}
+.wordmark .solutions{font-style:italic;font-weight:800;}
+.role-pill{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:rgba(255,255,255,.55);
+  border:1px solid var(--border-soft);border-radius:999px;padding:6px 13px;white-space:nowrap;}
+
+/* hero text */
+.eyebrow{font-size:12px;letter-spacing:.26em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:16px;}
+.hero h1{font-size:clamp(2.6rem,11vw,4.6rem);font-weight:800;letter-spacing:-.035em;line-height:.95;}
+.hero h1 .accent{color:var(--accent);}
+.hero .lead{font-size:clamp(1rem,3.4vw,1.22rem);font-weight:500;color:var(--txt);margin-top:18px;max-width:30ch;}
+.hero .bio{font-size:1rem;color:var(--txt-soft);margin-top:16px;max-width:54ch;line-height:1.62;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;background:rgba(41,170,225,.10);
+  border:1px solid rgba(79,192,241,.30);border-radius:999px;font-size:12.5px;font-weight:600;color:var(--txt);}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(41,170,225,.45);}
+
+/* ===== main ===== */
+main{flex:1;width:100%;}
+.section{max-width:980px;margin:0 auto;width:100%;padding:44px 22px 0;}
+.section-label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;color:var(--accent);
+  display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+
+/* project grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.card{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:22px;text-decoration:none;color:inherit;overflow:hidden;
+  transition:transform .35s var(--ease),border-color .25s,box-shadow .25s;}
+.card.live{cursor:pointer;}
+.card.live::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));}
+.card.live:hover{transform:translateY(-4px);border-color:rgba(41,170,225,.55);box-shadow:0 0 24px var(--glow);}
+.card.soon{opacity:.62;}
+.cardTop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.icn{width:46px;height:46px;flex:0 0 auto;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:rgba(41,170,225,.12);border:1px solid var(--border);font-size:1.4rem;}
+.badge{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;white-space:nowrap;}
+.badge.live{color:var(--accent);background:rgba(41,170,225,.12);border:1px solid var(--border);}
+.badge.soon{color:var(--txt-dim);background:transparent;border:1px solid var(--border-soft);}
+.card h3{font-size:1.28rem;font-weight:700;letter-spacing:-.02em;}
+.card .desc{font-size:.92rem;color:var(--txt-soft);margin-top:9px;line-height:1.58;flex:1;}
+.card .foot{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:.8rem;
+  color:var(--txt-dim);font-weight:500;}
+.card .go{color:var(--accent);font-weight:700;}
+
+/* elsewhere links */
+.links{display:flex;flex-wrap:wrap;gap:12px;}
+.linkbtn{display:inline-flex;align-items:center;gap:10px;padding:13px 18px;border-radius:11px;
+  background:var(--bg-2);border:1px solid var(--border-soft);text-decoration:none;color:var(--txt);
+  font-weight:600;font-size:.92rem;transition:border-color .2s,transform .12s,background .2s;}
+.linkbtn:hover{border-color:rgba(41,170,225,.5);background:#2c3346;transform:translateY(-2px);}
+.linkbtn .ico{color:var(--accent);display:flex;}
+.linkbtn .sub{color:var(--txt-dim);font-weight:400;font-size:.82rem;}
+
+/* footer */
+footer{margin-top:64px;border-top:1px solid var(--border-soft);
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.18));}
+.footin{max-width:980px;margin:0 auto;width:100%;padding:30px 22px calc(env(safe-area-inset-bottom,0px) + 34px);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.footin .tagline{font-size:12.5px;color:var(--txt-dim);font-style:italic;}
+.footin .copy{font-size:11.5px;color:var(--txt-dim);letter-spacing:.04em;}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s var(--ease),transform .5s var(--ease);}
+.reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
+@media (max-width:560px){
+  .brandrow{margin-bottom:36px;}
+  .role-pill{display:none;}
+  .footin{flex-direction:column;align-items:flex-start;gap:10px;}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="shell">
+    <div class="brandrow">
+      <div class="wordmark">
+        <svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+          <path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+          <path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+          <path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+        </svg>
+        <span><span class="light">PROBLEM</span> <span class="solutions">SOLUTIONS</span></span>
+      </div>
+      <div class="role-pill">Co-founder &middot; since 2004</div>
+    </div>
+
+    <div class="eyebrow reveal">// portfolio</div>
+    <h1 class="reveal">Nik <span class="accent">Hruska</span></h1>
+    <p class="lead reveal">Software engineer &amp; co-founder at Problem Solutions.</p>
+    <p class="bio reveal">I build software, agent systems, and small sharp tools - for clients, for the company, and for myself. This is where the open ones live. Made it, shipped it, here it is.</p>
+    <div class="chips reveal">
+      <span class="chip"><span class="dot"></span>Software engineering</span>
+      <span class="chip"><span class="dot"></span>AI agents &amp; automation</span>
+      <span class="chip"><span class="dot"></span>Web &amp; audio</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="section">
+    <div class="section-label">Builds</div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">Elsewhere</div>
+    <div class="links">
+      <a class="linkbtn reveal" href="https://github.com/nhruska" target="_blank" rel="noopener">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
+        <span>GitHub<br><span class="sub">github.com/nhruska</span></span>
+      </a>
+      <a class="linkbtn reveal" href="https://www.problemsolutions.net" target="_blank" rel="noopener">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 631 510" aria-hidden="true"><path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/><path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/><path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/></svg></span>
+        <span>Problem Solutions<br><span class="sub">problemsolutions.net</span></span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footin">
+    <div class="wordmark">
+      <svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+        <path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+        <path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+        <path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+      </svg>
+      <span><span class="light">PROBLEM</span> <span class="solutions">SOLUTIONS</span></span>
+    </div>
+    <div class="tagline">Enabling the Augmented Enterprise</div>
+    <div class="copy">&copy; <span id="yr"></span> Nik Hruska</div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   BUILDS — add an entry to show a new card.
+   { title, icon, desc, href (omit => "soon"), tag, status:"live"|"soon" }
+============================================================ */
+const BUILDS=[
+  {
+    title:"Music",
+    icon:"🎸",
+    desc:"Ukulele &amp; guitar performance tools - mic tuners, chord composers, a 50-song library and a fullscreen perform mode. Built for myself, shipped in the open.",
+    href:"music/",
+    tag:"Personal · Web Audio",
+    status:"live"
+  },
+  {
+    title:"More, soon",
+    icon:"✨",
+    desc:"Experiments, proofs-of-concept and professional work land here as they're ready.",
+    tag:"In progress",
+    status:"soon"
+  }
+];
+
+const grid=document.getElementById('grid');
+BUILDS.forEach(function(b){
+  var live = b.status==='live' && b.href;
+  var el=document.createElement(live?'a':'div');
+  el.className='card '+(live?'live':'soon');
+  if(live) el.href=b.href;
+  el.innerHTML=
+    '<div class="cardTop">'
+    +'<div class="icn">'+(b.icon||'◆')+'</div>'
+    +'<span class="badge '+(live?'live':'soon')+'">'+(live?'live':'soon')+'</span>'
+    +'</div>'
+    +'<h3>'+b.title+'</h3>'
+    +'<div class="desc">'+(b.desc||'')+'</div>'
+    +'<div class="foot"><span>'+(b.tag||'')+'</span><span class="go">'+(live?'open →':'')+'</span></div>';
+  grid.appendChild(el);
+});
+
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* reveal on scroll */
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(n){io.observe(n);});
+</script>
+</body>
+</html>

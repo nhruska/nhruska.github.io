@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Music — Nik Hruska</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+:root{
+  --bg:#0d0f12;--bg-2:#14171c;--surface:#181b21;--surface-2:#1f232b;
+  --line:#262b34;--line-strong:#323a45;
+  --txt:#e8ebf0;--txt-soft:#b6bcc6;--txt-dim:#8a92a0;
+  --accent:#5eead4;--accent-dim:#244b45;--accent-deep:#16302c;
+  --live:#5eead4;--wip:#fbbf24;--poc:#a78bfa;--idea:#8a92a0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);min-height:100dvh;
+  background-image:
+    radial-gradient(900px 320px at 15% -6%,rgba(94,234,212,.07),transparent 70%),
+    radial-gradient(700px 300px at 100% 0%,rgba(167,139,250,.05),transparent 70%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:920px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 24px) 18px 80px;}
+
+/* back link */
+.back{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:.74rem;
+  letter-spacing:.04em;color:var(--txt-dim);text-decoration:none;margin-bottom:20px;transition:color .15s;}
+.back:hover{color:var(--accent);}
+
+/* header */
+header{margin-bottom:26px;}
+.eyebrow{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+header h1{font-size:clamp(2.2rem,9vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:.95;}
+header p{color:var(--txt-soft);font-size:.96rem;margin-top:10px;max-width:48ch;line-height:1.5;}
+.meta{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);margin-top:14px;letter-spacing:.04em;}
+
+/* toolbar */
+.toolbar{display:flex;flex-direction:column;gap:12px;margin:24px 0 18px;position:sticky;top:0;z-index:5;
+  padding:14px 0;background:linear-gradient(180deg,var(--bg) 70%,transparent);}
+.search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
+  padding:13px 15px;font-family:inherit;font-size:.95rem;color:var(--txt);}
+.search::placeholder{color:var(--txt-dim);}
+.search:focus{outline:none;border-color:var(--accent);}
+.filters{display:flex;gap:7px;flex-wrap:wrap;}
+.chip{border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;
+  font-weight:600;font-size:.76rem;padding:8px 15px;border-radius:20px;cursor:pointer;letter-spacing:.02em;
+  transition:background .15s,color .15s,border-color .15s,transform .08s;}
+.chip:active{transform:scale(.95);}
+.chip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);
+  border:1px solid var(--line);border-radius:16px;padding:18px;cursor:pointer;text-decoration:none;color:inherit;
+  transition:transform .12s cubic-bezier(.2,.7,.3,1),border-color .15s,background .15s;overflow:hidden;}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(420px 120px at 100% 0%,var(--ca,rgba(94,234,212,.08)),transparent 60%);opacity:.7;pointer-events:none;}
+.card:hover{transform:translateY(-3px);border-color:var(--line-strong);background:var(--surface-2);}
+.card:active{transform:translateY(0) scale(.99);}
+.card.disabled{cursor:default;opacity:.6;}
+.card.disabled:hover{transform:none;background:var(--surface);border-color:var(--line);}
+.cardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.mono{width:52px;height:52px;flex:0 0 auto;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;font-weight:700;font-size:1.3rem;letter-spacing:-.02em;
+  border:1.5px solid var(--mc,var(--accent));color:var(--mc,var(--accent));background:rgba(255,255,255,.02);}
+.status{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 9px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.status.live{color:var(--live);border-color:var(--accent-dim);background:var(--accent-deep);}
+.status.wip{color:var(--wip);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08);}
+.status.poc{color:var(--poc);border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.08);}
+.status.idea{color:var(--idea);border-color:var(--line-strong);background:transparent;}
+.card h2{font-size:1.18rem;font-weight:700;letter-spacing:-.02em;line-height:1.1;}
+.card .desc{color:var(--txt-soft);font-size:.85rem;line-height:1.5;margin-top:7px;flex:1;}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}
+.tag{font-family:'Space Mono',monospace;font-size:.66rem;color:var(--txt-dim);border:1px solid var(--line);
+  padding:3px 8px;border-radius:6px;letter-spacing:.02em;}
+.cardFoot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;
+  font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
+.open{color:var(--accent);font-weight:700;}
+.card.disabled .open{color:var(--txt-dim);}
+
+.emptyState{text-align:center;color:var(--txt-dim);padding:50px 18px;font-size:.95rem;}
+
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+  font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+footer a{color:var(--accent);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">&larr; portfolio</a>
+  <header>
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="siteTitle"></h1>
+    <p id="siteSub"></p>
+    <div class="meta" id="siteMeta"></div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="search" placeholder="Search tools, tags, instruments…">
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="emptyState" id="empty" style="display:none">Nothing here yet under that filter.</div>
+
+  <footer>
+    <span id="footCount"></span>
+    <span><a href="../">&larr; back to portfolio</a></span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   SITE CONFIG
+============================================================ */
+const SITE={
+  title:"Music",
+  eyebrow:"// ukulele · guitar",
+  sub:"Self-contained web tools for playing — tuners, chord composers, songbooks and a fullscreen perform mode. Tap one to open it."
+};
+
+/* ============================================================
+   PROJECTS  —  TO ADD A NEW TOOL:
+   1) Drop its folder under an instrument (e.g.  /music/guitar/index.html )
+   2) Add an entry to the TOP of this array:
+        {
+          title:"My Tool",
+          desc:"One line on what it does.",
+          path:"guitar/",          // folder name + trailing slash (relative to /music/)
+          cat:"Guitar",            // instrument => becomes a filter chip
+          tags:["tuner","chords"], // optional, for search + display
+          status:"live"            // live | wip | poc | idea
+        }
+   3) Commit / PR. The card appears automatically.
+============================================================ */
+const PROJECTS=[
+  {
+    title:"Roadcase",
+    desc:"A full ukulele performance kit — mic auto-tuner, chord-progression composer, a 50-song library, setlists and a fullscreen perform mode with auto-scroll.",
+    path:"ukulele/",
+    cat:"Ukulele",
+    tags:["tuner","songbook","compose","webaudio"],
+    status:"live",
+    color:"#5eead4"
+  },
+  {
+    title:"Uke Composer",
+    desc:"The original single-screen chord builder and mic tuner that grew into Roadcase. Kept around as a lighter standalone.",
+    path:"ukulele/composer/",
+    cat:"Ukulele",
+    tags:["chords","tuner","webaudio"],
+    status:"live",
+    color:"#5eead4"
+  },
+  {
+    title:"Guitar",
+    desc:"Same performance kit, six strings — tuner, chords and songbook tuned for guitar. Coming next.",
+    cat:"Guitar",
+    tags:["tuner","chords"],
+    status:"idea",
+    color:"#fbbf24"
+  }
+  /* add new tools above this line ↑  (newest first) */
+];
+
+/* ============================================================
+   RENDER
+============================================================ */
+const STATUS_LABEL={live:"live",wip:"in progress",poc:"proof of concept",idea:"idea"};
+let activeCat="All", q="";
+
+document.getElementById('siteTitle').textContent=SITE.title;
+document.getElementById('eyebrow').textContent=SITE.eyebrow;
+document.getElementById('siteSub').textContent=SITE.sub;
+document.title=SITE.title+" — Nik Hruska";
+
+function monogram(p){
+  if(p.mono) return p.mono;
+  const words=p.title.replace(/[^A-Za-z0-9 ]/g,'').trim().split(/\s+/);
+  if(words.length>=2) return (words[0][0]+words[1][0]).toUpperCase();
+  return p.title.replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase();
+}
+function hueFromTitle(t){let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;return h;}
+function tileColor(p){ if(p.color) return p.color; const h=hueFromTitle(p.title); return 'hsl('+h+',55%,62%)'; }
+
+function categories(){
+  const set=new Set(['All']);
+  PROJECTS.forEach(p=>{if(p.cat)set.add(p.cat);});
+  return [...set];
+}
+function renderFilters(){
+  const el=document.getElementById('filters');el.innerHTML='';
+  categories().forEach(c=>{
+    const b=document.createElement('button');
+    b.className='chip'+(c===activeCat?' on':'');
+    b.textContent=c;
+    b.onclick=()=>{activeCat=c;renderFilters();renderGrid();};
+    el.appendChild(b);
+  });
+}
+function matches(p){
+  if(activeCat!=='All' && p.cat!==activeCat) return false;
+  if(q){
+    const hay=(p.title+' '+(p.desc||'')+' '+(p.tags||[]).join(' ')+' '+(p.cat||'')).toLowerCase();
+    return hay.indexOf(q)>=0;
+  }
+  return true;
+}
+function renderGrid(){
+  const grid=document.getElementById('grid');
+  const list=PROJECTS.filter(matches);
+  document.getElementById('empty').style.display=list.length?'none':'block';
+  grid.innerHTML='';
+  list.forEach(p=>{
+    const live = p.path && p.status!=='idea';
+    const el=document.createElement(live?'a':'div');
+    el.className='card'+(live?'':' disabled');
+    if(live) el.href=p.path;
+    const col=tileColor(p);
+    el.style.setProperty('--mc',col);
+    el.style.setProperty('--ca',hexToGlow(col));
+    el.innerHTML=
+      '<div class="cardTop">'
+      +'<div class="mono">'+monogram(p)+'</div>'
+      +'<span class="status '+(p.status||'idea')+'">'+(STATUS_LABEL[p.status]||p.status||'idea')+'</span>'
+      +'</div>'
+      +'<h2>'+p.title+'</h2>'
+      +'<div class="desc">'+(p.desc||'')+'</div>'
+      +(p.tags&&p.tags.length?'<div class="tags">'+p.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>':'')
+      +'<div class="cardFoot"><span>'+(p.cat||'')+'</span><span class="open">'+(live?'open →':'soon')+'</span></div>';
+    grid.appendChild(el);
+  });
+  document.getElementById('siteMeta').textContent=PROJECTS.length+' tools · '+(PROJECTS.filter(p=>p.status==='live').length)+' live';
+  document.getElementById('footCount').textContent=list.length+' shown';
+}
+function hexToGlow(c){
+  if(c.indexOf('hsl')===0) return c.replace(')',' / .12)').replace('hsl','hsla');
+  const m=c.replace('#','');const r=parseInt(m.slice(0,2),16),g=parseInt(m.slice(2,4),16),b=parseInt(m.slice(4,6),16);
+  return 'rgba('+r+','+g+','+b+',.1)';
+}
+
+document.getElementById('search').oninput=function(){q=this.value.toLowerCase();renderGrid();};
+
+renderFilters();
+renderGrid();
+</script>
+</body>
+</html>
