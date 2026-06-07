@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0f12">
+<title>Roadcase</title>
+<!-- Shared songbook styles (theme + all components). -->
+<link rel="stylesheet" href="../shared/songbook.css">
+<style>
+  /* in-app instrument/tuning picker (appbar) */
+  .abRight{display:flex;align-items:center;gap:8px;}
+  .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
+    font-family:inherit;font-size:.8rem;font-weight:600;padding:9px 10px;max-width:46vw;cursor:pointer;}
+  .picker:focus{outline:none;border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="appbar">
+    <div class="brand"><span class="nm">Roadcase</span><span class="ctx" id="ctxLine">loading…</span></div>
+    <div class="abRight">
+      <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
+      <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
+    </div>
+  </div>
+  <div class="view" id="view">
+    <section class="screen on" id="s-library">
+      <input class="search" id="search" placeholder="Search a song or an artist…">
+      <div class="chips" id="decadeChips"></div>
+      <div class="songs" id="songsList"></div>
+      <div class="libCount" id="libCount"></div>
+    </section>
+    <section class="screen" id="s-compose">
+      <div class="composeWrap">
+        <div class="progHead"><span class="progLbl">Progression</span>
+          <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button></div>
+        <div class="prog" id="prog"></div>
+        <div id="suggest" class="suggest"></div>
+        <div class="cActions">
+          <button class="btn ghost" id="cClear">Clear</button>
+          <button class="btn red" id="cSave">Save progression</button>
+        </div>
+        <div class="chips" id="catChips"></div>
+        <div class="chordGrid" id="buildGrid"></div>
+      </div>
+    </section>
+    <section class="screen" id="s-practice">
+      <div id="practiceEmpty" class="empty">Choose a song from the Library to practice.</div>
+      <div id="practiceBody" style="display:none"></div>
+    </section>
+    <section class="screen" id="s-setlist">
+      <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+        <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+      <div id="setBody"></div>
+      <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
+    </section>
+    <section class="screen" id="s-tune">
+      <div class="tunerWrap">
+        <h2>Tune Up</h2>
+        <div class="sub">Play a string — the needle shows how sharp or flat you are.</div>
+        <div class="tCard">
+          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— live needle by mic</span></h3>
+          <div class="micBox" id="micBox"></div>
+        </div>
+        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones — tap a letter for a steady pitch.</div>
+        <div class="tStrings" id="tStrings"></div>
+      </div>
+    </section>
+  </div>
+  <div class="tabbar">
+    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Songs</span></button>
+    <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
+    <button data-tab="practice"><span class="icn">𝅘𝅥</span><span class="lbl">Practice</span></button>
+    <button data-tab="setlist"><span class="icn">❦</span><span class="lbl">Set</span></button>
+    <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
+  </div>
+</div>
+<div class="perform" id="perform">
+  <div class="pTop"><span class="pos" id="pPos">1 / 1</span>
+    <div class="tools"><button class="pmini" id="pDown">−</button><button class="pmini" id="pUp">+</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
+  <div class="pTitle" id="pTitle"></div>
+  <div class="pArtist" id="pArtist"></div>
+  <div class="pKey" id="pKeyLine"></div>
+  <div class="pSheet" id="pSheet"></div>
+  <div class="pSpeed" id="pSpeed"><label>Scroll</label><input type="range" id="pSpeedR" min="10" max="80" value="28"><span class="sv" id="pSpeedV">28</span></div>
+  <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn scrollBtn" id="pScroll">▶</button><button class="btn" id="pNext">→</button></div>
+</div>
+<div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
+
+<!-- Shared, instrument-agnostic runtime -->
+<script src="../shared/songbook.js"></script>
+<script src="../shared/tuner.js"></script>
+<script src="../shared/diagram.js"></script>
+<script src="../shared/audio.js"></script>
+<!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
+     profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
+<script>
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+
+  // chord-progression suggestion map (instrument-agnostic chord names).
+  var SUGG = {
+    C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
+    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "Bb", "Am"],
+    B: ["E", "A", "F#7", "E7", "G"], Am: ["F", "G", "C", "Dm", "E7"], Em: ["C", "G", "D", "Am", "B7"],
+    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "Eb", "Bb"],
+    Cm: ["G7", "Fm", "Ab", "Eb", "Bb"], Fm: ["C7", "Bbm", "Db", "Ab", "Eb"],
+    G7: ["C", "Am", "F", "Em"], C7: ["F", "Dm", "G", "Am"], D7: ["G", "Em", "C", "Bm"],
+    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
+    B7: ["E", "G#m", "C#m", "F#m"]
+  };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', practice: 'practice room', setlist: 'tonight’s running order' };
+
+  function rootFreq(name) {
+    if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
+    return 261.63;
+  }
+
+  // Build the chord-pack interface the songbook engine expects, from a pure-data
+  // profile + the shared Diagram / ChordAudio / Tuner modules.
+  function buildAdapter(profile) {
+    var openFreqs = profile.strings.map(function (s) { return s.f; });
+    return {
+      meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
+      hasChord: function (name) { return !!(profile.chords && profile.chords[name]); },
+      diagram: function (name, size) { var fr = profile.chords ? profile.chords[name] : null; return window.Diagram.render(fr || null, { size: size, name: name }); },
+      playChord: function (name) { var fr = profile.chords ? profile.chords[name] : null; if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
+      playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },
+      playFreq: function (freq, dur) { window.ChordAudio.tone(freq, dur || 1.1); },
+      onLeaveTuner: function () { if (window.Tuner) window.Tuner.stop(); },
+      init: function (engine) {
+        if (window.Tuner) window.Tuner.mount({ strings: profile.strings });
+        var q = el('quickTune'); if (q) q.onclick = function () { engine.switchTab('tune'); };
+      }
+    };
+  }
+
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = src;
+      s.onload = res; s.onerror = function () { rej(new Error('failed to load ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function activeId(profiles) {
+    var qp = new URLSearchParams(location.search).get('p');
+    var hp = (location.hash || '').replace(/^#/, '');
+    var want = qp || hp;
+    if (want && profiles[want]) return want;
+    return Object.keys(profiles)[0];
+  }
+
+  function buildPicker(profiles, activeKey) {
+    var sel = el('profilePicker'); if (!sel) return;
+    var byInst = {};
+    Object.keys(profiles).forEach(function (k) { var p = profiles[k]; (byInst[p.instrument] = byInst[p.instrument] || []).push(p); });
+    sel.innerHTML = '';
+    Object.keys(byInst).forEach(function (inst) {
+      var og = document.createElement('optgroup'); og.label = inst.charAt(0).toUpperCase() + inst.slice(1);
+      byInst[inst].forEach(function (p) {
+        var o = document.createElement('option'); o.value = p.id; o.textContent = p.label;
+        if (p.id === activeKey) o.selected = true; og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    sel.onchange = function () { location.search = '?p=' + encodeURIComponent(sel.value); };
+  }
+
+  function start(profile, songs) {
+    el('ctxLine').textContent = profile.label;
+    document.title = 'Roadcase - ' + profile.label;
+    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
+    window.Songbook.mount({
+      songs: songs,
+      chordPack: buildAdapter(profile),
+      storagePrefix: 'roadcase-' + profile.id,
+      suggestions: SUGG,
+      contexts: contexts,
+      el: {
+        songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), libCount: el('libCount'),
+        practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
+        setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
+        perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),
+        pPrev: el('pPrev'), pNext: el('pNext'), pClose: el('pClose'), pUp: el('pUp'), pDown: el('pDown'), pDimBtn: el('pDimBtn'),
+        pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
+        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
+        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
+        ctxLine: el('ctxLine')
+      }
+    });
+  }
+
+  function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + msg + '</div>'; }
+
+  // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
+  fetch('../shared/profiles/manifest.json')
+    .then(function (r) { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
+    .then(function (m) { return Promise.all((m.profiles || []).map(function (id) { return loadScript('../shared/profiles/' + id + '.js'); })); })
+    .then(function () {
+      var profiles = window.MusicProfiles || {};
+      if (!Object.keys(profiles).length) { fail('No tuning profiles found.'); return; }
+      var key = activeId(profiles);
+      buildPicker(profiles, key);
+      var profile = profiles[key];
+      return fetch('../shared/songs.json')
+        .then(function (r) { if (!r.ok) throw new Error('songs.json ' + r.status); return r.json(); })
+        .then(function (songs) { start(profile, songs); });
+    })
+    .catch(function (err) { fail('Could not load (' + err.message + '). This page must be served over http(s) - open it via GitHub Pages or a local server.'); });
+})();
+</script>
+</body>
+</html>
