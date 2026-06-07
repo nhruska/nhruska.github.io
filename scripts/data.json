@@ -1,0 +1,58 @@
+{
+  "_comment": "Curated content for the root portfolio. scripts/generate.py merges this with live GitHub repo data and renders scripts/template.html -> ../index.html. Edit here, never hand-edit the generated index.html.",
+  "meta": {
+    "title": "Nik Hruska — Problem Solutions",
+    "description": "Nik Hruska — software engineer and co-founder at Problem Solutions. Builds, experiments and tools, shipped in the open.",
+    "github_user": "nhruska"
+  },
+  "hero": {
+    "role_pill": "Co-founder &middot; since 2004",
+    "eyebrow": "// portfolio",
+    "name_first": "Nik",
+    "name_last": "Hruska",
+    "lead": "Software engineer &amp; co-founder at Problem Solutions.",
+    "bio": "I build software, agent systems, and small sharp tools - for clients, for the company, and for myself. This is where the open ones live. Made it, shipped it, here it is.",
+    "chips": [
+      "Software engineering",
+      "AI agents &amp; automation",
+      "Web &amp; audio"
+    ]
+  },
+  "builds": [
+    {
+      "title": "Music",
+      "icon": "🎸",
+      "desc": "Ukulele &amp; guitar performance tools - mic tuners, chord composers, a 50-song library and a fullscreen perform mode. Built for myself, shipped in the open.",
+      "href": "music/",
+      "tag": "Personal · Web Audio",
+      "status": "live"
+    },
+    {
+      "title": "More, soon",
+      "icon": "✨",
+      "desc": "Experiments, proofs-of-concept and professional work land here as they're ready.",
+      "tag": "In progress",
+      "status": "soon"
+    }
+  ],
+  "github_section": {
+    "label": "Open source",
+    "intro": "Public repositories, freshest first - regenerated daily from the GitHub API.",
+    "max_repos": 9,
+    "exclude_names": []
+  },
+  "elsewhere": [
+    {
+      "title": "GitHub",
+      "sub": "github.com/nhruska",
+      "href": "https://github.com/nhruska",
+      "icon": "github"
+    },
+    {
+      "title": "Problem Solutions",
+      "sub": "problemsolutions.net",
+      "href": "https://www.problemsolutions.net",
+      "icon": "ps"
+    }
+  ]
+}
