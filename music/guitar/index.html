@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Roadcase — Guitar Performance Kit</title>
+<!-- Shared songbook styles (theme + all components). Lives in ../shared so the
+     guitar tool reuses the exact same look as the ukulele tool. -->
+<link rel="stylesheet" href="../shared/songbook.css">
+</head>
+<body>
+<div class="app">
+  <div class="appbar">
+    <div class="brand"><span class="nm">Roadcase</span><span class="ctx" id="ctxLine">guitar performance kit · v2</span></div>
+    <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
+  </div>
+  <div class="view" id="view">
+    <section class="screen on" id="s-library">
+      <input class="search" id="search" placeholder="Search a song or an artist…">
+      <div class="chips" id="decadeChips"></div>
+      <div class="songs" id="songsList"></div>
+      <div class="libCount" id="libCount"></div>
+    </section>
+    <section class="screen" id="s-compose">
+      <div class="composeWrap">
+        <div class="progHead"><span class="progLbl">Progression</span>
+          <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button></div>
+        <div class="prog" id="prog"></div>
+        <div id="suggest" class="suggest"></div>
+        <div class="cActions">
+          <button class="btn ghost" id="cClear">Clear</button>
+          <button class="btn red" id="cSave">Save progression</button>
+        </div>
+        <div class="chips" id="catChips"></div>
+        <div class="chordGrid" id="buildGrid"></div>
+      </div>
+    </section>
+    <section class="screen" id="s-practice">
+      <div id="practiceEmpty" class="empty">Choose a song from the Library to practice.</div>
+      <div id="practiceBody" style="display:none"></div>
+    </section>
+    <section class="screen" id="s-setlist">
+      <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+        <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+      <div id="setBody"></div>
+      <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
+    </section>
+    <section class="screen" id="s-tune">
+      <div class="tunerWrap">
+        <h2>Tune Up</h2>
+        <div class="sub">Tap a string for a steady tone — match it by ear</div>
+        <div class="tCanvasWrap"><span class="tCanvasLbl">REFERENCE WAVE</span><canvas id="tCanvas"></canvas></div>
+        <div class="tStrings" id="tStrings"></div>
+        <div class="tCard">
+          <h3>Hear the beats</h3>
+          <p>Play your string with the drone on. If it's out, you'll hear a pulsing "wah-wah" — the slower the pulse, the closer you are. When it vanishes, you're in tune. Tap to learn the sound.</p>
+          <div class="row"><button class="tBtn" id="beatIn">In tune (no beats)</button><button class="tBtn ghost" id="beatOff">Slightly off (beats)</button></div>
+        </div>
+        <div class="tCard">
+          <h3>Tune to itself</h3>
+          <p>Got one string roughly right? Tune the rest from it with the 5th-fret method. Press the fret shown, then match the open string beside it.</p>
+          <div id="relGuide"></div>
+        </div>
+        <div class="tCard">
+          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— needle by mic</span></h3>
+          <div class="micBox" id="micBox"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="tabbar">
+    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Songs</span></button>
+    <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
+    <button data-tab="practice"><span class="icn">𝅘𝅥</span><span class="lbl">Practice</span></button>
+    <button data-tab="setlist"><span class="icn">❦</span><span class="lbl">Set</span></button>
+    <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
+  </div>
+</div>
+<div class="perform" id="perform">
+  <div class="pTop"><span class="pos" id="pPos">1 / 1</span>
+    <div class="tools"><button class="pmini" id="pDown">−</button><button class="pmini" id="pUp">+</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
+  <div class="pTitle" id="pTitle"></div>
+  <div class="pArtist" id="pArtist"></div>
+  <div class="pKey" id="pKeyLine"></div>
+  <div class="pSheet" id="pSheet"></div>
+  <div class="pSpeed" id="pSpeed"><label>Scroll</label><input type="range" id="pSpeedR" min="10" max="80" value="28"><span class="sv" id="pSpeedV">28</span></div>
+  <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn scrollBtn" id="pScroll">▶</button><button class="btn" id="pNext">→</button></div>
+</div>
+<div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
+
+<!-- Shared, instrument-agnostic songbook engine -->
+<script src="../shared/songbook.js"></script>
+<!-- Guitar chord pack: fingerings, audio, the Tune tab. The ukulele tool uses
+     chords-ukulele.js instead; both consume the same chord-pack interface. -->
+<script src="../shared/chords-guitar.js"></script>
+<!-- Page bootstrap: load the shared catalog, then mount the songbook with the guitar pack. -->
+<script>
+(function () {
+  'use strict';
+
+  // chord-progression suggestion map (instrument-agnostic chord names).
+  // Shared content; passed in by the host so the data stays near the page.
+  var SUGG = {
+    C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
+    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "Bb", "Am"],
+    B: ["E", "A", "F#7", "E7", "G"], Am: ["F", "G", "C", "Dm", "E7"], Em: ["C", "G", "D", "Am", "B7"],
+    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "Eb", "Bb"],
+    Cm: ["G7", "Fm", "Ab", "Eb", "Bb"], Fm: ["C7", "Bbm", "Db", "Ab", "Eb"],
+    G7: ["C", "Am", "F", "Em"], C7: ["F", "Dm", "G", "Am"], D7: ["G", "Em", "C", "Bm"],
+    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
+    B7: ["E", "G#m", "C#m", "F#m"]
+  };
+
+  var CONTEXTS = {
+    library: 'your repertoire',
+    compose: 'build a progression',
+    practice: 'practice room',
+    setlist: 'tonight’s running order',
+    tune: 'EADGBE · tune by ear or mic'
+  };
+
+  function el(id) { return document.getElementById(id); }
+
+  function start(songs) {
+    window.Songbook.mount({
+      songs: songs,
+      chordPack: window.ChordPackGuitar,
+      storagePrefix: 'roadcase-guitar',
+      suggestions: SUGG,
+      contexts: CONTEXTS,
+      el: {
+        songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), libCount: el('libCount'),
+        practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
+        setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
+        perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),
+        pPrev: el('pPrev'), pNext: el('pNext'), pClose: el('pClose'), pUp: el('pUp'), pDown: el('pDown'), pDimBtn: el('pDimBtn'),
+        pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
+        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
+        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
+        ctxLine: el('ctxLine')
+      }
+    });
+  }
+
+  // Load the shared catalog. fetch() works over http(s) (GitHub Pages, localhost).
+  fetch('../shared/songs.json')
+    .then(function (r) { if (!r.ok) throw new Error('songs.json ' + r.status); return r.json(); })
+    .then(function (songs) { start(songs); })
+    .catch(function (err) {
+      var list = el('songsList');
+      if (list) list.innerHTML = '<div class="empty">Could not load the songbook (' + err.message + ').<br>This page must be served over http(s) - open it via GitHub Pages or a local server, not from a file:// path.</div>';
+    });
+})();
+</script>
+</body>
+</html>
