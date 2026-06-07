@@ -21,6 +21,8 @@ Design contract (DO NOT break):
     renders a graceful "GitHub" fallback card. The script exits 0 in both cases.
 """
 
+import base64
+import binascii
 import html
 import json
 import os
@@ -133,10 +135,14 @@ def recover_cached_repos():
         return None
     blob = text[start + len(REPO_CACHE_BEGIN): end].strip()
     try:
-        repos = json.loads(blob)
+        # cache is base64(JSON) so it can never contain "-->" and break the
+        # HTML comment, nor leak control chars from repo descriptions.
+        repos = json.loads(base64.b64decode(blob).decode("utf-8"))
+        if not isinstance(repos, list):
+            return None
         log(f"recovered {len(repos)} repos from cached index.html")
         return repos
-    except json.JSONDecodeError:
+    except (binascii.Error, json.JSONDecodeError, UnicodeDecodeError, ValueError):
         return None
 
 
@@ -187,17 +193,24 @@ def render_build_card(b):
 
 
 def render_repo_card(r):
-    name = esc(r["name"])
-    url = esc(r["html_url"])
-    desc = esc(r["description"]) if r["description"] else "No description provided."
+    # .get() defaults so a malformed/partial cached entry can never crash the build.
+    name = esc(r.get("name", ""))
+    url = esc(r.get("html_url", ""))
+    description = (r.get("description") or "").strip()
+    desc = esc(description) if description else "No description provided."
     meta_bits = []
-    if r["language"]:
+    language = r.get("language") or ""
+    if language:
         meta_bits.append(
-            f'<span class="m"><span class="lang-dot"></span>{esc(r["language"])}</span>'
+            f'<span class="m"><span class="lang-dot"></span>{esc(language)}</span>'
         )
-    if r["stargazers_count"]:
-        meta_bits.append(f'<span class="m">&#9733; {r["stargazers_count"]}</span>')
-    pushed = fmt_pushed(r["pushed_at"])
+    try:
+        stars = int(r.get("stargazers_count") or 0)
+    except (TypeError, ValueError):
+        stars = 0
+    if stars:
+        meta_bits.append(f'<span class="m">&#9733; {stars}</span>')
+    pushed = fmt_pushed(r.get("pushed_at", ""))
     if pushed:
         meta_bits.append(f'<span class="m">Updated {esc(pushed)}</span>')
     meta = "".join(meta_bits)
@@ -241,10 +254,10 @@ def render_elsewhere(links):
         icon = PS_LOGO_SVG if lk.get("icon") == "ps" else GITHUB_LOGO_SVG
         parts.append(
             '      <a class="linkbtn reveal" href="'
-            + esc(lk["href"])
+            + esc(lk.get("href", "#"))
             + '" target="_blank" rel="noopener">'
             + f'<span class="ico">{icon}</span>'
-            + f'<span>{esc(lk["title"])}<br><span class="sub">{esc(lk["sub"])}</span></span>'
+            + f'<span>{esc(lk.get("title", ""))}<br><span class="sub">{esc(lk.get("sub", ""))}</span></span>'
             + "</a>"
         )
     return "\n".join(parts)
@@ -300,8 +313,10 @@ def main() -> int:
     rendered = fill(template, mapping)
 
     # Embed the repo list as a comment so a future build can recover it if the
-    # API is down. Kept compact; never affects layout.
-    cache_blob = json.dumps(repos, ensure_ascii=False)
+    # API is down. base64(JSON) keeps it ASCII-safe and guarantees the blob can
+    # never contain "-->" (which a repo description otherwise could), so it can't
+    # break out of the HTML comment. Never affects layout.
+    cache_blob = base64.b64encode(json.dumps(repos).encode("utf-8")).decode("ascii")
     cache_comment = f"\n{REPO_CACHE_BEGIN}\n{cache_blob}\n{REPO_CACHE_END}\n"
     rendered = rendered.replace("</body>", cache_comment + "</body>")
 

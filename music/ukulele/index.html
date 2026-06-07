@@ -48,23 +48,13 @@
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
         <h2>Tune Up</h2>
-        <div class="sub">Tap a string for a steady tone — match it by ear</div>
-        <div class="tCanvasWrap"><span class="tCanvasLbl">REFERENCE WAVE</span><canvas id="tCanvas"></canvas></div>
-        <div class="tStrings" id="tStrings"></div>
+        <div class="sub">Play a string — the needle shows how sharp or flat you are.</div>
         <div class="tCard">
-          <h3>Hear the beats</h3>
-          <p>Play your string with the drone on. If it's out, you'll hear a pulsing "wah-wah" — the slower the pulse, the closer you are. When it vanishes, you're in tune. Tap to learn the sound.</p>
-          <div class="row"><button class="tBtn" id="beatIn">In tune (no beats)</button><button class="tBtn ghost" id="beatOff">Slightly off (beats)</button></div>
-        </div>
-        <div class="tCard">
-          <h3>Tune to itself</h3>
-          <p>Got one string roughly right? Tune the rest from it. Press the fret shown, then match the open string beside it.</p>
-          <div id="relGuide"></div>
-        </div>
-        <div class="tCard">
-          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— needle by mic</span></h3>
+          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— live needle by mic</span></h3>
           <div class="micBox" id="micBox"></div>
         </div>
+        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones — tap a letter for a steady pitch.</div>
+        <div class="tStrings" id="tStrings"></div>
       </div>
     </section>
   </div>
@@ -90,7 +80,9 @@
 
 <!-- Shared, instrument-agnostic songbook engine -->
 <script src="../shared/songbook.js"></script>
-<!-- Ukulele chord pack: fingerings, audio, the Tune tab. Swap for chords-guitar.js to build the guitar tool. -->
+<!-- Shared mic auto-tuner + reference tones (instrument-agnostic; one source for every instrument) -->
+<script src="../shared/tuner.js"></script>
+<!-- Ukulele chord pack: fingerings + chord audio; declares its strings to the shared tuner. Swap for chords-guitar.js to build the guitar tool. -->
 <script src="../shared/chords-ukulele.js"></script>
 <!-- Page bootstrap: load the shared catalog, then mount the songbook with the ukulele pack. -->
 <script>

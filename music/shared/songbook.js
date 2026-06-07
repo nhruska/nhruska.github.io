@@ -215,7 +215,7 @@
         card.className = 'songCard' + (inSet ? ' inSet' : '');
         var badge = s.custom ? '<span class="dot"></span><span>mine</span>' : '';
         card.innerHTML = '<button class="addBtn">' + (inSet ? '✓' : '+') + '</button>'
-          + '<div class="row1"><div><div class="title">' + s.t + '</div><div class="artist">' + s.a + '</div></div><div class="yr">’' + String(s.y).slice(-2) + '</div></div>'
+          + '<div class="row1"><div><div class="title">' + escHTML(s.t) + '</div><div class="artist">' + escHTML(s.a) + '</div></div><div class="yr">’' + String(s.y).slice(-2) + '</div></div>'
           + '<div class="meta"><span class="chds">' + s.seq.join(' · ') + '</span><span class="dot"></span><span>' + s.seq.length + ' chords</span>' + badge + '</div>';
         card.querySelector('.addBtn').onclick = function (e) { e.stopPropagation(); toggleSet(s.id); };
         card.onclick = function () { openPractice(s.id); };
@@ -249,7 +249,7 @@
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       el.practiceBody.innerHTML =
         '<div class="detail">'
-        + '<div class="detailHead"><div class="ti"><h2>' + s.t + '</h2><p>' + s.a + ' · ' + s.y + '</p></div>' + maxBtn + '</div>'
+        + '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>'
         + '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>'
         + '<div class="viewToggle"><button class="' + (STATE.view === 'lyrics' ? 'on' : '') + '" data-v="lyrics">Lyrics + Chords</button><button class="' + (STATE.view === 'chords' ? 'on' : '') + '" data-v="chords">Chord chart</button></div>'
         + '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>'
@@ -327,7 +327,7 @@
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         var it = document.createElement('div'); it.className = 'setItem';
-        it.innerHTML = '<div class="num">' + (i + 1) + '</div><div class="body"><div class="t">' + s.t + '</div><div class="a">' + s.a + ' · ' + s.y + '</div><div class="c">' + s.seq.join(' · ') + '</div></div>'
+        it.innerHTML = '<div class="num">' + (i + 1) + '</div><div class="body"><div class="t">' + escHTML(s.t) + '</div><div class="a">' + escHTML(s.a) + ' · ' + s.y + '</div><div class="c">' + s.seq.join(' · ') + '</div></div>'
           + '<div class="setCtrl"><button data-act="up" ' + (i === 0 ? 'disabled' : '') + '>▲</button><button data-act="dn" ' + (i === STATE.setlist.length - 1 ? 'disabled' : '') + '>▼</button></div><button class="rm" data-act="rm">×</button>';
         it.querySelector('[data-act=up]').onclick = function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };
         it.querySelector('[data-act=dn]').onclick = function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };

@@ -3,8 +3,9 @@
 This folder holds the songbook runtime, shared by every instrument tool under
 `music/` (ukulele today, guitar next). The point is anti-proliferation: there
 is ONE songbook (catalog + search + chord-over-lyric rendering + setlist +
-perform mode). Each instrument adds only a small "chord pack" with its own
-fingerings, audio, and tuner. No duplication, no build step, no framework.
+perform mode) AND ONE tuner (mic auto-tuner + reference tones). Each instrument
+adds only a small "chord pack" with its own fingerings, chord audio, and its
+open-string list. No duplication, no build step, no framework.
 
 ```
 music/
@@ -12,13 +13,14 @@ music/
     songs.json          <- THE song catalog (single source of truth)
     songbook.js         <- THE engine (instrument-agnostic). Global: Songbook
     songbook.css        <- THE styles (theme + all components)
+    tuner.js            <- THE mic auto-tuner + reference tones. Global: Tuner
     chords-ukulele.js   <- ukulele chord pack. Global: ChordPackUkulele
+    chords-guitar.js    <- guitar chord pack.   Global: ChordPackGuitar
     README.md           <- this file
   ukulele/
     index.html          <- ukulele page: loads shared modules + ukulele pack
   guitar/
-    index.html          <- (future) guitar page: same shared modules + chords-guitar.js
-    chords-guitar.js     would go in shared/ alongside chords-ukulele.js
+    index.html          <- guitar page:   same shared modules + guitar pack
 ```
 
 Everything loads as plain classic `<script>` / `<link>` tags via relative
@@ -30,13 +32,14 @@ the catalog is fetched with `fetch()`. A `file://` open shows a friendly error.
 ## How to build a new instrument tool (the 3-step recipe)
 
 1. Copy `chords-ukulele.js` to `chords-<instrument>.js`. Swap the instrument
-   data (chord fingerings, open-string frequencies, tuner string list, tuning
-   label) and keep the SAME exported shape. Expose it as a global, e.g.
-   `window.ChordPackGuitar`.
+   data (chord fingerings + the `TUNER_STRINGS` list you hand to the shared
+   tuner) and keep the SAME exported shape. Expose it as a global, e.g.
+   `window.ChordPackGuitar`. You do NOT reimplement the tuner - `init()` just
+   calls `Tuner.mount({ strings: TUNER_STRINGS })`.
 2. Copy `music/ukulele/index.html` to `music/<instrument>/index.html`. Change
    the `<script src="../shared/chords-ukulele.js">` line to your pack, and the
-   `chordPack:` value in the bootstrap to your global. Keep the markup IDs
-   identical (the engine and the pack both reference them by id).
+   `chordPack:` value in the bootstrap to your global. Keep `tuner.js` and the
+   markup IDs (`#micBox`, `#tStrings`, `#quickTune`) identical.
 3. Done. The catalog, search, transpose, chord-over-lyric sheets, setlist,
    perform/auto-scroll, and compose grid all work unchanged.
 
@@ -200,17 +203,21 @@ window.ChordPackGuitar = {
   playFreq:  function (freq, durSeconds) { /* raw tone fallback */ },
 
   // --- tab lifecycle hooks ---
-  onLeaveTuner: function () { /* silence any tuner drones when leaving Tune */ },
+  onLeaveTuner: function () { /* delegate: if (Tuner) Tuner.stop(); */ },
   onSwitchTab:  function (name) { /* optional: react to any tab switch */ },
 
   // --- wiring, called once after the engine mounts ---
-  // `engine` gives you { switchTab, chordRootFreq, tpose } so the pack can
-  // build its own tab (e.g. the Tune tab) and hook buttons like #quickTune.
-  init: function (engine) { /* build tuner UI, wire #quickTune, etc. */ }
+  // `engine` gives you { switchTab, chordRootFreq, tpose }. The pack hands its
+  // open-string list to the SHARED tuner and wires the #quickTune shortcut.
+  init: function (engine) {
+    if (window.Tuner) window.Tuner.mount({ strings: TUNER_STRINGS });
+    var q = document.getElementById('quickTune');
+    if (q) q.onclick = function () { engine.switchTab('tune'); };
+  }
 };
 ```
 
-### What the pack owns vs what the engine owns
+### What the pack owns vs what the engine/tuner owns
 
 | Concern | Owner |
 |---|---|
@@ -221,15 +228,17 @@ window.ChordPackGuitar = {
 | Perform mode + auto-scroll + stage dim | engine |
 | Compose grid layout + suggestions + save | engine (calls pack for diagrams/audio) |
 | Chord FINGERINGS / diagrams | pack |
-| All audio (strum, tone, drone, beats) | pack |
-| The Tune tab (drones, beat method, relative guide, mic auto-tuner) | pack |
+| Chord audio (strum, single tone) | pack |
+| Mic auto-tuner + reference-tone drones (the whole Tune tab UI) | **tuner.js (shared)** |
+| Which strings the tuner targets (note/label/Hz) | pack (`TUNER_STRINGS`) |
 
-The Tune tab is entirely the pack's responsibility because it is inherently
-instrument-specific (string count, open frequencies, tuning method). The pack
-builds it in `init()` against markup the host page provides (`#tStrings`,
-`#relGuide`, `#micBox`, `#tCanvas`, `#beatIn`, `#beatOff`, `#quickTune`). The
-engine only tells the pack when the user leaves the Tune tab
-(`onLeaveTuner`) so drones can be stopped.
+The Tune tab is rendered ONCE by the shared `tuner.js` (pitch detection, the
+live needle, Start/Stop mic plumbing, reference-tone drones) so it is not
+maintained per-instrument. The only instrument-specific input is the open-string
+list, which the pack passes via `Tuner.mount({ strings })` from its `init()`.
+`tuner.js` renders into the host markup `#micBox` (live needle) and `#tStrings`
+(reference tones); `Tuner.stop()` silences mic + drones when the user leaves the
+tab (called from the pack's `onLeaveTuner`).
 
 ### Mic auto-tuner note
 
