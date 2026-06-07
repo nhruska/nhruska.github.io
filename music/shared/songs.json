@@ -1,0 +1,1194 @@
+[
+  {
+    "t": "Three Little Birds",
+    "a": "Bob Marley",
+    "y": 1977,
+    "d": "70s",
+    "seq": [
+      "A",
+      "D",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[A]Don't worry, [D]about a [A]thing"
+      ],
+      [
+        "",
+        "'Cause [A]every little thing, gonna be [E]all right"
+      ],
+      [
+        "Verse",
+        "[A]Rise up this mornin', [D]smiled with the risin' [A]sun"
+      ],
+      [
+        "",
+        "Three little [E]birds, pitch by my [A]doorstep"
+      ]
+    ]
+  },
+  {
+    "t": "Let It Be",
+    "a": "The Beatles",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]When I find myself in [G]times of trouble"
+      ],
+      [
+        "",
+        "[Am]Mother Mary [F]comes to me"
+      ],
+      [
+        "",
+        "[C]Speaking words of [G]wisdom, let it [F]be [C]"
+      ],
+      [
+        "Chorus",
+        "Let it [Am]be, let it [G]be, let it [F]be, let it [C]be"
+      ]
+    ]
+  },
+  {
+    "t": "Knockin' on Heaven's Door",
+    "a": "Bob Dylan",
+    "y": 1973,
+    "d": "70s",
+    "seq": [
+      "G",
+      "D",
+      "Am",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Mama take this [D]badge off of me"
+      ],
+      [
+        "",
+        "[Am]I can't use it [C]anymore"
+      ],
+      [
+        "Chorus",
+        "[G]Knock knock [D]knockin' on heaven's [Am]door [C]"
+      ]
+    ]
+  },
+  {
+    "t": "Brown Eyed Girl",
+    "a": "Van Morrison",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Hey where did [C]we go, [G]days when the [D]rains came"
+      ],
+      [
+        "Chorus",
+        "[G]You my [C]brown eyed [G]girl [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Imagine",
+    "a": "John Lennon",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "C",
+      "F",
+      "Am",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Imagine [F]there's no [C]heaven [F]"
+      ],
+      [
+        "",
+        "[C]It's easy [F]if you [C]try [F]"
+      ],
+      [
+        "Chorus",
+        "You [F]may say [G]I'm a [C]dreamer [Am]"
+      ]
+    ]
+  },
+  {
+    "t": "Wish You Were Here",
+    "a": "Pink Floyd",
+    "y": 1975,
+    "d": "70s",
+    "seq": [
+      "C",
+      "D",
+      "Am",
+      "G",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "So, [C]so you think you can [D]tell"
+      ],
+      [
+        "",
+        "[Am]Heaven from [G]hell"
+      ],
+      [
+        "Chorus",
+        "How I [Em]wish, how I [G]wish you were [Em]here"
+      ]
+    ]
+  },
+  {
+    "t": "Hotel California",
+    "a": "Eagles",
+    "y": 1976,
+    "d": "70s",
+    "seq": [
+      "Am",
+      "E7",
+      "G",
+      "D",
+      "F",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "On a [Am]dark desert [E7]highway"
+      ],
+      [
+        "",
+        "[G]Cool wind in my [D]hair"
+      ],
+      [
+        "Chorus",
+        "Welcome to the [F]Hotel Cali[C]fornia"
+      ]
+    ]
+  },
+  {
+    "t": "Tiny Dancer",
+    "a": "Elton John",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "C",
+      "F",
+      "G",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Blue jean baby, [F]L.A. lady"
+      ],
+      [
+        "",
+        "[C]Seamstress for the [G]band"
+      ],
+      [
+        "Chorus",
+        "[F]Hold me [G]closer tiny [C]dancer"
+      ]
+    ]
+  },
+  {
+    "t": "Lean on Me",
+    "a": "Bill Withers",
+    "y": 1972,
+    "d": "70s",
+    "seq": [
+      "C",
+      "F",
+      "G",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Sometimes in our [F]lives, [C]we all have [G]pain"
+      ],
+      [
+        "Chorus",
+        "[C]Lean [F]on [C]me, when you're not [G]strong"
+      ]
+    ]
+  },
+  {
+    "t": "Bridge Over Troubled Water",
+    "a": "Simon & Garfunkel",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "C",
+      "F",
+      "G",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]When you're [F]weary, [C]feeling [G]small"
+      ],
+      [
+        "Chorus",
+        "Like a bridge over [F]troubled [C]water, I will lay me [G]down"
+      ]
+    ]
+  },
+  {
+    "t": "Stand by Me",
+    "a": "Ben E. King / 80s revival",
+    "y": 1986,
+    "d": "80s",
+    "seq": [
+      "G",
+      "Em",
+      "C",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "When the [G]night has come [Em]"
+      ],
+      [
+        "",
+        "And the [C]land is [D]dark [G]"
+      ],
+      [
+        "Chorus",
+        "[G]Stand by [Em]me, oh [C]stand, by [D]me [G]"
+      ]
+    ]
+  },
+  {
+    "t": "With or Without You",
+    "a": "U2",
+    "y": 1987,
+    "d": "80s",
+    "seq": [
+      "D",
+      "A",
+      "Bm",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]See the stone set [A]in your eyes"
+      ],
+      [
+        "",
+        "[Bm]See the thorn twist [G]in your side"
+      ],
+      [
+        "Chorus",
+        "With or [D]without [A]you, with or [Bm]without [G]you"
+      ]
+    ]
+  },
+  {
+    "t": "Every Breath You Take",
+    "a": "The Police",
+    "y": 1983,
+    "d": "80s",
+    "seq": [
+      "G",
+      "Em",
+      "C",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Every breath you [Em]take"
+      ],
+      [
+        "",
+        "[C]Every move you [D]make [G]"
+      ],
+      [
+        "",
+        "[C]Every step you [D]take, I'll be watching [G]you"
+      ]
+    ]
+  },
+  {
+    "t": "Sweet Child o' Mine",
+    "a": "Guns N' Roses",
+    "y": 1987,
+    "d": "80s",
+    "seq": [
+      "D",
+      "C",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]She's got a smile that it [C]seems to me"
+      ],
+      [
+        "",
+        "[G]Reminds me of childhood [D]memories"
+      ],
+      [
+        "Chorus",
+        "Oh oh oh [C]sweet child o' [G]mine [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Don't Dream It's Over",
+    "a": "Crowded House",
+    "y": 1986,
+    "d": "80s",
+    "seq": [
+      "Em",
+      "C",
+      "G",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Em]There is [C]freedom within [G]"
+      ],
+      [
+        "",
+        "There is [D]freedom with[Em]out [C]"
+      ],
+      [
+        "Chorus",
+        "[C]Hey now, [G]hey now, [D]don't dream it's [Em]over"
+      ]
+    ]
+  },
+  {
+    "t": "Take On Me",
+    "a": "a-ha",
+    "y": 1985,
+    "d": "80s",
+    "seq": [
+      "A",
+      "D",
+      "E",
+      "F#m"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]Talking away, I don't know [D]what I'm to say"
+      ],
+      [
+        "Chorus",
+        "[A]Take [D]on me, [E]take on me"
+      ]
+    ]
+  },
+  {
+    "t": "Time After Time",
+    "a": "Cyndi Lauper",
+    "y": 1984,
+    "d": "80s",
+    "seq": [
+      "C",
+      "Am",
+      "F",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Lying in my [Am]bed I hear the [F]clock tick"
+      ],
+      [
+        "Chorus",
+        "If you're [C]lost you can [Am]look and you will [F]find me [G]"
+      ]
+    ]
+  },
+  {
+    "t": "Don't Stop Believin'",
+    "a": "Journey",
+    "y": 1981,
+    "d": "80s",
+    "seq": [
+      "E",
+      "B",
+      "C#m",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]Just a small town [B]girl"
+      ],
+      [
+        "",
+        "[C#m]Livin' in a [A]lonely world"
+      ],
+      [
+        "Chorus",
+        "[E]Don't stop be[B]lievin'"
+      ]
+    ]
+  },
+  {
+    "t": "Africa",
+    "a": "Toto",
+    "y": 1982,
+    "d": "80s",
+    "seq": [
+      "F#m",
+      "D",
+      "A",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F#m]I hear the [D]drums echoing to[A]night [E]"
+      ],
+      [
+        "Chorus",
+        "I [D]bless the [A]rains down in [F#m]Africa [E]"
+      ]
+    ]
+  },
+  {
+    "t": "Tears in Heaven",
+    "a": "Eric Clapton",
+    "y": 1989,
+    "d": "80s",
+    "seq": [
+      "A",
+      "E",
+      "F#m",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]Would you [E]know my [F#m]name [D]"
+      ],
+      [
+        "",
+        "If I [A]saw you in [E]heaven"
+      ],
+      [
+        "Chorus",
+        "Would it be the [D]same [E]if I saw you in [A]heaven"
+      ]
+    ]
+  },
+  {
+    "t": "Wonderwall",
+    "a": "Oasis",
+    "y": 1995,
+    "d": "90s",
+    "seq": [
+      "Em",
+      "G",
+      "D",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Em]Today is [G]gonna be the day [D]"
+      ],
+      [
+        "",
+        "That they're [C]gonna throw it back to [Em]you [G]"
+      ],
+      [
+        "Chorus",
+        "[C]And [D]all the roads we [G]have to walk are [Em]winding"
+      ]
+    ]
+  },
+  {
+    "t": "Zombie",
+    "a": "The Cranberries",
+    "y": 1994,
+    "d": "90s",
+    "seq": [
+      "Em",
+      "C",
+      "G",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Em]Another head hangs [C]lowly"
+      ],
+      [
+        "",
+        "[G]Child is slowly [D]taken"
+      ],
+      [
+        "Chorus",
+        "In your [Em]head, in your [C]head, they are [G]fighting [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Good Riddance (Time of Your Life)",
+    "a": "Green Day",
+    "y": 1997,
+    "d": "90s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Another turning [D]point, a [C]fork stuck in the [G]road"
+      ],
+      [
+        "Chorus",
+        "It's [Em]something un[D]predictable but [G]in the end is [C]right"
+      ],
+      [
+        "",
+        "I [G]hope you had the [D]time of your [G]life"
+      ]
+    ]
+  },
+  {
+    "t": "No Woman No Cry",
+    "a": "reggae standard",
+    "y": 1990,
+    "d": "90s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "No [C]woman no [G]cry"
+      ],
+      [
+        "",
+        "No [Am]woman no [F]cry"
+      ],
+      [
+        "Verse",
+        "Said I re[C]member [G]when we used to [Am]sit [F]"
+      ]
+    ]
+  },
+  {
+    "t": "Free Fallin'",
+    "a": "Tom Petty",
+    "y": 1989,
+    "d": "90s",
+    "seq": [
+      "G",
+      "C",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "She's a [G]good girl, [C]loves her [G]mama [C]"
+      ],
+      [
+        "",
+        "Loves [G]Jesus, and [C]America [D]too"
+      ],
+      [
+        "Chorus",
+        "And I'm [G]free [C]free [G]fallin' [C]"
+      ]
+    ]
+  },
+  {
+    "t": "Iris",
+    "a": "Goo Goo Dolls",
+    "y": 1998,
+    "d": "90s",
+    "seq": [
+      "Bm",
+      "Em",
+      "G",
+      "D",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Bm]And I'd give up for[Em]ever to [G]touch you [D]"
+      ],
+      [
+        "Chorus",
+        "And I [Bm]don't want the [G]world to see [D]me"
+      ]
+    ]
+  },
+  {
+    "t": "Hey Jealousy",
+    "a": "Gin Blossoms",
+    "y": 1992,
+    "d": "90s",
+    "seq": [
+      "G",
+      "D",
+      "C",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Tell me do you think [D]it'd be all right"
+      ],
+      [
+        "Chorus",
+        "[C]Don't tell me you're not in [Em]love no more"
+      ]
+    ]
+  },
+  {
+    "t": "Black",
+    "a": "Pearl Jam",
+    "y": 1991,
+    "d": "90s",
+    "seq": [
+      "E",
+      "A",
+      "Bm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]Sheets of [A]empty canvas, [E]untouched [A]sheets of clay"
+      ],
+      [
+        "Chorus",
+        "I know some[A]day you'll have a beautiful [Bm]life"
+      ]
+    ]
+  },
+  {
+    "t": "Bittersweet Symphony",
+    "a": "The Verve",
+    "y": 1997,
+    "d": "90s",
+    "seq": [
+      "E",
+      "Bm",
+      "D",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]'Cause it's a bitter[Bm]sweet sym[D]phony, this [A]life"
+      ],
+      [
+        "Chorus",
+        "[E]Trying to make [Bm]ends [D]meet, you're a [A]slave to money"
+      ]
+    ]
+  },
+  {
+    "t": "More Than Words",
+    "a": "Extreme",
+    "y": 1990,
+    "d": "90s",
+    "seq": [
+      "G",
+      "C",
+      "Am",
+      "D",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Saying [C]I love [Am]you [D]"
+      ],
+      [
+        "Chorus",
+        "More than [Em]words is [C]all you have to [G]do [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Hey There Delilah",
+    "a": "Plain White T's",
+    "y": 2006,
+    "d": "00s",
+    "seq": [
+      "D",
+      "F#m",
+      "Bm",
+      "G",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]Hey there Deli[F#m]lah, what's it like in [D]New York City"
+      ],
+      [
+        "Chorus",
+        "Oh it's [Bm]what you do to [G]me [A]"
+      ]
+    ]
+  },
+  {
+    "t": "Drops of Jupiter",
+    "a": "Train",
+    "y": 2001,
+    "d": "00s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Now that she's [G]back in the at[Am]mosphere [F]"
+      ],
+      [
+        "Chorus",
+        "Tell me [C]did you [G]sail across the [Am]sun [F]"
+      ]
+    ]
+  },
+  {
+    "t": "Bubbly",
+    "a": "Colbie Caillat",
+    "y": 2007,
+    "d": "00s",
+    "seq": [
+      "A",
+      "E",
+      "F#m",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]I've been awake for a [E]while now"
+      ],
+      [
+        "Chorus",
+        "It [F#m]starts in my toes, makes me [D]crinkle my nose"
+      ]
+    ]
+  },
+  {
+    "t": "I'm Yours",
+    "a": "Jason Mraz",
+    "y": 2008,
+    "d": "00s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "Well [C]you done done me and you [G]bet I felt it"
+      ],
+      [
+        "Chorus",
+        "I [C]won't hesi[G]tate no [Am]more, no [F]more"
+      ]
+    ]
+  },
+  {
+    "t": "Hallelujah",
+    "a": "Jeff Buckley",
+    "y": 1994,
+    "d": "00s",
+    "seq": [
+      "C",
+      "Am",
+      "F",
+      "G",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]I heard there was a [Am]secret chord"
+      ],
+      [
+        "",
+        "[C]That David played and it [Am]pleased the Lord"
+      ],
+      [
+        "Chorus",
+        "Halle[F]lu[G]jah, halle[C]lu[Am]jah"
+      ]
+    ]
+  },
+  {
+    "t": "Mr. Brightside",
+    "a": "The Killers",
+    "y": 2003,
+    "d": "00s",
+    "seq": [
+      "C",
+      "Em",
+      "F",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Coming out of my [Em]cage and I've been [F]doing just [G]fine"
+      ],
+      [
+        "Chorus",
+        "Destiny is [C]calling me, open up my [Em]eager eyes"
+      ]
+    ]
+  },
+  {
+    "t": "Use Somebody",
+    "a": "Kings of Leon",
+    "y": 2008,
+    "d": "00s",
+    "seq": [
+      "C",
+      "Em",
+      "F",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]I've been roaming a[Em]round, always [F]looking [G]down"
+      ],
+      [
+        "Chorus",
+        "I'm sha[C]king at your [Em]beauty"
+      ]
+    ]
+  },
+  {
+    "t": "Yellow",
+    "a": "Coldplay",
+    "y": 2000,
+    "d": "00s",
+    "seq": [
+      "B",
+      "F#",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[B]Look at the stars, [F#]look how they shine for you"
+      ],
+      [
+        "Chorus",
+        "I came along, I [E]wrote a song for you"
+      ]
+    ]
+  },
+  {
+    "t": "Banana Pancakes",
+    "a": "Jack Johnson",
+    "y": 2005,
+    "d": "00s",
+    "seq": [
+      "G",
+      "C",
+      "Em",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Well, can't you see that it's [C]just raining"
+      ],
+      [
+        "Chorus",
+        "[Em]Make you banana pan[C]cakes [G]"
+      ]
+    ]
+  },
+  {
+    "t": "Chasing Cars",
+    "a": "Snow Patrol",
+    "y": 2006,
+    "d": "00s",
+    "seq": [
+      "A",
+      "E",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]We'll do it [E]all, [D]every[A]thing, on our [E]own"
+      ],
+      [
+        "Chorus",
+        "If I lay [A]here, if I just lay [E]here"
+      ]
+    ]
+  },
+  {
+    "t": "Riptide",
+    "a": "Vance Joy",
+    "y": 2013,
+    "d": "10s",
+    "seq": [
+      "Am",
+      "G",
+      "C",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]I was scared of [G]dentists and the [C]dark"
+      ],
+      [
+        "Chorus",
+        "Lady [Am]running down to the [G]riptide, taken away to the [C]dark side"
+      ]
+    ]
+  },
+  {
+    "t": "Ho Hey",
+    "a": "The Lumineers",
+    "y": 2012,
+    "d": "10s",
+    "seq": [
+      "C",
+      "F",
+      "Am",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]I've been trying to do it [F]right"
+      ],
+      [
+        "",
+        "I've been [C]living a lonely [F]life"
+      ],
+      [
+        "Chorus",
+        "[C]I belong with [F]you, you belong with [Am]me, you're my [G]sweetheart"
+      ]
+    ]
+  },
+  {
+    "t": "Somebody That I Used to Know",
+    "a": "Gotye",
+    "y": 2011,
+    "d": "10s",
+    "seq": [
+      "Dm",
+      "C",
+      "Bb",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Dm]Now and [C]then I think of [Bb]when we were to[C]gether"
+      ],
+      [
+        "Chorus",
+        "But you didn't [Dm]have to cut me [C]off"
+      ]
+    ]
+  },
+  {
+    "t": "Stay With Me",
+    "a": "Sam Smith",
+    "y": 2014,
+    "d": "10s",
+    "seq": [
+      "Am",
+      "F",
+      "C",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]Guess it's [F]true, I'm not [C]good at a one-night [G]stand"
+      ],
+      [
+        "Chorus",
+        "Oh won't you [Am]stay with [F]me, 'cause you're [C]all I need [G]"
+      ]
+    ]
+  },
+  {
+    "t": "Counting Stars",
+    "a": "OneRepublic",
+    "y": 2013,
+    "d": "10s",
+    "seq": [
+      "Am",
+      "F",
+      "C",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]Lately I been, I been [F]losing sleep"
+      ],
+      [
+        "Chorus",
+        "Said no more [Am]counting [F]dollars, we'll be [C]counting [G]stars"
+      ]
+    ]
+  },
+  {
+    "t": "Thinking Out Loud",
+    "a": "Ed Sheeran",
+    "y": 2014,
+    "d": "10s",
+    "seq": [
+      "D",
+      "F#m",
+      "G",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]When your legs don't [F#m]work like they used to be[G]fore [A]"
+      ],
+      [
+        "Chorus",
+        "So [D]honey now, [F#m]take me into your [G]loving arms [A]"
+      ]
+    ]
+  },
+  {
+    "t": "Shake It Off",
+    "a": "Taylor Swift",
+    "y": 2014,
+    "d": "10s",
+    "seq": [
+      "Am",
+      "C",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]I stay out too late, [C]got nothing in my [G]brain"
+      ],
+      [
+        "Chorus",
+        "[Am]Shake it off, [C]shake it [G]off"
+      ]
+    ]
+  },
+  {
+    "t": "Budapest",
+    "a": "George Ezra",
+    "y": 2013,
+    "d": "10s",
+    "seq": [
+      "F",
+      "C",
+      "Bb"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F]My house in Budapest, my hidden [C]treasure chest"
+      ],
+      [
+        "Chorus",
+        "Oh for you, [Bb]oh-oh-oh for [F]you"
+      ]
+    ]
+  },
+  {
+    "t": "Sunflower",
+    "a": "Post Malone & Swae Lee",
+    "y": 2018,
+    "d": "10s",
+    "seq": [
+      "Dm",
+      "G",
+      "C",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Dm]Needless to say, [G]I keep her in [C]check [Am]"
+      ],
+      [
+        "Chorus",
+        "Then you're left in the [Dm]dust, unless [G]I stuck by ya"
+      ]
+    ]
+  },
+  {
+    "t": "Let Her Go",
+    "a": "Passenger",
+    "y": 2012,
+    "d": "10s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "F",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Well you only [Em]need the light when it's [Am]burning low [F]"
+      ],
+      [
+        "Chorus",
+        "Only [C]know you've been [Em]high when you're [F]feeling low"
+      ]
+    ]
+  }
+]

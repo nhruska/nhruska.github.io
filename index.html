@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- ============================================================
+     GENERATED FILE TEMPLATE — do not edit ../index.html by hand.
+     Edit this template + scripts/data.json, then run
+     `python scripts/generate.py` (CI does this daily).
+     Injection slots are double-brace UPPERCASE markers replaced by generate.py.
+============================================================ -->
 <html lang="en" class="ps-dark">
 <head>
 <meta charset="UTF-8">
@@ -75,6 +81,7 @@ main{flex:1;width:100%;}
 .section-label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;color:var(--accent);
   display:flex;align-items:center;gap:12px;margin-bottom:22px;}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+.section-intro{font-size:.92rem;color:var(--txt-soft);margin:-10px 0 22px;max-width:60ch;line-height:1.6;}
 
 /* project grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
@@ -97,6 +104,11 @@ main{flex:1;width:100%;}
 .card .foot{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:.8rem;
   color:var(--txt-dim);font-weight:500;}
 .card .go{color:var(--accent);font-weight:700;}
+/* repo card meta row */
+.card .meta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:18px;font-size:.78rem;
+  color:var(--txt-dim);font-weight:500;}
+.card .meta .m{display:inline-flex;align-items:center;gap:5px;}
+.card .meta .lang-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:0 0 auto;}
 
 /* elsewhere links */
 .links{display:flex;flex-wrap:wrap;gap:12px;}
@@ -114,6 +126,7 @@ footer{margin-top:64px;border-top:1px solid var(--border-soft);
   display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .footin .tagline{font-size:12.5px;color:var(--txt-dim);font-style:italic;}
 .footin .copy{font-size:11.5px;color:var(--txt-dim);letter-spacing:.04em;}
+.footin .built{font-size:10.5px;color:var(--txt-dim);letter-spacing:.04em;opacity:.8;}
 
 /* reveal animation */
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .5s var(--ease),transform .5s var(--ease);}
@@ -157,20 +170,35 @@ footer{margin-top:64px;border-top:1px solid var(--border-soft);
 <main>
   <section class="section">
     <div class="section-label">Builds</div>
-    <div class="grid" id="grid"></div>
+    <div class="grid">
+      <a class="card live reveal" href="music/"><div class="cardTop"><div class="icn">🎸</div><span class="badge live">live</span></div><h3>Music</h3><div class="desc">Ukulele &amp; guitar performance tools - mic tuners, chord composers, a 50-song library and a fullscreen perform mode. Built for myself, shipped in the open.</div><div class="foot"><span>Personal · Web Audio</span><span class="go">open &rarr;</span></div></a>
+      <div class="card soon reveal"><div class="cardTop"><div class="icn">✨</div><span class="badge soon">soon</span></div><h3>More, soon</h3><div class="desc">Experiments, proofs-of-concept and professional work land here as they're ready.</div><div class="foot"><span>In progress</span><span class="go"></span></div></div>
+    </div>
+  </section>
+
+  <!-- ===== GENERATED SECTION: open-source repos from the GitHub API =====
+       This grid is produced by scripts/generate.py from live api.github.com
+       data, sorted by most-recently-pushed. Forks and archived repos are
+       excluded. Do not hand-edit. -->
+  <section class="section">
+    <div class="section-label">Open source</div>
+    <p class="section-intro reveal">Public repositories, freshest first - regenerated daily from the GitHub API.</p>
+    <div class="grid">
+      <a class="card live reveal" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>nhruska.github.io</h3><div class="desc">No description provided.</div><div class="meta"><span class="m"><span class="lang-dot"></span>HTML</span><span class="m">Updated Jun 2026</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/Codex" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>Codex</h3><div class="desc">Sandbox for Codex testing</div><div class="meta"><span class="m"><span class="lang-dot"></span>JavaScript</span><span class="m">Updated May 2025</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/kids-game" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>kids-game</h3><div class="desc">POC for AI codebase mgmt</div><div class="meta"><span class="m"><span class="lang-dot"></span>HTML</span><span class="m">Updated May 2025</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/codespaces-jupyter" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>codespaces-jupyter</h3><div class="desc">Sample Jupyter development setup for Codespaces</div><div class="meta"><span class="m"><span class="lang-dot"></span>Jupyter Notebook</span><span class="m">Updated Dec 2022</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/codespaces-express" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>codespaces-express</h3><div class="desc">Sample Express app development setup for Codespaces</div><div class="meta"><span class="m"><span class="lang-dot"></span>JavaScript</span><span class="m">Updated Dec 2022</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/codespaces-rails" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>codespaces-rails</h3><div class="desc">Sample Ruby on Rails development setup for Codespaces</div><div class="meta"><span class="m"><span class="lang-dot"></span>Ruby</span><span class="m">Updated Dec 2022</span></div></a>
+      <a class="card live reveal" href="https://github.com/nhruska/codespaces-react" target="_blank" rel="noopener"><div class="cardTop"><div class="icn"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></div><span class="badge live">repo</span></div><h3>codespaces-react</h3><div class="desc">Sample React development setup for Codespaces</div><div class="meta"><span class="m"><span class="lang-dot"></span>JavaScript</span><span class="m">Updated Dec 2022</span></div></a>
+    </div>
   </section>
 
   <section class="section">
     <div class="section-label">Elsewhere</div>
     <div class="links">
-      <a class="linkbtn reveal" href="https://github.com/nhruska" target="_blank" rel="noopener">
-        <span class="ico"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
-        <span>GitHub<br><span class="sub">github.com/nhruska</span></span>
-      </a>
-      <a class="linkbtn reveal" href="https://www.problemsolutions.net" target="_blank" rel="noopener">
-        <span class="ico"><svg width="20" height="20" viewBox="0 0 631 510" aria-hidden="true"><path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/><path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/><path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/></svg></span>
-        <span>Problem Solutions<br><span class="sub">problemsolutions.net</span></span>
-      </a>
+      <a class="linkbtn reveal" href="https://github.com/nhruska" target="_blank" rel="noopener"><span class="ico"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span><span>GitHub<br><span class="sub">github.com/nhruska</span></span></a>
+      <a class="linkbtn reveal" href="https://www.problemsolutions.net" target="_blank" rel="noopener"><span class="ico"><svg width="20" height="20" viewBox="0 0 631 510" aria-hidden="true"><path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/><path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/><path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/></svg></span><span>Problem Solutions<br><span class="sub">problemsolutions.net</span></span></a>
     </div>
   </section>
 </main>
@@ -188,48 +216,12 @@ footer{margin-top:64px;border-top:1px solid var(--border-soft);
     <div class="tagline">Enabling the Augmented Enterprise</div>
     <div class="copy">&copy; <span id="yr"></span> Nik Hruska</div>
   </div>
+  <div class="footin" style="padding-top:0;">
+    <div class="built">Open-source section auto-generated 2026-06-07 from the GitHub API.</div>
+  </div>
 </footer>
 
 <script>
-/* ============================================================
-   BUILDS — add an entry to show a new card.
-   { title, icon, desc, href (omit => "soon"), tag, status:"live"|"soon" }
-============================================================ */
-const BUILDS=[
-  {
-    title:"Music",
-    icon:"🎸",
-    desc:"Ukulele &amp; guitar performance tools - mic tuners, chord composers, a 50-song library and a fullscreen perform mode. Built for myself, shipped in the open.",
-    href:"music/",
-    tag:"Personal · Web Audio",
-    status:"live"
-  },
-  {
-    title:"More, soon",
-    icon:"✨",
-    desc:"Experiments, proofs-of-concept and professional work land here as they're ready.",
-    tag:"In progress",
-    status:"soon"
-  }
-];
-
-const grid=document.getElementById('grid');
-BUILDS.forEach(function(b){
-  var live = b.status==='live' && b.href;
-  var el=document.createElement(live?'a':'div');
-  el.className='card '+(live?'live':'soon');
-  if(live) el.href=b.href;
-  el.innerHTML=
-    '<div class="cardTop">'
-    +'<div class="icn">'+(b.icon||'◆')+'</div>'
-    +'<span class="badge '+(live?'live':'soon')+'">'+(live?'live':'soon')+'</span>'
-    +'</div>'
-    +'<h3>'+b.title+'</h3>'
-    +'<div class="desc">'+(b.desc||'')+'</div>'
-    +'<div class="foot"><span>'+(b.tag||'')+'</span><span class="go">'+(live?'open →':'')+'</span></div>';
-  grid.appendChild(el);
-});
-
 document.getElementById('yr').textContent=new Date().getFullYear();
 
 /* reveal on scroll */
@@ -238,5 +230,9 @@ var io=new IntersectionObserver(function(entries){
 },{threshold:.12});
 document.querySelectorAll('.reveal').forEach(function(n){io.observe(n);});
 </script>
+
+<!-- repo-data:begin
+W3sibmFtZSI6ICJuaHJ1c2thLmdpdGh1Yi5pbyIsICJkZXNjcmlwdGlvbiI6ICIiLCAiaHRtbF91cmwiOiAiaHR0cHM6Ly9naXRodWIuY29tL25ocnVza2EvbmhydXNrYS5naXRodWIuaW8iLCAic3RhcmdhemVyc19jb3VudCI6IDAsICJsYW5ndWFnZSI6ICJIVE1MIiwgInB1c2hlZF9hdCI6ICIyMDI2LTA2LTA3VDIxOjU3OjUzWiJ9LCB7Im5hbWUiOiAiQ29kZXgiLCAiZGVzY3JpcHRpb24iOiAiU2FuZGJveCBmb3IgQ29kZXggdGVzdGluZyIsICJodG1sX3VybCI6ICJodHRwczovL2dpdGh1Yi5jb20vbmhydXNrYS9Db2RleCIsICJzdGFyZ2F6ZXJzX2NvdW50IjogMCwgImxhbmd1YWdlIjogIkphdmFTY3JpcHQiLCAicHVzaGVkX2F0IjogIjIwMjUtMDUtMjJUMDI6NDQ6NTdaIn0sIHsibmFtZSI6ICJraWRzLWdhbWUiLCAiZGVzY3JpcHRpb24iOiAiUE9DIGZvciBBSSBjb2RlYmFzZSBtZ210IiwgImh0bWxfdXJsIjogImh0dHBzOi8vZ2l0aHViLmNvbS9uaHJ1c2thL2tpZHMtZ2FtZSIsICJzdGFyZ2F6ZXJzX2NvdW50IjogMCwgImxhbmd1YWdlIjogIkhUTUwiLCAicHVzaGVkX2F0IjogIjIwMjUtMDUtMjJUMDA6NDU6NDdaIn0sIHsibmFtZSI6ICJjb2Rlc3BhY2VzLWp1cHl0ZXIiLCAiZGVzY3JpcHRpb24iOiAiU2FtcGxlIEp1cHl0ZXIgZGV2ZWxvcG1lbnQgc2V0dXAgZm9yIENvZGVzcGFjZXMiLCAiaHRtbF91cmwiOiAiaHR0cHM6Ly9naXRodWIuY29tL25ocnVza2EvY29kZXNwYWNlcy1qdXB5dGVyIiwgInN0YXJnYXplcnNfY291bnQiOiAwLCAibGFuZ3VhZ2UiOiAiSnVweXRlciBOb3RlYm9vayIsICJwdXNoZWRfYXQiOiAiMjAyMi0xMi0wOFQxNToyMTowMloifSwgeyJuYW1lIjogImNvZGVzcGFjZXMtZXhwcmVzcyIsICJkZXNjcmlwdGlvbiI6ICJTYW1wbGUgRXhwcmVzcyBhcHAgZGV2ZWxvcG1lbnQgc2V0dXAgZm9yIENvZGVzcGFjZXMiLCAiaHRtbF91cmwiOiAiaHR0cHM6Ly9naXRodWIuY29tL25ocnVza2EvY29kZXNwYWNlcy1leHByZXNzIiwgInN0YXJnYXplcnNfY291bnQiOiAwLCAibGFuZ3VhZ2UiOiAiSmF2YVNjcmlwdCIsICJwdXNoZWRfYXQiOiAiMjAyMi0xMi0wOFQxNToxNzo1NFoifSwgeyJuYW1lIjogImNvZGVzcGFjZXMtcmFpbHMiLCAiZGVzY3JpcHRpb24iOiAiU2FtcGxlIFJ1Ynkgb24gUmFpbHMgZGV2ZWxvcG1lbnQgc2V0dXAgZm9yIENvZGVzcGFjZXMiLCAiaHRtbF91cmwiOiAiaHR0cHM6Ly9naXRodWIuY29tL25ocnVza2EvY29kZXNwYWNlcy1yYWlscyIsICJzdGFyZ2F6ZXJzX2NvdW50IjogMCwgImxhbmd1YWdlIjogIlJ1YnkiLCAicHVzaGVkX2F0IjogIjIwMjItMTItMDhUMTU6MTU6MDBaIn0sIHsibmFtZSI6ICJjb2Rlc3BhY2VzLXJlYWN0IiwgImRlc2NyaXB0aW9uIjogIlNhbXBsZSBSZWFjdCBkZXZlbG9wbWVudCBzZXR1cCBmb3IgQ29kZXNwYWNlcyIsICJodG1sX3VybCI6ICJodHRwczovL2dpdGh1Yi5jb20vbmhydXNrYS9jb2Rlc3BhY2VzLXJlYWN0IiwgInN0YXJnYXplcnNfY291bnQiOiAwLCAibGFuZ3VhZ2UiOiAiSmF2YVNjcmlwdCIsICJwdXNoZWRfYXQiOiAiMjAyMi0xMi0wNlQxNjoyOTowNFoifV0=
+repo-data:end -->
 </body>
 </html>

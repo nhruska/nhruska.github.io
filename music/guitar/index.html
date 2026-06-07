@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Roadcase — Uke Performance Kit</title>
+<title>Roadcase — Guitar Performance Kit</title>
 <!-- Shared songbook styles (theme + all components). Lives in ../shared so the
-     guitar tool can reuse the exact same look. -->
+     guitar tool reuses the exact same look as the ukulele tool. -->
 <link rel="stylesheet" href="../shared/songbook.css">
 </head>
 <body>
 <div class="app">
   <div class="appbar">
-    <div class="brand"><span class="nm">Roadcase</span><span class="ctx" id="ctxLine">ukulele performance kit · v2</span></div>
+    <div class="brand"><span class="nm">Roadcase</span><span class="ctx" id="ctxLine">guitar performance kit · v2</span></div>
     <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
   </div>
   <div class="view" id="view">
@@ -80,11 +80,12 @@
 
 <!-- Shared, instrument-agnostic songbook engine -->
 <script src="../shared/songbook.js"></script>
-<!-- Shared mic auto-tuner + reference tones (instrument-agnostic; one source for every instrument) -->
+<!-- Shared mic auto-tuner + reference tones (instrument-agnostic; same source the ukulele tool uses) -->
 <script src="../shared/tuner.js"></script>
-<!-- Ukulele chord pack: fingerings + chord audio; declares its strings to the shared tuner. Swap for chords-guitar.js to build the guitar tool. -->
-<script src="../shared/chords-ukulele.js"></script>
-<!-- Page bootstrap: load the shared catalog, then mount the songbook with the ukulele pack. -->
+<!-- Guitar chord pack: fingerings + chord audio; declares its strings to the shared tuner.
+     The ukulele tool uses chords-ukulele.js; both consume the same chord-pack interface. -->
+<script src="../shared/chords-guitar.js"></script>
+<!-- Page bootstrap: load the shared catalog, then mount the songbook with the guitar pack. -->
 <script>
 (function () {
   'use strict';
@@ -107,7 +108,7 @@
     compose: 'build a progression',
     practice: 'practice room',
     setlist: 'tonight’s running order',
-    tune: 'GCEA · tune by ear or mic'
+    tune: 'EADGBE · tune by ear or mic'
   };
 
   function el(id) { return document.getElementById(id); }
@@ -115,8 +116,8 @@
   function start(songs) {
     window.Songbook.mount({
       songs: songs,
-      chordPack: window.ChordPackUkulele,
-      storagePrefix: 'roadcase',
+      chordPack: window.ChordPackGuitar,
+      storagePrefix: 'roadcase-guitar',
       suggestions: SUGG,
       contexts: CONTEXTS,
       el: {
