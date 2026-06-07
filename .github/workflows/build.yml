@@ -1,0 +1,57 @@
+name: Build portfolio
+
+# Git-scraping build (after Simon Willison): regenerate the root index.html from
+# scripts/template.html + scripts/data.json + the live GitHub API, then commit the
+# result back to main so the existing Pages "deploy from branch main /(root)" config
+# keeps serving a fresh page. No Pages-settings change required.
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Daily at 11:17 UTC (off the top of the hour to dodge cron congestion).
+    - cron: "17 11 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+
+# Allow the job to push the regenerated index.html back to the branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: build-portfolio
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate index.html
+        env:
+          # Built-in token: lifts the GitHub API rate limit and authenticates the
+          # repo list fetch. generate.py reads it via os.environ when present.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/generate.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- index.html; then
+            echo "index.html unchanged - nothing to commit."
+            exit 0
+          fi
+          git add index.html
+          # [skip ci] prevents this push from re-triggering the push-on-scripts build.
+          git commit -m "chore(portfolio): regenerate index.html from GitHub data [skip ci]"
+          git push

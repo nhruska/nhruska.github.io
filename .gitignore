@@ -6,3 +6,7 @@ _handoff/
 Thumbs.db
 *.swp
 .vscode/
+
+# python build cruft (scripts/generate.py)
+__pycache__/
+*.pyc
