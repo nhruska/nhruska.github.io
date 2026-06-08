@@ -69,7 +69,7 @@
   }
 
   /* ---------- mic auto-tuner (secure-context only) ---------- */
-  var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null;
+  var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null, needleEMA = 50;
   function nearest(freq) {
     var best = 0, bd = 1e9;
     STRINGS.forEach(function (s, i) { var d = Math.abs(1200 * Math.log2(freq / s.f)); if (d < bd) { bd = d; best = i; } });
@@ -100,7 +100,7 @@
     var t = document.getElementById('micToggle'); if (t) t.textContent = 'Start mic';
     var nn = document.getElementById('micNote'); if (nn) { nn.textContent = '—'; nn.classList.remove('intune'); }
     var cc = document.getElementById('micCents'); if (cc) cc.textContent = 'mic stopped';
-    var nd = document.getElementById('micNeedle'); if (nd) nd.style.left = '50%';
+    needleEMA = 50; var nd = document.getElementById('micNeedle'); if (nd) nd.style.left = '50%';
   }
   function micLoop() {
     if (!micOn) return;
@@ -113,7 +113,7 @@
       var cents = Math.round(1200 * Math.log2(freq / tgt.f));
       noteEl.textContent = tgt.n;
       var clamped = Math.max(-50, Math.min(50, cents));
-      needle.style.left = (50 + clamped) + '%';
+      var target = 50 + clamped; needleEMA += (target - needleEMA) * 0.28; needle.style.left = needleEMA.toFixed(1) + '%';
       var inT = Math.abs(cents) <= 5;
       noteEl.classList.toggle('intune', inT);
       needle.style.background = inT ? 'var(--good)' : (Math.abs(cents) < 15 ? 'var(--warn)' : 'var(--bad)');
