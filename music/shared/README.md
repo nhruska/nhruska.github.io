@@ -292,5 +292,5 @@ GitHub Pages" message instead. This is unchanged from the original app.
   passed in from the host page bootstrap (they are shared content, but kept
   near the page so they are easy to tweak per tool). The engine ships sensible
   defaults for `composeCats` and `decades`.
-- Behavior is preserved 1:1 with the original single-file Roadcase app - this
+- Behavior is preserved 1:1 with the original single-file app - this
   was an extraction, not a redesign.
