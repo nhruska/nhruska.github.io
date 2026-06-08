@@ -1,47 +1,75 @@
 # Shared Songbook - the cross-instrument contract
 
-This folder holds the songbook runtime, shared by every instrument tool under
-`music/` (ukulele today, guitar next). The point is anti-proliferation: there
-is ONE songbook (catalog + search + chord-over-lyric rendering + setlist +
-perform mode) AND ONE tuner (mic auto-tuner + reference tones). Each instrument
-adds only a small "chord pack" with its own fingerings, chord audio, and its
-open-string list. No duplication, no build step, no framework.
+This folder holds the music runtime. Everything reusable is shared exactly
+once; an instrument OR an alternate tuning is just **pure data** - a "tuning
+profile." The point is anti-proliferation: there is ONE songbook, ONE tuner,
+ONE diagram renderer, ONE audio engine, and ONE versatile app (`music/play/`)
+that loads any profile. No duplication, no build step, no framework.
+
+**The key idea: "instrument" and "tuning" are the same primitive.** A guitar in
+DADGAD shares nothing with standard guitar except string count - different open
+notes, different chord shapes. So the unit is a *profile*, not an instrument.
 
 ```
 music/
   shared/
     songs.json          <- THE song catalog (single source of truth)
-    songbook.js         <- THE engine (instrument-agnostic). Global: Songbook
+    songbook.js         <- THE engine (catalog/search/transpose/setlist/perform/compose). Global: Songbook
     songbook.css        <- THE styles (theme + all components)
     tuner.js            <- THE mic auto-tuner + reference tones. Global: Tuner
-    chords-ukulele.js   <- ukulele chord pack. Global: ChordPackUkulele
-    chords-guitar.js    <- guitar chord pack.   Global: ChordPackGuitar
+    diagram.js          <- THE generic N-string fretboard renderer. Global: Diagram
+    audio.js            <- THE generic chord audio (strum/tone). Global: ChordAudio
+    profiles/
+      manifest.json     <- { "profiles": ["ukulele-gcea", ...] }  (load order)
+      <id>.js           <- ONE pure-data tuning profile per file (self-registers)
     README.md           <- this file
-  ukulele/
-    index.html          <- ukulele page: loads shared modules + ukulele pack
-  guitar/
-    index.html          <- guitar page:   same shared modules + guitar pack
+    chords-ukulele.js   <- LEGACY (superseded by profiles/ukulele-gcea.js); unused
+    chords-guitar.js    <- LEGACY (superseded by profiles/guitar-standard.js); unused
+  play/
+    index.html          <- THE versatile app. ?p=<id> picks the profile; in-app picker switches.
+  ukulele/ , guitar/
+    index.html          <- thin redirects into play/?p=ukulele-gcea / ?p=guitar-standard
 ```
 
 Everything loads as plain classic `<script>` / `<link>` tags via relative
 paths. It must be served over http(s) (GitHub Pages or a local server) because
-the catalog is fetched with `fetch()`. A `file://` open shows a friendly error.
+the catalog + manifest are fetched with `fetch()`.
 
 ---
 
-## How to build a new instrument tool (the 3-step recipe)
+## The tuning-profile schema (the contract)
 
-1. Copy `chords-ukulele.js` to `chords-<instrument>.js`. Swap the instrument
-   data (chord fingerings + the `TUNER_STRINGS` list you hand to the shared
-   tuner) and keep the SAME exported shape. Expose it as a global, e.g.
-   `window.ChordPackGuitar`. You do NOT reimplement the tuner - `init()` just
-   calls `Tuner.mount({ strings: TUNER_STRINGS })`.
-2. Copy `music/ukulele/index.html` to `music/<instrument>/index.html`. Change
-   the `<script src="../shared/chords-ukulele.js">` line to your pack, and the
-   `chordPack:` value in the bootstrap to your global. Keep `tuner.js` and the
-   markup IDs (`#micBox`, `#tStrings`, `#quickTune`) identical.
-3. Done. The catalog, search, transpose, chord-over-lyric sheets, setlist,
-   perform/auto-scroll, and compose grid all work unchanged.
+```js
+// music/shared/profiles/<id>.js  - pure data, self-registers, NO other file edits.
+(function (g) {
+  g.MusicProfiles = g.MusicProfiles || {};
+  g.MusicProfiles["guitar-dadgad"] = {
+    id: "guitar-dadgad",          // matches the filename + ?p= value + manifest entry
+    label: "Guitar - DADGAD",     // shown in the picker
+    instrument: "guitar",          // groups the picker (optgroup)
+    tuning: "DADGAD",
+    // display order == fret-array order == left->right on the diagram (low string first)
+    strings: [ { n: "D", l: "6th (low)", f: 73.42 }, /* ...note, label, Hz... */ ],
+    // chord NAME -> fret per string; -1 = muted, 0 = open, n = fret. One entry per string.
+    chords: { "C": [-1,3,2,0,1,0], /* ... */ }
+  };
+})(typeof window !== 'undefined' ? window : this);
+```
+
+`strings[i].f` are the open-string frequencies (Hz). The app derives the tuner
+targets, the diagrams (via `Diagram.render`), and the audio (via `ChordAudio`)
+entirely from this object - the profile is the only instrument-specific input.
+
+## How to add an instrument or tuning (the recipe)
+
+1. Create `music/shared/profiles/<id>.js` with the schema above. Author exact
+   open-string Hz + musically-correct chord shapes. (Minimum useful set: the
+   chords used by the catalog - A Am B Bb Bm C C#m D Dm E E7 Em F F# F#m G.)
+2. Add `"<id>"` to `music/shared/profiles/manifest.json`.
+3. Add a card to the `PROJECTS` array in `music/index.html` with `path:"play/?p=<id>"`.
+4. Done. The app renders its diagrams, tuner, and audio with zero new code.
+   (Tuner + chord-over-lyric work for any tuning immediately; only the diagram
+   fingerings are tuning-specific, so a profile can ship strings-only first.)
 
 You do NOT touch `songs.json`, `songbook.js`, or `songbook.css`. If you find
 yourself editing those for an instrument reason, the abstraction has a leak -
