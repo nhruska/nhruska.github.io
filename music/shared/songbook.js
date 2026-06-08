@@ -261,7 +261,7 @@
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.viewToggle button').forEach(function (b) { b.onclick = function () { STATE.view = b.dataset.v; renderPractice(); }; });
-      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayNote(elc.dataset.c); }; });
+      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
@@ -299,7 +299,7 @@
       el.maxGrid.innerHTML = '';
       chords.forEach(function (c) {
         var bd = pack.diagram ? pack.diagram(c, 'big') : (function () { var d = document.createElement('div'); d.className = 'bigC'; d.textContent = c; return d; })();
-        bd.onclick = function () { packPlayNote(c); };
+        bd.onclick = function () { packPlayChord(c); };
         el.maxGrid.appendChild(bd);
       });
       el.maxOv.classList.add('on');
