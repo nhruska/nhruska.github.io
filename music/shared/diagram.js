@@ -21,6 +21,8 @@
     big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 13, markY: 16, markSw: 2, H: 184 }
   };
 
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
   function baseFret(frets) {
     var fretted = frets.filter(function (x) { return x > 0; });
     if (!fretted.length) return 1;
@@ -34,15 +36,20 @@
     var name = opts.name || '';
     var wrap = document.createElement('div');
     wrap.className = o.wrapClass;
-    var nameSpan = '<span class="' + o.nameClass + '">' + name + '</span>';
+    var nameSpan = '<span class="' + o.nameClass + '">' + esc(name) + '</span>';
     if (!frets || !frets.length) { wrap.innerHTML = nameSpan; return wrap; }
 
-    var n = frets.length, cols = n - 1, rows = o.rows;
+    var n = frets.length, cols = n - 1;
     var sx = o.sx, padX = o.padX, padY = o.padY;
     var W = padX * 2 + cols * sx;
     var H = o.H;
-    var sy = (H - padY - o.bottomPad) / rows;
     var base = baseFret(frets);
+    var fretted = frets.filter(function (x) { return x > 0; });
+    var hi = fretted.length ? Math.max.apply(null, fretted) : 0;
+    // expand the window so a wide/stretch shape (e.g. mandolin C7 [5,2,1,3]) fits
+    // instead of drawing dots below the board.
+    var rows = Math.max(o.rows, hi - base + 1);
+    var sy = (H - padY - o.bottomPad) / rows;
 
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)

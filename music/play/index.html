@@ -194,12 +194,16 @@
     });
   }
 
-  function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + msg + '</div>'; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + esc(msg) + '</div>'; }
 
   // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
   fetch('../shared/profiles/manifest.json')
     .then(function (r) { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
-    .then(function (m) { return Promise.all((m.profiles || []).map(function (id) { return loadScript('../shared/profiles/' + id + '.js'); })); })
+    .then(function (m) {
+      // allSettled: one missing/broken profile drops out; the rest still load.
+      return Promise.allSettled((m.profiles || []).map(function (id) { return loadScript('../shared/profiles/' + id + '.js'); }));
+    })
     .then(function () {
       var profiles = window.MusicProfiles || {};
       if (!Object.keys(profiles).length) { fail('No tuning profiles found.'); return; }
