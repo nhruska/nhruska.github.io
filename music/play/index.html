@@ -19,7 +19,7 @@
 <body>
 <div class="app">
   <div class="appbar">
-    <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
+    <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading...</span></div>
     <div class="abRight">
       <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
       <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
@@ -27,7 +27,7 @@
   </div>
   <div class="view" id="view">
     <section class="screen on" id="s-library">
-      <input class="search" id="search" placeholder="Search a song or an artist…">
+      <input class="search" id="search" placeholder="Search a song or an artist...">
       <div class="chips" id="decadeChips"></div>
       <div class="songs" id="songsList"></div>
       <div class="libCount" id="libCount"></div>
@@ -59,12 +59,12 @@
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
         <h2>Tune Up</h2>
-        <div class="sub">Play a string — the needle shows how sharp or flat you are.</div>
+        <div class="sub">Play a string - the needle shows how sharp or flat you are.</div>
         <div class="tCard">
-          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— live needle by mic</span></h3>
+          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">- live needle by mic</span></h3>
           <div class="micBox" id="micBox"></div>
         </div>
-        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones — tap a letter for a steady pitch.</div>
+        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
       </div>
     </section>
@@ -112,7 +112,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', practice: 'practice room', setlist: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', practice: 'practice room', setlist: "tonight's running order" };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -173,7 +173,7 @@
   function start(profile, songs) {
     el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' \u2014 Music';
-    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
+    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' / tune by ear or mic' });
     window.Songbook.mount({
       songs: songs,
       chordPack: buildAdapter(profile),

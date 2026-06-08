@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d0f12">
-<title>Music — Nik Hruska</title>
+<title>Music - Nik Hruska</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
@@ -97,7 +97,7 @@ footer a{color:var(--accent);text-decoration:none;}
   </header>
 
   <div class="toolbar">
-    <input class="search" id="search" placeholder="Search tools, tags, instruments…">
+    <input class="search" id="search" placeholder="Search tools, tags, instruments...">
     <div class="filters" id="filters"></div>
   </div>
 
@@ -116,12 +116,12 @@ footer a{color:var(--accent);text-decoration:none;}
 ============================================================ */
 const SITE={
   title:"Music",
-  eyebrow:"// ukulele · guitar",
-  sub:"Self-contained web tools for playing — tuners, chord composers, songbooks and a fullscreen perform mode. Tap one to open it."
+  eyebrow:"// ukulele / guitar",
+  sub:"Self-contained web tools for playing - tuners, chord composers, songbooks and a fullscreen perform mode. Tap one to open it."
 };
 
 /* ============================================================
-   PROJECTS  —  TO ADD A NEW TOOL:
+   PROJECTS  -  TO ADD A NEW TOOL:
    1) Drop its folder under an instrument (e.g.  /music/guitar/index.html )
    2) Add an entry to the TOP of this array:
         {
@@ -137,7 +137,7 @@ const SITE={
 const PROJECTS=[
   {
     title:"Ukulele",
-    desc:"Standard GCEA — mic auto-tuner, chord composer, a 50-song library, setlists and a fullscreen perform mode.",
+    desc:"Standard GCEA - mic auto-tuner, chord composer, a 50-song library, setlists and a fullscreen perform mode.",
     path:"play/?p=ukulele-gcea",
     cat:"Ukulele",
     tags:["tuner","songbook","compose"],
@@ -146,7 +146,7 @@ const PROJECTS=[
   },
   {
     title:"Guitar",
-    desc:"Six strings, standard EADGBE — plus Drop D and Open G in the in-app tuning picker. The full kit.",
+    desc:"Six strings, standard EADGBE - plus Drop D and Open G in the in-app tuning picker. The full kit.",
     path:"play/?p=guitar-standard",
     cat:"Guitar",
     tags:["tuner","songbook","compose"],
@@ -155,7 +155,7 @@ const PROJECTS=[
   },
   {
     title:"Mandolin",
-    desc:"Standard GDAE (all-fifths) — tuner, composer with mandolin shapes, the shared songbook and perform mode.",
+    desc:"Standard GDAE (all-fifths) - tuner, composer with mandolin shapes, the shared songbook and perform mode.",
     path:"play/?p=mandolin-gdae",
     cat:"Mandolin",
     tags:["tuner","songbook","compose"],
@@ -164,7 +164,7 @@ const PROJECTS=[
   },
   {
     title:"Mandola",
-    desc:"Standard CGDA, a fifth below mandolin — the full kit with mandola chord shapes.",
+    desc:"Standard CGDA, a fifth below mandolin - the full kit with mandola chord shapes.",
     path:"play/?p=mandola-cgda",
     cat:"Mandola",
     tags:["tuner","songbook","compose"],
@@ -183,7 +183,7 @@ let activeCat="All", q="";
 document.getElementById('siteTitle').textContent=SITE.title;
 document.getElementById('eyebrow').textContent=SITE.eyebrow;
 document.getElementById('siteSub').textContent=SITE.sub;
-document.title=SITE.title+" — Nik Hruska";
+document.title=SITE.title+" - Nik Hruska";
 
 function monogram(p){
   if(p.mono) return p.mono;
@@ -241,7 +241,7 @@ function renderGrid(){
       +'<div class="cardFoot"><span>'+(p.cat||'')+'</span><span class="open">'+(live?'open →':'soon')+'</span></div>';
     grid.appendChild(el);
   });
-  document.getElementById('siteMeta').textContent=PROJECTS.length+' tools · '+(PROJECTS.filter(p=>p.status==='live').length)+' live';
+  document.getElementById('siteMeta').textContent=PROJECTS.length+' tools / '+(PROJECTS.filter(p=>p.status==='live').length)+' live';
   document.getElementById('footCount').textContent=list.length+' shown';
 }
 function hexToGlow(c){

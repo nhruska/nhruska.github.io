@@ -215,7 +215,7 @@
         card.className = 'songCard' + (inSet ? ' inSet' : '');
         var badge = s.custom ? '<span class="dot"></span><span>mine</span>' : '';
         card.innerHTML = '<button class="addBtn">' + (inSet ? '✓' : '+') + '</button>'
-          + '<div class="row1"><div><div class="title">' + escHTML(s.t) + '</div><div class="artist">' + escHTML(s.a) + '</div></div><div class="yr">’' + String(s.y).slice(-2) + '</div></div>'
+          + '<div class="row1"><div><div class="title">' + escHTML(s.t) + '</div><div class="artist">' + escHTML(s.a) + '</div></div><div class="yr">&#39;' + String(s.y).slice(-2) + '</div></div>'
           + '<div class="meta"><span class="chds">' + s.seq.join(' · ') + '</span><span class="dot"></span><span>' + s.seq.length + ' chords</span>' + badge + '</div>';
         card.querySelector('.addBtn').onclick = function (e) { e.stopPropagation(); toggleSet(s.id); };
         card.onclick = function () { openPractice(s.id); };
@@ -493,7 +493,7 @@
       name = name.trim() || 'My progression';
       var cs = { id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine', seq: progression.slice(), custom: true };
       customSongs.push(cs); saveCustom(); rebuildAll(); renderDecadeChips(); renderSongs();
-      alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
+      alert('Saved to your Songs (filter "Mine"). You can add it to a setlist and perform it.');
     }
     if (el.cClear) el.cClear.onclick = function () { progression = []; renderProg(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
