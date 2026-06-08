@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0d0f12">
-<title>Roadcase</title>
+<title>Music</title>
 <!-- Shared songbook styles (theme + all components). -->
 <link rel="stylesheet" href="../shared/songbook.css">
 <style>
@@ -18,7 +18,7 @@
 <body>
 <div class="app">
   <div class="appbar">
-    <div class="brand"><span class="nm">Roadcase</span><span class="ctx" id="ctxLine">loading…</span></div>
+    <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
     <div class="abRight">
       <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
       <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
@@ -171,7 +171,7 @@
 
   function start(profile, songs) {
     el('ctxLine').textContent = profile.label;
-    document.title = 'Roadcase - ' + profile.label;
+    document.title = profile.label + ' \u2014 Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
     window.Songbook.mount({
       songs: songs,

@@ -1,7 +1,7 @@
 /* =====================================================================
  * songbook.js  -  instrument-agnostic songbook engine
  * ---------------------------------------------------------------------
- * Lifted out of the Roadcase ukulele app so any instrument tool (guitar,
+ * Lifted out of the original ukulele app so any instrument tool (guitar,
  * mandolin, ...) can reuse the exact same songbook with zero duplication.
  *
  * The engine knows NOTHING about an instrument. It renders chord NAMES
