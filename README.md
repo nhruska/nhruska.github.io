@@ -19,8 +19,6 @@ The root `index.html` is **generated** (git-scraping style, after Simon Willison
     ├── index.html          # music hub (instrument-grouped: Ukulele · Guitar)
     └── ukulele/
         ├── index.html      # Ukulele performance kit (tuner + composer + songbook + perform)
-        └── composer/
-            └── index.html  # Uke Composer — lighter standalone chord builder + tuner
 ```
 
 URLs:
@@ -30,7 +28,6 @@ URLs:
 | Portfolio | https://nhruska.github.io/ |
 | Music hub | https://nhruska.github.io/music/ |
 | Music app | https://nhruska.github.io/music/ukulele/ |
-| Uke Composer | https://nhruska.github.io/music/ukulele/composer/ |
 
 ## Add a build
 
