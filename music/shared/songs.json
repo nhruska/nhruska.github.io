@@ -1334,7 +1334,8 @@
         "",
         "First one say she [Am]got my child, but it [B7]don't look like [Em]me"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Ripple",
@@ -1361,7 +1362,8 @@
         "Chorus",
         "[C]Ripple in still [G]water"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Sugar Magnolia",
@@ -1387,7 +1389,8 @@
         "Chorus",
         "[D]Sunshine [A]daydream [E]"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Truckin'",
@@ -1412,7 +1415,8 @@
         "Chorus",
         "What a [A]long, strange [B7]trip it's [E]been"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Bouncing Around the Room",
@@ -1434,7 +1438,8 @@
         "Chorus",
         "[Bm]Bouncing around the [A]room [G]"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Sample in a Jar",
@@ -1457,7 +1462,8 @@
         "Chorus",
         "Like a [Em]sample in a [C]jar, you can [G]look but you can't [D]touch"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Waste",
@@ -1479,7 +1485,8 @@
         "Verse",
         "[D]Don't want to be your [A]friend, I want to [Bm]kiss your [G]neck"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Not Fade Away",
@@ -1504,7 +1511,8 @@
         "",
         "Love is love and [D]not fade a[A]way [E]"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "The Weight",
@@ -1526,7 +1534,8 @@
         "Chorus",
         "Take a load off [E]Annie, take a load for [D]free [A]"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "All Along the Watchtower",
@@ -1547,7 +1556,8 @@
         "",
         "[Am]There's too much con[G]fusion, [F]I can't get no re[G]lief"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Man in the Mirror",
@@ -1620,7 +1630,8 @@
         "Coda",
         "[F]Na na na [Eb]na-na-na [Bb]na, na-na-na [F]na, hey Jude"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Twist and Shout",
@@ -1687,7 +1698,8 @@
         "Chorus",
         "[G]Don't go 'round tonight, [D]it's bound to take your life"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "The Joker",
@@ -1708,7 +1720,8 @@
         "Chorus",
         "'Cause I'm a [G]joker, I'm a [C]smoker, I'm a midnight [D]toker"
       ]
-    ]
+    ],
+    "jam": true
   },
   {
     "t": "Gloria",
@@ -1729,6 +1742,7 @@
         "Chorus",
         "[E]G-L-[D]O-R-I-[A]A, Gloria"
       ]
-    ]
+    ],
+    "jam": true
   }
 ]
