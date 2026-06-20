@@ -68,7 +68,9 @@
       if (fr > 0) {
         var rel = fr - (base - 1);
         var y = padY + (rel - 0.5) * sy;
-        svg += '<circle cx="' + x + '" cy="' + y + '" r="' + o.dotR + '" fill="#5eead4" stroke="#2a4f49" stroke-width="1.3"/>';
+        // fill/stroke via inline style so the dot follows the live --accent theme
+        // (SVG presentation attributes can't read CSS vars; the hex is a fallback).
+        svg += '<circle cx="' + x + '" cy="' + y + '" r="' + o.dotR + '" fill="#5eead4" stroke="#2a4f49" stroke-width="1.3" style="fill:var(--accent);stroke:var(--accent-dim)"/>';
       } else if (fr === 0) {
         svg += '<circle cx="' + x + '" cy="' + (padY - o.markY) + '" r="' + o.markR + '" fill="none" stroke="#e8ebf0" stroke-width="' + o.markSw + '"/>';
       } else { // muted
