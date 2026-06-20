@@ -1190,5 +1190,122 @@
         "Only [C]know you've been [Em]high when you're [F]feeling low"
       ]
     ]
+  },
+  {
+    "t": "A Horse with No Name",
+    "a": "America",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "Em",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Em]On the first part of the [D]journey"
+      ],
+      [
+        "",
+        "[Em]I was looking at all the [D]life"
+      ],
+      [
+        "Chorus",
+        "I've been through the [Em]desert on a [D]horse with no name"
+      ]
+    ]
+  },
+  {
+    "t": "Sweet Home Alabama",
+    "a": "Lynyrd Skynyrd",
+    "y": 1974,
+    "d": "70s",
+    "seq": [
+      "D",
+      "C",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[D]Sweet home Ala[C]bama [G]"
+      ],
+      [
+        "",
+        "[D]Where the skies are so [C]blue [G]"
+      ]
+    ]
+  },
+  {
+    "t": "La Bamba",
+    "a": "Los Lobos",
+    "y": 1987,
+    "d": "80s",
+    "seq": [
+      "C",
+      "F",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[C]Para bailar la [F]Bam[G]ba [C]"
+      ],
+      [
+        "",
+        "[C]Se necesita una [F]poca de [G]gracia [C]"
+      ]
+    ]
+  },
+  {
+    "t": "What's Up?",
+    "a": "4 Non Blondes",
+    "y": 1992,
+    "d": "90s",
+    "seq": [
+      "G",
+      "Am",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Twenty-five years and my [Am]life is still"
+      ],
+      [
+        "",
+        "Tryin' to get [C]up that great big hill of [G]hope"
+      ],
+      [
+        "Chorus",
+        "And I say [G]hey [Am]ey ey ey[C]ey, [G]hey"
+      ]
+    ]
+  },
+  {
+    "t": "Wagon Wheel",
+    "a": "Old Crow Medicine Show",
+    "y": 2004,
+    "d": "00s",
+    "seq": [
+      "G",
+      "D",
+      "Em",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "So [G]rock me mama like a [D]wagon wheel"
+      ],
+      [
+        "",
+        "[Em]Rock me mama any [C]way you feel"
+      ],
+      [
+        "",
+        "[G]Hey mama [D]rock me"
+      ]
+    ]
   }
 ]
