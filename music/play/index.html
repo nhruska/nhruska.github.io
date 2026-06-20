@@ -6,6 +6,12 @@
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<!-- Installable / offline (PWA): manifest + service worker (registered at end of body). -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Music">
 <!-- Shared songbook styles (theme + all components). -->
 <link rel="stylesheet" href="../shared/songbook.css">
 <style>
@@ -284,6 +290,15 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) close(); });
   });
 })();
+</script>
+<!-- Register the service worker (offline + installable). Scoped to /music/ so it
+     covers ../shared/ too; failures are non-fatal (the app still works online). -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(function () { });
+  });
+}
 </script>
 </body>
 </html>
