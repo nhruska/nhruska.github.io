@@ -208,14 +208,19 @@
        Shown only on the unfiltered library, so the moment you search or pick a
        decade it gets out of the way and the full list takes over. */
     function quickPicks() {
-      var simple = ALLSONGS.filter(function (s) { return !s.custom; })
-        .slice().sort(function (a, b) { return a.seq.length - b.seq.length || a.t.localeCompare(b.t); });
-      if (!simple.length) return [];
-      // rotate by day so revisits feel fresh without being random/disorienting
-      var day = Math.floor(Date.now() / 864e5) % simple.length;
+      var pool = ALLSONGS.filter(function (s) { return !s.custom; });
+      if (!pool.length) return [];
+      // Curated jam songs ("jam": true in the catalog) lead the picks; the rest
+      // are ordered easiest-first so they only backfill when flags run out.
+      var jam = pool.filter(function (s) { return s.jam; }).sort(function (a, b) { return a.t.localeCompare(b.t); });
+      var rest = pool.filter(function (s) { return !s.jam; })
+        .sort(function (a, b) { return a.seq.length - b.seq.length || a.t.localeCompare(b.t); });
+      // rotate the jam set by day so revisits feel fresh without being random
+      var day = jam.length ? Math.floor(Date.now() / 864e5) % jam.length : 0;
+      var ordered = jam.slice(day).concat(jam.slice(0, day)).concat(rest);
       var out = [], seen = {};
-      for (var i = 0; i < simple.length && out.length < 4; i++) {
-        var s = simple[(day + i) % simple.length];
+      for (var i = 0; i < ordered.length && out.length < 4; i++) {
+        var s = ordered[i];
         if (!seen[s.id]) { seen[s.id] = 1; out.push(s); }
       }
       return out;
