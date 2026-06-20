@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Dev Log — Music</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+:root{
+  --bg:#0d0f12;--surface:#181b21;--surface-2:#1f232b;--line:#262b34;--line-strong:#323a45;
+  --txt:#e8ebf0;--txt-soft:#b6bcc6;--txt-dim:#8a92a0;
+  --accent:#5eead4;--accent-dim:#244b45;--accent-deep:#16302c;
+  --open:#a78bfa;--ship:#5eead4;--next:#fbbf24;--idea:#8a92a0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);min-height:100dvh;
+  background-image:radial-gradient(900px 320px at 15% -6%,rgba(94,234,212,.07),transparent 70%);
+  -webkit-font-smoothing:antialiased;}
+.wrap{max-width:760px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px 70px;}
+.back{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:.74rem;
+  letter-spacing:.04em;color:var(--txt-dim);text-decoration:none;margin-bottom:18px;}
+.back:hover{color:var(--accent);}
+.eyebrow{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:9px;}
+h1{font-size:clamp(2rem,8vw,2.9rem);font-weight:800;letter-spacing:-.03em;line-height:.96;}
+header p{color:var(--txt-soft);font-size:.95rem;margin-top:10px;max-width:54ch;line-height:1.5;}
+.statusBar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
+.refresh{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;
+  font-weight:600;font-size:.76rem;padding:7px 13px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s;}
+.refresh:active{transform:scale(.94);background:var(--accent);color:#06201c;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0 8px;}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 12px;text-align:center;}
+.stat .n{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent);line-height:1;}
+.stat .l{font-size:.66rem;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-top:7px;font-weight:600;}
+section{margin-top:30px;}
+h2{font-size:1.06rem;font-weight:700;letter-spacing:-.01em;margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+h2 .ct{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);font-weight:400;}
+.row{display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:13px 14px;margin-bottom:9px;text-decoration:none;color:inherit;
+  transition:transform .1s,border-color .15s,background .15s;}
+a.row:hover{transform:translateY(-2px);border-color:var(--line-strong);background:var(--surface-2);}
+.num{font-family:'Space Mono',monospace;font-weight:700;font-size:.84rem;color:var(--accent);flex:0 0 auto;padding-top:1px;min-width:40px;}
+.rbody{flex:1;min-width:0;}
+.rtitle{font-weight:600;font-size:.95rem;line-height:1.25;}
+.rmeta{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--txt-dim);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.badge{font-family:'Space Mono',monospace;font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.badge.open{color:var(--open);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08);}
+.badge.draft{color:var(--txt-dim);border-color:var(--line-strong);background:transparent;}
+.badge.ship{color:var(--ship);border-color:var(--accent-dim);background:var(--accent-deep);}
+.badge.next{color:var(--next);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08);}
+.badge.idea{color:var(--idea);border-color:var(--line-strong);background:transparent;}
+.rmArea{font-weight:700;color:var(--txt-soft);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;margin:18px 0 9px;}
+.rmArea:first-child{margin-top:0;}
+.empty{color:var(--txt-dim);font-size:.88rem;padding:10px 2px;}
+.note{color:var(--txt-dim);font-size:.74rem;line-height:1.5;margin-top:6px;}
+footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);font-family:'Space Mono',monospace;
+  font-size:.7rem;color:var(--txt-dim);}
+footer a{color:var(--accent);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">&larr; Music</a>
+  <header>
+    <div class="eyebrow">// build tracker · live from GitHub</div>
+    <h1>Dev Log</h1>
+    <p>Everything shipped, in-flight, and planned for the Music app — pull requests pulled live from the repo, plus the curated roadmap.</p>
+    <div class="statusBar">
+      <span id="status">loading…</span>
+      <button class="refresh" id="refresh">↻ Refresh</button>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <section>
+    <h2>🚧 In flight <span class="ct" id="openCt"></span></h2>
+    <div id="open"><div class="empty">Loading open PRs…</div></div>
+  </section>
+
+  <section>
+    <h2>✅ Shipped <span class="ct" id="mergedCt"></span></h2>
+    <div id="merged"><div class="empty">Loading merged PRs…</div></div>
+  </section>
+
+  <section>
+    <h2>🗺 Roadmap</h2>
+    <div id="roadmap"></div>
+    <p class="note">Roadmap is curated (planned ideas don't exist as PRs yet). Shipped/in-flight above are live from GitHub.</p>
+  </section>
+
+  <footer>
+    <span>Source: <a href="https://github.com/nhruska/nhruska.github.io/pulls" target="_blank" rel="noopener">nhruska/nhruska.github.io</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var REPO = 'nhruska/nhruska.github.io';
+  var API = 'https://api.github.com/repos/' + REPO + '/pulls?state=all&per_page=100&sort=updated&direction=desc';
+  var CACHE_KEY = 'music.devlog.v1';
+  var FRESH_MS = 5 * 60 * 1000; // reuse cached PRs for 5 min to respect the rate limit
+
+  // Curated roadmap — planned ideas that aren't PRs yet. s: shipped | next | idea
+  var ROADMAP = [
+    { area: 'Perform & play-now', items: [
+      { t: 'Jam-now, in-stage view toggle, size memory, auto-fit', s: 'shipped' },
+      { t: 'Section jump (verse / chorus)', s: 'idea' }
+    ]},
+    { area: 'Tuner', items: [
+      { t: 'Drop D / Open G tuning presets', s: 'shipped' },
+      { t: 'Per-string needle lock', s: 'next' },
+      { t: 'Auto-advance + “tuned” checklist', s: 'idea' },
+      { t: 'A4 calibration (440 / 432)', s: 'idea' }
+    ]},
+    { area: 'Songbook & content', items: [
+      { t: '“What can we play?” chord-filter search', s: 'next' },
+      { t: 'Capo + key helper', s: 'next' },
+      { t: 'Strumming pattern per song', s: 'idea' },
+      { t: 'Song-structure navigation', s: 'idea' },
+      { t: 'Personal notes per song', s: 'idea' }
+    ]},
+    { area: 'Platform & polish', items: [
+      { t: 'Accent-colour chooser', s: 'shipped' },
+      { t: 'Installable offline PWA', s: 'shipped' },
+      { t: 'Share song / setlist by link or QR', s: 'idea' },
+      { t: 'Haptic tap feedback', s: 'idea' },
+      { t: 'Chord trainer (mic-confirmed)', s: 'idea' }
+    ]}
+  ];
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function $(id) { return document.getElementById(id); }
+  function ago(iso) {
+    if (!iso) return '';
+    var d = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (d < 90) return 'just now';
+    if (d < 3600) return Math.round(d / 60) + 'm ago';
+    if (d < 86400) return Math.round(d / 3600) + 'h ago';
+    return Math.round(d / 86400) + 'd ago';
+  }
+
+  function renderRoadmap() {
+    var SL = { shipped: 'ship', next: 'next', idea: 'idea' };
+    var ST = { shipped: 'Shipped', next: 'Next up', idea: 'Idea' };
+    var html = '';
+    ROADMAP.forEach(function (g) {
+      html += '<div class="rmArea">' + esc(g.area) + '</div>';
+      g.items.forEach(function (it) {
+        html += '<div class="row"><div class="rbody"><div class="rtitle">' + esc(it.t) + '</div></div>'
+          + '<span class="badge ' + SL[it.s] + '">' + ST[it.s] + '</span></div>';
+      });
+    });
+    $('roadmap').innerHTML = html;
+  }
+
+  function prRow(pr, kind) {
+    var badges = '';
+    if (kind === 'open') badges += '<span class="badge ' + (pr.draft ? 'draft' : 'open') + '">' + (pr.draft ? 'draft' : 'open') + '</span>';
+    else badges += '<span class="badge ship">merged</span>';
+    var when = kind === 'open' ? ('updated ' + ago(pr.updated_at)) : ('merged ' + ago(pr.merged_at));
+    return '<a class="row" href="' + esc(pr.html_url) + '" target="_blank" rel="noopener">'
+      + '<div class="num">#' + pr.number + '</div>'
+      + '<div class="rbody"><div class="rtitle">' + esc(pr.title) + '</div>'
+      + '<div class="rmeta"><span>' + when + '</span></div></div>'
+      + badges + '</a>';
+  }
+
+  function render(prs, stamp, stale) {
+    var open = prs.filter(function (p) { return p.state === 'open'; })
+      .sort(function (a, b) { return b.number - a.number; });
+    var merged = prs.filter(function (p) { return p.merged_at; })
+      .sort(function (a, b) { return new Date(b.merged_at) - new Date(a.merged_at); });
+
+    $('stats').innerHTML =
+      '<div class="stat"><div class="n">' + merged.length + '</div><div class="l">Shipped</div></div>'
+      + '<div class="stat"><div class="n">' + open.length + '</div><div class="l">In flight</div></div>'
+      + '<div class="stat"><div class="n">' + prs.length + '</div><div class="l">Total PRs</div></div>';
+
+    $('openCt').textContent = open.length ? '(' + open.length + ')' : '';
+    $('mergedCt').textContent = merged.length ? '(' + merged.length + ')' : '';
+    $('open').innerHTML = open.length ? open.map(function (p) { return prRow(p, 'open'); }).join('')
+      : '<div class="empty">Nothing in flight — all merged. 🎸</div>';
+    $('merged').innerHTML = merged.length ? merged.map(function (p) { return prRow(p, 'merged'); }).join('')
+      : '<div class="empty">No merged PRs yet.</div>';
+
+    $('status').textContent = (stale ? 'offline — last synced ' : 'synced ') + ago(stamp);
+  }
+
+  function loadCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { return null; } }
+  function saveCache(prs) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), prs: prs })); } catch (e) { } }
+
+  function fetchPRs(force) {
+    var cached = loadCache();
+    if (!force && cached && (Date.now() - cached.t) < FRESH_MS) { render(cached.prs, cached.t, false); return; }
+    $('status').textContent = 'syncing…';
+    fetch(API, { headers: { 'Accept': 'application/vnd.github+json' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status === 403 ? 'rate-limited' : ('HTTP ' + r.status)); return r.json(); })
+      .then(function (data) {
+        var prs = data.map(function (p) {
+          return { number: p.number, title: p.title, state: p.state, draft: p.draft,
+            merged_at: p.merged_at, updated_at: p.updated_at, html_url: p.html_url };
+        });
+        saveCache(prs);
+        render(prs, Date.now(), false);
+      })
+      .catch(function (err) {
+        if (cached) { render(cached.prs, cached.t, true); $('status').textContent = 'couldn’t refresh (' + err.message + ') — showing last sync ' + ago(cached.t); }
+        else { $('open').innerHTML = $('merged').innerHTML = ''; $('status').textContent = 'couldn’t load (' + err.message + '). Try Refresh, or view on GitHub.'; }
+      });
+  }
+
+  renderRoadmap();
+  $('refresh').onclick = function () { fetchPRs(true); };
+  fetchPRs(false);
+})();
+</script>
+</body>
+</html>
