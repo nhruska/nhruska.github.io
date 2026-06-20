@@ -73,6 +73,10 @@
       <div class="tunerWrap">
         <h2>Tune Up</h2>
         <div class="sub">Play a string — the needle shows how sharp or flat you are.</div>
+        <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
+          <div class="sub" style="margin:14px 0 8px">Tuning</div>
+          <div class="chips" id="tuneTunings"></div>
+        </div>
         <div class="tCard">
           <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— live needle by mic</span></h3>
           <div class="micBox" id="micBox"></div>
@@ -183,6 +187,27 @@
     sel.onchange = function () { location.search = '?p=' + encodeURIComponent(sel.value); };
   }
 
+  // Tune tab: one-tap tuning presets for the active instrument (e.g. guitar
+  // Standard / Drop D / Open G). Switching a preset switches the whole profile,
+  // so the chord shapes retune to match the tuning - not just the needle.
+  function renderTuningChips(profiles, activeKey) {
+    var row = el('tuneTuneRow'), box = el('tuneTunings'); if (!row || !box) return;
+    var inst = profiles[activeKey].instrument;
+    var sibs = Object.keys(profiles).map(function (k) { return profiles[k]; })
+      .filter(function (p) { return p.instrument === inst; });
+    if (sibs.length < 2) { row.style.display = 'none'; return; }
+    row.style.display = 'block';
+    box.innerHTML = '';
+    sibs.forEach(function (p) {
+      var b = document.createElement('button');
+      b.className = 'chip' + (p.id === activeKey ? ' on' : '');
+      var name = p.label.split(' - ').pop();
+      b.innerHTML = name + ' <span style="opacity:.55;font-weight:400">' + p.tuning + '</span>';
+      b.onclick = function () { if (p.id !== activeKey) location.search = '?p=' + encodeURIComponent(p.id); };
+      box.appendChild(b);
+    });
+  }
+
   function start(profile, songs) {
     el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' \u2014 Music';
@@ -223,6 +248,7 @@
       if (!Object.keys(profiles).length) { fail('No tuning profiles found.'); return; }
       var key = activeId(profiles);
       buildPicker(profiles, key);
+      renderTuningChips(profiles, key);
       var profile = profiles[key];
       return fetch('../shared/songs.json')
         .then(function (r) { if (!r.ok) throw new Error('songs.json ' + r.status); return r.json(); })
