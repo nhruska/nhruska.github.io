@@ -10,10 +10,20 @@
 <link rel="stylesheet" href="../shared/songbook.css">
 <style>
   /* in-app instrument/tuning picker (appbar) */
-  .abRight{display:flex;align-items:center;gap:8px;}
+  .abRight{display:flex;align-items:center;gap:8px;position:relative;}
   .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
-    font-family:inherit;font-size:.8rem;font-weight:600;padding:9px 10px;max-width:46vw;cursor:pointer;}
+    font-family:inherit;font-size:.8rem;font-weight:600;padding:9px 10px;max-width:42vw;cursor:pointer;}
   .picker:focus{outline:none;border-color:var(--accent);}
+  /* accent-colour chooser: #themeBtn shows the current accent; tap for swatches */
+  #themeBtn{font-size:1.3rem;line-height:1;}
+  .themePop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:flex;gap:9px;flex-wrap:wrap;
+    width:202px;padding:12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:13px;
+    box-shadow:0 14px 34px rgba(0,0,0,.5);animation:fadeUp .18s ease;}
+  .themePop[hidden]{display:none;}
+  .sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;padding:0;
+    background:var(--sc);transition:transform .08s;}
+  .sw:active{transform:scale(.88);}
+  .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
 </style>
 </head>
 <body>
@@ -23,6 +33,8 @@
     <div class="abRight">
       <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
       <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
+      <button class="ab-btn" id="themeBtn" title="Accent colour" aria-label="Choose accent colour" aria-haspopup="true" aria-expanded="false">●</button>
+      <div class="themePop" id="themePop" role="menu" aria-label="Accent colour" hidden></div>
     </div>
   </div>
   <div class="view" id="view">
@@ -217,6 +229,60 @@
         .then(function (songs) { start(profile, songs); });
     })
     .catch(function (err) { fail('Could not load (' + err.message + '). This page must be served over http(s) - open it via GitHub Pages or a local server.'); });
+})();
+</script>
+<!-- Accent-colour chooser. Re-skins the --accent family live (the tuner's
+     red/amber/green status colours are left alone) and remembers the choice
+     across instruments. Spectrum runs teal -> ... -> a warm amber/yellow. -->
+<script>
+(function () {
+  'use strict';
+  // a = accent, d = dim (borders), p = deep (tinted backgrounds)
+  var PALETTE = [
+    { n: 'Teal',   a: '#5eead4', d: '#244b45', p: '#16302c' },
+    { n: 'Green',  a: '#6ee7a8', d: '#235a3e', p: '#143226' },
+    { n: 'Sky',    a: '#56cdf4', d: '#1f4a5c', p: '#122d39' },
+    { n: 'Violet', a: '#a78bfa', d: '#3a2f63', p: '#221b3d' },
+    { n: 'Pink',   a: '#f472b6', d: '#5c2a45', p: '#371829' },
+    { n: 'Coral',  a: '#fb923c', d: '#5c3115', p: '#38200d' },
+    { n: 'Amber',  a: '#fbbf24', d: '#5c4715', p: '#38290b' }
+  ];
+  var KEY = 'music.accent.v1';
+  function apply(t) {
+    var r = document.documentElement.style;
+    r.setProperty('--accent', t.a);
+    r.setProperty('--accent-dim', t.d);
+    r.setProperty('--accent-deep', t.p);
+  }
+  function current() {
+    try { var v = localStorage.getItem(KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
+    return PALETTE[0];
+  }
+  // apply persisted accent immediately (documentElement exists already) to avoid a flash
+  apply(current());
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('themeBtn'), pop = document.getElementById('themePop');
+    if (!btn || !pop) return;
+    function mark(active) {
+      pop.querySelectorAll('.sw').forEach(function (s) { s.classList.toggle('on', s.dataset.a === active.a); });
+    }
+    PALETTE.forEach(function (t) {
+      var s = document.createElement('button');
+      s.className = 'sw'; s.type = 'button'; s.dataset.a = t.a;
+      s.style.setProperty('--sc', t.a);
+      s.title = t.n; s.setAttribute('role', 'menuitemradio'); s.setAttribute('aria-label', t.n);
+      s.onclick = function () { apply(t); try { localStorage.setItem(KEY, t.a); } catch (e) {} mark(t); close(); };
+      pop.appendChild(s);
+    });
+    mark(current());
+    function open() { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+    function close() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+    btn.onclick = function (e) { e.stopPropagation(); pop.hidden ? open() : close(); };
+    pop.addEventListener('click', function (e) { e.stopPropagation(); });
+    document.addEventListener('click', function () { if (!pop.hidden) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) close(); });
+  });
 })();
 </script>
 </body>
