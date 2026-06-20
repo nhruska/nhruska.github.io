@@ -101,7 +101,7 @@
    *   suggestions:  Object -- chord-progression suggestion map (chord -> [next...]).
    *   el: {  -- DOM element references (any subset; missing ones disable that feature)
    *     // library
-   *     songsList, decadeChips, search, libCount,
+   *     songsList, decadeChips, search, libCount, libHero,
    *     // practice
    *     practiceEmpty, practiceBody,
    *     // setlist
@@ -170,9 +170,13 @@
     var STORE_KEY = prefix + ".setlist.v1";
     function loadSet() { try { var r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
     function saveSet() { try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE.setlist)); } catch (e) { } }
+    // last-opened song, so the app can greet you already holding a song to play.
+    var LAST_KEY = prefix + ".last.v1";
+    function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
+    function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
     var STATE = {
       search: "", decade: "All", current: null, transpose: 0, view: "lyrics",
-      setlist: [], performIdx: 0, performDim: false, performTpose: 0,
+      setlist: [], performList: [], performIdx: 0, performDim: false, performTpose: 0,
       scrolling: false, scrollSpeed: 28, scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
@@ -200,7 +204,56 @@
       }
       return true;
     }
+    /* "Play now" hero: a Continue card + a couple of one-tap jam-starters.
+       Shown only on the unfiltered library, so the moment you search or pick a
+       decade it gets out of the way and the full list takes over. */
+    function quickPicks() {
+      var simple = ALLSONGS.filter(function (s) { return !s.custom; })
+        .slice().sort(function (a, b) { return a.seq.length - b.seq.length || a.t.localeCompare(b.t); });
+      if (!simple.length) return [];
+      // rotate by day so revisits feel fresh without being random/disorienting
+      var day = Math.floor(Date.now() / 864e5) % simple.length;
+      var out = [], seen = {};
+      for (var i = 0; i < simple.length && out.length < 4; i++) {
+        var s = simple[(day + i) % simple.length];
+        if (!seen[s.id]) { seen[s.id] = 1; out.push(s); }
+      }
+      return out;
+    }
+    function renderHero() {
+      if (!el.libHero) return;
+      if (STATE.search || STATE.decade !== 'All') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
+      el.libHero.style.display = 'block';
+      var html = '';
+      var last = loadLast() ? songById(loadLast()) : null;
+      if (last) {
+        html += '<button class="heroCont" data-id="' + last.id + '">'
+          + '<div class="hcKick">▸ Continue</div>'
+          + '<div class="hcTitle">' + escHTML(last.t) + '</div>'
+          + '<div class="hcSub">' + escHTML(last.a) + '  ·  ' + last.seq.join(' · ') + '</div>'
+          + '</button>';
+      }
+      var picks = quickPicks().filter(function (s) { return !last || s.id !== last.id; }).slice(0, last ? 2 : 4);
+      if (picks.length) {
+        html += '<div class="heroLbl">' + (last ? 'Or start something' : 'Tap a song — play right now') + '</div><div class="heroRow">';
+        picks.forEach(function (s) {
+          html += '<button class="heroCard" data-id="' + s.id + '">'
+            + '<div class="hcKick">▶ ' + s.seq.length + ' chords</div>'
+            + '<div class="hcTitle">' + escHTML(s.t) + '</div>'
+            + '<div class="hcArtist">' + escHTML(s.a) + '</div>'
+            + '<div class="hcChords">' + s.seq.join(' · ') + '</div>'
+            + '</button>';
+        });
+        html += '</div>';
+      }
+      el.libHero.innerHTML = html;
+      el.libHero.querySelectorAll('[data-id]').forEach(function (b) {
+        b.onclick = function () { openPractice(b.dataset.id); };
+      });
+    }
+
     function renderSongs() {
+      renderHero();
       if (!el.songsList) return;
       var filtered = ALLSONGS.filter(function (s) { return songMatches(s); });
       if (filtered.length === 0) {
@@ -228,6 +281,7 @@
     /* ===================== PRACTICE ===================== */
     function openPractice(id) {
       STATE.current = songById(id);
+      if (STATE.current) saveLast(id);
       STATE.transpose = 0;
       STATE.view = STATE.current && STATE.current.custom ? "chords" : "lyrics";
       switchTab('practice');
@@ -254,7 +308,11 @@
         + '<div class="viewToggle"><button class="' + (STATE.view === 'lyrics' ? 'on' : '') + '" data-v="lyrics">Lyrics + Chords</button><button class="' + (STATE.view === 'chords' ? 'on' : '') + '" data-v="chords">Chord chart</button></div>'
         + '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>'
         + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : STATE.view) + '</div>'
-        + '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Library</button></div>'
+        + '<div class="actions">'
+        + '<button class="btn red" id="playNow" style="flex-basis:100%">▶ Play fullscreen</button>'
+        + '<button class="btn" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button>'
+        + '<button class="btn ghost" id="backLib">← Library</button>'
+        + '</div>'
         + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
         + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>'
         + '</div>';
@@ -262,6 +320,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.viewToggle button').forEach(function (b) { b.onclick = function () { STATE.view = b.dataset.v; renderPractice(); }; });
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
+      el.practiceBody.querySelector('#playNow').onclick = function () { startPerform([s.id]); };
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
@@ -346,25 +405,29 @@
     var performEl = el.perform, pSheet = el.pSheet;
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
-    if (el.performBtn) el.performBtn.onclick = function () {
-      if (STATE.setlist.length === 0) return;
+    // Launch fullscreen perform mode for any list of song ids (the setlist, or a
+    // single song straight from Practice / the "Play now" hero).
+    function startPerform(ids) {
+      if (!ids || !ids.length) return;
+      STATE.performList = ids.slice();
       STATE.performIdx = 0; STATE.performDim = false; STATE.performTpose = 0;
       if (performEl) performEl.classList.remove('dim');
       stopScroll(); showPerform();
       if (performEl) performEl.classList.add('on');
       reqWake();
-    };
+    }
+    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
     if (el.pClose) el.pClose.onclick = function () { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); };
     if (el.pPrev) el.pPrev.onclick = function () { if (STATE.performIdx > 0) { STATE.performIdx--; STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
-      if (STATE.performIdx < STATE.setlist.length - 1) { STATE.performIdx++; STATE.performTpose = 0; showPerform(); }
+      if (STATE.performIdx < STATE.performList.length - 1) { STATE.performIdx++; STATE.performTpose = 0; showPerform(); }
       else { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
     function perfShift(dir) {
-      var s = songById(STATE.setlist[STATE.performIdx]);
+      var s = songById(STATE.performList[STATE.performIdx]);
       var cur = STATE.performTpose;
       for (var n = 1; n <= 6; n++) {
         var cand = cur + dir * n;
@@ -373,15 +436,15 @@
       }
     }
     function showPerform() {
-      var s = songById(STATE.setlist[STATE.performIdx]);
+      var s = songById(STATE.performList[STATE.performIdx]);
       if (!s) return;
-      if (el.pPos) el.pPos.textContent = (STATE.performIdx + 1) + ' / ' + STATE.setlist.length;
+      if (el.pPos) el.pPos.textContent = (STATE.performIdx + 1) + ' / ' + STATE.performList.length;
       if (el.pTitle) el.pTitle.textContent = s.t;
       if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
       if (pSheet) { pSheet.innerHTML = renderSheet(s, STATE.performTpose, s.custom ? 'chords' : 'lyrics'); pSheet.scrollTop = 0; }
-      if (el.pNext) el.pNext.textContent = (STATE.performIdx === STATE.setlist.length - 1) ? '✓' : '→';
+      if (el.pNext) el.pNext.textContent = (STATE.performIdx === STATE.performList.length - 1) ? '✓' : '→';
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; };
@@ -505,6 +568,7 @@
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
       if (name === 'setlist') renderSetlist();
       if (name === 'practice') renderPractice();
+      if (name === 'library') renderHero();
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
       var viewEl = document.getElementById('view');
