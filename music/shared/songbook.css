@@ -70,6 +70,29 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songCard.inSet .addBtn{background:var(--accent);color:#06201c;border-color:var(--accent);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
+
+/* ---- "Play now" hero: open the app already holding a song ---- */
+.libHero{margin-bottom:16px;}
+.libHero .heroLbl{font-size:.64rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.16em;margin:2px 2px 9px;}
+.heroCont{display:block;width:100%;text-align:left;position:relative;cursor:pointer;color:var(--txt);
+  background:linear-gradient(135deg,var(--accent-deep),var(--surface));border:1px solid var(--accent-dim);
+  border-radius:15px;padding:15px 16px;margin-bottom:12px;transition:transform .08s,border-color .15s;overflow:hidden;}
+.heroCont::after{content:"▶";position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  font-size:1.4rem;color:var(--accent);opacity:.9;}
+.heroCont:active{transform:scale(.99);border-color:var(--accent);}
+.heroCont .hcKick{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);}
+.heroCont .hcTitle{font-weight:800;font-size:1.18rem;letter-spacing:-.02em;line-height:1.1;margin-top:5px;padding-right:30px;}
+.heroCont .hcSub{font-size:.76rem;color:var(--txt-soft);margin-top:3px;}
+.heroRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.heroCard{text-align:left;position:relative;cursor:pointer;color:var(--txt);background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:14px;padding:13px 13px 12px;transition:transform .08s,border-color .15s,background .15s;
+  display:flex;flex-direction:column;min-height:104px;}
+.heroCard:active{transform:scale(.97);background:var(--surface-2);border-color:var(--accent-dim);}
+.heroCard .hcKick{font-family:'Space Mono',monospace;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
+.heroCard .hcTitle{font-weight:700;font-size:.98rem;letter-spacing:-.01em;line-height:1.12;margin-top:6px;}
+.heroCard .hcArtist{font-size:.71rem;color:var(--txt-dim);margin-top:2px;}
+.heroCard .hcChords{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-soft);margin-top:auto;padding-top:9px;}
+@media (max-width:360px){.heroRow{grid-template-columns:1fr;}}
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px;}
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
@@ -92,9 +115,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}
 .sect:first-child{margin-top:0;}
-.lyrLine{font-size:.85rem;line-height:1.18;white-space:pre;margin-bottom:9px;color:var(--txt);}
+/* practice sheet sized for arm's-length reading (phone on a strap / music stand) */
+.lyrLine{font-size:.98rem;line-height:1.32;white-space:pre;margin-bottom:11px;color:var(--txt);}
 .lyrLine .crd{color:var(--accent);font-weight:700;}
-.chordOnly{font-size:1.05rem;font-weight:700;line-height:1.6;}
+.chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
 .chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:7px;padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
@@ -152,7 +176,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .micMeter{position:relative;height:54px;margin:8px 2px 2px;}
 .micMeter .scale{position:absolute;top:28px;left:0;right:0;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--bad) 0%,var(--warn) 32%,var(--good) 50%,var(--warn) 68%,var(--bad) 100%);opacity:.55;}
 .micMeter .center{position:absolute;top:16px;left:50%;width:1px;height:26px;background:var(--accent);transform:translateX(-50%);}
-.micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:left .13s cubic-bezier(.22,.61,.36,1),background .2s;will-change:left;}
+/* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
+.micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
 .micMeter .fl{left:0;}.micMeter .sh{right:0;}
 .micNote{font-family:'Space Mono',monospace;text-align:center;font-weight:700;font-size:1.95rem;line-height:1;margin:2px 0;color:var(--txt);transition:color .15s,text-shadow .15s;}
