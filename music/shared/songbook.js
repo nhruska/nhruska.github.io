@@ -109,7 +109,8 @@
    *     // perform
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn, pScroll,
-   *     pSpeed, pSpeedR, pSpeedV,
+   *     pSpeed, pSpeedR, pSpeedV, pCtrls,
+   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
    *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax,
    *     // maximize overlay (chord pack diagrams)
@@ -174,10 +175,18 @@
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
+    // perform-screen prefs (scroll speed, view, font size), remembered per device.
+    var PERF_KEY = prefix + ".perfprefs.v1";
+    function loadPerfPrefs() { try { var r = localStorage.getItem(PERF_KEY); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } }
+    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
+    var _pp = loadPerfPrefs();
     var STATE = {
       search: "", decade: "All", current: null, transpose: 0, view: "lyrics",
       setlist: [], performList: [], performIdx: 0, performDim: false, performTpose: 0,
-      scrolling: false, scrollSpeed: 28, scrollRAF: null, wakeLock: null
+      performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
+      fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
+      fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
+      scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
@@ -225,11 +234,20 @@
       }
       return out;
     }
+    // Pick a random jam-flagged song (fall back to the quick-picks pool), so one
+    // tap drops you straight into playing something good — no decisions.
+    function jamSong() {
+      var jam = ALLSONGS.filter(function (s) { return s.jam && !s.custom; });
+      var pool = jam.length ? jam : quickPicks();
+      return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+    }
+    function jamNow() { var s = jamSong(); if (s) { saveLast(s.id); startPerform([s.id]); } }
+
     function renderHero() {
       if (!el.libHero) return;
       if (STATE.search || STATE.decade !== 'All') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
       el.libHero.style.display = 'block';
-      var html = '';
+      var html = '<button class="jamNow" id="heroJam">⚡ Jam now</button>';
       var last = loadLast() ? songById(loadLast()) : null;
       if (last) {
         html += '<button class="heroCont" data-id="' + last.id + '">'
@@ -255,6 +273,7 @@
       el.libHero.querySelectorAll('[data-id]').forEach(function (b) {
         b.onclick = function () { openPractice(b.dataset.id); };
       });
+      var jb = el.libHero.querySelector('#heroJam'); if (jb) jb.onclick = jamNow;
     }
 
     function renderSongs() {
@@ -416,9 +435,12 @@
       if (!ids || !ids.length) return;
       STATE.performList = ids.slice();
       STATE.performIdx = 0; STATE.performDim = false; STATE.performTpose = 0;
-      if (performEl) performEl.classList.remove('dim');
-      stopScroll(); showPerform();
-      if (performEl) performEl.classList.add('on');
+      // show the overlay BEFORE rendering so auto-fit can measure a real height
+      if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
+      stopScroll();
+      STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
+      if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
+      showPerform();
       reqWake();
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
@@ -431,6 +453,33 @@
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
+    // stage controls panel (scroll speed + font size + lyrics/chords view)
+    if (el.pCtrls) el.pCtrls.onclick = function () { STATE.ctrlsOpen = !STATE.ctrlsOpen; if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen || STATE.scrolling); };
+    if (el.pViewLyrics) el.pViewLyrics.onclick = function () { setPerformView('lyrics'); };
+    if (el.pViewChords) el.pViewChords.onclick = function () { setPerformView('chords'); };
+    if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
+    if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
+    if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
+    function setPerformView(v) { STATE.performView = v; showPerform(); savePerfPrefs(); }
+    function stepFont(d) { STATE.fontMode = 'manual'; STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2))); applyPerfFont(); updateStageBtns(); savePerfPrefs(); }
+    // auto-fit: scale the sheet so a short song fills the screen and a long one
+    // shrinks toward fitting; manual mode pins an explicit scale instead.
+    function applyPerfFont() {
+      if (!pSheet) return;
+      if (STATE.fontMode === 'manual') { pSheet.style.setProperty('--pscale', STATE.fontScale); return; }
+      var inner = pSheet.firstElementChild;
+      if (!inner) { pSheet.style.setProperty('--pscale', 1); return; }
+      pSheet.style.setProperty('--pscale', 1);            // measure at base size
+      var avail = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
+      var need = inner.scrollHeight;
+      var scale = need > 0 ? Math.max(0.8, Math.min(2.2, avail / need)) : 1;
+      pSheet.style.setProperty('--pscale', scale.toFixed(3));
+    }
+    function updateStageBtns() {
+      if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
+      if (el.pViewLyrics) el.pViewLyrics.classList.toggle('on', STATE.performView === 'lyrics');
+      if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
+    }
     function perfShift(dir) {
       var s = songById(STATE.performList[STATE.performIdx]);
       var cur = STATE.performTpose;
@@ -448,11 +497,17 @@
       if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
-      if (pSheet) { pSheet.innerHTML = renderSheet(s, STATE.performTpose, s.custom ? 'chords' : 'lyrics'); pSheet.scrollTop = 0; }
+      if (pSheet) {
+        var view = s.custom ? 'chords' : STATE.performView;
+        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view) + '</div>';
+        pSheet.scrollTop = 0;
+        applyPerfFont();
+      }
+      updateStageBtns();
       if (el.pNext) el.pNext.textContent = (STATE.performIdx === STATE.performList.length - 1) ? '✓' : '→';
     }
     /* auto-scroll */
-    if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; };
+    if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };
     function startScroll() {
       if (!pSheet) return;
       STATE.scrolling = true;
@@ -475,7 +530,8 @@
       STATE.scrolling = false;
       if (STATE.scrollRAF) cancelAnimationFrame(STATE.scrollRAF);
       if (el.pScroll) el.pScroll.textContent = '▶';
-      if (el.pSpeed) el.pSpeed.classList.remove('on');
+      // keep the controls panel open if the user opened it via the gear
+      if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen);
     }
     if (el.pScroll) el.pScroll.onclick = function () { STATE.scrolling ? stopScroll() : startScroll(); };
     if (pSheet) pSheet.onclick = function () { if (STATE.scrolling) stopScroll(); };
