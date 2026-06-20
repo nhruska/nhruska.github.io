@@ -1307,5 +1307,428 @@
         "[G]Hey mama [D]rock me"
       ]
     ]
+  },
+  {
+    "t": "Friend of the Devil",
+    "a": "Grateful Dead",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Em",
+      "Am",
+      "B7"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]I lit out from Reno, I was [C]trailed by twenty [G]hounds"
+      ],
+      [
+        "Chorus",
+        "Got a wife in [Am]Chino, babe, and [Em]one in Cherokee"
+      ],
+      [
+        "",
+        "First one say she [Am]got my child, but it [B7]don't look like [Em]me"
+      ]
+    ]
+  },
+  {
+    "t": "Ripple",
+    "a": "Grateful Dead",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Am",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]If my words did [C]glow with the gold of [G]sunshine"
+      ],
+      [
+        "",
+        "[Am]Would you hear my [D]voice come through the [G]music"
+      ],
+      [
+        "Chorus",
+        "[C]Ripple in still [G]water"
+      ]
+    ]
+  },
+  {
+    "t": "Sugar Magnolia",
+    "a": "Grateful Dead",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "A",
+      "D",
+      "E",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]Sugar magnolia, [E]blossoms blooming [D]"
+      ],
+      [
+        "",
+        "[A]Head's all empty and I [E]don't care [D]"
+      ],
+      [
+        "Chorus",
+        "[D]Sunshine [A]daydream [E]"
+      ]
+    ]
+  },
+  {
+    "t": "Truckin'",
+    "a": "Grateful Dead",
+    "y": 1970,
+    "d": "70s",
+    "seq": [
+      "E",
+      "A",
+      "B7"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]Truckin', got my chips cashed in"
+      ],
+      [
+        "",
+        "[A]Keep truckin', like the [E]do-dah man"
+      ],
+      [
+        "Chorus",
+        "What a [A]long, strange [B7]trip it's [E]been"
+      ]
+    ]
+  },
+  {
+    "t": "Bouncing Around the Room",
+    "a": "Phish",
+    "y": 1990,
+    "d": "90s",
+    "seq": [
+      "D",
+      "G",
+      "A",
+      "Bm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]I saw it written and I [G]saw it say"
+      ],
+      [
+        "Chorus",
+        "[Bm]Bouncing around the [A]room [G]"
+      ]
+    ]
+  },
+  {
+    "t": "Sample in a Jar",
+    "a": "Phish",
+    "y": 1994,
+    "d": "90s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Em",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Held a candle in my [C]hand, the wax dripped [D]down my arm"
+      ],
+      [
+        "Chorus",
+        "Like a [Em]sample in a [C]jar, you can [G]look but you can't [D]touch"
+      ]
+    ]
+  },
+  {
+    "t": "Waste",
+    "a": "Phish",
+    "y": 1996,
+    "d": "90s",
+    "seq": [
+      "D",
+      "A",
+      "Bm",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[D]Come waste your [A]time with me [Bm] [G]"
+      ],
+      [
+        "Verse",
+        "[D]Don't want to be your [A]friend, I want to [Bm]kiss your [G]neck"
+      ]
+    ]
+  },
+  {
+    "t": "Not Fade Away",
+    "a": "Buddy Holly",
+    "y": 1968,
+    "d": "60s",
+    "seq": [
+      "A",
+      "D",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]I'm gonna tell you how it's gonna [D]be [A]"
+      ],
+      [
+        "Chorus",
+        "[A]My love is bigger than a [D]Cadillac [A]"
+      ],
+      [
+        "",
+        "Love is love and [D]not fade a[A]way [E]"
+      ]
+    ]
+  },
+  {
+    "t": "The Weight",
+    "a": "The Band",
+    "y": 1968,
+    "d": "60s",
+    "seq": [
+      "A",
+      "C#m",
+      "D",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]I pulled into [C#m]Nazareth, was [D]feeling 'bout half [A]past dead"
+      ],
+      [
+        "Chorus",
+        "Take a load off [E]Annie, take a load for [D]free [A]"
+      ]
+    ]
+  },
+  {
+    "t": "All Along the Watchtower",
+    "a": "Bob Dylan / Jimi Hendrix",
+    "y": 1968,
+    "d": "60s",
+    "seq": [
+      "Am",
+      "G",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]There must be some [G]way out of [F]here, said the [G]joker to the thief"
+      ],
+      [
+        "",
+        "[Am]There's too much con[G]fusion, [F]I can't get no re[G]lief"
+      ]
+    ]
+  },
+  {
+    "t": "Man in the Mirror",
+    "a": "Michael Jackson",
+    "y": 1988,
+    "d": "80s",
+    "seq": [
+      "G",
+      "C",
+      "D",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]I'm gonna make a change, for [C]once in my life"
+      ],
+      [
+        "Chorus",
+        "I'm starting with the [G]man in the [D]mirror"
+      ],
+      [
+        "",
+        "I'm asking him to [Em]change his [C]ways [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Black or White",
+    "a": "Michael Jackson",
+    "y": 1991,
+    "d": "90s",
+    "seq": [
+      "E",
+      "A",
+      "B"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]I took my baby on a Saturday [A]bang [E]"
+      ],
+      [
+        "Chorus",
+        "It don't matter if you're [A]black or [E]white [B]"
+      ]
+    ]
+  },
+  {
+    "t": "Hey Jude",
+    "a": "The Beatles",
+    "y": 1968,
+    "d": "60s",
+    "seq": [
+      "F",
+      "C",
+      "Bb",
+      "Eb"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F]Hey Jude, [C]don't make it bad"
+      ],
+      [
+        "",
+        "[C]Take a sad song and [F]make it better"
+      ],
+      [
+        "Coda",
+        "[F]Na na na [Eb]na-na-na [Bb]na, na-na-na [F]na, hey Jude"
+      ]
+    ]
+  },
+  {
+    "t": "Twist and Shout",
+    "a": "The Beatles",
+    "y": 1963,
+    "d": "60s",
+    "seq": [
+      "D",
+      "G",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "Well [D]shake it up [G]baby now [A]"
+      ],
+      [
+        "Chorus",
+        "[D]Twist and [G]shout [A]"
+      ]
+    ]
+  },
+  {
+    "t": "Ob-La-Di, Ob-La-Da",
+    "a": "The Beatles",
+    "y": 1968,
+    "d": "60s",
+    "seq": [
+      "A",
+      "D",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]Desmond has a barrow in the [E]market place [A]"
+      ],
+      [
+        "Chorus",
+        "[A]Ob-la-di, ob-la-[D]da, life goes [A]on, [E]brah [A]"
+      ]
+    ]
+  },
+  {
+    "t": "Bad Moon Rising",
+    "a": "Creedence Clearwater Revival",
+    "y": 1969,
+    "d": "60s",
+    "seq": [
+      "D",
+      "A",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[D]I see a [A]bad [G]moon a-[D]rising"
+      ],
+      [
+        "",
+        "[D]I see [A]trouble [G]on the [D]way"
+      ],
+      [
+        "Chorus",
+        "[G]Don't go 'round tonight, [D]it's bound to take your life"
+      ]
+    ]
+  },
+  {
+    "t": "The Joker",
+    "a": "Steve Miller Band",
+    "y": 1973,
+    "d": "70s",
+    "seq": [
+      "G",
+      "C",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[G]Some people call me the [C]space cowboy [D]"
+      ],
+      [
+        "Chorus",
+        "'Cause I'm a [G]joker, I'm a [C]smoker, I'm a midnight [D]toker"
+      ]
+    ]
+  },
+  {
+    "t": "Gloria",
+    "a": "Them",
+    "y": 1964,
+    "d": "60s",
+    "seq": [
+      "E",
+      "D",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]Like to tell you 'bout my [D]baby [A]"
+      ],
+      [
+        "Chorus",
+        "[E]G-L-[D]O-R-I-[A]A, Gloria"
+      ]
+    ]
   }
 ]

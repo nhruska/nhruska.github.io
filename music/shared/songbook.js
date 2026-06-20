@@ -127,7 +127,7 @@
     var el = opts.el || {};
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
-    var DECADES = opts.decades || ["All", "70s", "80s", "90s", "00s", "10s"];
+    var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
     var CATS = opts.composeCats || {
       "Major": ["C", "D", "E", "F", "G", "A", "B"],
