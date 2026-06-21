@@ -13,19 +13,23 @@
 <!-- Shared songbook styles (theme + components). -->
 <link rel="stylesheet" href="../shared/songbook.css">
 <style>
-  /* backing-tracks finder (Phase 1, T2) */
-  .bt-controls{margin:6px 0 12px;}
-  .bt-label{font-family:'Space Mono',monospace;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-dim);margin:12px 2px 7px;}
-  .bt-count{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);margin:4px 2px 12px;}
-  .bt-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;}
-  .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  /* backing-tracks finder (Phase 1) - compact one-row filters */
+  .bt-controls{margin:2px 0 4px;}
+  .bt-bar{display:flex;align-items:center;gap:9px;margin:5px 0;}
+  .bt-tag{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--txt-dim);flex:0 0 auto;width:30px;text-align:right;}
+  .bt-bar .chips{margin-bottom:0;flex:1;min-width:0;}     /* shared .chips already scrolls on one row */
+  .bt-bar .chip{padding:6px 12px;}
+  .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
+  .bt-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+  .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
   .bt-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
   .bt-title{font-weight:700;font-size:1rem;letter-spacing:-.01em;}
   .bt-key{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.84rem;flex:0 0 auto;}
   .bt-sub{color:var(--txt-soft);font-size:.82rem;margin-top:3px;}
-  .bt-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;font-family:'Space Mono',monospace;font-size:.66rem;color:var(--txt-dim);}
+  .bt-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;font-family:'Space Mono',monospace;font-size:.66rem;color:var(--txt-dim);}
   .bt-meta span{border:1px solid var(--line);padding:3px 7px;border-radius:6px;}
-  .bt-empty{text-align:center;color:var(--txt-dim);padding:40px 18px;line-height:1.7;}
+  .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
 </style>
 </head>
@@ -40,10 +44,8 @@
   <div class="view">
     <section class="screen on" id="finder">
       <div class="bt-controls">
-        <div class="bt-label">Genre</div>
-        <div class="chips" id="genreChips"></div>
-        <div class="bt-label">Key</div>
-        <div class="chips" id="keyChips"></div>
+        <div class="bt-bar"><span class="bt-tag">genre</span><div class="chips" id="genreChips"></div></div>
+        <div class="bt-bar"><span class="bt-tag">key</span><div class="chips" id="keyChips"></div></div>
       </div>
       <div class="bt-count" id="resultCount"></div>
       <div class="bt-results" id="results"></div>
