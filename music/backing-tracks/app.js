@@ -160,7 +160,7 @@
     function renderPanel() {
       if (!elPanel || !window.Circle) return;
       if (!state.key) { elPanel.innerHTML = ''; return; }
-      var C = window.Circle, dia = C.diatonic(state.key, state.mode), nb = C.neighbors(state.key);
+      var C = window.Circle, dia = C.diatonic(state.key, state.mode), nb = C.neighbors(state.key, state.mode);
       var chords = dia.map(function (d) {
         return '<div class="cofChord"><span class="rn">' + esc(d.roman) + '</span><span class="nm">' + esc(d.chord) + '</span></div>';
       }).join('');
@@ -171,9 +171,7 @@
         + '<div class="cofChords">' + chords + '</div>'
         + '<div class="cofNbLbl">Explore next</div>'
         + '<div class="cofNb">'
-        + nbChip(nb.dominant, 'major', nb.why.dominant)
-        + nbChip(nb.subdominant, 'major', nb.why.subdominant)
-        + nbChip(nb.relativeMinor, 'minor', nb.why.relativeMinor)
+        + nb.map(function (x) { return nbChip(x.root, x.mode, x.why); }).join('')
         + '</div></div>';
       Array.prototype.forEach.call(elPanel.querySelectorAll('.cofNbChip'), function (b) {
         b.onclick = function () { state.key = b.getAttribute('data-root'); state.mode = b.getAttribute('data-mode'); rerender(); };

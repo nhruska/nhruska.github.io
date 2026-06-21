@@ -46,11 +46,16 @@ test('relative minor is three semitones down; relative major three up', function
   assert.strictEqual(Circle.relativeMajor('A'), 'C');
   assert.strictEqual(Circle.relativeMajor('E'), 'G');
 });
-test('neighbors() bundles dominant/subdominant/relative with a why', function () {
-  var n = Circle.neighbors('C');
-  assert.strictEqual(n.dominant, 'G');
-  assert.strictEqual(n.subdominant, 'F');
-  assert.strictEqual(n.relativeMinor, 'A');
+test('neighbors() major key → V, IV, relative minor (mode-aware)', function () {
+  var n = Circle.neighbors('C', 'major');
+  assert.deepStrictEqual(n.map(function (x) { return x.root + ':' + x.mode; }),
+    ['G:major', 'F:major', 'A:minor']);
+});
+test('neighbors() minor key → v, iv, relative major (mode-aware)', function () {
+  var n = Circle.neighbors('A', 'minor');
+  assert.deepStrictEqual(n.map(function (x) { return x.root + ':' + x.mode; }),
+    ['E:minor', 'D:minor', 'C:major']);
+  assert.ok(/relative major/.test(n[2].why));
 });
 
 /* ---------- diatonic chords ---------- */

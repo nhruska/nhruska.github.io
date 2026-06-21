@@ -91,11 +91,20 @@
     subdominant: function (root) { return shift(root, 5); },  // a fifth down
     relativeMinor: function (root) { return shift(root, -3); },
     relativeMajor: function (root) { return shift(root, 3); },
-    neighbors: function (root) {
-      return {
-        dominant: shift(root, 7), subdominant: shift(root, 5), relativeMinor: shift(root, -3),
-        why: { dominant: 'a fifth up (the V)', subdominant: 'a fifth down (the IV)', relativeMinor: 'its relative minor' }
-      };
+    // The keys worth exploring next, MODE-AWARE: a fifth up, a fifth down, and the
+    // relative key — labelled in the right case for the current mode. Returns an
+    // ordered array of { root, mode, why } so the panel renders them directly.
+    neighbors: function (root, mode) {
+      if (mode === 'minor') return [
+        { root: shift(root, 7), mode: 'minor', why: 'a fifth up (the v)' },
+        { root: shift(root, 5), mode: 'minor', why: 'a fifth down (the iv)' },
+        { root: shift(root, 3), mode: 'major', why: 'its relative major' }
+      ];
+      return [
+        { root: shift(root, 7), mode: 'major', why: 'a fifth up (the V)' },
+        { root: shift(root, 5), mode: 'major', why: 'a fifth down (the IV)' },
+        { root: shift(root, -3), mode: 'minor', why: 'its relative minor' }
+      ];
     },
     diatonic: diatonic,
     renderWheel: renderWheel
