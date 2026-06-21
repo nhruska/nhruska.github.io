@@ -97,7 +97,7 @@
     if (b) out.bpm = parseInt(b[1], 10);
     var k = title.match(/\bin\s+([A-G](?:#|b)?)\b\s*(minor|min|major|maj|m)?\b/i)
       || title.match(/\b([A-G](?:#|b)?)\s*(minor|min)\b/i)
-      || title.match(/\b([A-G](?:#|b)?)m\b/);
+      || title.match(/\b([A-G](?:#|b)?)(m)\b/);
     if (k) {
       out.key = k[1].charAt(0).toUpperCase() + k[1].slice(1);
       var q = (k[2] || '').toLowerCase();
@@ -228,9 +228,9 @@
       if (!toggle) return;
       toggle.onclick = function () { panel.hidden = !panel.hidden; if (!panel.hidden) aUrl.focus(); };
       $('aCancel').onclick = function () { panel.hidden = true; };
-      aUrl.oninput = function () {
-        var p = parseTrackFromTitle(aUrl.value);
-        if (!aTitle.value && p.title && !parseYouTubeId(aUrl.value)) aTitle.value = p.title;
+      aUrl.oninput = function () { aUrl.classList.remove('bad'); };
+      aTitle.oninput = function () {
+        var p = parseTrackFromTitle(aTitle.value);
         if (!aKey.value && p.key) aKey.value = p.key;
         if (!aGenre.value && p.genre) aGenre.value = p.genre;
         if (!aBpm.value && p.bpm) aBpm.value = p.bpm;
