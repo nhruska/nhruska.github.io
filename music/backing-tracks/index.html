@@ -78,6 +78,27 @@
   .bt-meta span{border:1px solid var(--line);padding:3px 7px;border-radius:6px;}
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
+  /* circle of fifths (Phase 2) — the key explorer */
+  .cof{display:flex;justify-content:center;margin:4px 0 2px;}
+  .cofWheel{width:230px;height:230px;max-width:74vw;}
+  .cofWedge{fill:var(--surface-2);stroke:var(--bg);stroke-width:1.5;cursor:pointer;transition:fill .12s;}
+  .cofWedge:hover{fill:var(--surface);}
+  .cofWedge.on{fill:var(--accent);}
+  .cofLabel{fill:var(--txt-soft);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
+  .cofLabel.on{fill:#06201c;}
+  .cofPanel:not(:empty){margin:6px 0 12px;}
+  .cofPanelInner{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
+  .cofKeyName{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;}
+  .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
+  .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .cofChord{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:40px;}
+  .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
+  .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);}
+  .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
+  .cofNb{display:flex;flex-wrap:wrap;gap:6px;}
+  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
+  .cofNbChip:active{transform:scale(.94);}
+  .cofNbChip b{font-weight:700;}
 </style>
 </head>
 <body>
@@ -90,6 +111,8 @@
   </div>
   <div class="view">
     <section class="screen on" id="finder">
+      <div class="cof" id="cof"></div>
+      <div class="cofPanel" id="cofPanel"></div>
       <div class="bt-controls">
         <div class="bt-bar"><span class="bt-tag">genre</span><div class="chips" id="genreChips"></div></div>
         <div class="bt-bar"><span class="bt-tag">key</span><div class="chips" id="keyChips"></div><div class="bt-mode" id="modeToggle"></div></div>
@@ -118,6 +141,7 @@
   </div>
 </div>
 <div class="bt-player" id="player" aria-hidden="true"></div>
+<script src="../shared/circle.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
