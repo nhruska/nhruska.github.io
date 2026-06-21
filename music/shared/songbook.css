@@ -114,6 +114,24 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .viewToggle button:active{transform:scale(.96);}
 .viewToggle button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
+/* play-mode switcher (Studio / Campfire / Stage) on the song screen */
+.modeSwitch{display:flex;gap:4px;margin:10px 0 14px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
+.modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.82rem;color:var(--txt-dim);padding:10px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
+.modeSwitch button:active{transform:scale(.95);}
+.modeSwitch button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
+.modeSwitch button.stageBtn{color:var(--accent);}
+.modeSwitch button.stageBtn:active{background:var(--accent);color:#06201c;}
+/* one-time teaching card: explains the three modes on the first song open */
+.teachCard{display:flex;flex-direction:column;gap:8px;margin:10px 0 0;padding:13px 14px;background:var(--bg-2);border:1px solid var(--accent-dim);border-radius:12px;animation:fadeUp .22s ease;}
+.teachCard strong{font-size:.92rem;color:var(--txt);}
+.teachCard span{font-size:.8rem;line-height:1.5;color:var(--txt-dim);}
+.teachCard b{color:var(--txt);font-weight:700;}
+.teachCard .btn{align-self:flex-end;padding:7px 16px;}
+/* Campfire: big chords-only, sized for jamming with the phone on the table */
+.campfireSheet{padding:18px 14px;}
+.campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
+.campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
+.campfireSheet .sect{font-size:.78rem;margin-top:18px;}
 .chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
 .chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent);border:1px solid var(--line-strong);padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:#06201c;}
