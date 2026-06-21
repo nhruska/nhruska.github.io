@@ -86,5 +86,49 @@
     "bpm": 114,
     "capo": 0,
     "tags": ["singalong"]
+  },
+  {
+    "yt": "ifOUmWAQups",
+    "title": "Reggae Backing Track in A Major",
+    "artist": "Petti Music Studios",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["jam"]
+  },
+  {
+    "yt": "hg6kcvOH5I4",
+    "title": "Mellow Reggae Jam in A Major",
+    "artist": "SubFunc Jam Tracks",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["mellow", "jam"]
+  },
+  {
+    "yt": "hf9--LynOZY",
+    "title": "Slow Blues Backing Track in A Minor",
+    "artist": "Quist",
+    "genre": "blues",
+    "key": "A",
+    "mode": "minor",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["slow"]
+  },
+  {
+    "yt": "2EoqzNR68pY",
+    "title": "Rock Backing Track in D Major",
+    "artist": "TGuitar",
+    "genre": "rock",
+    "key": "D",
+    "mode": "major",
+    "bpm": 100,
+    "capo": 0,
+    "tags": ["jam"]
   }
 ]
