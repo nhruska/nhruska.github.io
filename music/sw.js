@@ -11,9 +11,9 @@
  * CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v2';
+var CACHE = 'music-v3';
 var CORE = [
-  './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json',
+  './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json', './backing-tracks/app.js',
   './play/', './play/index.html', './play/manifest.webmanifest',
   './play/icon.svg', './play/icon-maskable.svg',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js',
