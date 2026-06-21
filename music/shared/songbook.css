@@ -126,12 +126,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
-/* first-run teaching card for the modes */
-.teachCard{background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:13px;padding:15px;margin-bottom:14px;}
-.teachCard .tcH{font-weight:800;font-size:1.04rem;margin-bottom:10px;letter-spacing:-.01em;}
-.teachCard .tcRow{font-size:.86rem;color:var(--txt-soft);line-height:1.5;margin-bottom:5px;}
-.teachCard .tcRow b{color:var(--accent);font-weight:700;}
-.teachCard .btn{margin-top:11px;}
 .chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
 .chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent);border:1px solid var(--line-strong);padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:#06201c;}

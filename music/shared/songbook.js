@@ -308,9 +308,6 @@
     var SONGMODE_KEY = prefix + ".songmode.v1";
     function loadSongMode() { try { var m = localStorage.getItem(SONGMODE_KEY); return (m === 'campfire' || m === 'stage') ? m : 'studio'; } catch (e) { return 'studio'; } }
     function saveSongMode(m) { try { localStorage.setItem(SONGMODE_KEY, m); } catch (e) { } }
-    var TEACH_KEY = prefix + ".modeteach.v1";
-    function teachSeen() { try { return localStorage.getItem(TEACH_KEY) === '1'; } catch (e) { return false; } }
-    function markTeachSeen() { try { localStorage.setItem(TEACH_KEY, '1'); } catch (e) { } }
     STATE.songMode = loadSongMode();
     STATE.screenMode = STATE.songMode === 'campfire' ? 'campfire' : 'studio';
 
@@ -322,8 +319,7 @@
       STATE.screenMode = STATE.songMode === 'campfire' ? 'campfire' : 'studio';
       switchTab('practice');
       renderPractice();
-      // restore Stage if that's where you left off (only once the modes are learned)
-      if (STATE.songMode === 'stage' && teachSeen()) startPerform([id]);
+      if (STATE.songMode === 'stage') startPerform([id]); // restore Stage if that's where you left off
     }
     function setMode(m) {
       if (m === 'stage') { saveSongMode('stage'); if (STATE.current) startPerform([STATE.current.id]); return; }
@@ -342,13 +338,6 @@
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
-      // first-run teaching card (Hybrid): explain the modes once, then get out of the way
-      var teach = teachSeen() ? '' :
-        '<div class="teachCard"><div class="tcH">Three ways to play a song</div>'
-        + '<div class="tcRow"><b>Studio</b> — learn it: lyrics, chords, transpose, diagrams.</div>'
-        + '<div class="tcRow"><b>Campfire</b> — jam it: big chords only, no clutter.</div>'
-        + '<div class="tcRow"><b>Stage</b> — perform it: fullscreen, auto-scroll, stage-dim.</div>'
-        + '<button class="btn red" id="teachOk">Got it</button></div>';
       var switcher = '<div class="modeSwitch">'
         + '<button data-m="studio" class="' + (mode === 'studio' ? 'on' : '') + '">Studio</button>'
         + '<button data-m="campfire" class="' + (mode === 'campfire' ? 'on' : '') + '">Campfire</button>'
@@ -370,8 +359,7 @@
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + teach + head + switcher + body + '</div>';
-      var tOk = el.practiceBody.querySelector('#teachOk'); if (tOk) tOk.onclick = function () { markTeachSeen(); renderPractice(); };
+      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + body + '</div>';
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
