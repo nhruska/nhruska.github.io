@@ -369,6 +369,16 @@
       switchTab('practice');
       renderPractice();
     }
+    // After the setlist is edited (reorder/remove) keep the live queue tracking it,
+    // so the queue is the running order rather than a snapshot taken at open time.
+    // Only when an active queue is the setlist (the open song is still in the set).
+    function syncQueueToSetlist() {
+      if (!QUEUE.isActive() || !STATE.current) return;
+      var at = STATE.setlist.indexOf(STATE.current.id);
+      if (at < 0) return;
+      QUEUE.set(STATE.setlist, at);
+      renderPractice(); // refresh the queue-nav position (n / N) for the new order
+    }
     function setMode(m) {
       // Stage performs the live queue from the current position (one-shot; not sticky)
       if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
@@ -494,9 +504,16 @@
         var it = document.createElement('div'); it.className = 'setItem';
         it.innerHTML = '<div class="num">' + (i + 1) + '</div><div class="body"><div class="t">' + escHTML(s.t) + '</div><div class="a">' + escHTML(s.a) + ' · ' + s.y + '</div><div class="c">' + s.seq.join(' · ') + '</div></div>'
           + '<div class="setCtrl"><button data-act="up" ' + (i === 0 ? 'disabled' : '') + '>▲</button><button data-act="dn" ' + (i === STATE.setlist.length - 1 ? 'disabled' : '') + '>▼</button></div><button class="rm" data-act="rm">×</button>';
-        it.querySelector('[data-act=up]').onclick = function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };
-        it.querySelector('[data-act=dn]').onclick = function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };
-        it.querySelector('[data-act=rm]').onclick = function () { STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet(); renderSetlist(); renderSongs(); };
+        it.querySelector('[data-act=up]').onclick = function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } };
+        it.querySelector('[data-act=dn]').onclick = function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } };
+        it.querySelector('[data-act=rm]').onclick = function () {
+          var wasOpen = STATE.current && STATE.current.id === sid;
+          STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
+          // keep the live queue + the (maybe hidden) song screen in step with the edit
+          if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
+          else syncQueueToSetlist();
+          renderSetlist(); renderSongs();
+        };
         it.querySelector('.body').onclick = function () { openPractice(sid, STATE.setlist); }; // open into the setlist queue
         body.appendChild(it);
       });
