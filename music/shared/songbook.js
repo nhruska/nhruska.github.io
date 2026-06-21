@@ -159,6 +159,9 @@
     var el = opts.el || {};
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
+    // ONE shared running-order queue — Studio, Campfire and Stage all read it,
+    // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
+    var QUEUE = global.Queue.createQueue();
     var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
     var CATS = opts.composeCats || {
@@ -213,7 +216,7 @@
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", decade: "All", current: null, transpose: 0, view: "lyrics",
-      setlist: [], performList: [], performIdx: 0, performDim: false, performTpose: 0,
+      setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
       fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
@@ -347,17 +350,28 @@
     STATE.songMode = loadSongMode();
     STATE.screenMode = STATE.songMode; // studio | campfire
 
-    function openPractice(id) { // opens the song screen in the last-used screen mode
-      STATE.current = songById(id);
-      if (STATE.current) saveLast(id);
+    // open a song in the song screen. queueIds (optional) sets the running order:
+    // opening from the Setlist passes the whole set so prev/next walks it; opening
+    // a lone song from the Library passes nothing → a one-song (inactive) queue.
+    function openPractice(id, queueIds) {
+      if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
+      else QUEUE.set([id]);
+      openCurrent();
+    }
+    // render whatever the queue cursor points at, in the last-used screen mode
+    function openCurrent() {
+      var id = QUEUE.current();
+      STATE.current = id ? songById(id) : null;
       STATE.transpose = 0;
       if (!STATE.current) return;
+      saveLast(STATE.current.id);
       STATE.screenMode = STATE.songMode; // studio | campfire — never auto-launch Stage
       switchTab('practice');
       renderPractice();
     }
     function setMode(m) {
-      if (m === 'stage') { if (STATE.current) startPerform([STATE.current.id]); return; } // one-shot; not sticky
+      // Stage performs the live queue from the current position (one-shot; not sticky)
+      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
       STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
     }
     function renderPractice() {
@@ -382,6 +396,11 @@
         + '<strong>Three ways to open a song</strong>'
         + '<span><b>Studio</b> — learn it (lyrics + chords) · <b>Campfire</b> — jam the chord chart · <b>Stage</b> — perform fullscreen</span>'
         + '<button class="btn ghost" id="teachOk">Got it</button></div>';
+      // queue nav — only when a real running order (the setlist) is loaded
+      var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
+        + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
+        + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
+        + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
       var head = '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>';
       var keyPill = '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
@@ -399,8 +418,10 @@
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + head + teach + switcher + body + '</div>';
+      el.practiceBody.innerHTML = '<div class="detail">' + head + teach + switcher + queueNav + body + '</div>';
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
+      var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
+      var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
       var teachOk = el.practiceBody.querySelector('#teachOk');
       if (teachOk) teachOk.onclick = function () { markTeachSeen(); var c = el.practiceBody.querySelector('#teachCard'); if (c) c.remove(); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
@@ -475,8 +496,8 @@
           + '<div class="setCtrl"><button data-act="up" ' + (i === 0 ? 'disabled' : '') + '>▲</button><button data-act="dn" ' + (i === STATE.setlist.length - 1 ? 'disabled' : '') + '>▼</button></div><button class="rm" data-act="rm">×</button>';
         it.querySelector('[data-act=up]').onclick = function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };
         it.querySelector('[data-act=dn]').onclick = function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); renderSetlist(); } };
-        it.querySelector('[data-act=rm]').onclick = function () { STATE.setlist.splice(i, 1); saveSet(); renderSetlist(); renderSongs(); };
-        it.querySelector('.body').onclick = function () { openPractice(sid); };
+        it.querySelector('[data-act=rm]').onclick = function () { STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet(); renderSetlist(); renderSongs(); };
+        it.querySelector('.body').onclick = function () { openPractice(sid, STATE.setlist); }; // open into the setlist queue
         body.appendChild(it);
       });
       if (bar) bar.style.display = 'flex';
@@ -492,10 +513,10 @@
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero).
-    function startPerform(ids) {
+    function startPerform(ids, startIdx) {
       if (!ids || !ids.length) return;
-      STATE.performList = ids.slice();
-      STATE.performIdx = 0; STATE.performDim = false; STATE.performTpose = 0;
+      QUEUE.set(ids, startIdx || 0);
+      STATE.performDim = false; STATE.performTpose = 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
       stopScroll();
@@ -506,9 +527,9 @@
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
     if (el.pClose) el.pClose.onclick = function () { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); };
-    if (el.pPrev) el.pPrev.onclick = function () { if (STATE.performIdx > 0) { STATE.performIdx--; STATE.performTpose = 0; showPerform(); } };
+    if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
-      if (STATE.performIdx < STATE.performList.length - 1) { STATE.performIdx++; STATE.performTpose = 0; showPerform(); }
+      if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
       else { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
@@ -542,7 +563,7 @@
       if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
     }
     function perfShift(dir) {
-      var s = songById(STATE.performList[STATE.performIdx]);
+      var s = songById(QUEUE.current());
       var cur = STATE.performTpose;
       for (var n = 1; n <= 6; n++) {
         var cand = cur + dir * n;
@@ -551,9 +572,9 @@
       }
     }
     function showPerform() {
-      var s = songById(STATE.performList[STATE.performIdx]);
+      var s = songById(QUEUE.current());
       if (!s) return;
-      if (el.pPos) el.pPos.textContent = (STATE.performIdx + 1) + ' / ' + STATE.performList.length;
+      if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
       if (el.pTitle) el.pTitle.textContent = s.t;
       if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
@@ -565,7 +586,7 @@
         applyPerfFont();
       }
       updateStageBtns();
-      if (el.pNext) el.pNext.textContent = (STATE.performIdx === STATE.performList.length - 1) ? '✓' : '→';
+      if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };
