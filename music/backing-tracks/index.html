@@ -39,6 +39,36 @@
     transition:border-color .15s,color .15s;}
   .bt-more-btn:hover{border-color:var(--accent);color:var(--accent);}
   .bt-more-btn .ar{color:var(--accent);}
+  /* curate form */
+  .bt-add{margin:12px 0 6px;}
+  .bt-add-toggle{background:transparent;border:1px solid var(--line);color:var(--txt-dim);font-family:inherit;
+    font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:10px;cursor:pointer;}
+  .bt-add-toggle:hover{color:var(--accent);border-color:var(--line-strong);}
+  .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;
+    padding:13px;display:flex;flex-direction:column;gap:9px;}
+  .bt-in{width:100%;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--txt);
+    font-family:inherit;font-size:.88rem;padding:10px 12px;border-radius:9px;}
+  .bt-in:focus{outline:none;border-color:var(--accent);}
+  .bt-in.bad{border-color:#f87171;}
+  .bt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .bt-add-actions{display:flex;gap:9px;align-items:center;}
+  .bt-add-save{flex:1;background:var(--accent);color:#06201c;border:none;font-family:inherit;font-weight:700;
+    font-size:.86rem;padding:11px;border-radius:10px;cursor:pointer;}
+  .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
+    font-size:.82rem;cursor:pointer;padding:8px;}
+  /* player overlay */
+  .bt-player{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.78);padding:16px;}
+  .bt-player.on{display:flex;}
+  .bt-pl-box{width:100%;max-width:760px;background:var(--surface);border:1px solid var(--line-strong);
+    border-radius:14px;overflow:hidden;}
+  .bt-pl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;}
+  .bt-pl-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bt-pl-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
+    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
+  .bt-pl-x:hover{color:var(--accent);border-color:var(--accent);}
+  .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+  .bt-pl-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   .bt-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
   .bt-title{font-weight:700;font-size:1rem;letter-spacing:-.01em;}
   .bt-key{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.84rem;flex:0 0 auto;}
@@ -66,9 +96,27 @@
       <div class="bt-count" id="resultCount"></div>
       <div class="bt-results" id="results"></div>
       <div class="bt-more" id="more"></div>
+      <div class="bt-add">
+        <button class="bt-add-toggle" id="addToggle" type="button">+ add a track</button>
+        <div class="bt-add-panel" id="addPanel" hidden>
+          <input id="aUrl" class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off">
+          <input id="aTitle" class="bt-in" placeholder="Title" autocomplete="off">
+          <div class="bt-add-grid">
+            <input id="aKey" class="bt-in" placeholder="Key (A, C#...)" autocomplete="off">
+            <select id="aMode" class="bt-in"><option value="major">major</option><option value="minor">minor</option></select>
+            <input id="aGenre" class="bt-in" placeholder="Genre" autocomplete="off">
+            <input id="aBpm" class="bt-in" placeholder="BPM" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="bt-add-actions">
+            <button id="aSave" class="bt-add-save" type="button">Save to my library</button>
+            <button id="aCancel" class="bt-add-cancel" type="button">cancel</button>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </div>
+<div class="bt-player" id="player" aria-hidden="true"></div>
 <script src="app.js"></script>
 </body>
 </html>
