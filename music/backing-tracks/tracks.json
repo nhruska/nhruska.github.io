@@ -1,0 +1,134 @@
+[
+  {
+    "yt": null,
+    "title": "Three Little Birds",
+    "artist": "Bob Marley",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": 76,
+    "capo": 0,
+    "tags": ["easy", "I-IV-V"]
+  },
+  {
+    "yt": null,
+    "title": "Let It Be",
+    "artist": "The Beatles",
+    "genre": "rock",
+    "key": "C",
+    "mode": "major",
+    "bpm": 73,
+    "capo": 0,
+    "tags": ["ballad", "I-V-vi-IV"]
+  },
+  {
+    "yt": null,
+    "title": "Bouncing Around the Room",
+    "artist": "Phish",
+    "genre": "jam",
+    "key": "D",
+    "mode": "major",
+    "bpm": 112,
+    "capo": 0,
+    "tags": ["jam"]
+  },
+  {
+    "yt": null,
+    "title": "Sample in a Jar",
+    "artist": "Phish",
+    "genre": "jam",
+    "key": "G",
+    "mode": "major",
+    "bpm": 120,
+    "capo": 0,
+    "tags": ["jam"]
+  },
+  {
+    "yt": null,
+    "title": "Waste",
+    "artist": "Phish",
+    "genre": "jam",
+    "key": "D",
+    "mode": "major",
+    "bpm": 80,
+    "capo": 0,
+    "tags": ["jam", "ballad"]
+  },
+  {
+    "yt": null,
+    "title": "Hey Jude",
+    "artist": "The Beatles",
+    "genre": "rock",
+    "key": "F",
+    "mode": "major",
+    "bpm": 75,
+    "capo": 0,
+    "tags": ["singalong"]
+  },
+  {
+    "yt": null,
+    "title": "Twist and Shout",
+    "artist": "The Beatles",
+    "genre": "rock",
+    "key": "D",
+    "mode": "major",
+    "bpm": 126,
+    "capo": 0,
+    "tags": ["uptempo", "I-IV-V"]
+  },
+  {
+    "yt": null,
+    "title": "Ob-La-Di, Ob-La-Da",
+    "artist": "The Beatles",
+    "genre": "rock",
+    "key": "A",
+    "mode": "major",
+    "bpm": 114,
+    "capo": 0,
+    "tags": ["singalong"]
+  },
+  {
+    "yt": "ifOUmWAQups",
+    "title": "Reggae Backing Track in A Major",
+    "artist": "Petti Music Studios",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["jam"]
+  },
+  {
+    "yt": "hg6kcvOH5I4",
+    "title": "Mellow Reggae Jam in A Major",
+    "artist": "SubFunc Jam Tracks",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["mellow", "jam"]
+  },
+  {
+    "yt": "hf9--LynOZY",
+    "title": "Slow Blues Backing Track in A Minor",
+    "artist": "Quist",
+    "genre": "blues",
+    "key": "A",
+    "mode": "minor",
+    "bpm": null,
+    "capo": 0,
+    "tags": ["slow"]
+  },
+  {
+    "yt": "2EoqzNR68pY",
+    "title": "Rock Backing Track in D Major",
+    "artist": "TGuitar",
+    "genre": "rock",
+    "key": "D",
+    "mode": "major",
+    "bpm": 100,
+    "capo": 0,
+    "tags": ["jam"]
+  }
+]
