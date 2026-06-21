@@ -380,9 +380,9 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
+      if (m !== 'campfire') stopBeat(); // tempo cue only lives in Campfire — stop it before any early return (incl. Stage)
       // Stage performs the live queue from the current position (one-shot; not sticky)
       if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
-      if (m !== 'campfire') stopBeat(); // tempo cue only lives in Campfire
       STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
     }
 
@@ -395,7 +395,7 @@
       var b = el.practiceBody && el.practiceBody.querySelector('#beatToggle'); if (b) b.textContent = '▶';
     }
     function startBeat() {
-      if (!TEMPO) return;
+      if (!TEMPO || STATE.beatOn || !el.practiceBody) return; // no-op if already running (avoid orphaning the rAF loop)
       STATE.beatOn = true; STATE.beatStart = perfNow();
       var btn = el.practiceBody.querySelector('#beatToggle'); if (btn) btn.textContent = '⏸';
       var last = -1;
@@ -414,7 +414,7 @@
       STATE.beatRAF = requestAnimationFrame(step);
     }
     function tapTempo() {
-      if (!TEMPO) return;
+      if (!TEMPO || !el.practiceBody) return;
       TEMPO.tap(perfNow());
       var v = el.practiceBody.querySelector('#bpmVal'); if (v) v.textContent = TEMPO.bpm();
       if (STATE.beatOn) STATE.beatStart = perfNow(); // realign the pulse to your tap
