@@ -563,7 +563,11 @@
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       if (!el.cKey) return;
-      el.cKey.textContent = cTpose === 0 ? '0' : (cTpose > 0 ? '+' + cTpose : '−' + Math.abs(cTpose));
+      // Show the key by name (the first chord), matching the Practice readout —
+      // far clearer than a "+2 semitones" counter. 'shifted' lights up whenever
+      // you've moved off the key you originally built in.
+      if (!progression.length) { el.cKey.textContent = '—'; el.cKey.classList.remove('shifted'); return; }
+      el.cKey.textContent = progression[0];
       el.cKey.classList.toggle('shifted', cTpose !== 0);
     }
     function composeTpose(st) {
@@ -594,9 +598,22 @@
       draw();
     }
     function suggestFor(ch) {
-      if (SUGG[ch]) return SUGG[ch];
-      var base = ch.replace(/(maj7|m7|7)$/, '');
-      if (SUGG[base]) return SUGG[base];
+      // Probe the exact name, then the quality-stripped base, each slid across all
+      // 12 roots. SUGG only lists natural keys, so a transposed (sharp/flat) chord
+      // would otherwise miss and fall back to the C/G/Am/F default — wrong key.
+      // Because SUGG relationships are interval-based, we slide ch up to a known
+      // root and shift its suggestions back by the same interval, keeping them in
+      // the transposed key.
+      var variants = [ch, ch.replace(/(maj7|m7|7)$/, '')];
+      for (var v = 0; v < variants.length; v++) {
+        for (var st = 0; st < 12; st++) {
+          var probe = tpose(variants[v], st);
+          if (SUGG[probe]) {
+            return st === 0 ? SUGG[probe].slice()
+              : SUGG[probe].map(function (c) { return tpose(c, -st); });
+          }
+        }
+      }
       return ["C", "G", "Am", "F"];
     }
     function suggestNext(seq) {

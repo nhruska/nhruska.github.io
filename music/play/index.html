@@ -56,7 +56,7 @@
         <div class="progHead"><span class="progLbl">Progression</span>
           <div class="progTools">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Semitones from your original key — tap to reset">0</button>
+            <button class="keyReadout" id="cKey" title="Key (the first chord) — tap to reset to your original key">—</button>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
           </div></div>
@@ -170,19 +170,27 @@
     });
     return t;
   }
+  // If a profile lists no CLOSED shape for a quality (e.g. Open-G has no movable
+  // maj7/m7 barre), slide a closely-related quality to the same root rather than
+  // drawing a blank name-only slot - a real, strummable shape beats nothing.
+  var QUAL_FALLBACK = { 'maj7': ['', '7'], 'm7': ['m'], '7': [''], '6': [''], 'sus4': [''], 'sus2': [''] };
   function movableVoicing(templates, name) {
     var q = chordQual(name), rp = chordRootPc(name); if (rp == null) return null;
-    var tpls = templates[q]; if (!tpls || !tpls.length) return null;
-    var best = null;
-    tpls.forEach(function (tp) {
-      var base = ((rp - tp.rootPc) % 12 + 12) % 12;               // slide up to the root,
-      [base, base - 12].forEach(function (d) {                    // or down an octave - lowest wins
-        var ok = true, f = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
-        if (!ok) return; var max = Math.max.apply(null, f); if (max > 14) return;
-        if (!best || max < best.max) best = { f: f, max: max };
+    var tries = [q].concat(QUAL_FALLBACK[q] || []);
+    for (var i = 0; i < tries.length; i++) {
+      var tpls = templates[tries[i]]; if (!tpls || !tpls.length) continue;
+      var best = null;
+      tpls.forEach(function (tp) {
+        var base = ((rp - tp.rootPc) % 12 + 12) % 12;             // slide up to the root,
+        [base, base - 12].forEach(function (d) {                  // or down an octave - lowest wins
+          var ok = true, f = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
+          if (!ok) return; var max = Math.max.apply(null, f); if (max > 14) return;
+          if (!best || max < best.max) best = { f: f, max: max };
+        });
       });
-    });
-    return best ? best.f : null;
+      if (best) return best.f;
+    }
+    return null;
   }
 
   // Build the chord-pack interface the songbook engine expects, from a pure-data
