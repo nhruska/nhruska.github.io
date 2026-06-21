@@ -16,10 +16,18 @@
 
   var AC = null;
   function ctx() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); return AC; }
-  (function () { // unlock audio on first gesture (iOS / autoplay policy)
-    function unlock() { var a = ctx(); if (a.state === 'suspended') a.resume(); window.removeEventListener('touchstart', unlock); window.removeEventListener('click', unlock); }
-    window.addEventListener('touchstart', unlock); window.addEventListener('click', unlock);
-  })();
+  // Be a polite audio citizen: a *running* WebAudio context claims the device's
+  // audio focus, which pauses other apps' playback (Spotify etc.) on Android.
+  // So we DON'T warm the context up on page load / first tap — it's created
+  // lazily only when a chord actually sounds, and suspended again shortly after
+  // the sound ends so background audio resumes. (Suspended releases focus.)
+  var idleTimer = null;
+  function releaseWhenIdle(secondsFromNow) {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      if (AC && AC.state === 'running') AC.suspend();
+    }, secondsFromNow * 1000 + 180);
+  }
 
   function freqForString(openFreq, fret) { return openFreq * Math.pow(2, fret / 12); }
 
@@ -34,6 +42,7 @@
     g.gain.setValueAtTime(0.2, t + dur - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); o2.connect(g); g.connect(a.destination);
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
+    releaseWhenIdle(dur);
   }
 
   function pluck(freq, t, dur, gscale) {
@@ -59,6 +68,7 @@
       pluck(freqForString(openFreqs[s], fr), t0 + i * 0.017, dur, 1 - i * 0.045);
       i++;
     });
+    releaseWhenIdle(0.02 + Math.max(0, i - 1) * 0.017 + dur);
   }
 
   global.ChordAudio = { tone: tone, strum: strum, freqForString: freqForString };
