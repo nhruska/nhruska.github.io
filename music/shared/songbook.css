@@ -207,6 +207,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow{display:flex;flex-wrap:wrap;gap:7px;}
 .suggBtn{font-family:'Space Mono',monospace;font-weight:700;font-size:.9rem;background:var(--surface-2);color:var(--accent);border:1px solid var(--accent-dim);padding:9px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .suggBtn:active{transform:scale(.9);background:var(--accent);color:#06201c;}
+/* suggested chords render as tappable mini-diagrams (accent-bordered to read as "tap to add") */
+.suggRow .chord.suggPick{display:flex;flex-direction:column;align-items:center;gap:5px;width:64px;cursor:pointer;border-radius:12px;padding:8px 4px 6px;border:1px solid var(--accent-dim);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+.suggRow .chord.suggPick:active{transform:scale(.9);background:var(--accent-deep);border-color:var(--accent);}
+.suggRow .chord.suggPick .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);}
 .cActions{display:flex;gap:8px;margin:14px 0;}
 .chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;}
 .chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;border-radius:12px;padding:9px 4px 7px;border:1px solid transparent;transition:transform .08s,background .15s,border-color .15s;}

@@ -628,16 +628,23 @@
     }
     function renderSuggest() {
       if (!el.suggest) return;
-      if (progression.length === 0) { el.suggest.innerHTML = ''; return; }
+      el.suggest.innerHTML = '';
+      if (progression.length === 0) return;
       var picks = suggestNext(progression);
-      if (!picks.length) { el.suggest.innerHTML = ''; return; }
+      if (!picks.length) return;
       var n = progression.length;
       var label = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord:";
-      var html = '<div class="suggLbl">' + label + '</div><div class="suggRow">';
-      picks.forEach(function (c) { html += '<button class="suggBtn" data-c="' + c + '">' + c + '</button>'; });
-      html += '</div>';
-      el.suggest.innerHTML = html;
-      el.suggest.querySelectorAll('.suggBtn').forEach(function (b) { b.onclick = function () { addChord(b.dataset.c); packPlayChord(b.dataset.c); }; });
+      var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
+      el.suggest.appendChild(lbl);
+      var row = document.createElement('div'); row.className = 'suggRow';
+      // show the actual chord shape, not just a name — same diagram as the build
+      // grid below, so the suggestion reads as "here's the chord, tap to add it".
+      picks.forEach(function (c) {
+        var d = packDiagram(c, 'small'); d.className += ' suggPick';
+        d.onclick = function () { addChord(c); packPlayChord(c); };
+        row.appendChild(d);
+      });
+      el.suggest.appendChild(row);
     }
     function saveProgression() {
       if (progression.length === 0) { alert('Build a progression first.'); return; }
