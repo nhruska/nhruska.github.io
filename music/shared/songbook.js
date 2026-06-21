@@ -302,14 +302,32 @@
     }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; renderSongs(); };
 
-    /* ===================== PRACTICE ===================== */
-    function openPractice(id) {
+    /* ===================== SONG (modes: Studio / Campfire / Stage) ===================== */
+    // last-used mode is restored on open; Stage falls back to the Studio screen
+    // underneath and launches the fullscreen perform overlay on top.
+    var SONGMODE_KEY = prefix + ".songmode.v1";
+    function loadSongMode() { try { var m = localStorage.getItem(SONGMODE_KEY); return (m === 'campfire' || m === 'stage') ? m : 'studio'; } catch (e) { return 'studio'; } }
+    function saveSongMode(m) { try { localStorage.setItem(SONGMODE_KEY, m); } catch (e) { } }
+    var TEACH_KEY = prefix + ".modeteach.v1";
+    function teachSeen() { try { return localStorage.getItem(TEACH_KEY) === '1'; } catch (e) { return false; } }
+    function markTeachSeen() { try { localStorage.setItem(TEACH_KEY, '1'); } catch (e) { } }
+    STATE.songMode = loadSongMode();
+    STATE.screenMode = STATE.songMode === 'campfire' ? 'campfire' : 'studio';
+
+    function openPractice(id) { // opens the song screen in the last-used mode
       STATE.current = songById(id);
       if (STATE.current) saveLast(id);
       STATE.transpose = 0;
-      STATE.view = STATE.current && STATE.current.custom ? "chords" : "lyrics";
+      if (!STATE.current) return;
+      STATE.screenMode = STATE.songMode === 'campfire' ? 'campfire' : 'studio';
       switchTab('practice');
       renderPractice();
+      // restore Stage if that's where you left off (only once the modes are learned)
+      if (STATE.songMode === 'stage' && teachSeen()) startPerform([id]);
+    }
+    function setMode(m) {
+      if (m === 'stage') { saveSongMode('stage'); if (STATE.current) startPerform([STATE.current.id]); return; }
+      STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
     }
     function renderPractice() {
       if (!el.practiceBody) return;
@@ -320,31 +338,44 @@
       }
       if (el.practiceEmpty) el.practiceEmpty.style.display = 'none';
       el.practiceBody.style.display = 'block';
-      var s = STATE.current;
+      var s = STATE.current, mode = STATE.screenMode || 'studio';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
-      var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
-      el.practiceBody.innerHTML =
-        '<div class="detail">'
-        + '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>'
-        + '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>'
-        + '<div class="viewToggle"><button class="' + (STATE.view === 'lyrics' ? 'on' : '') + '" data-v="lyrics">Lyrics + Chords</button><button class="' + (STATE.view === 'chords' ? 'on' : '') + '" data-v="chords">Chord chart</button></div>'
-        + '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>'
-        + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : STATE.view) + '</div>'
-        + '<div class="actions">'
-        + '<button class="btn red" id="playNow" style="flex-basis:100%">▶ Play fullscreen</button>'
-        + '<button class="btn" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button>'
-        + '<button class="btn ghost" id="backLib">← Library</button>'
-        + '</div>'
-        + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
-        + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>'
-        + '</div>';
+      // first-run teaching card (Hybrid): explain the modes once, then get out of the way
+      var teach = teachSeen() ? '' :
+        '<div class="teachCard"><div class="tcH">Three ways to play a song</div>'
+        + '<div class="tcRow"><b>Studio</b> — learn it: lyrics, chords, transpose, diagrams.</div>'
+        + '<div class="tcRow"><b>Campfire</b> — jam it: big chords only, no clutter.</div>'
+        + '<div class="tcRow"><b>Stage</b> — perform it: fullscreen, auto-scroll, stage-dim.</div>'
+        + '<button class="btn red" id="teachOk">Got it</button></div>';
+      var switcher = '<div class="modeSwitch">'
+        + '<button data-m="studio" class="' + (mode === 'studio' ? 'on' : '') + '">Studio</button>'
+        + '<button data-m="campfire" class="' + (mode === 'campfire' ? 'on' : '') + '">Campfire</button>'
+        + '<button data-m="stage" class="stageBtn">Stage ▶</button></div>';
+      var head = '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>';
+      var keyPill = '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>';
+      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
+      var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Songs</button></div>';
+      var body;
+      if (mode === 'campfire') {
+        body = keyPill + chips
+          + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
+          + actions;
+      } else {
+        var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
+        body = keyPill + chips
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
+          + actions
+          + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
+          + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
+      }
+      el.practiceBody.innerHTML = '<div class="detail">' + teach + head + switcher + body + '</div>';
+      var tOk = el.practiceBody.querySelector('#teachOk'); if (tOk) tOk.onclick = function () { markTeachSeen(); renderPractice(); };
+      el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
-      el.practiceBody.querySelectorAll('.viewToggle button').forEach(function (b) { b.onclick = function () { STATE.view = b.dataset.v; renderPractice(); }; });
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
-      el.practiceBody.querySelector('#playNow').onclick = function () { startPerform([s.id]); };
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
