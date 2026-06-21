@@ -49,6 +49,35 @@
     'F#7': [2, 4, 2, 3, 2, 2], 'G#m': [4, 6, 6, 4, 4, 4]
   };
 
+  // Any chord the catalog/transpose can ask for that isn't an explicit open voicing
+  // above gets a MOVABLE BARRE shape: take a known open shape and slide it up the neck
+  // to the requested root. Two shapes per quality (6th- and 5th-string root); we keep
+  // whichever sits lower on the neck. This makes every one of the 12 keys both
+  // playable (strum) and drawable (diagram) instead of rendering blank + silent.
+  var PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
+  var SHAPES = {
+    '': [{ o: [0, 2, 2, 1, 0, 0], pc: 4 }, { o: [-1, 0, 2, 2, 2, 0], pc: 9 }],       // major: E-shape, A-shape
+    'm': [{ o: [0, 2, 2, 0, 0, 0], pc: 4 }, { o: [-1, 0, 2, 2, 1, 0], pc: 9 }],       // minor
+    '7': [{ o: [0, 2, 0, 1, 0, 0], pc: 4 }, { o: [-1, 0, 2, 0, 2, 0], pc: 9 }],       // dominant 7
+    'maj7': [{ o: [0, 2, 1, 1, 0, 0], pc: 4 }, { o: [-1, 0, 2, 1, 2, 0], pc: 9 }],    // major 7
+    'm7': [{ o: [0, 2, 0, 0, 0, 0], pc: 4 }, { o: [-1, 0, 2, 0, 1, 0], pc: 9 }]       // minor 7
+  };
+  function barreShape(name) {
+    var m = /^([A-G][#b]?)(.*)$/.exec(name); if (!m) return null;
+    var pc = PC[m[1]]; if (pc == null) return null;
+    var shapes = SHAPES[m[2] || '']; if (!shapes) return null;
+    var best = null;
+    shapes.forEach(function (sh) {
+      var shift = ((pc - sh.pc) % 12 + 12) % 12;
+      var f = sh.o.map(function (x) { return x < 0 ? -1 : x + shift; });
+      var max = Math.max.apply(null, f);
+      if (max <= 12 && (!best || max < best.max)) best = { f: f, max: max };
+    });
+    return best ? best.f : null;
+  }
+  // a fingering for any chord: explicit open voicing first, else a movable barre.
+  function fingering(name) { return CHORDS[name] || barreShape(name); }
+
   // Open-string set handed to the shared tuner (low-E / 6th at top, guitar convention).
   var TUNER_STRINGS = [
     { n: "E", l: "6th string (low E)", f: 82.41 },
@@ -94,7 +123,7 @@
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
   }
   function strumChord(name, t, dur) {
-    var f = CHORDS[name]; if (!f) return;
+    var f = fingering(name); if (!f) return;
     // strum low-to-high; skip muted strings; slight stagger between strings.
     var i = 0;
     [0, 1, 2, 3, 4, 5].forEach(function (s) {
@@ -118,7 +147,7 @@
     return hi <= 4 ? 1 : lo; // window starts at the nut unless the shape sits high
   }
   function drawDiagram(name, opts) {
-    var f = CHORDS[name];
+    var f = fingering(name);
     var wrap = document.createElement('div'); wrap.className = opts.wrapClass;
     var nameSpan = '<span class="' + opts.nameClass + '">' + name + '</span>';
     if (!f) { wrap.innerHTML = nameSpan; return wrap; }
@@ -181,7 +210,7 @@
     meta: { instrument: 'guitar', tuning: 'EADGBE', strings: 6, stringNames: ['E', 'A', 'D', 'G', 'B', 'E'] },
 
     // does this exact chord name have a fingering?
-    hasChord: function (name) { return !!CHORDS[name]; },
+    hasChord: function (name) { return !!fingering(name); },
 
     // a fingering diagram element. size: 'small' (compose grid) | 'big' (maximize)
     diagram: function (name, size) { return size === 'big' ? bigDiagram(name) : smallDiagram(name); },
