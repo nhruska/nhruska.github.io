@@ -39,7 +39,7 @@
     ];
   }
   function trackMatch(t, compat) {
-    var tk = normRoot(t.key), tm = t.mode === 'minor' ? 'minor' : 'major';
+    var tk = normRoot(t.key), tm = t.mode || 'major'; // keep modal values literal - never coerce to major
     for (var j = 0; j < compat.length; j++) {
       if (compat[j].key === tk && compat[j].mode === tm) return compat[j];
     }
