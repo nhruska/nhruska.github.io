@@ -192,6 +192,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .micMsg b{color:var(--txt);}
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
+.progTools{display:flex;align-items:center;gap:6px;}
+.keyReadout{min-width:38px;height:38px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
+.keyReadout:active{transform:scale(.9);}
 .prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;}

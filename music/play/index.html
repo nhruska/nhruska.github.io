@@ -54,7 +54,12 @@
     <section class="screen" id="s-compose">
       <div class="composeWrap">
         <div class="progHead"><span class="progLbl">Progression</span>
-          <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button></div>
+          <div class="progTools">
+            <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
+            <button class="keyReadout" id="cKey" title="Semitones from your original key — tap to reset">0</button>
+            <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
+            <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
+          </div></div>
         <div class="prog" id="prog"></div>
         <div id="suggest" class="suggest"></div>
         <div class="cActions">
@@ -239,6 +244,7 @@
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
+        cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

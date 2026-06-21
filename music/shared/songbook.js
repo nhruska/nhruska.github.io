@@ -112,7 +112,7 @@
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
-   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax,
+   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, cKey,
    *     // maximize overlay (chord pack diagrams)
    *     maxOv, maxGrid, maxClose,
    *     // context line (optional)
@@ -537,7 +537,7 @@
     if (pSheet) pSheet.onclick = function () { if (STATE.scrolling) stopScroll(); };
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
-    var progression = [];
+    var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -560,6 +560,18 @@
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); }
+    // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
+    function renderKey() {
+      if (!el.cKey) return;
+      el.cKey.textContent = cTpose === 0 ? '0' : (cTpose > 0 ? '+' + cTpose : '−' + Math.abs(cTpose));
+      el.cKey.classList.toggle('shifted', cTpose !== 0);
+    }
+    function composeTpose(st) {
+      if (!progression.length) return;
+      progression = progression.map(function (c) { return tpose(c, st); });
+      cTpose += st;
+      renderProg(); renderKey();
+    }
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid, active = Object.keys(CATS)[0] || "Major";
@@ -619,9 +631,12 @@
       customSongs.push(cs); saveCustom(); rebuildAll(); renderDecadeChips(); renderSongs();
       alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
     }
-    if (el.cClear) el.cClear.onclick = function () { progression = []; renderProg(); };
+    if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
+    if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
+    if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
+    if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
 
     /* ===================== TABS ===================== */
     function switchTab(name) {
