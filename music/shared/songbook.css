@@ -192,6 +192,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .micMsg b{color:var(--txt);}
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
+.progTools{display:flex;align-items:center;gap:6px;}
+.keyReadout{min-width:38px;height:38px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
+.keyReadout:active{transform:scale(.9);}
 .prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;}
@@ -200,19 +204,29 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggest{margin-top:12px;}
 .suggest:empty{display:none;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
-.suggRow{display:flex;flex-wrap:wrap;gap:7px;}
-.suggBtn{font-family:'Space Mono',monospace;font-weight:700;font-size:.9rem;background:var(--surface-2);color:var(--accent);border:1px solid var(--accent-dim);padding:9px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
-.suggBtn:active{transform:scale(.9);background:var(--accent);color:#06201c;}
+.suggRow{display:flex;flex-wrap:wrap;gap:8px;}
 .cActions{display:flex;gap:8px;margin:14px 0;}
-.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;}
-.chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;border-radius:12px;padding:9px 4px 7px;border:1px solid transparent;transition:transform .08s,background .15s,border-color .15s;}
-.chordGrid .chord:active{transform:scale(.9);background:var(--surface-2);}
-.chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
+.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;}
+/* ONE chord-tile style, shared by the progression, the suggestions and the build
+   grid, so every chord box reads the same. Suggestions add an accent border to
+   signal "tap to add"; the current progression and the picker stay neutral. */
+.prog .slot .chord,
+.suggRow .chord.suggPick,
+.chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+.prog .slot .chord .chord-name,
+.suggRow .chord.suggPick .chord-name,
 .chordGrid .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
+.prog .slot .chord:active,
+.suggRow .chord.suggPick:active,
+.chordGrid .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
+.suggRow .chord.suggPick{border-color:var(--accent-dim);}
+.suggRow .chord.suggPick .chord-name{color:var(--accent);}
+.suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
+.chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}
-.maxGrid{flex:1;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:20px;padding:16px 4px;overflow:auto;}
+.maxGrid{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:center;gap:20px;padding:16px 4px 28px;overflow:auto;}
 .bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
 .bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent);}

@@ -112,7 +112,7 @@
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
-   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax,
+   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, cKey,
    *     // maximize overlay (chord pack diagrams)
    *     maxOv, maxGrid, maxClose,
    *     // context line (optional)
@@ -537,7 +537,7 @@
     if (pSheet) pSheet.onclick = function () { if (STATE.scrolling) stopScroll(); };
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
-    var progression = [];
+    var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -553,13 +553,29 @@
         var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
         slot.appendChild(d);
         var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-        rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); };
+        rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
         slot.appendChild(rm);
         el.prog.appendChild(slot);
       });
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); }
+    // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
+    function renderKey() {
+      if (!el.cKey) return;
+      // Show the key by name (the first chord), matching the Practice readout —
+      // far clearer than a "+2 semitones" counter. 'shifted' lights up whenever
+      // you've moved off the key you originally built in.
+      if (!progression.length) { el.cKey.textContent = '—'; el.cKey.classList.remove('shifted'); return; }
+      el.cKey.textContent = progression[0];
+      el.cKey.classList.toggle('shifted', cTpose !== 0);
+    }
+    function composeTpose(st) {
+      if (!progression.length) return;
+      progression = progression.map(function (c) { return tpose(c, st); });
+      cTpose += st;
+      renderProg(); renderKey();
+    }
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid, active = Object.keys(CATS)[0] || "Major";
@@ -582,9 +598,22 @@
       draw();
     }
     function suggestFor(ch) {
-      if (SUGG[ch]) return SUGG[ch];
-      var base = ch.replace(/(maj7|m7|7)$/, '');
-      if (SUGG[base]) return SUGG[base];
+      // Probe the exact name, then the quality-stripped base, each slid across all
+      // 12 roots. SUGG only lists natural keys, so a transposed (sharp/flat) chord
+      // would otherwise miss and fall back to the C/G/Am/F default — wrong key.
+      // Because SUGG relationships are interval-based, we slide ch up to a known
+      // root and shift its suggestions back by the same interval, keeping them in
+      // the transposed key.
+      var variants = [ch, ch.replace(/(maj7|m7|7)$/, '')];
+      for (var v = 0; v < variants.length; v++) {
+        for (var st = 0; st < 12; st++) {
+          var probe = tpose(variants[v], st);
+          if (SUGG[probe]) {
+            return st === 0 ? SUGG[probe].slice()
+              : SUGG[probe].map(function (c) { return tpose(c, -st); });
+          }
+        }
+      }
       return ["C", "G", "Am", "F"];
     }
     function suggestNext(seq) {
@@ -599,16 +628,23 @@
     }
     function renderSuggest() {
       if (!el.suggest) return;
-      if (progression.length === 0) { el.suggest.innerHTML = ''; return; }
+      el.suggest.innerHTML = '';
+      if (progression.length === 0) return;
       var picks = suggestNext(progression);
-      if (!picks.length) { el.suggest.innerHTML = ''; return; }
+      if (!picks.length) return;
       var n = progression.length;
       var label = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord:";
-      var html = '<div class="suggLbl">' + label + '</div><div class="suggRow">';
-      picks.forEach(function (c) { html += '<button class="suggBtn" data-c="' + c + '">' + c + '</button>'; });
-      html += '</div>';
-      el.suggest.innerHTML = html;
-      el.suggest.querySelectorAll('.suggBtn').forEach(function (b) { b.onclick = function () { addChord(b.dataset.c); packPlayChord(b.dataset.c); }; });
+      var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
+      el.suggest.appendChild(lbl);
+      var row = document.createElement('div'); row.className = 'suggRow';
+      // show the actual chord shape, not just a name — same diagram as the build
+      // grid below, so the suggestion reads as "here's the chord, tap to add it".
+      picks.forEach(function (c) {
+        var d = packDiagram(c, 'small'); d.className += ' suggPick';
+        d.onclick = function () { addChord(c); packPlayChord(c); };
+        row.appendChild(d);
+      });
+      el.suggest.appendChild(row);
     }
     function saveProgression() {
       if (progression.length === 0) { alert('Build a progression first.'); return; }
@@ -619,9 +655,12 @@
       customSongs.push(cs); saveCustom(); rebuildAll(); renderDecadeChips(); renderSongs();
       alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
     }
-    if (el.cClear) el.cClear.onclick = function () { progression = []; renderProg(); };
+    if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
+    if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
+    if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
+    if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
 
     /* ===================== TABS ===================== */
     function switchTab(name) {
