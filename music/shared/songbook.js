@@ -49,6 +49,37 @@
     return 261.63 * Math.pow(2, i / 12);
   }
 
+  /* ---------- keys / modes (the jam set) ----------
+   * steps = semitone offsets of the 7 scale tones; quals = the triad quality
+   * built on each degree from the mode's own notes (verified by thirds-stacking;
+   * 'dim' degrees are dropped from the chord palette but kept in the solo scale). */
+  var MODES = {
+    Major:      { label: "Major",      steps: [0, 2, 4, 5, 7, 9, 11], quals: ["", "m", "m", "", "", "m", "dim"] },
+    Minor:      { label: "Minor",      steps: [0, 2, 3, 5, 7, 8, 10], quals: ["m", "dim", "", "m", "m", "", ""] },
+    Mixolydian: { label: "Mixolydian", steps: [0, 2, 4, 5, 7, 9, 10], quals: ["", "m", "dim", "", "m", "m", ""] },
+    Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] }
+  };
+  var MODE_HINT = {
+    Major: "bright, resolved", Minor: "dark, moody",
+    Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
+  };
+  function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
+  function scalePcs(root, modeKey) {
+    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    return m.steps.map(function (s) { return (rp + s) % 12; });
+  }
+  // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
+  // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
+  function diatonicChords(root, modeKey) {
+    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var out = [];
+    m.steps.forEach(function (s, i) {
+      if (m.quals[i] === "dim") return;
+      out.push(ROOTS[(rp + s) % 12] + m.quals[i]);
+    });
+    return out;
+  }
+
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
   function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
@@ -597,6 +628,62 @@
       }
       draw();
     }
+
+    /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ---- */
+    var keyRoot = null, keyMode = "Major";
+    function buildKeyPicker() {
+      if (!el.keyRoots || !el.keyModes) return;
+      el.keyRoots.innerHTML = '';
+      ROOTS.forEach(function (r) {
+        var b = document.createElement('button');
+        b.className = 'chip rootChip' + (r === keyRoot ? ' on' : '');
+        b.textContent = r;
+        b.onclick = function () { keyRoot = (keyRoot === r ? null : r); buildKeyPicker(); renderKeyView(); };
+        el.keyRoots.appendChild(b);
+      });
+      el.keyModes.innerHTML = '';
+      Object.keys(MODES).forEach(function (mk) {
+        var b = document.createElement('button');
+        b.className = 'chip' + (mk === keyMode ? ' on' : '');
+        b.textContent = MODES[mk].label;
+        b.onclick = function () { keyMode = mk; buildKeyPicker(); renderKeyView(); };
+        el.keyModes.appendChild(b);
+      });
+      if (el.keyClear) el.keyClear.hidden = !keyRoot;
+    }
+    function renderKeyView() {
+      if (!el.keyView) return;
+      el.keyView.innerHTML = '';
+      if (el.keyClear) el.keyClear.hidden = !keyRoot;
+      if (!keyRoot) {
+        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see its chords and the scale to solo over.</p>';
+        return;
+      }
+      var title = document.createElement('div'); title.className = 'keyTitle';
+      title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      el.keyView.appendChild(title);
+
+      // chord palette: the diatonic chords, as tappable tiles that add to the progression
+      var pLbl = document.createElement('div'); pLbl.className = 'keySubLbl'; pLbl.textContent = 'Chords in this key';
+      el.keyView.appendChild(pLbl);
+      var pal = document.createElement('div'); pal.className = 'chordGrid keyPalette';
+      diatonicChords(keyRoot, keyMode).forEach(function (c) {
+        var d = packDiagram(c, 'small');
+        d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
+        pal.appendChild(d);
+      });
+      el.keyView.appendChild(pal);
+
+      // solo scale box (needs the instrument's open strings, via the chord pack)
+      var pcs = scalePcs(keyRoot, keyMode);
+      if (pack && typeof pack.scaleDiagram === 'function' && pcs.length) {
+        var sLbl = document.createElement('div'); sLbl.className = 'keySubLbl'; sLbl.textContent = 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' ');
+        el.keyView.appendChild(sLbl);
+        var box = pack.scaleDiagram(rootPc(keyRoot), pcs, 7);
+        el.keyView.appendChild(box);
+      }
+    }
+
     function suggestFor(ch) {
       // Probe the exact name, then the quality-stripped base, each slid across all
       // 12 roots. SUGG only lists natural keys, so a transposed (sharp/flat) chord
@@ -661,6 +748,7 @@
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
+    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); };
 
     /* ===================== TABS ===================== */
     function switchTab(name) {
@@ -684,6 +772,8 @@
     renderSongs();
     renderSetlist();
     buildGrid();
+    buildKeyPicker();
+    renderKeyView();
     renderProg();
 
     // Give the chord pack a chance to wire its own UI (e.g. the Tune tab).

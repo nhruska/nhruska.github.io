@@ -66,6 +66,13 @@
           <button class="btn ghost" id="cClear">Clear</button>
           <button class="btn red" id="cSave">Save progression</button>
         </div>
+        <div class="keyBox" id="keyBox">
+          <div class="keyHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+          <div class="keyRoots" id="keyRoots"></div>
+          <div class="chips keyModes" id="keyModes"></div>
+          <div class="keyView" id="keyView"></div>
+        </div>
+        <div class="allChordsLbl">All chords</div>
         <div class="chips" id="catChips"></div>
         <div class="chordGrid" id="buildGrid"></div>
       </div>
@@ -206,6 +213,12 @@
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
       diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
+      // scale map for the active instrument: open-string pitch classes + the scale's
+      // pitch classes -> a low-position neck diagram (root tones in the accent colour).
+      scaleDiagram: function (rootPc, scalePcs, frets) {
+        var openPcs = profile.strings.map(function (s) { return freqPc(s.f); });
+        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7 });
+      },
       playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
       playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },
       playFreq: function (freq, dur) { window.ChordAudio.tone(freq, dur || 1.1); },
@@ -292,6 +305,7 @@
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
+        keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }
