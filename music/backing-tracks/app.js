@@ -227,6 +227,7 @@
         };
         state.custom.push(entry); saveCustom(state.custom); remerge();
         aUrl.value = aTitle.value = aKey.value = aGenre.value = aBpm.value = '';
+        aMode.value = 'major'; // reset the mode select too (it stayed sticky on the last entry)
         aUrl.classList.remove('bad'); aKey.classList.remove('bad');
         panel.hidden = true; rerender();
       };
