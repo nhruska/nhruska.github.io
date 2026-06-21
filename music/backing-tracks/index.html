@@ -20,6 +20,11 @@
     color:var(--txt-dim);flex:0 0 auto;width:30px;text-align:right;}
   .bt-bar .chips{margin-bottom:0;flex:1;min-width:0;}     /* shared .chips already scrolls on one row */
   .bt-bar .chip{padding:6px 12px;}
+  .bt-mode{flex:0 0 auto;display:flex;gap:5px;margin-left:2px;}
+  .bt-mode .chip{padding:6px 9px;font-size:.68rem;}
+  .bt-why{display:inline-block;margin-top:8px;font-family:'Space Mono',monospace;font-size:.6rem;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-deep);
+    border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
   .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
   .bt-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
   .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
@@ -45,7 +50,7 @@
     <section class="screen on" id="finder">
       <div class="bt-controls">
         <div class="bt-bar"><span class="bt-tag">genre</span><div class="chips" id="genreChips"></div></div>
-        <div class="bt-bar"><span class="bt-tag">key</span><div class="chips" id="keyChips"></div></div>
+        <div class="bt-bar"><span class="bt-tag">key</span><div class="chips" id="keyChips"></div><div class="bt-mode" id="modeToggle"></div></div>
       </div>
       <div class="bt-count" id="resultCount"></div>
       <div class="bt-results" id="results"></div>
