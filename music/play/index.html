@@ -66,7 +66,7 @@
       </div>
     </section>
     <section class="screen" id="s-practice">
-      <div id="practiceEmpty" class="empty">Choose a song from the Library to practice.</div>
+      <div id="practiceEmpty" class="empty">Choose a song from Songs to open it.</div>
       <div id="practiceBody" style="display:none"></div>
     </section>
     <section class="screen" id="s-setlist">
@@ -138,7 +138,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', practice: 'practice room', setlist: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', practice: 'now playing', setlist: 'tonight’s running order' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
