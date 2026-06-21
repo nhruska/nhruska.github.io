@@ -1,8 +1,8 @@
-/* Backing Tracks - finder + theory expansion (Phase 1, T2-T3).
-   Reads tracks.json; filters by genre + key, and widens the pool via
-   relative/parallel keys so a C-major track surfaces for A-minor practice.
-   Pure functions (compatibleKeys, filterTracks) are exported for Node tests;
-   DOM boot only runs in a browser. */
+/* Backing Tracks - finder + theory expansion + smart search (Phase 1, T2-T4).
+   Reads tracks.json; filters by genre + key, widens via relative/parallel keys,
+   and every card / the "search more" button opens a deterministic YouTube
+   backing-track search (no API key, works offline). Pure functions are exported
+   for Node tests; DOM boot only runs in a browser. */
 (function () {
   'use strict';
 
@@ -14,8 +14,6 @@
   function rootAt(i) { return ROOTS[((i % 12) + 12) % 12]; }
   function rootIndex(r) { return ROOTS.indexOf(normRoot(r)); }
 
-  // Selected (root, mode) -> the keys whose notes work over it, with a "why".
-  // rank 0 exact; 1 relative (same key signature); 2 parallel (same root).
   function compatibleKeys(root, mode) {
     var i = rootIndex(root);
     if (i < 0) return [];
@@ -40,7 +38,6 @@
     }
     return null;
   }
-  // -> [{ track, why|null, rank }], genre-filtered, key-expanded, rank-sorted.
   function filterTracks(tracks, genre, root, mode) {
     var byGenre = tracks.filter(function (t) {
       return !genre || genre === 'all' || t.genre === genre;
@@ -60,6 +57,24 @@
     tracks.forEach(function (t) { if (t.genre) set[t.genre] = true; });
     return Object.keys(set).sort();
   }
+
+  /* --- smart-search fallback (deterministic; no API key, offline-safe) --- */
+  function searchQuery(t) {
+    var p = [];
+    if (t.artist) p.push(t.artist);
+    if (t.title) p.push(t.title);
+    p.push('backing track');
+    return p.join(' ');
+  }
+  function filterQuery(genre, root, mode) {
+    var g = (genre && genre !== 'all') ? genre + ' ' : '';
+    var k = root ? (' in ' + root + (mode === 'minor' ? ' minor' : ' major')) : '';
+    return g + 'backing track' + k;
+  }
+  function youtubeSearchUrl(q) {
+    return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -73,8 +88,10 @@
     var elKeys = document.getElementById('keyChips');
     var elMode = document.getElementById('modeToggle');
     var elResults = document.getElementById('results');
+    var elMore = document.getElementById('more');
     var elCount = document.getElementById('resultCount');
 
+    function openSearch(q) { window.open(youtubeSearchUrl(q), '_blank', 'noopener'); }
     function chip(label, on, fn) {
       var b = document.createElement('button');
       b.className = 'chip' + (on ? ' on' : '');
@@ -109,7 +126,7 @@
     function cardEl(row) {
       var t = row.track;
       var el = document.createElement('div');
-      el.className = 'bt-card';
+      el.className = 'bt-card tap';
       el.innerHTML =
         '<div class="bt-row"><span class="bt-title">' + esc(t.title) + '</span>'
         + '<span class="bt-key">' + esc(t.key) + (t.mode === 'minor' ? 'm' : '') + '</span></div>'
@@ -118,16 +135,27 @@
         + '<div class="bt-meta"><span>' + esc(t.genre) + '</span>'
         + (t.bpm ? '<span>' + esc(t.bpm) + ' bpm</span>' : '')
         + (t.capo ? '<span>capo ' + esc(t.capo) + '</span>' : '')
+        + '<span class="bt-open">YouTube &#8599;</span>'
         + '</div>';
+      el.onclick = function () { openSearch(searchQuery(t)); };
       return el;
+    }
+    function moreButton(label, q) {
+      elMore.innerHTML = '';
+      var b = document.createElement('button');
+      b.className = 'bt-more-btn';
+      b.innerHTML = esc(label) + ' <span class="ar">&#8599;</span>';
+      b.onclick = function () { openSearch(q); };
+      elMore.appendChild(b);
     }
     function renderResults() {
       var rows = filterTracks(state.tracks, state.genre, state.key, state.mode);
+      var fq = filterQuery(state.genre, state.key, state.mode);
       elResults.innerHTML = '';
       if (!rows.length) {
-        elResults.innerHTML = '<div class="bt-empty">No tracks for that genre + key yet.'
-          + '<div class="sub">smart YouTube search lands in T4</div></div>';
+        elResults.innerHTML = '<div class="bt-empty">No curated tracks for that yet.</div>';
         elCount.textContent = '';
+        moreButton('Search YouTube for ' + fq, fq);
         return;
       }
       rows.forEach(function (r) { elResults.appendChild(cardEl(r)); });
@@ -135,6 +163,7 @@
       var extra = rows.length - exact;
       elCount.textContent = rows.length + (rows.length === 1 ? ' track' : ' tracks')
         + (state.key && extra ? ' (' + exact + ' in key, ' + extra + ' related)' : '');
+      moreButton('Search YouTube for more', fq);
     }
 
     fetch('tracks.json').then(function (r) { return r.json(); }).then(function (data) {
@@ -154,6 +183,9 @@
 
   if (typeof document !== 'undefined') boot();
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres };
+    module.exports = {
+      compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
+      searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl
+    };
   }
 })();

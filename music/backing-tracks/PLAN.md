@@ -82,6 +82,13 @@ this branch (bundle, do not swarm - reviewer-fatigue + shared-file conflicts).
 - `JSON.parse(tracks.json)` clean; every `key` matches `^[A-G][#b]?$`.
 - AI-tells validator clean on any new human-facing copy.
 
+## Known polish (deferred, not blocking)
+
+- **Key-row horizontal layout** - the 12 root chips scroll behind the pinned
+  maj/min toggle on phones, so only ~4 roots show at once. Acceptable for now
+  (Nik, 2026-06-21 preview). Revisit: a 2-row grid of roots, a compact wheel, or
+  a wider scroll affordance.
+
 ## Out of scope (later phases)
 
 - Circle of fifths / key explorer (Phase 2 - the soul).

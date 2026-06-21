@@ -28,6 +28,17 @@
   .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
   .bt-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
   .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
+  .bt-card.tap{cursor:pointer;transition:border-color .12s,transform .08s,background .12s;}
+  .bt-card.tap:hover{border-color:var(--line-strong);background:var(--surface-2);}
+  .bt-card.tap:active{transform:scale(.99);}
+  .bt-meta{align-items:center;}
+  .bt-meta .bt-open{border:none;padding:0;margin-left:auto;color:var(--accent);font-weight:700;}
+  .bt-more{margin:14px 0 6px;}
+  .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
+    font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;
+    transition:border-color .15s,color .15s;}
+  .bt-more-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .bt-more-btn .ar{color:var(--accent);}
   .bt-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
   .bt-title{font-weight:700;font-size:1rem;letter-spacing:-.01em;}
   .bt-key{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.84rem;flex:0 0 auto;}
@@ -54,6 +65,7 @@
       </div>
       <div class="bt-count" id="resultCount"></div>
       <div class="bt-results" id="results"></div>
+      <div class="bt-more" id="more"></div>
     </section>
   </div>
 </div>
