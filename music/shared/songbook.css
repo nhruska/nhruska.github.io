@@ -223,6 +223,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow .chord.suggPick .chord-name{color:var(--accent);}
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
 .chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
+/* ---- Key & scale picker ---- */
+.keyBox{margin:6px 0 18px;padding:14px;border-radius:13px;background:var(--bg-2);border:1px solid var(--line-strong);}
+.keyHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
+.keyClearBtn{border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:14px;cursor:pointer;}
+.keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
+.keyRoots{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;margin-bottom:9px;scrollbar-width:none;}
+.keyRoots::-webkit-scrollbar{display:none;}
+.rootChip{padding:7px 11px;font-family:'Space Mono',monospace;font-size:.78rem;}
+.keyModes{margin-bottom:2px;}
+.keyHint{color:var(--txt-dim);font-size:.82rem;margin:8px 2px 2px;}
+.keyTitle{margin:8px 0 4px;font-size:1rem;}
+.keyTitle strong{color:var(--txt);font-weight:800;}
+.keyTitle span{color:var(--accent);font-size:.76rem;font-weight:600;margin-left:6px;}
+.keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
+.keyPalette{margin-bottom:2px;}
+.scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.scaleBox::-webkit-scrollbar{display:none;}
+.scaleBox svg{display:block;}
+.allChordsLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 10px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}
