@@ -553,7 +553,7 @@
         var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
         slot.appendChild(d);
         var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-        rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); };
+        rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
         slot.appendChild(rm);
         el.prog.appendChild(slot);
       });
