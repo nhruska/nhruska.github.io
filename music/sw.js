@@ -6,12 +6,12 @@
  * RELATIVE to this file, so the same worker works on the live site and on
  * githack preview URLs.
  *
- * Strategy: stale-while-revalidate for same-origin GETs (instant + offline,
- * refreshes in the background), cache-first for cross-origin (fonts). Bump
- * CACHE to roll out a new precache.
+ * Strategy: network-first for same-origin GETs (you always get the latest
+ * when you have signal; falls back to cache when offline), cache-first for
+ * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v1';
+var CACHE = 'music-v2';
 var CORE = [
   './play/', './play/index.html', './play/manifest.webmanifest',
   './play/icon.svg', './play/icon-maskable.svg',
@@ -40,17 +40,34 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
-  e.respondWith(
-    caches.open(CACHE).then(function (cache) {
-      return cache.match(req).then(function (cached) {
-        // refresh the cache in the background (fonts included via opaque/cors)
-        var network = fetch(req).then(function (res) {
-          if (res && (res.status === 200 || res.type === 'opaque')) cache.put(req, res.clone());
+  if (!/^https?:/.test(req.url)) return;         // skip chrome-extension: etc. (cache.put would throw)
+  if (req.headers.has('range')) return;          // let the browser handle media byte-range itself
+  var sameOrigin = new URL(req.url).origin === self.location.origin;
+  if (sameOrigin) {
+    // network-first: always fresh when online; cached copy only as offline fallback.
+    // On a cache miss offline (e.g. a deep link with ?p=…), fall back to the app
+    // shell so a navigation still renders instead of a dead network error.
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (cached) {
+          if (cached) return cached;
+          if (req.mode === 'navigate') return caches.match('./play/').then(function (shell) { return shell || caches.match('./play/index.html'); });
+          return Response.error();
+        });
+      })
+    );
+  } else {
+    // cross-origin (fonts/icons): cache-first, they rarely change
+    e.respondWith(
+      caches.match(req).then(function (cached) {
+        return cached || fetch(req).then(function (res) {
+          if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
         }).catch(function () { return cached; });
-        // serve cache instantly when we have it; otherwise wait for the network
-        return cached || network;
-      });
-    })
-  );
+      })
+    );
+  }
 });
