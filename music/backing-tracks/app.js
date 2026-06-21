@@ -14,7 +14,12 @@
   var STORE = 'bt.custom.v1';
 
   /* --- pure (testable) music-theory + filter --- */
-  function normRoot(r) { r = String(r || ''); return FLAT2SHARP[r] || r; }
+  function normRoot(r) {
+    r = String(r || '').trim();
+    if (!r) return '';
+    var u = r.charAt(0).toUpperCase() + r.slice(1).toLowerCase(); // canonicalize case
+    return FLAT2SHARP[u] || u;                                    // flats -> sharps
+  }
   function rootAt(i) { return ROOTS[((i % 12) + 12) % 12]; }
   function rootIndex(r) { return ROOTS.indexOf(normRoot(r)); }
 
@@ -95,7 +100,7 @@
     var out = { title: title, key: null, mode: 'major', genre: null, bpm: null };
     var b = title.match(/(\d{2,3})\s*bpm/i);
     if (b) out.bpm = parseInt(b[1], 10);
-    var k = title.match(/\bin\s+([A-G](?:#|b)?)\b\s*(minor|min|major|maj|m)?\b/i)
+    var k = title.match(/\bin\s+([A-G](?:#|b)?)\s*(minor|min|major|maj|m)?\b/i)
       || title.match(/\b([A-G](?:#|b)?)\s*(minor|min)\b/i)
       || title.match(/\b([A-G](?:#|b)?)(m)\b/);
     if (k) {
@@ -238,9 +243,9 @@
       };
       $('aSave').onclick = function () {
         var id = parseYouTubeId(aUrl.value);
-        var key = aKey.value.trim();
+        var key = normRoot(aKey.value);
         if (!id) { aUrl.focus(); aUrl.classList.add('bad'); return; }
-        if (!key) { aKey.focus(); aKey.classList.add('bad'); return; }
+        if (!key || rootIndex(key) < 0) { aKey.focus(); aKey.classList.add('bad'); return; }
         var entry = {
           yt: id, title: aTitle.value.trim() || ('My track ' + id),
           genre: aGenre.value.trim().toLowerCase() || 'other',
