@@ -9,8 +9,6 @@
 
   var ROOTS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   var FLAT2SHARP = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-  var KNOWN_GENRES = ['blues', 'rock', 'jazz', 'funk', 'reggae', 'jam', 'metal',
-    'pop', 'soul', 'country', 'lofi', 'lo-fi', 'bossa', 'folk', 'gospel'];
   var STORE = 'bt.custom.v1';
 
   /* --- pure (testable) music-theory + filter --- */
@@ -94,25 +92,6 @@
     if (m) return m[1];
     if (/^[A-Za-z0-9_-]{11}$/.test(url)) return url;
     return null;
-  }
-  function parseTrackFromTitle(title) {
-    title = String(title || '').trim();
-    var out = { title: title, key: null, mode: 'major', genre: null, bpm: null };
-    var b = title.match(/(\d{2,3})\s*bpm/i);
-    if (b) out.bpm = parseInt(b[1], 10);
-    var k = title.match(/\bin\s+([A-G](?:#|b)?)\s*(minor|min|major|maj|m)?\b/i)
-      || title.match(/\b([A-G](?:#|b)?)\s*(minor|min)\b/i)
-      || title.match(/\b([A-G](?:#|b)?)(m)\b/);
-    if (k) {
-      out.key = k[1].charAt(0).toUpperCase() + k[1].slice(1);
-      var q = (k[2] || '').toLowerCase();
-      if (q === 'm' || q.indexOf('min') === 0) out.mode = 'minor';
-    }
-    var lt = title.toLowerCase();
-    for (var i = 0; i < KNOWN_GENRES.length; i++) {
-      if (lt.indexOf(KNOWN_GENRES[i]) >= 0) { out.genre = KNOWN_GENRES[i]; break; }
-    }
-    return out;
   }
   function mergeTracks(seed, custom) {
     return (Array.isArray(seed) ? seed : []).concat(Array.isArray(custom) ? custom : []);
@@ -234,14 +213,7 @@
       toggle.onclick = function () { panel.hidden = !panel.hidden; if (!panel.hidden) aUrl.focus(); };
       $('aCancel').onclick = function () { panel.hidden = true; };
       aUrl.oninput = function () { aUrl.classList.remove('bad'); };
-      var auto = { key: '', genre: '', bpm: '', mode: '' }; // last parser-set values, so live typing can correct them
-      aTitle.oninput = function () {
-        var p = parseTrackFromTitle(aTitle.value);
-        if (p.key && (aKey.value === '' || aKey.value === auto.key)) { aKey.value = p.key; auto.key = p.key; }
-        if (p.genre && (aGenre.value === '' || aGenre.value === auto.genre)) { aGenre.value = p.genre; auto.genre = p.genre; }
-        if (p.bpm && (aBpm.value === '' || aBpm.value === auto.bpm)) { aBpm.value = String(p.bpm); auto.bpm = String(p.bpm); }
-        if (auto.mode === '' || aMode.value === auto.mode) { aMode.value = p.mode; auto.mode = p.mode; }
-      };
+      aKey.oninput = function () { aKey.classList.remove('bad'); };
       $('aSave').onclick = function () {
         var id = parseYouTubeId(aUrl.value);
         var key = normRoot(aKey.value);
@@ -283,8 +255,7 @@
     module.exports = {
       compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
       searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
-      embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, parseTrackFromTitle: parseTrackFromTitle,
-      mergeTracks: mergeTracks
+      embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks
     };
   }
 })();
