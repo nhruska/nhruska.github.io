@@ -40,21 +40,31 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
+  if (!/^https?:/.test(req.url)) return;         // skip chrome-extension: etc. (cache.put would throw)
+  if (req.headers.has('range')) return;          // let the browser handle media byte-range itself
   var sameOrigin = new URL(req.url).origin === self.location.origin;
   if (sameOrigin) {
-    // network-first: always fresh when online; cached copy only as offline fallback
+    // network-first: always fresh when online; cached copy only as offline fallback.
+    // On a cache miss offline (e.g. a deep link with ?p=…), fall back to the app
+    // shell so a navigation still renders instead of a dead network error.
     e.respondWith(
       fetch(req).then(function (res) {
-        if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+        if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
         return res;
-      }).catch(function () { return caches.match(req); })
+      }).catch(function () {
+        return caches.match(req).then(function (cached) {
+          if (cached) return cached;
+          if (req.mode === 'navigate') return caches.match('./play/').then(function (shell) { return shell || caches.match('./play/index.html'); });
+          return Response.error();
+        });
+      })
     );
   } else {
     // cross-origin (fonts/icons): cache-first, they rarely change
     e.respondWith(
       caches.match(req).then(function (cached) {
         return cached || fetch(req).then(function (res) {
-          if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+          if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
         }).catch(function () { return cached; });
       })
