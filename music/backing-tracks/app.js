@@ -234,13 +234,13 @@
       toggle.onclick = function () { panel.hidden = !panel.hidden; if (!panel.hidden) aUrl.focus(); };
       $('aCancel').onclick = function () { panel.hidden = true; };
       aUrl.oninput = function () { aUrl.classList.remove('bad'); };
-      var auto = { key: '', genre: '', bpm: '' }; // last parser-set values, so live typing can correct them
+      var auto = { key: '', genre: '', bpm: '', mode: '' }; // last parser-set values, so live typing can correct them
       aTitle.oninput = function () {
         var p = parseTrackFromTitle(aTitle.value);
         if (p.key && (aKey.value === '' || aKey.value === auto.key)) { aKey.value = p.key; auto.key = p.key; }
         if (p.genre && (aGenre.value === '' || aGenre.value === auto.genre)) { aGenre.value = p.genre; auto.genre = p.genre; }
         if (p.bpm && (aBpm.value === '' || aBpm.value === auto.bpm)) { aBpm.value = String(p.bpm); auto.bpm = String(p.bpm); }
-        if (p.mode === 'minor') aMode.value = 'minor';
+        if (auto.mode === '' || aMode.value === auto.mode) { aMode.value = p.mode; auto.mode = p.mode; }
       };
       $('aSave').onclick = function () {
         var id = parseYouTubeId(aUrl.value);
