@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Backing Tracks - Music</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../play/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Backing Tracks">
+<!-- Shared songbook styles (theme + components). -->
+<link rel="stylesheet" href="../shared/songbook.css">
+<style>
+  /* backing-tracks shell (Phase 1 - T1) */
+  .bt-empty{text-align:center;color:var(--txt-dim);padding:48px 18px;line-height:1.7;}
+  .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="appbar">
+    <div class="brand"><span class="nm">Backing Tracks</span><span class="ctx" id="ctx">find a track in your key</span></div>
+    <div class="abRight">
+      <a class="ab-btn" href="../" title="Music launcher" aria-label="Back to Music launcher">&larr;</a>
+    </div>
+  </div>
+  <div class="view">
+    <section class="screen on" id="finder">
+      <div class="bt-empty" id="empty">
+        Pick a genre and a key to find a backing track.
+        <div class="sub">finder lands next - T2</div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+/* Backing Tracks - Phase 1 shell. Finder logic arrives in T2.
+   Same service worker as the rest of the Music app (scope /music/). */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(function () { });
+  });
+}
+</script>
+</body>
+</html>
