@@ -151,15 +151,54 @@
     return 261.63;
   }
 
+  // ---- movable-shape fallback (instrument-agnostic) --------------------------
+  // Profiles list explicit fingerings only for common chords. Transpose/compose
+  // can land on any of the 12 roots, so for a chord the profile doesn't list we
+  // slide a CLOSED template (no open strings, so it moves) of the same quality up
+  // to the requested root - keeping the lowest valid window. Result: every key
+  // both draws a real shape and strums on every instrument.
+  var CHORD_PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
+  function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
+  function chordRootPc(name) { var m = /^([A-G][#b]?)/.exec(name); return m ? CHORD_PC[m[1]] : null; }
+  function chordQual(name) { var m = /^[A-G][#b]?(.*)$/.exec(name); return m ? m[1] : ''; }
+  function buildTemplates(chords) {
+    var t = {}; if (!chords) return t;
+    Object.keys(chords).forEach(function (nm) {
+      var fr = chords[nm]; if (fr.indexOf(0) >= 0) return;        // open string -> can't slide
+      var q = chordQual(nm), rp = chordRootPc(nm); if (rp == null) return;
+      (t[q] = t[q] || []).push({ frets: fr, rootPc: rp });
+    });
+    return t;
+  }
+  function movableVoicing(templates, name) {
+    var q = chordQual(name), rp = chordRootPc(name); if (rp == null) return null;
+    var tpls = templates[q]; if (!tpls || !tpls.length) return null;
+    var best = null;
+    tpls.forEach(function (tp) {
+      var base = ((rp - tp.rootPc) % 12 + 12) % 12;               // slide up to the root,
+      [base, base - 12].forEach(function (d) {                    // or down an octave - lowest wins
+        var ok = true, f = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
+        if (!ok) return; var max = Math.max.apply(null, f); if (max > 14) return;
+        if (!best || max < best.max) best = { f: f, max: max };
+      });
+    });
+    return best ? best.f : null;
+  }
+
   // Build the chord-pack interface the songbook engine expects, from a pure-data
   // profile + the shared Diagram / ChordAudio / Tuner modules.
   function buildAdapter(profile) {
     var openFreqs = profile.strings.map(function (s) { return s.f; });
+    var templates = buildTemplates(profile.chords);
+    // explicit profile voicing first; else a movable shape; else null (name-only)
+    function voicingFor(name) {
+      return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
+    }
     return {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
-      hasChord: function (name) { return !!(profile.chords && profile.chords[name]); },
-      diagram: function (name, size) { var fr = profile.chords ? profile.chords[name] : null; return window.Diagram.render(fr || null, { size: size, name: name }); },
-      playChord: function (name) { var fr = profile.chords ? profile.chords[name] : null; if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
+      hasChord: function (name) { return !!voicingFor(name); },
+      diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
+      playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
       playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },
       playFreq: function (freq, dur) { window.ChordAudio.tone(freq, dur || 1.1); },
       onLeaveTuner: function () { if (window.Tuner) window.Tuner.stop(); },
