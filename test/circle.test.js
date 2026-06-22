@@ -85,4 +85,42 @@ test('unknown root returns empty diatonic', function () {
   assert.deepStrictEqual(Circle.diatonic('H', 'major'), []);
 });
 
+/* ---------- modes: scales, degrees, the "one note changed" ---------- */
+test('scale() spells the mode from the root (sharp spelling)', function () {
+  assert.deepStrictEqual(Circle.scale('C', 'major'), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
+  assert.deepStrictEqual(Circle.scale('A', 'dorian'), ['A', 'B', 'C', 'D', 'E', 'F#', 'G']);
+  assert.deepStrictEqual(Circle.scale('G', 'mixolydian'), ['G', 'A', 'B', 'C', 'D', 'E', 'F']);
+  assert.deepStrictEqual(Circle.scale('C', 'minor'), ['C', 'D', 'D#', 'F', 'G', 'G#', 'A#']); // minor == aeolian
+});
+test('scaleDegrees() labels intervals against the major scale', function () {
+  assert.deepStrictEqual(Circle.scaleDegrees('dorian'), ['1', '2', '♭3', '4', '5', '6', '♭7']);
+  assert.deepStrictEqual(Circle.scaleDegrees('mixolydian'), ['1', '2', '3', '4', '5', '6', '♭7']);
+  assert.deepStrictEqual(Circle.scaleDegrees('phrygian'), ['1', '♭2', '♭3', '4', '5', '♭6', '♭7']);
+  assert.deepStrictEqual(Circle.scaleDegrees('lydian'), ['1', '2', '3', '♯4', '5', '6', '7']);
+});
+test('modeChange() reports the note that moves vs the parent scale', function () {
+  var d = Circle.modeChange('A', 'dorian'); // vs natural minor: raise the 6th F->F#
+  assert.strictEqual(d.length, 1);
+  assert.deepStrictEqual({ degree: d[0].degree, from: d[0].from, to: d[0].to, dir: d[0].dir },
+    { degree: 6, from: 'F', to: 'F#', dir: 'raise' });
+  var m = Circle.modeChange('G', 'mixolydian'); // vs major: lower the 7th F#->F
+  assert.deepStrictEqual({ degree: m[0].degree, from: m[0].from, to: m[0].to, dir: m[0].dir },
+    { degree: 7, from: 'F#', to: 'F', dir: 'lower' });
+  assert.deepStrictEqual(Circle.modeChange('C', 'major'), []); // a reference scale changes nothing
+  assert.deepStrictEqual(Circle.modeChange('A', 'minor'), []);
+});
+test('modeInfo() carries family + label', function () {
+  assert.strictEqual(Circle.modeInfo('dorian').family, 'minor');
+  assert.strictEqual(Circle.modeInfo('mixolydian').family, 'major');
+  assert.ok(/Dorian/.test(Circle.modeInfo('dorian').label));
+});
+test('diatonic() generalizes to modes', function () {
+  var d = Circle.diatonic('A', 'dorian');
+  assert.strictEqual(names(d), 'Am Bm C D Em F#dim G');
+  assert.deepStrictEqual(d.map(function (x) { return x.roman; }),
+    ['i', 'ii', 'III', 'IV', 'v', 'vi°', 'VII']);
+  var g = Circle.diatonic('G', 'mixolydian');
+  assert.strictEqual(names(g), 'G Am Bdim C Dm Em F');
+});
+
 run();

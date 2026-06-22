@@ -105,7 +105,12 @@
 
   /* --- DOM boot (browser only) --- */
   function boot() {
-    var state = { genre: 'all', key: null, mode: 'major', seed: [], custom: [], tracks: [] };
+    // mode = the track filter (major|minor); scaleMode = the teaching mode shown in
+    // the key panel (ionian..phrygian). scaleMode maps to its major/minor family.
+    var state = { genre: 'all', key: null, mode: 'major', scaleMode: 'ionian', seed: [], custom: [], tracks: [] };
+    var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
+    var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
+    function familyMode(m) { return m === 'minor' ? 'aeolian' : 'ionian'; }
     var $ = function (id) { return document.getElementById(id); };
     var elGenre = $('genreChips'), elKeys = $('keyChips'), elMode = $('modeToggle');
     var elResults = $('results'), elMore = $('more'), elCount = $('resultCount');
@@ -150,31 +155,62 @@
       elWheel.innerHTML = '';
       elWheel.appendChild(window.Circle.renderWheel({
         selected: { root: state.key, mode: state.mode },
-        onPick: function (root, mode) { state.key = root; state.mode = mode; rerender(); }
+        onPick: function (root, mode) { state.key = root; state.mode = mode; state.scaleMode = familyMode(mode); rerender(); }
       }));
     }
     function nbChip(root, mode, why) {
       return '<button class="cofNbChip" data-root="' + esc(root) + '" data-mode="' + esc(mode) + '">'
         + '<b>' + esc(root) + (mode === 'minor' ? 'm' : '') + '</b> · ' + esc(why) + '</button>';
     }
+    function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
+    function modeHint(C, label) {
+      var ch = C.modeChange(state.key, state.scaleMode), info = C.modeInfo(state.scaleMode);
+      if (!ch.length) return '<b>' + esc(shortMode(label)) + '</b> — the home scale you measure the others against.';
+      var ref = info.ref === 'aeolian' ? 'natural minor' : 'major';
+      var parts = ch.map(function (c) {
+        return 'the ' + ORD[c.degree] + ' ' + (c.dir === 'raise' ? 'raised' : 'lowered')
+          + ' (<b>' + esc(c.from) + ' → ' + esc(c.to) + '</b>)';
+      }).join(', ');
+      return '<b>' + esc(shortMode(label)) + '</b> = ' + ref + ' with ' + parts + '.';
+    }
     function renderPanel() {
       if (!elPanel || !window.Circle) return;
       if (!state.key) { elPanel.innerHTML = ''; return; }
-      var C = window.Circle, dia = C.diatonic(state.key, state.mode), nb = C.neighbors(state.key, state.mode);
+      var C = window.Circle, label = C.modeInfo(state.scaleMode).label;
+      var dia = C.diatonic(state.key, state.scaleMode), nb = C.neighbors(state.key, state.mode);
+      var notes = C.scale(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      var changed = {}; C.modeChange(state.key, state.scaleMode).forEach(function (c) { changed[c.degree] = true; });
+      var modeChips = MODE_ORDER.map(function (m) {
+        return '<button class="cofModeChip' + (state.scaleMode === m ? ' on' : '') + '" data-mode="' + esc(m) + '">'
+          + esc(shortMode(C.modeInfo(m).label)) + '</button>';
+      }).join('');
+      var strip = notes.map(function (n, i) {
+        return '<div class="cofDeg' + (changed[i + 1] ? ' char' : '') + '">'
+          + '<span class="nt">' + esc(n) + '</span><span class="dg">' + esc(degs[i]) + '</span></div>';
+      }).join('');
       var chords = dia.map(function (d) {
         return '<div class="cofChord"><span class="rn">' + esc(d.roman) + '</span><span class="nm">' + esc(d.chord) + '</span></div>';
       }).join('');
       elPanel.innerHTML =
         '<div class="cofPanelInner">'
-        + '<div class="cofKeyName">' + esc(state.key) + ' ' + esc(state.mode) + '</div>'
-        + '<div class="cofWhy">The chords that live in this key:</div>'
+        + '<div class="cofKeyName">' + esc(state.key) + ' ' + esc(shortMode(label)) + '</div>'
+        + '<div class="cofModes">' + modeChips + '</div>'
+        + '<div class="cofScale">' + strip + '</div>'
+        + '<div class="cofHint">' + modeHint(C, label) + '</div>'
+        + '<div class="cofWhy">The chords that live in this scale:</div>'
         + '<div class="cofChords">' + chords + '</div>'
         + '<div class="cofNbLbl">Explore next</div>'
         + '<div class="cofNb">'
         + nb.map(function (x) { return nbChip(x.root, x.mode, x.why); }).join('')
         + '</div></div>';
+      Array.prototype.forEach.call(elPanel.querySelectorAll('.cofModeChip'), function (b) {
+        b.onclick = function () { state.scaleMode = b.getAttribute('data-mode'); state.mode = C.modeInfo(state.scaleMode).family; rerender(); };
+      });
       Array.prototype.forEach.call(elPanel.querySelectorAll('.cofNbChip'), function (b) {
-        b.onclick = function () { state.key = b.getAttribute('data-root'); state.mode = b.getAttribute('data-mode'); rerender(); };
+        b.onclick = function () {
+          state.key = b.getAttribute('data-root'); state.mode = b.getAttribute('data-mode');
+          state.scaleMode = familyMode(state.mode); rerender();
+        };
       });
     }
     function renderGenre() {
@@ -194,7 +230,7 @@
     function renderMode() {
       elMode.innerHTML = '';
       [['maj', 'major'], ['min', 'minor']].forEach(function (m) {
-        elMode.appendChild(chip(m[0], state.mode === m[1], function () { state.mode = m[1]; rerender(); }));
+        elMode.appendChild(chip(m[0], state.mode === m[1], function () { state.mode = m[1]; state.scaleMode = familyMode(m[1]); rerender(); }));
       });
     }
     function cardEl(row) {

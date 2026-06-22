@@ -11,7 +11,7 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v7';
+var CACHE = 'music-v8';
 var CORE = [
   './', './index.html',
   './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json', './backing-tracks/app.js',

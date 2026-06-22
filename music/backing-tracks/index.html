@@ -99,6 +99,23 @@
   .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
   .cofNbChip:active{transform:scale(.94);}
   .cofNbChip b{font-weight:700;}
+  /* modes layer + interval degrees (Phase 2.x) */
+  .cofModes{display:flex;gap:5px;overflow-x:auto;margin:2px 0 11px;padding-bottom:2px;scrollbar-width:none;}
+  .cofModes::-webkit-scrollbar{display:none;}
+  .cofModeChip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
+    transition:background .12s,color .12s,border-color .12s;}
+  .cofModeChip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+  .cofScale{display:flex;gap:4px;margin:0 0 9px;}
+  .cofDeg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:8px;padding:6px 2px;min-width:0;}
+  .cofDeg.char{background:var(--accent-deep);border-color:var(--accent-dim);}
+  .cofDeg .nt{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:var(--txt);}
+  .cofDeg.char .nt{color:var(--accent);}
+  .cofDeg .dg{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--txt-dim);}
+  .cofDeg.char .dg{color:var(--accent);}
+  .cofHint{font-size:.72rem;color:var(--txt-soft);margin:0 0 12px;line-height:1.5;}
+  .cofHint b{color:var(--accent);font-weight:700;}
 </style>
 </head>
 <body>
