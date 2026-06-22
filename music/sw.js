@@ -17,7 +17,7 @@ var CORE = [
   './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json', './backing-tracks/app.js',
   './play/', './play/index.html', './play/manifest.webmanifest',
   './play/icon.svg', './play/icon-maskable.svg',
-  './shared/circle.js',
+  './shared/circle.js', './shared/queue.js', './shared/tempo.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js',
   './shared/songbook.css', './shared/songs.json',
   './shared/profiles/manifest.json',
