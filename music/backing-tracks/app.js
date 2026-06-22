@@ -193,7 +193,7 @@
       }).join('');
       elPanel.innerHTML =
         '<div class="cofPanelInner">'
-        + '<div class="cofKeyName">' + esc(state.key) + ' ' + esc(shortMode(label)) + '</div>'
+        + '<div class="cofKeyName">' + esc(notes[0] || C.keyName(state.key)) + ' ' + esc(shortMode(label)) + '</div>'
         + '<div class="cofModes">' + modeChips + '</div>'
         + '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">' + modeHint(C, label) + '</div>'
@@ -201,7 +201,7 @@
         + '<div class="cofChords">' + chords + '</div>'
         + '<div class="cofNbLbl">Explore next</div>'
         + '<div class="cofNb">'
-        + nb.map(function (x) { return nbChip(x.root, x.mode, x.why); }).join('')
+        + nb.map(function (x) { return nbChip(C.spellRoot(x.root, x.mode), x.mode, x.why); }).join('')
         + '</div></div>';
       Array.prototype.forEach.call(elPanel.querySelectorAll('.cofModeChip'), function (b) {
         b.onclick = function () { state.scaleMode = b.getAttribute('data-mode'); state.mode = C.modeInfo(state.scaleMode).family; rerender(); };
