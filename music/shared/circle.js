@@ -23,21 +23,72 @@
   function spell(pc) { return ROOTS[((pc % 12) + 12) % 12]; }
   function shift(root, semis) { var p = pcOf(root); return p < 0 ? null : spell(p + semis); }
 
-  // diatonic triad recipes: scale-degree semitone offsets + chord qualities + roman
+  // The seven modes as semitone formulas from the root. 'major'/'minor' alias
+  // Ionian/Aeolian. Everything below (scales, interval degrees, the "one note
+  // changed" hint, and the diatonic triads) derives from these — one source.
+  var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
   var MODES = {
-    major: { steps: [0, 2, 4, 5, 7, 9, 11], qual: ['', 'm', 'm', '', '', 'm', 'dim'], roman: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'] },
-    minor: { steps: [0, 2, 3, 5, 7, 8, 10], qual: ['m', 'dim', '', 'm', 'm', '', ''], roman: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'] }
+    ionian: [0, 2, 4, 5, 7, 9, 11], dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10],
+    lydian: [0, 2, 4, 6, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10], aeolian: [0, 2, 3, 5, 7, 8, 10], locrian: [0, 1, 3, 5, 6, 8, 10]
   };
+  var ALIAS = { major: 'ionian', minor: 'aeolian' };
+  // ref = the scale a mode is "one note changed" from (its brighter parent)
+  var MODE_INFO = {
+    ionian: { label: 'Ionian (major)', family: 'major', ref: 'ionian', vibe: 'bright / home' },
+    lydian: { label: 'Lydian', family: 'major', ref: 'ionian', vibe: 'dreamy / floating' },
+    mixolydian: { label: 'Mixolydian', family: 'major', ref: 'ionian', vibe: 'bluesy / dominant' },
+    dorian: { label: 'Dorian', family: 'minor', ref: 'aeolian', vibe: 'hopeful minor' },
+    aeolian: { label: 'Aeolian (minor)', family: 'minor', ref: 'aeolian', vibe: 'sad / neutral' },
+    phrygian: { label: 'Phrygian', family: 'minor', ref: 'aeolian', vibe: 'Spanish / dark' },
+    locrian: { label: 'Locrian', family: 'minor', ref: 'aeolian', vibe: 'unstable' }
+  };
+  var DEG = ['1', '2', '3', '4', '5', '6', '7'];
+  var RN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  function modeKey(mode) { return MODES[ALIAS[mode] || mode] ? (ALIAS[mode] || mode) : 'ionian'; }
 
   function position(root) { return ORDER.indexOf(norm(root)); }
   function atPosition(n) { return ORDER[((n % 12) + 12) % 12]; }
 
+  function scale(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    return MODES[modeKey(mode)].map(function (s) { return spell(pc + s); });
+  }
+  // interval label per degree vs the major scale: e.g. dorian -> 1 2 ♭3 4 5 6 ♭7
+  function scaleDegrees(mode) {
+    return MODES[modeKey(mode)].map(function (s, i) {
+      var d = s - MAJOR_STEPS[i];
+      return (d < 0 ? '♭' : d > 0 ? '♯' : '') + DEG[i];
+    });
+  }
+  // the note(s) that move vs the parent reference scale — "raise the 6th (F→F#)"
+  function modeChange(root, mode) {
+    var mk = modeKey(mode), ref = MODE_INFO[mk].ref;
+    if (ref === mk) return [];
+    var pc = pcOf(root); if (pc < 0) return [];
+    var fm = MODES[mk], fr = MODES[ref], out = [];
+    for (var i = 0; i < 7; i++) {
+      if (fm[i] !== fr[i]) out.push({ degree: i + 1, from: spell(pc + fr[i]), to: spell(pc + fm[i]), dir: fm[i] > fr[i] ? 'raise' : 'lower' });
+    }
+    return out;
+  }
+  function triadQuality(third, fifth) {
+    if (third === 4 && fifth === 7) return { q: '', t: 'maj' };
+    if (third === 3 && fifth === 7) return { q: 'm', t: 'min' };
+    if (third === 3 && fifth === 6) return { q: 'dim', t: 'dim' };
+    if (third === 4 && fifth === 8) return { q: 'aug', t: 'aug' };
+    return { q: '', t: 'maj' };
+  }
+  // diatonic triads of any mode, built by stacking thirds within its own scale
   function diatonic(root, mode) {
-    var pc = pcOf(root), m = MODES[mode] || MODES.major;
-    if (pc < 0) return [];
-    return m.steps.map(function (st, i) {
-      var r = spell(pc + st);
-      return { roman: m.roman[i], chord: r + m.qual[i], root: r, quality: m.qual[i] };
+    var sc = scale(root, mode); if (!sc.length) return [];
+    var pcs = sc.map(pcOf);
+    return sc.map(function (r, i) {
+      var third = (((pcs[(i + 2) % 7] - pcs[i]) % 12) + 12) % 12;
+      var fifth = (((pcs[(i + 4) % 7] - pcs[i]) % 12) + 12) % 12;
+      var qq = triadQuality(third, fifth);
+      var rn = (qq.t === 'min' || qq.t === 'dim') ? RN[i].toLowerCase() : RN[i];
+      if (qq.t === 'dim') rn += '°'; else if (qq.t === 'aug') rn += '+';
+      return { roman: rn, chord: r + qq.q, root: r, quality: qq.q };
     });
   }
 
@@ -107,6 +158,11 @@
       ];
     },
     diatonic: diatonic,
+    scale: scale,
+    scaleDegrees: scaleDegrees,
+    modeChange: modeChange,
+    modeInfo: function (mode) { return MODE_INFO[modeKey(mode)]; },
+    MODE_INFO: MODE_INFO,
     renderWheel: renderWheel
   };
 

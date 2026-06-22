@@ -50,6 +50,17 @@ tapping a wedge calls `onPick(root, mode)`.
 - Wheel is legible + tappable at 375px width (eyeball).
 - Guardrail: still one surface; the wheel is navigation, not a dashboard.
 
+## Phase 2.x — modes + interval degrees (shipped)
+A teaching *layer inside the key panel* (no new page — see the one-surface law):
+- Mode chips (Ionian / Lydian / Mixolydian / Dorian / Aeolian / Phrygian). Picking one
+  re-colours the panel and maps to its major/minor family for the track filter.
+- An interval-labelled **scale strip**: each note tagged with its degree (`1 2 ♭3 4 5 6 ♭7`),
+  the *characteristic* note (the one that moves vs the parent scale) highlighted.
+- A one-line "why": e.g. *"Dorian = natural minor with the 6th raised (F → F#)."*
+- `diatonic()` generalized to all modes, so the chord grid is correct per mode.
+All theory is pure + unit-tested in `circle.js` (`scale`, `scaleDegrees`, `modeChange`,
+`modeInfo`); 16/16 green.
+
 ## Out of scope (Phase 3+)
 - Nudge engine ("you keep jamming in Am — C#m is one hop away").
 - Per-key stretch/extended voicings on the chord display (reuse `diagram.js` later).
