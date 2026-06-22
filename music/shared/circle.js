@@ -50,21 +50,36 @@
   // Internal note identity stays sharp (ORDER, pcOf, dominant…); spelling is a
   // pure display layer. Conventional root spelling per pitch class: flats on the
   // flat side (Bb/Eb/Ab/Db), F# kept for the F#/Gb enharmonic.
-  var PC2NAME = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+  var FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
   var LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   function accStr(n) { return n === 0 ? '' : n > 0 ? (n > 1 ? '##' : '#') : (n < -1 ? 'bb' : 'b'); }
-  function keyName(root) { var p = pcOf(root); return p < 0 ? root : PC2NAME[p]; }
-  // spell a scale so each letter A-G is used exactly once (proper diatonic notation)
-  function spellScale(root, mode) {
-    var pc = pcOf(root); if (pc < 0) return [];
-    var li = LETTERS.indexOf(keyName(root).charAt(0));
-    return MODES[modeKey(mode)].map(function (s, i) {
+  // spell a scale from one root-letter so letters A-G are each used once
+  function spellFromLetter(rootName, pc, formula) {
+    var li = LETTERS.indexOf(rootName.charAt(0)), names = [], badness = 0;
+    formula.forEach(function (s, i) {
       var target = (pc + s) % 12, letter = LETTERS[(li + i) % 7];
       var d = (((target - LETTER_PC[letter]) % 12) + 18) % 12 - 6; // nearest accidental, -6..5
-      return letter + accStr(d);
+      names.push(letter + accStr(d));
+      badness += Math.abs(d) > 1 ? 100 + Math.abs(d) : Math.abs(d); // punish double-accidentals hard
     });
+    return { names: names, badness: badness };
   }
+  // Spell a scale, choosing the root enharmonic that needs the fewest accidentals
+  // (so C# minor — 4 sharps — not Db minor's 8 flats / double-flats). Sharp wins ties.
+  function spellScale(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    var formula = MODES[modeKey(mode)];
+    var cands = ROOTS[pc] === FLAT[pc] ? [ROOTS[pc]] : [ROOTS[pc], FLAT[pc]];
+    var best = null;
+    cands.forEach(function (rn) {
+      var r = spellFromLetter(rn, pc, formula);
+      if (!best || r.badness < best.badness) best = r;
+    });
+    return best.names;
+  }
+  function spellRoot(root, mode) { var s = spellScale(root, mode); return s.length ? s[0] : root; }
+  function keyName(root) { return spellRoot(root, 'major'); } // conventional major-key spelling
 
   function position(root) { return ORDER.indexOf(norm(root)); }
   function atPosition(n) { return ORDER[((n % 12) + 12) % 12]; }
@@ -144,7 +159,7 @@
         t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
         t.setAttribute('class', 'cofLabel' + (on ? ' on' : ''));
         t.style.pointerEvents = 'none';
-        t.textContent = keyName(root) + ring.suffix; // flat side reads Bb/Eb/Ab, not A#/D#/G#
+        t.textContent = spellRoot(root, ring.mode) + ring.suffix; // major+minor each spelled in context
         svg.appendChild(t);
       });
     });
@@ -177,6 +192,7 @@
     },
     diatonic: diatonic,
     keyName: keyName,
+    spellRoot: spellRoot,
     spellScale: spellScale,
     scale: scale,
     scaleDegrees: scaleDegrees,

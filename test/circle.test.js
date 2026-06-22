@@ -94,6 +94,20 @@ test('scale() spells each letter A-G once, key-aware (flats on the flat side)', 
   assert.deepStrictEqual(Circle.scale('F#', 'major'), ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']); // E#, not F
   assert.deepStrictEqual(Circle.scale('A#', 'major'), Circle.scale('Bb', 'major')); // sharp input spells the flat key
 });
+test('no double-accidentals on any wheel-reachable key (ORDER x UI modes)', function () {
+  var modes = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
+  Circle.ORDER.forEach(function (root) {
+    modes.forEach(function (m) {
+      Circle.scale(root, m).forEach(function (n) {
+        assert.ok(!/(bb|##)/.test(n), root + ' ' + m + ' produced ' + n);
+      });
+    });
+  });
+});
+test('dark modes on sharp roots stay readable (C# minor, not Db double-flats)', function () {
+  assert.deepStrictEqual(Circle.scale('C#', 'aeolian'), ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B']);
+  assert.deepStrictEqual(Circle.scale('G#', 'phrygian'), ['G#', 'A', 'B', 'C#', 'D#', 'E', 'F#']);
+});
 test('keyName() gives the conventional spelling of a root (flat side flats)', function () {
   assert.strictEqual(Circle.keyName('A#'), 'Bb');
   assert.strictEqual(Circle.keyName('D#'), 'Eb');
