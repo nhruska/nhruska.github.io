@@ -110,6 +110,7 @@
     var elGenre = $('genreChips'), elKeys = $('keyChips'), elMode = $('modeToggle');
     var elResults = $('results'), elMore = $('more'), elCount = $('resultCount');
     var elPlayer = $('player');
+    var elWheel = $('cof'), elPanel = $('cofPanel');
 
     function loadCustom() {
       try { var s = localStorage.getItem(STORE); var a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a : []; }
@@ -141,7 +142,41 @@
       b.className = 'chip' + (on ? ' on' : ''); b.textContent = label; b.onclick = fn;
       return b;
     }
-    function rerender() { renderGenre(); renderKeys(); renderMode(); renderResults(); }
+    function rerender() { renderCircle(); renderPanel(); renderGenre(); renderKeys(); renderMode(); renderResults(); }
+    // Circle of fifths (Phase 2): the wheel is home + navigation. Tapping a key
+    // drives the same state.key/state.mode the Phase-1 finder already filters on.
+    function renderCircle() {
+      if (!elWheel || !window.Circle) return;
+      elWheel.innerHTML = '';
+      elWheel.appendChild(window.Circle.renderWheel({
+        selected: { root: state.key, mode: state.mode },
+        onPick: function (root, mode) { state.key = root; state.mode = mode; rerender(); }
+      }));
+    }
+    function nbChip(root, mode, why) {
+      return '<button class="cofNbChip" data-root="' + esc(root) + '" data-mode="' + esc(mode) + '">'
+        + '<b>' + esc(root) + (mode === 'minor' ? 'm' : '') + '</b> · ' + esc(why) + '</button>';
+    }
+    function renderPanel() {
+      if (!elPanel || !window.Circle) return;
+      if (!state.key) { elPanel.innerHTML = ''; return; }
+      var C = window.Circle, dia = C.diatonic(state.key, state.mode), nb = C.neighbors(state.key, state.mode);
+      var chords = dia.map(function (d) {
+        return '<div class="cofChord"><span class="rn">' + esc(d.roman) + '</span><span class="nm">' + esc(d.chord) + '</span></div>';
+      }).join('');
+      elPanel.innerHTML =
+        '<div class="cofPanelInner">'
+        + '<div class="cofKeyName">' + esc(state.key) + ' ' + esc(state.mode) + '</div>'
+        + '<div class="cofWhy">The chords that live in this key:</div>'
+        + '<div class="cofChords">' + chords + '</div>'
+        + '<div class="cofNbLbl">Explore next</div>'
+        + '<div class="cofNb">'
+        + nb.map(function (x) { return nbChip(x.root, x.mode, x.why); }).join('')
+        + '</div></div>';
+      Array.prototype.forEach.call(elPanel.querySelectorAll('.cofNbChip'), function (b) {
+        b.onclick = function () { state.key = b.getAttribute('data-root'); state.mode = b.getAttribute('data-mode'); rerender(); };
+      });
+    }
     function renderGenre() {
       elGenre.innerHTML = '';
       ['all'].concat(uniqueGenres(state.tracks)).forEach(function (g) {
