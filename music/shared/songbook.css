@@ -133,6 +133,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .teachCard span{font-size:.8rem;line-height:1.5;color:var(--txt-dim);}
 .teachCard b{color:var(--txt);font-weight:700;}
 .teachCard .btn{align-self:flex-end;padding:7px 16px;}
+/* Campfire tempo cue: tap the beat, watch it pulse */
+.tempoBar{display:flex;align-items:center;gap:10px;margin:0 0 13px;padding:9px 11px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;}
+.tempoBar .tempoPlay{flex:0 0 auto;width:38px;height:38px;border-radius:9px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent);font-size:1rem;cursor:pointer;transition:transform .08s,background .15s;}
+.tempoBar .tempoPlay:active{transform:scale(.9);background:var(--accent);color:#06201c;}
+.tempoBar .tapBtn{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:700;font-size:.8rem;padding:9px 16px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s;}
+.tempoBar .tapBtn:active{transform:scale(.92);background:var(--accent);color:#06201c;}
+.tempoBar .bpmRead{font-size:.78rem;color:var(--txt-dim);}
+.tempoBar .bpmRead b{font-family:'Space Mono',monospace;font-size:.96rem;color:var(--txt);font-weight:700;}
+.tempoBar .beatDot{margin-left:auto;width:16px;height:16px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);flex:0 0 auto;}
+.tempoBar .beatDot.on{animation:beatFlash .18s ease;}
+.tempoBar .beatDot.down.on{animation:beatFlashDown .2s ease;}
+@keyframes beatFlash{from{transform:scale(1.5);background:var(--accent);border-color:var(--accent);}to{transform:scale(1);}}
+@keyframes beatFlashDown{from{transform:scale(1.8);background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-deep);}to{transform:scale(1);}}
 /* Campfire: big chords-only, sized for jamming with the phone on the table */
 .campfireSheet{padding:18px 14px;}
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}

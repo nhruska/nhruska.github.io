@@ -380,9 +380,44 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
+      if (m !== 'campfire') stopBeat(); // tempo cue only lives in Campfire — stop it before any early return (incl. Stage)
       // Stage performs the live queue from the current position (one-shot; not sticky)
       if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
       STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
+    }
+
+    /* ---- Campfire tempo cue: tap-tempo + a visual beat pulse ---- */
+    var TEMPO = (global.Tempo && global.Tempo.createTempo) ? global.Tempo.createTempo() : null;
+    function perfNow() { return (global.performance && global.performance.now) ? global.performance.now() : Date.now(); }
+    function stopBeat() {
+      STATE.beatOn = false;
+      if (STATE.beatRAF) { cancelAnimationFrame(STATE.beatRAF); STATE.beatRAF = null; }
+      var b = el.practiceBody && el.practiceBody.querySelector('#beatToggle'); if (b) b.textContent = '▶';
+    }
+    function startBeat() {
+      if (!TEMPO || STATE.beatOn || !el.practiceBody) return; // no-op if already running (avoid orphaning the rAF loop)
+      STATE.beatOn = true; STATE.beatStart = perfNow();
+      var btn = el.practiceBody.querySelector('#beatToggle'); if (btn) btn.textContent = '⏸';
+      var last = -1;
+      function step() {
+        if (!STATE.beatOn) return;
+        var dot = el.practiceBody.querySelector('#beatDot');
+        if (!dot) { STATE.beatOn = false; STATE.beatRAF = null; return; } // left Campfire — stop
+        var bi = TEMPO.beatIndex(STATE.beatStart, perfNow());
+        if (bi !== last) {
+          last = bi;
+          dot.classList.remove('on', 'down'); void dot.offsetWidth; // restart the flash
+          dot.classList.add('on'); if (bi % TEMPO.beatsPerBar() === 0) dot.classList.add('down');
+        }
+        STATE.beatRAF = requestAnimationFrame(step);
+      }
+      STATE.beatRAF = requestAnimationFrame(step);
+    }
+    function tapTempo() {
+      if (!TEMPO || !el.practiceBody) return;
+      TEMPO.tap(perfNow());
+      var v = el.practiceBody.querySelector('#bpmVal'); if (v) v.textContent = TEMPO.bpm();
+      if (STATE.beatOn) STATE.beatStart = perfNow(); // realign the pulse to your tap
     }
     function renderPractice() {
       if (!el.practiceBody) return;
@@ -417,7 +452,13 @@
       var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Songs</button></div>';
       var body;
       if (mode === 'campfire') {
-        body = keyPill + chips
+        // tempo cue: tap the beat, watch it pulse — sets the jam's feel (no BPM in the data)
+        var tempoBar = TEMPO ? '<div class="tempoBar">'
+          + '<button id="beatToggle" class="tempoPlay" title="Start/stop the beat">' + (STATE.beatOn ? '⏸' : '▶') + '</button>'
+          + '<button id="tapBtn" class="tapBtn">Tap</button>'
+          + '<span class="bpmRead"><b id="bpmVal">' + TEMPO.bpm() + '</b> BPM</span>'
+          + '<span class="beatDot" id="beatDot"></span></div>' : '';
+        body = keyPill + tempoBar + chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions;
       } else {
@@ -432,6 +473,8 @@
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
+      var beatToggle = el.practiceBody.querySelector('#beatToggle'); if (beatToggle) beatToggle.onclick = function () { STATE.beatOn ? stopBeat() : startBeat(); };
+      var tapBtn = el.practiceBody.querySelector('#tapBtn'); if (tapBtn) tapBtn.onclick = tapTempo;
       var teachOk = el.practiceBody.querySelector('#teachOk');
       if (teachOk) teachOk.onclick = function () { markTeachSeen(); var c = el.practiceBody.querySelector('#teachCard'); if (c) c.remove(); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
@@ -822,6 +865,7 @@
     function switchTab(name) {
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
+      if (name !== 'practice') stopBeat(); // tempo cue stops when you leave the song screen
       if (name === 'setlist') renderSetlist();
       if (name === 'practice') renderPractice();
       if (name === 'library') renderHero();
