@@ -115,6 +115,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .viewToggle button:active{transform:scale(.96);}
 .viewToggle button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
 /* play-mode switcher (Studio / Campfire / Stage) on the song screen */
+/* queue nav: prev / position / next — shown in Studio & Campfire when a setlist is loaded */
+.queueNav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;}
+.queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
+.queueNav button:active{transform:scale(.94);background:var(--accent);color:#06201c;}
+.queueNav button:disabled{opacity:.32;cursor:default;color:var(--txt-dim);}
+.queueNav .qPos{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-dim);letter-spacing:.04em;}
 .modeSwitch{display:flex;gap:4px;margin:10px 0 14px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.82rem;color:var(--txt-dim);padding:10px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .modeSwitch button:active{transform:scale(.95);}
