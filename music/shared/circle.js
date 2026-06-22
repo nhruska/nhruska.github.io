@@ -46,13 +46,30 @@
   var RN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   function modeKey(mode) { return MODES[ALIAS[mode] || mode] ? (ALIAS[mode] || mode) : 'ionian'; }
 
+  // ---- key-aware note spelling ----------------------------------------------
+  // Internal note identity stays sharp (ORDER, pcOf, dominant…); spelling is a
+  // pure display layer. Conventional root spelling per pitch class: flats on the
+  // flat side (Bb/Eb/Ab/Db), F# kept for the F#/Gb enharmonic.
+  var PC2NAME = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+  var LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function accStr(n) { return n === 0 ? '' : n > 0 ? (n > 1 ? '##' : '#') : (n < -1 ? 'bb' : 'b'); }
+  function keyName(root) { var p = pcOf(root); return p < 0 ? root : PC2NAME[p]; }
+  // spell a scale so each letter A-G is used exactly once (proper diatonic notation)
+  function spellScale(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    var li = LETTERS.indexOf(keyName(root).charAt(0));
+    return MODES[modeKey(mode)].map(function (s, i) {
+      var target = (pc + s) % 12, letter = LETTERS[(li + i) % 7];
+      var d = (((target - LETTER_PC[letter]) % 12) + 18) % 12 - 6; // nearest accidental, -6..5
+      return letter + accStr(d);
+    });
+  }
+
   function position(root) { return ORDER.indexOf(norm(root)); }
   function atPosition(n) { return ORDER[((n % 12) + 12) % 12]; }
 
-  function scale(root, mode) {
-    var pc = pcOf(root); if (pc < 0) return [];
-    return MODES[modeKey(mode)].map(function (s) { return spell(pc + s); });
-  }
+  function scale(root, mode) { return spellScale(root, mode); }
   // interval label per degree vs the major scale: e.g. dorian -> 1 2 ♭3 4 5 6 ♭7
   function scaleDegrees(mode) {
     return MODES[modeKey(mode)].map(function (s, i) {
@@ -64,10 +81,10 @@
   function modeChange(root, mode) {
     var mk = modeKey(mode), ref = MODE_INFO[mk].ref;
     if (ref === mk) return [];
-    var pc = pcOf(root); if (pc < 0) return [];
-    var fm = MODES[mk], fr = MODES[ref], out = [];
+    if (pcOf(root) < 0) return [];
+    var fm = MODES[mk], fr = MODES[ref], rs = spellScale(root, ref), ms = spellScale(root, mk), out = [];
     for (var i = 0; i < 7; i++) {
-      if (fm[i] !== fr[i]) out.push({ degree: i + 1, from: spell(pc + fr[i]), to: spell(pc + fm[i]), dir: fm[i] > fr[i] ? 'raise' : 'lower' });
+      if (fm[i] !== fr[i]) out.push({ degree: i + 1, from: rs[i], to: ms[i], dir: fm[i] > fr[i] ? 'raise' : 'lower' });
     }
     return out;
   }
@@ -80,8 +97,9 @@
   }
   // diatonic triads of any mode, built by stacking thirds within its own scale
   function diatonic(root, mode) {
-    var sc = scale(root, mode); if (!sc.length) return [];
-    var pcs = sc.map(pcOf);
+    var pc = pcOf(root); if (pc < 0) return [];
+    var sc = spellScale(root, mode);                       // properly-spelled names
+    var pcs = MODES[modeKey(mode)].map(function (s) { return (pc + s) % 12; }); // pcs from formula
     return sc.map(function (r, i) {
       var third = (((pcs[(i + 2) % 7] - pcs[i]) % 12) + 12) % 12;
       var fifth = (((pcs[(i + 4) % 7] - pcs[i]) % 12) + 12) % 12;
@@ -126,7 +144,7 @@
         t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
         t.setAttribute('class', 'cofLabel' + (on ? ' on' : ''));
         t.style.pointerEvents = 'none';
-        t.textContent = root + ring.suffix;
+        t.textContent = keyName(root) + ring.suffix; // flat side reads Bb/Eb/Ab, not A#/D#/G#
         svg.appendChild(t);
       });
     });
@@ -158,6 +176,8 @@
       ];
     },
     diatonic: diatonic,
+    keyName: keyName,
+    spellScale: spellScale,
     scale: scale,
     scaleDegrees: scaleDegrees,
     modeChange: modeChange,
