@@ -102,6 +102,11 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
+  // Focus an input WITHOUT the browser auto-scrolling it into view — on mobile
+  // that scroll pushes the pinned appbar off-screen. Falls back for old browsers.
+  function focusNoJump(el) {
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+  }
 
   /* --- DOM boot (browser only) --- */
   function boot() {
@@ -281,15 +286,24 @@
       var aUrl = $('aUrl'), aTitle = $('aTitle'), aKey = $('aKey'),
         aMode = $('aMode'), aGenre = $('aGenre'), aBpm = $('aBpm');
       if (!toggle) return;
-      toggle.onclick = function () { panel.hidden = !panel.hidden; if (!panel.hidden) aUrl.focus(); };
+      // Open/close the curate form. focus({preventScroll:true}) keeps the cursor
+      // ready WITHOUT the browser yanking the pinned header off-screen on mobile;
+      // then we scroll the panel into view inside the .view scroller deliberately.
+      toggle.onclick = function () {
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) {
+          focusNoJump(aUrl);
+          panel.scrollIntoView({ block: 'nearest' });
+        }
+      };
       $('aCancel').onclick = function () { panel.hidden = true; };
       aUrl.oninput = function () { aUrl.classList.remove('bad'); };
       aKey.oninput = function () { aKey.classList.remove('bad'); };
       $('aSave').onclick = function () {
         var id = parseYouTubeId(aUrl.value);
         var key = normRoot(aKey.value);
-        if (!id) { aUrl.focus(); aUrl.classList.add('bad'); return; }
-        if (!key || rootIndex(key) < 0) { aKey.focus(); aKey.classList.add('bad'); return; }
+        if (!id) { focusNoJump(aUrl); aUrl.classList.add('bad'); return; }
+        if (!key || rootIndex(key) < 0) { focusNoJump(aKey); aKey.classList.add('bad'); return; }
         var entry = {
           yt: id, title: aTitle.value.trim() || ('My track ' + id),
           genre: aGenre.value.trim().toLowerCase() || 'other',
