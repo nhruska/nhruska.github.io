@@ -139,13 +139,6 @@
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
 <script src="../shared/tracks.js"></script>
-<!-- Mount the Backing Tracks finder into its tab (shares circle.js + the theme). -->
-<script>
-  (function () {
-    var el = document.getElementById('s-tracks');
-    if (el && window.Tracks) window.Tracks.mount({ container: el, tracksUrl: '../backing-tracks/tracks.json' });
-  })();
-</script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -300,9 +293,14 @@
     el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' \u2014 Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
+    var pack = buildAdapter(profile);
+    // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
+    // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
+    var tracksEl = el('s-tracks');
+    if (tracksEl && window.Tracks) window.Tracks.mount({ container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack });
     window.Songbook.mount({
       songs: songs,
-      chordPack: buildAdapter(profile),
+      chordPack: pack,
       storagePrefix: 'roadcase-' + profile.id,
       suggestions: SUGG,
       contexts: contexts,

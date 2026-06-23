@@ -5,6 +5,7 @@
 'use strict';
 var assert = require('assert');
 var T = require('../music/shared/tracks.js');
+var Circle = require('../music/shared/circle.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -64,6 +65,20 @@ test('filterQuery composes genre + key', function () {
 test('mergeTracks concatenates seed + custom safely', function () {
   assert.deepStrictEqual(T.mergeTracks([1], [2]), [1, 2]);
   assert.deepStrictEqual(T.mergeTracks(null, null), []);
+});
+test('notesToPcs maps note names to chromatic pitch classes (flats normalised)', function () {
+  assert.deepStrictEqual(T.notesToPcs(['C', 'E', 'G']), [0, 4, 7]);
+  assert.deepStrictEqual(T.notesToPcs(['Bb', 'Db']), [10, 1]);
+  assert.deepStrictEqual(T.notesToPcs(['C', 'wat', 'G']), [0, 7]); // unknowns drop out
+});
+test('Studio fretboard input: A minor scale -> the right pitch classes', function () {
+  // the exact pcs the scale diagram lights up for an Am backing track
+  var pcs = T.notesToPcs(Circle.scale('A', 'aeolian'));
+  assert.deepStrictEqual(pcs, [9, 11, 0, 2, 4, 5, 7]);
+});
+test('Studio chords: C major track -> its diatonic triads', function () {
+  var chords = Circle.diatonic('C', 'ionian').map(function (d) { return d.chord; });
+  assert.deepStrictEqual(chords, ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
 });
 
 run();
