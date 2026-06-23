@@ -208,7 +208,7 @@
       var scaleMode = familyMode(mode), notes = C.scale(k, scaleMode);
       return {
         key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
-        degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode).map(function (d) { return d.chord; }),
+        degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
         label: shortMode(C.modeInfo(scaleMode).label)
       };
     }
@@ -253,13 +253,19 @@
       var chordsBox = elPlayer.querySelector('[data-chords]');
       th.chords.forEach(function (c) {
         var d;
-        try { d = pack.diagram(c, 'small'); } catch (e) { return; }
+        try { d = pack.diagram(c.chord, 'small'); } catch (e) { return; }
         d.className += ' bt-st-chip';
         d.onclick = function () {
-          try { pack.playChord(c); } catch (e) {}
+          try { pack.playChord(c.chord); } catch (e) {}
           d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
         };
-        chordsBox.appendChild(d);
+        var cell = document.createElement('div');
+        cell.className = 'bt-st-chordcell';
+        cell.appendChild(d);
+        var rn = document.createElement('span');
+        rn.className = 'rn'; rn.textContent = c.roman;
+        cell.appendChild(rn);
+        chordsBox.appendChild(cell);
       });
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {

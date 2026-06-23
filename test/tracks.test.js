@@ -89,5 +89,13 @@ test('Studio chords: C major track -> its diatonic triads', function () {
   var chords = Circle.diatonic('C', 'ionian').map(function (d) { return d.chord; });
   assert.deepStrictEqual(chords, ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
 });
+test('Studio chords carry interval (Roman) labels — case-aware, diminished marked', function () {
+  // the chord row now shows the interval under each chord; major=UPPER, minor=lower, dim=°
+  var romans = Circle.diatonic('C', 'ionian').map(function (d) { return d.roman; });
+  assert.deepStrictEqual(romans, ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']);
+  // minor key relabels the same chords from its own tonic
+  var minor = Circle.diatonic('A', 'aeolian').map(function (d) { return d.roman; });
+  assert.deepStrictEqual(minor, ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']);
+});
 
 run();
