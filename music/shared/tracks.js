@@ -98,10 +98,21 @@
   function mergeTracks(seed, custom) {
     return (Array.isArray(seed) ? seed : []).concat(Array.isArray(custom) ? custom : []);
   }
-  // note names ("A","C#","Bb"...) -> chromatic pitch classes (0-11), for the
-  // instrument scale diagram. Flats are normalised; unknown names drop out.
+  // note name -> chromatic pitch class (0-11), parsed generically from the letter
+  // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
+  // handles every enharmonic spelling circle.js can emit — E#, B#, Cb, Fb and
+  // double accidentals — so exotic keys (F# major spells E#, D# minor too) light
+  // ALL seven scale tones on the fretboard, matching the note label. -1 if unparseable.
+  var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function noteToPc(name) {
+    var m = /^([A-Ga-g])([#b]*)$/.exec(String(name == null ? '' : name).trim());
+    if (!m) return -1;
+    var pc = LETTER_PC[m[1].toUpperCase()];
+    for (var i = 0; i < m[2].length; i++) pc += (m[2].charAt(i) === '#' ? 1 : -1);
+    return ((pc % 12) + 12) % 12;
+  }
   function notesToPcs(notes) {
-    return (notes || []).map(function (n) { return rootIndex(n); }).filter(function (p) { return p >= 0; });
+    return (notes || []).map(noteToPc).filter(function (p) { return p >= 0; });
   }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -206,9 +217,11 @@
       var strip = th.notes.map(function (n, i) {
         return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(th.degrees[i]) + '</span></div>';
       }).join('');
+      // player-facing key name: "A minor" reads better than "A Aeolian"
+      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label;
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees — '
-        + esc(th.key) + ' ' + esc(th.label) + '.</div><div class="bt-st-wheel"></div>';
+        + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
           selected: { root: th.key, mode: th.scaleMode === 'aeolian' ? 'minor' : 'major' }

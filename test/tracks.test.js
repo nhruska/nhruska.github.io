@@ -76,6 +76,15 @@ test('Studio fretboard input: A minor scale -> the right pitch classes', functio
   var pcs = T.notesToPcs(Circle.scale('A', 'aeolian'));
   assert.deepStrictEqual(pcs, [9, 11, 0, 2, 4, 5, 7]);
 });
+test('notesToPcs handles exotic enharmonics (E#,B#,Cb,Fb + double accidentals)', function () {
+  assert.deepStrictEqual(T.notesToPcs(['E#', 'B#', 'Cb', 'Fb']), [5, 0, 11, 4]);
+  assert.deepStrictEqual(T.notesToPcs(['F##', 'Bbb']), [7, 9]);
+});
+test('Studio fretboard: F# major + D# minor light ALL 7 tones (the E# bug)', function () {
+  // F# major is spelled F# G# A# B C# D# E# — the E# must not drop
+  assert.deepStrictEqual(T.notesToPcs(Circle.scale('F#', 'ionian')), [6, 8, 10, 11, 1, 3, 5]);
+  assert.strictEqual(T.notesToPcs(Circle.scale('D#', 'aeolian')).length, 7);
+});
 test('Studio chords: C major track -> its diatonic triads', function () {
   var chords = Circle.diatonic('C', 'ionian').map(function (d) { return d.chord; });
   assert.deepStrictEqual(chords, ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
