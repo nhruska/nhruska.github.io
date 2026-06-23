@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Music">
 <!-- Shared songbook styles (theme + all components). -->
 <link rel="stylesheet" href="../shared/songbook.css">
+<link rel="stylesheet" href="../shared/tracks.css">
 <style>
   /* in-app instrument/tuning picker (appbar) */
   .abRight{display:flex;align-items:center;gap:8px;position:relative;}
@@ -81,6 +82,7 @@
       <div id="practiceEmpty" class="empty">Choose a song from Songs to open it.</div>
       <div id="practiceBody" style="display:none"></div>
     </section>
+    <section class="screen" id="s-tracks"></section>
     <section class="screen" id="s-setlist">
       <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
         <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
@@ -107,6 +109,7 @@
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Songs</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
+    <button data-tab="tracks"><span class="icn">▶</span><span class="lbl">Tracks</span></button>
     <button data-tab="setlist"><span class="icn">❦</span><span class="lbl">Set</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -130,10 +133,19 @@
 <!-- Shared, instrument-agnostic runtime -->
 <script src="../shared/queue.js"></script>
 <script src="../shared/tempo.js"></script>
+<script src="../shared/circle.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
+<script src="../shared/tracks.js"></script>
+<!-- Mount the Backing Tracks finder into its tab (shares circle.js + the theme). -->
+<script>
+  (function () {
+    var el = document.getElementById('s-tracks');
+    if (el && window.Tracks) window.Tracks.mount({ container: el, tracksUrl: '../backing-tracks/tracks.json' });
+  })();
+</script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>

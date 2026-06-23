@@ -11,15 +11,15 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v9';
+var CACHE = 'music-v10';
 var CORE = [
   './', './index.html',
   './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json', './backing-tracks/app.js',
   './play/', './play/index.html', './play/manifest.webmanifest',
   './play/icon.svg', './play/icon-maskable.svg',
-  './shared/circle.js', './shared/queue.js', './shared/tempo.js',
+  './shared/circle.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js',
-  './shared/songbook.css', './shared/songs.json',
+  './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
   './shared/profiles/ukulele-gcea.js', './shared/profiles/guitar-standard.js',
   './shared/profiles/guitar-dropd.js', './shared/profiles/guitar-openg.js',
