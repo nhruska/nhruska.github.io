@@ -21,24 +21,36 @@
   // So we DON'T warm the context up on page load / first tap — it's created
   // lazily only when a chord actually sounds, and suspended again shortly after
   // the sound ends so background audio resumes. (Suspended releases focus.)
+  // Be a polite audio citizen WITHOUT killing tap latency. We suspend only after
+  // a genuine idle gap (well past the longest note + a comfortable margin), so a
+  // run of taps during a jam keeps the context warm and notes fire instantly.
+  // Suspending the instant a note's envelope ended made every tap re-pay the
+  // hardware resume cost (the ~0.5s lag) — that's the regression this fixes.
+  var IDLE_RELEASE_MS = 4000;
   var idleTimer = null;
   function releaseWhenIdle(secondsFromNow) {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(function () {
       if (AC && AC.state === 'running') AC.suspend();
-    }, secondsFromNow * 1000 + 180);
+    }, secondsFromNow * 1000 + IDLE_RELEASE_MS);
   }
 
   function freqForString(openFreq, fret) { return openFreq * Math.pow(2, fret / 12); }
 
+  // Run `play` against a running context. If the context is already running
+  // (the common jam case) we schedule SYNCHRONOUSLY — zero added latency. Only
+  // when it's been suspended (after a long idle, or on the very first tap) do we
+  // go through resume()'s promise, because scheduling against a frozen
+  // currentTime would drop the note.
+  function whenRunning(a, play) {
+    if (a.state === 'running') { play(); return; }
+    a.resume().then(play);
+  }
+
   function tone(freq, dur) {
     dur = dur || 1.1;
     var a = ctx();
-    // Schedule AFTER resume() resolves: while the context is suspended (we
-    // auto-suspend when idle) currentTime is frozen, so scheduling against it
-    // before resume completes can drop the note. resume() resolves immediately
-    // when already running, so this is free in the common case.
-    a.resume().then(function () {
+    whenRunning(a, function () {
       var o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain();
       o.type = 'sine'; o2.type = 'triangle';
       o.frequency.value = freq; o2.frequency.value = freq;
@@ -68,7 +80,7 @@
     if (!frets || !openFreqs) return;
     dur = dur || 1.4;
     var a = ctx();
-    a.resume().then(function () { // schedule after resume — see tone()
+    whenRunning(a, function () { // sync when already running — see tone()
       var t0 = a.currentTime + 0.02, i = 0;
       frets.forEach(function (fr, s) {
         if (fr < 0 || openFreqs[s] == null) return; // muted / missing string
