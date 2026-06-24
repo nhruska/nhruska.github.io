@@ -11,10 +11,12 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v10';
+var CACHE = 'music-v11';
 var CORE = [
   './', './index.html',
-  './backing-tracks/', './backing-tracks/index.html', './backing-tracks/tracks.json', './backing-tracks/app.js',
+  // tracks.json is the live data source for the play app's Tracks tab (the standalone
+  // backing-tracks page was retired; its index.html/app.js are gone, data stays).
+  './backing-tracks/tracks.json',
   './play/', './play/index.html', './play/manifest.webmanifest',
   './play/icon.svg', './play/icon-maskable.svg',
   './shared/circle.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js',
