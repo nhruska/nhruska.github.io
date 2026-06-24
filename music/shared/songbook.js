@@ -690,10 +690,16 @@
     function renderProg() {
       if (!el.prog) return;
       el.prog.innerHTML = '';
+      var tonic = progression[0];
       progression.forEach(function (c, i) {
         var slot = document.createElement('div'); slot.className = 'slot';
         var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
         slot.appendChild(d);
+        // interval relative to the key (the first chord) — think I IV V, not shapes
+        if (global.Circle && global.Circle.romanFor) {
+          var rn = global.Circle.romanFor(c, tonic);
+          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+        }
         var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
         rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
         slot.appendChild(rm);
