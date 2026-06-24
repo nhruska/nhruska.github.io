@@ -841,12 +841,23 @@
       var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
+      var tonic = progression[0];
       // show the actual chord shape, not just a name — same diagram as the build
       // grid below, so the suggestion reads as "here's the chord, tap to add it".
+      // Plus its interval from the key, so you see the ROLE you'd be adding (V, vi…).
       picks.forEach(function (c) {
         var d = packDiagram(c, 'small'); d.className += ' suggPick';
         d.onclick = function () { addChord(c); packPlayChord(c); };
-        row.appendChild(d);
+        var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
+        if (rn) {
+          var cell = document.createElement('div'); cell.className = 'suggCell';
+          cell.appendChild(d);
+          var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn;
+          cell.appendChild(lbl);
+          row.appendChild(cell);
+        } else {
+          row.appendChild(d);
+        }
       });
       el.suggest.appendChild(row);
     }
