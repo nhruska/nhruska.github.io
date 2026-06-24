@@ -149,6 +149,13 @@ test('diatonic() generalizes to modes', function () {
   var g = Circle.diatonic('G', 'mixolydian');
   assert.strictEqual(names(g), 'G Am Bdim C Dm Em F');
 });
+test('MODE_STEPS is exported as the single source for scale intervals', function () {
+  // songbook.js derives its jam-mode steps from these — they must stay correct
+  assert.deepStrictEqual(Circle.MODE_STEPS.ionian, [0, 2, 4, 5, 7, 9, 11]);
+  assert.deepStrictEqual(Circle.MODE_STEPS.aeolian, [0, 2, 3, 5, 7, 8, 10]);
+  assert.deepStrictEqual(Circle.MODE_STEPS.mixolydian, [0, 2, 4, 5, 7, 9, 10]);
+  assert.deepStrictEqual(Circle.MODE_STEPS.dorian, [0, 2, 3, 5, 7, 9, 10]);
+});
 test('romanFor() labels any chord by its interval from the key (the first chord)', function () {
   var rf = Circle.romanFor;
   // diatonic major: case carries quality, ° marks the diminished

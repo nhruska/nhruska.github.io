@@ -66,15 +66,27 @@
   }
 
   /* ---------- keys / modes (the jam set) ----------
-   * steps = semitone offsets of the 7 scale tones; quals = the triad quality
-   * built on each degree from the mode's own notes (verified by thirds-stacking;
-   * 'dim' degrees are dropped from the chord palette but kept in the solo scale). */
+   * The scale INTERVALS (steps) are owned by circle.js (Circle.MODE_STEPS) so there's
+   * one source of truth for them; we map our jam-mode names to circle's mode keys and
+   * pull the steps from there. We keep, locally, the jam-specific presentation circle
+   * doesn't model: the curated 4-mode SET, the display labels, and `quals` with the
+   * diminished degree dropped from the strummable palette (kept in the solo scale).
+   * If circle is somehow absent, the inline steps are an identical fallback. */
+  var CIRCLE_MODE = { Major: "ionian", Minor: "aeolian", Mixolydian: "mixolydian", Dorian: "dorian" };
   var MODES = {
     Major:      { label: "Major",      steps: [0, 2, 4, 5, 7, 9, 11], quals: ["", "m", "m", "", "", "m", "dim"] },
     Minor:      { label: "Minor",      steps: [0, 2, 3, 5, 7, 8, 10], quals: ["m", "dim", "", "m", "m", "", ""] },
     Mixolydian: { label: "Mixolydian", steps: [0, 2, 4, 5, 7, 9, 10], quals: ["", "m", "dim", "", "m", "m", ""] },
     Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] }
   };
+  (function syncStepsFromCircle() {
+    var C = global.Circle;
+    if (!C || !C.MODE_STEPS) return; // keep the inline fallback
+    Object.keys(CIRCLE_MODE).forEach(function (name) {
+      var s = C.MODE_STEPS[CIRCLE_MODE[name]];
+      if (s && s.length === 7) MODES[name].steps = s.slice();
+    });
+  })();
   var MODE_HINT = {
     Major: "bright, resolved", Minor: "dark, moody",
     Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
@@ -116,6 +128,34 @@
     { name: "Jazz turnaround",  degrees: [1, 4, 0] },    // ii V  I
     { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] } // I V vi iii IV I IV V
   ];
+  // 0-indexed MAJOR-scale degree of a chord in a key (-1 if its root isn't a scale
+  // tone). Used to recognize a progression-in-progress against the canon.
+  var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
+  function degreeOf(chord, tonic) {
+    var cm = /^([A-G][#bx]*)/.exec((chord || '').trim());
+    var cp = cm ? noteToPc(cm[1]) : null, tp = rootPc(tonic);
+    if (cp == null || tp == null) return -1;
+    var iv = ((cp - tp) % 12 + 12) % 12;
+    return MAJOR_STEPS.indexOf(iv); // -1 if chromatic (borrowed) chord
+  }
+  // Recognize the progression-so-far as the START of one or more canon progressions,
+  // and return what each one's NEXT chord would be — the "completing" suggestion.
+  // Returns [{ name, chord, degree }], the canon entries this progression is a strict
+  // diatonic prefix of (longest-context first). Empty if no canon matches.
+  function completions(progression, tonic, keyMode) {
+    if (!progression.length || !tonic) return [];
+    var degs = progression.map(function (c) { return degreeOf(c, tonic); });
+    if (degs.indexOf(-1) >= 0) return []; // a borrowed chord -> not a clean canon match
+    var out = [];
+    PROGRESSIONS.forEach(function (p) {
+      if (p.degrees.length <= degs.length) return;        // nothing left to add
+      var isPrefix = degs.every(function (d, i) { return d === p.degrees[i]; });
+      if (!isPrefix) return;
+      var nextDeg = p.degrees[degs.length];
+      out.push({ name: p.name, degree: nextDeg, chord: chordsFromDegrees(tonic, keyMode || "Major", [nextDeg])[0] });
+    });
+    return out;
+  }
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
   function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -902,34 +942,54 @@
         return (pack ? packHasChord(c) : true) && c !== last;
       }).sort(function (a, b) { return score[b] - score[a]; }).slice(0, 5);
     }
+    // a tappable suggestion chip: chord diagram + its interval label, plays + adds on tap.
+    // `completes` (a progression name) accent-highlights the chip and adds a tiny caption,
+    // so a chord that finishes a famous progression is flagged IN PLACE — no extra rows.
+    function suggChip(c, tonic, completes) {
+      var d = packDiagram(c, 'small'); d.className += ' suggPick' + (completes ? ' complete' : '');
+      d.onclick = function () { addChord(c); packPlayChord(c); };
+      var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
+      if (!rn && !completes) return d;
+      var cell = document.createElement('div'); cell.className = 'suggCell' + (completes ? ' complete' : '');
+      cell.appendChild(d);
+      if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; cell.appendChild(lbl); }
+      if (completes) { var cap = document.createElement('span'); cap.className = 'compCap'; cap.textContent = completes; cell.appendChild(cap); }
+      return cell;
+    }
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0) return;
+      var tonic = labelTonic();
+      // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
+      // flagged right inside the normal "add a chord" list (accent glow + a tiny name
+      // caption) — no separate rows, no forced vertical. De-duped per chord.
+      var comps = completions(progression, tonic, keyRoot ? keyMode : "Major");
+      var completeBy = {};
+      comps.forEach(function (cmp) {
+        (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
+      });
+
       var picks = suggestNext(progression);
+      // make sure any completing chord is actually in the list (the Markov ranker might
+      // not surface it), and float completions to the front so the highlight reads first.
+      Object.keys(completeBy).forEach(function (chord) {
+        var i = picks.indexOf(chord);
+        if (i >= 0) picks.splice(i, 1);
+      });
+      picks = Object.keys(completeBy).concat(picks).slice(0, 5);
       if (!picks.length) return;
       var n = progression.length;
       var label = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord:";
       var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
-      var tonic = labelTonic();
-      // show the actual chord shape, not just a name — same diagram as the build
-      // grid below, so the suggestion reads as "here's the chord, tap to add it".
-      // Plus its interval from the key, so you see the ROLE you'd be adding (V, vi…).
+      // show the actual chord shape, not just a name — same diagram as the build grid
+      // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the
+      // accent glow + the progression name it finishes.
       picks.forEach(function (c) {
-        var d = packDiagram(c, 'small'); d.className += ' suggPick';
-        d.onclick = function () { addChord(c); packPlayChord(c); };
-        var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
-        if (rn) {
-          var cell = document.createElement('div'); cell.className = 'suggCell';
-          cell.appendChild(d);
-          var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn;
-          cell.appendChild(lbl);
-          row.appendChild(cell);
-        } else {
-          row.appendChild(d);
-        }
+        var names = completeBy[c];
+        row.appendChild(suggChip(c, tonic, names ? names.join(' / ') : null));
       });
       el.suggest.appendChild(row);
     }
@@ -1009,6 +1069,8 @@
     renderSheet: renderSheet,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
+    degreeOf: degreeOf,
+    completions: completions,
     ROOTS: ROOTS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;

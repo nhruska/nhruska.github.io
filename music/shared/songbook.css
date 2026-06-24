@@ -242,6 +242,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggest{margin-top:12px;}
 .suggest:empty{display:none;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+/* progression-aware highlight: a chord that COMPLETES a famous progression is flagged
+   in place inside the normal suggestion list — accent glow on the chip + a tiny name
+   caption, its interval label in accent. No separate rows / no added vertical. */
+.suggRow .chord.suggPick.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 6px 16px rgba(94,234,212,.18);}
+.suggCell.complete .rn{color:var(--accent);}
+.suggCell .compCap{font-size:.56rem;font-weight:600;color:var(--accent);text-align:center;line-height:1.1;max-width:72px;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;}
 .suggCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .suggCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
