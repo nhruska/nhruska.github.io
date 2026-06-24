@@ -79,6 +79,27 @@
     });
     return out;
   }
+  // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
+  // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
+  // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
+  function chordsFromDegrees(root, modeKey, degrees) {
+    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    return degrees.map(function (deg) {
+      var i = ((deg % 7) + 7) % 7;
+      return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
+    });
+  }
+  // The canon — famous progressions, by 0-indexed major-scale degree. All diatonic
+  // to MAJOR so they fill cleanly from any major key; modal/borrowed ones (Andalusian,
+  // i-bVII-bVI) need a different derivation and are a deliberate follow-up.
+  var PROGRESSIONS = [
+    { name: "4-chord song",     degrees: [0, 4, 5, 3] }, // I  V  vi IV
+    { name: "50s / doo-wop",    degrees: [0, 5, 3, 4] }, // I  vi IV V
+    { name: "Pop / Axis",       degrees: [5, 3, 0, 4] }, // vi IV I  V
+    { name: "Three-chord rock", degrees: [0, 3, 4] },    // I  IV V
+    { name: "Jazz turnaround",  degrees: [1, 4, 0] },    // ii V  I
+    { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] } // I V vi iii IV I IV V
+  ];
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
   function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -687,15 +708,19 @@
       wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + name + '</span>';
       return wrap;
     }
+    // What tonic do we measure intervals against? The chosen key when one is set
+    // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
+    // the first chord as a sensible default for free-built progressions.
+    function labelTonic() { return keyRoot || progression[0]; }
     function renderProg() {
       if (!el.prog) return;
       el.prog.innerHTML = '';
-      var tonic = progression[0];
+      var tonic = labelTonic();
       progression.forEach(function (c, i) {
         var slot = document.createElement('div'); slot.className = 'slot';
         var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
         slot.appendChild(d);
-        // interval relative to the key (the first chord) — think I IV V, not shapes
+        // interval relative to the key — think I IV V, not shapes
         if (global.Circle && global.Circle.romanFor) {
           var rn = global.Circle.romanFor(c, tonic);
           if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
@@ -708,6 +733,37 @@
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); }
+    // Fill the progression from a named pattern, in the user's key (default C Major).
+    // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
+    // root if there is one, force the mode to Major, and sync the key picker so the
+    // chord palette + solo scale below match what just got filled in.
+    function loadProgression(degrees) {
+      var root = keyRoot || "C";
+      keyRoot = root; keyMode = "Major";
+      progression = chordsFromDegrees(root, keyMode, degrees);
+      cTpose = 0;
+      renderProg(); renderKey();
+      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
+    }
+    function renderProgPicks() {
+      if (!el.progPicks) return;
+      el.progPicks.innerHTML = '';
+      var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+      lbl.textContent = 'Start with a common progression';
+      el.progPicks.appendChild(lbl);
+      var row = document.createElement('div'); row.className = 'progPickRow';
+      PROGRESSIONS.forEach(function (p) {
+        var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
+        // the Roman pattern reads as the lesson; the name grounds it
+        var roman = chordsFromDegrees("C", "Major", p.degrees)
+          .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, "C") : c; })
+          .join(' ');
+        b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
+        b.onclick = function () { loadProgression(p.degrees); };
+        row.appendChild(b);
+      });
+      el.progPicks.appendChild(row);
+    }
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       if (!el.cKey) return;
@@ -755,7 +811,7 @@
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === keyRoot ? ' on' : '');
         b.textContent = r;
-        b.onclick = function () { keyRoot = (keyRoot === r ? null : r); buildKeyPicker(); renderKeyView(); };
+        b.onclick = function () { keyRoot = (keyRoot === r ? null : r); buildKeyPicker(); renderKeyView(); renderProg(); };
         el.keyRoots.appendChild(b);
       });
       el.keyModes.innerHTML = '';
@@ -763,7 +819,7 @@
         var b = document.createElement('button');
         b.className = 'chip' + (mk === keyMode ? ' on' : '');
         b.textContent = MODES[mk].label;
-        b.onclick = function () { keyMode = mk; buildKeyPicker(); renderKeyView(); };
+        b.onclick = function () { keyMode = mk; buildKeyPicker(); renderKeyView(); renderProg(); };
         el.keyModes.appendChild(b);
       });
       if (el.keyClear) el.keyClear.hidden = !keyRoot;
@@ -841,7 +897,7 @@
       var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
-      var tonic = progression[0];
+      var tonic = labelTonic();
       // show the actual chord shape, not just a name — same diagram as the build
       // grid below, so the suggestion reads as "here's the chord, tap to add it".
       // Plus its interval from the key, so you see the ROLE you'd be adding (V, vi…).
@@ -876,7 +932,7 @@
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
-    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); };
+    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); renderProg(); };
 
     /* ===================== TABS ===================== */
     function switchTab(name) {
@@ -903,6 +959,7 @@
     buildGrid();
     buildKeyPicker();
     renderKeyView();
+    renderProgPicks();
     renderProg();
 
     // Give the chord pack a chance to wire its own UI (e.g. the Tune tab).
@@ -933,7 +990,10 @@
     splitChord: splitChord,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
+    chordsFromDegrees: chordsFromDegrees,
+    PROGRESSIONS: PROGRESSIONS,
     ROOTS: ROOTS
   };
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 
 })(typeof window !== 'undefined' ? window : this);
