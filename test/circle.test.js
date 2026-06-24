@@ -149,5 +149,24 @@ test('diatonic() generalizes to modes', function () {
   var g = Circle.diatonic('G', 'mixolydian');
   assert.strictEqual(names(g), 'G Am Bdim C Dm Em F');
 });
+test('romanFor() labels any chord by its interval from the key (the first chord)', function () {
+  var rf = Circle.romanFor;
+  // diatonic major: case carries quality, ° marks the diminished
+  assert.deepStrictEqual(['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'].map(function (c) { return rf(c, 'C'); }),
+    ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']);
+  // minor key relabels from its own tonic
+  assert.deepStrictEqual(['Am', 'Dm', 'Em'].map(function (c) { return rf(c, 'Am'); }), ['i', 'iv', 'v']);
+  // borrowed / non-diatonic chords get a flatted numeral
+  assert.strictEqual(rf('Bb', 'C'), 'bVII');
+  assert.strictEqual(rf('Eb', 'C'), 'bIII');
+  assert.strictEqual(rf('F#', 'C'), 'bV');
+  // transpose-invariant: a I-IV-V-vi is the same labels in any key
+  assert.deepStrictEqual(['D', 'G', 'A', 'Bm'].map(function (c) { return rf(c, 'D'); }), ['I', 'IV', 'V', 'vi']);
+  // flat spelling on either side resolves the same as its sharp enharmonic
+  assert.strictEqual(rf('Ab', 'C'), 'bVI');
+  assert.strictEqual(rf('C', 'Bb'), 'II');
+  // garbage in -> empty (caller skips the label)
+  assert.strictEqual(rf('???', 'C'), '');
+});
 
 run();

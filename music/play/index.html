@@ -63,6 +63,7 @@
           </div></div>
         <div class="prog" id="prog"></div>
         <div id="suggest" class="suggest"></div>
+        <div id="progPicks" class="progPicks"></div>
         <div class="cActions">
           <button class="btn ghost" id="cClear">Clear</button>
           <button class="btn red" id="cSave">Save progression</button>
@@ -139,13 +140,6 @@
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
 <script src="../shared/tracks.js"></script>
-<!-- Mount the Backing Tracks finder into its tab (shares circle.js + the theme). -->
-<script>
-  (function () {
-    var el = document.getElementById('s-tracks');
-    if (el && window.Tracks) window.Tracks.mount({ container: el, tracksUrl: '../backing-tracks/tracks.json' });
-  })();
-</script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -179,7 +173,14 @@
   // both draws a real shape and strums on every instrument.
   var CHORD_PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
   function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
-  function chordRootPc(name) { var m = /^([A-G][#b]?)/.exec(name); return m ? CHORD_PC[m[1]] : null; }
+  // Parse the root pitch class generically (handles E#, B#, Cb, Fb, double accidentals
+  // that the CHORD_PC table can't) via the shared helper; table is the no-Songbook fallback.
+  function chordRootPc(name) {
+    if (window.Songbook && typeof window.Songbook.noteToPc === 'function') {
+      var m0 = /^([A-G][#bx]*)/.exec(name); if (m0) { var pc = window.Songbook.noteToPc(m0[1]); if (pc != null) return pc; }
+    }
+    var m = /^([A-G][#b]?)/.exec(name); return m ? (CHORD_PC[m[1]] != null ? CHORD_PC[m[1]] : null) : null;
+  }
   function chordQual(name) { var m = /^[A-G][#b]?(.*)$/.exec(name); return m ? m[1] : ''; }
   function buildTemplates(chords) {
     var t = {}; if (!chords) return t;
@@ -300,9 +301,14 @@
     el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' \u2014 Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
+    var pack = buildAdapter(profile);
+    // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
+    // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
+    var tracksEl = el('s-tracks');
+    if (tracksEl && window.Tracks) window.Tracks.mount({ container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack });
     window.Songbook.mount({
       songs: songs,
-      chordPack: buildAdapter(profile),
+      chordPack: pack,
       storagePrefix: 'roadcase-' + profile.id,
       suggestions: SUGG,
       contexts: contexts,
@@ -315,7 +321,7 @@
         pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
-        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        prog: el('prog'), suggest: el('suggest'), progPicks: el('progPicks'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),

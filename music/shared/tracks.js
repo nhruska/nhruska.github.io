@@ -98,6 +98,22 @@
   function mergeTracks(seed, custom) {
     return (Array.isArray(seed) ? seed : []).concat(Array.isArray(custom) ? custom : []);
   }
+  // note name -> chromatic pitch class (0-11), parsed generically from the letter
+  // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
+  // handles every enharmonic spelling circle.js can emit — E#, B#, Cb, Fb and
+  // double accidentals — so exotic keys (F# major spells E#, D# minor too) light
+  // ALL seven scale tones on the fretboard, matching the note label. -1 if unparseable.
+  var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function noteToPc(name) {
+    var m = /^([A-Ga-g])([#b]*)$/.exec(String(name == null ? '' : name).trim());
+    if (!m) return -1;
+    var pc = LETTER_PC[m[1].toUpperCase()];
+    for (var i = 0; i < m[2].length; i++) pc += (m[2].charAt(i) === '#' ? 1 : -1);
+    return ((pc % 12) + 12) % 12;
+  }
+  function notesToPcs(notes) {
+    return (notes || []).map(noteToPc).filter(function (p) { return p >= 0; });
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -144,6 +160,7 @@
     var container = opts.container;
     if (!container) return;
     var tracksUrl = opts.tracksUrl || 'tracks.json';
+    var pack = opts.pack || null;  // instrument pack -> the fretboard Studio (else a bare player)
     container.innerHTML = SHELL;
     var $ = function (sel) { return container.querySelector(sel); };
 
@@ -177,9 +194,89 @@
       elPlayer.querySelector('.bt-pl-x').onclick = closePlayer;
       elPlayer.onclick = function (e) { if (e.target === elPlayer) closePlayer(); };
     }
-    function closePlayer() { elPlayer.classList.remove('on'); elPlayer.innerHTML = ''; }
+    function closePlayer() { elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = ''; }
+
+    /* ---- the Practice Studio: the track playing + the theory to solo over it ----
+     * Scale-first layout: pinned backing track on top, the fretboard scale to
+     * solo as the hero, then the chords in the key (tap to hear), then the circle
+     * one tap away. Needs the instrument pack (for the fretboard + chord shapes);
+     * without one we fall back to the bare player. The iframe never reloads as you
+     * scroll the theory below it. */
+    function studioTheory(key, mode) {
+      var C = global.Circle, k = normRoot(key), rp = rootIndex(k);
+      if (!C || rp < 0) return null;
+      var scaleMode = familyMode(mode), notes = C.scale(k, scaleMode);
+      return {
+        key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
+        degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
+        label: shortMode(C.modeInfo(scaleMode).label)
+      };
+    }
+    function buildWhy(box, th) {
+      var C = global.Circle;
+      var strip = th.notes.map(function (n, i) {
+        return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(th.degrees[i]) + '</span></div>';
+      }).join('');
+      // player-facing key name: "A minor" reads better than "A Aeolian"
+      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label;
+      box.innerHTML = '<div class="cofScale">' + strip + '</div>'
+        + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees — '
+        + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
+      if (C && C.renderWheel) {
+        box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
+          selected: { root: th.key, mode: th.scaleMode === 'aeolian' ? 'minor' : 'major' }
+        }));
+      }
+    }
+    function openStudio(t) {
+      var th = studioTheory(t.key, t.mode);
+      if (!th || !pack) { openPlayer(t); return; }
+      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
+        .filter(Boolean).join(' · ');
+      elPlayer.innerHTML =
+        '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
+        + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
+        + '<span class="bt-st-meta">' + meta + '</span></div>'
+        + '<button class="bt-st-x" type="button">close</button></div>'
+        + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+        + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+        + '<div class="bt-st-body">'
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
+        + '<div class="bt-st-scale" data-scale></div></div>'
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
+        + '<div class="bt-st-chords" data-chords></div></div>'
+        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes — the circle</button>'
+        + '<div class="bt-st-why" data-why hidden></div>'
+        + '</div></div>';
+      elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      try { elPlayer.querySelector('[data-scale]').appendChild(pack.scaleDiagram(th.rootPc, th.pcs, 7)); } catch (e) {}
+      var chordsBox = elPlayer.querySelector('[data-chords]');
+      th.chords.forEach(function (c) {
+        var d;
+        try { d = pack.diagram(c.chord, 'small'); } catch (e) { return; }
+        d.className += ' bt-st-chip';
+        d.onclick = function () {
+          try { pack.playChord(c.chord); } catch (e) {}
+          d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
+        };
+        var cell = document.createElement('div');
+        cell.className = 'bt-st-chordcell';
+        cell.appendChild(d);
+        var rn = document.createElement('span');
+        rn.className = 'rn'; rn.textContent = c.roman;
+        cell.appendChild(rn);
+        chordsBox.appendChild(cell);
+      });
+      var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
+      whyToggle.onclick = function () {
+        var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
+        if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
+      };
+      elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
+    }
+
     function activate(t) {
-      if (t.yt && navigator.onLine !== false) openPlayer(t);
+      if (t.yt && navigator.onLine !== false) { pack ? openStudio(t) : openPlayer(t); }
       else openSearch(searchQuery(t));
     }
 
@@ -363,7 +460,8 @@
   var Tracks = {
     compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
-    embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks, mount: mount
+    embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
+    notesToPcs: notesToPcs, mount: mount
   };
   global.Tracks = Tracks;
   if (typeof module !== 'undefined' && module.exports) module.exports = Tracks;

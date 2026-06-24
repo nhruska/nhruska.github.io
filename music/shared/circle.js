@@ -124,6 +124,38 @@
       return { roman: rn, chord: r + qq.q, root: r, quality: qq.q };
     });
   }
+  // split a chord token into its root note and its suffix (everything after the root)
+  function chordParts(chord) {
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec((chord || '').trim());
+    if (!m) return null;
+    return { root: norm(m[1].charAt(0).toUpperCase() + m[1].slice(1)), suffix: m[2] };
+  }
+  // quality from a chord suffix, for casing the numeral (m/dim -> lower, dim -> °, aug -> +)
+  function suffixQuality(suffix) {
+    var s = (suffix || '').toLowerCase();
+    if (/^(dim|°|o)/.test(s) || /m7?b5|m7-5|ø/.test(s)) return 'dim';
+    if (/^(aug|\+)/.test(s)) return 'aug';
+    // a leading 'm' that isn't 'maj' means minor
+    if (/^m(?!aj)/.test(s)) return 'min';
+    return 'maj';
+  }
+  // chromatic-aware degree numerals: index by semitones above the tonic.
+  // Non-diatonic degrees get a flat (bIII, bVII, ...); tritone reads as bV.
+  var RN_CHROM = ['I', 'bII', 'II', 'bIII', 'III', 'IV', 'bV', 'V', 'bVI', 'VI', 'bVII', 'VII'];
+  // Roman-numeral interval label for `chord` measured against `tonicChord`.
+  // Works for ANY progression (diatonic or borrowed): the interval is the
+  // semitone distance between roots; the chord's own quality cases the numeral.
+  function romanFor(chord, tonicChord) {
+    var c = chordParts(chord), t = chordParts(tonicChord);
+    if (!c || !t) return '';
+    var cp = pcOf(c.root), tp = pcOf(t.root);
+    if (cp < 0 || tp < 0) return '';
+    var iv = ((cp - tp) % 12 + 12) % 12;
+    var rn = RN_CHROM[iv], q = suffixQuality(c.suffix);
+    if (q === 'min' || q === 'dim') rn = rn.toLowerCase();
+    if (q === 'dim') rn += '°'; else if (q === 'aug') rn += '+';
+    return rn;
+  }
 
   /* ---- SVG wheel renderer (browser only; node -c'd, eyeballed) ---- */
   var NS = 'http://www.w3.org/2000/svg';
@@ -191,6 +223,7 @@
       ];
     },
     diatonic: diatonic,
+    romanFor: romanFor,
     keyName: keyName,
     spellRoot: spellRoot,
     spellScale: spellScale,

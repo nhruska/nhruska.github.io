@@ -235,13 +235,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyReadout:active{transform:scale(.9);}
 .prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
-.prog .slot{position:relative;animation:fadeUp .2s ease;}
+.prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
 .suggest{margin-top:12px;}
 .suggest:empty{display:none;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
-.suggRow{display:flex;flex-wrap:wrap;gap:8px;}
+.suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;}
+.suggCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.suggCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+.progPicks{margin-top:14px;}
+.progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.progPickRow::-webkit-scrollbar{display:none;}
+.progPick{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:9px 12px;
+  transition:transform .08s,border-color .15s,background .15s;}
+.progPick:active{transform:scale(.96);background:var(--surface-2);border-color:var(--accent);}
+.progPick .ppRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);letter-spacing:.02em;white-space:nowrap;}
+.progPick .ppName{font-size:.66rem;color:var(--txt-dim);font-weight:600;white-space:nowrap;}
 .cActions{display:flex;gap:8px;margin:14px 0;}
 .chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;}
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
