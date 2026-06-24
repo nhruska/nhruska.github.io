@@ -943,15 +943,17 @@
       }).sort(function (a, b) { return score[b] - score[a]; }).slice(0, 5);
     }
     // a tappable suggestion chip: chord diagram + its interval label, plays + adds on tap.
-    function suggChip(c, tonic, extraClass) {
-      var d = packDiagram(c, 'small'); d.className += ' suggPick' + (extraClass ? ' ' + extraClass : '');
+    // `completes` (a progression name) accent-highlights the chip and adds a tiny caption,
+    // so a chord that finishes a famous progression is flagged IN PLACE — no extra rows.
+    function suggChip(c, tonic, completes) {
+      var d = packDiagram(c, 'small'); d.className += ' suggPick' + (completes ? ' complete' : '');
       d.onclick = function () { addChord(c); packPlayChord(c); };
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
-      if (!rn) return d;
-      var cell = document.createElement('div'); cell.className = 'suggCell';
+      if (!rn && !completes) return d;
+      var cell = document.createElement('div'); cell.className = 'suggCell' + (completes ? ' complete' : '');
       cell.appendChild(d);
-      var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn;
-      cell.appendChild(lbl);
+      if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; cell.appendChild(lbl); }
+      if (completes) { var cap = document.createElement('span'); cap.className = 'compCap'; cap.textContent = completes; cell.appendChild(cap); }
       return cell;
     }
     function renderSuggest() {
@@ -959,37 +961,36 @@
       el.suggest.innerHTML = '';
       if (progression.length === 0) return;
       var tonic = labelTonic();
-      // PROGRESSION-AWARE nudge: if what you've played is the start of a famous
-      // progression, surface the chord that COMPLETES it, named, above the generic
-      // next-chord picks. De-duped (one chip per completing chord, even if several
-      // canon progressions share it).
+      // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
+      // flagged right inside the normal "add a chord" list (accent glow + a tiny name
+      // caption) — no separate rows, no forced vertical. De-duped per chord.
       var comps = completions(progression, tonic, keyRoot ? keyMode : "Major");
-      var seenComp = {};
+      var completeBy = {};
       comps.forEach(function (cmp) {
-        if (seenComp[cmp.chord]) { seenComp[cmp.chord].push(cmp.name); return; }
-        seenComp[cmp.chord] = [cmp.name];
-      });
-      Object.keys(seenComp).forEach(function (chord) {
-        var names = seenComp[chord];
-        var clbl = document.createElement('div'); clbl.className = 'suggLbl complete';
-        clbl.textContent = 'Complete the ' + names.join(' / ') + ':';
-        el.suggest.appendChild(clbl);
-        var crow = document.createElement('div'); crow.className = 'suggRow';
-        crow.appendChild(suggChip(chord, tonic, 'complete'));
-        el.suggest.appendChild(crow);
+        (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
       });
 
       var picks = suggestNext(progression);
+      // make sure any completing chord is actually in the list (the Markov ranker might
+      // not surface it), and float completions to the front so the highlight reads first.
+      Object.keys(completeBy).forEach(function (chord) {
+        var i = picks.indexOf(chord);
+        if (i >= 0) picks.splice(i, 1);
+      });
+      picks = Object.keys(completeBy).concat(picks).slice(0, 5);
       if (!picks.length) return;
       var n = progression.length;
       var label = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord:";
       var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
-      // show the actual chord shape, not just a name — same diagram as the build
-      // grid below, so the suggestion reads as "here's the chord, tap to add it".
-      // Plus its interval from the key, so you see the ROLE you'd be adding (V, vi…).
-      picks.forEach(function (c) { row.appendChild(suggChip(c, tonic)); });
+      // show the actual chord shape, not just a name — same diagram as the build grid
+      // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the
+      // accent glow + the progression name it finishes.
+      picks.forEach(function (c) {
+        var names = completeBy[c];
+        row.appendChild(suggChip(c, tonic, names ? names.join(' / ') : null));
+      });
       el.suggest.appendChild(row);
     }
     function saveProgression() {
