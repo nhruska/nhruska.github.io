@@ -48,4 +48,23 @@ test('every shipped PROGRESSION renders the Roman pattern it claims (round-trip 
   });
 });
 
+/* ---------- enharmonic root parsing (the E#dim-sounds-as-C bug) ---------- */
+test('noteToPc parses enharmonics the 12-name table cannot (E#, B#, Cb, Fb, double accidentals)', function () {
+  assert.strictEqual(Songbook.noteToPc('E#'), 5);  // == F
+  assert.strictEqual(Songbook.noteToPc('B#'), 0);  // == C
+  assert.strictEqual(Songbook.noteToPc('Cb'), 11); // == B
+  assert.strictEqual(Songbook.noteToPc('Fb'), 4);  // == E
+  assert.strictEqual(Songbook.noteToPc('Fx'), 7);  // double sharp == G
+  assert.strictEqual(Songbook.noteToPc('Bbb'), 9); // double flat == A
+  assert.strictEqual(Songbook.noteToPc('C'), 0);
+  assert.strictEqual(Songbook.noteToPc('zz'), null); // junk
+});
+test('chordRootFreq: E#dim sounds as F, NOT the C fallback (the vii-of-F#-major bug)', function () {
+  var fEsharp = Songbook.chordRootFreq('E#dim');
+  assert.ok(Math.abs(fEsharp - Songbook.chordRootFreq('F')) < 0.01, 'E# should equal F');
+  assert.ok(Math.abs(fEsharp - 261.63) > 1, 'E# must not fall back to C (261.63)');
+  // a genuinely unparseable token still falls back to C, by design
+  assert.strictEqual(Songbook.chordRootFreq('???'), 261.63);
+});
+
 run();

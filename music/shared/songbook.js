@@ -30,6 +30,21 @@
     if (F2S[r]) r = F2S[r];
     return { root: r, qual: m[2] || "" };
   }
+  // Pitch class (0-11) of ANY note spelling: a letter plus any run of accidentals,
+  // including the enharmonics our 12-name ROOTS table can't hold — E#, B#, Cb, Fb,
+  // double sharps/flats. Lookup tables miss these and fall back to C (a wrong tone
+  // on exotic diatonic chords like the vii° of F# major, E#dim). Returns null on junk.
+  var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function noteToPc(name) {
+    var m = /^([A-Ga-g])([#bx]*)$/.exec((name || '').trim());
+    if (!m) return null;
+    var pc = LETTER_PC[m[1].toUpperCase()];
+    for (var i = 0; i < m[2].length; i++) {
+      var c = m[2][i];
+      pc += (c === '#') ? 1 : (c === 'x') ? 2 : -1; // x = double sharp
+    }
+    return ((pc % 12) + 12) % 12;
+  }
   function tpose(ch, st) {
     var p = splitChord(ch);
     if (!p) return ch;
@@ -40,13 +55,14 @@
   function tposeLine(raw, st) {
     return raw.replace(/\[([^\]]+)\]/g, function (_, c) { return "[" + tpose(c, st) + "]"; });
   }
-  // root frequency of a chord, relative to middle C (used for the chord-chip tap tone)
+  // root frequency of a chord, relative to middle C (used for the chord-chip tap tone).
+  // Parse the root pitch class generically so exotic spellings (E#, B#, Cb, Fb) sound
+  // the right note instead of falling back to C.
   function chordRootFreq(ch) {
-    var p = splitChord(ch);
-    if (!p) return 261.63;
-    var i = ROOTS.indexOf(p.root);
-    if (i < 0) return 261.63;
-    return 261.63 * Math.pow(2, i / 12);
+    var m = /^([A-G][#bx]*)/.exec((ch || '').trim());
+    var pc = m ? noteToPc(m[1]) : null;
+    if (pc == null) return 261.63;
+    return 261.63 * Math.pow(2, pc / 12);
   }
 
   /* ---------- keys / modes (the jam set) ----------
@@ -988,6 +1004,7 @@
     tpose: tpose,
     tposeLine: tposeLine,
     splitChord: splitChord,
+    noteToPc: noteToPc,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
     chordsFromDegrees: chordsFromDegrees,

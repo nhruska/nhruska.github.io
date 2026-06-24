@@ -173,7 +173,14 @@
   // both draws a real shape and strums on every instrument.
   var CHORD_PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
   function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
-  function chordRootPc(name) { var m = /^([A-G][#b]?)/.exec(name); return m ? CHORD_PC[m[1]] : null; }
+  // Parse the root pitch class generically (handles E#, B#, Cb, Fb, double accidentals
+  // that the CHORD_PC table can't) via the shared helper; table is the no-Songbook fallback.
+  function chordRootPc(name) {
+    if (window.Songbook && typeof window.Songbook.noteToPc === 'function') {
+      var m0 = /^([A-G][#bx]*)/.exec(name); if (m0) { var pc = window.Songbook.noteToPc(m0[1]); if (pc != null) return pc; }
+    }
+    var m = /^([A-G][#b]?)/.exec(name); return m ? (CHORD_PC[m[1]] != null ? CHORD_PC[m[1]] : null) : null;
+  }
   function chordQual(name) { var m = /^[A-G][#b]?(.*)$/.exec(name); return m ? m[1] : ''; }
   function buildTemplates(chords) {
     var t = {}; if (!chords) return t;
