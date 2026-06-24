@@ -67,4 +67,29 @@ test('chordRootFreq: E#dim sounds as F, NOT the C fallback (the vii-of-F#-major 
   assert.strictEqual(Songbook.chordRootFreq('???'), 261.63);
 });
 
+/* ---------- progression-aware suggestion (the "complete the cliche" nudge) ---------- */
+test('degreeOf maps a chord to its 0-indexed major-scale degree (-1 if borrowed)', function () {
+  assert.strictEqual(Songbook.degreeOf('C', 'C'), 0);
+  assert.strictEqual(Songbook.degreeOf('G', 'C'), 4);   // V
+  assert.strictEqual(Songbook.degreeOf('Am', 'C'), 5);  // vi
+  assert.strictEqual(Songbook.degreeOf('Eb', 'C'), -1); // borrowed bIII -> not a scale tone
+  assert.strictEqual(Songbook.degreeOf('D', 'G'), 4);   // V of G
+});
+function compNames(cs) { return cs.map(function (c) { return c.name + '->' + c.chord; }); }
+test('completions nudges the chord that finishes a famous progression', function () {
+  // I-V-vi -> IV completes the 4-chord song
+  var c = Songbook.completions(['C', 'G', 'Am'], 'C', 'Major');
+  assert.ok(c.some(function (x) { return x.name === '4-chord song' && x.chord === 'F'; }), compNames(c).join(','));
+  // ii-V -> I completes the jazz turnaround
+  assert.deepStrictEqual(compNames(Songbook.completions(['Dm', 'G'], 'C', 'Major')), ['Jazz turnaround->C']);
+});
+test('completions is transpose-invariant (same nudge in any key)', function () {
+  var c = Songbook.completions(['G', 'D', 'Em'], 'G', 'Major');
+  assert.ok(c.some(function (x) { return x.name === '4-chord song' && x.chord === 'C'; }), compNames(c).join(','));
+});
+test('completions bails on a borrowed chord and on an already-complete progression', function () {
+  assert.deepStrictEqual(Songbook.completions(['C', 'Eb'], 'C', 'Major'), []);        // borrowed -> no clean match
+  assert.deepStrictEqual(Songbook.completions(['C', 'G', 'Am', 'F'], 'C', 'Major'), []); // 4-chord song done
+});
+
 run();

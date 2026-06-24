@@ -224,6 +224,7 @@
     },
     diatonic: diatonic,
     romanFor: romanFor,
+    MODE_STEPS: MODES,   // raw semitone steps per mode (single source for scale intervals)
     keyName: keyName,
     spellRoot: spellRoot,
     spellScale: spellScale,
