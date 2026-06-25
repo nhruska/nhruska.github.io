@@ -50,6 +50,8 @@
     stopDrone(); startDrone(freq, idx); if (btn) btn.classList.add('droning');
   }
 
+  var nsdfBuf = null; // reused NSDF scratch buffer (grown on demand) — no per-frame alloc
+
   /* ---------- pitch detection (band-limited NSDF / McLeod) ----------
    * Normalised square-difference autocorrelation, searched ONLY across the
    * instrument's plausible period band, picking the FIRST strong peak (the
@@ -68,7 +70,9 @@
     var maxLag = Math.min(n - 2, Math.ceil(sr / fmin));
     if (maxLag <= minLag) return { freq: -1, clarity: 0 };
     // NSDF: n'(lag) = 2·Σ x[i]·x[i+lag] / Σ (x[i]² + x[i+lag]²)
-    var nsdf = new Float64Array(maxLag + 2);
+    // (reuse one scratch buffer across frames — no per-frame allocation / GC churn)
+    if (!nsdfBuf || nsdfBuf.length < maxLag + 2) nsdfBuf = new Float64Array(maxLag + 2);
+    var nsdf = nsdfBuf;
     for (lag = minLag; lag <= maxLag; lag++) {
       var ac = 0, m = 0;
       for (i = 0; i < n - lag; i++) { var a = buf[i], b = buf[i + lag]; ac += a * b; m += a * a + b * b; }
@@ -93,6 +97,11 @@
     var thresh = strongest * 0.9, chosen = null;
     for (i = 0; i < peaks.length; i++) if (peaks[i].val >= thresh) { chosen = peaks[i]; break; }
     if (!chosen) return { freq: -1, clarity: 0 };
+    // Edge guard: a peak pinned to the search boundary means the true fundamental
+    // likely lies OUTSIDE the band (a wildly-flat string, or a tone above fmax).
+    // Report low confidence so the gate drops it and the UI says "listening"
+    // instead of a confident WRONG note that sends you tuning the wrong way.
+    if (chosen.lag >= maxLag - 1 || chosen.lag <= minLag) return { freq: sr / chosen.lag, clarity: Math.min(chosen.val, 0.4) };
     // parabolic interpolation around the chosen lag for sub-sample precision
     var T0 = chosen.lag, y1 = nsdf[T0 - 1] || 0, y2 = nsdf[T0], y3 = nsdf[T0 + 1] || 0, den = y1 - 2 * y2 + y3;
     if (den) T0 = T0 + 0.5 * (y1 - y3) / den;
@@ -115,14 +124,17 @@
     return best;
   }
   function nearest(freq) { return nearestString(freq, STRINGS); }
-  // Search band from the instrument's own strings: a little below the lowest
-  // open string and above the highest, so we never lock an octave below the
-  // bass string and the search stays cheap.
+  // Search band from the instrument's own strings.
+  //  fmin ×0.6  ≈ 9 semitones of FLAT headroom — a tuner's job is to catch a
+  //    badly-flat string and say "very flat", not pin to the edge and read a
+  //    plausible-but-wrong note that sends you tightening the wrong way.
+  //  fmax floored at 1400 keeps minLag small, so the first-peak rule can't
+  //    overshoot a high string's fundamental and report an octave low.
   function bandLimits(strings) {
-    if (!strings || !strings.length) return { fmin: 60, fmax: 1320 };
+    if (!strings || !strings.length) return { fmin: 48, fmax: 1400 };
     var lo = Infinity, hi = 0;
     strings.forEach(function (s) { if (s.f < lo) lo = s.f; if (s.f > hi) hi = s.f; });
-    return { fmin: lo * 0.85, fmax: hi * 1.7 };
+    return { fmin: lo * 0.6, fmax: Math.max(hi * 1.8, 1400) };
   }
   function micToggle() {
     if (micOn) { micStop(); return; }

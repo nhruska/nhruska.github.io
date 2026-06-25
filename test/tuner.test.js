@@ -31,7 +31,7 @@ var GUITAR = [
   { n: 'E', l: '6th', f: 82.41 }, { n: 'A', l: '5th', f: 110.00 }, { n: 'D', l: '4th', f: 146.83 },
   { n: 'G', l: '3rd', f: 196.00 }, { n: 'B', l: '2nd', f: 246.94 }, { n: 'E', l: '1st', f: 329.63 }
 ];
-var FMIN = 70, FMAX = 700;
+var BAND = T.bandLimits(GUITAR), FMIN = BAND.fmin, FMAX = BAND.fmax; // the real guitar search band
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -84,6 +84,26 @@ test('noisy but real pluck still detects the fundamental', function () {
 test('clarity is high for a clean tone, returned 0..1', function () {
   var r = T.detectPitch(synth(196), SR, FMIN, FMAX);
   assert.ok(r.clarity > 0.8 && r.clarity <= 1.0001, 'clarity ' + r.clarity);
+});
+
+// ---- band-edge fixes (the two review findings) ----
+test('bandLimits gives ~9 semitones of FLAT headroom below the lowest string', function () {
+  var b = T.bandLimits(GUITAR);
+  assert.ok(b.fmin <= 82.41 * Math.pow(2, -6 / 12), 'fmin ' + b.fmin.toFixed(1) + ' — not enough flat headroom');
+});
+test('a badly-flat low E (-3 semitones) reads ~that pitch, not pinned to the edge', function () {
+  var f = 82.41 * Math.pow(2, -3 / 12); // ~69.3 Hz
+  var r = T.detectPitch(synth(f), SR, FMIN, FMAX);
+  assert.ok(r.freq > 0 && r.clarity > 0.9 && Math.abs(cents(r.freq, f)) < 12,
+    'read ' + (r.freq > 0 ? r.freq.toFixed(1) + 'Hz @ clarity ' + r.clarity.toFixed(2) : 'nothing'));
+});
+test('high tone (500Hz) reads 500, not an octave low (high-edge first-peak fix)', function () {
+  var r = T.detectPitch(synth(500), SR, FMIN, FMAX);
+  assert.ok(Math.abs(cents(r.freq, 500)) < 15, 'read ' + r.freq.toFixed(1) + 'Hz (octave-low cliff?)');
+});
+test('out-of-band rumble (40Hz, below the band) fails safe — gated, not a confident wrong note', function () {
+  var r = T.detectPitch(synth(40, { harmonics: [1] }), SR, FMIN, FMAX);
+  assert.ok(r.clarity < 0.9, 'clarity ' + r.clarity.toFixed(3) + ' would pass the gate and mislead');
 });
 
 run();
