@@ -153,6 +153,16 @@
   function isOutlier(freq, ref, maxCents) {
     return ref > 0 && freq > 0 && Math.abs(1200 * Math.log2(freq / ref)) > (maxCents || 70);
   }
+  // Tuning advice for "always tune UP from flat" (approach pitch from below so the
+  // string seats under tension). The three states aren't symmetric:
+  //   'flat'  (≤ -2¢) keep coming up — the good direction
+  //   'near'  (±1¢)   you're on it — lock
+  //   'sharp' (≥ +2¢) overshot — drop below and re-approach
+  function tuneHint(cents) {
+    if (cents >= 2) return 'sharp';
+    if (cents <= -2) return 'flat';
+    return 'near';
+  }
   function micToggle() {
     if (micOn) { micStop(); return; }
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
@@ -182,7 +192,7 @@
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
     inTuneHold = 0; reading = false; lastCentsTxt = ''; glitchFrames = 0; prevShown = null;
     var nd = document.getElementById('micNeedle');
-    if (nd) { nd.style.left = '50%'; nd.style.background = 'var(--bad)'; if (nd.parentNode) nd.parentNode.classList.remove('locked'); }
+    if (nd) { nd.style.left = '50%'; nd.style.background = 'var(--bad)'; if (nd.parentNode) { nd.parentNode.classList.remove('locked'); nd.parentNode.classList.remove('sharp'); } }
   }
   function micLoop() {
     if (!micOn) return;
@@ -214,10 +224,11 @@
       else if (tgt !== lockedString) { if (++switchFrames >= 3) { lockedString = tgt; switchFrames = 0; } }
       else { switchFrames = 0; }
       var shown = lockedString;
-      var cents = Math.round(1200 * Math.log2(freq / shown.f)), aC = Math.abs(cents);
-      // In-tune LOCK with hold: latch at ≤3¢, hold ~18 frames through wobble,
-      // release only past 6¢ — a calm steady state instead of a flickering label.
-      if (aC <= 3) inTuneHold = 18; else if (aC > 6) inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
+      var cents = Math.round(1200 * Math.log2(freq / shown.f)), hint = tuneHint(cents);
+      // Tight, asymmetric LOCK for tuning UP from flat: latch only at ±1¢; the
+      // instant it goes sharp (overshoot) drop the lock so you SEE it; a brief
+      // flat-side hold rides out wobble while the string seats.
+      if (hint === 'near') inTuneHold = 8; else if (hint === 'sharp') inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
       var locked = inTuneHold > 0;
       // Zoomed needle, driven by the same smoothed value as the cents readout.
       // SNAP only when the string itself changes; otherwise glide steadily, so
@@ -225,20 +236,23 @@
       var target = needlePos(cents), k = (shown !== prevShown) ? 0.45 : 0.2;
       prevShown = shown;
       needleEMA += (target - needleEMA) * k; needle.style.left = needleEMA.toFixed(1) + '%';
-      needle.style.background = locked ? 'var(--good)' : (aC <= 10 ? 'var(--warn)' : 'var(--bad)');
+      // Colour the workflow: green = there; amber = flat, keep coming UP (the good
+      // direction); red = sharp, you overshot — drop below and re-approach.
+      needle.style.background = locked ? 'var(--good)' : (hint === 'sharp' ? 'var(--bad)' : 'var(--warn)');
       noteEl.textContent = shown.n;
       noteEl.classList.toggle('intune', locked);
-      if (meter) meter.classList.toggle('locked', locked);
-      // Steady text: repaint only on change (no per-frame churn). ✓ when locked,
-      // else cents + which way to turn the peg (sharp -> loosen, flat -> tighten).
-      var txt = locked ? '✓ in tune' : ((cents > 0 ? '+' : '') + cents + '¢  ' + (cents > 0 ? 'loosen ▽' : '△ tighten'));
+      if (meter) { meter.classList.toggle('locked', locked); meter.classList.toggle('sharp', !locked && hint === 'sharp'); }
+      // Steady text: repaint only on change. ✓ when locked; flat -> keep coming up;
+      // sharp -> you overshot, drop below and come back up.
+      var txt = locked ? '✓ in tune'
+        : (hint === 'sharp' ? '+' + cents + '¢  ▼ sharp — drop & come up' : cents + '¢  ▲ keep tuning up');
       if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
     } else if (++quietFrames > 18) {
       // Sustained silence (~0.3s): release, clear history, drift gently to centre.
       reading = false; freqHist = []; lockedString = null; switchFrames = 0; inTuneHold = 0; glitchFrames = 0; prevShown = null;
       needleEMA += (50 - needleEMA) * 0.05; needle.style.left = needleEMA.toFixed(1) + '%';
       needle.style.background = 'var(--bad)';
-      noteEl.classList.remove('intune'); if (meter) meter.classList.remove('locked');
+      noteEl.classList.remove('intune'); if (meter) { meter.classList.remove('locked'); meter.classList.remove('sharp'); }
       if (lastCentsTxt !== '…') { centsEl.textContent = 'listening… play a string'; lastCentsTxt = '…'; }
     }
     // brief dropouts (quietFrames <= 18): hold the last good reading, no flicker.
@@ -291,6 +305,7 @@
     module.exports.bandLimits = bandLimits;
     module.exports.needlePos = needlePos;
     module.exports.isOutlier = isOutlier;
+    module.exports.tuneHint = tuneHint;
     module.exports.median = median;
   }
 

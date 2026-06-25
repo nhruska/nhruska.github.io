@@ -139,4 +139,19 @@ test('isOutlier: no running estimate yet means nothing is a glitch', function ()
   assert.strictEqual(T.isOutlier(440, -1, 70), false);
 });
 
+// ---- asymmetric tuning advice (tune UP from flat; sharp = overshoot) ----
+test('tuneHint: ±1¢ is "near" (lock), ≤-2¢ "flat" (keep up), ≥+2¢ "sharp" (overshot)', function () {
+  assert.strictEqual(T.tuneHint(0), 'near');
+  assert.strictEqual(T.tuneHint(1), 'near');
+  assert.strictEqual(T.tuneHint(-1), 'near');
+  assert.strictEqual(T.tuneHint(-2), 'flat');
+  assert.strictEqual(T.tuneHint(-30), 'flat');
+  assert.strictEqual(T.tuneHint(2), 'sharp');
+  assert.strictEqual(T.tuneHint(25), 'sharp');
+});
+test('tuneHint: the lock zone is tight (±1¢) — +3¢ is NOT in tune', function () {
+  assert.notStrictEqual(T.tuneHint(3), 'near'); // the "showing in-tune but sharp" bug
+  assert.strictEqual(T.tuneHint(3), 'sharp');
+});
+
 run();

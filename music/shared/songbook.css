@@ -220,10 +220,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* in-tune target zone (±3¢ in the zoomed needle map) — a band to park the needle
    in; lights up + glows green when the reading LOCKS, so "in tune" reads at a
    glance without watching the number. */
-.micMeter .tgt{position:absolute;top:8px;left:38%;width:24%;height:38px;border-radius:7px;background:var(--good);opacity:.10;transition:opacity .2s,box-shadow .2s;pointer-events:none;}
-.micMeter.locked .tgt{opacity:.24;box-shadow:0 0 18px 3px rgba(94,234,212,.55);}
+.micMeter .tgt{position:absolute;top:8px;left:46%;width:8%;height:38px;border-radius:6px;background:var(--good);opacity:.12;transition:opacity .2s,box-shadow .2s;pointer-events:none;}
+.micMeter.locked .tgt{opacity:.28;box-shadow:0 0 18px 3px rgba(94,234,212,.6);}
 .micMeter .center{position:absolute;top:16px;left:50%;width:1px;height:26px;background:var(--accent);transform:translateX(-50%);transition:background .2s,box-shadow .2s;}
 .micMeter.locked .center{background:var(--good);box-shadow:0 0 8px var(--good);}
+/* sharp = overshot the pitch: the centre line goes red as "you've gone too far,
+   drop below and come back up" (the always-tune-up-from-flat workflow). */
+.micMeter.sharp .center{background:var(--bad);box-shadow:0 0 8px var(--bad);}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
