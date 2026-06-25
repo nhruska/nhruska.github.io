@@ -29,12 +29,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   background-image:radial-gradient(1100px 360px at 50% -8%,rgba(94,234,212,.06),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
-.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) 16px 12px;border-bottom:1px solid var(--line);background:rgba(20,23,28,.85);backdrop-filter:blur(8px);z-index:10;}
-.appbar .brand{display:flex;flex-direction:column;line-height:1;gap:3px;}
-.appbar .brand .nm{font-weight:800;font-size:1.18rem;letter-spacing:-.02em;}
-.appbar .brand .ctx{font-size:.68rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;}
-.appbar .ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:11px;font-size:1.05rem;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
-.appbar .ab-btn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
+/* Slim header (one screen, above the fold): compact padding + smaller brand, the
+   instrument picker the only control here. ♪ quick-tune lives in the Tune tab and
+   the accent picker moved there too — both were redundant in the always-on bar. */
+.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:rgba(20,23,28,.85);backdrop-filter:blur(8px);z-index:10;}
+.appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
+.appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
+.appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:11px;font-size:1.05rem;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
+.ab-btn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{flex:0 0 auto;display:flex;gap:2px;padding:6px 6px calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);background:var(--bg-2);border-top:1px solid var(--line);}
@@ -301,7 +304,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}
-.maxGrid{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:center;gap:20px;padding:16px 4px 28px;overflow:auto;}
+/* Chord-expand grid fills the screen per orientation (one screen, no scroll):
+   portrait = 2 per row, rows scroll; landscape = 4 across in a single row that
+   fits the height. SVG diagrams scale to their cell via the viewBox. */
+.maxGrid{flex:1;display:grid;grid-template-columns:repeat(2,1fr);align-content:start;justify-items:center;gap:18px;padding:14px 4px 22px;overflow:auto;}
+.maxGrid .bigC{display:flex;flex-direction:column;align-items:center;width:100%;}
+.maxGrid .bigC svg{width:100%;height:auto;max-width:240px;}
+@media (orientation:landscape){
+  .maxGrid{grid-template-columns:repeat(4,1fr);align-content:center;gap:12px;overflow:hidden;}
+  .maxGrid .bigC svg{width:auto;height:auto;max-width:100%;max-height:62vh;}
+}
 .bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
 .bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent);}

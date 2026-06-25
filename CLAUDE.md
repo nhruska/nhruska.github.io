@@ -113,6 +113,14 @@ A self-contained **static** GitHub Pages site (`nhruska.github.io`), served from
   bit us on the hero cards).
 - **Keep diffs surgical** — when scripting edits to `songs.json`, only the
   intended lines should change (write back with the same 2-space formatting).
+- **One screen, above the fold (always preferred).** Maximize what's usable
+  without scrolling on a phone: keep the header minimal (it must not repeat a
+  subtitle the view already shows), cut redundant or already-elsewhere controls,
+  and size content to the viewport (`100dvh`, orientation-aware grids) instead of
+  assuming the user will scroll. Before adding UI, ask "does this push the primary
+  action below the fold?" — if yes, reclaim space first. Portrait and landscape
+  each get a layout that fills the screen (e.g. chord-expand: 2-up portrait, 4-up
+  single row landscape).
 
 ### Preview & CI
 - `.github/workflows/pr-preview.yml` posts tappable **githack** preview links
