@@ -118,7 +118,7 @@
    * -> eased needle, holding the last good value through brief dropouts. */
   var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null, needleEMA = 50;
   var freqHist = [], lockedString = null, switchFrames = 0, quietFrames = 0, micBand = { fmin: 60, fmax: 1320 };
-  var inTuneHold = 0, reading = false, lastCentsTxt = '';
+  var inTuneHold = 0, reading = false, lastCentsTxt = '', glitchFrames = 0, prevShown = null;
   function nearestString(freq, strings) {
     var best = strings[0], bd = 1e9;
     for (var i = 0; i < strings.length; i++) { var d = Math.abs(1200 * Math.log2(freq / strings[i].f)); if (d < bd) { bd = d; best = strings[i]; } }
@@ -147,6 +147,12 @@
     var off = a <= 10 ? (a / 10) * 40 : 40 + ((a - 10) / 40) * 10;
     return 50 + sgn * off;
   }
+  // Is this frame a glitch? True when `freq` deviates more than `maxCents` from the
+  // running estimate `ref` - a pluck transient or a momentary octave/harmonic blip
+  // that must not yank the needle. (ref<=0 means "no estimate yet" -> never a glitch.)
+  function isOutlier(freq, ref, maxCents) {
+    return ref > 0 && freq > 0 && Math.abs(1200 * Math.log2(freq / ref)) > (maxCents || 70);
+  }
   function micToggle() {
     if (micOn) { micStop(); return; }
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
@@ -174,7 +180,7 @@
     var nn = document.getElementById('micNote'); if (nn) { nn.textContent = '—'; nn.classList.remove('intune'); }
     var cc = document.getElementById('micCents'); if (cc) cc.textContent = 'mic stopped';
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
-    inTuneHold = 0; reading = false; lastCentsTxt = '';
+    inTuneHold = 0; reading = false; lastCentsTxt = ''; glitchFrames = 0; prevShown = null;
     var nd = document.getElementById('micNeedle');
     if (nd) { nd.style.left = '50%'; nd.style.background = 'var(--bad)'; if (nd.parentNode) nd.parentNode.classList.remove('locked'); }
   }
@@ -189,8 +195,18 @@
     // (down to 0.72) so the note/cents don't flicker out while a string sustains.
     if (res.freq > 0 && res.clarity > (reading ? 0.72 : 0.9)) {
       reading = true; quietFrames = 0;
-      freqHist.push(res.freq); if (freqHist.length > 5) freqHist.shift();
-      var freq = median(freqHist); // median kills the odd single-frame spike
+      // Reject a single glitch frame so it can't yank the needle; if the deviation
+      // PERSISTS (~4 frames) it's a real new note, so adopt it. Otherwise the
+      // longer median buffer keeps the read steady — the needle tracks the same
+      // smoothed value as the cents number you trust.
+      var refFreq = freqHist.length ? median(freqHist) : 0;
+      if (isOutlier(res.freq, refFreq, 70)) {
+        if (++glitchFrames >= 4) { freqHist = [res.freq]; glitchFrames = 0; }
+      } else {
+        glitchFrames = 0;
+        freqHist.push(res.freq); if (freqHist.length > 8) freqHist.shift();
+      }
+      var freq = median(freqHist);
       var tgt = nearest(freq);
       // Note-name hysteresis: don't flip the displayed string on a transient -
       // require a few consistent frames before committing to a new string.
@@ -203,9 +219,11 @@
       // release only past 6¢ — a calm steady state instead of a flickering label.
       if (aC <= 3) inTuneHold = 18; else if (aC > 6) inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
       var locked = inTuneHold > 0;
-      // Zoomed needle: every cent near centre is a big visible move. Snap on a
-      // string jump, glide when fine-tuning.
-      var target = needlePos(cents), k = Math.abs(target - needleEMA) > 14 ? 0.34 : 0.18;
+      // Zoomed needle, driven by the same smoothed value as the cents readout.
+      // SNAP only when the string itself changes; otherwise glide steadily, so
+      // honing the last few cents stays rock-steady (no fast/slow jumpiness).
+      var target = needlePos(cents), k = (shown !== prevShown) ? 0.45 : 0.2;
+      prevShown = shown;
       needleEMA += (target - needleEMA) * k; needle.style.left = needleEMA.toFixed(1) + '%';
       needle.style.background = locked ? 'var(--good)' : (aC <= 10 ? 'var(--warn)' : 'var(--bad)');
       noteEl.textContent = shown.n;
@@ -217,7 +235,7 @@
       if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
     } else if (++quietFrames > 18) {
       // Sustained silence (~0.3s): release, clear history, drift gently to centre.
-      reading = false; freqHist = []; lockedString = null; switchFrames = 0; inTuneHold = 0;
+      reading = false; freqHist = []; lockedString = null; switchFrames = 0; inTuneHold = 0; glitchFrames = 0; prevShown = null;
       needleEMA += (50 - needleEMA) * 0.05; needle.style.left = needleEMA.toFixed(1) + '%';
       needle.style.background = 'var(--bad)';
       noteEl.classList.remove('intune'); if (meter) meter.classList.remove('locked');
@@ -272,6 +290,7 @@
     module.exports.nearestString = nearestString;
     module.exports.bandLimits = bandLimits;
     module.exports.needlePos = needlePos;
+    module.exports.isOutlier = isOutlier;
     module.exports.median = median;
   }
 

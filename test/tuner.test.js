@@ -127,4 +127,16 @@ test('needlePos: a few cents is a BIG visible move (not a pixel)', function () {
   assert.ok(Math.abs((T.needlePos(7) - 50) + (T.needlePos(-7) - 50)) < 1e-9);
 });
 
+// ---- outlier rejection (the "needle jumps away while honing in" fix) ----
+test('isOutlier: an octave/harmonic blip is rejected, a few-cents wobble is kept', function () {
+  assert.strictEqual(T.isOutlier(220, 110, 70), true);   // octave up — glitch
+  assert.strictEqual(T.isOutlier(55, 110, 70), true);    // octave down — glitch
+  assert.strictEqual(T.isOutlier(111, 110, 70), false);  // ~16¢ wobble — real, keep
+  assert.strictEqual(T.isOutlier(110.3, 110, 70), false);// dead on — keep
+});
+test('isOutlier: no running estimate yet means nothing is a glitch', function () {
+  assert.strictEqual(T.isOutlier(440, 0, 70), false);
+  assert.strictEqual(T.isOutlier(440, -1, 70), false);
+});
+
 run();
