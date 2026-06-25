@@ -106,4 +106,25 @@ test('out-of-band rumble (40Hz, below the band) fails safe — gated, not a conf
   assert.ok(r.clarity < 0.9, 'clarity ' + r.clarity.toFixed(3) + ' would pass the gate and mislead');
 });
 
+// ---- zoomed needle mapping (the "blind near zero" fix) ----
+test('needlePos: 0¢ dead centre, full-scale at ±50¢, clamped beyond', function () {
+  assert.strictEqual(T.needlePos(0), 50);
+  assert.strictEqual(T.needlePos(50), 100);
+  assert.strictEqual(T.needlePos(-50), 0);
+  assert.strictEqual(T.needlePos(120), 100);
+  assert.strictEqual(T.needlePos(-120), 0);
+});
+test('needlePos: the in-tune zone (±3¢) maps to centre ±12%', function () {
+  assert.ok(Math.abs(T.needlePos(3) - 62) < 0.01, 'got ' + T.needlePos(3));
+  assert.ok(Math.abs(T.needlePos(-3) - 38) < 0.01, 'got ' + T.needlePos(-3));
+});
+test('needlePos: a few cents is a BIG visible move (not a pixel)', function () {
+  // the whole point: ±5¢ should swing the needle clearly off centre (>15%),
+  // where the old linear ±50¢ map moved it only ~5%
+  assert.ok(Math.abs(T.needlePos(5) - 50) >= 15, '5¢ only moved to ' + T.needlePos(5));
+  // monotonic + symmetric near centre
+  assert.ok(T.needlePos(2) > T.needlePos(1) && T.needlePos(1) > T.needlePos(0));
+  assert.ok(Math.abs((T.needlePos(7) - 50) + (T.needlePos(-7) - 50)) < 1e-9);
+});
+
 run();
