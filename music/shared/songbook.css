@@ -227,6 +227,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* sharp = overshot the pitch: the centre line goes red as "you've gone too far,
    drop below and come back up" (the always-tune-up-from-flat workflow). */
 .micMeter.sharp .center{background:var(--bad);box-shadow:0 0 8px var(--bad);}
+.micMeter.locked{animation:lockPulse .34s ease;}
+.micMeter.sharp{box-shadow:0 0 0 2px var(--bad) inset;border-radius:8px;}
+@keyframes lockPulse{0%{transform:scale(1)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
+/* strobe POC: the classic "stands still = in tune" display. Stripes drift left
+   when flat / right when sharp (speed ∝ how far off), freeze + glow green when
+   locked. Far easier to land than chasing a needle. */
+.strobe{position:relative;height:30px;margin:10px 2px 4px;border-radius:8px;overflow:hidden;
+  border:1px solid var(--line);background:var(--bg-2);}
+.strobeInner{position:absolute;top:0;bottom:0;left:-40px;right:-40px;will-change:transform;
+  background:repeating-linear-gradient(90deg,var(--txt-soft) 0 10px,transparent 10px 20px);opacity:.45;}
+.strobe.sharp .strobeInner{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,transparent 10px 20px);opacity:.7;}
+.strobe.locked{border-color:var(--good);box-shadow:0 0 14px rgba(94,234,212,.45);}
+.strobe.locked .strobeInner{background:repeating-linear-gradient(90deg,var(--good) 0 10px,transparent 10px 20px);opacity:.9;}
+.strobeLbl{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-size:.54rem;
+  letter-spacing:.04em;color:var(--txt-dim);font-family:'Space Mono',monospace;pointer-events:none;}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}

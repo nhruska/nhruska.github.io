@@ -119,6 +119,7 @@
   var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null, needleEMA = 50;
   var freqHist = [], lockedString = null, switchFrames = 0, quietFrames = 0, micBand = { fmin: 60, fmax: 1320 };
   var inTuneHold = 0, reading = false, lastCentsTxt = '', glitchFrames = 0, prevShown = null;
+  var strobePhase = 0, wasLocked = false, prevHint = '';
   function nearestString(freq, strings) {
     var best = strings[0], bd = 1e9;
     for (var i = 0; i < strings.length; i++) { var d = Math.abs(1200 * Math.log2(freq / strings[i].f)); if (d < bd) { bd = d; best = strings[i]; } }
@@ -154,13 +155,13 @@
     return ref > 0 && freq > 0 && Math.abs(1200 * Math.log2(freq / ref)) > (maxCents || 70);
   }
   // Tuning advice for "always tune UP from flat" (approach pitch from below so the
-  // string seats under tension). The three states aren't symmetric:
-  //   'flat'  (≤ -2¢) keep coming up — the good direction
-  //   'near'  (±1¢)   you're on it — lock
-  //   'sharp' (≥ +2¢) overshot — drop below and re-approach
+  // string seats under tension). Asymmetric + biased to the way you actually land:
+  //   'flat'  (≤ -3¢)      keep coming up — the good direction
+  //   'near'  (-2..+1¢)    you're on it — lock (landable coming up from below)
+  //   'sharp' (≥ +2¢)      overshot — drop below and re-approach (tight on sharp)
   function tuneHint(cents) {
     if (cents >= 2) return 'sharp';
-    if (cents <= -2) return 'flat';
+    if (cents <= -3) return 'flat';
     return 'near';
   }
   function micToggle() {
@@ -191,6 +192,8 @@
     var cc = document.getElementById('micCents'); if (cc) cc.textContent = 'mic stopped';
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
     inTuneHold = 0; reading = false; lastCentsTxt = ''; glitchFrames = 0; prevShown = null;
+    strobePhase = 0; wasLocked = false; prevHint = '';
+    var st = document.getElementById('micStrobe'); if (st) { st.classList.remove('locked'); st.classList.remove('sharp'); }
     var nd = document.getElementById('micNeedle');
     if (nd) { nd.style.left = '50%'; nd.style.background = 'var(--bad)'; if (nd.parentNode) { nd.parentNode.classList.remove('locked'); nd.parentNode.classList.remove('sharp'); } }
   }
@@ -200,7 +203,7 @@
     var res = detectPitch(micBuf, micAC.sampleRate, micBand.fmin, micBand.fmax);
     var noteEl = document.getElementById('micNote'), centsEl = document.getElementById('micCents'), needle = document.getElementById('micNeedle');
     if (!noteEl || !centsEl || !needle) { micRAF = requestAnimationFrame(micLoop); return; }
-    var meter = needle.parentNode;
+    var meter = needle.parentNode, strobe = document.getElementById('micStrobe'), strobeInner = document.getElementById('micStrobeInner');
     // Clarity hysteresis: acquire a string at 0.9, then HOLD it through brief dips
     // (down to 0.72) so the note/cents don't flicker out while a string sustains.
     if (res.freq > 0 && res.clarity > (reading ? 0.72 : 0.9)) {
@@ -210,7 +213,7 @@
       // longer median buffer keeps the read steady — the needle tracks the same
       // smoothed value as the cents number you trust.
       var refFreq = freqHist.length ? median(freqHist) : 0;
-      if (isOutlier(res.freq, refFreq, 70)) {
+      if (isOutlier(res.freq, refFreq, 40)) {
         if (++glitchFrames >= 4) { freqHist = [res.freq]; glitchFrames = 0; }
       } else {
         glitchFrames = 0;
@@ -247,12 +250,28 @@
       var txt = locked ? '✓ in tune'
         : (hint === 'sharp' ? '+' + cents + '¢  ▼ sharp — drop & come up' : cents + '¢  ▲ keep tuning up');
       if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
+      // STROBE: stripes drift ∝ cents (flat ← / sharp →), FREEZE when locked — the
+      // classic "stands still = in tune" read that beats chasing a needle.
+      if (strobe && strobeInner) {
+        strobe.classList.toggle('locked', locked);
+        strobe.classList.toggle('sharp', !locked && hint === 'sharp');
+        if (!locked) { strobePhase = ((strobePhase + cents * 0.5) % 20 + 20) % 20; strobeInner.style.transform = 'translateX(' + (-strobePhase) + 'px)'; }
+      }
+      // Haptics (Android): a tick the instant you LOCK, a buzz the instant you go
+      // SHARP — feedback you feel without watching the screen.
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        if (locked && !wasLocked) navigator.vibrate(25);
+        else if (hint === 'sharp' && prevHint !== 'sharp') navigator.vibrate([12, 30, 12]);
+      }
+      wasLocked = locked; prevHint = hint;
     } else if (++quietFrames > 18) {
       // Sustained silence (~0.3s): release, clear history, drift gently to centre.
       reading = false; freqHist = []; lockedString = null; switchFrames = 0; inTuneHold = 0; glitchFrames = 0; prevShown = null;
       needleEMA += (50 - needleEMA) * 0.05; needle.style.left = needleEMA.toFixed(1) + '%';
       needle.style.background = 'var(--bad)';
       noteEl.classList.remove('intune'); if (meter) { meter.classList.remove('locked'); meter.classList.remove('sharp'); }
+      if (strobe) { strobe.classList.remove('locked'); strobe.classList.remove('sharp'); }
+      wasLocked = false; prevHint = '';
       if (lastCentsTxt !== '…') { centsEl.textContent = 'listening… play a string'; lastCentsTxt = '…'; }
     }
     // brief dropouts (quietFrames <= 18): hold the last good reading, no flicker.
@@ -267,6 +286,7 @@
     }
     box.innerHTML = '<div class="micNote" id="micNote">—</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
       + '<div class="micMeter"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
+      + '<div class="strobe" id="micStrobe"><div class="strobeInner" id="micStrobeInner"></div><div class="strobeLbl">stands still = in tune · drifts ◀ flat · sharp ▶</div></div>'
       + '<div class="actions"><button class="btn" id="micToggle">Start mic</button></div>';
     document.getElementById('micToggle').onclick = micToggle;
   }
