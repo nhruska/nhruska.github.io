@@ -18,13 +18,15 @@
 
   var AC = null;
   function ctx() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); return AC; }
-  (function () { // unlock audio on first user gesture (iOS / autoplay policy)
-    function unlock() {
-      var a = ctx(); if (a.state === 'suspended') a.resume();
-      window.removeEventListener('touchstart', unlock); window.removeEventListener('click', unlock);
-    }
-    window.addEventListener('touchstart', unlock); window.addEventListener('click', unlock);
-  })();
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    (function () { // unlock audio on first user gesture (iOS / autoplay policy)
+      function unlock() {
+        var a = ctx(); if (a.state === 'suspended') a.resume();
+        window.removeEventListener('touchstart', unlock); window.removeEventListener('click', unlock);
+      }
+      window.addEventListener('touchstart', unlock); window.addEventListener('click', unlock);
+    })();
+  }
 
   /* ---------- reference tones (steady drone per string) ---------- */
   var droneNodes = null, droneIdx = -1;
@@ -48,28 +50,53 @@
     stopDrone(); startDrone(freq, idx); if (btn) btn.classList.add('droning');
   }
 
-  /* ---------- pitch detection (autocorrelation + clarity) ----------
-   * Returns { freq, clarity }. `clarity` is the normalised height of the
-   * winning autocorrelation peak (0..1) - a confidence score the loop uses
-   * to ignore noisy / breath / room-tone frames instead of chasing them. */
-  function autoCorr(buf, sr) {
-    var SIZE = buf.length, rms = 0;
-    for (var i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-    rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return { freq: -1, clarity: 0 };
-    var r1 = 0, r2 = SIZE - 1, th = 0.2;
-    for (var i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < th) { r1 = i; break; } }
-    for (var i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < th) { r2 = SIZE - i; break; } }
-    var b = buf.slice(r1, r2), n = b.length, c = new Array(n).fill(0);
-    for (var lag = 0; lag < n; lag++) for (var i = 0; i < n - lag; i++) c[lag] += b[i] * b[i + lag];
-    var d = 0; while (d < n - 1 && c[d] > c[d + 1]) d++;
-    var mx = -1, pos = -1;
-    for (var i = d; i < n; i++) { if (c[i] > mx) { mx = c[i]; pos = i; } }
-    if (pos <= 0) return { freq: -1, clarity: 0 };
-    var T0 = pos;
-    var x1 = c[T0 - 1] || 0, x2 = c[T0] || 0, x3 = c[T0 + 1] || 0, a = (x1 + x3 - 2 * x2) / 2, bb = (x3 - x1) / 2;
-    if (a) T0 = T0 - bb / (2 * a);
-    return { freq: sr / T0, clarity: c[0] > 0 ? mx / c[0] : 0 };
+  /* ---------- pitch detection (band-limited NSDF / McLeod) ----------
+   * Normalised square-difference autocorrelation, searched ONLY across the
+   * instrument's plausible period band, picking the FIRST strong peak (the
+   * fundamental) instead of the global max. That first-peak rule is the
+   * standard cure for octave errors - the bug that made low strings read an
+   * octave off and land on the wrong string. Band-limiting both speeds it up
+   * and refuses sub-octave lock-ons. Returns { freq, clarity }, clarity 0..1
+   * (1 = perfectly periodic) - the confidence the loop gates noise on. */
+  function detectPitch(buf, sr, fmin, fmax) {
+    var n = buf.length, i, lag, rms = 0;
+    for (i = 0; i < n; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / n);
+    if (rms < 0.01) return { freq: -1, clarity: 0 };       // RMS floor: ignore room tone / breath
+    fmin = fmin || 60; fmax = fmax || 1320;
+    var minLag = Math.max(2, Math.floor(sr / fmax));
+    var maxLag = Math.min(n - 2, Math.ceil(sr / fmin));
+    if (maxLag <= minLag) return { freq: -1, clarity: 0 };
+    // NSDF: n'(lag) = 2·Σ x[i]·x[i+lag] / Σ (x[i]² + x[i+lag]²)
+    var nsdf = new Float64Array(maxLag + 2);
+    for (lag = minLag; lag <= maxLag; lag++) {
+      var ac = 0, m = 0;
+      for (i = 0; i < n - lag; i++) { var a = buf[i], b = buf[i + lag]; ac += a * b; m += a * a + b * b; }
+      nsdf[lag] = m > 0 ? (2 * ac / m) : 0;
+    }
+    // "key maxima": the top of each positive lobe AFTER the first negative
+    // zero-crossing (skipping the lag-0 self-correlation lobe entirely).
+    var peaks = [], curMax = -1, curLag = -1, positive = false, seenNeg = false;
+    for (lag = minLag; lag <= maxLag; lag++) {
+      var v = nsdf[lag];
+      if (!seenNeg) { if (v < 0) seenNeg = true; continue; }
+      if (!positive) { if (v > 0) { positive = true; curMax = v; curLag = lag; } }
+      else {
+        if (v > curMax) { curMax = v; curLag = lag; }
+        if (v <= 0) { peaks.push({ lag: curLag, val: curMax }); positive = false; curMax = -1; }
+      }
+    }
+    if (positive && curLag > 0) peaks.push({ lag: curLag, val: curMax });
+    if (!peaks.length) return { freq: -1, clarity: 0 };
+    // the fundamental = the FIRST peak clearing 0.9× the strongest peak
+    var strongest = 0; for (i = 0; i < peaks.length; i++) if (peaks[i].val > strongest) strongest = peaks[i].val;
+    var thresh = strongest * 0.9, chosen = null;
+    for (i = 0; i < peaks.length; i++) if (peaks[i].val >= thresh) { chosen = peaks[i]; break; }
+    if (!chosen) return { freq: -1, clarity: 0 };
+    // parabolic interpolation around the chosen lag for sub-sample precision
+    var T0 = chosen.lag, y1 = nsdf[T0 - 1] || 0, y2 = nsdf[T0], y3 = nsdf[T0 + 1] || 0, den = y1 - 2 * y2 + y3;
+    if (den) T0 = T0 + 0.5 * (y1 - y3) / den;
+    return { freq: sr / T0, clarity: Math.max(0, Math.min(1, chosen.val)) };
   }
   function median(arr) {
     var s = arr.slice().sort(function (a, b) { return a - b; }), m = s.length >> 1;
@@ -81,11 +108,21 @@
    * read: clarity gate -> median of recent frames -> note-name hysteresis
    * -> eased needle, holding the last good value through brief dropouts. */
   var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null, needleEMA = 50;
-  var freqHist = [], lockedString = null, switchFrames = 0, quietFrames = 0;
-  function nearest(freq) {
-    var best = 0, bd = 1e9;
-    STRINGS.forEach(function (s, i) { var d = Math.abs(1200 * Math.log2(freq / s.f)); if (d < bd) { bd = d; best = i; } });
-    return STRINGS[best];
+  var freqHist = [], lockedString = null, switchFrames = 0, quietFrames = 0, micBand = { fmin: 60, fmax: 1320 };
+  function nearestString(freq, strings) {
+    var best = strings[0], bd = 1e9;
+    for (var i = 0; i < strings.length; i++) { var d = Math.abs(1200 * Math.log2(freq / strings[i].f)); if (d < bd) { bd = d; best = strings[i]; } }
+    return best;
+  }
+  function nearest(freq) { return nearestString(freq, STRINGS); }
+  // Search band from the instrument's own strings: a little below the lowest
+  // open string and above the highest, so we never lock an octave below the
+  // bass string and the search stays cheap.
+  function bandLimits(strings) {
+    if (!strings || !strings.length) return { fmin: 60, fmax: 1320 };
+    var lo = Infinity, hi = 0;
+    strings.forEach(function (s) { if (s.f < lo) lo = s.f; if (s.f > hi) hi = s.f; });
+    return { fmin: lo * 0.85, fmax: hi * 1.7 };
   }
   function micToggle() {
     if (micOn) { micStop(); return; }
@@ -95,8 +132,9 @@
         micAC = new (window.AudioContext || window.webkitAudioContext)();
         var src = micAC.createMediaStreamSource(micStream);
         micAnalyser = micAC.createAnalyser();
-        micAnalyser.fftSize = 2048;
+        micAnalyser.fftSize = 4096;          // ~93ms @44.1k: enough low-string wavelengths to lock on
         micBuf = new Float32Array(micAnalyser.fftSize);
+        micBand = bandLimits(STRINGS);
         src.connect(micAnalyser);
         micOn = true;
         var t = document.getElementById('micToggle'); if (t) t.textContent = 'Stop mic';
@@ -118,14 +156,15 @@
   function micLoop() {
     if (!micOn) return;
     micAnalyser.getFloatTimeDomainData(micBuf);
-    var res = autoCorr(micBuf, micAC.sampleRate);
+    var res = detectPitch(micBuf, micAC.sampleRate, micBand.fmin, micBand.fmax);
     var noteEl = document.getElementById('micNote'), centsEl = document.getElementById('micCents'), needle = document.getElementById('micNeedle');
     if (!noteEl || !centsEl || !needle) { micRAF = requestAnimationFrame(micLoop); return; }
-    // Confidence gate: only a clear, in-range pitch counts as a real reading.
-    if (res.freq > 55 && res.freq < 1500 && res.clarity > 0.92) {
+    // Confidence gate: NSDF clarity is a true 0..1 periodicity score, so a single
+    // firm threshold cleanly separates a real string from noise.
+    if (res.freq > 0 && res.clarity > 0.9) {
       quietFrames = 0;
-      freqHist.push(res.freq); if (freqHist.length > 6) freqHist.shift();
-      var freq = median(freqHist); // median kills single-frame spikes + octave jumps
+      freqHist.push(res.freq); if (freqHist.length > 5) freqHist.shift();
+      var freq = median(freqHist); // median kills the odd single-frame spike
       var tgt = nearest(freq);
       // Note-name hysteresis: don't flip the displayed string on a transient -
       // require a few consistent frames before committing to a new string.
@@ -136,7 +175,10 @@
       var cents = Math.round(1200 * Math.log2(freq / shown.f));
       noteEl.textContent = shown.n;
       var clamped = Math.max(-50, Math.min(50, cents));
-      var target = 50 + clamped; needleEMA += (target - needleEMA) * 0.18; needle.style.left = needleEMA.toFixed(1) + '%';
+      // Adaptive easing: snap when you've jumped to a new string (big move),
+      // glide when fine-tuning (small move) so the needle feels both quick and steady.
+      var target = 50 + clamped, k = Math.abs(target - needleEMA) > 8 ? 0.34 : 0.16;
+      needleEMA += (target - needleEMA) * k; needle.style.left = needleEMA.toFixed(1) + '%';
       var inT = Math.abs(cents) <= 4;
       noteEl.classList.toggle('intune', inT);
       needle.style.background = inT ? 'var(--good)' : (Math.abs(cents) < 15 ? 'var(--warn)' : 'var(--bad)');
@@ -159,7 +201,7 @@
       return;
     }
     box.innerHTML = '<div class="micNote" id="micNote">—</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
-      + '<div class="micMeter"><div class="scale"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
+      + '<div class="micMeter"><div class="scale"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:left 60ms linear,background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
       + '<div class="actions"><button class="btn" id="micToggle">Start mic</button></div>';
     document.getElementById('micToggle').onclick = micToggle;
   }
@@ -190,5 +232,13 @@
     // silence mic + reference drones (call when leaving the Tune tab)
     stop: function () { stopDrone(); micStop(); }
   };
+
+  // expose the pure DSP for Node unit tests (no DOM/mic needed)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports.detectPitch = detectPitch;
+    module.exports.nearestString = nearestString;
+    module.exports.bandLimits = bandLimits;
+    module.exports.median = median;
+  }
 
 })(typeof window !== 'undefined' ? window : this);
