@@ -17,13 +17,14 @@
 <link rel="stylesheet" href="../shared/tracks.css">
 <style>
   /* in-app instrument/tuning picker (appbar) */
-  .abRight{display:flex;align-items:center;gap:8px;position:relative;}
   .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
-    font-family:inherit;font-size:.8rem;font-weight:600;padding:9px 10px;max-width:42vw;cursor:pointer;}
+    font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
   .picker:focus{outline:none;border-color:var(--accent);}
-  /* accent-colour chooser: #themeBtn shows the current accent; tap for swatches */
+  /* accent-colour chooser lives in the Tune tab now (not the always-on header) */
+  .tuneTheme{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;}
+  .themeWrap{position:relative;}
   #themeBtn{font-size:1.3rem;line-height:1;}
-  .themePop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:flex;gap:9px;flex-wrap:wrap;
+  .themePop{position:absolute;bottom:calc(100% + 8px);right:0;z-index:30;display:flex;gap:9px;flex-wrap:wrap;
     width:202px;padding:12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:13px;
     box-shadow:0 14px 34px rgba(0,0,0,.5);animation:fadeUp .18s ease;}
   .themePop[hidden]{display:none;}
@@ -37,12 +38,7 @@
 <div class="app">
   <div class="appbar">
     <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
-    <div class="abRight">
-      <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
-      <button class="ab-btn" id="quickTune" title="Quick tune">♪</button>
-      <button class="ab-btn" id="themeBtn" title="Accent colour" aria-label="Choose accent colour" aria-haspopup="true" aria-expanded="false">●</button>
-      <div class="themePop" id="themePop" role="menu" aria-label="Accent colour" hidden></div>
-    </div>
+    <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
     <section class="screen on" id="s-library">
@@ -104,6 +100,13 @@
         </div>
         <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones — tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
+        <div class="tuneTheme">
+          <span class="sub">Accent colour</span>
+          <div class="themeWrap">
+            <button class="ab-btn" id="themeBtn" title="Accent colour" aria-label="Choose accent colour" aria-haspopup="true" aria-expanded="false">●</button>
+            <div class="themePop" id="themePop" role="menu" aria-label="Accent colour" hidden></div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
