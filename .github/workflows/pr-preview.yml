@@ -3,8 +3,10 @@
 # site, so we serve the PR's exact commit through raw.githack.com (an https CDN
 # over raw GitHub files) - https means the mic-based tuner works on mobile too.
 #
-# NOTE: pull_request workflows run from the *base* branch, so this only starts
-# commenting once it has landed on `main`.
+# NOTE: when this workflow file is FIRST added in a PR, it does not run for
+# that initial PR (GitHub doesn't know the workflow exists from main yet).
+# Once it's landed on main, subsequent PRs run the workflow as it exists on
+# THEIR head SHA - so workflow edits in a PR DO apply to that same PR's runs.
 name: PR preview link
 
 on:
