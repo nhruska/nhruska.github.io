@@ -11,7 +11,7 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v11';
+var CACHE = 'music-v12';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -24,7 +24,7 @@ var CORE = [
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
   './shared/profiles/ukulele-gcea.js', './shared/profiles/guitar-standard.js',
-  './shared/profiles/guitar-dropd.js', './shared/profiles/guitar-openg.js',
+  './shared/profiles/cigarbox-dgbd.js', './shared/profiles/banjo-gdgbd.js',
   './shared/profiles/mandolin-gdae.js', './shared/profiles/mandola-cgda.js'
 ];
 
