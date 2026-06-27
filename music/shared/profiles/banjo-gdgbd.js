@@ -13,7 +13,17 @@
  * Top 4 strings (D G B D) match the Open-G guitar top 4 / Cigar Box DGBD,
  * so the chord shapes for those 4 are identical (just shifted by one index
  * since the drone takes column 0). The drone rings open when the chord
- * contains a G (it's the chord tone) and is muted otherwise. */
+ * contains a G (it's the chord tone) and is muted otherwise.
+ *
+ * HSR-by-design (DO NOT "fix" to open position):
+ * Majors are a single barre across the top 4 strings at the root's fret
+ * (G@0, A@2, Bb@3, B@4, C@5, D@7, E@9, F@10, F#@11). Minors are the same
+ * barre with the B-string flatted one fret. Dominant 7ths share the same
+ * shape too. This is intentional - the shapes teach Horizontal Shape
+ * Relationships (HSR): one moveable shape, root-fret = chord. A future
+ * Claude looking at these and wanting to swap to "idiomatic open-position"
+ * voicings: don't. The HSR teaching value beats the open-position
+ * familiarity for this profile. */
 (function (g) {
   g.MusicProfiles = g.MusicProfiles || {};
   g.MusicProfiles["banjo-gdgbd"] = {

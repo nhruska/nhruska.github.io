@@ -51,7 +51,16 @@
     var rows = Math.max(o.rows, hi - base + 1);
     var sy = (H - padY - o.bottomPad) / rows;
 
-    var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+    // High-position shapes render the "Nfr" label to the LEFT of the diagram.
+    // The label is right-anchored at x = padX - basePad and grows leftward; for
+    // multi-char labels ("5fr", "10fr") the digits end up at negative x and get
+    // clipped off the original (0, W) viewBox - leaving just the trailing "fr"
+    // visible, which is what the small chord cards on the Compose tab showed.
+    // Extend the canvas + viewBox leftward by labelPad when base > 1 so the
+    // digits have room. Low-position shapes (nut bar) are unchanged.
+    var labelPad = (base > 1) ? (opts.size === 'big' ? 28 : 16) : 0;
+    var canvasW = W + labelPad;
+    var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)
     if (base === 1) {
       svg += '<rect x="' + (padX - o.nutPad) + '" y="' + (padY - o.nutPad - 1) + '" width="' + (cols * sx + 2 * o.nutPad) + '" height="' + o.nutH + '" fill="#e8ebf0" rx="1"/>';
