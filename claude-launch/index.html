@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" class="ps-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1A1F2E">
+<title>Setup is done - a co-founder walkthrough</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<meta name="description" content="What I built in the global Claude config + web environment, and what it unlocks for Problem Solutions. A Mike-direct walkthrough.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1A1F2E; --bg-2:#252B3B; --card:#2A3044;
+  --txt:#FFFFFF; --txt-soft:rgba(255,255,255,.72); --txt-dim:rgba(255,255,255,.52);
+  --accent:#29AAE1; --accent-soft:#4FC0F1; --accent-2:#2075BC; --accent-deep:#105480;
+  --border:rgba(41,170,225,.20); --border-soft:rgba(255,255,255,.10);
+  --glow:rgba(41,170,225,.25);
+  --ease:cubic-bezier(.25,.1,.25,1);
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow-x:hidden; }
+html { scroll-snap-type:y mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; }
+body {
+  font-family:'Poppins', sans-serif; font-weight:400; color:var(--txt); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.55;
+  background:
+    radial-gradient(ellipse 80% 50% at 18% 0%, rgba(41,170,225,.16), transparent 60%),
+    radial-gradient(ellipse 70% 40% at 92% 30%, rgba(79,192,241,.10), transparent 60%),
+    linear-gradient(160deg,#1A1F2E 0%,#0E1320 100%);
+  background-attachment:fixed;
+}
+.slide{
+  width:100vw; height:100vh; height:100dvh;
+  overflow:hidden; scroll-snap-align:start;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 28px) 24px calc(env(safe-area-inset-bottom,0px) + 36px);
+  position:relative;
+}
+.shell{ max-width:980px; margin:0 auto; width:100%; }
+.eyebrow{
+  font-size:11px; letter-spacing:.28em; text-transform:uppercase; font-weight:600;
+  color:var(--accent); margin-bottom:18px; display:inline-flex; align-items:center; gap:10px;
+}
+.eyebrow::before{
+  content:''; width:24px; height:1px; background:var(--accent); display:inline-block;
+}
+h1.title{ font-size:clamp(2.2rem, 7vw, 4.4rem); font-weight:800; letter-spacing:-.035em; line-height:1.02; }
+h1.title .accent{ color:var(--accent); }
+h1.title .italic{ font-style:italic; font-weight:900; }
+h2.head{ font-size:clamp(1.55rem, 4.4vw, 2.4rem); font-weight:700; letter-spacing:-.025em; line-height:1.1; margin-bottom:18px; }
+h2.head .accent{ color:var(--accent); }
+.lead{ font-size:clamp(1rem, 2.6vw, 1.2rem); font-weight:500; color:var(--txt); margin-top:14px; max-width:46ch; }
+.body{ font-size:clamp(.95rem, 2.2vw, 1.05rem); color:var(--txt-soft); line-height:1.65; max-width:60ch; }
+.body + .body{ margin-top:14px; }
+.muted{ color:var(--txt-dim); font-size:.92rem; }
+.kicker{
+  font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; font-weight:600;
+  color:var(--accent); margin-bottom:10px;
+}
+
+/* numbers grid - slide 2 */
+.numbers{
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:14px; margin-top:30px;
+}
+.num{
+  background:var(--card); border:1px solid var(--border-soft); border-radius:18px;
+  padding:22px 16px; text-align:left; position:relative; overflow:hidden;
+}
+.num::before{
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent);
+}
+.num .n{ font-size:clamp(1.9rem, 5vw, 2.8rem); font-weight:800; color:var(--txt); line-height:1; letter-spacing:-.02em; }
+.num .k{ font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; color:var(--txt-dim); margin-top:10px; }
+@media (max-width:780px){
+  .numbers{ grid-template-columns:repeat(2, 1fr); gap:10px; margin-top:20px; }
+  .num{ padding:16px 14px; border-radius:14px; }
+}
+
+/* total banner - slide 2 */
+.total{
+  margin-top:24px; padding:18px 22px; border-radius:14px;
+  background:linear-gradient(120deg, rgba(41,170,225,.16), rgba(41,170,225,.04));
+  border:1px solid var(--border);
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+}
+.total .big{ font-size:clamp(2rem, 5.5vw, 3rem); font-weight:800; color:var(--accent); line-height:1; }
+.total .lbl{ font-size:.95rem; color:var(--txt-soft); }
+
+/* split layout - slide 3 */
+.cols{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:24px; }
+@media (max-width:780px){ .cols{ grid-template-columns:1fr; gap:12px; } }
+.col{
+  background:var(--card); border:1px solid var(--border-soft); border-radius:16px;
+  padding:22px; min-height:200px; display:flex; flex-direction:column;
+}
+.col .tag{
+  font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; font-weight:700;
+  color:var(--accent); margin-bottom:8px;
+}
+.col h3{ font-size:1.15rem; font-weight:700; margin-bottom:8px; }
+.col p{ font-size:.92rem; color:var(--txt-soft); line-height:1.55; }
+.col .footnote{ margin-top:auto; padding-top:12px; font-size:.78rem; color:var(--txt-dim); letter-spacing:.04em; }
+
+/* bullets */
+.bullets{ margin-top:20px; display:flex; flex-direction:column; gap:14px; }
+.bullets li{
+  list-style:none; padding-left:34px; position:relative; font-size:1.02rem; color:var(--txt);
+  line-height:1.5;
+}
+.bullets li::before{
+  content:''; position:absolute; left:0; top:.5em; width:20px; height:2px; background:var(--accent);
+}
+.bullets li b{ font-weight:700; color:var(--txt); }
+
+/* flow - slide 4 */
+.flow{ display:flex; align-items:stretch; gap:14px; margin-top:30px; flex-wrap:wrap; }
+.flow .step{
+  flex:1; min-width:180px; background:var(--card); border:1px solid var(--border-soft);
+  border-radius:14px; padding:18px; position:relative;
+}
+.flow .step .n{
+  font-size:.75rem; letter-spacing:.18em; color:var(--accent); font-weight:700; margin-bottom:8px;
+}
+.flow .step h4{ font-size:1.05rem; font-weight:700; margin-bottom:6px; }
+.flow .step p{ font-size:.85rem; color:var(--txt-soft); line-height:1.5; }
+.flow .arrow{ align-self:center; color:var(--accent); font-weight:700; font-size:1.3rem; }
+@media (max-width:780px){ .flow .arrow{ display:none; } }
+
+/* what-unlocks - slide 6 */
+.grid2{ display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; margin-top:24px; }
+@media (max-width:780px){ .grid2{ grid-template-columns:1fr; } }
+.tile{
+  background:var(--card); border:1px solid var(--border-soft); border-radius:14px; padding:20px;
+}
+.tile h4{ font-size:1.05rem; font-weight:700; margin-bottom:8px; }
+.tile h4 .dot{
+  display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent);
+  box-shadow:0 0 8px var(--glow); margin-right:9px; vertical-align:middle;
+}
+.tile p{ font-size:.92rem; color:var(--txt-soft); line-height:1.55; }
+
+/* closing */
+.signoff{ margin-top:30px; font-size:1.05rem; color:var(--txt-soft); font-style:italic; }
+.kbd{
+  display:inline-block; padding:2px 7px; background:var(--bg-2); border:1px solid var(--border-soft);
+  border-radius:5px; font-size:.75rem; color:var(--txt-soft); font-family:monospace;
+}
+
+/* hint chip */
+.hint{
+  position:fixed; bottom:16px; right:18px; z-index:50;
+  background:rgba(42,48,68,.85); backdrop-filter:blur(8px);
+  border:1px solid var(--border-soft); border-radius:999px;
+  padding:7px 13px; font-size:11px; letter-spacing:.08em; color:var(--txt-soft);
+  display:flex; align-items:center; gap:8px;
+  transition:opacity .35s var(--ease); opacity:.92;
+}
+.hint.fade{ opacity:0; pointer-events:none; }
+
+/* progress rail */
+.rail{
+  position:fixed; right:18px; top:50%; transform:translateY(-50%); z-index:40;
+  display:flex; flex-direction:column; gap:8px;
+}
+.rail a{
+  width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.18);
+  display:block; transition:all .25s var(--ease);
+}
+.rail a:hover, .rail a.on{ background:var(--accent); box-shadow:0 0 9px var(--glow); transform:scale(1.25); }
+@media (max-width:780px){ .rail{ display:none; } }
+
+/* footer brand */
+.brand-foot{
+  position:absolute; left:24px; bottom:18px; font-size:11px; letter-spacing:.16em;
+  font-weight:600; color:var(--txt-dim); text-transform:uppercase;
+}
+.brand-foot .accent{ color:var(--accent); }
+
+/* slide-in animation when each slide intersects the viewport */
+.slide .shell{ opacity:0; transform:translateY(18px); transition:opacity .55s var(--ease), transform .55s var(--ease); }
+.slide.in .shell{ opacity:1; transform:translateY(0); }
+
+a.link{ color:var(--accent); text-decoration:none; border-bottom:1px solid var(--border); }
+a.link:hover{ color:var(--accent-soft); border-color:var(--accent-soft); }
+</style>
+</head>
+<body>
+
+<!-- ============= SLIDE 1: COVER ============= -->
+<section class="slide" id="s1">
+  <div class="shell">
+    <div class="eyebrow">A co-founder walkthrough / 2026-06-27</div>
+    <h1 class="title">Setup is <span class="italic accent">done</span>.</h1>
+    <p class="lead">What I built in the global Claude config + the web environment, and what it unlocks for Problem Solutions.</p>
+    <p class="body" style="margin-top:30px;">Wanted you to see it from the inside before it shows up in the work. Twelve slides, five minutes.</p>
+  </div>
+  <div class="brand-foot">Problem <span class="accent">Solutions</span> / Claude global / launch</div>
+</section>
+
+<!-- ============= SLIDE 2: THE NUMBERS ============= -->
+<section class="slide" id="s2">
+  <div class="shell">
+    <div class="kicker">The shape of it</div>
+    <h2 class="head">The team's new tooling baseline, in <span class="accent">numbers</span>.</h2>
+    <p class="body">These are live counts in the shared <a class="link" href="https://github.com/nhruska/claude-config" target="_blank" rel="noopener">claude-config</a> repo as of today. Every one of them is a piece of behavior we don't have to re-derive next time.</p>
+    <div class="numbers">
+      <div class="num"><div class="n">77</div><div class="k">Skills</div></div>
+      <div class="num"><div class="n">137</div><div class="k">Commands</div></div>
+      <div class="num"><div class="n">26</div><div class="k">Rules</div></div>
+      <div class="num"><div class="n">24</div><div class="k">Protocols</div></div>
+      <div class="num"><div class="n">8</div><div class="k">Agents</div></div>
+    </div>
+    <div class="total">
+      <span class="big">272</span>
+      <span class="lbl">primitives, each one a saved trip back through the same friction.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============= SLIDE 3: THE SPLIT ============= -->
+<section class="slide" id="s3">
+  <div class="shell">
+    <div class="kicker">Three repos, one brain</div>
+    <h2 class="head">Shared, personal, and <span class="accent">private knowledge</span>. Clean lines.</h2>
+    <p class="body">The split matters. Anything that helps the team goes to the shared repo. Anything that's mine alone lives in the private overlay. Knowledge that spans projects lives in the brain repo. Nothing leaks across.</p>
+    <div class="cols">
+      <div class="col">
+        <div class="tag">Shared (public)</div>
+        <h3>claude-config</h3>
+        <p>The team's config and primitives. Anyone on the crew clones this and inherits the whole working agreement.</p>
+        <div class="footnote">nhruska/claude-config</div>
+      </div>
+      <div class="col">
+        <div class="tag">Personal (private)</div>
+        <h3>claude-config-personal</h3>
+        <p>My identity, my tone defaults, machine-local routing. Loaded only on my machines, never shipped to the team.</p>
+        <div class="footnote">nhruska/claude-config-personal</div>
+      </div>
+      <div class="col">
+        <div class="tag">Brain (private)</div>
+        <h3>knowledge-space</h3>
+        <p>Cross-project topics, durable notes, the thinking that survives any one project. The thing that compounds.</p>
+        <div class="footnote">nhruska/knowledge-space</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= SLIDE 4: WHAT IT ACTUALLY IS ============= -->
+<section class="slide" id="s4">
+  <div class="shell">
+    <div class="kicker">The loop</div>
+    <h2 class="head">Friction in. Primitive out. <span class="accent">Permanent.</span></h2>
+    <p class="body">This is the move. Every time I hit the same papercut twice, it becomes a rule, a skill, a command. The agent and I both stop hitting it. Then the team stops hitting it. Compound engineering, done one paper cut at a time.</p>
+    <div class="flow">
+      <div class="step"><div class="n">01</div><h4>Notice</h4><p>A repeated explanation, a manual sequence, a step the agent forgot.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="step"><div class="n">02</div><h4>Codify</h4><p>Turn it into a rule, skill, or command. One sentence is fine.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="step"><div class="n">03</div><h4>Compound</h4><p>Every future session inherits it. Across projects. Across the team.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= SLIDE 5: WEB ENV ============= -->
+<section class="slide" id="s5">
+  <div class="shell">
+    <div class="kicker">Web environment ready</div>
+    <h2 class="head">Claude Code <span class="accent">on the web</span>, not just on my laptop.</h2>
+    <p class="body">Sessions launch in cloud containers from any device. The repo gets cloned fresh each time, the work goes back through a PR. This means:</p>
+    <ul class="bullets">
+      <li><b>Phone, tablet, any browser.</b> I can kick off a task from a coffee shop and review the PR on the way home.</li>
+      <li><b>Ephemeral isolation.</b> Each session is its own sandbox. Nothing crosswires with the laptop.</li>
+      <li><b>Scoped repo access.</b> The web env knows exactly which repos this branch can touch. No accidental writes elsewhere.</li>
+      <li><b>The 8 GB Chromebook is no longer the bottleneck.</b> Heavy lifting moves to the cloud, the laptop stays cool.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============= SLIDE 6: WHAT IT UNLOCKS FOR PS ============= -->
+<section class="slide" id="s6">
+  <div class="shell">
+    <div class="kicker">Why this matters to PS</div>
+    <h2 class="head">What this unlocks for <span class="accent">Problem Solutions</span>.</h2>
+    <div class="grid2">
+      <div class="tile">
+        <h4><span class="dot"></span>Agent-swarm-as-team</h4>
+        <p>Decompose a sprint into atomic tasks, dispatch them in parallel, review the PRs. We compete with vibe-coder outfits on throughput without growing headcount.</p>
+      </div>
+      <div class="tile">
+        <h4><span class="dot"></span>AI-Mentor positioning</h4>
+        <p>The setup is the offering. When clients ask "how do you do that?", the answer is this config. It's the IP that blurs the services/IP line.</p>
+      </div>
+      <div class="tile">
+        <h4><span class="dot"></span>Quality sword stays sharp</h4>
+        <p>V&amp;V evidence, codex adversarial review, live-integration proof. The bar holds even as we move fast. 22 years of quality habits, encoded.</p>
+      </div>
+      <div class="tile">
+        <h4><span class="dot"></span>Roaming productivity</h4>
+        <p>Phone-remote, voice-agent fallback, bridge UI. Work doesn't die when I leave the desk. Family time stays family time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= SLIDE 7: THE BAR ============= -->
+<section class="slide" id="s7">
+  <div class="shell">
+    <div class="kicker">The bar I hold</div>
+    <h2 class="head">No <span class="accent">slop</span> ships.</h2>
+    <p class="body">The team's reputation is the moat. The rules I encoded keep the bar high even when agents are doing the typing:</p>
+    <ul class="bullets">
+      <li><b>Live integration evidence.</b> Autonomous-green is necessary, never sufficient. A real request flows through the real architecture before "done."</li>
+      <li><b>Codex adversarial review.</b> A second model tries to refute the work before merge. Catches what a single perspective misses.</li>
+      <li><b>No AI tells.</b> Public-facing copy passes the de-slop check. No em dashes, no "as an AI", no cliche openers.</li>
+      <li><b>Memory discipline.</b> Nothing durable lives in a machine-local cache. If it matters, it's in git, shared with the team.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============= SLIDE 8: WHAT'S NEXT ============= -->
+<section class="slide" id="s8">
+  <div class="shell">
+    <div class="kicker">Where you plug in</div>
+    <h2 class="head">What I'd love your <span class="accent">eyes on</span>.</h2>
+    <ul class="bullets">
+      <li><b>The IP/services positioning.</b> Is "the config is the offering" the right framing for the next AI-Mentor conversation, or do we lead with a customer outcome?</li>
+      <li><b>Which client gets the first demo.</b> I have a shortlist. Want to sanity-check the choice before I reach out.</li>
+      <li><b>The voice agent integration.</b> The mentor-coach phone agent could carry context between us when neither of us is at a keyboard. Worth a half-hour spike together.</li>
+      <li><b>Patterns you'd want encoded.</b> The shared repo is open to add. Anything you wish I would stop forgetting between calls, drop it in.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============= SLIDE 9: CLOSE ============= -->
+<section class="slide" id="s9">
+  <div class="shell">
+    <div class="kicker">Sign off</div>
+    <h2 class="head">That's <span class="accent">it</span>.</h2>
+    <p class="body" style="margin-top:18px;">No grand reveal. The setup just works now, and the work that runs on top of it will feel different. You'll see it in the cadence first - more PRs, smaller, finished. Then in the quality of what lands.</p>
+    <p class="body">Bedtime stories and the dog walk still happen at the same time. That's part of the point.</p>
+    <p class="signoff">- Nik</p>
+    <p class="muted" style="margin-top:28px;">
+      Live deck: <a class="link" href="https://nhruska.github.io/claude-launch/">nhruska.github.io/claude-launch/</a><br>
+      Source: <a class="link" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">github.com/nhruska/nhruska.github.io</a>
+    </p>
+  </div>
+  <div class="brand-foot">Problem <span class="accent">Solutions</span> / Compound engineering, applied.</div>
+</section>
+
+<!-- progress rail -->
+<nav class="rail" aria-label="Slide progress">
+  <a href="#s1" data-i="1" aria-label="Slide 1"></a>
+  <a href="#s2" data-i="2" aria-label="Slide 2"></a>
+  <a href="#s3" data-i="3" aria-label="Slide 3"></a>
+  <a href="#s4" data-i="4" aria-label="Slide 4"></a>
+  <a href="#s5" data-i="5" aria-label="Slide 5"></a>
+  <a href="#s6" data-i="6" aria-label="Slide 6"></a>
+  <a href="#s7" data-i="7" aria-label="Slide 7"></a>
+  <a href="#s8" data-i="8" aria-label="Slide 8"></a>
+  <a href="#s9" data-i="9" aria-label="Slide 9"></a>
+</nav>
+
+<!-- nav hint -->
+<div class="hint" id="hint">
+  <span class="kbd">&darr;</span> <span class="kbd">Space</span> next
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var rails  = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+  var hint   = document.getElementById('hint');
+
+  // intersection-driven .in animation + progress rail
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      var s = e.target;
+      if(e.isIntersecting && e.intersectionRatio > 0.5){
+        s.classList.add('in');
+        var idx = slides.indexOf(s);
+        rails.forEach(function(r, i){ r.classList.toggle('on', i === idx); });
+      }
+    });
+  }, { threshold:[0.5] });
+  slides.forEach(function(s){ io.observe(s); });
+
+  // keyboard nav
+  function currentIndex(){
+    var y = window.scrollY + (window.innerHeight * 0.4);
+    for(var i = slides.length - 1; i >= 0; i--){
+      if(slides[i].offsetTop <= y) return i;
+    }
+    return 0;
+  }
+  function goto(i){
+    if(i < 0 || i >= slides.length) return;
+    slides[i].scrollIntoView({ behavior:'smooth' });
+  }
+  document.addEventListener('keydown', function(e){
+    var k = e.key;
+    if(k === 'ArrowDown' || k === 'PageDown' || k === ' '){ e.preventDefault(); goto(currentIndex() + 1); }
+    else if(k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); goto(currentIndex() - 1); }
+    else if(k === 'Home'){ e.preventDefault(); goto(0); }
+    else if(k === 'End'){ e.preventDefault(); goto(slides.length - 1); }
+  });
+
+  // fade hint after first scroll
+  var faded = false;
+  window.addEventListener('scroll', function(){
+    if(faded) return;
+    if(window.scrollY > 50){ hint.classList.add('fade'); faded = true; }
+  }, { passive:true });
+})();
+</script>
+</body>
+</html>
