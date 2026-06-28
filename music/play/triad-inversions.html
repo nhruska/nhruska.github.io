@@ -14,11 +14,6 @@
      <script> below reads music.accent.v1 from localStorage and overrides if
      the user picked a different accent in the app. */
   --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c;
-  /* Operation pill colors: exact entries from the main app's accent palette
-     (Amber / Green / Pink / Sky) so the artifact's palette is always a
-     subset of colors the user could have picked as their accent. No
-     out-of-family colors. */
-  --hammer:#fbbf24; --slide:#6ee7a8; --rotate:#f472b6; --flip:#56cdf4;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--txt);font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -45,27 +40,30 @@ h1 .em{color:var(--accent)}
 .keyHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .keyHead h2{font-size:.98rem;margin:0;font-weight:800}
 .keyHead h2 .deg{color:var(--accent);font-weight:600;font-size:.74rem;margin-left:8px;letter-spacing:.04em}
-.posLbl{font-size:.62rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 6px}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s,transform .08s}
-.step:active{transform:scale(.98);border-color:var(--accent-dim)}
-.step.on{border-color:var(--accent);background:var(--accent-deep)}
+.posLbl{font-size:.78rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding:7px 12px;background:var(--accent-deep);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
+/* Step card is non-interactive - no click handler, no shake-on-tap, no
+   .on selection state. The diagram + info just sits and reads. */
+.step{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center}
 .step svg.diagram{display:block}
-.step .info{display:flex;flex-direction:column;gap:3px;min-width:0}
-.step .role{display:flex;align-items:baseline;gap:8px}
-.step .roman{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:1.28rem;color:var(--accent);letter-spacing:.04em}
-.step .chord{font-weight:700;font-size:1.02rem}
+.step .info{display:flex;flex-direction:column;gap:4px;min-width:0}
+/* Roman vs chord letter - clear visual separation so "I A" never reads
+   as "IA". Roman is monospace accent-colored, chord letter is sans-serif
+   white, with a 14px gap. */
+.step .role{display:flex;align-items:baseline;gap:14px;margin-bottom:1px}
+.step .roman{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:1.4rem;color:var(--accent);letter-spacing:.06em;line-height:1}
+.step .chord{font-weight:800;font-size:1.15rem;color:var(--txt);letter-spacing:-.01em;line-height:1}
 .step .shape{font-size:.72rem;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.06em}
 .step .frets{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.68rem;color:var(--ink-faint);margin-top:2px}
 .step .notes{font-size:.74rem;color:var(--txt-soft);margin-top:3px;line-height:1.4}
 .transition{display:flex;align-items:flex-start;gap:8px;margin:2px 0 2px 14px;font-size:.76rem;color:var(--txt-dim);padding:6px 10px;border-left:2px solid var(--line-strong);line-height:1.4}
 .transition .op{flex-shrink:0;margin-top:1px}
-.flipBox{background:rgba(96,165,250,.08);border:1px solid var(--flip);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5}
+/* FlipBox + op pills - all share the accent family. The 4 ops used to be
+   distinct hues (Amber / Green / Pink / Sky) but Nik flagged that as wild,
+   especially when the active accent is warm and the FLIP pill stays cool.
+   Op pills are now accent-only; distinction is by their text label. */
+.flipBox{background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5;color:var(--txt-soft)}
 .flipBox .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.op{display:inline-block;font-weight:700;padding:1px 7px;border-radius:6px;font-size:.7rem;letter-spacing:.04em}
-.op.hammer{color:#1a1300;background:var(--hammer)}
-.op.slide{color:#062017;background:var(--slide)}
-.op.rotate{color:#2a0a1f;background:var(--rotate)}
-.op.flip{color:#0a1b3a;background:var(--flip)}
+.op{display:inline-block;font-weight:700;padding:2px 8px;border-radius:6px;font-size:.7rem;letter-spacing:.04em;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim)}
 /* Explainers */
 .explainerLbl{font-size:.6rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px}
 .explainer{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
@@ -139,7 +137,7 @@ h1 .em{color:var(--accent)}
   <select class="instPicker" id="instPicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
 </div>
 <h1>Triad <span class="em">Inversions</span></h1>
-<p class="lede">Walk I-IV-V up the neck with three shape pivots. The chord names stay; only the inversion and fret position climb.</p>
+<p class="lede">Walk I-IV-V up the neck with three shape pivots. The chord names stay - only the inversion and fret position climb.</p>
 
 <div class="keyChips" id="keyChips"></div>
 <div id="cycle"></div>
@@ -522,10 +520,10 @@ function renderDiagram(frets, fingers) {
     if (fr > 0) {
       const rel = fr - (base - 1);
       const y = padY + (rel - 0.5) * sy;
-      svg += `<circle cx="${x}" cy="${y}" r="${dotR}" fill="#a78bfa" stroke="#7c6bd0" stroke-width="1.3"/>`;
+      svg += `<circle cx="${x}" cy="${y}" r="${dotR}" fill="var(--accent)" stroke="var(--accent-dim)" stroke-width="1.3"/>`;
       const f = fingers && fingers[s];
       if (f) {
-        svg += `<text x="${x}" y="${y+3.5}" fill="#06201c" font-size="10" font-weight="700" font-family="'Space Mono',monospace" text-anchor="middle">${f}</text>`;
+        svg += `<text x="${x}" y="${y+3.5}" fill="var(--bg)" font-size="10" font-weight="700" font-family="'Space Mono',monospace" text-anchor="middle">${f}</text>`;
       }
     } else if (fr === 0) {
       svg += `<circle cx="${x}" cy="${padY - markY}" r="${markR}" fill="none" stroke="#e8ebf0" stroke-width="1.4"/>`;
@@ -680,11 +678,6 @@ function renderCycle() {
           <div class="frets">[${fullFrets.join(', ')}]</div>
           <div class="notes">${step.notes}</div>
         </div>`;
-      card.onclick = function () {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('on'));
-        card.classList.add('on');
-        card.scrollIntoView({behavior:'smooth', block:'center'});
-      };
       block.appendChild(card);
       if (si < pos.transitions.length) {
         const t = pos.transitions[si];
@@ -738,8 +731,8 @@ function renderCrossInst(profile) {
   body.innerHTML = `
     <p>You're seeing this on <strong>${esc(profile.label)}</strong> (${esc(profile.tuning)}). The interval geometry is what transfers - the same shape positions sound the same chord progression on every instrument with a [P4, M3] interval pattern on strings 4-3-2.</p>
     <div class="inst ${isUke ? 'cur' : ''}"><strong>Ukulele G-C-E-A</strong> - strings 4-3-2 = G-C-E. Mute string 1 (A) for the artifact's pure three-string voicing, or let it ring for added colour.</div>
-    <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Cigar Box / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major; uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
-    <div class="inst ${isFifths ? 'cur' : ''}"><strong>Mandolin / Mandola (all-fifths)</strong> - the artifact's shape vocabulary doesn't directly map. Different fingerings needed; the IV-to-V slide-up-2 still holds but the I and IV shapes are different families.</div>
+    <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Cigar Box / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major, uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
+    <div class="inst ${isFifths ? 'cur' : ''}"><strong>Mandolin / Mandola (all-fifths)</strong> - the artifact's shape vocabulary doesn't directly map. Different fingerings needed - the IV-to-V slide-up-2 still holds but the I and IV shapes are different families.</div>
   `;
 }
 
