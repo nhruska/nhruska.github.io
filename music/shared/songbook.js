@@ -912,12 +912,13 @@
         el.keyView.appendChild(box);
       }
 
-      // HSR Chain: I - IV - V (or i-iv-V etc.) rendered with the SAME closed
-      // shape slid up the neck. The headline teaching of this app: one shape,
-      // three roots. For HSR-by-design profiles (Cigar Box, Banjo) the same-
-      // shape view is the profile default. For idiomatic profiles (Guitar etc.)
-      // the adapter's diagramClosed picks the movable barre family so the eye
-      // sees the repeat.
+      // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
+      // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
+      // teaching: V is adjacent to IV (same hand shape, 2-fret slide). I sits
+      // in a different family - you "rotate" into it via hammer/transform. The
+      // adapter's chainVoicings honors this. For HSR-by-design profiles (Cigar
+      // Box, Banjo) the same closed barre is the home shape so I+IV+V all use
+      // the same family - that profile IS the HSR loop in one shape.
       renderHsrChain();
     }
     // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
@@ -943,7 +944,7 @@
         diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
       }
       var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
-      hsrLbl.textContent = 'HSR chain · same shape, slide it up';
+      hsrLbl.textContent = 'I IV V · V is IV slid up 2 frets';
       el.keyView.appendChild(hsrLbl);
       var row = document.createElement('div'); row.className = 'hsrChain';
       chain.forEach(function (c, i) {
