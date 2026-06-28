@@ -6,7 +6,7 @@
  * chord diagram. Handles any string count, plus:
  *   -1 = muted (x above the nut),  0 = open (o above the nut),  n = fretted.
  * High-position shapes (lowest fretted note > 4) render in a 4-fret window
- * with a "Nfr" base-fret label instead of the nut bar.
+ * with just the digit ("5", "10") as a base-fret label instead of the nut bar.
  *
  * Replaces the per-instrument renderers that used to live in each chord
  * pack. A profile supplies only the fret arrays (data); this draws them.
@@ -17,9 +17,10 @@
   'use strict';
 
   var SIZES = {
-    // baseFont sized to render readable Nfr digits on phone screens. Was 7.5
-    // (small) - the "5" / "10" digits were technically present in the SVG but
-    // crammed against "fr" at a sub-pixel width on high-DPI mobile.
+    // baseFont sized to render readable digit on phone screens. Was 7.5 (small)
+    // - the "5" / "10" digits were technically present in the SVG but crammed
+    // against "fr" at a sub-pixel width on high-DPI mobile. Dropping "fr" frees
+    // ~16px of horizontal labelPad that was eating into the diagram width.
     small: { wrapClass: 'chord', nameClass: 'chord-name', sx: 9.6, padX: 12, padY: 13, bottomPad: 6, rows: 4, dotR: 4.6, markR: 3, sw: 1.1, nutPad: 1, nutH: 3, basePad: 4, baseFont: 10, markY: 7, markSw: 1.2, H: 74 },
     big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 14, markY: 16, markSw: 2, H: 184 }
   };
@@ -54,24 +55,23 @@
     var rows = Math.max(o.rows, hi - base + 1);
     var sy = (H - padY - o.bottomPad) / rows;
 
-    // High-position shapes render the "Nfr" label to the LEFT of the diagram.
-    // The label is right-anchored at x = padX - basePad and grows leftward; for
-    // multi-char labels ("5fr", "10fr") the digits end up at negative x and get
-    // clipped off the original (0, W) viewBox - leaving just the trailing "fr"
-    // visible, which is what the small chord cards on the Compose tab showed.
-    // Extend the canvas + viewBox leftward by labelPad when base > 1 so the
-    // digits have room. Low-position shapes (nut bar) are unchanged.
-    // labelPad sized to fit up to "10fr" / "11fr" at the current baseFont. Small
-    // size: 10px monospace x 4 chars ~= 24px text width; pad to 26 for breathing
-    // room. Big size: 14px monospace x 4 chars ~= 34px; pad to 36.
-    var labelPad = (base > 1) ? (opts.size === 'big' ? 36 : 26) : 0;
+    // High-position shapes render a single base-fret digit to the LEFT of the
+    // diagram (e.g. just "5" instead of "5fr"). The label is right-anchored at
+    // x = padX - basePad and grows leftward. Dropping the "fr" suffix saves
+    // ~16px of labelPad that was eating into the diagram width on phone-sized
+    // cards. Extend the canvas + viewBox leftward by labelPad when base > 1
+    // so even a two-digit base fret ("10", "11") has room.
+    // labelPad sized to fit two digits at the current baseFont. Small size:
+    // 10px monospace x 2 chars ~= 12px; pad to 14 for breathing room. Big size:
+    // 14px monospace x 2 chars ~= 17px; pad to 20.
+    var labelPad = (base > 1) ? (opts.size === 'big' ? 20 : 14) : 0;
     var canvasW = W + labelPad;
     var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)
     if (base === 1) {
       svg += '<rect x="' + (padX - o.nutPad) + '" y="' + (padY - o.nutPad - 1) + '" width="' + (cols * sx + 2 * o.nutPad) + '" height="' + o.nutH + '" fill="#e8ebf0" rx="1"/>';
     } else {
-      svg += '<text x="' + (padX - o.basePad) + '" y="' + (padY + sy * 0.55) + '" fill="#9aa3b2" font-size="' + o.baseFont + '" font-family="monospace" text-anchor="end">' + base + 'fr</text>';
+      svg += '<text x="' + (padX - o.basePad) + '" y="' + (padY + sy * 0.55) + '" fill="#9aa3b2" font-size="' + o.baseFont + '" font-family="monospace" text-anchor="end">' + base + '</text>';
     }
     // string verticals
     for (var st = 0; st < n; st++) { var x = padX + st * sx; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (padY + rows * sy) + '" stroke="#3a4150" stroke-width="' + o.sw + '"/>'; }

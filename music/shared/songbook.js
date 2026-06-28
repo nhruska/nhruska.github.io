@@ -892,14 +892,27 @@
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
 
-      // chord palette: the diatonic chords, as tappable tiles that add to the progression
+      // chord palette: the diatonic chords, as tappable tiles that add to the progression.
+      // Each tile follows the same layout pattern as the I-IV-V chain cards + the
+      // "Add a Nth chord" suggestion row: chord name at top (bold, via the
+      // chord-name span inside the diagram), diagram in the middle, Roman numeral
+      // (interval role) at the bottom. Consistent across all three palettes.
       var pLbl = document.createElement('div'); pLbl.className = 'keySubLbl'; pLbl.textContent = 'Chords in this key';
       el.keyView.appendChild(pLbl);
       var pal = document.createElement('div'); pal.className = 'chordGrid keyPalette';
       diatonicChords(keyRoot, keyMode).forEach(function (c) {
         var d = packDiagram(c, 'small');
         d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
-        pal.appendChild(d);
+        var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '';
+        if (rn) {
+          var cell = document.createElement('div'); cell.className = 'chordCell';
+          cell.appendChild(d);
+          var rnEl = document.createElement('span'); rnEl.className = 'rn'; rnEl.textContent = rn;
+          cell.appendChild(rnEl);
+          pal.appendChild(cell);
+        } else {
+          pal.appendChild(d);
+        }
       });
       el.keyView.appendChild(pal);
 
@@ -911,6 +924,68 @@
         var box = pack.scaleDiagram(rootPc(keyRoot), pcs, 7);
         el.keyView.appendChild(box);
       }
+
+      // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
+      // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
+      // teaching: V is adjacent to IV (same hand shape, 2-fret slide). I sits
+      // in a different family - you "rotate" into it via hammer/transform. The
+      // adapter's chainVoicings honors this. For HSR-by-design profiles (Cigar
+      // Box, Banjo) the same closed barre is the home shape so I+IV+V all use
+      // the same family - that profile IS the HSR loop in one shape.
+      renderHsrChain();
+    }
+    // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
+    // Reuses chordsFromDegrees so any future progression patterns slot in here.
+    function renderHsrChain() {
+      if (!el.keyView || !keyRoot || !pack) return;
+      var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
+      if (!chain.length) return;
+      var quals = (MODES[keyMode] && MODES[keyMode].quals) || ["", "", "", "", "", "", ""];
+      var romanBase = ['I', 'IV', 'V'];
+      var labels = [0, 3, 4].map(function (deg, i) {
+        return (quals[deg] === 'm' || quals[deg] === 'dim') ? romanBase[i].toLowerCase() : romanBase[i];
+      });
+      // diagramChain picks a single template family across all three names so
+      // the eye sees the same hand shape slid up. Fallback to per-chord
+      // diagramClosed when the adapter doesn't expose the chain method.
+      var diagrams;
+      if (typeof pack.diagramChain === 'function') {
+        diagrams = pack.diagramChain(chain, 'small');
+      } else if (typeof pack.diagramClosed === 'function') {
+        diagrams = chain.map(function (c) { return pack.diagramClosed(c, 'small'); });
+      } else {
+        diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
+      }
+      var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
+      hsrLbl.textContent = 'I IV V · V is IV slid up 2 frets';
+      el.keyView.appendChild(hsrLbl);
+      var row = document.createElement('div'); row.className = 'hsrChain';
+      chain.forEach(function (c, i) {
+        // Same vertical layout as the diatonic palette + "Add Nth chord" row:
+        // chord name (top, inside diagram via chord-name span) -> diagram ->
+        // Roman numeral (bottom). Moving Roman from above to below the diagram
+        // makes the chord name the most prominent label and matches the other
+        // palettes.
+        var card = document.createElement('div'); card.className = 'hsrCard';
+        card.appendChild(diagrams[i]);
+        var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
+        card.appendChild(rn);
+        card.onclick = function () {
+          addChord(c); packPlayChord(c);
+          card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
+        };
+        row.appendChild(card);
+      });
+      el.keyView.appendChild(row);
+      // Deep-dive: the same I-IV-V relationship walked all the way up the neck
+      // using shape rotations (C-shape -> A-shape -> F-shape) and the Hammer /
+      // Slide / Rotate / Flip operations. Not the default surface; linked here
+      // for the curious.
+      var more = document.createElement('a');
+      more.className = 'hsrMore';
+      more.href = 'triad-inversions.html';
+      more.textContent = 'Walk the full cycle up the neck →';
+      el.keyView.appendChild(more);
     }
 
     function suggestFor(ch) {
