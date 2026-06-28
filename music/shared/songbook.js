@@ -768,12 +768,15 @@
     // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
     // the first chord as a sensible default for free-built progressions.
     function labelTonic() { return keyRoot || progression[0]; }
+    var prevProgEmpty = null; // tracks the empty<->building transition for the starter disclosure
     function renderProg() {
       if (!el.prog) return;
-      // Onboarding "Common progressions" starter tracks the progression state in ONE place:
-      // open at empty (cold start / cleared / removed last chord), folded away once building.
-      // renderProg runs on every mutation (add/remove/clear/load/init), so this is symmetric.
-      if (el.discPatterns) el.discPatterns.open = !progression.length;
+      // "Common progressions" starter follows the progression state, but only on the
+      // empty<->building TRANSITION (open when it empties, fold when building starts).
+      // Toggling on EVERY render would clobber a user who manually closed it at empty.
+      var isEmpty = !progression.length;
+      if (el.discPatterns && isEmpty !== prevProgEmpty) el.discPatterns.open = isEmpty;
+      prevProgEmpty = isEmpty;
       el.prog.innerHTML = '';
       var tonic = labelTonic();
       progression.forEach(function (c, i) {
