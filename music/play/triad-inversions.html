@@ -42,8 +42,10 @@ h1 .em{color:var(--accent)}
 .keyHead h2 .deg{color:var(--accent);font-weight:600;font-size:.74rem;margin-left:8px;letter-spacing:.04em}
 .posLbl{font-size:.78rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding:7px 12px;background:var(--accent-deep);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
 /* Step card is non-interactive - no click handler, no shake-on-tap, no
-   .on selection state. The diagram + info just sits and reads. */
-.step{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center}
+   .on selection state, no text selection. The diagram + info just sits
+   and reads. user-select:none kills the long-press selection that was
+   making the cards feel grabby. */
+.step{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .step svg.diagram{display:block}
 .step .info{display:flex;flex-direction:column;gap:4px;min-width:0}
 /* Roman vs chord letter - clear visual separation so "I A" never reads
@@ -498,14 +500,18 @@ function renderDiagram(frets, fingers) {
   const base = (!fretted.length || hi <= 4) ? 1 : Math.min(...fretted);
   const showRows = Math.max(rows, hi - base + 1);
   const sy = 18;
-  const W = padX * 2 + cols * sx + (base > 1 ? 18 : 0);
+  // base-fret label sits left of the diagram. First dot is at cx=padX with r=dotR,
+  // so its leftmost extent is padX-dotR. Label is text-anchor="end" at x=padX-labelOff;
+  // labelOff must clear dotR so a two-digit number like "10" can't be overlapped by the dot.
+  const labelOff = 12;
+  const labelPad = base > 1 ? 26 : 0;
+  const W = padX * 2 + cols * sx + labelPad;
   const H = padY + showRows * sy + 6;
-  const xOff = base > 1 ? 18 : 0;
-  let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="${-xOff} 0 ${W} ${H}">`;
+  let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="${-labelPad} 0 ${W} ${H}">`;
   if (base === 1) {
     svg += `<rect x="${padX-1}" y="${padY-2}" width="${cols*sx+2}" height="3" fill="#e8ebf0" rx="1"/>`;
   } else {
-    svg += `<text x="${padX-4}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
+    svg += `<text x="${padX-labelOff}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
   }
   for (let s = 0; s < n; s++) {
     const x = padX + s * sx;
