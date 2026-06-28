@@ -2,7 +2,7 @@
   "name": "Music — Nik Hruska",
   "short_name": "Music",
   "description": "Tuner, chord composer, a song library and a fullscreen perform mode — for guitar, ukulele and mandolin.",
-  "start_url": ".",
+  "start_url": "./?p=ukulele-gcea",
   "scope": "../",
   "display": "standalone",
   "orientation": "portrait",
