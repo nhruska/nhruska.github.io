@@ -367,9 +367,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeDisc>summary:active{background:var(--surface-2);}
 .discBody{padding:2px 14px 14px;}
 .discBody .chips{margin-bottom:12px;}
-/* keyboard focus ring - the app previously stripped all outlines (a11y regression) */
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+/* keyboard focus ring - the app previously stripped all outlines (a11y regression).
+   No border-radius here: the outline follows each element's own radius; setting it
+   would square off pill chips/buttons when focused. */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .search:focus-visible{outline:2px solid var(--accent);outline-offset:0;}
+/* keep the "All chords" category chips on the same 44px touch floor as the key controls */
+#catChips .chip{display:inline-flex;align-items:center;min-height:44px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}
