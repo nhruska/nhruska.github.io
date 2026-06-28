@@ -20,6 +20,10 @@ body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 1
 .backLink{display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-strong)}
 .backLink:active{background:var(--accent-deep)}
 .instBadge{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.66rem;font-weight:700;color:var(--accent);letter-spacing:.06em;padding:5px 8px;border-radius:7px;background:var(--accent-deep);border:1px solid var(--accent-dim)}
+/* Instrument picker - same look as the main app's #profilePicker so the
+   artifact's header reads as an extension of the Music shell. */
+.instPicker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer}
+.instPicker:focus{outline:none;border-color:var(--accent)}
 h1{font-size:1.18rem;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
 h1 .em{color:var(--accent)}
 .lede{color:var(--txt-soft);font-size:.84rem;line-height:1.5;margin:6px 0 14px}
@@ -95,7 +99,7 @@ h1 .em{color:var(--accent)}
 
 <div class="appBar">
   <a href="../play/" class="backLink">← Music</a>
-  <span class="instBadge" id="instBadge">loading…</span>
+  <select class="instPicker" id="instPicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
 </div>
 <h1>Triad <span class="em">Inversions</span></h1>
 <p class="lede">Walk I-IV-V up the neck with three shape pivots. The chord names stay; only the inversion and fret position climb.</p>
@@ -545,8 +549,38 @@ function expandFingers(playedFingers, idx, totalStrings) {
   return out;
 }
 
-function setInstBadge(profile) {
-  document.getElementById('instBadge').textContent = profile.label || profile.id;
+// Build the instrument picker - same shape as the main app's: an optgroup
+// per instrument family, options for each tuning variant within. Changing
+// selection persists the new id and reloads the page with ?p= so the rest
+// of the artifact picks it up from scratch.
+function buildInstPicker(profiles, manifestOrder, activeId) {
+  const sel = document.getElementById('instPicker');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const byInst = {};
+  const order = [];
+  (manifestOrder || Object.keys(profiles)).forEach(k => {
+    const p = profiles[k];
+    if (!p) return;
+    if (!byInst[p.instrument]) { byInst[p.instrument] = []; order.push(p.instrument); }
+    byInst[p.instrument].push(p);
+  });
+  order.forEach(inst => {
+    const og = document.createElement('optgroup');
+    og.label = inst.charAt(0).toUpperCase() + inst.slice(1);
+    byInst[inst].forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.label || p.id;
+      if (p.id === activeId) o.selected = true;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  sel.onchange = function () {
+    try { localStorage.setItem(PROFILE_KEY, sel.value); } catch (e) {}
+    location.search = '?p=' + encodeURIComponent(sel.value);
+  };
 }
 
 function buildKeyChips() {
@@ -707,30 +741,33 @@ function wireDismissals() {
 }
 
 // ---- boot ------------------------------------------------------------------
+// Load the manifest, load ALL profile scripts in parallel (small files, gives
+// us labels for the picker so the user can switch instruments inline without
+// going back to the main app), then activate the resolved id.
+let manifestIds = [];
 fetch('../shared/profiles/manifest.json')
   .then(r => { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
   .then(m => {
-    const ids = m.profiles || [];
-    if (!ids.length) throw new Error('no profiles in manifest');
-    // Resolve the wanted id; if it's missing or unknown (stale localStorage
-    // value, bad ?p= deep link, garbage stored data), fall back to the first
-    // manifest entry instead of throwing. Keeps the page usable even when the
-    // saved/passed id has rotted.
-    let wantId = pickActiveId();
-    if (!ids.includes(wantId)) wantId = ids[0];
-    return loadScript('../shared/profiles/' + wantId + '.js').then(() => ({ wantId, fallbackIds: ids }));
+    manifestIds = m.profiles || [];
+    if (!manifestIds.length) throw new Error('no profiles in manifest');
+    return Promise.allSettled(manifestIds.map(id => loadScript('../shared/profiles/' + id + '.js')));
   })
-  .then(ctx => {
+  .then(() => {
     const profiles = window.MusicProfiles || {};
-    activeProfile = profiles[ctx.wantId];
+    let wantId = pickActiveId();
+    if (!manifestIds.includes(wantId)) wantId = manifestIds[0];
+    activeProfile = profiles[wantId];
     if (!activeProfile) {
-      // Profile script loaded but did not register (corrupt or empty script).
-      // Try the next manifest id as a last resort before throwing.
-      for (const id of ctx.fallbackIds) {
-        if (id !== ctx.wantId && profiles[id]) { activeProfile = profiles[id]; break; }
+      // Profile script for the wanted id didn't register (corrupt / empty);
+      // fall through to the next valid manifest id.
+      for (const id of manifestIds) {
+        if (id !== wantId && profiles[id]) { activeProfile = profiles[id]; wantId = id; break; }
       }
-      if (!activeProfile) throw new Error('profile script did not register: ' + ctx.wantId);
+      if (!activeProfile) throw new Error('no profile scripts registered');
     }
+    // Build the inline instrument picker NOW so the user can switch even if
+    // the cycle render hits the mandolin/mandola incompatible branch below.
+    buildInstPicker(profiles, manifestIds, activeProfile.id);
     // Find which display indices correspond to strings 4, 3, 2 by parsing the
     // "Nth string" labels. For uke (4 strings) this is [0,1,2]; for guitar
     // (6 strings) it's [2,3,4]; for banjo (5 strings, drone on left) [1,2,3].
@@ -741,7 +778,6 @@ fetch('../shared/profiles/manifest.json')
       freqPc(activeProfile.strings[activeStringIdx[2]].f),
     ];
     intervalOk = detectIntervalOk(activeStringPcs);
-    setInstBadge(activeProfile);
     renderCrossInst(activeProfile);
     if (intervalOk) {
       buildKeyChips();
@@ -754,7 +790,7 @@ fetch('../shared/profiles/manifest.json')
   })
   .catch(err => {
     document.getElementById('cycle').innerHTML =
-      '<div class="fallback"><p>Could not load instrument profile (' + (err.message || err) + '). <a href="../play/">Back to app</a></p></div>';
+      '<div class="fallback"><p>Could not load instrument profile (' + esc(err.message || String(err)) + '). <a href="../play/">Back to app</a></p></div>';
     applyAccordionState();
     wireDismissals();
   });
