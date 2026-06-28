@@ -362,13 +362,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
    so build->solo->build never scrolls it away; the key picker, scale, and grids flow
    below. The bg matches the app so chords scroll cleanly under it. */
-.composeSticky{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
+/* Compose = a fixed top region (controls + palette) over a self-scrolling accordion.
+   NOT position:sticky - a tall sticky with a nested h-scroller repaints every scroll
+   frame (the "stuck" feel) and overlaps scrolling content (the "see under the pallet"
+   bleed). A flex column with the accordion as the ONLY scroll container is smooth. */
+#s-compose{height:100%;}
+.composeWrap{display:flex;flex-direction:column;height:100%;}
+.composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
+.composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.composeAccordion::-webkit-scrollbar{width:0;}
 /* one compact control row: transpose + key + view on the left, Save/Clear on the right */
 .ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;}
 .ctrlSpacer{flex:1 1 auto;}
 .ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
 /* 8-chord cap: gray the choosers so it reads as "no more allowed" */
-.maxNote{font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
+.maxNote{flex:0 0 auto;font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
 .composeAccordion.maxed .keyView .chordGrid .chord,
 .composeAccordion.maxed #buildGrid .chord,
 .composeAccordion.maxed .hsrChain .hsrCard,
