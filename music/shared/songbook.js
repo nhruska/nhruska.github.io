@@ -900,38 +900,23 @@
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
 
-      // chord palette: the diatonic chords, as tappable tiles that add to the progression.
-      // Each tile follows the same layout pattern as the I-IV-V chain cards + the
-      // "Add a Nth chord" suggestion row: chord name at top (bold, via the
-      // chord-name span inside the diagram), diagram in the middle, Roman numeral
-      // (interval role) at the bottom. Consistent across all three palettes.
-      var pLbl = document.createElement('div'); pLbl.className = 'keySubLbl'; pLbl.textContent = 'Chords in this key';
-      el.keyView.appendChild(pLbl);
-      var pal = document.createElement('div'); pal.className = 'chordGrid keyPalette';
-      diatonicChords(keyRoot, keyMode).forEach(function (c) {
-        var d = packDiagram(c, 'small');
-        d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
-        var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '';
-        if (rn) {
-          var cell = document.createElement('div'); cell.className = 'chordCell';
-          cell.appendChild(d);
-          var rnEl = document.createElement('span'); rnEl.className = 'rn'; rnEl.textContent = rn;
-          cell.appendChild(rnEl);
-          pal.appendChild(cell);
-        } else {
-          pal.appendChild(d);
-        }
+      // chord palette + solo scale via the shared KeyExplorer (also used by the Tracks
+      // player). Theory is computed HERE so Compose keeps its own vocabulary (diatonicChords
+      // drops vii°); the module only paints + wires the tap. Compose tap = add to the
+      // progression + play. The I-IV-V HSR chain below stays Compose-only.
+      var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
+        return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
       });
-      el.keyView.appendChild(pal);
-
-      // solo scale box (needs the instrument's open strings, via the chord pack)
+      global.KeyExplorer.renderChords(el.keyView, keItems, {
+        label: 'Chords in this key',
+        diagram: packDiagram,
+        onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+      });
       var pcs = scalePcs(keyRoot, keyMode);
-      if (pack && typeof pack.scaleDiagram === 'function' && pcs.length) {
-        var sLbl = document.createElement('div'); sLbl.className = 'keySubLbl'; sLbl.textContent = 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' ');
-        el.keyView.appendChild(sLbl);
-        var box = pack.scaleDiagram(rootPc(keyRoot), pcs, 7);
-        el.keyView.appendChild(box);
-      }
+      global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
+        label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
+        frets: 7
+      });
 
       // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
       // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
