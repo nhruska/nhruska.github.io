@@ -414,20 +414,44 @@
     });
   }
 
-  function activeId(profiles) {
+  // Profile selection priority:
+  //   1. ?p= query param (explicit)
+  //   2. #hash (legacy)
+  //   3. localStorage (last selected — survives revisits without ?p=)
+  //   4. manifest order (the first id in the manifest array — deterministic)
+  //   5. whatever Object.keys returns (last-resort; non-deterministic because
+  //      profile scripts settle in load-completion order, not append order)
+  var PROFILE_KEY = 'music.activeProfile.v1';
+  function activeId(profiles, manifestOrder) {
     var qp = new URLSearchParams(location.search).get('p');
     var hp = (location.hash || '').replace(/^#/, '');
     var want = qp || hp;
     if (want && profiles[want]) return want;
+    try {
+      var stored = localStorage.getItem(PROFILE_KEY);
+      if (stored && profiles[stored]) return stored;
+    } catch (e) {}
+    if (manifestOrder) {
+      for (var i = 0; i < manifestOrder.length; i++) {
+        if (profiles[manifestOrder[i]]) return manifestOrder[i];
+      }
+    }
     return Object.keys(profiles)[0];
   }
 
-  function buildPicker(profiles, activeKey) {
+  function buildPicker(profiles, activeKey, manifestOrder) {
     var sel = el('profilePicker'); if (!sel) return;
-    var byInst = {};
-    Object.keys(profiles).forEach(function (k) { var p = profiles[k]; (byInst[p.instrument] = byInst[p.instrument] || []).push(p); });
+    // Group by instrument in MANIFEST ORDER so the dropdown is stable across
+    // page loads (Object.keys order depends on script-load completion, which
+    // is a race and can flip alphabetically-equivalent profiles).
+    var byInst = {}, order = [];
+    (manifestOrder || Object.keys(profiles)).forEach(function (k) {
+      var p = profiles[k]; if (!p) return;
+      if (!byInst[p.instrument]) { byInst[p.instrument] = []; order.push(p.instrument); }
+      byInst[p.instrument].push(p);
+    });
     sel.innerHTML = '';
-    Object.keys(byInst).forEach(function (inst) {
+    order.forEach(function (inst) {
       var og = document.createElement('optgroup'); og.label = inst.charAt(0).toUpperCase() + inst.slice(1);
       byInst[inst].forEach(function (p) {
         var o = document.createElement('option'); o.value = p.id; o.textContent = p.label;
@@ -435,7 +459,12 @@
       });
       sel.appendChild(og);
     });
-    sel.onchange = function () { location.search = '?p=' + encodeURIComponent(sel.value); };
+    sel.onchange = function () {
+      // Persist the new choice BEFORE the navigation reloads the page so a
+      // subsequent visit to /music/play/ without ?p= still lands on this pick.
+      try { localStorage.setItem(PROFILE_KEY, sel.value); } catch (e) {}
+      location.search = '?p=' + encodeURIComponent(sel.value);
+    };
   }
 
   // Tune tab: one-tap tuning presets for the active instrument (e.g. guitar
@@ -497,18 +526,24 @@
   function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + esc(msg) + '</div>'; }
 
   // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
+  var manifestOrder = [];
   fetch('../shared/profiles/manifest.json')
     .then(function (r) { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
     .then(function (m) {
+      manifestOrder = (m.profiles || []).slice();
       // allSettled: one missing/broken profile drops out; the rest still load.
-      return Promise.allSettled((m.profiles || []).map(function (id) { return loadScript('../shared/profiles/' + id + '.js'); }));
+      return Promise.allSettled(manifestOrder.map(function (id) { return loadScript('../shared/profiles/' + id + '.js'); }));
     })
     .then(function () {
       var profiles = window.MusicProfiles || {};
       if (!Object.keys(profiles).length) { fail('No tuning profiles found.'); return; }
-      var key = activeId(profiles);
-      buildPicker(profiles, key);
+      var key = activeId(profiles, manifestOrder);
+      buildPicker(profiles, key, manifestOrder);
       renderTuningChips(profiles, key);
+      // Also persist the resolved key on first load so a tab-bar refresh
+      // doesn't snap back to manifest-default if the user navigated here
+      // from a deep link and then later visited /music/play/ bare.
+      try { localStorage.setItem(PROFILE_KEY, key); } catch (e) {}
       var profile = profiles[key];
       return fetch('../shared/songs.json')
         .then(function (r) { if (!r.ok) throw new Error('songs.json ' + r.status); return r.json(); })
