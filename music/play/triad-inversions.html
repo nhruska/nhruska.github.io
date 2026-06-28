@@ -10,8 +10,15 @@
   --bg:#0d0f12; --bg-2:#14171c; --surface:#181b21; --surface-2:#1f232b;
   --line:#262b34; --line-strong:#323a45;
   --txt:#e8ebf0; --txt-soft:#b6bcc6; --txt-dim:#8a92a0; --txt-faint:#6b7280; --ink-faint:#7a8294;
-  --accent:#a78bfa; --accent-dim:#7c6bd0; --accent-deep:#1d1834;
-  --hammer:#fbbf24; --slide:#34d399; --rotate:#f472b6; --flip:#60a5fa;
+  /* --accent triplet defaults to Teal (the main app's PALETTE[0]); a small
+     <script> below reads music.accent.v1 from localStorage and overrides if
+     the user picked a different accent in the app. */
+  --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c;
+  /* Operation pill colors: exact entries from the main app's accent palette
+     (Amber / Green / Pink / Sky) so the artifact's palette is always a
+     subset of colors the user could have picked as their accent. No
+     out-of-family colors. */
+  --hammer:#fbbf24; --slide:#6ee7a8; --rotate:#f472b6; --flip:#56cdf4;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--txt);font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -96,6 +103,36 @@ h1 .em{color:var(--accent)}
 </style>
 </head>
 <body>
+<script>
+/* Apply the user's chosen app accent BEFORE the rest of the page renders so
+   the artifact's headers / chips / links match the Music shell. Same PALETTE
+   entries as music/play/index.html. localStorage read is sync + small.   */
+(function () {
+  'use strict';
+  var PALETTE = [
+    { a: '#5eead4', d: '#244b45', p: '#16302c' },
+    { a: '#6ee7a8', d: '#235a3e', p: '#143226' },
+    { a: '#56cdf4', d: '#1f4a5c', p: '#122d39' },
+    { a: '#a78bfa', d: '#3a2f63', p: '#221b3d' },
+    { a: '#f472b6', d: '#5c2a45', p: '#371829' },
+    { a: '#fb923c', d: '#5c3115', p: '#38200d' },
+    { a: '#fbbf24', d: '#5c4715', p: '#38290b' }
+  ];
+  var active = PALETTE[0];
+  try {
+    var stored = localStorage.getItem('music.accent.v1');
+    if (stored) {
+      for (var i = 0; i < PALETTE.length; i++) {
+        if (PALETTE[i].a === stored) { active = PALETTE[i]; break; }
+      }
+    }
+  } catch (e) {}
+  var r = document.documentElement.style;
+  r.setProperty('--accent', active.a);
+  r.setProperty('--accent-dim', active.d);
+  r.setProperty('--accent-deep', active.p);
+})();
+</script>
 
 <div class="appBar">
   <a href="../play/" class="backLink">← Music</a>
