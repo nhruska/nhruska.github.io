@@ -226,10 +226,59 @@
     function voicingFor(name) {
       return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
     }
+    // HSR Chain wants the CLOSED (movable) shape so I/IV/V show the same hand
+    // shape slid up the neck. If the profile only has an open shape (no closed
+    // template), fall back so the chord still renders.
+    function closedVoicingFor(name) {
+      return movableVoicing(templates, name) || (profile.chords && profile.chords[name]) || null;
+    }
+    // HSR Chain shape-consistency: when all chord names in a chain share the
+    // same quality (typical I-IV-V in Major; i-iv-v in Minor), pick a SINGLE
+    // template family that voices all three within the fret window so the eye
+    // sees the same hand shape slid up. Without this, movableVoicing picks the
+    // lowest-fret shape PER chord and can mix E-shape G with A-shape C/D -
+    // killing the HSR teaching. Falls back to per-chord closed voicings when
+    // the chain mixes qualities (Mixolydian's V is minor, etc.).
+    function chainVoicings(names) {
+      if (!names || !names.length) return [];
+      var qs = names.map(chordQual);
+      var sameQual = qs.every(function (q) { return q === qs[0]; });
+      if (sameQual) {
+        var tpls = templates[qs[0]];
+        if (tpls && tpls.length) {
+          var best = null;
+          tpls.forEach(function (tp) {
+            var voicings = names.map(function (name) {
+              var rp = chordRootPc(name); if (rp == null) return null;
+              var base = ((rp - tp.rootPc) % 12 + 12) % 12;
+              var chosen = null;
+              [base, base - 12].forEach(function (d) {
+                var ok = true, f = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
+                if (!ok) return; var max = Math.max.apply(null, f); if (max > 14) return;
+                if (!chosen || max < chosen.max) chosen = { f: f, max: max };
+              });
+              return chosen;
+            });
+            if (voicings.every(function (v) { return v !== null; })) {
+              var total = voicings.reduce(function (s, v) { return s + v.max; }, 0);
+              if (!best || total < best.total) best = { total: total, voicings: voicings.map(function (v) { return v.f; }) };
+            }
+          });
+          if (best) return best.voicings;
+        }
+      }
+      // Mixed-quality chain or no single-family fit: per-chord closed voicing.
+      return names.map(closedVoicingFor);
+    }
     return {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
       diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
+      diagramClosed: function (name, size) { return window.Diagram.render(closedVoicingFor(name), { size: size, name: name }); },
+      diagramChain: function (names, size) {
+        var voicings = chainVoicings(names);
+        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i] }); });
+      },
       // scale map for the active instrument: open-string pitch classes + the scale's
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).
       scaleDiagram: function (rootPc, scalePcs, frets) {

@@ -911,6 +911,53 @@
         var box = pack.scaleDiagram(rootPc(keyRoot), pcs, 7);
         el.keyView.appendChild(box);
       }
+
+      // HSR Chain: I - IV - V (or i-iv-V etc.) rendered with the SAME closed
+      // shape slid up the neck. The headline teaching of this app: one shape,
+      // three roots. For HSR-by-design profiles (Cigar Box, Banjo) the same-
+      // shape view is the profile default. For idiomatic profiles (Guitar etc.)
+      // the adapter's diagramClosed picks the movable barre family so the eye
+      // sees the repeat.
+      renderHsrChain();
+    }
+    // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
+    // Reuses chordsFromDegrees so any future progression patterns slot in here.
+    function renderHsrChain() {
+      if (!el.keyView || !keyRoot || !pack) return;
+      var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
+      if (!chain.length) return;
+      var quals = (MODES[keyMode] && MODES[keyMode].quals) || ["", "", "", "", "", "", ""];
+      var romanBase = ['I', 'IV', 'V'];
+      var labels = [0, 3, 4].map(function (deg, i) {
+        return (quals[deg] === 'm' || quals[deg] === 'dim') ? romanBase[i].toLowerCase() : romanBase[i];
+      });
+      // diagramChain picks a single template family across all three names so
+      // the eye sees the same hand shape slid up. Fallback to per-chord
+      // diagramClosed when the adapter doesn't expose the chain method.
+      var diagrams;
+      if (typeof pack.diagramChain === 'function') {
+        diagrams = pack.diagramChain(chain, 'small');
+      } else if (typeof pack.diagramClosed === 'function') {
+        diagrams = chain.map(function (c) { return pack.diagramClosed(c, 'small'); });
+      } else {
+        diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
+      }
+      var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
+      hsrLbl.textContent = 'HSR chain · same shape, slide it up';
+      el.keyView.appendChild(hsrLbl);
+      var row = document.createElement('div'); row.className = 'hsrChain';
+      chain.forEach(function (c, i) {
+        var card = document.createElement('div'); card.className = 'hsrCard';
+        var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
+        card.appendChild(rn);
+        card.appendChild(diagrams[i]);
+        card.onclick = function () {
+          addChord(c); packPlayChord(c);
+          card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
+        };
+        row.appendChild(card);
+      });
+      el.keyView.appendChild(row);
     }
 
     function suggestFor(ch) {
