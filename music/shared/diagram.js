@@ -17,8 +17,11 @@
   'use strict';
 
   var SIZES = {
-    small: { wrapClass: 'chord', nameClass: 'chord-name', sx: 9.6, padX: 12, padY: 13, bottomPad: 6, rows: 4, dotR: 4.6, markR: 3, sw: 1.1, nutPad: 1, nutH: 3, basePad: 3, baseFont: 7.5, markY: 7, markSw: 1.2, H: 74 },
-    big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 13, markY: 16, markSw: 2, H: 184 }
+    // baseFont sized to render readable Nfr digits on phone screens. Was 7.5
+    // (small) - the "5" / "10" digits were technically present in the SVG but
+    // crammed against "fr" at a sub-pixel width on high-DPI mobile.
+    small: { wrapClass: 'chord', nameClass: 'chord-name', sx: 9.6, padX: 12, padY: 13, bottomPad: 6, rows: 4, dotR: 4.6, markR: 3, sw: 1.1, nutPad: 1, nutH: 3, basePad: 4, baseFont: 10, markY: 7, markSw: 1.2, H: 74 },
+    big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 14, markY: 16, markSw: 2, H: 184 }
   };
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -58,7 +61,10 @@
     // visible, which is what the small chord cards on the Compose tab showed.
     // Extend the canvas + viewBox leftward by labelPad when base > 1 so the
     // digits have room. Low-position shapes (nut bar) are unchanged.
-    var labelPad = (base > 1) ? (opts.size === 'big' ? 28 : 16) : 0;
+    // labelPad sized to fit up to "10fr" / "11fr" at the current baseFont. Small
+    // size: 10px monospace x 4 chars ~= 24px text width; pad to 26 for breathing
+    // room. Big size: 14px monospace x 4 chars ~= 34px; pad to 36.
+    var labelPad = (base > 1) ? (opts.size === 'big' ? 36 : 26) : 0;
     var canvasW = W + labelPad;
     var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)
