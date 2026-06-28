@@ -53,23 +53,24 @@
       <div class="composeWrap">
         <!-- Slim steady header: label + transpose + Clear/Save stay pinned (NOT the tall chord
              diagrams, which made the old sticky band ~3/4 of the screen). -->
+        <!-- Pinned unit: one compact control bar (transpose + view + Save/Clear) AND the
+             progression palette below it, both steady on scroll. No "Progression" label -
+             the empty palette's placeholder text carries that. -->
         <div class="composeSticky">
-          <div class="progHead"><span class="progLbl">Progression</span>
-            <div class="progTools">
-              <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-              <button class="keyReadout" id="cKey" title="Key (the first chord) — tap to reset to your original key">—</button>
-              <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
-              <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
-            </div></div>
-          <div class="cActions">
-            <button class="btn ghost" id="cClear">Clear</button>
-            <button class="btn red" id="cSave">Save progression</button>
+          <div class="ctrlBar">
+            <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
+            <button class="keyReadout" id="cKey" title="Key (first chord) — tap to reset transpose">—</button>
+            <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
+            <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
+            <span class="ctrlSpacer"></span>
+            <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
+            <button class="btn red ctrlBtn" id="cSave">Save</button>
           </div>
+          <!-- progression = one-row horizontal filmstrip (no wrap) -->
+          <div class="prog" id="prog"></div>
         </div>
-        <!-- Progression as a one-row horizontal filmstrip (no 2-row wrap). -->
-        <div class="prog" id="prog"></div>
-        <!-- One-open-at-a-time exclusive accordion (native <details name>): only one panel
-             ever expanded, so the page stays short on a phone. -->
+        <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
+        <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
         <div class="composeAccordion">
           <details class="composeDisc" name="compose" id="discSuggest">
             <summary>Next chord</summary>
@@ -88,7 +89,7 @@
             <summary>All chords</summary>
             <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
           </details>
-          <details class="composeDisc" name="compose" id="discPatterns">
+          <details class="composeDisc" name="compose" id="discPatterns" open>
             <summary>Common progressions</summary>
             <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
           </details>
@@ -536,7 +537,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), discPatterns: el('discPatterns'),
+        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), discPatterns: el('discPatterns'), maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }
