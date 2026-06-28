@@ -334,6 +334,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .hsrCard:active{transform:scale(.92);border-color:var(--accent-dim);}
 .hsrCard.sel{border-color:var(--accent);background:var(--accent-deep);}
 .hsrRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);letter-spacing:.06em;}
+.hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
+.hsrMore:active{opacity:.6;}
 .allChordsLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 10px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}

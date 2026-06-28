@@ -162,24 +162,50 @@ const KEYS = [
           { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
         ],
         next: { type: 'rotate', text: 'Bar with ring finger at fret 14 = next I (D again, one octave above Position 1). The pattern returns to the C-shape ring-bar configuration and the cycle keeps walking up.' }
+      },
+      {
+        label: 'Position 4 · loop closes - ring-bar D one octave above Position 1',
+        steps: [
+          { role: 'I', chord: 'D', shape: 'C-shape (ring-bar)', frets: [14,14,14,-1], fingers: ['3','3','3',''], notes: 'Ring finger bars strings 4-3-2 at fret 14. Same triad as Position 1 (A D F#), one octave higher. From here the cycle repeats identically - HAMMER to F-shape IV at fret 16, SLIDE +2 to V at fret 18. Most ukuleles run out of fingerboard before this is playable; on guitar (24 frets) the cycle keeps walking up.' },
+        ],
+        transitions: [],
+        next: { type: 'rotate', text: 'Cycle complete. One full revolution covers an octave: C-shape (index bar) -> A-shape -> F-shape -> C-shape (ring bar). Same I, IV, V chord names every cycle, ascending inversions.' }
       }
     ]
   },
   {
-    key: 'C', tonic: 'C major (same mechanic, starting at fret 0)', degrees: 'I = C · IV = F · V = G',
+    key: 'E', tonic: 'E major (same mechanic, starting at fret 4)', degrees: 'I = E · IV = A · V = B',
     positions: [
       {
-        label: 'Position 1 · open / fret 0 start',
+        label: 'Position 1 · C-shape start at fret 4',
         steps: [
-          { role: 'I',  chord: 'C', shape: 'C-shape (open)',  frets: [0,0,0,-1], fingers: ['','','',''], notes: 'At fret 0 there is no bar - just open strings G C E sounding as a partial C triad. Same role as the C-shape I.' },
-          { role: 'IV', chord: 'F', shape: 'F-shape',  frets: [2,0,1,-1], fingers: ['2','','1',''], notes: 'Middle on string 4 fret 2, index on string 2 fret 1, string 3 open, string 1 muted. Triad A C F.' },
-          { role: 'V',  chord: 'G', shape: 'F-shape',  frets: [4,2,3,-1], fingers: ['2','1','3',''], notes: 'F-shape slid +2. Now the bar concept kicks in: index across string 3 at fret 2. Triad B D G.' },
+          { role: 'I',  chord: 'E', shape: 'C-shape',  frets: [4,4,4,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 4. Triad B E G#. String 1 muted.' },
+          { role: 'IV', chord: 'A', shape: 'F-shape',  frets: [6,4,5,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 4. RING hammers to fret 6 string 4. MIDDLE hammers to fret 5 string 2. Triad C# E A.' },
+          { role: 'V',  chord: 'B', shape: 'F-shape',  frets: [8,6,7,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Triad D# F# B.' },
         ],
         transitions: [
-          { type: 'hammer', text: 'From open C, finger 2 hammers on string 4 fret 2 and finger 1 catches string 2 at fret 1.' },
-          { type: 'slide', text: 'Slide F-shape up 2 frets for V. From here the cycle is identical to the D example.' },
+          { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 4.' },
+          { type: 'slide', text: 'Slide the whole F-shape up 2 frets. Same fingers, two frets higher.' },
         ],
-        next: { type: 'rotate', text: 'Rotate +1 fret + A-shape lands the next I (C) at frets 3-5. Continues identically to D.' }
+        next: { type: 'rotate', text: 'ROTATE +1 + A-shape lands the next I (E) at frets 9-11. The cycle continues identically to D, just shifted +2 frets up the neck.' }
+      }
+    ]
+  },
+  {
+    key: 'G', tonic: 'G major (same mechanic, starting at fret 7)', degrees: 'I = G · IV = C · V = D',
+    positions: [
+      {
+        label: 'Position 1 · C-shape start at fret 7',
+        steps: [
+          { role: 'I',  chord: 'G', shape: 'C-shape',  frets: [7,7,7,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 7. Triad D G B. Note: this is the same chord as the ring-bar G in Position 2 of D - same notes, different finger choice depending on where you came from in the cycle.' },
+          { role: 'IV', chord: 'C', shape: 'F-shape',  frets: [9,7,8,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 7. RING on fret 9 string 4. MIDDLE on fret 8 string 2. Triad E G C.' },
+          { role: 'V',  chord: 'D', shape: 'F-shape',  frets: [11,9,10,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Triad F# A D.' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 7.' },
+          { type: 'slide', text: 'Slide the whole F-shape up 2 frets.' },
+        ],
+        next: { type: 'rotate', text: 'ROTATE +1 + A-shape would land the next I (G) at frets 12-14. On most ukuleles you have run out of fingerboard - on guitar the cycle continues identically to D.' }
       }
     ]
   },

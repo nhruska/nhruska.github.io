@@ -959,6 +959,15 @@
         row.appendChild(card);
       });
       el.keyView.appendChild(row);
+      // Deep-dive: the same I-IV-V relationship walked all the way up the neck
+      // using shape rotations (C-shape -> A-shape -> F-shape) and the Hammer /
+      // Slide / Rotate / Flip operations. Not the default surface; linked here
+      // for the curious.
+      var more = document.createElement('a');
+      more.className = 'hsrMore';
+      more.href = 'triad-inversions.html';
+      more.textContent = 'Walk the full cycle up the neck →';
+      el.keyView.appendChild(more);
     }
 
     function suggestFor(ch) {
