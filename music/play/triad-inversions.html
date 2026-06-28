@@ -178,9 +178,15 @@ h1 .em{color:var(--accent)}
 'use strict';
 
 // ---- profile loading -------------------------------------------------------
-// Reads the active instrument from the main app's localStorage (PR #45's
-// music.activeProfile.v1 key). Falls back to ?p= URL param, then ukulele.
-// Then loads the manifest, then the active profile script.
+// Resolves the active instrument id in this order:
+//   1. ?p= URL query param (explicit deep link, wins so a link can override
+//      a stale persisted choice).
+//   2. main app's localStorage at music.activeProfile.v1 (PR #45 stores a
+//      bare profile id string here, not a JSON blob).
+//   3. ukulele-gcea as the deterministic default.
+// The id is then validated against the manifest before script load (see the
+// .then(wantId => ...) below); an unknown id falls back to the first valid
+// manifest entry so a stale or garbage stored id never breaks the page.
 const PROFILE_KEY = 'music.activeProfile.v1';
 function pickActiveId() {
   const qp = new URLSearchParams(location.search).get('p');
@@ -201,10 +207,23 @@ function loadScript(src) {
   });
 }
 
+// HTML-escape any string before injecting it via innerHTML. Profile fields
+// (label, tuning, id) come from our own profile scripts today but a future
+// schema drift / external profile source could turn them into an injection
+// vector. Defensive escape on every untrusted-by-default field.
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // ---- pitch + interval helpers ---------------------------------------------
 const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
-function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
+function freqPc(f) {
+  if (!f || !isFinite(f) || f <= 0) return 0;
+  return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12;
+}
 
 // Parse the "Nth string" label on each profile string to find the display
 // indices for strings 4, 3, 2 (the artifact's three played strings). Different
@@ -252,8 +271,15 @@ function computeBaseFrets(stringPcs, keyRootPc) {
 }
 
 // Pick which shape to start at for Position 1 - the lowest-fret entry that
-// fits inside the fretboard (max fret <= MAX_FRET). For "open keys" (key root
-// matches string-3 open PC) the C-shape at fret 0 is the open partial.
+// fits inside the fretboard (max fret <= MAX_FRET). All three shapes are
+// valid at fret 0 (the "bar" sits on the nut, meaning the strings ring open):
+//   C-shape at fret 0: [0,0,0,-1] open partial; valid when string-3 open PC
+//     equals the key root (the open strings spell the I chord).
+//   F-shape at fret 0: [2,0,1,-1] open with string 3 ringing; valid for the
+//     key whose root sits at string-2 open + 1 semitone (uke F = open F chord,
+//     guitar D-G-B's C = open C-shape on those 3 strings).
+//   A-shape at fret 0: [2,1,0,-1] open with string 2 ringing on the index
+//     finger position (uke A = open A chord, guitar D-G-B's E = open E shape).
 const MAX_FRET = 14;
 function pickStartShape(stringPcs, keyRootPc) {
   const base = computeBaseFrets(stringPcs, keyRootPc);
@@ -263,14 +289,18 @@ function pickStartShape(stringPcs, keyRootPc) {
   //   C-shape position: max = cFret + 4 (V is F-shape at cFret+2 with ring at cFret+4)
   //   A-shape position: max = aFret + 4 (V is ring-bar at aFret+4)
   //   F-shape position: max = fFret + 5 (V is A-shape at fFret+3 with ring at fFret+5)
+  // base.X = 0 means "shape starts on the nut" - the open version of that
+  // shape sounds the key root. Accept fret 0 for any shape. base.X = 0 with
+  // NO open key (= no C-shape open partial available) means C-shape wraps
+  // to fret 12; F and A still have valid fret-0 forms.
   const candidates = [];
   if (isOpenKey) {
     candidates.push({ shape: 'C-open', startFret: 0, maxFret: 4 });
-  } else {
-    if (base.c >= 1) candidates.push({ shape: 'C', startFret: base.c, maxFret: base.c + 4 });
+  } else if (base.c >= 1) {
+    candidates.push({ shape: 'C', startFret: base.c, maxFret: base.c + 4 });
   }
-  if (base.f >= 1) candidates.push({ shape: 'F', startFret: base.f, maxFret: base.f + 5 });
-  if (base.a >= 1) candidates.push({ shape: 'A', startFret: base.a, maxFret: base.a + 4 });
+  if (base.f >= 0) candidates.push({ shape: 'F', startFret: base.f, maxFret: base.f + 5 });
+  if (base.a >= 0) candidates.push({ shape: 'A', startFret: base.a, maxFret: base.a + 4 });
 
   // Filter to shapes that fit, then pick lowest starting fret
   let fitting = candidates.filter(c => c.maxFret <= MAX_FRET);
@@ -619,10 +649,10 @@ function renderIncompatibleFallback(root) {
   const fallback = document.createElement('div');
   fallback.className = 'fallback';
   fallback.innerHTML = `
-    <p><strong>${profile.label}'s tuning</strong> uses a different interval pattern (${profile.tuning}). The artifact's C-shape, F-shape and A-shape geometry is built for the perfect-fourth + major-third interval pattern on strings 4-3-2 - ukulele G-C-E and guitar D-G-B drop straight in, but mandolin / mandola fifths tuning needs a different shape vocabulary.</p>
+    <p><strong>${esc(profile.label)}'s tuning</strong> uses a different interval pattern (${esc(profile.tuning)}). The artifact's C-shape, F-shape and A-shape geometry is built for the perfect-fourth + major-third interval pattern on strings 4-3-2 - ukulele G-C-E and guitar D-G-B drop straight in, but tunings like mandolin / mandola fifths need a different shape vocabulary.</p>
     <p>You can still walk I-IV-V in the Compose tab - the chord chain there picks the lowest-fret voicing for any tuning.</p>
     <div class="actions">
-      <a href="../play/?p=${encodeURIComponent(profile.id)}">Compose tab in ${profile.label}</a>
+      <a href="../play/?p=${encodeURIComponent(profile.id)}">Compose tab in ${esc(profile.label)}</a>
       <a class="alt" href="?p=ukulele-gcea">Switch to ukulele</a>
     </div>
   `;
@@ -635,7 +665,7 @@ function renderCrossInst(profile) {
   const isGuitarFamily = ['guitar','cigarbox','banjo'].includes(profile.instrument);
   const isFifths = ['mandolin','mandola'].includes(profile.instrument);
   body.innerHTML = `
-    <p>You're seeing this on <strong>${profile.label}</strong> (${profile.tuning}). The interval geometry is what transfers - the same shape positions sound the same chord progression on every instrument with a [P4, M3] interval pattern on strings 4-3-2.</p>
+    <p>You're seeing this on <strong>${esc(profile.label)}</strong> (${esc(profile.tuning)}). The interval geometry is what transfers - the same shape positions sound the same chord progression on every instrument with a [P4, M3] interval pattern on strings 4-3-2.</p>
     <div class="inst ${isUke ? 'cur' : ''}"><strong>Ukulele G-C-E-A</strong> - strings 4-3-2 = G-C-E. Mute string 1 (A) for the artifact's pure three-string voicing, or let it ring for added colour.</div>
     <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Cigar Box / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major; uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
     <div class="inst ${isFifths ? 'cur' : ''}"><strong>Mandolin / Mandola (all-fifths)</strong> - the artifact's shape vocabulary doesn't directly map. Different fingerings needed; the IV-to-V slide-up-2 still holds but the I and IV shapes are different families.</div>
@@ -680,15 +710,27 @@ function wireDismissals() {
 fetch('../shared/profiles/manifest.json')
   .then(r => { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
   .then(m => {
-    const wantId = pickActiveId();
     const ids = m.profiles || [];
-    if (!ids.includes(wantId)) throw new Error('profile not in manifest: ' + wantId);
-    return loadScript('../shared/profiles/' + wantId + '.js').then(() => wantId);
+    if (!ids.length) throw new Error('no profiles in manifest');
+    // Resolve the wanted id; if it's missing or unknown (stale localStorage
+    // value, bad ?p= deep link, garbage stored data), fall back to the first
+    // manifest entry instead of throwing. Keeps the page usable even when the
+    // saved/passed id has rotted.
+    let wantId = pickActiveId();
+    if (!ids.includes(wantId)) wantId = ids[0];
+    return loadScript('../shared/profiles/' + wantId + '.js').then(() => ({ wantId, fallbackIds: ids }));
   })
-  .then(wantId => {
+  .then(ctx => {
     const profiles = window.MusicProfiles || {};
-    activeProfile = profiles[wantId];
-    if (!activeProfile) throw new Error('profile script did not register: ' + wantId);
+    activeProfile = profiles[ctx.wantId];
+    if (!activeProfile) {
+      // Profile script loaded but did not register (corrupt or empty script).
+      // Try the next manifest id as a last resort before throwing.
+      for (const id of ctx.fallbackIds) {
+        if (id !== ctx.wantId && profiles[id]) { activeProfile = profiles[id]; break; }
+      }
+      if (!activeProfile) throw new Error('profile script did not register: ' + ctx.wantId);
+    }
     // Find which display indices correspond to strings 4, 3, 2 by parsing the
     // "Nth string" labels. For uke (4 strings) this is [0,1,2]; for guitar
     // (6 strings) it's [2,3,4]; for banjo (5 strings, drone on left) [1,2,3].
