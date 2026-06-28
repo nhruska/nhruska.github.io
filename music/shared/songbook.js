@@ -788,7 +788,13 @@
       });
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); }
+    function addChord(c) {
+      if (progression.length >= 8) return;
+      progression.push(c);
+      // first chord placed -> the "Common progressions" starter has done its job; fold it away
+      if (el.discPatterns && progression.length === 1) el.discPatterns.open = false;
+      renderProg();
+    }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
@@ -798,6 +804,7 @@
       keyRoot = root; keyMode = "Major";
       progression = chordsFromDegrees(root, keyMode, degrees);
       cTpose = 0;
+      if (el.discPatterns) el.discPatterns.open = false; // pattern loaded -> collapse the starter
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
     }
@@ -1112,6 +1119,8 @@
     renderKeyView();
     renderProgPicks();
     renderProg();
+    // cold start (no progression yet) -> show the "Common progressions" on-ramp expanded
+    if (el.discPatterns) el.discPatterns.open = !progression.length;
 
     // Give the chord pack a chance to wire its own UI (e.g. the Tune tab).
     if (pack && typeof pack.init === 'function') {

@@ -105,7 +105,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
-.iconBtn{width:38px;height:38px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
 .ctrl{display:flex;gap:8px;margin:12px 0 10px;}
 .pill{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:6px;}
@@ -257,14 +257,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .progTools{display:flex;align-items:center;gap:6px;}
-.keyReadout{min-width:38px;height:38px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.keyReadout{min-width:44px;height:44px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
 .keyReadout:active{transform:scale(.9);}
 .prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
+.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
+/* expand the thumb hit area to 44px without growing the visual badge (WCAG 2.5.8) */
+.prog .slot .rm::before{content:"";position:absolute;inset:-10px;}
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
 .suggest{margin-top:12px;}
 .suggest:empty{display:none;}
@@ -309,14 +311,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
 .chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
 /* ---- Key & scale picker ---- */
-.keyBox{margin:6px 0 18px;padding:14px;border-radius:13px;background:var(--bg-2);border:1px solid var(--line-strong);}
-.keyHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.keyStrip{margin:2px 0 18px;}
+.keyStripHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
-.keyClearBtn{border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:14px;cursor:pointer;}
+.keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
-.keyRoots{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;margin-bottom:9px;scrollbar-width:none;}
-.keyRoots::-webkit-scrollbar{display:none;}
-.rootChip{padding:7px 11px;font-family:'Space Mono',monospace;font-size:.78rem;}
+/* all 12 roots visible at once (wrap), each a 44px thumb target - no hidden-scroll */
+.keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.rootChip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:.78rem;}
 .keyModes{margin-bottom:2px;}
 .keyHint{color:var(--txt-dim);font-size:.82rem;margin:8px 2px 2px;}
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
@@ -349,7 +351,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .hsrRoman{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
-.allChordsLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 10px;}
+/* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
+/* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
+   so build->solo->build never scrolls it away; the key picker, scale, and grids flow
+   below. The bg matches the app so chords scroll cleanly under it. */
+.composeSticky{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+/* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
+.keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
+/* native <details> disclosures: free aria-expanded + keyboard support */
+.composeDisc{border:1px solid var(--line-strong);border-radius:13px;background:var(--bg-2);margin-bottom:12px;overflow:hidden;}
+.composeDisc>summary{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;list-style:none;}
+.composeDisc>summary::-webkit-details-marker{display:none;}
+.composeDisc>summary::before{content:"\25B8";font-size:.8rem;color:var(--accent);transition:transform .15s;}
+.composeDisc[open]>summary::before{transform:rotate(90deg);}
+.composeDisc>summary:active{background:var(--surface-2);}
+.discBody{padding:2px 14px 14px;}
+.discBody .chips{margin-bottom:12px;}
+/* keyboard focus ring - the app previously stripped all outlines (a11y regression) */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+.search:focus-visible{outline:2px solid var(--accent);outline-offset:0;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}

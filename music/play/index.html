@@ -50,29 +50,35 @@
     </section>
     <section class="screen" id="s-compose">
       <div class="composeWrap">
-        <div class="progHead"><span class="progLbl">Progression</span>
-          <div class="progTools">
-            <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Key (the first chord) — tap to reset to your original key">—</button>
-            <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
-            <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
-          </div></div>
-        <div class="prog" id="prog"></div>
-        <div id="suggest" class="suggest"></div>
-        <div id="progPicks" class="progPicks"></div>
+        <div class="composeSticky">
+          <div class="progHead"><span class="progLbl">Progression</span>
+            <div class="progTools">
+              <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
+              <button class="keyReadout" id="cKey" title="Key (the first chord) — tap to reset to your original key">—</button>
+              <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
+              <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
+            </div></div>
+          <div class="prog" id="prog"></div>
+          <div id="suggest" class="suggest"></div>
+        </div>
         <div class="cActions">
           <button class="btn ghost" id="cClear">Clear</button>
           <button class="btn red" id="cSave">Save progression</button>
         </div>
-        <div class="keyBox" id="keyBox">
-          <div class="keyHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+        <div class="keyStrip">
+          <div class="keyStripHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
           <div class="keyRoots" id="keyRoots"></div>
           <div class="chips keyModes" id="keyModes"></div>
-          <div class="keyView" id="keyView"></div>
         </div>
-        <div class="allChordsLbl">All chords</div>
-        <div class="chips" id="catChips"></div>
-        <div class="chordGrid" id="buildGrid"></div>
+        <div class="keyView" id="keyView"></div>
+        <details class="composeDisc" id="discChords">
+          <summary>All chords</summary>
+          <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
+        </details>
+        <details class="composeDisc" id="discPatterns">
+          <summary>Common progressions</summary>
+          <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
+        </details>
       </div>
     </section>
     <section class="screen" id="s-practice">
@@ -516,6 +522,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
+        discChords: el('discChords'), discPatterns: el('discPatterns'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }
