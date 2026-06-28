@@ -260,7 +260,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyReadout{min-width:44px;height:44px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
 .keyReadout:active{transform:scale(.9);}
-.prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
+/* one-row horizontal filmstrip (was flex-wrap, which pushed a 4th chord to a 2nd row) */
+.prog{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;min-height:88px;margin-bottom:12px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.prog::-webkit-scrollbar{display:none;}
+.prog .slot{flex:0 0 auto;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
@@ -356,6 +359,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    so build->solo->build never scrolls it away; the key picker, scale, and grids flow
    below. The bg matches the app so chords scroll cleanly under it. */
 .composeSticky{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+.composeSticky .cActions{margin:8px 0 0;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
 /* native <details> disclosures: free aria-expanded + keyboard support */

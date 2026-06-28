@@ -51,6 +51,8 @@
     </section>
     <section class="screen" id="s-compose">
       <div class="composeWrap">
+        <!-- Slim steady header: label + transpose + Clear/Save stay pinned (NOT the tall chord
+             diagrams, which made the old sticky band ~3/4 of the screen). -->
         <div class="composeSticky">
           <div class="progHead"><span class="progLbl">Progression</span>
             <div class="progTools">
@@ -59,27 +61,38 @@
               <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
               <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
             </div></div>
-          <div class="prog" id="prog"></div>
-          <div id="suggest" class="suggest"></div>
+          <div class="cActions">
+            <button class="btn ghost" id="cClear">Clear</button>
+            <button class="btn red" id="cSave">Save progression</button>
+          </div>
         </div>
-        <div class="cActions">
-          <button class="btn ghost" id="cClear">Clear</button>
-          <button class="btn red" id="cSave">Save progression</button>
+        <!-- Progression as a one-row horizontal filmstrip (no 2-row wrap). -->
+        <div class="prog" id="prog"></div>
+        <!-- One-open-at-a-time exclusive accordion (native <details name>): only one panel
+             ever expanded, so the page stays short on a phone. -->
+        <div class="composeAccordion">
+          <details class="composeDisc" name="compose" id="discSuggest">
+            <summary>Next chord</summary>
+            <div class="discBody"><div id="suggest" class="suggest"></div></div>
+          </details>
+          <details class="composeDisc" name="compose" id="discKey">
+            <summary>Key &amp; scale</summary>
+            <div class="discBody">
+              <div class="keyStripHead"><span class="keyLbl">Pick a key</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+              <div class="keyRoots" id="keyRoots"></div>
+              <div class="chips keyModes" id="keyModes"></div>
+              <div class="keyView" id="keyView"></div>
+            </div>
+          </details>
+          <details class="composeDisc" name="compose" id="discChords">
+            <summary>All chords</summary>
+            <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
+          </details>
+          <details class="composeDisc" name="compose" id="discPatterns">
+            <summary>Common progressions</summary>
+            <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
+          </details>
         </div>
-        <div class="keyStrip">
-          <div class="keyStripHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-          <div class="keyRoots" id="keyRoots"></div>
-          <div class="chips keyModes" id="keyModes"></div>
-        </div>
-        <div class="keyView" id="keyView"></div>
-        <details class="composeDisc" id="discChords">
-          <summary>All chords</summary>
-          <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
-        </details>
-        <details class="composeDisc" id="discPatterns">
-          <summary>Common progressions</summary>
-          <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
-        </details>
       </div>
     </section>
     <section class="screen" id="s-practice">
@@ -523,7 +536,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discChords: el('discChords'), discPatterns: el('discPatterns'),
+        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), discPatterns: el('discPatterns'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

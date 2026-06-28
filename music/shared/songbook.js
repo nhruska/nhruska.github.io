@@ -768,14 +768,18 @@
     // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
     // the first chord as a sensible default for free-built progressions.
     function labelTonic() { return keyRoot || progression[0]; }
-    var prevProgEmpty = null; // tracks the empty<->building transition for the starter disclosure
+    var prevProgEmpty = null; // tracks the empty<->building transition for the exclusive accordion
     function renderProg() {
       if (!el.prog) return;
-      // "Common progressions" starter follows the progression state, but only on the
-      // empty<->building TRANSITION (open when it empties, fold when building starts).
-      // Toggling on EVERY render would clobber a user who manually closed it at empty.
+      // Exclusive accordion (one panel open at a time): at cold start surface the
+      // "Common progressions" starter; once building, surface "Next chord". Only on the
+      // empty<->building TRANSITION, so a user's manual panel pick is never clobbered.
+      // Setting .open on a name="compose" <details> auto-closes the others (native).
       var isEmpty = !progression.length;
-      if (el.discPatterns && isEmpty !== prevProgEmpty) el.discPatterns.open = isEmpty;
+      if (isEmpty !== prevProgEmpty) {
+        if (isEmpty && el.discPatterns) el.discPatterns.open = true;
+        else if (!isEmpty && el.discSuggest) el.discSuggest.open = true;
+      }
       prevProgEmpty = isEmpty;
       el.prog.innerHTML = '';
       var tonic = labelTonic();
