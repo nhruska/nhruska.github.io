@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HSR Lens · Ukulele</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#0f1116; --surface:#161a22; --surface-2:#1c2230; --line:#2a3142; --line-strong:#3a4150;
+  --txt:#e8ebf0; --txt-dim:#9aa3b2; --txt-faint:#6b7280; --ink-faint:#7a8294;
+  --accent:#a78bfa; --accent-dim:#7c6bd0; --accent-deep:#1d1834;
+  --hammer:#fbbf24; --slide:#34d399; --rotate:#f472b6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 30px)}
+header{margin-bottom:18px}
+h1{font-size:1.4rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em}
+h1 .lens{color:var(--accent)}
+.sub{color:var(--txt-dim);font-size:.86rem;line-height:1.4}
+.theory{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0 22px}
+.theory h2{font-size:.84rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px;font-weight:700}
+.theory p{margin:6px 0;font-size:.86rem;line-height:1.5;color:var(--txt)}
+.theory .op{display:inline-block;font-weight:700;padding:1px 7px;border-radius:6px;font-size:.78rem;margin-right:4px}
+.op.hammer{color:#1a1300;background:var(--hammer)}
+.op.slide{color:#062017;background:var(--slide)}
+.op.rotate{color:#2a0a1f;background:var(--rotate)}
+.keyBlock{margin-bottom:34px}
+.keyHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 6px;border-bottom:1px solid var(--line-strong);padding-bottom:8px}
+.keyHead h2{font-size:1.05rem;margin:0;font-weight:800}
+.keyHead h2 .deg{color:var(--accent);font-weight:600;font-size:.86rem;margin-left:8px}
+.posLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 8px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s,transform .08s}
+.step:active{transform:scale(.98);border-color:var(--accent-dim)}
+.step.on{border-color:var(--accent);background:var(--accent-deep)}
+.step svg.diagram{display:block}
+.step .info{display:flex;flex-direction:column;gap:4px}
+.step .role{display:flex;align-items:baseline;gap:8px}
+.step .roman{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:1.4rem;color:var(--accent);letter-spacing:.04em}
+.step .chord{font-weight:700;font-size:1.1rem}
+.step .shape{font-size:.78rem;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.06em}
+.step .frets{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.74rem;color:var(--ink-faint);margin-top:2px}
+.step .notes{font-size:.78rem;color:var(--txt);margin-top:2px}
+.transition{display:flex;align-items:center;gap:8px;margin:4px 8px 4px 22px;font-size:.78rem;color:var(--txt-dim);padding:6px 10px;border-left:2px solid var(--line-strong)}
+.transition .op{flex-shrink:0}
+.transition .desc{line-height:1.4}
+.cyclic{font-size:.74rem;color:var(--txt-faint);font-style:italic;text-align:center;margin:6px 0 0;padding:8px;border-top:1px dashed var(--line)}
+.legend{position:sticky;bottom:0;background:rgba(15,17,22,.95);backdrop-filter:blur(6px);padding:8px 10px;margin:0 -16px;border-top:1px solid var(--line);display:flex;justify-content:center;gap:14px;font-size:.7rem;color:var(--txt-dim)}
+.legend .item{display:flex;align-items:center;gap:5px}
+.legend .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:24px 0 12px;font-size:.82rem;line-height:1.55}
+.notes h3{font-size:.86rem;margin:0 0 8px;color:var(--accent)}
+.notes ul{margin:6px 0;padding-left:20px}
+.notes li{margin:4px 0}
+.fingerLegend{display:flex;gap:10px;margin-top:6px;font-size:.7rem;color:var(--txt-dim);flex-wrap:wrap}
+.fingerLegend span{display:inline-flex;align-items:center;gap:3px}
+.fingerLegend .swatch{display:inline-block;width:14px;height:14px;border-radius:50%;color:#06201c;font-weight:700;font-size:.62rem;text-align:center;line-height:14px;background:var(--accent);font-family:'Space Mono',monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>HSR <span class="lens">Lens</span></h1>
+  <p class="sub">Ukulele · the Hammer-Slide-Rotate cycle worked out in 3 keys. Tap a card to highlight it. <a href="../play/" style="color:var(--accent)">Back to app</a></p>
+</header>
+
+<div class="theory">
+  <h2>The Cycle</h2>
+  <p>Start with the home shape as <strong>I</strong>. <span class="op hammer">HAMMER</span> into a different shape that gives <strong>IV</strong> at the same hand position (no big jump). <span class="op slide">SLIDE +2</span> that same shape up two frets to get <strong>V</strong> (because IV-to-V is always a whole step in major-key diatonics). <span class="op rotate">ROTATE</span> up 1 fret into a new shape family to land on <strong>I</strong> again, one CAGED position higher. Repeat - the cycle keeps walking up the neck. Move between shapes in whatever order makes musical sense, but <strong>economy of movement</strong> is the constraint.</p>
+  <p>Shape families on uke (G C E A): treat G-C-E as if it were guitar D-G-B and let the A string be a color decision. The three shape families that drive the cycle: <strong>C-shape</strong>, <strong>F-shape</strong>, <strong>A-shape</strong>.</p>
+  <div class="fingerLegend">
+    <span><span class="swatch">1</span>index</span>
+    <span><span class="swatch">2</span>middle</span>
+    <span><span class="swatch">3</span>ring</span>
+    <span><span class="swatch">4</span>pinky</span>
+  </div>
+</div>
+
+<div id="lens"></div>
+
+<div class="notes">
+  <h3>Mental model in one sentence</h3>
+  <p>Ukulele G-C-E preserves guitar D-G-B interval geometry, so the same triad fragments transfer; HSR is a movement vocabulary (hammer / slide +2 / rotate +1) that walks I-IV-V up the neck through C, F, and A shape families instead of memorizing isolated chord charts. Open chords are entry points; movable inversions are the navigation system.</p>
+  <h3>Verify against your hands</h3>
+  <p>Tap each card to highlight. The fret-array under each card reads <code>[4G, 3C, 2E, 1A]</code> with -1 = muted. If the position 2 shapes (the rotated I-IV-V higher up the neck) don't match your hand geometry, tell me and I'll adjust - this is the part I'm least certain about.</p>
+  <h3>Three-string mode (mute A)</h3>
+  <p>When A is muted, the C-shape I becomes <code>[0,0,0,-1]</code>, F-shape IV becomes <code>[2,0,1,-1]</code>, etc. Same fret motion, A doesn't sound. This is the guitar D-G-B bridge in pure form.</p>
+</div>
+
+<div class="legend">
+  <span class="item"><span class="dot" style="background:var(--hammer)"></span>Hammer</span>
+  <span class="item"><span class="dot" style="background:var(--slide)"></span>Slide +2</span>
+  <span class="item"><span class="dot" style="background:var(--rotate)"></span>Rotate +1</span>
+</div>
+
+<script>
+// HSR Lens data - 3 keys, 2 positions each.
+// Each chord: name, frets [G,C,E,A], shape family, finger map (4-string array of "1"|"2"|"3"|"4" or "" if no finger), notes label, role (I/IV/V).
+// Transitions describe what to do to get to the NEXT chord.
+const KEYS = [
+  {
+    key: 'C', tonic: 'C major', degrees: 'I = C · IV = F · V = G',
+    positions: [
+      {
+        label: 'Position 1 · open (frets 0-4)',
+        steps: [
+          { role: 'I',  chord: 'C', shape: 'C-shape',  frets: [0,0,0,3], fingers: ['','','','3'], notes: 'G C E C - open uke C, ring on A string fret 3' },
+          { role: 'IV', chord: 'F', shape: 'F-shape',  frets: [2,0,1,0], fingers: ['2','','1',''], notes: 'A C F A - hammer onto F shape, index stays on E string fret 1' },
+          { role: 'V',  chord: 'G', shape: 'F-shape',  frets: [4,2,3,2], fingers: ['3','1','2','1'], notes: 'B D G B - same F shape, slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer onto F shape - index and middle add at frets 1-2 with minimal hand move' },
+          { type: 'slide', text: 'Slide the WHOLE F shape up 2 frets - same fingers, different position' },
+        ],
+        next: { type: 'rotate', text: 'Rotate: up 1 fret + A-shape gives the next I (C in higher CAGED position)' }
+      },
+      {
+        label: 'Position 2 · A-shape rotation (frets 3-7)',
+        steps: [
+          { role: 'I',  chord: 'C', shape: 'A-shape',  frets: [5,4,3,3], fingers: ['3','2','1','1'], notes: 'C E G C - A-shape moved so root C lands on A string fret 3' },
+          { role: 'IV', chord: 'F', shape: 'C-shape',  frets: [5,5,5,8], fingers: ['1','1','1','4'], notes: 'C F A F - C-shape barre fret 5 + pinky at fret 8 on A string' },
+          { role: 'V',  chord: 'G', shape: 'C-shape',  frets: [7,7,7,10], fingers: ['1','1','1','4'], notes: 'D G B G - same C-shape, slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer the C shape - ring/pinky finger adds at fret 8 on the A string' },
+          { type: 'slide', text: 'Slide the C shape up 2 frets for V' },
+        ],
+        next: { type: 'cycle', text: 'Next rotation: up 1 more fret + new shape family for I at fret 8 area (cycle continues)' }
+      }
+    ]
+  },
+  {
+    key: 'G', tonic: 'G major', degrees: 'I = G · IV = C · V = D',
+    positions: [
+      {
+        label: 'Position 1 · open (frets 0-5)',
+        steps: [
+          { role: 'I',  chord: 'G', shape: 'G-shape',  frets: [0,2,3,2], fingers: ['','1','3','2'], notes: 'G D G B - open uke G' },
+          { role: 'IV', chord: 'C', shape: 'C-shape',  frets: [0,0,0,3], fingers: ['','','','3'], notes: 'G C E C - hammer onto open C shape, hand barely moves' },
+          { role: 'V',  chord: 'D', shape: 'C-shape',  frets: [2,2,2,5], fingers: ['1','1','1','4'], notes: 'A D F# D - same C-shape, slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer onto C shape - hand stays in same low position, fingers reorganize' },
+          { type: 'slide', text: 'Slide the C shape up 2 frets - index barre at fret 2, pinky stretches to fret 5' },
+        ],
+        next: { type: 'rotate', text: 'Rotate: up 1 fret + F-shape gives the next I (G in higher position)' }
+      },
+      {
+        label: 'Position 2 · F-shape rotation (frets 2-5)',
+        steps: [
+          { role: 'I',  chord: 'G', shape: 'F-shape',  frets: [4,2,3,2], fingers: ['3','1','2','1'], notes: 'B D G B - F-shape moved up 2 frets to play G (root G on E string fret 3, fifth D on C string fret 2)' },
+          { role: 'IV', chord: 'C', shape: 'A-shape',  frets: [5,4,3,3], fingers: ['3','2','1','1'], notes: 'C E G C - A-shape moved so root C on A string fret 3 (hammer from F-shape area)' },
+          { role: 'V',  chord: 'D', shape: 'A-shape',  frets: [7,6,5,5], fingers: ['3','2','1','1'], notes: 'D F# A D - same A-shape, slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer A shape - barre fret 3 with index, middle and ring add chord tones' },
+          { type: 'slide', text: 'Slide the A shape up 2 frets for V' },
+        ],
+        next: { type: 'cycle', text: 'Next rotation continues up the neck' }
+      }
+    ]
+  },
+  {
+    key: 'D', tonic: 'D major', degrees: 'I = D · IV = G · V = A',
+    positions: [
+      {
+        label: 'Position 1 · open (frets 0-4)',
+        steps: [
+          { role: 'I',  chord: 'D', shape: 'D-shape',  frets: [2,2,2,0], fingers: ['1','2','3',''], notes: 'A D F# A - open uke D, three fingers across fret 2' },
+          { role: 'IV', chord: 'G', shape: 'G-shape',  frets: [0,2,3,2], fingers: ['','1','3','2'], notes: 'G D G B - open G, hammer in low area' },
+          { role: 'V',  chord: 'A', shape: 'G-shape',  frets: [2,4,5,4], fingers: ['1','2','4','3'], notes: 'A E A C# - G-shape slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer onto G shape - middle/ring/pinky rearrange in same hand area' },
+          { type: 'slide', text: 'Slide the G shape up 2 frets for V' },
+        ],
+        next: { type: 'rotate', text: 'Rotate: up 1 fret + C-shape gives the next I (D in higher position)' }
+      },
+      {
+        label: 'Position 2 · A-shape rotation (frets 5-12)',
+        steps: [
+          { role: 'I',  chord: 'D', shape: 'A-shape',  frets: [7,6,5,5], fingers: ['3','2','1','1'], notes: 'D F# A D - A-shape moved so root D on A string fret 5' },
+          { role: 'IV', chord: 'G', shape: 'C-shape',  frets: [7,7,7,10], fingers: ['1','1','1','4'], notes: 'D G B G - C-shape barre fret 7 + pinky reach to fret 10' },
+          { role: 'V',  chord: 'A', shape: 'C-shape',  frets: [9,9,9,12], fingers: ['1','1','1','4'], notes: 'E A C# A - same C-shape, slid up 2 frets' },
+        ],
+        transitions: [
+          { type: 'hammer', text: 'Hammer C shape - barre stays at fret 7, pinky stretches to fret 10 for the root' },
+          { type: 'slide', text: 'Slide the C shape up 2 frets for V' },
+        ],
+        next: { type: 'cycle', text: 'Next rotation continues up the neck' }
+      }
+    ]
+  },
+];
+
+// ---------- chord diagram renderer (4-string ukulele) ----------
+function renderDiagram(frets, fingers) {
+  const n = 4, cols = n - 1, sx = 14, padX = 16, padY = 18, rows = 4, dotR = 8, markR = 4, sw = 1.3, markY = 9, baseFont = 11;
+  const fretted = frets.filter(f => f > 0);
+  const hi = fretted.length ? Math.max(...fretted) : 0;
+  const base = (!fretted.length || hi <= 4) ? 1 : Math.min(...fretted);
+  const showRows = Math.max(rows, hi - base + 1);
+  const sy = 18;
+  const W = padX * 2 + cols * sx + (base > 1 ? 18 : 0);
+  const H = padY + showRows * sy + 6;
+  const xOff = base > 1 ? 18 : 0;
+  let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="${-xOff} 0 ${W} ${H}">`;
+  if (base === 1) {
+    svg += `<rect x="${padX-1}" y="${padY-2}" width="${cols*sx+2}" height="3" fill="#e8ebf0" rx="1"/>`;
+  } else {
+    svg += `<text x="${padX-4}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}fr</text>`;
+  }
+  for (let s = 0; s < n; s++) {
+    const x = padX + s * sx;
+    svg += `<line x1="${x}" y1="${padY}" x2="${x}" y2="${padY + showRows * sy}" stroke="#3a4150" stroke-width="${sw}"/>`;
+  }
+  for (let r = 0; r <= showRows; r++) {
+    const y = padY + r * sy;
+    svg += `<line x1="${padX}" y1="${y}" x2="${padX + cols * sx}" y2="${y}" stroke="#3a4150" stroke-width="${sw}"/>`;
+  }
+  frets.forEach((fr, s) => {
+    const x = padX + s * sx;
+    if (fr > 0) {
+      const rel = fr - (base - 1);
+      const y = padY + (rel - 0.5) * sy;
+      svg += `<circle cx="${x}" cy="${y}" r="${dotR}" fill="#a78bfa" stroke="#7c6bd0" stroke-width="1.3"/>`;
+      const f = fingers && fingers[s];
+      if (f) {
+        svg += `<text x="${x}" y="${y+3.5}" fill="#06201c" font-size="10" font-weight="700" font-family="'Space Mono',monospace" text-anchor="middle">${f}</text>`;
+      }
+    } else if (fr === 0) {
+      svg += `<circle cx="${x}" cy="${padY - markY}" r="${markR}" fill="none" stroke="#e8ebf0" stroke-width="1.4"/>`;
+    } else {
+      const mY = padY - markY, d = markR;
+      svg += `<line x1="${x-d}" y1="${mY-d}" x2="${x+d}" y2="${mY+d}" stroke="#7a8294" stroke-width="1.5"/>`;
+      svg += `<line x1="${x-d}" y1="${mY+d}" x2="${x+d}" y2="${mY-d}" stroke="#7a8294" stroke-width="1.5"/>`;
+    }
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// ---------- build the DOM ----------
+const root = document.getElementById('lens');
+KEYS.forEach(k => {
+  const block = document.createElement('div');
+  block.className = 'keyBlock';
+  block.innerHTML = `<div class="keyHead"><h2>${k.tonic}<span class="deg">${k.degrees}</span></h2></div>`;
+  k.positions.forEach((pos, posIdx) => {
+    const posLbl = document.createElement('div');
+    posLbl.className = 'posLbl';
+    posLbl.textContent = pos.label;
+    block.appendChild(posLbl);
+    pos.steps.forEach((step, si) => {
+      const card = document.createElement('div');
+      card.className = 'step';
+      card.innerHTML = `
+        ${renderDiagram(step.frets, step.fingers)}
+        <div class="info">
+          <div class="role"><span class="roman">${step.role}</span><span class="chord">${step.chord}</span></div>
+          <div class="shape">${step.shape}</div>
+          <div class="frets">[${step.frets.join(', ')}]</div>
+          <div class="notes">${step.notes}</div>
+        </div>`;
+      card.onclick = function () {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('on'));
+        card.classList.add('on');
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+      };
+      block.appendChild(card);
+      if (si < pos.transitions.length) {
+        const t = pos.transitions[si];
+        const tr = document.createElement('div');
+        tr.className = 'transition';
+        tr.innerHTML = `<span class="op ${t.type}">${t.type === 'hammer' ? 'HAMMER' : t.type === 'slide' ? 'SLIDE +2' : 'ROTATE +1'}</span><span class="desc">${t.text}</span>`;
+        block.appendChild(tr);
+      }
+    });
+    if (pos.next) {
+      const nx = document.createElement('div');
+      nx.className = pos.next.type === 'rotate' ? 'transition' : 'cyclic';
+      if (pos.next.type === 'rotate') {
+        nx.innerHTML = `<span class="op rotate">ROTATE +1</span><span class="desc">${pos.next.text}</span>`;
+      } else {
+        nx.textContent = pos.next.text;
+      }
+      block.appendChild(nx);
+    }
+  });
+  root.appendChild(block);
+});
+</script>
+</body>
+</html>
