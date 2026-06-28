@@ -252,6 +252,14 @@
     // C-shape index-bar at fret 1: bar across strings 4-3-2 at fret 1, string 1
     // muted. Triad root sits on string 3, so rootPc = (string-3 open + 1) % 12.
     templates[''].unshift({ frets: [1, 1, 1, -1], rootPc: (pc1 + 1) % 12 });
+    // Em-shape closed barre [4, 4, 3, 2] - lowest movable minor barre on uke.
+    // Without this, the only closed minor template is Bm [4,3,2,2] (rp=11) so
+    // G#m, A#m etc end up high (rp=8 -> [13,11,11,11] max=13). With Em-shape
+    // (rp=4) injected, G#m lands at [8,8,7,6] max=8 - playable on a uke neck.
+    templates['m'] = templates['m'] || [];
+    // Notes for [4,4,3,2]: G+4=B, C+4=E, E+3=G, A+2=B - sounds Em (E G B). The
+    // root (E) sits on string 3, so rootPc = (string-3 open + 4) % 12.
+    templates['m'].unshift({ frets: [4, 4, 3, 2], rootPc: (pc1 + 4) % 12 });
     return true;
   }
 

@@ -321,6 +321,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyTitle span{color:var(--accent);font-size:.76rem;font-weight:600;margin-left:6px;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
 .keyPalette{margin-bottom:2px;}
+/* Each diatonic chord tile uses the same layout as the suggCell and hsrCard:
+   diagram on top + Roman numeral below. Keeps the visual consistent across
+   all three palettes (chord name bold at top via .chord-name, Roman muted at
+   bottom via .rn). */
+.keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .scaleBox::-webkit-scrollbar{display:none;}
 .scaleBox svg{display:block;}

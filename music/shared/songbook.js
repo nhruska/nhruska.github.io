@@ -892,14 +892,27 @@
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
 
-      // chord palette: the diatonic chords, as tappable tiles that add to the progression
+      // chord palette: the diatonic chords, as tappable tiles that add to the progression.
+      // Each tile follows the same layout pattern as the I-IV-V chain cards + the
+      // "Add a Nth chord" suggestion row: chord name at top (bold, via the
+      // chord-name span inside the diagram), diagram in the middle, Roman numeral
+      // (interval role) at the bottom. Consistent across all three palettes.
       var pLbl = document.createElement('div'); pLbl.className = 'keySubLbl'; pLbl.textContent = 'Chords in this key';
       el.keyView.appendChild(pLbl);
       var pal = document.createElement('div'); pal.className = 'chordGrid keyPalette';
       diatonicChords(keyRoot, keyMode).forEach(function (c) {
         var d = packDiagram(c, 'small');
         d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
-        pal.appendChild(d);
+        var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '';
+        if (rn) {
+          var cell = document.createElement('div'); cell.className = 'chordCell';
+          cell.appendChild(d);
+          var rnEl = document.createElement('span'); rnEl.className = 'rn'; rnEl.textContent = rn;
+          cell.appendChild(rnEl);
+          pal.appendChild(cell);
+        } else {
+          pal.appendChild(d);
+        }
       });
       el.keyView.appendChild(pal);
 
@@ -948,10 +961,15 @@
       el.keyView.appendChild(hsrLbl);
       var row = document.createElement('div'); row.className = 'hsrChain';
       chain.forEach(function (c, i) {
+        // Same vertical layout as the diatonic palette + "Add Nth chord" row:
+        // chord name (top, inside diagram via chord-name span) -> diagram ->
+        // Roman numeral (bottom). Moving Roman from above to below the diagram
+        // makes the chord name the most prominent label and matches the other
+        // palettes.
         var card = document.createElement('div'); card.className = 'hsrCard';
+        card.appendChild(diagrams[i]);
         var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
         card.appendChild(rn);
-        card.appendChild(diagrams[i]);
         card.onclick = function () {
           addChord(c); packPlayChord(c);
           card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
