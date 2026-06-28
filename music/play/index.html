@@ -219,9 +219,46 @@
 
   // Build the chord-pack interface the songbook engine expects, from a pure-data
   // profile + the shared Diagram / ChordAudio / Tuner modules.
+  // For instruments whose top three played strings (strings 4-3-2 in display
+  // order, A muted) form a [P4, M3] interval pattern, the artifact's three-
+  // string triad-inversion shapes apply: a C-shape index bar at fret N + the
+  // F-shape barre (bar at N, ring at N+2 string 4, middle at N+1 string 2) +
+  // A-shape (ring on string 4 etc.). The base profile only lists open-position
+  // four-string voicings, so movable fallback would otherwise reach for E/B
+  // templates that produce high-fret 4-string barres. Injecting the artifact's
+  // two barre shapes as additional movable major-quality templates makes the
+  // fallback pick the LOWEST-fret artifact voicing - which fixes both the
+  // palette (F# shows F-shape barre at fret 1, not E-shape at fret 6) and the
+  // I-IV-V chain (uses C-shape I and F-shape IV/V the artifact teaches).
+  // Restricted to ukulele - cigar box and banjo have their own intentional
+  // 4-string ring-bar profile (HSR-by-design) that we don't want to override.
+  function augmentTriadShapes(profile, templates) {
+    if (!profile || profile.instrument !== 'ukulele') return false;
+    var strs = profile.strings; if (!strs || strs.length !== 4) return false;
+    var pc0 = freqPc(strs[0].f), pc1 = freqPc(strs[1].f), pc2 = freqPc(strs[2].f);
+    if ((pc1 - pc0 + 12) % 12 !== 5) return false;     // strings 4->3 must be P4
+    if ((pc2 - pc1 + 12) % 12 !== 4) return false;     // strings 3->2 must be M3
+    templates[''] = templates[''] || [];
+    // unshift order matters: movableVoicing iterates templates in order and
+    // strict-less-than tiebreak means FIRST entry wins ties. So the artifact
+    // shapes go to the front - a profile-derived 4-string voicing only wins
+    // when its max fret is strictly lower. Result: F# resolves to the F-shape
+    // barre at fret 1 not the E-shape barre at fret 6, and natural-key chord
+    // voicings used in the I-IV-V chain pick the artifact's 3-string mute-A
+    // shapes over the open 4-string strums (matches the artifact's pedagogy).
+    // F-shape barre at fret 1: bar at 1, ring at 3 on string 4, middle at 2 on
+    // string 2. Triad root sits on string 2, so rootPc = (string-2 open + 2) % 12.
+    templates[''].unshift({ frets: [3, 1, 2, -1], rootPc: (pc2 + 2) % 12 });
+    // C-shape index-bar at fret 1: bar across strings 4-3-2 at fret 1, string 1
+    // muted. Triad root sits on string 3, so rootPc = (string-3 open + 1) % 12.
+    templates[''].unshift({ frets: [1, 1, 1, -1], rootPc: (pc1 + 1) % 12 });
+    return true;
+  }
+
   function buildAdapter(profile) {
     var openFreqs = profile.strings.map(function (s) { return s.f; });
     var templates = buildTemplates(profile.chords);
+    var triadStyle = augmentTriadShapes(profile, templates);
     // explicit profile voicing first; else a movable shape; else null (name-only)
     function voicingFor(name) {
       return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
@@ -232,16 +269,20 @@
     function closedVoicingFor(name) {
       return movableVoicing(templates, name) || (profile.chords && profile.chords[name]) || null;
     }
-    // I-IV-V chain voicings, HSR-style: I uses the profile's preferred voicing
-    // (often the open-position home shape), IV uses a movable closed shape, and
-    // V is IV shifted UP TWO FRETS (in major-derived modes IV->V is always a
-    // whole step, so the same hand shape slid up 2 yields V). This gives the
-    // visual the HSR teaching wants: I in one family, IV in another, V is IV
-    // adjacent and slid up. The "same shape across all three" version killed
-    // the family-rotation insight by repeating I in the IV/V family - confusing
-    // for a player who reads the chain as "what shape do I move to next?".
+    // I-IV-V chain voicings.
+    // On artifact-supported instruments (uke with the augmented C-shape/F-shape
+    // barre templates), the closed-voicing pool already prefers the artifact's
+    // adjacent-inversion shapes for every chord. Route both naturals and
+    // sharps/flats through closedVoicingFor so the chain shows the artifact's
+    // C-shape I + F-shape IV + F-shape+2 V even when the profile has an open
+    // 4-string voicing. The teaching point of the chain is the artifact's
+    // mechanic, not the everyday open strum.
+    // On other instruments (cigar box, banjo, guitar) the artifact templates
+    // are NOT injected, so chainVoicings keeps the original behavior: I uses
+    // the profile's preferred voicing (often open), IV/V use closed/movable.
     function chainVoicings(names) {
       if (!names || !names.length) return [];
+      if (triadStyle) return triadChainVoicings(names);
       var I = voicingFor(names[0]);                   // home shape (open if profile has one)
       var IV = closedVoicingFor(names[1]);            // closed/movable family for IV
       if (!IV) return [I, voicingFor(names[1]), voicingFor(names[2])];
@@ -255,6 +296,60 @@
         if (alt) return alt;
       }
       return [I, IV, V];
+    }
+    // Artifact-style chain for uke: deterministic shape construction so EVERY
+    // key shows the same teaching mechanic (C-shape I + F-shape IV + F-shape
+    // slid+2 V). The math derives directly from the open-string pitch classes,
+    // so chord tones are guaranteed correct for any key:
+    //   C-shape index bar at fret N  -> sounds the chord rooted at (C_open + N)
+    //   F-shape barre at fret N      -> sounds the chord rooted at (E_open + N + 1) = IV when N matches I
+    //   F-shape barre at fret N + 2  -> V (a whole step up from IV)
+    // C major (rp=0) is the one exception: bar-at-fret-0 is impossible, so the
+    // artifact uses open-position partials at fret 0. Hard-coded.
+    // For high-rooted keys (B, sometimes A#) Position 1 runs off the 14-fret
+    // floor, so fall back to Position 2 (A-shape I + ring-bar IV + ring-bar+2 V)
+    // which sits lower on the neck.
+    function triadChainVoicings(names) {
+      if (names[0] === 'C' && names[1] === 'F' && names[2] === 'G') {
+        return [[0, 0, 0, -1], [2, 0, 1, -1], [4, 2, 3, -1]];
+      }
+      var rpI = chordRootPc(names[0]);
+      if (rpI == null) return [voicingFor(names[0]), voicingFor(names[1]), voicingFor(names[2])];
+      var f = rpI < 1 ? rpI + 12 : rpI;  // C-shape index bar at fret f
+      var p1 = [
+        [f, f, f, -1],
+        [f + 2, f, f + 1, -1],
+        [f + 4, f + 2, f + 3, -1]
+      ];
+      if (chainFitsFretboard(p1)) return p1;
+      // Position 2 fallback: A-shape I where X = ring fret on string 4 = the
+      // fret that puts the key root on string 4 = (rpI - G_open_pc + 12) % 12.
+      // Then middle on string 3 at X-1, index on string 2 at X-2. IV is the
+      // ring-bar AT the same fret X (sounds the IV chord because rotating
+      // hand keeps fret 4 but bars 4-3-2 at X). V is ring-bar at X+2.
+      // Lands B major at frets 2-6 instead of running off at fret 15.
+      var X = ((rpI - 7) % 12 + 12) % 12;
+      if (X < 2) X += 12;
+      var p2 = [
+        [X, X - 1, X - 2, -1],
+        [X, X, X, -1],
+        [X + 2, X + 2, X + 2, -1]
+      ];
+      if (chainFitsFretboard(p2)) return p2;
+      // Last resort: fall through to the per-chord closed-voicing logic.
+      var I = closedVoicingFor(names[0]);
+      var IV = closedVoicingFor(names[1]);
+      if (!I || !IV) return [voicingFor(names[0]), voicingFor(names[1]), voicingFor(names[2])];
+      var V = IV.map(function (fr) { return fr < 0 ? -1 : fr + 2; });
+      return [I, IV, V];
+    }
+    function chainFitsFretboard(chain) {
+      for (var i = 0; i < chain.length; i++) {
+        for (var j = 0; j < chain[i].length; j++) {
+          if (chain[i][j] > 14) return false;
+        }
+      }
+      return true;
     }
     // Backoff when the default V slid-up-2 falls off the fingerboard: try every
     // major-quality template, pick one whose IV+2 voicing fits (max fret <= 14).
