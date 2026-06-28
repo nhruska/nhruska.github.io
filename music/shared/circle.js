@@ -45,6 +45,10 @@
   var DEG = ['1', '2', '3', '4', '5', '6', '7'];
   var RN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   function modeKey(mode) { return MODES[ALIAS[mode] || mode] ? (ALIAS[mode] || mode) : 'ionian'; }
+  // tonal family of any mode: Ionian/Lydian/Mixolydian -> major; Dorian/Phrygian/Aeolian/Locrian -> minor.
+  // Lets mode-aware helpers resolve a modal key (e.g. D Dorian) to the right branch instead of
+  // defaulting everything that isn't literally 'minor' to the major branch.
+  function familyOf(mode) { return (MODE_INFO[modeKey(mode)] || {}).family || 'major'; }
 
   // ---- key-aware note spelling ----------------------------------------------
   // Internal note identity stays sharp (ORDER, pcOf, dominant…); spelling is a
@@ -210,8 +214,11 @@
     // The keys worth exploring next, MODE-AWARE: a fifth up, a fifth down, and the
     // relative key — labelled in the right case for the current mode. Returns an
     // ordered array of { root, mode, why } so the panel renders them directly.
+    // Resolves modal keys by tonal family (familyOf): D Dorian takes the minor branch,
+    // G Mixolydian the major branch — fixes the old "anything != 'minor' is major"
+    // fallback that mislabelled every mode's neighbors.
     neighbors: function (root, mode) {
-      if (mode === 'minor') return [
+      if (familyOf(mode) === 'minor') return [
         { root: shift(root, 7), mode: 'minor', why: 'a fifth up (the v)' },
         { root: shift(root, 5), mode: 'minor', why: 'a fifth down (the iv)' },
         { root: shift(root, 3), mode: 'major', why: 'its relative major' }
@@ -221,6 +228,26 @@
         { root: shift(root, 5), mode: 'major', why: 'a fifth down (the IV)' },
         { root: shift(root, -3), mode: 'minor', why: 'its relative minor' }
       ];
+    },
+    // Related keys for the Compose "Related Keys" lens: the skill-transfer set you can
+    // practice next OVER THE SAME or relative tonic. Family-aware. Scope (per #44 Phase 2):
+    // the relative key + same-root parallel modes the engine actually models (Mixolydian /
+    // Dorian / parallel major-or-minor). Harmonic minor is intentionally deferred — it is not
+    // in MODES, so it cannot be spelled or given diatonic triads yet. Returns an ordered array
+    // of { root, mode, why, kind } (kind: 'relative' | 'parallel').
+    relatedKeys: function (root, mode) {
+      var minorFam = familyOf(mode) === 'minor';
+      var rel = minorFam
+        ? { root: shift(root, 3), mode: 'major', why: 'its relative major', kind: 'relative' }
+        : { root: shift(root, -3), mode: 'minor', why: 'its relative minor', kind: 'relative' };
+      var parallels = minorFam
+        ? [ { root: root, mode: 'dorian', why: 'parallel Dorian — a brighter minor', kind: 'parallel' },
+            { root: root, mode: 'major', why: 'parallel major', kind: 'parallel' },
+            { root: root, mode: 'mixolydian', why: 'parallel Mixolydian', kind: 'parallel' } ]
+        : [ { root: root, mode: 'mixolydian', why: 'parallel Mixolydian — the flat-7', kind: 'parallel' },
+            { root: root, mode: 'dorian', why: 'parallel Dorian', kind: 'parallel' },
+            { root: root, mode: 'minor', why: 'parallel minor', kind: 'parallel' } ];
+      return [rel].concat(parallels);
     },
     diatonic: diatonic,
     romanFor: romanFor,

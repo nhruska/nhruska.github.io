@@ -57,6 +57,42 @@ test('neighbors() minor key → v, iv, relative major (mode-aware)', function ()
     ['E:minor', 'D:minor', 'C:major']);
   assert.ok(/relative major/.test(n[2].why));
 });
+test('neighbors() resolves a MODAL key by family (D Dorian → minor branch, not major)', function () {
+  // Regression for the mode-fallback bug: Dorian is a minor-family mode, so it must take
+  // the minor branch (v/iv minor, relative major) - the old code treated everything that
+  // was not literally 'minor' as major and mislabelled these.
+  var n = Circle.neighbors('D', 'dorian');
+  assert.deepStrictEqual(n.map(function (x) { return x.root + ':' + x.mode; }),
+    ['A:minor', 'G:minor', 'F:major']);
+  // and a major-family mode (Mixolydian) still takes the major branch
+  var g = Circle.neighbors('G', 'mixolydian');
+  assert.deepStrictEqual(g.map(function (x) { return x.mode; }), ['major', 'major', 'minor']);
+});
+test('relatedKeys() major tonic → relative minor + same-root parallel modes', function () {
+  var r = Circle.relatedKeys('G', 'major');
+  assert.strictEqual(r[0].kind, 'relative');
+  assert.strictEqual(r[0].root, 'E');
+  assert.strictEqual(r[0].mode, 'minor');
+  // every parallel sits on the SAME root (skill transfer over one tonic)
+  var par = r.slice(1);
+  assert.ok(par.every(function (x) { return x.kind === 'parallel' && x.root === 'G'; }));
+  assert.deepStrictEqual(par.map(function (x) { return x.mode; }), ['mixolydian', 'dorian', 'minor']);
+});
+test('relatedKeys() minor tonic → relative major + same-root parallels', function () {
+  var r = Circle.relatedKeys('A', 'minor');
+  assert.strictEqual(r[0].kind, 'relative');
+  assert.strictEqual(r[0].root, 'C');
+  assert.strictEqual(r[0].mode, 'major');
+  assert.ok(r.slice(1).every(function (x) { return x.kind === 'parallel' && x.root === 'A'; }));
+});
+test('relatedKeys() modal tonic returns valid structure (parallels stay on the same root)', function () {
+  // The exact "relative" of a modal tonic is a Phase-2b presentation call; here we only
+  // pin the unambiguous contract - a relative entry exists, and parallels share the tonic.
+  var r = Circle.relatedKeys('D', 'dorian');
+  assert.strictEqual(r[0].kind, 'relative');
+  assert.ok(r.slice(1).every(function (x) { return x.kind === 'parallel' && x.root === 'D'; }));
+  assert.ok(r.slice(1).every(function (x) { return Circle.MODE_STEPS[x.mode] || x.mode === 'major' || x.mode === 'minor'; }));
+});
 
 /* ---------- diatonic chords ---------- */
 test('C major diatonic triads: C Dm Em F G Am Bdim', function () {
