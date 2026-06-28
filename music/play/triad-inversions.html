@@ -16,21 +16,20 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--txt);font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 24px);min-height:100dvh}
-/* ---- Header ---- */
 .appBar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .backLink{display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-strong)}
 .backLink:active{background:var(--accent-deep)}
+.instBadge{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.66rem;font-weight:700;color:var(--accent);letter-spacing:.06em;padding:5px 8px;border-radius:7px;background:var(--accent-deep);border:1px solid var(--accent-dim)}
 h1{font-size:1.18rem;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
 h1 .em{color:var(--accent)}
 .lede{color:var(--txt-soft);font-size:.84rem;line-height:1.5;margin:6px 0 14px}
-/* ---- Key chip picker ---- */
-.keyChips{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
-.keyChip{flex:1 1 auto;min-width:54px;padding:9px 6px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--txt-soft);font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:.92rem;letter-spacing:.04em;cursor:pointer;text-align:center;transition:transform .08s,background .15s,border-color .15s,color .15s}
+/* Key picker */
+.keyChips{display:flex;gap:5px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.keyChips::-webkit-scrollbar{display:none}
+.keyChip{flex:0 0 auto;min-width:46px;padding:8px 6px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--txt-soft);font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:.86rem;letter-spacing:.04em;cursor:pointer;text-align:center;transition:transform .08s,background .15s,border-color .15s,color .15s}
 .keyChip:active{transform:scale(.94)}
 .keyChip.on{background:var(--accent-deep);border-color:var(--accent);color:var(--accent)}
-.keyChipLbl{display:block;font-size:.55rem;font-weight:600;color:var(--txt-faint);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
-.keyChip.on .keyChipLbl{color:var(--accent-dim)}
-/* ---- Cycle: positions + steps ---- */
+/* Cycle */
 .keyBlock{margin:0 0 18px}
 .keyHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .keyHead h2{font-size:.98rem;margin:0;font-weight:800}
@@ -51,13 +50,12 @@ h1 .em{color:var(--accent)}
 .transition .op{flex-shrink:0;margin-top:1px}
 .flipBox{background:rgba(96,165,250,.08);border:1px solid var(--flip);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5}
 .flipBox .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-/* ---- Operation pills (used in transitions and explainers) ---- */
 .op{display:inline-block;font-weight:700;padding:1px 7px;border-radius:6px;font-size:.7rem;letter-spacing:.04em}
 .op.hammer{color:#1a1300;background:var(--hammer)}
 .op.slide{color:#062017;background:var(--slide)}
 .op.rotate{color:#2a0a1f;background:var(--rotate)}
 .op.flip{color:#0a1b3a;background:var(--flip)}
-/* ---- Explainer accordions ---- */
+/* Explainers */
 .explainerLbl{font-size:.6rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px}
 .explainer{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
 .explainer[open]{border-color:var(--line-strong)}
@@ -71,6 +69,7 @@ h1 .em{color:var(--accent)}
 .explainer .explainerBody li{margin:4px 0}
 .explainer .explainerBody strong{color:var(--txt)}
 .explainer .explainerBody .inst{margin:8px 0;padding:8px 12px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--accent-dim);font-size:.8rem}
+.explainer .explainerBody .inst.cur{border-left-color:var(--accent);background:var(--accent-deep)}
 .explainer .explainerBody .inst strong{color:var(--accent)}
 .fingerLegend{display:flex;gap:10px;margin-top:10px;font-size:.7rem;color:var(--txt-dim);flex-wrap:wrap}
 .fingerLegend span{display:inline-flex;align-items:center;gap:3px}
@@ -81,41 +80,41 @@ h1 .em{color:var(--accent)}
 #resetIntros{border:1px solid var(--line);background:transparent;color:var(--txt-faint);font-family:inherit;font-weight:600;font-size:.72rem;padding:7px 14px;border-radius:9px;cursor:pointer}
 #resetIntros:hover{color:var(--txt-soft)}
 #resetIntros[hidden]{display:none}
-/* ---- Sticky operation legend at the bottom ---- */
 .legend{position:sticky;bottom:0;background:rgba(13,15,18,.95);backdrop-filter:blur(6px);padding:8px 10px;margin:14px -14px 0;border-top:1px solid var(--line);display:flex;justify-content:center;gap:10px;font-size:.64rem;color:var(--txt-dim);flex-wrap:wrap}
 .legend .item{display:flex;align-items:center;gap:4px}
 .legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+/* Incompatible-instrument fallback */
+.fallback{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:16px;margin:14px 0;font-size:.84rem;line-height:1.5;color:var(--txt-soft)}
+.fallback strong{color:var(--txt)}
+.fallback .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.fallback .actions a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;color:var(--accent);text-decoration:none;font-size:.78rem;font-weight:600;background:var(--accent-deep);border:1px solid var(--accent-dim)}
+.fallback .actions a.alt{background:var(--surface-2);color:var(--txt-soft);border-color:var(--line-strong)}
 </style>
 </head>
 <body>
 
 <div class="appBar">
   <a href="../play/" class="backLink">← Music</a>
+  <span class="instBadge" id="instBadge">loading…</span>
 </div>
 <h1>Triad <span class="em">Inversions</span></h1>
 <p class="lede">Walk I-IV-V up the neck with three shape pivots. The chord names stay; only the inversion and fret position climb.</p>
 
-<!-- Key picker -->
 <div class="keyChips" id="keyChips"></div>
-
-<!-- The cycle for the active key -->
 <div id="cycle"></div>
 
-<!-- Explainer label -->
 <div class="explainerLbl">Learn more</div>
 
-<!-- Accordion: How this works (auto-opens on first visit) -->
 <details class="explainer" data-explainer="how">
   <summary>How this works</summary>
   <div class="explainerBody">
-    <p>Think in chord intervals (<strong>I, IV, V</strong>), not note letters. The same shape sequence works in any key - you just start at a different fret.</p>
-    <p>String 1 (A) stays muted throughout. The G-C-E strings (4, 3, 2) preserve the same interval geometry as guitar's D-G-B set, so guitar muscle memory transfers directly.</p>
-    <p>The cycle through one position is: I in a shape, HAMMER into the IV shape, SLIDE +2 frets to V. Then a rotation or flip lands the next inversion of I one position higher up the neck. After three positions you're one octave up and the cycle repeats.</p>
+    <p>Think in chord intervals (<strong>I, IV, V</strong>), not note letters. The same shape sequence works in any key - you just start the cycle at a different fret.</p>
+    <p>String 1 stays muted throughout. The strings used (4, 3, 2) preserve a perfect-fourth + major-third interval pattern - same geometry on ukulele G-C-E and guitar D-G-B, so the shapes transfer directly.</p>
+    <p>Within one position, the cycle is: I in a shape, HAMMER into IV's shape, SLIDE +2 to V. A rotation or flip then lands the next inversion of I one position higher on the neck. After three positions you're one octave up and the cycle repeats.</p>
     <button class="dismiss" type="button">Got it - don't show again</button>
   </div>
 </details>
 
-<!-- Accordion: 4 operations -->
 <details class="explainer" data-explainer="ops">
   <summary>The 4 operations</summary>
   <div class="explainerBody">
@@ -129,7 +128,6 @@ h1 .em{color:var(--accent)}
   </div>
 </details>
 
-<!-- Accordion: 3 shape families -->
 <details class="explainer" data-explainer="shapes">
   <summary>The 3 shape families</summary>
   <div class="explainerBody">
@@ -149,23 +147,17 @@ h1 .em{color:var(--accent)}
   </div>
 </details>
 
-<!-- Accordion: Cross-instrument -->
 <details class="explainer" data-explainer="cross">
   <summary>Cross-instrument transfer</summary>
-  <div class="explainerBody">
-    <p>The interval geometry is what transfers - the physical shape adapts to the instrument's tuning.</p>
-    <div class="inst"><strong>Guitar (standard EADGBE)</strong> - the D, G, B strings (4, 3, 2 - the middle three) have the same interval pattern as ukulele G, C, E. The exact shapes drop straight onto that D-G-B set. Mute strings 1, 5, 6 for the pure three-string voicing, or include the high E and bass strings for fuller chords. CAGED is the full-neck extension.</div>
-    <div class="inst"><strong>Cigar Box (DGBD) / 5-string Banjo (gDGBD)</strong> - all majors are a single barre across all 4 strings at the root fret. The cycle simplifies: <span class="op rotate">ROTATE +1</span> and <span class="op flip">FLIP</span> still apply, but <span class="op hammer">HAMMER</span> collapses. The <span class="op slide">SLIDE +2</span> from IV to V is the headline mechanic.</div>
-    <div class="inst"><strong>Mandolin / Mandola (GDAE / CGDA)</strong> - all-fifths tuning, so the shapes are different but the IV-to-V slide-up-2 still holds. The triad-inversion math is the same; the fingering family needs its own derivation.</div>
-    <button class="dismiss" type="button">Got it - don't show again</button>
+  <div class="explainerBody" id="crossInstBody">
+    <!-- Dynamically generated based on active instrument -->
   </div>
 </details>
 
-<!-- Accordion: Big picture -->
 <details class="explainer" data-explainer="big">
   <summary>The big picture</summary>
   <div class="explainerBody">
-    <p>The same shape pattern repeats up the neck while you stay in one key. Chord names don't change - <strong>D stays D, G stays G, A stays A</strong> - each cycle just puts them in different inversions higher and higher on the fretboard.</p>
+    <p>The same shape pattern repeats up the neck while you stay in one key. Chord names don't change - each cycle just puts them in different inversions higher and higher on the fretboard.</p>
     <p>Once the shape pattern is in muscle memory, you've removed the abstraction of note letters entirely. You think in <strong>I, IV, V</strong> and let the fretboard hand you whichever inversion is closest at hand.</p>
     <button class="dismiss" type="button">Got it - don't show again</button>
   </div>
@@ -183,178 +175,255 @@ h1 .em{color:var(--accent)}
 </div>
 
 <script>
-// All four keys verified - chord-tone math runs clean in node before commit.
-// String 1 (A) muted throughout. Strings 4-3-2 = G-C-E preserves guitar D-G-B
-// interval geometry, so shapes transfer cross-instrument.
-const KEYS = [
-  {
-    key: 'C', tonic: 'C major (starts at open position)', degrees: 'I = C · IV = F · V = G',
-    positions: [
-      {
-        label: 'Position 1 · open partial at fret 0',
-        steps: [
-          { role: 'I',  chord: 'C', shape: 'C-shape (open)',  frets: [0,0,0,-1], fingers: ['','','',''], notes: 'Open strings G C E sounding as a partial C triad - same role as the C-shape index-bar in other keys, just at fret 0 where the open strings give you the chord for free.' },
-          { role: 'IV', chord: 'F', shape: 'F-shape (open)',  frets: [2,0,1,-1], fingers: ['2','','1',''], notes: 'Middle on string 4 fret 2, index on string 2 fret 1, string 3 open, string 1 muted. Triad A C F.' },
-          { role: 'V',  chord: 'G', shape: 'F-shape',         frets: [4,2,3,-1], fingers: ['3','1','2',''], notes: 'F-shape slid +2. Now the bar concept kicks in: index bar at fret 2, ring on fret 4 string 4, middle on fret 3 string 2. Triad B D G.' },
-        ],
-        transitions: [
-          { type: 'hammer', text: 'From open C, finger 2 hammers on string 4 fret 2 and finger 1 catches string 2 fret 1.' },
-          { type: 'slide',  text: 'Slide the F-shape up 2 frets. The open string 3 of the IV becomes a fretted bar at fret 2.' },
-        ],
-        next: { type: 'rotate', text: 'ROTATE +1 + A-shape lands the next I (C) at frets 3-5.' }
-      },
-      {
-        label: 'Position 2 · A-shape rotation at frets 3-7',
-        steps: [
-          { role: 'I',  chord: 'C', shape: 'A-shape',                 frets: [5,4,3,-1], fingers: ['3','2','1',''], notes: 'Ring on string 4 fret 5, middle on string 3 fret 4, index on string 2 fret 3. Triad C E G.' },
-          { role: 'IV', chord: 'F', shape: 'C-shape (ring-bar)',      frets: [5,5,5,-1], fingers: ['3','3','3',''], notes: 'Ring finger BARS strings 4-3-2 at fret 5. Index and middle lift. Triad C F A.' },
-          { role: 'V',  chord: 'G', shape: 'C-shape (ring-bar)',      frets: [7,7,7,-1], fingers: ['3','3','3',''], notes: 'Same ring-bar shape, slid up 2 frets to fret 7. Triad D G B.' },
-        ],
-        transitions: [
-          { type: 'hammer', text: 'Hammer the ring finger into a 3-string bar at fret 5. Other fingers lift.' },
-          { type: 'slide',  text: 'Slide the ring-bar up 2 frets for V.' },
-        ],
-        next: { type: 'flip', text: 'FLIP ring-bar to index-bar at fret 7. Then HAMMER fingers 2 and 3 into F-shape - lands on the next inversion of I (C) higher up.' }
-      },
-      {
-        label: 'Position 3 · F-shape rotation at frets 7-12',
-        steps: [
-          { role: 'I',  chord: 'C', shape: 'F-shape',  frets: [9,7,8,-1],   fingers: ['3','1','2',''], notes: 'After the flip + hammer: C in a higher inversion. Index bar at fret 7, ring on string 4 fret 9, middle on string 2 fret 8. Triad E G C.' },
-          { role: 'IV', chord: 'F', shape: 'A-shape',  frets: [10,9,8,-1],  fingers: ['3','2','1',''], notes: 'SLIDE up 1 fret AND switch to A-shape geometry. Ring on string 4 fret 10, middle on string 3 fret 9, index on string 2 fret 8. Triad F A C.' },
-          { role: 'V',  chord: 'G', shape: 'A-shape',  frets: [12,11,10,-1], fingers: ['3','2','1',''], notes: 'Same A-shape, slid up 2 frets. Triad G B D.' },
-        ],
-        transitions: [
-          { type: 'slide', text: 'SLIDE up 1 fret AND change geometry to A-shape (ring, middle, index walk down). The IV is reached by slide-plus-shape-change.' },
-          { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
-        ],
-        next: { type: 'rotate', text: 'Bar with ring finger at fret 12 = next I (C, one octave above Position 1). The pattern returns to the ring-bar configuration and the cycle keeps walking up.' }
-      }
-    ]
-  },
-  {
-    key: 'D', tonic: 'D major', degrees: 'I = D · IV = G · V = A',
-    positions: [
-      {
-        label: 'Position 1 · C-shape start at fret 2',
-        steps: [
-          { role: 'I',  chord: 'D', shape: 'C-shape',  frets: [2,2,2,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 2. String 1 muted. Triad A D F#.' },
-          { role: 'IV', chord: 'G', shape: 'F-shape',  frets: [4,2,3,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 2. RING hammers to fret 4 string 4. MIDDLE hammers to fret 3 string 2. Triad B D G.' },
-          { role: 'V',  chord: 'A', shape: 'F-shape',  frets: [6,4,5,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Same fingers (ring high, index bar, middle low). Triad C# E A.' },
-        ],
-        transitions: [
-          { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 2 (covered by middle on string 4).' },
-          { type: 'slide',  text: 'Slide the whole F-shape up 2 frets. Same fingers, two frets higher.' },
-        ],
-        next: { type: 'rotate', text: 'Up 1 fret + A-shape gives the next I (still D, one CAGED position higher).' }
-      },
-      {
-        label: 'Position 2 · A-shape rotation at frets 5-7',
-        steps: [
-          { role: 'I',  chord: 'D', shape: 'A-shape',                 frets: [7,6,5,-1], fingers: ['3','2','1',''], notes: 'Ring on string 4 fret 7, middle on string 3 fret 6, index on string 2 fret 5. Triad D F# A.' },
-          { role: 'IV', chord: 'G', shape: 'C-shape (ring-bar)',      frets: [7,7,7,-1], fingers: ['3','3','3',''], notes: 'Ring finger now BARS across strings 4-3-2 at fret 7. Index and middle lift. Triad D G B. Easy to roll back to I by lifting ring.' },
-          { role: 'V',  chord: 'A', shape: 'C-shape (ring-bar)',      frets: [9,9,9,-1], fingers: ['3','3','3',''], notes: 'Same ring-bar shape, slid up 2 frets to fret 9. Triad E A C#.' },
-        ],
-        transitions: [
-          { type: 'hammer', text: 'Hammer the ring finger into a 3-string bar at fret 7. Other fingers lift. This IS the C-shape inverted from the A-shape position.' },
-          { type: 'slide',  text: 'Slide the ring-bar up 2 frets for V.' },
-        ],
-        next: { type: 'flip', text: 'FLIP ring-bar to index-bar at fret 9. The chord (A) does not change - it is still V of D. But the geometry now frees fingers 2 and 3 to hammer F-shape, landing on a higher inversion of I (D).' }
-      },
-      {
-        label: 'Position 3 · F-shape rotation at frets 9-14 (after FLIP + hammer)',
-        steps: [
-          { role: 'I',  chord: 'D', shape: 'F-shape',  frets: [11,9,10,-1],   fingers: ['3','1','2',''], notes: 'After the flip + hammer: D in a higher inversion. Index bar still at fret 9, ring high on string 4 fret 11, middle on string 2 fret 10.' },
-          { role: 'IV', chord: 'G', shape: 'A-shape',  frets: [12,11,10,-1],  fingers: ['3','2','1',''], notes: 'SLIDE up 1 fret AND switch to A-shape geometry. Ring on string 4 fret 12, middle on string 3 fret 11, index on string 2 fret 10. Triad G B D.' },
-          { role: 'V',  chord: 'A', shape: 'A-shape',  frets: [14,13,12,-1],  fingers: ['3','2','1',''], notes: 'Same A-shape, slid up 2 frets. Triad A C# E.' },
-        ],
-        transitions: [
-          { type: 'slide', text: 'SLIDE up 1 fret AND change geometry to A-shape (ring, middle, index walk down). The IV is reached by slide-plus-shape-change, not by hammer this time.' },
-          { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
-        ],
-        next: { type: 'rotate', text: 'Bar with ring finger at fret 14 = next I (D again, one octave above Position 1). The pattern returns to the C-shape ring-bar configuration and the cycle keeps walking up.' }
-      },
-      {
-        label: 'Position 4 · loop closes - ring-bar D one octave above Position 1',
-        steps: [
-          { role: 'I', chord: 'D', shape: 'C-shape (ring-bar)', frets: [14,14,14,-1], fingers: ['3','3','3',''], notes: 'Ring finger bars strings 4-3-2 at fret 14. Same triad as Position 1 (A D F#), one octave higher. From here the cycle repeats identically - HAMMER to F-shape IV at fret 16, SLIDE +2 to V at fret 18. Most ukuleles run out of fingerboard before this is playable; on guitar (24 frets) the cycle keeps walking up.' },
-        ],
-        transitions: [],
-        next: { type: 'rotate', text: 'Cycle complete. One full revolution covers an octave: C-shape (index bar) -> A-shape -> F-shape -> C-shape (ring bar). Same I, IV, V chord names every cycle.' }
-      }
-    ]
-  },
-  {
-    key: 'E', tonic: 'E major (same mechanic, starting at fret 4)', degrees: 'I = E · IV = A · V = B',
-    positions: [
-      {
-        label: 'Position 1 · C-shape start at fret 4',
-        steps: [
-          { role: 'I',  chord: 'E', shape: 'C-shape',  frets: [4,4,4,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 4. Triad B E G#. String 1 muted.' },
-          { role: 'IV', chord: 'A', shape: 'F-shape',  frets: [6,4,5,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 4. RING hammers to fret 6 string 4. MIDDLE hammers to fret 5 string 2. Triad C# E A.' },
-          { role: 'V',  chord: 'B', shape: 'F-shape',  frets: [8,6,7,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Triad D# F# B.' },
-        ],
-        transitions: [
-          { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 4.' },
-          { type: 'slide',  text: 'Slide the whole F-shape up 2 frets. Same fingers, two frets higher.' },
-        ],
-        next: { type: 'rotate', text: 'ROTATE +1 + A-shape lands the next I (E) at frets 9-11. The cycle continues identically to D, just shifted +2 frets up the neck.' }
-      }
-    ]
-  },
-  {
-    key: 'G', tonic: 'G major (starts low at fret 2)', degrees: 'I = G · IV = C · V = D',
-    positions: [
-      {
-        label: 'Position 1 · F-shape start at fret 2 (lowest G voicing)',
-        steps: [
-          { role: 'I',  chord: 'G', shape: 'F-shape (2nd inv.)',  frets: [4,2,3,-1], fingers: ['3','1','2',''], notes: 'F-shape with index bar at fret 2. Ring on string 4 fret 4, middle on string 2 fret 3. Triad B D G - G in 2nd inversion (D in bass). This is the lowest G voicing using the artifact\'s three-string vocabulary; matches the same inversion as the open G strum, just compacted into bar-and-two-fingers geometry.' },
-          { role: 'IV', chord: 'C', shape: 'A-shape',  frets: [5,4,3,-1], fingers: ['3','2','1',''], notes: 'A-shape with index at fret 3. Ring on string 4 fret 5, middle on string 3 fret 4, index on string 2 fret 3. Triad C E G - C in root position.' },
-          { role: 'V',  chord: 'D', shape: 'A-shape',  frets: [7,6,5,-1], fingers: ['3','2','1',''], notes: 'Same A-shape, slid up 2 frets. Triad D F# A - D in root position.' },
-        ],
-        transitions: [
-          { type: 'slide', text: 'SLIDE up 1 fret AND switch to A-shape (ring on string 4, middle on string 3, index on string 2 walking down). The chord changes G -> C as the shape rotates.' },
-          { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
-        ],
-        next: { type: 'rotate', text: 'HAMMER the ring finger into a 3-string bar at fret 7. Other fingers lift. The chord changes V (D) -> next I (G in root position). Cycle restarts at Position 2 one octave above where Position 1 sounded.' }
-      },
-      {
-        label: 'Position 2 · ring-bar at fret 7 (G root position)',
-        steps: [
-          { role: 'I',  chord: 'G', shape: 'C-shape (ring-bar)',  frets: [7,7,7,-1],   fingers: ['3','3','3',''], notes: 'Ring finger bars strings 4-3-2 at fret 7. Triad D G B - G in root position. Same chord as the F-shape G of Position 1, different geometry; hammered into from the A-shape V of Position 1.' },
-          { role: 'IV', chord: 'C', shape: 'F-shape',             frets: [9,7,8,-1],   fingers: ['3','1','2',''], notes: 'FLIP ring-bar to index-bar at fret 7, then HAMMER ring (string 4 fret 9) and middle (string 2 fret 8) into F-shape. Triad E G C.' },
-          { role: 'V',  chord: 'D', shape: 'F-shape',             frets: [11,9,10,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Triad F# A D.' },
-        ],
-        transitions: [
-          { type: 'flip',  text: 'FLIP ring-bar to index-bar at fret 7. Then HAMMER fingers 2 and 3 into F-shape - ring reaches up to fret 9, middle to fret 8. The chord changes G -> C.' },
-          { type: 'slide', text: 'Slide the F-shape up 2 frets.' },
-        ],
-        next: { type: 'rotate', text: 'ROTATE +1 + A-shape would land the next I (G) at frets 12-14. On most ukuleles you have run out of fingerboard; on guitar the cycle continues identically one octave higher.' }
-      }
-    ]
-  },
-];
+'use strict';
 
-const STORAGE = {
-  active: 'tri.activeKey.v1',
-  dismissed: 'tri.dismissed.v1',
-  seen: 'tri.firstVisitSeen.v1',
-};
-function readStored(key, fallback) {
-  try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch (e) { return fallback; }
+// ---- profile loading -------------------------------------------------------
+// Reads the active instrument from the main app's localStorage (PR #45's
+// music.activeProfile.v1 key). Falls back to ?p= URL param, then ukulele.
+// Then loads the manifest, then the active profile script.
+const PROFILE_KEY = 'music.activeProfile.v1';
+function pickActiveId() {
+  const qp = new URLSearchParams(location.search).get('p');
+  if (qp) return qp;
+  try {
+    const stored = localStorage.getItem(PROFILE_KEY);
+    if (stored) return stored;
+  } catch (e) {}
+  return 'ukulele-gcea';
 }
-function readStoredArr(key) {
-  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; }
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => rej(new Error('failed to load ' + src));
+    document.head.appendChild(s);
+  });
 }
-function writeStored(key, v) { try { localStorage.setItem(key, v); } catch (e) {} }
-function writeStoredArr(key, arr) { try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {} }
 
-let activeKey = readStored(STORAGE.active, 'D');
-if (!KEYS.find(k => k.key === activeKey)) activeKey = 'D';
-let dismissed = readStoredArr(STORAGE.dismissed);
-const isFirstVisit = !readStored(STORAGE.seen, null);
+// ---- pitch + interval helpers ---------------------------------------------
+const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
+function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
 
+// Parse the "Nth string" label on each profile string to find the display
+// indices for strings 4, 3, 2 (the artifact's three played strings). Different
+// profiles have different mappings:
+//   uke (4 strings, GCEA): "4th"=0, "3rd"=1, "2nd"=2
+//   cigarbox (4 strings, DGBD): "4th"=0, "3rd"=1, "2nd"=2
+//   banjo (5 strings, gDGBD with drone on left): "4th"=1, "3rd"=2, "2nd"=3
+//   guitar (6 strings, EADGBE): "4th"=2, "3rd"=3, "2nd"=4
+function findStringIndices(profile) {
+  const targets = { 4: -1, 3: -1, 2: -1 };
+  (profile.strings || []).forEach((s, i) => {
+    const m = (s.l || '').match(/(\d+)(?:st|nd|rd|th)\s+string/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (targets[n] === -1 && (n === 4 || n === 3 || n === 2)) targets[n] = i;
+    }
+  });
+  if (targets[4] < 0 || targets[3] < 0 || targets[2] < 0) {
+    // Fallback heuristics if labels missing: use indices 0,1,2 for 4-string,
+    // 1,2,3 for 5-string, 2,3,4 for 6+ string. Position-based.
+    const n = (profile.strings || []).length;
+    const base = n === 4 ? 0 : n === 5 ? 1 : 2;
+    return [base, base + 1, base + 2];
+  }
+  return [targets[4], targets[3], targets[2]];
+}
+
+// ---- shape geometry --------------------------------------------------------
+// For any instrument where strings 4-3-2 have a [P4, M3] interval pattern,
+// the artifact's C-shape / F-shape / A-shape vocabulary applies. Compute the
+// three base frets for a key + instrument:
+//   C-shape barre at fret cFret: bar across strings 4-3-2 at fret N where
+//       string-3-open + N = keyRoot (mod 12).
+//   F-shape barre at fret fFret: bar + ring at N+2 string 4 + middle at N+1
+//       string 2. Root sits on string 2 at fret N+1.
+//   A-shape at index fret aFret: ring at N+2 string 4 (root), middle at N+1
+//       string 3 (M3), index at N string 2 (P5).
+// Invariants for [5,4] instruments: aFret = cFret + 3, fFret = cFret + 7 (mod 12).
+function computeBaseFrets(stringPcs, keyRootPc) {
+  const [s4, s3, s2] = stringPcs;
+  const c = ((keyRootPc - s3) % 12 + 12) % 12;
+  const f = ((keyRootPc - s2 - 1) % 12 + 12) % 12;
+  const a = ((keyRootPc - s4 - 2) % 12 + 12) % 12;
+  return { c, f, a };
+}
+
+// Pick which shape to start at for Position 1 - the lowest-fret entry that
+// fits inside the fretboard (max fret <= MAX_FRET). For "open keys" (key root
+// matches string-3 open PC) the C-shape at fret 0 is the open partial.
+const MAX_FRET = 14;
+function pickStartShape(stringPcs, keyRootPc) {
+  const base = computeBaseFrets(stringPcs, keyRootPc);
+  const isOpenKey = keyRootPc === stringPcs[1];
+
+  // Each shape's "max fret" within its Position 1 progression:
+  //   C-shape position: max = cFret + 4 (V is F-shape at cFret+2 with ring at cFret+4)
+  //   A-shape position: max = aFret + 4 (V is ring-bar at aFret+4)
+  //   F-shape position: max = fFret + 5 (V is A-shape at fFret+3 with ring at fFret+5)
+  const candidates = [];
+  if (isOpenKey) {
+    candidates.push({ shape: 'C-open', startFret: 0, maxFret: 4 });
+  } else {
+    if (base.c >= 1) candidates.push({ shape: 'C', startFret: base.c, maxFret: base.c + 4 });
+  }
+  if (base.f >= 1) candidates.push({ shape: 'F', startFret: base.f, maxFret: base.f + 5 });
+  if (base.a >= 1) candidates.push({ shape: 'A', startFret: base.a, maxFret: base.a + 4 });
+
+  // Filter to shapes that fit, then pick lowest starting fret
+  let fitting = candidates.filter(c => c.maxFret <= MAX_FRET);
+  if (!fitting.length) fitting = candidates;  // accept the least-bad if nothing fits
+  fitting.sort((a, b) => a.startFret - b.startFret);
+  return fitting[0];
+}
+
+// ---- cycle generation ------------------------------------------------------
+// The cycle has 3 shape positions per octave: C-shape -> A-shape -> F-shape ->
+// next-octave C-shape (ring-bar) -> A-shape -> F-shape -> ...
+// Each shape position has its own I-IV-V progression. Frets advance:
+//   C -> A: +3 frets (ROTATE +1 + shape change)
+//   A -> F: +4 frets (FLIP at V's fret then HAMMER into F-shape)
+//   F -> C: +5 frets (ROTATE to next-octave ring-bar)
+// We iterate up to 4 positions, stopping when the next would run off the neck.
+function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
+  const positions = [];
+  function noteAt(stringIdx, fret) { return fret < 0 ? null : NAMES[(stringPcs[stringIdx] + fret) % 12]; }
+  function notesString(frets) {
+    return frets.map((f, i) => noteAt(i, f)).filter(n => n).join(' ');
+  }
+  function maxFretOf(steps) {
+    let m = 0;
+    steps.forEach(s => s.frets.forEach(f => { if (f > m) m = f; }));
+    return m;
+  }
+
+  // Position builders per shape. Each returns {label, steps, transitions, next}.
+  function cOpenPosition(idx) {
+    const iF = [0, 0, 0, -1], ivF = [2, 0, 1, -1], vF = [4, 2, 3, -1];
+    return {
+      label: `Position ${idx} · open partial at fret 0`,
+      steps: [
+        { role: 'I',  chord: keyRoot, shape: 'C-shape (open)',  frets: iF,  fingers: ['','','',''], notes: `Open strings sound ${notesString(iF)} - the ${keyRoot} triad for free.` },
+        { role: 'IV', chord: ivName,  shape: 'F-shape (open)',  frets: ivF, fingers: ['2','','1',''], notes: `Middle on string 4 fret 2, index on string 2 fret 1, string 3 open, string 1 muted. Triad ${notesString(ivF)}.` },
+        { role: 'V',  chord: vName,   shape: 'F-shape',         frets: vF,  fingers: ['3','1','2',''], notes: `F-shape barre at fret 2. Triad ${notesString(vF)}.` },
+      ],
+      transitions: [
+        { type: 'hammer', text: `From open ${keyRoot}, finger 2 hammers on string 4 fret 2 and finger 1 catches string 2 fret 1.` },
+        { type: 'slide',  text: 'Slide the F-shape up 2 frets. The open string 3 becomes a fretted bar at fret 2.' },
+      ],
+      next: { type: 'rotate', text: `ROTATE +1 + A-shape lands the next I (${keyRoot}) at frets 3-5.` }
+    };
+  }
+  function cShapePosition(idx, N, isRingBar) {
+    const iF = [N, N, N, -1];
+    const ivF = [N+2, N, N+1, -1];
+    const vF = [N+4, N+2, N+3, -1];
+    const fingers = isRingBar ? ['3','3','3',''] : ['1','1','1',''];
+    const barFinger = isRingBar ? 'Ring' : 'Index';
+    const ringBarSuffix = isRingBar ? ' (ring-bar)' : '';
+    return {
+      label: `Position ${idx} · C-shape${ringBarSuffix} at fret ${N}`,
+      steps: [
+        { role: 'I',  chord: keyRoot, shape: `C-shape${ringBarSuffix}`,  frets: iF,  fingers, notes: `${barFinger} bars strings 4-3-2 at fret ${N}. Triad ${notesString(iF)}.` },
+        { role: 'IV', chord: ivName,  shape: 'F-shape',                  frets: ivF, fingers: ['3','1','2',''], notes: `${isRingBar ? `FLIP ring-bar to index-bar at fret ${N}, then HAMMER ` : 'Hammer '}ring (string 4 fret ${N+2}) and middle (string 2 fret ${N+1}) into F-shape. Triad ${notesString(ivF)}.` },
+        { role: 'V',  chord: vName,   shape: 'F-shape',                  frets: vF,  fingers: ['3','1','2',''], notes: `Same F-shape, slid up 2 frets. Triad ${notesString(vF)}.` },
+      ],
+      transitions: [
+        { type: isRingBar ? 'flip' : 'hammer', text: isRingBar ? `FLIP ring-bar to index-bar at fret ${N}, then HAMMER fingers 2 and 3 into F-shape.` : `Hammer fingers 2 and 3 into F-shape. Index bar stays at fret ${N}.` },
+        { type: 'slide',  text: 'Slide the F-shape up 2 frets.' },
+      ],
+      next: { type: 'rotate', text: `ROTATE +1 + A-shape lands the next I (${keyRoot}) at frets ${N+3}-${N+5}.` }
+    };
+  }
+  function aShapePosition(idx, N) {
+    const iF = [N+2, N+1, N, -1];
+    const ivF = [N+2, N+2, N+2, -1];
+    const vF = [N+4, N+4, N+4, -1];
+    return {
+      label: `Position ${idx} · A-shape rotation at frets ${N}-${N+4}`,
+      steps: [
+        { role: 'I',  chord: keyRoot, shape: 'A-shape',                 frets: iF,  fingers: ['3','2','1',''], notes: `Ring on string 4 fret ${N+2}, middle on string 3 fret ${N+1}, index on string 2 fret ${N}. Triad ${notesString(iF)}.` },
+        { role: 'IV', chord: ivName,  shape: 'C-shape (ring-bar)',      frets: ivF, fingers: ['3','3','3',''], notes: `Ring finger BARS strings 4-3-2 at fret ${N+2}. Index and middle lift. Triad ${notesString(ivF)}.` },
+        { role: 'V',  chord: vName,   shape: 'C-shape (ring-bar)',      frets: vF,  fingers: ['3','3','3',''], notes: `Same ring-bar, slid up 2 frets to fret ${N+4}. Triad ${notesString(vF)}.` },
+      ],
+      transitions: [
+        { type: 'hammer', text: `Hammer ring into a 3-string bar at fret ${N+2}. Other fingers lift.` },
+        { type: 'slide',  text: 'Slide the ring-bar up 2 frets for V.' },
+      ],
+      next: { type: 'flip', text: `FLIP ring-bar to index-bar at fret ${N+4}. Then HAMMER fingers 2 and 3 into F-shape, landing on a higher inversion of I (${keyRoot}).` }
+    };
+  }
+  function fShapePosition(idx, N) {
+    const iF = [N+2, N, N+1, -1];
+    const ivF = [N+3, N+2, N+1, -1];
+    const vF = [N+5, N+4, N+3, -1];
+    return {
+      label: `Position ${idx} · F-shape rotation at frets ${N}-${N+5}`,
+      steps: [
+        { role: 'I',  chord: keyRoot, shape: 'F-shape',  frets: iF,  fingers: ['3','1','2',''], notes: `Index bar at fret ${N}, ring on string 4 fret ${N+2}, middle on string 2 fret ${N+1}. Triad ${notesString(iF)}.` },
+        { role: 'IV', chord: ivName,  shape: 'A-shape',  frets: ivF, fingers: ['3','2','1',''], notes: `SLIDE up 1 fret AND switch to A-shape. Ring on string 4 fret ${N+3}, middle on string 3 fret ${N+2}, index on string 2 fret ${N+1}. Triad ${notesString(ivF)}.` },
+        { role: 'V',  chord: vName,   shape: 'A-shape',  frets: vF,  fingers: ['3','2','1',''], notes: `Same A-shape, slid up 2 frets. Triad ${notesString(vF)}.` },
+      ],
+      transitions: [
+        { type: 'slide', text: 'SLIDE up 1 fret AND change geometry to A-shape (ring, middle, index walk down).' },
+        { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
+      ],
+      next: { type: 'rotate', text: `Bar with ring finger at fret ${N+5} = next I (${keyRoot}, one octave above the starting position).` }
+    };
+  }
+
+  // Cycle order: C -> A -> F -> back to C (next octave). Each transition has a fret delta.
+  const CYCLE = ['C', 'A', 'F'];
+  const ADVANCE = { C: 3, A: 4, F: 5 };  // frets to advance to NEXT shape
+
+  let idx = (startShape === 'C' || startShape === 'C-open') ? 0
+          : startShape === 'A' ? 1
+          : 2;  // 'F'
+  let curShape = startShape;
+  let curFret = startFret;
+  let sawC = false;  // tracks whether a C-shape has appeared (next C uses ring-bar)
+
+  for (let i = 0; i < 4; i++) {
+    let pos = null;
+    if (curShape === 'C-open') {
+      pos = cOpenPosition(i+1);
+      sawC = true;
+    } else if (curShape === 'C') {
+      pos = cShapePosition(i+1, curFret, sawC);
+      sawC = true;
+    } else if (curShape === 'A') {
+      pos = aShapePosition(i+1, curFret);
+    } else if (curShape === 'F') {
+      pos = fShapePosition(i+1, curFret);
+    }
+    if (!pos) break;
+
+    // Stop if this position runs significantly off the neck (allow some overflow on the LAST position).
+    const maxFret = maxFretOf(pos.steps);
+    if (maxFret > MAX_FRET + 4) {
+      // Only render the first position even if off-board; later off-board positions are skipped.
+      if (i === 0) positions.push(pos);
+      break;
+    }
+    positions.push(pos);
+
+    // Advance for next iteration
+    const shapeKey = (curShape === 'C-open') ? 'C' : curShape;
+    curFret += ADVANCE[shapeKey];
+    idx = (idx + 1) % 3;
+    curShape = CYCLE[idx];
+  }
+
+  return positions;
+}
+
+// ---- diagram rendering ----------------------------------------------------
+// Renders a fretboard chord diagram for ANY string count (4 strings = uke /
+// cigarbox, 5 = banjo, 6 = guitar). The fret array's length determines n.
 function renderDiagram(frets, fingers) {
-  const n = 4, cols = n - 1, sx = 14, padX = 16, padY = 18, rows = 4, dotR = 8, markR = 4, sw = 1.3, markY = 9, baseFont = 11;
+  const n = frets.length, cols = n - 1, sx = 14, padX = 16, padY = 18, rows = 4, dotR = 8, markR = 4, sw = 1.3, markY = 9, baseFont = 11;
   const fretted = frets.filter(f => f > 0);
   const hi = fretted.length ? Math.max(...fretted) : 0;
   const base = (!fretted.length || hi <= 4) ? 1 : Math.min(...fretted);
@@ -399,18 +468,68 @@ function renderDiagram(frets, fingers) {
   return svg;
 }
 
+// ---- state + render --------------------------------------------------------
+const STORAGE = {
+  active: 'tri.activeKey.v1',
+  dismissed: 'tri.dismissed.v1',
+  seen: 'tri.firstVisitSeen.v1',
+};
+function readStored(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch (e) { return fallback; } }
+function readStoredArr(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; } }
+function writeStored(key, v) { try { localStorage.setItem(key, v); } catch (e) {} }
+function writeStoredArr(key, arr) { try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {} }
+
+const NATURAL_KEYS = ['C','D','E','F','G','A','B'];
+const ALL_KEYS_DEFAULT = NATURAL_KEYS.concat(['C#','D#','F#','G#','A#']);
+
+let activeKey = readStored(STORAGE.active, 'D');
+if (!ALL_KEYS_DEFAULT.includes(activeKey)) activeKey = 'D';
+let dismissed = readStoredArr(STORAGE.dismissed);
+const isFirstVisit = !readStored(STORAGE.seen, null);
+
+let activeProfile = null;
+let activeStringPcs = null;  // [s4_pc, s3_pc, s2_pc]
+let activeStringIdx = null;  // [display_idx_for_s4, _s3, _s2] in the full strings array
+let intervalOk = false;       // true when strings 4-3-2 have [P4, M3]
+
+function detectIntervalOk(stringPcs) {
+  const [s4, s3, s2] = stringPcs;
+  return ((s3 - s4 + 12) % 12 === 5) && ((s2 - s3 + 12) % 12 === 4);
+}
+
+// Expand a 4-element played-fret array ([s4_fret, s3_fret, s2_fret, -1]) into
+// a full instrument fret array of the correct length, placing the played fret
+// values at the right display indices and muting everything else with -1.
+function expandFrets(playedFrets, idx, totalStrings) {
+  const out = new Array(totalStrings).fill(-1);
+  if (idx[0] >= 0 && idx[0] < totalStrings) out[idx[0]] = playedFrets[0];
+  if (idx[1] >= 0 && idx[1] < totalStrings) out[idx[1]] = playedFrets[1];
+  if (idx[2] >= 0 && idx[2] < totalStrings) out[idx[2]] = playedFrets[2];
+  return out;
+}
+function expandFingers(playedFingers, idx, totalStrings) {
+  const out = new Array(totalStrings).fill('');
+  if (idx[0] >= 0 && idx[0] < totalStrings) out[idx[0]] = playedFingers[0] || '';
+  if (idx[1] >= 0 && idx[1] < totalStrings) out[idx[1]] = playedFingers[1] || '';
+  if (idx[2] >= 0 && idx[2] < totalStrings) out[idx[2]] = playedFingers[2] || '';
+  return out;
+}
+
+function setInstBadge(profile) {
+  document.getElementById('instBadge').textContent = profile.label || profile.id;
+}
+
 function buildKeyChips() {
   const chips = document.getElementById('keyChips');
   chips.innerHTML = '';
-  KEYS.forEach(k => {
+  ALL_KEYS_DEFAULT.forEach(k => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'keyChip' + (k.key === activeKey ? ' on' : '');
-    btn.dataset.key = k.key;
-    btn.innerHTML = `${k.key}<span class="keyChipLbl">Major</span>`;
+    btn.className = 'keyChip' + (k === activeKey ? ' on' : '');
+    btn.textContent = k;
     btn.onclick = function () {
-      if (k.key === activeKey) return;
-      activeKey = k.key;
+      if (k === activeKey) return;
+      activeKey = k;
       writeStored(STORAGE.active, activeKey);
       buildKeyChips();
       renderCycle();
@@ -423,12 +542,22 @@ function buildKeyChips() {
 function renderCycle() {
   const root = document.getElementById('cycle');
   root.innerHTML = '';
-  const k = KEYS.find(k => k.key === activeKey);
-  if (!k) return;
+  if (!intervalOk) { renderIncompatibleFallback(root); return; }
+  const keyRootPc = PC[activeKey];
+  if (keyRootPc == null) return;
+  const ivPc = (keyRootPc + 5) % 12;
+  const vPc = (keyRootPc + 7) % 12;
+  const ivName = NAMES[ivPc];
+  const vName = NAMES[vPc];
+
+  const start = pickStartShape(activeStringPcs, keyRootPc);
+  const positions = buildCycle(start.shape, start.startFret, activeKey, activeStringPcs, ivName, vName);
+
   const block = document.createElement('div');
   block.className = 'keyBlock';
-  block.innerHTML = `<div class="keyHead"><h2>${k.tonic}<span class="deg">${k.degrees}</span></h2></div>`;
-  k.positions.forEach((pos) => {
+  block.innerHTML = `<div class="keyHead"><h2>${activeKey} major <span class="deg">I = ${activeKey} · IV = ${ivName} · V = ${vName}</span></h2></div>`;
+
+  positions.forEach((pos) => {
     const posLbl = document.createElement('div');
     posLbl.className = 'posLbl';
     posLbl.textContent = pos.label;
@@ -436,12 +565,18 @@ function renderCycle() {
     pos.steps.forEach((step, si) => {
       const card = document.createElement('div');
       card.className = 'step';
+      // Expand the 4-element played-fret array into the active instrument's
+      // full string-count fret array, placing the played fret values at the
+      // display indices for strings 4-3-2 and muting all others with -1.
+      const totalStrings = activeProfile.strings.length;
+      const fullFrets = expandFrets(step.frets, activeStringIdx, totalStrings);
+      const fullFingers = expandFingers(step.fingers, activeStringIdx, totalStrings);
       card.innerHTML = `
-        ${renderDiagram(step.frets, step.fingers)}
+        ${renderDiagram(fullFrets, fullFingers)}
         <div class="info">
           <div class="role"><span class="roman">${step.role}</span><span class="chord">${step.chord}</span></div>
           <div class="shape">${step.shape}</div>
-          <div class="frets">[${step.frets.join(', ')}]</div>
+          <div class="frets">[${fullFrets.join(', ')}]</div>
           <div class="notes">${step.notes}</div>
         </div>`;
       card.onclick = function () {
@@ -477,23 +612,47 @@ function renderCycle() {
   root.appendChild(block);
 }
 
+function renderIncompatibleFallback(root) {
+  // For mandolin / mandola (all-fifths tuning), the artifact's three-string
+  // shape vocabulary doesn't directly map. Offer paths back to the main app.
+  const profile = activeProfile;
+  const fallback = document.createElement('div');
+  fallback.className = 'fallback';
+  fallback.innerHTML = `
+    <p><strong>${profile.label}'s tuning</strong> uses a different interval pattern (${profile.tuning}). The artifact's C-shape, F-shape and A-shape geometry is built for the perfect-fourth + major-third interval pattern on strings 4-3-2 - ukulele G-C-E and guitar D-G-B drop straight in, but mandolin / mandola fifths tuning needs a different shape vocabulary.</p>
+    <p>You can still walk I-IV-V in the Compose tab - the chord chain there picks the lowest-fret voicing for any tuning.</p>
+    <div class="actions">
+      <a href="../play/?p=${encodeURIComponent(profile.id)}">Compose tab in ${profile.label}</a>
+      <a class="alt" href="?p=ukulele-gcea">Switch to ukulele</a>
+    </div>
+  `;
+  root.appendChild(fallback);
+}
+
+function renderCrossInst(profile) {
+  const body = document.getElementById('crossInstBody');
+  const isUke = profile.instrument === 'ukulele';
+  const isGuitarFamily = ['guitar','cigarbox','banjo'].includes(profile.instrument);
+  const isFifths = ['mandolin','mandola'].includes(profile.instrument);
+  body.innerHTML = `
+    <p>You're seeing this on <strong>${profile.label}</strong> (${profile.tuning}). The interval geometry is what transfers - the same shape positions sound the same chord progression on every instrument with a [P4, M3] interval pattern on strings 4-3-2.</p>
+    <div class="inst ${isUke ? 'cur' : ''}"><strong>Ukulele G-C-E-A</strong> - strings 4-3-2 = G-C-E. Mute string 1 (A) for the artifact's pure three-string voicing, or let it ring for added colour.</div>
+    <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Cigar Box / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major; uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
+    <div class="inst ${isFifths ? 'cur' : ''}"><strong>Mandolin / Mandola (all-fifths)</strong> - the artifact's shape vocabulary doesn't directly map. Different fingerings needed; the IV-to-V slide-up-2 still holds but the I and IV shapes are different families.</div>
+  `;
+}
+
 function applyAccordionState() {
-  // hide dismissed accordions
   document.querySelectorAll('.explainer').forEach(d => {
     const id = d.dataset.explainer;
     d.style.display = dismissed.includes(id) ? 'none' : '';
   });
-  // first-visit experience: auto-open the "how this works" accordion ONLY on
-  // the user's first ever visit. Returning users see everything collapsed by
-  // default - the cycle is the primary content, explainers are opt-in.
   if (isFirstVisit) {
     const intro = document.querySelector('.explainer[data-explainer="how"]');
     if (intro) intro.open = true;
     writeStored(STORAGE.seen, '1');
   }
-  // toggle the "Show dismissed explainers" reset button visibility
-  const resetBtn = document.getElementById('resetIntros');
-  resetBtn.hidden = dismissed.length === 0;
+  document.getElementById('resetIntros').hidden = dismissed.length === 0;
 }
 
 function wireDismissals() {
@@ -517,11 +676,46 @@ function wireDismissals() {
   };
 }
 
-// boot
-buildKeyChips();
-renderCycle();
-applyAccordionState();
-wireDismissals();
+// ---- boot ------------------------------------------------------------------
+fetch('../shared/profiles/manifest.json')
+  .then(r => { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
+  .then(m => {
+    const wantId = pickActiveId();
+    const ids = m.profiles || [];
+    if (!ids.includes(wantId)) throw new Error('profile not in manifest: ' + wantId);
+    return loadScript('../shared/profiles/' + wantId + '.js').then(() => wantId);
+  })
+  .then(wantId => {
+    const profiles = window.MusicProfiles || {};
+    activeProfile = profiles[wantId];
+    if (!activeProfile) throw new Error('profile script did not register: ' + wantId);
+    // Find which display indices correspond to strings 4, 3, 2 by parsing the
+    // "Nth string" labels. For uke (4 strings) this is [0,1,2]; for guitar
+    // (6 strings) it's [2,3,4]; for banjo (5 strings, drone on left) [1,2,3].
+    activeStringIdx = findStringIndices(activeProfile);
+    activeStringPcs = [
+      freqPc(activeProfile.strings[activeStringIdx[0]].f),
+      freqPc(activeProfile.strings[activeStringIdx[1]].f),
+      freqPc(activeProfile.strings[activeStringIdx[2]].f),
+    ];
+    intervalOk = detectIntervalOk(activeStringPcs);
+    setInstBadge(activeProfile);
+    renderCrossInst(activeProfile);
+    if (intervalOk) {
+      buildKeyChips();
+    } else {
+      document.getElementById('keyChips').style.display = 'none';
+    }
+    renderCycle();
+    applyAccordionState();
+    wireDismissals();
+  })
+  .catch(err => {
+    document.getElementById('cycle').innerHTML =
+      '<div class="fallback"><p>Could not load instrument profile (' + (err.message || err) + '). <a href="../play/">Back to app</a></p></div>';
+    applyAccordionState();
+    wireDismissals();
+  });
 </script>
 
 </body>
