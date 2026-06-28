@@ -52,6 +52,15 @@ browser**. So:
   algorithmic/logic bit in Node. There is **no headless browser**, so state
   plainly what you could *not* verify ("eyeball the preview for layout") rather
   than implying it's fully tested.
+- **Phone-DPI text floor for SVG labels.** Any text rendered inside a chord
+  diagram or other SVG that ships to a phone MUST use `font-size >= 10` and
+  have the SVG canvas / viewBox sized to fit the rendered label without
+  clipping. A 7.5px label digit is ~4 CSS pixels wide on the small chord cards
+  - it disappears into adjacent letters at Pixel-10-XL DPI even when the SVG
+  technically contains it. Node-side render-verify is necessary but NOT
+  sufficient for any visible-on-phone label: if you can't confirm a phone
+  render before merge (no headless browser available here), keep the font
+  conservatively large rather than at the lower bound.
 
 ### Shipping — the `/ship` flow
 Branch → commit → push → **draft** PR → post tappable preview links → auto-watch
@@ -113,6 +122,14 @@ A self-contained **static** GitHub Pages site (`nhruska.github.io`), served from
   bit us on the hero cards).
 - **Keep diffs surgical** — when scripting edits to `songs.json`, only the
   intended lines should change (write back with the same 2-space formatting).
+- **SW cache version is part of the change, not a follow-up.** Whenever you
+  touch ANY file listed in `music/sw.js` `CORE` (any profile, `songbook.js`,
+  `diagram.js`, `tuner.js`, `audio.js`, `songs.json`, the CSS, etc.), bump
+  `CACHE = 'music-vN'` in the same commit. Skipping the bump means returning
+  users keep the cached old asset until they manually clear it. This session
+  shipped two `diagram.js` fixes without bumping, then bumped on the third —
+  which masked whether the first two even reached real browsers. The bump is
+  cheap; the skip is invisible-until-it-isn't.
 - **One screen, above the fold (always preferred).** Maximize what's usable
   without scrolling on a phone: keep the header minimal (it must not repeat a
   subtitle the view already shows), cut redundant or already-elsewhere controls,
