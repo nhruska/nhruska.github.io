@@ -128,8 +128,8 @@ const KEYS = [
         label: 'Position 1 · C-shape start at fret 2',
         steps: [
           { role: 'I',  chord: 'D', shape: 'C-shape',  frets: [2,2,2,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 2. String 1 muted. Triad A D F#.' },
-          { role: 'IV', chord: 'G', shape: 'F-shape',  frets: [4,2,3,-1], fingers: ['2','1','3',''], notes: 'Index bar stays at fret 2. Middle hammers to fret 4 string 4. Ring hammers to fret 3 string 2. Triad B D G.' },
-          { role: 'V',  chord: 'A', shape: 'F-shape',  frets: [6,4,5,-1], fingers: ['2','1','3',''], notes: 'Same F-shape, slid up two frets. Same fingers. Triad C# E A.' },
+          { role: 'IV', chord: 'G', shape: 'F-shape',  frets: [4,2,3,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 2. RING hammers to fret 4 string 4 (the reach-up finger). MIDDLE hammers to fret 3 string 2. Triad B D G.' },
+          { role: 'V',  chord: 'A', shape: 'F-shape',  frets: [6,4,5,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Same fingers (ring high, index bar, middle low). Triad C# E A.' },
         ],
         transitions: [
           { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 2 (covered by middle on string 4).' },
@@ -151,17 +151,17 @@ const KEYS = [
         next: { type: 'flip', text: 'Flip the ring-bar to an INDEX-bar at the SAME fret (fret 9). The chord (A) does not change - it is still V of D. But the geometry now frees fingers 2 and 3 to hammer F-shape, landing on a higher INVERSION of I (D).' }
       },
       {
-        label: 'Position 3 · higher D inversion (above fret 9) - TBD pending your narration',
+        label: 'Position 3 · F-shape rotation at frets 9-14 (after FLIP + hammer)',
         steps: [
-          { role: 'I',  chord: 'D', shape: 'F-shape (inversion)',  frets: [11,9,10,-1], fingers: ['2','1','3',''], notes: 'After the flip + hammer: D in 1st inversion (F# A D, with F# in bass). Index bar still at fret 9, middle and ring landed higher. Same I as before, different voicing.' },
-          { role: 'IV', chord: 'G', shape: '?',  frets: [-1,-1,-1,-1], fingers: ['','','',''], notes: 'What G voicing comes next at this higher position? Need your input - the IV in D major above fret 9.' },
-          { role: 'V',  chord: 'A', shape: '?',  frets: [-1,-1,-1,-1], fingers: ['','','',''], notes: 'And the V in D major at this position?' },
+          { role: 'I',  chord: 'D', shape: 'F-shape (1st inv.)',  frets: [11,9,10,-1], fingers: ['3','1','2',''], notes: 'After the flip + hammer: D in 1st inversion (F# A D, F# in bass). Index bar still at fret 9, ring high on string 4 fret 11, middle on string 2 fret 10. Same I as before, just a higher voicing.' },
+          { role: 'IV', chord: 'G', shape: 'A-shape',  frets: [12,11,10,-1], fingers: ['3','2','1',''], notes: 'SLIDE up 1 fret AND switch to A-shape geometry. Ring on string 4 fret 12, middle on string 3 fret 11, index on string 2 fret 10. Triad G B D.' },
+          { role: 'V',  chord: 'A', shape: 'A-shape',  frets: [14,13,12,-1], fingers: ['3','2','1',''], notes: 'Same A-shape, slid up 2 frets. Triad A C# E.' },
         ],
         transitions: [
-          { type: 'hammer', text: 'Hammer brings us back to I (D) but as a higher inversion. The cycle restarts in D major.' },
-          { type: 'slide', text: '(TBD) - depends on IV voicing above' },
+          { type: 'slide', text: 'SLIDE up 1 fret AND change geometry to A-shape (ring, middle, index walk down). The IV is reached by slide-plus-shape-change, not by hammer this time.' },
+          { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
         ],
-        next: { type: 'rotate', text: '(Cycle continues up the neck in D major - I am waiting on your narration of what gets played above fret 9.)' }
+        next: { type: 'rotate', text: 'Bar with ring finger at fret 14 = next I (D again, one octave above Position 1). The pattern returns to the C-shape ring-bar configuration and the cycle keeps walking up.' }
       }
     ]
   },
