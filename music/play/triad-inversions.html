@@ -65,7 +65,7 @@ code{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.78rem;backgro
 <body>
 <header>
   <h1>Triad <span class="em">Inversions</span></h1>
-  <p class="sub">A consistent method to walk I-IV-V up the neck using barre-bar shape pivots. Three-string focus (mute string 1) keeps the geometry uke-compatible with guitar's D-G-B fragment. <a href="../play/">Back to app</a></p>
+  <p class="sub">A consistent method to walk I-IV-V up the neck using barre-bar shape pivots. Stays in one key throughout - the chords keep their names, the shapes give you new inversions higher and higher on the fretboard. Three-string focus (mute string 1) keeps the geometry uke-compatible with guitar's D-G-B fragment. <a href="../play/">Back to app</a></p>
 </header>
 
 <div class="section">
@@ -75,7 +75,7 @@ code{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.78rem;backgro
     <li><span class="op hammer">HAMMER</span> add fingers 2 and 3 to the bar position you're already in - the bar stays put, fingers reorganize.</li>
     <li><span class="op slide">SLIDE +2</span> move the whole shape up two frets - IV to V is always a whole step in major-key diatonic.</li>
     <li><span class="op rotate">ROTATE +1</span> move up one fret and shift to the next shape family - V's hand position becomes the launching pad for the next I.</li>
-    <li><span class="op flip">FLIP</span> ring bar to index bar at the same fret - the V you just played becomes the I of the next cycle (one P5 up the circle of fifths).</li>
+    <li><span class="op flip">FLIP</span> ring bar to index bar at the same fret - the chord doesn't change, but the geometry now lets fingers 2 and 3 hammer back into an F-shape, landing on the NEXT inversion of I higher up the neck. The cycle restarts in the same key.</li>
   </ul>
   <p>Three shape families do all the work:</p>
   <ul>
@@ -104,8 +104,8 @@ code{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.78rem;backgro
 
 <div class="section">
   <h2>The Compound Insight</h2>
-  <p>One full cycle (I-IV-V at one position, rotate, I-IV-V at the next position, flip) <strong>moves the key up by a P5</strong> - D becomes A, A becomes E, E becomes B, and so on around the circle of fifths. Run the cycle 12 times and you're back where you started, one octave higher.</p>
-  <p>The fretboard mechanic IS the circle of fifths. Every rotation walks one position higher; every flip rolls forward to the next key.</p>
+  <p>The same shape pattern repeats up the neck while you stay in one key. The chord names don't change - <strong>D stays D, G stays G, A stays A</strong> - but each cycle puts them in different inversions higher and higher on the fretboard.</p>
+  <p>Once the shape pattern is in muscle memory, you've removed the abstraction of note letters entirely. You think in <strong>I, IV, V</strong> and let the fretboard hand you whichever inversion is closest at hand.</p>
 </div>
 
 <div class="legend">
@@ -148,25 +148,20 @@ const KEYS = [
           { type: 'hammer', text: 'Hammer the ring finger into a 3-string bar at fret 7. Other fingers lift. This IS the C-shape inverted from the A-shape position.' },
           { type: 'slide', text: 'Slide the ring-bar up 2 frets for V.' },
         ],
-        next: { type: 'flip', text: 'Flip the ring-bar to an INDEX-bar at the SAME fret (fret 9). The chord (A) does not change - but it is now the I of the next key.' }
-      }
-    ]
-  },
-  {
-    key: 'A', tonic: 'A major (continuation - V became new I via FLIP)', degrees: 'I = A · IV = D · V = E',
-    positions: [
+        next: { type: 'flip', text: 'Flip the ring-bar to an INDEX-bar at the SAME fret (fret 9). The chord (A) does not change - it is still V of D. But the geometry now frees fingers 2 and 3 to hammer F-shape, landing on a higher INVERSION of I (D).' }
+      },
       {
-        label: 'Position 1 · C-shape start at fret 9',
+        label: 'Position 3 · higher D inversion (above fret 9) - TBD pending your narration',
         steps: [
-          { role: 'I',  chord: 'A', shape: 'C-shape',  frets: [9,9,9,-1], fingers: ['1','1','1',''], notes: 'After the FLIP - same fret (9), same chord (A), but now index does the bar so fingers 2 and 3 are free for the next hammer.' },
-          { role: 'IV', chord: 'D', shape: 'F-shape',  frets: [11,9,10,-1], fingers: ['2','1','3',''], notes: 'Index bar stays at fret 9 (covered by middle on string 4). Middle to fret 11 string 4. Ring to fret 10 string 2. Triad F# A D.' },
-          { role: 'V',  chord: 'E', shape: 'F-shape',  frets: [13,11,12,-1], fingers: ['2','1','3',''], notes: 'F-shape slid +2 to fret 11-13. Triad G# B E.' },
+          { role: 'I',  chord: 'D', shape: 'F-shape (inversion)',  frets: [11,9,10,-1], fingers: ['2','1','3',''], notes: 'After the flip + hammer: D in 1st inversion (F# A D, with F# in bass). Index bar still at fret 9, middle and ring landed higher. Same I as before, different voicing.' },
+          { role: 'IV', chord: 'G', shape: '?',  frets: [-1,-1,-1,-1], fingers: ['','','',''], notes: 'What G voicing comes next at this higher position? Need your input - the IV in D major above fret 9.' },
+          { role: 'V',  chord: 'A', shape: '?',  frets: [-1,-1,-1,-1], fingers: ['','','',''], notes: 'And the V in D major at this position?' },
         ],
         transitions: [
-          { type: 'hammer', text: 'Same hammer mechanic as Position 1 of D - fingers 2 and 3 add into F-shape. Index bar stays.' },
-          { type: 'slide', text: 'Slide F-shape up 2 frets. Same as before, just higher on the neck.' },
+          { type: 'hammer', text: 'Hammer brings us back to I (D) but as a higher inversion. The cycle restarts in D major.' },
+          { type: 'slide', text: '(TBD) - depends on IV voicing above' },
         ],
-        next: { type: 'rotate', text: 'Continues the same way - A-shape next I, ring-bar IV, slide V, flip to E... and so on around the circle.' }
+        next: { type: 'rotate', text: '(Cycle continues up the neck in D major - I am waiting on your narration of what gets played above fret 9.)' }
       }
     ]
   },
