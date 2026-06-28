@@ -192,20 +192,33 @@ const KEYS = [
     ]
   },
   {
-    key: 'G', tonic: 'G major (same mechanic, starting at fret 7)', degrees: 'I = G · IV = C · V = D',
+    key: 'G', tonic: 'G major (starts low at fret 2)', degrees: 'I = G · IV = C · V = D',
     positions: [
       {
-        label: 'Position 1 · C-shape start at fret 7',
+        label: 'Position 1 · F-shape start at fret 2 (lowest G voicing)',
         steps: [
-          { role: 'I',  chord: 'G', shape: 'C-shape',  frets: [7,7,7,-1], fingers: ['1','1','1',''], notes: 'Index bar across strings 4-3-2 at fret 7. Triad D G B. Note: this is the same chord as the ring-bar G in Position 2 of D - same notes, different finger choice depending on where you came from in the cycle.' },
-          { role: 'IV', chord: 'C', shape: 'F-shape',  frets: [9,7,8,-1], fingers: ['3','1','2',''], notes: 'Index bar stays at fret 7. RING on fret 9 string 4. MIDDLE on fret 8 string 2. Triad E G C.' },
+          { role: 'I',  chord: 'G', shape: 'F-shape (2nd inv.)',  frets: [4,2,3,-1], fingers: ['3','1','2',''], notes: 'F-shape with index bar at fret 2. Ring on string 4 fret 4, middle on string 2 fret 3. Triad B D G - G in 2nd inversion (D in bass). This is the lowest G voicing using the artifact\'s three-string shape vocabulary; matches the same inversion as the open G strum, just compacted into the bar-and-two-fingers geometry.' },
+          { role: 'IV', chord: 'C', shape: 'A-shape',  frets: [5,4,3,-1], fingers: ['3','2','1',''], notes: 'A-shape with index at fret 3. Ring on string 4 fret 5, middle on string 3 fret 4, index on string 2 fret 3. Triad C E G - C in root position.' },
+          { role: 'V',  chord: 'D', shape: 'A-shape',  frets: [7,6,5,-1], fingers: ['3','2','1',''], notes: 'Same A-shape, slid up 2 frets. Triad D F# A - D in root position.' },
+        ],
+        transitions: [
+          { type: 'slide', text: 'SLIDE up 1 fret AND switch to A-shape (ring on string 4, middle on string 3, index on string 2 walking down). The chord changes G -> C as the shape rotates.' },
+          { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
+        ],
+        next: { type: 'rotate', text: 'HAMMER the ring finger into a 3-string bar at fret 7. Other fingers lift. The chord changes V (D) -> next I (G in root position). Cycle restarts at Position 2 one octave above where Position 1 sounded.' }
+      },
+      {
+        label: 'Position 2 · ring-bar at fret 7 (G root position)',
+        steps: [
+          { role: 'I',  chord: 'G', shape: 'C-shape (ring-bar)',  frets: [7,7,7,-1], fingers: ['3','3','3',''], notes: 'Ring finger bars strings 4-3-2 at fret 7. Triad D G B - G in root position. Same chord as the F-shape G of Position 1, different geometry; hammered into from the A-shape V of Position 1.' },
+          { role: 'IV', chord: 'C', shape: 'F-shape',  frets: [9,7,8,-1], fingers: ['3','1','2',''], notes: 'FLIP ring-bar to index-bar at fret 7, then HAMMER ring (string 4 fret 9) and middle (string 2 fret 8) into F-shape. Triad E G C.' },
           { role: 'V',  chord: 'D', shape: 'F-shape',  frets: [11,9,10,-1], fingers: ['3','1','2',''], notes: 'Same F-shape, slid up two frets. Triad F# A D.' },
         ],
         transitions: [
-          { type: 'hammer', text: 'Hammer fingers 2 and 3 into F-shape. Index bar stays at fret 7.' },
-          { type: 'slide', text: 'Slide the whole F-shape up 2 frets.' },
+          { type: 'flip', text: 'FLIP ring-bar to index-bar at fret 7. Then HAMMER fingers 2 and 3 into F-shape - ring reaches up to fret 9, middle to fret 8. The chord changes G -> C.' },
+          { type: 'slide', text: 'Slide the F-shape up 2 frets.' },
         ],
-        next: { type: 'rotate', text: 'ROTATE +1 + A-shape would land the next I (G) at frets 12-14. On most ukuleles you have run out of fingerboard - on guitar the cycle continues identically to D.' }
+        next: { type: 'rotate', text: 'ROTATE +1 + A-shape would land the next I (G) at frets 12-14. On most ukuleles you have run out of fingerboard; on guitar the cycle continues identically one octave higher.' }
       }
     ]
   },
