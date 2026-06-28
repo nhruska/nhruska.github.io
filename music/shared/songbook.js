@@ -770,6 +770,14 @@
     function labelTonic() { return keyRoot || progression[0]; }
     function renderProg() {
       if (!el.prog) return;
+      // NO auto-switching of accordion panels on add/remove - that made the surface jump
+      // and shoved the just-tapped chord out of view. Panels are user-controlled; the
+      // "Common progressions" starter is the only default-open (set in the HTML at cold start).
+      // Gray out the choosers once the 8-chord cap (addChord) is reached.
+      var maxed = progression.length >= 8;
+      var acc = document.querySelector('.composeAccordion');
+      if (acc) acc.classList.toggle('maxed', maxed);
+      if (el.maxNote) el.maxNote.hidden = !maxed;
       el.prog.innerHTML = '';
       var tonic = labelTonic();
       progression.forEach(function (c, i) {
@@ -1017,19 +1025,21 @@
         return (pack ? packHasChord(c) : true) && c !== last;
       }).sort(function (a, b) { return score[b] - score[a]; }).slice(0, 5);
     }
-    // a tappable suggestion chip: chord diagram + its interval label, plays + adds on tap.
-    // `completes` (a progression name) accent-highlights the chip and adds a tiny caption,
-    // so a chord that finishes a famous progression is flagged IN PLACE — no extra rows.
+    // a COMPACT tappable suggestion chip: chord name + its interval (Roman) label, no
+    // fretboard diagram - so "Next chord" stays a few short rows instead of eating the
+    // viewport. (The full shapes live in "All chords" / the key palette.) `completes` (a
+    // progression name) accent-highlights the chip and adds a tiny caption in place.
     function suggChip(c, tonic, completes) {
-      var d = packDiagram(c, 'small'); d.className += ' suggPick' + (completes ? ' complete' : '');
-      d.onclick = function () { addChord(c); packPlayChord(c); };
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
-      if (!rn && !completes) return d;
-      var cell = document.createElement('div'); cell.className = 'suggCell' + (completes ? ' complete' : '');
-      cell.appendChild(d);
-      if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; cell.appendChild(lbl); }
-      if (completes) { var cap = document.createElement('span'); cap.className = 'compCap'; cap.textContent = completes; cell.appendChild(cap); }
-      return cell;
+      var html = '<span class="scName">' + c + '</span>';
+      if (rn) html += '<span class="scRn">' + rn + '</span>';
+      if (completes) html += '<span class="scCap">' + completes + '</span>';
+      chip.innerHTML = html;
+      chip.onclick = function () { addChord(c); packPlayChord(c); };
+      return chip;
     }
     function renderSuggest() {
       if (!el.suggest) return;
@@ -1055,9 +1065,13 @@
       picks = Object.keys(completeBy).concat(picks).slice(0, 5);
       if (!picks.length) return;
       var n = progression.length;
-      var label = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord:";
-      var lbl = document.createElement('div'); lbl.className = 'suggLbl'; lbl.textContent = label;
-      el.suggest.appendChild(lbl);
+      // Helpful "Add a Nth chord" guidance only for the first few; past that the panel's own
+      // "Next chord" summary already says it (avoid the duplicate header the user flagged).
+      if (n <= 3) {
+        var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+        lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : "Add a 4th chord:";
+        el.suggest.appendChild(lbl);
+      }
       var row = document.createElement('div'); row.className = 'suggRow';
       // show the actual chord shape, not just a name — same diagram as the build grid
       // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the

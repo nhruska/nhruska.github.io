@@ -52,7 +52,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);margin-bottom:11px;}
 .search::placeholder{color:var(--txt-dim);}
 .search:focus{outline:none;border-color:var(--accent);}
-.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .chips::-webkit-scrollbar{display:none;}
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:18px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
@@ -105,7 +105,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
-.iconBtn{width:38px;height:38px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
 .ctrl{display:flex;gap:8px;margin:12px 0 10px;}
 .pill{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:6px;}
@@ -257,29 +257,38 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .progTools{display:flex;align-items:center;gap:6px;}
-.keyReadout{min-width:38px;height:38px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.keyReadout{min-width:44px;height:44px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
 .keyReadout:active{transform:scale(.9);}
-.prog{display:flex;flex-wrap:wrap;gap:8px;min-height:88px;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;}
+/* one-row horizontal filmstrip (was flex-wrap, which pushed a 4th chord to a 2nd row).
+   touch-action:pan-x = horizontal pan handled here, vertical gestures pass to the page
+   scroll (fixes the "stuck / few pixels at a time" trap from a nested h-scroller). */
+.prog{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
+.prog::-webkit-scrollbar{display:none;}
+.prog .slot{flex:0 0 auto;}
+.prog .slot .chord{min-width:62px;}
 .prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
+/* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
+   area, which would overlap the chord tile and steal play-taps from the diagram below. */
+.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
-.suggest{margin-top:12px;}
+.suggest{margin-top:2px;}
 .suggest:empty{display:none;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
-/* progression-aware highlight: a chord that COMPLETES a famous progression is flagged
-   in place inside the normal suggestion list — accent glow on the chip + a tiny name
-   caption, its interval label in accent. No separate rows / no added vertical. */
-.suggRow .chord.suggPick.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 6px 16px rgba(94,234,212,.18);}
-.suggCell.complete .rn{color:var(--accent);}
-.suggCell .compCap{font-size:.56rem;font-weight:600;color:var(--accent);text-align:center;line-height:1.1;max-width:72px;}
-.suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;}
-.suggCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
-.suggCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+.suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
+/* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
+   "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
+   A chord that COMPLETES a famous progression gets an accent glow + a tiny caption. */
+.suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
+.suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent);}
+.suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent);}
+.suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+.suggChip.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
+.suggChip .scCap{font-size:.54rem;font-weight:600;color:var(--accent);text-align:center;line-height:1.1;max-width:84px;}
 .progPicks{margin-top:14px;}
-.progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
 .progPick{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;
   background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:9px 12px;
@@ -309,14 +318,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
 .chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
 /* ---- Key & scale picker ---- */
-.keyBox{margin:6px 0 18px;padding:14px;border-radius:13px;background:var(--bg-2);border:1px solid var(--line-strong);}
-.keyHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.keyStrip{margin:2px 0 18px;}
+.keyStripHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
-.keyClearBtn{border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:14px;cursor:pointer;}
+.keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
-.keyRoots{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;margin-bottom:9px;scrollbar-width:none;}
-.keyRoots::-webkit-scrollbar{display:none;}
-.rootChip{padding:7px 11px;font-family:'Space Mono',monospace;font-size:.78rem;}
+/* all 12 roots visible at once (wrap), each a 44px thumb target - no hidden-scroll */
+.keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.rootChip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:.78rem;}
 .keyModes{margin-bottom:2px;}
 .keyHint{color:var(--txt-dim);font-size:.82rem;margin:8px 2px 2px;}
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
@@ -330,7 +339,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    bottom via .rn). */
 .keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-.scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;}
 .scaleBox::-webkit-scrollbar{display:none;}
 .scaleBox svg{display:block;}
 /* HSR Chain - three cards across showing I-IV-V (or mode equivalent) using
@@ -349,7 +358,50 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .hsrRoman{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
-.allChordsLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 10px;}
+/* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
+/* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
+   so build->solo->build never scrolls it away; the key picker, scale, and grids flow
+   below. The bg matches the app so chords scroll cleanly under it. */
+/* Compose = a fixed top region (controls + palette) over a self-scrolling accordion.
+   NOT position:sticky - a tall sticky with a nested h-scroller repaints every scroll
+   frame (the "stuck" feel) and overlaps scrolling content (the "see under the pallet"
+   bleed). A flex column with the accordion as the ONLY scroll container is smooth. */
+#s-compose{height:100%;}
+.composeWrap{display:flex;flex-direction:column;height:100%;}
+.composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
+.composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.composeAccordion::-webkit-scrollbar{width:0;}
+/* one compact control row: transpose + key + view on the left, Save/Clear on the right */
+.ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;}
+.ctrlSpacer{flex:1 1 auto;}
+.ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
+/* 8-chord cap: gray the choosers so it reads as "no more allowed" */
+.maxNote{flex:0 0 auto;font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
+.composeAccordion.maxed .keyView .chordGrid .chord,
+.composeAccordion.maxed #buildGrid .chord,
+.composeAccordion.maxed .hsrChain .hsrCard,
+.composeAccordion.maxed .suggChip{opacity:.35;pointer-events:none;}
+/* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
+.keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
+/* native <details> disclosures: free aria-expanded + keyboard support */
+.composeDisc{border:1px solid var(--line-strong);border-radius:13px;background:var(--bg-2);margin-bottom:12px;overflow:hidden;}
+.composeDisc>summary{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;list-style:none;}
+.composeDisc>summary::-webkit-details-marker{display:none;}
+.composeDisc>summary::before{content:"\25B8";font-size:.8rem;color:var(--accent);transition:transform .15s;}
+.composeDisc[open]>summary::before{transform:rotate(90deg);}
+.composeDisc>summary:active{background:var(--surface-2);}
+/* draw the summary's focus ring inset - the disclosure has overflow:hidden, which would
+   otherwise clip an outward (offset:2px) outline at the rounded top edge. */
+.composeDisc>summary:focus-visible{outline-offset:-2px;}
+.discBody{padding:2px 14px 14px;}
+.discBody .chips{margin-bottom:12px;}
+/* keyboard focus ring - the app previously stripped all outlines (a11y regression).
+   No border-radius here: the outline follows each element's own radius; setting it
+   would square off pill chips/buttons when focused. */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.search:focus-visible{outline:2px solid var(--accent);outline-offset:0;}
+/* keep the "All chords" category chips on the same 44px touch floor as the key controls */
+#catChips .chip{display:inline-flex;align-items:center;min-height:44px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}

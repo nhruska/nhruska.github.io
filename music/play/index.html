@@ -20,6 +20,7 @@
   .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
     font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
   .picker:focus{outline:none;border-color:var(--accent);}
+  .picker:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   /* accent-colour chooser lives in the Tune tab now (not the always-on header) */
   .tuneTheme{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;}
   .themeWrap{position:relative;}
@@ -50,29 +51,49 @@
     </section>
     <section class="screen" id="s-compose">
       <div class="composeWrap">
-        <div class="progHead"><span class="progLbl">Progression</span>
-          <div class="progTools">
+        <!-- Slim steady header: label + transpose + Clear/Save stay pinned (NOT the tall chord
+             diagrams, which made the old sticky band ~3/4 of the screen). -->
+        <!-- Pinned unit: one compact control bar (transpose + view + Save/Clear) AND the
+             progression palette below it, both steady on scroll. No "Progression" label -
+             the empty palette's placeholder text carries that. -->
+        <div class="composeSticky">
+          <div class="ctrlBar">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Key (the first chord) — tap to reset to your original key">—</button>
+            <button class="keyReadout" id="cKey" title="Key (first chord) — tap to reset transpose">—</button>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
-          </div></div>
-        <div class="prog" id="prog"></div>
-        <div id="suggest" class="suggest"></div>
-        <div id="progPicks" class="progPicks"></div>
-        <div class="cActions">
-          <button class="btn ghost" id="cClear">Clear</button>
-          <button class="btn red" id="cSave">Save progression</button>
+            <span class="ctrlSpacer"></span>
+            <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
+            <button class="btn red ctrlBtn" id="cSave">Save</button>
+          </div>
+          <!-- progression = one-row horizontal filmstrip (no wrap) -->
+          <div class="prog" id="prog"></div>
         </div>
-        <div class="keyBox" id="keyBox">
-          <div class="keyHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-          <div class="keyRoots" id="keyRoots"></div>
-          <div class="chips keyModes" id="keyModes"></div>
-          <div class="keyView" id="keyView"></div>
+        <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
+        <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
+        <div class="composeAccordion">
+          <details class="composeDisc" name="compose" id="discSuggest">
+            <summary>Next chord</summary>
+            <div class="discBody"><div id="suggest" class="suggest"></div></div>
+          </details>
+          <details class="composeDisc" name="compose" id="discKey">
+            <summary>Key &amp; scale</summary>
+            <div class="discBody">
+              <div class="keyStripHead"><span class="keyLbl">Pick a key</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+              <div class="keyRoots" id="keyRoots"></div>
+              <div class="chips keyModes" id="keyModes"></div>
+              <div class="keyView" id="keyView"></div>
+            </div>
+          </details>
+          <details class="composeDisc" name="compose" id="discChords">
+            <summary>All chords</summary>
+            <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
+          </details>
+          <details class="composeDisc" name="compose" id="discPatterns" open>
+            <summary>Common progressions</summary>
+            <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
+          </details>
         </div>
-        <div class="allChordsLbl">All chords</div>
-        <div class="chips" id="catChips"></div>
-        <div class="chordGrid" id="buildGrid"></div>
       </div>
     </section>
     <section class="screen" id="s-practice">
@@ -516,6 +537,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
+        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), discPatterns: el('discPatterns'), maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }
