@@ -57,15 +57,15 @@ h1 .em{color:var(--accent)}
 .step .shape{font-size:.72rem;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.06em}
 .step .frets{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.68rem;color:var(--ink-faint);margin-top:2px}
 .step .notes{font-size:.74rem;color:var(--txt-soft);margin-top:3px;line-height:1.4}
+/* Transition rows sit between chord cards; the left border + indent + dim
+   text already mark them as "the move between two chords." We used to render
+   a SLIDE/HAMMER/ROTATE/FLIP pill on each one, but the labels were misleading
+   ("SLIDE +2" on a one-fret shape change, "ROTATE +1" on what was really a
+   ring-finger bar hammer) and the prose already says what the move is - so
+   the pills were noise, not signal. */
 .transition{display:flex;align-items:flex-start;gap:8px;margin:2px 0 2px 14px;font-size:.76rem;color:var(--txt-dim);padding:6px 10px;border-left:2px solid var(--line-strong);line-height:1.4}
-.transition .op{flex-shrink:0;margin-top:1px}
-/* FlipBox + op pills - all share the accent family. The 4 ops used to be
-   distinct hues (Amber / Green / Pink / Sky) but Nik flagged that as wild,
-   especially when the active accent is warm and the FLIP pill stays cool.
-   Op pills are now accent-only; distinction is by their text label. */
 .flipBox{background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5;color:var(--txt-soft)}
-.flipBox .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.op{display:inline-block;font-weight:700;padding:2px 8px;border-radius:6px;font-size:.7rem;letter-spacing:.04em;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim)}
+.flipBox .head{margin-bottom:6px;color:var(--accent);font-weight:700}
 /* Explainers */
 .explainerLbl{font-size:.6rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px}
 .explainer{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
@@ -91,9 +91,6 @@ h1 .em{color:var(--accent)}
 #resetIntros{border:1px solid var(--line);background:transparent;color:var(--txt-faint);font-family:inherit;font-weight:600;font-size:.72rem;padding:7px 14px;border-radius:9px;cursor:pointer}
 #resetIntros:hover{color:var(--txt-soft)}
 #resetIntros[hidden]{display:none}
-.legend{position:sticky;bottom:0;background:rgba(13,15,18,.95);backdrop-filter:blur(6px);padding:8px 10px;margin:14px -14px 0;border-top:1px solid var(--line);display:flex;justify-content:center;gap:10px;font-size:.64rem;color:var(--txt-dim);flex-wrap:wrap}
-.legend .item{display:flex;align-items:center;gap:4px}
-.legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
 /* Incompatible-instrument fallback */
 .fallback{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:16px;margin:14px 0;font-size:.84rem;line-height:1.5;color:var(--txt-soft)}
 .fallback strong{color:var(--txt)}
@@ -151,20 +148,7 @@ h1 .em{color:var(--accent)}
   <div class="explainerBody">
     <p>Think in chord intervals (<strong>I, IV, V</strong>), not note letters. The same shape sequence works in any key - you just start the cycle at a different fret.</p>
     <p>String 1 stays muted throughout. The strings used (4, 3, 2) preserve a perfect-fourth + major-third interval pattern - same geometry on ukulele G-C-E and guitar D-G-B, so the shapes transfer directly.</p>
-    <p>Within one position, the cycle is: I in a shape, HAMMER into IV's shape, SLIDE +2 to V. A rotation or flip then lands the next inversion of I one position higher on the neck. After three positions you're one octave up and the cycle repeats.</p>
-    <button class="dismiss" type="button">Got it - don't show again</button>
-  </div>
-</details>
-
-<details class="explainer" data-explainer="ops">
-  <summary>The 4 operations</summary>
-  <div class="explainerBody">
-    <ul>
-      <li><span class="op hammer">HAMMER</span> add fingers 2 and 3 to the bar position you're already in - the bar stays put, fingers reorganize.</li>
-      <li><span class="op slide">SLIDE +2</span> move the whole shape up two frets - IV to V is always a whole step in major-key diatonic.</li>
-      <li><span class="op rotate">ROTATE +1</span> move up one fret and shift to the next shape family - V's hand position becomes the launching pad for the next I.</li>
-      <li><span class="op flip">FLIP</span> ring bar to index bar at the same fret - the chord doesn't change, but the geometry now lets fingers 2 and 3 hammer back into an F-shape, landing on the NEXT inversion of I higher up the neck.</li>
-    </ul>
+    <p>Within one position, the cycle is: I in a shape, hammer fingers into IV's shape, slide up two frets to V. A small fret bump (and sometimes a flip of the bar finger) lands the next inversion of I one position higher on the neck. After three positions you're one octave up and the cycle repeats.</p>
     <button class="dismiss" type="button">Got it - don't show again</button>
   </div>
 </details>
@@ -206,13 +190,6 @@ h1 .em{color:var(--accent)}
 
 <div class="explainerFooter">
   <button id="resetIntros" type="button" hidden>Show dismissed explainers</button>
-</div>
-
-<div class="legend">
-  <span class="item"><span class="dot" style="background:var(--hammer)"></span>Hammer</span>
-  <span class="item"><span class="dot" style="background:var(--slide)"></span>Slide +2</span>
-  <span class="item"><span class="dot" style="background:var(--rotate)"></span>Rotate +1</span>
-  <span class="item"><span class="dot" style="background:var(--flip)"></span>Flip</span>
 </div>
 
 <script>
@@ -384,7 +361,7 @@ function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
         { type: 'hammer', text: `From open ${keyRoot}, finger 2 hammers on string 4 fret 2 and finger 1 catches string 2 fret 1.` },
         { type: 'slide',  text: 'Slide the F-shape up 2 frets. The open string 3 becomes a fretted bar at fret 2.' },
       ],
-      next: { type: 'rotate', text: `ROTATE +1 + A-shape lands the next I (${keyRoot}) at frets 3-5.` }
+      next: { type: 'rotate', text: `Move up one fret and switch to A-shape - that lands the next I (${keyRoot}) at frets 3-5.` }
     };
   }
   function cShapePosition(idx, N, isRingBar) {
@@ -398,14 +375,14 @@ function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
       label: `Position ${idx} · C-shape${ringBarSuffix} at fret ${N}`,
       steps: [
         { role: 'I',  chord: keyRoot, shape: `C-shape${ringBarSuffix}`,  frets: iF,  fingers, notes: `${barFinger} bars strings 4-3-2 at fret ${N}. Triad ${notesString(iF)}.` },
-        { role: 'IV', chord: ivName,  shape: 'F-shape',                  frets: ivF, fingers: ['3','1','2',''], notes: `${isRingBar ? `FLIP ring-bar to index-bar at fret ${N}, then HAMMER ` : 'Hammer '}ring (string 4 fret ${N+2}) and middle (string 2 fret ${N+1}) into F-shape. Triad ${notesString(ivF)}.` },
+        { role: 'IV', chord: ivName,  shape: 'F-shape',                  frets: ivF, fingers: ['3','1','2',''], notes: `${isRingBar ? `Flip the ring-bar to an index-bar at fret ${N}, then hammer ` : 'Hammer '}ring (string 4 fret ${N+2}) and middle (string 2 fret ${N+1}) into F-shape. Triad ${notesString(ivF)}.` },
         { role: 'V',  chord: vName,   shape: 'F-shape',                  frets: vF,  fingers: ['3','1','2',''], notes: `Same F-shape, slid up 2 frets. Triad ${notesString(vF)}.` },
       ],
       transitions: [
-        { type: isRingBar ? 'flip' : 'hammer', text: isRingBar ? `FLIP ring-bar to index-bar at fret ${N}, then HAMMER fingers 2 and 3 into F-shape.` : `Hammer fingers 2 and 3 into F-shape. Index bar stays at fret ${N}.` },
+        { type: isRingBar ? 'flip' : 'hammer', text: isRingBar ? `Flip the ring-bar to an index-bar at fret ${N}, then hammer fingers 2 and 3 into F-shape.` : `Hammer fingers 2 and 3 into F-shape. Index bar stays at fret ${N}.` },
         { type: 'slide',  text: 'Slide the F-shape up 2 frets.' },
       ],
-      next: { type: 'rotate', text: `ROTATE +1 + A-shape lands the next I (${keyRoot}) at frets ${N+3}-${N+5}.` }
+      next: { type: 'rotate', text: `Move up one fret and switch to A-shape - that lands the next I (${keyRoot}) at frets ${N+3}-${N+5}.` }
     };
   }
   function aShapePosition(idx, N) {
@@ -423,7 +400,7 @@ function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
         { type: 'hammer', text: `Hammer ring into a 3-string bar at fret ${N+2}. Other fingers lift.` },
         { type: 'slide',  text: 'Slide the ring-bar up 2 frets for V.' },
       ],
-      next: { type: 'flip', text: `FLIP ring-bar to index-bar at fret ${N+4}. Then HAMMER fingers 2 and 3 into F-shape, landing on a higher inversion of I (${keyRoot}).` }
+      next: { type: 'flip', text: `Flip the ring-bar to an index-bar at fret ${N+4}, then hammer fingers 2 and 3 into F-shape - that lands a higher inversion of I (${keyRoot}).` }
     };
   }
   function fShapePosition(idx, N) {
@@ -434,11 +411,11 @@ function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
       label: `Position ${idx} · F-shape rotation at frets ${N}-${N+5}`,
       steps: [
         { role: 'I',  chord: keyRoot, shape: 'F-shape',  frets: iF,  fingers: ['3','1','2',''], notes: `Index bar at fret ${N}, ring on string 4 fret ${N+2}, middle on string 2 fret ${N+1}. Triad ${notesString(iF)}.` },
-        { role: 'IV', chord: ivName,  shape: 'A-shape',  frets: ivF, fingers: ['3','2','1',''], notes: `SLIDE up 1 fret AND switch to A-shape. Ring on string 4 fret ${N+3}, middle on string 3 fret ${N+2}, index on string 2 fret ${N+1}. Triad ${notesString(ivF)}.` },
+        { role: 'IV', chord: ivName,  shape: 'A-shape',  frets: ivF, fingers: ['3','2','1',''], notes: `Move up one fret and switch to A-shape. Ring on string 4 fret ${N+3}, middle on string 3 fret ${N+2}, index on string 2 fret ${N+1}. Triad ${notesString(ivF)}.` },
         { role: 'V',  chord: vName,   shape: 'A-shape',  frets: vF,  fingers: ['3','2','1',''], notes: `Same A-shape, slid up 2 frets. Triad ${notesString(vF)}.` },
       ],
       transitions: [
-        { type: 'slide', text: 'SLIDE up 1 fret AND change geometry to A-shape (ring, middle, index walk down).' },
+        { type: 'slide', text: 'Move up one fret and reshape to A-shape (ring, middle, index walk down).' },
         { type: 'slide', text: 'Slide the A-shape up 2 frets for V.' },
       ],
       next: { type: 'rotate', text: `Bar with ring finger at fret ${N+5} = next I (${keyRoot}, one octave above the starting position).` }
@@ -689,8 +666,7 @@ function renderCycle() {
         const t = pos.transitions[si];
         const tr = document.createElement('div');
         tr.className = 'transition';
-        const lbl = t.type === 'hammer' ? 'HAMMER' : t.type === 'slide' ? 'SLIDE +2' : t.type === 'rotate' ? 'ROTATE +1' : 'FLIP';
-        tr.innerHTML = `<span class="op ${t.type}">${lbl}</span><span>${t.text}</span>`;
+        tr.textContent = t.text;
         block.appendChild(tr);
       }
     });
@@ -698,13 +674,13 @@ function renderCycle() {
       if (pos.next.type === 'flip') {
         const fl = document.createElement('div');
         fl.className = 'flipBox';
-        fl.innerHTML = `<div class="head"><span class="op flip">FLIP</span><strong>V becomes the next I</strong></div><div>${pos.next.text}</div>`;
+        fl.innerHTML = `<div class="head">V becomes the next I</div><div></div>`;
+        fl.lastElementChild.textContent = pos.next.text;
         block.appendChild(fl);
       } else {
         const tr = document.createElement('div');
         tr.className = 'transition';
-        const lbl = pos.next.type === 'rotate' ? 'ROTATE +1' : pos.next.type.toUpperCase();
-        tr.innerHTML = `<span class="op ${pos.next.type}">${lbl}</span><span>${pos.next.text}</span>`;
+        tr.textContent = pos.next.text;
         block.appendChild(tr);
       }
     }
