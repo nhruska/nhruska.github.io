@@ -294,13 +294,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    signal "tap to add"; the current progression and the picker stay neutral. */
 .prog .slot .chord,
 .suggRow .chord.suggPick,
-.chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+.chordGrid .chord,
+.hsrChain .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
 .prog .slot .chord .chord-name,
 .suggRow .chord.suggPick .chord-name,
-.chordGrid .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
+.chordGrid .chord .chord-name,
+.hsrChain .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
 .prog .slot .chord:active,
 .suggRow .chord.suggPick:active,
-.chordGrid .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
+.chordGrid .chord:active,
+.hsrChain .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
 .suggRow .chord.suggPick{border-color:var(--accent-dim);}
 .suggRow .chord.suggPick .chord-name{color:var(--accent);}
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
@@ -336,10 +339,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    so even profiles that have idiomatic open voicings get the moveable barre
    pattern that teaches HSR. */
 .hsrChain{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 6px;}
-.hsrCard{display:flex;flex-direction:column;align-items:center;gap:4px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
-.hsrCard:active{transform:scale(.92);border-color:var(--accent-dim);}
-.hsrCard.sel{border-color:var(--accent);background:var(--accent-deep);}
-.hsrRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);letter-spacing:.06em;}
+/* HSR chain card matches the layout of suggCell + chordCell: outer wrapper is
+   a plain flex column (no border) - the inner .chord (the diagram) gets the
+   bordered tile styling via the broader selector above, and the Roman numeral
+   sits BELOW the bordered tile as small muted text, identical to .rn used by
+   .suggCell. Keeps the visual hierarchy consistent across all three palettes. */
+.hsrCard{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+.hsrCard.sel .chord{border-color:var(--accent);background:var(--accent-deep);}
+.hsrRoman{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
 .allChordsLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 10px;}
