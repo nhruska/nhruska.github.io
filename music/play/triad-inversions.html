@@ -360,14 +360,21 @@ function renderDiagram(frets, fingers) {
   const base = (!fretted.length || hi <= 4) ? 1 : Math.min(...fretted);
   const showRows = Math.max(rows, hi - base + 1);
   const sy = 18;
-  const W = padX * 2 + cols * sx + (base > 1 ? 18 : 0);
+  // Base-fret label sits to the LEFT of the leftmost string at the height of the
+  // top row. Earlier value (padX-4 = x12, xOff/W pad = 18) put the digit's right
+  // edge at x=12 while the leftmost dot (x=padX-dotR = x8 to x24) sat in the same
+  // vertical band - so a 3-string ring-bar on the top row (e.g. [7,7,7,-1])
+  // covered the "7". Bumped padding to 24 and shifted the label to padX-14 (x=2,
+  // right-anchored) so even a 2-digit label (frets 12/14) clears the dot with
+  // ~6px gap. Vertical position unchanged so the digit still labels the top row.
+  const W = padX * 2 + cols * sx + (base > 1 ? 24 : 0);
   const H = padY + showRows * sy + 6;
-  const xOff = base > 1 ? 18 : 0;
+  const xOff = base > 1 ? 24 : 0;
   let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="${-xOff} 0 ${W} ${H}">`;
   if (base === 1) {
     svg += `<rect x="${padX-1}" y="${padY-2}" width="${cols*sx+2}" height="3" fill="#e8ebf0" rx="1"/>`;
   } else {
-    svg += `<text x="${padX-4}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
+    svg += `<text x="${padX-14}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
   }
   for (let s = 0; s < n; s++) {
     const x = padX + s * sx;
