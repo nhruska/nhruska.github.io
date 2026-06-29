@@ -242,13 +242,33 @@
     var QUEUE = global.Queue.createQueue();
     var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
-    var CATS = opts.composeCats || {
-      "Major": ["C", "D", "E", "F", "G", "A", "B"],
-      "Minor": ["Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm"],
-      "7th": ["C7", "D7", "E7", "F7", "G7", "A7", "B7"],
-      "Maj7": ["Cmaj7", "Dmaj7", "Emaj7", "Fmaj7", "Gmaj7", "Amaj7", "Bmaj7"],
-      "Min7": ["Cm7", "Dm7", "Em7", "Fm7", "Gm7", "Am7", "Bm7"]
-    };
+    // The all-chords build palette covers ALL 12 chromatic roots (the old default only
+    // had the 7 naturals - no sharps/flats). For each category we map every ROOTS entry
+    // to its chord, then make each one renderable: if a chord pack is present and lacks
+    // the sharp shape, fall back to the enharmonic flat spelling, and omit only if
+    // neither spelling is voiceable (no crash). With no pack, names always render so all
+    // 12 stay. ROOTS uses sharp spelling (C# D# F# G# A#); S2F is the flat fallback.
+    var S2F = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
+    var CATS = opts.composeCats || (function () {
+      var packHas = function (name) { return opts.chordPack && typeof opts.chordPack.hasChord === 'function' ? opts.chordPack.hasChord(name) : false; };
+      var havePack = !!opts.chordPack;
+      // pick a spelling the pack can voice: prefer the sharp ROOTS spelling, fall back to
+      // the enharmonic flat, return null if neither is voiceable (then the chord is omitted).
+      function spell(root, suffix) {
+        var sharp = root + suffix;
+        if (!havePack) return sharp;          // no pack -> names always render
+        if (packHas(sharp)) return sharp;
+        var flat = S2F[root] ? (S2F[root] + suffix) : null;
+        if (flat && packHas(flat)) return flat;
+        return null;                          // neither spelling voiceable -> omit
+      }
+      function cat(suffix) {
+        var out = [];
+        ROOTS.forEach(function (root) { var s = spell(root, suffix); if (s) out.push(s); });
+        return out;
+      }
+      return { "Major": cat(""), "Minor": cat("m"), "7th": cat("7"), "Maj7": cat("maj7"), "Min7": cat("m7") };
+    })();
     var SUGG = opts.suggestions || {};
 
     var CATALOG = (opts.songs || []).slice();
@@ -841,9 +861,15 @@
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       if (!el.cKey) return;
-      // Show the key by name (the first chord), matching the Practice readout —
-      // far clearer than a "+2 semitones" counter. 'shifted' lights up whenever
-      // you've moved off the key you originally built in.
+      // Show the UNIFIED song key (root + mode, e.g. "E Mixolydian") so the readout
+      // matches the key picker exactly - no drift between the picker and the transpose
+      // readout. 'shifted' lights up whenever you've moved off the key you originally
+      // built in. Falls back to the placeholder only when there's no key AND no chords.
+      if (songKey.root) {
+        el.cKey.textContent = songKey.root + ' ' + MODES[songKey.mode].label;
+        el.cKey.classList.toggle('shifted', cTpose !== 0);
+        return;
+      }
       if (!progression.length) { el.cKey.textContent = '—'; el.cKey.classList.remove('shifted'); return; }
       el.cKey.textContent = progression[0];
       el.cKey.classList.toggle('shifted', cTpose !== 0);
@@ -933,13 +959,30 @@
           // Picking a root sets the explicit key and closes the popover. Tapping the
           // currently-selected root clears the key (and re-opens for a fresh pick).
           if (songKey.root === r) {
+            // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
             songKey.root = null; songKey.explicit = false;
             keyPopoverOpen = true;
           } else {
+            // Pick a NEW root. If a progression exists, transpose it by the semitone
+            // delta between the OLD song-key tonic and the new root (by TONIC, not by
+            // progression[0] - a progression may not start on the tonic). Take the
+            // shorter direction around the circle so the shapes move minimally.
+            var oldRoot = songKey.root; // may be null (no key yet) - then context only, no shift
+            if (progression.length && oldRoot) {
+              var op = rootPc(oldRoot), np = rootPc(r);
+              if (op != null && np != null) {
+                var delta = ((np - op) % 12 + 12) % 12;
+                if (delta > 6) delta -= 12; // shift the short way
+                if (delta !== 0) {
+                  progression = progression.map(function (c) { return tpose(c, delta); });
+                  cTpose += delta; // keep the transpose readout's net-shift accounting consistent
+                }
+              }
+            }
             songKey.root = r; songKey.explicit = true;
             keyPopoverOpen = false;
           }
-          buildKeyPicker(); renderKeyView(); renderProg();
+          renderProg(); renderKey(); buildKeyPicker(); renderKeyView();
         };
         el.keyRoots.appendChild(b);
       });
@@ -951,8 +994,10 @@
         b.className = 'chip' + (mk === songKey.mode ? ' on' : '');
         b.textContent = MODES[mk].label;
         b.onclick = function () {
+          // Mode change is scale-context-only: it updates the palette/solo scale and the
+          // (mode-aware) readout, but does NOT transpose or re-qualify the built progression.
           songKey.mode = mk;
-          buildKeyPicker(); renderKeyView(); renderProg();
+          renderKey(); buildKeyPicker(); renderKeyView(); renderProg();
         };
         el.keyModes.appendChild(b);
       });
