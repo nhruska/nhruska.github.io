@@ -840,33 +840,25 @@
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
     }
     function renderProgPicks() {
+      // Common progressions now live inside renderSuggest's empty state (the "Next chord"
+      // disclosure). The standalone "Common progressions" disclosure (#discPatterns / #progPicks)
+      // is hidden via CSS so there is no duplication. This function is intentionally a no-op.
       if (!el.progPicks) return;
       el.progPicks.innerHTML = '';
-      var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = 'Start with a common progression';
-      el.progPicks.appendChild(lbl);
-      var row = document.createElement('div'); row.className = 'progPickRow';
-      PROGRESSIONS.forEach(function (p) {
-        var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
-        // the Roman pattern reads as the lesson; the name grounds it
-        var roman = chordsFromDegrees("C", "Major", p.degrees)
-          .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, "C") : c; })
-          .join(' ');
-        b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
-        b.onclick = function () { loadProgression(p.degrees); };
-        row.appendChild(b);
-      });
-      el.progPicks.appendChild(row);
     }
+    // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
+    // Full labels are used everywhere else (key picker chip, key-view title).
+    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       if (!el.cKey) return;
-      // Show the UNIFIED song key (root + mode, e.g. "E Mixolydian") so the readout
-      // matches the key picker exactly - no drift between the picker and the transpose
-      // readout. 'shifted' lights up whenever you've moved off the key you originally
-      // built in. Falls back to the placeholder only when there's no key AND no chords.
+      // Show the UNIFIED song key (root + abbreviated mode, e.g. "E Mixo") in the ctrlBar
+      // readout so it stays short enough for the Save button to remain on-screen at 375px.
+      // 'shifted' lights up whenever you've moved off the key you originally built in.
+      // Falls back to the placeholder only when there's no key AND no chords.
       if (songKey.root) {
-        el.cKey.textContent = songKey.root + ' ' + MODES[songKey.mode].label;
+        var shortMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
+        el.cKey.textContent = songKey.root + ' ' + shortMode;
         el.cKey.classList.toggle('shifted', cTpose !== 0);
         return;
       }
@@ -1160,10 +1152,23 @@
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0) {
-        var hint = document.createElement('p');
-        hint.className = 'keyHint suggEmpty';
-        hint.textContent = 'Add a chord - I\'ll suggest what comes next.';
-        el.suggest.appendChild(hint);
+        // Empty state: show common progressions so the user has actionable one-tap starters.
+        // This replaces the old bare "Add a chord..." hint and merges the standalone
+        // progPicks disclosure (now hidden) into the suggestions area.
+        var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+        lbl.textContent = 'Start with a common progression';
+        el.suggest.appendChild(lbl);
+        var row = document.createElement('div'); row.className = 'progPickRow';
+        PROGRESSIONS.forEach(function (p) {
+          var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
+          var roman = chordsFromDegrees('C', 'Major', p.degrees)
+            .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, 'C') : c; })
+            .join(' ');
+          b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
+          b.onclick = function () { loadProgression(p.degrees); };
+          row.appendChild(b);
+        });
+        el.suggest.appendChild(row);
         return;
       }
       var tonic = labelTonic();

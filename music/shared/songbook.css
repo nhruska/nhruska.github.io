@@ -384,8 +384,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
 .composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .composeAccordion::-webkit-scrollbar{width:0;}
-/* one compact control row: transpose + key + view on the left, Save/Clear on the right */
-.ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;}
+/* one compact control row: transpose + key + view on the left, Save/Clear on the right.
+   flex-wrap:wrap ensures the Save button stays visible at narrow (375px) widths when the
+   mode readout is long (e.g. "E Mixo"). #cKey gets min-width:0 + overflow:hidden so it
+   shrinks before it pushes Save off-screen. */
+.ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;}
+/* Key readout in ctrlBar: allow shrink, clip with ellipsis so long "E Mixo" stays contained */
+#cKey.keyReadout{min-width:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Hide the standalone "Common progressions" disclosure — its content now lives in the
+   "Next chord" suggestions area empty state, so showing it would be a duplicate. */
+#discPatterns{display:none;}
 .ctrlSpacer{flex:1 1 auto;}
 .ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
 /* 8-chord cap: gray the choosers so it reads as "no more allowed" */
