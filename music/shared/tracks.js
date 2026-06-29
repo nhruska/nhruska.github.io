@@ -233,13 +233,23 @@
       if (!th || !pack) { openPlayer(t); return; }
       var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
+      // Iframe when a curated yt id is present; otherwise a tap-to-search card.
+      // The HUD (scale + chords + circle) stays in both cases - the harmony
+      // teacher is the point; the embedded player is convenience.
+      var playerBlock = t.yt
+        ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+        : '<div class="bt-st-search">'
+          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">'
+          + 'Watch on YouTube &#8599;</a>'
+          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. The HUD below works either way.</div>'
+          + '</div>';
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + '<button class="bt-st-x" type="button">close</button></div>'
-        + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-        + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+        + playerBlock
         + '<div class="bt-st-body">'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
         + '<div class="bt-st-scale" data-scale></div></div>'
@@ -277,9 +287,15 @@
       elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
     }
 
+    // The harmony-teacher HUD (scale + chords-in-key + circle) is the point - the
+    // embedded player is convenience. Open the Studio whenever a key + mode are
+    // present (covers every curated track), even without a yt id; openStudio
+    // swaps the iframe for a tap-to-search card in that case. Pure-search
+    // fallback (no key, no pack) still goes straight to YouTube as before.
     function activate(t) {
-      if (t.yt && navigator.onLine !== false) { pack ? openStudio(t) : openPlayer(t); }
-      else openSearch(searchQuery(t));
+      if (pack && t.key && t.mode && studioTheory(t.key, t.mode)) { openStudio(t); return; }
+      if (t.yt && navigator.onLine !== false) { openPlayer(t); return; }
+      openSearch(searchQuery(t));
     }
 
     function chip(label, on, fn) {
