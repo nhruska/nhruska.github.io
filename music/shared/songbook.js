@@ -796,6 +796,7 @@
     // transposer used to be two independent key notions and drifted; now a transpose
     // moves songKey.root so the readout, palette and solo scale all follow.
     function labelTonic() { return songKey.root || progression[0]; }
+    var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
       // NO auto-switching of accordion panels on add/remove - that made the surface jump
@@ -807,22 +808,31 @@
       var acc = document.querySelector('.composeAccordion');
       if (acc) acc.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
-      el.prog.innerHTML = '';
       var tonic = labelTonic();
-      progression.forEach(function (c, i) {
-        var slot = document.createElement('div'); slot.className = 'slot';
-        var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
-        slot.appendChild(d);
-        // interval relative to the key — think I IV V, not shapes
-        if (global.Circle && global.Circle.romanFor) {
-          var rn = global.Circle.romanFor(c, tonic);
-          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
-        }
-        var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-        rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
-        slot.appendChild(rm);
-        el.prog.appendChild(slot);
-      });
+      // Only repaint the strip when something VISIBLE changed - the chords, their
+      // key-relative romans (via tonic), or the maxed cap. A mode toggle re-calls
+      // renderProg but changes none of these (romans are root-relative), so a rebuild
+      // would just flash the strip with identical content. Suggestions still refresh
+      // below (completions are mode-aware).
+      var sig = progression.join(',') + '|' + tonic + '|' + maxed;
+      if (sig !== lastProgSig) {
+        lastProgSig = sig;
+        el.prog.innerHTML = '';
+        progression.forEach(function (c, i) {
+          var slot = document.createElement('div'); slot.className = 'slot';
+          var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
+          slot.appendChild(d);
+          // interval relative to the key — think I IV V, not shapes
+          if (global.Circle && global.Circle.romanFor) {
+            var rn = global.Circle.romanFor(c, tonic);
+            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+          }
+          var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
+          rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
+          slot.appendChild(rm);
+          el.prog.appendChild(slot);
+        });
+      }
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); renderKey(); }
