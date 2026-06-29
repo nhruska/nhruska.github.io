@@ -838,7 +838,7 @@
       progression = chordsFromDegrees(root, songKey.mode, degrees);
       cTpose = 0;
       renderProg(); renderKey();
-      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
+      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
     }
     function renderProgPicks() {
       // Common progressions now live inside renderSuggest's empty state (the "Next chord"
@@ -886,28 +886,86 @@
         if (p0) songKey.root = p0.root;
       }
       renderProg(); renderKey();
-      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
+      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
     }
+    // ADAPTIVE chord surface (Phase 1). One picker that LEADS with the in-key
+    // diatonic chords when a song key is set, and keeps the full chromatic grid one
+    // tap away under "+ all chords" for borrowed / secondary / blues chords. With NO
+    // key set it shows the full chromatic grid directly (working as before) plus a
+    // gentle hint to pick a key for guided in-key chords. The in-key palette lives
+    // ONLY here now (renderKeyView keeps the scale + HSR + inversions teaching only),
+    // so the diatonic chords are never duplicated across two surfaces.
+    // 'allChordsOpen' is the user's expander state for the chromatic grid when a key
+    // is set; remembered across re-renders so toggling key/mode doesn't collapse it.
+    var allChordsOpen = false;
+    // 'allChordsActiveCat' persists which chromatic category tab (Major/Minor/7th/...)
+    // is selected across re-renders, so switching tab or toggling the expander doesn't
+    // reset to the first category.
+    var allChordsActiveCat = Object.keys(CATS)[0] || "Major";
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
-      var chips = el.catChips, grid = el.buildGrid, active = Object.keys(CATS)[0] || "Major";
-      function draw() {
-        chips.innerHTML = '';
+      var chips = el.catChips, grid = el.buildGrid;
+      // #catChips is now a vertical stack (CSS .adaptiveChips). Inside it we place the
+      // lead content (in-key palette / no-key hint), the expander, and an inner
+      // horizontally-scrolling category-tab row; the chromatic tiles go in #buildGrid.
+      chips.className = 'chips adaptiveChips';
+      chips.innerHTML = ''; grid.innerHTML = '';
+      // tap handler shared by every chord tile: add to the progression + play, with a
+      // brief selected flash for feedback.
+      function wireTap(d, c) {
+        d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
+        return d;
+      }
+      // Draw the chromatic picker: a scrollable category-tab row appended into `chips`,
+      // and the matching chord tiles into `grid`. Key-independent.
+      function drawChromatic() {
+        var tabRow = document.createElement('div'); tabRow.className = 'catTabRow';
         Object.keys(CATS).forEach(function (cat) {
           var b = document.createElement('button');
-          b.className = 'chip' + (cat === active ? ' on' : '');
+          b.className = 'chip' + (cat === allChordsActiveCat ? ' on' : '');
           b.textContent = cat;
-          b.onclick = function () { active = cat; draw(); };
-          chips.appendChild(b);
+          b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
+          tabRow.appendChild(b);
         });
-        grid.innerHTML = '';
-        (CATS[active] || []).forEach(function (c) {
-          var d = packDiagram(c, 'small');
-          d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
-          grid.appendChild(d);
+        chips.appendChild(tabRow);
+        (CATS[allChordsActiveCat] || []).forEach(function (c) {
+          grid.appendChild(wireTap(packDiagram(c, 'small'), c));
         });
       }
-      draw();
+      if (!songKey.root) {
+        // No key: full chromatic grid directly + a one-line hint nudging toward a key.
+        var hint = document.createElement('p');
+        hint.className = 'keyHint chordsHint';
+        hint.textContent = 'Pick a key (in Key & scale) to lead with its in-key chords. All chords stay available here.';
+        chips.appendChild(hint);
+        drawChromatic();
+        return;
+      }
+      // Key set: LEAD with the diatonic chords (labeled, with Roman numerals), tap=add+play.
+      var keyRoot = songKey.root, keyMode = songKey.mode;
+      var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
+      if (global.KeyExplorer) {
+        var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
+          return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+        });
+        global.KeyExplorer.renderChords(leadWrap, keItems, {
+          label: 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label,
+          diagram: packDiagram,
+          onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+        });
+      }
+      chips.appendChild(leadWrap);
+      // "+ all chords" expander: reveals the full chromatic grid for out-of-key chords.
+      var exp = document.createElement('button');
+      exp.type = 'button';
+      exp.className = 'allChordsToggle' + (allChordsOpen ? ' open' : '');
+      exp.setAttribute('aria-expanded', allChordsOpen ? 'true' : 'false');
+      exp.innerHTML = '<span class="acLabel">' + (allChordsOpen ? '− all chords' : '+ all chords') +
+        '</span> <span class="acHint">borrowed · secondary · blues 7ths</span>';
+      exp.onclick = function () { allChordsOpen = !allChordsOpen; buildGrid(); };
+      chips.appendChild(exp);
+      // When expanded, draw the chromatic picker below the expander.
+      if (allChordsOpen) drawChromatic();
     }
 
     /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ----
@@ -983,7 +1041,7 @@
             songKey.root = r; songKey.explicit = true;
             keyPopoverOpen = false;
           }
-          renderProg(); renderKey(); buildKeyPicker(); renderKeyView();
+          renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid();
         };
         el.keyRoots.appendChild(b);
       });
@@ -999,7 +1057,7 @@
           // Mode change is scale-context-only: it updates the palette/solo scale and the
           // (mode-aware) readout, but does NOT transpose or re-qualify the built progression.
           songKey.mode = mk;
-          renderKey(); buildKeyPicker(); renderKeyView(); renderProg();
+          renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
         };
         el.keyModes.appendChild(b);
       });
@@ -1018,22 +1076,19 @@
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
 
-      // chord palette + solo scale via the shared KeyExplorer (also used by the Tracks
-      // player). Theory is computed HERE so Compose keeps its own vocabulary (diatonicChords
-      // drops vii°); the module only paints + wires the tap. Compose tap = add to the
-      // progression + play. The I-IV-V HSR chain below stays Compose-only.
-      // Guarded so a future script-load reorder degrades (palette/scale skipped, HSR + title
-      // still render) instead of hard-crashing renderKeyView. key-explorer.js loads before
-      // songbook.js in index.html, so in practice this is always present.
+      // Solo scale via the shared KeyExplorer. The in-key DIATONIC CHORD palette used
+      // to render here too, but it now lives ONLY on the adaptive chord surface
+      // (buildGrid -> #discChords, which leads with the in-key chords when a key is set)
+      // so the diatonic chords are never duplicated across two surfaces. This view keeps
+      // the teaching content: title, the solo scale box, the I-IV-V HSR chain, and the
+      // "Walk the full cycle" inversions link. Guarded so a future script-load reorder
+      // degrades (scale skipped, HSR + title still render) instead of hard-crashing.
+      // A one-line pointer tells the user where the in-key chords now are.
+      var palettePtr = document.createElement('p');
+      palettePtr.className = 'keyHint chordsPtr';
+      palettePtr.textContent = 'In-key chords lead the Chords panel below; + all chords there for out-of-key.';
+      el.keyView.appendChild(palettePtr);
       if (global.KeyExplorer) {
-        var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-          return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
-        });
-        global.KeyExplorer.renderChords(el.keyView, keItems, {
-          label: 'Chords in this key',
-          diagram: packDiagram,
-          onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
-        });
         var pcs = scalePcs(keyRoot, keyMode);
         global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
           label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
@@ -1239,7 +1294,7 @@
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
-    if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); };
+    if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";

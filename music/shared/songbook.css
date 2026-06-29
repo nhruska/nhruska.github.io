@@ -352,6 +352,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    bottom via .rn). */
 .keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+/* ---- Adaptive chord surface (Phase 1) ----
+   #catChips in the Chords panel becomes a vertical stack: the in-key lead palette (or
+   the no-key hint), the "+ all chords" expander, and an inner scrollable category-tab
+   row. Override the default .chips horizontal-flex behavior for this stacked layout. */
+.adaptiveChips{display:flex;flex-direction:column;gap:0;overflow:visible;margin-bottom:10px;}
+.adaptiveChips .inKeyLead{margin-bottom:4px;}
+/* the chromatic category tabs keep the original horizontal-scroll pill-row behavior */
+.adaptiveChips .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:6px 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
+.adaptiveChips .catTabRow::-webkit-scrollbar{display:none;}
+.chordsHint{margin:0 2px 4px;}
+.chordsPtr{margin:10px 2px 2px;}
+/* "+ all chords" expander: a quiet full-width control under the in-key lead */
+.allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
+.allChordsToggle:active{transform:scale(.98);}
+.allChordsToggle.open{border-style:solid;border-color:var(--accent);color:var(--txt);}
+.allChordsToggle .acHint{font-weight:600;font-size:.66rem;color:var(--txt-dim);letter-spacing:.02em;}
 .scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;}
 .scaleBox::-webkit-scrollbar{display:none;}
 .scaleBox svg{display:block;}

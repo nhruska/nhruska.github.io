@@ -91,8 +91,13 @@
               <div class="keyView" id="keyView"></div>
             </div>
           </details>
+          <!-- Adaptive chord surface (Phase 1): leads with the in-key diatonic chords
+               when a song key is set ("+ all chords" reveals the full chromatic grid for
+               borrowed/secondary/blues), and shows the full chromatic grid directly when
+               no key is set. #catChips holds the in-key lead + expander (or no-key hint +
+               category tabs); #buildGrid holds the chromatic tiles. -->
           <details class="composeDisc" name="compose" id="discChords">
-            <summary>All chords</summary>
+            <summary>Chords</summary>
             <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
           </details>
           <!-- The old standalone "Common progressions" panel (#discPatterns / #progPicks)
