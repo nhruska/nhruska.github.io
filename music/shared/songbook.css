@@ -368,7 +368,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .allChordsToggle:active{transform:scale(.98);}
 .allChordsToggle.open{border-style:solid;border-color:var(--accent);color:var(--txt);}
 .allChordsToggle .acHint{font-weight:600;font-size:.66rem;color:var(--txt-dim);letter-spacing:.02em;}
-.scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;}
+.scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x pan-y;}
 .scaleBox::-webkit-scrollbar{display:none;}
 .scaleBox svg{display:block;}
 /* HSR Chain - three cards across showing I-IV-V (or mode equivalent) using
