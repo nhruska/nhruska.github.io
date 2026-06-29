@@ -34,8 +34,12 @@
       var lbl = document.createElement('div'); lbl.className = 'keySubLbl';
       lbl.textContent = opts.label; container.appendChild(lbl);
     }
-    var grid = document.createElement('div');
-    grid.className = opts.gridClass || 'chordGrid keyPalette';
+    // wrap=true (default): build a grid wrapper around the tiles (Compose). wrap=false:
+    // append cells straight into `container` (the Tracks studio already owns its box+label).
+    var wrap = (opts.wrap != null) ? opts.wrap : true;
+    var parent = wrap ? document.createElement('div') : container;
+    if (wrap) parent.className = opts.gridClass || 'chordGrid keyPalette';
+    var cellClass = opts.cellClass || 'chordCell';
     items.forEach(function (it) {
       var d = opts.diagram(it.chord, 'small');
       if (opts.tapClass && d && d.classList) d.classList.add(opts.tapClass);
@@ -43,17 +47,17 @@
         (function (chord, el) { el.onclick = function () { opts.onTap(chord, el); }; })(it.chord, d);
       }
       if (it.roman) {
-        var cell = document.createElement('div'); cell.className = 'chordCell';
+        var cell = document.createElement('div'); cell.className = cellClass;
         cell.appendChild(d);
         var rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = it.roman;
         cell.appendChild(rn);
-        grid.appendChild(cell);
+        parent.appendChild(cell);
       } else {
-        grid.appendChild(d);
+        parent.appendChild(d);
       }
     });
-    container.appendChild(grid);
-    return grid;
+    if (wrap) container.appendChild(parent);
+    return parent;
   }
 
   /* renderScale(container, pack, rootPc, pcs, opts)
