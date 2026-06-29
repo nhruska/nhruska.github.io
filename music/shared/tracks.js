@@ -249,23 +249,25 @@
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
-      try { elPlayer.querySelector('[data-scale]').appendChild(pack.scaleDiagram(th.rootPc, th.pcs, 7)); } catch (e) {}
-      var chordsBox = elPlayer.querySelector('[data-chords]');
-      th.chords.forEach(function (c) {
-        var d;
-        try { d = pack.diagram(c.chord, 'small'); } catch (e) { return; }
-        d.className += ' bt-st-chip';
-        d.onclick = function () {
-          try { pack.playChord(c.chord); } catch (e) {}
+      // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
+      // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
+      // chord render runs unwrapped into [data-chords] with the studio's cell class.
+      try {
+        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7 });
+      } catch (e) {}
+      global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
+        wrap: false,
+        cellClass: 'bt-st-chordcell',
+        diagram: function (name, size) {
+          var d;
+          try { d = pack.diagram(name, size); } catch (e) { return null; } // skip a chord the pack can't draw
+          d.className += ' bt-st-chip';
+          return d;
+        },
+        onTap: function (c, d) {
+          try { pack.playChord(c); } catch (e) {}
           d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
-        };
-        var cell = document.createElement('div');
-        cell.className = 'bt-st-chordcell';
-        cell.appendChild(d);
-        var rn = document.createElement('span');
-        rn.className = 'rn'; rn.textContent = c.roman;
-        cell.appendChild(rn);
-        chordsBox.appendChild(cell);
+        }
       });
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {
