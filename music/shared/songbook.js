@@ -804,6 +804,7 @@
     function loadProgression(degrees) {
       var root = keyRoot || "C";
       keyRoot = root; keyMode = "Major";
+      keyPickerOpen = false; // key is now set - collapse the full grid to the compact chip
       progression = chordsFromDegrees(root, keyMode, degrees);
       cTpose = 0;
       renderProg(); renderKey();
@@ -884,7 +885,11 @@
       var expanded = !keyRoot || keyPickerOpen;
       if (compact) {
         compact.hidden = expanded;
-        compact.textContent = keyRoot ? (keyRoot + ' ' + MODES[keyMode].label + ' v') : '';
+        compact.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        compact.setAttribute('aria-controls', 'keyRoots keyModes');
+        compact.innerHTML = keyRoot
+          ? (keyRoot + ' ' + MODES[keyMode].label + ' <span aria-hidden="true">v</span>')
+          : '';
         compact.onclick = function () { keyPickerOpen = true; buildKeyPicker(); };
       }
       el.keyRoots.hidden = !expanded;
@@ -897,11 +902,13 @@
         b.onclick = function () {
           var wasRoot = keyRoot;
           keyRoot = (keyRoot === r ? null : r);
-          if (keyRoot) {
-            keyPickerOpen = false; // auto-collapse on pick
-          } else {
-            keyPickerOpen = true;  // deselected -> re-expand
+          if (!keyRoot) {
+            keyPickerOpen = true;  // deselected -> re-expand so user can pick again
+          } else if (wasRoot) {
+            keyPickerOpen = false; // re-selecting a different root while key already existed: collapse (mode was already chosen)
           }
+          // else: first pick of a root (wasRoot was null) - leave keyPickerOpen unchanged
+          // so the mode grid stays reachable for the user to pick Minor/Dorian/etc.
           buildKeyPicker(); renderKeyView(); renderProg();
         };
         el.keyRoots.appendChild(b);
@@ -911,7 +918,11 @@
         var b = document.createElement('button');
         b.className = 'chip' + (mk === keyMode ? ' on' : '');
         b.textContent = MODES[mk].label;
-        b.onclick = function () { keyMode = mk; buildKeyPicker(); renderKeyView(); renderProg(); };
+        b.onclick = function () {
+          keyMode = mk;
+          if (keyRoot) { keyPickerOpen = false; } // mode chosen with a root set: key is complete, collapse
+          buildKeyPicker(); renderKeyView(); renderProg();
+        };
         el.keyModes.appendChild(b);
       });
       if (el.keyClear) el.keyClear.hidden = !keyRoot;
@@ -1090,7 +1101,7 @@
       if (!picks.length) {
         var hint = document.createElement('p');
         hint.className = 'keyHint suggEmpty';
-        hint.textContent = 'Add a chord - I\'ll suggest what comes next.';
+        hint.textContent = 'No suggestions for this progression yet.';
         el.suggest.appendChild(hint);
         return;
       }
