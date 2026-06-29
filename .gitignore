@@ -10,3 +10,6 @@ Thumbs.db
 # python build cruft (scripts/generate.py)
 __pycache__/
 *.pyc
+
+# session files = local continuity, never commit to this PUBLIC repo (keep the rest of .claude visible to signal CC usage)
+.claude/sessions/
