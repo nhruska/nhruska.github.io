@@ -367,6 +367,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .adaptiveChips .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:6px 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .adaptiveChips .catTabRow::-webkit-scrollbar{display:none;}
 .chordsHint{margin:0 2px 4px;}
+/* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
+   are never mistaken for the key-MODE toggle above. */
+.allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
 /* "+ all chords" expander: a quiet full-width control under the in-key lead */
 .allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
 .allChordsToggle:active{transform:scale(.98);}

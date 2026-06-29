@@ -926,9 +926,14 @@
         d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
         return d;
       }
-      // Draw the chromatic picker: a scrollable category-tab row appended into `chips`,
-      // and the matching chord tiles into `grid`. Key-independent.
+      // Draw the chromatic picker UNDER an "All chords" header: a header row, then a
+      // scrollable category-tab row (Major/Minor/7th/Maj7/Min7) and the matching chord
+      // tiles. Key-independent. The header makes it unmistakable that this block is the
+      // "All chords" browse, so its type tabs are never confused with the key-mode toggle.
       function drawChromatic() {
+        var hdr = document.createElement('div'); hdr.className = 'allChordsHdr';
+        hdr.textContent = 'All chords';
+        chips.appendChild(hdr);
         var tabRow = document.createElement('div'); tabRow.className = 'catTabRow';
         Object.keys(CATS).forEach(function (cat) {
           var b = document.createElement('button');
@@ -943,12 +948,22 @@
         });
       }
       if (!songKey.root) {
-        // No key: full chromatic grid directly + a one-line hint nudging toward a key.
+        // No key (default): show a prompt + an explicit "All chords" button. The chord-TYPE
+        // tabs + chromatic grid stay HIDDEN until the button is tapped - so the only toggle
+        // row visible by default is the key-MODE toggle above, never both at once.
         var hint = document.createElement('p');
         hint.className = 'keyHint chordsHint';
-        hint.textContent = 'Pick a key above to lead with its in-key chords. All chords stay available here.';
+        hint.textContent = 'Pick a key above to lead with its chords, or tap All chords to browse every chord.';
         chips.appendChild(hint);
-        drawChromatic();
+        var allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.className = 'allChordsToggle' + (allChordsOpen ? ' open' : '');
+        allBtn.setAttribute('aria-expanded', allChordsOpen ? 'true' : 'false');
+        allBtn.innerHTML = '<span class="acLabel">' + (allChordsOpen ? '− All chords' : 'All chords') +
+          '</span> <span class="acHint">browse every root + type</span>';
+        allBtn.onclick = function () { allChordsOpen = !allChordsOpen; buildGrid(); };
+        chips.appendChild(allBtn);
+        if (allChordsOpen) drawChromatic();
         return;
       }
       // Key set: LEAD with the diatonic chords (labeled, with Roman numerals), tap=add+play.
