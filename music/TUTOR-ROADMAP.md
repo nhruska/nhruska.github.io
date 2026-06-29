@@ -19,7 +19,7 @@ An adaptive AI music tutor whose destination is **soloing and songwriting confid
 
 ## Locked design decisions
 
-- **Chord picker = adaptive** (Phase 1): in-key chords lead and visibly change with key AND mode; "+ all chords" expander preserves access to out-of-key chords. Guided by default, unrestricted on demand. Decided 2026-06-29 via use-case/human-factors/theory review.
+- **Chord picker = adaptive, ONE panel** (Phase 1): a single Chords panel - filter (key chip + maj/min/mixo/dor mode toggle) on top, the in-key chord list directly below it (leads with in-key chords that change with key AND mode, "+ all chords" expander preserves out-of-key access), and the solo scale + teaching content as a collapsed "Solo over it" fly-out at the bottom. The separate "Key & scale" panel was merged in so there is one chord surface, not two. Guided by default, unrestricted on demand. Decided 2026-06-29 via use-case/human-factors/theory review; one-panel form via device-test feedback.
 - **Transpose == song key** (Phase 0): one unified `songKey`; transposing moves the key, picking a key transposes the progression (by tonic delta), the readout shows root + mode. No drift.
 - **Mode toggle = scale-context-only**: changing mode updates the solo scale + the in-key palette offered, but does NOT re-qualify already-built chords (deliberate). Re-qualifying is the explicit Phase 2 modal-interchange action, never a side effect.
 - **Why the picker is NOT locked to the key**: blues (C7-F7-G7 - dominants, non-diatonic), borrowed chords / modal interchange, secondary dominants (D7->G in C), and modulation all require out-of-key chords. Locking would block whole genres. Hence: lead in-key, keep all reachable.
@@ -32,9 +32,9 @@ An adaptive AI music tutor whose destination is **soloing and songwriting confid
 
 ## Surfaces (current, for reference)
 
-- **Build grid** ("all chords"): chromatic, key-independent. Becomes the "+ all chords" expander in Phase 1.
-- **"Chords in this key"** (in key & scale): diatonic to key + mode. Becomes the in-key lead in Phase 1.
-- **Solo scale + HSR I-IV-V chain + "Walk the full cycle" inversions link** (key & scale): teaching content; carries `?key=`/`?mode=` to the inversions page. Stays; feeds Phases 3-4.
+- **Build grid** ("all chords"): chromatic, key-independent. Is the "+ all chords" expander in the one Chords panel (Phase 1).
+- **In-key chord list**: diatonic to key + mode. Leads the Chords panel directly under the key filter (Phase 1).
+- **Solo scale + HSR I-IV-V chain + "Walk the full cycle" inversions link**: teaching content, now the collapsed "Solo over it" fly-out at the bottom of the Chords panel; carries `?key=`/`?mode=` to the inversions page. Feeds Phases 3-4.
 
 ## Open follow-ups
 

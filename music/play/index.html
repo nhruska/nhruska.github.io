@@ -78,27 +78,35 @@
             <summary>Next chord</summary>
             <div class="discBody"><div id="suggest" class="suggest"></div></div>
           </details>
-          <details class="composeDisc" name="compose" id="discKey">
-            <summary>Key &amp; scale</summary>
-            <div class="discBody">
-              <div class="keyStripHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-              <!-- Persistent compact key bar: #keyPickerCompact (the current-key chip,
-                   injected by songbook.js before #keyRoots) sits here, the always-visible
-                   maj/min toggle (#keyModes) beside it, and the 12-root popover (#keyRoots)
-                   drops in below the chip on demand. -->
-              <div class="chips keyModes" id="keyModes"></div>
-              <div class="keyRoots" id="keyRoots"></div>
-              <div class="keyView" id="keyView"></div>
-            </div>
-          </details>
-          <!-- Adaptive chord surface (Phase 1): leads with the in-key diatonic chords
-               when a song key is set ("+ all chords" reveals the full chromatic grid for
-               borrowed/secondary/blues), and shows the full chromatic grid directly when
-               no key is set. #catChips holds the in-key lead + expander (or no-key hint +
-               category tabs); #buildGrid holds the chromatic tiles. -->
+          <!-- ONE chord panel (Phase 1 final form). Top-to-bottom:
+               1. FILTER (always visible): the compact key chip (#keyPickerCompact,
+                  injected by songbook.js before #keyModes) taps to the 12-root popover
+                  (#keyRoots); the maj/min/mixo/dor mode toggle (#keyModes) sits beside it.
+               2. CHORD LIST (always visible): the adaptive picker - #catChips holds the
+                  in-key lead + "+ all chords" expander (or the no-key hint + category tabs),
+                  #buildGrid holds the chromatic tiles.
+               3. "Solo over it" FLY-OUT (#discSolo, collapsed by default): #keyView gets
+                  the key title + solo-scale fretboard + I-IV-V HSR chain + inversions link.
+               The old standalone "Key & scale" panel was merged in here so there is a
+               single chord surface instead of two. -->
           <details class="composeDisc" name="compose" id="discChords">
             <summary>Chords</summary>
-            <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
+            <div class="discBody">
+              <!-- 1. Filter: key chip (injected) + mode toggle, with the root popover below. -->
+              <div class="keyFilter">
+                <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+                <div class="chips keyModes" id="keyModes"></div>
+                <div class="keyRoots" id="keyRoots"></div>
+              </div>
+              <!-- 2. Chord list. -->
+              <div class="chips" id="catChips"></div>
+              <div class="chordGrid" id="buildGrid"></div>
+              <!-- 3. Solo-over-it fly-out: collapsed by default; #keyView is rendered inside. -->
+              <details class="soloDisc" id="discSolo">
+                <summary>Solo over it</summary>
+                <div class="keyView" id="keyView"></div>
+              </details>
+            </div>
           </details>
           <!-- The old standalone "Common progressions" panel (#discPatterns / #progPicks)
                was removed: its starters now live in the #discSuggest empty state above. -->
@@ -548,7 +556,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), maxNote: el('maxNote'),
+        discSuggest: el('discSuggest'), discChords: el('discChords'), discSolo: el('discSolo'), maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

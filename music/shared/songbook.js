@@ -946,7 +946,7 @@
         // No key: full chromatic grid directly + a one-line hint nudging toward a key.
         var hint = document.createElement('p');
         hint.className = 'keyHint chordsHint';
-        hint.textContent = 'Pick a key (in Key & scale) to lead with its in-key chords. All chords stay available here.';
+        hint.textContent = 'Pick a key above to lead with its in-key chords. All chords stay available here.';
         chips.appendChild(hint);
         drawChromatic();
         return;
@@ -991,9 +991,9 @@
       // current key (or a "Pick a key" prompt) and toggles the root popover.
       var chip = document.getElementById('keyPickerCompact');
       if (!chip) {
-        // Inject the chip at the TOP of the key bar: before the maj/min toggle when it
+        // Inject the chip at the TOP of the filter row: before the mode toggle when it
         // exists (so reading order is chip -> mode toggle -> root popover), else before
-        // the root grid. Both live in the same parent (#discKey discBody).
+        // the root grid. Both live in the same parent (#discChords .keyFilter).
         var anchor = el.keyModes || el.keyRoots;
         if (anchor && anchor.parentNode) {
           chip = document.createElement('button');
@@ -1077,8 +1077,14 @@
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
+      // The "Solo over it" fly-out only carries teaching content once a key is set; with
+      // no key it is disabled (and force-collapsed) so an empty disclosure can't be opened.
+      if (el.discSolo) {
+        if (!songKey.root) { el.discSolo.open = false; el.discSolo.classList.add('isEmpty'); }
+        else { el.discSolo.classList.remove('isEmpty'); }
+      }
       if (!songKey.root) {
-        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see its chords and the scale to solo over.</p>';
+        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see the scale to solo over.</p>';
         return;
       }
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
@@ -1088,16 +1094,12 @@
 
       // Solo scale via the shared KeyExplorer. The in-key DIATONIC CHORD palette used
       // to render here too, but it now lives ONLY on the adaptive chord surface
-      // (buildGrid -> #discChords, which leads with the in-key chords when a key is set)
-      // so the diatonic chords are never duplicated across two surfaces. This view keeps
-      // the teaching content: title, the solo scale box, the I-IV-V HSR chain, and the
-      // "Walk the full cycle" inversions link. Guarded so a future script-load reorder
-      // degrades (scale skipped, HSR + title still render) instead of hard-crashing.
-      // A one-line pointer tells the user where the in-key chords now are.
-      var palettePtr = document.createElement('p');
-      palettePtr.className = 'keyHint chordsPtr';
-      palettePtr.textContent = 'In-key chords lead the Chords panel below; + all chords there for out-of-key.';
-      el.keyView.appendChild(palettePtr);
+      // (buildGrid -> the chord list above this fly-out, which leads with the in-key
+      // chords when a key is set) so the diatonic chords are never duplicated across two
+      // surfaces. This fly-out keeps the teaching content: title, the solo scale box, the
+      // I-IV-V HSR chain, and the "Walk the full cycle" inversions link. Guarded so a
+      // future script-load reorder degrades (scale skipped, HSR + title still render)
+      // instead of hard-crashing.
       if (global.KeyExplorer) {
         var pcs = scalePcs(keyRoot, keyMode);
         global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {

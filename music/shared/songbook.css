@@ -298,7 +298,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progPick .ppRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);letter-spacing:.02em;white-space:nowrap;}
 .progPick .ppName{font-size:.66rem;color:var(--txt-dim);font-weight:600;white-space:nowrap;}
 .cActions{display:flex;gap:8px;margin:14px 0;}
-.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;}
+/* touch-action:pan-y - the chord tiles are a vertical grid (no horizontal scroll of its
+   own), so a vertical swipe over it MUST pan the page/accordion, never get trapped. */
+.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;touch-action:pan-y;}
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
    grid, so every chord box reads the same. Suggestions add an accent border to
    signal "tap to add"; the current progression and the picker stay neutral. */
@@ -318,9 +320,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow .chord.suggPick .chord-name{color:var(--accent);}
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
 .chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
-/* ---- Key & scale picker ---- */
-.keyStrip{margin:2px 0 18px;}
-.keyStripHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+/* ---- Key filter (top of the single Chords panel) ---- */
+/* The filter row: the injected key chip (#keyPickerCompact) + the mode toggle (#keyModes),
+   with the 12-root popover (#keyRoots) dropping in below the chip on demand. Sits above
+   the chord list so picking a key / mode re-leads the chords directly below it. */
+.keyFilter{margin:2px 0 12px;}
+.keyFilterHead{display:flex;align-items:center;justify-content:flex-end;min-height:0;}
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
@@ -362,7 +367,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .adaptiveChips .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:6px 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .adaptiveChips .catTabRow::-webkit-scrollbar{display:none;}
 .chordsHint{margin:0 2px 4px;}
-.chordsPtr{margin:10px 2px 2px;}
 /* "+ all chords" expander: a quiet full-width control under the in-key lead */
 .allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
 .allChordsToggle:active{transform:scale(.98);}
@@ -398,7 +402,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #s-compose{height:100%;}
 .composeWrap{display:flex;flex-direction:column;height:100%;}
 .composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
-.composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+/* The accordion is compose's primary scroll container. overscroll-behavior:auto (not
+   contain) so a vertical swipe over the chord list scrolls smoothly and, at a boundary,
+   chains to the page instead of being trapped (the contained version could swallow a
+   vertical swipe when content was short). */
+.composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
 .composeAccordion::-webkit-scrollbar{width:0;}
 /* one compact control row: transpose + key + view on the left, Save/Clear on the right.
    flex-wrap:wrap ensures the Save button stays visible at narrow (375px) widths when the
@@ -429,6 +437,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeDisc>summary:focus-visible{outline-offset:-2px;}
 .discBody{padding:2px 14px 14px;}
 .discBody .chips{margin-bottom:12px;}
+/* "Solo over it" fly-out: a nested disclosure at the bottom of the single Chords panel.
+   Collapsed by default to save vertical space; opening it reveals the key title + solo
+   scale fretboard + I-IV-V HSR chain + the inversions link (renderKeyView's teaching
+   content). Visually lighter than the top-level composeDisc so it reads as a secondary,
+   in-panel reveal rather than another section. */
+.soloDisc{margin-top:6px;border-top:1px solid var(--line);}
+.soloDisc>summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;list-style:none;}
+.soloDisc>summary::-webkit-details-marker{display:none;}
+.soloDisc>summary::before{content:"\25B8";font-size:.8rem;color:var(--accent);transition:transform .15s;}
+.soloDisc[open]>summary::before{transform:rotate(90deg);}
+.soloDisc>summary:active{color:var(--txt);}
+.soloDisc>summary:focus-visible{outline-offset:2px;}
+/* No key yet: disable + dim the fly-out so the empty disclosure can't be opened. */
+.soloDisc.isEmpty{opacity:.5;}
+.soloDisc.isEmpty>summary{pointer-events:none;}
+.soloDisc .keyView{padding-top:4px;}
 /* keyboard focus ring - the app previously stripped all outlines (a11y regression).
    No border-radius here: the outline follows each element's own radius; setting it
    would square off pill chips/buttons when focused. */
