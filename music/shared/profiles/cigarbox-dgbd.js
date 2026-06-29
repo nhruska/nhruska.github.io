@@ -52,7 +52,14 @@
       E7: [2, 1, 0, 0],        // E G# B D
       C7: [-1, 5, 5, 8],       // C E Bb (no 5th; partial)
       B7: [4, 4, 4, 7],        // F# B D# A
-      F7: [3, 2, 1, 1]         // F A C Eb
+      F7: [3, 2, 1, 1],        // F A C Eb
+
+      // Diminished (vii°). Dim7 voicings - 4 roots per family share each shape
+      // because dim7 is symmetric in minor thirds. F1=[1,2,1,4] (C/Eb/F#/A),
+      // F2=[2,3,2,5] (C#/E/G/Bb), F3=[3,4,3,6] (D/F/G#/B).
+      Cdim: [1, 2, 1, 4], "D#dim": [1, 2, 1, 4], Ebdim: [1, 2, 1, 4], "F#dim": [1, 2, 1, 4], Gbdim: [1, 2, 1, 4], Adim: [1, 2, 1, 4],
+      "C#dim": [2, 3, 2, 5], Dbdim: [2, 3, 2, 5], Edim: [2, 3, 2, 5], Gdim: [2, 3, 2, 5], "A#dim": [2, 3, 2, 5], Bbdim: [2, 3, 2, 5],
+      Ddim: [3, 4, 3, 6], Fdim: [3, 4, 3, 6], "G#dim": [3, 4, 3, 6], Abdim: [3, 4, 3, 6], Bdim: [3, 4, 3, 6]
     }
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -72,7 +72,14 @@
       A7: [-1, 7, 6, 5, 5],
       E7: [-1, 2, 1, 0, 0],
       B7: [-1, 4, 4, 4, 7],
-      F7: [-1, 3, 2, 1, 1]
+      F7: [-1, 3, 2, 1, 1],
+
+      // Diminished (vii°). Dim7 voicings - the top 4 strings share the cigarbox
+      // pattern; the G drone (5th) rings open only when G is a chord tone
+      // (family 2: C#/E/G/Bb). 3-fret-symmetric so 4 roots share each shape.
+      Cdim: [-1, 1, 2, 1, 4], "D#dim": [-1, 1, 2, 1, 4], Ebdim: [-1, 1, 2, 1, 4], "F#dim": [-1, 1, 2, 1, 4], Gbdim: [-1, 1, 2, 1, 4], Adim: [-1, 1, 2, 1, 4],
+      "C#dim": [0, 2, 3, 2, 5], Dbdim: [0, 2, 3, 2, 5], Edim: [0, 2, 3, 2, 5], Gdim: [0, 2, 3, 2, 5], "A#dim": [0, 2, 3, 2, 5], Bbdim: [0, 2, 3, 2, 5],
+      Ddim: [-1, 3, 4, 3, 6], Fdim: [-1, 3, 4, 3, 6], "G#dim": [-1, 3, 4, 3, 6], Abdim: [-1, 3, 4, 3, 6], Bdim: [-1, 3, 4, 3, 6]
     }
   };
 })(typeof window !== 'undefined' ? window : this);

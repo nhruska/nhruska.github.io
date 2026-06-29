@@ -60,7 +60,14 @@
       Dm7: [2, 2, 3, 3],
       Em7: [4, 0, 0, 2],
       Fm7: [3, 1, 3, 3],
-      Gm7: [2, 0, 3, 1]
+      Gm7: [2, 0, 3, 1],
+      // Diminished (vii°). Dim7 voicings on CGDA all-fifths tuning - same shape
+      // pattern as mandolin but P5 lower (start one fret higher to land in the
+      // playable range). 3-fret-symmetric: F1=[3,2,4,3] (C/Eb/F#/A),
+      // F2=[4,3,5,4] (C#/E/G/Bb), F3=[5,4,6,5] (D/F/G#/B).
+      Cdim: [3, 2, 4, 3], "D#dim": [3, 2, 4, 3], Ebdim: [3, 2, 4, 3], "F#dim": [3, 2, 4, 3], Gbdim: [3, 2, 4, 3], Adim: [3, 2, 4, 3],
+      "C#dim": [4, 3, 5, 4], Dbdim: [4, 3, 5, 4], Edim: [4, 3, 5, 4], Gdim: [4, 3, 5, 4], "A#dim": [4, 3, 5, 4], Bbdim: [4, 3, 5, 4],
+      Ddim: [5, 4, 6, 5], Fdim: [5, 4, 6, 5], "G#dim": [5, 4, 6, 5], Abdim: [5, 4, 6, 5], Bdim: [5, 4, 6, 5]
     }
   };
 })(typeof window !== 'undefined' ? window : this);
