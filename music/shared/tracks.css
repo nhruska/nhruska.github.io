@@ -82,8 +82,11 @@
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
     margin-bottom:9px;font-weight:700;}
   .bt-st-scale{display:flex;justify-content:center;}
-  .bt-st-chords{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;}
-  .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
+     taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width
+     columns + bottom-aligned cells line every roman up regardless of diagram height. */
+  .bt-st-chords{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px;align-items:end;}
+  .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
   .bt-st-chordcell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
     color:var(--txt-dim);letter-spacing:.04em;transition:color .12s;}
   .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s;
@@ -118,7 +121,8 @@
   .cofKeyName{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;}
   .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
   .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
-  .cofChord{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:40px;}
+  /* uniform 44px tiles so longer names (C#dim, F#m) don't squash + every tile is a thumb target */
+  .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:46px;min-height:44px;}
   .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
   .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);}
   .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
