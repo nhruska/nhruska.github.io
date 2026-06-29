@@ -79,9 +79,13 @@
           <details class="composeDisc" name="compose" id="discKey">
             <summary>Key &amp; scale</summary>
             <div class="discBody">
-              <div class="keyStripHead"><span class="keyLbl">Pick a key</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-              <div class="keyRoots" id="keyRoots"></div>
+              <div class="keyStripHead"><span class="keyLbl">Key &amp; scale</span><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+              <!-- Persistent compact key bar: #keyPickerCompact (the current-key chip,
+                   injected by songbook.js before #keyRoots) sits here, the always-visible
+                   maj/min toggle (#keyModes) beside it, and the 12-root popover (#keyRoots)
+                   drops in below the chip on demand. -->
               <div class="chips keyModes" id="keyModes"></div>
+              <div class="keyRoots" id="keyRoots"></div>
               <div class="keyView" id="keyView"></div>
             </div>
           </details>
@@ -523,6 +527,7 @@
       songs: songs,
       chordPack: pack,
       storagePrefix: 'roadcase-' + profile.id,
+      profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
       contexts: contexts,
       el: {

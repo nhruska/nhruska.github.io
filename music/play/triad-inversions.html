@@ -534,7 +534,16 @@ function writeStoredArr(key, arr) { try { localStorage.setItem(key, JSON.stringi
 const NATURAL_KEYS = ['C','D','E','F','G','A','B'];
 const ALL_KEYS_DEFAULT = NATURAL_KEYS.concat(['C#','D#','F#','G#','A#']);
 
-let activeKey = readStored(STORAGE.active, 'D');
+// A ?key= deep-link (carried from the Compose "walk the cycle" link) pre-selects that
+// key, overriding the stored one, so the inversions page opens in the same key the user
+// is composing in. Falls back to the stored key, then 'D'. The cycle is always derived
+// I-IV-V from the key, so no palette/mode dependency; ?mode= is accepted but unused for
+// now (the page renders the major cycle - a minor variant is a later phase).
+let activeKey = (function () {
+  const qk = new URLSearchParams(location.search).get('key');
+  if (qk && ALL_KEYS_DEFAULT.includes(qk)) { writeStored(STORAGE.active, qk); return qk; }
+  return readStored(STORAGE.active, 'D');
+})();
 if (!ALL_KEYS_DEFAULT.includes(activeKey)) activeKey = 'D';
 let dismissed = readStoredArr(STORAGE.dismissed);
 const isFirstVisit = !readStored(STORAGE.seen, null);
