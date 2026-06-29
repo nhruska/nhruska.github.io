@@ -868,14 +868,42 @@
 
     /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ---- */
     var keyRoot = null, keyMode = "Major";
+    var keyPickerOpen = true; // true = expanded (full root+mode grid); false = collapsed to compact chip
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
+      // Compact chip: inject once into the discKey discBody (before keyRoots)
+      var compact = document.getElementById('keyPickerCompact');
+      if (!compact && el.keyRoots.parentNode) {
+        compact = document.createElement('button');
+        compact.type = 'button';
+        compact.id = 'keyPickerCompact';
+        compact.className = 'keyPickerCompact';
+        el.keyRoots.parentNode.insertBefore(compact, el.keyRoots);
+      }
+      // Determine expanded/collapsed state
+      var expanded = !keyRoot || keyPickerOpen;
+      if (compact) {
+        compact.hidden = expanded;
+        compact.textContent = keyRoot ? (keyRoot + ' ' + MODES[keyMode].label + ' v') : '';
+        compact.onclick = function () { keyPickerOpen = true; buildKeyPicker(); };
+      }
+      el.keyRoots.hidden = !expanded;
+      el.keyModes.hidden = !expanded;
       el.keyRoots.innerHTML = '';
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === keyRoot ? ' on' : '');
         b.textContent = r;
-        b.onclick = function () { keyRoot = (keyRoot === r ? null : r); buildKeyPicker(); renderKeyView(); renderProg(); };
+        b.onclick = function () {
+          var wasRoot = keyRoot;
+          keyRoot = (keyRoot === r ? null : r);
+          if (keyRoot) {
+            keyPickerOpen = false; // auto-collapse on pick
+          } else {
+            keyPickerOpen = true;  // deselected -> re-expand
+          }
+          buildKeyPicker(); renderKeyView(); renderProg();
+        };
         el.keyRoots.appendChild(b);
       });
       el.keyModes.innerHTML = '';
@@ -1034,7 +1062,13 @@
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
-      if (progression.length === 0) return;
+      if (progression.length === 0) {
+        var hint = document.createElement('p');
+        hint.className = 'keyHint suggEmpty';
+        hint.textContent = 'Add a chord - I\'ll suggest what comes next.';
+        el.suggest.appendChild(hint);
+        return;
+      }
       var tonic = labelTonic();
       // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
       // flagged right inside the normal "add a chord" list (accent glow + a tiny name
@@ -1053,7 +1087,13 @@
         if (i >= 0) picks.splice(i, 1);
       });
       picks = Object.keys(completeBy).concat(picks).slice(0, 5);
-      if (!picks.length) return;
+      if (!picks.length) {
+        var hint = document.createElement('p');
+        hint.className = 'keyHint suggEmpty';
+        hint.textContent = 'Add a chord - I\'ll suggest what comes next.';
+        el.suggest.appendChild(hint);
+        return;
+      }
       var n = progression.length;
       // Helpful "Add a Nth chord" guidance only for the first few; past that the panel's own
       // "Next chord" summary already says it (avoid the duplicate header the user flagged).
@@ -1087,7 +1127,7 @@
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
-    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); renderProg(); };
+    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; keyPickerOpen = true; buildKeyPicker(); renderKeyView(); renderProg(); };
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";

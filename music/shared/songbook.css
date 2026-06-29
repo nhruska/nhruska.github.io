@@ -276,6 +276,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
 .suggest{margin-top:2px;}
 .suggest:empty{display:none;}
+.suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
 /* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
@@ -323,10 +324,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
+/* Compact chip shown when a key is set and the full picker is collapsed */
+.keyPickerCompact{display:inline-flex;align-items:center;min-height:44px;padding:7px 16px;border-radius:18px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent);font-family:'Space Mono',monospace;font-size:.84rem;font-weight:700;cursor:pointer;margin-bottom:10px;transition:background .15s,border-color .15s;}
+.keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent);transform:scale(.95);}
+.keyPickerCompact[hidden]{display:none;}
 /* all 12 roots visible at once (wrap), each a 44px thumb target - no hidden-scroll */
 .keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.keyRoots[hidden]{display:none;}
 .rootChip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:.78rem;}
 .keyModes{margin-bottom:2px;}
+.keyModes[hidden]{display:none;}
 .keyHint{color:var(--txt-dim);font-size:.82rem;margin:8px 2px 2px;}
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
 .keyTitle strong{color:var(--txt);font-weight:800;}
