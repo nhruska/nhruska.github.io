@@ -77,6 +77,17 @@
   .bt-st-x:hover{color:var(--accent);border-color:var(--accent);}
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  /* No-yt fallback: the Practice Studio still loads (HUD intact), the iframe slot
+     becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
+     harmony-teacher surface usable for every track regardless of curated IDs. */
+  .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
+  .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
+    font-weight:700;font-size:.92rem;color:var(--accent);text-decoration:none;
+    border:1px solid var(--accent-dim);background:var(--accent-deep);
+    padding:10px 16px;border-radius:10px;min-height:44px;}
+  .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
@@ -89,7 +100,17 @@
   .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
   .bt-st-chordcell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
     color:var(--txt-dim);letter-spacing:.04em;transition:color .12s;}
-  .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s;
+  /* Stack the chord NAME above its diagram + center both - songbook.css scopes
+     this layout to specific parents (.prog, .suggRow, .chordGrid, .hsrChain),
+     none of which the Practice Studio is under. Without this rule the inline
+     <span class="chord-name"> floats to the left of the SVG (the misalignment
+     reported on the Tracks tab). */
+  .bt-st-chordcell .chord{display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:12px;
+    padding:7px 5px 5px;box-sizing:border-box;}
+  .bt-st-chordcell .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;
+    font-size:.82rem;color:var(--txt);}
+  .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s,background .15s,border-color .15s;
     outline:2px solid transparent;outline-offset:2px;}
   .bt-st-chip:active{transform:scale(.96);}
   .bt-st-chip.sel{outline-color:var(--accent);}

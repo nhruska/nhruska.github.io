@@ -842,6 +842,13 @@
       if (!progression.length) return;
       progression = progression.map(function (c) { return tpose(c, st); });
       cTpose += st;
+      // Keep the Key & Scale picker in sync with the transpose - the diatonic
+      // palette + scale view should follow the progression's root (one-way:
+      // transpose -> key picker; picking a key chip does NOT transpose).
+      if (keyRoot) {
+        keyRoot = tpose(keyRoot, st);
+        buildKeyPicker(); renderKeyView();
+      }
       renderProg(); renderKey();
     }
     function buildGrid() {
