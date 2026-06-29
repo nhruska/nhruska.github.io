@@ -59,7 +59,7 @@
         <div class="composeSticky">
           <div class="ctrlBar">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Key (first chord) — tap to reset transpose">—</button>
+            <button class="keyReadout" id="cKey" title="Song key - tap to reset transpose">—</button>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
             <span class="ctrlSpacer"></span>
@@ -72,7 +72,9 @@
         <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
         <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
         <div class="composeAccordion">
-          <details class="composeDisc" name="compose" id="discSuggest">
+          <!-- Default-open at cold start: its empty state shows the common-progression
+               starters so a fresh Compose tab offers actionable one-tap starts. -->
+          <details class="composeDisc" name="compose" id="discSuggest" open>
             <summary>Next chord</summary>
             <div class="discBody"><div id="suggest" class="suggest"></div></div>
           </details>
@@ -93,10 +95,8 @@
             <summary>All chords</summary>
             <div class="discBody"><div class="chips" id="catChips"></div><div class="chordGrid" id="buildGrid"></div></div>
           </details>
-          <details class="composeDisc" name="compose" id="discPatterns" open>
-            <summary>Common progressions</summary>
-            <div class="discBody"><div id="progPicks" class="progPicks"></div></div>
-          </details>
+          <!-- The old standalone "Common progressions" panel (#discPatterns / #progPicks)
+               was removed: its starters now live in the #discSuggest empty state above. -->
         </div>
       </div>
     </section>
@@ -539,11 +539,11 @@
         pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
-        prog: el('prog'), suggest: el('suggest'), progPicks: el('progPicks'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), discPatterns: el('discPatterns'), maxNote: el('maxNote'),
+        discSuggest: el('discSuggest'), discKey: el('discKey'), discChords: el('discChords'), maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

@@ -391,9 +391,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;}
 /* Key readout in ctrlBar: allow shrink, clip with ellipsis so long "E Mixo" stays contained */
 #cKey.keyReadout{min-width:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* Hide the standalone "Common progressions" disclosure — its content now lives in the
-   "Next chord" suggestions area empty state, so showing it would be a duplicate. */
-#discPatterns{display:none;}
 .ctrlSpacer{flex:1 1 auto;}
 .ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
 /* 8-chord cap: gray the choosers so it reads as "no more allowed" */
