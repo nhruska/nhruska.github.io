@@ -258,7 +258,12 @@
       global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
         wrap: false,
         cellClass: 'bt-st-chordcell',
-        diagram: function (name, size) { var d = pack.diagram(name, size); d.className += ' bt-st-chip'; return d; },
+        diagram: function (name, size) {
+          var d;
+          try { d = pack.diagram(name, size); } catch (e) { return null; } // skip a chord the pack can't draw
+          d.className += ' bt-st-chip';
+          return d;
+        },
         onTap: function (c, d) {
           try { pack.playChord(c); } catch (e) {}
           d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);

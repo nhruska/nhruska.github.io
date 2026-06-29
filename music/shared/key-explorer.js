@@ -21,7 +21,8 @@
    *   items: [{ chord: 'C', roman: 'I' }]  - caller pre-derives (vocabulary stays caller's)
    *   opts:
    *     label    - optional 'Chords in this key' sub-label
-   *     diagram  - REQUIRED fn(chordName, size) -> tile element (caller's pack diagram)
+   *     diagram  - REQUIRED when items is non-empty: fn(chordName, size) -> tile element,
+   *                or null to skip that chord (e.g. the pack can't render it)
    *     onTap    - optional fn(chordName, tileEl); when set, makes the tile interactive.
    *                Compose passes add-to-progression+play; Tracks passes play-only.
    *     tapClass - optional class added to each tile (opt-in). Lets add-tiles LOOK
@@ -42,6 +43,7 @@
     var cellClass = opts.cellClass || 'chordCell';
     items.forEach(function (it) {
       var d = opts.diagram(it.chord, 'small');
+      if (!d) return;  // a diagram that can't render (returns null) is skipped, not crashed on
       if (opts.tapClass && d && d.classList) d.classList.add(opts.tapClass);
       if (opts.onTap) {
         (function (chord, el) { el.onclick = function () { opts.onTap(chord, el); }; })(it.chord, d);

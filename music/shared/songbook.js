@@ -904,19 +904,24 @@
       // player). Theory is computed HERE so Compose keeps its own vocabulary (diatonicChords
       // drops vii°); the module only paints + wires the tap. Compose tap = add to the
       // progression + play. The I-IV-V HSR chain below stays Compose-only.
-      var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-        return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
-      });
-      global.KeyExplorer.renderChords(el.keyView, keItems, {
-        label: 'Chords in this key',
-        diagram: packDiagram,
-        onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
-      });
-      var pcs = scalePcs(keyRoot, keyMode);
-      global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
-        label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
-        frets: 7
-      });
+      // Guarded so a future script-load reorder degrades (palette/scale skipped, HSR + title
+      // still render) instead of hard-crashing renderKeyView. key-explorer.js loads before
+      // songbook.js in index.html, so in practice this is always present.
+      if (global.KeyExplorer) {
+        var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
+          return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+        });
+        global.KeyExplorer.renderChords(el.keyView, keItems, {
+          label: 'Chords in this key',
+          diagram: packDiagram,
+          onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+        });
+        var pcs = scalePcs(keyRoot, keyMode);
+        global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
+          label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
+          frets: 7
+        });
+      }
 
       // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
       // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
