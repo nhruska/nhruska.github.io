@@ -1744,5 +1744,881 @@
       ]
     ],
     "jam": true
+  },
+  {
+    "t": "Bohemian Rhapsody",
+    "a": "Queen",
+    "y": 1975,
+    "d": "70s",
+    "seq": [
+      "Bb",
+      "F",
+      "Eb",
+      "Cm",
+      "Gm",
+      "Ab"
+    ],
+    "sheet": [
+      [
+        "Ballad",
+        "[Bb]Is this the real [F]life? Is this just [Eb]fantasy? [Bb]"
+      ],
+      [
+        "",
+        "[Cm]Caught in a land[F]slide, no [Bb]escape from re[Gm]ality"
+      ],
+      [
+        "",
+        "Open your [Eb]eyes, [Bb]look up to the [F]skies and [Bb]see"
+      ],
+      [
+        "Hook",
+        "[Eb]Mama, [Bb]just killed a [F]man [Bb]"
+      ]
+    ]
+  },
+  {
+    "t": "Stormy Monday",
+    "a": "The Allman Brothers Band",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "Bb",
+      "Eb",
+      "F",
+      "Cm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Bb]They call it stormy [Eb]Monday, but [Bb]Tuesday's just as bad"
+      ],
+      [
+        "",
+        "[Eb]Wednesday's worse and [Bb]Thursday's also sad"
+      ],
+      [
+        "Turnaround",
+        "[Cm]Yes the eagle [F]flies on Friday, and [Bb]Saturday I go out to play"
+      ]
+    ],
+    "jam": true
+  },
+  {
+    "t": "You've Got a Friend",
+    "a": "Carole King",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "Bb",
+      "F",
+      "Eb",
+      "Cm",
+      "Gm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Bb]When you're down and [F]troubled and you [Eb]need a helping [Bb]hand"
+      ],
+      [
+        "",
+        "And [Cm]nothing, nothing is [F]going right [Bb]"
+      ],
+      [
+        "Chorus",
+        "You just [Eb]call out my [F]name and you [Bb]know, wherever I [Gm]am"
+      ],
+      [
+        "",
+        "I'll come [Eb]running to [F]see you again [Bb]"
+      ]
+    ]
+  },
+  {
+    "t": "Sultans of Swing",
+    "a": "Dire Straits",
+    "y": 1978,
+    "d": "70s",
+    "seq": [
+      "Dm",
+      "C",
+      "Bb",
+      "A",
+      "F",
+      "Gm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "You get a [Dm]shiver in the [C]dark, it's a [Bb]raining in the [A]park"
+      ],
+      [
+        "",
+        "But meantime, [Dm]south of the [C]river you stop and you [Bb]hold every[A]thing"
+      ],
+      [
+        "Chorus",
+        "And the [F]band plays Dixie [C]double four [Bb]time"
+      ],
+      [
+        "",
+        "We're the [Dm]sultans, we're the [Gm]sultans of [A]swing"
+      ]
+    ]
+  },
+  {
+    "t": "Another Brick in the Wall (Pt. 2)",
+    "a": "Pink Floyd",
+    "y": 1979,
+    "d": "70s",
+    "seq": [
+      "Dm",
+      "G",
+      "C",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Dm]We don't need no [G]education"
+      ],
+      [
+        "",
+        "[Dm]We don't need no [G]thought control"
+      ],
+      [
+        "Chorus",
+        "All in [Dm]all you're just an[G]other brick in the [Dm]wall"
+      ]
+    ]
+  },
+  {
+    "t": "Comfortably Numb",
+    "a": "Pink Floyd",
+    "y": 1979,
+    "d": "70s",
+    "seq": [
+      "Bm",
+      "A",
+      "G",
+      "Em",
+      "D",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Bm]Hello, [A]hello, [G]hello"
+      ],
+      [
+        "",
+        "Is there [Em]anybody [Bm]in there?"
+      ],
+      [
+        "Chorus",
+        "[D]I have become [A]comfortably [C]numb [G]"
+      ]
+    ]
+  },
+  {
+    "t": "More Than a Feeling",
+    "a": "Boston",
+    "y": 1976,
+    "d": "70s",
+    "seq": [
+      "D",
+      "C",
+      "G",
+      "Em",
+      "F#m"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "I [D]looked out this [C]morning and the [G]sun was gone"
+      ],
+      [
+        "",
+        "Turned on some [D]music to [C]start my day [G]"
+      ],
+      [
+        "Chorus",
+        "It's [D]more than a feeling [C]"
+      ],
+      [
+        "",
+        "When I [G]hear that old song they used to [F#m]play [Em]"
+      ]
+    ]
+  },
+  {
+    "t": "Carry On Wayward Son",
+    "a": "Kansas",
+    "y": 1976,
+    "d": "70s",
+    "seq": [
+      "C",
+      "Bb",
+      "F",
+      "G",
+      "Am",
+      "Em"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[C]Carry [Bb]on my [F]wayward [C]son"
+      ],
+      [
+        "",
+        "There'll be [Bb]peace when [F]you are [C]done"
+      ],
+      [
+        "Verse",
+        "Once I [Am]rose above the [Em]noise and [F]confusion"
+      ],
+      [
+        "",
+        "Just to [Am]get a glimpse be[Em]yond this il[F]lusion [G]"
+      ]
+    ]
+  },
+  {
+    "t": "Dream On",
+    "a": "Aerosmith",
+    "y": 1973,
+    "d": "70s",
+    "seq": [
+      "F#m",
+      "Bm",
+      "A",
+      "E",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F#m]Every time that I [Bm]look in the [A]mirror"
+      ],
+      [
+        "",
+        "[E]All these lines on my [F#m]face getting clearer"
+      ],
+      [
+        "Chorus",
+        "[F#m]Dream on, [Bm]dream on, [A]dream on"
+      ],
+      [
+        "",
+        "[E]Dream until your [D]dreams come [F#m]true"
+      ]
+    ]
+  },
+  {
+    "t": "Ramblin' Man",
+    "a": "The Allman Brothers Band",
+    "y": 1973,
+    "d": "70s",
+    "seq": [
+      "G",
+      "D",
+      "Em",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Chorus",
+        "[G]Lord I was [D]born a [Em]ramblin' [C]man"
+      ],
+      [
+        "",
+        "Tryin' to make a [G]livin' and [D]doin' the best I [C]can [G]"
+      ],
+      [
+        "Verse",
+        "My father was a [Em]gambler down in [G]Georgia [D]"
+      ]
+    ],
+    "jam": true
+  },
+  {
+    "t": "American Pie",
+    "a": "Don McLean",
+    "y": 1971,
+    "d": "70s",
+    "seq": [
+      "G",
+      "D",
+      "Em",
+      "Am",
+      "C",
+      "F"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "A [G]long, long [D]time ago"
+      ],
+      [
+        "",
+        "[Em]I can still re[Am]member how that"
+      ],
+      [
+        "",
+        "[C]music used to [Em]make me [D]smile"
+      ],
+      [
+        "Chorus",
+        "So bye, bye [C]Miss American [G]Pie"
+      ],
+      [
+        "",
+        "Drove my [C]Chevy to the [G]levee but the [D]levee was dry"
+      ]
+    ],
+    "jam": true
+  },
+  {
+    "t": "She's Always a Woman",
+    "a": "Billy Joel",
+    "y": 1977,
+    "d": "70s",
+    "seq": [
+      "F",
+      "C",
+      "Bb",
+      "Dm",
+      "Gm",
+      "Am"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "She [F]can [C]kill with a [Bb]smile, she can [F]wound with her [C]eyes"
+      ],
+      [
+        "",
+        "She can [Dm]ruin your [Am]faith with her [Gm]casual [C]lies"
+      ],
+      [
+        "Chorus",
+        "Oh, she [Bb]takes care of [F]herself"
+      ],
+      [
+        "",
+        "She can [Dm]wait if she [Gm]wants, she's a[C]head of her[F]self"
+      ]
+    ]
+  },
+  {
+    "t": "Refugee",
+    "a": "Tom Petty and the Heartbreakers",
+    "y": 1979,
+    "d": "70s",
+    "seq": [
+      "Em",
+      "C",
+      "D",
+      "G"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Em]We got somethin', we both [C]know it, we don't [D]talk too much about it [Em]"
+      ],
+      [
+        "",
+        "[Em]Ain't no real big [C]secret, but it [D]seems to me you [Em]work too hard on it"
+      ],
+      [
+        "Chorus",
+        "[Em]You don't have to [C]live like a [G]refugee [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Roxanne",
+    "a": "The Police",
+    "y": 1978,
+    "d": "70s",
+    "seq": [
+      "Gm",
+      "F",
+      "Eb",
+      "Bb",
+      "Cm",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Gm]Roxanne, [F]you don't have to [Eb]put on the red [F]light"
+      ],
+      [
+        "",
+        "[Gm]Those days are [F]over, you don't have to [Eb]sell your body to the [F]night"
+      ],
+      [
+        "Chorus",
+        "[Bb]Rox[F]anne, [Cm]you don't have to [Gm]put on the red [D]light"
+      ]
+    ]
+  },
+  {
+    "t": "Message in a Bottle",
+    "a": "The Police",
+    "y": 1979,
+    "d": "70s",
+    "seq": [
+      "C#m",
+      "G#m",
+      "A",
+      "B"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C#m]Just a castaway, [G#m]an island lost at sea, oh"
+      ],
+      [
+        "",
+        "[A]Another lonely day, [B]no one here but me, oh"
+      ],
+      [
+        "Chorus",
+        "[C#m]I'll send an [G#m]S.O.S. to the [A]world [B]"
+      ],
+      [
+        "",
+        "I hope that [C#m]someone gets my, [G#m]someone gets my [A]message in a [B]bottle"
+      ]
+    ]
+  },
+  {
+    "t": "Sweet Dreams (Are Made of This)",
+    "a": "Eurythmics",
+    "y": 1983,
+    "d": "80s",
+    "seq": [
+      "Cm",
+      "Ab",
+      "Bb",
+      "Eb"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Cm]Sweet dreams are [Bb]made of [Ab]this"
+      ],
+      [
+        "",
+        "[Cm]Who am I to dis[Bb]a[Ab]gree?"
+      ],
+      [
+        "",
+        "[Cm]Travel the [Bb]world and the [Ab]seven [Cm]seas"
+      ],
+      [
+        "",
+        "[Cm]Everybody's [Bb]looking for [Ab]something [Cm]"
+      ]
+    ]
+  },
+  {
+    "t": "Money for Nothing",
+    "a": "Dire Straits",
+    "y": 1985,
+    "d": "80s",
+    "seq": [
+      "Gm",
+      "Bb",
+      "C",
+      "F",
+      "Eb"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "Now [Gm]look at them yo-yos, that's the [Bb]way you do it"
+      ],
+      [
+        "",
+        "You play the [C]guitar on the [Gm]MTV"
+      ],
+      [
+        "Chorus",
+        "I [Gm]want my, I [F]want my, I [Eb]want my [Bb]MTV [Gm]"
+      ]
+    ]
+  },
+  {
+    "t": "Brothers in Arms",
+    "a": "Dire Straits",
+    "y": 1985,
+    "d": "80s",
+    "seq": [
+      "Gm",
+      "Eb",
+      "F",
+      "Bb",
+      "Cm",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "These [Gm]mist covered [Eb]mountains are a [F]home now for [Bb]me"
+      ],
+      [
+        "",
+        "But my [Cm]home is the [Gm]lowlands and [D]always will [Gm]be"
+      ],
+      [
+        "Chorus",
+        "We're [Eb]fools to make [F]war on our [Bb]brothers in arms [Gm]"
+      ]
+    ]
+  },
+  {
+    "t": "Mad World",
+    "a": "Tears for Fears",
+    "y": 1982,
+    "d": "80s",
+    "seq": [
+      "F#m",
+      "A",
+      "E",
+      "B",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F#m]All around me are fa[A]miliar faces"
+      ],
+      [
+        "",
+        "[E]Worn out places, [B]worn out faces"
+      ],
+      [
+        "Chorus",
+        "And I [F#m]find it kinda [A]funny, I find it kinda [E]sad [B]"
+      ],
+      [
+        "",
+        "The dreams in which I'm [F#m]dying are the [A]best I've ever [D]had [B]"
+      ]
+    ]
+  },
+  {
+    "t": "Layla (Unplugged)",
+    "a": "Eric Clapton",
+    "y": 1992,
+    "d": "90s",
+    "seq": [
+      "Dm",
+      "Bb",
+      "C",
+      "F",
+      "Am",
+      "Gm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "What'll you [Dm]do when you get [Bb]lonely [C]"
+      ],
+      [
+        "",
+        "And no[Am]body's waitin' [Gm]by your [Dm]side?"
+      ],
+      [
+        "Chorus",
+        "[F]Layla, [C]you got me on my [Dm]knees"
+      ],
+      [
+        "",
+        "[F]Layla, [C]I'm begging, darlin' [Dm]please"
+      ]
+    ]
+  },
+  {
+    "t": "Smells Like Teen Spirit",
+    "a": "Nirvana",
+    "y": 1991,
+    "d": "90s",
+    "seq": [
+      "F",
+      "Bb",
+      "Ab",
+      "Db"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F]Load up on guns, [Bb]bring your friends"
+      ],
+      [
+        "",
+        "[Ab]It's fun to lose [Db]and to pretend"
+      ],
+      [
+        "Chorus",
+        "With the [F]lights out, it's [Bb]less dangerous"
+      ],
+      [
+        "",
+        "[Ab]Here we are now, [Db]entertain us"
+      ]
+    ]
+  },
+  {
+    "t": "Mr. Jones",
+    "a": "Counting Crows",
+    "y": 1993,
+    "d": "90s",
+    "seq": [
+      "F",
+      "Bb",
+      "Am",
+      "Dm",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F]I was down at the New Amster[Bb]dam staring at this yellow-haired [F]girl"
+      ],
+      [
+        "",
+        "[Bb]Mr. Jones strikes up a [F]conversation with a black-haired [Bb]flamenco dancer"
+      ],
+      [
+        "Chorus",
+        "[F]Mr. [Am]Jones and [Bb]me, tell each other [Am]fairy [Dm]tales"
+      ],
+      [
+        "",
+        "And we [C]stare at the beautiful [Bb]women [F]"
+      ]
+    ]
+  },
+  {
+    "t": "Losing My Religion",
+    "a": "R.E.M.",
+    "y": 1991,
+    "d": "90s",
+    "seq": [
+      "Am",
+      "Em",
+      "Dm",
+      "G",
+      "F",
+      "C"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[Am]Oh life, [Em]is bigger, [Am]it's bigger than [Em]you"
+      ],
+      [
+        "",
+        "[Am]And you are [Em]not me [Dm]"
+      ],
+      [
+        "Chorus",
+        "[F]That's me in the [G]corner, [F]that's me in the [G]spotlight"
+      ],
+      [
+        "",
+        "[F]Losing my reli[G]gion [Am]"
+      ]
+    ]
+  },
+  {
+    "t": "Don't Look Back in Anger",
+    "a": "Oasis",
+    "y": 1995,
+    "d": "90s",
+    "seq": [
+      "C",
+      "G",
+      "Am",
+      "E",
+      "F",
+      "Fm"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[C]Slip inside the [G]eye of your [Am]mind"
+      ],
+      [
+        "",
+        "Don't you [E]know you might [F]find a better place to [G]play"
+      ],
+      [
+        "Chorus",
+        "So [F]Sally can [Fm]wait, she [C]knows it's too [G]late as we're walking on [Am]by [E]"
+      ],
+      [
+        "",
+        "Her [F]soul slides a[Fm]way, but [C]don't look back in [G]anger I heard you [F]say"
+      ]
+    ]
+  },
+  {
+    "t": "Under the Bridge",
+    "a": "Red Hot Chili Peppers",
+    "y": 1991,
+    "d": "90s",
+    "seq": [
+      "E",
+      "B",
+      "C#m",
+      "G#m",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]Sometimes I feel like I [B]don't have a partner"
+      ],
+      [
+        "",
+        "[C#m]Sometimes I feel like my [G#m]only friend"
+      ],
+      [
+        "Chorus",
+        "I don't ever [A]want to feel [E]like I did that day"
+      ],
+      [
+        "",
+        "Take me to the [A]place I love, [E]take me all the way"
+      ]
+    ]
+  },
+  {
+    "t": "Better Man",
+    "a": "Pearl Jam",
+    "y": 1994,
+    "d": "90s",
+    "seq": [
+      "F#m",
+      "A",
+      "E",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[F#m]Waiting, [A]watching the [E]clock, it's four o'[D]clock, it's got to stop"
+      ],
+      [
+        "",
+        "[F#m]Tell him, [A]take no more, she [E]practices her [D]speech"
+      ],
+      [
+        "Chorus",
+        "She [F#m]lies and [A]says she's in [E]love with [D]him"
+      ],
+      [
+        "",
+        "[F#m]Can't find a [A]better [E]man [D]"
+      ]
+    ]
+  },
+  {
+    "t": "Learn to Fly",
+    "a": "Foo Fighters",
+    "y": 1999,
+    "d": "90s",
+    "seq": [
+      "B",
+      "F#",
+      "G#m",
+      "E"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[B]Run and tell all of the [F#]angels"
+      ],
+      [
+        "",
+        "This could [G#m]take all night, think I [E]need an aeroplane"
+      ],
+      [
+        "Chorus",
+        "[B]Make my way back home when I [F#]learn to fly [G#m]"
+      ],
+      [
+        "",
+        "[E]Look in the [B]mirror, all that you see"
+      ]
+    ]
+  },
+  {
+    "t": "Run-Around",
+    "a": "Blues Traveler",
+    "y": 1994,
+    "d": "90s",
+    "seq": [
+      "A",
+      "E",
+      "F#m",
+      "D"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[A]Oh, once upon a [E]midnight dearie"
+      ],
+      [
+        "",
+        "[F#m]I woke with something [D]in my head"
+      ],
+      [
+        "Chorus",
+        "But you, [A]why you wanna give me a [E]run-around"
+      ],
+      [
+        "",
+        "Is it a [F#m]sure-fire way to [D]speed things up"
+      ]
+    ],
+    "jam": true
+  },
+  {
+    "t": "Crash Into Me",
+    "a": "Dave Matthews Band",
+    "y": 1996,
+    "d": "90s",
+    "seq": [
+      "E",
+      "B",
+      "C#m",
+      "A"
+    ],
+    "sheet": [
+      [
+        "Verse",
+        "[E]You've got your ball, you've got your [B]chain"
+      ],
+      [
+        "",
+        "Tied to me [C#m]tight, tie me up a[A]gain"
+      ],
+      [
+        "Chorus",
+        "[C#m]Crash into me, [A]yeah"
+      ],
+      [
+        "",
+        "And I come in[E]to you, and I come in[B]to you"
+      ]
+    ],
+    "jam": true
   }
 ]
