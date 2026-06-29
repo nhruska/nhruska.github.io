@@ -236,18 +236,39 @@
     var el = opts.el || {};
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
+    var PROFILE_ID = opts.profileId || null; // instrument profile id, carried onto the inversions deep-link
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
     var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
-    var CATS = opts.composeCats || {
-      "Major": ["C", "D", "E", "F", "G", "A", "B"],
-      "Minor": ["Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm"],
-      "7th": ["C7", "D7", "E7", "F7", "G7", "A7", "B7"],
-      "Maj7": ["Cmaj7", "Dmaj7", "Emaj7", "Fmaj7", "Gmaj7", "Amaj7", "Bmaj7"],
-      "Min7": ["Cm7", "Dm7", "Em7", "Fm7", "Gm7", "Am7", "Bm7"]
-    };
+    // The all-chords build palette covers ALL 12 chromatic roots (the old default only
+    // had the 7 naturals - no sharps/flats). For each category we map every ROOTS entry
+    // to its chord, then make each one renderable: if a chord pack is present and lacks
+    // the sharp shape, fall back to the enharmonic flat spelling, and omit only if
+    // neither spelling is voiceable (no crash). With no pack, names always render so all
+    // 12 stay. ROOTS uses sharp spelling (C# D# F# G# A#); S2F is the flat fallback.
+    var S2F = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
+    var CATS = opts.composeCats || (function () {
+      var packHas = function (name) { return opts.chordPack && typeof opts.chordPack.hasChord === 'function' ? opts.chordPack.hasChord(name) : false; };
+      var havePack = !!opts.chordPack;
+      // pick a spelling the pack can voice: prefer the sharp ROOTS spelling, fall back to
+      // the enharmonic flat, return null if neither is voiceable (then the chord is omitted).
+      function spell(root, suffix) {
+        var sharp = root + suffix;
+        if (!havePack) return sharp;          // no pack -> names always render
+        if (packHas(sharp)) return sharp;
+        var flat = S2F[root] ? (S2F[root] + suffix) : null;
+        if (flat && packHas(flat)) return flat;
+        return null;                          // neither spelling voiceable -> omit
+      }
+      function cat(suffix) {
+        var out = [];
+        ROOTS.forEach(function (root) { var s = spell(root, suffix); if (s) out.push(s); });
+        return out;
+      }
+      return { "Major": cat(""), "Minor": cat("m"), "7th": cat("7"), "Maj7": cat("maj7"), "Min7": cat("m7") };
+    })();
     var SUGG = opts.suggestions || {};
 
     var CATALOG = (opts.songs || []).slice();
@@ -767,12 +788,20 @@
     // What tonic do we measure intervals against? The chosen key when one is set
     // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
     // the first chord as a sensible default for free-built progressions.
-    function labelTonic() { return keyRoot || progression[0]; }
+    // ONE source of truth for "the key": songKey. `root` is the key center (null
+    // until the user explicitly picks, then it stays explicit through transposes);
+    // until then we fall back to progression[0] so a free-built progression still
+    // reads sensible intervals. `mode` is always set (Major default). See the
+    // unified-key refactor (PLAN-key-subsystem-redesign.md): the picker and the
+    // transposer used to be two independent key notions and drifted; now a transpose
+    // moves songKey.root so the readout, palette and solo scale all follow.
+    function labelTonic() { return songKey.root || progression[0]; }
     function renderProg() {
       if (!el.prog) return;
       // NO auto-switching of accordion panels on add/remove - that made the surface jump
       // and shoved the just-tapped chord out of view. Panels are user-controlled; the
-      // "Common progressions" starter is the only default-open (set in the HTML at cold start).
+      // "Next chord" panel (#discSuggest) is the only default-open (set in the HTML at
+      // cold start), and its empty state shows the common-progression starters.
       // Gray out the choosers once the 8-chord cap (addChord) is reached.
       var maxed = progression.length >= 8;
       var acc = document.querySelector('.composeAccordion');
@@ -796,53 +825,68 @@
       });
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); }
+    function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); renderKey(); }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
     // chord palette + solo scale below match what just got filled in.
     function loadProgression(degrees) {
-      var root = keyRoot || "C";
-      keyRoot = root; keyMode = "Major";
-      progression = chordsFromDegrees(root, keyMode, degrees);
+      var root = songKey.root || "C";
+      // a named pattern sets an explicit Major key (patterns are major-diatonic)
+      songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
+      keyPopoverOpen = false; // a key is set now - the root popover stays closed
+      progression = chordsFromDegrees(root, songKey.mode, degrees);
       cTpose = 0;
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
     }
     function renderProgPicks() {
+      // Common progressions now live inside renderSuggest's empty state (the "Next chord"
+      // disclosure). The standalone "Common progressions" disclosure (#discPatterns / #progPicks)
+      // was removed from the HTML, so el.progPicks is absent. Kept as a guarded no-op.
       if (!el.progPicks) return;
       el.progPicks.innerHTML = '';
-      var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = 'Start with a common progression';
-      el.progPicks.appendChild(lbl);
-      var row = document.createElement('div'); row.className = 'progPickRow';
-      PROGRESSIONS.forEach(function (p) {
-        var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
-        // the Roman pattern reads as the lesson; the name grounds it
-        var roman = chordsFromDegrees("C", "Major", p.degrees)
-          .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, "C") : c; })
-          .join(' ');
-        b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
-        b.onclick = function () { loadProgression(p.degrees); };
-        row.appendChild(b);
-      });
-      el.progPicks.appendChild(row);
     }
+    // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
+    // Full labels are used everywhere else (key picker chip, key-view title).
+    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       if (!el.cKey) return;
-      // Show the key by name (the first chord), matching the Practice readout —
-      // far clearer than a "+2 semitones" counter. 'shifted' lights up whenever
-      // you've moved off the key you originally built in.
+      // Show the UNIFIED song key (root + abbreviated mode, e.g. "E Mixo") in the ctrlBar
+      // readout so it stays short enough for the Save button to remain on-screen at 375px.
+      // 'shifted' lights up whenever you've moved off the key you originally built in.
+      // Falls back to the placeholder only when there's no key AND no chords.
+      // 'shifted' reflects the NET shift mod an octave: a full loop back to the original
+      // key (e.g. C->G->D->C, cTpose = -12) lands on the same chord names, so the
+      // indicator must read NOT shifted. Normalize cTpose into [0,12) before the check.
+      var netShift = (((cTpose % 12) + 12) % 12) !== 0;
+      if (songKey.root) {
+        var shortMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
+        el.cKey.textContent = songKey.root + ' ' + shortMode;
+        el.cKey.classList.toggle('shifted', netShift);
+        return;
+      }
       if (!progression.length) { el.cKey.textContent = '—'; el.cKey.classList.remove('shifted'); return; }
       el.cKey.textContent = progression[0];
-      el.cKey.classList.toggle('shifted', cTpose !== 0);
+      el.cKey.classList.toggle('shifted', netShift);
     }
     function composeTpose(st) {
       if (!progression.length) return;
       progression = progression.map(function (c) { return tpose(c, st); });
       cTpose += st;
+      // Move the song key with the chords so the readout, diatonic palette and solo
+      // scale never drift from what's actually sounding. If a key center exists
+      // (explicit pick, or one derived earlier) shift its root by the same delta;
+      // otherwise derive it fresh from the now-transposed first chord.
+      if (songKey.root) {
+        songKey.root = tpose(songKey.root, st);
+      } else {
+        var p0 = splitChord(progression[0]);
+        if (p0) songKey.root = p0.root;
+      }
       renderProg(); renderKey();
+      if (el.keyRoots) { buildKeyPicker(); renderKeyView(); }
     }
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
@@ -866,36 +910,110 @@
       draw();
     }
 
-    /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ---- */
-    var keyRoot = null, keyMode = "Major";
+    /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ----
+     * Persistent compact key bar (replaces the old collapse): the current-key chip and
+     * the maj/min mode toggle are ALWAYS visible - one tap changes major<->minor, never
+     * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
+     * and closed on selection. No "tap the already-selected Major to dismiss" gesture. */
+    var songKey = { root: null, mode: "Major", explicit: false };
+    var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
+      // Compact key chip: injected once before keyRoots. ALWAYS visible - it shows the
+      // current key (or a "Pick a key" prompt) and toggles the root popover.
+      var chip = document.getElementById('keyPickerCompact');
+      if (!chip) {
+        // Inject the chip at the TOP of the key bar: before the maj/min toggle when it
+        // exists (so reading order is chip -> mode toggle -> root popover), else before
+        // the root grid. Both live in the same parent (#discKey discBody).
+        var anchor = el.keyModes || el.keyRoots;
+        if (anchor && anchor.parentNode) {
+          chip = document.createElement('button');
+          chip.type = 'button';
+          chip.id = 'keyPickerCompact';
+          chip.className = 'keyPickerCompact';
+          anchor.parentNode.insertBefore(chip, anchor);
+        }
+      }
+      if (chip) {
+        chip.hidden = false;
+        chip.setAttribute('aria-expanded', keyPopoverOpen ? 'true' : 'false');
+        chip.setAttribute('aria-controls', 'keyRoots');
+        chip.setAttribute('aria-haspopup', 'true');
+        chip.innerHTML = songKey.root
+          ? (songKey.root + ' <span class="kpcMode">' + MODES[songKey.mode].label + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          : ('Pick a key <span class="kpcCaret" aria-hidden="true">▾</span>');
+        chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
+      }
+      // Root grid = on-demand popover. Closed by default; opens when the chip is tapped.
+      el.keyRoots.hidden = !keyPopoverOpen;
       el.keyRoots.innerHTML = '';
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
-        b.className = 'chip rootChip' + (r === keyRoot ? ' on' : '');
+        b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
         b.textContent = r;
-        b.onclick = function () { keyRoot = (keyRoot === r ? null : r); buildKeyPicker(); renderKeyView(); renderProg(); };
+        b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
+        b.onclick = function () {
+          // Picking a root sets the explicit key and closes the popover. Tapping the
+          // currently-selected root clears the key (and re-opens for a fresh pick).
+          if (songKey.root === r) {
+            // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
+            songKey.root = null; songKey.explicit = false;
+            keyPopoverOpen = true;
+          } else {
+            // Pick a NEW root. If a progression exists, transpose it by the semitone
+            // delta between the OLD song-key tonic and the new root. The old tonic is the
+            // explicit song key if one was picked; otherwise (a freely-built progression
+            // with no key yet) derive it from the first chord's root so picking a key
+            // TRANSPOSES the chords into that key instead of just relabeling them. Take
+            // the shorter direction around the circle so the shapes move minimally.
+            var oldRoot = songKey.root ||
+              (progression.length ? ((splitChord(progression[0]) || {}).root || null) : null);
+            if (progression.length && oldRoot) {
+              var op = rootPc(oldRoot), np = rootPc(r);
+              if (op != null && np != null) {
+                var delta = ((np - op) % 12 + 12) % 12;
+                if (delta > 6) delta -= 12; // shift the short way
+                if (delta !== 0) {
+                  progression = progression.map(function (c) { return tpose(c, delta); });
+                  cTpose += delta; // keep the transpose readout's net-shift accounting consistent
+                }
+              }
+            }
+            songKey.root = r; songKey.explicit = true;
+            keyPopoverOpen = false;
+          }
+          renderProg(); renderKey(); buildKeyPicker(); renderKeyView();
+        };
         el.keyRoots.appendChild(b);
       });
+      // maj/min (and the wider mode set) toggle - ALWAYS visible, one tap.
+      el.keyModes.hidden = false;
       el.keyModes.innerHTML = '';
       Object.keys(MODES).forEach(function (mk) {
         var b = document.createElement('button');
-        b.className = 'chip' + (mk === keyMode ? ' on' : '');
+        b.className = 'chip' + (mk === songKey.mode ? ' on' : '');
         b.textContent = MODES[mk].label;
-        b.onclick = function () { keyMode = mk; buildKeyPicker(); renderKeyView(); renderProg(); };
+        b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
+        b.onclick = function () {
+          // Mode change is scale-context-only: it updates the palette/solo scale and the
+          // (mode-aware) readout, but does NOT transpose or re-qualify the built progression.
+          songKey.mode = mk;
+          renderKey(); buildKeyPicker(); renderKeyView(); renderProg();
+        };
         el.keyModes.appendChild(b);
       });
-      if (el.keyClear) el.keyClear.hidden = !keyRoot;
+      if (el.keyClear) el.keyClear.hidden = !songKey.root;
     }
     function renderKeyView() {
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
-      if (el.keyClear) el.keyClear.hidden = !keyRoot;
-      if (!keyRoot) {
+      if (el.keyClear) el.keyClear.hidden = !songKey.root;
+      if (!songKey.root) {
         el.keyView.innerHTML = '<p class="keyHint">Pick a key to see its chords and the scale to solo over.</p>';
         return;
       }
+      var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
@@ -935,6 +1053,7 @@
     // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
     // Reuses chordsFromDegrees so any future progression patterns slot in here.
     function renderHsrChain() {
+      var keyRoot = songKey.root, keyMode = songKey.mode;
       if (!el.keyView || !keyRoot || !pack) return;
       var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
       if (!chain.length) return;
@@ -981,7 +1100,15 @@
       // for the curious.
       var more = document.createElement('a');
       more.className = 'hsrMore';
-      more.href = 'triad-inversions.html';
+      // Carry the current instrument AND key so the inversions page opens in context -
+      // same instrument profile, pre-selected to this key (the cycle is the same I-IV-V,
+      // now anchored to where the user is actually composing). mode rides along too so a
+      // future minor-cycle variant can read it; the page ignores params it doesn't use.
+      var invParams = [];
+      if (PROFILE_ID) invParams.push('p=' + encodeURIComponent(PROFILE_ID));
+      if (keyRoot) invParams.push('key=' + encodeURIComponent(keyRoot));
+      if (keyMode) invParams.push('mode=' + encodeURIComponent(keyMode));
+      more.href = 'triad-inversions.html' + (invParams.length ? '?' + invParams.join('&') : '');
       more.textContent = 'Walk the full cycle up the neck →';
       el.keyView.appendChild(more);
     }
@@ -1034,12 +1161,31 @@
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
-      if (progression.length === 0) return;
+      if (progression.length === 0) {
+        // Empty state: show common progressions so the user has actionable one-tap starters.
+        // This replaces the old bare "Add a chord..." hint and merges the standalone
+        // progPicks disclosure (now removed) into the suggestions area.
+        var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+        lbl.textContent = 'Start with a common progression';
+        el.suggest.appendChild(lbl);
+        var row = document.createElement('div'); row.className = 'progPickRow';
+        PROGRESSIONS.forEach(function (p) {
+          var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
+          var roman = chordsFromDegrees('C', 'Major', p.degrees)
+            .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, 'C') : c; })
+            .join(' ');
+          b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
+          b.onclick = function () { loadProgression(p.degrees); };
+          row.appendChild(b);
+        });
+        el.suggest.appendChild(row);
+        return;
+      }
       var tonic = labelTonic();
       // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
       // flagged right inside the normal "add a chord" list (accent glow + a tiny name
       // caption) — no separate rows, no forced vertical. De-duped per chord.
-      var comps = completions(progression, tonic, keyRoot ? keyMode : "Major");
+      var comps = completions(progression, tonic, songKey.root ? songKey.mode : "Major");
       var completeBy = {};
       comps.forEach(function (cmp) {
         (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
@@ -1053,7 +1199,13 @@
         if (i >= 0) picks.splice(i, 1);
       });
       picks = Object.keys(completeBy).concat(picks).slice(0, 5);
-      if (!picks.length) return;
+      if (!picks.length) {
+        var hint = document.createElement('p');
+        hint.className = 'keyHint suggEmpty';
+        hint.textContent = 'No suggestions for this progression yet.';
+        el.suggest.appendChild(hint);
+        return;
+      }
       var n = progression.length;
       // Helpful "Add a Nth chord" guidance only for the first few; past that the panel's own
       // "Next chord" summary already says it (avoid the duplicate header the user flagged).
@@ -1087,7 +1239,7 @@
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
-    if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); renderProg(); };
+    if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); };
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
