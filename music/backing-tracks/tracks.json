@@ -8,7 +8,10 @@
     "mode": "major",
     "bpm": 76,
     "capo": 0,
-    "tags": ["easy", "I-IV-V"]
+    "tags": [
+      "easy",
+      "I-IV-V"
+    ]
   },
   {
     "yt": null,
@@ -19,7 +22,10 @@
     "mode": "major",
     "bpm": 73,
     "capo": 0,
-    "tags": ["ballad", "I-V-vi-IV"]
+    "tags": [
+      "ballad",
+      "I-V-vi-IV"
+    ]
   },
   {
     "yt": null,
@@ -30,7 +36,9 @@
     "mode": "major",
     "bpm": 112,
     "capo": 0,
-    "tags": ["jam"]
+    "tags": [
+      "jam"
+    ]
   },
   {
     "yt": null,
@@ -41,7 +49,9 @@
     "mode": "major",
     "bpm": 120,
     "capo": 0,
-    "tags": ["jam"]
+    "tags": [
+      "jam"
+    ]
   },
   {
     "yt": null,
@@ -52,7 +62,10 @@
     "mode": "major",
     "bpm": 80,
     "capo": 0,
-    "tags": ["jam", "ballad"]
+    "tags": [
+      "jam",
+      "ballad"
+    ]
   },
   {
     "yt": null,
@@ -63,7 +76,9 @@
     "mode": "major",
     "bpm": 75,
     "capo": 0,
-    "tags": ["singalong"]
+    "tags": [
+      "singalong"
+    ]
   },
   {
     "yt": null,
@@ -74,7 +89,10 @@
     "mode": "major",
     "bpm": 126,
     "capo": 0,
-    "tags": ["uptempo", "I-IV-V"]
+    "tags": [
+      "uptempo",
+      "I-IV-V"
+    ]
   },
   {
     "yt": null,
@@ -85,7 +103,9 @@
     "mode": "major",
     "bpm": 114,
     "capo": 0,
-    "tags": ["singalong"]
+    "tags": [
+      "singalong"
+    ]
   },
   {
     "yt": "ifOUmWAQups",
@@ -96,7 +116,9 @@
     "mode": "major",
     "bpm": null,
     "capo": 0,
-    "tags": ["jam"]
+    "tags": [
+      "jam"
+    ]
   },
   {
     "yt": "hg6kcvOH5I4",
@@ -107,7 +129,10 @@
     "mode": "major",
     "bpm": null,
     "capo": 0,
-    "tags": ["mellow", "jam"]
+    "tags": [
+      "mellow",
+      "jam"
+    ]
   },
   {
     "yt": "hf9--LynOZY",
@@ -118,7 +143,9 @@
     "mode": "minor",
     "bpm": null,
     "capo": 0,
-    "tags": ["slow"]
+    "tags": [
+      "slow"
+    ]
   },
   {
     "yt": "2EoqzNR68pY",
@@ -129,6 +156,383 @@
     "mode": "major",
     "bpm": 100,
     "capo": 0,
-    "tags": ["jam"]
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Rock Backing Track in C Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "C",
+    "mode": "major",
+    "bpm": 100,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Mellow Jam Track in C Major",
+    "artist": "search",
+    "genre": "jam",
+    "key": "C",
+    "mode": "major",
+    "bpm": 90,
+    "capo": 0,
+    "tags": [
+      "mellow",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Country Rock Backing Track in G Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "G",
+    "mode": "major",
+    "bpm": 105,
+    "capo": 0,
+    "tags": [
+      "country",
+      "I-IV-V"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Acoustic Folk Backing Track in G Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "G",
+    "mode": "major",
+    "bpm": 80,
+    "capo": 0,
+    "tags": [
+      "folk",
+      "ballad"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Grateful Dead Style Mixolydian Jam in G",
+    "artist": "search",
+    "genre": "jam",
+    "key": "G",
+    "mode": "mixolydian",
+    "bpm": 95,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "mixolydian"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Rock Backing Track in E Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "E",
+    "mode": "major",
+    "bpm": 110,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "12 Bar Blues Shuffle in E",
+    "artist": "search",
+    "genre": "blues",
+    "key": "E",
+    "mode": "major",
+    "bpm": 95,
+    "capo": 0,
+    "tags": [
+      "shuffle",
+      "12-bar"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Southern Rock Mixolydian Jam in E",
+    "artist": "search",
+    "genre": "jam",
+    "key": "E",
+    "mode": "mixolydian",
+    "bpm": 100,
+    "capo": 0,
+    "tags": [
+      "southern-rock",
+      "mixolydian",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Folk Backing Track in F Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "F",
+    "mode": "major",
+    "bpm": 88,
+    "capo": 0,
+    "tags": [
+      "folk",
+      "ballad"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Soul Groove Backing Track in F Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "F",
+    "mode": "major",
+    "bpm": 96,
+    "capo": 0,
+    "tags": [
+      "soul",
+      "groove"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Slow Blues Backing Track in Bb",
+    "artist": "search",
+    "genre": "blues",
+    "key": "Bb",
+    "mode": "major",
+    "bpm": 65,
+    "capo": 0,
+    "tags": [
+      "slow",
+      "12-bar"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Jazz Blues Swing in Bb",
+    "artist": "search",
+    "genre": "blues",
+    "key": "Bb",
+    "mode": "major",
+    "bpm": 130,
+    "capo": 0,
+    "tags": [
+      "jazz",
+      "swing"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Acoustic Strum Backing Track in D Major",
+    "artist": "search",
+    "genre": "rock",
+    "key": "D",
+    "mode": "major",
+    "bpm": 92,
+    "capo": 0,
+    "tags": [
+      "acoustic",
+      "strum"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Sweet Mixolydian Jam in D",
+    "artist": "search",
+    "genre": "jam",
+    "key": "D",
+    "mode": "mixolydian",
+    "bpm": 105,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "mixolydian"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Uptempo Reggae Backing in A",
+    "artist": "search",
+    "genre": "reggae",
+    "key": "A",
+    "mode": "major",
+    "bpm": 95,
+    "capo": 0,
+    "tags": [
+      "uptempo"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Rock Backing Track in D Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "D",
+    "mode": "minor",
+    "bpm": 100,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Cinematic Melodic Backing in D Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "D",
+    "mode": "minor",
+    "bpm": 78,
+    "capo": 0,
+    "tags": [
+      "cinematic",
+      "ballad"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Rock Backing Track in E Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "E",
+    "mode": "minor",
+    "bpm": 110,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Santana Dorian Jam in E Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "E",
+    "mode": "dorian",
+    "bpm": 108,
+    "capo": 0,
+    "tags": [
+      "latin-rock",
+      "dorian"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Rock Backing Track in G Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "G",
+    "mode": "minor",
+    "bpm": 102,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Minor Blues Backing Track in G",
+    "artist": "search",
+    "genre": "blues",
+    "key": "G",
+    "mode": "minor",
+    "bpm": 80,
+    "capo": 0,
+    "tags": [
+      "slow",
+      "minor-blues"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Hard Rock Backing in F# Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "F#",
+    "mode": "minor",
+    "bpm": 112,
+    "capo": 0,
+    "tags": [
+      "hard-rock",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "80s Rock Backing in C# Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "C#",
+    "mode": "minor",
+    "bpm": 118,
+    "capo": 0,
+    "tags": [
+      "80s",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Dark Rock Backing in C Minor",
+    "artist": "search",
+    "genre": "rock",
+    "key": "C",
+    "mode": "minor",
+    "bpm": 90,
+    "capo": 0,
+    "tags": [
+      "dark",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Hendrix Style Jam in A Minor",
+    "artist": "search",
+    "genre": "jam",
+    "key": "A",
+    "mode": "minor",
+    "bpm": 100,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "psychedelic"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Carlos Style Dorian Jam in A",
+    "artist": "search",
+    "genre": "jam",
+    "key": "A",
+    "mode": "dorian",
+    "bpm": 105,
+    "capo": 0,
+    "tags": [
+      "latin-rock",
+      "dorian",
+      "jam"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Modal Jam Track in D Dorian",
+    "artist": "search",
+    "genre": "jam",
+    "key": "D",
+    "mode": "dorian",
+    "bpm": 95,
+    "capo": 0,
+    "tags": [
+      "dorian",
+      "modal",
+      "jam"
+    ]
   }
 ]
