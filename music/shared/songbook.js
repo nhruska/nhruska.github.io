@@ -1090,7 +1090,9 @@
     if (el.keyClear) el.keyClear.onclick = function () { keyRoot = null; buildKeyPicker(); renderKeyView(); renderProg(); };
 
     /* ===================== TABS ===================== */
+    var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
     function switchTab(name) {
+      try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
       if (name !== 'practice') stopBeat(); // tempo cue stops when you leave the song screen
@@ -1125,6 +1127,18 @@
         tpose: tpose
       });
     }
+
+    // Reopen where you left off: restore the last active tab (Library is the default-shown,
+    // so only switch when the saved tab is something else and its button actually exists).
+    try {
+      var savedTab = localStorage.getItem(ACTIVE_TAB_KEY), tabExists = false;
+      // match by iterating buttons (not a built selector) so a malformed stored value can't
+      // throw a selector SyntaxError and abort the restore.
+      document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
+      if (savedTab && savedTab !== 'library' && tabExists) {
+        switchTab(savedTab);
+      }
+    } catch (e) {}
 
     /* ---- controller ---- */
     return {
