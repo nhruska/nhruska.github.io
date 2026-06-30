@@ -34,9 +34,16 @@ test('normalize a TRACK record (title/artist/key/mode/genre/bpm/yt)', function (
   assert.strictEqual(it.video, 'abcdefghijk');
   assert.strictEqual(it.chords, null);
 });
-test('action ladder: curated video -> Play; no video -> YouTube search', function () {
-  assert.strictEqual(LI.action(LI.normalize({ yt: 'abcdefghijk' })).kind, 'play');
-  assert.strictEqual(LI.action(LI.normalize({ t: 'x' })).kind, 'search');
+test('action ladder: curated video -> Video (in-app); no video -> Search (external)', function () {
+  var play = LI.action(LI.normalize({ yt: 'abcdefghijk' }));
+  assert.strictEqual(play.kind, 'play'); assert.strictEqual(play.label, 'Video'); assert.strictEqual(play.external, false);
+  var search = LI.action(LI.normalize({ t: 'x' }));
+  assert.strictEqual(search.kind, 'search'); assert.strictEqual(search.label, 'Search'); assert.strictEqual(search.external, true);
+});
+test('hazards: accidental-root -> sharps/flats; extended -> 7ths; plain -> none', function () {
+  assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['A', 'F#m', 'D'] })), ['sharps/flats']);
+  assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['Am', 'C', 'G7'] })), ['7ths']);
+  assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['C', 'G', 'Am'] })), []);
 });
 test('keyLabel: A minor -> Am, C major -> C, no key -> null', function () {
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'A', mode: 'minor' })), 'Am');
@@ -44,17 +51,18 @@ test('keyLabel: A minor -> Am, C major -> C, no key -> null', function () {
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'Dm'); // minor-family
   assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null);
 });
-test('metaCells: SONG shows each chord + count + "mine" when custom', function () {
-  var cells = LI.metaCells(LI.normalize({ seq: ['A', 'D', 'E'], custom: true }));
-  assert.deepStrictEqual(cells, ['A', 'D', 'E', '3 chords', 'mine']);
+test('metaCells: SONG -> count only at rest (chords/capo/mine are badges/markers, not meta)', function () {
+  // plain open chords -> no hazard; custom + capo do NOT appear in the meta row
+  var cells = LI.metaCells(LI.normalize({ seq: ['A', 'D', 'E'], custom: true, capo: 2 }));
+  assert.deepStrictEqual(cells, ['3 chords']);
 });
-test('metaCells: TRACK shows genre + bpm + capo', function () {
+test('metaCells: TRACK -> bpm then genre (capo is a badge, not meta), universal order', function () {
   var cells = LI.metaCells(LI.normalize({ genre: 'rock', bpm: 73, capo: 2 }));
-  assert.deepStrictEqual(cells, ['rock', '73 bpm', 'capo 2']);
+  assert.deepStrictEqual(cells, ['73 bpm', 'rock']);
 });
-test('metaCells: collective union when an item has BOTH chords and track data', function () {
-  var cells = LI.metaCells(LI.normalize({ seq: ['C', 'G'], genre: 'folk', bpm: 90 }));
-  assert.deepStrictEqual(cells, ['C', 'G', '2 chords', 'folk', '90 bpm']);
+test('metaCells: chords + track data -> count, hazard, bpm, genre (no per-chord spell-out)', function () {
+  var cells = LI.metaCells(LI.normalize({ seq: ['C', 'G7'], genre: 'folk', bpm: 90 }));
+  assert.deepStrictEqual(cells, ['2 chords', '7ths', '90 bpm', 'folk']);
 });
 
 run();

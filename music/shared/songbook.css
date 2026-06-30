@@ -82,24 +82,40 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent);flex:0 0 auto;min-width:22px;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
-.listItem .li-title{font-weight:700;font-size:1.02rem;line-height:1.14;letter-spacing:-.01em;}
-.listItem .li-tag{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.72rem;flex:0 0 auto;}
-.listItem .li-artist{font-size:.77rem;color:var(--txt-dim);margin-top:2px;}
-.listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
-.listItem .li-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.69rem;color:var(--txt-dim);align-items:center;}
-.listItem .li-meta .dot{width:3px;height:3px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
-.listItem .li-act{margin-left:auto;color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap;}
-.listItem .li-act-search{color:var(--txt-soft);}
-.listItem .li-add{flex:0 0 auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* Title bumped for the arm's-length <1s glance; meta + artist raised off --txt-dim
+ * to --txt-soft and up in size (legibility-at-distance, council accessibility lens). */
+.listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;}
+/* Setup pair (capo + key) live together, right of the title. Key is KEY-FIRST; an
+ * unknown key shows a quiet "Key?" rather than a year (which read as the key). */
+.listItem .li-tags{display:flex;align-items:baseline;gap:6px;flex:0 0 auto;}
+.listItem .li-tag{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.82rem;flex:0 0 auto;}
+.listItem .li-tag.isKeyUnknown{color:var(--txt-dim);font-weight:400;}
+.listItem .li-capo{font-family:'Space Mono',monospace;font-weight:700;font-size:.72rem;color:var(--brass);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:1px 6px;border-radius:6px;flex:0 0 auto;}
+.listItem .li-artist{font-size:.79rem;color:var(--txt-soft);margin-top:2px;}
+.listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
+.listItem .li-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--txt-soft);align-items:center;}
+.listItem .li-meta .dot{width:4px;height:4px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
+/* Action is a real padded target + box/underline so Video vs Search isn't colour-only.
+ * Movement-cancel (in JS) is the scroll-grab guard; the padded box is the hit area. */
+.listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;}
+.listItem .li-act-play{color:var(--accent);background:var(--accent-deep);}
+.listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
+.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 .listItem.inSet .li-add{background:var(--accent);color:#06201c;border-color:var(--accent);}
-.listItem .li-ctrl{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;}
-.listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:27px;height:21px;border-radius:6px;cursor:pointer;font-size:.7rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
-.listItem .li-up:active,.listItem .li-dn:active{transform:scale(.85);background:var(--accent);color:#06201c;}
+/* Edit-mode reorder/remove targets enlarged (>=32px, gapped) - only rendered in
+ * edit-set mode, so they no longer sit always-hot on the scroll rail. */
+.listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+.listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
+.listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:#06201c;}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
-.listItem .li-rm{flex:0 0 auto;border:none;background:transparent;color:var(--txt-dim);font-size:1.15rem;cursor:pointer;padding:4px 6px;align-self:center;transition:color .15s,transform .08s;}
-.listItem .li-rm:active{transform:scale(.85);color:var(--bad);}
-.listItem .li-edit{flex:0 0 auto;width:26px;height:26px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:7px;cursor:pointer;font-size:.85rem;align-self:center;}
+.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;min-width:40px;min-height:40px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
+.listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
+.listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
+/* Persistent undo banner for the last set removal. */
+.setUndo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:9px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
+/* Edit-set toggle: ghost button that lights up accent when editing. */
+#setEdit.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 

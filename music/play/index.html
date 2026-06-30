@@ -63,6 +63,7 @@
       <!-- Set sub-view -->
       <div class="libSet" id="libSet" hidden>
         <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+          <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
         <div id="setBody"></div>
         <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
@@ -549,7 +550,7 @@
         songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
         typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
-        setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
+        setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),
         pPrev: el('pPrev'), pNext: el('pNext'), pClose: el('pClose'), pUp: el('pUp'), pDown: el('pDown'), pDimBtn: el('pDimBtn'),
         pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),

@@ -314,6 +314,7 @@
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", decade: "All", libType: "songs", current: null, transpose: 0, view: "lyrics",
+      setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
@@ -690,27 +691,51 @@
     function renderSetlist() {
       if (!el.setBody) return;
       var body = el.setBody, bar = el.setBar, count = el.setCount;
+      // The Edit toggle reveals reorder/remove (codex: keep the resting set row clean +
+      // destructive controls off the scroll rail until the user opts into editing).
+      if (el.setEdit) {
+        el.setEdit.style.display = STATE.setlist.length ? '' : 'none';
+        el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
+        el.setEdit.classList.toggle('on', STATE.setEditMode);
+      }
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
+        STATE.setEditMode = false; STATE.lastRemoved = null;
         return;
       }
-      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '') + ' · ready to play';
+      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '')
+        + (STATE.setEditMode ? ' · editing' : ' · ready to play');
       body.innerHTML = '';
+      // Persistent undo for the last removal (codex: not a short toast). Stays until used or Done.
+      if (STATE.lastRemoved) {
+        var u = document.createElement('div'); u.className = 'setUndo';
+        var rs = songById(STATE.lastRemoved.sid);
+        u.innerHTML = '<span>Removed ' + escHTML(rs ? rs.t : 'song') + '</span><button class="btn ghost" type="button">Undo</button>';
+        u.querySelector('button').onclick = function () {
+          var lr = STATE.lastRemoved; if (!lr) return;
+          var at = Math.min(lr.index, STATE.setlist.length);
+          STATE.setlist.splice(at, 0, lr.sid); STATE.lastRemoved = null;
+          saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
+        };
+        body.appendChild(u);
+      }
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
-        // SSOT: same renderer as Songs/Tracks, in 'set' mode (number + reorder/remove).
+        // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
         body.appendChild(global.ListItem.render(s, {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
+          setEdit: STATE.setEditMode,
           onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {
             var wasOpen = STATE.current && STATE.current.id === sid;
+            STATE.lastRemoved = { sid: sid, index: i }; // enable undo
             STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
             // keep the live queue + the (maybe hidden) song screen in step with the edit
             if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
@@ -722,9 +747,14 @@
       });
       if (bar) bar.style.display = 'flex';
     }
+    if (el.setEdit) el.setEdit.onclick = function () {
+      STATE.setEditMode = !STATE.setEditMode;
+      if (!STATE.setEditMode) STATE.lastRemoved = null; // leaving edit mode dismisses the undo affordance
+      renderSetlist();
+    };
     if (el.setClear) el.setClear.onclick = function () {
       if (STATE.setlist.length === 0) return;
-      if (confirm('Clear your setlist?')) { STATE.setlist = []; saveSet(); renderSetlist(); renderSongs(); }
+      if (confirm('Clear your setlist?')) { STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
     };
 
     /* ===================== PERFORM ===================== */

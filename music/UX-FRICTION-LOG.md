@@ -41,6 +41,8 @@ Lens: user is HOLDING AN INSTRUMENT (one free thumb, phone propped, arm's-length
 - **Songs now show a "YouTube" action** (search) - the first visible step toward "all songs are tracks". Once edit-to-curate (M2) lands, a curated song flips to "Play".
 
 ## Resolved
+- **HF polish volley 1** (P0 + edit-set mode, council-driven): legibility bumps (title 1.12rem, meta .78rem/--txt-soft, artist --txt-soft, dots 4px, note .68rem no-caps); action -> real padded target labelled by consequence ("Video"/"Search"), distinct glyph + box/underline (not colour-only), **movement-cancelled** so a scroll-grab can't fire it; meta slimmed to count + a hazard flag (sharps-flats / 7ths) + bpm + genre (per-chord spell-out + capo + "mine" removed from the row); **key-first tag** with a "Key?" badge when unknown (no silent year); **capo** promoted to an explicit badge by the key; add target 28->40px; **edit-set mode** gates reorder/remove behind an Edit toggle (clean at rest) with enlarged controls + **persistent undo** on remove. Verified live across all 3 segments, 0 console errors.
+- Open follow-ups (logged, not yet done): notes-classification (routine-vs-critical) deferred - no critical-note data field exists yet; "mine"/custom marker deferred (codex: a left-border collides with inSet/selection states - needs a distinct treatment); the action box is ~32px tall (padded) not a full 44px to avoid inflating the meta-row height - movement-cancel is the primary safety, size is secondary.
 - **Songs vs Tracks list-item style divergence** (PR #60 + M1): retired `.songCard`/`.bt-card`/`.setItem` into one `.listItem` rendered by `music/shared/list-item.js`. All 3 segments verified identical (live render, 0 old classes, 0 console errors).
 
 ## Notes
