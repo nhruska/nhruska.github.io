@@ -961,125 +961,120 @@
       keyPopoverOpen = false;
       renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid(); renderSuggest();
     }
-    // The convert control: a labeled row of the 4 target modes, shown ONLY when a
-    // progression exists (it acts ON the progression). Clearly distinct from the
-    // scale-only mode toggle inside the Chords panel - this one re-harmonizes.
+    // The convert control: a SINGLE "Re-harmonize chords to <key mode>" button, shown
+    // ONLY when a progression exists (it acts ON the progression). The mode it converts
+    // to is the CURRENT key-mode (set by the one mode chooser - the #keyModes toggle), so
+    // there is exactly ONE mode-chooser row in the whole Compose tab. This button just
+    // applies that chosen mode to the already-built chords (same roots, re-qualified).
     function renderConvertBar() {
       if (!el.convertBar) return;
       if (!progression.length) { el.convertBar.hidden = true; el.convertBar.innerHTML = ''; return; }
       el.convertBar.hidden = false;
       el.convertBar.innerHTML = '';
-      var lbl = document.createElement('span');
-      lbl.className = 'convertLbl';
-      lbl.textContent = 'Re-harmonize to:';
-      el.convertBar.appendChild(lbl);
-      var row = document.createElement('div'); row.className = 'convertModes';
-      Object.keys(MODES).forEach(function (mk) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        // Highlight the mode the progression is currently IN (the song key's mode) so the
-        // control reads as "you're in X; tap another to convert".
-        b.className = 'chip convertChip' + (mk === songKey.mode ? ' on' : '');
-        b.textContent = MODES[mk].label;
-        b.title = 'Convert this progression to ' + MODES[mk].label + ' (same roots, re-qualified)';
-        b.onclick = function () { convertToMode(mk); };
-        row.appendChild(b);
-      });
-      el.convertBar.appendChild(row);
+      var mode = songKey.mode || 'Major';
+      var tonic = songKey.root || (splitChord(progression[0]) || {}).root || '';
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn convertBtn';
+      b.textContent = 'Re-harmonize to ' + (tonic ? tonic + ' ' : '') + MODES[mode].label;
+      b.title = 'Re-qualify every built chord to ' + MODES[mode].label + ' (same roots, qualities flipped to the mode)';
+      b.onclick = function () { convertToMode(mode); };
+      el.convertBar.appendChild(b);
     }
-    // ADAPTIVE chord surface (Phase 1). One picker that LEADS with the in-key
-    // diatonic chords when a song key is set, and keeps the full chromatic grid one
-    // tap away under "+ all chords" for borrowed / secondary / blues chords. With NO
-    // key set it shows the full chromatic grid directly (working as before) plus a
-    // gentle hint to pick a key for guided in-key chords. The in-key palette lives
-    // ONLY here now (renderKeyView keeps the scale + HSR + inversions teaching only),
-    // so the diatonic chords are never duplicated across two surfaces.
-    // 'allChordsOpen' is the user's expander state for the chromatic grid when a key
-    // is set; remembered across re-renders so toggling key/mode doesn't collapse it.
-    var allChordsOpen = false;
+    // ADAPTIVE chord surface (Phase 1, consolidated). ONE chord list with an "In key | All"
+    // segmented toggle at the top that swaps the list's CONTENT (not two stacked sections):
+    //   - "In key": the diatonic chords for the current song key (root + mode), labeled
+    //     with Roman numerals. Default when a key is set.
+    //   - "All": the full chromatic grid plus the chord-TYPE tabs (Major/Minor/7th/Maj7/
+    //     Min7) as a sub-filter. Default when no key is set (and the In-key segment then
+    //     prompts to pick a key).
+    // The in-key palette lives ONLY here now (renderKeyView keeps the scale + HSR +
+    // inversions teaching only), so the diatonic chords are never duplicated.
+    // 'chordView' is the segmented-toggle state ('inkey' | 'all'); null = "follow the key"
+    // (auto: in-key when a key is set, all otherwise). An explicit user tap pins it.
+    var chordView = null;
     // 'allChordsActiveCat' persists which chromatic category tab (Major/Minor/7th/...)
-    // is selected across re-renders, so switching tab or toggling the expander doesn't
-    // reset to the first category.
+    // is selected across re-renders, so switching tab doesn't reset to the first category.
     var allChordsActiveCat = Object.keys(CATS)[0] || "Major";
+    // Resolve the effective view: an explicit pin wins; otherwise follow the key.
+    function effectiveChordView() {
+      if (chordView === 'inkey' || chordView === 'all') return chordView;
+      return songKey.root ? 'inkey' : 'all';
+    }
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid;
-      // #catChips is now a vertical stack (CSS .adaptiveChips). Inside it we place the
-      // lead content (in-key palette / no-key hint), the expander, and an inner
-      // horizontally-scrolling category-tab row; the chromatic tiles go in #buildGrid.
+      // #catChips is a vertical stack (CSS .adaptiveChips). It holds the segmented toggle,
+      // then either the in-key lead OR the All-chords type tabs; #buildGrid holds tiles.
       chips.className = 'chips adaptiveChips';
       chips.innerHTML = ''; grid.innerHTML = '';
+      var view = effectiveChordView();
       // tap handler shared by every chord tile: add to the progression + play, with a
       // brief selected flash for feedback.
       function wireTap(d, c) {
         d.onclick = function () { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); };
         return d;
       }
-      // Draw the chromatic picker UNDER an "All chords" header: a header row, then a
-      // scrollable category-tab row (Major/Minor/7th/Maj7/Min7) and the matching chord
-      // tiles. Key-independent. The header makes it unmistakable that this block is the
-      // "All chords" browse, so its type tabs are never confused with the key-mode toggle.
-      function drawChromatic() {
+      // Segmented control: In key | All. One tap pins the view (chordView), then re-render.
+      var seg = document.createElement('div'); seg.className = 'chordSeg';
+      [['inkey', 'In key'], ['all', 'All']].forEach(function (pair) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chordSegBtn' + (view === pair[0] ? ' on' : '');
+        b.textContent = pair[1];
+        b.setAttribute('aria-pressed', view === pair[0] ? 'true' : 'false');
+        b.onclick = function () { chordView = pair[0]; buildGrid(); };
+        seg.appendChild(b);
+      });
+      chips.appendChild(seg);
+
+      if (view === 'inkey') {
         var hdr = document.createElement('div'); hdr.className = 'allChordsHdr';
-        hdr.textContent = 'All chords';
+        if (!songKey.root) {
+          // In-key view with no key set: prompt to pick a key (the list is empty until then).
+          hdr.textContent = 'Chords in key';
+          chips.appendChild(hdr);
+          var hint = document.createElement('p');
+          hint.className = 'keyHint chordsHint';
+          hint.textContent = 'Pick a key above to lead with its chords, or switch to All to browse every chord.';
+          chips.appendChild(hint);
+          return;
+        }
+        var keyRoot = songKey.root, keyMode = songKey.mode;
+        hdr.textContent = 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label;
         chips.appendChild(hdr);
-        var tabRow = document.createElement('div'); tabRow.className = 'catTabRow';
-        Object.keys(CATS).forEach(function (cat) {
-          var b = document.createElement('button');
-          b.className = 'chip' + (cat === allChordsActiveCat ? ' on' : '');
-          b.textContent = cat;
-          b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
-          tabRow.appendChild(b);
-        });
-        chips.appendChild(tabRow);
-        (CATS[allChordsActiveCat] || []).forEach(function (c) {
-          grid.appendChild(wireTap(packDiagram(c, 'small'), c));
-        });
-      }
-      if (!songKey.root) {
-        // No key (default): show a prompt + an explicit "All chords" button. The chord-TYPE
-        // tabs + chromatic grid stay HIDDEN until the button is tapped - so the only toggle
-        // row visible by default is the key-MODE toggle above, never both at once.
-        var hint = document.createElement('p');
-        hint.className = 'keyHint chordsHint';
-        hint.textContent = 'Pick a key above to lead with its chords, or tap All chords to browse every chord.';
-        chips.appendChild(hint);
-        var allBtn = document.createElement('button');
-        allBtn.type = 'button';
-        allBtn.className = 'allChordsToggle' + (allChordsOpen ? ' open' : '');
-        allBtn.setAttribute('aria-expanded', allChordsOpen ? 'true' : 'false');
-        allBtn.innerHTML = '<span class="acLabel">' + (allChordsOpen ? '− All chords' : 'All chords') +
-          '</span> <span class="acHint">browse every root + type</span>';
-        allBtn.onclick = function () { allChordsOpen = !allChordsOpen; buildGrid(); };
-        chips.appendChild(allBtn);
-        if (allChordsOpen) drawChromatic();
+        var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
+        if (global.KeyExplorer) {
+          var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
+            return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+          });
+          global.KeyExplorer.renderChords(leadWrap, keItems, {
+            label: 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label,
+            diagram: packDiagram,
+            onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+          });
+        }
+        chips.appendChild(leadWrap);
         return;
       }
-      // Key set: LEAD with the diatonic chords (labeled, with Roman numerals), tap=add+play.
-      var keyRoot = songKey.root, keyMode = songKey.mode;
-      var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
-      if (global.KeyExplorer) {
-        var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-          return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
-        });
-        global.KeyExplorer.renderChords(leadWrap, keItems, {
-          label: 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label,
-          diagram: packDiagram,
-          onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
-        });
-      }
-      chips.appendChild(leadWrap);
-      // "+ all chords" expander: reveals the full chromatic grid for out-of-key chords.
-      var exp = document.createElement('button');
-      exp.type = 'button';
-      exp.className = 'allChordsToggle' + (allChordsOpen ? ' open' : '');
-      exp.setAttribute('aria-expanded', allChordsOpen ? 'true' : 'false');
-      exp.innerHTML = '<span class="acLabel">' + (allChordsOpen ? '− all chords' : '+ all chords') +
-        '</span> <span class="acHint">borrowed · secondary · blues 7ths</span>';
-      exp.onclick = function () { allChordsOpen = !allChordsOpen; buildGrid(); };
-      chips.appendChild(exp);
-      // When expanded, draw the chromatic picker below the expander.
-      if (allChordsOpen) drawChromatic();
+
+      // "All" view: a header, the scrollable chord-TYPE tab row (the sub-filter), and the
+      // matching chromatic chord tiles in #buildGrid.
+      var ahdr = document.createElement('div'); ahdr.className = 'allChordsHdr';
+      ahdr.textContent = 'All chords';
+      chips.appendChild(ahdr);
+      var tabRow = document.createElement('div'); tabRow.className = 'catTabRow';
+      Object.keys(CATS).forEach(function (cat) {
+        var b = document.createElement('button');
+        b.className = 'chip' + (cat === allChordsActiveCat ? ' on' : '');
+        b.textContent = cat;
+        b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
+        tabRow.appendChild(b);
+      });
+      chips.appendChild(tabRow);
+      (CATS[allChordsActiveCat] || []).forEach(function (c) {
+        grid.appendChild(wireTap(packDiagram(c, 'small'), c));
+      });
     }
 
     /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ----
@@ -1155,6 +1150,9 @@
             songKey.root = r; songKey.explicit = true;
             keyPopoverOpen = false;
           }
+          // Picking/clearing a key resets the chord-list view to "follow the key": a set
+          // key -> In key, a cleared key -> All. (An explicit segment tap re-pins it.)
+          chordView = null;
           renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid();
         };
         el.keyRoots.appendChild(b);

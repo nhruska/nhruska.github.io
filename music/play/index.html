@@ -68,11 +68,11 @@
           </div>
           <!-- progression = one-row horizontal filmstrip (no wrap) -->
           <div class="prog" id="prog"></div>
-          <!-- Modal interchange (Phase 2): re-harmonize the built progression to a
-               PARALLEL mode (same roots, qualities flipped) and set the key to it.
-               Distinct from the scale-only mode toggle in the Chords panel (which only
-               changes the palette) and from transpose (which moves roots). Shown only
-               when a progression exists; populated by songbook.js renderConvertBar(). -->
+          <!-- Modal interchange (Phase 2, consolidated): a SINGLE "Re-harmonize to <key
+               mode>" button - re-qualifies the built progression to the CURRENT key mode
+               (set by the one mode chooser, #keyModes). Same roots, qualities flipped.
+               Distinct from transpose (which moves roots). Shown only when a progression
+               exists; populated by songbook.js renderConvertBar(). -->
           <div class="convertBar" id="convertBar" hidden></div>
         </div>
         <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
@@ -88,9 +88,9 @@
                1. FILTER (always visible): the compact key chip (#keyPickerCompact,
                   injected by songbook.js before #keyModes) taps to the 12-root popover
                   (#keyRoots); the maj/min/mixo/dor mode toggle (#keyModes) sits beside it.
-               2. CHORD LIST (always visible): the adaptive picker - #catChips holds the
-                  in-key lead + "+ all chords" expander (or the no-key hint + category tabs),
-                  #buildGrid holds the chromatic tiles.
+               2. CHORD LIST (always visible): ONE list with an "In key | All" segmented
+                  toggle at the top (in #catChips). "In key" shows the diatonic lead; "All"
+                  shows the category tabs (Major/Minor/7th/...) + #buildGrid chromatic tiles.
                3. "Solo over it" FLY-OUT (#discSolo, collapsed by default): #keyView gets
                   the key title + solo-scale fretboard + I-IV-V HSR chain + inversions link.
                The old standalone "Key & scale" panel was merged in here so there is a

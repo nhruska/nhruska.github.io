@@ -304,6 +304,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
    grid, so every chord box reads the same. Suggestions add an accent border to
    signal "tap to add"; the current progression and the picker stay neutral. */
+/* touch-action:pan-y on the tiles themselves: .chordGrid sets pan-y but it does NOT
+   inherit, so a vertical swipe STARTING on a .chord tile would otherwise use `auto` and
+   trap the gesture. Setting it on the tile lets a vertical swipe from a tile scroll the
+   panel/page. (Progression tiles live in .prog, a horizontal strip - they keep pan-x via
+   the .prog rule and are NOT in .chordGrid, so they are unaffected.) */
+.chordGrid .chord,
+.inKeyLead .chord,
+.hsrChain .chord{touch-action:pan-y;}
 .prog .slot .chord,
 .suggRow .chord.suggPick,
 .chordGrid .chord,
@@ -363,6 +371,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    row. Override the default .chips horizontal-flex behavior for this stacked layout. */
 .adaptiveChips{display:flex;flex-direction:column;gap:0;overflow:visible;margin-bottom:10px;}
 .adaptiveChips .inKeyLead{margin-bottom:4px;}
+/* Segmented "In key | All" toggle: ONE control at the top of the chord list that swaps
+   its content. A pill pair, full-width, each segment >=44px tall for touch. */
+.chordSeg{display:flex;gap:0;width:100%;margin:2px 0 10px;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;}
+.chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
+.chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
+.chordSegBtn:active{transform:scale(.98);}
+.chordSegBtn.on{background:var(--accent-deep);color:var(--accent);}
 /* the chromatic category tabs keep the original horizontal-scroll pill-row behavior */
 .adaptiveChips .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:6px 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .adaptiveChips .catTabRow::-webkit-scrollbar{display:none;}
@@ -405,15 +420,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #s-compose{height:100%;}
 .composeWrap{display:flex;flex-direction:column;height:100%;}
 .composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
-/* Modal interchange control (Phase 2): "Re-harmonize to:" + the 4 target-mode chips.
-   Sits directly under the progression strip so it reads as acting ON the progression.
-   Hidden via the [hidden] attribute when no progression exists. Visually distinct from
-   the in-panel scale-only mode toggle: it carries its own verb label + a top divider. */
+/* Modal interchange control (Phase 2, consolidated): a SINGLE "Re-harmonize to <key
+   mode>" button. The mode it converts to is the one set by the single mode chooser (the
+   #keyModes toggle), so the whole Compose tab has exactly ONE mode-chooser row. Sits
+   directly under the progression strip so it reads as acting ON the progression. Hidden
+   via [hidden] when no progression exists. */
 .convertBar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-strong);}
 .convertBar[hidden]{display:none;}
-.convertLbl{font-family:'Space Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt-dim);flex:0 0 auto;}
-.convertModes{display:flex;flex-wrap:wrap;gap:7px;}
-.convertChip{font-size:.72rem;padding:6px 12px;}
+.convertBtn{font-size:.78rem;padding:9px 16px;min-height:44px;}
 /* The accordion is compose's primary scroll container. overscroll-behavior:auto (not
    contain) so a vertical swipe over the chord list scrolls smoothly and, at a boundary,
    chains to the page instead of being trapped (the contained version could swallow a
