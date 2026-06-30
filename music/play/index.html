@@ -114,6 +114,9 @@
           </div>
           <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
           <div class="chips" id="catChips"></div>
+          <!-- Phase 3: bridge a built progression to a matched backing track to solo over.
+               Hidden until a key + progression exist (toggled by songbook's renderKey). -->
+          <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
         </div>
         <!-- The ONLY scroll area: the chord list. In-key cells (.chordCell) and All-chords
              tiles (.chord) keep touch-action:pan-y so a vertical swipe scrolls them. -->
@@ -536,7 +539,7 @@
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
     var tracksEl = el('s-tracks');
-    if (tracksEl && window.Tracks) window.Tracks.mount({ container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack });
+    var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({ container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack }) : null;
     window.Songbook.mount({
       songs: songs,
       chordPack: pack,
@@ -544,6 +547,9 @@
       profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
       contexts: contexts,
+      // P3: Compose -> backing track. songbook reads the built key+mode and calls this
+      // to seed the Tracks finder, so matched tracks + the solo scale surface directly.
+      seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
         songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
         typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
@@ -557,7 +563,7 @@
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         composeChords: el('composeChords'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
-        cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
+        cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'), soloBackingBtn: el('soloBackingBtn'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
         maxNote: el('maxNote'),

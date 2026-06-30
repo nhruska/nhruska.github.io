@@ -143,6 +143,12 @@
   }
   function focusNoJump(el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
   function familyMode(m) { return m === 'minor' ? 'aeolian' : 'ionian'; }
+  // P3: coarsen any mode name (Major/Minor or a church mode) to the major/minor
+  // family the backing-track finder filters on. Minor-family: aeolian/dorian/
+  // phrygian/locrian (+ "minor"); everything else (ionian/lydian/mixolydian) -> major.
+  function normMode(mode) {
+    return /min|aeolian|dorian|phrygian|locrian/.test(String(mode == null ? '' : mode).toLowerCase()) ? 'minor' : 'major';
+  }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
 
   var STORE = 'bt.custom.v1';
@@ -624,6 +630,21 @@
     });
     wireAdd();
     rerender();
+
+    // P3 controller: bridge from the Compose loop. seedKey carries a built
+    // progression's key + mode into the finder so matched backing tracks + the
+    // solo scale surface without the user re-entering the key by hand. Mode is
+    // normalized to the major/minor family the finder filters on.
+    function seedKey(root, mode) {
+      var k = normRoot(root);
+      if (rootIndex(k) < 0) return false;
+      state.key = k;
+      state.mode = normMode(mode);
+      state.scaleMode = familyMode(state.mode);
+      rerender();
+      return true;
+    }
+    return { seedKey: seedKey };
   }
 
   var Tracks = {
@@ -631,7 +652,7 @@
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
-    notesToPcs: notesToPcs, mount: mount,
+    notesToPcs: notesToPcs, normMode: normMode, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied
