@@ -42,12 +42,31 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
+    <!-- UNIFIED LIBRARY (merged 2026-06: the old separate SONGS, TRACKS and SET
+         tabs are now ONE screen + a type toggle). #typeToggle (Songs|Tracks|Set)
+         swaps which sub-view shows. Search + decade chips apply to Songs and Set
+         (both are the songs.json catalog); they hide for Tracks, which has its own
+         genre/key/circle filters. Each sub-view keeps its original element IDs so
+         the songbook + tracks wiring is unchanged. -->
     <section class="screen on" id="s-library">
+      <div class="chips typeToggle" id="typeToggle"></div>
       <div class="libHero" id="libHero"></div>
-      <div class="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
+      <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="decadeChips"></div>
-      <div class="songs" id="songsList"></div>
-      <div class="libCount" id="libCount"></div>
+      <!-- Songs sub-view -->
+      <div class="libSongs" id="libSongs">
+        <div class="songs" id="songsList"></div>
+        <div class="libCount" id="libCount"></div>
+      </div>
+      <!-- Tracks sub-view (Tracks.mount renders into here) -->
+      <div class="libTracks" id="s-tracks" hidden></div>
+      <!-- Set sub-view -->
+      <div class="libSet" id="libSet" hidden>
+        <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+        <div id="setBody"></div>
+        <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
+      </div>
     </section>
     <section class="screen" id="s-compose">
       <!-- FLATTENED Compose (no accordions). Two regions:
@@ -107,13 +126,6 @@
       <div id="practiceEmpty" class="empty">Choose a song from Songs to open it.</div>
       <div id="practiceBody" style="display:none"></div>
     </section>
-    <section class="screen" id="s-tracks"></section>
-    <section class="screen" id="s-setlist">
-      <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
-        <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
-      <div id="setBody"></div>
-      <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
-    </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
         <h2>Tune Up</h2>
@@ -139,10 +151,8 @@
     </section>
   </div>
   <div class="tabbar">
-    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Songs</span></button>
+    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
-    <button data-tab="tracks"><span class="icn">▶</span><span class="lbl">Tracks</span></button>
-    <button data-tab="setlist"><span class="icn">❦</span><span class="lbl">Set</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
 </div>
@@ -535,6 +545,7 @@
       contexts: contexts,
       el: {
         songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
+        typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),

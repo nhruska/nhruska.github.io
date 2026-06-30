@@ -313,7 +313,7 @@
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
-      search: "", decade: "All", current: null, transpose: 0, view: "lyrics",
+      search: "", decade: "All", libType: "songs", current: null, transpose: 0, view: "lyrics",
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
@@ -323,7 +323,56 @@
     STATE.setlist = loadSet();
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
-    /* ===================== LIBRARY ===================== */
+    /* ===================== LIBRARY (unified: Songs | Tracks | Set) =====================
+     * The old separate SONGS, TRACKS and SET tabs are now ONE library screen with a
+     * type toggle (#typeToggle). The toggle swaps which sub-view shows; search + decade
+     * chips apply to Songs and Set (both ride the songs.json catalog) and hide for
+     * Tracks (which keeps its own genre/key/circle filters, mounted by tracks.js). */
+    var LIBTYPE_KEY = prefix + ".libType.v1";
+    var LIB_TYPES = [
+      { id: 'songs', label: 'Songs' },
+      { id: 'tracks', label: 'Tracks' },
+      { id: 'set', label: 'Set' }
+    ];
+    try { var _lt = localStorage.getItem(LIBTYPE_KEY); if (_lt === 'tracks' || _lt === 'set') STATE.libType = _lt; } catch (e) {}
+    function applyLibType() {
+      var t = STATE.libType;
+      // sub-view visibility
+      if (el.libSongs) el.libSongs.hidden = (t !== 'songs');
+      if (el.libTracks) el.libTracks.hidden = (t !== 'tracks');
+      if (el.libSet) el.libSet.hidden = (t !== 'set');
+      // search + decade chips ride the songs catalog -> shown for songs + set, hidden for tracks
+      var catalogView = (t !== 'tracks');
+      if (el.searchWrap) el.searchWrap.hidden = !catalogView;
+      if (el.decadeChips) el.decadeChips.hidden = !catalogView;
+      if (el.libHero) el.libHero.style.display = (t === 'songs') ? '' : 'none';
+      if (t === 'songs') { renderHero(); renderSongs(); }
+      else if (t === 'set') renderSetlist();
+      // tracks renders itself (tracks.js owns its sub-view)
+      // context line follows the active sub-view
+      if (el.ctxLine) {
+        var ctx = (t === 'tracks') ? CONTEXTS['tracks'] : (t === 'set') ? CONTEXTS['setlist'] : CONTEXTS['library'];
+        if (ctx != null) el.ctxLine.textContent = ctx;
+      }
+    }
+    function setLibType(t) {
+      STATE.libType = t;
+      try { localStorage.setItem(LIBTYPE_KEY, t); } catch (e) {}
+      renderTypeToggle();
+      applyLibType();
+    }
+    function renderTypeToggle() {
+      if (!el.typeToggle) return;
+      el.typeToggle.innerHTML = '';
+      LIB_TYPES.forEach(function (lt) {
+        var b = document.createElement('button');
+        b.className = 'chip' + (lt.id === STATE.libType ? ' on' : '');
+        b.textContent = lt.label;
+        b.onclick = function () { if (STATE.libType !== lt.id) setLibType(lt.id); };
+        el.typeToggle.appendChild(b);
+      });
+    }
+
     function renderDecadeChips() {
       if (!el.decadeChips) return;
       el.decadeChips.innerHTML = '';
@@ -583,7 +632,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'songs'; try { localStorage.setItem(LIBTYPE_KEY, 'songs'); } catch (e) {} switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       if (s.custom) {
@@ -1415,13 +1464,17 @@
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
     function switchTab(name) {
+      // Legacy tab names (setlist / tracks) now resolve to the unified Library screen
+      // with the matching type filter pre-selected, so old internal callers + deep
+      // links still land in the right place after the 3-tab merge.
+      if (name === 'setlist') { STATE.libType = 'set'; try { localStorage.setItem(LIBTYPE_KEY, 'set'); } catch (e) {} name = 'library'; }
+      else if (name === 'tracks') { STATE.libType = 'tracks'; try { localStorage.setItem(LIBTYPE_KEY, 'tracks'); } catch (e) {} name = 'library'; }
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
       if (name !== 'practice') stopBeat(); // tempo cue stops when you leave the song screen
-      if (name === 'setlist') renderSetlist();
       if (name === 'practice') renderPractice();
-      if (name === 'library') renderHero();
+      if (name === 'library') { renderTypeToggle(); applyLibType(); }
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
       var viewEl = document.getElementById('view');
@@ -1433,9 +1486,11 @@
 
     /* ===================== INIT ===================== */
     rebuildAll();
+    renderTypeToggle();
     renderDecadeChips();
     renderSongs();
     renderSetlist();
+    applyLibType(); // set initial sub-view visibility (Songs | Tracks | Set)
     buildGrid();
     buildKeyPicker();
     renderKeyView();
