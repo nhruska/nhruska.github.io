@@ -21,4 +21,4 @@
 - [x] All existing `node test/*.test.js` still pass (6 suites green).
 - [x] music/play loads with zero console errors at desktop (1440x900) + phone (375x812) via Playwright; bridge driven end-to-end (build progression -> CTA appears -> click -> Library/Tracks seeded to C -> matched results render). Screenshots captured.
 - [x] music/TUTOR-ROADMAP.md updated (Phase 3 -> DONE).
-- [ ] PR opened from `claude/music-phase3-backing-solo` with V&V block + a curl-verified githack preview link.
+- [x] PR opened from `claude/music-phase3-backing-solo` with V&V block + a curl-verified githack preview link (PR #59).
