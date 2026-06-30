@@ -12,19 +12,12 @@
   .bt-bar .chip{padding:6px 12px;}
   .bt-mode{flex:0 0 auto;display:flex;gap:5px;margin-left:2px;}
   .bt-mode .chip{padding:6px 9px;font-size:.68rem;}
-  .bt-why{display:inline-block;margin-top:8px;font-family:'Space Mono',monospace;font-size:.6rem;
-    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-deep);
-    border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
+  /* (.bt-why retired -> the related-match note renders as .li-note in the SSOT item.) */
   .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
-  /* Match the Songs list: single-column list of items with the same gap (.songs). */
-  .bt-results{display:flex;flex-direction:column;gap:9px;}
-  /* Same item shell as .songCard (radius/padding) so Songs and Tracks read as one list. */
-  .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
-  .bt-card.tap{cursor:pointer;transition:border-color .12s,transform .08s,background .12s;}
-  .bt-card.tap:hover{border-color:var(--line-strong);background:var(--surface-2);}
-  .bt-card.tap:active{transform:scale(.99);}
-  .bt-meta{align-items:center;}
-  .bt-meta .bt-open{border:none;padding:0;margin-left:auto;color:var(--accent);font-weight:700;}
+  /* Track result items now render via the SSOT .listItem (music/shared/list-item.js);
+   * the list container (.bt-results) + item styles live in songbook.css. The old
+   * .bt-card/.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta/.bt-open/.bt-why item rules
+   * were retired here to keep one source of truth for the Library list item. */
   .bt-more{margin:14px 0 6px;}
   .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;
@@ -158,16 +151,7 @@
   .bt-st-why-toggle:hover,.bt-st-why-toggle.on{color:var(--accent);border-color:var(--accent);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
-  .bt-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
-  /* Title/sub/meta matched to .songCard .title/.artist/.meta so the items look identical. */
-  .bt-title{font-weight:700;font-size:1.02rem;line-height:1.14;letter-spacing:-.01em;}
-  .bt-key{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.84rem;flex:0 0 auto;}
-  .bt-sub{color:var(--txt-dim);font-size:.77rem;margin-top:2px;}
-  .bt-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.69rem;color:var(--txt-dim);align-items:center;}
-  /* Plain meta items (no pill borders) - matches the Songs list meta row. */
-  .bt-meta span{border:none;padding:0;border-radius:0;}
-  /* Dot separators between meta items, mirroring .songCard .meta .dot. */
-  .bt-meta .dot{width:3px;height:3px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
+  /* (.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta item rules retired -> .listItem.) */
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
   /* circle of fifths (Phase 2) — the key explorer */

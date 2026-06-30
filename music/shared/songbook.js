@@ -457,6 +457,12 @@
       var jb = el.libHero.querySelector('#heroJam'); if (jb) jb.onclick = jamNow;
     }
 
+    // Action-ladder fallback for an item with no curated video: find one on YouTube.
+    function ytSearch(s) {
+      var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
+        .filter(Boolean).join(' ');
+      window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
+    }
     function renderSongs() {
       renderHero();
       if (!el.songsList) return;
@@ -469,15 +475,14 @@
       el.songsList.innerHTML = '';
       filtered.forEach(function (s) {
         var inSet = STATE.setlist.indexOf(s.id) >= 0;
-        var card = document.createElement('div');
-        card.className = 'songCard' + (inSet ? ' inSet' : '');
-        var badge = s.custom ? '<span class="dot"></span><span>mine</span>' : '';
-        card.innerHTML = '<button class="addBtn">' + (inSet ? '✓' : '+') + '</button>'
-          + '<div class="row1"><div><div class="title">' + escHTML(s.t) + '</div><div class="artist">' + escHTML(s.a) + '</div></div><div class="yr">’' + String(s.y).slice(-2) + '</div></div>'
-          + '<div class="meta"><span class="chds">' + s.seq.join(' · ') + '</span><span class="dot"></span><span>' + s.seq.length + ' chords</span>' + badge + '</div>';
-        card.querySelector('.addBtn').onclick = function (e) { e.stopPropagation(); toggleSet(s.id); };
-        card.onclick = function () { openPractice(s.id); };
-        el.songsList.appendChild(card);
+        // SSOT: one shared renderer for Songs / Tracks / Set (music/shared/list-item.js).
+        el.songsList.appendChild(global.ListItem.render(s, {
+          segment: 'library',
+          inSet: inSet,
+          onActivate: function () { openPractice(s.id); },
+          onAdd: function () { toggleSet(s.id); },
+          onAction: function () { ytSearch(s); }
+        }));
       });
       if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + ALLSONGS.length + ' songs';
     }
@@ -695,21 +700,25 @@
       body.innerHTML = '';
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
-        var it = document.createElement('div'); it.className = 'setItem';
-        it.innerHTML = '<div class="num">' + (i + 1) + '</div><div class="body"><div class="t">' + escHTML(s.t) + '</div><div class="a">' + escHTML(s.a) + ' · ' + s.y + '</div><div class="c">' + s.seq.join(' · ') + '</div></div>'
-          + '<div class="setCtrl"><button data-act="up" ' + (i === 0 ? 'disabled' : '') + '>▲</button><button data-act="dn" ' + (i === STATE.setlist.length - 1 ? 'disabled' : '') + '>▼</button></div><button class="rm" data-act="rm">×</button>';
-        it.querySelector('[data-act=up]').onclick = function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } };
-        it.querySelector('[data-act=dn]').onclick = function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } };
-        it.querySelector('[data-act=rm]').onclick = function () {
-          var wasOpen = STATE.current && STATE.current.id === sid;
-          STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
-          // keep the live queue + the (maybe hidden) song screen in step with the edit
-          if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
-          else syncQueueToSetlist();
-          renderSetlist(); renderSongs();
-        };
-        it.querySelector('.body').onclick = function () { openPractice(sid, STATE.setlist); }; // open into the setlist queue
-        body.appendChild(it);
+        // SSOT: same renderer as Songs/Tracks, in 'set' mode (number + reorder/remove).
+        body.appendChild(global.ListItem.render(s, {
+          segment: 'set',
+          position: i + 1,
+          first: i === 0,
+          last: i === STATE.setlist.length - 1,
+          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
+          onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
+          onRemove: function () {
+            var wasOpen = STATE.current && STATE.current.id === sid;
+            STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
+            // keep the live queue + the (maybe hidden) song screen in step with the edit
+            if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
+            else syncQueueToSetlist();
+            renderSetlist(); renderSongs();
+          },
+          onAction: function () { ytSearch(s); }
+        }));
       });
       if (bar) bar.style.display = 'flex';
     }
