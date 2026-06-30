@@ -833,7 +833,6 @@
           el.prog.appendChild(slot);
         });
       }
-      renderConvertBar();
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); renderKey(); }
@@ -902,10 +901,10 @@
     // MODAL INTERCHANGE (Phase 2). Re-harmonize the whole built progression to a
     // PARALLEL mode: same tonic, same chord ROOTS, but each chord re-QUALIFIED to the
     // target mode's degree quality. C Major I-IV-V (C F G) -> C Minor i-iv-v (Cm Fm Gm).
-    // This is deliberately distinct from BOTH:
-    //   - transpose (composeTpose): moves roots, keeps qualities;
-    //   - the scale-only mode toggle (buildKeyPicker): changes the palette/solo scale
-    //     offered but never touches already-built chords.
+    // Distinct from transpose (composeTpose): transpose moves roots and keeps qualities;
+    // this keeps roots and flips qualities. Called by the one key/mode filter (#keyModes)
+    // whenever the mode changes with a progression present - so the filter always keeps
+    // the built chords in sync with the chosen mode (no separate re-harmonize button).
     // Best-effort by the user's decision: a chord whose root is NOT a scale degree of the
     // target mode (a chromatic/borrowed root) is left UNCHANGED rather than guessed at.
     // A preserved 7th-type extension is re-based onto the new triad quality where the
@@ -960,26 +959,6 @@
       songKey.explicit = true;
       keyPopoverOpen = false;
       renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid(); renderSuggest();
-    }
-    // The convert control: a SINGLE "Re-harmonize chords to <key mode>" button, shown
-    // ONLY when a progression exists (it acts ON the progression). The mode it converts
-    // to is the CURRENT key-mode (set by the one mode chooser - the #keyModes toggle), so
-    // there is exactly ONE mode-chooser row in the whole Compose tab. This button just
-    // applies that chosen mode to the already-built chords (same roots, re-qualified).
-    function renderConvertBar() {
-      if (!el.convertBar) return;
-      if (!progression.length) { el.convertBar.hidden = true; el.convertBar.innerHTML = ''; return; }
-      el.convertBar.hidden = false;
-      el.convertBar.innerHTML = '';
-      var mode = songKey.mode || 'Major';
-      var tonic = songKey.root || (splitChord(progression[0]) || {}).root || '';
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'btn convertBtn';
-      b.textContent = 'Re-harmonize to ' + (tonic ? tonic + ' ' : '') + MODES[mode].label;
-      b.title = 'Re-qualify every built chord to ' + MODES[mode].label + ' (same roots, qualities flipped to the mode)';
-      b.onclick = function () { convertToMode(mode); };
-      el.convertBar.appendChild(b);
     }
     // ADAPTIVE chord surface (Phase 1, consolidated). ONE chord list with an "In key | All"
     // segmented toggle at the top that swaps the list's CONTENT (not two stacked sections):
@@ -1048,8 +1027,10 @@
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
             return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
           });
+          // No 'label' opt here: the "Chords in <key> <mode>" header is already rendered
+          // once above (allChordsHdr). Passing label too would render a second identical
+          // header (the duplicate-header bug). Header lives in ONE place: allChordsHdr.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
-            label: 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label,
             diagram: packDiagram,
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
           });
@@ -1166,10 +1147,17 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Mode change is scale-context-only: it updates the palette/solo scale and the
-          // (mode-aware) readout, but does NOT transpose or re-qualify the built progression.
-          songKey.mode = mk;
-          renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+          // Mode change ALWAYS re-harmonizes the built progression (solo-practice scope):
+          // the one key/mode filter keeps the chords in sync - a root change transposes,
+          // a mode change re-qualifies. convertToMode sets songKey.mode + re-renders.
+          // If the progression is empty there's nothing to harmonize, so just set the
+          // mode and re-render the palette/solo scale.
+          if (progression.length) {
+            convertToMode(mk);
+          } else {
+            songKey.mode = mk;
+            renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+          }
         };
         el.keyModes.appendChild(b);
       });

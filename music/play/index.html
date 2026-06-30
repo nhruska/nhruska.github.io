@@ -68,12 +68,10 @@
           </div>
           <!-- progression = one-row horizontal filmstrip (no wrap) -->
           <div class="prog" id="prog"></div>
-          <!-- Modal interchange (Phase 2, consolidated): a SINGLE "Re-harmonize to <key
-               mode>" button - re-qualifies the built progression to the CURRENT key mode
-               (set by the one mode chooser, #keyModes). Same roots, qualities flipped.
-               Distinct from transpose (which moves roots). Shown only when a progression
-               exists; populated by songbook.js renderConvertBar(). -->
-          <div class="convertBar" id="convertBar" hidden></div>
+          <!-- Modal interchange (Phase 2): re-harmonization now happens automatically when
+               the key/mode filter (#keyModes) changes - the one filter keeps the built
+               progression in sync (root change transposes, mode change re-qualifies). The
+               former standalone "Re-harmonize" button (#convertBar) was removed. -->
         </div>
         <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
         <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
@@ -558,7 +556,7 @@
         pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
-        prog: el('prog'), convertBar: el('convertBar'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
