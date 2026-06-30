@@ -34,6 +34,22 @@ Lens: user is HOLDING AN INSTRUMENT (one free thumb, phone propped, arm's-length
 
 **Resolved tension:** info-density wanted chords hidden at rest; accessibility called chords performance-critical. Resolution: the chord SEQUENCE is not useful in the browse row (not in playable order, too small) and lives in the chord sheet / `.perform`; the browse row keeps a count + hazard flag. Both satisfied.
 
+## M3 - Full songs/tracks merge (one repertoire) - PLANNED, approved by Nik 2026-06-30
+
+Decision: **full merge** (drop the Songs|Tracks split; a song with a curated video is just a playable item). Shared filter bar = **Search + Genre + Key** (NOT decade). Set stays. This is the "tracks concept goes away" end-state.
+
+Build plan:
+1. **Merged repertoire**: one list = ALLSONGS (songs.json + custom) + the tracks store (tracks.json + custom + URL overlay), DEDUPED - a song that is also a curated track becomes ONE item (merge fields: chords from the song + video/genre/bpm from the track; match on title+artist, key as a tiebreak). ListItem already renders both shapes.
+2. **Drop the Songs|Tracks toggle** -> Library = one Repertoire list + Set (toggle becomes Repertoire|Set). Remove the separate `Tracks.mount` finder tab (#s-tracks).
+3. **Unified filter bar**: Search (title/artist) + Genre chips + Key chips, filtering the merged list. Replaces both the songs decade/search bar and the tracks genre/key/mode finder chrome.
+4. **Per-item actions** (ListItem already does): open chords / Video / Search / add-to-set / edit.
+5. **Rehome the Tracks finder's rich features** - SUB-DECISION for Nik (recommended approach A):
+   - (A) curation (add track / edit video URL / candidates queue) -> a top-level "+ Add" + per-item edit (M2); the Practice Studio (play + solo scale + fretboard) stays reachable by tapping a playable item; the always-on circle-of-fifths panel moves INTO the studio/detail, not a Library panel. [Recommended - cleanest dissolution]
+   - (B) keep a richer "backing tracks" experience as a mode/filter within the unified list (e.g. a "playable" filter + the circle panel on demand) to preserve the solo-over-a-track flow more prominently.
+6. Risk: data-model dedup + merge; preserving curation/studio reachability; dropping a nav toggle. Multi-step; verify each increment live; gate.
+
+Recommended: build M3 in a FRESH session (this one's context is large) so the merge gets full headroom + careful verification.
+
 ## Surfaced during M1 (candidates for next volleys)
 - **Action wraps under meta in Set items** (375px): when the reorder/remove controls take width, "YouTube ↗" wraps to a second line below the chord meta. Tighten the Set item layout (e.g. action inline-end, or controls overlaid) so it stays one row.
 - **Meta row can get long** once an item has the full union (each chord + count + genre + bpm + capo + "mine"). Consider a cap / truncation / de-emphasis when many cells are present.
