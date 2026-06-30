@@ -833,6 +833,7 @@
           el.prog.appendChild(slot);
         });
       }
+      renderConvertBar();
       renderSuggest();
     }
     function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); renderKey(); }
@@ -897,6 +898,94 @@
       }
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
+    }
+    // MODAL INTERCHANGE (Phase 2). Re-harmonize the whole built progression to a
+    // PARALLEL mode: same tonic, same chord ROOTS, but each chord re-QUALIFIED to the
+    // target mode's degree quality. C Major I-IV-V (C F G) -> C Minor i-iv-v (Cm Fm Gm).
+    // This is deliberately distinct from BOTH:
+    //   - transpose (composeTpose): moves roots, keeps qualities;
+    //   - the scale-only mode toggle (buildKeyPicker): changes the palette/solo scale
+    //     offered but never touches already-built chords.
+    // Best-effort by the user's decision: a chord whose root is NOT a scale degree of the
+    // target mode (a chromatic/borrowed root) is left UNCHANGED rather than guessed at.
+    // A preserved 7th-type extension is re-based onto the new triad quality where the
+    // base triad maps to "" (major) or "m" (minor); on a "dim" degree we keep the bare
+    // dim triad. Round-trip is not perfect for chromatic chords (acceptable).
+    function convertToMode(targetMode) {
+      if (!progression.length || !MODES[targetMode]) return;
+      // Parallel = same tonic. Use the explicit/derived song key root; else the first
+      // chord's root. rootPc handles flat spellings; if it can't resolve, bail safely.
+      var tonicRoot = songKey.root || (splitChord(progression[0]) || {}).root || null;
+      var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
+      if (tonicPc == null) return;
+      var steps = MODES[targetMode].steps, quals = MODES[targetMode].quals;
+      progression = progression.map(function (c) {
+        var p = splitChord(c);
+        if (!p) return c;
+        var rpc = rootPc(p.root);
+        if (rpc == null) return c;
+        var offset = ((rpc - tonicPc) % 12 + 12) % 12;
+        var i = steps.indexOf(offset);
+        if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
+        var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished
+        // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
+        // Re-base it onto the target triad quality: major degree -> maj7 keeps its own
+        // maj7-ness only if it was maj7; a dominant 7 stays a dominant 7; a minor 7
+        // becomes minor on a minor degree, etc. Simpler+correct rule: rebuild from the
+        // base triad and re-attach the extension class that survives a quality flip.
+        var ext = "";
+        if (/maj7$/.test(p.qual)) ext = "maj7-like";
+        else if (/m7$/.test(p.qual)) ext = "min7-like";
+        else if (/7$/.test(p.qual)) ext = "dom7-like";
+        var suffix;
+        if (ext === "") {
+          suffix = baseQual; // plain triad -> target triad quality
+        } else if (baseQual === "dim") {
+          suffix = "dim"; // keep the bare diminished triad on a dim degree
+        } else if (baseQual === "m") {
+          // minor degree: a 7th becomes a minor 7th (m7); a maj7 over a minor degree is
+          // uncommon - normalize to m7 to keep the chord diatonic-feeling.
+          suffix = "m7";
+        } else { // baseQual === "" -> major degree
+          // major degree: a maj7 stays maj7; a dominant/minor 7 becomes a dominant 7
+          // (the usual major-degree 7th in these jam styles).
+          suffix = (ext === "maj7-like") ? "maj7" : "7";
+        }
+        return p.root + suffix;
+      });
+      // Parallel interchange keeps the tonic fixed; only the mode changes. Roots do not
+      // move, so cTpose (the transpose-from-origin readout) is intentionally untouched.
+      songKey.root = tonicRoot;
+      songKey.mode = targetMode;
+      songKey.explicit = true;
+      keyPopoverOpen = false;
+      renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid(); renderSuggest();
+    }
+    // The convert control: a labeled row of the 4 target modes, shown ONLY when a
+    // progression exists (it acts ON the progression). Clearly distinct from the
+    // scale-only mode toggle inside the Chords panel - this one re-harmonizes.
+    function renderConvertBar() {
+      if (!el.convertBar) return;
+      if (!progression.length) { el.convertBar.hidden = true; el.convertBar.innerHTML = ''; return; }
+      el.convertBar.hidden = false;
+      el.convertBar.innerHTML = '';
+      var lbl = document.createElement('span');
+      lbl.className = 'convertLbl';
+      lbl.textContent = 'Re-harmonize to:';
+      el.convertBar.appendChild(lbl);
+      var row = document.createElement('div'); row.className = 'convertModes';
+      Object.keys(MODES).forEach(function (mk) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        // Highlight the mode the progression is currently IN (the song key's mode) so the
+        // control reads as "you're in X; tap another to convert".
+        b.className = 'chip convertChip' + (mk === songKey.mode ? ' on' : '');
+        b.textContent = MODES[mk].label;
+        b.title = 'Convert this progression to ' + MODES[mk].label + ' (same roots, re-qualified)';
+        b.onclick = function () { convertToMode(mk); };
+        row.appendChild(b);
+      });
+      el.convertBar.appendChild(row);
     }
     // ADAPTIVE chord surface (Phase 1). One picker that LEADS with the in-key
     // diatonic chords when a song key is set, and keeps the full chromatic grid one

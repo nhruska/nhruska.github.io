@@ -11,8 +11,8 @@ An adaptive AI music tutor whose destination is **soloing and songwriting confid
 | Phase | Capability | Status |
 |---|---|---|
 | 0 | **Chord building foundation** - unified song key, compact key bar, transpose==key sync, all-chords sharps/flats, suggestions+common-progressions merge | DONE (PR #50/#52/#56) |
-| 1 | **Adaptive chord surface** - one picker that LEADS with the in-key diatonic chords (tracks key + mode) and keeps "+ all chords" one tap away for borrowed/secondary/blues | THIS PR |
-| 2 | **Modal interchange** - an explicit "convert my progression to this mode" action (e.g. C major I-IV-V -> C minor i-iv-v: same roots, qualities flipped). Distinct from transpose (which shifts roots, keeps qualities) | NEXT |
+| 1 | **Adaptive chord surface** - one picker that LEADS with the in-key diatonic chords (tracks key + mode) and keeps "+ all chords" one tap away for borrowed/secondary/blues | DONE (PR #57) |
+| 2 | **Modal interchange** - an explicit "convert my progression to this mode" action (e.g. C major I-IV-V -> C minor i-iv-v: same roots, qualities flipped). Distinct from transpose (which shifts roots, keeps qualities). Best-effort: a chord whose root is not a degree of the target mode is left unchanged | THIS PR |
 | 3 | **Backing-track soloing + scale guidance** - launch a backing track for the current progression; show the scale to solo over, on the fretboard | PLANNED |
 | 4 | **Relative / parallel scale demos** - over the same backing, swap compliant scales and explain why: A minor over a C major progression (relative - same notes), then switch the backing to C minor and solo C minor (parallel - different notes) | PLANNED |
 | 5 | **Song-form coaching** - AABA, intro/verse/chorus/bridge; guide building a coherent whole song from sections | PLANNED |

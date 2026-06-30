@@ -405,6 +405,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #s-compose{height:100%;}
 .composeWrap{display:flex;flex-direction:column;height:100%;}
 .composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
+/* Modal interchange control (Phase 2): "Re-harmonize to:" + the 4 target-mode chips.
+   Sits directly under the progression strip so it reads as acting ON the progression.
+   Hidden via the [hidden] attribute when no progression exists. Visually distinct from
+   the in-panel scale-only mode toggle: it carries its own verb label + a top divider. */
+.convertBar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-strong);}
+.convertBar[hidden]{display:none;}
+.convertLbl{font-family:'Space Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt-dim);flex:0 0 auto;}
+.convertModes{display:flex;flex-wrap:wrap;gap:7px;}
+.convertChip{font-size:.72rem;padding:6px 12px;}
 /* The accordion is compose's primary scroll container. overscroll-behavior:auto (not
    contain) so a vertical swipe over the chord list scrolls smoothly and, at a boundary,
    chains to the page instead of being trapped (the contained version could swallow a

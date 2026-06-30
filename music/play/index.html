@@ -68,6 +68,12 @@
           </div>
           <!-- progression = one-row horizontal filmstrip (no wrap) -->
           <div class="prog" id="prog"></div>
+          <!-- Modal interchange (Phase 2): re-harmonize the built progression to a
+               PARALLEL mode (same roots, qualities flipped) and set the key to it.
+               Distinct from the scale-only mode toggle in the Chords panel (which only
+               changes the palette) and from transpose (which moves roots). Shown only
+               when a progression exists; populated by songbook.js renderConvertBar(). -->
+          <div class="convertBar" id="convertBar" hidden></div>
         </div>
         <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
         <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
@@ -552,7 +558,7 @@
         pScroll: el('pScroll'), pSpeed: el('pSpeed'), pSpeedR: el('pSpeedR'), pSpeedV: el('pSpeedV'),
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
-        prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
+        prog: el('prog'), convertBar: el('convertBar'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
