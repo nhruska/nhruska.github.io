@@ -799,14 +799,12 @@
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
-      // NO auto-switching of accordion panels on add/remove - that made the surface jump
-      // and shoved the just-tapped chord out of view. Panels are user-controlled; the
-      // "Next chord" panel (#discSuggest) is the only default-open (set in the HTML at
-      // cold start), and its empty state shows the common-progression starters.
-      // Gray out the choosers once the 8-chord cap (addChord) is reached.
+      // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
+      // sits on .composeWrap so it covers BOTH regions: the fixed top (starters + toggle)
+      // AND the scrolling chord list (in-key cells + all-chords tiles).
       var maxed = progression.length >= 8;
-      var acc = document.querySelector('.composeAccordion');
-      if (acc) acc.classList.toggle('maxed', maxed);
+      var wrap = document.querySelector('.composeWrap');
+      if (wrap) wrap.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // Only repaint the strip when something VISIBLE changed - the chords, their
@@ -835,13 +833,14 @@
       }
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; progression.push(c); renderProg(); renderKey(); }
+    function addChord(c) { if (progression.length >= 8) return; forceStarters = false; progression.push(c); renderProg(); renderKey(); }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
     // chord palette + solo scale below match what just got filled in.
     function loadProgression(degrees) {
       var root = songKey.root || "C";
+      forceStarters = false; // a progression is loaded now - leave the starters view
       // a named pattern sets an explicit Major key (patterns are major-diatonic)
       songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
@@ -983,10 +982,22 @@
     function buildGrid() {
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid;
-      // #catChips is a vertical stack (CSS .adaptiveChips). It holds the segmented toggle,
-      // then either the in-key lead OR the All-chords type tabs; #buildGrid holds tiles.
-      chips.className = 'chips adaptiveChips';
+      // FLATTENED layout split:
+      //   #catChips  = the FIXED In-key|All toggle (stays in .composeTop, never scrolls).
+      //   the scroll area (#composeChords) holds the LIST content: in-key lead, the
+      //   All-chords type-tab row, and #buildGrid tiles - so only the list scrolls.
+      // Redundant headers ("Chords in <key>", "All chords") are dropped: the key/mode chip
+      // already shows the key, and the toggle already says which list you're in.
+      chips.className = 'chips';
       chips.innerHTML = ''; grid.innerHTML = '';
+      // Remove any list-content nodes a prior render appended to the scroll area, keeping
+      // #buildGrid (the tiles container) in place.
+      var scroller = el.composeChords;
+      if (scroller) {
+        Array.prototype.slice.call(scroller.children).forEach(function (n) {
+          if (n !== grid) scroller.removeChild(n);
+        });
+      }
       var view = effectiveChordView();
       // tap handler shared by every chord tile: add to the progression + play, with a
       // brief selected flash for feedback.
@@ -995,6 +1006,7 @@
         return d;
       }
       // Segmented control: In key | All. One tap pins the view (chordView), then re-render.
+      // Stays in the FIXED #catChips.
       var seg = document.createElement('div'); seg.className = 'chordSeg';
       [['inkey', 'In key'], ['all', 'All']].forEach(function (pair) {
         var b = document.createElement('button');
@@ -1008,42 +1020,32 @@
       chips.appendChild(seg);
 
       if (view === 'inkey') {
-        var hdr = document.createElement('div'); hdr.className = 'allChordsHdr';
         if (!songKey.root) {
           // In-key view with no key set: prompt to pick a key (the list is empty until then).
-          hdr.textContent = 'Chords in key';
-          chips.appendChild(hdr);
           var hint = document.createElement('p');
           hint.className = 'keyHint chordsHint';
-          hint.textContent = 'Pick a key above to lead with its chords, or switch to All to browse every chord.';
-          chips.appendChild(hint);
+          hint.textContent = 'Pick a key (tap the key chip above) to lead with its chords, or switch to All to browse every chord.';
+          if (scroller) scroller.insertBefore(hint, grid);
           return;
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
-        hdr.textContent = 'Chords in ' + keyRoot + ' ' + MODES[keyMode].label;
-        chips.appendChild(hdr);
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
         if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
             return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
           });
-          // No 'label' opt here: the "Chords in <key> <mode>" header is already rendered
-          // once above (allChordsHdr). Passing label too would render a second identical
-          // header (the duplicate-header bug). Header lives in ONE place: allChordsHdr.
+          // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
             diagram: packDiagram,
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
           });
         }
-        chips.appendChild(leadWrap);
+        if (scroller) scroller.insertBefore(leadWrap, grid);
         return;
       }
 
-      // "All" view: a header, the scrollable chord-TYPE tab row (the sub-filter), and the
-      // matching chromatic chord tiles in #buildGrid.
-      var ahdr = document.createElement('div'); ahdr.className = 'allChordsHdr';
-      ahdr.textContent = 'All chords';
-      chips.appendChild(ahdr);
+      // "All" view: the scrollable chord-TYPE tab row (the sub-filter), then the matching
+      // chromatic chord tiles in #buildGrid. No "All chords" header (redundant w/ toggle).
       var tabRow = document.createElement('div'); tabRow.className = 'catTabRow';
       Object.keys(CATS).forEach(function (cat) {
         var b = document.createElement('button');
@@ -1052,7 +1054,7 @@
         b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
         tabRow.appendChild(b);
       });
-      chips.appendChild(tabRow);
+      if (scroller) scroller.insertBefore(tabRow, grid);
       (CATS[allChordsActiveCat] || []).forEach(function (c) {
         grid.appendChild(wireTap(packDiagram(c, 'small'), c));
       });
@@ -1067,14 +1069,12 @@
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
-      // Compact key chip: injected once before keyRoots. ALWAYS visible - it shows the
-      // current key (or a "Pick a key" prompt) and toggles the root popover.
+      // Compact "C Major v" chip: injected once into .keyBar before the fly-out. ALWAYS
+      // visible - it shows the current key (or a "Pick a key" prompt) and toggles the
+      // fly-out (#keyFlyout, which holds the 12 roots + the mode toggle + the solo scale).
       var chip = document.getElementById('keyPickerCompact');
       if (!chip) {
-        // Inject the chip at the TOP of the filter row: before the mode toggle when it
-        // exists (so reading order is chip -> mode toggle -> root popover), else before
-        // the root grid. Both live in the same parent (#discChords .keyFilter).
-        var anchor = el.keyModes || el.keyRoots;
+        var anchor = el.keyFlyout || el.keyRoots;
         if (anchor && anchor.parentNode) {
           chip = document.createElement('button');
           chip.type = 'button';
@@ -1086,15 +1086,17 @@
       if (chip) {
         chip.hidden = false;
         chip.setAttribute('aria-expanded', keyPopoverOpen ? 'true' : 'false');
-        chip.setAttribute('aria-controls', 'keyRoots');
+        chip.setAttribute('aria-controls', 'keyFlyout');
         chip.setAttribute('aria-haspopup', 'true');
         chip.innerHTML = songKey.root
           ? (songKey.root + ' <span class="kpcMode">' + MODES[songKey.mode].label + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
           : ('Pick a key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
-      // Root grid = on-demand popover. Closed by default; opens when the chip is tapped.
-      el.keyRoots.hidden = !keyPopoverOpen;
+      // The fly-out (roots + mode toggle + solo scale) opens/closes with the chip.
+      if (el.keyFlyout) el.keyFlyout.hidden = !keyPopoverOpen;
+      // Root grid is always visible INSIDE the fly-out now (no separate popover).
+      el.keyRoots.hidden = false;
       el.keyRoots.innerHTML = '';
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
@@ -1167,12 +1169,8 @@
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
-      // The "Solo over it" fly-out only carries teaching content once a key is set; with
-      // no key it is disabled (and force-collapsed) so an empty disclosure can't be opened.
-      if (el.discSolo) {
-        if (!songKey.root) { el.discSolo.open = false; el.discSolo.classList.add('isEmpty'); }
-        else { el.discSolo.classList.remove('isEmpty'); }
-      }
+      // #keyView now lives INSIDE the key/mode fly-out (below the roots + mode toggle), so
+      // the solo scale + HSR chain + inversions link show when the fly-out is open.
       if (!songKey.root) {
         el.keyView.innerHTML = '<p class="keyHint">Pick a key to see the scale to solo over.</p>';
         return;
@@ -1315,13 +1313,16 @@
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
     }
+    // The "?" help button can FORCE the starter list to show even when a progression
+    // exists (so the starters stay reachable after you've begun). Cleared as soon as a
+    // chord is added/loaded so the box returns to its normal built-chord + next-chord view.
+    var forceStarters = false;
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
-      if (progression.length === 0) {
-        // Empty state: show common progressions so the user has actionable one-tap starters.
-        // This replaces the old bare "Add a chord..." hint and merges the standalone
-        // progPicks disclosure (now removed) into the suggestions area.
+      if (progression.length === 0 || forceStarters) {
+        // Empty state (or "?" pressed): show common progressions so the user has actionable
+        // one-tap starters. The starters live INSIDE the progression box (below #prog).
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
         lbl.textContent = 'Start with a common progression';
         el.suggest.appendChild(lbl);
@@ -1393,6 +1394,12 @@
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
+    // "?" help: re-show the starter progressions inside the progression box. Toggles off
+    // if already forced (and there's a progression to fall back to).
+    if (el.cHelp) el.cHelp.onclick = function () {
+      forceStarters = (progression.length === 0) ? true : !forceStarters;
+      renderSuggest();
+    };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key

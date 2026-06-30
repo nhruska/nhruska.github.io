@@ -50,70 +50,53 @@
       <div class="libCount" id="libCount"></div>
     </section>
     <section class="screen" id="s-compose">
+      <!-- FLATTENED Compose (no accordions). Two regions:
+             1. .composeTop (FIXED, does NOT scroll): button bar + progression box +
+                compact key/mode chip + In-key|All toggle.
+             2. .composeChords (the ONLY scroll area): the chord list.
+           Rationale: the old nested-accordion scroll container trapped vertical swipes on
+           the in-key cells (the lingering swipe bug). With a single flat scroll container
+           the chord cells scroll cleanly. -->
       <div class="composeWrap">
-        <!-- Slim steady header: label + transpose + Clear/Save stay pinned (NOT the tall chord
-             diagrams, which made the old sticky band ~3/4 of the screen). -->
-        <!-- Pinned unit: one compact control bar (transpose + view + Save/Clear) AND the
-             progression palette below it, both steady on scroll. No "Progression" label -
-             the empty palette's placeholder text carries that. -->
-        <div class="composeSticky">
+        <div class="composeTop">
           <div class="ctrlBar">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
             <button class="keyReadout" id="cKey" title="Song key - tap to reset transpose">—</button>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
+            <button class="iconBtn" id="cHelp" title="Show starter progressions" aria-label="Show starter progressions">?</button>
             <span class="ctrlSpacer"></span>
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
           </div>
-          <!-- progression = one-row horizontal filmstrip (no wrap) -->
-          <div class="prog" id="prog"></div>
-          <!-- Modal interchange (Phase 2): re-harmonization now happens automatically when
-               the key/mode filter (#keyModes) changes - the one filter keeps the built
-               progression in sync (root change transposes, mode change re-qualifies). The
-               former standalone "Re-harmonize" button (#convertBar) was removed. -->
-        </div>
-        <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
-        <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
-        <div class="composeAccordion">
-          <!-- Default-open at cold start: its empty state shows the common-progression
-               starters so a fresh Compose tab offers actionable one-tap starts. -->
-          <details class="composeDisc" name="compose" id="discSuggest" open>
-            <summary>Next chord</summary>
-            <div class="discBody"><div id="suggest" class="suggest"></div></div>
-          </details>
-          <!-- ONE chord panel (Phase 1 final form). Top-to-bottom:
-               1. FILTER (always visible): the compact key chip (#keyPickerCompact,
-                  injected by songbook.js before #keyModes) taps to the 12-root popover
-                  (#keyRoots); the maj/min/mixo/dor mode toggle (#keyModes) sits beside it.
-               2. CHORD LIST (always visible): ONE list with an "In key | All" segmented
-                  toggle at the top (in #catChips). "In key" shows the diatonic lead; "All"
-                  shows the category tabs (Major/Minor/7th/...) + #buildGrid chromatic tiles.
-               3. "Solo over it" FLY-OUT (#discSolo, collapsed by default): #keyView gets
-                  the key title + solo-scale fretboard + I-IV-V HSR chain + inversions link.
-               The old standalone "Key & scale" panel was merged in here so there is a
-               single chord surface instead of two. -->
-          <details class="composeDisc" name="compose" id="discChords">
-            <summary>Chords</summary>
-            <div class="discBody">
-              <!-- 1. Filter: key chip (injected) + mode toggle, with the root popover below. -->
-              <div class="keyFilter">
-                <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-                <div class="chips keyModes" id="keyModes"></div>
-                <div class="keyRoots" id="keyRoots"></div>
-              </div>
-              <!-- 2. Chord list. -->
-              <div class="chips" id="catChips"></div>
-              <div class="chordGrid" id="buildGrid"></div>
-              <!-- 3. Solo-over-it fly-out: collapsed by default; #keyView is rendered inside. -->
-              <details class="soloDisc" id="discSolo">
-                <summary>Solo over it</summary>
-                <div class="keyView" id="keyView"></div>
-              </details>
+          <!-- Progression box. When EMPTY it shows the tappable starter progressions
+               (rendered into #suggest by renderSuggest). When non-empty it shows the
+               built chords (#prog). The "?" button re-shows the starters at any time. -->
+          <div class="progBox">
+            <div class="prog" id="prog"></div>
+            <div id="suggest" class="suggest"></div>
+          </div>
+          <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
+          <!-- Compact key/mode chip + its fly-out. The chip (#keyPickerCompact, injected by
+               songbook.js before #keyModes) shows "C Major v"; tapping it opens #keyFlyout
+               with the 12 roots (#keyRoots), the mode toggle (#keyModes), and the solo
+               scale (#keyView). The In-key|All toggle (#catChips holds .chordSeg) sits
+               below the chip, still in the fixed region. -->
+          <div class="keyBar">
+            <div class="keyFlyout" id="keyFlyout" hidden>
+              <div class="keyRoots" id="keyRoots"></div>
+              <div class="chips keyModes" id="keyModes"></div>
+              <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+              <div class="keyView" id="keyView"></div>
             </div>
-          </details>
-          <!-- The old standalone "Common progressions" panel (#discPatterns / #progPicks)
-               was removed: its starters now live in the #discSuggest empty state above. -->
+          </div>
+          <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
+          <div class="chips" id="catChips"></div>
+        </div>
+        <!-- The ONLY scroll area: the chord list. In-key cells (.chordCell) and All-chords
+             tiles (.chord) keep touch-action:pan-y so a vertical swipe scrolls them. -->
+        <div class="composeChords" id="composeChords">
+          <div class="chordGrid" id="buildGrid"></div>
         </div>
       </div>
     </section>
@@ -557,10 +540,12 @@
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
-        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
+        composeChords: el('composeChords'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discSuggest: el('discSuggest'), discChords: el('discChords'), discSolo: el('discSolo'), maxNote: el('maxNote'),
+        keyBar: el('keyBar'), keyFlyout: el('keyFlyout'),
+        maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

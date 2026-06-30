@@ -267,7 +267,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog::-webkit-scrollbar{display:none;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:62px;}
-.prog:empty::after{content:"Tap chords below to build your progression";color:var(--txt-dim);font-size:.82rem;width:100%;text-align:center;}
+/* When empty the #suggest starters below carry the call-to-action, so the empty #prog
+   collapses (no min-height, no placeholder) instead of showing a redundant prompt. */
+.prog:empty{min-height:0;padding:0;border:0;}
+.suggest:not(:empty){margin-top:8px;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
@@ -361,9 +364,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyPickerCompact .kpcMode{color:var(--txt-soft);font-weight:600;}
 .keyPickerCompact .kpcCaret{font-size:.7rem;color:var(--accent-dim);transition:transform .15s;}
 .keyPickerCompact[aria-expanded="true"] .kpcCaret{transform:rotate(180deg);color:var(--accent);}
-/* Root grid = on-demand popover under the chip. All 12 roots at once (wrap), each a
-   44px thumb target - no hidden-scroll. Hidden until the chip is tapped. */
-.keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
+/* Root grid - lives inside the key/mode fly-out now (always shown there). All 12 roots
+   at once (wrap), each a 44px thumb target. No own border/bg: the fly-out frames it. */
+.keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
 .keyRoots[hidden]{display:none;}
 .rootChip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:.78rem;}
 .keyModes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
@@ -385,17 +388,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    the no-key hint), the "+ all chords" expander, and an inner scrollable category-tab
    row. Override the default .chips horizontal-flex behavior for this stacked layout. */
 .adaptiveChips{display:flex;flex-direction:column;gap:0;overflow:visible;margin-bottom:10px;}
-.adaptiveChips .inKeyLead{margin-bottom:4px;}
-/* Segmented "In key | All" toggle: ONE control at the top of the chord list that swaps
-   its content. A pill pair, full-width, each segment >=44px tall for touch. */
-.chordSeg{display:flex;gap:0;width:100%;margin:2px 0 10px;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;}
+.inKeyLead{margin-bottom:4px;}
+/* Segmented "In key | All" toggle: ONE control (in the FIXED #catChips) that swaps the
+   scrolling chord list's content. A pill pair, full-width, each segment >=44px tall. */
+#catChips{margin-bottom:8px;}
+.chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;}
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
 .chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
 .chordSegBtn:active{transform:scale(.98);}
 .chordSegBtn.on{background:var(--accent-deep);color:var(--accent);}
-/* the chromatic category tabs keep the original horizontal-scroll pill-row behavior */
-.adaptiveChips .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:6px 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
-.adaptiveChips .catTabRow::-webkit-scrollbar{display:none;}
+/* the chromatic category tabs keep the horizontal-scroll pill-row behavior (now a direct
+   child of the scroll area, not .adaptiveChips). */
+.catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
+.catTabRow::-webkit-scrollbar{display:none;}
 .chordsHint{margin:0 2px 4px;}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
@@ -428,19 +433,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
    so build->solo->build never scrolls it away; the key picker, scale, and grids flow
    below. The bg matches the app so chords scroll cleanly under it. */
-/* Compose = a fixed top region (controls + palette) over a self-scrolling accordion.
-   NOT position:sticky - a tall sticky with a nested h-scroller repaints every scroll
-   frame (the "stuck" feel) and overlaps scrolling content (the "see under the pallet"
-   bleed). A flex column with the accordion as the ONLY scroll container is smooth. */
+/* FLATTENED Compose (no accordions). A flex column: a FIXED top region (button bar +
+   progression box + key/mode chip + In-key|All toggle) over the chord list, which is the
+   ONLY scroll container. No nested scroller -> vertical swipes on the in-key cells scroll
+   cleanly (fixes the lingering nested-accordion swipe bug). */
 #s-compose{height:100%;}
 .composeWrap{display:flex;flex-direction:column;height:100%;}
-.composeSticky{flex:0 0 auto;background:var(--bg);padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
-/* The accordion is compose's primary scroll container. overscroll-behavior:auto (not
-   contain) so a vertical swipe over the chord list scrolls smoothly and, at a boundary,
-   chains to the page instead of being trapped (the contained version could swallow a
-   vertical swipe when content was short). */
-.composeAccordion{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
-.composeAccordion::-webkit-scrollbar{width:0;}
+.composeTop{flex:0 0 auto;background:var(--bg);padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line);}
+/* The chord list is compose's ONLY scroll container. overscroll-behavior:auto (not
+   contain) so a vertical swipe scrolls smoothly and chains to the page at a boundary. */
+.composeChords{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
+.composeChords::-webkit-scrollbar{width:0;}
+/* progression box: built chords (#prog) on top; #suggest below carries the next-chord
+   picks (non-empty) or the starter progressions (empty / "?" pressed). */
+.progBox{margin-bottom:8px;}
+/* key/mode chip + its fly-out (roots + mode toggle + solo scale). */
+.keyBar{margin-bottom:6px;}
+.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
+.keyFlyout[hidden]{display:none;}
+/* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
+.keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
 /* one compact control row: transpose + key + view on the left, Save/Clear on the right.
    flex-wrap:wrap ensures the Save button stays visible at narrow (375px) widths when the
    mode readout is long (e.g. "E Mixo"). #cKey gets min-width:0 + overflow:hidden so it
@@ -450,42 +462,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #cKey.keyReadout{min-width:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ctrlSpacer{flex:1 1 auto;}
 .ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
-/* 8-chord cap: gray the choosers so it reads as "no more allowed" */
+/* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
+   .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
+   IN-KEY cells (.chordCell) and starters (.progPick), the HSR chain cards, and the
+   next-chord suggestion chips. */
 .maxNote{flex:0 0 auto;font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
-.composeAccordion.maxed .keyView .chordGrid .chord,
-.composeAccordion.maxed #buildGrid .chord,
-.composeAccordion.maxed .hsrChain .hsrCard,
-.composeAccordion.maxed .suggChip{opacity:.35;pointer-events:none;}
+.composeWrap.maxed .keyView .chordGrid .chord,
+.composeWrap.maxed #buildGrid .chord,
+.composeWrap.maxed .inKeyLead .chordCell,
+.composeWrap.maxed .progPick,
+.composeWrap.maxed .hsrChain .hsrCard,
+.composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
-/* native <details> disclosures: free aria-expanded + keyboard support */
-.composeDisc{border:1px solid var(--line-strong);border-radius:13px;background:var(--bg-2);margin-bottom:12px;overflow:hidden;}
-.composeDisc>summary{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;list-style:none;}
-.composeDisc>summary::-webkit-details-marker{display:none;}
-.composeDisc>summary::before{content:"\25B8";font-size:.8rem;color:var(--accent);transition:transform .15s;}
-.composeDisc[open]>summary::before{transform:rotate(90deg);}
-.composeDisc>summary:active{background:var(--surface-2);}
-/* draw the summary's focus ring inset - the disclosure has overflow:hidden, which would
-   otherwise clip an outward (offset:2px) outline at the rounded top edge. */
-.composeDisc>summary:focus-visible{outline-offset:-2px;}
-.discBody{padding:2px 14px 14px;}
-.discBody .chips{margin-bottom:12px;}
-/* "Solo over it" fly-out: a nested disclosure at the bottom of the single Chords panel.
-   Collapsed by default to save vertical space; opening it reveals the key title + solo
-   scale fretboard + I-IV-V HSR chain + the inversions link (renderKeyView's teaching
-   content). Visually lighter than the top-level composeDisc so it reads as a secondary,
-   in-panel reveal rather than another section. */
-.soloDisc{margin-top:6px;border-top:1px solid var(--line);}
-.soloDisc>summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;list-style:none;}
-.soloDisc>summary::-webkit-details-marker{display:none;}
-.soloDisc>summary::before{content:"\25B8";font-size:.8rem;color:var(--accent);transition:transform .15s;}
-.soloDisc[open]>summary::before{transform:rotate(90deg);}
-.soloDisc>summary:active{color:var(--txt);}
-.soloDisc>summary:focus-visible{outline-offset:2px;}
-/* No key yet: disable + dim the fly-out so the empty disclosure can't be opened. */
-.soloDisc.isEmpty{opacity:.5;}
-.soloDisc.isEmpty>summary{pointer-events:none;}
-.soloDisc .keyView{padding-top:4px;}
 /* keyboard focus ring - the app previously stripped all outlines (a11y regression).
    No border-radius here: the outline follows each element's own radius; setting it
    would square off pill chips/buttons when focused. */
