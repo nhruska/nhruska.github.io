@@ -309,9 +309,24 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    trap the gesture. Setting it on the tile lets a vertical swipe from a tile scroll the
    panel/page. (Progression tiles live in .prog, a horizontal strip - they keep pan-x via
    the .prog rule and are NOT in .chordGrid, so they are unaffected.) */
+/* The in-key list cells are .chordCell (KeyExplorer), NOT .chord - and the In-key|All
+   toggle, mode chips, and key filter are their own elements. touch-action does NOT
+   inherit, so each tap target that should pass a vertical swipe must declare pan-y
+   (the All-chords .chordGrid tiles already do, which is why that view scrolls). */
 .chordGrid .chord,
 .inKeyLead .chord,
-.hsrChain .chord{touch-action:pan-y;}
+.hsrChain .chord,
+.chordCell,
+.keyPalette .chordCell,
+.chordSeg,
+.chordSegBtn,
+.keyModes,
+.keyModes .chip,
+.keyFilter,
+.keyPickerCompact,
+.keyRoots,
+.rootChip,
+.keyClearBtn{touch-action:pan-y;}
 .prog .slot .chord,
 .suggRow .chord.suggPick,
 .chordGrid .chord,
