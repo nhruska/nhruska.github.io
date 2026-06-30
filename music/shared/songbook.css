@@ -257,9 +257,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .progTools{display:flex;align-items:center;gap:6px;}
-.keyReadout{min-width:44px;height:44px;padding:0 8px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt-dim);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
-.keyReadout.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
-.keyReadout:active{transform:scale(.9);}
 /* one-row horizontal filmstrip (was flex-wrap, which pushed a 4th chord to a 2nd row).
    touch-action:pan-x = horizontal pan handled here, vertical gestures pass to the page
    scroll (fixes the "stuck / few pixels at a time" trap from a nested h-scroller). */
@@ -355,15 +352,23 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
-/* Persistent compact key chip - ALWAYS visible. Shows the current key (or a "Pick a
-   key" prompt) and toggles the 12-root popover. The maj/min toggle sits beside it and
-   is also always visible, so changing major<->minor is one tap with nothing hidden. */
-.keyPickerCompact{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:7px 16px;border-radius:18px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent);font-family:'Space Mono',monospace;font-size:.84rem;font-weight:700;cursor:pointer;margin-bottom:10px;transition:background .15s,border-color .15s;}
+/* Key/mode chip - lives in the button bar (#keyChipSlot) now, doing double duty: shows
+   the current key (root + abbreviated mode, tracking songKey so it reads as the transpose
+   readout) AND toggles the key/mode fly-out. FIXED WIDTH so "C Maj" and "G# Mixo" render
+   the same size and the button bar never jumps as the key name changes; overflow ellipsis
+   guards an unexpectedly long label. 'shifted' lights it when transposed off the built-in
+   key (mirrors the retired #cKey readout indicator). */
+.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
 .keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent);transform:scale(.95);}
 .keyPickerCompact[hidden]{display:none;}
-.keyPickerCompact .kpcMode{color:var(--txt-soft);font-weight:600;}
-.keyPickerCompact .kpcCaret{font-size:.7rem;color:var(--accent-dim);transition:transform .15s;}
+.keyPickerCompact.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
+.keyPickerCompact.shifted .kpcMode{color:#06201c;}
+.keyPickerCompact.shifted .kpcCaret{color:#06201c;}
+.keyPickerCompact .kpcMode{color:var(--txt-soft);font-weight:600;overflow:hidden;text-overflow:ellipsis;}
+.keyPickerCompact .kpcCaret{font-size:.7rem;color:var(--accent-dim);transition:transform .15s;flex:0 0 auto;}
 .keyPickerCompact[aria-expanded="true"] .kpcCaret{transform:rotate(180deg);color:var(--accent);}
+/* Slot the chip is injected into - inline so it sits inside the button-bar flex row. */
+.keyChipSlot{display:inline-flex;flex:0 0 auto;}
 /* Root grid - lives inside the key/mode fly-out now (always shown there). All 12 roots
    at once (wrap), each a 44px thumb target. No own border/bg: the fly-out frames it. */
 .keyRoots{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
@@ -447,21 +452,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* progression box: built chords (#prog) on top; #suggest below carries the next-chord
    picks (non-empty) or the starter progressions (empty / "?" pressed). */
 .progBox{margin-bottom:8px;}
-/* key/mode chip + its fly-out (roots + mode toggle + solo scale). */
-.keyBar{margin-bottom:6px;}
+/* key/mode fly-out (roots + mode toggle + solo scale). The chip that opens it lives in
+   the button bar now; this is just the drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
 .keyFlyout[hidden]{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
-/* one compact control row: transpose + key + view on the left, Save/Clear on the right.
-   flex-wrap:wrap ensures the Save button stays visible at narrow (375px) widths when the
-   mode readout is long (e.g. "E Mixo"). #cKey gets min-width:0 + overflow:hidden so it
-   shrinks before it pushes Save off-screen. */
-.ctrlBar{display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;}
-/* Key readout in ctrlBar: allow shrink, clip with ellipsis so long "E Mixo" stays contained */
-#cKey.keyReadout{min-width:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ctrlSpacer{flex:1 1 auto;}
-.ctrlBtn{padding:9px 14px;font-size:.82rem;min-height:44px;}
+/* SINGLE control row, no wrap: [♭] [key/mode chip] [♯] [⤢] [?] | [Clear] [Save].
+   Must fit 375px (content width ~347px after the .view 14px side padding). Icon buttons
+   and the buttons are compacted in this context; the chip is a fixed 96px. The spacer
+   flexes to push Clear/Save to the right but collapses to 0 first when space is tight, so
+   nothing overflows. */
+.ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
+/* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
+.ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:9px;}
+.ctrlSpacer{flex:1 1 0;min-width:0;}
+.ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
    IN-KEY cells (.chordCell) and starters (.progPick), the HSR chain cards, and the

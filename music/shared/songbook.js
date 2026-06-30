@@ -220,7 +220,7 @@
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
-   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, cKey,
+   *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, keyChipSlot,
    *     // maximize overlay (chord pack diagrams)
    *     maxOv, maxGrid, maxClose,
    *     // context line (optional)
@@ -861,24 +861,13 @@
     var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
-      if (!el.cKey) return;
-      // Show the UNIFIED song key (root + abbreviated mode, e.g. "E Mixo") in the ctrlBar
-      // readout so it stays short enough for the Save button to remain on-screen at 375px.
-      // 'shifted' lights up whenever you've moved off the key you originally built in.
-      // Falls back to the placeholder only when there's no key AND no chords.
-      // 'shifted' reflects the NET shift mod an octave: a full loop back to the original
-      // key (e.g. C->G->D->C, cTpose = -12) lands on the same chord names, so the
-      // indicator must read NOT shifted. Normalize cTpose into [0,12) before the check.
-      var netShift = (((cTpose % 12) + 12) % 12) !== 0;
-      if (songKey.root) {
-        var shortMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
-        el.cKey.textContent = songKey.root + ' ' + shortMode;
-        el.cKey.classList.toggle('shifted', netShift);
-        return;
-      }
-      if (!progression.length) { el.cKey.textContent = '—'; el.cKey.classList.remove('shifted'); return; }
-      el.cKey.textContent = progression[0];
-      el.cKey.classList.toggle('shifted', netShift);
+      // The song key/mode is now shown by the button-bar chip (#keyPickerCompact), which
+      // both displays the current key (root + abbreviated mode - it tracks songKey, which
+      // moves on every transpose, so it doubles as the transpose readout) and opens the
+      // key/mode fly-out. buildKeyPicker() is the single source of truth for the chip's
+      // text + 'shifted' state, so renderKey just refreshes it. (Light: buildKeyPicker is
+      // idempotent and already runs on every key/mode/transpose action.)
+      buildKeyPicker();
     }
     function composeTpose(st) {
       if (!progression.length) return;
@@ -1069,18 +1058,22 @@
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
-      // Compact "C Major v" chip: injected once into .keyBar before the fly-out. ALWAYS
-      // visible - it shows the current key (or a "Pick a key" prompt) and toggles the
+      // Fixed-width key/mode chip: injected once into the button bar (#keyChipSlot). It
+      // does double duty - shows the current key (root + abbreviated mode, so it reads as
+      // the transpose readout: songKey.root moves with every transpose) AND toggles the
       // fly-out (#keyFlyout, which holds the 12 roots + the mode toggle + the solo scale).
+      // Abbreviated mode (Maj/Min/Mixo/Dor) keeps it short for the fixed width; the fixed
+      // width (.keyPickerCompact in CSS) means "C Maj" and "G# Mixo" render the same size,
+      // so the button bar never jumps as the key name changes.
       var chip = document.getElementById('keyPickerCompact');
       if (!chip) {
-        var anchor = el.keyFlyout || el.keyRoots;
-        if (anchor && anchor.parentNode) {
+        var anchor = el.keyChipSlot;
+        if (anchor) {
           chip = document.createElement('button');
           chip.type = 'button';
           chip.id = 'keyPickerCompact';
           chip.className = 'keyPickerCompact';
-          anchor.parentNode.insertBefore(chip, anchor);
+          anchor.appendChild(chip);
         }
       }
       if (chip) {
@@ -1088,9 +1081,17 @@
         chip.setAttribute('aria-expanded', keyPopoverOpen ? 'true' : 'false');
         chip.setAttribute('aria-controls', 'keyFlyout');
         chip.setAttribute('aria-haspopup', 'true');
+        chip.title = 'Key / mode - tap to change';
+        // 'shifted' lights the chip when you've transposed off the key you built in
+        // (net shift mod an octave), mirroring the old #cKey readout indicator.
+        var chipShift = (((cTpose % 12) + 12) % 12) !== 0;
+        chip.classList.toggle('shifted', chipShift);
+        var chipMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
+        // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
+        // the title attr carries the full "Key / mode - tap to change" affordance.
         chip.innerHTML = songKey.root
-          ? (songKey.root + ' <span class="kpcMode">' + MODES[songKey.mode].label + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
-          : ('Pick a key <span class="kpcCaret" aria-hidden="true">▾</span>');
+          ? (songKey.root + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
       // The fly-out (roots + mode toggle + solo scale) opens/closes with the chip.
@@ -1402,7 +1403,9 @@
     };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
-    if (el.cKey) el.cKey.onclick = function () { if (cTpose) composeTpose(-cTpose); }; // snap back to original key
+    // The key/mode chip (#keyPickerCompact) is injected + wired by buildKeyPicker; it
+    // opens the fly-out on tap (the old #cKey "snap back to key" readout is retired -
+    // the chip is the unified key surface now).
     if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
 
     /* ===================== TABS ===================== */

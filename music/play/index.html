@@ -59,9 +59,14 @@
            the chord cells scroll cleanly. -->
       <div class="composeWrap">
         <div class="composeTop">
+          <!-- SINGLE-ROW button bar (375px-safe, no wrap). The key/mode chip
+               (#keyPickerCompact, injected by songbook.js into #keyChipSlot) lives HERE -
+               it both shows the current key (it tracks songKey, so it moves on transpose
+               and doubles as the readout) and opens the key/mode fly-out (#keyFlyout) on
+               tap. No separate "C Maj" transpose readout, no standalone chip row. -->
           <div class="ctrlBar">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Song key - tap to reset transpose">—</button>
+            <span class="keyChipSlot" id="keyChipSlot"></span>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
             <button class="iconBtn" id="cHelp" title="Show starter progressions" aria-label="Show starter progressions">?</button>
@@ -77,18 +82,16 @@
             <div id="suggest" class="suggest"></div>
           </div>
           <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
-          <!-- Compact key/mode chip + its fly-out. The chip (#keyPickerCompact, injected by
-               songbook.js before #keyModes) shows "C Major v"; tapping it opens #keyFlyout
-               with the 12 roots (#keyRoots), the mode toggle (#keyModes), and the solo
-               scale (#keyView). The In-key|All toggle (#catChips holds .chordSeg) sits
-               below the chip, still in the fixed region. -->
-          <div class="keyBar">
-            <div class="keyFlyout" id="keyFlyout" hidden>
-              <div class="keyRoots" id="keyRoots"></div>
-              <div class="chips keyModes" id="keyModes"></div>
-              <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-              <div class="keyView" id="keyView"></div>
-            </div>
+          <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
+               When hidden it takes NO vertical space (the old standalone chip row is gone -
+               the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
+               toggle (#keyModes), and the solo scale (#keyView). The In-key|All toggle
+               (#catChips) sits below, still in the fixed region. -->
+          <div class="keyFlyout" id="keyFlyout" hidden>
+            <div class="keyRoots" id="keyRoots"></div>
+            <div class="chips keyModes" id="keyModes"></div>
+            <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+            <div class="keyView" id="keyView"></div>
           </div>
           <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
           <div class="chips" id="catChips"></div>
@@ -544,7 +547,7 @@
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        keyBar: el('keyBar'), keyFlyout: el('keyFlyout'),
+        keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
         maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
