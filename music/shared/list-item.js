@@ -24,14 +24,24 @@
   // missing fields are null so the renderer can omit them.
   function normalize(rec) {
     rec = rec || {};
-    var chords = rec.seq || rec.chords || null;
+    var raw = rec.seq || rec.chords || null;
+    var chords = Array.isArray(raw) ? raw : (raw ? [raw] : null);
+    // Derive the key from the first chord when none is given - matches the app's
+    // labelTonic convention (a song's first chord is its working tonic). This is what
+    // turns "Key?" into a real key for chord-sheet songs that carry no key field, and
+    // lets key-based filtering span songs + tracks. Editable later (curate/M2).
+    var key = rec.key || null, mode = rec.mode || null;
+    if (!key && chords && chords.length) {
+      var km = /^([A-G][#b]?)(m(?!aj)|min)?/.exec(String(chords[0]));
+      if (km) { key = km[1]; mode = km[2] ? 'minor' : 'major'; }
+    }
     return {
       title: rec.title != null ? rec.title : (rec.t || ''),
       artist: rec.artist != null ? rec.artist : (rec.a || ''),
       year: rec.y != null ? rec.y : (rec.year != null ? rec.year : null),
-      key: rec.key || null,
-      mode: rec.mode || null,
-      chords: Array.isArray(chords) ? chords : (chords ? [chords] : null),
+      key: key,
+      mode: mode,
+      chords: chords,
       genre: rec.genre || null,
       bpm: rec.bpm || null,
       capo: rec.capo || null,

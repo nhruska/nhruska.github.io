@@ -34,6 +34,15 @@ test('normalize a TRACK record (title/artist/key/mode/genre/bpm/yt)', function (
   assert.strictEqual(it.video, 'abcdefghijk');
   assert.strictEqual(it.chords, null);
 });
+test('normalize derives key from the first chord when none is given (fixes "Key?")', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'Let It Be', seq: ['C', 'G', 'Am', 'F'] })), 'C');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Am', 'F', 'C', 'G'] })), 'Am'); // minor first chord
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['F#m', 'D'] })), 'F#m');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Cmaj7', 'G'] })), 'C'); // maj7 is NOT minor
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null); // no chords, no key -> still null ("Key?")
+  // an explicit key always wins over derivation
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'minor', seq: ['G', 'C'] })), 'Dm');
+});
 test('action ladder: curated video -> Video (in-app); no video -> Search (external)', function () {
   var play = LI.action(LI.normalize({ yt: 'abcdefghijk' }));
   assert.strictEqual(play.kind, 'play'); assert.strictEqual(play.label, 'Video'); assert.strictEqual(play.external, false);
