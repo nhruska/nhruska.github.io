@@ -16,8 +16,10 @@
     letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-deep);
     border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
   .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
-  .bt-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
-  .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
+  /* Match the Songs list: single-column list of items with the same gap (.songs). */
+  .bt-results{display:flex;flex-direction:column;gap:9px;}
+  /* Same item shell as .songCard (radius/padding) so Songs and Tracks read as one list. */
+  .bt-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
   .bt-card.tap{cursor:pointer;transition:border-color .12s,transform .08s,background .12s;}
   .bt-card.tap:hover{border-color:var(--line-strong);background:var(--surface-2);}
   .bt-card.tap:active{transform:scale(.99);}
@@ -157,11 +159,15 @@
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
   .bt-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
-  .bt-title{font-weight:700;font-size:1rem;letter-spacing:-.01em;}
+  /* Title/sub/meta matched to .songCard .title/.artist/.meta so the items look identical. */
+  .bt-title{font-weight:700;font-size:1.02rem;line-height:1.14;letter-spacing:-.01em;}
   .bt-key{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.84rem;flex:0 0 auto;}
-  .bt-sub{color:var(--txt-soft);font-size:.82rem;margin-top:3px;}
-  .bt-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;font-family:'Space Mono',monospace;font-size:.66rem;color:var(--txt-dim);}
-  .bt-meta span{border:1px solid var(--line);padding:3px 7px;border-radius:6px;}
+  .bt-sub{color:var(--txt-dim);font-size:.77rem;margin-top:2px;}
+  .bt-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.69rem;color:var(--txt-dim);align-items:center;}
+  /* Plain meta items (no pill borders) - matches the Songs list meta row. */
+  .bt-meta span{border:none;padding:0;border-radius:0;}
+  /* Dot separators between meta items, mirroring .songCard .meta .dot. */
+  .bt-meta .dot{width:3px;height:3px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
   /* circle of fifths (Phase 2) — the key explorer */

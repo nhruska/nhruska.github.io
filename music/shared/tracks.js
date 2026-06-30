@@ -549,8 +549,8 @@
         + '<div class="bt-sub">' + esc(t.artist || '') + '</div>'
         + (row.why && row.rank > 0 ? '<div class="bt-why">' + esc(row.why) + '</div>' : '')
         + '<div class="bt-meta"><span>' + esc(t.genre) + '</span>'
-        + (t.bpm ? '<span>' + esc(t.bpm) + ' bpm</span>' : '')
-        + (t.capo ? '<span>capo ' + esc(t.capo) + '</span>' : '')
+        + (t.bpm ? '<span class="dot"></span><span>' + esc(t.bpm) + ' bpm</span>' : '')
+        + (t.capo ? '<span class="dot"></span><span>capo ' + esc(t.capo) + '</span>' : '')
         + '<span class="bt-open">' + (t.yt ? 'Play' : 'YouTube') + ' &#8599;</span>'
         + '</div>';
       el.onclick = function () { activate(t); };
