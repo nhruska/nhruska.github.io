@@ -11,7 +11,7 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v48';
+var CACHE = 'music-v49';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -22,7 +22,7 @@ var CORE = [
   // triad-inversions.html is the deep-dive walkthrough linked from the Compose tab.
   // Precaching keeps it available offline alongside the rest of the play surface.
   './play/triad-inversions.html',
-  './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js',
+  './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js', './shared/candidates.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js',
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
