@@ -339,8 +339,8 @@
     function songMatches(s) {
       if (STATE.decade === "Mine" && !s.custom) return false;
       if (STATE.decade !== "All" && STATE.decade !== "Mine" && s.d !== STATE.decade) return false;
-      if (STATE.search) {
-        var q = STATE.search.toLowerCase();
+      var q = STATE.search.trim().toLowerCase(); // trim so a trailing space ("Phish ") still matches
+      if (q) {
         return s.t.toLowerCase().indexOf(q) >= 0 || s.a.toLowerCase().indexOf(q) >= 0;
       }
       return true;
@@ -377,7 +377,7 @@
 
     function renderHero() {
       if (!el.libHero) return;
-      if (STATE.search || STATE.decade !== 'All') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
+      if (STATE.search.trim() || STATE.decade !== 'All') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
       el.libHero.style.display = 'block';
       var html = '<button class="jamNow" id="heroJam">⚡ Jam now</button>';
       var last = loadLast() ? songById(loadLast()) : null;
@@ -432,7 +432,11 @@
       });
       if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + ALLSONGS.length + ' songs';
     }
-    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; renderSongs(); };
+    function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
+    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
+    if (el.searchClear) el.searchClear.onclick = function () {
+      el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
+    };
 
     /* ===================== SONG (modes: Studio / Campfire / Stage) ===================== */
     // A song opens in your last-used SCREEN mode (Studio or Campfire). Stage is a

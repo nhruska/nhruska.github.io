@@ -49,9 +49,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .screen{display:none;}
 .screen.on{display:block;animation:fadeUp .26s cubic-bezier(.2,.7,.3,1);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
-.search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);margin-bottom:11px;}
+.searchWrap{position:relative;margin-bottom:11px;}
+.search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 40px 12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);}
 .search::placeholder{color:var(--txt-dim);}
 .search:focus{outline:none;border-color:var(--accent);}
+/* clear (x) button - shown only when the search field has text (toggled in JS via [hidden]) */
+.searchClear{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
+.searchClear:hover{color:var(--txt);background:var(--surface-2);}
+.searchClear[hidden]{display:none;}
 .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .chips::-webkit-scrollbar{display:none;}
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:18px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
@@ -496,7 +501,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    fits the height. SVG diagrams scale to their cell via the viewBox. */
 .maxGrid{flex:1;display:grid;grid-template-columns:repeat(2,1fr);align-content:start;justify-items:center;gap:18px;padding:14px 4px 22px;overflow:auto;}
 .maxGrid .bigC{display:flex;flex-direction:column;align-items:center;width:100%;}
-.maxGrid .bigC svg{width:100%;height:auto;max-width:240px;}
+/* Size big chord diagrams by HEIGHT, not width. Every big diagram shares the same
+   SVG height (184), but offset shapes (base fret > 1) have a wider canvas because
+   the base-fret label extends the viewBox leftward. Width-driven sizing (width:100%)
+   therefore shrank the fretboard of offset shapes relative to open ones. Height-driven
+   sizing keeps the fret grid a uniform size across every chord. */
+.maxGrid .bigC svg{width:auto;height:auto;max-width:100%;max-height:32vh;}
 @media (orientation:landscape){
   .maxGrid{grid-template-columns:repeat(4,1fr);align-content:center;gap:12px;overflow:hidden;}
   .maxGrid .bigC svg{width:auto;height:auto;max-width:100%;max-height:62vh;}
