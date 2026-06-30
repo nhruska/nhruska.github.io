@@ -237,6 +237,8 @@
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
     var PROFILE_ID = opts.profileId || null; // instrument profile id, carried onto the inversions deep-link
+    // P3: seed the backing-track finder with the built key+mode (no-op if not wired).
+    var seedBackingKey = opts.seedBackingKey || function () {};
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
@@ -921,6 +923,9 @@
       // text + 'shifted' state, so renderKey just refreshes it. (Light: buildKeyPicker is
       // idempotent and already runs on every key/mode/transpose action.)
       buildKeyPicker();
+      // P3: the "Solo over a backing track" CTA appears once a key + progression
+      // are established (the roadmap precondition for backing-track soloing).
+      if (el.soloBackingBtn) el.soloBackingBtn.hidden = !(songKey.root && progression.length);
     }
     function composeTpose(st) {
       if (!progression.length) return;
@@ -1456,6 +1461,14 @@
     };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
+    // P3: carry the built key+mode into the backing-track finder and switch to it,
+    // so the user solos over a matched track without re-entering the key by hand.
+    if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
+      if (!songKey.root || !progression.length) return;
+      setLibType('tracks');
+      switchTab('library');
+      seedBackingKey(songKey.root, songKey.mode);
+    };
     // The key/mode chip (#keyPickerCompact) is injected + wired by buildKeyPicker; it
     // opens the fly-out on tap (the old #cKey "snap back to key" readout is retired -
     // the chip is the unified key surface now).

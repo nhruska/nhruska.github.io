@@ -98,4 +98,37 @@ test('Studio chords carry interval (Roman) labels — case-aware, diminished mar
   assert.deepStrictEqual(minor, ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']);
 });
 
+// --- Phase 3: Compose -> backing-track bridge -----------------------------
+test('P3 normMode: Major/Minor coarsen to the finder families', function () {
+  assert.strictEqual(T.normMode('Major'), 'major');
+  assert.strictEqual(T.normMode('Minor'), 'minor');
+  assert.strictEqual(T.normMode('minor'), 'minor');
+});
+test('P3 normMode: church modes coarsen by family', function () {
+  assert.strictEqual(T.normMode('Dorian'), 'minor');
+  assert.strictEqual(T.normMode('Phrygian'), 'minor');
+  assert.strictEqual(T.normMode('Aeolian'), 'minor');
+  assert.strictEqual(T.normMode('Mixolydian'), 'major'); // dominant, major-family
+  assert.strictEqual(T.normMode('Lydian'), 'major');
+  assert.strictEqual(T.normMode('Ionian'), 'major');
+});
+test('P3 normMode: missing/garbage defaults to major (safe)', function () {
+  assert.strictEqual(T.normMode(null), 'major');
+  assert.strictEqual(T.normMode(''), 'major');
+  assert.strictEqual(T.normMode(undefined), 'major');
+});
+test('P3 seed end-to-end: a composed A-minor key surfaces matched tracks', function () {
+  // the bridge seeds the finder with (root, normMode(mode)) -> filterTracks ranks matches
+  var tracks = [
+    { title: 'Am jam', genre: 'rock', key: 'A', mode: 'minor', yt: 'aaaaaaaaaaa' },
+    { title: 'C jam', genre: 'rock', key: 'C', mode: 'major', yt: 'bbbbbbbbbbb' },
+    { title: 'F# blues', genre: 'blues', key: 'F#', mode: 'major', yt: 'ccccccccccc' }
+  ];
+  var out = T.filterTracks(tracks, 'all', 'A', T.normMode('Minor'));
+  assert.strictEqual(out[0].track.title, 'Am jam', 'exact key match ranks first');
+  // C major is A minor's relative -> it is a labelled related match, not dropped
+  var c = out.filter(function (r) { return r.track.title === 'C jam'; })[0];
+  assert.ok(c && c.rank > 0 && /relative/.test(c.why || ''), 'relative major surfaces, labelled');
+});
+
 run();
