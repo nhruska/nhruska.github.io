@@ -98,6 +98,28 @@
   function mergeTracks(seed, custom) {
     return (Array.isArray(seed) ? seed : []).concat(Array.isArray(custom) ? custom : []);
   }
+  // Stable identity for a curated track. tracks.json carries no id field, so the
+  // localStorage URL overlay (music.trackUrls.v1) is keyed by a deterministic
+  // signature of the immutable descriptive fields. Lowercased + trimmed so a
+  // cosmetic whitespace/case diff doesn't orphan an attached url.
+  function trackKey(t) {
+    t = t || {};
+    function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
+    return [norm(t.title), norm(t.artist), normRoot(t.key), (t.mode === 'minor' ? 'minor' : 'major')].join('|');
+  }
+  // Overlay a { trackKey: videoId } map onto a seed list, returning NEW track
+  // objects so the original seed is never mutated. A track that already has a
+  // curated yt id keeps it unless the overlay explicitly replaces it.
+  function applyUrlOverlay(seed, overlay) {
+    overlay = overlay || {};
+    return (Array.isArray(seed) ? seed : []).map(function (t) {
+      var k = trackKey(t), ov = overlay[k];
+      if (ov == null || ov === '') return t;
+      var copy = {}; for (var p in t) if (Object.prototype.hasOwnProperty.call(t, p)) copy[p] = t[p];
+      copy.yt = ov; copy.ytSource = 'overlay';
+      return copy;
+    });
+  }
   // note name -> chromatic pitch class (0-11), parsed generically from the letter
   // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
   // handles every enharmonic spelling circle.js can emit — E#, B#, Cb, Fb and
@@ -124,6 +146,7 @@
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
 
   var STORE = 'bt.custom.v1';
+  var URLSTORE = 'music.trackUrls.v1';   // { [trackKey]: videoId } overlay for curated tracks
   var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
   var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 
@@ -135,8 +158,10 @@
     + '  <div class="bt-bar"><span class="bt-tag">key</span><div class="chips" data-keys></div><div class="bt-mode" data-modetoggle></div></div>'
     + '</div>'
     + '<div class="bt-count" data-count></div>'
+    + '<div class="bt-curate-bar" data-curatebar></div>'
     + '<div class="bt-results" data-results></div>'
     + '<div class="bt-more" data-more></div>'
+    + '<div class="bt-queue" data-queue hidden></div>'
     + '<div class="bt-add">'
     + '  <button class="bt-add-toggle" data-addtoggle type="button">+ add a track</button>'
     + '  <div class="bt-add-panel" data-addpanel hidden>'
@@ -170,17 +195,37 @@
     elPlayer.className = 'bt-player';
     document.body.appendChild(elPlayer);
 
-    var state = { genre: 'all', key: null, mode: 'major', scaleMode: 'ionian', seed: [], custom: [], tracks: [] };
+    var state = { genre: 'all', key: null, mode: 'major', scaleMode: 'ionian', view: 'finder', seed: [], custom: [], urls: {}, tracks: [] };
     var elGenre = $('[data-genre]'), elKeys = $('[data-keys]'), elMode = $('[data-modetoggle]');
     var elResults = $('[data-results]'), elMore = $('[data-more]'), elCount = $('[data-count]');
     var elWheel = $('[data-cof]'), elPanel = $('[data-cofpanel]');
+    var elQueue = $('[data-queue]'), elCurateBar = $('[data-curatebar]');
+    var elControls = $('.bt-controls'), elAdd = $('.bt-add');
 
     function loadCustom() {
       try { var s = localStorage.getItem(STORE); var a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a : []; }
       catch (e) { return []; }
     }
     function saveCustom(a) { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} }
-    function remerge() { state.tracks = mergeTracks(state.seed, state.custom); }
+    function loadUrls() {
+      try { var s = localStorage.getItem(URLSTORE); var o = s ? JSON.parse(s) : {}; return (o && typeof o === 'object') ? o : {}; }
+      catch (e) { return {}; }
+    }
+    function saveUrls(o) { try { localStorage.setItem(URLSTORE, JSON.stringify(o)); } catch (e) {} }
+    // Attach a curated url to a seed track by its stable key (or clear it when id is falsy),
+    // persist the overlay, and rebuild the merged list. Returns true on a real change.
+    function setTrackUrl(t, id) {
+      var k = trackKey(t);
+      if (id) state.urls[k] = id; else delete state.urls[k];
+      saveUrls(state.urls); remerge(); return true;
+    }
+    // Seed (with url overlay applied) + custom user tracks. Custom tracks already
+    // carry their own yt id and aren't part of the overlay.
+    function remerge() { state.tracks = mergeTracks(applyUrlOverlay(state.seed, state.urls), state.custom); }
+    // Tracks with no playable video: neither a curated tracks.json id nor an overlay url.
+    function urllessTracks() {
+      return state.tracks.filter(function (t) { return !t.yt; });
+    }
 
     function openSearch(q) { window.open(youtubeSearchUrl(q), '_blank', 'noopener'); }
     function openPlayer(t) {
@@ -242,8 +287,19 @@
         : '<div class="bt-st-search">'
           + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">'
           + 'Watch on YouTube &#8599;</a>'
-          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. The HUD below works either way.</div>'
+          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. Paste the one you like below. The HUD below works either way.</div>'
           + '</div>';
+      // Add/edit-video-URL affordance. Custom user tracks own their yt id directly
+      // (edit them via the library), so the overlay editor is only for curated
+      // seed tracks. Shows current state + a paste field + clear when one is set.
+      var urlEditor = t.custom ? '' :
+        '<div class="bt-st-urled" data-urled>'
+        + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
+        + '<div class="bt-st-urled-row">'
+        + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+        + '<button data-urlsave class="bt-st-urled-save" type="button">Save</button>'
+        + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
+        + '</div></div>';
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
@@ -251,6 +307,7 @@
         + '<button class="bt-st-x" type="button">close</button></div>'
         + playerBlock
         + '<div class="bt-st-body">'
+        + urlEditor
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
         + '<div class="bt-st-scale" data-scale></div></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
@@ -284,6 +341,26 @@
         var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
         if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
       };
+      // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
+      var urlIn = elPlayer.querySelector('[data-urlin]'),
+          urlSave = elPlayer.querySelector('[data-urlsave]'),
+          urlClear = elPlayer.querySelector('[data-urlclear]');
+      if (urlIn) {
+        if (t.yt) urlIn.value = 'https://youtu.be/' + t.yt;
+        urlIn.oninput = function () { urlIn.classList.remove('bad'); };
+      }
+      if (urlSave) urlSave.onclick = function () {
+        var id = parseYouTubeId(urlIn.value);
+        if (!id) { focusNoJump(urlIn); urlIn.classList.add('bad'); return; }
+        setTrackUrl(t, id); rerender();
+        var merged = state.tracks.filter(function (x) { return trackKey(x) === trackKey(t); })[0] || t;
+        openStudio(merged);
+      };
+      if (urlClear) urlClear.onclick = function () {
+        setTrackUrl(t, null); rerender();
+        var merged = state.tracks.filter(function (x) { return trackKey(x) === trackKey(t); })[0] || t;
+        openStudio(merged);
+      };
       elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
     }
 
@@ -303,7 +380,80 @@
       b.className = 'chip' + (on ? ' on' : ''); b.textContent = label; b.onclick = fn;
       return b;
     }
-    function rerender() { renderCircle(); renderPanel(); renderGenre(); renderKeys(); renderMode(); renderResults(); }
+    function applyView() {
+      var q = state.view === 'queue';
+      // Toggle inline display directly: some of these (the circle wheel, the results
+      // grid) carry an explicit display rule in CSS that overrides the [hidden]
+      // attribute, so setting .hidden alone leaves them visible. Inline style wins.
+      function show(el, on) { if (el) el.style.display = on ? '' : 'none'; }
+      show(elControls, !q); show(elWheel, !q); show(elPanel, !q);
+      show(elResults, !q); show(elMore, !q); show(elCount, !q); show(elAdd, !q);
+      if (elQueue) { elQueue.hidden = !q; elQueue.style.display = q ? '' : 'none'; }
+    }
+    function rerender() {
+      renderCircle(); renderPanel(); renderGenre(); renderKeys(); renderMode();
+      renderResults(); renderCurateBar(); renderQueue(); applyView();
+    }
+
+    /* ---- curation queue: every track with no playable video ---- */
+    function renderCurateBar() {
+      if (!elCurateBar) return;
+      var n = urllessTracks().length;
+      if (state.view === 'queue') {
+        elCurateBar.innerHTML = '<button class="bt-curate-btn on" data-curatetoggle type="button">&#8592; Back to finder</button>';
+      } else if (n > 0) {
+        elCurateBar.innerHTML = '<button class="bt-curate-btn" data-curatetoggle type="button">Curate videos (' + n + ')</button>';
+      } else {
+        elCurateBar.innerHTML = '';
+      }
+      var tog = elCurateBar.querySelector('[data-curatetoggle]');
+      if (tog) tog.onclick = function () { state.view = (state.view === 'queue') ? 'finder' : 'queue'; rerender(); };
+    }
+    function queueRow(t) {
+      var el = document.createElement('div');
+      el.className = 'bt-qcard';
+      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? esc(t.bpm) + ' bpm' : '', esc(t.genre || '')]
+        .filter(Boolean).join(' · ');
+      el.innerHTML =
+        '<div class="bt-qrow"><span class="bt-qtitle">' + esc(t.title || '') + '</span>'
+        + '<a class="bt-qsearch" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">Search YouTube &#8599;</a></div>'
+        + '<div class="bt-qmeta">' + (t.artist ? esc(t.artist) + ' · ' : '') + meta + '</div>'
+        + '<div class="bt-qcands" data-cands></div>'
+        + '<div class="bt-st-urled-row">'
+        + '<input data-qurlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+        + '<button data-qurlsave class="bt-st-urled-save" type="button">Save</button>'
+        + '</div>';
+      // P3 candidate suggestions (if seeded) - tappable to fill the input, not auto-applied.
+      var cands = (global.Tracks && global.Tracks.CANDIDATES && global.Tracks.CANDIDATES[trackKey(t)]) || [];
+      var candBox = el.querySelector('[data-cands]');
+      var urlIn = el.querySelector('[data-qurlin]'), urlSave = el.querySelector('[data-qurlsave]');
+      if (cands.length && candBox) {
+        candBox.innerHTML = '<div class="bt-qcand-lbl">Suggested - tap to load, then Save to confirm:</div>';
+        cands.forEach(function (c) {
+          var b = document.createElement('button');
+          b.className = 'bt-qcand'; b.type = 'button';
+          b.innerHTML = esc(c.label || c.id) + (c.note ? ' <span class="bt-qcand-note">' + esc(c.note) + '</span>' : '');
+          b.onclick = function () { urlIn.value = 'https://youtu.be/' + c.id; urlIn.classList.remove('bad'); focusNoJump(urlIn); };
+          candBox.appendChild(b);
+        });
+      }
+      urlIn.oninput = function () { urlIn.classList.remove('bad'); };
+      urlSave.onclick = function () {
+        var id = parseYouTubeId(urlIn.value);
+        if (!id) { focusNoJump(urlIn); urlIn.classList.add('bad'); return; }
+        setTrackUrl(t, id); rerender();
+      };
+      return el;
+    }
+    function renderQueue() {
+      if (!elQueue) return;
+      var rows = urllessTracks();
+      elQueue.innerHTML = '<div class="bt-qhead">Curation queue</div>'
+        + '<div class="bt-qhint">' + (rows.length
+          ? rows.length + (rows.length === 1 ? ' track has' : ' tracks have') + ' no video yet. Find one on YouTube, paste the URL, and it becomes the curated video.'
+          : 'Every track has a curated video. Nice work.') + '</div>';
+      rows.forEach(function (t) { elQueue.appendChild(queueRow(t)); });
+    }
 
     /* ---- circle of fifths: home + navigation (reuses shared circle.js) ---- */
     function renderCircle() {
@@ -464,6 +614,7 @@
 
     state.seed = [];
     state.custom = loadCustom();
+    state.urls = loadUrls();
     fetch(tracksUrl).then(function (r) { return r.json(); }).then(function (data) {
       state.seed = Array.isArray(data) ? data : [];
       remerge(); rerender();
@@ -479,7 +630,13 @@
     compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
-    notesToPcs: notesToPcs, mount: mount
+    trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
+    notesToPcs: notesToPcs, mount: mount,
+    // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
+    // as tap-to-load suggestions in the curation queue. Populated by candidates.js
+    // (loaded after tracks.js); empty when absent. Suggestions only - never applied
+    // automatically; the user taps one, then Saves to confirm.
+    CANDIDATES: {}
   };
   global.Tracks = Tracks;
   if (typeof module !== 'undefined' && module.exports) module.exports = Tracks;

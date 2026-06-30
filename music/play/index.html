@@ -42,87 +42,89 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
+    <!-- UNIFIED LIBRARY (merged 2026-06: the old separate SONGS, TRACKS and SET
+         tabs are now ONE screen + a type toggle). #typeToggle (Songs|Tracks|Set)
+         swaps which sub-view shows. Search + decade chips apply to Songs and Set
+         (both are the songs.json catalog); they hide for Tracks, which has its own
+         genre/key/circle filters. Each sub-view keeps its original element IDs so
+         the songbook + tracks wiring is unchanged. -->
     <section class="screen on" id="s-library">
+      <div class="chips typeToggle" id="typeToggle"></div>
       <div class="libHero" id="libHero"></div>
-      <input class="search" id="search" placeholder="Search a song or an artist…">
+      <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="decadeChips"></div>
-      <div class="songs" id="songsList"></div>
-      <div class="libCount" id="libCount"></div>
+      <!-- Songs sub-view -->
+      <div class="libSongs" id="libSongs">
+        <div class="songs" id="songsList"></div>
+        <div class="libCount" id="libCount"></div>
+      </div>
+      <!-- Tracks sub-view (Tracks.mount renders into here) -->
+      <div class="libTracks" id="s-tracks" hidden></div>
+      <!-- Set sub-view -->
+      <div class="libSet" id="libSet" hidden>
+        <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+        <div id="setBody"></div>
+        <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
+      </div>
     </section>
     <section class="screen" id="s-compose">
+      <!-- FLATTENED Compose (no accordions). Two regions:
+             1. .composeTop (FIXED, does NOT scroll): button bar + progression box +
+                compact key/mode chip + In-key|All toggle.
+             2. .composeChords (the ONLY scroll area): the chord list.
+           Rationale: the old nested-accordion scroll container trapped vertical swipes on
+           the in-key cells (the lingering swipe bug). With a single flat scroll container
+           the chord cells scroll cleanly. -->
       <div class="composeWrap">
-        <!-- Slim steady header: label + transpose + Clear/Save stay pinned (NOT the tall chord
-             diagrams, which made the old sticky band ~3/4 of the screen). -->
-        <!-- Pinned unit: one compact control bar (transpose + view + Save/Clear) AND the
-             progression palette below it, both steady on scroll. No "Progression" label -
-             the empty palette's placeholder text carries that. -->
-        <div class="composeSticky">
+        <div class="composeTop">
+          <!-- SINGLE-ROW button bar (375px-safe, no wrap). The key/mode chip
+               (#keyPickerCompact, injected by songbook.js into #keyChipSlot) lives HERE -
+               it both shows the current key (it tracks songKey, so it moves on transpose
+               and doubles as the readout) and opens the key/mode fly-out (#keyFlyout) on
+               tap. No separate "C Maj" transpose readout, no standalone chip row. -->
           <div class="ctrlBar">
             <button class="iconBtn" id="cTdown" title="Transpose down a semitone">♭</button>
-            <button class="keyReadout" id="cKey" title="Song key - tap to reset transpose">—</button>
+            <span class="keyChipSlot" id="keyChipSlot"></span>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
+            <button class="iconBtn" id="cHelp" title="Show starter progressions" aria-label="Show starter progressions">?</button>
             <span class="ctrlSpacer"></span>
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
           </div>
-          <!-- progression = one-row horizontal filmstrip (no wrap) -->
-          <div class="prog" id="prog"></div>
+          <!-- Progression box. When EMPTY it shows the tappable starter progressions
+               (rendered into #suggest by renderSuggest). When non-empty it shows the
+               built chords (#prog). The "?" button re-shows the starters at any time. -->
+          <div class="progBox">
+            <div class="prog" id="prog"></div>
+            <div id="suggest" class="suggest"></div>
+          </div>
+          <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
+          <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
+               When hidden it takes NO vertical space (the old standalone chip row is gone -
+               the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
+               toggle (#keyModes), and the solo scale (#keyView). The In-key|All toggle
+               (#catChips) sits below, still in the fixed region. -->
+          <div class="keyFlyout" id="keyFlyout" hidden>
+            <div class="keyRoots" id="keyRoots"></div>
+            <div class="chips keyModes" id="keyModes"></div>
+            <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
+            <div class="keyView" id="keyView"></div>
+          </div>
+          <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
+          <div class="chips" id="catChips"></div>
         </div>
-        <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
-        <!-- One-open-at-a-time exclusive accordion (native <details name>). -->
-        <div class="composeAccordion">
-          <!-- Default-open at cold start: its empty state shows the common-progression
-               starters so a fresh Compose tab offers actionable one-tap starts. -->
-          <details class="composeDisc" name="compose" id="discSuggest" open>
-            <summary>Next chord</summary>
-            <div class="discBody"><div id="suggest" class="suggest"></div></div>
-          </details>
-          <!-- ONE chord panel (Phase 1 final form). Top-to-bottom:
-               1. FILTER (always visible): the compact key chip (#keyPickerCompact,
-                  injected by songbook.js before #keyModes) taps to the 12-root popover
-                  (#keyRoots); the maj/min/mixo/dor mode toggle (#keyModes) sits beside it.
-               2. CHORD LIST (always visible): the adaptive picker - #catChips holds the
-                  in-key lead + "+ all chords" expander (or the no-key hint + category tabs),
-                  #buildGrid holds the chromatic tiles.
-               3. "Solo over it" FLY-OUT (#discSolo, collapsed by default): #keyView gets
-                  the key title + solo-scale fretboard + I-IV-V HSR chain + inversions link.
-               The old standalone "Key & scale" panel was merged in here so there is a
-               single chord surface instead of two. -->
-          <details class="composeDisc" name="compose" id="discChords">
-            <summary>Chords</summary>
-            <div class="discBody">
-              <!-- 1. Filter: key chip (injected) + mode toggle, with the root popover below. -->
-              <div class="keyFilter">
-                <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
-                <div class="chips keyModes" id="keyModes"></div>
-                <div class="keyRoots" id="keyRoots"></div>
-              </div>
-              <!-- 2. Chord list. -->
-              <div class="chips" id="catChips"></div>
-              <div class="chordGrid" id="buildGrid"></div>
-              <!-- 3. Solo-over-it fly-out: collapsed by default; #keyView is rendered inside. -->
-              <details class="soloDisc" id="discSolo">
-                <summary>Solo over it</summary>
-                <div class="keyView" id="keyView"></div>
-              </details>
-            </div>
-          </details>
-          <!-- The old standalone "Common progressions" panel (#discPatterns / #progPicks)
-               was removed: its starters now live in the #discSuggest empty state above. -->
+        <!-- The ONLY scroll area: the chord list. In-key cells (.chordCell) and All-chords
+             tiles (.chord) keep touch-action:pan-y so a vertical swipe scrolls them. -->
+        <div class="composeChords" id="composeChords">
+          <div class="chordGrid" id="buildGrid"></div>
         </div>
       </div>
     </section>
     <section class="screen" id="s-practice">
       <div id="practiceEmpty" class="empty">Choose a song from Songs to open it.</div>
       <div id="practiceBody" style="display:none"></div>
-    </section>
-    <section class="screen" id="s-tracks"></section>
-    <section class="screen" id="s-setlist">
-      <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
-        <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
-      <div id="setBody"></div>
-      <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
@@ -149,10 +151,8 @@
     </section>
   </div>
   <div class="tabbar">
-    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Songs</span></button>
+    <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
-    <button data-tab="tracks"><span class="icn">▶</span><span class="lbl">Tracks</span></button>
-    <button data-tab="setlist"><span class="icn">❦</span><span class="lbl">Set</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
 </div>
@@ -182,6 +182,7 @@
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
 <script src="../shared/tracks.js"></script>
+<script src="../shared/candidates.js"></script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -544,7 +545,8 @@
       suggestions: SUGG,
       contexts: contexts,
       el: {
-        songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), libCount: el('libCount'), libHero: el('libHero'),
+        songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
+        typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),
@@ -553,10 +555,12 @@
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
-        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
+        composeChords: el('composeChords'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
-        discSuggest: el('discSuggest'), discChords: el('discChords'), discSolo: el('discSolo'), maxNote: el('maxNote'),
+        keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
+        maxNote: el('maxNote'),
         maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
         ctxLine: el('ctxLine')
       }

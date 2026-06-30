@@ -59,12 +59,18 @@
     // diagram (e.g. just "5" instead of "5fr"). The label is right-anchored at
     // x = padX - basePad and grows leftward. Dropping the "fr" suffix saves
     // ~16px of labelPad that was eating into the diagram width on phone-sized
-    // cards. Extend the canvas + viewBox leftward by labelPad when base > 1
-    // so even a two-digit base fret ("10", "11") has room.
+    // cards. The canvas + viewBox extend leftward by labelPad to make room.
     // labelPad sized to fit two digits at the current baseFont. Small size:
     // 10px monospace x 2 chars ~= 12px; pad to 14 for breathing room. Big size:
     // 14px monospace x 2 chars ~= 17px; pad to 20.
-    var labelPad = (base > 1) ? (opts.size === 'big' ? 20 : 14) : 0;
+    //
+    // labelPad is RESERVED for EVERY diagram (not just base>1) so that the canvas
+    // dimensions are identical across open and offset shapes. Without this, offset
+    // shapes had a wider canvas and rendered SMALLER than open shapes in the
+    // maximize grid (the wider canvas hit the width cap first, shrinking the fret
+    // grid). A constant canvas size makes the fretboard render uniformly regardless
+    // of fret offset; for base-1 shapes the reserved space is simply empty.
+    var labelPad = (opts.size === 'big' ? 20 : 14);
     var canvasW = W + labelPad;
     var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)
