@@ -244,6 +244,10 @@
     // the Practice Studio (solo scale + chords + circle) for a track or a composed key.
     var getTracks = opts.getTracks || function () { return []; };
     var openStudioCb = opts.openStudio || null;
+    // M2: the unified Add/Edit form (repertoire-form.js) - one mounted overlay reused
+    // for create + edit of custom ("Mine") songs/tracks. Absent (no-op guarded below)
+    // if the script didn't load, so the rest of the app still works.
+    var repForm = (global.RepertoireForm && global.RepertoireForm.mount) ? global.RepertoireForm.mount() : null;
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
@@ -1402,15 +1406,96 @@
       });
       el.suggest.appendChild(row);
     }
+    // Derive key/mode for a saved progression the same way repertoire.js's
+    // deriveKey() does (first-chord regex) - reuse it directly (pure, node-tested)
+    // rather than duplicating the regex. Falls back to the explicit songKey when
+    // one was picked in Compose (more reliable than re-parsing chord #1, e.g. a
+    // vi-IV-I-V progression built from a picked key starts on the relative chord).
+    function deriveProgressionKey(seq) {
+      if (songKey.root) return { key: songKey.root, mode: songKey.mode === 'Minor' ? 'minor' : 'major' };
+      var d = global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null };
+      return { key: d.key, mode: d.mode || 'major' };
+    }
+    // Save the in-progress Compose progression as a stable custom song (cs.id).
+    // Populates key/mode (Task 2 requirement 1, locked-interface contract) so the
+    // saved song is immediately eligible for "Solo over it" + the Studio. Returns
+    // the saved song object, or null if there was nothing to save / the user
+    // cancelled the name prompt.
     function saveProgression() {
-      if (progression.length === 0) { alert('Build a progression first.'); return; }
+      if (progression.length === 0) { alert('Build a progression first.'); return null; }
       var name = prompt('Name this progression:', 'My progression');
-      if (name === null) return;
+      if (name === null) return null;
       name = name.trim() || 'My progression';
-      var cs = { id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine', seq: progression.slice(), custom: true };
+      var km = deriveProgressionKey(progression);
+      var cs = {
+        id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+        seq: progression.slice(), custom: true, key: km.key, mode: km.mode, yt: null
+      };
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
+      return cs;
     }
+    // Create a brand-new custom item from the Add/Edit form (Requirement 3, Task 2).
+    // No seq -> a standalone custom TRACK (no chord sheet; playable straight from
+    // the Studio per repertoire.js's existing playability() logic). A seq -> a
+    // custom SONG (same shape saveProgression() produces).
+    function createCustomItem(f) {
+      var cs = {
+        id: 'm' + Date.now(), t: f.title || 'Untitled', a: f.artist || '', y: new Date().getFullYear(),
+        d: 'Mine', genre: f.genre || '', custom: true, key: f.key || null, mode: f.mode || 'major', yt: f.yt || null
+      };
+      if (f.seq && f.seq.length) cs.seq = f.seq.slice();
+      customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      return cs;
+    }
+    // Apply an edit (title/artist/genre/key/mode/seq/yt) to an EXISTING custom item.
+    function updateCustomItem(id, f) {
+      var cs = null;
+      for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) { cs = customSongs[i]; break; }
+      if (!cs) return null;
+      cs.t = f.title || cs.t; cs.a = f.artist != null ? f.artist : cs.a; cs.genre = f.genre != null ? f.genre : cs.genre;
+      cs.key = f.key != null ? f.key : cs.key; cs.mode = f.mode || cs.mode; cs.yt = f.yt != null ? f.yt : cs.yt;
+      if (f.seq && f.seq.length) cs.seq = f.seq.slice(); else if (f.seq) delete cs.seq;
+      saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      if (STATE.current && STATE.current.id === id) renderPractice();
+      return cs;
+    }
+    function deleteCustomItem(id) {
+      customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
+      saveCustom();
+      var sp = STATE.setlist.indexOf(id);
+      if (sp >= 0) { STATE.setlist.splice(sp, 1); saveSet(); }
+      rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
+    }
+    function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
+    // ---- M2 Add/Edit form entry points ----
+    function openAddForm() {
+      if (!repForm) return;
+      repForm.open({
+        mode: 'create',
+        onSave: function (f) { createCustomItem(f); }
+      });
+    }
+    function openEditForm(id) {
+      if (!repForm) return;
+      var cs = customById(id);
+      if (!cs) return;
+      repForm.open({
+        mode: 'edit', item: cs,
+        onSave: function (f) {
+          var updated = updateCustomItem(id, f);
+          // Reopening the Studio here is the actual regression test for the
+          // video-persistence bug (Task 2 success criteria): the video now lives
+          // on the SAVED item (cs.yt), so a fresh openStudioCb call for the same
+          // id shows the same video without any in-memory re-render trick.
+          if (updated && updated.yt && openStudioCb) {
+            openStudioCb({ id: updated.id, title: updated.t, artist: updated.a, key: updated.key, mode: updated.mode, custom: true, yt: updated.yt });
+          }
+        },
+        onDelete: function () { deleteCustomItem(id); switchTab('library'); }
+      });
+    }
+    if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
@@ -1427,9 +1512,28 @@
     // YouTube search for one. The finder tab is retired, so this goes straight to the
     // studio instead of seeding a finder view. seedBackingKey stays wired as a no-op
     // fallback when no studio callback is present.
+    //
+    // Bug fix (Task 2, requirement 5 + the root-caused video-persistence bug): the
+    // old code passed a THROWAWAY object ({title:'Solo practice', ...}) with no
+    // stable id, so any video pasted into the resulting Studio session had nothing
+    // to attach to and vanished on close. Gate video curation behind a SAVED
+    // progression: prompt to save first (cs.id is what a video attaches to, via
+    // the Add/Edit form's updateCustomItem), then open the Studio for that saved
+    // song - matching the locked-interface object shape exactly (id/title/artist/key/mode/custom).
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
+        var wantsVideo = confirm(
+          'Save this progression first so a video you attach in the Studio actually sticks?\n\n'
+          + 'OK = save, then open Studio (video will persist - attach it via Edit in the Studio).\n'
+          + 'Cancel = open Studio without saving (any video you paste will NOT be kept).'
+        );
+        if (wantsVideo) {
+          var saved = saveProgression();
+          if (!saved) return; // user cancelled the save-name prompt
+          openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+          return;
+        }
         openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode });
       } else {
         setLibType('repertoire');
@@ -1504,7 +1608,11 @@
       openSong: openPractice,
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
-      rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); }
+      rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); },
+      // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
+      // the controller so tracks.js's Studio "Edit this track" link (wired via
+      // Tracks.mount's onEditRequest) can reach it without a circular require.
+      openEditForm: openEditForm
     };
   }
 
