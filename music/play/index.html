@@ -555,7 +555,7 @@
       // Task 2 requirement 4: the Studio's "Edit this track to add a video" link
       // (t.custom items only) opens the M2 Add/Edit form. songbookCtl doesn't exist
       // yet at mount time (built just below), so this indirects through the closure.
-      onEditRequest: function (t) { if (songbookCtl && songbookCtl.openEditForm && t && t.id) songbookCtl.openEditForm(t.id); }
+      onEditRequest: function (t) { if (songbookCtl && songbookCtl.openEditOrAdd) songbookCtl.openEditOrAdd(t); }
     }) : null;
     songbookCtl = window.Songbook.mount({
       songs: songs,

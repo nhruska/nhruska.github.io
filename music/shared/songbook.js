@@ -1510,6 +1510,23 @@
         onDelete: function () { deleteCustomItem(id); switchTab('library'); }
       });
     }
+    // Studio "Edit this track to add a video" entry point. If the studio item maps
+    // to a saved custom song/track, edit it; otherwise (an ephemeral or unmatched
+    // item) open a prefilled CREATE form so the user can save + curate it. Never a
+    // silent close.
+    function openEditOrAdd(t) {
+      if (!repForm) return;
+      var cs = (t && t.id != null) ? customById(t.id) : null;
+      if (cs) { openEditForm(cs.id); return; }
+      repForm.open({
+        mode: 'create',
+        item: {
+          t: (t && (t.title || t.t)) || '', a: (t && (t.artist || t.a)) || '',
+          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null
+        },
+        onSave: function (f) { createCustomItem(f); }
+      });
+    }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
@@ -1627,7 +1644,8 @@
       // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
-      openEditForm: openEditForm
+      openEditForm: openEditForm,
+      openEditOrAdd: openEditOrAdd
     };
   }
 

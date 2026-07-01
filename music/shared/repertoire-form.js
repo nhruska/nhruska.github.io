@@ -61,13 +61,16 @@
     function render() {
       var editing = current.mode === 'edit';
       var it = current.item || {};
-      var title = editing ? (it.t || it.title || '') : '';
-      var artist = editing ? (it.a || it.artist || '') : '';
-      var key = editing ? (it.key || '') : '';
-      var mode = editing ? (it.mode || 'major') : 'major';
-      var genre = editing ? (it.genre || '') : '';
-      var seqText = editing ? seqToText(it.seq) : '';
-      var urlText = editing && it.yt ? ('https://youtu.be/' + it.yt) : '';
+      // Prefill from the item in BOTH modes: edit fills from the existing custom
+      // item; create fills from a passed-in seed (e.g. a Studio track whose video
+      // the user wants to curate). Create with no item -> it is {} -> all blank.
+      var title = it.t || it.title || '';
+      var artist = it.a || it.artist || '';
+      var key = it.key || '';
+      var mode = it.mode || 'major';
+      var genre = it.genre || '';
+      var seqText = seqToText(it.seq);
+      var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
       var rootOpts = ROOTS.map(function (r) { return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
       el.innerHTML =
         '<div class="rf-box" role="dialog" aria-label="' + (editing ? 'Edit repertoire item' : 'Add a song or track') + '">'
