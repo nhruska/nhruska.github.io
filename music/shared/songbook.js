@@ -216,7 +216,7 @@
    *     setBody, setBar, setCount, setClear, performBtn,
    *     // perform
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
-   *     pPrev, pNext, pClose, pUp, pDown, pDimBtn, pScroll,
+   *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
@@ -815,18 +815,17 @@
       STATE.performDim = false; STATE.performTpose = 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
-      stopScroll();
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
-    if (el.pClose) el.pClose.onclick = function () { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); };
+    if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
       if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); }
+      else { relWake(); if (performEl) performEl.classList.remove('on'); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -886,33 +885,6 @@
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };
-    function startScroll() {
-      if (!pSheet) return;
-      STATE.scrolling = true;
-      if (el.pScroll) el.pScroll.textContent = '⏸';
-      if (el.pSpeed) el.pSpeed.classList.add('on');
-      var last = null;
-      function step(ts) {
-        if (!STATE.scrolling) return;
-        if (last != null) {
-          var dt = (ts - last) / 1000;
-          pSheet.scrollTop += STATE.scrollSpeed * dt;
-          if (pSheet.scrollTop + pSheet.clientHeight >= pSheet.scrollHeight - 2) { stopScroll(); return; }
-        }
-        last = ts;
-        STATE.scrollRAF = requestAnimationFrame(step);
-      }
-      STATE.scrollRAF = requestAnimationFrame(step);
-    }
-    function stopScroll() {
-      STATE.scrolling = false;
-      if (STATE.scrollRAF) cancelAnimationFrame(STATE.scrollRAF);
-      if (el.pScroll) el.pScroll.textContent = '▶';
-      // keep the controls panel open if the user opened it via the gear
-      if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen);
-    }
-    if (el.pScroll) el.pScroll.onclick = function () { STATE.scrolling ? stopScroll() : startScroll(); };
-    if (pSheet) pSheet.onclick = function () { if (STATE.scrolling) stopScroll(); };
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
     var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
