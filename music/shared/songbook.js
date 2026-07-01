@@ -539,19 +539,16 @@
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
 
-    /* ===================== SONG (modes: Studio / Campfire / Stage) ===================== */
-    // A song opens in your last-used SCREEN mode (Studio or Campfire). Stage is a
-    // one-shot action — it launches the fullscreen perform overlay over whichever
-    // screen you're on, but is never persisted as the default-open mode (otherwise
-    // every song-tap would trap you in fullscreen with no way back to the chords).
-    var SONGMODE_KEY = prefix + ".songmode.v1";
-    var TEACH_KEY = prefix + ".songmode.teach.v1";
-    function loadSongMode() { try { return localStorage.getItem(SONGMODE_KEY) === 'campfire' ? 'campfire' : 'studio'; } catch (e) { return 'studio'; } }
-    function saveSongMode(m) { try { localStorage.setItem(SONGMODE_KEY, m); } catch (e) { } }
-    function teachSeen() { try { return localStorage.getItem(TEACH_KEY) === '1'; } catch (e) { return true; } }
-    function markTeachSeen() { try { localStorage.setItem(TEACH_KEY, '1'); } catch (e) { } }
-    STATE.songMode = loadSongMode();
-    STATE.screenMode = STATE.songMode; // studio | campfire
+    /* ===================== SONG (modes: Practice / Stage) ===================== */
+    // A song opens in the merged Practice view (chords + lyrics, or chords-only via
+    // the inline toggle). Stage is a one-shot action — it launches the fullscreen
+    // perform overlay over whichever view you're on, but is never persisted as the
+    // default-open mode (otherwise every song-tap would trap you in fullscreen with
+    // no way back to the chords).
+    var CHORDVIEW_KEY = prefix + ".chordsonly.v1";
+    function loadChordsOnly() { try { return localStorage.getItem(CHORDVIEW_KEY) === '1'; } catch (e) { return false; } }
+    function saveChordsOnly(v) { try { localStorage.setItem(CHORDVIEW_KEY, v ? '1' : '0'); } catch (e) { } }
+    STATE.chordsOnly = loadChordsOnly();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
@@ -561,14 +558,13 @@
       else QUEUE.set([id]);
       openCurrent();
     }
-    // render whatever the queue cursor points at, in the last-used screen mode
+    // render whatever the queue cursor points at
     function openCurrent() {
       var id = QUEUE.current();
       STATE.current = id ? songById(id) : null;
       STATE.transpose = 0;
       if (!STATE.current) return;
       saveLast(STATE.current.id);
-      STATE.screenMode = STATE.songMode; // studio | campfire — never auto-launch Stage
       switchTab('practice');
       renderPractice();
     }
@@ -583,45 +579,10 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
-      if (m !== 'campfire') stopBeat(); // tempo cue only lives in Campfire — stop it before any early return (incl. Stage)
       // Stage performs the live queue from the current position (one-shot; not sticky)
       if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
-      STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
     }
 
-    /* ---- Campfire tempo cue: tap-tempo + a visual beat pulse ---- */
-    var TEMPO = (global.Tempo && global.Tempo.createTempo) ? global.Tempo.createTempo() : null;
-    function perfNow() { return (global.performance && global.performance.now) ? global.performance.now() : Date.now(); }
-    function stopBeat() {
-      STATE.beatOn = false;
-      if (STATE.beatRAF) { cancelAnimationFrame(STATE.beatRAF); STATE.beatRAF = null; }
-      var b = el.practiceBody && el.practiceBody.querySelector('#beatToggle'); if (b) b.textContent = '▶';
-    }
-    function startBeat() {
-      if (!TEMPO || STATE.beatOn || !el.practiceBody) return; // no-op if already running (avoid orphaning the rAF loop)
-      STATE.beatOn = true; STATE.beatStart = perfNow();
-      var btn = el.practiceBody.querySelector('#beatToggle'); if (btn) btn.textContent = '⏸';
-      var last = -1;
-      function step() {
-        if (!STATE.beatOn) return;
-        var dot = el.practiceBody.querySelector('#beatDot');
-        if (!dot) { STATE.beatOn = false; STATE.beatRAF = null; return; } // left Campfire — stop
-        var bi = TEMPO.beatIndex(STATE.beatStart, perfNow());
-        if (bi !== last) {
-          last = bi;
-          dot.classList.remove('on', 'down'); void dot.offsetWidth; // restart the flash
-          dot.classList.add('on'); if (bi % TEMPO.beatsPerBar() === 0) dot.classList.add('down');
-        }
-        STATE.beatRAF = requestAnimationFrame(step);
-      }
-      STATE.beatRAF = requestAnimationFrame(step);
-    }
-    function tapTempo() {
-      if (!TEMPO || !el.practiceBody) return;
-      TEMPO.tap(perfNow());
-      var v = el.practiceBody.querySelector('#bpmVal'); if (v) v.textContent = TEMPO.bpm();
-      if (STATE.beatOn) STATE.beatStart = perfNow(); // realign the pulse to your tap
-    }
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -631,55 +592,61 @@
       }
       if (el.practiceEmpty) el.practiceEmpty.style.display = 'none';
       el.practiceBody.style.display = 'block';
-      var s = STATE.current, mode = STATE.screenMode || 'studio';
+      var s = STATE.current;
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
+      var chordsOnly = !!STATE.chordsOnly;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
-      var switcher = '<div class="modeSwitch">'
-        + '<button data-m="studio" class="' + (mode === 'studio' ? 'on' : '') + '">Studio</button>'
-        + '<button data-m="campfire" class="' + (mode === 'campfire' ? 'on' : '') + '">Campfire</button>'
-        + '<button data-m="stage" class="stageBtn">Stage ▶</button></div>';
-      // one-time teaching card explaining the three modes (shown on the first song open)
-      var teach = teachSeen() ? '' : '<div class="teachCard" id="teachCard">'
-        + '<strong>Three ways to open a song</strong>'
-        + '<span><b>Studio</b> — learn it (lyrics + chords) · <b>Campfire</b> — jam the chord chart · <b>Stage</b> — perform fullscreen</span>'
-        + '<button class="btn ghost" id="teachOk">Got it</button></div>';
+      // header: icon-only back arrow (top-left, beside the title) + a compact
+      // setlist checkmark toggle (top-right, alongside the maximize icon when
+      // present) — both above the fold, no separate row.
+      var head = '<div class="detailHead">'
+        + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>'
+        + '<div class="headActions">'
+        + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
+        + maxBtn
+        + '</div></div>';
+      // mode row: 2-way switch (Practice / chords-only toggle) + compact transpose
+      // chip, in the same row — plus a clearly-labeled Stage CTA (a distinct button,
+      // not a third switch tab, per Nik's "make fullscreen entry more discoverable").
+      var switcher = '<div class="practiceRow">'
+        + '<div class="modeSwitch">'
+        + '<button data-m="full" class="' + (!chordsOnly ? 'on' : '') + '">Practice</button>'
+        + '<button data-m="chords" class="' + (chordsOnly ? 'on' : '') + '">Chords only</button>'
+        + '</div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '</div>'
+        + '<button class="stageCta" id="stageBtn" title="Perform fullscreen"><span class="stageIcon" aria-hidden="true">⛶</span> Stage · Perform fullscreen</button>';
       // queue nav — only when a real running order (the setlist) is loaded
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var head = '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>';
-      var keyPill = '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
-      var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Library</button></div>';
+      var canSolo = s.custom && typeof openStudioCb === 'function' && s.key && s.mode;
+      var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
+      var actions = '<div class="actions">' + soloBtn + '</div>';
       var body;
-      if (mode === 'campfire') {
-        // tempo cue: tap the beat, watch it pulse — sets the jam's feel (no BPM in the data)
-        var tempoBar = TEMPO ? '<div class="tempoBar">'
-          + '<button id="beatToggle" class="tempoPlay" title="Start/stop the beat">' + (STATE.beatOn ? '⏸' : '▶') + '</button>'
-          + '<button id="tapBtn" class="tapBtn">Tap</button>'
-          + '<span class="bpmRead"><b id="bpmVal">' + TEMPO.bpm() + '</b> BPM</span>'
-          + '<span class="beatDot" id="beatDot"></span></div>' : '';
-        body = keyPill + tempoBar + chips
+      if (chordsOnly) {
+        body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions;
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
-        body = keyPill + chips
+        body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
           + actions
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + head + teach + switcher + queueNav + body + '</div>';
-      el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
+      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
-      var beatToggle = el.practiceBody.querySelector('#beatToggle'); if (beatToggle) beatToggle.onclick = function () { STATE.beatOn ? stopBeat() : startBeat(); };
-      var tapBtn = el.practiceBody.querySelector('#tapBtn'); if (tapBtn) tapBtn.onclick = tapTempo;
-      var teachOk = el.practiceBody.querySelector('#teachOk');
-      if (teachOk) teachOk.onclick = function () { markTeachSeen(); var c = el.practiceBody.querySelector('#teachCard'); if (c) c.remove(); };
+      el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
+        b.onclick = function () { STATE.chordsOnly = (b.dataset.m === 'chords'); saveChordsOnly(STATE.chordsOnly); renderPractice(); };
+      });
+      var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
@@ -687,6 +654,10 @@
       el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
+      var soloOver = el.practiceBody.querySelector('#soloOverBtn');
+      if (soloOver) soloOver.onclick = function () {
+        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true });
+      };
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
         if (act) {
@@ -701,7 +672,7 @@
               rebuildAll(); switchTab('library'); renderSongs(); renderSetlist();
             }
           };
-          act.parentNode.insertBefore(db, act.nextSibling);
+          act.appendChild(db);
         }
       }
     }
@@ -1575,7 +1546,6 @@
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
-      if (name !== 'practice') stopBeat(); // tempo cue stops when you leave the song screen
       if (name === 'practice') renderPractice();
       if (name === 'library') { renderTypeToggle(); applyLibType(); }
       // leaving the Tune tab: let the chord pack stop any tuner audio
