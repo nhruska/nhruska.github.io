@@ -209,14 +209,14 @@
    *   suggestions:  Object -- chord-progression suggestion map (chord -> [next...]).
    *   el: {  -- DOM element references (any subset; missing ones disable that feature)
    *     // library
-   *     songsList, decadeChips, search, libCount, libHero,
+   *     songsList, decadeChips, search, libCount,
    *     // practice
    *     practiceEmpty, practiceBody,
    *     // setlist
    *     setBody, setBar, setCount, setClear, performBtn,
    *     // perform
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
-   *     pPrev, pNext, pClose, pUp, pDown, pDimBtn, pScroll,
+   *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
    *     // compose (optional; needs a chord pack for diagrams/audio)
@@ -244,6 +244,10 @@
     // the Practice Studio (solo scale + chords + circle) for a track or a composed key.
     var getTracks = opts.getTracks || function () { return []; };
     var openStudioCb = opts.openStudio || null;
+    // M2: the unified Add/Edit form (repertoire-form.js) - one mounted overlay reused
+    // for create + edit of custom ("Mine") songs/tracks. Absent (no-op guarded below)
+    // if the script didn't load, so the rest of the app still works.
+    var repForm = (global.RepertoireForm && global.RepertoireForm.mount) ? global.RepertoireForm.mount() : null;
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
@@ -291,7 +295,7 @@
     // OR the chord pack knows every chord at that transposition.
     function seqPlayable(seq, st) {
       if (!pack) return true;
-      return seq.every(function (c) { return packHasChord(tpose(c, st)); });
+      return (seq || []).every(function (c) { return packHasChord(tpose(c, st)); });
     }
 
     /* ---------- custom (composed) progressions ---------- */
@@ -299,7 +303,7 @@
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
     function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customSongs)); } catch (e) { } }
     var customSongs = loadCustom();
-    function buildSheetFromSeq(seq) { return [["Progression", seq.map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
+    function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
     function rebuildAll() {
       ALLSONGS = CATALOG.map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); });
       customSongs.forEach(function (cs) { ALLSONGS.push(Object.assign({}, cs, { sheet: buildSheetFromSeq(cs.seq) })); });
@@ -358,8 +362,7 @@
       if (el.searchWrap) el.searchWrap.hidden = !repView;
       if (el.genreChips) el.genreChips.hidden = !repView;
       if (el.keyChips) el.keyChips.hidden = !repView;
-      if (el.libHero) el.libHero.style.display = repView ? '' : 'none';
-      if (t === 'repertoire') { renderFilterChips(); renderHero(); renderSongs(); }
+      if (t === 'repertoire') { renderFilterChips(); renderSongs(); }
       else if (t === 'set') renderSetlist();
       // context line follows the active sub-view
       if (el.ctxLine) {
@@ -422,69 +425,6 @@
         });
       }
     }
-    /* "Play now" hero: a Continue card + a couple of one-tap jam-starters.
-       Shown only on the unfiltered library, so the moment you search or pick a
-       decade it gets out of the way and the full list takes over. */
-    function quickPicks() {
-      var pool = ALLSONGS.filter(function (s) { return !s.custom; });
-      if (!pool.length) return [];
-      // Curated jam songs ("jam": true in the catalog) lead the picks; the rest
-      // are ordered easiest-first so they only backfill when flags run out.
-      var jam = pool.filter(function (s) { return s.jam; }).sort(function (a, b) { return a.t.localeCompare(b.t); });
-      var rest = pool.filter(function (s) { return !s.jam; })
-        .sort(function (a, b) { return a.seq.length - b.seq.length || a.t.localeCompare(b.t); });
-      // rotate the jam set by day so revisits feel fresh without being random
-      var day = jam.length ? Math.floor(Date.now() / 864e5) % jam.length : 0;
-      var ordered = jam.slice(day).concat(jam.slice(0, day)).concat(rest);
-      var out = [], seen = {};
-      for (var i = 0; i < ordered.length && out.length < 4; i++) {
-        var s = ordered[i];
-        if (!seen[s.id]) { seen[s.id] = 1; out.push(s); }
-      }
-      return out;
-    }
-    // Pick a random jam-flagged song (fall back to the quick-picks pool), so one
-    // tap drops you straight into playing something good — no decisions.
-    function jamSong() {
-      var jam = ALLSONGS.filter(function (s) { return s.jam && !s.custom; });
-      var pool = jam.length ? jam : quickPicks();
-      return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
-    }
-    function jamNow() { var s = jamSong(); if (s) { saveLast(s.id); startPerform([s.id]); } }
-
-    function renderHero() {
-      if (!el.libHero) return;
-      if (STATE.search.trim() || STATE.genre !== 'all' || STATE.key !== 'all') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
-      el.libHero.style.display = 'block';
-      var html = '<button class="jamNow" id="heroJam">⚡ Jam now</button>';
-      var last = loadLast() ? songById(loadLast()) : null;
-      if (last) {
-        html += '<button class="heroCont" data-id="' + last.id + '">'
-          + '<div class="hcKick">▸ Continue</div>'
-          + '<div class="hcTitle">' + escHTML(last.t) + '</div>'
-          + '<div class="hcSub">' + escHTML(last.a) + '  ·  ' + last.seq.join(' · ') + '</div>'
-          + '</button>';
-      }
-      var picks = quickPicks().filter(function (s) { return !last || s.id !== last.id; }).slice(0, last ? 2 : 4);
-      if (picks.length) {
-        html += '<div class="heroLbl">' + (last ? 'Or start something' : 'Tap a song — play right now') + '</div><div class="heroRow">';
-        picks.forEach(function (s) {
-          html += '<button class="heroCard" data-id="' + s.id + '">'
-            + '<div class="hcKick">▶ ' + s.seq.length + ' chords</div>'
-            + '<div class="hcTitle">' + escHTML(s.t) + '</div>'
-            + '<div class="hcArtist">' + escHTML(s.a) + '</div>'
-            + '<div class="hcChords">' + s.seq.join(' · ') + '</div>'
-            + '</button>';
-        });
-        html += '</div>';
-      }
-      el.libHero.innerHTML = html;
-      el.libHero.querySelectorAll('[data-id]').forEach(function (b) {
-        b.onclick = function () { openPractice(b.dataset.id); };
-      });
-      var jb = el.libHero.querySelector('#heroJam'); if (jb) jb.onclick = jamNow;
-    }
-
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
       var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
@@ -507,7 +447,6 @@
       ytSearch(rec);
     }
     function renderSongs() {
-      renderHero();
       if (!el.songsList) return;
       buildRepertoire();
       var filtered = global.Repertoire.filter(REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
@@ -539,19 +478,16 @@
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
 
-    /* ===================== SONG (modes: Studio / Campfire / Stage) ===================== */
-    // A song opens in your last-used SCREEN mode (Studio or Campfire). Stage is a
-    // one-shot action — it launches the fullscreen perform overlay over whichever
-    // screen you're on, but is never persisted as the default-open mode (otherwise
-    // every song-tap would trap you in fullscreen with no way back to the chords).
-    var SONGMODE_KEY = prefix + ".songmode.v1";
-    var TEACH_KEY = prefix + ".songmode.teach.v1";
-    function loadSongMode() { try { return localStorage.getItem(SONGMODE_KEY) === 'campfire' ? 'campfire' : 'studio'; } catch (e) { return 'studio'; } }
-    function saveSongMode(m) { try { localStorage.setItem(SONGMODE_KEY, m); } catch (e) { } }
-    function teachSeen() { try { return localStorage.getItem(TEACH_KEY) === '1'; } catch (e) { return true; } }
-    function markTeachSeen() { try { localStorage.setItem(TEACH_KEY, '1'); } catch (e) { } }
-    STATE.songMode = loadSongMode();
-    STATE.screenMode = STATE.songMode; // studio | campfire
+    /* ===================== SONG (modes: Practice / Stage) ===================== */
+    // A song opens in the merged Practice view (chords + lyrics, or chords-only via
+    // the inline toggle). Stage is a one-shot action — it launches the fullscreen
+    // perform overlay over whichever view you're on, but is never persisted as the
+    // default-open mode (otherwise every song-tap would trap you in fullscreen with
+    // no way back to the chords).
+    var CHORDVIEW_KEY = prefix + ".chordsonly.v1";
+    function loadChordsOnly() { try { return localStorage.getItem(CHORDVIEW_KEY) === '1'; } catch (e) { return false; } }
+    function saveChordsOnly(v) { try { localStorage.setItem(CHORDVIEW_KEY, v ? '1' : '0'); } catch (e) { } }
+    STATE.chordsOnly = loadChordsOnly();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
@@ -561,14 +497,13 @@
       else QUEUE.set([id]);
       openCurrent();
     }
-    // render whatever the queue cursor points at, in the last-used screen mode
+    // render whatever the queue cursor points at
     function openCurrent() {
       var id = QUEUE.current();
       STATE.current = id ? songById(id) : null;
       STATE.transpose = 0;
       if (!STATE.current) return;
       saveLast(STATE.current.id);
-      STATE.screenMode = STATE.songMode; // studio | campfire — never auto-launch Stage
       switchTab('practice');
       renderPractice();
     }
@@ -583,45 +518,10 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
-      if (m !== 'campfire') stopBeat(); // tempo cue only lives in Campfire — stop it before any early return (incl. Stage)
       // Stage performs the live queue from the current position (one-shot; not sticky)
       if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
-      STATE.screenMode = m; STATE.songMode = m; saveSongMode(m); renderPractice();
     }
 
-    /* ---- Campfire tempo cue: tap-tempo + a visual beat pulse ---- */
-    var TEMPO = (global.Tempo && global.Tempo.createTempo) ? global.Tempo.createTempo() : null;
-    function perfNow() { return (global.performance && global.performance.now) ? global.performance.now() : Date.now(); }
-    function stopBeat() {
-      STATE.beatOn = false;
-      if (STATE.beatRAF) { cancelAnimationFrame(STATE.beatRAF); STATE.beatRAF = null; }
-      var b = el.practiceBody && el.practiceBody.querySelector('#beatToggle'); if (b) b.textContent = '▶';
-    }
-    function startBeat() {
-      if (!TEMPO || STATE.beatOn || !el.practiceBody) return; // no-op if already running (avoid orphaning the rAF loop)
-      STATE.beatOn = true; STATE.beatStart = perfNow();
-      var btn = el.practiceBody.querySelector('#beatToggle'); if (btn) btn.textContent = '⏸';
-      var last = -1;
-      function step() {
-        if (!STATE.beatOn) return;
-        var dot = el.practiceBody.querySelector('#beatDot');
-        if (!dot) { STATE.beatOn = false; STATE.beatRAF = null; return; } // left Campfire — stop
-        var bi = TEMPO.beatIndex(STATE.beatStart, perfNow());
-        if (bi !== last) {
-          last = bi;
-          dot.classList.remove('on', 'down'); void dot.offsetWidth; // restart the flash
-          dot.classList.add('on'); if (bi % TEMPO.beatsPerBar() === 0) dot.classList.add('down');
-        }
-        STATE.beatRAF = requestAnimationFrame(step);
-      }
-      STATE.beatRAF = requestAnimationFrame(step);
-    }
-    function tapTempo() {
-      if (!TEMPO || !el.practiceBody) return;
-      TEMPO.tap(perfNow());
-      var v = el.practiceBody.querySelector('#bpmVal'); if (v) v.textContent = TEMPO.bpm();
-      if (STATE.beatOn) STATE.beatStart = perfNow(); // realign the pulse to your tap
-    }
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -629,57 +529,71 @@
         el.practiceBody.style.display = 'none';
         return;
       }
+      var s = STATE.current;
+      // A chord-less item (a pure custom track, or a song whose chords were cleared
+      // via the Add/Edit form) is not a song-screen item - show the empty state
+      // rather than throwing on s.seq.map.
+      if (!s.seq || !s.seq.length) {
+        if (el.practiceEmpty) el.practiceEmpty.style.display = 'block';
+        el.practiceBody.style.display = 'none';
+        return;
+      }
       if (el.practiceEmpty) el.practiceEmpty.style.display = 'none';
       el.practiceBody.style.display = 'block';
-      var s = STATE.current, mode = STATE.screenMode || 'studio';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
+      var chordsOnly = !!STATE.chordsOnly;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
-      var switcher = '<div class="modeSwitch">'
-        + '<button data-m="studio" class="' + (mode === 'studio' ? 'on' : '') + '">Studio</button>'
-        + '<button data-m="campfire" class="' + (mode === 'campfire' ? 'on' : '') + '">Campfire</button>'
-        + '<button data-m="stage" class="stageBtn">Stage ▶</button></div>';
-      // one-time teaching card explaining the three modes (shown on the first song open)
-      var teach = teachSeen() ? '' : '<div class="teachCard" id="teachCard">'
-        + '<strong>Three ways to open a song</strong>'
-        + '<span><b>Studio</b> — learn it (lyrics + chords) · <b>Campfire</b> — jam the chord chart · <b>Stage</b> — perform fullscreen</span>'
-        + '<button class="btn ghost" id="teachOk">Got it</button></div>';
+      // header: icon-only back arrow (top-left, beside the title) + a compact
+      // setlist checkmark toggle (top-right, alongside the maximize icon when
+      // present) — both above the fold, no separate row.
+      var head = '<div class="detailHead">'
+        + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>'
+        + '<div class="headActions">'
+        + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
+        + maxBtn
+        + '</div></div>';
+      // mode row: 2-way switch (Practice / chords-only toggle) + compact transpose
+      // chip, in the same row — plus a clearly-labeled Stage CTA (a distinct button,
+      // not a third switch tab, per Nik's "make fullscreen entry more discoverable").
+      var switcher = '<div class="practiceRow">'
+        + '<div class="modeSwitch">'
+        + '<button data-m="full" class="' + (!chordsOnly ? 'on' : '') + '">Practice</button>'
+        + '<button data-m="chords" class="' + (chordsOnly ? 'on' : '') + '">Chords only</button>'
+        + '</div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '</div>'
+        + '<button class="stageCta" id="stageBtn" title="Perform fullscreen"><span class="stageIcon" aria-hidden="true">⛶</span> Stage · Perform fullscreen</button>';
       // queue nav — only when a real running order (the setlist) is loaded
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var head = '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>';
-      var keyPill = '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
-      var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Library</button></div>';
+      var canSolo = s.custom && typeof openStudioCb === 'function' && s.key && s.mode;
+      var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
+      var actions = '<div class="actions">' + soloBtn + '</div>';
       var body;
-      if (mode === 'campfire') {
-        // tempo cue: tap the beat, watch it pulse — sets the jam's feel (no BPM in the data)
-        var tempoBar = TEMPO ? '<div class="tempoBar">'
-          + '<button id="beatToggle" class="tempoPlay" title="Start/stop the beat">' + (STATE.beatOn ? '⏸' : '▶') + '</button>'
-          + '<button id="tapBtn" class="tapBtn">Tap</button>'
-          + '<span class="bpmRead"><b id="bpmVal">' + TEMPO.bpm() + '</b> BPM</span>'
-          + '<span class="beatDot" id="beatDot"></span></div>' : '';
-        body = keyPill + tempoBar + chips
+      if (chordsOnly) {
+        body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions;
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
-        body = keyPill + chips
+        body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
           + actions
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + head + teach + switcher + queueNav + body + '</div>';
-      el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
+      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
-      var beatToggle = el.practiceBody.querySelector('#beatToggle'); if (beatToggle) beatToggle.onclick = function () { STATE.beatOn ? stopBeat() : startBeat(); };
-      var tapBtn = el.practiceBody.querySelector('#tapBtn'); if (tapBtn) tapBtn.onclick = tapTempo;
-      var teachOk = el.practiceBody.querySelector('#teachOk');
-      if (teachOk) teachOk.onclick = function () { markTeachSeen(); var c = el.practiceBody.querySelector('#teachCard'); if (c) c.remove(); };
+      el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
+        b.onclick = function () { STATE.chordsOnly = (b.dataset.m === 'chords'); saveChordsOnly(STATE.chordsOnly); renderPractice(); };
+      });
+      var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
@@ -687,9 +601,18 @@
       el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
+      var soloOver = el.practiceBody.querySelector('#soloOverBtn');
+      if (soloOver) soloOver.onclick = function () {
+        var csv = customById(s.id);
+        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true, yt: (csv && csv.yt) || s.yt || null });
+      };
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
         if (act) {
+          var eb = document.createElement('button');
+          eb.className = 'btn'; eb.textContent = 'Edit';
+          eb.onclick = function () { openEditForm(s.id); };
+          act.appendChild(eb);
           var db = document.createElement('button');
           db.className = 'btn ghost'; db.textContent = 'Delete progression'; db.style.flexBasis = '100%';
           db.onclick = function () {
@@ -701,7 +624,7 @@
               rebuildAll(); switchTab('library'); renderSongs(); renderSetlist();
             }
           };
-          act.parentNode.insertBefore(db, act.nextSibling);
+          act.appendChild(db);
         }
       }
     }
@@ -815,18 +738,17 @@
       STATE.performDim = false; STATE.performTpose = 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
-      stopScroll();
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
-    if (el.pClose) el.pClose.onclick = function () { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); };
+    if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
       if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { stopScroll(); relWake(); if (performEl) performEl.classList.remove('on'); }
+      else { relWake(); if (performEl) performEl.classList.remove('on'); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -886,33 +808,6 @@
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };
-    function startScroll() {
-      if (!pSheet) return;
-      STATE.scrolling = true;
-      if (el.pScroll) el.pScroll.textContent = '⏸';
-      if (el.pSpeed) el.pSpeed.classList.add('on');
-      var last = null;
-      function step(ts) {
-        if (!STATE.scrolling) return;
-        if (last != null) {
-          var dt = (ts - last) / 1000;
-          pSheet.scrollTop += STATE.scrollSpeed * dt;
-          if (pSheet.scrollTop + pSheet.clientHeight >= pSheet.scrollHeight - 2) { stopScroll(); return; }
-        }
-        last = ts;
-        STATE.scrollRAF = requestAnimationFrame(step);
-      }
-      STATE.scrollRAF = requestAnimationFrame(step);
-    }
-    function stopScroll() {
-      STATE.scrolling = false;
-      if (STATE.scrollRAF) cancelAnimationFrame(STATE.scrollRAF);
-      if (el.pScroll) el.pScroll.textContent = '▶';
-      // keep the controls panel open if the user opened it via the gear
-      if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen);
-    }
-    if (el.pScroll) el.pScroll.onclick = function () { STATE.scrolling ? stopScroll() : startScroll(); };
-    if (pSheet) pSheet.onclick = function () { if (STATE.scrolling) stopScroll(); };
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
     var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
@@ -1524,15 +1419,115 @@
       });
       el.suggest.appendChild(row);
     }
+    // Derive key/mode for a saved progression the same way repertoire.js's
+    // deriveKey() does (first-chord regex) - reuse it directly (pure, node-tested)
+    // rather than duplicating the regex. Falls back to the explicit songKey when
+    // one was picked in Compose (more reliable than re-parsing chord #1, e.g. a
+    // vi-IV-I-V progression built from a picked key starts on the relative chord).
+    function deriveProgressionKey(seq) {
+      if (songKey.root) return { key: songKey.root, mode: songKey.mode === 'Minor' ? 'minor' : 'major' };
+      var d = global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null };
+      return { key: d.key, mode: d.mode || 'major' };
+    }
+    // Save the in-progress Compose progression as a stable custom song (cs.id).
+    // Populates key/mode (Task 2 requirement 1, locked-interface contract) so the
+    // saved song is immediately eligible for "Solo over it" + the Studio. Returns
+    // the saved song object, or null if there was nothing to save / the user
+    // cancelled the name prompt.
     function saveProgression() {
-      if (progression.length === 0) { alert('Build a progression first.'); return; }
+      if (progression.length === 0) { alert('Build a progression first.'); return null; }
       var name = prompt('Name this progression:', 'My progression');
-      if (name === null) return;
+      if (name === null) return null;
       name = name.trim() || 'My progression';
-      var cs = { id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine', seq: progression.slice(), custom: true };
+      var km = deriveProgressionKey(progression);
+      var cs = {
+        id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+        seq: progression.slice(), custom: true, key: km.key, mode: km.mode, yt: null
+      };
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
+      return cs;
     }
+    // Create a brand-new custom item from the Add/Edit form (Requirement 3, Task 2).
+    // No seq -> a standalone custom TRACK (no chord sheet; playable straight from
+    // the Studio per repertoire.js's existing playability() logic). A seq -> a
+    // custom SONG (same shape saveProgression() produces).
+    function createCustomItem(f) {
+      var cs = {
+        id: 'm' + Date.now(), t: f.title || 'Untitled', a: f.artist || '', y: new Date().getFullYear(),
+        d: 'Mine', genre: f.genre || '', custom: true, key: f.key || null, mode: f.mode || 'major', yt: f.yt || null
+      };
+      if (f.seq && f.seq.length) cs.seq = f.seq.slice();
+      customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      return cs;
+    }
+    // Apply an edit (title/artist/genre/key/mode/seq/yt) to an EXISTING custom item.
+    function updateCustomItem(id, f) {
+      var cs = null;
+      for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) { cs = customSongs[i]; break; }
+      if (!cs) return null;
+      cs.t = f.title || cs.t; cs.a = f.artist != null ? f.artist : cs.a; cs.genre = f.genre != null ? f.genre : cs.genre;
+      cs.key = f.key != null ? f.key : cs.key; cs.mode = f.mode || cs.mode; cs.yt = f.yt != null ? f.yt : cs.yt;
+      if (f.seq && f.seq.length) cs.seq = f.seq.slice(); else if (f.seq) delete cs.seq;
+      saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      if (STATE.current && STATE.current.id === id) {
+        if (!cs.seq || !cs.seq.length) switchTab('library'); else renderPractice();
+      }
+      return cs;
+    }
+    function deleteCustomItem(id) {
+      customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
+      saveCustom();
+      var sp = STATE.setlist.indexOf(id);
+      if (sp >= 0) { STATE.setlist.splice(sp, 1); saveSet(); }
+      rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
+    }
+    function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
+    // ---- M2 Add/Edit form entry points ----
+    function openAddForm() {
+      if (!repForm) return;
+      repForm.open({
+        mode: 'create',
+        onSave: function (f) { createCustomItem(f); }
+      });
+    }
+    function openEditForm(id) {
+      if (!repForm) return;
+      var cs = customById(id);
+      if (!cs) return;
+      repForm.open({
+        mode: 'edit', item: cs,
+        onSave: function (f) {
+          var updated = updateCustomItem(id, f);
+          // Reopening the Studio here is the actual regression test for the
+          // video-persistence bug (Task 2 success criteria): the video now lives
+          // on the SAVED item (cs.yt), so a fresh openStudioCb call for the same
+          // id shows the same video without any in-memory re-render trick.
+          if (updated && updated.yt && openStudioCb) {
+            openStudioCb({ id: updated.id, title: updated.t, artist: updated.a, key: updated.key, mode: updated.mode, custom: true, yt: updated.yt });
+          }
+        },
+        onDelete: function () { deleteCustomItem(id); switchTab('library'); }
+      });
+    }
+    // Studio "Edit this track to add a video" entry point. If the studio item maps
+    // to a saved custom song/track, edit it; otherwise (an ephemeral or unmatched
+    // item) open a prefilled CREATE form so the user can save + curate it. Never a
+    // silent close.
+    function openEditOrAdd(t) {
+      if (!repForm) return;
+      var cs = (t && t.id != null) ? customById(t.id) : null;
+      if (cs) { openEditForm(cs.id); return; }
+      repForm.open({
+        mode: 'create',
+        item: {
+          t: (t && (t.title || t.t)) || '', a: (t && (t.artist || t.a)) || '',
+          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null
+        },
+        onSave: function (f) { createCustomItem(f); }
+      });
+    }
+    if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
     if (el.cSave) el.cSave.onclick = saveProgression;
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
@@ -1549,9 +1544,28 @@
     // YouTube search for one. The finder tab is retired, so this goes straight to the
     // studio instead of seeding a finder view. seedBackingKey stays wired as a no-op
     // fallback when no studio callback is present.
+    //
+    // Bug fix (Task 2, requirement 5 + the root-caused video-persistence bug): the
+    // old code passed a THROWAWAY object ({title:'Solo practice', ...}) with no
+    // stable id, so any video pasted into the resulting Studio session had nothing
+    // to attach to and vanished on close. Gate video curation behind a SAVED
+    // progression: prompt to save first (cs.id is what a video attaches to, via
+    // the Add/Edit form's updateCustomItem), then open the Studio for that saved
+    // song - matching the locked-interface object shape exactly (id/title/artist/key/mode/custom).
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
+        var wantsVideo = confirm(
+          'Save this progression first so a video you attach in the Studio actually sticks?\n\n'
+          + 'OK = save, then open Studio (video will persist - attach it via Edit in the Studio).\n'
+          + 'Cancel = open Studio without saving (any video you paste will NOT be kept).'
+        );
+        if (wantsVideo) {
+          var saved = saveProgression();
+          if (!saved) return; // user cancelled the save-name prompt
+          openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+          return;
+        }
         openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode });
       } else {
         setLibType('repertoire');
@@ -1575,7 +1589,6 @@
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
-      if (name !== 'practice') stopBeat(); // tempo cue stops when you leave the song screen
       if (name === 'practice') renderPractice();
       if (name === 'library') { renderTypeToggle(); applyLibType(); }
       // leaving the Tune tab: let the chord pack stop any tuner audio
@@ -1627,7 +1640,12 @@
       openSong: openPractice,
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
-      rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); }
+      rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); },
+      // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
+      // the controller so tracks.js's Studio "Edit this track" link (wired via
+      // Tracks.mount's onEditRequest) can reach it without a circular require.
+      openEditForm: openEditForm,
+      openEditOrAdd: openEditOrAdd
     };
   }
 

@@ -295,11 +295,19 @@
           + 'Watch on YouTube &#8599;</a>'
           + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. Paste the one you like below. The HUD below works either way.</div>'
           + '</div>';
-      // Add/edit-video-URL affordance. Custom user tracks own their yt id directly
-      // (edit them via the library), so the overlay editor is only for curated
-      // seed tracks. Shows current state + a paste field + clear when one is set.
-      var urlEditor = t.custom ? '' :
-        '<div class="bt-st-urled" data-urled>'
+      // Add/edit-video-URL affordance. Custom user tracks/songs own their yt id
+      // directly and are curated through the Add/Edit form now (Task 2, M2), not
+      // an inline paste-box - so for t.custom we show a single plain link instead
+      // (only when the host wired opts.onEditRequest; otherwise nothing renders,
+      // degrading gracefully). Curated (non-custom) seed tracks keep the original
+      // inline paste/clear editor unchanged.
+      var urlEditor = t.custom
+        ? (opts.onEditRequest
+          ? '<div class="bt-st-urled" data-urled>'
+            + '<button class="bt-st-editlink" data-editrequest type="button">Edit this track to add a video</button>'
+            + '</div>'
+          : '')
+        : '<div class="bt-st-urled" data-urled>'
         + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
         + '<div class="bt-st-urled-row">'
         + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
@@ -367,6 +375,8 @@
         var merged = state.tracks.filter(function (x) { return trackKey(x) === trackKey(t); })[0] || t;
         openStudio(merged);
       };
+      var editReq = elPlayer.querySelector('[data-editrequest]');
+      if (editReq) editReq.onclick = function () { closePlayer(); opts.onEditRequest(t); };
       elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
     }
 

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<title>PR #64 - UAT Follow-up HiTL Report</title>
+<style>
+:root{--bg:#0f1216;--card:#171c22;--line:#2a323c;--fg:#e7edf3;--mut:#9fb0c0;--ok:#3ecf8e;--warn:#e0a34e;--acc:#5aa9ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;padding:16px;max-width:900px;margin:0 auto}
+h1{font-size:21px;margin:.2em 0}h2{font-size:17px;margin:1.4em 0 .5em;border-bottom:1px solid var(--line);padding-bottom:4px}
+.sub{color:var(--mut);font-size:13px;margin-top:0}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.pok{background:rgba(62,207,142,.15);color:var(--ok)}.pwarn{background:rgba(224,163,78,.15);color:var(--warn)}
+table{width:100%;border-collapse:collapse;margin:.5em 0;font-size:13.5px}
+td,th{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--card);color:var(--mut);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.big{font-size:16px;font-weight:700}
+code{background:#0b0e12;padding:1px 5px;border-radius:4px;font-size:12.5px}
+img{max-width:100%;border:1px solid var(--line);border-radius:8px;margin:6px 0}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.shots figure{margin:0}.shots figcaption{color:var(--mut);font-size:12px;text-align:center}
+a{color:var(--acc)}
+.rec{background:rgba(90,169,255,.1);border:1px solid var(--acc);border-radius:10px;padding:14px}
+</style>
+</head>
+<body>
+<h1>PR #64 - Music PR62 UAT Follow-up</h1>
+<p class="sub">Final Reviewer Report - all 13 UAT items - <span class="pill pok">18/18 live checks</span> <span class="pill pok">0 console errors</span> - HITL merge decision pending</p>
+
+<div class="card">
+<p class="big">What this is</p>
+<p>Your UAT feedback on PR #62 (M3 Repertoire merge), resolved via interview into an atomic plan, executed as a 4-task worktree swarm and integrated into one PR off <code>main</code>. Every item verified live in the real app at 375px + 1440px.</p>
+</div>
+
+<h2>Your feedback &rarr; what changed</h2>
+<table>
+<tr><th>Feedback</th><th>Change</th></tr>
+<tr><td>Pasted YouTube URL never shows the curated video ("Watch on YouTube" persists)</td><td>Video lives on the saved song (<code>cs.yt</code>), keyed to a stable id. <b>Fixed + proven live, persists across a full reload.</b></td></tr>
+<tr><td>Do we need to save before jamming?</td><td>Video-attach gated behind a saved progression; unsaved solo prompts to save first.</td></tr>
+<tr><td>"Curated video URL" too prominent above the fold</td><td>Studio simplified for custom items - video set via the Add/Edit form, not an inline paste box.</td></tr>
+<tr><td>Quick-links hero pops in/out on filter</td><td>Hero removed entirely (code + markup + CSS).</td></tr>
+<tr><td>Back button hidden bottom-right</td><td>Icon back-arrow moved top-left of the header, above the fold.</td></tr>
+<tr><td>Fullscreen "play" icon doesn't work / not needed</td><td>Auto-scroll button removed; also removed the now-inert Stage "Scroll" slider.</td></tr>
+<tr><td>Remove tempo/tap on campfire view</td><td>Removed entirely.</td></tr>
+<tr><td>Compact key-transpose like Compose, in the toggle row</td><td>Transpose is now a compact chip in the mode-toggle row.</td></tr>
+<tr><td>Do we need Studio/Campfire/Stage toggles?</td><td>Collapsed 3 &rarr; 2: "Practice / Chords only" + a distinct "Stage - Perform fullscreen" CTA.</td></tr>
+<tr><td>"In setlist" as a checkmark float top-right</td><td>Compact checkmark toggle floated top-right of the header.</td></tr>
+<tr><td>Edit Setlist button WAY too wide</td><td>Fixed (<code>.setHead .btn{flex:0 0 auto}</code>).</td></tr>
+<tr><td>Song view should be editable</td><td>New "Edit" button on custom songs opens the pre-filled Add/Edit form.</td></tr>
+<tr><td>(your "maybe a different fullscreen CTA")</td><td>Stage entry is now a clearly labeled CTA, not a subtle tab.</td></tr>
+</table>
+
+<h2>Verification &amp; Validation</h2>
+<table>
+<tr><th>Check</th><th>Result</th></tr>
+<tr><td>Full node suite (9 files)</td><td><span class="pill pok">all green</span> incl. new <code>repertoire-form.test.js</code></td></tr>
+<tr><td><code>node --check</code> all touched/new JS</td><td>clean</td></tr>
+<tr><td>Live E2E - custom-song flow (Playwright, real app)</td><td><span class="pill pok">18/18</span>, 0 console errors</td></tr>
+<tr><td>Live E2E - catalog-song path (common case)</td><td><span class="pill pok">6/7</span> (1 test-selector miss, not an app bug), 0 console errors</td></tr>
+<tr><td><b>VIDEO READ</b> - saved song w/ curated video opens Studio showing it</td><td><span class="pill pok">PASS</span> iframe src <code>.../embed/dQw4w9WgXcQ...</code></td></tr>
+<tr><td><b>VIDEO WRITE + RELOAD</b> - paste URL, save, full reload, reopen</td><td><span class="pill pok">PASS</span> <code>.../embed/abc123XYZ99...</code> <b>persists across reload</b></td></tr>
+<tr><td>Catalog songs stay read-only (no Edit/Solo)</td><td><span class="pill pok">PASS</span></td></tr>
+</table>
+
+<div class="card">
+<p class="big">Defect the live pass caught (and fixed)</p>
+<p>The first Playwright run <b>failed the two video checks</b>: the "Solo over it" button opened the Studio without the video id, so a curated video showed "Watch on YouTube" - literally your reported bug, reintroduced at the T1/T2 integration seam (my locked-interface contract omitted <code>yt</code>). Fixed by reading <code>yt</code> from the custom-song source; re-run went 18/18. This is why the live gate exists rather than trusting green unit tests.</p>
+</div>
+
+<h2>Adversarial launch-safety audit</h2>
+<table>
+<tr><th>Lens</th><th>Finding</th><th>Status</th></tr>
+<tr><td>Video persistence</td><td>video on a throwaway object never persists</td><td><span class="pill pok">FIXED</span> lives on <code>cs.yt</code>, proven across reload</td></tr>
+<tr><td>T1/T2 integration seam</td><td>Solo-over-it dropped the video id</td><td><span class="pill pok">FIXED</span> live-caught</td></tr>
+<tr><td>Merge correctness</td><td>4 branches, 3 touching songbook.js</td><td><span class="pill pok">RESOLVED</span> clean 3-way merge, 0 stale refs</td></tr>
+<tr><td>Runtime throws</td><td>null querySelector after hero/tempo/scroll removals</td><td><span class="pill pok">CLEAN</span> 0 console errors across every real path</td></tr>
+<tr><td>Dead code</td><td>inert Stage scroll slider left visible</td><td><span class="pill pok">FIXED</span> row removed; wiring is a guarded no-op</td></tr>
+<tr><td>codex GPT-5.5 adversarial pass</td><td>2 HIGH raised. <b>F1</b> (onEditRequest passes object) - REFUTED, false positive (codex lacked index.html; wiring already extracts <code>t.id</code>). <b>F2</b> (clearing a custom song's chords crashes <code>seq.map</code>) - CONFIRMED.</td><td><span class="pill pok">F2 FIXED</span> guarded <code>buildSheetFromSeq</code>/<code>seqPlayable</code>/<code>renderPractice</code>; live-verified no crash (3/3)</td></tr>
+</table>
+
+<h2>Evidence (rendered pixels, 375px + 1440px)</h2>
+<div class="shots">
+<figure><img src="uat-mobile-practice.png"><figcaption>Practice: 2 modes + Stage CTA, back-arrow + setlist above fold</figcaption></figure>
+<figure><img src="uat-mobile-studio-video.png"><figcaption>Studio shows the curated video (read path)</figcaption></figure>
+<figure><img src="uat-mobile-video-persist.png"><figcaption>Video persists across a full reload</figcaption></figure>
+<figure><img src="uat-mobile-catalog-song.png"><figcaption>Catalog song - read-only, no Edit/Solo</figcaption></figure>
+<figure><img src="uat-mobile-addform.png"><figcaption>Add/Edit form (create mode)</figcaption></figure>
+<figure><img src="uat-mobile-stage.png"><figcaption>Stage fullscreen - no scroll button</figcaption></figure>
+<figure><img src="uat-mobile-library.png"><figcaption>Library - no jam-now hero, +Add present</figcaption></figure>
+<figure><img src="uat-desktop-library.png"><figcaption>Library at 1440px</figcaption></figure>
+</div>
+
+<h2>Regression certification</h2>
+<p>Base (<code>origin/main</code> d07b107, post-M3) ships 8 node suites green. This PR keeps all green and adds a 9th. No existing test modified. Practice / Compose / Tune / Stage / setlist paths re-verified live. No regressions found.</p>
+
+<h2>Guided manual test plan (your phone sign-off)</h2>
+<ol>
+<li><b>Video (the big one):</b> open a Mine progression &rarr; Edit &rarr; paste a YouTube URL &rarr; save. <b>Reload the page.</b> Reopen &rarr; Solo over it &rarr; the video plays.</li>
+<li><b>Save-first:</b> Compose without saving &rarr; try to jam &rarr; it prompts to save first.</li>
+<li><b>Practice:</b> back-arrow top-left, setlist checkmark top-right, 2 modes, transpose in that row, no tempo.</li>
+<li><b>Add:</b> "+" in Library header &rarr; create a track with just a video URL, no chords &rarr; playable from Library.</li>
+<li><b>Cleanups:</b> no jam-now hero, Edit Setlist normal width, Stage has no scroll button.</li>
+<li><b>Read-only:</b> catalog (non-Mine) songs have no Edit button.</li>
+</ol>
+
+<h2>Risk &amp; recommendation</h2>
+<div class="rec">
+<p><b>Risk: low-medium.</b> Large refactor across the most-coupled files, scoped to Library + song/practice screens; catalog / compose / tune re-verified live. New form logic unit-tested; live E2E clean at 18/18.</p>
+<p><b>Live behavior confirmed: YES</b> - 18/18 live checks, 0 console errors, iframe src + rendered pixels inspected, video persistence proven across reload.</p>
+<p><b>Deferred:</b> live drive of standalone-track creation (form opens + unit-tested; in your manual pass #4); stale <code>.heroCard</code> mention in the historical <code>UX-FRICTION-LOG.md</code>.</p>
+<p class="big">Recommendation: MERGE after your phone pass. No auto-merge - awaiting your tap.</p>
+</div>
+
+<p class="sub" style="margin-top:24px">Generated with Claude Code - opus-4.8 reasoning + sonnet-4.6 swarm implementation. PR <a href="https://github.com/nhruska/nhruska.github.io/pull/64">#64</a>.</p>
+</body>
+</html>
