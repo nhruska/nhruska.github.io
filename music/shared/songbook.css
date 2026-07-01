@@ -449,6 +449,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* progression box: built chords (#prog) on top; #suggest below carries the next-chord
    picks (non-empty) or the starter progressions (empty / "?" pressed). */
 .progBox{margin-bottom:8px;}
+/* Inline save UI (songbook.js: composeRow/composeToast) - replaces native
+   prompt()/alert()/confirm() in the save + solo-backing flows. Rendered on
+   demand right above the progression box; zero footprint until used. */
+.composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
+.composeRow[hidden]{display:none;}
+.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);font-family:inherit;font-size:.85rem;}
+.composeRowInput:focus{outline:none;border-color:var(--accent);}
+.composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
+.composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
+.composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
+.composeToast[hidden]{display:none;}
+.composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
 /* key/mode fly-out (roots + mode toggle + solo scale). The chip that opens it lives in
    the button bar now; this is just the drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
