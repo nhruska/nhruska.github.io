@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Export my music data</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+  :root { --bg:#0d0f12; --surface:#181b21; --line:#262b34; --txt:#e8ebf0; --soft:#b6bcc6; --dim:#8a92a0; --accent:#5eead4; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--txt); line-height:1.5;
+    padding:calc(env(safe-area-inset-top,0px) + 24px) 18px 60px; max-width:760px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin-bottom:6px; }
+  p.sub { color:var(--soft); margin-bottom:20px; font-size:.95rem; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .counts { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .count { font-size:.9rem; color:var(--soft); }
+  .count b { color:var(--accent); font-size:1.3rem; display:block; }
+  .btnrow { display:flex; gap:10px; flex-wrap:wrap; }
+  button { font-family:inherit; font-size:.95rem; font-weight:600; padding:12px 18px; border-radius:10px; cursor:pointer;
+    border:1px solid var(--line); background:transparent; color:var(--txt); }
+  button.primary { background:var(--accent); color:#06201c; border-color:var(--accent); }
+  button:disabled { opacity:.4; cursor:default; }
+  pre { background:#0a0c0f; border:1px solid var(--line); border-radius:10px; padding:14px; overflow:auto;
+    font-size:.8rem; color:var(--soft); max-height:340px; margin-top:14px; white-space:pre-wrap; word-break:break-word; }
+  .note { color:var(--dim); font-size:.82rem; margin-top:10px; }
+  code { background:#0a0c0f; padding:1px 5px; border-radius:4px; color:var(--accent); font-size:.85em; }
+  .empty { color:var(--dim); }
+</style>
+</head>
+<body>
+  <h1>Export my music data</h1>
+  <p class="sub">Bundles the songs + backing tracks you saved on THIS browser so they can be folded back into the shipped data for new installs. Open this page on whatever device holds your curation, then download the bundle and run the merge script.</p>
+
+  <div class="card">
+    <div class="counts" id="counts"></div>
+    <div class="btnrow">
+      <button class="primary" id="download">Download bundle</button>
+      <button id="copy">Copy JSON</button>
+    </div>
+    <div class="note">Then, on your machine: <code>node music/dev/merge-localstorage.js &lt;downloaded-file&gt;.json</code> - review <code>git diff</code>, commit. Re-running is safe (deduped).</div>
+    <pre id="preview"></pre>
+  </div>
+
+<script>
+'use strict';
+// Read the three curation stores this app writes. Device prefs (setlist, last-opened,
+// perform prefs, songmode, libType) are intentionally NOT exported - they're personal
+// to the device, not shipping data.
+function readJson(key, fallback) {
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+}
+function buildBundle() {
+  var customTracks = readJson('bt.custom.v1', []) || [];
+  var trackUrls = readJson('music.trackUrls.v1', {}) || {};
+  var customSongs = {};
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    var m = /^roadcase-(.+)\.custom\.v1$/.exec(k || '');
+    if (m) {
+      var arr = readJson(k, []);
+      if (Array.isArray(arr) && arr.length) customSongs[m[1]] = arr;
+    }
+  }
+  return {
+    exportedAt: new Date().toISOString(),
+    origin: location.origin,
+    customSongs: customSongs,
+    customTracks: customTracks,
+    trackUrls: trackUrls
+  };
+}
+var bundle = buildBundle();
+
+var songCount = Object.keys(bundle.customSongs).reduce(function (n, k) { return n + bundle.customSongs[k].length; }, 0);
+var urlCount = Object.keys(bundle.trackUrls).length;
+document.getElementById('counts').innerHTML =
+  '<div class="count"><b>' + songCount + '</b> custom songs</div>'
+  + '<div class="count"><b>' + bundle.customTracks.length + '</b> custom tracks</div>'
+  + '<div class="count"><b>' + urlCount + '</b> curated video URLs</div>';
+
+var json = JSON.stringify(bundle, null, 2);
+document.getElementById('preview').textContent =
+  (songCount + bundle.customTracks.length + urlCount) ? json : 'Nothing saved on this browser yet - no custom songs, tracks, or curated URLs found.';
+
+document.getElementById('download').onclick = function () {
+  var blob = new Blob([json], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'music-data-' + bundle.exportedAt.slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('copy').onclick = function () {
+  if (navigator.clipboard) navigator.clipboard.writeText(json).then(function () {
+    var b = document.getElementById('copy'); b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy JSON'; }, 1500);
+  });
+};
+</script>
+</body>
+</html>
