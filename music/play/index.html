@@ -42,23 +42,23 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
-    <!-- UNIFIED LIBRARY (merged 2026-06: the old separate SONGS, TRACKS and SET
-         tabs are now ONE screen + a type toggle). #typeToggle (Songs|Tracks|Set)
-         swaps which sub-view shows. Search + decade chips apply to Songs and Set
-         (both are the songs.json catalog); they hide for Tracks, which has its own
-         genre/key/circle filters. Each sub-view keeps its original element IDs so
-         the songbook + tracks wiring is unchanged. -->
+    <!-- UNIFIED LIBRARY (M3: the Songs|Tracks split is dissolved into ONE Repertoire.
+         #typeToggle is now Repertoire|Set. Search + Genre + Key chips filter the merged
+         list (songs.json + backing tracks, deduped by repertoire.js). The old finder
+         tab (#s-tracks) is retired but kept hidden so Tracks.mount can still power the
+         Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
     <section class="screen on" id="s-library">
       <div class="chips typeToggle" id="typeToggle"></div>
       <div class="libHero" id="libHero"></div>
       <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
-      <div class="chips" id="decadeChips"></div>
-      <!-- Songs sub-view -->
+      <div class="chips" id="genreChips"></div>
+      <div class="chips" id="keyChips"></div>
+      <!-- Repertoire sub-view (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
         <div class="libCount" id="libCount"></div>
       </div>
-      <!-- Tracks sub-view (Tracks.mount renders into here) -->
+      <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
       <!-- Set sub-view -->
       <div class="libSet" id="libSet" hidden>
@@ -182,6 +182,7 @@
 <script src="../shared/circle.js"></script>
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
+<script src="../shared/repertoire.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
 <script src="../shared/diagram.js"></script>
@@ -541,19 +542,29 @@
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
     var tracksEl = el('s-tracks');
-    var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({ container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack }) : null;
-    window.Songbook.mount({
+    var songbookCtl = null;
+    // M3: tracks.js still mounts (hidden) to power the Practice Studio + supply the
+    // track catalog for the merged repertoire. onReady fires when tracks.json loads,
+    // so the repertoire rebuilds once the track data is in.
+    var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
+      container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
+      onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); }
+    }) : null;
+    songbookCtl = window.Songbook.mount({
       songs: songs,
       chordPack: pack,
       storagePrefix: 'roadcase-' + profile.id,
       profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
       contexts: contexts,
-      // P3: Compose -> backing track. songbook reads the built key+mode and calls this
-      // to seed the Tracks finder, so matched tracks + the solo scale surface directly.
+      // M3: the merged repertoire reads the track catalog (seed + URL overlay + custom)
+      // from tracks.js, and opens the Practice Studio for a track / composed key.
+      getTracks: function () { return tracksCtl ? tracksCtl.getTracks() : []; },
+      openStudio: function (t) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t); },
+      // P3 fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
-        songsList: el('songsList'), decadeChips: el('decadeChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
+        songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
         typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),

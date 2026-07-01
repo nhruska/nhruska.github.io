@@ -239,6 +239,11 @@
     var PROFILE_ID = opts.profileId || null; // instrument profile id, carried onto the inversions deep-link
     // P3: seed the backing-track finder with the built key+mode (no-op if not wired).
     var seedBackingKey = opts.seedBackingKey || function () {};
+    // M3: the repertoire merges songs.json with the backing-track catalog. getTracks()
+    // supplies the (seed + URL overlay + custom) track list; openStudioCb(track) opens
+    // the Practice Studio (solo scale + chords + circle) for a track or a composed key.
+    var getTracks = opts.getTracks || function () { return []; };
+    var openStudioCb = opts.openStudio || null;
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
@@ -315,7 +320,7 @@
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
-      search: "", decade: "All", libType: "songs", current: null, transpose: 0, view: "lyrics",
+      search: "", genre: "all", key: "all", libType: "repertoire", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
@@ -326,35 +331,39 @@
     STATE.setlist = loadSet();
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
-    /* ===================== LIBRARY (unified: Songs | Tracks | Set) =====================
-     * The old separate SONGS, TRACKS and SET tabs are now ONE library screen with a
-     * type toggle (#typeToggle). The toggle swaps which sub-view shows; search + decade
-     * chips apply to Songs and Set (both ride the songs.json catalog) and hide for
-     * Tracks (which keeps its own genre/key/circle filters, mounted by tracks.js). */
+    /* ===================== LIBRARY (M3: unified Repertoire | Set) =====================
+     * The old Songs|Tracks split is dissolved: a song and its curated backing track
+     * are ONE item in a single Repertoire (repertoire.js merges + dedups). The toggle
+     * is now just Repertoire | Set. The finder tab is retired; its Practice Studio
+     * (solo scale + chords + circle) stays reachable by tapping a playable item
+     * (openStudioCb), and curation moves to +Add / per-item edit (M2). Search + the
+     * Genre/Key facet chips filter the merged list; they show for Repertoire, hide
+     * for Set. */
     var LIBTYPE_KEY = prefix + ".libType.v1";
     var LIB_TYPES = [
-      { id: 'songs', label: 'Songs' },
-      { id: 'tracks', label: 'Tracks' },
+      { id: 'repertoire', label: 'Repertoire' },
       { id: 'set', label: 'Set' }
     ];
-    try { var _lt = localStorage.getItem(LIBTYPE_KEY); if (_lt === 'tracks' || _lt === 'set') STATE.libType = _lt; } catch (e) {}
+    // migrate the pre-M3 stored value: 'songs'/'tracks' both collapse into 'repertoire'.
+    try { var _lt = localStorage.getItem(LIBTYPE_KEY); STATE.libType = (_lt === 'set') ? 'set' : 'repertoire'; } catch (e) {}
     function applyLibType() {
       var t = STATE.libType;
-      // sub-view visibility
-      if (el.libSongs) el.libSongs.hidden = (t !== 'songs');
-      if (el.libTracks) el.libTracks.hidden = (t !== 'tracks');
+      // sub-view visibility. #libSongs is the Repertoire container now; #s-tracks
+      // (the old finder) stays hidden - the studio it powered opens on <body>.
+      if (el.libSongs) el.libSongs.hidden = (t !== 'repertoire');
+      if (el.libTracks) el.libTracks.hidden = true;
       if (el.libSet) el.libSet.hidden = (t !== 'set');
-      // search + decade chips ride the songs catalog -> shown for songs + set, hidden for tracks
-      var catalogView = (t !== 'tracks');
-      if (el.searchWrap) el.searchWrap.hidden = !catalogView;
-      if (el.decadeChips) el.decadeChips.hidden = !catalogView;
-      if (el.libHero) el.libHero.style.display = (t === 'songs') ? '' : 'none';
-      if (t === 'songs') { renderHero(); renderSongs(); }
+      // search + facet chips apply to the Repertoire; hidden on Set.
+      var repView = (t === 'repertoire');
+      if (el.searchWrap) el.searchWrap.hidden = !repView;
+      if (el.genreChips) el.genreChips.hidden = !repView;
+      if (el.keyChips) el.keyChips.hidden = !repView;
+      if (el.libHero) el.libHero.style.display = repView ? '' : 'none';
+      if (t === 'repertoire') { renderFilterChips(); renderHero(); renderSongs(); }
       else if (t === 'set') renderSetlist();
-      // tracks renders itself (tracks.js owns its sub-view)
       // context line follows the active sub-view
       if (el.ctxLine) {
-        var ctx = (t === 'tracks') ? CONTEXTS['tracks'] : (t === 'set') ? CONTEXTS['setlist'] : CONTEXTS['library'];
+        var ctx = (t === 'set') ? CONTEXTS['setlist'] : CONTEXTS['library'];
         if (ctx != null) el.ctxLine.textContent = ctx;
       }
     }
@@ -376,26 +385,42 @@
       });
     }
 
-    function renderDecadeChips() {
-      if (!el.decadeChips) return;
-      el.decadeChips.innerHTML = '';
-      var ds = DECADES.concat(customSongs.length ? ['Mine'] : []);
-      ds.forEach(function (d) {
-        var b = document.createElement('button');
-        b.className = 'chip' + (d === STATE.decade ? ' on' : '');
-        b.textContent = d;
-        b.onclick = function () { STATE.decade = d; renderDecadeChips(); renderSongs(); };
-        el.decadeChips.appendChild(b);
-      });
+    /* ---- merged repertoire (songs.json + backing tracks, deduped) ---- */
+    var REPERTOIRE = [];
+    // getTracks() (from tracks.js) already applies the URL overlay + custom tracks.
+    function buildRepertoire() {
+      REPERTOIRE = global.Repertoire.build(ALLSONGS, getTracks());
+      return REPERTOIRE;
     }
-    function songMatches(s) {
-      if (STATE.decade === "Mine" && !s.custom) return false;
-      if (STATE.decade !== "All" && STATE.decade !== "Mine" && s.d !== STATE.decade) return false;
-      var q = STATE.search.trim().toLowerCase(); // trim so a trailing space ("Phish ") still matches
-      if (q) {
-        return s.t.toLowerCase().indexOf(q) >= 0 || s.a.toLowerCase().indexOf(q) >= 0;
+    function chipBtn(label, on, fn) {
+      var b = document.createElement('button');
+      b.className = 'chip' + (on ? ' on' : '');
+      b.textContent = label;
+      b.onclick = fn;
+      return b;
+    }
+    // Unified facet bar: Genre + Key chips derived from the current repertoire.
+    // (Search is the text input; these replace the old decade chips.)
+    function renderFilterChips() {
+      buildRepertoire();
+      if (el.genreChips) {
+        el.genreChips.innerHTML = '';
+        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all',
+          function () { STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
+        global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
+          el.genreChips.appendChild(chipBtn(g, STATE.genre === g,
+            function () { STATE.genre = g; renderFilterChips(); renderSongs(); }));
+        });
       }
-      return true;
+      if (el.keyChips) {
+        el.keyChips.innerHTML = '';
+        el.keyChips.appendChild(chipBtn('Any key', STATE.key === 'all',
+          function () { STATE.key = 'all'; renderFilterChips(); renderSongs(); }));
+        global.Repertoire.keys(REPERTOIRE).forEach(function (k) {
+          el.keyChips.appendChild(chipBtn(k, STATE.key === k,
+            function () { STATE.key = k; renderFilterChips(); renderSongs(); }));
+        });
+      }
     }
     /* "Play now" hero: a Continue card + a couple of one-tap jam-starters.
        Shown only on the unfiltered library, so the moment you search or pick a
@@ -429,7 +454,7 @@
 
     function renderHero() {
       if (!el.libHero) return;
-      if (STATE.search.trim() || STATE.decade !== 'All') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
+      if (STATE.search.trim() || STATE.genre !== 'all' || STATE.key !== 'all') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
       el.libHero.style.display = 'block';
       var html = '<button class="jamNow" id="heroJam">⚡ Jam now</button>';
       var last = loadLast() ? songById(loadLast()) : null;
@@ -466,28 +491,47 @@
         .filter(Boolean).join(' ');
       window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
     }
+    // Where a repertoire tap lands (approach A): a chord sheet opens the song screen
+    // (openPractice); a pure backing track opens the Practice Studio (solo scale +
+    // chords + circle); otherwise a YouTube search.
+    function openRepertoireItem(rec) {
+      var p = global.Repertoire.playability(rec);
+      if (p.sheet && rec.id != null && songById(rec.id)) { openPractice(rec.id); return; }
+      if (openStudioCb && (p.studio || rec._track)) { openStudioCb(rec._track || rec); return; }
+      ytSearch(rec);
+    }
+    // The ▶/↗ action button: a curated video opens the Studio (video + solo HUD);
+    // otherwise it's a YouTube search for a backing track.
+    function repertoireAction(rec) {
+      if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(rec._track || rec); return; }
+      ytSearch(rec);
+    }
     function renderSongs() {
       renderHero();
       if (!el.songsList) return;
-      var filtered = ALLSONGS.filter(function (s) { return songMatches(s); });
+      buildRepertoire();
+      var filtered = global.Repertoire.filter(REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
       if (filtered.length === 0) {
-        el.songsList.innerHTML = '<div class="empty">No songs match.</div>';
+        el.songsList.innerHTML = '<div class="empty">Nothing in your repertoire matches.</div>';
         if (el.libCount) el.libCount.textContent = '';
         return;
       }
       el.songsList.innerHTML = '';
-      filtered.forEach(function (s) {
-        var inSet = STATE.setlist.indexOf(s.id) >= 0;
-        // SSOT: one shared renderer for Songs / Tracks / Set (music/shared/list-item.js).
-        el.songsList.appendChild(global.ListItem.render(s, {
+      filtered.forEach(function (rec) {
+        var sid = rec.id;
+        // only chord-sheet items (real song id) can join a setlist; pure tracks can't.
+        var canAdd = sid != null && !!songById(sid);
+        var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
+        // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
+        el.songsList.appendChild(global.ListItem.render(rec, {
           segment: 'library',
           inSet: inSet,
-          onActivate: function () { openPractice(s.id); },
-          onAdd: function () { toggleSet(s.id); },
-          onAction: function () { ytSearch(s); }
+          onActivate: function () { openRepertoireItem(rec); },
+          onAdd: canAdd ? function () { toggleSet(sid); } : null,
+          onAction: function () { repertoireAction(rec); }
         }));
       });
-      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + ALLSONGS.length + ' songs';
+      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length + ' in repertoire';
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
@@ -608,7 +652,7 @@
       var head = '<div class="detailHead"><div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>' + maxBtn + '</div>';
       var keyPill = '<div class="ctrl"><div class="pill"><button id="tDown">−</button><div><div class="lbl">Key</div><div class="v" id="keyV">' + seq[0] + '</div></div><button id="tUp">+</button></div></div>';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
-      var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Songs</button></div>';
+      var actions = '<div class="actions"><button class="btn ' + (inSet ? 'red' : '') + '" id="setToggle">' + (inSet ? '✓ In setlist' : '+ Add to setlist') + '</button><button class="btn ghost" id="backLib">← Library</button></div>';
       var body;
       if (mode === 'campfire') {
         // tempo cue: tap the beat, watch it pulse — sets the jam's feel (no BPM in the data)
@@ -640,7 +684,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'songs'; try { localStorage.setItem(LIBTYPE_KEY, 'songs'); } catch (e) {} switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       if (s.custom) {
@@ -1486,7 +1530,7 @@
       if (name === null) return;
       name = name.trim() || 'My progression';
       var cs = { id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine', seq: progression.slice(), custom: true };
-      customSongs.push(cs); saveCustom(); rebuildAll(); renderDecadeChips(); renderSongs();
+      customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
     }
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
@@ -1500,13 +1544,20 @@
     };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
-    // P3: carry the built key+mode into the backing-track finder and switch to it,
-    // so the user solos over a matched track without re-entering the key by hand.
+    // P3 (M3): "Solo over a backing track" opens the Practice Studio directly for the
+    // composed key+mode - solo scale + chords + circle, plus a curated video or a
+    // YouTube search for one. The finder tab is retired, so this goes straight to the
+    // studio instead of seeding a finder view. seedBackingKey stays wired as a no-op
+    // fallback when no studio callback is present.
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
-      setLibType('tracks');
-      switchTab('library');
-      seedBackingKey(songKey.root, songKey.mode);
+      if (openStudioCb) {
+        openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode });
+      } else {
+        setLibType('repertoire');
+        switchTab('library');
+        seedBackingKey(songKey.root, songKey.mode);
+      }
     };
     // The key/mode chip (#keyPickerCompact) is injected + wired by buildKeyPicker; it
     // opens the fly-out on tap (the old #cKey "snap back to key" readout is retired -
@@ -1520,7 +1571,7 @@
       // with the matching type filter pre-selected, so old internal callers + deep
       // links still land in the right place after the 3-tab merge.
       if (name === 'setlist') { STATE.libType = 'set'; try { localStorage.setItem(LIBTYPE_KEY, 'set'); } catch (e) {} name = 'library'; }
-      else if (name === 'tracks') { STATE.libType = 'tracks'; try { localStorage.setItem(LIBTYPE_KEY, 'tracks'); } catch (e) {} name = 'library'; }
+      else if (name === 'tracks' || name === 'repertoire') { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} name = 'library'; }
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
@@ -1539,7 +1590,7 @@
     /* ===================== INIT ===================== */
     rebuildAll();
     renderTypeToggle();
-    renderDecadeChips();
+    renderFilterChips();
     renderSongs();
     renderSetlist();
     applyLibType(); // set initial sub-view visibility (Songs | Tracks | Set)
@@ -1576,7 +1627,7 @@
       openSong: openPractice,
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
-      rebuild: function () { rebuildAll(); renderDecadeChips(); renderSongs(); renderSetlist(); }
+      rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); }
     };
   }
 
