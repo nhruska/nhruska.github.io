@@ -209,7 +209,7 @@
    *   suggestions:  Object -- chord-progression suggestion map (chord -> [next...]).
    *   el: {  -- DOM element references (any subset; missing ones disable that feature)
    *     // library
-   *     songsList, decadeChips, search, libCount, libHero,
+   *     songsList, decadeChips, search, libCount,
    *     // practice
    *     practiceEmpty, practiceBody,
    *     // setlist
@@ -358,8 +358,7 @@
       if (el.searchWrap) el.searchWrap.hidden = !repView;
       if (el.genreChips) el.genreChips.hidden = !repView;
       if (el.keyChips) el.keyChips.hidden = !repView;
-      if (el.libHero) el.libHero.style.display = repView ? '' : 'none';
-      if (t === 'repertoire') { renderFilterChips(); renderHero(); renderSongs(); }
+      if (t === 'repertoire') { renderFilterChips(); renderSongs(); }
       else if (t === 'set') renderSetlist();
       // context line follows the active sub-view
       if (el.ctxLine) {
@@ -422,69 +421,6 @@
         });
       }
     }
-    /* "Play now" hero: a Continue card + a couple of one-tap jam-starters.
-       Shown only on the unfiltered library, so the moment you search or pick a
-       decade it gets out of the way and the full list takes over. */
-    function quickPicks() {
-      var pool = ALLSONGS.filter(function (s) { return !s.custom; });
-      if (!pool.length) return [];
-      // Curated jam songs ("jam": true in the catalog) lead the picks; the rest
-      // are ordered easiest-first so they only backfill when flags run out.
-      var jam = pool.filter(function (s) { return s.jam; }).sort(function (a, b) { return a.t.localeCompare(b.t); });
-      var rest = pool.filter(function (s) { return !s.jam; })
-        .sort(function (a, b) { return a.seq.length - b.seq.length || a.t.localeCompare(b.t); });
-      // rotate the jam set by day so revisits feel fresh without being random
-      var day = jam.length ? Math.floor(Date.now() / 864e5) % jam.length : 0;
-      var ordered = jam.slice(day).concat(jam.slice(0, day)).concat(rest);
-      var out = [], seen = {};
-      for (var i = 0; i < ordered.length && out.length < 4; i++) {
-        var s = ordered[i];
-        if (!seen[s.id]) { seen[s.id] = 1; out.push(s); }
-      }
-      return out;
-    }
-    // Pick a random jam-flagged song (fall back to the quick-picks pool), so one
-    // tap drops you straight into playing something good — no decisions.
-    function jamSong() {
-      var jam = ALLSONGS.filter(function (s) { return s.jam && !s.custom; });
-      var pool = jam.length ? jam : quickPicks();
-      return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
-    }
-    function jamNow() { var s = jamSong(); if (s) { saveLast(s.id); startPerform([s.id]); } }
-
-    function renderHero() {
-      if (!el.libHero) return;
-      if (STATE.search.trim() || STATE.genre !== 'all' || STATE.key !== 'all') { el.libHero.innerHTML = ''; el.libHero.style.display = 'none'; return; }
-      el.libHero.style.display = 'block';
-      var html = '<button class="jamNow" id="heroJam">⚡ Jam now</button>';
-      var last = loadLast() ? songById(loadLast()) : null;
-      if (last) {
-        html += '<button class="heroCont" data-id="' + last.id + '">'
-          + '<div class="hcKick">▸ Continue</div>'
-          + '<div class="hcTitle">' + escHTML(last.t) + '</div>'
-          + '<div class="hcSub">' + escHTML(last.a) + '  ·  ' + last.seq.join(' · ') + '</div>'
-          + '</button>';
-      }
-      var picks = quickPicks().filter(function (s) { return !last || s.id !== last.id; }).slice(0, last ? 2 : 4);
-      if (picks.length) {
-        html += '<div class="heroLbl">' + (last ? 'Or start something' : 'Tap a song — play right now') + '</div><div class="heroRow">';
-        picks.forEach(function (s) {
-          html += '<button class="heroCard" data-id="' + s.id + '">'
-            + '<div class="hcKick">▶ ' + s.seq.length + ' chords</div>'
-            + '<div class="hcTitle">' + escHTML(s.t) + '</div>'
-            + '<div class="hcArtist">' + escHTML(s.a) + '</div>'
-            + '<div class="hcChords">' + s.seq.join(' · ') + '</div>'
-            + '</button>';
-        });
-        html += '</div>';
-      }
-      el.libHero.innerHTML = html;
-      el.libHero.querySelectorAll('[data-id]').forEach(function (b) {
-        b.onclick = function () { openPractice(b.dataset.id); };
-      });
-      var jb = el.libHero.querySelector('#heroJam'); if (jb) jb.onclick = jamNow;
-    }
-
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
       var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
@@ -507,7 +443,6 @@
       ytSearch(rec);
     }
     function renderSongs() {
-      renderHero();
       if (!el.songsList) return;
       buildRepertoire();
       var filtered = global.Repertoire.filter(REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
