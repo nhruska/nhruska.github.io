@@ -49,7 +49,6 @@
          Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
     <section class="screen on" id="s-library">
       <div class="chips typeToggle" id="typeToggle"></div>
-      <div class="libHero" id="libHero"></div>
       <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="genreChips"></div>
       <div class="chips" id="keyChips"></div>
@@ -564,7 +563,7 @@
       // P3 fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
-        songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
+        songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
         typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),
