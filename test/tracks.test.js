@@ -131,4 +131,43 @@ test('P3 seed end-to-end: a composed A-minor key surfaces matched tracks', funct
   assert.ok(c && c.rank > 0 && /relative/.test(c.why || ''), 'relative major surfaces, labelled');
 });
 
+// --- Practice Studio 4-mode fidelity: resolveScaleMode ---------------------
+test('resolveScaleMode: capitalized inputs map to the right circle mode', function () {
+  assert.strictEqual(T.resolveScaleMode('Minor'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('Dorian'), 'dorian');
+  assert.strictEqual(T.resolveScaleMode('Mixolydian'), 'mixolydian');
+});
+test('resolveScaleMode: lowercase family + mode names', function () {
+  assert.strictEqual(T.resolveScaleMode('minor'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('major'), 'ionian');
+  assert.strictEqual(T.resolveScaleMode('aeolian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('ionian'), 'ionian');
+  assert.strictEqual(T.resolveScaleMode('dorian'), 'dorian');
+  assert.strictEqual(T.resolveScaleMode('mixolydian'), 'mixolydian');
+});
+test('resolveScaleMode: missing/undefined defaults to ionian (safe major)', function () {
+  assert.strictEqual(T.resolveScaleMode(undefined), 'ionian');
+  assert.strictEqual(T.resolveScaleMode(null), 'ionian');
+  assert.strictEqual(T.resolveScaleMode(''), 'ionian');
+});
+test('resolveScaleMode: unsupported modes coarsen to their major/minor family', function () {
+  // phrygian is minor-family -> aeolian (NOT ionian - the original bug), lydian major-family -> ionian
+  assert.strictEqual(T.resolveScaleMode('phrygian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('Phrygian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('locrian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('lydian'), 'ionian');
+});
+test('resolveScaleMode: the reported bug - A Minor no longer renders a major scale', function () {
+  // regression: 'Minor' used to fall through familyMode()==='ionian', lighting C#/G#.
+  // Now it resolves to aeolian, whose A-scale is A B C D E F G (no sharps).
+  var pcs = T.notesToPcs(Circle.scale('A', T.resolveScaleMode('Minor')));
+  assert.deepStrictEqual(pcs, [9, 11, 0, 2, 4, 5, 7]);
+});
+test('resolveScaleMode: A Dorian and G Mixolydian light their true modal tones', function () {
+  // A dorian = A B C D E F# G  (raised 6th vs aeolian)
+  assert.deepStrictEqual(T.notesToPcs(Circle.scale('A', T.resolveScaleMode('Dorian'))), [9, 11, 0, 2, 4, 6, 7]);
+  // G mixolydian = G A B C D E F  (lowered 7th vs ionian)
+  assert.deepStrictEqual(T.notesToPcs(Circle.scale('G', T.resolveScaleMode('Mixolydian'))), [7, 9, 11, 0, 2, 4, 5]);
+});
+
 run();

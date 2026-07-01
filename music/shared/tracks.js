@@ -149,6 +149,22 @@
   function normMode(mode) {
     return /min|aeolian|dorian|phrygian|locrian/.test(String(mode == null ? '' : mode).toLowerCase()) ? 'minor' : 'major';
   }
+  // Resolve any incoming mode string to the ACTUAL scale mode the Practice Studio
+  // renders. The Studio teaches 4 modes faithfully: major/minor plus the two most
+  // common modal colours (dorian, mixolydian). Accepts lowercase circle-family
+  // names, legacy capitalized inputs (Major/Minor/Dorian/Mixolydian), and bare
+  // family words - anything it does not recognize coarsens to the major/minor
+  // family via normMode (never throws, never silently lands on ionian for a
+  // minor-family input like phrygian). Unlike familyMode this preserves the modal
+  // colour so an A Dorian track lights a Dorian scale, not a plain minor one.
+  function resolveScaleMode(mode) {
+    var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    if (m === 'ionian' || m === 'major') return 'ionian';
+    if (m === 'aeolian' || m === 'minor') return 'aeolian';
+    if (m === 'dorian') return 'dorian';
+    if (m === 'mixolydian') return 'mixolydian';
+    return familyMode(normMode(mode));
+  }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
 
   var STORE = 'bt.custom.v1';
@@ -256,7 +272,7 @@
     function studioTheory(key, mode) {
       var C = global.Circle, k = normRoot(key), rp = rootIndex(k);
       if (!C || rp < 0) return null;
-      var scaleMode = familyMode(mode), notes = C.scale(k, scaleMode);
+      var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
       return {
         key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
         degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
@@ -268,21 +284,27 @@
       var strip = th.notes.map(function (n, i) {
         return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(th.degrees[i]) + '</span></div>';
       }).join('');
-      // player-facing key name: "A minor" reads better than "A Aeolian"
-      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label;
+      // player-facing key name: "A minor" reads better than "A Aeolian"; modal
+      // colours (dorian/mixolydian) read as their own names ("A dorian").
+      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees — '
         + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
-          selected: { root: th.key, mode: th.scaleMode === 'aeolian' ? 'minor' : 'major' }
+          selected: { root: th.key, mode: normMode(th.scaleMode) }
         }));
       }
     }
     function openStudio(t) {
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
-      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
+      // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
+      // "G mixolydian" (modal). th.label is the mode name from circle.js.
+      var keyLabel = th.scaleMode === 'ionian' ? esc(th.key)
+        : th.scaleMode === 'aeolian' ? esc(th.key) + 'm'
+        : esc(th.key + ' ' + th.label.toLowerCase());
+      var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
       // Iframe when a curated yt id is present; otherwise a tap-to-search card.
       // The HUD (scale + chords + circle) stays in both cases - the harmony
@@ -299,33 +321,47 @@
       // directly and are curated through the Add/Edit form now (Task 2, M2), not
       // an inline paste-box - so for t.custom we show a single plain link instead
       // (only when the host wired opts.onEditRequest; otherwise nothing renders,
-      // degrading gracefully). Curated (non-custom) seed tracks keep the original
-      // inline paste/clear editor unchanged.
+      // degrading gracefully). The inline paste/clear overlay editor is keyed by
+      // trackKey into the localStorage url overlay, so it only makes sense for a
+      // real CURATED seed track (one whose key resurfaces in the finder). An
+      // ephemeral studio session (e.g. Solo practice) has a trackKey in no
+      // catalog - pasting a url there writes an overlay entry that never
+      // resurfaces (silent data loss), so it gets NO url editor. Compose-flow
+      // sessions save-first to attach a video.
+      var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
       var urlEditor = t.custom
         ? (opts.onEditRequest
           ? '<div class="bt-st-urled" data-urled>'
             + '<button class="bt-st-editlink" data-editrequest type="button">Edit this track to add a video</button>'
             + '</div>'
           : '')
-        : '<div class="bt-st-urled" data-urled>'
-        + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
-        + '<div class="bt-st-urled-row">'
-        + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
-        + '<button data-urlsave class="bt-st-urled-save" type="button">Save</button>'
-        + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
-        + '</div></div>';
+        : (isSeedTrack
+          ? '<div class="bt-st-urled" data-urled>'
+            + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
+            + '<div class="bt-st-urled-row">'
+            + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+            + '<button data-urlsave class="bt-st-urled-save" type="button">Save</button>'
+            + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
+            + '</div></div>'
+          : '');
+      // .bt-st-stage wraps the pinned header + video: one column in portrait,
+      // the left pane in the landscape two-pane split (CSS). Practice content
+      // (scale, chords) leads the scrollable body; the url-curation editor sits
+      // last, just above the "why" toggle - plumbing after the practice.
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
+        + '<div class="bt-st-stage">'
         + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + '<button class="bt-st-x" type="button">close</button></div>'
         + playerBlock
+        + '</div>'
         + '<div class="bt-st-body">'
-        + urlEditor
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
         + '<div class="bt-st-scale" data-scale></div></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
+        + urlEditor
         + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes — the circle</button>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
@@ -668,7 +704,7 @@
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
-    notesToPcs: notesToPcs, normMode: normMode, mount: mount,
+    notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied
