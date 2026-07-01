@@ -39,28 +39,40 @@ any project — copy it into other repos) and **this project** (the Music app).
   Never put a URL he needs to open inside backticks or a code block.
 - Reference PRs and commits as hyperlinks.
 
-### Android / no-local context
-Nik usually runs Claude Code on **Android with no local project, terminal, or
-browser**. So:
-- Don't make "run it locally" the primary path. Verify the work yourself and
-  hand him a **tappable preview link** instead.
+### Surface-aware context (Android/no-local vs main laptop)
+Nik runs Claude Code from two kinds of surface, and the verification bar differs
+by surface — detect which one you're on before claiming what you did/didn't test:
+- **Android / remote with no local project, terminal, or browser** (a frequent
+  surface). Here: don't make "run it locally" the primary path — verify what you
+  can and hand him a **tappable preview link**. There is **no headless browser on
+  this surface**, so state plainly what you could *not* verify ("eyeball the
+  preview for layout") rather than implying it's fully tested.
+- **Main laptop (local)** — full toolchain INCLUDING a shared headless Playwright
+  + Chromium (Python venv `~/.claude/.venv`, browsers at `~/.cache/ms-playwright`).
+  On this surface you CAN and SHOULD render-verify with real pixels: serve the
+  app, load `music/play/` headless at phone (375x812) + desktop viewports,
+  screenshot, and confirm **zero console errors** before shipping.
+- **Detect the surface:** if `python -c "import playwright"` succeeds in the
+  shared venv AND `~/.cache/ms-playwright/chromium-*` exists, you're on the laptop
+  — render-verify. Otherwise treat it as the no-browser surface.
 - **Durable config lives in the repo** (this file, `.claude/`), version
   controlled — not in `~/.claude`, which isn't reliably persistent on web
   sessions.
-- **Verification bar before shipping:** syntax-check changed JS
+- **Verification bar before shipping:** always syntax-check changed JS
   (`node -c file.js`), validate JSON (`JSON.parse`), and unit-test any new
-  algorithmic/logic bit in Node. There is **no headless browser**, so state
-  plainly what you could *not* verify ("eyeball the preview for layout") rather
-  than implying it's fully tested.
+  algorithmic/logic bit in Node. On the laptop, ADD a headless Playwright
+  render-verify (screenshots + zero console errors); on the no-browser surface,
+  state plainly what you could not verify.
 - **Phone-DPI text floor for SVG labels.** Any text rendered inside a chord
   diagram or other SVG that ships to a phone MUST use `font-size >= 10` and
   have the SVG canvas / viewBox sized to fit the rendered label without
   clipping. A 7.5px label digit is ~4 CSS pixels wide on the small chord cards
   - it disappears into adjacent letters at Pixel-10-XL DPI even when the SVG
   technically contains it. Node-side render-verify is necessary but NOT
-  sufficient for any visible-on-phone label: if you can't confirm a phone
-  render before merge (no headless browser available here), keep the font
-  conservatively large rather than at the lower bound.
+  sufficient for any visible-on-phone label: on the laptop, confirm a
+  phone-viewport render with headless Playwright before merge; on the no-browser
+  surface (can't confirm a phone render), keep the font conservatively large
+  rather than at the lower bound.
 
 ### Shipping — the `/ship` flow
 Branch → commit → push → **draft** PR → post tappable preview links → auto-watch
