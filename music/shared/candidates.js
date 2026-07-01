@@ -408,6 +408,149 @@
       "label": "D Dorian Mode/Scale | Groove Backing Jam",
       "note": "D dorian"
     }
+  ],
+  "three little birds|bob marley|A|major": [
+    {
+      "id": "ywvraIjOgcs",
+      "label": "Reggae Backing Track in A | 74 BPM | Three Little Birds - Bob Marley",
+      "note": "exact key, near bpm (74 vs 76)"
+    },
+    {
+      "id": "7ACL5efssTw",
+      "label": "Three Little Birds Backing Track | Bob Marley | Reggae Jam in A",
+      "note": "exact key, bpm unstated"
+    },
+    {
+      "id": "FLtuwnJWdN0",
+      "label": "Bob Marley - Three Little Birds (guitar backing track)",
+      "note": "original song key (A), bpm unstated"
+    }
+  ],
+  "let it be|the beatles|C|major": [
+    {
+      "id": "Jp94V3yVcQQ",
+      "label": "Let It Be Chords: The Best Darn Major Pentatonic Classic Rock Backing Track [C Major - 66 bpm]",
+      "note": "exact key, near bpm (66 vs 73)"
+    },
+    {
+      "id": "uwXLUfUMPlI",
+      "label": "The Beatles - Let It Be GUITAR BACKING TRACK",
+      "note": "original song key (C), bpm unstated"
+    },
+    {
+      "id": "JC8fj1-0TbQ",
+      "label": "Let it be (The Beatles) - INSTRUMENTAL BACKING TRACK",
+      "note": "original song key (C), bpm unstated"
+    }
+  ],
+  "bouncing around the room|phish|D|major": [
+    {
+      "id": "xOKEdZS_fRE",
+      "label": "Phish - Bouncing Around The Room (drums backing track)",
+      "note": "drums-only backing track, confirmed D major, ~107 bpm (catalog says 112)"
+    },
+    {
+      "id": "VHQfg59Kp5Q",
+      "label": "Phish | 12.28.11 | Bouncing Around the Room",
+      "note": "live full-band performance, not an isolated backing track - use as a play-along reference"
+    }
+  ],
+  "sample in a jar|phish|G|major": [
+    {
+      "id": "X8hqMBcr368",
+      "label": "Phish - Sample in a Jar (The Spectrum '97) - Guitar Backing Track",
+      "note": "key mismatch - song's actual key is A major per chord charts (A C G A E Em D), catalog lists G"
+    },
+    {
+      "id": "Ao5iDef-duA",
+      "label": "Sample In A Jar Jam Phish Style Guitar Backing Track (A Minor)",
+      "note": "A minor jam-style variant, key mismatch vs catalog G major"
+    },
+    {
+      "id": "x6dRu6ijGj4",
+      "label": "Phish - Sample In A Jar (karaoke)",
+      "note": "karaoke/full track, actual key A major not G per catalog"
+    }
+  ],
+  "waste|phish|D|major": [
+    {
+      "id": "hPfeMRIYTo8",
+      "label": "Phish - Waste KARAOKE",
+      "note": "karaoke/instrumental, song commonly played in D (matches catalog)"
+    },
+    {
+      "id": "KacdcBRy70w",
+      "label": "Free (Phish) 10-minute backing track (D to Bb jam)",
+      "note": "generic D-to-Bb jam progression matching Waste's key, not song-specific"
+    },
+    {
+      "id": "Doq2smEImK8",
+      "label": "Phish Waste Guitar Lesson (Acoustic Version For Beginners)",
+      "note": "guitar lesson, not an isolated backing track - useful as a reference"
+    }
+  ],
+  "hey jude|the beatles|F|major": [
+    {
+      "id": "PRH0Zl2FmMs",
+      "label": "Hey Jude » Backing Track » The Beatles",
+      "note": "song's key is F major per chord references; bpm unstated"
+    },
+    {
+      "id": "X-ER_J4LSlc",
+      "label": "Guitar Backing Track | Hey Jude - The Beatles",
+      "note": "original song key (F), bpm unstated"
+    },
+    {
+      "id": "LP0Ecfu6Ot8",
+      "label": "Hey Jude The Beatles Guitar Lesson Tutorial [Guitar Play Along for Beginners]",
+      "note": "play-along tutorial, not a pure backing track - original key (F)"
+    }
+  ],
+  "twist and shout|the beatles|D|major": [
+    {
+      "id": "KkECudC28u4",
+      "label": "The Beatles - 'Twist And Shout' - Full Backing Track",
+      "note": "original song key (D), bpm unstated"
+    },
+    {
+      "id": "tYu5UZ5LG_o",
+      "label": "Twist And Shout - The Beatles Guitar Backing Track with chords and lyrics",
+      "note": "original song key (D), bpm unstated"
+    },
+    {
+      "id": "dKSZ8JvyzX8",
+      "label": "Twist And Shout - The Beatles | Backing Track | Guitar Tab",
+      "note": "original song key (D), bpm unstated"
+    }
+  ],
+  "ob-la-di, ob-la-da|the beatles|A|major": [
+    {
+      "id": "POHQX1iJJGI",
+      "label": "The Beatles - Ob La Di Ob La da GUITAR BACKING TRACK",
+      "note": "song is Bb capo 1, sounds in A - matches catalog key"
+    },
+    {
+      "id": "DPnSqAFibK4",
+      "label": "The Beatles - Ob-La-Di, Ob-La-Da (Instrumental & Backing Vocals)",
+      "note": "instrumental + backing vocals, sounds in A per capo-1 convention"
+    }
+  ],
+  "dark rock backing in c minor|search|C|minor": [
+    {
+      "id": "DZ3zxrltUpc",
+      "label": "Dark Blues Rock Guitar Backing Track Jam in C Minor",
+      "note": "exact key, bpm unstated"
+    },
+    {
+      "id": "-Rht_M5oXSc",
+      "label": "Dark Dreamy Melodic Rock Backing Track in C Minor",
+      "note": "exact key, bpm unstated"
+    },
+    {
+      "id": "9MejXhz393c",
+      "label": "Dark Country Rock Guitar Backing Track Jam in C Minor",
+      "note": "exact key, bpm unstated"
+    }
   ]
 };
 })(typeof window !== 'undefined' ? window : this);
