@@ -547,20 +547,15 @@
     }
     function cardEl(row) {
       var t = row.track;
-      var el = document.createElement('div');
-      el.className = 'bt-card tap';
-      el.innerHTML =
-        '<div class="bt-row"><span class="bt-title">' + esc(t.title) + '</span>'
-        + '<span class="bt-key">' + esc(t.key) + (t.mode === 'minor' ? 'm' : '') + '</span></div>'
-        + '<div class="bt-sub">' + esc(t.artist || '') + '</div>'
-        + (row.why && row.rank > 0 ? '<div class="bt-why">' + esc(row.why) + '</div>' : '')
-        + '<div class="bt-meta"><span>' + esc(t.genre) + '</span>'
-        + (t.bpm ? '<span>' + esc(t.bpm) + ' bpm</span>' : '')
-        + (t.capo ? '<span>capo ' + esc(t.capo) + '</span>' : '')
-        + '<span class="bt-open">' + (t.yt ? 'Play' : 'YouTube') + ' &#8599;</span>'
-        + '</div>';
-      el.onclick = function () { activate(t); };
-      return el;
+      // SSOT: same renderer as Songs/Set (music/shared/list-item.js). The track-
+      // specific related-match label rides along as the item note; tap + action
+      // both route through activate() (the existing play/search ladder).
+      return global.ListItem.render(t, {
+        segment: 'library',
+        note: (row.why && row.rank > 0) ? row.why : null,
+        onActivate: function () { activate(t); },
+        onAction: function () { activate(t); }
+      });
     }
     function moreButton(label, q) {
       elMore.innerHTML = '';
