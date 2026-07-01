@@ -240,8 +240,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .strobe.sharp .strobeInner{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,transparent 10px 20px);opacity:.7;}
 .strobe.locked{border-color:var(--good);box-shadow:0 0 14px rgba(94,234,212,.45);}
 .strobe.locked .strobeInner{background:repeating-linear-gradient(90deg,var(--good) 0 10px,transparent 10px 20px);opacity:.9;}
-.strobeLbl{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-size:.54rem;
-  letter-spacing:.04em;color:var(--txt-dim);font-family:'Space Mono',monospace;pointer-events:none;}
+/* the caption sits ON TOP of the moving stripe pattern - a dark backdrop band
+   keeps it legible in stopped/drifting/locked states alike without touching
+   the stripe/status colours themselves (those stay fixed per the tuner-trust
+   rule; only the label's own readability changes here). */
+.strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
+  letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
+  padding:3px 4px 2px;background:rgba(13,15,18,.72);}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
