@@ -269,6 +269,30 @@
      * one tap away. Needs the instrument pack (for the fretboard + chord shapes);
      * without one we fall back to the bare player. The iframe never reloads as you
      * scroll the theory below it. */
+    // Maps the Studio's resolved circle.js scale-mode name (ionian/aeolian/dorian/
+    // mixolydian) to the lowercase major/minor/dorian/mixolydian vocabulary the
+    // "walk the cycle" deep-link params use (matching songbook.js's inversions link -
+    // triad-inversions.html doesn't read ?mode= yet, but the vocabulary stays
+    // consistent for whenever it does).
+    var SCALE_MODE_TO_RECORD_MODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian' };
+    // Deep-link to the same "Walk the full cycle up the neck" inversions page the
+    // Compose tab links (songbook.js), now surfaced from the Practice Studio too -
+    // carries the active instrument profile (so the page opens on the same fretboard)
+    // and the track's key/mode. Profile id comes from the page URL first (explicit),
+    // then the last-selected-profile fallback in localStorage; omitted if neither
+    // resolves (the page still works with just ?key=, defaulting its own profile).
+    function inversionsHref(th) {
+      var params = [];
+      try {
+        var qp = new URLSearchParams(location.search).get('p');
+        var pid = qp || localStorage.getItem('music.activeProfile.v1');
+        if (pid) params.push('p=' + encodeURIComponent(pid));
+      } catch (e) {}
+      if (th.key) params.push('key=' + encodeURIComponent(th.key));
+      var modeParam = SCALE_MODE_TO_RECORD_MODE[th.scaleMode];
+      if (modeParam) params.push('mode=' + encodeURIComponent(modeParam));
+      return 'triad-inversions.html' + (params.length ? '?' + params.join('&') : '');
+    }
     function studioTheory(key, mode) {
       var C = global.Circle, k = normRoot(key), rp = rootIndex(k);
       if (!C || rp < 0) return null;
@@ -358,7 +382,8 @@
         + '</div>'
         + '<div class="bt-st-body">'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
-        + '<div class="bt-st-scale" data-scale></div></div>'
+        + '<div class="bt-st-scale" data-scale></div>'
+        + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
         + urlEditor

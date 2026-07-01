@@ -62,12 +62,22 @@
     return parent;
   }
 
+  // Position-shift step/cap for the "walk the scale up the neck" control. STEP mirrors
+  // how far a hand naturally slides in one move; CAP is the practical top-of-neck fret
+  // this app already uses elsewhere (play/index.html's chainFitsFretboard caps chord
+  // voicings the same way) - past it there's nothing meaningful left to solo into.
+  var POS_STEP = 5, POS_CAP = 14;
+
   /* renderScale(container, pack, rootPc, pcs, opts)
    *   pack    - the instrument adapter (needs pack.scaleDiagram)
    *   rootPc  - pitch-class index of the tonic
    *   pcs     - scale pitch classes
    *   opts: label (optional 'Solo over it ...'), frets (default 7)
-   * No-ops (returns null) when the pack can't render a scale or pcs is empty. */
+   * No-ops (returns null) when the pack can't render a scale or pcs is empty.
+   * When the pack exposes pack.scaleDiagram.supportsStart, also renders a compact
+   * back/forward position control beneath the diagram so the player can walk the
+   * scale up the neck. Packs that don't set the flag render exactly as before -
+   * feature-detected, not a breaking change to the pack contract. */
   function renderScale(container, pack, rootPc, pcs, opts) {
     opts = opts || {};
     if (!(pack && typeof pack.scaleDiagram === 'function' && pcs && pcs.length)) return null;
@@ -75,9 +85,38 @@
       var sLbl = document.createElement('div'); sLbl.className = 'keySubLbl';
       sLbl.textContent = opts.label; container.appendChild(sLbl);
     }
-    var box = pack.scaleDiagram(rootPc, pcs, opts.frets || 7);
-    container.appendChild(box);
-    return box;
+    var F = opts.frets || 7;
+    var supportsStart = !!pack.scaleDiagram.supportsStart;
+    var startFret = 0;
+    var boxWrap = document.createElement('div'); boxWrap.className = 'scaleBoxWrap';
+    container.appendChild(boxWrap);
+    function renderBox() {
+      boxWrap.innerHTML = '';
+      boxWrap.appendChild(pack.scaleDiagram(rootPc, pcs, F, startFret));
+    }
+    renderBox();
+    if (supportsStart) {
+      var ctrl = document.createElement('div'); ctrl.className = 'scalePosCtrl';
+      var back = document.createElement('button');
+      back.type = 'button'; back.className = 'scalePosBtn'; back.textContent = String.fromCharCode(0x25C0);
+      back.setAttribute('aria-label', 'Shift the scale down the neck');
+      var lbl = document.createElement('span'); lbl.className = 'scalePosLbl';
+      var fwd = document.createElement('button');
+      fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
+      fwd.setAttribute('aria-label', 'Shift the scale up the neck');
+      function refresh() {
+        var endFret = startFret === 0 ? F : (startFret + F - 1);
+        lbl.textContent = 'frets ' + startFret + '-' + endFret;
+        back.disabled = startFret <= 0;
+        fwd.disabled = (startFret + POS_STEP) > POS_CAP;
+      }
+      back.onclick = function () { startFret = Math.max(0, startFret - POS_STEP); renderBox(); refresh(); };
+      fwd.onclick = function () { if (startFret + POS_STEP > POS_CAP) return; startFret += POS_STEP; renderBox(); refresh(); };
+      refresh();
+      ctrl.appendChild(back); ctrl.appendChild(lbl); ctrl.appendChild(fwd);
+      container.appendChild(ctrl);
+    }
+    return boxWrap;
   }
 
   var KeyExplorer = { renderChords: renderChords, renderScale: renderScale };
