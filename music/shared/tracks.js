@@ -619,9 +619,11 @@
     fetch(tracksUrl).then(function (r) { return r.json(); }).then(function (data) {
       state.seed = Array.isArray(data) ? data : [];
       remerge(); rerender();
+      if (opts.onReady) opts.onReady();  // M3: tracks loaded -> let the repertoire owner rebuild
     }).catch(function () {
       remerge(); rerender();
       if (!state.tracks.length) elResults.innerHTML = '<div class="bt-empty">Could not load tracks.</div>';
+      if (opts.onReady) opts.onReady();
     });
     wireAdd();
     rerender();
@@ -639,7 +641,16 @@
       rerender();
       return true;
     }
-    return { seedKey: seedKey };
+    // M3: the finder tab is retired, but the Practice Studio + the curated track
+    // data live on. The repertoire (songbook) reaches them through this controller:
+    // openStudio(track) opens the body-level studio overlay (scale + chords + circle,
+    // the theory HUD is the point); getTracks() is the seed+overlay+custom list the
+    // merged repertoire is built from.
+    return {
+      seedKey: seedKey,
+      openStudio: function (t) { openStudio(t); },
+      getTracks: function () { return state.tracks.slice(); }
+    };
   }
 
   var Tracks = {
