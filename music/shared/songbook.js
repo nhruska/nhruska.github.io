@@ -195,6 +195,19 @@
     });
     return html;
   }
+  // Stage/Perform auto-fit scale: shrinks the sheet until it fits BOTH the
+  // available height AND width, or grows a short song up to a cap. Lyric lines
+  // render with white-space:pre (no wrapping), so a height-only fit lets a
+  // short song scale up past its own width and clip words off-screen - width
+  // must always be allowed to win. Pure + Node-testable; DOM callers pass real
+  // measurements (see applyPerfFont).
+  function fitScale(availH, needH, availW, needW) {
+    var heightScale = needH > 0 ? availH / needH : Infinity;
+    var widthScale = needW > 0 ? availW / needW : Infinity;
+    var scale = Math.min(heightScale, widthScale);
+    if (!isFinite(scale)) scale = 1;
+    return Math.max(0.5, Math.min(2.2, scale));
+  }
 
   /* =====================================================================
    * Songbook.mount(opts)
@@ -770,9 +783,11 @@
       var inner = pSheet.firstElementChild;
       if (!inner) { pSheet.style.setProperty('--pscale', 1); return; }
       pSheet.style.setProperty('--pscale', 1);            // measure at base size
-      var avail = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
-      var need = inner.scrollHeight;
-      var scale = need > 0 ? Math.max(0.8, Math.min(2.2, avail / need)) : 1;
+      var availH = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
+      var needH = inner.scrollHeight;
+      var availW = pSheet.clientWidth;
+      var needW = inner.scrollWidth; // white-space:pre lyric lines never wrap - width must win
+      var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
     }
     function updateStageBtns() {
@@ -1659,6 +1674,7 @@
     noteToPc: noteToPc,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
+    fitScale: fitScale,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

@@ -518,7 +518,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTitle{font-weight:800;font-size:1.4rem;line-height:1.06;flex:0 0 auto;letter-spacing:-.02em;}
 .pArtist{font-size:.82rem;color:var(--txt-dim);margin:3px 0 7px;flex:0 0 auto;}
 .pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent);font-weight:700;margin-bottom:9px;flex:0 0 auto;}
-.pSheet{flex:1 1 auto;overflow-y:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
+/* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
+   the sheet within the viewport width itself, but manual font-size steps (A+/A-)
+   can still push a long unwrapped (white-space:pre) lyric line past the edge - let
+   it scroll rather than silently clip. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
 .pSheet::-webkit-scrollbar{width:0;}
 /* font-size scales with --pscale (perform Size control / auto-fit) */
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
