@@ -584,7 +584,14 @@
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
-      var canSolo = s.custom && typeof openStudioCb === 'function' && s.key && s.mode;
+      // "Solo over it" used to require s.custom (only progressions built in Compose
+      // carried a key/mode). Any song can bridge to the Studio if we can determine a
+      // key: use an explicit one when the record has it, otherwise derive one the
+      // same way repertoire.js's Key filter facet does - from the CURRENTLY
+      // TRANSPOSED chords (`seq`, above), so soloing always matches what's on screen.
+      var soloKey = (s.key && s.mode) ? { key: s.key, mode: s.mode }
+        : (global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null });
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
       var body;
@@ -617,7 +624,12 @@
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
-        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true, yt: (csv && csv.yt) || s.yt || null });
+        // Locked interface: no `custom:true` for a catalog song (it isn't a saved
+        // custom item, so there's nothing for the Studio's "Edit this track" link
+        // to look up). Custom songs keep the exact payload shape they always had.
+        var payload = { id: s.id, title: s.t, artist: s.a, key: soloKey.key, mode: soloKey.mode, yt: (csv && csv.yt) || s.yt || null };
+        if (s.custom) payload.custom = true;
+        openStudioCb(payload);
       };
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
