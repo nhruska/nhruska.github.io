@@ -15,6 +15,7 @@
 <!-- Shared songbook styles (theme + all components). -->
 <link rel="stylesheet" href="../shared/songbook.css">
 <link rel="stylesheet" href="../shared/tracks.css">
+<link rel="stylesheet" href="../shared/repertoire-form.css">
 <style>
   /* in-app instrument/tuning picker (appbar) */
   .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
@@ -48,7 +49,10 @@
          tab (#s-tracks) is retired but kept hidden so Tracks.mount can still power the
          Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
     <section class="screen on" id="s-library">
-      <div class="chips typeToggle" id="typeToggle"></div>
+      <div class="libTypeRow">
+        <div class="chips typeToggle" id="typeToggle"></div>
+        <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
+      </div>
       <div class="libHero" id="libHero"></div>
       <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="genreChips"></div>
@@ -183,6 +187,7 @@
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
 <script src="../shared/repertoire.js"></script>
+<script src="../shared/repertoire-form.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
 <script src="../shared/diagram.js"></script>
@@ -548,7 +553,11 @@
     // so the repertoire rebuilds once the track data is in.
     var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
       container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
-      onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); }
+      onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); },
+      // Task 2 requirement 4: the Studio's "Edit this track to add a video" link
+      // (t.custom items only) opens the M2 Add/Edit form. songbookCtl doesn't exist
+      // yet at mount time (built just below), so this indirects through the closure.
+      onEditRequest: function (t) { if (songbookCtl && songbookCtl.openEditForm && t && t.id) songbookCtl.openEditForm(t.id); }
     }) : null;
     songbookCtl = window.Songbook.mount({
       songs: songs,
@@ -565,7 +574,7 @@
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
         songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'), libHero: el('libHero'),
-        typeToggle: el('typeToggle'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
+        typeToggle: el('typeToggle'), addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),

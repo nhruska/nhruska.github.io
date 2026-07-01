@@ -70,6 +70,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .typeToggle{gap:0;margin-bottom:14px;padding:3px;background:var(--surface);border:1px solid var(--line-strong);border-radius:13px;overflow:visible;}
 .typeToggle .chip{flex:1 1 0;text-align:center;justify-content:center;border:none;border-radius:10px;padding:9px 0;font-size:.82rem;min-height:40px;display:flex;align-items:center;}
 .typeToggle .chip.on{background:var(--accent);color:#06201c;}
+/* M2: the +Add entry point sits beside the Repertoire|Set toggle, same row. */
+.libTypeRow{display:flex;align-items:flex-start;gap:8px;}
+.libTypeRow .typeToggle{flex:1;margin-bottom:0;}
+.libTypeRow #addBtn{margin-top:3px;}
 .libTracks[hidden],.libSet[hidden],.libSongs[hidden]{display:none;}
 /* ===== Unified Library list item (SSOT - music/shared/list-item.js) =====
  * One element + one class for Songs / Tracks / Set. The three list containers
