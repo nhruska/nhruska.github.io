@@ -295,7 +295,7 @@
     // OR the chord pack knows every chord at that transposition.
     function seqPlayable(seq, st) {
       if (!pack) return true;
-      return seq.every(function (c) { return packHasChord(tpose(c, st)); });
+      return (seq || []).every(function (c) { return packHasChord(tpose(c, st)); });
     }
 
     /* ---------- custom (composed) progressions ---------- */
@@ -303,7 +303,7 @@
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
     function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customSongs)); } catch (e) { } }
     var customSongs = loadCustom();
-    function buildSheetFromSeq(seq) { return [["Progression", seq.map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
+    function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
     function rebuildAll() {
       ALLSONGS = CATALOG.map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); });
       customSongs.forEach(function (cs) { ALLSONGS.push(Object.assign({}, cs, { sheet: buildSheetFromSeq(cs.seq) })); });
@@ -529,9 +529,17 @@
         el.practiceBody.style.display = 'none';
         return;
       }
+      var s = STATE.current;
+      // A chord-less item (a pure custom track, or a song whose chords were cleared
+      // via the Add/Edit form) is not a song-screen item - show the empty state
+      // rather than throwing on s.seq.map.
+      if (!s.seq || !s.seq.length) {
+        if (el.practiceEmpty) el.practiceEmpty.style.display = 'block';
+        el.practiceBody.style.display = 'none';
+        return;
+      }
       if (el.practiceEmpty) el.practiceEmpty.style.display = 'none';
       el.practiceBody.style.display = 'block';
-      var s = STATE.current;
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
       var chordsOnly = !!STATE.chordsOnly;
@@ -1462,7 +1470,9 @@
       cs.key = f.key != null ? f.key : cs.key; cs.mode = f.mode || cs.mode; cs.yt = f.yt != null ? f.yt : cs.yt;
       if (f.seq && f.seq.length) cs.seq = f.seq.slice(); else if (f.seq) delete cs.seq;
       saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
-      if (STATE.current && STATE.current.id === id) renderPractice();
+      if (STATE.current && STATE.current.id === id) {
+        if (!cs.seq || !cs.seq.length) switchTab('library'); else renderPractice();
+      }
       return cs;
     }
     function deleteCustomItem(id) {
