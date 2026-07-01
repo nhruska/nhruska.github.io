@@ -595,7 +595,8 @@
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
-        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true });
+        var csv = customById(s.id);
+        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true, yt: (csv && csv.yt) || s.yt || null });
       };
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
