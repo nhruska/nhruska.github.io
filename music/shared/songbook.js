@@ -600,6 +600,10 @@
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
         if (act) {
+          var eb = document.createElement('button');
+          eb.className = 'btn'; eb.textContent = 'Edit';
+          eb.onclick = function () { openEditForm(s.id); };
+          act.appendChild(eb);
           var db = document.createElement('button');
           db.className = 'btn ghost'; db.textContent = 'Delete progression'; db.style.flexBasis = '100%';
           db.onclick = function () {
