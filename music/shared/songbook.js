@@ -948,6 +948,9 @@
       if (seedView === 'lyrics' || seedView === 'chords' || seedView === 'both') {
         STATE.performView = seedView;
       }
+      // Default to auto-fit font on every Stage open (UAT r3) - a manual A-/A+
+      // size set in one song shouldn't carry into the next open; auto re-measures.
+      STATE.fontMode = 'auto';
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
