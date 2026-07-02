@@ -811,16 +811,15 @@
       // a catalog song.
       var forcedChords = s.custom && !s.forkOf;
       var view = forcedChords ? 'chords' : STATE.songView;
-      var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
-      // setlist checkmark toggle (top-right, alongside the maximize icon when
-      // present) — both above the fold, no separate row.
+      // setlist checkmark toggle (top-right). The Stage (⛶) button in the view
+      // row below is the single fullscreen/maximize control (t2 - the old ⤢
+      // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
-        + maxBtn
         + '</div></div>';
       // view row: Lyrics / Chords / Both segmented + compact transpose chip +
       // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
@@ -858,20 +857,21 @@
       // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
       // not the sheet). The MERGED record feeds the query so track-derived
       // fields (key etc.) match what the ladder builds from.
-      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>';
       var body;
       if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions
-          + ytLink;
+          + '<div class="lyricsLinks">' + ytLink + '</div>';
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
+        var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
           + actions
-          + ytLink
-          + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
+          // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
+          + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
@@ -886,8 +886,6 @@
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
-      var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
-      if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
