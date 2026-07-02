@@ -31,12 +31,14 @@
  *       double-close). Guarded against a double-tap while a back() is in flight.
  *       No-op when the stack is empty.
  *   NavHistory.settleAfter(rawClose, runNext)
- *       Modal -> modal HAND-OFF. Close the current top layer's DOM (rawClose), then
- *       run runNext (which may open a new layer). If runNext opens one it REPLACES the
- *       current history slot (same depth, no async back/push race); if it opens nothing
- *       the slot collapses. Use this whenever closing one layer opens another (Studio ->
- *       Edit form; form Save/Delete -> Practice/Studio/Library). IMPORTANT: capture any
- *       state you need (e.g. current.onSave) BEFORE calling - rawClose may null it.
+ *       Modal -> modal HAND-OFF. Runs runNext FIRST (persist + maybe open a new layer),
+ *       THEN closes the current top layer's DOM (rawClose). runNext-first is deliberate:
+ *       its exceptions PROPAGATE (a save failure surfaces with the layer still open +
+ *       input preserved, never swallowed behind a close). If runNext opens a layer it
+ *       REPLACES the current history slot (same depth, synchronous - no async back/push
+ *       race); if it opens nothing the slot collapses after the DOM close. Use whenever
+ *       closing one layer opens another (Studio -> Edit form; form Save/Delete ->
+ *       Practice/Studio/Library).
  *   NavHistory.depth()  -> number of open layers (0 = at the app root).
  *
  * WIRING CONTRACT for every layer:

@@ -136,13 +136,12 @@
         if (f._urlInvalid) { urlIn.classList.add('bad'); try { urlIn.focus({ preventScroll: true }); } catch (e2) { urlIn.focus(); } return; }
         delete f._urlRaw; delete f._urlInvalid;
         // Save may navigate (fork -> Practice, edit-with-video -> Studio) or not (plain
-        // add). settleAfter closes the form + lets onSave's new layer take the form's
-        // history slot - so the async back/push race can't pop the just-opened layer;
-        // if onSave navigates nowhere, the form slot is collapsed. Falls back to the raw
-        // save+close when NavHistory is absent.
-        // CAPTURE the callback FIRST: settleAfter calls close() (which nulls `current`)
-        // BEFORE running this - reading current.onSave inside would be a null deref, so
-        // the save would silently no-op.
+        // add). settleAfter runs onSave FIRST then closes the form, so onSave's new layer
+        // takes the form's history slot (no async back/push race) and a save error stays
+        // visible with the form open; a no-nav save collapses the slot. Falls back to the
+        // raw save+close when NavHistory is absent.
+        // Capture the callback into a local (defensive: keeps this robust even if
+        // settleAfter's close ordering changes so `current` is nulled before onSave runs).
         var onSave = current.onSave;
         var doSave = function () { if (onSave) onSave(f); };
         if (global.NavHistory) global.NavHistory.settleAfter(close, doSave);
