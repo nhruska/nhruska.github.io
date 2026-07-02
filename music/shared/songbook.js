@@ -714,8 +714,9 @@
       var actions = '<div class="actions">' + soloBtn + '</div>';
       // Hear the real recording: same YouTube search the list-item action ladder
       // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
-      // not the sheet).
-      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
+      // not the sheet). The MERGED record feeds the query so track-derived
+      // fields (key etc.) match what the ladder builds from.
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
       var body;
       if (view === 'chords') {
         body = chips
@@ -1019,7 +1020,12 @@
             if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-          rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
+          rm.onclick = function (e) {
+            e.stopPropagation(); progression.splice(i, 1);
+            var kc = reinferKey();
+            renderProg(); renderSuggest(); renderKey();
+            if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+          };
           slot.appendChild(rm);
           el.prog.appendChild(slot);
         });
@@ -1040,12 +1046,31 @@
         if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
       }
       renderProg(); renderKey();
+      // (reinferKey() is the symmetric partner for remove/clear paths below.)
       // Key changed under an auto-infer: refresh the fly-out content + the chord list
       // (renderKey/buildKeyPicker already refreshed the chip + roots). Skipped when
       // nothing moved so a plain add never rebuilds the grid mid-tap.
       if ((songKey.root !== prevRoot || songKey.mode !== prevMode) && el.keyRoots) {
         renderKeyView(); buildGrid();
       }
+    }
+    // Symmetric UN-infer for the remove/Clear paths: an auto-inferred
+    // (non-explicit) key must keep tracking the progression the same way
+    // addChord's infer does - re-infer at 2+ chords, clear entirely below 2.
+    // Otherwise a deleted progression leaves a stale key chip + palette.
+    // Returns true when the key actually changed (caller refreshes the
+    // fly-out + grid, mirroring addChord's conditional rebuild).
+    function reinferKey() {
+      if (songKey.explicit) return false;
+      var prevRoot = songKey.root, prevMode = songKey.mode;
+      if (progression.length >= 2) {
+        var ik = inferKey(progression);
+        if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
+        else { songKey.root = null; }
+      } else {
+        songKey.root = null;
+      }
+      return songKey.root !== prevRoot || songKey.mode !== prevMode;
     }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
@@ -1274,7 +1299,8 @@
       });
     }
 
-    /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ----
+    /* ---- Key: pick a key -> its diatonic chord palette (the solo scale/HSR
+     * moved to the Studio; the fly-out links out via Triads & Inversions) ----
      * Persistent compact key bar (replaces the old collapse): the current-key chip and
      * the maj/min mode toggle are ALWAYS visible - one tap changes major<->minor, never
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
@@ -1509,8 +1535,8 @@
       }
       var tonic = labelTonic();
       // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
-      // flagged right inside the normal "add a chord" list (accent glow + a tiny name
-      // caption) — no separate rows, no forced vertical. De-duped per chord.
+      // flagged right inside the normal "add a chord" list with an accent glow -
+      // no separate rows, no forced vertical, no caption. De-duped per chord.
       var comps = completions(progression, tonic, songKey.root ? songKey.mode : "Major");
       var completeBy = {};
       comps.forEach(function (cmp) {
@@ -1753,7 +1779,12 @@
       });
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
-    if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
+    if (el.cClear) el.cClear.onclick = function () {
+      progression = []; cTpose = 0;
+      var kc = reinferKey();
+      renderProg(); renderKey();
+      if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+    };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     // "?" help: re-show the starter progressions inside the progression box. Toggles off

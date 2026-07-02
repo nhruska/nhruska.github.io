@@ -188,7 +188,7 @@
     if (micStream) { micStream.getTracks().forEach(function (t) { t.stop(); }); micStream = null; }
     if (micAC) { micAC.close(); micAC = null; }
     var t = document.getElementById('micToggle'); if (t) t.textContent = 'Start mic';
-    var nn = document.getElementById('micNote'); if (nn) { nn.textContent = '—'; nn.classList.remove('intune'); }
+    var nn = document.getElementById('micNote'); if (nn) { nn.textContent = '·'; nn.classList.remove('intune'); }
     var cc = document.getElementById('micCents'); if (cc) cc.textContent = 'mic stopped';
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
     inTuneHold = 0; reading = false; lastCentsTxt = ''; glitchFrames = 0; prevShown = null;
@@ -284,7 +284,7 @@
       box.innerHTML = '<div class="micMsg"><b>The live needle needs a microphone</b>, which the browser only allows over <b>https</b>. Opened as a local file the mic is blocked - use the reference tones below to tune by ear, or open this page over https (it is live on GitHub Pages) to unlock the needle.</div>';
       return;
     }
-    box.innerHTML = '<div class="micNote" id="micNote">—</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
+    box.innerHTML = '<div class="micNote" id="micNote">·</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
       + '<div class="micMeter"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
       + '<div class="strobe" id="micStrobe"><div class="strobeInner" id="micStrobeInner"></div><div class="strobeLbl">stands still = in tune · drifts ◀ flat · sharp ▶</div></div>'
       + '<div class="actions"><button class="btn" id="micToggle">Start mic</button></div>';
