@@ -27,6 +27,14 @@ An adaptive AI music tutor whose destination is **soloing and songwriting confid
 - **Mode toggle ALWAYS re-harmonizes the progression** (revised 2026-06-29, device-test feedback - reverses the earlier "scale-context-only" decision for this app's solo-practice scope): the one key/mode filter is a single control that drives the built chords. A root change transposes, a mode change re-qualifies (modal interchange), so the chords stay in the chosen key/mode automatically. The separate "Re-harmonize to <mode>" button was removed. Rationale: this app is solo-practice, not composing - the user wants pick-key-and-mode -> harmonized progression -> solo, not the ability to freeze chords against a mode change. (If freezing is ever needed, that's a separate composing app.) When the progression is empty there is nothing to harmonize, so the mode change just updates the palette/solo scale.
 - **Why the picker is NOT locked to the key**: blues (C7-F7-G7 - dominants, non-diatonic), borrowed chords / modal interchange, secondary dominants (D7->G in C), and modulation all require out-of-key chords. Locking would block whole genres. Hence: lead in-key, keep all reachable.
 
+## AI Tutor prototype (conceptual UI/UX exploration, unlinked)
+
+A standalone, unlinked sandbox at `music/tutor/` explores what a persona/chat-style AI Tutor layer could look and feel like, ahead of committing to a specific roadmap phase or backend. Not part of the shipped app - not linked from `music/index.html` nav, not wired into Compose/Tracks. Built via [music/TUTOR-PROTOTYPE-CHECKLIST.md](TUTOR-PROTOTYPE-CHECKLIST.md).
+
+- Chat UI (message thread, typing indicator, tappable quick-replies) answers from a small canned/scripted library grounded in this roadmap's theory primitives (parallel vs relative, I-IV-V vs i-iv-v, borrowed chords, a Phase 4 scale-swap teaser, a Phase 5 song-form teaser) - no live model call is made.
+- A pluggable provider interface (`music/tutor/provider.js`, `sendMessage(history, context) -> {text, quickReplies}`) so a real backend can be swapped in later without touching the UI.
+- **Open architecture question (unresolved, explicit follow-up):** the real backend for a live tutor could be a central proxy (e.g. hosted, OpenRouter-backed, so users don't need their own key) or bring-your-own-key (direct client-side calls to a user-supplied key). This prototype ships a settings-panel stub shaped for an OpenRouter-compatible endpoint (base URL / model / API key, localStorage-only) but does not implement either path - that's a real infra/cost decision for later, not resolved here.
+
 ## Theory primitives the tutor teaches
 
 - **Parallel vs relative.** Parallel (C major <-> C minor): same home note, different notes, chord qualities flip (I-IV-V -> i-iv-v). Relative (C major <-> A minor): same 7 notes, different home - why A-minor and C-major scales both solo over a C-major progression.

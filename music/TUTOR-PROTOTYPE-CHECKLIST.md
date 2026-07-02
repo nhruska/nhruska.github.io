@@ -47,19 +47,19 @@
 ## Checklist
 
 ### Standalone page
-- [ ] `music/tutor/index.html` - persona-driven chat-style layout (message list + input), reuses `songbook.css` accent theming
-- [ ] Not linked from `music/index.html` nav (sandbox only)
-- [ ] Mobile-first layout, one-screen where reasonable, phone-DPI-safe text per CLAUDE.md floor
+- [x] `music/tutor/index.html` - persona-driven chat-style layout (message list + input), reuses `songbook.css` accent theming
+- [x] Not linked from `music/index.html` nav (sandbox only)
+- [x] Mobile-first layout, one-screen where reasonable, phone-DPI-safe text per CLAUDE.md floor
 
 ### Provider abstraction
-- [ ] `music/tutor/provider.js` (or equivalent) - defines a small interface (e.g. `sendMessage(history, context) -> response`) so a real backend can be swapped in later without touching the UI
-- [ ] Canned/scripted provider implementation covering at least: parallel vs relative scales, I-IV-V vs i-iv-v, one Phase 4 "swap solo scale over fixed progression" demo turn, one Phase 5 "build a song section by section" demo turn
-- [ ] Settings panel: API key / base URL / model fields (OpenRouter-compatible shape), persists to `localStorage`, explicitly labeled experimental/not-yet-wired, no fetch call wired to it in this pass
+- [x] `music/tutor/provider.js` (or equivalent) - defines a small interface (e.g. `sendMessage(history, context) -> response`) so a real backend can be swapped in later without touching the UI
+- [x] Canned/scripted provider implementation covering at least: parallel vs relative scales, I-IV-V vs i-iv-v, one Phase 4 "swap solo scale over fixed progression" demo turn, one Phase 5 "build a song section by section" demo turn
+- [x] Settings panel: API key / base URL / model fields (OpenRouter-compatible shape), persists to `localStorage`, explicitly labeled experimental/not-yet-wired, no fetch call wired to it in this pass
 
 ### Roadmap note
-- [ ] `music/TUTOR-ROADMAP.md` updated with a short pointer to this prototype + the open architecture question (central OpenRouter proxy vs BYOK) named as an unresolved follow-up
+- [x] `music/TUTOR-ROADMAP.md` updated with a short pointer to this prototype + the open architecture question (central OpenRouter proxy vs BYOK) named as an unresolved follow-up
 
 ### Quality gates
-- [ ] New unit tests added for any new pure-JS logic, `node test/run-all.js` green
-- [ ] `music/tutor/index.html` loads with zero console errors at desktop (1440x900) + phone (375x812) via Playwright; one sample conversation driven end-to-end; screenshots captured
-- [ ] PR opened from `claude/ai-tutor-prototype-kz5ix1` with V&V block + a curl-verified githack preview link
+- [x] New unit tests added for any new pure-JS logic, `node test/run-all.js` green
+- [x] `music/tutor/index.html` loads with zero console errors at desktop (1440x900) + phone (375x812) via Playwright; one sample conversation driven end-to-end; screenshots captured
+- [x] PR opened from `claude/ai-tutor-prototype-kz5ix1` with V&V block + a curl-verified githack preview link
