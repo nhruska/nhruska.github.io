@@ -142,4 +142,20 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
 });
 
+/* ---------- ytSearchURL: the song-view "Hear it on YouTube" link ---------- */
+test('ytSearchURL builds title + artist + key into one encoded query', function () {
+  var url = Songbook.ytSearchURL({ t: 'Hey Jude', a: 'The Beatles', key: 'F' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Hey Jude The Beatles F key'));
+});
+test('ytSearchURL accepts long-form fields and skips the missing ones', function () {
+  var url = Songbook.ytSearchURL({ title: 'Jolene', artist: 'Dolly Parton' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Jolene Dolly Parton'));
+});
+test('ytSearchURL encodes attribute-hostile characters so the double-quoted href cannot break out', function () {
+  var url = Songbook.ytSearchURL({ t: 'Me & You "live"', a: 'X<Y' });
+  assert.strictEqual(url.split('?')[1].indexOf('&'), -1, 'raw & must not survive into the query');
+  assert.strictEqual(url.indexOf('"'), -1, 'raw double quote must not survive');
+  assert.strictEqual(url.indexOf('<'), -1, 'raw < must not survive');
+});
+
 run();

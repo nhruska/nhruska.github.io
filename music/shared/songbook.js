@@ -223,6 +223,15 @@
     return { key: null, mode: null };
   }
 
+  // YouTube search URL for a repertoire/song record - the query the ytSearch
+  // action opens. Pure + Node-testable; shared by the list-item action ladder
+  // and the song-view "Hear it on YouTube" link.
+  function ytSearchURL(s) {
+    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
+      .filter(Boolean).join(' ');
+    return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
   /* =====================================================================
    * Songbook.mount(opts)
    *
@@ -454,9 +463,7 @@
     }
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
-      var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-        .filter(Boolean).join(' ');
-      window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
+      window.open(ytSearchURL(s), '_blank', 'noopener');
     }
     // Where a repertoire tap lands (approach A): a chord sheet opens the song screen
     // (openPractice); a pure backing track opens the Practice Studio (solo scale +
@@ -611,16 +618,22 @@
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
+      // Hear the real recording: same YouTube search the list-item action ladder
+      // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
+      // not the sheet).
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
       var body;
       if (chordsOnly) {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
-          + actions;
+          + actions
+          + ytLink;
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
           + actions
+          + ytLink
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
@@ -1810,6 +1823,7 @@
     renderSheet: renderSheet,
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
+    ytSearchURL: ytSearchURL,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
