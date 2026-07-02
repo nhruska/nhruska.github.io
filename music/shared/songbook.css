@@ -591,7 +591,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    vertical space (UAT r3). Controls collapse to a SINGLE row (View + Size side
    by side); the header shrinks so the sheet keeps the room. Placed AFTER the
    base .pSpeed rules so the row override wins on source order. */
-@media (orientation:landscape), (max-height:520px){
+/* Landscape only - it guarantees width > height, so the one-row View+Size
+   control panel always has horizontal room. A narrow SHORT PORTRAIT must NOT
+   trigger this (the 42px label + 3 View buttons at ~half width would overlap),
+   so we no longer OR in a bare max-height. */
+@media (orientation:landscape){
   .perform{padding-top:calc(max(env(safe-area-inset-top,0px), 4px) + 4px);}
   .pTop{margin-bottom:3px;}
   .pTitle{font-size:1.02rem;}

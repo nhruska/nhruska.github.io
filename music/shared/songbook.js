@@ -465,7 +465,8 @@
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
-    // perform-screen prefs (scroll speed, view, font size), remembered per device.
+    // perform-screen prefs (scroll speed + view), remembered per device. Font
+    // size is NOT persisted - Stage force-opens auto every time (UAT r3).
     // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
     // chords-over-lyrics, which is now called 'both' - migrate it as such.
     var PERF_KEY = prefix + ".perfprefs.v2";
