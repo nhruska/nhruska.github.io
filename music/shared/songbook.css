@@ -142,8 +142,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .queueNav button:active{transform:scale(.94);background:var(--accent);color:#06201c;}
 .queueNav button:disabled{opacity:.32;cursor:default;color:var(--txt-dim);}
 .queueNav .qPos{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-dim);letter-spacing:.04em;}
-/* practice-view mode row: 2-way switch (Practice / Chords only) + compact transpose chip, one row */
-.practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 8px;}
+/* song-view row: Lyrics/Chords/Both segmented + compact transpose chip + Stage icon, one row */
+.practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 14px;}
 .modeSwitch{display:flex;gap:4px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--txt-dim);padding:10px 4px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}
@@ -152,11 +152,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:8px;cursor:pointer;transition:background .15s,transform .08s,color .15s;}
 .transposeChip button:active{transform:scale(.86);background:var(--accent);color:#06201c;}
 .transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 8px;min-width:28px;text-align:center;}
-/* Stage: a clearly-labeled, discoverable CTA for the fullscreen perform overlay —
- * a distinct full-width button (not a subtle third switch tab). */
-.stageCta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent);font-family:inherit;font-weight:700;font-size:.86rem;padding:11px;border-radius:11px;cursor:pointer;margin:0 0 14px;transition:transform .08s,background .15s;}
-.stageCta:active{transform:scale(.98);background:var(--accent);color:#06201c;}
-.stageCta .stageIcon{font-size:1rem;}
+.modeSwitch button:disabled{opacity:.35;cursor:default;}
+/* Stage: compact fullscreen icon button on the view row (replaces the old
+ * full-width CTA) - accent-filled so the perform entry stays discoverable. */
+.stageGo{height:auto;min-height:44px;background:var(--accent-deep);border-color:var(--accent-dim);}
+.stageGo:active{background:var(--accent);color:#06201c;border-color:var(--accent);}
 /* Campfire: big chords-only, sized for jamming with the phone on the table */
 .campfireSheet{padding:18px 14px;}
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}

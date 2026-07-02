@@ -142,6 +142,28 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
 });
 
+/* ---------- renderSheet tri-view: lyrics / chords / both ---------- */
+var triSong = { sheet: [["Verse", "[C]Hello [G]world"], ["", "[Am]  [F]"]] };
+test('renderSheet both (default) positions chords over lyrics', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'both');
+  assert.ok(html.indexOf('class="crd"') >= 0, 'chord row expected');
+  assert.ok(html.indexOf('Hello') >= 0 && html.indexOf('world') >= 0, 'lyric text expected');
+  // legacy/default fallthrough: any unknown view token renders the combined sheet
+  assert.strictEqual(Songbook.renderSheet(triSong, 0, undefined), html);
+});
+test('renderSheet lyrics strips chord tokens and drops pure-chord lines', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'lyrics');
+  assert.ok(html.indexOf('Hello world') >= 0, 'lyric text expected without token gaps');
+  assert.strictEqual(html.indexOf('class="crd"'), -1, 'no chord row in lyrics view');
+  assert.strictEqual(html.indexOf('Am'), -1, 'pure-chord line must vanish');
+  assert.ok(html.indexOf('Verse') >= 0, 'section headers stay');
+});
+test('renderSheet chords stays the campfire chord-bar view (transposed)', function () {
+  var html = Songbook.renderSheet(triSong, 2, 'chords');
+  assert.ok(html.indexOf('>D<') >= 0 && html.indexOf('>Bm<') >= 0, 'bars transpose (+2: C->D, Am->Bm)');
+  assert.strictEqual(html.indexOf('Hello'), -1, 'no lyric text in chords view');
+});
+
 /* ---------- ytSearchURL: the song-view "Hear it on YouTube" link ---------- */
 test('ytSearchURL builds title + artist + key into one encoded query', function () {
   var url = Songbook.ytSearchURL({ t: 'Hey Jude', a: 'The Beatles', key: 'F' });

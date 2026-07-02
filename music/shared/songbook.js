@@ -185,8 +185,24 @@
     });
     return out.join('');
   }
+  // Lyrics with the [chord] tokens stripped - the sing-along view. Lines that
+  // were pure chord calls (all tokens, no words) vanish rather than leaving
+  // blank rows.
+  function renderLyricsOnly(sheet) {
+    var out = [], last = null;
+    sheet.forEach(function (pair) {
+      var sect = pair[0], line = pair[1];
+      if (sect && sect !== last) { out.push('<div class="sect">' + sect + '</div>'); last = sect; }
+      var lyr = line.replace(/\[([^\]]+)\]/g, '').replace(/[ ]{2,}/g, ' ');
+      if (lyr.trim().length) out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>');
+    });
+    return out.join('');
+  }
+  // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
+  // 'both' (default) = chords positioned over lyrics.
   function renderSheet(song, st, view) {
     if (view === 'chords') return renderChordOnly(song.sheet, st);
+    if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
@@ -512,16 +528,25 @@
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
 
-    /* ===================== SONG (modes: Practice / Stage) ===================== */
-    // A song opens in the merged Practice view (chords + lyrics, or chords-only via
-    // the inline toggle). Stage is a one-shot action — it launches the fullscreen
+    /* ===================== SONG (views: Lyrics / Chords / Both + Stage) ===================== */
+    // A song opens in one of three sheet views - Lyrics (sing-along), Chords
+    // (campfire bars) or Both (chords over lyrics, the default) - picked via the
+    // segmented control. Stage is a one-shot action - it launches the fullscreen
     // perform overlay over whichever view you're on, but is never persisted as the
     // default-open mode (otherwise every song-tap would trap you in fullscreen with
     // no way back to the chords).
-    var CHORDVIEW_KEY = prefix + ".chordsonly.v1";
-    function loadChordsOnly() { try { return localStorage.getItem(CHORDVIEW_KEY) === '1'; } catch (e) { return false; } }
-    function saveChordsOnly(v) { try { localStorage.setItem(CHORDVIEW_KEY, v ? '1' : '0'); } catch (e) { } }
-    STATE.chordsOnly = loadChordsOnly();
+    var SONGVIEW_KEY = prefix + ".songview.v1";
+    var CHORDVIEW_KEY = prefix + ".chordsonly.v1"; // legacy 2-way toggle - migration source only
+    function loadSongView() {
+      try {
+        var v = localStorage.getItem(SONGVIEW_KEY);
+        if (v === 'lyrics' || v === 'chords' || v === 'both') return v;
+        // legacy: chords-only '1' maps to Chords; the old Practice view was chords-over-lyrics = Both
+        return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
+      } catch (e) { return 'both'; }
+    }
+    function saveSongView(v) { try { localStorage.setItem(SONGVIEW_KEY, v); } catch (e) { } }
+    STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
@@ -576,7 +601,9 @@
       el.practiceBody.style.display = 'block';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
-      var chordsOnly = !!STATE.chordsOnly;
+      // Custom (composed) sheets are chord calls with no lyric text - Lyrics/Both
+      // would render empty, so the view is pinned to Chords for them.
+      var view = s.custom ? 'chords' : STATE.songView;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
       // setlist checkmark toggle (top-right, alongside the maximize icon when
@@ -588,17 +615,19 @@
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + maxBtn
         + '</div></div>';
-      // mode row: 2-way switch (Practice / chords-only toggle) + compact transpose
-      // chip, in the same row — plus a clearly-labeled Stage CTA (a distinct button,
-      // not a third switch tab, per Nik's "make fullscreen entry more discoverable").
+      // view row: Lyrics / Chords / Both segmented + compact transpose chip +
+      // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
+      // locked decision - replaces the full-width Stage CTA).
+      function segBtn(v, lbl) {
+        var dis = s.custom && v !== 'chords';
+        return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
+          + (dis ? ' disabled' : '') + ' aria-pressed="' + (view === v ? 'true' : 'false') + '">' + lbl + '</button>';
+      }
       var switcher = '<div class="practiceRow">'
-        + '<div class="modeSwitch">'
-        + '<button data-m="full" class="' + (!chordsOnly ? 'on' : '') + '">Practice</button>'
-        + '<button data-m="chords" class="' + (chordsOnly ? 'on' : '') + '">Chords only</button>'
-        + '</div>'
+        + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
-        + '</div>'
-        + '<button class="stageCta" id="stageBtn" title="Perform fullscreen"><span class="stageIcon" aria-hidden="true">⛶</span> Stage · Perform fullscreen</button>';
+        + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
+        + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
@@ -623,7 +652,7 @@
       // not the sheet).
       var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
       var body;
-      if (chordsOnly) {
+      if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions
@@ -631,7 +660,7 @@
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
           + actions
           + ytLink
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
@@ -641,7 +670,7 @@
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
-        b.onclick = function () { STATE.chordsOnly = (b.dataset.m === 'chords'); saveChordsOnly(STATE.chordsOnly); renderPractice(); };
+        b.onclick = function () { if (b.disabled) return; STATE.songView = b.dataset.v; saveSongView(STATE.songView); renderPractice(); };
       });
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
