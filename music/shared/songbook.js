@@ -239,6 +239,23 @@
     return { key: null, mode: null };
   }
 
+  // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
+  // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
+  // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
+  // - tpose and the key readout are pitch-class based). Tries up to the 11 other
+  // pitch classes in tap direction, skipping unplayable ones; null when nothing
+  // else is playable (caller no-ops, matching the old stuck-at-end behavior).
+  // Pure + Node-testable; `playable` is the caller's seqPlayable predicate.
+  function nextTranspose(cur, dir, playable) {
+    for (var n = 1; n <= 11; n++) {
+      var cand = cur + dir * n;
+      while (cand > 6) cand -= 12;
+      while (cand <= -6) cand += 12;
+      if (playable(cand)) return cand;
+    }
+    return null;
+  }
+
   // YouTube search URL for a repertoire/song record - the query the ytSearch
   // action opens. Pure + Node-testable; shared by the list-item action ladder
   // and the song-view "Hear it on YouTube" link.
@@ -733,12 +750,8 @@
       }
     }
     function shiftKey(dir) {
-      var cur = STATE.transpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(STATE.current.seq, cand)) { STATE.transpose = cand; renderPractice(); return; }
-      }
+      var cand = nextTranspose(STATE.transpose, dir, function (st) { return seqPlayable(STATE.current.seq, st); });
+      if (cand !== null) { STATE.transpose = cand; renderPractice(); }
     }
 
     /* ===================== MAXIMIZE (chord pack diagrams) ===================== */
@@ -892,12 +905,8 @@
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
-      var cur = STATE.performTpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(s.seq, cand)) { STATE.performTpose = cand; showPerform(); return; }
-      }
+      var cand = nextTranspose(STATE.performTpose, dir, function (st) { return seqPlayable(s.seq, st); });
+      if (cand !== null) { STATE.performTpose = cand; showPerform(); }
     }
     function showPerform() {
       var s = songById(QUEUE.current());
@@ -1870,6 +1879,7 @@
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
     ytSearchURL: ytSearchURL,
+    nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

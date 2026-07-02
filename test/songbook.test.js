@@ -164,6 +164,36 @@ test('renderSheet chords stays the campfire chord-bar view (transposed)', functi
   assert.strictEqual(html.indexOf('Hello'), -1, 'no lyric text in chords view');
 });
 
+/* ---------- nextTranspose: transpose steps wrap at the range ends ---------- */
+function always() { return true; }
+test('nextTranspose steps by one semitone inside the range', function () {
+  assert.strictEqual(Songbook.nextTranspose(0, 1, always), 1);
+  assert.strictEqual(Songbook.nextTranspose(0, -1, always), -1);
+  assert.strictEqual(Songbook.nextTranspose(3, 1, always), 4);
+});
+test('nextTranspose wraps at the top: +6 then + lands on -5 (same cycle, keeps going)', function () {
+  assert.strictEqual(Songbook.nextTranspose(6, 1, always), -5);
+});
+test('nextTranspose wraps at the bottom: -5 then - lands on +6 (-6 normalizes to its enharmonic +6)', function () {
+  assert.strictEqual(Songbook.nextTranspose(-5, -1, always), 6);
+  assert.strictEqual(Songbook.nextTranspose(6, -1, always), 5); // and back down the far side
+});
+test('nextTranspose cycles through ALL 12 keys on repeated + taps', function () {
+  var seen = {}, cur = 0;
+  for (var i = 0; i < 12; i++) { seen[cur] = true; cur = Songbook.nextTranspose(cur, 1, always); }
+  assert.strictEqual(Object.keys(seen).length, 12, 'twelve distinct transposes before repeating');
+  assert.strictEqual(cur, 0, 'thirteenth tap is back where we started');
+});
+test('nextTranspose skips unplayable candidates ACROSS the wrap boundary', function () {
+  // at +5, everything from +6 through -3 unvoiceable -> the next + must land on -2
+  var playable = function (st) { return st === -2 || st === 5; };
+  assert.strictEqual(Songbook.nextTranspose(5, 1, playable), -2);
+});
+test('nextTranspose returns null when no other transpose is playable (caller no-ops)', function () {
+  assert.strictEqual(Songbook.nextTranspose(2, 1, function (st) { return st === 2; }), null);
+  assert.strictEqual(Songbook.nextTranspose(0, 1, function () { return false; }), null);
+});
+
 /* ---------- ytSearchURL: the song-view "Hear it on YouTube" link ---------- */
 test('ytSearchURL builds title + artist + key into one encoded query', function () {
   var url = Songbook.ytSearchURL({ t: 'Hey Jude', a: 'The Beatles', key: 'F' });
