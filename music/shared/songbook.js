@@ -92,10 +92,6 @@
     Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
   };
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
-  function scalePcs(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
-    return m.steps.map(function (s) { return (rp + s) % 12; });
-  }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
@@ -155,6 +151,42 @@
       out.push({ name: p.name, degree: nextDeg, chord: chordsFromDegrees(tonic, keyMode || "Major", [nextDeg])[0] });
     });
     return out;
+  }
+  // AUTO-INFER a song key from the chords themselves (Compose sets it once 2+ chords
+  // exist and the user never explicitly picked one). Pure: seq -> {root, mode} | null.
+  // Every root x Major/Minor candidate is scored by how many of the progression's BASE
+  // triads are diatonic to it (7th extensions stripped: Cmaj7/C7 count as C, Am7 as Am -
+  // matching convertToMode's extension classes). Ties break toward the first chord's
+  // root as tonic (the app's existing first-chord derivation), then Major, then the
+  // first candidate in chromatic order (determinism). Needs at least 2 base triads to
+  // fit or nothing is inferred - one matching chord is not a key.
+  function baseTriad(ch) {
+    var p = splitChord(ch);
+    if (!p) return null;
+    var q = p.qual;
+    if (/maj7$/.test(q)) q = q.slice(0, -4);
+    else if (/m7$/.test(q)) q = q.slice(0, -1);
+    else if (/7$/.test(q)) q = q.slice(0, -1);
+    return p.root + q;
+  }
+  function inferKey(seq) {
+    if (!seq || seq.length < 2) return null;
+    var bases = seq.map(baseTriad).filter(function (b) { return b != null; });
+    if (bases.length < 2) return null;
+    var firstRoot = (splitChord(seq[0]) || {}).root || null;
+    function tieRank(c) { return (c.root === firstRoot ? 2 : 0) + (c.mode === 'Major' ? 1 : 0); }
+    var best = null;
+    ROOTS.forEach(function (r) {
+      ['Major', 'Minor'].forEach(function (mk) {
+        var pal = {};
+        chordsFromDegrees(r, mk, [0, 1, 2, 3, 4, 5, 6]).forEach(function (c) { pal[c] = true; });
+        var score = 0;
+        bases.forEach(function (b) { if (pal[b]) score++; });
+        var cand = { root: r, mode: mk, score: score };
+        if (!best || score > best.score || (score === best.score && tieRank(cand) > tieRank(best))) best = cand;
+      });
+    });
+    return (best && best.score >= 2) ? { root: best.root, mode: best.mode } : null;
   }
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
@@ -988,7 +1020,27 @@
       }
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; forceStarters = false; progression.push(c); renderProg(); renderKey(); }
+    function addChord(c) {
+      if (progression.length >= 8) return;
+      forceStarters = false;
+      progression.push(c);
+      // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
+      // one, so the key chip + in-key palette light up without a key-panel trip. The
+      // inferred key stays NON-explicit: it keeps tracking further adds until the user
+      // pins a key themselves (root pick / mode pick / named pattern all set explicit).
+      var prevRoot = songKey.root, prevMode = songKey.mode;
+      if (!songKey.explicit && progression.length >= 2) {
+        var ik = inferKey(progression);
+        if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
+      }
+      renderProg(); renderKey();
+      // Key changed under an auto-infer: refresh the fly-out content + the chord list
+      // (renderKey/buildKeyPicker already refreshed the chip + roots). Skipped when
+      // nothing moved so a plain add never rebuilds the grid mid-tap.
+      if ((songKey.root !== prevRoot || songKey.mode !== prevMode) && el.keyRoots) {
+        renderKeyView(); buildGrid();
+      }
+    }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
@@ -1137,12 +1189,14 @@
       // already shows the key, and the toggle already says which list you're in.
       chips.className = 'chips';
       chips.innerHTML = ''; grid.innerHTML = '';
-      // Remove any list-content nodes a prior render appended to the scroll area, keeping
-      // #buildGrid (the tiles container) in place.
+      // Remove any list-content nodes a prior render appended to the scroll area,
+      // keeping #buildGrid (the tiles container) and #suggest (the suggestion surface -
+      // renderSuggest owns its content; it leads the scroll area per the UAT fold-in)
+      // in place.
       var scroller = el.composeChords;
       if (scroller) {
         Array.prototype.slice.call(scroller.children).forEach(function (n) {
-          if (n !== grid) scroller.removeChild(n);
+          if (n !== grid && n !== el.suggest) scroller.removeChild(n);
         });
       }
       var view = effectiveChordView();
@@ -1168,11 +1222,18 @@
 
       if (view === 'inkey') {
         if (!songKey.root) {
-          // In-key view with no key set: prompt to pick a key (the list is empty until then).
+          // In-key view with no key set: a PROMINENT pick-a-key CTA (replaces the old
+          // hint prose) - one tap opens the key panel right above. A short secondary
+          // line keeps the All escape hatch discoverable.
+          var cta = document.createElement('button');
+          cta.type = 'button';
+          cta.className = 'btn red pickKeyCta';
+          cta.textContent = 'Pick a key';
+          cta.onclick = function () { keyPopoverOpen = true; buildKeyPicker(); };
           var hint = document.createElement('p');
           hint.className = 'keyHint chordsHint';
-          hint.textContent = 'Pick a key (tap the key chip above) to lead with its chords, or switch to All to browse every chord.';
-          if (scroller) scroller.insertBefore(hint, grid);
+          hint.textContent = 'Its chords will lead this list - or switch to All to browse every chord.';
+          if (scroller) { scroller.insertBefore(cta, grid); scroller.insertBefore(hint, grid); }
           return;
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
@@ -1263,8 +1324,11 @@
         b.textContent = r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
-          // Picking a root sets the explicit key and closes the popover. Tapping the
-          // currently-selected root clears the key (and re-opens for a fresh pick).
+          // Picking a root sets the explicit key and KEEPS the panel open so the mode
+          // can be chosen in the same visit (root -> mode is one gesture; the old
+          // close-on-root-pick forced a reopen to get minor). A mode tap - or re-tapping
+          // the current mode as a "confirm" - closes it. Tapping the currently-selected
+          // root clears the key (and stays open for a fresh pick).
           if (songKey.root === r) {
             // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
             songKey.root = null; songKey.explicit = false;
@@ -1290,7 +1354,7 @@
               }
             }
             songKey.root = r; songKey.explicit = true;
-            keyPopoverOpen = false;
+            // stays open (keyPopoverOpen untouched) - the mode tap completes the gesture
           }
           // Picking/clearing a key resets the chord-list view to "follow the key": a set
           // key -> In key, a cleared key -> All. (An explicit segment tap re-pins it.)
@@ -1308,15 +1372,26 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Mode change ALWAYS re-harmonizes the built progression (solo-practice scope):
-          // the one key/mode filter keeps the chords in sync - a root change transposes,
-          // a mode change re-qualifies. convertToMode sets songKey.mode + re-renders.
-          // If the progression is empty there's nothing to harmonize, so just set the
-          // mode and re-render the palette/solo scale.
+          // Re-tapping the CURRENT mode is a no-op confirm: change nothing, just close
+          // the panel (when a root is set - the gesture is complete). The old
+          // unconditional convertToMode call re-derived a key from the first chord and
+          // could swap the chord list underneath the user on a same-mode tap.
+          if (mk === songKey.mode) {
+            if (songKey.root) { keyPopoverOpen = false; buildKeyPicker(); }
+            return;
+          }
+          // A real mode change re-harmonizes the built progression (solo-practice
+          // scope): the one key/mode filter keeps the chords in sync - a root change
+          // transposes, a mode change re-qualifies. convertToMode sets songKey.mode,
+          // closes the panel + re-renders. If the progression is empty there's nothing
+          // to harmonize, so just set the mode, close (root + mode both chosen = the
+          // gesture is done; with no root yet, stay open for the root pick) and
+          // re-render the palette.
           if (progression.length) {
             convertToMode(mk);
           } else {
             songKey.mode = mk;
+            if (songKey.root) keyPopoverOpen = false;
             renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
           }
         };
@@ -1328,102 +1403,28 @@
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
-      // #keyView now lives INSIDE the key/mode fly-out (below the roots + mode toggle), so
-      // the solo scale + HSR chain + inversions link show when the fly-out is open.
-      if (!songKey.root) {
-        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see the scale to solo over.</p>';
-        return;
-      }
+      // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
+      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
+      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
+      // HSR chain moved out entirely. What remains: the key readout line and a
+      // "Triads & Inversions" deep-dive link that opens in the current instrument +
+      // key context.
+      if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
-
-      // Solo scale via the shared KeyExplorer. The in-key DIATONIC CHORD palette used
-      // to render here too, but it now lives ONLY on the adaptive chord surface
-      // (buildGrid -> the chord list above this fly-out, which leads with the in-key
-      // chords when a key is set) so the diatonic chords are never duplicated across two
-      // surfaces. This fly-out keeps the teaching content: title, the solo scale box, the
-      // I-IV-V HSR chain, and the "Walk the full cycle" inversions link. Guarded so a
-      // future script-load reorder degrades (scale skipped, HSR + title still render)
-      // instead of hard-crashing.
-      if (global.KeyExplorer) {
-        var pcs = scalePcs(keyRoot, keyMode);
-        global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
-          label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
-          frets: 7
-        });
-      }
-
-      // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
-      // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
-      // teaching: V is adjacent to IV (same hand shape, 2-fret slide). I sits
-      // in a different family - you "rotate" into it via hammer/transform. The
-      // adapter's chainVoicings honors this. For HSR-by-design profiles (Cigar
-      // Box, Banjo) the same closed barre is the home shape so I+IV+V all use
-      // the same family - that profile IS the HSR loop in one shape.
-      renderHsrChain();
-    }
-    // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
-    // Reuses chordsFromDegrees so any future progression patterns slot in here.
-    function renderHsrChain() {
-      var keyRoot = songKey.root, keyMode = songKey.mode;
-      if (!el.keyView || !keyRoot || !pack) return;
-      var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
-      if (!chain.length) return;
-      var quals = (MODES[keyMode] && MODES[keyMode].quals) || ["", "", "", "", "", "", ""];
-      var romanBase = ['I', 'IV', 'V'];
-      var labels = [0, 3, 4].map(function (deg, i) {
-        return (quals[deg] === 'm' || quals[deg] === 'dim') ? romanBase[i].toLowerCase() : romanBase[i];
-      });
-      // diagramChain picks a single template family across all three names so
-      // the eye sees the same hand shape slid up. Fallback to per-chord
-      // diagramClosed when the adapter doesn't expose the chain method.
-      var diagrams;
-      if (typeof pack.diagramChain === 'function') {
-        diagrams = pack.diagramChain(chain, 'small');
-      } else if (typeof pack.diagramClosed === 'function') {
-        diagrams = chain.map(function (c) { return pack.diagramClosed(c, 'small'); });
-      } else {
-        diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
-      }
-      var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
-      hsrLbl.textContent = 'I IV V · V is IV slid up 2 frets';
-      el.keyView.appendChild(hsrLbl);
-      var row = document.createElement('div'); row.className = 'hsrChain';
-      chain.forEach(function (c, i) {
-        // Same vertical layout as the diatonic palette + "Add Nth chord" row:
-        // chord name (top, inside diagram via chord-name span) -> diagram ->
-        // Roman numeral (bottom). Moving Roman from above to below the diagram
-        // makes the chord name the most prominent label and matches the other
-        // palettes.
-        var card = document.createElement('div'); card.className = 'hsrCard';
-        card.appendChild(diagrams[i]);
-        var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
-        card.appendChild(rn);
-        card.onclick = function () {
-          addChord(c); packPlayChord(c);
-          card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
-        };
-        row.appendChild(card);
-      });
-      el.keyView.appendChild(row);
-      // Deep-dive: the same I-IV-V relationship walked all the way up the neck
-      // using shape rotations (C-shape -> A-shape -> F-shape) and the Hammer /
-      // Slide / Rotate / Flip operations. Not the default surface; linked here
-      // for the curious.
+      // Carry the current instrument AND key so the inversions page opens in context -
+      // same instrument profile, pre-selected to this key. mode rides along too so a
+      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var more = document.createElement('a');
       more.className = 'hsrMore';
-      // Carry the current instrument AND key so the inversions page opens in context -
-      // same instrument profile, pre-selected to this key (the cycle is the same I-IV-V,
-      // now anchored to where the user is actually composing). mode rides along too so a
-      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var invParams = [];
       if (PROFILE_ID) invParams.push('p=' + encodeURIComponent(PROFILE_ID));
-      if (keyRoot) invParams.push('key=' + encodeURIComponent(keyRoot));
-      if (keyMode) invParams.push('mode=' + encodeURIComponent(keyMode));
-      more.href = 'triad-inversions.html' + (invParams.length ? '?' + invParams.join('&') : '');
-      more.textContent = 'Walk the full cycle up the neck →';
+      invParams.push('key=' + encodeURIComponent(keyRoot));
+      invParams.push('mode=' + encodeURIComponent(keyMode));
+      more.href = 'triad-inversions.html?' + invParams.join('&');
+      more.textContent = 'Triads & Inversions →';
       el.keyView.appendChild(more);
     }
 
@@ -1458,8 +1459,10 @@
     }
     // a COMPACT tappable suggestion chip: chord name + its interval (Roman) label, no
     // fretboard diagram - so "Next chord" stays a few short rows instead of eating the
-    // viewport. (The full shapes live in "All chords" / the key palette.) `completes` (a
-    // progression name) accent-highlights the chip and adds a tiny caption in place.
+    // viewport. (The full shapes live in "All chords" / the key palette.) `completes`
+    // accent-highlights the chip that finishes a famous progression. The progression
+    // NAME itself is deliberately not rendered - the caption blew the chip width and
+    // wrapped the row; the glow alone carries the nudge.
     function suggChip(c, tonic, completes) {
       var chip = document.createElement('button');
       chip.type = 'button';
@@ -1467,7 +1470,6 @@
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
       var html = '<span class="scName">' + c + '</span>';
       if (rn) html += '<span class="scRn">' + rn + '</span>';
-      if (completes) html += '<span class="scCap">' + completes + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
@@ -1480,8 +1482,9 @@
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0 || forceStarters) {
-        // Empty state (or "?" pressed): show common progressions so the user has actionable
-        // one-tap starters. The starters live INSIDE the progression box (below #prog).
+        // Empty state (or "?" pressed): show common progressions so the user has
+        // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
+        // in with the In key / All content) so the fixed top region stays short.
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
         lbl.textContent = 'Start with a common progression';
         el.suggest.appendChild(lbl);
@@ -1532,12 +1535,10 @@
         el.suggest.appendChild(lbl);
       }
       var row = document.createElement('div'); row.className = 'suggRow';
-      // show the actual chord shape, not just a name — same diagram as the build grid
-      // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the
-      // accent glow + the progression name it finishes.
+      // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
+      // glow (no name caption - see suggChip).
       picks.forEach(function (c) {
-        var names = completeBy[c];
-        row.appendChild(suggChip(c, tonic, names ? names.join(' / ') : null));
+        row.appendChild(suggChip(c, tonic, !!completeBy[c]));
       });
       el.suggest.appendChild(row);
     }
@@ -1891,6 +1892,7 @@
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,
+    inferKey: inferKey,
     ROOTS: ROOTS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;

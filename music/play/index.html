@@ -99,12 +99,12 @@
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
           </div>
-          <!-- Progression box. When EMPTY it shows the tappable starter progressions
-               (rendered into #suggest by renderSuggest). When non-empty it shows the
-               built chords (#prog). The "?" button re-shows the starters at any time. -->
+          <!-- Progression box: the built chords (#prog). The suggestion surface
+               (#suggest) lives at the top of the SCROLLING chord list below - starters
+               when the progression is empty, next-chord chips otherwise - so the fixed
+               top region stays as short as possible. -->
           <div class="progBox">
             <div class="prog" id="prog"></div>
-            <div id="suggest" class="suggest"></div>
           </div>
           <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
           <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
@@ -124,9 +124,13 @@
                Hidden until a key + progression exist (toggled by songbook's renderKey). -->
           <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
         </div>
-        <!-- The ONLY scroll area: the chord list. In-key cells (.chordCell) and All-chords
-             tiles (.chord) keep touch-action:pan-y so a vertical swipe scrolls them. -->
+        <!-- The ONLY scroll area: the chord list, led by the suggestion surface
+             (#suggest - starter progressions when empty, next-chord chips otherwise;
+             the "?" button re-shows the starters at any time). In-key cells
+             (.chordCell) and All-chords tiles (.chord) keep touch-action:pan-y so a
+             vertical swipe scrolls them. -->
         <div class="composeChords" id="composeChords">
+          <div id="suggest" class="suggest"></div>
           <div class="chordGrid" id="buildGrid"></div>
         </div>
       </div>
