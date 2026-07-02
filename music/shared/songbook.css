@@ -283,13 +283,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
 /* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
-   A chord that COMPLETES a famous progression gets an accent glow + a tiny caption. */
+   A chord that COMPLETES a famous progression gets an accent glow (no name caption -
+   the caption blew the chip width and wrapped the row). */
 .suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
 .suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent);}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
-.suggChip .scCap{font-size:.54rem;font-weight:600;color:var(--accent);text-align:center;line-height:1.1;max-width:84px;}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}

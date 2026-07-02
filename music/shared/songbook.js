@@ -1379,8 +1379,10 @@
     }
     // a COMPACT tappable suggestion chip: chord name + its interval (Roman) label, no
     // fretboard diagram - so "Next chord" stays a few short rows instead of eating the
-    // viewport. (The full shapes live in "All chords" / the key palette.) `completes` (a
-    // progression name) accent-highlights the chip and adds a tiny caption in place.
+    // viewport. (The full shapes live in "All chords" / the key palette.) `completes`
+    // accent-highlights the chip that finishes a famous progression. The progression
+    // NAME itself is deliberately not rendered - the caption blew the chip width and
+    // wrapped the row; the glow alone carries the nudge.
     function suggChip(c, tonic, completes) {
       var chip = document.createElement('button');
       chip.type = 'button';
@@ -1388,7 +1390,6 @@
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
       var html = '<span class="scName">' + c + '</span>';
       if (rn) html += '<span class="scRn">' + rn + '</span>';
-      if (completes) html += '<span class="scCap">' + completes + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
@@ -1453,12 +1454,10 @@
         el.suggest.appendChild(lbl);
       }
       var row = document.createElement('div'); row.className = 'suggRow';
-      // show the actual chord shape, not just a name — same diagram as the build grid
-      // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the
-      // accent glow + the progression name it finishes.
+      // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
+      // glow (no name caption - see suggChip).
       picks.forEach(function (c) {
-        var names = completeBy[c];
-        row.appendChild(suggChip(c, tonic, names ? names.join(' / ') : null));
+        row.appendChild(suggChip(c, tonic, !!completeBy[c]));
       });
       el.suggest.appendChild(row);
     }
