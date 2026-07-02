@@ -1085,7 +1085,19 @@
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
     function setPerformView(v) { STATE.performView = v; stageDefaultView = v; showPerform(); savePerfPrefs(); }
-    function stepFont(d) { STATE.fontMode = 'manual'; STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2))); applyPerfFont(); updateStageBtns(); savePerfPrefs(); }
+    function stepFont(d) {
+      // Leaving auto-fit: seed the manual scale from the CURRENT on-screen auto size
+      // (the last --pscale applyPerfFont computed), not the neutral 1. Otherwise the
+      // first A+ jumps DOWN to 1.1 from a ~1.5 auto-fit (looks like a decrease) and
+      // the first A- drops a big step. Continuing from what's visible = no jump.
+      if (STATE.fontMode === 'auto' && pSheet) {
+        var curScale = parseFloat(pSheet.style.getPropertyValue('--pscale'));
+        if (curScale > 0) STATE.fontScale = curScale;
+      }
+      STATE.fontMode = 'manual';
+      STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2)));
+      applyPerfFont(); updateStageBtns(); savePerfPrefs();
+    }
     // auto-fit: scale the sheet so a short song fills the screen and a long one
     // shrinks toward fitting; manual mode pins an explicit scale instead.
     function applyPerfFont() {

@@ -454,9 +454,9 @@
       // startFret (optional) slides the window up the neck - see scaleDiagram.supportsStart
       // below, which is how KeyExplorer.renderScale feature-detects this before offering
       // the position-shift control.
-      scaleDiagram: function (rootPc, scalePcs, frets, startFret) {
+      scaleDiagram: function (rootPc, scalePcs, frets, startFret, names) {
         var openPcs = profile.strings.map(function (s) { return freqPc(s.f); });
-        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0 });
+        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0, names: names });
       },
       playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
       playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },

@@ -588,6 +588,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed .psBtn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .pSpeed .psBtn:active{transform:scale(.94);}
 .pSpeed .psBtn.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+/* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
+   disabled, matching the practice modeSwitch - the disable was functional-only. */
+.pSpeed .psBtn:disabled{opacity:.35;cursor:default;}
 /* Landscape only (UAT r3): collapse the Stage View+Size controls into a SINGLE
    row and shrink the header so the sheet keeps the vertical room. Landscape
    guarantees width > height, so the one row always has horizontal space; a

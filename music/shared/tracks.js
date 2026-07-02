@@ -492,14 +492,19 @@
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + '<button class="bt-st-x" type="button">close</button></div>'
         + playerBlock
+        // Curation lives in the top panel next to Watch-on-YouTube, so when you
+        // return to a videoless track the "add a video" control is immediately at
+        // hand (was buried below the scale + chords).
+        + urlEditor
         + '</div>'
         + '<div class="bt-st-body">'
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
+        // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
+        // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · <span class="bt-st-notes">' + esc(th.notes.join(' ')) + '</span></div>'
         + '<div class="bt-st-scale" data-scale></div>'
         + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
-        + urlEditor
         + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
@@ -508,7 +513,12 @@
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
       try {
-        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7 });
+        // Key-aware fretboard spelling: map each scale pitch-class to the note name
+        // the scale actually uses (Bb, not A#, in F major) so the dots match the
+        // "Solo over it" list above. Non-scale pcs fall back to sharps in the diagram.
+        var nameByPc = [];
+        th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
+        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7, names: nameByPc });
       } catch (e) {}
       global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
         wrap: false,
