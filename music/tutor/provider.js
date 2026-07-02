@@ -98,11 +98,10 @@
       reply: function (ctx) {
         var root = (ctx && ctx.key) || 'C';
         return {
-          text: '(Phase 4 preview) Picture your Compose progression staying exactly as built. I hold the chords fixed and only change ' +
-            'what YOU solo with: first pass, ' + relativeMinorName(root) + ' minor over it (relative - same notes, different feel). ' +
-            'Second pass, I retune the backing to ' + root + ' minor and you solo ' + root + ' minor (parallel - genuinely different notes). ' +
-            'This is a decoupled scale selector, separate from the key/mode filter that drives harmonization - not built yet, just the idea.',
-          quickReplies: ['What are borrowed chords?', 'Help me build a song']
+          text: 'Picture your progression staying exactly as built. I hold the chords fixed and only change what YOU solo with: ' +
+            relativeMinorName(root) + ' minor over it (relative - same notes, different feel), then the same progression relabeled ' +
+            'in a different key (parallel-flavored - a genuinely different feel). Try a challenge to actually do this, not just hear about it.',
+          quickReplies: ['Try a challenge', 'What are borrowed chords?']
         };
       }
     },
@@ -111,10 +110,10 @@
       match: function (t) { return /song|section|verse|chorus|bridge|aaba|form/.test(t); },
       reply: function () {
         return {
-          text: '(Phase 5 preview) Once a progression feels good, the next question is "what section is this?" I\'d walk you through ' +
-            'labeling it (intro / verse / chorus / bridge), then help pick a contrasting progression for the next section so the whole ' +
-            'song has shape instead of one loop repeated. AABA is the classic starting form - two verses, a contrasting bridge, back to the verse.',
-          quickReplies: ['Swap the solo scale over my progression', 'What are borrowed chords?']
+          text: 'Once a progression feels good, the next question is "what section is this?" Label it (verse / chorus / bridge), ' +
+            'then pick a key for the next section that transitions well - so the whole song has shape instead of one loop repeated. ' +
+            'Want to actually build one?',
+          quickReplies: ['Build a song', 'What are borrowed chords?']
         };
       }
     }

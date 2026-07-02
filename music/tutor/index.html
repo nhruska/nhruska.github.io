@@ -187,6 +187,7 @@ body{display:flex;flex-direction:column;max-width:560px;margin:0 auto;height:100
 <script src="../shared/songbook.js"></script>
 <script src="mini-compose.js"></script>
 <script src="challenges.js"></script>
+<script src="song-builder.js"></script>
 <script src="provider.js"></script>
 <script>
 'use strict';
@@ -201,6 +202,11 @@ var chatHistory = [];
 // A message that matches this, when not already inside a challenge, starts
 // challenge mode instead of going to the free-chat canned provider.
 var CHALLENGE_TRIGGER = /challenge|practice|exercise|quiz/i;
+// Same idea for the song-builder flow (wave 4). Deliberately narrow (verb +
+// "song", not a bare "song"/"section" word) so a genuine theory question
+// like "what's a song section" still reaches the canned provider instead of
+// launching the builder.
+var SONG_TRIGGER = /build.*song|write.*song|make.*song|start.*song|song builder/i;
 
 var thread = document.getElementById('thread');
 var composer = document.getElementById('composer');
@@ -296,7 +302,11 @@ function send(text) {
   appendMessage('user', text);
   chatHistory.push({ role: 'user', text: text });
 
-  if (!activeChallenge && CHALLENGE_TRIGGER.test(text)) {
+  if (!activeChallenge && !songMode && SONG_TRIGGER.test(text)) {
+    startSongFlow();
+    return;
+  }
+  if (!activeChallenge && !songMode && CHALLENGE_TRIGGER.test(text)) {
     startChallengeFlow(TutorChallenges.CHALLENGES[0].id);
     return;
   }
@@ -341,8 +351,14 @@ var widgetState = MiniCompose.initialState(context.key, context.mode);
 var activeChallenge = null;   // the challenge object currently in play, or null
 var challengeIndex = -1;      // index into TutorChallenges.CHALLENGES
 
+// ---- song-builder mode (wave 4) - mutually exclusive with challenge mode ----
+var SECTION_LABELS = ['Verse', 'Chorus', 'Bridge'];
+var songMode = false;    // true while actively building a song
+var song = null;         // SongBuilder song object, built incrementally
+var songSectionIndex = -1;
+
 function renderWidget() {
-  wKeyChip.textContent = widgetState.key + ' ' + widgetState.mode;
+  wKeyChip.textContent = (songMode ? widgetState.label + ' - ' : '') + widgetState.key + ' ' + widgetState.mode;
   wTrack.textContent = widgetState.track;
 
   var romans = MiniCompose.romanNumerals(widgetState);
@@ -434,6 +450,7 @@ function askIdentifyQuestion(challenge) {
 function startChallengeFlow(id) {
   var challenge = TutorChallenges.byId(id);
   if (!challenge) return;
+  wCheck.textContent = 'Check my answer'; // defensive reset in case song mode left it as 'Section done'
   activeChallenge = challenge;
   challengeIndex = TutorChallenges.CHALLENGES.indexOf(challenge);
   // Restarting from the top (e.g. re-tapping "Try a challenge" after
@@ -481,7 +498,74 @@ function endChallenges() {
   challengeIndex = -1;
   widget.hidden = true;
   appendMessage('tutor', 'Back to chat - ask me anything, or start another challenge any time.');
-  appendQuickReplies(['Try a challenge', 'Parallel vs relative', 'What are borrowed chords?']);
+  appendQuickReplies(['Try a challenge', 'Build a song', 'Parallel vs relative']);
+}
+
+// ---- song-builder flow (wave 4): AI acts on the SAME widget, but the goal
+// is building something, not answering right/wrong. Each section reuses the
+// mini-compose reducers directly (a section IS a mini-compose state, per
+// song-builder.js); the new teaching moment is picking the NEXT section's
+// key with the transition-quality reasoning surfaced as the choice itself.
+function startSongFlow() {
+  songMode = true;
+  song = SongBuilder.createSong();
+  songSectionIndex = 0;
+  widgetState = SongBuilder.createSection(SECTION_LABELS[0], context.key, context.mode);
+  widget.hidden = false;
+  renderWidget();
+  renderPicker();
+  wPickerWrap.hidden = false;
+  wActions.hidden = false;
+  wCheck.textContent = 'Section done';
+  wCheck.disabled = true;
+  appendMessage('tutor', 'Let\'s build a song - ' + SECTION_LABELS.join(', ') + '. Starting with the ' + SECTION_LABELS[0] +
+    ' in ' + widgetState.key + ' ' + widgetState.mode + ' - tap chords below to build its progression, then hit Section done.');
+}
+
+function promptNextSection(justFinishedSection) {
+  var nextLabel = SECTION_LABELS[songSectionIndex + 1];
+  var choices = SongBuilder.keyChoicesFor(justFinishedSection);
+  appendMessage('tutor', 'Nice ' + justFinishedSection.label + '. Now let\'s pick a key for the ' + nextLabel +
+    ' - here\'s what reads as a pleasing change coming out of ' + justFinishedSection.key + ' ' + justFinishedSection.mode + ':');
+  var items = choices.map(function (c) { return { id: c.root + '-' + c.mode, root: c.root, mode: c.mode, label: c.root + ' ' + c.mode }; });
+  appendChoiceReplies(items, function (chosen) {
+    var picked = choices.filter(function (c) { return c.root === chosen.root && c.mode === chosen.mode; })[0];
+    appendMessage('tutor', picked.reason);
+    songSectionIndex++;
+    widgetState = SongBuilder.createSection(nextLabel, chosen.root, chosen.mode);
+    renderWidget();
+    renderPicker();
+    wPickerWrap.hidden = false;
+    wActions.hidden = false;
+    wCheck.disabled = true;
+    appendMessage('tutor', 'Build the ' + nextLabel + ' progression.');
+  });
+}
+
+function finishSong() {
+  var transitions = SongBuilder.analyzeSong(song);
+  var lines = song.sections.map(function (s, i) {
+    var romans = MiniCompose.romanNumerals(s);
+    var line = '**' + s.label + '** (' + s.key + ' ' + s.mode + '): ' + s.progression.join('-') + ' [' + romans.join('-') + ']';
+    if (i < transitions.length) line += '\n' + transitions[i].reason;
+    return line;
+  });
+  appendMessage('tutor', 'Here\'s your song:\n\n' + lines.join('\n\n'));
+  songMode = false;
+  song = null;
+  songSectionIndex = -1;
+  widget.hidden = true;
+  wCheck.textContent = 'Check my answer';
+  appendQuickReplies(['Build a song', 'Try a challenge', 'Parallel vs relative']);
+}
+
+function handleSectionDone() {
+  song = SongBuilder.addSection(song, widgetState);
+  wPickerWrap.hidden = true;
+  wActions.hidden = true;
+  var justFinished = song.sections[song.sections.length - 1];
+  if (songSectionIndex < SECTION_LABELS.length - 1) promptNextSection(justFinished);
+  else finishSong();
 }
 
 wUndo.addEventListener('click', function () {
@@ -491,6 +575,7 @@ wUndo.addEventListener('click', function () {
 });
 
 wCheck.addEventListener('click', function () {
+  if (songMode) { handleSectionDone(); return; }
   if (!activeChallenge) return;
   var result = activeChallenge.check(widgetState);
   wPickerWrap.hidden = true;
