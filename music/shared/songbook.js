@@ -758,7 +758,10 @@
         // Locked interface: no `custom:true` for a catalog song (it isn't a saved
         // custom item, so there's nothing for the Studio's "Edit this track" link
         // to look up). Custom songs keep the exact payload shape they always had.
-        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || (mr && mr.yt) || s.yt || null };
+        // Deliberately NO merged-record yt here: openStudio rehydrates url-less
+        // payloads by trackKey and sets ytSource alongside yt - passing mr.yt
+        // directly would skip that and lose the overlay Clear button.
+        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || s.yt || null };
         if (s.custom) payload.custom = true;
         openStudioCb(payload);
       };
