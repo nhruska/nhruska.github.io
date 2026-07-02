@@ -137,7 +137,11 @@
         // history slot - so the async back/push race can't pop the just-opened layer;
         // if onSave navigates nowhere, the form slot is collapsed. Falls back to the raw
         // save+close when NavHistory is absent.
-        var doSave = function () { if (current.onSave) current.onSave(f); };
+        // CAPTURE the callback FIRST: settleAfter calls close() (which nulls `current`)
+        // BEFORE running this - reading current.onSave inside would be a null deref, so
+        // the save would silently no-op.
+        var onSave = current.onSave;
+        var doSave = function () { if (onSave) onSave(f); };
         if (global.NavHistory) global.NavHistory.settleAfter(close, doSave);
         else { doSave(); close(); }
       };
@@ -148,7 +152,9 @@
             : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
           if (confirm(msg)) {
             // Delete navigates (switchTab('library')): same transition hand-off as save.
-            var doDelete = function () { if (current.onDelete) current.onDelete(); };
+            // Capture onDelete FIRST (close() nulls current before runNext runs).
+            var onDelete = current.onDelete;
+            var doDelete = function () { if (onDelete) onDelete(); };
             if (global.NavHistory) global.NavHistory.settleAfter(close, doDelete);
             else { doDelete(); close(); }
           }
