@@ -107,7 +107,7 @@
         + '<input data-url class="bt-in" value="' + esc(urlText) + '" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
         + '<div class="rf-actions">'
         + '<button class="btn red" data-save type="button">' + (fork ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
-        + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">Delete</button>' : '')
+        + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
       el.querySelector('[data-close]').onclick = close;
@@ -127,7 +127,9 @@
       if (current.onDelete) {
         var delBtn = el.querySelector('[data-delete]');
         if (delBtn) delBtn.onclick = function () {
-          if (confirm('Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?')) { current.onDelete(); close(); }
+          var msg = fork ? 'Revert to the original song? Your edits and video will be removed.'
+            : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
+          if (confirm(msg)) { current.onDelete(); close(); }
         };
       }
     }

@@ -1869,7 +1869,11 @@
       var cs = customById(id);
       if (!cs) return;
       repForm.open({
-        mode: 'edit', item: cs,
+        // A fork edits in FORK mode too (chords hidden, its sheet preserved) -
+        // the generic form would expose Chords, but rebuildAll keeps the fork's
+        // sheet, so a chord edit would be silently ignored. Chord/lyric editing
+        // is slice 2. Its destructive action is "Revert to original".
+        mode: 'edit', item: cs, fork: !!cs.forkOf,
         onSave: function (f) {
           var updated = updateCustomItem(id, f);
           // Reopening the Studio here is the actual regression test for the

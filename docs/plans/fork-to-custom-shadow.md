@@ -17,5 +17,5 @@
 - A [chord]lyric sheet editor in the Add/Edit form so a fork (or any custom) can edit chords AND lyrics without losing the lyric lines. Unlocks the seq/sheet field in fork mode.
 
 ## Verification
-- Unit: rebuildAll shadow (fork omits its catalog original; delete restores) + sheet-preserve (fork keeps its rich sheet, not a chord-only rebuild).
-- Live: Make-it-mine on a catalog song -> edit name + paste video -> list shows the fork (one entry, not two), original hidden; Solo/Studio shows the curated video; lyrics intact; Revert -> original returns.
+- Unit: `shadowedCatalogIds` predicate (which catalog ids a fork set shadows) + `readFields` fork-mode (no Chords field -> seq undefined, sheet not clobbered). The full `rebuildAll` shadow/delete-restore/sheet-preserve is verified LIVE (below), not by a mount-level unit test - a committed mount-DOM harness is the tracked follow-up.
+- Live (Playwright, real app, inspected): Make-it-mine on a catalog song -> fork form (Chords hidden) -> edit name + paste video -> list shows ONE entry (fork shadows the original); lyrics intact; persisted fork carries forkOf + preserved sheet + video; Solo/Studio shows the curated video; Revert -> original returns.
