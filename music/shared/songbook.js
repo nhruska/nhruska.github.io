@@ -287,6 +287,15 @@
   // chord-sheet items can open the Practice screen or join a setlist/Stage - a
   // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
   function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
+  // Set of catalog ids shadowed by a fork: a custom item with forkOf="<catalogId>"
+  // hides that catalog song (its edited copy takes its place). Pure + testable.
+  function shadowedCatalogIds(customs) {
+    var out = {};
+    (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      if (cs && cs.forkOf) out[cs.forkOf] = true;
+    });
+    return out;
+  }
   // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
   // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
   // literally named "mine" filters as a genre and does NOT hijack the ownership
@@ -445,13 +454,21 @@
     var customSongs = loadCustom();
     function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
     function rebuildAll() {
-      ALLSONGS = CATALOG.map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); });
-      // Only fabricate a chord sheet for a seq-BEARING custom song. A seq-less
-      // video-only track must NOT get a (truthy) sheet - buildSheetFromSeq([])
-      // returns [["Progression",""]], which routed the track to a blank Practice
-      // screen instead of the Studio (repertoire.js playability keys off .sheet).
+      // Fork-to-custom SHADOW: a custom item with forkOf="<catalogId>" replaces
+      // (shadows) that catalog song - so its curated video / edited metadata show
+      // and the original is hidden. Deleting the fork drops it from this set, so
+      // the catalog song reappears (revert). Pure predicate, so it's testable.
+      var shadowed = shadowedCatalogIds(customSongs);
+      ALLSONGS = CATALOG
+        .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
+        .filter(function (s) { return !shadowed[s.id]; });
       customSongs.forEach(function (cs) {
-        var withSheet = (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
+        // Prefer an item's OWN sheet (a fork preserves the catalog chords+lyrics
+        // verbatim). Otherwise fabricate a chord-only sheet from seq for composed
+        // customs; a seq-less, sheet-less video-only track gets NO sheet (routes
+        // to the Studio, not a blank Practice screen).
+        var withSheet = (cs.sheet && cs.sheet.length) ? {}
+          : (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
         ALLSONGS.push(Object.assign({}, cs, withSheet));
       });
     }
@@ -715,9 +732,12 @@
       el.practiceBody.style.display = 'block';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
-      // Custom (composed) sheets are chord calls with no lyric text - Lyrics/Both
-      // would render empty, so the view is pinned to Chords for them.
-      var view = s.custom ? 'chords' : STATE.songView;
+      // Composed customs are chord calls with no lyric text - Lyrics/Both would
+      // render empty, so the view is pinned to Chords. A FORK of a catalog song
+      // DOES carry lyrics (preserved sheet), so it respects the view choice like
+      // a catalog song.
+      var forcedChords = s.custom && !s.forkOf;
+      var view = forcedChords ? 'chords' : STATE.songView;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
       // setlist checkmark toggle (top-right, alongside the maximize icon when
@@ -733,7 +753,7 @@
       // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
       // locked decision - replaces the full-width Stage CTA).
       function segBtn(v, lbl) {
-        var dis = s.custom && v !== 'chords';
+        var dis = forcedChords && v !== 'chords';
         return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
           + (dis ? ' disabled' : '') + ' aria-pressed="' + (view === v ? 'true' : 'false') + '">' + lbl + '</button>';
       }
@@ -815,26 +835,30 @@
         if (s.custom) payload.custom = true;
         openStudioCb(payload);
       };
-      if (s.custom) {
-        var act = el.practiceBody.querySelector('.actions');
-        if (act) {
-          var eb = document.createElement('button');
-          eb.className = 'btn'; eb.textContent = 'Edit';
-          eb.onclick = function () { openEditForm(s.id); };
-          act.appendChild(eb);
-          var db = document.createElement('button');
-          db.className = 'btn ghost'; db.textContent = 'Delete progression'; db.style.flexBasis = '100%';
-          db.onclick = function () {
-            if (confirm('Delete this progression?')) {
-              customSongs = customSongs.filter(function (cs) { return cs.id !== s.id; });
-              saveCustom();
-              var sp = STATE.setlist.indexOf(s.id);
-              if (sp >= 0) { STATE.setlist.splice(sp, 1); saveSet(); }
-              rebuildAll(); switchTab('library'); renderSongs(); renderSetlist();
-            }
-          };
-          act.appendChild(db);
-        }
+      var act = el.practiceBody.querySelector('.actions');
+      if (act && s.custom) {
+        var isFork = !!s.forkOf;
+        var eb = document.createElement('button');
+        eb.className = 'btn'; eb.textContent = 'Edit';
+        eb.onclick = function () { openEditForm(s.id); };
+        act.appendChild(eb);
+        var db = document.createElement('button');
+        db.className = 'btn ghost';
+        // A fork shadows a catalog song, so removing it REVERTS to the original
+        // rather than deleting a user creation - label + confirm say so.
+        db.textContent = isFork ? 'Revert to original' : 'Delete progression'; db.style.flexBasis = '100%';
+        db.onclick = function () {
+          var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
+          if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
+        };
+        act.appendChild(db);
+      } else if (act && !s.custom) {
+        // Catalog song: fork it into an editable, user-owned copy that SHADOWS
+        // the original (add a video, rename, re-key). Chords + lyrics preserved.
+        var mb = document.createElement('button');
+        mb.className = 'btn'; mb.textContent = 'Make it mine';
+        mb.onclick = function () { openForkForm(s); };
+        act.appendChild(mb);
       }
     }
     function shiftKey(dir) {
@@ -1006,7 +1030,7 @@
       // control must SAY so - highlight Chords and disable the other views
       // instead of showing a Lyrics/Both highlight over a chords-only sheet.
       var cur = songById(QUEUE.current());
-      var forced = !!(cur && cur.custom);
+      var forced = !!(cur && cur.custom && !cur.forkOf); // a fork carries lyrics -> not forced
       var v = forced ? 'chords' : STATE.performView;
       if (el.pViewLyrics) { el.pViewLyrics.classList.toggle('on', v === 'lyrics'); el.pViewLyrics.disabled = forced; }
       if (el.pViewChords) el.pViewChords.classList.toggle('on', v === 'chords');
@@ -1039,7 +1063,7 @@
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
       if (pSheet) {
-        var view = s.custom ? 'chords' : STATE.performView;
+        var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view) + '</div>';
         pSheet.scrollTop = 0;
         applyPerfFont();
@@ -1801,6 +1825,12 @@
         d: 'Mine', genre: f.genre || '', custom: true, key: f.key || null, mode: f.mode || 'major', yt: f.yt || null
       };
       if (f.seq && f.seq.length) cs.seq = f.seq.slice();
+      // Fork of a catalog song: record which song it shadows + preserve the
+      // original chords+lyrics sheet verbatim (rebuildAll keeps cs.sheet over a
+      // chord-only rebuild). The year carries over so the shadow reads identically.
+      if (f.forkOf) cs.forkOf = f.forkOf;
+      if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
+      if (f.y != null) cs.y = f.y;
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       return cs;
     }
@@ -1868,6 +1898,30 @@
           key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null
         },
         onSave: function (f) { createCustomItem(f); }
+      });
+    }
+    // Fork a CATALOG song into an editable, user-owned copy that SHADOWS the
+    // original (add a video / rename / re-key). Chords + lyrics are preserved
+    // verbatim (passed through as sheet + seq); the form hides the Chords field
+    // in fork mode. On save, open the new copy so the user lands on their version.
+    function openForkForm(song) {
+      if (!repForm || !song) return;
+      var sk = soloKeyFor(song, (song.seq || []), 0); // derive a key if the record lacks one
+      repForm.open({
+        mode: 'create', fork: true,
+        item: {
+          t: song.t, a: song.a,
+          key: song.key || (sk && sk.key) || '', mode: song.mode || (sk && sk.mode) || 'major',
+          genre: song.genre || '', yt: song.yt || null
+        },
+        onSave: function (f) {
+          f.forkOf = song.id;                       // shadow this catalog id
+          if (song.sheet && song.sheet.length) f.sheet = song.sheet; // preserve chords+lyrics
+          if (song.seq && song.seq.length) f.seq = song.seq.slice(); // preserve chord chips / solo key
+          if (song.y != null) f.y = song.y;
+          var cs = createCustomItem(f);
+          if (cs) { STATE.transpose = 0; openPractice(cs.id); }
+        }
       });
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
@@ -2029,6 +2083,7 @@
     soloKeyFor: soloKeyFor,
     isMine: isMine,
     hasChordSheet: hasChordSheet,
+    shadowedCatalogIds: shadowedCatalogIds,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
     ytSearchURL: ytSearchURL,

@@ -48,7 +48,8 @@
     var keyRaw = form.querySelector('[data-key]').value.trim();
     var mode = normFormMode(form.querySelector('[data-mode]').value);
     var genre = form.querySelector('[data-genre]').value.trim();
-    var seq = parseSeq(form.querySelector('[data-seq]').value);
+    var seqEl = form.querySelector('[data-seq]'); // absent in fork mode (chords preserved)
+    var seq = seqEl ? parseSeq(seqEl.value) : undefined;
     var urlRaw = form.querySelector('[data-url]').value.trim();
     var yt = urlRaw ? (parseYouTubeId ? parseYouTubeId(urlRaw) : null) : null;
     return {
@@ -68,6 +69,9 @@
 
     function render() {
       var editing = current.mode === 'edit';
+      var fork = !!current.fork; // forking a catalog song: chords+lyrics come from
+                                 // the original (preserved), so hide the Chords field
+                                 // in this slice (full sheet editing is the next one).
       var it = current.item || {};
       // Prefill from the item in BOTH modes: edit fills from the existing custom
       // item; create fills from a passed-in seed (e.g. a Studio track whose video
@@ -81,8 +85,8 @@
       var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
       var rootOpts = ROOTS.map(function (r) { return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
       el.innerHTML =
-        '<div class="rf-box" role="dialog" aria-label="' + (editing ? 'Edit repertoire item' : 'Add a song or track') + '">'
-        + '<div class="rf-head"><span class="rf-t">' + (editing ? 'Edit' : 'Add a song or track') + '</span>'
+        '<div class="rf-box" role="dialog" aria-label="' + (fork ? 'Make it mine' : editing ? 'Edit repertoire item' : 'Add a song or track') + '">'
+        + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Make it mine' : editing ? 'Edit' : 'Add a song or track') + '</span>'
         + '<button class="rf-x" type="button" data-close>close</button></div>'
         + '<div class="rf-body">'
         + '<label class="rf-lbl">Title</label><input data-title class="bt-in" value="' + esc(title) + '" placeholder="Song or track title" autocomplete="off">'
@@ -93,12 +97,16 @@
         + MODES.map(function (m) { return '<option value="' + m + '"' + (mode === m ? ' selected' : '') + '>' + m + '</option>'; }).join('')
         + '</select></div></div>'
         + '<label class="rf-lbl">Genre</label><input data-genre class="bt-in" value="' + esc(genre) + '" placeholder="Genre (optional)" autocomplete="off">'
-        + '<label class="rf-lbl">Chords <span class="rf-opt">(optional - leave blank for a video-only track)</span></label>'
-        + '<textarea data-seq class="bt-in rf-seq" placeholder="e.g. G D Em C" rows="2">' + esc(seqText) + '</textarea>'
+        // Fork mode preserves the catalog song's chords + lyrics, so the Chords
+        // field is hidden (a chord-only edit here would drop the lyric lines).
+        + (fork
+          ? '<div class="rf-note">Chords and lyrics stay from the original song. Editing them is coming next.</div>'
+          : '<label class="rf-lbl">Chords <span class="rf-opt">(optional - leave blank for a video-only track)</span></label>'
+            + '<textarea data-seq class="bt-in rf-seq" placeholder="e.g. G D Em C" rows="2">' + esc(seqText) + '</textarea>')
         + '<label class="rf-lbl">Video URL <span class="rf-opt">(optional)</span></label>'
         + '<input data-url class="bt-in" value="' + esc(urlText) + '" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
         + '<div class="rf-actions">'
-        + '<button class="btn red" data-save type="button">' + (editing ? 'Save changes' : 'Create') + '</button>'
+        + '<button class="btn red" data-save type="button">' + (fork ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">Delete</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
@@ -125,7 +133,7 @@
     }
 
     function open(o) {
-      current = { mode: o.mode === 'edit' ? 'edit' : 'create', item: o.item || null, onSave: o.onSave || null, onDelete: o.onDelete || null };
+      current = { mode: o.mode === 'edit' ? 'edit' : 'create', fork: !!o.fork, item: o.item || null, onSave: o.onSave || null, onDelete: o.onDelete || null };
       render();
     }
 

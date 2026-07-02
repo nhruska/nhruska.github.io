@@ -1,0 +1,21 @@
+# Fork-to-custom (SHADOW) - catalog song curation + editing
+
+> UAT r3 solo-HUD asks: curate a found YouTube video onto a catalog song, and edit a catalog song's name/key/chords/lyrics. Both resolve to ONE pattern: fork a catalog song into an editable user-owned copy that SHADOWS the original (operator decision 2026-07-02: shadow, not duplicate).
+
+## Data model
+- A custom item gains `forkOf: "<catalogId>"` (the `kN` id of the shadowed catalog song) and carries the original `sheet` verbatim.
+- `rebuildAll`: build catalog (kN ids); collect the set of `forkOf` ids across customs; **omit** those catalog entries (the fork shadows them); append customs. Deleting the fork -> catalog reappears (revert).
+- `rebuildAll` sheet rule: **prefer `cs.sheet`** when present (a fork preserves the original chords+lyrics); else build a chord-only sheet from `cs.seq` (existing behavior for composed customs).
+
+## Slice 1 (this PR) - foundation + metadata/video, lyrics PRESERVED
+- forkOf + shadow + sheet-preserve in rebuildAll (+ unit test for the shadow/sheet-preserve logic).
+- Entry: "Make it mine" on a CATALOG song (practice view) -> Add/Edit form in **fork mode**: edit title / artist / key / mode / genre / **video URL**. Chords + lyrics come from the original and are preserved untouched (the seq/sheet field is hidden in fork mode with a "chords & lyrics editing coming next" note - avoids the chord-only rebuild clobbering the catalog lyrics).
+- Revert: a forked item's delete is labelled **"Revert to original"**; deleting restores the catalog song.
+- Video curation solved: fork -> paste video -> shadows the catalog song with your video (persisted).
+
+## Slice 2 (next PR) - full sheet editor
+- A [chord]lyric sheet editor in the Add/Edit form so a fork (or any custom) can edit chords AND lyrics without losing the lyric lines. Unlocks the seq/sheet field in fork mode.
+
+## Verification
+- Unit: rebuildAll shadow (fork omits its catalog original; delete restores) + sheet-preserve (fork keeps its rich sheet, not a chord-only rebuild).
+- Live: Make-it-mine on a catalog song -> edit name + paste video -> list shows the fork (one entry, not two), original hidden; Solo/Studio shows the curated video; lyrics intact; Revert -> original returns.

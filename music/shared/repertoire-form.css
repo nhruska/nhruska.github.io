@@ -21,6 +21,7 @@
   font-weight:700;margin:12px 0 5px;}
 .rf-lbl:first-child{margin-top:0;}
 .rf-opt{text-transform:none;letter-spacing:0;font-weight:500;color:var(--txt-dim);opacity:.85;}
+.rf-note{font-size:.8rem;color:var(--txt-dim);background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:2px 0 4px;}
 .rf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .rf-seq{resize:vertical;min-height:44px;font-family:'Space Mono',monospace;}
 .rf-actions{display:flex;gap:10px;margin-top:18px;}

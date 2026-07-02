@@ -143,6 +143,16 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
 });
 
 /* ---------- the Mine facet (user-owned items in the Library filter bar) ---------- */
+test('shadowedCatalogIds: forks report the catalog id they shadow, others do not', function () {
+  var customs = [
+    { id: 'm1', custom: true, seq: ['C', 'G'] },              // a plain composed custom
+    { id: 'm2', custom: true, forkOf: 'k7', sheet: [['V', '[C]x']] }, // a fork of catalog k7
+    { id: 'm3', custom: true, forkOf: 'k3' }                  // a fork of catalog k3
+  ];
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds(customs), { k7: true, k3: true });
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds([]), {});
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds(null), {});
+});
 test('hasChordSheet: only items with a real chord sequence can join Practice/Setlist/Stage', function () {
   assert.strictEqual(Songbook.hasChordSheet({ seq: ['C', 'G'] }), true);
   assert.strictEqual(Songbook.hasChordSheet({ seq: [] }), false);   // cleared chords
