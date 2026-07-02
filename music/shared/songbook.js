@@ -237,6 +237,17 @@
     var base = Rep.filter(list, { q: sel.q, genre: mine ? 'all' : sel.genre, key: sel.key });
     return mine ? base.filter(isMine) : base;
   }
+  // Zero-results empty state for the Library list. When a key facet is active it
+  // NAMES the key - the key chips can sit scrolled out of view, so "why is my
+  // list empty" must be readable from the message itself - and clearKey tells
+  // the DOM layer to offer the one-tap Any-key clearing link. Pure + Node-testable.
+  function libraryEmptyState(sel) {
+    var key = sel && sel.key && sel.key !== 'all' ? sel.key : null;
+    return {
+      message: key ? 'Nothing in your repertoire matches in ' + key + '.' : 'Nothing in your repertoire matches.',
+      clearKey: !!key
+    };
+  }
 
   /* =====================================================================
    * Songbook.mount(opts)
@@ -457,7 +468,20 @@
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
       if (filtered.length === 0) {
-        el.songsList.innerHTML = '<div class="empty">Nothing in your repertoire matches.</div>';
+        var es = libraryEmptyState({ key: STATE.key });
+        var box = document.createElement('div');
+        box.className = 'empty';
+        box.appendChild(document.createTextNode(es.message));
+        if (es.clearKey) {
+          var clr = document.createElement('button');
+          clr.type = 'button';
+          clr.className = 'emptyClear';
+          clr.textContent = 'Search Any key';
+          clr.onclick = function () { STATE.key = 'all'; renderFilterChips(); renderSongs(); };
+          box.appendChild(clr);
+        }
+        el.songsList.innerHTML = '';
+        el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
         return;
       }
@@ -1792,6 +1816,7 @@
     soloKeyFor: soloKeyFor,
     isMine: isMine,
     libraryFilter: libraryFilter,
+    libraryEmptyState: libraryEmptyState,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

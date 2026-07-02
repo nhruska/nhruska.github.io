@@ -123,6 +123,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Edit-set toggle: ghost button that lights up accent when editing. */
 #setEdit.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
+/* One-tap key-filter clearing link inside the zero-results empty state. */
+.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:#06201c;}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px;}
