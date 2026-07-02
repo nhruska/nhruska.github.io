@@ -34,12 +34,16 @@ jobs:
             const hOwner = (pr.head.repo && pr.head.repo.owner && pr.head.repo.owner.login) || owner;
             const hName = (pr.head.repo && pr.head.repo.name) || repo;
             const base = `https://raw.githack.com/${hOwner}/${hName}/${sha}`;
-            const commitUrl = `https://github.com/${hOwner}/${hName}/commit/${sha}`;
             // Encode each branch path segment but keep the slashes literal so the
             // GitHub tree URL for a slashed branch (claude/foo) still resolves and
             // a `)`/`#`/`%` in a branch can't break the Markdown link href.
             const branchPath = String(branch).split('/').map(encodeURIComponent).join('/');
             const branchUrl = `https://github.com/${hOwner}/${hName}/tree/${branchPath}`;
+            // Branch-form githack root: the DEFAULT for the tuning links so the preview
+            // tracks the latest push (slashed branch names resolve on githack). The
+            // commit-pinned `base` (githack at the SHA) is offered as the "Commit
+            // preview" link for isolated per-commit testing.
+            const baseBranch = `https://raw.githack.com/${hOwner}/${hName}/${branchPath}`;
             const liveUrl = `https://${owner}.github.io/music/play/`;
             // The profile label + branch are PR-controlled; truncate FIRST, THEN
             // escape Markdown-active chars, so a slice can't sever an escape pair
@@ -63,14 +67,14 @@ jobs:
                   const m = js.match(/label:\s*["']([^"']+)["']/);
                   if (m) label = m[1];
                 } catch (e) { /* leave label as id */ }
-                apps.push([mdText(label), `${base}/music/play/?p=${encodeURIComponent(id)}`]);
+                apps.push([mdText(label), `${baseBranch}/music/play/?p=${encodeURIComponent(id)}`]);
               }
             } catch (e) {
               core.warning(`manifest read failed: ${e.message}; falling back to hardcoded list`);
               apps = [
-                ['Guitar', `${base}/music/play/?p=guitar-standard`],
-                ['Ukulele', `${base}/music/play/?p=ukulele-gcea`],
-                ['Mandolin', `${base}/music/play/?p=mandolin-gdae`],
+                ['Guitar', `${baseBranch}/music/play/?p=guitar-standard`],
+                ['Ukulele', `${baseBranch}/music/play/?p=ukulele-gcea`],
+                ['Mandolin', `${baseBranch}/music/play/?p=mandolin-gdae`],
               ];
             }
             const marker = '<!-- pr-preview-bot -->';
@@ -79,11 +83,10 @@ jobs:
             const body = [
               marker,
               '### Live preview - tap to open on your phone',
-              '_https, so the mic tuner works. No merge needed._',
               '',
               '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
-              `**Commit** [\`${sha.slice(0, 7)}\`](${commitUrl}) · **Branch** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
+              `**Commit preview** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (pin for isolated testing) · **Branch** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
