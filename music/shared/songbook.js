@@ -469,7 +469,14 @@
         return {};
       } catch (e) { return {}; }
     }
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
+    // stageDefaultView = the PERSISTED Stage view preference. STATE.performView is
+    // the CURRENT view, which a per-launch seed (song-view Stage) may transiently
+    // override without changing the saved default - only an in-Stage view tap
+    // (setPerformView) updates the default. Persisting STATE.performView instead
+    // would let staging one custom song (forced 'chords') leak into every later
+    // setlist Perform. (Assigned just after STATE is built, below.)
+    var stageDefaultView;
+    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -481,6 +488,7 @@
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
+    stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
     /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
@@ -700,7 +708,7 @@
       // present) — both above the fold, no separate row.
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
-        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>'
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + maxBtn
@@ -715,7 +723,7 @@
       }
       var switcher = '<div class="practiceRow">'
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
-        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
         + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded
@@ -921,11 +929,12 @@
     function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
-      // Song-view Stage carries its view forward (seedView); the setlist Perform
-      // button passes none and keeps the persisted stage pref. Persist so the
-      // stage toggle + updateStageBtns stay consistent with what's shown.
+      // Seed the CURRENT view for this launch only - never persisted here (that
+      // would leak a custom song's forced 'chords' into later performances). The
+      // setlist Perform button seeds stageDefaultView so it always opens in the
+      // saved preference regardless of a prior song-view Stage seed.
       if (seedView === 'lyrics' || seedView === 'chords' || seedView === 'both') {
-        STATE.performView = seedView; savePerfPrefs();
+        STATE.performView = seedView;
       }
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
@@ -935,7 +944,7 @@
       showPerform();
       reqWake();
     }
-    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
+    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
     if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
@@ -945,7 +954,7 @@
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
-    // stage controls panel (scroll speed + font size + lyrics/chords/both view)
+    // stage controls panel (font size + lyrics/chords/both view; no scroll-speed slider in the current markup)
     if (el.pCtrls) el.pCtrls.onclick = function () { STATE.ctrlsOpen = !STATE.ctrlsOpen; if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen || STATE.scrolling); };
     if (el.pViewLyrics) el.pViewLyrics.onclick = function () { setPerformView('lyrics'); };
     if (el.pViewChords) el.pViewChords.onclick = function () { setPerformView('chords'); };
@@ -953,7 +962,7 @@
     if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
-    function setPerformView(v) { STATE.performView = v; showPerform(); savePerfPrefs(); }
+    function setPerformView(v) { STATE.performView = v; stageDefaultView = v; showPerform(); savePerfPrefs(); }
     function stepFont(d) { STATE.fontMode = 'manual'; STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2))); applyPerfFont(); updateStageBtns(); savePerfPrefs(); }
     // auto-fit: scale the sheet so a short song fills the screen and a long one
     // shrinks toward fitting; manual mode pins an explicit scale instead.
