@@ -142,4 +142,188 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
 });
 
+/* ---------- the Mine facet (user-owned items in the Library filter bar) ---------- */
+test('hasChordSheet: only items with a real chord sequence can join Practice/Setlist/Stage', function () {
+  assert.strictEqual(Songbook.hasChordSheet({ seq: ['C', 'G'] }), true);
+  assert.strictEqual(Songbook.hasChordSheet({ seq: [] }), false);   // cleared chords
+  assert.strictEqual(Songbook.hasChordSheet({ yt: 'x' }), false);    // pure video-only custom track
+  assert.strictEqual(Songbook.hasChordSheet({ seq: 'C G' }), false); // non-array guard
+  assert.strictEqual(Songbook.hasChordSheet(null), false);
+});
+test('isMine flags custom items and the legacy d:Mine marker, nothing else', function () {
+  assert.strictEqual(Songbook.isMine({ custom: true }), true);
+  assert.strictEqual(Songbook.isMine({ d: 'Mine' }), true);          // pre-flag persisted records
+  assert.strictEqual(Songbook.isMine({ d: '70s' }), false);
+  assert.strictEqual(Songbook.isMine({ t: 'x', genre: 'mine' }), false); // a genre named mine is not ownership
+  assert.strictEqual(Songbook.isMine(null), false);
+});
+var MINE_LIST = [
+  { t: 'Catalog Song', a: 'Band', genre: 'rock', seq: ['C', 'G'] },
+  { t: 'My Jam', a: 'Me', genre: 'rock', custom: true, d: 'Mine', seq: ['Am', 'F'] },
+  { t: 'Old Save', a: 'Me', d: 'Mine', seq: ['G', 'D'] }
+];
+test('libraryFilter mine:true keeps ONLY user-owned items', function () {
+  var out = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'all', mine: true });
+  assert.deepStrictEqual(out.map(function (r) { return r.t; }), ['My Jam', 'Old Save']);
+});
+test('libraryFilter mine:true still composes with the q and key filters', function () {
+  var q = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: 'jam', genre: 'all', key: 'all', mine: true });
+  assert.deepStrictEqual(q.map(function (r) { return r.t; }), ['My Jam']);
+  var k = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'G', mine: true });
+  assert.deepStrictEqual(k.map(function (r) { return r.t; }), ['Old Save']); // seq G D derives key G
+});
+test('libraryFilter passes non-mine selections through to Repertoire.filter untouched', function () {
+  var all = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'all' });
+  assert.strictEqual(all.length, 3);
+  var rock = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'rock', key: 'all' });
+  assert.deepStrictEqual(rock.map(function (r) { return r.t; }), ['Catalog Song', 'My Jam']);
+});
+test('libraryFilter: a real genre named "mine" filters as a genre, NOT as ownership', function () {
+  var list = [
+    { t: 'Owned', a: 'Me', genre: 'rock', custom: true, d: 'Mine', seq: ['Am', 'F'] },
+    { t: 'Mine-genre catalog', a: 'Band', genre: 'mine', seq: ['C', 'G'] }
+  ];
+  // genre 'mine' + mine:false -> the catalog item with that genre, not the owned one
+  var g = Songbook.libraryFilter(RealRepertoire, list, { q: '', genre: 'mine', key: 'all', mine: false });
+  assert.deepStrictEqual(g.map(function (r) { return r.t; }), ['Mine-genre catalog']);
+  // ownership facet still works independently
+  var o = Songbook.libraryFilter(RealRepertoire, list, { q: '', genre: 'all', key: 'all', mine: true });
+  assert.deepStrictEqual(o.map(function (r) { return r.t; }), ['Owned']);
+});
+
+/* ---------- keyed zero-results empty state (why-is-my-list-empty visibility) ---------- */
+test('libraryEmptyState names the active key filter and asks for the clearing link', function () {
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'Am' }),
+    { message: 'Nothing in your repertoire matches in Am.', clearKey: true });
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'F#' }),
+    { message: 'Nothing in your repertoire matches in F#.', clearKey: true });
+});
+test('libraryEmptyState with no key filter keeps the plain message, no link', function () {
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'all' }),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+  assert.deepStrictEqual(Songbook.libraryEmptyState({}),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+  assert.deepStrictEqual(Songbook.libraryEmptyState(null),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+});
+
+/* ---------- renderSheet tri-view: lyrics / chords / both ---------- */
+var triSong = { sheet: [["Verse", "[C]Hello [G]world"], ["", "[Am]  [F]"]] };
+test('renderSheet both (default) positions chords over lyrics', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'both');
+  assert.ok(html.indexOf('class="crd"') >= 0, 'chord row expected');
+  assert.ok(html.indexOf('Hello') >= 0 && html.indexOf('world') >= 0, 'lyric text expected');
+  // legacy/default fallthrough: any unknown view token renders the combined sheet
+  assert.strictEqual(Songbook.renderSheet(triSong, 0, undefined), html);
+});
+test('renderSheet lyrics strips chord tokens and drops pure-chord lines', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'lyrics');
+  assert.ok(html.indexOf('Hello world') >= 0, 'lyric text expected without token gaps');
+  assert.strictEqual(html.indexOf('class="crd"'), -1, 'no chord row in lyrics view');
+  assert.strictEqual(html.indexOf('Am'), -1, 'pure-chord line must vanish');
+  assert.ok(html.indexOf('Verse') >= 0, 'section headers stay');
+});
+test('renderSheet chords stays the campfire chord-bar view (transposed)', function () {
+  var html = Songbook.renderSheet(triSong, 2, 'chords');
+  assert.ok(html.indexOf('>D<') >= 0 && html.indexOf('>Bm<') >= 0, 'bars transpose (+2: C->D, Am->Bm)');
+  assert.strictEqual(html.indexOf('Hello'), -1, 'no lyric text in chords view');
+});
+
+/* ---------- nextTranspose: transpose steps wrap at the range ends ---------- */
+function always() { return true; }
+test('nextTranspose steps by one semitone inside the range', function () {
+  assert.strictEqual(Songbook.nextTranspose(0, 1, always), 1);
+  assert.strictEqual(Songbook.nextTranspose(0, -1, always), -1);
+  assert.strictEqual(Songbook.nextTranspose(3, 1, always), 4);
+});
+test('nextTranspose wraps at the top: +6 then + lands on -5 (same cycle, keeps going)', function () {
+  assert.strictEqual(Songbook.nextTranspose(6, 1, always), -5);
+});
+test('nextTranspose wraps at the bottom: -5 then - lands on +6 (-6 normalizes to its enharmonic +6)', function () {
+  assert.strictEqual(Songbook.nextTranspose(-5, -1, always), 6);
+  assert.strictEqual(Songbook.nextTranspose(6, -1, always), 5); // and back down the far side
+});
+test('nextTranspose cycles through ALL 12 keys on repeated + taps', function () {
+  var seen = {}, cur = 0;
+  for (var i = 0; i < 12; i++) { seen[cur] = true; cur = Songbook.nextTranspose(cur, 1, always); }
+  assert.strictEqual(Object.keys(seen).length, 12, 'twelve distinct transposes before repeating');
+  assert.strictEqual(cur, 0, 'thirteenth tap is back where we started');
+});
+test('nextTranspose skips unplayable candidates ACROSS the wrap boundary', function () {
+  // at +5, everything from +6 through -3 unvoiceable -> the next + must land on -2
+  var playable = function (st) { return st === -2 || st === 5; };
+  assert.strictEqual(Songbook.nextTranspose(5, 1, playable), -2);
+});
+test('nextTranspose returns null when no other transpose is playable (caller no-ops)', function () {
+  assert.strictEqual(Songbook.nextTranspose(2, 1, function (st) { return st === 2; }), null);
+  assert.strictEqual(Songbook.nextTranspose(0, 1, function () { return false; }), null);
+});
+
+/* ---------- ytSearchURL: the song-view "Hear it on YouTube" link ---------- */
+test('ytSearchURL builds title + artist + key into one encoded query', function () {
+  var url = Songbook.ytSearchURL({ t: 'Hey Jude', a: 'The Beatles', key: 'F' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Hey Jude The Beatles F key'));
+});
+test('ytSearchURL accepts long-form fields and skips the missing ones', function () {
+  var url = Songbook.ytSearchURL({ title: 'Jolene', artist: 'Dolly Parton' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Jolene Dolly Parton'));
+});
+test('ytSearchURL encodes attribute-hostile characters so the double-quoted href cannot break out', function () {
+  var url = Songbook.ytSearchURL({ t: 'Me & You "live"', a: 'X<Y' });
+  assert.strictEqual(url.split('?')[1].indexOf('&'), -1, 'raw & must not survive into the query');
+  assert.strictEqual(url.indexOf('"'), -1, 'raw double quote must not survive');
+  assert.strictEqual(url.indexOf('<'), -1, 'raw < must not survive');
+});
+
+/* ---------- inferKey: Compose's auto-selected key (2+ chords, no explicit pick) ---------- */
+test('inferKey: fewer than 2 chords never infers (one chord is not a key)', function () {
+  assert.strictEqual(Songbook.inferKey([]), null);
+  assert.strictEqual(Songbook.inferKey(['C']), null);
+  assert.strictEqual(Songbook.inferKey(null), null);
+});
+test('inferKey: I-V-vi-IV starting on the tonic lands on that Major key', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'Am', 'F']), { root: 'C', mode: 'Major' });
+  assert.deepStrictEqual(Songbook.inferKey(['G', 'D', 'Em', 'C']), { root: 'G', mode: 'Major' });
+});
+test('inferKey: two plain major chords already resolve (C + F -> C Major, first-chord tonic tie-break)', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: a minor-led progression resolves to the minor key on the first chord', function () {
+  // Am F C G fits BOTH C Major and A Minor fully - the first-chord tonic wins
+  assert.deepStrictEqual(Songbook.inferKey(['Am', 'F', 'C', 'G']), { root: 'A', mode: 'Minor' });
+});
+test('inferKey: 7th extensions score as their base triads (G7 counts as G, Am7 as Am, Cmaj7 as C)', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['Cmaj7', 'G7', 'Am7', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: one borrowed chord does not derail the majority key', function () {
+  // Eb is borrowed (bIII) - the other four still say C Major
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'Eb', 'Am', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: junk-only input infers nothing', function () {
+  assert.strictEqual(Songbook.inferKey(['??', '!!']), null);
+});
+test('inferKey: DISTINCT triads are the evidence - a repeated single chord is not a key', function () {
+  assert.strictEqual(Songbook.inferKey(['C', 'C']), null);        // one chord, twice
+  assert.strictEqual(Songbook.inferKey(['Am', 'Am', 'Am']), null); // a one-chord vamp
+  // but a real two-chord vamp still infers (distinct C + G -> C Major)
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'C', 'G']), { root: 'C', mode: 'Major' });
+});
+
+/* ---------- sheet-render escaping (volley 3: custom/imported chord tokens and
+ * section labels are user-controlled strings - never live HTML) ---------- */
+test('renderSheet(chords) escapes hostile chord tokens and section labels', function () {
+  var hostile = [['<img src=x onerror=a>', 'La [<img/src=x/onerror=b>]la [C]la']];
+  var html = Songbook.renderSheet({ sheet: hostile }, 0, 'chords');
+  assert.ok(html.indexOf('<img') === -1, 'raw <img must never survive: ' + html);
+  assert.ok(html.indexOf('&lt;img') !== -1, 'hostile tokens render as inert text');
+});
+test('renderSheet lyrics/both views escape section labels and injected tags', function () {
+  var hostile = [['<b>sect</b>', '[C]hello <i>world</i>']];
+  ['lyrics', 'both'].forEach(function (v) {
+    var html = Songbook.renderSheet({ sheet: hostile }, 0, v);
+    assert.ok(html.indexOf('<b>') === -1 && html.indexOf('<i>') === -1, v + ' must escape: ' + html);
+    assert.ok(html.indexOf('&lt;b&gt;sect') !== -1, v + ' keeps the label as text');
+  });
+});
+
 run();

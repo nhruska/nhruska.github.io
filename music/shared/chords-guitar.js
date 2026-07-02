@@ -117,10 +117,14 @@
     var hi = Math.max.apply(null, fretted), lo = Math.min.apply(null, fretted);
     return hi <= 4 ? 1 : lo; // window starts at the nut unless the shape sits high
   }
+  function escName(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function drawDiagram(name, opts) {
     var f = CHORDS[name];
     var wrap = document.createElement('div'); wrap.className = opts.wrapClass;
-    var nameSpan = '<span class="' + opts.nameClass + '">' + name + '</span>';
+    // name is user-controlled for custom songs (freeform seq tokens reach this
+    // via the Maximize diagram path), so escape before it enters innerHTML - the
+    // unknown-chord branch below injects nameSpan directly.
+    var nameSpan = '<span class="' + opts.nameClass + '">' + escName(name) + '</span>';
     if (!f) { wrap.innerHTML = nameSpan; return wrap; }
 
     var base = baseFret(f);

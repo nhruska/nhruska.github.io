@@ -130,7 +130,6 @@ var controller = Songbook.mount({
   songs:        [...],                 // REQUIRED: array in songs.json shape
   chordPack:    window.ChordPackUkulele, // optional; null => names-only, no audio/diagrams
   storagePrefix:'roadcase',            // optional; localStorage namespace (default "songbook")
-  decades:      ["All","70s",...,"10s"], // optional; filter chips
   composeCats:  {...},                 // optional; chord categories for the compose grid
   suggestions:  {...},                 // optional; chord -> [next chords] progression hints
   contexts:     { library:"...", ... },  // optional; per-tab subtitle text for #ctxLine
@@ -144,23 +143,25 @@ library). The fields, grouped by feature:
 
 | Feature   | el fields |
 |-----------|-----------|
-| Library   | `songsList`, `decadeChips`, `search`, `libCount` |
+| Library   | `songsList`, `genreChips`, `keyChips`, `search`, `searchClear`, `libCount`, `addBtn` |
 | Practice  | `practiceEmpty`, `practiceBody` |
-| Setlist   | `setBody`, `setBar`, `setCount`, `setClear`, `performBtn` |
-| Perform   | `perform`, `pSheet`, `pPos`, `pTitle`, `pArtist`, `pKeyLine`, `pPrev`, `pNext`, `pClose`, `pUp`, `pDown`, `pDimBtn`, `pScroll`, `pSpeed`, `pSpeedR`, `pSpeedV` |
-| Compose   | `prog`, `suggest`, `catChips`, `buildGrid`, `cClear`, `cSave`, `cMax` |
+| Setlist (in Jam) | `setBody`, `setBar`, `setCount`, `setClear`, `setEdit`, `performBtn` |
+| Perform   | `perform`, `pSheet`, `pPos`, `pTitle`, `pArtist`, `pKeyLine`, `pPrev`, `pNext`, `pClose`, `pUp`, `pDown`, `pDimBtn`, `pCtrls`, `pSpeed`, `pFontDown`, `pFontUp`, `pFontAuto`, `pViewLyrics`, `pViewChords`, `pViewBoth` |
+| Compose   | `prog`, `suggest`, `catChips`, `buildGrid`, `composeChords`, `cClear`, `cSave`, `cMax`, `keyChipSlot`, `keyFlyout`, `keyRoots`, `keyModes`, `keyView`, `keyClear`, `soloBackingBtn` |
 | Maximize  | `maxOv`, `maxGrid`, `maxClose` (chord-diagram overlay) |
 | Chrome    | `ctxLine` (header subtitle) |
 
 The engine also queries `.tabbar button[data-tab]` and `.screen` by id
-(`s-library`, `s-compose`, `s-practice`, `s-setlist`, `s-tune`) for tab
-switching. Keep those class/id conventions in your markup. The reference
-markup is `music/ukulele/index.html` - copy it.
+(`s-library`, `s-jam`, `s-compose`, `s-practice`, `s-tune`) for tab
+switching (the Set/Perform surface lives in the Jam tab - there is no
+`s-setlist` screen anymore). Keep those class/id conventions in your
+markup. The reference markup is `music/play/index.html` (the legacy
+`music/ukulele/index.html` is only a redirect stub now).
 
 ### Returned controller
 
 ```js
-controller.switchTab(name)  // "library" | "compose" | "practice" | "setlist" | "tune"
+controller.switchTab(name)  // "library" | "jam" | "compose" | "practice" | "tune" (legacy "setlist"/"set"/"tracks"/"repertoire" normalize)
 controller.openSong(id)     // open a song in the Practice tab by engine id
 controller.getState()       // live STATE object (read-only intent)
 controller.getSongs()       // ALLSONGS (catalog + custom progressions), each with an `id`
@@ -174,7 +175,7 @@ Songbook.tpose(chord, semitones)   // transpose a chord name
 Songbook.tposeLine(line, semitones)// transpose all [chords] in a lyric line
 Songbook.splitChord(chord)         // -> { root, qual } or null
 Songbook.chordRootFreq(chord)      // root frequency (Hz) relative to middle C
-Songbook.renderSheet(song, st, view) // view: "lyrics" | "chords"
+Songbook.renderSheet(song, st, view) // view: "lyrics" (words only) | "chords" (bars) | "both" (chords over lyrics; default)
 Songbook.ROOTS                     // ["C","C#",...,"B"]
 ```
 

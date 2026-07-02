@@ -43,28 +43,30 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
-    <!-- UNIFIED LIBRARY (M3: the Songs|Tracks split is dissolved into ONE Repertoire.
-         #typeToggle is now Repertoire|Set. Search + Genre + Key chips filter the merged
-         list (songs.json + backing tracks, deduped by repertoire.js). The old finder
-         tab (#s-tracks) is retired but kept hidden so Tracks.mount can still power the
-         Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
+    <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
+         by repertoire.js). Search + Genre + Key chips filter the list; +Add sits on
+         the search row. The old #typeToggle (Repertoire|Set) is retired - the Set /
+         Perform surface is its own main tab now (#s-jam). The old finder tab
+         (#s-tracks) stays hidden so Tracks.mount can still power the Practice
+         Studio, which opens as a <body>-level overlay on tapping a track. -->
     <section class="screen on" id="s-library">
-      <div class="libTypeRow">
-        <div class="chips typeToggle" id="typeToggle"></div>
+      <div class="libSearchRow">
+        <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
         <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
       </div>
-      <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="genreChips"></div>
       <div class="chips" id="keyChips"></div>
-      <!-- Repertoire sub-view (merged songs + tracks) -->
+      <!-- Repertoire list (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
         <div class="libCount" id="libCount"></div>
       </div>
       <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
-      <!-- Set sub-view -->
-      <div class="libSet" id="libSet" hidden>
+    </section>
+    <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
+    <section class="screen" id="s-jam">
+      <div class="libSet" id="libSet">
         <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
@@ -97,18 +99,19 @@
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
           </div>
-          <!-- Progression box. When EMPTY it shows the tappable starter progressions
-               (rendered into #suggest by renderSuggest). When non-empty it shows the
-               built chords (#prog). The "?" button re-shows the starters at any time. -->
+          <!-- Progression box: the built chords (#prog). The suggestion surface
+               (#suggest) lives at the top of the SCROLLING chord list below - starters
+               when the progression is empty, next-chord chips otherwise - so the fixed
+               top region stays as short as possible. -->
           <div class="progBox">
             <div class="prog" id="prog"></div>
-            <div id="suggest" class="suggest"></div>
           </div>
-          <div class="maxNote" id="maxNote" hidden>Max 8 chords — remove one to add another.</div>
+          <div class="maxNote" id="maxNote" hidden>Max 8 chords - remove one to add another.</div>
           <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
                When hidden it takes NO vertical space (the old standalone chip row is gone -
                the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
-               toggle (#keyModes), and the solo scale (#keyView). The In-key|All toggle
+               toggle (#keyModes), and the key title + Triads & Inversions link
+               (#keyView; the solo scale + HSR moved to the Studio). The In-key|All toggle
                (#catChips) sits below, still in the fixed region. -->
           <div class="keyFlyout" id="keyFlyout" hidden>
             <div class="keyRoots" id="keyRoots"></div>
@@ -122,30 +125,34 @@
                Hidden until a key + progression exist (toggled by songbook's renderKey). -->
           <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
         </div>
-        <!-- The ONLY scroll area: the chord list. In-key cells (.chordCell) and All-chords
-             tiles (.chord) keep touch-action:pan-y so a vertical swipe scrolls them. -->
+        <!-- The ONLY scroll area: the chord list, led by the suggestion surface
+             (#suggest - starter progressions when empty, next-chord chips otherwise;
+             the "?" button re-shows the starters at any time). In-key cells
+             (.chordCell) and All-chords tiles (.chord) keep touch-action:pan-y so a
+             vertical swipe scrolls them. -->
         <div class="composeChords" id="composeChords">
+          <div id="suggest" class="suggest"></div>
           <div class="chordGrid" id="buildGrid"></div>
         </div>
       </div>
     </section>
     <section class="screen" id="s-practice">
-      <div id="practiceEmpty" class="empty">Choose a song from Songs to open it.</div>
+      <div id="practiceEmpty" class="empty">Choose a song from the Library to open it.</div>
       <div id="practiceBody" style="display:none"></div>
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
         <h2>Tune Up</h2>
-        <div class="sub">Play a string — the needle shows how sharp or flat you are.</div>
+        <div class="sub">Play a string - the needle shows how sharp or flat you are.</div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub" style="margin:14px 0 8px">Tuning</div>
           <div class="chips" id="tuneTunings"></div>
         </div>
         <div class="tCard">
-          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">— live needle by mic</span></h3>
+          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">- live needle by mic</span></h3>
           <div class="micBox" id="micBox"></div>
         </div>
-        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones — tap a letter for a steady pitch.</div>
+        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
         <div class="tuneTheme">
           <span class="sub">Accent colour</span>
@@ -159,6 +166,7 @@
   </div>
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
+    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Jam</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -172,7 +180,7 @@
   <div class="pSheet" id="pSheet"></div>
   <div class="pSpeed" id="pSpeed">
     <div class="psRow"><label>Size</label><div class="psBtns"><button class="psBtn" id="pFontDown">A−</button><button class="psBtn" id="pFontAuto">Auto</button><button class="psBtn" id="pFontUp">A+</button></div></div>
-    <div class="psRow"><label>View</label><div class="psBtns"><button class="psBtn" id="pViewLyrics">Lyrics</button><button class="psBtn" id="pViewChords">Chords</button></div></div>
+    <div class="psRow"><label>View</label><div class="psBtns"><button class="psBtn" id="pViewLyrics">Lyrics</button><button class="psBtn" id="pViewChords">Chords</button><button class="psBtn" id="pViewBoth">Both</button></div></div>
   </div>
   <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
 </div>
@@ -210,7 +218,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', setlist: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -548,7 +556,7 @@
 
   function start(profile, songs) {
     el('ctxLine').textContent = profile.label;
-    document.title = profile.label + ' \u2014 Music';
+    document.title = profile.label + ' - Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
     var pack = buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
@@ -581,14 +589,14 @@
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
         songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
-        typeToggle: el('typeToggle'), addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
+        addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),
         pPrev: el('pPrev'), pNext: el('pNext'), pClose: el('pClose'), pUp: el('pUp'), pDown: el('pDown'), pDimBtn: el('pDimBtn'),
         pSpeed: el('pSpeed'),
         pCtrls: el('pCtrls'), pFontDown: el('pFontDown'), pFontAuto: el('pFontAuto'), pFontUp: el('pFontUp'),
-        pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'),
+        pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'), pViewBoth: el('pViewBoth'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         composeChords: el('composeChords'),
         cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),

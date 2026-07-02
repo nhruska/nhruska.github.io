@@ -92,10 +92,6 @@
     Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
   };
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
-  function scalePcs(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
-    return m.steps.map(function (s) { return (rp + s) % 12; });
-  }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
@@ -156,9 +152,53 @@
     });
     return out;
   }
+  // AUTO-INFER a song key from the chords themselves (Compose sets it once 2+ chords
+  // exist and the user never explicitly picked one). Pure: seq -> {root, mode} | null.
+  // Every root x Major/Minor candidate is scored by how many of the progression's BASE
+  // triads are diatonic to it (7th extensions stripped: Cmaj7/C7 count as C, Am7 as Am -
+  // matching convertToMode's extension classes). Ties break toward the first chord's
+  // root as tonic (the app's existing first-chord derivation), then Major, then the
+  // first candidate in chromatic order (determinism). Needs at least 2 base triads to
+  // fit or nothing is inferred - one matching chord is not a key.
+  function baseTriad(ch) {
+    var p = splitChord(ch);
+    if (!p) return null;
+    var q = p.qual;
+    if (/maj7$/.test(q)) q = q.slice(0, -4);
+    else if (/m7$/.test(q)) q = q.slice(0, -1);
+    else if (/7$/.test(q)) q = q.slice(0, -1);
+    return p.root + q;
+  }
+  function inferKey(seq) {
+    if (!seq || seq.length < 2) return null;
+    // Evidence is DISTINCT triads, not repetitions: ['C','C'] (or a I-I vamp)
+    // is one chord, and one matching chord is not a key. A real I-V-I-V still
+    // has two distinct triads and infers fine.
+    var seen = {}, bases = [];
+    seq.map(baseTriad).forEach(function (b) { if (b != null && !seen[b]) { seen[b] = true; bases.push(b); } });
+    if (bases.length < 2) return null;
+    var firstRoot = (splitChord(seq[0]) || {}).root || null;
+    function tieRank(c) { return (c.root === firstRoot ? 2 : 0) + (c.mode === 'Major' ? 1 : 0); }
+    var best = null;
+    ROOTS.forEach(function (r) {
+      ['Major', 'Minor'].forEach(function (mk) {
+        var pal = {};
+        chordsFromDegrees(r, mk, [0, 1, 2, 3, 4, 5, 6]).forEach(function (c) { pal[c] = true; });
+        var score = 0;
+        bases.forEach(function (b) { if (pal[b]) score++; });
+        var cand = { root: r, mode: mk, score: score };
+        if (!best || score > best.score || (score === best.score && tieRank(cand) > tieRank(best))) best = cand;
+      });
+    });
+    return (best && best.score >= 2) ? { root: best.root, mode: best.mode } : null;
+  }
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
-  function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  // Escape EVERYTHING interpolated into sheet/chip innerHTML: custom songs and
+  // the localStorage import path accept freeform tokens, so chord names and
+  // section labels are user-controlled strings, not trusted vocabulary. The
+  // quote entity makes the same helper safe inside attribute values.
+  function escHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   function renderLyricLine(raw) {
     var chordRow = "", lyricRow = "", last = 0, m;
@@ -178,19 +218,35 @@
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
-      if (sect && sect !== last) { out.push('<div class="sect">' + sect + '</div>'); last = sect; }
+      if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var re = /\[([^\]]+)\]/g, m, cs = [];
       while ((m = re.exec(line))) cs.push(tpose(m[1], st));
-      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + c + '</span>'; }).join(' ') + '</div>');
+      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(c) + '</span>'; }).join(' ') + '</div>');
     });
     return out.join('');
   }
+  // Lyrics with the [chord] tokens stripped - the sing-along view. Lines that
+  // were pure chord calls (all tokens, no words) vanish rather than leaving
+  // blank rows.
+  function renderLyricsOnly(sheet) {
+    var out = [], last = null;
+    sheet.forEach(function (pair) {
+      var sect = pair[0], line = pair[1];
+      if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
+      var lyr = line.replace(/\[([^\]]+)\]/g, '').replace(/[ ]{2,}/g, ' ');
+      if (lyr.trim().length) out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>');
+    });
+    return out.join('');
+  }
+  // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
+  // 'both' (default) = chords positioned over lyrics.
   function renderSheet(song, st, view) {
     if (view === 'chords') return renderChordOnly(song.sheet, st);
+    if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
-      if (sect && sect !== last) { html += '<div class="sect">' + sect + '</div>'; last = sect; }
+      if (sect && sect !== last) { html += '<div class="sect">' + escHTML(sect) + '</div>'; last = sect; }
       html += renderLyricLine(tposeLine(line, st));
     });
     return html;
@@ -223,6 +279,64 @@
     return { key: null, mode: null };
   }
 
+  // User-owned ("Mine") repertoire items: everything the user saved or added via
+  // +Add / Save progression (custom flag; d:'Mine' is the same marker on records
+  // persisted before the flag existed). Pure + Node-testable.
+  function isMine(rec) { return !!(rec && (rec.custom || rec.d === 'Mine')); }
+  // A chord-sheet item (has a chord sequence) vs a pure video-only track. Only
+  // chord-sheet items can open the Practice screen or join a setlist/Stage - a
+  // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
+  function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
+  // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
+  // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
+  // literally named "mine" filters as a genre and does NOT hijack the ownership
+  // facet (matches isMine's "a genre named mine is not ownership" contract). Rep
+  // is dependency-injected (same pattern as soloKeyFor) so Node tests pass the
+  // real module.
+  function libraryFilter(Rep, list, sel) {
+    sel = sel || {};
+    var mine = !!sel.mine;
+    var base = Rep.filter(list, { q: sel.q, genre: sel.genre, key: sel.key });
+    return mine ? base.filter(isMine) : base;
+  }
+  // Zero-results empty state for the Library list. When a key facet is active it
+  // NAMES the key - the key chips can sit scrolled out of view, so "why is my
+  // list empty" must be readable from the message itself - and clearKey tells
+  // the DOM layer to offer the one-tap Any-key clearing link. Pure + Node-testable.
+  function libraryEmptyState(sel) {
+    var key = sel && sel.key && sel.key !== 'all' ? sel.key : null;
+    return {
+      message: key ? 'Nothing in your repertoire matches in ' + key + '.' : 'Nothing in your repertoire matches.',
+      clearKey: !!key
+    };
+  }
+
+  // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
+  // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
+  // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
+  // - tpose and the key readout are pitch-class based). Tries up to the 11 other
+  // pitch classes in tap direction, skipping unplayable ones; null when nothing
+  // else is playable (caller no-ops, matching the old stuck-at-end behavior).
+  // Pure + Node-testable; `playable` is the caller's seqPlayable predicate.
+  function nextTranspose(cur, dir, playable) {
+    for (var n = 1; n <= 11; n++) {
+      var cand = cur + dir * n;
+      while (cand > 6) cand -= 12;
+      while (cand <= -6) cand += 12;
+      if (playable(cand)) return cand;
+    }
+    return null;
+  }
+
+  // YouTube search URL for a repertoire/song record - the query the ytSearch
+  // action opens. Pure + Node-testable; shared by the list-item action ladder
+  // and the song-view "Hear it on YouTube" link.
+  function ytSearchURL(s) {
+    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
+      .filter(Boolean).join(' ');
+    return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
   /* =====================================================================
    * Songbook.mount(opts)
    *
@@ -236,7 +350,7 @@
    *   suggestions:  Object -- chord-progression suggestion map (chord -> [next...]).
    *   el: {  -- DOM element references (any subset; missing ones disable that feature)
    *     // library
-   *     songsList, decadeChips, search, libCount,
+   *     songsList, genreChips, keyChips, search, searchClear, libCount, addBtn,
    *     // practice
    *     practiceEmpty, practiceBody,
    *     // setlist
@@ -244,8 +358,8 @@
    *     // perform
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
-   *     pSpeed, pSpeedR, pSpeedV, pCtrls,
-   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
+   *     pSpeed, pCtrls,
+   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
    *     // compose (optional; needs a chord pack for diagrams/audio)
    *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, keyChipSlot,
    *     // maximize overlay (chord pack diagrams)
@@ -278,7 +392,6 @@
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
-    var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
     // The all-chords build palette covers ALL 12 chromatic roots (the old default only
     // had the 7 naturals - no sharps/flats). For each category we map every ROOTS entry
@@ -333,7 +446,14 @@
     function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
     function rebuildAll() {
       ALLSONGS = CATALOG.map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); });
-      customSongs.forEach(function (cs) { ALLSONGS.push(Object.assign({}, cs, { sheet: buildSheetFromSeq(cs.seq) })); });
+      // Only fabricate a chord sheet for a seq-BEARING custom song. A seq-less
+      // video-only track must NOT get a (truthy) sheet - buildSheetFromSeq([])
+      // returns [["Progression",""]], which routed the track to a blank Practice
+      // screen instead of the Studio (repertoire.js playability keys off .sheet).
+      customSongs.forEach(function (cs) {
+        var withSheet = (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
+        ALLSONGS.push(Object.assign({}, cs, withSheet));
+      });
     }
     var ALLSONGS = [];
 
@@ -346,74 +466,50 @@
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
     // perform-screen prefs (scroll speed, view, font size), remembered per device.
-    var PERF_KEY = prefix + ".perfprefs.v1";
-    function loadPerfPrefs() { try { var r = localStorage.getItem(PERF_KEY); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } }
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
+    // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
+    // chords-over-lyrics, which is now called 'both' - migrate it as such.
+    var PERF_KEY = prefix + ".perfprefs.v2";
+    var PERF_KEY_V1 = prefix + ".perfprefs.v1";
+    function loadPerfPrefs() {
+      try {
+        var r = localStorage.getItem(PERF_KEY);
+        if (r) return JSON.parse(r);
+        var v1 = localStorage.getItem(PERF_KEY_V1);
+        if (v1) { var p = JSON.parse(v1); if (p.view === 'lyrics') p.view = 'both'; return p; }
+        return {};
+      } catch (e) { return {}; }
+    }
+    // stageDefaultView = the PERSISTED Stage view preference. STATE.performView is
+    // the CURRENT view, which a per-launch seed (song-view Stage) may transiently
+    // override without changing the saved default - only an in-Stage view tap
+    // (setPerformView) updates the default. Persisting STATE.performView instead
+    // would let staging one custom song (forced 'chords') leak into every later
+    // setlist Perform. (Assigned just after STATE is built, below.)
+    var stageDefaultView;
+    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
-      search: "", genre: "all", key: "all", libType: "repertoire", current: null, transpose: 0, view: "lyrics",
+      search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
-      performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
+      performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
       fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
+    stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
-    /* ===================== LIBRARY (M3: unified Repertoire | Set) =====================
+    /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
      * The old Songs|Tracks split is dissolved: a song and its curated backing track
-     * are ONE item in a single Repertoire (repertoire.js merges + dedups). The toggle
-     * is now just Repertoire | Set. The finder tab is retired; its Practice Studio
-     * (solo scale + chords + circle) stays reachable by tapping a playable item
-     * (openStudioCb), and curation moves to +Add / per-item edit (M2). Search + the
-     * Genre/Key facet chips filter the merged list; they show for Repertoire, hide
-     * for Set. */
-    var LIBTYPE_KEY = prefix + ".libType.v1";
-    var LIB_TYPES = [
-      { id: 'repertoire', label: 'Repertoire' },
-      { id: 'set', label: 'Set' }
-    ];
-    // migrate the pre-M3 stored value: 'songs'/'tracks' both collapse into 'repertoire'.
-    try { var _lt = localStorage.getItem(LIBTYPE_KEY); STATE.libType = (_lt === 'set') ? 'set' : 'repertoire'; } catch (e) {}
-    function applyLibType() {
-      var t = STATE.libType;
-      // sub-view visibility. #libSongs is the Repertoire container now; #s-tracks
-      // (the old finder) stays hidden - the studio it powered opens on <body>.
-      if (el.libSongs) el.libSongs.hidden = (t !== 'repertoire');
-      if (el.libTracks) el.libTracks.hidden = true;
-      if (el.libSet) el.libSet.hidden = (t !== 'set');
-      // search + facet chips apply to the Repertoire; hidden on Set.
-      var repView = (t === 'repertoire');
-      if (el.searchWrap) el.searchWrap.hidden = !repView;
-      if (el.genreChips) el.genreChips.hidden = !repView;
-      if (el.keyChips) el.keyChips.hidden = !repView;
-      if (t === 'repertoire') { renderFilterChips(); renderSongs(); }
-      else if (t === 'set') renderSetlist();
-      // context line follows the active sub-view
-      if (el.ctxLine) {
-        var ctx = (t === 'set') ? CONTEXTS['setlist'] : CONTEXTS['library'];
-        if (ctx != null) el.ctxLine.textContent = ctx;
-      }
-    }
-    function setLibType(t) {
-      STATE.libType = t;
-      try { localStorage.setItem(LIBTYPE_KEY, t); } catch (e) {}
-      renderTypeToggle();
-      applyLibType();
-    }
-    function renderTypeToggle() {
-      if (!el.typeToggle) return;
-      el.typeToggle.innerHTML = '';
-      LIB_TYPES.forEach(function (lt) {
-        var b = document.createElement('button');
-        b.className = 'chip' + (lt.id === STATE.libType ? ' on' : '');
-        b.textContent = lt.label;
-        b.onclick = function () { if (STATE.libType !== lt.id) setLibType(lt.id); };
-        el.typeToggle.appendChild(b);
-      });
-    }
+     * are ONE item in a single Repertoire (repertoire.js merges + dedups). The old
+     * Repertoire|Set top toggle (#typeToggle) is retired too - the Set / Perform
+     * surface is its own main tab now ("Jam", #s-jam), so the Library screen is
+     * ALWAYS the repertoire: search + the Genre/Key facet chips over the merged
+     * list. The finder tab is retired; its Practice Studio (solo scale + chords +
+     * circle) stays reachable by tapping a playable item (openStudioCb), and
+     * curation moves to +Add / per-item edit (M2). */
 
     /* ---- merged repertoire (songs.json + backing tracks, deduped) ---- */
     var REPERTOIRE = [];
@@ -433,13 +529,24 @@
     // (Search is the text input; these replace the old decade chips.)
     function renderFilterChips() {
       buildRepertoire();
+      // Heal a dead-end facet: deleting the last custom item while filtered to
+      // Mine would drop the chip but leave the (now-invisible) filter active,
+      // showing an empty Library with nothing selected.
+      if (STATE.mineOnly && !REPERTOIRE.some(isMine)) STATE.mineOnly = false;
       if (el.genreChips) {
         el.genreChips.innerHTML = '';
-        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all',
-          function () { STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
+        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all' && !STATE.mineOnly,
+          function () { STATE.genre = 'all'; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
+        // Mine: the user's own saved/added items. An ownership facet pinned ahead
+        // of the data-derived genres; shown only when a custom item exists (facet
+        // chips reflect what is actually in the repertoire).
+        if (REPERTOIRE.some(isMine)) {
+          el.genreChips.appendChild(chipBtn('Mine', STATE.mineOnly,
+            function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
+        }
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
-          el.genreChips.appendChild(chipBtn(g, STATE.genre === g,
-            function () { STATE.genre = g; renderFilterChips(); renderSongs(); }));
+          el.genreChips.appendChild(chipBtn(g, STATE.genre === g && !STATE.mineOnly,
+            function () { STATE.genre = g; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
         });
       }
       if (el.keyChips) {
@@ -454,9 +561,7 @@
     }
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
-      var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-        .filter(Boolean).join(' ');
-      window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
+      window.open(ytSearchURL(s), '_blank', 'noopener');
     }
     // Where a repertoire tap lands (approach A): a chord sheet opens the song screen
     // (openPractice); a pure backing track opens the Practice Studio (solo scale +
@@ -476,17 +581,32 @@
     function renderSongs() {
       if (!el.songsList) return;
       buildRepertoire();
-      var filtered = global.Repertoire.filter(REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
+      var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
-        el.songsList.innerHTML = '<div class="empty">Nothing in your repertoire matches.</div>';
+        var es = libraryEmptyState({ key: STATE.key });
+        var box = document.createElement('div');
+        box.className = 'empty';
+        box.appendChild(document.createTextNode(es.message));
+        if (es.clearKey) {
+          var clr = document.createElement('button');
+          clr.type = 'button';
+          clr.className = 'emptyClear';
+          clr.textContent = 'Search Any key';
+          clr.onclick = function () { STATE.key = 'all'; renderFilterChips(); renderSongs(); };
+          box.appendChild(clr);
+        }
+        el.songsList.innerHTML = '';
+        el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
         return;
       }
       el.songsList.innerHTML = '';
       filtered.forEach(function (rec) {
         var sid = rec.id;
-        // only chord-sheet items (real song id) can join a setlist; pure tracks can't.
-        var canAdd = sid != null && !!songById(sid);
+        // only chord-sheet items can join a setlist; a pure/video-only track (no
+        // seq) can't - it would later crash s.seq.map in Perform. songById alone
+        // is insufficient: a seq-less custom track has an id too.
+        var canAdd = sid != null && hasChordSheet(songById(sid));
         var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
         el.songsList.appendChild(global.ListItem.render(rec, {
@@ -505,16 +625,25 @@
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
 
-    /* ===================== SONG (modes: Practice / Stage) ===================== */
-    // A song opens in the merged Practice view (chords + lyrics, or chords-only via
-    // the inline toggle). Stage is a one-shot action — it launches the fullscreen
+    /* ===================== SONG (views: Lyrics / Chords / Both + Stage) ===================== */
+    // A song opens in one of three sheet views - Lyrics (sing-along), Chords
+    // (campfire bars) or Both (chords over lyrics, the default) - picked via the
+    // segmented control. Stage is a one-shot action - it launches the fullscreen
     // perform overlay over whichever view you're on, but is never persisted as the
     // default-open mode (otherwise every song-tap would trap you in fullscreen with
     // no way back to the chords).
-    var CHORDVIEW_KEY = prefix + ".chordsonly.v1";
-    function loadChordsOnly() { try { return localStorage.getItem(CHORDVIEW_KEY) === '1'; } catch (e) { return false; } }
-    function saveChordsOnly(v) { try { localStorage.setItem(CHORDVIEW_KEY, v ? '1' : '0'); } catch (e) { } }
-    STATE.chordsOnly = loadChordsOnly();
+    var SONGVIEW_KEY = prefix + ".songview.v1";
+    var CHORDVIEW_KEY = prefix + ".chordsonly.v1"; // legacy 2-way toggle - migration source only
+    function loadSongView() {
+      try {
+        var v = localStorage.getItem(SONGVIEW_KEY);
+        if (v === 'lyrics' || v === 'chords' || v === 'both') return v;
+        // legacy: chords-only '1' maps to Chords; the old Practice view was chords-over-lyrics = Both
+        return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
+      } catch (e) { return 'both'; }
+    }
+    function saveSongView(v) { try { localStorage.setItem(SONGVIEW_KEY, v); } catch (e) { } }
+    STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
@@ -545,8 +674,21 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
-      // Stage performs the live queue from the current position (one-shot; not sticky)
-      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
+      // Stage performs the live queue from the current position (one-shot; not sticky).
+      // Seed the overlay with the song view's transpose AND its Lyrics/Chords/Both
+      // selection so Stage opens in the key AND view you were just practicing in,
+      // not the original / a stale stage pref (UAT item 8 + the "over whichever
+      // view you're on" contract above).
+      // Seed the EFFECTIVE view: a custom song is forced to chords, so seed
+      // 'chords' rather than a raw Lyrics/Both songView that would (a) mislabel
+      // this Stage and (b) persist the wrong performView for a later non-custom
+      // Stage / setlist Perform.
+      if (m === 'stage') {
+        if (!STATE.current) return;
+        var seedView = STATE.current.custom ? 'chords' : STATE.songView;
+        startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, seedView);
+        return;
+      }
     }
 
     function renderPractice() {
@@ -569,35 +711,39 @@
       el.practiceBody.style.display = 'block';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
-      var chordsOnly = !!STATE.chordsOnly;
+      // Custom (composed) sheets are chord calls with no lyric text - Lyrics/Both
+      // would render empty, so the view is pinned to Chords for them.
+      var view = s.custom ? 'chords' : STATE.songView;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
       // setlist checkmark toggle (top-right, alongside the maximize icon when
       // present) — both above the fold, no separate row.
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
-        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + s.y + '</p></div>'
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + maxBtn
         + '</div></div>';
-      // mode row: 2-way switch (Practice / chords-only toggle) + compact transpose
-      // chip, in the same row — plus a clearly-labeled Stage CTA (a distinct button,
-      // not a third switch tab, per Nik's "make fullscreen entry more discoverable").
+      // view row: Lyrics / Chords / Both segmented + compact transpose chip +
+      // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
+      // locked decision - replaces the full-width Stage CTA).
+      function segBtn(v, lbl) {
+        var dis = s.custom && v !== 'chords';
+        return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
+          + (dis ? ' disabled' : '') + ' aria-pressed="' + (view === v ? 'true' : 'false') + '">' + lbl + '</button>';
+      }
       var switcher = '<div class="practiceRow">'
-        + '<div class="modeSwitch">'
-        + '<button data-m="full" class="' + (!chordsOnly ? 'on' : '') + '">Practice</button>'
-        + '<button data-m="chords" class="' + (chordsOnly ? 'on' : '') + '">Chords only</button>'
-        + '</div>'
-        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
-        + '</div>'
-        + '<button class="stageCta" id="stageBtn" title="Perform fullscreen"><span class="stageIcon" aria-hidden="true">⛶</span> Stage · Perform fullscreen</button>';
+        + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
+        + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
+      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
       // "Solo over it" used to require s.custom (only progressions built in Compose
       // carried a key/mode). Any song can bridge to the Studio if we can determine a
       // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
@@ -611,16 +757,23 @@
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
+      // Hear the real recording: same YouTube search the list-item action ladder
+      // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
+      // not the sheet). The MERGED record feeds the query so track-derived
+      // fields (key etc.) match what the ladder builds from.
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
       var body;
-      if (chordsOnly) {
+      if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
-          + actions;
+          + actions
+          + ytLink;
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
           + actions
+          + ytLink
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
@@ -628,14 +781,14 @@
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
-        b.onclick = function () { STATE.chordsOnly = (b.dataset.m === 'chords'); saveChordsOnly(STATE.chordsOnly); renderPractice(); };
+        b.onclick = function () { if (b.disabled) return; STATE.songView = b.dataset.v; saveSongView(STATE.songView); renderPractice(); };
       });
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
@@ -651,7 +804,10 @@
         // Locked interface: no `custom:true` for a catalog song (it isn't a saved
         // custom item, so there's nothing for the Studio's "Edit this track" link
         // to look up). Custom songs keep the exact payload shape they always had.
-        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || (mr && mr.yt) || s.yt || null };
+        // Deliberately NO merged-record yt here: openStudio rehydrates url-less
+        // payloads by trackKey and sets ytSource alongside yt - passing mr.yt
+        // directly would skip that and lose the overlay Clear button.
+        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || s.yt || null };
         if (s.custom) payload.custom = true;
         openStudioCb(payload);
       };
@@ -678,12 +834,8 @@
       }
     }
     function shiftKey(dir) {
-      var cur = STATE.transpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(STATE.current.seq, cand)) { STATE.transpose = cand; renderPractice(); return; }
-      }
+      var cand = nextTranspose(STATE.transpose, dir, function (st) { return seqPlayable(STATE.current.seq, st); });
+      if (cand !== null) { STATE.transpose = cand; renderPractice(); }
     }
 
     /* ===================== MAXIMIZE (chord pack diagrams) ===================== */
@@ -716,8 +868,11 @@
         el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
         el.setEdit.classList.toggle('on', STATE.setEditMode);
       }
+      // Clear (✕) hides on an empty setlist too - a destructive control with
+      // nothing to destroy is dead weight in the header (pilot polish audit).
+      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
       if (STATE.setlist.length === 0) {
-        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs with the + button.</div>';
+        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
         STATE.setEditMode = false; STATE.lastRemoved = null;
@@ -780,11 +935,20 @@
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
-    // single song straight from Practice / the "Play now" hero).
-    function startPerform(ids, startIdx) {
+    // single song straight from Practice / the "Play now" hero). seedTpose carries
+    // the song view's transpose into the opening song (absent = original key);
+    // prev/next still reset to 0 per song, as before.
+    function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
-      STATE.performDim = false; STATE.performTpose = 0;
+      // Seed the CURRENT view for this launch only - never persisted here (that
+      // would leak a custom song's forced 'chords' into later performances). The
+      // setlist Perform button seeds stageDefaultView so it always opens in the
+      // saved preference regardless of a prior song-view Stage seed.
+      if (seedView === 'lyrics' || seedView === 'chords' || seedView === 'both') {
+        STATE.performView = seedView;
+      }
+      STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
@@ -792,7 +956,7 @@
       showPerform();
       reqWake();
     }
-    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist); };
+    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
     if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
@@ -802,14 +966,15 @@
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
-    // stage controls panel (scroll speed + font size + lyrics/chords view)
+    // stage controls panel (font size + lyrics/chords/both view; no scroll-speed slider in the current markup)
     if (el.pCtrls) el.pCtrls.onclick = function () { STATE.ctrlsOpen = !STATE.ctrlsOpen; if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen || STATE.scrolling); };
     if (el.pViewLyrics) el.pViewLyrics.onclick = function () { setPerformView('lyrics'); };
     if (el.pViewChords) el.pViewChords.onclick = function () { setPerformView('chords'); };
+    if (el.pViewBoth) el.pViewBoth.onclick = function () { setPerformView('both'); };
     if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
-    function setPerformView(v) { STATE.performView = v; showPerform(); savePerfPrefs(); }
+    function setPerformView(v) { STATE.performView = v; stageDefaultView = v; showPerform(); savePerfPrefs(); }
     function stepFont(d) { STATE.fontMode = 'manual'; STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2))); applyPerfFont(); updateStageBtns(); savePerfPrefs(); }
     // auto-fit: scale the sheet so a short song fills the screen and a long one
     // shrinks toward fitting; manual mode pins an explicit scale instead.
@@ -828,17 +993,23 @@
     }
     function updateStageBtns() {
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
-      if (el.pViewLyrics) el.pViewLyrics.classList.toggle('on', STATE.performView === 'lyrics');
-      if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
+      // Custom sheets force the chords renderer (showPerform); the segmented
+      // control must SAY so - highlight Chords and disable the other views
+      // instead of showing a Lyrics/Both highlight over a chords-only sheet.
+      var cur = songById(QUEUE.current());
+      var forced = !!(cur && cur.custom);
+      var v = forced ? 'chords' : STATE.performView;
+      if (el.pViewLyrics) { el.pViewLyrics.classList.toggle('on', v === 'lyrics'); el.pViewLyrics.disabled = forced; }
+      if (el.pViewChords) el.pViewChords.classList.toggle('on', v === 'chords');
+      if (el.pViewBoth) { el.pViewBoth.classList.toggle('on', v === 'both'); el.pViewBoth.disabled = forced; }
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
-      var cur = STATE.performTpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(s.seq, cand)) { STATE.performTpose = cand; showPerform(); return; }
-      }
+      // A seq-less item (placeholder-rendered in showPerform for a stale setlist)
+      // has nothing to transpose - no-op rather than crash in seqPlayable(s.seq).
+      if (!hasChordSheet(s)) return;
+      var cand = nextTranspose(STATE.performTpose, dir, function (st) { return seqPlayable(s.seq, st); });
+      if (cand !== null) { STATE.performTpose = cand; showPerform(); }
     }
     function showPerform() {
       var s = songById(QUEUE.current());
@@ -846,6 +1017,16 @@
       if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
       if (el.pTitle) el.pTitle.textContent = s.t;
       if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
+      // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
+      // persisted before that guard could still hold one - render a gentle
+      // placeholder instead of crashing on s.seq.map.
+      if (!hasChordSheet(s)) {
+        if (el.pKeyLine) el.pKeyLine.textContent = '';
+        if (pSheet) pSheet.innerHTML = '<div class="pInner"><div class="sect">No chord chart for this track</div></div>';
+        updateStageBtns();
+        if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+        return;
+      }
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
       if (pSheet) {
@@ -866,7 +1047,9 @@
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
       wrap.className = (size === 'big') ? 'bigC' : 'chord';
-      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + name + '</span>';
+      // name is a freeform custom-song token here (no real pack to resolve it),
+      // so escape before innerHTML - same XSS class as the sheet renderer.
+      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(name) + '</span>';
       return wrap;
     }
     // What tonic do we measure intervals against? The chosen key when one is set
@@ -910,14 +1093,58 @@
             if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-          rm.onclick = function (e) { e.stopPropagation(); progression.splice(i, 1); renderProg(); renderSuggest(); renderKey(); };
+          rm.onclick = function (e) {
+            e.stopPropagation(); progression.splice(i, 1);
+            var kc = reinferKey();
+            renderProg(); renderSuggest(); renderKey();
+            if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+          };
           slot.appendChild(rm);
           el.prog.appendChild(slot);
         });
       }
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; forceStarters = false; progression.push(c); renderProg(); renderKey(); }
+    function addChord(c) {
+      if (progression.length >= 8) return;
+      forceStarters = false;
+      progression.push(c);
+      // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
+      // one, so the key chip + in-key palette light up without a key-panel trip. The
+      // inferred key stays NON-explicit: it keeps tracking further adds until the user
+      // pins a key themselves (root pick / mode pick / named pattern all set explicit).
+      var prevRoot = songKey.root, prevMode = songKey.mode;
+      // Re-infer through the SAME helper the remove/Clear paths use, so a later
+      // chord that makes inference fail CLEARS a stale non-explicit key instead
+      // of leaving the old chip/palette (the inline infer only ever set a key,
+      // never cleared one - the asymmetry codex flagged).
+      reinferKey();
+      renderProg(); renderKey();
+      // Key changed under an auto-infer: refresh the fly-out content + the chord list
+      // (renderKey/buildKeyPicker already refreshed the chip + roots). Skipped when
+      // nothing moved so a plain add never rebuilds the grid mid-tap.
+      if ((songKey.root !== prevRoot || songKey.mode !== prevMode) && el.keyRoots) {
+        renderKeyView(); buildGrid();
+      }
+    }
+    // Symmetric UN-infer for the remove/Clear paths: an auto-inferred
+    // (non-explicit) key must keep tracking the progression the same way
+    // addChord's infer does - re-infer at 2+ chords, clear entirely below 2.
+    // Otherwise a deleted progression leaves a stale key chip + palette.
+    // Returns true when the key actually changed (caller refreshes the
+    // fly-out + grid, mirroring addChord's conditional rebuild).
+    function reinferKey() {
+      if (songKey.explicit) return false;
+      var prevRoot = songKey.root, prevMode = songKey.mode;
+      if (progression.length >= 2) {
+        var ik = inferKey(progression);
+        if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
+        else { songKey.root = null; }
+      } else {
+        songKey.root = null;
+      }
+      return songKey.root !== prevRoot || songKey.mode !== prevMode;
+    }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
@@ -1042,8 +1269,9 @@
     //   - "All": the full chromatic grid plus the chord-TYPE tabs (Major/Minor/7th/Maj7/
     //     Min7) as a sub-filter. Default when no key is set (and the In-key segment then
     //     prompts to pick a key).
-    // The in-key palette lives ONLY here now (renderKeyView keeps the scale + HSR +
-    // inversions teaching only), so the diatonic chords are never duplicated.
+    // The in-key palette lives ONLY here now (renderKeyView is title + the
+    // Triads & Inversions link only - the solo scale + HSR chain moved to the
+    // Studio), so the diatonic chords are never duplicated.
     // 'chordView' is the segmented-toggle state ('inkey' | 'all'); null = "follow the key"
     // (auto: in-key when a key is set, all otherwise). An explicit user tap pins it.
     var chordView = null;
@@ -1066,12 +1294,14 @@
       // already shows the key, and the toggle already says which list you're in.
       chips.className = 'chips';
       chips.innerHTML = ''; grid.innerHTML = '';
-      // Remove any list-content nodes a prior render appended to the scroll area, keeping
-      // #buildGrid (the tiles container) in place.
+      // Remove any list-content nodes a prior render appended to the scroll area,
+      // keeping #buildGrid (the tiles container) and #suggest (the suggestion surface -
+      // renderSuggest owns its content; it leads the scroll area per the UAT fold-in)
+      // in place.
       var scroller = el.composeChords;
       if (scroller) {
         Array.prototype.slice.call(scroller.children).forEach(function (n) {
-          if (n !== grid) scroller.removeChild(n);
+          if (n !== grid && n !== el.suggest) scroller.removeChild(n);
         });
       }
       var view = effectiveChordView();
@@ -1097,11 +1327,18 @@
 
       if (view === 'inkey') {
         if (!songKey.root) {
-          // In-key view with no key set: prompt to pick a key (the list is empty until then).
+          // In-key view with no key set: a PROMINENT pick-a-key CTA (replaces the old
+          // hint prose) - one tap opens the key panel right above. A short secondary
+          // line keeps the All escape hatch discoverable.
+          var cta = document.createElement('button');
+          cta.type = 'button';
+          cta.className = 'btn red pickKeyCta';
+          cta.textContent = 'Pick a key';
+          cta.onclick = function () { keyPopoverOpen = true; buildKeyPicker(); };
           var hint = document.createElement('p');
           hint.className = 'keyHint chordsHint';
-          hint.textContent = 'Pick a key (tap the key chip above) to lead with its chords, or switch to All to browse every chord.';
-          if (scroller) scroller.insertBefore(hint, grid);
+          hint.textContent = 'Its chords will lead this list - or switch to All to browse every chord.';
+          if (scroller) { scroller.insertBefore(cta, grid); scroller.insertBefore(hint, grid); }
           return;
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
@@ -1136,11 +1373,13 @@
       });
     }
 
-    /* ---- Key & scale: pick a key -> its diatonic chord palette + a solo scale box ----
+    /* ---- Key: pick a key -> its diatonic chord palette (the solo scale/HSR
+     * moved to the Studio; the fly-out links out via Triads & Inversions) ----
      * Persistent compact key bar (replaces the old collapse): the current-key chip and
      * the maj/min mode toggle are ALWAYS visible - one tap changes major<->minor, never
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
-     * and closed on selection. No "tap the already-selected Major to dismiss" gesture. */
+     * and closed on selection; tapping the already-selected mode re-confirms and
+     * closes it (a no-op re-harmonize guard, not a toggle). */
     var songKey = { root: null, mode: "Major", explicit: false };
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
@@ -1148,7 +1387,7 @@
       // Fixed-width key/mode chip: injected once into the button bar (#keyChipSlot). It
       // does double duty - shows the current key (root + abbreviated mode, so it reads as
       // the transpose readout: songKey.root moves with every transpose) AND toggles the
-      // fly-out (#keyFlyout, which holds the 12 roots + the mode toggle + the solo scale).
+      // fly-out (#keyFlyout: the 12 roots + the mode toggle + the Triads & Inversions link).
       // Abbreviated mode (Maj/Min/Mixo/Dor) keeps it short for the fixed width; the fixed
       // width (.keyPickerCompact in CSS) means "C Maj" and "G# Mixo" render the same size,
       // so the button bar never jumps as the key name changes.
@@ -1173,7 +1412,9 @@
         // (net shift mod an octave), mirroring the old #cKey readout indicator.
         var chipShift = (((cTpose % 12) + 12) % 12) !== 0;
         chip.classList.toggle('shifted', chipShift);
-        var chipMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
+        // Guarded lookup: a bad persisted/imported mode must degrade to the
+        // raw string, never hard-crash the key picker on `.label` of undefined.
+        var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
         chip.innerHTML = songKey.root
@@ -1181,7 +1422,7 @@
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
-      // The fly-out (roots + mode toggle + solo scale) opens/closes with the chip.
+      // The fly-out (roots + mode toggle + Triads & Inversions link) opens/closes with the chip.
       if (el.keyFlyout) el.keyFlyout.hidden = !keyPopoverOpen;
       // Root grid is always visible INSIDE the fly-out now (no separate popover).
       el.keyRoots.hidden = false;
@@ -1192,8 +1433,11 @@
         b.textContent = r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
-          // Picking a root sets the explicit key and closes the popover. Tapping the
-          // currently-selected root clears the key (and re-opens for a fresh pick).
+          // Picking a root sets the explicit key and KEEPS the panel open so the mode
+          // can be chosen in the same visit (root -> mode is one gesture; the old
+          // close-on-root-pick forced a reopen to get minor). A mode tap - or re-tapping
+          // the current mode as a "confirm" - closes it. Tapping the currently-selected
+          // root clears the key (and stays open for a fresh pick).
           if (songKey.root === r) {
             // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
             songKey.root = null; songKey.explicit = false;
@@ -1219,7 +1463,7 @@
               }
             }
             songKey.root = r; songKey.explicit = true;
-            keyPopoverOpen = false;
+            // stays open (keyPopoverOpen untouched) - the mode tap completes the gesture
           }
           // Picking/clearing a key resets the chord-list view to "follow the key": a set
           // key -> In key, a cleared key -> All. (An explicit segment tap re-pins it.)
@@ -1237,15 +1481,26 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Mode change ALWAYS re-harmonizes the built progression (solo-practice scope):
-          // the one key/mode filter keeps the chords in sync - a root change transposes,
-          // a mode change re-qualifies. convertToMode sets songKey.mode + re-renders.
-          // If the progression is empty there's nothing to harmonize, so just set the
-          // mode and re-render the palette/solo scale.
+          // Re-tapping the CURRENT mode is a no-op confirm: change nothing, just close
+          // the panel (when a root is set - the gesture is complete). The old
+          // unconditional convertToMode call re-derived a key from the first chord and
+          // could swap the chord list underneath the user on a same-mode tap.
+          if (mk === songKey.mode) {
+            if (songKey.root) { keyPopoverOpen = false; buildKeyPicker(); }
+            return;
+          }
+          // A real mode change re-harmonizes the built progression (solo-practice
+          // scope): the one key/mode filter keeps the chords in sync - a root change
+          // transposes, a mode change re-qualifies. convertToMode sets songKey.mode,
+          // closes the panel + re-renders. If the progression is empty there's nothing
+          // to harmonize, so just set the mode, close (root + mode both chosen = the
+          // gesture is done; with no root yet, stay open for the root pick) and
+          // re-render the palette.
           if (progression.length) {
             convertToMode(mk);
           } else {
             songKey.mode = mk;
+            if (songKey.root) keyPopoverOpen = false;
             renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
           }
         };
@@ -1257,102 +1512,28 @@
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
-      // #keyView now lives INSIDE the key/mode fly-out (below the roots + mode toggle), so
-      // the solo scale + HSR chain + inversions link show when the fly-out is open.
-      if (!songKey.root) {
-        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see the scale to solo over.</p>';
-        return;
-      }
+      // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
+      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
+      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
+      // HSR chain moved out entirely. What remains: the key readout line and a
+      // "Triads & Inversions" deep-dive link that opens in the current instrument +
+      // key context.
+      if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
-
-      // Solo scale via the shared KeyExplorer. The in-key DIATONIC CHORD palette used
-      // to render here too, but it now lives ONLY on the adaptive chord surface
-      // (buildGrid -> the chord list above this fly-out, which leads with the in-key
-      // chords when a key is set) so the diatonic chords are never duplicated across two
-      // surfaces. This fly-out keeps the teaching content: title, the solo scale box, the
-      // I-IV-V HSR chain, and the "Walk the full cycle" inversions link. Guarded so a
-      // future script-load reorder degrades (scale skipped, HSR + title still render)
-      // instead of hard-crashing.
-      if (global.KeyExplorer) {
-        var pcs = scalePcs(keyRoot, keyMode);
-        global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
-          label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
-          frets: 7
-        });
-      }
-
-      // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
-      // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
-      // teaching: V is adjacent to IV (same hand shape, 2-fret slide). I sits
-      // in a different family - you "rotate" into it via hammer/transform. The
-      // adapter's chainVoicings honors this. For HSR-by-design profiles (Cigar
-      // Box, Banjo) the same closed barre is the home shape so I+IV+V all use
-      // the same family - that profile IS the HSR loop in one shape.
-      renderHsrChain();
-    }
-    // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
-    // Reuses chordsFromDegrees so any future progression patterns slot in here.
-    function renderHsrChain() {
-      var keyRoot = songKey.root, keyMode = songKey.mode;
-      if (!el.keyView || !keyRoot || !pack) return;
-      var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
-      if (!chain.length) return;
-      var quals = (MODES[keyMode] && MODES[keyMode].quals) || ["", "", "", "", "", "", ""];
-      var romanBase = ['I', 'IV', 'V'];
-      var labels = [0, 3, 4].map(function (deg, i) {
-        return (quals[deg] === 'm' || quals[deg] === 'dim') ? romanBase[i].toLowerCase() : romanBase[i];
-      });
-      // diagramChain picks a single template family across all three names so
-      // the eye sees the same hand shape slid up. Fallback to per-chord
-      // diagramClosed when the adapter doesn't expose the chain method.
-      var diagrams;
-      if (typeof pack.diagramChain === 'function') {
-        diagrams = pack.diagramChain(chain, 'small');
-      } else if (typeof pack.diagramClosed === 'function') {
-        diagrams = chain.map(function (c) { return pack.diagramClosed(c, 'small'); });
-      } else {
-        diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
-      }
-      var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
-      hsrLbl.textContent = 'I IV V · V is IV slid up 2 frets';
-      el.keyView.appendChild(hsrLbl);
-      var row = document.createElement('div'); row.className = 'hsrChain';
-      chain.forEach(function (c, i) {
-        // Same vertical layout as the diatonic palette + "Add Nth chord" row:
-        // chord name (top, inside diagram via chord-name span) -> diagram ->
-        // Roman numeral (bottom). Moving Roman from above to below the diagram
-        // makes the chord name the most prominent label and matches the other
-        // palettes.
-        var card = document.createElement('div'); card.className = 'hsrCard';
-        card.appendChild(diagrams[i]);
-        var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
-        card.appendChild(rn);
-        card.onclick = function () {
-          addChord(c); packPlayChord(c);
-          card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
-        };
-        row.appendChild(card);
-      });
-      el.keyView.appendChild(row);
-      // Deep-dive: the same I-IV-V relationship walked all the way up the neck
-      // using shape rotations (C-shape -> A-shape -> F-shape) and the Hammer /
-      // Slide / Rotate / Flip operations. Not the default surface; linked here
-      // for the curious.
+      // Carry the current instrument AND key so the inversions page opens in context -
+      // same instrument profile, pre-selected to this key. mode rides along too so a
+      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var more = document.createElement('a');
       more.className = 'hsrMore';
-      // Carry the current instrument AND key so the inversions page opens in context -
-      // same instrument profile, pre-selected to this key (the cycle is the same I-IV-V,
-      // now anchored to where the user is actually composing). mode rides along too so a
-      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var invParams = [];
       if (PROFILE_ID) invParams.push('p=' + encodeURIComponent(PROFILE_ID));
-      if (keyRoot) invParams.push('key=' + encodeURIComponent(keyRoot));
-      if (keyMode) invParams.push('mode=' + encodeURIComponent(keyMode));
-      more.href = 'triad-inversions.html' + (invParams.length ? '?' + invParams.join('&') : '');
-      more.textContent = 'Walk the full cycle up the neck →';
+      invParams.push('key=' + encodeURIComponent(keyRoot));
+      invParams.push('mode=' + encodeURIComponent(keyMode));
+      more.href = 'triad-inversions.html?' + invParams.join('&');
+      more.textContent = 'Triads & Inversions →';
       el.keyView.appendChild(more);
     }
 
@@ -1387,16 +1568,17 @@
     }
     // a COMPACT tappable suggestion chip: chord name + its interval (Roman) label, no
     // fretboard diagram - so "Next chord" stays a few short rows instead of eating the
-    // viewport. (The full shapes live in "All chords" / the key palette.) `completes` (a
-    // progression name) accent-highlights the chip and adds a tiny caption in place.
+    // viewport. (The full shapes live in "All chords" / the key palette.) `completes`
+    // accent-highlights the chip that finishes a famous progression. The progression
+    // NAME itself is deliberately not rendered - the caption blew the chip width and
+    // wrapped the row; the glow alone carries the nudge.
     function suggChip(c, tonic, completes) {
       var chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
-      var html = '<span class="scName">' + c + '</span>';
-      if (rn) html += '<span class="scRn">' + rn + '</span>';
-      if (completes) html += '<span class="scCap">' + completes + '</span>';
+      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
@@ -1409,8 +1591,9 @@
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0 || forceStarters) {
-        // Empty state (or "?" pressed): show common progressions so the user has actionable
-        // one-tap starters. The starters live INSIDE the progression box (below #prog).
+        // Empty state (or "?" pressed): show common progressions so the user has
+        // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
+        // in with the In key / All content) so the fixed top region stays short.
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
         lbl.textContent = 'Start with a common progression';
         el.suggest.appendChild(lbl);
@@ -1429,8 +1612,8 @@
       }
       var tonic = labelTonic();
       // PROGRESSION-AWARE highlight: a chord that COMPLETES a famous progression is
-      // flagged right inside the normal "add a chord" list (accent glow + a tiny name
-      // caption) — no separate rows, no forced vertical. De-duped per chord.
+      // flagged right inside the normal "add a chord" list with an accent glow -
+      // no separate rows, no forced vertical, no caption. De-duped per chord.
       var comps = completions(progression, tonic, songKey.root ? songKey.mode : "Major");
       var completeBy = {};
       comps.forEach(function (cmp) {
@@ -1461,12 +1644,10 @@
         el.suggest.appendChild(lbl);
       }
       var row = document.createElement('div'); row.className = 'suggRow';
-      // show the actual chord shape, not just a name — same diagram as the build grid
-      // below. Interval label shows the ROLE (V, vi…); a completing chord also gets the
-      // accent glow + the progression name it finishes.
+      // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
+      // glow (no name caption - see suggChip).
       picks.forEach(function (c) {
-        var names = completeBy[c];
-        row.appendChild(suggChip(c, tonic, names ? names.join(' / ') : null));
+        row.appendChild(suggChip(c, tonic, !!completeBy[c]));
       });
       el.suggest.appendChild(row);
     }
@@ -1675,7 +1856,12 @@
       });
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
-    if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
+    if (el.cClear) el.cClear.onclick = function () {
+      progression = []; cTpose = 0;
+      var kc = reinferKey();
+      renderProg(); renderKey();
+      if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+    };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     // "?" help: re-show the starter progressions inside the progression box. Toggles off
@@ -1717,7 +1903,6 @@
           openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
         });
       } else {
-        setLibType('repertoire');
         switchTab('library');
         seedBackingKey(songKey.root, songKey.mode);
       }
@@ -1730,16 +1915,17 @@
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
     function switchTab(name) {
-      // Legacy tab names (setlist / tracks) now resolve to the unified Library screen
-      // with the matching type filter pre-selected, so old internal callers + deep
-      // links still land in the right place after the 3-tab merge.
-      if (name === 'setlist') { STATE.libType = 'set'; try { localStorage.setItem(LIBTYPE_KEY, 'set'); } catch (e) {} name = 'library'; }
-      else if (name === 'tracks' || name === 'repertoire') { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} name = 'library'; }
+      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
+      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
+      // old internal callers + deep links still land in the right place.
+      if (name === 'setlist' || name === 'set') name = 'jam';
+      else if (name === 'tracks' || name === 'repertoire') name = 'library';
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
       if (name === 'practice') renderPractice();
-      if (name === 'library') { renderTypeToggle(); applyLibType(); }
+      if (name === 'library') { renderFilterChips(); renderSongs(); }
+      if (name === 'jam') renderSetlist();
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
       var viewEl = document.getElementById('view');
@@ -1751,11 +1937,12 @@
 
     /* ===================== INIT ===================== */
     rebuildAll();
-    renderTypeToggle();
     renderFilterChips();
     renderSongs();
     renderSetlist();
-    applyLibType(); // set initial sub-view visibility (Songs | Tracks | Set)
+    // Library is the default-shown screen; set its context line (the tab-restore
+    // below overwrites it when a saved non-library tab is reopened).
+    if (el.ctxLine && CONTEXTS['library'] != null) el.ctxLine.textContent = CONTEXTS['library'];
     buildGrid();
     buildKeyPicker();
     renderKeyView();
@@ -1775,6 +1962,21 @@
     // so only switch when the saved tab is something else and its button actually exists).
     try {
       var savedTab = localStorage.getItem(ACTIVE_TAB_KEY), tabExists = false;
+      // Normalize a legacy saved tab through the SAME mapping switchTab applies,
+      // so an old activeTab.v1 written before the Jam rename ('setlist'/'set' ->
+      // Jam, 'tracks'/'repertoire' -> Library) restores to the right modern tab
+      // instead of failing the tabExists check and falling back to Library.
+      if (savedTab === 'setlist' || savedTab === 'set') savedTab = 'jam';
+      else if (savedTab === 'tracks' || savedTab === 'repertoire') savedTab = 'library';
+      // Pre-Jam versions kept Set/Perform as a Library SUBVIEW under libType.v1
+      // (never written by this version). Consume it ONCE: migrate to Jam and
+      // REMOVE the legacy key - otherwise a migrated user who later chooses
+      // Library would be forced back to Jam on every reload (the sticky-marker
+      // bug), since libType.v1 would keep overriding the real saved tab.
+      if (localStorage.getItem(prefix + '.libType.v1') === 'set') {
+        try { localStorage.removeItem(prefix + '.libType.v1'); } catch (e) {}
+        if (!savedTab || savedTab === 'library') savedTab = 'jam';
+      }
       // match by iterating buttons (not a built selector) so a malformed stored value can't
       // throw a selector SyntaxError and abort the restore.
       document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
@@ -1810,10 +2012,17 @@
     renderSheet: renderSheet,
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
+    isMine: isMine,
+    hasChordSheet: hasChordSheet,
+    libraryFilter: libraryFilter,
+    libraryEmptyState: libraryEmptyState,
+    ytSearchURL: ytSearchURL,
+    nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,
+    inferKey: inferKey,
     ROOTS: ROOTS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;

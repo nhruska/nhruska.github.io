@@ -63,18 +63,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:18px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
 .chip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
-/* Unified-library type toggle (Songs | Tracks | Set). A prominent full-width
-   segmented control sitting above search - the primary repertoire switch since
-   the 3 tabs merged. Larger + equal-width segments distinguish it from the
-   secondary decade chips below it. */
-.typeToggle{gap:0;margin-bottom:14px;padding:3px;background:var(--surface);border:1px solid var(--line-strong);border-radius:13px;overflow:visible;}
-.typeToggle .chip{flex:1 1 0;text-align:center;justify-content:center;border:none;border-radius:10px;padding:9px 0;font-size:.82rem;min-height:40px;display:flex;align-items:center;}
-.typeToggle .chip.on{background:var(--accent);color:#06201c;}
-/* M2: the +Add entry point sits beside the Repertoire|Set toggle, same row. */
-.libTypeRow{display:flex;align-items:flex-start;gap:8px;}
-.libTypeRow .typeToggle{flex:1;margin-bottom:0;}
-.libTypeRow #addBtn{margin-top:3px;}
-.libTracks[hidden],.libSet[hidden],.libSongs[hidden]{display:none;}
+/* Library head row: search (flex) + the +Add entry point, one row. The old
+   Repertoire|Set type toggle is retired - Set/Perform lives on the Jam tab. */
+.libSearchRow{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.libSearchRow .searchWrap{flex:1 1 auto;min-width:0;margin-bottom:0;}
+.libTracks[hidden]{display:none;}
+/* Library scroll model: search + facet chips stay pinned; the song list is the
+   ONLY scroll container (same flat single-scroller pattern as Compose - no
+   nested scroll traps). .screen.on is display:block by default, so the flex
+   column is scoped to the library screen's own .on state. */
+#s-library{height:100%;}
+#s-library.on{display:flex;flex-direction:column;}
+.libSearchRow,#genreChips,#keyChips{flex:0 0 auto;}
+.libSongs{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
+.libSongs::-webkit-scrollbar{width:0;}
 /* ===== Unified Library list item (SSOT - music/shared/list-item.js) =====
  * One element + one class for Songs / Tracks / Set. The three list containers
  * stack items identically; per-segment differences are only the leading number
@@ -121,6 +123,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Edit-set toggle: ghost button that lights up accent when editing. */
 #setEdit.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
+/* One-tap key-filter clearing link inside the zero-results empty state. */
+.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:#06201c;}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px;}
@@ -142,21 +147,23 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .queueNav button:active{transform:scale(.94);background:var(--accent);color:#06201c;}
 .queueNav button:disabled{opacity:.32;cursor:default;color:var(--txt-dim);}
 .queueNav .qPos{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-dim);letter-spacing:.04em;}
-/* practice-view mode row: 2-way switch (Practice / Chords only) + compact transpose chip, one row */
-.practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 8px;}
-.modeSwitch{display:flex;gap:4px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
-.modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--txt-dim);padding:10px 4px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* song-view row: Lyrics/Chords/Both segmented + compact transpose chip + Stage icon, one row.
+ * Ultra-narrow screens (<350px) give the segmented its own line rather than clip labels. */
+.practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 14px;}
+@media (max-width:349px){.practiceRow{flex-wrap:wrap;}.practiceRow .modeSwitch{flex-basis:100%;}}
+.modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:3px;}
+.modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}
 .modeSwitch button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
 .transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:8px;cursor:pointer;transition:background .15s,transform .08s,color .15s;}
 .transposeChip button:active{transform:scale(.86);background:var(--accent);color:#06201c;}
-.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 8px;min-width:28px;text-align:center;}
-/* Stage: a clearly-labeled, discoverable CTA for the fullscreen perform overlay —
- * a distinct full-width button (not a subtle third switch tab). */
-.stageCta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent);font-family:inherit;font-weight:700;font-size:.86rem;padding:11px;border-radius:11px;cursor:pointer;margin:0 0 14px;transition:transform .08s,background .15s;}
-.stageCta:active{transform:scale(.98);background:var(--accent);color:#06201c;}
-.stageCta .stageIcon{font-size:1rem;}
+.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 6px;min-width:24px;text-align:center;}
+.modeSwitch button:disabled{opacity:.35;cursor:default;}
+/* Stage: compact fullscreen icon button on the view row (replaces the old
+ * full-width CTA) - accent-filled so the perform entry stays discoverable. */
+.stageGo{height:auto;min-height:44px;width:40px;background:var(--accent-deep);border-color:var(--accent-dim);}
+.stageGo:active{background:var(--accent);color:#06201c;border-color:var(--accent);}
 /* Campfire: big chords-only, sized for jamming with the phone on the table */
 .campfireSheet{padding:18px 14px;}
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
@@ -266,30 +273,32 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog::-webkit-scrollbar{display:none;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:62px;}
-/* When empty the #suggest starters below carry the call-to-action, so the empty #prog
-   collapses (no min-height, no placeholder) instead of showing a redundant prompt. */
+/* When empty the #suggest starters (top of the chord list below) carry the
+   call-to-action, so the empty #prog collapses (no min-height, no placeholder)
+   instead of showing a redundant prompt. */
 .prog:empty{min-height:0;padding:0;border:0;}
-.suggest:not(:empty){margin-top:8px;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
    area, which would overlap the chord tile and steal play-taps from the diagram below. */
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
-.suggest{margin-top:2px;}
+/* #suggest leads the scrolling chord list (folded into the In key / All surface):
+   starters when the progression is empty, next-chord chips otherwise. */
+.suggest:not(:empty){margin:2px 0 12px;}
 .suggest:empty{display:none;}
 .suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
 /* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
-   A chord that COMPLETES a famous progression gets an accent glow + a tiny caption. */
+   A chord that COMPLETES a famous progression gets an accent glow (no name caption -
+   the caption blew the chip width and wrapped the row). */
 .suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
 .suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent);}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
-.suggChip .scCap{font-size:.54rem;font-weight:600;color:var(--accent);text-align:center;line-height:1.1;max-width:84px;}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
@@ -317,7 +326,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    (the All-chords .chordGrid tiles already do, which is why that view scrolls). */
 .chordGrid .chord,
 .inKeyLead .chord,
-.hsrChain .chord,
 .chordCell,
 .keyPalette .chordCell,
 .chordSeg,
@@ -331,16 +339,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyClearBtn{touch-action:pan-y;}
 .prog .slot .chord,
 .suggRow .chord.suggPick,
-.chordGrid .chord,
-.hsrChain .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+.chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
 .prog .slot .chord .chord-name,
 .suggRow .chord.suggPick .chord-name,
-.chordGrid .chord .chord-name,
-.hsrChain .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
+.chordGrid .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
 .prog .slot .chord:active,
 .suggRow .chord.suggPick:active,
-.chordGrid .chord:active,
-.hsrChain .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
+.chordGrid .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
 .suggRow .chord.suggPick{border-color:var(--accent-dim);}
 .suggRow .chord.suggPick .chord-name{color:var(--accent);}
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
@@ -384,10 +389,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyTitle span{color:var(--accent);font-size:.76rem;font-weight:600;margin-left:6px;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
 .keyPalette{margin-bottom:2px;}
-/* Each diatonic chord tile uses the same layout as the suggCell and hsrCard:
-   diagram on top + Roman numeral below. Keeps the visual consistent across
-   all three palettes (chord name bold at top via .chord-name, Roman muted at
-   bottom via .rn). */
+/* Each diatonic chord tile uses the same layout as the suggCell: diagram on
+   top + Roman numeral below. Keeps the visual consistent across the palettes
+   (chord name bold at top via .chord-name, Roman muted at bottom via .rn). */
 .keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* ---- Adaptive chord surface (Phase 1) ----
@@ -409,6 +413,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .catTabRow::-webkit-scrollbar{display:none;}
 .chordsHint{margin:0 2px 4px;}
+/* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
+   reads as THE next step (the old prose hint buried it). */
+.pickKeyCta{display:block;width:100%;margin:2px 0 8px;}
+/* Solo-over-backing bridge: a compact link-style row, not a full-height .btn - it
+   sits in the FIXED compose top, so every saved pixel is above-the-fold chord list.
+   Accent + dashed border keep it recognizably tappable at the smaller size. */
+.soloBackingBtn{display:block;width:100%;flex:none;padding:6px 10px;min-height:0;font-size:.76rem;font-weight:600;background:transparent;border:1px dashed var(--accent-dim);color:var(--accent);border-radius:9px;}
+.soloBackingBtn:active{background:var(--accent-deep);border-color:var(--accent);}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
@@ -430,20 +442,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .scalePosBtn:active{transform:scale(.94);}
 .scalePosBtn:disabled{opacity:.32;cursor:default;}
 .scalePosLbl{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--txt-dim);letter-spacing:.03em;min-width:76px;text-align:center;}
-/* HSR Chain - three cards across showing I-IV-V (or mode equivalent) using
-   the same hand shape slid up the neck. The Roman numeral on each card makes
-   the function explicit; the diagram below is via the adapter's diagramClosed
-   so even profiles that have idiomatic open voicings get the moveable barre
-   pattern that teaches HSR. */
-.hsrChain{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 6px;}
-/* HSR chain card matches the layout of suggCell + chordCell: outer wrapper is
-   a plain flex column (no border) - the inner .chord (the diagram) gets the
-   bordered tile styling via the broader selector above, and the Roman numeral
-   sits BELOW the bordered tile as small muted text, identical to .rn used by
-   .suggCell. Keeps the visual hierarchy consistent across all three palettes. */
-.hsrCard{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
-.hsrCard.sel .chord{border-color:var(--accent);background:var(--accent-deep);}
-.hsrRoman{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+/* Deep-dive link (Compose fly-out "Triads & Inversions" + the Studio's
+   "Walk the full cycle" - tracks.js renders the same class). The HSR chain
+   cards this used to sit under left Compose with the fly-out scale (locked
+   decision: the Studio owns fretboard/scale teaching). */
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
 /* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
@@ -461,8 +463,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    contain) so a vertical swipe scrolls smoothly and chains to the page at a boundary. */
 .composeChords{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
 .composeChords::-webkit-scrollbar{width:0;}
-/* progression box: built chords (#prog) on top; #suggest below carries the next-chord
-   picks (non-empty) or the starter progressions (empty / "?" pressed). */
+/* progression box: the built chords (#prog). The suggestion surface (#suggest) lives
+   at the top of the scrolling chord list, not here - keeps the fixed top short. */
 .progBox{margin-bottom:8px;}
 /* Inline save UI (songbook.js: composeRow/composeToast) - replaces native
    prompt()/alert()/confirm() in the save + solo-backing flows. Rendered on
@@ -476,8 +478,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
-/* key/mode fly-out (roots + mode toggle + solo scale). The chip that opens it lives in
-   the button bar now; this is just the drop-down, hidden by default (no row when closed). */
+/* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
+   to the Studio). The chip that opens it lives in the button bar now; this is just the
+   drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
 .keyFlyout[hidden]{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
@@ -494,14 +497,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
-   IN-KEY cells (.chordCell) and starters (.progPick), the HSR chain cards, and the
-   next-chord suggestion chips. */
+   IN-KEY cells (.chordCell) and starters (.progPick), and the next-chord suggestion
+   chips. */
 .maxNote{flex:0 0 auto;font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
 .composeWrap.maxed .keyView .chordGrid .chord,
 .composeWrap.maxed #buildGrid .chord,
 .composeWrap.maxed .inKeyLead .chordCell,
 .composeWrap.maxed .progPick,
-.composeWrap.maxed .hsrChain .hsrCard,
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
