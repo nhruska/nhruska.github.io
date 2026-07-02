@@ -296,6 +296,12 @@
     });
     return out;
   }
+  // Which record the Studio (video + solo HUD) should open for a Repertoire row.
+  // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
+  // never as a merged backing SEED track (rec._track), which would drop the user's
+  // curated video / fork id. A non-custom merged song opens the seed track (its
+  // curated key/video is the intent there). Pure + Node-testable.
+  function studioTarget(rec) { return (rec && rec.custom) ? rec : ((rec && rec._track) || rec); }
   // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
   // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
   // literally named "mine" filters as a genre and does NOT hijack the ownership
@@ -590,13 +596,13 @@
     function openRepertoireItem(rec) {
       var p = global.Repertoire.playability(rec);
       if (p.sheet && rec.id != null && songById(rec.id)) { openPractice(rec.id); return; }
-      if (openStudioCb && (p.studio || rec._track)) { openStudioCb(rec._track || rec); return; }
+      if (openStudioCb && (p.studio || rec._track)) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
     // The ▶/↗ action button: a curated video opens the Studio (video + solo HUD);
     // otherwise it's a YouTube search for a backing track.
     function repertoireAction(rec) {
-      if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(rec._track || rec); return; }
+      if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
     function renderSongs() {
@@ -700,13 +706,14 @@
       // selection so Stage opens in the key AND view you were just practicing in,
       // not the original / a stale stage pref (UAT item 8 + the "over whichever
       // view you're on" contract above).
-      // Seed the EFFECTIVE view: a custom song is forced to chords, so seed
+      // Seed the EFFECTIVE view: a chord-only custom is forced to chords, so seed
       // 'chords' rather than a raw Lyrics/Both songView that would (a) mislabel
       // this Stage and (b) persist the wrong performView for a later non-custom
-      // Stage / setlist Perform.
+      // Stage / setlist Perform. A FORK keeps the original's lyrics, so it is NOT
+      // forced - it seeds the practiced Lyrics/Chords/Both view like a catalog song.
       if (m === 'stage') {
         if (!STATE.current) return;
-        var seedView = STATE.current.custom ? 'chords' : STATE.songView;
+        var seedView = (STATE.current.custom && !STATE.current.forkOf) ? 'chords' : STATE.songView;
         startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, seedView);
         return;
       }
@@ -1831,6 +1838,14 @@
       if (f.forkOf) cs.forkOf = f.forkOf;
       if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
       if (f.y != null) cs.y = f.y;
+      // Forking a SETLISTED catalog song: rebuildAll shadows the catalog kN id, so
+      // the setlist slot pointing at it would go dangling (the song vanishes from
+      // the set). Remap that slot to the new fork id so the entry is REPLACED, not
+      // lost - the setlist still holds the song, now as your editable fork.
+      if (cs.forkOf) {
+        var fsp = STATE.setlist.indexOf(cs.forkOf);
+        if (fsp >= 0) { STATE.setlist[fsp] = cs.id; saveSet(); }
+      }
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       return cs;
     }
@@ -1849,10 +1864,18 @@
       return cs;
     }
     function deleteCustomItem(id) {
+      var victim = customById(id);
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
       saveCustom();
       var sp = STATE.setlist.indexOf(id);
-      if (sp >= 0) { STATE.setlist.splice(sp, 1); saveSet(); }
+      if (sp >= 0) {
+        // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore
+        // the catalog id into the setlist slot (keep the song setlisted). A plain
+        // custom delete has no original to fall back to, so drop the slot.
+        if (victim && victim.forkOf) STATE.setlist[sp] = victim.forkOf;
+        else STATE.setlist.splice(sp, 1);
+        saveSet();
+      }
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
@@ -2088,6 +2111,7 @@
     isMine: isMine,
     hasChordSheet: hasChordSheet,
     shadowedCatalogIds: shadowedCatalogIds,
+    studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
     ytSearchURL: ytSearchURL,

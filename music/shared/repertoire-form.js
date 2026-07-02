@@ -11,7 +11,11 @@
  *   RepertoireForm.mount({ container? })  -> { open(opts), close() }
  *     opts = {
  *       mode: 'create' | 'edit',
- *       item: {...} (edit mode: the existing custom song/track to prefill),
+ *       fork: boolean (optional; forking a catalog song - hides the Chords field
+ *             since chords+lyrics are preserved from the original, and relabels
+ *             the dialog "Make it mine" / delete -> "Revert to original"),
+ *       item: {...} (edit mode: the existing custom song/track to prefill; also
+ *             the fork seed in fork+create mode),
  *       onSave: function(fields) -> saved item or null (host persists),
  *       onDelete: function() (edit mode only; optional)
  *     }

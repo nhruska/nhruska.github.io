@@ -153,6 +153,31 @@ test('shadowedCatalogIds: forks report the catalog id they shadow, others do not
   assert.deepStrictEqual(Songbook.shadowedCatalogIds([]), {});
   assert.deepStrictEqual(Songbook.shadowedCatalogIds(null), {});
 });
+
+/* ---- studioTarget: a fork's OWN video must reach the Studio, not the merged
+ * backing SEED track. This is the call-chain the ▶/↗ action + row tap use
+ * (openStudioCb(studioTarget(rec))); a regression here silently opens the seed
+ * track for a fork that matched a backing track, dropping the curated video. ---- */
+test('studioTarget: a custom/fork opens as ITSELF even when merged with a seed track', function () {
+  var seed = { id: 't5', yt: 'SEEDvideoAA', key: 'C' };
+  // a fork that matched a backing track: Repertoire.build hangs the seed on _track
+  var fork = { id: 'm2', custom: true, forkOf: 'k7', yt: 'FORKvideoBB', _track: seed };
+  assert.strictEqual(Songbook.studioTarget(fork).id, 'm2');   // the fork, not the seed
+  assert.strictEqual(Songbook.studioTarget(fork).yt, 'FORKvideoBB'); // the curated video wins
+});
+test('studioTarget: a plain custom song with its own video opens as itself', function () {
+  var custom = { id: 'm9', custom: true, yt: 'MINEvideoCC', _track: { id: 't1', yt: 'SEEDvideoDD' } };
+  assert.strictEqual(Songbook.studioTarget(custom).id, 'm9');
+});
+test('studioTarget: a NON-custom merged song still opens the seed track (unchanged)', function () {
+  var seed = { id: 't3', yt: 'SEEDvideoEE', key: 'G' };
+  var merged = { id: 'k4', yt: 'CATvideoFF', _track: seed };   // catalog song merged w/ a track
+  assert.strictEqual(Songbook.studioTarget(merged).id, 't3'); // seed track is the intent here
+});
+test('studioTarget: a bare record with no _track opens as itself', function () {
+  var rec = { id: 'k1', yt: 'x' };
+  assert.strictEqual(Songbook.studioTarget(rec).id, 'k1');
+});
 test('hasChordSheet: only items with a real chord sequence can join Practice/Setlist/Stage', function () {
   assert.strictEqual(Songbook.hasChordSheet({ seq: ['C', 'G'] }), true);
   assert.strictEqual(Songbook.hasChordSheet({ seq: [] }), false);   // cleared chords
