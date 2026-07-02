@@ -96,16 +96,24 @@
     try { global.history.back(); } catch (e) { dismissing = false; popAndClose(); }
   }
 
-  // Modal -> modal transition. Close the CURRENT top layer's DOM (rawClose), then run
-  // `runNext` (which may open a new layer). If it opens one, that layer REPLACES the
-  // current history slot (same depth - no async back/push race). If it opens nothing,
-  // the now-DOM-closed slot is collapsed. This is the correct hand-off from one layer
-  // to another (Studio -> Edit form; form Save/Delete -> Practice/Studio/Library).
+  // Modal -> modal transition (Studio -> Edit form; form Save/Delete -> Practice/
+  // Studio/Library). Runs runNext FIRST (persist + maybe open a new layer), THEN closes
+  // the current layer's DOM. runNext-first is deliberate:
+  //   - Its exceptions PROPAGATE (a persistence/render failure surfaces with the form
+  //     still open + input preserved - never swallowed behind a close that looked ok).
+  //   - A layer runNext opens REPLACES the current history slot (synchronous
+  //     replaceState via pendingReplace - no async back/push race); if it opens
+  //     nothing, the current slot is collapsed after the DOM close.
   function settleAfter(rawClose, runNext) {
     root();
+    pendingReplace = stack.length > 0; // a layer opened by runNext replaces THIS slot
+    try {
+      if (typeof runNext === 'function') runNext();
+    } catch (err) {
+      pendingReplace = false;          // reset the one-shot flag, then surface the error
+      throw err;                       // form stays open (rawClose below never ran)
+    }
     if (typeof rawClose === 'function') { try { rawClose(); } catch (e) {} }
-    pendingReplace = stack.length > 0;
-    if (typeof runNext === 'function') { try { runNext(); } catch (e) {} }
     if (pendingReplace) {
       // runNext opened no new layer -> collapse the freed slot. history.back() fires
       // popstate -> pops it; its close fn is the raw close we already ran (idempotent).
