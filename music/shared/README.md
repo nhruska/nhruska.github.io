@@ -144,7 +144,7 @@ library). The fields, grouped by feature:
 
 | Feature   | el fields |
 |-----------|-----------|
-| Library   | `songsList`, `decadeChips`, `search`, `libCount` |
+| Library   | `songsList`, `genreChips`, `keyChips`, `search`, `searchClear`, `libCount`, `addBtn` |
 | Practice  | `practiceEmpty`, `practiceBody` |
 | Setlist   | `setBody`, `setBar`, `setCount`, `setClear`, `performBtn` |
 | Perform   | `perform`, `pSheet`, `pPos`, `pTitle`, `pArtist`, `pKeyLine`, `pPrev`, `pNext`, `pClose`, `pUp`, `pDown`, `pDimBtn`, `pScroll`, `pSpeed`, `pSpeedR`, `pSpeedV` |
@@ -156,7 +156,8 @@ The engine also queries `.tabbar button[data-tab]` and `.screen` by id
 (`s-library`, `s-jam`, `s-compose`, `s-practice`, `s-tune`) for tab
 switching (the Set/Perform surface lives in the Jam tab - there is no
 `s-setlist` screen anymore). Keep those class/id conventions in your
-markup. The reference markup is `music/ukulele/index.html` - copy it.
+markup. The reference markup is `music/play/index.html` (the legacy
+`music/ukulele/index.html` is only a redirect stub now).
 
 ### Returned controller
 

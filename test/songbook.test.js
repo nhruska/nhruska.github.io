@@ -284,4 +284,21 @@ test('inferKey: junk-only input infers nothing', function () {
   assert.strictEqual(Songbook.inferKey(['??', '!!']), null);
 });
 
+/* ---------- sheet-render escaping (volley 3: custom/imported chord tokens and
+ * section labels are user-controlled strings - never live HTML) ---------- */
+test('renderSheet(chords) escapes hostile chord tokens and section labels', function () {
+  var hostile = [['<img src=x onerror=a>', 'La [<img/src=x/onerror=b>]la [C]la']];
+  var html = Songbook.renderSheet({ sheet: hostile }, 0, 'chords');
+  assert.ok(html.indexOf('<img') === -1, 'raw <img must never survive: ' + html);
+  assert.ok(html.indexOf('&lt;img') !== -1, 'hostile tokens render as inert text');
+});
+test('renderSheet lyrics/both views escape section labels and injected tags', function () {
+  var hostile = [['<b>sect</b>', '[C]hello <i>world</i>']];
+  ['lyrics', 'both'].forEach(function (v) {
+    var html = Songbook.renderSheet({ sheet: hostile }, 0, v);
+    assert.ok(html.indexOf('<b>') === -1 && html.indexOf('<i>') === -1, v + ' must escape: ' + html);
+    assert.ok(html.indexOf('&lt;b&gt;sect') !== -1, v + ' keeps the label as text');
+  });
+});
+
 run();

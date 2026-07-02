@@ -190,7 +190,11 @@
   }
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
-  function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  // Escape EVERYTHING interpolated into sheet/chip innerHTML: custom songs and
+  // the localStorage import path accept freeform tokens, so chord names and
+  // section labels are user-controlled strings, not trusted vocabulary. The
+  // quote entity makes the same helper safe inside attribute values.
+  function escHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   function renderLyricLine(raw) {
     var chordRow = "", lyricRow = "", last = 0, m;
@@ -210,10 +214,10 @@
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
-      if (sect && sect !== last) { out.push('<div class="sect">' + sect + '</div>'); last = sect; }
+      if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var re = /\[([^\]]+)\]/g, m, cs = [];
       while ((m = re.exec(line))) cs.push(tpose(m[1], st));
-      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + c + '</span>'; }).join(' ') + '</div>');
+      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(c) + '</span>'; }).join(' ') + '</div>');
     });
     return out.join('');
   }
@@ -224,7 +228,7 @@
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
-      if (sect && sect !== last) { out.push('<div class="sect">' + sect + '</div>'); last = sect; }
+      if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var lyr = line.replace(/\[([^\]]+)\]/g, '').replace(/[ ]{2,}/g, ' ');
       if (lyr.trim().length) out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>');
     });
@@ -238,7 +242,7 @@
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
-      if (sect && sect !== last) { html += '<div class="sect">' + sect + '</div>'; last = sect; }
+      if (sect && sect !== last) { html += '<div class="sect">' + escHTML(sect) + '</div>'; last = sect; }
       html += renderLyricLine(tposeLine(line, st));
     });
     return html;
@@ -501,6 +505,10 @@
     // (Search is the text input; these replace the old decade chips.)
     function renderFilterChips() {
       buildRepertoire();
+      // Heal a dead-end facet: deleting the last custom item while filtered to
+      // Mine would drop the chip but leave the (now-invisible) filter active,
+      // showing an empty Library with nothing selected.
+      if (STATE.genre === 'mine' && !REPERTOIRE.some(isMine)) STATE.genre = 'all';
       if (el.genreChips) {
         el.genreChips.innerHTML = '';
         el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all',
@@ -698,7 +706,7 @@
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
+      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
       // "Solo over it" used to require s.custom (only progressions built in Compose
       // carried a key/mode). Any song can bridge to the Studio if we can determine a
       // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
@@ -941,9 +949,15 @@
     }
     function updateStageBtns() {
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
-      if (el.pViewLyrics) el.pViewLyrics.classList.toggle('on', STATE.performView === 'lyrics');
-      if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
-      if (el.pViewBoth) el.pViewBoth.classList.toggle('on', STATE.performView === 'both');
+      // Custom sheets force the chords renderer (showPerform); the segmented
+      // control must SAY so - highlight Chords and disable the other views
+      // instead of showing a Lyrics/Both highlight over a chords-only sheet.
+      var cur = songById(QUEUE.current());
+      var forced = !!(cur && cur.custom);
+      var v = forced ? 'chords' : STATE.performView;
+      if (el.pViewLyrics) { el.pViewLyrics.classList.toggle('on', v === 'lyrics'); el.pViewLyrics.disabled = forced; }
+      if (el.pViewChords) el.pViewChords.classList.toggle('on', v === 'chords');
+      if (el.pViewBoth) { el.pViewBoth.classList.toggle('on', v === 'both'); el.pViewBoth.disabled = forced; }
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
@@ -1446,7 +1460,7 @@
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
@@ -1887,6 +1901,12 @@
     // so only switch when the saved tab is something else and its button actually exists).
     try {
       var savedTab = localStorage.getItem(ACTIVE_TAB_KEY), tabExists = false;
+      // Pre-Jam versions kept Set/Perform as a Library SUBVIEW persisted under
+      // libType.v1 - a user who last left that subview should reopen in Jam,
+      // not a Library that no longer contains it.
+      if (!savedTab || savedTab === 'library') {
+        if (localStorage.getItem(prefix + '.libType.v1') === 'set') savedTab = 'jam';
+      }
       // match by iterating buttons (not a built selector) so a malformed stored value can't
       // throw a selector SyntaxError and abort the restore.
       document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
