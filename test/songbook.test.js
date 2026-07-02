@@ -143,6 +143,13 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
 });
 
 /* ---------- the Mine facet (user-owned items in the Library filter bar) ---------- */
+test('hasChordSheet: only items with a real chord sequence can join Practice/Setlist/Stage', function () {
+  assert.strictEqual(Songbook.hasChordSheet({ seq: ['C', 'G'] }), true);
+  assert.strictEqual(Songbook.hasChordSheet({ seq: [] }), false);   // cleared chords
+  assert.strictEqual(Songbook.hasChordSheet({ yt: 'x' }), false);    // pure video-only custom track
+  assert.strictEqual(Songbook.hasChordSheet({ seq: 'C G' }), false); // non-array guard
+  assert.strictEqual(Songbook.hasChordSheet(null), false);
+});
 test('isMine flags custom items and the legacy d:Mine marker, nothing else', function () {
   assert.strictEqual(Songbook.isMine({ custom: true }), true);
   assert.strictEqual(Songbook.isMine({ d: 'Mine' }), true);          // pre-flag persisted records

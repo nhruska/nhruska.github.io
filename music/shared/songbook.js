@@ -283,6 +283,10 @@
   // +Add / Save progression (custom flag; d:'Mine' is the same marker on records
   // persisted before the flag existed). Pure + Node-testable.
   function isMine(rec) { return !!(rec && (rec.custom || rec.d === 'Mine')); }
+  // A chord-sheet item (has a chord sequence) vs a pure video-only track. Only
+  // chord-sheet items can open the Practice screen or join a setlist/Stage - a
+  // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
+  function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
   // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
   // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
   // literally named "mine" filters as a genre and does NOT hijack the ownership
@@ -592,8 +596,10 @@
       el.songsList.innerHTML = '';
       filtered.forEach(function (rec) {
         var sid = rec.id;
-        // only chord-sheet items (real song id) can join a setlist; pure tracks can't.
-        var canAdd = sid != null && !!songById(sid);
+        // only chord-sheet items can join a setlist; a pure/video-only track (no
+        // seq) can't - it would later crash s.seq.map in Perform. songById alone
+        // is insufficient: a seq-less custom track has an id too.
+        var canAdd = sid != null && hasChordSheet(songById(sid));
         var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
         el.songsList.appendChild(global.ListItem.render(rec, {
@@ -1001,6 +1007,16 @@
       if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
       if (el.pTitle) el.pTitle.textContent = s.t;
       if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
+      // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
+      // persisted before that guard could still hold one - render a gentle
+      // placeholder instead of crashing on s.seq.map.
+      if (!hasChordSheet(s)) {
+        if (el.pKeyLine) el.pKeyLine.textContent = '';
+        if (pSheet) pSheet.innerHTML = '<div class="pInner"><div class="sect">No chord chart for this track</div></div>';
+        updateStageBtns();
+        if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+        return;
+      }
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
       if (pSheet) {
@@ -1550,8 +1566,8 @@
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
-      var html = '<span class="scName">' + c + '</span>';
-      if (rn) html += '<span class="scRn">' + rn + '</span>';
+      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
@@ -1982,6 +1998,7 @@
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
     isMine: isMine,
+    hasChordSheet: hasChordSheet,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
     ytSearchURL: ytSearchURL,
