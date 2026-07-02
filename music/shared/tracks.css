@@ -77,6 +77,20 @@
     color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:6px;}
   .bt-qcand:hover{border-color:var(--accent);}
   .bt-qcand-note{color:var(--txt-dim);font-size:.72rem;margin-left:6px;}
+  /* visible curate entry point under the Library list (curateBarEl host) - quiet,
+     self-hides when there's nothing to curate */
+  .curateSlot{margin-top:10px;text-align:center;}
+  .curateSlot:empty{display:none;}
+  /* body-level curation-queue panel (the in-container queue lives inside the
+     permanently-hidden finder tab). Same overlay family as .bt-player. */
+  .bt-qpanel{position:fixed;inset:0;z-index:50;display:none;align-items:stretch;justify-content:center;
+    background:rgba(0,0,0,.78);padding:calc(max(env(safe-area-inset-top,0px), 16px)) 12px calc(env(safe-area-inset-bottom,0px) + 12px);}
+  .bt-qpanel.on{display:flex;}
+  .bt-qpanel-box{width:100%;max-width:640px;background:var(--paper,#0d0f12);border:1px solid var(--line-strong);
+    border-radius:14px;display:flex;flex-direction:column;overflow:hidden;padding:12px 14px;}
+  .bt-qpanel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex:0 0 auto;}
+  .bt-qpanel-head .bt-qhead{margin:0;}
+  .bt-qpanel-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:10px;}
   /* player overlay */
   .bt-player{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
     background:rgba(0,0,0,.78);padding:16px;}
