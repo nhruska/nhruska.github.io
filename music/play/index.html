@@ -43,28 +43,30 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
-    <!-- UNIFIED LIBRARY (M3: the Songs|Tracks split is dissolved into ONE Repertoire.
-         #typeToggle is now Repertoire|Set. Search + Genre + Key chips filter the merged
-         list (songs.json + backing tracks, deduped by repertoire.js). The old finder
-         tab (#s-tracks) is retired but kept hidden so Tracks.mount can still power the
-         Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
+    <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
+         by repertoire.js). Search + Genre + Key chips filter the list; +Add sits on
+         the search row. The old #typeToggle (Repertoire|Set) is retired - the Set /
+         Perform surface is its own main tab now (#s-jam). The old finder tab
+         (#s-tracks) stays hidden so Tracks.mount can still power the Practice
+         Studio, which opens as a <body>-level overlay on tapping a track. -->
     <section class="screen on" id="s-library">
-      <div class="libTypeRow">
-        <div class="chips typeToggle" id="typeToggle"></div>
+      <div class="libSearchRow">
+        <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
         <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
       </div>
-      <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="genreChips"></div>
       <div class="chips" id="keyChips"></div>
-      <!-- Repertoire sub-view (merged songs + tracks) -->
+      <!-- Repertoire list (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
         <div class="libCount" id="libCount"></div>
       </div>
       <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
-      <!-- Set sub-view -->
-      <div class="libSet" id="libSet" hidden>
+    </section>
+    <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
+    <section class="screen" id="s-jam">
+      <div class="libSet" id="libSet">
         <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
@@ -159,6 +161,7 @@
   </div>
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
+    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Jam</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -210,7 +213,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', setlist: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -581,7 +584,7 @@
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
         songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
-        typeToggle: el('typeToggle'), addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
+        addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), setEdit: el('setEdit'), performBtn: el('performBtn'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pKeyLine: el('pKeyLine'),

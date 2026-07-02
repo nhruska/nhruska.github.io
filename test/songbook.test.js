@@ -142,4 +142,50 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
 });
 
+/* ---------- the Mine facet (user-owned items in the Library filter bar) ---------- */
+test('isMine flags custom items and the legacy d:Mine marker, nothing else', function () {
+  assert.strictEqual(Songbook.isMine({ custom: true }), true);
+  assert.strictEqual(Songbook.isMine({ d: 'Mine' }), true);          // pre-flag persisted records
+  assert.strictEqual(Songbook.isMine({ d: '70s' }), false);
+  assert.strictEqual(Songbook.isMine({ t: 'x', genre: 'mine' }), false); // a genre named mine is not ownership
+  assert.strictEqual(Songbook.isMine(null), false);
+});
+var MINE_LIST = [
+  { t: 'Catalog Song', a: 'Band', genre: 'rock', seq: ['C', 'G'] },
+  { t: 'My Jam', a: 'Me', genre: 'rock', custom: true, d: 'Mine', seq: ['Am', 'F'] },
+  { t: 'Old Save', a: 'Me', d: 'Mine', seq: ['G', 'D'] }
+];
+test('libraryFilter genre:mine keeps ONLY user-owned items', function () {
+  var out = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'mine', key: 'all' });
+  assert.deepStrictEqual(out.map(function (r) { return r.t; }), ['My Jam', 'Old Save']);
+});
+test('libraryFilter genre:mine still composes with the q and key filters', function () {
+  var q = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: 'jam', genre: 'mine', key: 'all' });
+  assert.deepStrictEqual(q.map(function (r) { return r.t; }), ['My Jam']);
+  var k = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'mine', key: 'G' });
+  assert.deepStrictEqual(k.map(function (r) { return r.t; }), ['Old Save']); // seq G D derives key G
+});
+test('libraryFilter passes non-mine selections through to Repertoire.filter untouched', function () {
+  var all = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'all' });
+  assert.strictEqual(all.length, 3);
+  var rock = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'rock', key: 'all' });
+  assert.deepStrictEqual(rock.map(function (r) { return r.t; }), ['Catalog Song', 'My Jam']);
+});
+
+/* ---------- keyed zero-results empty state (why-is-my-list-empty visibility) ---------- */
+test('libraryEmptyState names the active key filter and asks for the clearing link', function () {
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'Am' }),
+    { message: 'Nothing in your repertoire matches in Am.', clearKey: true });
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'F#' }),
+    { message: 'Nothing in your repertoire matches in F#.', clearKey: true });
+});
+test('libraryEmptyState with no key filter keeps the plain message, no link', function () {
+  assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'all' }),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+  assert.deepStrictEqual(Songbook.libraryEmptyState({}),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+  assert.deepStrictEqual(Songbook.libraryEmptyState(null),
+    { message: 'Nothing in your repertoire matches.', clearKey: false });
+});
+
 run();
