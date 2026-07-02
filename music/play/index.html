@@ -556,7 +556,7 @@
 
   function start(profile, songs) {
     el('ctxLine').textContent = profile.label;
-    document.title = profile.label + ' \u2014 Music';
+    document.title = profile.label + ' - Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
     var pack = buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard

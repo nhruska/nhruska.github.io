@@ -358,7 +358,7 @@
    *     // perform
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
-   *     pSpeed, pSpeedR, pSpeedV, pCtrls,
+   *     pSpeed, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
    *     // compose (optional; needs a chord pack for diagrams/audio)
    *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, keyChipSlot,
@@ -998,6 +998,9 @@
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
+      // A seq-less item (placeholder-rendered in showPerform for a stale setlist)
+      // has nothing to transpose - no-op rather than crash in seqPlayable(s.seq).
+      if (!hasChordSheet(s)) return;
       var cand = nextTranspose(STATE.performTpose, dir, function (st) { return seqPlayable(s.seq, st); });
       if (cand !== null) { STATE.performTpose = cand; showPerform(); }
     }
@@ -1368,7 +1371,8 @@
      * Persistent compact key bar (replaces the old collapse): the current-key chip and
      * the maj/min mode toggle are ALWAYS visible - one tap changes major<->minor, never
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
-     * and closed on selection. No "tap the already-selected Major to dismiss" gesture. */
+     * and closed on selection; tapping the already-selected mode re-confirms and
+     * closes it (a no-op re-harmonize guard, not a toggle). */
     var songKey = { root: null, mode: "Major", explicit: false };
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
@@ -1403,7 +1407,7 @@
         chip.classList.toggle('shifted', chipShift);
         // Guarded lookup: a bad persisted/imported mode must degrade to the
         // raw string, never hard-crash the key picker on `.label` of undefined.
-        var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || String(songKey.mode || '');
+        var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
         chip.innerHTML = songKey.root
