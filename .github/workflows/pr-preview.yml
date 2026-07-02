@@ -27,7 +27,11 @@ jobs:
             const { owner, repo } = context.repo;
             const pr = context.payload.pull_request;
             const sha = pr.head.sha;
+            const branch = pr.head.ref;
             const base = `https://raw.githack.com/${owner}/${repo}/${sha}`;
+            const commitUrl = `https://github.com/${owner}/${repo}/commit/${sha}`;
+            const branchUrl = `https://github.com/${owner}/${repo}/tree/${branch}`;
+            const liveUrl = `https://${owner}.github.io/music/play/`;
 
             // Drive the preview list off the manifest at this exact commit so a
             // new profile lands in the comment automatically. Label comes out
@@ -60,15 +64,16 @@ jobs:
               ];
             }
             const marker = '<!-- pr-preview-bot -->';
+            // Concise CTA: link TEXT only (no raw URLs), all instrument profiles
+            // inline, plus commit / branch / deployed as labelled links.
             const body = [
               marker,
-              '### 🎸 Live preview (no merge needed)',
+              '### Live preview - tap to open on your phone',
+              '_https, so the mic tuner works. No merge needed._',
               '',
-              'Open on your phone — https, so the mic tuner works:',
+              '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
-              ...apps.map(([n, u]) => `- **${n}** — ${u}`),
-              '',
-              `_Serving commit \`${sha.slice(0, 7)}\` via githack. After merge it goes live at https://${owner}.github.io/music/play/_`,
+              `**Commit** [\`${sha.slice(0, 7)}\`](${commitUrl}) · **Branch** [\`${branch}\`](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
