@@ -406,6 +406,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .catTabRow::-webkit-scrollbar{display:none;}
 .chordsHint{margin:0 2px 4px;}
+/* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
+   reads as THE next step (the old prose hint buried it). */
+.pickKeyCta{display:block;width:100%;margin:2px 0 8px;}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}

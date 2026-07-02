@@ -1151,11 +1151,18 @@
 
       if (view === 'inkey') {
         if (!songKey.root) {
-          // In-key view with no key set: prompt to pick a key (the list is empty until then).
+          // In-key view with no key set: a PROMINENT pick-a-key CTA (replaces the old
+          // hint prose) - one tap opens the key panel right above. A short secondary
+          // line keeps the All escape hatch discoverable.
+          var cta = document.createElement('button');
+          cta.type = 'button';
+          cta.className = 'btn red pickKeyCta';
+          cta.textContent = 'Pick a key';
+          cta.onclick = function () { keyPopoverOpen = true; buildKeyPicker(); };
           var hint = document.createElement('p');
           hint.className = 'keyHint chordsHint';
-          hint.textContent = 'Pick a key (tap the key chip above) to lead with its chords, or switch to All to browse every chord.';
-          if (scroller) scroller.insertBefore(hint, grid);
+          hint.textContent = 'Its chords will lead this list - or switch to All to browse every chord.';
+          if (scroller) { scroller.insertBefore(cta, grid); scroller.insertBefore(hint, grid); }
           return;
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
