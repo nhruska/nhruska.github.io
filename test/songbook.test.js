@@ -155,14 +155,14 @@ var MINE_LIST = [
   { t: 'My Jam', a: 'Me', genre: 'rock', custom: true, d: 'Mine', seq: ['Am', 'F'] },
   { t: 'Old Save', a: 'Me', d: 'Mine', seq: ['G', 'D'] }
 ];
-test('libraryFilter genre:mine keeps ONLY user-owned items', function () {
-  var out = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'mine', key: 'all' });
+test('libraryFilter mine:true keeps ONLY user-owned items', function () {
+  var out = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'all', mine: true });
   assert.deepStrictEqual(out.map(function (r) { return r.t; }), ['My Jam', 'Old Save']);
 });
-test('libraryFilter genre:mine still composes with the q and key filters', function () {
-  var q = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: 'jam', genre: 'mine', key: 'all' });
+test('libraryFilter mine:true still composes with the q and key filters', function () {
+  var q = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: 'jam', genre: 'all', key: 'all', mine: true });
   assert.deepStrictEqual(q.map(function (r) { return r.t; }), ['My Jam']);
-  var k = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'mine', key: 'G' });
+  var k = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'all', key: 'G', mine: true });
   assert.deepStrictEqual(k.map(function (r) { return r.t; }), ['Old Save']); // seq G D derives key G
 });
 test('libraryFilter passes non-mine selections through to Repertoire.filter untouched', function () {
@@ -170,6 +170,18 @@ test('libraryFilter passes non-mine selections through to Repertoire.filter unto
   assert.strictEqual(all.length, 3);
   var rock = Songbook.libraryFilter(RealRepertoire, MINE_LIST, { q: '', genre: 'rock', key: 'all' });
   assert.deepStrictEqual(rock.map(function (r) { return r.t; }), ['Catalog Song', 'My Jam']);
+});
+test('libraryFilter: a real genre named "mine" filters as a genre, NOT as ownership', function () {
+  var list = [
+    { t: 'Owned', a: 'Me', genre: 'rock', custom: true, d: 'Mine', seq: ['Am', 'F'] },
+    { t: 'Mine-genre catalog', a: 'Band', genre: 'mine', seq: ['C', 'G'] }
+  ];
+  // genre 'mine' + mine:false -> the catalog item with that genre, not the owned one
+  var g = Songbook.libraryFilter(RealRepertoire, list, { q: '', genre: 'mine', key: 'all', mine: false });
+  assert.deepStrictEqual(g.map(function (r) { return r.t; }), ['Mine-genre catalog']);
+  // ownership facet still works independently
+  var o = Songbook.libraryFilter(RealRepertoire, list, { q: '', genre: 'all', key: 'all', mine: true });
+  assert.deepStrictEqual(o.map(function (r) { return r.t; }), ['Owned']);
 });
 
 /* ---------- keyed zero-results empty state (why-is-my-list-empty visibility) ---------- */

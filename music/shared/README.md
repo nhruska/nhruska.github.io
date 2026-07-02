@@ -147,8 +147,8 @@ library). The fields, grouped by feature:
 | Library   | `songsList`, `genreChips`, `keyChips`, `search`, `searchClear`, `libCount`, `addBtn` |
 | Practice  | `practiceEmpty`, `practiceBody` |
 | Setlist   | `setBody`, `setBar`, `setCount`, `setClear`, `performBtn` |
-| Perform   | `perform`, `pSheet`, `pPos`, `pTitle`, `pArtist`, `pKeyLine`, `pPrev`, `pNext`, `pClose`, `pUp`, `pDown`, `pDimBtn`, `pCtrls`, `pSpeed`, `pSpeedR`, `pSpeedV`, `pFontDown`, `pFontUp`, `pFontAuto`, `pViewLyrics`, `pViewChords`, `pViewBoth` |
-| Compose   | `prog`, `suggest`, `catChips`, `buildGrid`, `cClear`, `cSave`, `cMax` |
+| Perform   | `perform`, `pSheet`, `pPos`, `pTitle`, `pArtist`, `pKeyLine`, `pPrev`, `pNext`, `pClose`, `pUp`, `pDown`, `pDimBtn`, `pCtrls`, `pSpeed`, `pFontDown`, `pFontUp`, `pFontAuto`, `pViewLyrics`, `pViewChords`, `pViewBoth` |
+| Compose   | `prog`, `suggest`, `catChips`, `buildGrid`, `composeChords`, `cClear`, `cSave`, `cMax`, `keyChipSlot`, `keyFlyout`, `keyRoots`, `keyModes`, `keyView`, `keyClear`, `soloBackingBtn` |
 | Maximize  | `maxOv`, `maxGrid`, `maxClose` (chord-diagram overlay) |
 | Chrome    | `ctxLine` (header subtitle) |
 

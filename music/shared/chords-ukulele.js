@@ -80,6 +80,9 @@
   function strumTap(name) { var a = ctx(); a.resume(); strumChord(name, a.currentTime + 0.02, 1.3); }
 
   /* ---------- diagrams (SVG fingering charts) ---------- */
+  // Known-chord names are a controlled vocabulary, but escape defensively so the
+  // known-path innerHTML can never become a sink if a token ever slips through.
+  function escName(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function bigDiagram(name) {
     var f = CHORDS[name];
     var wrap = document.createElement('div'); wrap.className = 'bigC';
@@ -96,7 +99,7 @@
       else if (fr === 0) { svg += '<circle cx="' + x + '" cy="' + (padY - 16) + '" r="6" fill="none" stroke="#e8ebf0" stroke-width="2"/>'; }
     });
     svg += '</svg>';
-    wrap.innerHTML = '<span class="nm">' + name + '</span>' + svg;
+    wrap.innerHTML = '<span class="nm">' + escName(name) + '</span>' + svg;
     return wrap;
   }
   function smallDiagram(name) {
@@ -115,7 +118,7 @@
       else if (fr === 0) { svg += '<circle cx="' + x + '" cy="' + (padY - 7) + '" r="3" fill="none" stroke="#e8ebf0" stroke-width="1.2"/>'; }
     });
     svg += '</svg>';
-    wrap.innerHTML = '<span class="chord-name">' + name + '</span>' + svg;
+    wrap.innerHTML = '<span class="chord-name">' + escName(name) + '</span>' + svg;
     return wrap;
   }
 

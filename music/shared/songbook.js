@@ -283,14 +283,16 @@
   // +Add / Save progression (custom flag; d:'Mine' is the same marker on records
   // persisted before the flag existed). Pure + Node-testable.
   function isMine(rec) { return !!(rec && (rec.custom || rec.d === 'Mine')); }
-  // Library filter = Repertoire.filter + the 'mine' facet (which is ownership,
-  // not a genre, so repertoire.js stays genre-pure). sel.genre === 'mine' keeps
-  // the q/key filters and narrows to user-owned items. Rep is dependency-injected
-  // (same pattern as soloKeyFor) so Node tests can pass the real module.
+  // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
+  // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
+  // literally named "mine" filters as a genre and does NOT hijack the ownership
+  // facet (matches isMine's "a genre named mine is not ownership" contract). Rep
+  // is dependency-injected (same pattern as soloKeyFor) so Node tests pass the
+  // real module.
   function libraryFilter(Rep, list, sel) {
     sel = sel || {};
-    var mine = sel.genre === 'mine';
-    var base = Rep.filter(list, { q: sel.q, genre: mine ? 'all' : sel.genre, key: sel.key });
+    var mine = !!sel.mine;
+    var base = Rep.filter(list, { q: sel.q, genre: sel.genre, key: sel.key });
     return mine ? base.filter(isMine) : base;
   }
   // Zero-results empty state for the Library list. When a key facet is active it
@@ -470,7 +472,7 @@
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
-      search: "", genre: "all", key: "all", current: null, transpose: 0, view: "lyrics",
+      search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
@@ -512,21 +514,21 @@
       // Heal a dead-end facet: deleting the last custom item while filtered to
       // Mine would drop the chip but leave the (now-invisible) filter active,
       // showing an empty Library with nothing selected.
-      if (STATE.genre === 'mine' && !REPERTOIRE.some(isMine)) STATE.genre = 'all';
+      if (STATE.mineOnly && !REPERTOIRE.some(isMine)) STATE.mineOnly = false;
       if (el.genreChips) {
         el.genreChips.innerHTML = '';
-        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all',
-          function () { STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
+        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all' && !STATE.mineOnly,
+          function () { STATE.genre = 'all'; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
         // Mine: the user's own saved/added items. An ownership facet pinned ahead
         // of the data-derived genres; shown only when a custom item exists (facet
         // chips reflect what is actually in the repertoire).
         if (REPERTOIRE.some(isMine)) {
-          el.genreChips.appendChild(chipBtn('Mine', STATE.genre === 'mine',
-            function () { STATE.genre = 'mine'; renderFilterChips(); renderSongs(); }));
+          el.genreChips.appendChild(chipBtn('Mine', STATE.mineOnly,
+            function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
         }
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
-          el.genreChips.appendChild(chipBtn(g, STATE.genre === g,
-            function () { STATE.genre = g; renderFilterChips(); renderSongs(); }));
+          el.genreChips.appendChild(chipBtn(g, STATE.genre === g && !STATE.mineOnly,
+            function () { STATE.genre = g; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
         });
       }
       if (el.keyChips) {
@@ -561,7 +563,7 @@
     function renderSongs() {
       if (!el.songsList) return;
       buildRepertoire();
-      var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
+      var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
         var box = document.createElement('div');
@@ -657,7 +659,16 @@
       // selection so Stage opens in the key AND view you were just practicing in,
       // not the original / a stale stage pref (UAT item 8 + the "over whichever
       // view you're on" contract above).
-      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, STATE.songView); return; }
+      // Seed the EFFECTIVE view: a custom song is forced to chords, so seed
+      // 'chords' rather than a raw Lyrics/Both songView that would (a) mislabel
+      // this Stage and (b) persist the wrong performView for a later non-custom
+      // Stage / setlist Perform.
+      if (m === 'stage') {
+        if (!STATE.current) return;
+        var seedView = STATE.current.custom ? 'chords' : STATE.songView;
+        startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, seedView);
+        return;
+      }
     }
 
     function renderPractice() {
@@ -1002,7 +1013,9 @@
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
       wrap.className = (size === 'big') ? 'bigC' : 'chord';
-      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + name + '</span>';
+      // name is a freeform custom-song token here (no real pack to resolve it),
+      // so escape before innerHTML - same XSS class as the sheet renderer.
+      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(name) + '</span>';
       return wrap;
     }
     // What tonic do we measure intervals against? The chosen key when one is set
