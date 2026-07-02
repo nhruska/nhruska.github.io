@@ -145,9 +145,17 @@
   // Facet lists for the filter bar. genres(): unique lowercased genres present.
   // keys(): unique key labels, musically ordered (circle-ish: C G D ... then minors).
   function genres(list) {
-    var seen = {}, out = [];
-    (list || []).forEach(function (r) { if (r.genre && !seen[r.genre]) { seen[r.genre] = 1; out.push(r.genre); } });
+    var seen = {}, out = [], anyCustom = false;
+    (list || []).forEach(function (r) {
+      if (r.custom) anyCustom = true;
+      if (r.genre && !seen[r.genre]) { seen[r.genre] = 1; out.push(r.genre); }
+    });
     out.sort();
+    // 'Mine' = everything the user saved (compositions + custom tracks), whatever
+    // genre they also carry. Capitalized so it reads as a collection, not a genre;
+    // appended after the alphabetical genres; only offered when something custom
+    // exists so a fresh install never shows a dead chip.
+    if (anyCustom) out.push('Mine');
     return out;
   }
   var KEY_ORDER = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'];
@@ -171,7 +179,10 @@
     var g = sel.genre && sel.genre !== 'all' ? sel.genre : null;
     var k = sel.key && sel.key !== 'all' ? sel.key : null;
     return (list || []).filter(function (r) {
-      if (g && r.genre !== g) return false;
+      // 'Mine' is the saved-by-you collection, matched on the custom flag - not a
+      // genre string on the record.
+      if (g === 'Mine') { if (!r.custom) return false; }
+      else if (g && r.genre !== g) return false;
       if (k && keyLabel(r) !== k) return false;
       if (q) {
         var hay = (recTitle(r) + ' ' + recArtist(r)).toLowerCase();

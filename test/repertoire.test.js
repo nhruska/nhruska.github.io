@@ -103,4 +103,26 @@ test('filter narrows by q, genre and key independently', function () {
   assert.strictEqual(R.filter(list, { genre: 'all', key: 'all', q: '' }).length, 2);
 });
 
+/* ---------- 'Mine' facet (M4): custom items form a saved-by-you collection ---------- */
+test("genres(): appends 'Mine' after the sorted genres when any custom item exists", function () {
+  var list = [{ genre: 'rock' }, { genre: 'blues' }, { custom: true, genre: '' }];
+  assert.deepStrictEqual(R.genres(list), ['blues', 'rock', 'Mine']);
+});
+test("genres(): no 'Mine' chip when nothing custom exists", function () {
+  assert.deepStrictEqual(R.genres([{ genre: 'jam' }]), ['jam']);
+});
+test("filter(): genre 'Mine' matches custom items regardless of their genre string", function () {
+  var list = [
+    { t: 'saved prog', custom: true },
+    { t: 'saved track', custom: true, genre: 'blues' },
+    { t: 'catalog', genre: 'blues' }
+  ];
+  var out = R.filter(list, { genre: 'Mine' });
+  assert.deepStrictEqual(out.map(function (r) { return r.t; }), ['saved prog', 'saved track']);
+});
+test("filter(): real genres still exclude custom items that don't carry them", function () {
+  var list = [{ t: 'a', custom: true }, { t: 'b', genre: 'blues' }];
+  assert.deepStrictEqual(R.filter(list, { genre: 'blues' }).map(function (r) { return r.t; }), ['b']);
+});
+
 run();

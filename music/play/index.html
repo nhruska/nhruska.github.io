@@ -43,28 +43,31 @@
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
   </div>
   <div class="view" id="view">
-    <!-- UNIFIED LIBRARY (M3: the Songs|Tracks split is dissolved into ONE Repertoire.
-         #typeToggle is now Repertoire|Set. Search + Genre + Key chips filter the merged
-         list (songs.json + backing tracks, deduped by repertoire.js). The old finder
-         tab (#s-tracks) is retired but kept hidden so Tracks.mount can still power the
-         Practice Studio, which opens as a <body>-level overlay on tapping a track. -->
+    <!-- UNIFIED LIBRARY (M3/M4: the Songs|Tracks split dissolved into ONE Repertoire,
+         and the Set moved to its own bottom tab (#s-set) - no Repertoire|Set toggle
+         row, so search + the list start at the top of the fold. The + add button
+         rides in the search row. The old finder tab (#s-tracks) is retired but kept
+         hidden so Tracks.mount can still power the Practice Studio (a <body>-level
+         overlay); its curate bar renders into the VISIBLE #curateSlot below the list
+         so the curation queue is reachable. -->
     <section class="screen on" id="s-library">
-      <div class="libTypeRow">
-        <div class="chips typeToggle" id="typeToggle"></div>
+      <div class="searchRow">
+        <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
         <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
       </div>
-      <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
       <div class="chips" id="genreChips"></div>
       <div class="chips" id="keyChips"></div>
-      <!-- Repertoire sub-view (merged songs + tracks) -->
+      <!-- Repertoire (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
         <div class="libCount" id="libCount"></div>
+        <div class="curateSlot" id="curateSlot"></div>
       </div>
       <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
-      <!-- Set sub-view -->
-      <div class="libSet" id="libSet" hidden>
+    </section>
+    <section class="screen" id="s-set">
+      <div class="libSet" id="libSet">
         <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
@@ -160,6 +163,7 @@
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
+    <button data-tab="set"><span class="icn">≡</span><span class="lbl">Set</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
 </div>
@@ -210,7 +214,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', setlist: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', set: 'tonight’s running order' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -560,6 +564,10 @@
     // so the repertoire rebuilds once the track data is in.
     var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
       container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
+      // M4: the curate bar renders into a VISIBLE slot under the repertoire list
+      // (the old in-container bar lived inside the hidden finder, making the whole
+      // curation queue unreachable). The queue itself opens as a body-level panel.
+      curateBarEl: el('curateSlot'),
       onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); },
       // Task 2 requirement 4: the Studio's "Edit this track to add a video" link
       // (t.custom items only) opens the M2 Add/Edit form. songbookCtl doesn't exist
