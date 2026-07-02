@@ -381,7 +381,7 @@
       // colours (dorian/mixolydian) read as their own names ("A dorian").
       var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
-        + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees — '
+        + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
         + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
@@ -470,10 +470,10 @@
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
         + '<div class="bt-st-scale" data-scale></div>'
         + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
         + urlEditor
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes — the circle</button>'
+        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
@@ -633,7 +633,7 @@
     }
     function modeHint(C, label) {
       var ch = C.modeChange(state.key, state.scaleMode), info = C.modeInfo(state.scaleMode);
-      if (!ch.length) return '<b>' + esc(shortMode(label)) + '</b> — the home scale you measure the others against.';
+      if (!ch.length) return '<b>' + esc(shortMode(label)) + '</b> - the home scale you measure the others against.';
       var ref = info.ref === 'aeolian' ? 'natural minor' : 'major';
       var parts = ch.map(function (c) {
         return 'the ' + ORD[c.degree] + ' ' + (c.dir === 'raise' ? 'raised' : 'lowered')

@@ -248,7 +248,7 @@
       // Steady text: repaint only on change. ✓ when locked; flat -> keep coming up;
       // sharp -> you overshot, drop below and come back up.
       var txt = locked ? '✓ in tune'
-        : (hint === 'sharp' ? '+' + cents + '¢  ▼ sharp — drop & come up' : cents + '¢  ▲ keep tuning up');
+        : (hint === 'sharp' ? '+' + cents + '¢  ▼ sharp - drop & come up' : cents + '¢  ▲ keep tuning up');
       if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
       // STROBE: stripes drift ∝ cents (flat ← / sharp →), FREEZE when locked — the
       // classic "stands still = in tune" read that beats chasing a needle.
@@ -281,7 +281,7 @@
     if (!box) return;
     var secure = window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
     if (!secure) {
-      box.innerHTML = '<div class="micMsg"><b>The live needle needs a microphone</b>, which the browser only allows over <b>https</b>. Opened as a local file the mic is blocked — use the reference tones below to tune by ear, or open this page over https (it is live on GitHub Pages) to unlock the needle.</div>';
+      box.innerHTML = '<div class="micMsg"><b>The live needle needs a microphone</b>, which the browser only allows over <b>https</b>. Opened as a local file the mic is blocked - use the reference tones below to tune by ear, or open this page over https (it is live on GitHub Pages) to unlock the needle.</div>';
       return;
     }
     box.innerHTML = '<div class="micNote" id="micNote">—</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
