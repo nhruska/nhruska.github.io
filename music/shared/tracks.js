@@ -43,7 +43,10 @@
     ];
   }
   function trackMatch(t, compat) {
-    var tk = normRoot(t.key), tm = t.mode || 'major';
+    // Coarsen the track's mode to its major/minor FAMILY before comparing:
+    // compat rows only speak major/minor, so a raw 'dorian'/'mixolydian'
+    // t.mode would never match and the track vanishes from keyed results.
+    var tk = normRoot(t.key), tm = normMode(t.mode);
     for (var j = 0; j < compat.length; j++) {
       if (compat[j].key === tk && compat[j].mode === tm) return compat[j];
     }
@@ -105,7 +108,12 @@
   function trackKey(t) {
     t = t || {};
     function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
-    return [norm(t.title), norm(t.artist), normRoot(t.key), (t.mode === 'minor' ? 'minor' : 'major')].join('|');
+    // Serialize the FULL 4-mode vocabulary: coarsening dorian/mixolydian to
+    // 'major' let a modal track collide with a same-title/artist/key major row
+    // in the url overlay. Unknown/absent modes still default to 'major'.
+    var m = norm(t.mode);
+    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian') m = 'major';
+    return [norm(t.title), norm(t.artist), normRoot(t.key), m].join('|');
   }
   // Overlay a { trackKey: videoId } map onto a seed list, returning NEW track
   // objects so the original seed is never mutated. A track that already has a
@@ -166,6 +174,14 @@
     return familyMode(normMode(mode));
   }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
+  // Mode-honest short key label used everywhere a track's key renders as text:
+  // 'A' (major), 'Am' (minor), 'A dorian' / 'G mixolydian' (modal).
+  function keyLabelFor(key, mode) {
+    var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    if (m === 'minor' || m === 'aeolian') return key + 'm';
+    if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
+    return key;
+  }
   // Circle source: window.Circle in the browser (classic scripts). Under Node
   // the IIFE's `global` is this module's own exports object, so a test can
   // never inject Circle there - fall back to a guarded require so the REAL
@@ -201,7 +217,15 @@
   // applied once when the overlay loads; an existing entry under the new key is
   // never clobbered. Module-level + exported so the remap is testable.
   var LEGACY_TRACKKEYS = {
-    'sample in a jar|phish|G|major': 'sample in a jar|phish|A|major'
+    'sample in a jar|phish|G|major': 'sample in a jar|phish|A|major',
+    // trackKey used to coarsen modal modes to 'major' - overlays saved for the
+    // 6 modal seed tracks re-key to their true-mode identity.
+    'grateful dead style mixolydian jam in g|search|G|major': 'grateful dead style mixolydian jam in g|search|G|mixolydian',
+    'southern rock mixolydian jam in e|search|E|major': 'southern rock mixolydian jam in e|search|E|mixolydian',
+    'sweet mixolydian jam in d|search|D|major': 'sweet mixolydian jam in d|search|D|mixolydian',
+    'santana dorian jam in e minor|search|E|major': 'santana dorian jam in e minor|search|E|dorian',
+    'carlos style dorian jam in a|search|A|major': 'carlos style dorian jam in a|search|A|dorian',
+    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian'
   };
   function migrateUrls(o) {
     var changed = false;
@@ -546,7 +570,7 @@
     function queueRow(t) {
       var el = document.createElement('div');
       el.className = 'bt-qcard';
-      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? esc(t.bpm) + ' bpm' : '', esc(t.genre || '')]
+      var meta = [esc(keyLabelFor(t.key, t.mode)), t.bpm ? esc(t.bpm) + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
       el.innerHTML =
         '<div class="bt-qrow"><span class="bt-qtitle">' + esc(t.title || '') + '</span>'
@@ -787,7 +811,7 @@
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
-    studioTheory: studioTheory, migrateUrls: migrateUrls, mount: mount,
+    studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

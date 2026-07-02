@@ -215,5 +215,43 @@ test('migrateUrls is a no-op (returns false, no save-back) when nothing is legac
   assert.deepStrictEqual(o, { 'blues in a|x|A|minor': 'keep' });
   assert.strictEqual(T.migrateUrls({}), false);
 });
+test('migrateUrls re-keys a modal overlay saved under the old coarsened-major identity', function () {
+  var o = { 'santana dorian jam in e minor|search|E|major': 'vidD' };
+  assert.strictEqual(T.migrateUrls(o), true);
+  assert.deepStrictEqual(o, { 'santana dorian jam in e minor|search|E|dorian': 'vidD' });
+});
+
+// --- modal tracks in the keyed finder (the invisible-dorian bug) -----------
+test('a dorian track surfaces in its minor-family keyed search', function () {
+  var tracks = [{ title: 'Santana style', genre: 'latin', key: 'E', mode: 'dorian', yt: 'x' }];
+  var out = T.filterTracks(tracks, 'all', 'E', 'minor');
+  assert.strictEqual(out.length, 1, 'dorian track must be visible in an E-minor-family search');
+  assert.strictEqual(out[0].rank, 0, 'same-root modal track is an exact-family match');
+});
+test('a mixolydian track surfaces in its major-family keyed search', function () {
+  var tracks = [{ title: 'Dead style', genre: 'jam', key: 'G', mode: 'mixolydian', yt: 'x' }];
+  var out = T.filterTracks(tracks, 'all', 'G', 'major');
+  assert.strictEqual(out.length, 1, 'mixolydian track must be visible in a G-major-family search');
+});
+
+// --- trackKey 4-mode serialization (overlay identity) -----------------------
+test('trackKey serializes the full 4-mode vocabulary distinctly', function () {
+  var base = { title: 'X', artist: 'Y', key: 'E' };
+  var kMaj = T.trackKey(Object.assign({}, base, { mode: 'major' }));
+  var kDor = T.trackKey(Object.assign({}, base, { mode: 'dorian' }));
+  var kMix = T.trackKey(Object.assign({}, base, { mode: 'mixolydian' }));
+  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix));
+  assert.notStrictEqual(kDor, kMaj); // the collision codex flagged
+  assert.strictEqual(T.trackKey(Object.assign({}, base, { mode: 'weird' })), kMaj); // unknown -> major
+});
+
+// --- mode-honest key labels everywhere a key renders as text ----------------
+test('keyLabelFor matches the Studio label convention', function () {
+  assert.strictEqual(T.keyLabelFor('A', 'major'), 'A');
+  assert.strictEqual(T.keyLabelFor('A', 'minor'), 'Am');
+  assert.strictEqual(T.keyLabelFor('E', 'dorian'), 'E dorian');
+  assert.strictEqual(T.keyLabelFor('G', 'Mixolydian'), 'G mixolydian');
+  assert.strictEqual(T.keyLabelFor('C', null), 'C');
+});
 
 run();

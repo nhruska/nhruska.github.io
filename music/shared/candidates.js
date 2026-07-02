@@ -5,8 +5,7 @@
  * ONLY - nothing is applied automatically. */
 (function (global) {
   'use strict';
-  if (!global.Tracks) return;
-  global.Tracks.CANDIDATES = {
+  var CANDIDATES = {
   "rock backing track in c major|search|C|major": [
     {
       "id": "vQJEPT6Awvc",
@@ -75,7 +74,7 @@
       "note": "exact bpm"
     }
   ],
-  "grateful dead style mixolydian jam in g|search|G|major": [
+  "grateful dead style mixolydian jam in g|search|G|mixolydian": [
     {
       "id": "L3bgwghr0pM",
       "label": "Grateful Dead China Cat Sunflower - G Mixolydian",
@@ -126,7 +125,7 @@
       "note": "E shuffle"
     }
   ],
-  "southern rock mixolydian jam in e|search|E|major": [
+  "southern rock mixolydian jam in e|search|E|mixolydian": [
     {
       "id": "W-bdSPy8bts",
       "label": "Catchy Southern Rock in E | 85 bpm",
@@ -213,7 +212,7 @@
       "note": "acoustic strum"
     }
   ],
-  "sweet mixolydian jam in d|search|D|major": [
+  "sweet mixolydian jam in d|search|D|mixolydian": [
     {
       "id": "6y75xmcKZ8g",
       "label": "Sweet D Mixolydian Guitar Backing Track",
@@ -288,7 +287,7 @@
       "note": "exact"
     }
   ],
-  "santana dorian jam in e minor|search|E|major": [
+  "santana dorian jam in e minor|search|E|dorian": [
     {
       "id": "EVQvTcpwgRk",
       "label": "Latin Rock E Dorian Minor Santana Style",
@@ -375,7 +374,7 @@
       "note": "A minor hendrix"
     }
   ],
-  "carlos style dorian jam in a|search|A|major": [
+  "carlos style dorian jam in a|search|A|dorian": [
     {
       "id": "v4XF3aZnPtA",
       "label": "A Dorian Backing Track: Carlos Santana Style",
@@ -392,7 +391,7 @@
       "note": "A dorian santana"
     }
   ],
-  "modal jam track in d dorian|search|D|major": [
+  "modal jam track in d dorian|search|D|dorian": [
     {
       "id": "_lSZ8uRFvoI",
       "label": "Funky D Dorian Guitar Jam Track 95 BPM",
@@ -553,4 +552,9 @@
     }
   ]
 };
+  // Browser: attach to the already-loaded Tracks (script order per play/index.html).
+  // Node: export the map so tests can enforce key/coverage integrity against
+  // Tracks.trackKey + the seed catalog.
+  if (global.Tracks) global.Tracks.CANDIDATES = CANDIDATES;
+  if (typeof module !== 'undefined' && module.exports) module.exports = { CANDIDATES: CANDIDATES };
 })(typeof window !== 'undefined' ? window : this);
