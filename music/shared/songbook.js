@@ -351,7 +351,7 @@
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
-      search: "", genre: "all", key: "all", libType: "repertoire", current: null, transpose: 0, view: "lyrics",
+      search: "", genre: "all", key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
@@ -362,58 +362,15 @@
     STATE.setlist = loadSet();
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
-    /* ===================== LIBRARY (M3: unified Repertoire | Set) =====================
+    /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
      * The old Songs|Tracks split is dissolved: a song and its curated backing track
-     * are ONE item in a single Repertoire (repertoire.js merges + dedups). The toggle
-     * is now just Repertoire | Set. The finder tab is retired; its Practice Studio
-     * (solo scale + chords + circle) stays reachable by tapping a playable item
-     * (openStudioCb), and curation moves to +Add / per-item edit (M2). Search + the
-     * Genre/Key facet chips filter the merged list; they show for Repertoire, hide
-     * for Set. */
-    var LIBTYPE_KEY = prefix + ".libType.v1";
-    var LIB_TYPES = [
-      { id: 'repertoire', label: 'Repertoire' },
-      { id: 'set', label: 'Set' }
-    ];
-    // migrate the pre-M3 stored value: 'songs'/'tracks' both collapse into 'repertoire'.
-    try { var _lt = localStorage.getItem(LIBTYPE_KEY); STATE.libType = (_lt === 'set') ? 'set' : 'repertoire'; } catch (e) {}
-    function applyLibType() {
-      var t = STATE.libType;
-      // sub-view visibility. #libSongs is the Repertoire container now; #s-tracks
-      // (the old finder) stays hidden - the studio it powered opens on <body>.
-      if (el.libSongs) el.libSongs.hidden = (t !== 'repertoire');
-      if (el.libTracks) el.libTracks.hidden = true;
-      if (el.libSet) el.libSet.hidden = (t !== 'set');
-      // search + facet chips apply to the Repertoire; hidden on Set.
-      var repView = (t === 'repertoire');
-      if (el.searchWrap) el.searchWrap.hidden = !repView;
-      if (el.genreChips) el.genreChips.hidden = !repView;
-      if (el.keyChips) el.keyChips.hidden = !repView;
-      if (t === 'repertoire') { renderFilterChips(); renderSongs(); }
-      else if (t === 'set') renderSetlist();
-      // context line follows the active sub-view
-      if (el.ctxLine) {
-        var ctx = (t === 'set') ? CONTEXTS['setlist'] : CONTEXTS['library'];
-        if (ctx != null) el.ctxLine.textContent = ctx;
-      }
-    }
-    function setLibType(t) {
-      STATE.libType = t;
-      try { localStorage.setItem(LIBTYPE_KEY, t); } catch (e) {}
-      renderTypeToggle();
-      applyLibType();
-    }
-    function renderTypeToggle() {
-      if (!el.typeToggle) return;
-      el.typeToggle.innerHTML = '';
-      LIB_TYPES.forEach(function (lt) {
-        var b = document.createElement('button');
-        b.className = 'chip' + (lt.id === STATE.libType ? ' on' : '');
-        b.textContent = lt.label;
-        b.onclick = function () { if (STATE.libType !== lt.id) setLibType(lt.id); };
-        el.typeToggle.appendChild(b);
-      });
-    }
+     * are ONE item in a single Repertoire (repertoire.js merges + dedups). The old
+     * Repertoire|Set top toggle (#typeToggle) is retired too - the Set / Perform
+     * surface is its own main tab now ("Jam", #s-jam), so the Library screen is
+     * ALWAYS the repertoire: search + the Genre/Key facet chips over the merged
+     * list. The finder tab is retired; its Practice Studio (solo scale + chords +
+     * circle) stays reachable by tapping a playable item (openStudioCb), and
+     * curation moves to +Add / per-item edit (M2). */
 
     /* ---- merged repertoire (songs.json + backing tracks, deduped) ---- */
     var REPERTOIRE = [];
@@ -635,7 +592,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
       var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
       if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
@@ -1717,7 +1674,6 @@
           openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
         });
       } else {
-        setLibType('repertoire');
         switchTab('library');
         seedBackingKey(songKey.root, songKey.mode);
       }
@@ -1730,16 +1686,17 @@
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
     function switchTab(name) {
-      // Legacy tab names (setlist / tracks) now resolve to the unified Library screen
-      // with the matching type filter pre-selected, so old internal callers + deep
-      // links still land in the right place after the 3-tab merge.
-      if (name === 'setlist') { STATE.libType = 'set'; try { localStorage.setItem(LIBTYPE_KEY, 'set'); } catch (e) {} name = 'library'; }
-      else if (name === 'tracks' || name === 'repertoire') { STATE.libType = 'repertoire'; try { localStorage.setItem(LIBTYPE_KEY, 'repertoire'); } catch (e) {} name = 'library'; }
+      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
+      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
+      // old internal callers + deep links still land in the right place.
+      if (name === 'setlist' || name === 'set') name = 'jam';
+      else if (name === 'tracks' || name === 'repertoire') name = 'library';
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
       if (name === 'practice') renderPractice();
-      if (name === 'library') { renderTypeToggle(); applyLibType(); }
+      if (name === 'library') { renderFilterChips(); renderSongs(); }
+      if (name === 'jam') renderSetlist();
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
       var viewEl = document.getElementById('view');
@@ -1751,11 +1708,12 @@
 
     /* ===================== INIT ===================== */
     rebuildAll();
-    renderTypeToggle();
     renderFilterChips();
     renderSongs();
     renderSetlist();
-    applyLibType(); // set initial sub-view visibility (Songs | Tracks | Set)
+    // Library is the default-shown screen; set its context line (the tab-restore
+    // below overwrites it when a saved non-library tab is reopened).
+    if (el.ctxLine && CONTEXTS['library'] != null) el.ctxLine.textContent = CONTEXTS['library'];
     buildGrid();
     buildKeyPicker();
     renderKeyView();
