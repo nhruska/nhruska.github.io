@@ -41,8 +41,9 @@
 (function (global) {
   'use strict';
 
-  var stack = [];      // [{ tag, close }] - topmost is the last element
-  var rooted = false;  // replaceState the root exactly once
+  var stack = [];             // [{ tag, close }] - topmost is the last element
+  var rooted = false;         // replaceState the root exactly once
+  var pendingReplace = false; // one-shot: the next open() REPLACES the top slot (a modal->modal transition)
 
   function root() {
     if (rooted) return;
@@ -53,10 +54,20 @@
   function open(tag, close) {
     if (typeof close !== 'function') return;
     root();
+    var doReplace = pendingReplace && stack.length > 0;
+    pendingReplace = false; // consumed by this open()
+    if (doReplace) {
+      // Opened as part of a transition (settleAfter): take over the CURRENT history
+      // slot instead of stacking on top of the just-closed layer. Mutate the stack
+      // only AFTER the history op succeeds (never leave a phantom entry).
+      try { global.history.replaceState({ mnav: tag }, ''); } catch (e) { return; }
+      stack[stack.length - 1] = { tag: tag, close: close };
+      return;
+    }
     var top = stack[stack.length - 1];
     if (top && top.tag === tag) { top.close = close; return; } // re-render in place, no new entry
+    try { global.history.pushState({ mnav: tag }, ''); } catch (e) { return; }
     stack.push({ tag: tag, close: close });
-    try { global.history.pushState({ mnav: tag }, ''); } catch (e) {}
   }
 
   function popAndClose() {
@@ -71,6 +82,24 @@
     try { global.history.back(); } catch (e) { popAndClose(); }
   }
 
+  // Modal -> modal transition. Close the CURRENT top layer's DOM (rawClose), then run
+  // `runNext` (which may open a new layer). If it opens one, that layer REPLACES the
+  // current history slot (same depth - no async back/push race). If it opens nothing,
+  // the now-DOM-closed slot is collapsed. This is the correct hand-off from one layer
+  // to another (Studio -> Edit form; form Save/Delete -> Practice/Studio/Library).
+  function settleAfter(rawClose, runNext) {
+    root();
+    if (typeof rawClose === 'function') { try { rawClose(); } catch (e) {} }
+    pendingReplace = stack.length > 0;
+    if (typeof runNext === 'function') { try { runNext(); } catch (e) {} }
+    if (pendingReplace) {
+      // runNext opened no new layer -> collapse the freed slot. history.back() fires
+      // popstate -> pops it; its close fn is the raw close we already ran (idempotent).
+      pendingReplace = false;
+      try { global.history.back(); } catch (e) { popAndClose(); }
+    }
+  }
+
   global.addEventListener('popstate', function () {
     // Back pressed (or dismiss() called): close the topmost layer. Empty stack
     // means a real root-back - do nothing and let the browser leave the app.
@@ -80,6 +109,7 @@
   global.NavHistory = {
     open: open,
     dismiss: dismiss,
+    settleAfter: settleAfter,
     depth: function () { return stack.length; }
   };
 

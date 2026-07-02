@@ -132,15 +132,26 @@
         if (!f.title) { titleIn.classList.add('bad'); try { titleIn.focus({ preventScroll: true }); } catch (e2) { titleIn.focus(); } return; }
         if (f._urlInvalid) { urlIn.classList.add('bad'); try { urlIn.focus({ preventScroll: true }); } catch (e2) { urlIn.focus(); } return; }
         delete f._urlRaw; delete f._urlInvalid;
-        var saved = current.onSave && current.onSave(f);
-        if (saved !== false) dismissForm();
+        // Save may navigate (fork -> Practice, edit-with-video -> Studio) or not (plain
+        // add). settleAfter closes the form + lets onSave's new layer take the form's
+        // history slot - so the async back/push race can't pop the just-opened layer;
+        // if onSave navigates nowhere, the form slot is collapsed. Falls back to the raw
+        // save+close when NavHistory is absent.
+        var doSave = function () { if (current.onSave) current.onSave(f); };
+        if (global.NavHistory) global.NavHistory.settleAfter(close, doSave);
+        else { doSave(); close(); }
       };
       if (current.onDelete) {
         var delBtn = el.querySelector('[data-delete]');
         if (delBtn) delBtn.onclick = function () {
           var msg = fork ? 'Revert to the original song? Your edits and video will be removed.'
             : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
-          if (confirm(msg)) { current.onDelete(); dismissForm(); }
+          if (confirm(msg)) {
+            // Delete navigates (switchTab('library')): same transition hand-off as save.
+            var doDelete = function () { if (current.onDelete) current.onDelete(); };
+            if (global.NavHistory) global.NavHistory.settleAfter(close, doDelete);
+            else { doDelete(); close(); }
+          }
         };
       }
     }

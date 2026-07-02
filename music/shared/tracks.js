@@ -573,7 +573,13 @@
         openStudio(merged);
       };
       var editReq = elPlayer.querySelector('[data-editrequest]');
-      if (editReq) editReq.onclick = function () { closePlayer(); opts.onEditRequest(t); };
+      if (editReq) editReq.onclick = function () {
+        // Transition Studio -> Edit form: close the studio DOM + let the form take over
+        // its history slot (no stale studio layer left under the form). settleAfter does
+        // the replace; falls back to the raw sequence without NavHistory.
+        if (window.NavHistory) NavHistory.settleAfter(closePlayer, function () { opts.onEditRequest(t); });
+        else { closePlayer(); opts.onEditRequest(t); }
+      };
       // Inline "add the video you found" for a custom song with no video yet: parse the
       // pasted URL, write it via the host (cs.yt), and re-open the Studio so the embed
       // shows immediately.
