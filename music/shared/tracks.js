@@ -324,6 +324,9 @@
 
     function openSearch(q) { window.open(youtubeSearchUrl(q), '_blank', 'noopener'); }
     function openPlayer(t) {
+      // No video = nothing to embed: a bare iframe would load /embed/undefined.
+      // Send the player to a YouTube search for the track instead.
+      if (!t.yt) { openSearch(searchQuery(t)); return; }
       elPlayer.innerHTML =
         '<div class="bt-pl-box" role="dialog" aria-label="Player">'
         + '<div class="bt-pl-head"><span class="bt-pl-t">' + esc(t.title || '') + '</span>'

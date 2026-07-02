@@ -8,6 +8,11 @@ var fs = require('fs'), path = require('path'), cp = require('child_process');
 
 var dir = __dirname;
 var files = fs.readdirSync(dir).filter(function (f) { return /\.test\.js$/.test(f); }).sort();
+if (files.length === 0) {
+  // Green must mean "tests ran" - an empty discovery is a broken checkout/glob.
+  console.error('run-all: no *.test.js files discovered in ' + dir);
+  process.exit(1);
+}
 var failedFiles = 0, totalLine = [];
 
 files.forEach(function (f) {

@@ -600,10 +600,14 @@
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
       // "Solo over it" used to require s.custom (only progressions built in Compose
       // carried a key/mode). Any song can bridge to the Studio if we can determine a
-      // key: use an explicit one when the record has it, otherwise derive one the
-      // same way repertoire.js's Key filter facet does - from the CURRENTLY
-      // TRANSPOSED chords (`seq`, above), so soloing always matches what's on screen.
-      var soloKey = soloKeyFor(s, seq, STATE.transpose);
+      // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
+      // backing track's authoritative key/mode onto it, which beats re-deriving from
+      // the first chord (a non-tonic opener would mislabel). Fall back to the raw
+      // record; soloKeyFor still derives from the TRANSPOSED seq when neither has
+      // an explicit key, so soloing always matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';

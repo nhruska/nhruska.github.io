@@ -91,8 +91,9 @@
    * No-ops (returns null) when the pack can't render a scale or pcs is empty.
    * When the pack exposes pack.scaleDiagram.supportsStart, also renders a compact
    * back/forward position control beneath the diagram so the player can walk the
-   * scale up the neck. Packs that don't set the flag render exactly as before -
-   * feature-detected, not a breaking change to the pack contract. */
+   * scale up the neck. Packs that don't set the flag keep the classic 3-arg
+   * scaleDiagram call and get no control; they do share the boxWrap/diagBox
+   * wrapper structure (needed so flex-row hosts lay out identically). */
   function renderScale(container, pack, rootPc, pcs, opts) {
     opts = opts || {};
     if (!(pack && typeof pack.scaleDiagram === 'function' && pcs && pcs.length)) return null;
@@ -117,7 +118,11 @@
     function shownFrets() { return posWindow(startFret, F, POS_STEP, POS_CAP).shown; }
     function renderBox() {
       diagBox.innerHTML = '';
-      diagBox.appendChild(pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret));
+      // Packs without the supportsStart flag get the classic 3-arg call - no
+      // startFret leaks into a signature that never declared it.
+      diagBox.appendChild(supportsStart
+        ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret)
+        : pack.scaleDiagram(rootPc, pcs, F));
     }
     renderBox();
     if (supportsStart) {
