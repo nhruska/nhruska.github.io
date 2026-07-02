@@ -320,6 +320,21 @@
     });
     return all;
   }
+  // Match keys of the catalog songs a fork shadows - so their backing tracks get
+  // suppressed too. A fork REPLACES its catalog song; without this, the generic backing
+  // track that matched the original stays visible (and, once the fork is renamed, orphans
+  // into a standalone row - the "fork + original track" duplicate). matchKeyFn is
+  // Repertoire.matchKey (title+artist). Pure + Node-testable.
+  function shadowedTrackKeys(catalog, customs, matchKeyFn) {
+    var out = {};
+    if (typeof matchKeyFn !== 'function') return out;
+    var byId = {};
+    (Array.isArray(catalog) ? catalog : []).forEach(function (s, i) { byId['k' + i] = s; });
+    (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      if (cs && cs.forkOf && byId[cs.forkOf]) out[matchKeyFn(byId[cs.forkOf])] = true;
+    });
+    return out;
+  }
   // Remap the setlist when a fork shadows/reverts its catalog original: replace EVERY
   // slot holding fromId with toId (fork create: kN->mN), or REMOVE every fromId slot
   // when toId is null (plain delete). Mutates in place (keeps the array ref the queue
@@ -583,7 +598,15 @@
     var REPERTOIRE = [];
     // getTracks() (from tracks.js) already applies the URL overlay + custom tracks.
     function buildRepertoire() {
-      REPERTOIRE = global.Repertoire.build(ALLSONGS, getTracks());
+      // Suppress the backing tracks of any catalog song a fork shadows, so a fork
+      // REPLACES its original completely (no leftover generic track, and no orphaned
+      // standalone track row once the fork is renamed).
+      var suppress = shadowedTrackKeys(CATALOG, customSongs, global.Repertoire.matchKey);
+      var tracks = getTracks();
+      if (Object.keys(suppress).length) {
+        tracks = tracks.filter(function (t) { return !suppress[global.Repertoire.matchKey(t)]; });
+      }
+      REPERTOIRE = global.Repertoire.build(ALLSONGS, tracks);
       return REPERTOIRE;
     }
     function chipBtn(label, on, fn) {
@@ -2153,6 +2176,7 @@
     shadowedCatalogIds: shadowedCatalogIds,
     buildAllSongs: buildAllSongs,
     buildSheetFromSeq: buildSheetFromSeq,
+    shadowedTrackKeys: shadowedTrackKeys,
     remapSetlist: remapSetlist,
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
