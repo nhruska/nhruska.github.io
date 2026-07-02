@@ -944,6 +944,9 @@
     }
 
     /* ===================== MAXIMIZE (chord pack diagrams) ===================== */
+    // Raw DOM close for the inversions overlay - idempotent, must NOT call
+    // NavHistory.dismiss (that's the button/back-button path, not this).
+    function rawCloseMax() { if (el.maxOv) el.maxOv.classList.remove('on'); }
     function openMaxWith(chords) {
       if (!el.maxOv || !el.maxGrid || !pack) return;
       el.maxGrid.innerHTML = '';
@@ -953,8 +956,9 @@
         el.maxGrid.appendChild(bd);
       });
       el.maxOv.classList.add('on');
+      if (window.NavHistory) NavHistory.open('inversions', rawCloseMax);
     }
-    if (el.maxClose) el.maxClose.onclick = function () { el.maxOv.classList.remove('on'); };
+    if (el.maxClose) el.maxClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseMax(); };
 
     /* ===================== SETLIST ===================== */
     function toggleSet(id) {
@@ -1039,6 +1043,9 @@
     var performEl = el.perform, pSheet = el.pSheet;
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
+    // Raw DOM close for the Stage overlay - idempotent, must NOT call
+    // NavHistory.dismiss (that's the button/back-button path, not this).
+    function rawCloseStage() { relWake(); if (performEl) performEl.classList.remove('on'); }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -1065,13 +1072,14 @@
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
+      if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
-    if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
+    if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
       if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { relWake(); if (performEl) performEl.classList.remove('on'); }
+      else { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -2122,12 +2130,16 @@
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
-    function switchTab(name) {
-      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
-      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
-      // old internal callers + deep links still land in the right place.
-      if (name === 'setlist' || name === 'set') name = 'jam';
-      else if (name === 'tracks' || name === 'repertoire') name = 'library';
+    // Tracks the screen actually on-screen (post legacy-name normalization).
+    // Set once INIT resolves the first-shown screen (see below); drives the
+    // screen/tab back-history wiring in switchTab.
+    var currentTab = null;
+    // Renders the tab/screen switch WITHOUT touching the back-history stack.
+    // Used by: the CLOSE side of a screen back-history entry (returning to the
+    // previous screen - calling switchTab there would push a second entry),
+    // and any future same-name refresh. `name` must already be normalized
+    // (the legacy-name remap lives in switchTab, below).
+    function applyTab(name) {
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
@@ -2140,6 +2152,26 @@
       if (viewEl) viewEl.scrollTop = 0;
       if (el.ctxLine && CONTEXTS[name] != null) el.ctxLine.textContent = CONTEXTS[name];
       if (pack && typeof pack.onSwitchTab === 'function') pack.onSwitchTab(name);
+    }
+    // USER-facing tab/screen switch (tab-bar taps, opening Practice, etc).
+    // Pushes ONE back-history layer per actual screen change so hardware/gesture
+    // Back returns to the PREVIOUS screen instead of leaving the app straight
+    // away; its close fn calls applyTab (never switchTab, which would push a
+    // second entry) to restore the prior screen.
+    function switchTab(name) {
+      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
+      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
+      // old internal callers + deep links still land in the right place. Runs
+      // BEFORE computing `from` / calling applyTab so both compare the
+      // normalized name.
+      if (name === 'setlist' || name === 'set') name = 'jam';
+      else if (name === 'tracks' || name === 'repertoire') name = 'library';
+      var from = currentTab;
+      applyTab(name);
+      if (from && from !== name && window.NavHistory) {
+        NavHistory.open('screen:' + name, function () { applyTab(from); currentTab = from; });
+      }
+      currentTab = name;
     }
     document.querySelectorAll('.tabbar button').forEach(function (b) { b.onclick = function () { switchTab(b.dataset.tab); }; });
 
@@ -2189,9 +2221,14 @@
       // throw a selector SyntaxError and abort the restore.
       document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
       if (savedTab && savedTab !== 'library' && tabExists) {
-        switchTab(savedTab);
+        switchTab(savedTab); // from=null (currentTab unset yet) -> no history push, just sets currentTab
       }
     } catch (e) {}
+    // No restore above set currentTab (savedTab was library, missing, or its
+    // button didn't exist) -> the markup's default-shown screen (Library) is
+    // what's on screen. Seed currentTab to match so the FIRST real user
+    // navigation correctly pushes a back-history layer.
+    if (!currentTab) currentTab = 'library';
 
     /* ---- controller ---- */
     return {
