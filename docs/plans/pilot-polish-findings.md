@@ -22,3 +22,21 @@ Jam, Compose, Tune, keyed/unkeyed empty states, triad-inversions page) at 375x81
 | 6 | Library row action label "↗ Search" is ambiguous next to the search input (it means YouTube search, not list filtering) | Intentional prior design (list-item.js distinguishes in-app "▶ Video" vs external "↗ Search"); revisit copy ("YouTube ↗"?) with UAT feedback |
 | 7 | Tune screen strobe caption "stands still = in tune · drifts ..." reads edge-to-edge at 375 | Measured: scrollWidth == clientWidth (317px), no actual overflow. No action; keep an eye if copy grows |
 | 8 | Jam header shows title-case "The Setlist" + lowercase ctx "tonight's running order" + X on the same row; slight visual weight imbalance vs other screens' headers | Cosmetic only; revisit if the Jam surface gets more chrome in UAT round 3 |
+
+## Follow-up: committed browser-e2e / mount-DOM test harness
+
+Codex flagged the same gap in nearly every PR #67 volley: the mount-level DOM
+behaviors (Stage transpose+view seed via #stageBtn, Mine-facet chip render +
+last-custom heal, Jam/legacy-tab restore, tri-view .modeSwitch clicks incl.
+disabled custom-song buttons) have no COMMITTED regression test - they were
+live-verified each volley via ad-hoc Playwright scripts, but those aren't in
+the repo, so the class can regress green.
+
+The repo is deliberately dependency-free (per-file node-assert self-runners),
+so the options are: (a) a committed Playwright spec + CI job (adds a dev dep +
+browser install to tests.yml), or (b) a heavier stub-document harness like
+test/key-explorer.dom.test.js scaled up to the full mount(). Decision +
+implementation deferred to a dedicated follow-up PR (out of scope for this
+UAT arc's convergence). Pure cores (inferKey, nextTranspose, soloKeyFor,
+libraryFilter, renderSheet, posWindow, studioTheory, migrateUrls) ARE
+unit-covered today.

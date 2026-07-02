@@ -130,7 +130,6 @@ var controller = Songbook.mount({
   songs:        [...],                 // REQUIRED: array in songs.json shape
   chordPack:    window.ChordPackUkulele, // optional; null => names-only, no audio/diagrams
   storagePrefix:'roadcase',            // optional; localStorage namespace (default "songbook")
-  decades:      ["All","70s",...,"10s"], // optional; filter chips
   composeCats:  {...},                 // optional; chord categories for the compose grid
   suggestions:  {...},                 // optional; chord -> [next chords] progression hints
   contexts:     { library:"...", ... },  // optional; per-tab subtitle text for #ctxLine

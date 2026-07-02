@@ -388,7 +388,6 @@
     // ONE shared running-order queue — Studio, Campfire and Stage all read it,
     // so prev/next means the same song everywhere (Phase B: "queue works everywhere").
     var QUEUE = global.Queue.createQueue();
-    var DECADES = opts.decades || ["All", "60s", "70s", "80s", "90s", "00s", "10s"];
     var CONTEXTS = opts.contexts || {};
     // The all-chords build palette covers ALL 12 chromatic roots (the old default only
     // had the 7 naturals - no sharps/flats). For each category we map every ROOTS entry
