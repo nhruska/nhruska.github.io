@@ -96,6 +96,29 @@
     return n;
   }
 
+  // Human-readable summary of a {key:value} data map, translating raw keys into
+  // songbook concepts with real counts ("Setlist: 12 songs", not "1 item").
+  // Returns an ordered array of { label, detail } lines. Used for the Settings
+  // sheet summary AND the restore-confirm preview so the user sees WHAT moves.
+  function describe(data) {
+    data = data || {};
+    function has(k) { return typeof data[k] === 'string'; }
+    function arrLen(k) { try { var a = JSON.parse(data[k]); return Array.isArray(a) ? a.length : 0; } catch (e) { return 0; } }
+    function objLen(k) { try { var o = JSON.parse(data[k]); return (o && typeof o === 'object') ? Object.keys(o).length : 0; } catch (e) { return 0; } }
+    function plural(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
+    var lines = [];
+    if (has('songbook.setlist.v1')) lines.push({ label: 'Setlist', detail: plural(arrLen('songbook.setlist.v1'), 'song') });
+    if (has('songbook.custom.v1')) lines.push({ label: 'Saved progressions', detail: plural(arrLen('songbook.custom.v1'), 'progression') });
+    if (has('bt.custom.v1')) lines.push({ label: 'Custom tracks', detail: plural(arrLen('bt.custom.v1'), 'track') });
+    if (has('music.trackUrls.v1')) lines.push({ label: 'Curated track links', detail: plural(objLen('music.trackUrls.v1'), 'link') });
+    var prefs = [];
+    if (has('music.accent.v1')) prefs.push('accent colour');
+    if (has('music.activeProfile.v1')) prefs.push('instrument');
+    if (['songbook.perfprefs.v2', 'songbook.songview.v1', 'songbook.activeTab.v1', 'songbook.last.v1'].some(has)) prefs.push('view + screen prefs');
+    if (prefs.length) lines.push({ label: 'Preferences', detail: prefs.join(', ') });
+    return lines;
+  }
+
   // Boot-time: bring THIS device's stored data up to the current schema before
   // the app reads it. No-op at v1 (just stamps existing users as the baseline);
   // the hook future breaking changes run through.
@@ -120,6 +143,7 @@
     migrate: migrate,
     snapshot: snapshot,
     validate: validate,
+    describe: describe,
     restore: restore,
     runMigrations: runMigrations
   };

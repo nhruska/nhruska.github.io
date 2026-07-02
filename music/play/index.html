@@ -47,6 +47,10 @@
   .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
   .setBtns{display:flex;gap:10px;}
   .setBtns .btn{flex:1;}
+  .setSummary{margin:0 0 14px;display:flex;flex-direction:column;gap:5px;}
+  .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
+  .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
+  .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
   .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:12px;}
   .setAbout{color:var(--ink-faint);font-size:.74rem;text-align:center;padding-bottom:0;}
 </style>
@@ -209,7 +213,8 @@
     </div>
     <div class="setSec">
       <div class="setLbl">Your songbook</div>
-      <p class="setHint">Your setlist, saved songs, tracks and preferences live only on this device. Back up to a file (save it to Drive or Files), then Restore it on a new phone to bring everything across.</p>
+      <p class="setHint">Everything below lives only on this device. Back up saves it to a file (drop it in Drive or Files); Restore reads that file on a new phone to bring it across. Restore adds and overwrites these items - it never deletes anything already here.</p>
+      <div class="setSummary" id="dataSummary" aria-live="polite"></div>
       <div class="setBtns">
         <button class="btn" id="btnBackup" type="button">Back up</button>
         <button class="btn ghost" id="btnRestore" type="button">Restore</button>
@@ -763,6 +768,18 @@
       var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
       el.textContent = 'Last backed up: ' + relWhen(iso);
     }
+    // Live "what's on THIS device" summary, so the counts are visible before a
+    // backup (and the origin/empty-storage case is obvious at a glance).
+    function renderSummary() {
+      var el = document.getElementById('dataSummary'); if (!el || !window.Backup) return;
+      var lines = Backup.describe(Backup.collect(localStorage));
+      if (!lines.length) { el.innerHTML = '<div class="empty">Nothing saved on this device yet.</div>'; return; }
+      el.innerHTML = lines.map(function (l) {
+        return '<div class="row"><span class="k"></span><span class="v"></span></div>';
+      }).join('');
+      var rows = el.querySelectorAll('.row');
+      lines.forEach(function (l, i) { rows[i].querySelector('.k').textContent = l.label; rows[i].querySelector('.v').textContent = l.detail; });
+    }
     function showVersion() {
       var el = document.getElementById('appVer'); if (!el) return;
       if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = 'Music - running online (not yet installed offline)'; return; }
@@ -772,7 +789,7 @@
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
       } catch (e) {}
     }
-    function openSettings() { if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true'); renderLastBackup(); showVersion(); }
+    function openSettings() { if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true'); renderSummary(); renderLastBackup(); showVersion(); }
     function closeSettings() { if (!ov) return; ov.hidden = true; if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
     if (openBtn) openBtn.onclick = openSettings;
     if (closeBtn) closeBtn.onclick = closeSettings;
@@ -808,10 +825,12 @@
           var payload; try { payload = JSON.parse(rd.result); } catch (e) { alert('That file is not a valid backup (not JSON).'); return; }
           var v = Backup.validate(payload);
           if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
-          var count = Object.keys(payload.data || {}).length;
-          if (!confirm('Restore ' + count + ' saved items from this backup onto this device?')) return;
-          var n; try { n = Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
-          alert('Restored ' + n + ' items. Reloading the app.'); location.reload();
+          var lines = Backup.describe(payload.data);
+          var manifest = lines.length ? lines.map(function (l) { return '- ' + l.label + ': ' + l.detail; }).join('\n') : '- (nothing recognisable in this file)';
+          var when = payload.exportedAt ? ' from ' + payload.exportedAt.slice(0, 10) : '';
+          if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? This adds and overwrites these items - it won\'t delete anything already here.')) return;
+          try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
+          alert('Restored your songbook. Reloading the app.'); location.reload();
         };
         rd.readAsText(f);
       };

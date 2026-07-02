@@ -101,6 +101,34 @@ test('restore() ignores any foreign keys smuggled into data', function () {
   assert.strictEqual(s.getItem('evil.key'), null);
 });
 
+/* ---------- describe() translates keys into human counts ---------- */
+test('describe() summarises keys as songbook concepts with real counts', function () {
+  var lines = Backup.describe({
+    'songbook.setlist.v1': '["a","b","c"]',
+    'bt.custom.v1': '[{"t":"x"},{"t":"y"}]',
+    'music.trackUrls.v1': '{"k1":"v","k2":"v"}',
+    'music.accent.v1': '#5eead4',
+    'music.activeProfile.v1': 'ukulele-gcea'
+  });
+  var byLabel = {};
+  lines.forEach(function (l) { byLabel[l.label] = l.detail; });
+  assert.strictEqual(byLabel['Setlist'], '3 songs');
+  assert.strictEqual(byLabel['Custom tracks'], '2 tracks');
+  assert.strictEqual(byLabel['Curated track links'], '2 links');
+  assert.strictEqual(byLabel['Preferences'], 'accent colour, instrument');
+});
+test('describe() singularises a count of one and skips absent keys', function () {
+  var lines = Backup.describe({ 'songbook.setlist.v1': '["only"]' });
+  assert.strictEqual(lines.length, 1);
+  assert.strictEqual(lines[0].label, 'Setlist');
+  assert.strictEqual(lines[0].detail, '1 song');
+});
+test('describe() tolerates malformed values without throwing', function () {
+  var lines = Backup.describe({ 'bt.custom.v1': 'not json', 'songbook.setlist.v1': '{}' });
+  // malformed array -> 0; still lists the label rather than crashing
+  assert.strictEqual(lines.length, 2);
+});
+
 /* ---------- migrate() is an identity at the current version ---------- */
 test('migrate() is a no-op from v1 to v1', function () {
   var data = { 'songbook.setlist.v1': '["a"]' };
