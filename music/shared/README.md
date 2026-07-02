@@ -153,14 +153,15 @@ library). The fields, grouped by feature:
 | Chrome    | `ctxLine` (header subtitle) |
 
 The engine also queries `.tabbar button[data-tab]` and `.screen` by id
-(`s-library`, `s-compose`, `s-practice`, `s-setlist`, `s-tune`) for tab
-switching. Keep those class/id conventions in your markup. The reference
-markup is `music/ukulele/index.html` - copy it.
+(`s-library`, `s-jam`, `s-compose`, `s-practice`, `s-tune`) for tab
+switching (the Set/Perform surface lives in the Jam tab - there is no
+`s-setlist` screen anymore). Keep those class/id conventions in your
+markup. The reference markup is `music/ukulele/index.html` - copy it.
 
 ### Returned controller
 
 ```js
-controller.switchTab(name)  // "library" | "compose" | "practice" | "setlist" | "tune"
+controller.switchTab(name)  // "library" | "jam" | "compose" | "practice" | "tune" (legacy "setlist"/"set"/"tracks"/"repertoire" normalize)
 controller.openSong(id)     // open a song in the Practice tab by engine id
 controller.getState()       // live STATE object (read-only intent)
 controller.getSongs()       // ALLSONGS (catalog + custom progressions), each with an `id`

@@ -1337,7 +1337,9 @@
         // (net shift mod an octave), mirroring the old #cKey readout indicator.
         var chipShift = (((cTpose % 12) + 12) % 12) !== 0;
         chip.classList.toggle('shifted', chipShift);
-        var chipMode = MODE_SHORT[songKey.mode] || MODES[songKey.mode].label;
+        // Guarded lookup: a bad persisted/imported mode must degrade to the
+        // raw string, never hard-crash the key picker on `.label` of undefined.
+        var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || String(songKey.mode || '');
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
         chip.innerHTML = songKey.root
