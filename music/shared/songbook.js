@@ -446,7 +446,14 @@
     function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
     function rebuildAll() {
       ALLSONGS = CATALOG.map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); });
-      customSongs.forEach(function (cs) { ALLSONGS.push(Object.assign({}, cs, { sheet: buildSheetFromSeq(cs.seq) })); });
+      // Only fabricate a chord sheet for a seq-BEARING custom song. A seq-less
+      // video-only track must NOT get a (truthy) sheet - buildSheetFromSeq([])
+      // returns [["Progression",""]], which routed the track to a blank Practice
+      // screen instead of the Studio (repertoire.js playability keys off .sheet).
+      customSongs.forEach(function (cs) {
+        var withSheet = (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
+        ALLSONGS.push(Object.assign({}, cs, withSheet));
+      });
     }
     var ALLSONGS = [];
 
