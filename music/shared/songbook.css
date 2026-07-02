@@ -478,8 +478,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
-/* key/mode fly-out (roots + mode toggle + solo scale). The chip that opens it lives in
-   the button bar now; this is just the drop-down, hidden by default (no row when closed). */
+/* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
+   to the Studio). The chip that opens it lives in the button bar now; this is just the
+   drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
 .keyFlyout[hidden]{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */

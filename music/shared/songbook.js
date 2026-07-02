@@ -1114,12 +1114,12 @@
       // inferred key stays NON-explicit: it keeps tracking further adds until the user
       // pins a key themselves (root pick / mode pick / named pattern all set explicit).
       var prevRoot = songKey.root, prevMode = songKey.mode;
-      if (!songKey.explicit && progression.length >= 2) {
-        var ik = inferKey(progression);
-        if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
-      }
+      // Re-infer through the SAME helper the remove/Clear paths use, so a later
+      // chord that makes inference fail CLEARS a stale non-explicit key instead
+      // of leaving the old chip/palette (the inline infer only ever set a key,
+      // never cleared one - the asymmetry codex flagged).
+      reinferKey();
       renderProg(); renderKey();
-      // (reinferKey() is the symmetric partner for remove/clear paths below.)
       // Key changed under an auto-infer: refresh the fly-out content + the chord list
       // (renderKey/buildKeyPicker already refreshed the chip + roots). Skipped when
       // nothing moved so a plain add never rebuilds the grid mid-tap.
@@ -1387,7 +1387,7 @@
       // Fixed-width key/mode chip: injected once into the button bar (#keyChipSlot). It
       // does double duty - shows the current key (root + abbreviated mode, so it reads as
       // the transpose readout: songKey.root moves with every transpose) AND toggles the
-      // fly-out (#keyFlyout, which holds the 12 roots + the mode toggle + the solo scale).
+      // fly-out (#keyFlyout: the 12 roots + the mode toggle + the Triads & Inversions link).
       // Abbreviated mode (Maj/Min/Mixo/Dor) keeps it short for the fixed width; the fixed
       // width (.keyPickerCompact in CSS) means "C Maj" and "G# Mixo" render the same size,
       // so the button bar never jumps as the key name changes.
