@@ -76,7 +76,7 @@ test('markers in a shifted window use TRUE fret numbers, not window-relative one
 });
 test('a shifted window whose span contains only fret 9 reports exactly that marker', function () {
   var p = D.scalePlan({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 2, startFret: 8 });
-  // true frets 8-9: no marker in {3,5,7,9,12,...} - wait 9 IS a marker, use 8-9 -> [9]
+  // true frets 8-9: 9 is the only standard marker inside the window
   assert.deepStrictEqual(p.markers, [9]);
 });
 

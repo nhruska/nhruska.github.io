@@ -361,6 +361,14 @@
       }
     }
     function openStudio(t) {
+      // Rehydrate from the merged track list BEFORE rendering: a bridge payload
+      // (songbook's "Solo over it") carries only the song record's yt, so a
+      // curated overlay url saved for the SAME track would be silently ignored
+      // on first open. Match by trackKey; a yt the payload already carries wins.
+      if (!t.yt) {
+        var hydrated = state.tracks.filter(function (x) { return trackKey(x) === trackKey(t); })[0];
+        if (hydrated && hydrated.yt) t = Object.assign({}, t, { yt: hydrated.yt, ytSource: hydrated.ytSource });
+      }
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
       // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /

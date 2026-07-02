@@ -2,7 +2,9 @@
  * key-explorer.test.js  -  unit tests for KeyExplorer.posWindow (the pure
  * window math behind the scale position-shift control: shown span, end
  * fret, and the back/forward gating incl. the fret-14 cap). The DOM path
- * (renderScale wiring) is exercised via Playwright at integration.
+ * (renderScale wiring) has no committed automated test yet - it is verified
+ * by agent-driven live browser checks per change; a committed browser-e2e
+ * harness is queued as follow-up work.
  * Run: node test/key-explorer.test.js
  * ===================================================================== */
 'use strict';

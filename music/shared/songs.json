@@ -1447,20 +1447,20 @@
     "y": 1994,
     "d": "90s",
     "seq": [
-      "G",
-      "C",
+      "A",
       "D",
-      "Em",
-      "Am"
+      "E",
+      "F#m",
+      "Bm"
     ],
     "sheet": [
       [
         "Verse",
-        "[G]Held a candle in my [C]hand, the wax dripped [D]down my arm"
+        "[A]Held a candle in my [D]hand, the wax dripped [E]down my arm"
       ],
       [
         "Chorus",
-        "Like a [Em]sample in a [C]jar, you can [G]look but you can't [D]touch"
+        "Like a [F#m]sample in a [D]jar, you can [A]look but you can't [E]touch"
       ]
     ],
     "jam": true

@@ -532,7 +532,7 @@
     {
       "id": "DPnSqAFibK4",
       "label": "The Beatles - Ob-La-Di, Ob-La-Da (Instrumental & Backing Vocals)",
-      "note": "instrumental + backing vocals, sounds in A per capo-1 convention"
+      "note": "instrumental + backing vocals; recording pitch is Bb (like the note above) - transpose or capo to match, confirm by ear"
     }
   ],
   "dark rock backing in c minor|search|C|minor": [

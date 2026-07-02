@@ -197,4 +197,23 @@ test('studioTheory: unresolvable key returns null (caller falls back to player/s
   assert.strictEqual(T.studioTheory('H', 'major'), null);
 });
 
+/* ---------- overlay re-key migration (catalog-key corrections must not orphan
+ * a user's curated urls: trackKey embeds the key, so the stored key moves) ---------- */
+test('migrateUrls re-keys a legacy overlay entry and deletes the old key', function () {
+  var o = { 'sample in a jar|phish|G|major': 'vid1' };
+  assert.strictEqual(T.migrateUrls(o), true);
+  assert.deepStrictEqual(o, { 'sample in a jar|phish|A|major': 'vid1' });
+});
+test('migrateUrls never clobbers an entry already saved under the new key', function () {
+  var o = { 'sample in a jar|phish|G|major': 'old', 'sample in a jar|phish|A|major': 'new' };
+  assert.strictEqual(T.migrateUrls(o), true); // old key still deleted
+  assert.deepStrictEqual(o, { 'sample in a jar|phish|A|major': 'new' });
+});
+test('migrateUrls is a no-op (returns false, no save-back) when nothing is legacy', function () {
+  var o = { 'blues in a|x|A|minor': 'keep' };
+  assert.strictEqual(T.migrateUrls(o), false);
+  assert.deepStrictEqual(o, { 'blues in a|x|A|minor': 'keep' });
+  assert.strictEqual(T.migrateUrls({}), false);
+});
+
 run();
