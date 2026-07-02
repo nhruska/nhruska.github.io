@@ -340,7 +340,7 @@
    *   suggestions:  Object -- chord-progression suggestion map (chord -> [next...]).
    *   el: {  -- DOM element references (any subset; missing ones disable that feature)
    *     // library
-   *     songsList, decadeChips, search, libCount,
+   *     songsList, genreChips, keyChips, search, searchClear, libCount, addBtn,
    *     // practice
    *     practiceEmpty, practiceBody,
    *     // setlist
@@ -649,9 +649,11 @@
     }
     function setMode(m) {
       // Stage performs the live queue from the current position (one-shot; not sticky).
-      // Seed the overlay with the song view's transpose so Stage opens in the key
-      // you were just practicing in, not the original (UAT item 8).
-      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose); return; }
+      // Seed the overlay with the song view's transpose AND its Lyrics/Chords/Both
+      // selection so Stage opens in the key AND view you were just practicing in,
+      // not the original / a stale stage pref (UAT item 8 + the "over whichever
+      // view you're on" contract above).
+      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, STATE.songView); return; }
     }
 
     function renderPractice() {
@@ -901,9 +903,15 @@
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
     // prev/next still reset to 0 per song, as before.
-    function startPerform(ids, startIdx, seedTpose) {
+    function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
+      // Song-view Stage carries its view forward (seedView); the setlist Perform
+      // button passes none and keeps the persisted stage pref. Persist so the
+      // stage toggle + updateStageBtns stay consistent with what's shown.
+      if (seedView === 'lyrics' || seedView === 'chords' || seedView === 'both') {
+        STATE.performView = seedView; savePerfPrefs();
+      }
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
