@@ -153,6 +153,55 @@ test('shadowedCatalogIds: forks report the catalog id they shadow, others do not
   assert.deepStrictEqual(Songbook.shadowedCatalogIds([]), {});
   assert.deepStrictEqual(Songbook.shadowedCatalogIds(null), {});
 });
+test('shadowedCatalogIds: a malformed/foreign forkOf (not kN) shadows nothing', function () {
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds([{ forkOf: 'bogus' }, { forkOf: 'm9' }, { forkOf: 'k2' }]), { k2: true });
+});
+
+/* ---- buildAllSongs: the PURE core of rebuildAll (shadow + append + sheet-preserve).
+ * This is the real changed merge path, extracted so a regression ships RED instead of
+ * green - the coverage gap codex flagged across volleys 2-5. ---- */
+var CAT = [
+  { t: 'Song A', a: 'X', sheet: [['V', '[C] a']] },  // -> k0
+  { t: 'Song B', a: 'Y', sheet: [['V', '[G] b']] },  // -> k1
+  { t: 'Song C', a: 'Z', sheet: [['V', '[D] c']] }   // -> k2
+];
+test('buildAllSongs: no customs -> catalog only, kN ids assigned in order', function () {
+  var all = Songbook.buildAllSongs(CAT, []);
+  assert.deepStrictEqual(all.map(function (s) { return s.id; }), ['k0', 'k1', 'k2']);
+});
+test('buildAllSongs: a fork SHADOWS its catalog original and appends the fork', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k1', t: 'My B', a: 'Y', sheet: [['V', '[G] mine']] };
+  var all = Songbook.buildAllSongs(CAT, [fork]);
+  var ids = all.map(function (s) { return s.id; });
+  assert.ok(ids.indexOf('k1') < 0, 'catalog k1 is shadowed (omitted)');
+  assert.deepStrictEqual(ids, ['k0', 'k2', 'm1']);           // k1 gone, fork appended
+  assert.strictEqual(all.find(function (s) { return s.id === 'm1'; }).t, 'My B');
+});
+test('buildAllSongs: a fork PRESERVES its own sheet (chords+lyrics), not a chord-only rebuild', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k0', seq: ['C'], sheet: [['V', '[C] real lyric']] };
+  var out = Songbook.buildAllSongs(CAT, [fork]).find(function (s) { return s.id === 'm1'; });
+  assert.deepStrictEqual(out.sheet, [['V', '[C] real lyric']]); // own sheet wins over seq
+});
+test('buildAllSongs: a composed custom with seq (no sheet) gets a chord-only sheet', function () {
+  var comp = { id: 'm2', custom: true, seq: ['Am', 'F'] };
+  var out = Songbook.buildAllSongs(CAT, [comp]).find(function (s) { return s.id === 'm2'; });
+  assert.deepStrictEqual(out.sheet, [['Progression', '[Am] [F]']]);
+});
+test('buildAllSongs: a video-only custom (no seq, no sheet) gets NO sheet (routes to Studio)', function () {
+  var vid = { id: 'm3', custom: true, yt: 'abc' };
+  var out = Songbook.buildAllSongs(CAT, [vid]).find(function (s) { return s.id === 'm3'; });
+  assert.ok(!out.sheet, 'no fabricated sheet for a video-only track');
+});
+test('buildAllSongs: deleting the fork (customs without it) RESTORES the catalog original', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k1', sheet: [['V', 'x']] };
+  assert.ok(Songbook.buildAllSongs(CAT, [fork]).map(function (s) { return s.id; }).indexOf('k1') < 0); // shadowed
+  assert.ok(Songbook.buildAllSongs(CAT, []).map(function (s) { return s.id; }).indexOf('k1') >= 0);     // reverted
+});
+test('buildAllSongs: does not mutate the source catalog (fresh records with ids)', function () {
+  var cat = [{ t: 'S', a: 'A' }];
+  Songbook.buildAllSongs(cat, []);
+  assert.ok(cat[0].id == null, 'source catalog record left untouched');
+});
 
 /* ---- studioTarget: a fork's OWN video must reach the Studio, not the merged
  * backing SEED track. This is the call-chain the play/action button uses

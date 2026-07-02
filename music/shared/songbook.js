@@ -292,9 +292,33 @@
   function shadowedCatalogIds(customs) {
     var out = {};
     (Array.isArray(customs) ? customs : []).forEach(function (cs) {
-      if (cs && cs.forkOf) out[cs.forkOf] = true;
+      // Only a well-formed catalog id (kN) shadows - honors the "catalog ids" contract
+      // and ignores a malformed/foreign forkOf rather than hiding an arbitrary id.
+      if (cs && cs.forkOf && /^k\d+$/.test(cs.forkOf)) out[cs.forkOf] = true;
     });
     return out;
+  }
+  // A composed custom's chord-only sheet (one "[C] [G] ..." progression line). Pure.
+  function buildSheetFromSeq(seq) {
+    return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
+  }
+  // PURE core of rebuildAll: fold the catalog + customs into the merged ALLSONGS list.
+  // Catalog songs get kN ids; a fork (forkOf=kN) SHADOWS its catalog original (omit it);
+  // customs append with their sheet resolved (own sheet preferred -> a fork keeps the
+  // catalog chords+lyrics verbatim; else a chord-only sheet from seq; else no sheet ->
+  // a video-only track routes to the Studio, not a blank Practice screen). Extracted +
+  // exported so the changed merge path has a real regression test (not DOM-coupled).
+  function buildAllSongs(catalog, customs) {
+    var shadowed = shadowedCatalogIds(customs);
+    var all = (Array.isArray(catalog) ? catalog : [])
+      .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
+      .filter(function (s) { return !shadowed[s.id]; });
+    (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      var withSheet = (cs.sheet && cs.sheet.length) ? {}
+        : (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
+      all.push(Object.assign({}, cs, withSheet));
+    });
+    return all;
   }
   // Which record the Studio (video + solo HUD) should open for a Repertoire row.
   // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
@@ -472,26 +496,10 @@
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
     function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customSongs)); } catch (e) { } }
     var customSongs = loadCustom();
-    function buildSheetFromSeq(seq) { return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]]; }
-    function rebuildAll() {
-      // Fork-to-custom SHADOW: a custom item with forkOf="<catalogId>" replaces
-      // (shadows) that catalog song - so its curated video / edited metadata show
-      // and the original is hidden. Deleting the fork drops it from this set, so
-      // the catalog song reappears (revert). Pure predicate, so it's testable.
-      var shadowed = shadowedCatalogIds(customSongs);
-      ALLSONGS = CATALOG
-        .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
-        .filter(function (s) { return !shadowed[s.id]; });
-      customSongs.forEach(function (cs) {
-        // Prefer an item's OWN sheet (a fork preserves the catalog chords+lyrics
-        // verbatim). Otherwise fabricate a chord-only sheet from seq for composed
-        // customs; a seq-less, sheet-less video-only track gets NO sheet (routes
-        // to the Studio, not a blank Practice screen).
-        var withSheet = (cs.sheet && cs.sheet.length) ? {}
-          : (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
-        ALLSONGS.push(Object.assign({}, cs, withSheet));
-      });
-    }
+    // Fork-to-custom SHADOW + composed-custom append: the pure fold lives in the
+    // module-scope buildAllSongs(catalog, customs) (exported + unit-tested). Deleting
+    // a fork drops it from customs, so its catalog original reappears (revert).
+    function rebuildAll() { ALLSONGS = buildAllSongs(CATALOG, customSongs); }
     var ALLSONGS = [];
 
     /* ---------- state + persistence ---------- */
@@ -1854,15 +1862,20 @@
       // original chords+lyrics sheet verbatim (rebuildAll keeps cs.sheet over a
       // chord-only rebuild). The year carries over so the shadow reads identically.
       if (f.forkOf) cs.forkOf = f.forkOf;
-      if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
+      // Clone the preserved sheet so the fork OWNS its rows - a shared reference to the
+      // catalog song's sheet array could be mutated in place from either side.
+      if (f.sheet && f.sheet.length) cs.sheet = f.sheet.map(function (r) { return Array.isArray(r) ? r.slice() : r; });
       if (f.y != null) cs.y = f.y;
       // Forking a SETLISTED catalog song: rebuildAll shadows the catalog kN id, so
       // the setlist slot pointing at it would go dangling (the song vanishes from
-      // the set). Remap that slot to the new fork id so the entry is REPLACED, not
-      // lost - the setlist still holds the song, now as your editable fork.
+      // the set). Remap EVERY slot holding it to the new fork id so the entry is
+      // REPLACED, not lost - the setlist still holds the song, now as your fork.
       if (cs.forkOf) {
-        var fsp = STATE.setlist.indexOf(cs.forkOf);
-        if (fsp >= 0) { STATE.setlist[fsp] = cs.id; saveSet(); }
+        var remapped = false;
+        for (var si = 0; si < STATE.setlist.length; si++) {
+          if (STATE.setlist[si] === cs.forkOf) { STATE.setlist[si] = cs.id; remapped = true; }
+        }
+        if (remapped) saveSet();
       }
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       return cs;
@@ -1885,15 +1898,18 @@
       var victim = customById(id);
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
       saveCustom();
-      var sp = STATE.setlist.indexOf(id);
-      if (sp >= 0) {
-        // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore
-        // the catalog id into the setlist slot (keep the song setlisted). A plain
-        // custom delete has no original to fall back to, so drop the slot.
-        if (victim && victim.forkOf) STATE.setlist[sp] = victim.forkOf;
-        else STATE.setlist.splice(sp, 1);
-        saveSet();
+      // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore the
+      // catalog id into EVERY slot that held the fork (keep the song setlisted). A
+      // plain custom delete has no original to fall back to, so drop those slots.
+      var restore = (victim && victim.forkOf) ? victim.forkOf : null;
+      var touched = false;
+      for (var di = STATE.setlist.length - 1; di >= 0; di--) {
+        if (STATE.setlist[di] === id) {
+          if (restore) STATE.setlist[di] = restore; else STATE.setlist.splice(di, 1);
+          touched = true;
+        }
       }
+      if (touched) saveSet();
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
@@ -1955,7 +1971,9 @@
       repForm.open({
         mode: 'create', fork: true,
         item: {
-          t: song.t, a: song.a,
+          // fall back to title/artist so the form prefills regardless of record shape
+          // (a merged/track-shaped record carries title/artist, a song carries t/a)
+          t: song.t != null ? song.t : song.title, a: song.a != null ? song.a : song.artist,
           key: song.key || (sk && sk.key) || '', mode: song.mode || (sk && sk.mode) || 'major',
           genre: song.genre || '', yt: song.yt || null
         },
@@ -2129,6 +2147,8 @@
     isMine: isMine,
     hasChordSheet: hasChordSheet,
     shadowedCatalogIds: shadowedCatalogIds,
+    buildAllSongs: buildAllSongs,
+    buildSheetFromSeq: buildSheetFromSeq,
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
