@@ -299,9 +299,23 @@
   // Which record the Studio (video + solo HUD) should open for a Repertoire row.
   // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
   // never as a merged backing SEED track (rec._track), which would drop the user's
-  // curated video / fork id. A non-custom merged song opens the seed track (its
-  // curated key/video is the intent there). Pure + Node-testable.
-  function studioTarget(rec) { return (rec && rec.custom) ? rec : ((rec && rec._track) || rec); }
+  // curated video / fork id. BUT custom SONGS store the name as t/a while the Studio
+  // (Tracks.openStudio) reads title/artist - so normalize to the Studio shape (t->title,
+  // a->artist) or the fork opens with a blank title. Mirrors the explicit descriptors
+  // the other openStudioCb call sites build. A non-custom merged song opens the seed
+  // track (its curated key/video is the intent there). Pure + Node-testable.
+  function studioTarget(rec) {
+    if (!rec) return rec;
+    if (rec.custom) {
+      return {
+        id: rec.id,
+        title: rec.t != null ? rec.t : rec.title,
+        artist: rec.a != null ? rec.a : rec.artist,
+        key: rec.key, mode: rec.mode, yt: rec.yt, custom: true
+      };
+    }
+    return rec._track || rec;
+  }
   // Library filter = Repertoire.filter + the ownership ("Mine") facet. Ownership
   // is a SEPARATE flag (sel.mine), never a genre value, so a user/catalog genre
   // literally named "mine" filters as a genre and does NOT hijack the ownership

@@ -163,13 +163,27 @@ test('shadowedCatalogIds: forks report the catalog id they shadow, others do not
 test('studioTarget: a custom/fork opens as ITSELF even when merged with a seed track', function () {
   var seed = { id: 't5', yt: 'SEEDvideoAA', key: 'C' };
   // a fork that matched a backing track: Repertoire.build hangs the seed on _track
-  var fork = { id: 'm2', custom: true, forkOf: 'k7', yt: 'FORKvideoBB', _track: seed };
-  assert.strictEqual(Songbook.studioTarget(fork).id, 'm2');   // the fork, not the seed
-  assert.strictEqual(Songbook.studioTarget(fork).yt, 'FORKvideoBB'); // the curated video wins
+  var fork = { id: 'm2', custom: true, forkOf: 'k7', t: 'Let It Be', a: 'The Beatles', key: 'C', mode: 'major', yt: 'FORKvideoBB', _track: seed };
+  var out = Songbook.studioTarget(fork);
+  assert.strictEqual(out.id, 'm2');           // the fork, not the seed
+  assert.strictEqual(out.yt, 'FORKvideoBB');  // the curated video wins over the seed track
+  // Studio shape: it reads title/artist, NOT the custom-song t/a - normalize or the
+  // fork opens with a blank title (the regression volley 4 caught).
+  assert.strictEqual(out.title, 'Let It Be');
+  assert.strictEqual(out.artist, 'The Beatles');
 });
-test('studioTarget: a plain custom song with its own video opens as itself', function () {
-  var custom = { id: 'm9', custom: true, yt: 'MINEvideoCC', _track: { id: 't1', yt: 'SEEDvideoDD' } };
-  assert.strictEqual(Songbook.studioTarget(custom).id, 'm9');
+test('studioTarget: a plain custom song with its own video opens as itself, title mapped', function () {
+  var custom = { id: 'm9', custom: true, t: 'My Song', a: 'Me', key: 'G', mode: 'major', yt: 'MINEvideoCC', _track: { id: 't1', yt: 'SEEDvideoDD' } };
+  var out = Songbook.studioTarget(custom);
+  assert.strictEqual(out.id, 'm9');
+  assert.strictEqual(out.yt, 'MINEvideoCC');
+  assert.strictEqual(out.title, 'My Song'); // t -> title for the Studio
+});
+test('studioTarget: a custom BACKING TRACK (already title/artist) passes those through', function () {
+  var track = { id: 'c1', custom: true, title: 'Jam', artist: 'Nobody', key: 'A', mode: 'minor', yt: 'TRKvideoEE' };
+  var out = Songbook.studioTarget(track);
+  assert.strictEqual(out.title, 'Jam');   // falls back to rec.title when rec.t absent
+  assert.strictEqual(out.artist, 'Nobody');
 });
 test('studioTarget: a NON-custom merged song still opens the seed track (unchanged)', function () {
   var seed = { id: 't3', yt: 'SEEDvideoEE', key: 'G' };
