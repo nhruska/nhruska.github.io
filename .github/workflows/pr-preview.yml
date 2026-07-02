@@ -28,10 +28,16 @@ jobs:
             const pr = context.payload.pull_request;
             const sha = pr.head.sha;
             const branch = pr.head.ref;
+            // Fork PRs: the head branch lives in the fork repo, not base owner/repo.
+            const headRepo = (pr.head.repo && pr.head.repo.full_name) || `${owner}/${repo}`;
             const base = `https://raw.githack.com/${owner}/${repo}/${sha}`;
             const commitUrl = `https://github.com/${owner}/${repo}/commit/${sha}`;
-            const branchUrl = `https://github.com/${owner}/${repo}/tree/${branch}`;
+            const branchUrl = `https://github.com/${headRepo}/tree/${branch}`;
             const liveUrl = `https://${owner}.github.io/music/play/`;
+            // The profile label + branch are PR-controlled content; escape any
+            // Markdown-active chars before they go into link text / code spans so
+            // a crafted label can't inject attacker links into the bot comment.
+            const mdText = (s) => String(s == null ? '' : s).replace(/[\\`*_{}\[\]()#+\-.!|<>]/g, '\\$&').replace(/[\r\n]+/g, ' ').slice(0, 60);
 
             // Drive the preview list off the manifest at this exact commit so a
             // new profile lands in the comment automatically. Label comes out
@@ -53,7 +59,7 @@ jobs:
                   const m = js.match(/label:\s*["']([^"']+)["']/);
                   if (m) label = m[1];
                 } catch (e) { /* leave label as id */ }
-                apps.push([label, `${base}/music/play/?p=${id}`]);
+                apps.push([mdText(label), `${base}/music/play/?p=${encodeURIComponent(id)}`]);
               }
             } catch (e) {
               core.warning(`manifest read failed: ${e.message}; falling back to hardcoded list`);
@@ -73,7 +79,7 @@ jobs:
               '',
               '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
-              `**Commit** [\`${sha.slice(0, 7)}\`](${commitUrl}) · **Branch** [\`${branch}\`](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
+              `**Commit** [\`${sha.slice(0, 7)}\`](${commitUrl}) · **Branch** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

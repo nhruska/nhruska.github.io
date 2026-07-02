@@ -485,7 +485,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    tab bar above/below (dvh so mobile URL-bar changes are respected); overflow-y
    is the hard guard - if a pathologically short viewport still can't fit, the
    fly-out scrolls INTERNALLY so the page itself never overflows. */
-.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:calc(100dvh - 210px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:max(180px, calc(100dvh - 210px));overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .keyFlyout[hidden]{display:none;}
 /* UAT r3 - eliminate Compose scroll: while the key/mode fly-out is open, hide
    the chord picker (In-key|All toggle + chord list + solo-backing CTA) so the
@@ -494,7 +494,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    hidden, not torn down - so it's current the moment the fly-out closes. */
 .composeWrap.keyOpen #catChips,
 .composeWrap.keyOpen .composeChords,
-.composeWrap.keyOpen #soloBackingBtn{display:none;}
+.composeWrap.keyOpen #soloBackingBtn,
+.composeWrap.keyOpen #maxNote{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
 /* SINGLE control row, no wrap: [♭] [key/mode chip] [♯] [⤢] [?] | [Clear] [Save].
@@ -587,14 +588,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed .psBtn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .pSpeed .psBtn:active{transform:scale(.94);}
 .pSpeed .psBtn.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
-/* Landscape / short viewport: fit the Stage header + controls into far less
-   vertical space (UAT r3). Controls collapse to a SINGLE row (View + Size side
-   by side); the header shrinks so the sheet keeps the room. Placed AFTER the
-   base .pSpeed rules so the row override wins on source order. */
-/* Landscape only - it guarantees width > height, so the one-row View+Size
-   control panel always has horizontal room. A narrow SHORT PORTRAIT must NOT
-   trigger this (the 42px label + 3 View buttons at ~half width would overlap),
-   so we no longer OR in a bare max-height. */
+/* Landscape only (UAT r3): collapse the Stage View+Size controls into a SINGLE
+   row and shrink the header so the sheet keeps the vertical room. Landscape
+   guarantees width > height, so the one row always has horizontal space; a
+   narrow SHORT PORTRAIT must NOT trigger this (label + 3 View buttons at ~half
+   width would overlap), which is why there's no bare max-height branch. Placed
+   AFTER the base .pSpeed rules so the row override wins on source order. */
 @media (orientation:landscape){
   .perform{padding-top:calc(max(env(safe-area-inset-top,0px), 4px) + 4px);}
   .pTop{margin-bottom:3px;}
