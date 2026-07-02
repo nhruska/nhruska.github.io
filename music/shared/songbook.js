@@ -223,6 +223,21 @@
     return { key: null, mode: null };
   }
 
+  // User-owned ("Mine") repertoire items: everything the user saved or added via
+  // +Add / Save progression (custom flag; d:'Mine' is the same marker on records
+  // persisted before the flag existed). Pure + Node-testable.
+  function isMine(rec) { return !!(rec && (rec.custom || rec.d === 'Mine')); }
+  // Library filter = Repertoire.filter + the 'mine' facet (which is ownership,
+  // not a genre, so repertoire.js stays genre-pure). sel.genre === 'mine' keeps
+  // the q/key filters and narrows to user-owned items. Rep is dependency-injected
+  // (same pattern as soloKeyFor) so Node tests can pass the real module.
+  function libraryFilter(Rep, list, sel) {
+    sel = sel || {};
+    var mine = sel.genre === 'mine';
+    var base = Rep.filter(list, { q: sel.q, genre: mine ? 'all' : sel.genre, key: sel.key });
+    return mine ? base.filter(isMine) : base;
+  }
+
   /* =====================================================================
    * Songbook.mount(opts)
    *
@@ -394,6 +409,13 @@
         el.genreChips.innerHTML = '';
         el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all',
           function () { STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
+        // Mine: the user's own saved/added items. An ownership facet pinned ahead
+        // of the data-derived genres; shown only when a custom item exists (facet
+        // chips reflect what is actually in the repertoire).
+        if (REPERTOIRE.some(isMine)) {
+          el.genreChips.appendChild(chipBtn('Mine', STATE.genre === 'mine',
+            function () { STATE.genre = 'mine'; renderFilterChips(); renderSongs(); }));
+        }
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
           el.genreChips.appendChild(chipBtn(g, STATE.genre === g,
             function () { STATE.genre = g; renderFilterChips(); renderSongs(); }));
@@ -433,7 +455,7 @@
     function renderSongs() {
       if (!el.songsList) return;
       buildRepertoire();
-      var filtered = global.Repertoire.filter(REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
+      var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key });
       if (filtered.length === 0) {
         el.songsList.innerHTML = '<div class="empty">Nothing in your repertoire matches.</div>';
         if (el.libCount) el.libCount.textContent = '';
@@ -1768,6 +1790,8 @@
     renderSheet: renderSheet,
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
+    isMine: isMine,
+    libraryFilter: libraryFilter,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
