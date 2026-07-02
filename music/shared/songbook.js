@@ -1085,7 +1085,19 @@
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
     function setPerformView(v) { STATE.performView = v; stageDefaultView = v; showPerform(); savePerfPrefs(); }
-    function stepFont(d) { STATE.fontMode = 'manual'; STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2))); applyPerfFont(); updateStageBtns(); savePerfPrefs(); }
+    function stepFont(d) {
+      // Leaving auto-fit: seed the manual scale from the CURRENT on-screen auto size
+      // (the last --pscale applyPerfFont computed), not the neutral 1. Otherwise the
+      // first A+ jumps DOWN to 1.1 from a ~1.5 auto-fit (looks like a decrease) and
+      // the first A- drops a big step. Continuing from what's visible = no jump.
+      if (STATE.fontMode === 'auto' && pSheet) {
+        var curScale = parseFloat(pSheet.style.getPropertyValue('--pscale'));
+        if (curScale > 0) STATE.fontScale = curScale;
+      }
+      STATE.fontMode = 'manual';
+      STATE.fontScale = Math.max(0.8, Math.min(2.2, +(STATE.fontScale + d).toFixed(2)));
+      applyPerfFont(); updateStageBtns(); savePerfPrefs();
+    }
     // auto-fit: scale the sheet so a short song fills the screen and a long one
     // shrinks toward fitting; manual mode pins an explicit scale instead.
     function applyPerfFont() {
@@ -1153,6 +1165,11 @@
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
     var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
+    // The saved custom-song id the current Compose buffer is linked to (null = an
+    // unsaved/fresh progression). Set on save; re-save UPDATES that song in place
+    // (no duplicate); "Solo over" opens its Studio directly (no re-prompt). Detached
+    // on Clear or when a starter pattern replaces the buffer wholesale.
+    var savedComposeId = null;
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -1267,6 +1284,7 @@
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
       progression = chordsFromDegrees(root, songKey.mode, degrees);
       cTpose = 0;
+      savedComposeId = null; // a starter is a NEW progression - detach from any saved song
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
     }
@@ -1881,6 +1899,14 @@
       // (or cleared to) while the row was open.
       var snapSeq = progression.slice();
       var km = deriveProgressionKey(snapSeq);
+      // Editing a progression already saved this session -> UPDATE that same song in
+      // place (no new copy, no name prompt), per the operator's "update the same
+      // saved song" choice. The chord edits + any re-key flow straight onto cs.
+      if (savedComposeId && customById(savedComposeId)) {
+        var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
+        if (upd) { showComposeToast('Updated ' + upd.t); done(upd); return; }
+        savedComposeId = null; // the saved song vanished - fall through to a fresh save
+      }
       openSaveNameRow('My progression', function (name) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
@@ -1888,6 +1914,7 @@
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
         customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
         showComposeToast('Saved to your Repertoire');
         done(cs);
       });
@@ -1949,6 +1976,14 @@
         mode: 'create',
         onSave: function (f) { createCustomItem(f); }
       });
+    }
+    // Attach/replace a custom song's video inline from the Studio's "add the video you
+    // found" paste box: write cs.yt via updateCustomItem and return the studio-shaped
+    // record so the Studio re-renders with the embed. null if the song vanished.
+    function setCustomVideo(id, yt) {
+      var updated = updateCustomItem(id, { yt: yt });
+      if (!updated) return null;
+      return { id: updated.id, title: updated.t, artist: updated.a, key: updated.key, mode: updated.mode, custom: true, yt: updated.yt };
     }
     function openEditForm(id) {
       if (!repForm) return;
@@ -2019,6 +2054,8 @@
     if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () {
       progression = []; cTpose = 0;
+      savedComposeId = null;   // fresh canvas - detach from any saved song
+      hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       var kc = reinferKey();
       renderProg(); renderKey();
       if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
@@ -2051,6 +2088,16 @@
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
+        // Already saved this session: no re-prompt. Save-in-place (updates the linked
+        // song if the chords changed, no-op-ish if not) then open its Studio directly
+        // - with the Edit button, since it's a real saved song. No duplicate.
+        if (savedComposeId && customById(savedComposeId)) {
+          saveProgression(function (saved) {
+            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+          });
+          return;
+        }
+        // Never saved -> the save/skip choice (Save & open Studio links it going forward).
         openSoloChoiceRow(function (choice) {
           if (choice === 'save') {
             saveProgression(function (saved) {
@@ -2157,7 +2204,8 @@
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
       openEditForm: openEditForm,
-      openEditOrAdd: openEditOrAdd
+      openEditOrAdd: openEditOrAdd,
+      setCustomVideo: setCustomVideo
     };
   }
 

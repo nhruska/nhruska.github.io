@@ -121,7 +121,7 @@
       // Packs without the supportsStart flag get the classic 3-arg call - no
       // startFret leaks into a signature that never declared it.
       diagBox.appendChild(supportsStart
-        ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret)
+        ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret, opts.names)
         : pack.scaleDiagram(rootPc, pcs, F));
     }
     renderBox();

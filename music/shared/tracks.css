@@ -139,6 +139,8 @@
     padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
     margin-bottom:9px;font-weight:700;}
+  /* note names inside an uppercased label must keep their case (Bb, not BB) */
+  .bt-st-notes{text-transform:none;letter-spacing:0;}
   .bt-st-scale{display:flex;justify-content:center;}
   /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
      taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width
