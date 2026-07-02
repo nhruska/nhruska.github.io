@@ -60,6 +60,7 @@
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
         <div class="libCount" id="libCount"></div>
+        <div class="curateSlot" id="curateSlot"></div>
       </div>
       <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
@@ -570,6 +571,10 @@
     // so the repertoire rebuilds once the track data is in.
     var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
       container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
+      // reachability shim: the curate bar renders into a VISIBLE slot under the
+      // repertoire list (the in-container bar lives inside the retired, permanently
+      // -hidden finder tab, making the whole curation queue unreachable otherwise).
+      curateBarEl: el('curateSlot'),
       onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); },
       // Task 2 requirement 4: the Studio's "Edit this track to add a video" link
       // (t.custom items only) opens the M2 Add/Edit form. songbookCtl doesn't exist

@@ -293,6 +293,33 @@
     var elWheel = $('[data-cof]'), elPanel = $('[data-cofpanel]');
     var elQueue = $('[data-queue]'), elCurateBar = $('[data-curatebar]');
     var elControls = $('.bt-controls'), elAdd = $('.bt-add');
+    // Optional VISIBLE home for the curate bar (the in-container bar lives inside
+    // the retired, permanently-hidden finder tab - unreachable). When the host
+    // supplies a slot, the bar renders there and the queue opens as a body-level
+    // panel (same pattern as the player/Studio overlay).
+    var elCurateHost = opts.curateBarEl || null;
+    if (elCurateHost) elCurateBar = elCurateHost;
+    var elQueuePanel = document.createElement('div');
+    elQueuePanel.className = 'bt-qpanel';
+    document.body.appendChild(elQueuePanel);
+    function queuePanelOpen() { return elQueuePanel.classList.contains('on'); }
+    function renderQueuePanel() {
+      var rows = urllessTracks();
+      elQueuePanel.innerHTML =
+        '<div class="bt-qpanel-box" role="dialog" aria-label="Curation queue">'
+        + '<div class="bt-qpanel-head"><span class="bt-qhead">Curate videos</span>'
+        + '<button class="bt-pl-x" data-qclose type="button">close</button></div>'
+        + '<div class="bt-qhint">' + (rows.length
+          ? rows.length + (rows.length === 1 ? ' track has' : ' tracks have') + ' no video yet. Tap a suggestion or paste a YouTube URL - Save makes it the curated video.'
+          : 'Every track has a curated video. Nice work.') + '</div>'
+        + '<div class="bt-qpanel-list" data-qlist></div></div>';
+      var list = elQueuePanel.querySelector('[data-qlist]');
+      rows.forEach(function (t) { list.appendChild(queueRow(t)); });
+      elQueuePanel.querySelector('[data-qclose]').onclick = closeQueuePanel;
+      elQueuePanel.onclick = function (e) { if (e.target === elQueuePanel) closeQueuePanel(); };
+    }
+    function openQueuePanel() { renderQueuePanel(); elQueuePanel.classList.add('on'); }
+    function closeQueuePanel() { elQueuePanel.classList.remove('on'); elQueuePanel.innerHTML = ''; }
 
     function loadCustom() {
       try { var s = localStorage.getItem(STORE); var a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a : []; }
@@ -562,6 +589,16 @@
     function renderCurateBar() {
       if (!elCurateBar) return;
       var n = urllessTracks().length;
+      if (elCurateHost) {
+        // Visible Library slot: a quiet entry point, only when something needs
+        // curating (self-hides at zero). Opens the body-level queue panel.
+        elCurateBar.innerHTML = n > 0
+          ? '<button class="bt-curate-btn" data-curatetoggle type="button">Curate videos (' + n + ')</button>'
+          : '';
+        var tg = elCurateBar.querySelector('[data-curatetoggle]');
+        if (tg) tg.onclick = openQueuePanel;
+        return;
+      }
       if (state.view === 'queue') {
         elCurateBar.innerHTML = '<button class="bt-curate-btn on" data-curatetoggle type="button">&#8592; Back to finder</button>';
       } else if (n > 0) {
@@ -605,6 +642,8 @@
         var id = parseYouTubeId(urlIn.value);
         if (!id) { focusNoJump(urlIn); urlIn.classList.add('bad'); return; }
         setTrackUrl(t, id); rerender();
+        // keep the body-level panel walking the remaining queue after a save
+        if (queuePanelOpen()) renderQueuePanel();
       };
       return el;
     }
