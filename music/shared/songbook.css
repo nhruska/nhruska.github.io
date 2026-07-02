@@ -68,6 +68,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .libSearchRow{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
 .libSearchRow .searchWrap{flex:1 1 auto;min-width:0;margin-bottom:0;}
 .libTracks[hidden]{display:none;}
+/* Library scroll model: search + facet chips stay pinned; the song list is the
+   ONLY scroll container (same flat single-scroller pattern as Compose - no
+   nested scroll traps). .screen.on is display:block by default, so the flex
+   column is scoped to the library screen's own .on state. */
+#s-library{height:100%;}
+#s-library.on{display:flex;flex-direction:column;}
+.libSearchRow,#genreChips,#keyChips{flex:0 0 auto;}
+.libSongs{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
+.libSongs::-webkit-scrollbar{width:0;}
 /* ===== Unified Library list item (SSOT - music/shared/list-item.js) =====
  * One element + one class for Songs / Tracks / Set. The three list containers
  * stack items identically; per-segment differences are only the leading number
