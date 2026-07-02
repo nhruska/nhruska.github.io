@@ -155,8 +155,10 @@ test('shadowedCatalogIds: forks report the catalog id they shadow, others do not
 });
 
 /* ---- studioTarget: a fork's OWN video must reach the Studio, not the merged
- * backing SEED track. This is the call-chain the ▶/↗ action + row tap use
- * (openStudioCb(studioTarget(rec))); a regression here silently opens the seed
+ * backing SEED track. This is the call-chain the play/action button uses
+ * (repertoireAction -> openStudioCb(studioTarget(rec))); for a sheet-bearing
+ * fork the row tap opens Practice instead (studioTarget is only the row-tap path
+ * for seq-less video-only tracks). A regression here silently opens the seed
  * track for a fork that matched a backing track, dropping the curated video. ---- */
 test('studioTarget: a custom/fork opens as ITSELF even when merged with a seed track', function () {
   var seed = { id: 't5', yt: 'SEEDvideoAA', key: 'C' };

@@ -110,7 +110,7 @@
         + '<label class="rf-lbl">Video URL <span class="rf-opt">(optional)</span></label>'
         + '<input data-url class="bt-in" value="' + esc(urlText) + '" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
         + '<div class="rf-actions">'
-        + '<button class="btn red" data-save type="button">' + (fork ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
+        + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');

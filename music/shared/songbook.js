@@ -864,7 +864,11 @@
         // the original (add a video, rename, re-key). Chords + lyrics preserved.
         var mb = document.createElement('button');
         mb.className = 'btn'; mb.textContent = 'Make it mine';
-        mb.onclick = function () { openForkForm(s); };
+        // Fork from the MERGED record so a matched backing track's authoritative
+        // video/key/mode carry onto the fork (mirrors soloKeyFor/ytSearchURL above);
+        // the raw s (from ALLSONGS) lacks those merged fields. mergeRec never copies
+        // _track into a saved custom, so forkOf/sheet/seq preservation is unaffected.
+        mb.onclick = function () { openForkForm(mergedRec || s); };
         act.appendChild(mb);
       }
     }
