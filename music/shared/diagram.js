@@ -163,20 +163,20 @@
     // dotR/strSpace sized so the 10px note-name labels (phone-DPI floor for SVG
     // text, CLAUDE.md) fit their circles with clearance between adjacent strings.
     var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 21, dotR = 9.2;
+    // Fret-number labels get their OWN band below the board. The bottom string's
+    // dots (r 9.2 around cy = boardBot) used to reach into the label row - and the
+    // labels painted BEFORE the dots, so the numbers hid behind them. The band
+    // reserves clearance and the labels now paint last (see below).
+    var labelBand = plan.markers.length ? 10 : 0;
     var nutX = showOpen ? (padX + openColW) : padX;
-    var W = nutX + F * fretW + padX, H = padY * 2 + (n - 1) * strSpace;
+    var boardBot = padY + (n - 1) * strSpace; // last string line - board ends here, band follows
+    var W = nutX + F * fretW + padX, H = boardBot + padY + labelBand;
     function yOf(s) { return padY + (n - 1 - s) * strSpace; } // low string (index 0) at the bottom
     // column index: 0 = the open-string column (only when showOpen), 1..F = trueFrets[0..F-1]
     function xOf(col) { return col === 0 ? (padX + openColW / 2) : (nutX + (col - 0.5) * fretW); }
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
-    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (H - padY) + '" stroke="#3a4150" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
+    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + boardBot + '" stroke="#3a4150" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
     for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" stroke-width="1"/>'; }
-    // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
-    // these are TRUE fret numbers even in a shifted window (plan.markers already reflects that).
-    plan.markers.forEach(function (fn) {
-      var col = trueFrets.indexOf(fn) + 1;
-      svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
-    });
     for (var s2 = 0; s2 < n; s2++) {
       var y2 = yOf(s2);
       plan.notesOn(s2).forEach(function (note) {
@@ -188,6 +188,14 @@
         svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + NOTE_NAMES[note.pc] + '</text>';
       });
     }
+    // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
+    // these are TRUE fret numbers even in a shifted window (plan.markers already reflects
+    // that). Drawn LAST (SVG paints in document order) and inside the reserved labelBand,
+    // so the numbers can never hide behind the note dots again.
+    plan.markers.forEach(function (fn) {
+      var col = trueFrets.indexOf(fn) + 1;
+      svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
+    });
     svg += '</svg>';
     wrap.innerHTML = svg;
     return wrap;
@@ -195,9 +203,11 @@
 
   global.Diagram = { render: render, baseFret: baseFret, scale: scale, scalePlan: scalePlan };
 
-  // expose the pure fret-window math for Node unit tests (no DOM needed)
+  // expose the pure fret-window math for Node unit tests (no DOM needed), plus
+  // scale() for the stub-document render tests (label band + paint order).
   if (typeof module !== 'undefined' && module.exports) {
     module.exports.scalePlan = scalePlan;
+    module.exports.scale = scale;
   }
 
 })(typeof window !== 'undefined' ? window : this);
