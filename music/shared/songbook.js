@@ -1977,6 +1977,14 @@
         onSave: function (f) { createCustomItem(f); }
       });
     }
+    // Attach/replace a custom song's video inline from the Studio's "add the video you
+    // found" paste box: write cs.yt via updateCustomItem and return the studio-shaped
+    // record so the Studio re-renders with the embed. null if the song vanished.
+    function setCustomVideo(id, yt) {
+      var updated = updateCustomItem(id, { yt: yt });
+      if (!updated) return null;
+      return { id: updated.id, title: updated.t, artist: updated.a, key: updated.key, mode: updated.mode, custom: true, yt: updated.yt };
+    }
     function openEditForm(id) {
       if (!repForm) return;
       var cs = customById(id);
@@ -2196,7 +2204,8 @@
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
       openEditForm: openEditForm,
-      openEditOrAdd: openEditOrAdd
+      openEditOrAdd: openEditOrAdd,
+      setCustomVideo: setCustomVideo
     };
   }
 

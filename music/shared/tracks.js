@@ -454,24 +454,33 @@
           + 'Watch on YouTube &#8599;</a>'
           + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
           + '</div>';
-      // Add/edit-video-URL affordance. Custom user tracks/songs own their yt id
-      // directly and are curated through the Add/Edit form now (Task 2, M2), not
-      // an inline paste-box - so for t.custom we show a single plain link instead
-      // (only when the host wired opts.onEditRequest; otherwise nothing renders,
-      // degrading gracefully). The inline paste/clear overlay editor is keyed by
-      // trackKey into the localStorage url overlay, so it only makes sense for a
-      // real CURATED seed track (one whose key resurfaces in the finder). An
-      // ephemeral studio session (e.g. Solo practice) has a trackKey in no
-      // catalog - pasting a url there writes an overlay entry that never
-      // resurfaces (silent data loss), so it gets NO url editor. Compose-flow
-      // sessions save-first to attach a video. (isSeedTrack computed above,
-      // where the no-video hint wording needs it.)
+      // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
+      // State-aware (operator UAT): the wording must never say "add a video" once one
+      // exists. HAS a video -> a single "Edit song details" button (the Add/Edit form
+      // changes the URL AND title/chords/genre). NO video -> a quick inline paste box
+      // to attach the video you just found on YouTube (writes cs.yt via onSetVideo),
+      // plus an "edit song details" link for the fuller changes. The paste box needs
+      // opts.onSetVideo (host writes cs.yt); the edit link needs opts.onEditRequest;
+      // each renders only when its callback is wired (graceful degrade). A seed track
+      // keeps the trackUrl-overlay editor; an ephemeral session (no id/onSetVideo)
+      // gets nothing (a pasted url would have nothing to attach to).
       var urlEditor = t.custom
-        ? (opts.onEditRequest
-          ? '<div class="bt-st-urled" data-urled>'
-            + '<button class="bt-st-editlink" data-editrequest type="button">Edit this track to add a video</button>'
-            + '</div>'
-          : '')
+        ? (t.yt
+          ? (opts.onEditRequest
+            ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit song details</button></div>'
+            : '')
+          : ((opts.onSetVideo && t.id) || opts.onEditRequest
+            ? '<div class="bt-st-urled" data-urled>'
+              + ((opts.onSetVideo && t.id)
+                ? '<div class="bt-st-urled-lbl">Add the video you found</div>'
+                  + '<div class="bt-st-urled-row">'
+                  + '<input data-vidin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+                  + '<button data-vidsave class="bt-st-urled-save" type="button">Save</button>'
+                  + '</div>'
+                : '')
+              + (opts.onEditRequest ? '<button class="bt-st-editlink" data-editrequest type="button">Or edit song details (title, chords, genre)</button>' : '')
+              + '</div>'
+            : ''))
         : (isSeedTrack
           ? '<div class="bt-st-urled" data-urled>'
             + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
@@ -561,6 +570,17 @@
       };
       var editReq = elPlayer.querySelector('[data-editrequest]');
       if (editReq) editReq.onclick = function () { closePlayer(); opts.onEditRequest(t); };
+      // Inline "add the video you found" for a custom song with no video yet: parse the
+      // pasted URL, write it via the host (cs.yt), and re-open the Studio so the embed
+      // shows immediately.
+      var vidIn = elPlayer.querySelector('[data-vidin]'), vidSave = elPlayer.querySelector('[data-vidsave]');
+      if (vidIn) vidIn.oninput = function () { vidIn.classList.remove('bad'); };
+      if (vidSave) vidSave.onclick = function () {
+        var id = parseYouTubeId((vidIn.value || '').trim());
+        if (!id) { vidIn.classList.add('bad'); try { vidIn.focus({ preventScroll: true }); } catch (e) { vidIn.focus(); } return; }
+        var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
+        openStudio(updated || Object.assign({}, t, { yt: id }));
+      };
       elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
     }
 
