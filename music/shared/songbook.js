@@ -270,7 +270,7 @@
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
-   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
+   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
    *     // compose (optional; needs a chord pack for diagrams/audio)
    *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, keyChipSlot,
    *     // maximize overlay (chord pack diagrams)
@@ -371,15 +371,26 @@
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
     // perform-screen prefs (scroll speed, view, font size), remembered per device.
-    var PERF_KEY = prefix + ".perfprefs.v1";
-    function loadPerfPrefs() { try { var r = localStorage.getItem(PERF_KEY); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } }
+    // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
+    // chords-over-lyrics, which is now called 'both' - migrate it as such.
+    var PERF_KEY = prefix + ".perfprefs.v2";
+    var PERF_KEY_V1 = prefix + ".perfprefs.v1";
+    function loadPerfPrefs() {
+      try {
+        var r = localStorage.getItem(PERF_KEY);
+        if (r) return JSON.parse(r);
+        var v1 = localStorage.getItem(PERF_KEY_V1);
+        if (v1) { var p = JSON.parse(v1); if (p.view === 'lyrics') p.view = 'both'; return p; }
+        return {};
+      } catch (e) { return {}; }
+    }
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", key: "all", libType: "repertoire", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
-      performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
+      performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
       fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
@@ -844,10 +855,11 @@
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
-    // stage controls panel (scroll speed + font size + lyrics/chords view)
+    // stage controls panel (scroll speed + font size + lyrics/chords/both view)
     if (el.pCtrls) el.pCtrls.onclick = function () { STATE.ctrlsOpen = !STATE.ctrlsOpen; if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen || STATE.scrolling); };
     if (el.pViewLyrics) el.pViewLyrics.onclick = function () { setPerformView('lyrics'); };
     if (el.pViewChords) el.pViewChords.onclick = function () { setPerformView('chords'); };
+    if (el.pViewBoth) el.pViewBoth.onclick = function () { setPerformView('both'); };
     if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
@@ -872,6 +884,7 @@
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
       if (el.pViewLyrics) el.pViewLyrics.classList.toggle('on', STATE.performView === 'lyrics');
       if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
+      if (el.pViewBoth) el.pViewBoth.classList.toggle('on', STATE.performView === 'both');
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
