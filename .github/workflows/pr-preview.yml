@@ -28,24 +28,28 @@ jobs:
             const pr = context.payload.pull_request;
             const sha = pr.head.sha;
             const branch = pr.head.ref;
-            // Fork PRs: the head branch lives in the fork repo, not base owner/repo.
-            const headRepo = (pr.head.repo && pr.head.repo.full_name) || `${owner}/${repo}`;
-            const base = `https://raw.githack.com/${owner}/${repo}/${sha}`;
-            const commitUrl = `https://github.com/${owner}/${repo}/commit/${sha}`;
-            const branchUrl = `https://github.com/${headRepo}/tree/${branch}`;
+            // Fork PRs: the head commit + files live in the FORK repo, not base
+            // owner/repo - use the head repo for githack + the content reads so a
+            // fork preview resolves (falls back to base for same-repo PRs).
+            const hOwner = (pr.head.repo && pr.head.repo.owner && pr.head.repo.owner.login) || owner;
+            const hName = (pr.head.repo && pr.head.repo.name) || repo;
+            const base = `https://raw.githack.com/${hOwner}/${hName}/${sha}`;
+            const commitUrl = `https://github.com/${hOwner}/${hName}/commit/${sha}`;
+            // Encode each branch path segment but keep the slashes literal so the
+            // GitHub tree URL for a slashed branch (claude/foo) still resolves and
+            // a `)`/`#`/`%` in a branch can't break the Markdown link href.
+            const branchPath = String(branch).split('/').map(encodeURIComponent).join('/');
+            const branchUrl = `https://github.com/${hOwner}/${hName}/tree/${branchPath}`;
             const liveUrl = `https://${owner}.github.io/music/play/`;
-            // The profile label + branch are PR-controlled content; escape any
-            // Markdown-active chars before they go into link text / code spans so
-            // a crafted label can't inject attacker links into the bot comment.
-            const mdText = (s) => String(s == null ? '' : s).replace(/[\\`*_{}\[\]()#+\-.!|<>]/g, '\\$&').replace(/[\r\n]+/g, ' ').slice(0, 60);
+            // The profile label + branch are PR-controlled; truncate FIRST, THEN
+            // escape Markdown-active chars, so a slice can't sever an escape pair
+            // and leave a dangling backslash that eats the closing bracket.
+            const mdText = (s) => String(s == null ? '' : s).replace(/[\r\n]+/g, ' ').slice(0, 60).replace(/[\\`*_{}\[\]()#+\-.!|<>]/g, '\\$&');
 
-            // Drive the preview list off the manifest at this exact commit so a
-            // new profile lands in the comment automatically. Label comes out
-            // of the profile JS itself (the `label: "..."` field). If anything
-            // in the read fails, fall back to a small hardcoded set so the PR
-            // still gets a usable comment.
+            // Drive the preview list off the manifest at the head commit so a new
+            // profile lands automatically. Reads from the HEAD repo (fork-safe).
             async function readPath(path) {
-              const res = await github.rest.repos.getContent({ owner, repo, path, ref: sha });
+              const res = await github.rest.repos.getContent({ owner: hOwner, repo: hName, path, ref: sha });
               return Buffer.from(res.data.content, 'base64').toString('utf8');
             }
             let apps;

@@ -485,7 +485,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    tab bar above/below (dvh so mobile URL-bar changes are respected); overflow-y
    is the hard guard - if a pathologically short viewport still can't fit, the
    fly-out scrolls INTERNALLY so the page itself never overflows. */
-.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:max(180px, calc(100dvh - 210px));overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:calc(100dvh - 210px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .keyFlyout[hidden]{display:none;}
 /* UAT r3 - eliminate Compose scroll: while the key/mode fly-out is open, hide
    the chord picker (In-key|All toggle + chord list + solo-backing CTA) so the
