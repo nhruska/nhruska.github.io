@@ -588,8 +588,10 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
-      // Stage performs the live queue from the current position (one-shot; not sticky)
-      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
+      // Stage performs the live queue from the current position (one-shot; not sticky).
+      // Seed the overlay with the song view's transpose so Stage opens in the key
+      // you were just practicing in, not the original (UAT item 8).
+      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose); return; }
     }
 
     function renderPractice() {
@@ -833,11 +835,13 @@
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
-    // single song straight from Practice / the "Play now" hero).
-    function startPerform(ids, startIdx) {
+    // single song straight from Practice / the "Play now" hero). seedTpose carries
+    // the song view's transpose into the opening song (absent = original key);
+    // prev/next still reset to 0 per song, as before.
+    function startPerform(ids, startIdx, seedTpose) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
-      STATE.performDim = false; STATE.performTpose = 0;
+      STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
