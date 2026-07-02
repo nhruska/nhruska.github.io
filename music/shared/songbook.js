@@ -1190,9 +1190,9 @@
         b.onclick = function () {
           // Picking a root sets the explicit key and KEEPS the panel open so the mode
           // can be chosen in the same visit (root -> mode is one gesture; the old
-          // close-on-root-pick forced a reopen to get minor). A mode tap closes it.
-          // Tapping the currently-selected root clears the key (stays open for a
-          // fresh pick).
+          // close-on-root-pick forced a reopen to get minor). A mode tap - or re-tapping
+          // the current mode as a "confirm" - closes it. Tapping the currently-selected
+          // root clears the key (and stays open for a fresh pick).
           if (songKey.root === r) {
             // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
             songKey.root = null; songKey.explicit = false;
@@ -1236,15 +1236,26 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Mode change ALWAYS re-harmonizes the built progression (solo-practice scope):
-          // the one key/mode filter keeps the chords in sync - a root change transposes,
-          // a mode change re-qualifies. convertToMode sets songKey.mode + re-renders.
-          // If the progression is empty there's nothing to harmonize, so just set the
-          // mode and re-render the palette/solo scale.
+          // Re-tapping the CURRENT mode is a no-op confirm: change nothing, just close
+          // the panel (when a root is set - the gesture is complete). The old
+          // unconditional convertToMode call re-derived a key from the first chord and
+          // could swap the chord list underneath the user on a same-mode tap.
+          if (mk === songKey.mode) {
+            if (songKey.root) { keyPopoverOpen = false; buildKeyPicker(); }
+            return;
+          }
+          // A real mode change re-harmonizes the built progression (solo-practice
+          // scope): the one key/mode filter keeps the chords in sync - a root change
+          // transposes, a mode change re-qualifies. convertToMode sets songKey.mode,
+          // closes the panel + re-renders. If the progression is empty there's nothing
+          // to harmonize, so just set the mode, close (root + mode both chosen = the
+          // gesture is done; with no root yet, stay open for the root pick) and
+          // re-render the palette.
           if (progression.length) {
             convertToMode(mk);
           } else {
             songKey.mode = mk;
+            if (songKey.root) keyPopoverOpen = false;
             renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
           }
         };
