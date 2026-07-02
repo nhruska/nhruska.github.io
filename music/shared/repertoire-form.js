@@ -70,6 +70,13 @@
     var current = null; // { mode, item, onSave, onDelete }
 
     function close() { el.classList.remove('on'); el.innerHTML = ''; current = null; }
+    // User-initiated close: route through NavHistory.dismiss() so the pushed
+    // history entry pops in step with the DOM close (single close path via
+    // popstate -> close). Falls back to the raw close() if no layer is open.
+    function dismissForm() {
+      if (global.NavHistory && global.NavHistory.depth()) global.NavHistory.dismiss();
+      else close();
+    }
 
     function render() {
       var editing = current.mode === 'edit';
@@ -114,8 +121,8 @@
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
-      el.querySelector('[data-close]').onclick = close;
-      el.onclick = function (e) { if (e.target === el) close(); };
+      el.querySelector('[data-close]').onclick = dismissForm;
+      el.onclick = function (e) { if (e.target === el) dismissForm(); };
       var urlIn = el.querySelector('[data-url]');
       urlIn.oninput = function () { urlIn.classList.remove('bad'); };
       var titleIn = el.querySelector('[data-title]');
@@ -126,14 +133,14 @@
         if (f._urlInvalid) { urlIn.classList.add('bad'); try { urlIn.focus({ preventScroll: true }); } catch (e2) { urlIn.focus(); } return; }
         delete f._urlRaw; delete f._urlInvalid;
         var saved = current.onSave && current.onSave(f);
-        if (saved !== false) close();
+        if (saved !== false) dismissForm();
       };
       if (current.onDelete) {
         var delBtn = el.querySelector('[data-delete]');
         if (delBtn) delBtn.onclick = function () {
           var msg = fork ? 'Revert to the original song? Your edits and video will be removed.'
             : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
-          if (confirm(msg)) { current.onDelete(); close(); }
+          if (confirm(msg)) { current.onDelete(); dismissForm(); }
         };
       }
     }
@@ -141,6 +148,7 @@
     function open(o) {
       current = { mode: o.mode === 'edit' ? 'edit' : 'create', fork: !!o.fork, item: o.item || null, onSave: o.onSave || null, onDelete: o.onDelete || null };
       render();
+      if (global.NavHistory) global.NavHistory.open('form', close);
     }
 
     return { open: open, close: close };
