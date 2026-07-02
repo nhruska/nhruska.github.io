@@ -7,6 +7,7 @@
 var assert = require('assert');
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
+var Repertoire = require('../music/shared/repertoire.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -143,6 +144,165 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
 });
 
 /* ---------- the Mine facet (user-owned items in the Library filter bar) ---------- */
+test('shadowedCatalogIds: forks report the catalog id they shadow, others do not', function () {
+  var customs = [
+    { id: 'm1', custom: true, seq: ['C', 'G'] },              // a plain composed custom
+    { id: 'm2', custom: true, forkOf: 'k7', sheet: [['V', '[C]x']] }, // a fork of catalog k7
+    { id: 'm3', custom: true, forkOf: 'k3' }                  // a fork of catalog k3
+  ];
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds(customs), { k7: true, k3: true });
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds([]), {});
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds(null), {});
+});
+test('shadowedCatalogIds: a malformed/foreign forkOf (not kN) shadows nothing', function () {
+  assert.deepStrictEqual(Songbook.shadowedCatalogIds([{ forkOf: 'bogus' }, { forkOf: 'm9' }, { forkOf: 'k2' }]), { k2: true });
+});
+
+/* ---- buildAllSongs: the PURE core of rebuildAll (shadow + append + sheet-preserve).
+ * This is the real changed merge path, extracted so a regression ships RED instead of
+ * green - the coverage gap codex flagged across volleys 2-5. ---- */
+var CAT = [
+  { t: 'Song A', a: 'X', sheet: [['V', '[C] a']] },  // -> k0
+  { t: 'Song B', a: 'Y', sheet: [['V', '[G] b']] },  // -> k1
+  { t: 'Song C', a: 'Z', sheet: [['V', '[D] c']] }   // -> k2
+];
+test('buildAllSongs: no customs -> catalog only, kN ids assigned in order', function () {
+  var all = Songbook.buildAllSongs(CAT, []);
+  assert.deepStrictEqual(all.map(function (s) { return s.id; }), ['k0', 'k1', 'k2']);
+});
+test('buildAllSongs: a fork SHADOWS its catalog original and appends the fork', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k1', t: 'My B', a: 'Y', sheet: [['V', '[G] mine']] };
+  var all = Songbook.buildAllSongs(CAT, [fork]);
+  var ids = all.map(function (s) { return s.id; });
+  assert.ok(ids.indexOf('k1') < 0, 'catalog k1 is shadowed (omitted)');
+  assert.deepStrictEqual(ids, ['k0', 'k2', 'm1']);           // k1 gone, fork appended
+  assert.strictEqual(all.find(function (s) { return s.id === 'm1'; }).t, 'My B');
+});
+test('buildAllSongs: a fork PRESERVES its own sheet (chords+lyrics), not a chord-only rebuild', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k0', seq: ['C'], sheet: [['V', '[C] real lyric']] };
+  var out = Songbook.buildAllSongs(CAT, [fork]).find(function (s) { return s.id === 'm1'; });
+  assert.deepStrictEqual(out.sheet, [['V', '[C] real lyric']]); // own sheet wins over seq
+});
+test('buildAllSongs: a composed custom with seq (no sheet) gets a chord-only sheet', function () {
+  var comp = { id: 'm2', custom: true, seq: ['Am', 'F'] };
+  var out = Songbook.buildAllSongs(CAT, [comp]).find(function (s) { return s.id === 'm2'; });
+  assert.deepStrictEqual(out.sheet, [['Progression', '[Am] [F]']]);
+});
+test('buildAllSongs: a video-only custom (no seq, no sheet) gets NO sheet (routes to Studio)', function () {
+  var vid = { id: 'm3', custom: true, yt: 'abc' };
+  var out = Songbook.buildAllSongs(CAT, [vid]).find(function (s) { return s.id === 'm3'; });
+  assert.ok(!out.sheet, 'no fabricated sheet for a video-only track');
+});
+test('buildAllSongs: deleting the fork (customs without it) RESTORES the catalog original', function () {
+  var fork = { id: 'm1', custom: true, forkOf: 'k1', sheet: [['V', 'x']] };
+  assert.ok(Songbook.buildAllSongs(CAT, [fork]).map(function (s) { return s.id; }).indexOf('k1') < 0); // shadowed
+  assert.ok(Songbook.buildAllSongs(CAT, []).map(function (s) { return s.id; }).indexOf('k1') >= 0);     // reverted
+});
+test('buildAllSongs: does not mutate the source catalog (fresh records with ids)', function () {
+  var cat = [{ t: 'S', a: 'A' }];
+  Songbook.buildAllSongs(cat, []);
+  assert.ok(cat[0].id == null, 'source catalog record left untouched');
+});
+
+/* ---- remapSetlist: the setlist slot mutation on fork-shadow (kN->mN) and revert
+ * (mN->kN or drop). Extracted + tested so the private STATE.setlist chain has a real
+ * regression guard, not just the live Playwright pass. ---- */
+test('remapSetlist: fork replaces EVERY catalog-id slot with the fork id (not just the first)', function () {
+  var sl = ['k1', 'k3', 'k1'];           // duplicate defensive case
+  assert.strictEqual(Songbook.remapSetlist(sl, 'k1', 'm9'), true);
+  assert.deepStrictEqual(sl, ['m9', 'k3', 'm9']);
+});
+test('remapSetlist: revert with a restore id replaces every fork slot with the catalog id', function () {
+  var sl = ['m9', 'k3'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'm9', 'k1'), true);
+  assert.deepStrictEqual(sl, ['k1', 'k3']);
+});
+test('remapSetlist: plain delete (toId null) REMOVES every matching slot', function () {
+  var sl = ['m9', 'k3', 'm9'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'm9', null), true);
+  assert.deepStrictEqual(sl, ['k3']);
+});
+test('remapSetlist: no match -> unchanged + returns false', function () {
+  var sl = ['k3', 'k4'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'k1', 'm9'), false);
+  assert.deepStrictEqual(sl, ['k3', 'k4']);
+});
+test('remapSetlist: mutates in place (keeps the array reference the queue holds)', function () {
+  var sl = ['k1']; var ref = sl;
+  Songbook.remapSetlist(sl, 'k1', 'm9');
+  assert.strictEqual(ref, sl);           // same reference, mutated
+  assert.deepStrictEqual(ref, ['m9']);
+});
+test('remapSetlist: a non-array is safe (returns false)', function () {
+  assert.strictEqual(Songbook.remapSetlist(null, 'k1', 'm9'), false);
+});
+
+/* ---- shadowedTrackKeys: a fork suppresses its shadowed catalog song's backing
+ * track (so a renamed fork doesn't orphan the original track as a standalone row). ---- */
+// Use the REAL Repertoire.matchKey (not a mock) so the test catches normalization /
+// call-chain drift - the exact function buildRepertoire passes at runtime.
+var MK = Repertoire.matchKey;
+test('shadowedTrackKeys: a fork yields its catalog original\'s match key (real matchKey; suppresses that track)', function () {
+  var cat = [{ t: 'Let It Be', a: 'The Beatles' }, { t: 'Yellow', a: 'Coldplay' }]; // k0, k1
+  var customs = [{ id: 'm1', custom: true, forkOf: 'k0', t: 'Let It Be (uke)', a: 'me' }]; // renamed fork of k0
+  var keys = Songbook.shadowedTrackKeys(cat, customs, MK);
+  // a backing track carrying the original song's title/artist matches the suppressed key
+  assert.ok(keys[MK({ title: 'Let It Be', artist: 'The Beatles' })], 'the original Let It Be track key is suppressed');
+  assert.ok(!keys[MK({ title: 'Yellow', artist: 'Coldplay' })], 'an unforked song is not suppressed');
+});
+test('shadowedTrackKeys: no forks -> empty set; missing matchKeyFn -> empty set', function () {
+  var cat = [{ t: 'A', a: 'B' }];
+  assert.deepStrictEqual(Songbook.shadowedTrackKeys(cat, [{ id: 'm1', custom: true, seq: ['C'] }], MK), {});
+  assert.deepStrictEqual(Songbook.shadowedTrackKeys(cat, [{ forkOf: 'k0' }], null), {});
+});
+
+/* ---- studioTarget: a fork's OWN video must reach the Studio, not the merged
+ * backing SEED track. This is the call-chain the play/action button uses
+ * (repertoireAction -> openStudioCb(studioTarget(rec))); for a sheet-bearing
+ * fork the row tap opens Practice instead (studioTarget is only the row-tap path
+ * for seq-less video-only tracks). A regression here silently opens the seed
+ * track for a fork that matched a backing track, dropping the curated video. ---- */
+test('studioTarget: a custom/fork opens as ITSELF even when merged with a seed track', function () {
+  var seed = { id: 't5', yt: 'SEEDvideoAA', key: 'C' };
+  // a fork that matched a backing track: Repertoire.build hangs the seed on _track
+  var fork = { id: 'm2', custom: true, forkOf: 'k7', t: 'Let It Be', a: 'The Beatles', key: 'C', mode: 'major', yt: 'FORKvideoBB', _track: seed };
+  var out = Songbook.studioTarget(fork);
+  assert.strictEqual(out.id, 'm2');           // the fork, not the seed
+  assert.strictEqual(out.yt, 'FORKvideoBB');  // the curated video wins over the seed track
+  // Studio shape: it reads title/artist, NOT the custom-song t/a - normalize or the
+  // fork opens with a blank title (the regression volley 4 caught).
+  assert.strictEqual(out.title, 'Let It Be');
+  assert.strictEqual(out.artist, 'The Beatles');
+});
+test('studioTarget: a plain custom song with its own video opens as itself, title mapped', function () {
+  var custom = { id: 'm9', custom: true, t: 'My Song', a: 'Me', key: 'G', mode: 'major', yt: 'MINEvideoCC', _track: { id: 't1', yt: 'SEEDvideoDD' } };
+  var out = Songbook.studioTarget(custom);
+  assert.strictEqual(out.id, 'm9');
+  assert.strictEqual(out.yt, 'MINEvideoCC');
+  assert.strictEqual(out.title, 'My Song'); // t -> title for the Studio
+});
+test('studioTarget: a custom BACKING TRACK (already title/artist) passes those through', function () {
+  var track = { id: 'c1', custom: true, title: 'Jam', artist: 'Nobody', key: 'A', mode: 'minor', yt: 'TRKvideoEE' };
+  var out = Songbook.studioTarget(track);
+  assert.strictEqual(out.title, 'Jam');   // falls back to rec.title when rec.t absent
+  assert.strictEqual(out.artist, 'Nobody');
+});
+test('studioTarget: preserves a custom rec.video field (the playability gate accepts it)', function () {
+  // repertoireAction gates on (rec.yt || rec.video); a hand-picked normalize dropped
+  // rec.video, leaving the Studio with no playable media (volley 6 High).
+  var out = Songbook.studioTarget({ id: 'm5', custom: true, t: 'V', a: '', key: 'C', mode: 'major', video: 'VIDurl' });
+  assert.strictEqual(out.video, 'VIDurl');
+  assert.strictEqual(out.title, 'V');
+});
+test('studioTarget: a NON-custom merged song still opens the seed track (unchanged)', function () {
+  var seed = { id: 't3', yt: 'SEEDvideoEE', key: 'G' };
+  var merged = { id: 'k4', yt: 'CATvideoFF', _track: seed };   // catalog song merged w/ a track
+  assert.strictEqual(Songbook.studioTarget(merged).id, 't3'); // seed track is the intent here
+});
+test('studioTarget: a bare record with no _track opens as itself', function () {
+  var rec = { id: 'k1', yt: 'x' };
+  assert.strictEqual(Songbook.studioTarget(rec).id, 'k1');
+});
 test('hasChordSheet: only items with a real chord sequence can join Practice/Setlist/Stage', function () {
   assert.strictEqual(Songbook.hasChordSheet({ seq: ['C', 'G'] }), true);
   assert.strictEqual(Songbook.hasChordSheet({ seq: [] }), false);   // cleared chords

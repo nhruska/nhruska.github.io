@@ -92,5 +92,17 @@ test('readFields round-trips a dorian item without rewriting it to major', funct
   var f = RF.readFields(fakeForm({ title: 'Modal jam', artist: '', key: 'A', mode: 'dorian', genre: '', seq: 'Am D', url: '' }), fakeParseYouTubeId);
   assert.strictEqual(f.mode, 'dorian');
 });
+test('readFields in FORK mode (no Chords field) leaves seq undefined, not a crash or []', function () {
+  // fork mode hides [data-seq]; querySelector returns null. readFields must NOT
+  // throw and must NOT emit an empty seq that would clobber the preserved sheet.
+  var form = { querySelector: function (sel) {
+    if (sel === '[data-seq]') return null;
+    var map = { '[data-title]': 'Let It Be', '[data-artist]': 'The Beatles', '[data-key]': 'C', '[data-mode]': 'major', '[data-genre]': '', '[data-url]': '' };
+    return { value: map[sel] != null ? map[sel] : '' };
+  } };
+  var f = RF.readFields(form, fakeParseYouTubeId);
+  assert.strictEqual(f.seq, undefined);
+  assert.strictEqual(f.title, 'Let It Be');
+});
 
 run();
