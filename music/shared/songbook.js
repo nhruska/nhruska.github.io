@@ -604,7 +604,9 @@
       var suppress = shadowedTrackKeys(CATALOG, customSongs, global.Repertoire.matchKey);
       var tracks = getTracks();
       if (Object.keys(suppress).length) {
-        tracks = tracks.filter(function (t) { return !suppress[global.Repertoire.matchKey(t)]; });
+        // Suppress only the SEED/catalog backing track a fork shadows - NEVER a user's
+        // own custom track that happens to share the title (that's their data, keep it).
+        tracks = tracks.filter(function (t) { return t.custom || !suppress[global.Repertoire.matchKey(t)]; });
       }
       REPERTOIRE = global.Repertoire.build(ALLSONGS, tracks);
       return REPERTOIRE;

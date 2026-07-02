@@ -7,6 +7,7 @@
 var assert = require('assert');
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
+var Repertoire = require('../music/shared/repertoire.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -238,17 +239,16 @@ test('remapSetlist: a non-array is safe (returns false)', function () {
 
 /* ---- shadowedTrackKeys: a fork suppresses its shadowed catalog song's backing
  * track (so a renamed fork doesn't orphan the original track as a standalone row). ---- */
-var MK = function (r) { // stand-in for Repertoire.matchKey (title+artist, lowercased)
-  var t = (r.t != null ? r.t : r.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  var a = (r.a != null ? r.a : r.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  return t + '|' + a;
-};
-test('shadowedTrackKeys: a fork yields its catalog original\'s match key (to suppress that track)', function () {
+// Use the REAL Repertoire.matchKey (not a mock) so the test catches normalization /
+// call-chain drift - the exact function buildRepertoire passes at runtime.
+var MK = Repertoire.matchKey;
+test('shadowedTrackKeys: a fork yields its catalog original\'s match key (real matchKey; suppresses that track)', function () {
   var cat = [{ t: 'Let It Be', a: 'The Beatles' }, { t: 'Yellow', a: 'Coldplay' }]; // k0, k1
   var customs = [{ id: 'm1', custom: true, forkOf: 'k0', t: 'Let It Be (uke)', a: 'me' }]; // renamed fork of k0
   var keys = Songbook.shadowedTrackKeys(cat, customs, MK);
-  assert.ok(keys[MK(cat[0])], 'the original Let It Be track key is suppressed');
-  assert.ok(!keys[MK(cat[1])], 'an unforked song is not suppressed');
+  // a backing track carrying the original song's title/artist matches the suppressed key
+  assert.ok(keys[MK({ title: 'Let It Be', artist: 'The Beatles' })], 'the original Let It Be track key is suppressed');
+  assert.ok(!keys[MK({ title: 'Yellow', artist: 'Coldplay' })], 'an unforked song is not suppressed');
 });
 test('shadowedTrackKeys: no forks -> empty set; missing matchKeyFn -> empty set', function () {
   var cat = [{ t: 'A', a: 'B' }];
