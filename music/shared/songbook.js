@@ -171,7 +171,11 @@
   }
   function inferKey(seq) {
     if (!seq || seq.length < 2) return null;
-    var bases = seq.map(baseTriad).filter(function (b) { return b != null; });
+    // Evidence is DISTINCT triads, not repetitions: ['C','C'] (or a I-I vamp)
+    // is one chord, and one matching chord is not a key. A real I-V-I-V still
+    // has two distinct triads and infers fine.
+    var seen = {}, bases = [];
+    seq.map(baseTriad).forEach(function (b) { if (b != null && !seen[b]) { seen[b] = true; bases.push(b); } });
     if (bases.length < 2) return null;
     var firstRoot = (splitChord(seq[0]) || {}).root || null;
     function tieRank(c) { return (c.root === firstRoot ? 2 : 0) + (c.mode === 'Major' ? 1 : 0); }
@@ -1218,8 +1222,9 @@
     //   - "All": the full chromatic grid plus the chord-TYPE tabs (Major/Minor/7th/Maj7/
     //     Min7) as a sub-filter. Default when no key is set (and the In-key segment then
     //     prompts to pick a key).
-    // The in-key palette lives ONLY here now (renderKeyView keeps the scale + HSR +
-    // inversions teaching only), so the diatonic chords are never duplicated.
+    // The in-key palette lives ONLY here now (renderKeyView is title + the
+    // Triads & Inversions link only - the solo scale + HSR chain moved to the
+    // Studio), so the diatonic chords are never duplicated.
     // 'chordView' is the segmented-toggle state ('inkey' | 'all'); null = "follow the key"
     // (auto: in-key when a key is set, all otherwise). An explicit user tap pins it.
     var chordView = null;
@@ -1909,9 +1914,14 @@
     // so only switch when the saved tab is something else and its button actually exists).
     try {
       var savedTab = localStorage.getItem(ACTIVE_TAB_KEY), tabExists = false;
-      // Pre-Jam versions kept Set/Perform as a Library SUBVIEW persisted under
-      // libType.v1 - a user who last left that subview should reopen in Jam,
-      // not a Library that no longer contains it.
+      // Normalize a legacy saved tab through the SAME mapping switchTab applies,
+      // so an old activeTab.v1 written before the Jam rename ('setlist'/'set' ->
+      // Jam, 'tracks'/'repertoire' -> Library) restores to the right modern tab
+      // instead of failing the tabExists check and falling back to Library.
+      if (savedTab === 'setlist' || savedTab === 'set') savedTab = 'jam';
+      else if (savedTab === 'tracks' || savedTab === 'repertoire') savedTab = 'library';
+      // Pre-Jam versions also kept Set/Perform as a Library SUBVIEW persisted
+      // under libType.v1 - a user who last left that subview reopens in Jam.
       if (!savedTab || savedTab === 'library') {
         if (localStorage.getItem(prefix + '.libType.v1') === 'set') savedTab = 'jam';
       }

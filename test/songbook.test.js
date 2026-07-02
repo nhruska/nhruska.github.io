@@ -283,6 +283,12 @@ test('inferKey: one borrowed chord does not derail the majority key', function (
 test('inferKey: junk-only input infers nothing', function () {
   assert.strictEqual(Songbook.inferKey(['??', '!!']), null);
 });
+test('inferKey: DISTINCT triads are the evidence - a repeated single chord is not a key', function () {
+  assert.strictEqual(Songbook.inferKey(['C', 'C']), null);        // one chord, twice
+  assert.strictEqual(Songbook.inferKey(['Am', 'Am', 'Am']), null); // a one-chord vamp
+  // but a real two-chord vamp still infers (distinct C + G -> C Major)
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'C', 'G']), { root: 'C', mode: 'Major' });
+});
 
 /* ---------- sheet-render escaping (volley 3: custom/imported chord tokens and
  * section labels are user-controlled strings - never live HTML) ---------- */
