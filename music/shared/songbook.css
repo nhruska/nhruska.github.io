@@ -481,7 +481,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
    to the Studio). The chip that opens it lives in the button bar now; this is just the
    drop-down, hidden by default (no row when closed). */
-.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* max-height leaves room for the app header + button bar + progression box +
+   tab bar above/below (dvh so mobile URL-bar changes are respected); overflow-y
+   is the hard guard - if a pathologically short viewport still can't fit, the
+   fly-out scrolls INTERNALLY so the page itself never overflows. */
+.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:calc(100dvh - 210px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .keyFlyout[hidden]{display:none;}
 /* UAT r3 - eliminate Compose scroll: while the key/mode fly-out is open, hide
    the chord picker (In-key|All toggle + chord list + solo-backing CTA) so the
@@ -595,6 +599,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pKey{margin-bottom:3px;}
   .pSpeed{flex-direction:row;flex-wrap:nowrap;gap:8px 14px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);}
   .pSpeed .psRow{flex:1 1 46%;min-width:0;}
+  .pSpeed .psBtns{min-width:0;}
+  .pSpeed .psBtn{min-width:0;padding:8px 4px;font-size:.72rem;}
 }
 .perform.dim{background:#000;}
 .perform.dim .lyrLine{color:#f0ead8;}

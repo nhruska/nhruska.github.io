@@ -486,15 +486,18 @@
     // would let staging one custom song (forced 'chords') leak into every later
     // setlist Perform. (Assigned just after STATE is built, below.)
     var stageDefaultView;
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
+    // NOTE: font size is intentionally NOT persisted - Stage force-defaults to
+    // auto on every open (UAT r3), so a cross-reload size would be dead. Manual
+    // A-/A+ still holds in STATE within a Stage session (across prev/next).
+    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
-      fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
-      fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
+      fontMode: 'auto', // Stage always opens auto-fit (size not persisted; see savePerfPrefs)
+      fontScale: 1, ctrlsOpen: false,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
