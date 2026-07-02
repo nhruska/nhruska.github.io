@@ -48,6 +48,31 @@ body{display:flex;flex-direction:column;max-width:560px;margin:0 auto;height:100
 .qr{background:var(--surface-2);color:var(--accent);border:1px solid var(--accent-dim);border-radius:20px;padding:8px 13px;font-size:.78rem;font-weight:600;cursor:pointer}
 .qr:active{background:var(--accent-deep);transform:scale(.97)}
 
+/* ---- practice widget (wave 2: the AI actually manipulates this) ---- */
+.widget{border-bottom:1px solid var(--line);background:var(--bg-2);padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.widget[hidden]{display:none}
+.widgetHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.keyChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent);font-weight:800;font-size:.8rem;padding:5px 11px;border-radius:9px;transition:transform .12s}
+.keyChip.pulse{transform:scale(1.08)}
+.trackPill{color:var(--txt-dim);font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:5px}
+.trackPill .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.progRow{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.progChip{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;line-height:1.2;transition:transform .15s,background .15s;animation:chipIn .18s ease}
+.progChip .cName{font-weight:800;font-size:.84rem;color:var(--txt)}
+.progChip .cRoman{font-size:.62rem;color:var(--accent);font-weight:700}
+@keyframes chipIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.progEmpty{color:var(--txt-dim);font-size:.78rem;font-style:italic;align-self:center}
+.pickerLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.pickerRow{display:flex;flex-wrap:wrap;gap:6px}
+.pickChip{background:var(--surface);border:1px solid var(--line-strong);color:var(--txt-soft);border-radius:9px;padding:7px 11px;font-size:.8rem;font-weight:700;cursor:pointer}
+.pickChip:active{background:var(--accent-deep);color:var(--accent);border-color:var(--accent-dim);transform:scale(.95)}
+.widgetActions{display:flex;gap:8px}
+.widgetActions[hidden]{display:none}
+.widgetActions button{flex:1;padding:9px;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;border:1px solid var(--line-strong)}
+.checkBtn{background:var(--accent);color:#08120f;border-color:transparent}
+.checkBtn:disabled{opacity:.35}
+.undoBtn{background:var(--surface-2);color:var(--txt-soft)}
+
 /* ---- composer ---- */
 .composer{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--bg-2)}
 .composerInput{flex:1 1 auto;background:var(--surface);color:var(--txt);border:1px solid var(--line-strong);border-radius:22px;padding:11px 16px;font-size:.9rem;font-family:inherit}
@@ -110,6 +135,22 @@ body{display:flex;flex-direction:column;max-width:560px;margin:0 auto;height:100
   <button class="settingsBtn" id="settingsBtn" type="button" title="Settings" aria-label="Settings">&#9881;&#65039;</button>
 </div>
 
+<div class="widget" id="widget" hidden>
+  <div class="widgetHead">
+    <span class="keyChip" id="wKeyChip">C major</span>
+    <span class="trackPill"><span class="dot"></span><span id="wTrack">No track</span></span>
+  </div>
+  <div class="progRow" id="wProgRow"></div>
+  <div id="wPickerWrap" hidden>
+    <div class="pickerLbl">Your turn - tap chords to build it</div>
+    <div class="pickerRow" id="wPickerRow"></div>
+  </div>
+  <div class="widgetActions" id="wActions" hidden>
+    <button type="button" class="undoBtn" id="wUndo">Undo</button>
+    <button type="button" class="checkBtn" id="wCheck">Check my answer</button>
+  </div>
+</div>
+
 <div class="thread" id="thread" role="log" aria-live="polite"></div>
 
 <form class="composer" id="composer">
@@ -141,6 +182,10 @@ body{display:flex;flex-direction:column;max-width:560px;margin:0 auto;height:100
   </div>
 </div>
 
+<script src="../shared/circle.js"></script>
+<script src="../shared/songbook.js"></script>
+<script src="mini-compose.js"></script>
+<script src="challenges.js"></script>
 <script src="provider.js"></script>
 <script>
 'use strict';
@@ -151,6 +196,10 @@ var context = { key: params.get('key') || 'C', mode: params.get('mode') || 'majo
 
 var provider = TutorProvider.createCannedProvider({ latencyMs: 550 });
 var chatHistory = [];
+
+// A message that matches this, when not already inside a challenge, starts
+// challenge mode instead of going to the free-chat canned provider.
+var CHALLENGE_TRIGGER = /challenge|practice|exercise|quiz/i;
 
 var thread = document.getElementById('thread');
 var composer = document.getElementById('composer');
@@ -207,9 +256,15 @@ function send(text) {
   text = String(text || '').trim();
   if (!text) return;
   input.value = '';
-  sendBtn.disabled = true;
   appendMessage('user', text);
   chatHistory.push({ role: 'user', text: text });
+
+  if (!activeChallenge && CHALLENGE_TRIGGER.test(text)) {
+    startChallengeFlow(TutorChallenges.CHALLENGES[0].id);
+    return;
+  }
+
+  sendBtn.disabled = true;
   var typingEl = showTyping();
   provider.sendMessage(chatHistory, context).then(function (reply) {
     hideTyping();
@@ -232,7 +287,169 @@ composer.addEventListener('submit', function (e) {
 
 // ---- opening turn -----------------------------------------------------
 appendMessage('tutor', 'Hi! I’m a prototype of the AI Tutor - I can only answer from a small scripted script for now, no live model behind me yet. Pick something below, or type your own question.');
-appendQuickReplies(['Parallel vs relative', 'What are borrowed chords?', 'Swap the solo scale over my progression', 'Help me build a song']);
+appendQuickReplies(['Try a challenge', 'Parallel vs relative', 'What are borrowed chords?', 'Help me build a song']);
+
+// ---- practice widget + challenge flow (wave 2: the AI acts on the widget) ----
+var widget = document.getElementById('widget');
+var wKeyChip = document.getElementById('wKeyChip');
+var wTrack = document.getElementById('wTrack');
+var wProgRow = document.getElementById('wProgRow');
+var wPickerWrap = document.getElementById('wPickerWrap');
+var wPickerRow = document.getElementById('wPickerRow');
+var wActions = document.getElementById('wActions');
+var wUndo = document.getElementById('wUndo');
+var wCheck = document.getElementById('wCheck');
+
+var widgetState = MiniCompose.initialState(context.key, context.mode);
+var activeChallenge = null;   // the challenge object currently in play, or null
+var challengeIndex = -1;      // index into TutorChallenges.CHALLENGES
+
+function renderWidget() {
+  wKeyChip.textContent = widgetState.key + ' ' + widgetState.mode;
+  wTrack.textContent = widgetState.track;
+
+  var romans = MiniCompose.romanNumerals(widgetState);
+  wProgRow.innerHTML = '';
+  if (!widgetState.progression.length) {
+    var empty = document.createElement('span');
+    empty.className = 'progEmpty'; empty.textContent = 'No chords yet';
+    wProgRow.appendChild(empty);
+  } else {
+    widgetState.progression.forEach(function (chord, i) {
+      var chip = document.createElement('div');
+      chip.className = 'progChip';
+      chip.innerHTML = '<span class="cName">' + esc(chord) + '</span><span class="cRoman">' + esc(romans[i] || '') + '</span>';
+      wProgRow.appendChild(chip);
+    });
+  }
+}
+
+function pulseKeyChip() {
+  wKeyChip.classList.add('pulse');
+  setTimeout(function () { wKeyChip.classList.remove('pulse'); }, 220);
+}
+
+// Applies one demo action (as emitted by a challenge's demoActions()) to the
+// widget state through the SAME mini-compose reducers the human's taps use.
+function applyDemoAction(action) {
+  if (action.type === 'clearProgression') widgetState = MiniCompose.clearProgression(widgetState);
+  else if (action.type === 'addChord') widgetState = MiniCompose.addChord(widgetState, action.chord);
+  else if (action.type === 'setKey') widgetState = MiniCompose.setKey(widgetState, action.root, action.mode);
+  else if (action.type === 'transpose') widgetState = MiniCompose.transpose(widgetState, action.semitones);
+  renderWidget();
+  pulseKeyChip();
+}
+
+function playDemoActions(actions, onDone) {
+  var i = 0;
+  (function step() {
+    if (i >= actions.length) { onDone(); return; }
+    applyDemoAction(actions[i]);
+    i++;
+    setTimeout(step, 650);
+  })();
+}
+
+function renderPicker() {
+  wPickerRow.innerHTML = '';
+  MiniCompose.diatonicChoices(widgetState).forEach(function (d) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'pickChip';
+    b.innerHTML = esc(d.chord) + ' <span style="opacity:.6">' + esc(d.roman) + '</span>';
+    b.addEventListener('click', function () {
+      widgetState = MiniCompose.addChord(widgetState, d.chord);
+      renderWidget();
+      wCheck.disabled = widgetState.progression.length === 0;
+    });
+    wPickerRow.appendChild(b);
+  });
+}
+
+function enterYourTurn(challenge) {
+  widgetState = challenge.setup(widgetState);
+  renderWidget();
+  renderPicker();
+  wPickerWrap.hidden = false;
+  wActions.hidden = false;
+  wCheck.disabled = true;
+  appendMessage('tutor', challenge.prompt);
+}
+
+function startChallengeFlow(id) {
+  var challenge = TutorChallenges.byId(id);
+  if (!challenge) return;
+  activeChallenge = challenge;
+  challengeIndex = TutorChallenges.CHALLENGES.indexOf(challenge);
+  widget.hidden = false;
+  wPickerWrap.hidden = true;
+  wActions.hidden = true;
+  renderWidget();
+
+  appendMessage('tutor', challenge.intro(widgetState));
+  var typingEl = showTyping();
+  setTimeout(function () {
+    hideTyping();
+    playDemoActions(challenge.demoActions(widgetState), function () {
+      enterYourTurn(challenge);
+    });
+  }, 500);
+}
+
+function endChallenges() {
+  activeChallenge = null;
+  challengeIndex = -1;
+  widget.hidden = true;
+  appendMessage('tutor', 'Back to chat - ask me anything, or start another challenge any time.');
+  appendQuickReplies(['Try a challenge', 'Parallel vs relative', 'What are borrowed chords?']);
+}
+
+wUndo.addEventListener('click', function () {
+  widgetState = MiniCompose.removeLast(widgetState);
+  renderWidget();
+  wCheck.disabled = widgetState.progression.length === 0;
+});
+
+wCheck.addEventListener('click', function () {
+  if (!activeChallenge) return;
+  var result = activeChallenge.check(widgetState);
+  wPickerWrap.hidden = true;
+  wActions.hidden = true;
+  appendMessage('tutor', result.message);
+  if (result.pass) {
+    var next = TutorChallenges.CHALLENGES[challengeIndex + 1];
+    if (next) {
+      appendQuickReplies(['Next challenge']);
+    } else {
+      appendMessage('tutor', 'That was the last challenge in this prototype - nice work.');
+      endChallenges();
+    }
+  } else {
+    appendQuickReplies(['Try again']);
+  }
+});
+
+// Quick-replies that control the challenge flow are intercepted here rather
+// than sent through the free-chat provider (send() already routes a raw
+// "Try a challenge" typed message via CHALLENGE_TRIGGER above).
+document.getElementById('thread').addEventListener('click', function (e) {
+  var btn = e.target.closest ? e.target.closest('.qr') : null;
+  if (!btn) return;
+  var label = btn.textContent;
+  if (label === 'Try a challenge') {
+    e.stopImmediatePropagation();
+    appendMessage('user', label);
+    startChallengeFlow(TutorChallenges.CHALLENGES[0].id);
+  } else if (label === 'Next challenge' && activeChallenge) {
+    e.stopImmediatePropagation();
+    appendMessage('user', label);
+    var next = TutorChallenges.CHALLENGES[challengeIndex + 1];
+    if (next) startChallengeFlow(next.id);
+  } else if (label === 'Try again' && activeChallenge) {
+    e.stopImmediatePropagation();
+    appendMessage('user', label);
+    enterYourTurn(activeChallenge);
+  }
+}, true);
 
 // ---- settings drawer ----------------------------------------------------
 var settingsBtn = document.getElementById('settingsBtn');
