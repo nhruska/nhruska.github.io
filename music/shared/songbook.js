@@ -1165,6 +1165,11 @@
 
     /* ===================== COMPOSE (needs chord pack for diagrams/audio) ===================== */
     var progression = [], cTpose = 0; // cTpose = net semitones shifted from where you started (interval-learning readout)
+    // The saved custom-song id the current Compose buffer is linked to (null = an
+    // unsaved/fresh progression). Set on save; re-save UPDATES that song in place
+    // (no duplicate); "Solo over" opens its Studio directly (no re-prompt). Detached
+    // on Clear or when a starter pattern replaces the buffer wholesale.
+    var savedComposeId = null;
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -1279,6 +1284,7 @@
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
       progression = chordsFromDegrees(root, songKey.mode, degrees);
       cTpose = 0;
+      savedComposeId = null; // a starter is a NEW progression - detach from any saved song
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
     }
@@ -1893,6 +1899,14 @@
       // (or cleared to) while the row was open.
       var snapSeq = progression.slice();
       var km = deriveProgressionKey(snapSeq);
+      // Editing a progression already saved this session -> UPDATE that same song in
+      // place (no new copy, no name prompt), per the operator's "update the same
+      // saved song" choice. The chord edits + any re-key flow straight onto cs.
+      if (savedComposeId && customById(savedComposeId)) {
+        var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
+        if (upd) { showComposeToast('Updated ' + upd.t); done(upd); return; }
+        savedComposeId = null; // the saved song vanished - fall through to a fresh save
+      }
       openSaveNameRow('My progression', function (name) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
@@ -1900,6 +1914,7 @@
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
         customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
         showComposeToast('Saved to your Repertoire');
         done(cs);
       });
@@ -2031,6 +2046,8 @@
     if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () {
       progression = []; cTpose = 0;
+      savedComposeId = null;   // fresh canvas - detach from any saved song
+      hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       var kc = reinferKey();
       renderProg(); renderKey();
       if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
@@ -2063,6 +2080,16 @@
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
+        // Already saved this session: no re-prompt. Save-in-place (updates the linked
+        // song if the chords changed, no-op-ish if not) then open its Studio directly
+        // - with the Edit button, since it's a real saved song. No duplicate.
+        if (savedComposeId && customById(savedComposeId)) {
+          saveProgression(function (saved) {
+            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+          });
+          return;
+        }
+        // Never saved -> the save/skip choice (Save & open Studio links it going forward).
         openSoloChoiceRow(function (choice) {
           if (choice === 'save') {
             saveProgression(function (saved) {
