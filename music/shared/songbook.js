@@ -152,6 +152,42 @@
     });
     return out;
   }
+  // AUTO-INFER a song key from the chords themselves (Compose sets it once 2+ chords
+  // exist and the user never explicitly picked one). Pure: seq -> {root, mode} | null.
+  // Every root x Major/Minor candidate is scored by how many of the progression's BASE
+  // triads are diatonic to it (7th extensions stripped: Cmaj7/C7 count as C, Am7 as Am -
+  // matching convertToMode's extension classes). Ties break toward the first chord's
+  // root as tonic (the app's existing first-chord derivation), then Major, then the
+  // first candidate in chromatic order (determinism). Needs at least 2 base triads to
+  // fit or nothing is inferred - one matching chord is not a key.
+  function baseTriad(ch) {
+    var p = splitChord(ch);
+    if (!p) return null;
+    var q = p.qual;
+    if (/maj7$/.test(q)) q = q.slice(0, -4);
+    else if (/m7$/.test(q)) q = q.slice(0, -1);
+    else if (/7$/.test(q)) q = q.slice(0, -1);
+    return p.root + q;
+  }
+  function inferKey(seq) {
+    if (!seq || seq.length < 2) return null;
+    var bases = seq.map(baseTriad).filter(function (b) { return b != null; });
+    if (bases.length < 2) return null;
+    var firstRoot = (splitChord(seq[0]) || {}).root || null;
+    function tieRank(c) { return (c.root === firstRoot ? 2 : 0) + (c.mode === 'Major' ? 1 : 0); }
+    var best = null;
+    ROOTS.forEach(function (r) {
+      ['Major', 'Minor'].forEach(function (mk) {
+        var pal = {};
+        chordsFromDegrees(r, mk, [0, 1, 2, 3, 4, 5, 6]).forEach(function (c) { pal[c] = true; });
+        var score = 0;
+        bases.forEach(function (b) { if (pal[b]) score++; });
+        var cand = { root: r, mode: mk, score: score };
+        if (!best || score > best.score || (score === best.score && tieRank(cand) > tieRank(best))) best = cand;
+      });
+    });
+    return (best && best.score >= 2) ? { root: best.root, mode: best.mode } : null;
+  }
 
   /* ---------- sheet rendering (chord-over-lyric, instrument-agnostic) ---------- */
   function escHTML(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -913,7 +949,27 @@
       }
       renderSuggest();
     }
-    function addChord(c) { if (progression.length >= 8) return; forceStarters = false; progression.push(c); renderProg(); renderKey(); }
+    function addChord(c) {
+      if (progression.length >= 8) return;
+      forceStarters = false;
+      progression.push(c);
+      // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
+      // one, so the key chip + in-key palette light up without a key-panel trip. The
+      // inferred key stays NON-explicit: it keeps tracking further adds until the user
+      // pins a key themselves (root pick / mode pick / named pattern all set explicit).
+      var prevRoot = songKey.root, prevMode = songKey.mode;
+      if (!songKey.explicit && progression.length >= 2) {
+        var ik = inferKey(progression);
+        if (ik) { songKey.root = ik.root; songKey.mode = ik.mode; }
+      }
+      renderProg(); renderKey();
+      // Key changed under an auto-infer: refresh the fly-out content + the chord list
+      // (renderKey/buildKeyPicker already refreshed the chip + roots). Skipped when
+      // nothing moved so a plain add never rebuilds the grid mid-tap.
+      if ((songKey.root !== prevRoot || songKey.mode !== prevMode) && el.keyRoots) {
+        renderKeyView(); buildGrid();
+      }
+    }
     // Fill the progression from a named pattern, in the user's key (default C Major).
     // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
     // root if there is one, force the mode to Major, and sync the key picker so the
@@ -1750,6 +1806,7 @@
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,
+    inferKey: inferKey,
     ROOTS: ROOTS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;

@@ -142,4 +142,33 @@ test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
 });
 
+
+/* ---------- inferKey: Compose's auto-selected key (2+ chords, no explicit pick) ---------- */
+test('inferKey: fewer than 2 chords never infers (one chord is not a key)', function () {
+  assert.strictEqual(Songbook.inferKey([]), null);
+  assert.strictEqual(Songbook.inferKey(['C']), null);
+  assert.strictEqual(Songbook.inferKey(null), null);
+});
+test('inferKey: I-V-vi-IV starting on the tonic lands on that Major key', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'Am', 'F']), { root: 'C', mode: 'Major' });
+  assert.deepStrictEqual(Songbook.inferKey(['G', 'D', 'Em', 'C']), { root: 'G', mode: 'Major' });
+});
+test('inferKey: two plain major chords already resolve (C + F -> C Major, first-chord tonic tie-break)', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: a minor-led progression resolves to the minor key on the first chord', function () {
+  // Am F C G fits BOTH C Major and A Minor fully - the first-chord tonic wins
+  assert.deepStrictEqual(Songbook.inferKey(['Am', 'F', 'C', 'G']), { root: 'A', mode: 'Minor' });
+});
+test('inferKey: 7th extensions score as their base triads (G7 counts as G, Am7 as Am, Cmaj7 as C)', function () {
+  assert.deepStrictEqual(Songbook.inferKey(['Cmaj7', 'G7', 'Am7', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: one borrowed chord does not derail the majority key', function () {
+  // Eb is borrowed (bIII) - the other four still say C Major
+  assert.deepStrictEqual(Songbook.inferKey(['C', 'G', 'Eb', 'Am', 'F']), { root: 'C', mode: 'Major' });
+});
+test('inferKey: junk-only input infers nothing', function () {
+  assert.strictEqual(Songbook.inferKey(['??', '!!']), null);
+});
+
 run();
