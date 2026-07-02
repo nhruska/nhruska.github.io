@@ -28,7 +28,15 @@
  *       Programmatic close (what a close BUTTON calls). Steps history.back(),
  *       which fires popstate, which runs the topmost closeFn - the SINGLE close
  *       path (button and hardware-Back both funnel through popstate; never
- *       double-close). No-op when the stack is empty.
+ *       double-close). Guarded against a double-tap while a back() is in flight.
+ *       No-op when the stack is empty.
+ *   NavHistory.settleAfter(rawClose, runNext)
+ *       Modal -> modal HAND-OFF. Close the current top layer's DOM (rawClose), then
+ *       run runNext (which may open a new layer). If runNext opens one it REPLACES the
+ *       current history slot (same depth, no async back/push race); if it opens nothing
+ *       the slot collapses. Use this whenever closing one layer opens another (Studio ->
+ *       Edit form; form Save/Delete -> Practice/Studio/Library). IMPORTANT: capture any
+ *       state you need (e.g. current.onSave) BEFORE calling - rawClose may null it.
  *   NavHistory.depth()  -> number of open layers (0 = at the app root).
  *
  * WIRING CONTRACT for every layer:
@@ -44,11 +52,16 @@
   var stack = [];             // [{ tag, close }] - topmost is the last element
   var rooted = false;         // replaceState the root exactly once
   var pendingReplace = false; // one-shot: the next open() REPLACES the top slot (a modal->modal transition)
+  var dismissing = false;     // a dismiss() history.back() is in flight (double-tap guard)
 
+  // Each history entry carries `d` = the app-layer DEPTH it represents (root = 0).
+  // popstate pops the stack DOWN to the target entry's depth - so Back pops the right
+  // number of layers, and browser FORWARD (a move to a deeper/equal depth) is a no-op
+  // instead of over-closing an underlying layer.
   function root() {
     if (rooted) return;
     rooted = true;
-    try { global.history.replaceState({ mnav: 'root' }, ''); } catch (e) {}
+    try { global.history.replaceState({ mnav: 'root', d: 0 }, ''); } catch (e) {}
   }
 
   function open(tag, close) {
@@ -58,15 +71,15 @@
     pendingReplace = false; // consumed by this open()
     if (doReplace) {
       // Opened as part of a transition (settleAfter): take over the CURRENT history
-      // slot instead of stacking on top of the just-closed layer. Mutate the stack
-      // only AFTER the history op succeeds (never leave a phantom entry).
-      try { global.history.replaceState({ mnav: tag }, ''); } catch (e) { return; }
+      // slot (same depth) instead of stacking on top of the just-closed layer. Mutate
+      // the stack only AFTER the history op succeeds (never leave a phantom entry).
+      try { global.history.replaceState({ mnav: tag, d: stack.length }, ''); } catch (e) { return; }
       stack[stack.length - 1] = { tag: tag, close: close };
       return;
     }
     var top = stack[stack.length - 1];
     if (top && top.tag === tag) { top.close = close; return; } // re-render in place, no new entry
-    try { global.history.pushState({ mnav: tag }, ''); } catch (e) { return; }
+    try { global.history.pushState({ mnav: tag, d: stack.length + 1 }, ''); } catch (e) { return; }
     stack.push({ tag: tag, close: close });
   }
 
@@ -76,10 +89,11 @@
   }
 
   function dismiss() {
-    if (!stack.length) return;
+    if (!stack.length || dismissing) return; // ignore a double-tap while a back() is in flight
+    dismissing = true;
     // Step back so popstate runs the close fn (single close path). If back()
     // is unavailable for any reason, close directly as a fallback.
-    try { global.history.back(); } catch (e) { popAndClose(); }
+    try { global.history.back(); } catch (e) { dismissing = false; popAndClose(); }
   }
 
   // Modal -> modal transition. Close the CURRENT top layer's DOM (rawClose), then run
@@ -100,10 +114,14 @@
     }
   }
 
-  global.addEventListener('popstate', function () {
-    // Back pressed (or dismiss() called): close the topmost layer. Empty stack
-    // means a real root-back - do nothing and let the browser leave the app.
-    if (stack.length) popAndClose();
+  global.addEventListener('popstate', function (e) {
+    dismissing = false; // a dismiss()'s back() (or any nav) has landed
+    // Pop DOWN to the depth the target history entry represents. Back to a shallower
+    // entry closes the layers above it (usually one); Forward / a move to an equal-or-
+    // deeper entry pops nothing (stack.length <= d) - no over-close. Missing state (a
+    // non-app history entry) reads as depth 0 -> close everything back to the app root.
+    var d = (e && e.state && typeof e.state.d === 'number') ? e.state.d : 0;
+    while (stack.length > d) popAndClose();
   });
 
   global.NavHistory = {

@@ -16,7 +16,10 @@
  *             the dialog "Make it mine" / delete -> "Revert to original"),
  *       item: {...} (edit mode: the existing custom song/track to prefill; also
  *             the fork seed in fork+create mode),
- *       onSave: function(fields) -> saved item or null (host persists),
+ *       onSave: function(fields) (host persists; may navigate). A VALID save always
+ *             closes the form (via NavHistory.settleAfter) - the return value is no
+ *             longer a close-veto. Invalid input (empty title / bad URL) is caught
+ *             BEFORE onSave and keeps the form open.
  *       onDelete: function() (edit mode only; optional)
  *     }
  * ===================================================================== */
