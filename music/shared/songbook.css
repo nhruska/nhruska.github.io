@@ -266,17 +266,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog::-webkit-scrollbar{display:none;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:62px;}
-/* When empty the #suggest starters below carry the call-to-action, so the empty #prog
-   collapses (no min-height, no placeholder) instead of showing a redundant prompt. */
+/* When empty the #suggest starters (top of the chord list below) carry the
+   call-to-action, so the empty #prog collapses (no min-height, no placeholder)
+   instead of showing a redundant prompt. */
 .prog:empty{min-height:0;padding:0;border:0;}
-.suggest:not(:empty){margin-top:8px;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
    area, which would overlap the chord tile and steal play-taps from the diagram below. */
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
 .prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
-.suggest{margin-top:2px;}
+/* #suggest leads the scrolling chord list (folded into the In key / All surface):
+   starters when the progression is empty, next-chord chips otherwise. */
+.suggest:not(:empty){margin:2px 0 12px;}
 .suggest:empty{display:none;}
 .suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
@@ -446,8 +448,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    contain) so a vertical swipe scrolls smoothly and chains to the page at a boundary. */
 .composeChords{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
 .composeChords::-webkit-scrollbar{width:0;}
-/* progression box: built chords (#prog) on top; #suggest below carries the next-chord
-   picks (non-empty) or the starter progressions (empty / "?" pressed). */
+/* progression box: the built chords (#prog). The suggestion surface (#suggest) lives
+   at the top of the scrolling chord list, not here - keeps the fixed top short. */
 .progBox{margin-bottom:8px;}
 /* Inline save UI (songbook.js: composeRow/composeToast) - replaces native
    prompt()/alert()/confirm() in the save + solo-backing flows. Rendered on

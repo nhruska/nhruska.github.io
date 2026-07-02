@@ -1118,12 +1118,14 @@
       // already shows the key, and the toggle already says which list you're in.
       chips.className = 'chips';
       chips.innerHTML = ''; grid.innerHTML = '';
-      // Remove any list-content nodes a prior render appended to the scroll area, keeping
-      // #buildGrid (the tiles container) in place.
+      // Remove any list-content nodes a prior render appended to the scroll area,
+      // keeping #buildGrid (the tiles container) and #suggest (the suggestion surface -
+      // renderSuggest owns its content; it leads the scroll area per the UAT fold-in)
+      // in place.
       var scroller = el.composeChords;
       if (scroller) {
         Array.prototype.slice.call(scroller.children).forEach(function (n) {
-          if (n !== grid) scroller.removeChild(n);
+          if (n !== grid && n !== el.suggest) scroller.removeChild(n);
         });
       }
       var view = effectiveChordView();
@@ -1402,8 +1404,9 @@
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0 || forceStarters) {
-        // Empty state (or "?" pressed): show common progressions so the user has actionable
-        // one-tap starters. The starters live INSIDE the progression box (below #prog).
+        // Empty state (or "?" pressed): show common progressions so the user has
+        // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
+        // in with the In key / All content) so the fixed top region stays short.
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
         lbl.textContent = 'Start with a common progression';
         el.suggest.appendChild(lbl);
