@@ -1188,8 +1188,11 @@
         b.textContent = r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
-          // Picking a root sets the explicit key and closes the popover. Tapping the
-          // currently-selected root clears the key (and re-opens for a fresh pick).
+          // Picking a root sets the explicit key and KEEPS the panel open so the mode
+          // can be chosen in the same visit (root -> mode is one gesture; the old
+          // close-on-root-pick forced a reopen to get minor). A mode tap closes it.
+          // Tapping the currently-selected root clears the key (stays open for a
+          // fresh pick).
           if (songKey.root === r) {
             // Clear the key (context only) - NEVER transpose on clear; the chords stay put.
             songKey.root = null; songKey.explicit = false;
@@ -1215,7 +1218,7 @@
               }
             }
             songKey.root = r; songKey.explicit = true;
-            keyPopoverOpen = false;
+            // stays open (keyPopoverOpen untouched) - the mode tap completes the gesture
           }
           // Picking/clearing a key resets the chord-list view to "follow the key": a set
           // key -> In key, a cleared key -> All. (An explicit segment tap re-pins it.)
