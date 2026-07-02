@@ -95,65 +95,13 @@ the PR. Conventions:
 
 ---
 
-## This project — the Music app
+## This project — `nhruska.github.io`
 
-A self-contained **static** GitHub Pages site (`nhruska.github.io`), served from
-`main`. **No build step**; classic `<script>` tags; vanilla JS. Live app:
-[nhruska.github.io/music/play/](https://nhruska.github.io/music/play/).
+A self-contained **static** GitHub Pages site, served from `main`. **No build step**; classic `<script>` tags; vanilla JS.
 
-### Layout
 - `index.html` — portfolio landing.
-- `music/index.html` — the Music launcher (cards → the app).
-- `music/play/` — the app shell (the real product). Tabs: Songs / Compose /
-  Practice / Set / Tune. Opens on a **"Play now" hero**, not a cold list.
-- `music/shared/` — the shared, instrument-agnostic runtime:
-  - `songbook.js` — the engine (`Songbook.mount(opts)`; full contract in its header).
-  - `tuner.js` — mic autocorrelation tuner + reference tones.
-  - `diagram.js`, `audio.js` — chord diagrams + strum/tone audio.
-  - `songbook.css` — the whole theme + every component.
-  - `profiles/` + `manifest.json` — per-instrument string/chord data.
-  - `songs.json` — the song catalog.
+- `music/` — the **Music app** (the real product): live at [nhruska.github.io/music/play/](https://nhruska.github.io/music/play/).
 
-### Conventions that bite if ignored
-- **`songs.json` shape:** `{ t, a, y, d, seq[], sheet[[section, line]…], jam? }`.
-  `d` is a decade chip (`60s`…`10s`) matching year `y`. Chord tokens (in `seq`
-  and `[..]` tags) must match `^[A-G][#b]?…` and reflect the real key.
-  `"jam": true` flags a song as a **Play-now jam-starter** (curated toward
-  Grateful Dead / Phish / jammable classic rock); without flags, jam-starters
-  fall back to fewest-chord songs. After editing, validate: `JSON.parse` +
-  every `seq` chord splits cleanly.
-- **Tuner trust:** the needle is smoothed in JS — clarity gate → median →
-  note-name hysteresis → dropout hold. **Keep the red/amber/green status colours
-  fixed**; do NOT tie them to the accent theme. Pitch feedback must stay
-  unambiguous.
-- **Accent theming:** the chooser sets `--accent` / `--accent-dim` /
-  `--accent-deep` on `:root`, persisted in `localStorage` (`music.accent.v1`).
-  Things that should re-skin use those vars; tuner status colours don't.
-- **`<button>` text doesn't inherit colour** — button-based cards need an
-  explicit `color` or text falls back to system black on the dark theme (this
-  bit us on the hero cards).
-- **Keep diffs surgical** — when scripting edits to `songs.json`, only the
-  intended lines should change (write back with the same 2-space formatting).
-- **SW cache version is part of the change, not a follow-up.** Whenever you
-  touch ANY file listed in `music/sw.js` `CORE` (any profile, `songbook.js`,
-  `diagram.js`, `tuner.js`, `audio.js`, `songs.json`, the CSS, etc.), bump
-  `CACHE = 'music-vN'` in the same commit. Skipping the bump means returning
-  users keep the cached old asset until they manually clear it. This session
-  shipped two `diagram.js` fixes without bumping, then bumped on the third —
-  which masked whether the first two even reached real browsers. The bump is
-  cheap; the skip is invisible-until-it-isn't.
-- **One screen, above the fold (always preferred).** Maximize what's usable
-  without scrolling on a phone: keep the header minimal (it must not repeat a
-  subtitle the view already shows), cut redundant or already-elsewhere controls,
-  and size content to the viewport (`100dvh`, orientation-aware grids) instead of
-  assuming the user will scroll. Before adding UI, ask "does this push the primary
-  action below the fold?" — if yes, reclaim space first. Portrait and landscape
-  each get a layout that fills the screen (e.g. chord-expand: 2-up portrait, 4-up
-  single row landscape).
+**Music-app specifics live in [music/CLAUDE.md](music/CLAUDE.md)** — its layout, the `songs.json` shape, tuner/accent/SW-cache conventions, the note-spelling rules, and the githack preview-link policy (branch link by default, commit link only for isolated testing). Read it before touching anything under `music/`.
 
-### Preview & CI
-- `.github/workflows/pr-preview.yml` posts tappable **githack** preview links
-  (per instrument) on every PR — reviewable on a phone over https (mic works)
-  without merging. Use the commit **SHA** in githack URLs (unambiguous; slashed
-  branch names break the path).
-- No other CI gates merging; it's a personal static site.
+No CI gates merging; it's a personal static site (a node unit suite + a githack preview comment run on PRs — see [music/CLAUDE.md](music/CLAUDE.md)).
