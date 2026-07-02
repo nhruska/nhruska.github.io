@@ -483,6 +483,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
 .keyFlyout[hidden]{display:none;}
+/* UAT r3 - eliminate Compose scroll: picking a key and picking chords are
+   mutually exclusive, so while the key/mode fly-out is open, hide the chord
+   picker (In-key|All toggle + chord list + solo-backing CTA). The fly-out then
+   uses that freed height and the tab fits with no vertical overflow. */
+.composeWrap.keyOpen #catChips,
+.composeWrap.keyOpen .composeChords,
+.composeWrap.keyOpen #soloBackingBtn{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
 /* SINGLE control row, no wrap: [♭] [key/mode chip] [♯] [⤢] [?] | [Clear] [Save].

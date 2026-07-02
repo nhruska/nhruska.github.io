@@ -1424,6 +1424,12 @@
       }
       // The fly-out (roots + mode toggle + Triads & Inversions link) opens/closes with the chip.
       if (el.keyFlyout) el.keyFlyout.hidden = !keyPopoverOpen;
+      // Picking a key and picking chords are mutually exclusive - hide the chord
+      // picker (In-key/All toggle + chord list + solo-backing CTA) while the
+      // key/mode fly-out is open, so the fly-out uses that freed height and the
+      // Compose tab fits with no vertical scroll.
+      var cwrap = el.keyFlyout && el.keyFlyout.closest ? el.keyFlyout.closest('.composeWrap') : null;
+      if (cwrap) cwrap.classList.toggle('keyOpen', keyPopoverOpen);
       // Root grid is always visible INSIDE the fly-out now (no separate popover).
       el.keyRoots.hidden = false;
       el.keyRoots.innerHTML = '';
