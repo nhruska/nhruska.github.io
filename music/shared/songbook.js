@@ -209,6 +209,20 @@
     return Math.max(0.5, Math.min(2.2, scale));
   }
 
+  // Key/mode payload for the "Solo over it" Studio bridge - TRANSPOSE-AWARE on
+  // both paths. An explicit record key moves with the current transpose (the
+  // chords on screen are shifted, so the Studio must follow or the player
+  // solos in the wrong key); an implicit one derives from the already-transposed
+  // sequence the same way repertoire.js's Key facet does. Pure + Node-testable.
+  function soloKeyFor(song, transposedSeq, st, Repertoire) {
+    if (song && song.key && song.mode) {
+      return { key: st ? tpose(song.key, st) : song.key, mode: song.mode };
+    }
+    var R = Repertoire || global.Repertoire;
+    if (R && typeof R.deriveKey === 'function') return R.deriveKey({ seq: transposedSeq });
+    return { key: null, mode: null };
+  }
+
   /* =====================================================================
    * Songbook.mount(opts)
    *
@@ -589,8 +603,7 @@
       // key: use an explicit one when the record has it, otherwise derive one the
       // same way repertoire.js's Key filter facet does - from the CURRENTLY
       // TRANSPOSED chords (`seq`, above), so soloing always matches what's on screen.
-      var soloKey = (s.key && s.mode) ? { key: s.key, mode: s.mode }
-        : (global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null });
+      var soloKey = soloKeyFor(s, seq, STATE.transpose);
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
@@ -1780,6 +1793,7 @@
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
     fitScale: fitScale,
+    soloKeyFor: soloKeyFor,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

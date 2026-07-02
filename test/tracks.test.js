@@ -170,4 +170,31 @@ test('resolveScaleMode: A Dorian and G Mixolydian light their true modal tones',
   assert.deepStrictEqual(T.notesToPcs(Circle.scale('G', T.resolveScaleMode('Mixolydian'))), [7, 9, 11, 0, 2, 4, 5]);
 });
 
+/* ---------- studioTheory wiring (the real Studio path, not just resolveScaleMode) ---------- */
+test('studioTheory: A Dorian renders a true dorian scale (F#, natural G)', function () {
+  var th = T.studioTheory('A', 'Dorian');
+  assert.ok(th, 'theory bundle should resolve');
+  assert.strictEqual(th.scaleMode, 'dorian');
+  assert.deepStrictEqual(th.notes, ['A', 'B', 'C', 'D', 'E', 'F#', 'G']);
+});
+test('studioTheory: G Mixolydian renders a true mixolydian scale (natural F)', function () {
+  var th = T.studioTheory('G', 'Mixolydian');
+  assert.strictEqual(th.scaleMode, 'mixolydian');
+  assert.deepStrictEqual(th.notes, ['G', 'A', 'B', 'C', 'D', 'E', 'F']);
+});
+test('studioTheory: capitalized Minor is aeolian, never ionian (the regression)', function () {
+  var th = T.studioTheory('A', 'Minor');
+  assert.strictEqual(th.scaleMode, 'aeolian');
+  assert.deepStrictEqual(th.notes, ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+});
+test('studioTheory: diatonic chords + degrees follow the resolved mode', function () {
+  var th = T.studioTheory('A', 'Dorian');
+  assert.strictEqual(th.chords.length, 7);
+  assert.strictEqual(th.degrees.length, 7);
+  assert.strictEqual(th.pcs.length, 7);
+});
+test('studioTheory: unresolvable key returns null (caller falls back to player/search)', function () {
+  assert.strictEqual(T.studioTheory('H', 'major'), null);
+});
+
 run();

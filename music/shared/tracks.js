@@ -166,6 +166,33 @@
     return familyMode(normMode(mode));
   }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
+  // Circle source: window.Circle in the browser (classic scripts). Under Node
+  // the IIFE's `global` is this module's own exports object, so a test can
+  // never inject Circle there - fall back to a guarded require so the REAL
+  // studioTheory is drivable from test/tracks.test.js. No-op in the browser.
+  function circleRef() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./circle.js'); } catch (e) {}
+    }
+    return null;
+  }
+  // The Practice Studio's theory bundle for a key+mode: scale notes, pitch
+  // classes, degrees, diatonic chords, display label. Module-scope + exported
+  // so tests can drive the SAME function the Studio wiring calls (a direct
+  // resolveScaleMode test alone would let the openStudio path regress green).
+  // Returns null when Circle is absent or the key is unresolvable (callers
+  // fall back to the bare player / a YouTube search).
+  function studioTheory(key, mode) {
+    var C = circleRef(), k = normRoot(key), rp = rootIndex(k);
+    if (!C || rp < 0) return null;
+    var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
+    return {
+      key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
+      degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
+      label: shortMode(C.modeInfo(scaleMode).label)
+    };
+  }
 
   var STORE = 'bt.custom.v1';
   var URLSTORE = 'music.trackUrls.v1';   // { [trackKey]: videoId } overlay for curated tracks
@@ -293,16 +320,7 @@
       if (modeParam) params.push('mode=' + encodeURIComponent(modeParam));
       return 'triad-inversions.html' + (params.length ? '?' + params.join('&') : '');
     }
-    function studioTheory(key, mode) {
-      var C = global.Circle, k = normRoot(key), rp = rootIndex(k);
-      if (!C || rp < 0) return null;
-      var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
-      return {
-        key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
-        degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
-        label: shortMode(C.modeInfo(scaleMode).label)
-      };
-    }
+    // studioTheory now lives at module scope (exported for tests) - see above.
     function buildWhy(box, th) {
       var C = global.Circle;
       var strip = th.notes.map(function (n, i) {
@@ -330,16 +348,25 @@
         : esc(th.key + ' ' + th.label.toLowerCase());
       var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
+      // Whether this session's video is attachable determines the no-video hint
+      // wording below, so compute the seed-track check up front.
+      var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
       // Iframe when a curated yt id is present; otherwise a tap-to-search card.
       // The HUD (scale + chords + circle) stays in both cases - the harmony
-      // teacher is the point; the embedded player is convenience.
+      // teacher is the point; the embedded player is convenience. The hint's
+      // attach instruction matches what's actually rendered: seed tracks have
+      // the paste editor below, custom items attach via Edit, and an ephemeral
+      // session (no editor at all) gets no attach instruction.
+      var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
+        : isSeedTrack ? ' Paste the one you like below.'
+        : '';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
         : '<div class="bt-st-search">'
           + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">'
           + 'Watch on YouTube &#8599;</a>'
-          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. Paste the one you like below. The HUD below works either way.</div>'
+          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
           + '</div>';
       // Add/edit-video-URL affordance. Custom user tracks/songs own their yt id
       // directly and are curated through the Add/Edit form now (Task 2, M2), not
@@ -351,8 +378,8 @@
       // ephemeral studio session (e.g. Solo practice) has a trackKey in no
       // catalog - pasting a url there writes an overlay entry that never
       // resurfaces (silent data loss), so it gets NO url editor. Compose-flow
-      // sessions save-first to attach a video.
-      var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
+      // sessions save-first to attach a video. (isSeedTrack computed above,
+      // where the no-video hint wording needs it.)
       var urlEditor = t.custom
         ? (opts.onEditRequest
           ? '<div class="bt-st-urled" data-urled>'
@@ -729,7 +756,8 @@
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
-    notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode, mount: mount,
+    notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
+    studioTheory: studioTheory, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

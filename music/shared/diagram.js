@@ -160,7 +160,9 @@
     if (!n || !(opts.scalePcs && opts.scalePcs.length)) return wrap;
     var plan = scalePlan(opts);
     var F = plan.frets, showOpen = plan.showOpen, trueFrets = plan.trueFrets;
-    var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 19, dotR = 8.2;
+    // dotR/strSpace sized so the 10px note-name labels (phone-DPI floor for SVG
+    // text, CLAUDE.md) fit their circles with clearance between adjacent strings.
+    var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 21, dotR = 9.2;
     var nutX = showOpen ? (padX + openColW) : padX;
     var W = nutX + F * fretW + padX, H = padY * 2 + (n - 1) * strSpace;
     function yOf(s) { return padY + (n - 1 - s) * strSpace; } // low string (index 0) at the bottom
@@ -183,7 +185,7 @@
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
         var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : '';
         svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + '/>';
-        svg += '<text x="' + cx + '" y="' + (y2 + 3) + '" fill="' + tf + '" font-size="8.5" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + NOTE_NAMES[note.pc] + '</text>';
+        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + NOTE_NAMES[note.pc] + '</text>';
       });
     }
     svg += '</svg>';

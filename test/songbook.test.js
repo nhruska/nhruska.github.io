@@ -118,4 +118,21 @@ test('fitScale treats a zero/unknown dimension as unconstrained (falls through t
   assert.strictEqual(Songbook.fitScale(0, 0, 0, 0), 1);         // nothing measurable -> neutral 1x
 });
 
+/* ---------- soloKeyFor: the "Solo over it" Studio-bridge payload ---------- */
+var fakeRep = { deriveKey: function (rec) { var c = rec.seq && rec.seq[0]; return c ? { key: c.replace(/m$/, ''), mode: /m$/.test(c) ? 'minor' : 'major' } : { key: null, mode: null }; } };
+test('soloKeyFor: explicit key follows the transpose (keyed song shifted +2 solos in B, not A)', function () {
+  var out = Songbook.soloKeyFor({ key: 'A', mode: 'minor' }, ['Bm', 'F#m'], 2, fakeRep);
+  assert.deepStrictEqual(out, { key: 'B', mode: 'minor' });
+});
+test('soloKeyFor: explicit key untransposed passes through unchanged', function () {
+  assert.deepStrictEqual(Songbook.soloKeyFor({ key: 'G', mode: 'major' }, ['G'], 0, fakeRep), { key: 'G', mode: 'major' });
+});
+test('soloKeyFor: no explicit key derives from the ALREADY-TRANSPOSED sequence', function () {
+  var out = Songbook.soloKeyFor({ t: 'x' }, ['Bm', 'E'], 2, fakeRep);
+  assert.deepStrictEqual(out, { key: 'B', mode: 'minor' });
+});
+test('soloKeyFor: no key and no deriver yields the null payload (solo affordance hidden)', function () {
+  assert.deepStrictEqual(Songbook.soloKeyFor({ t: 'x' }, ['C'], 0, null), { key: null, mode: null });
+});
+
 run();

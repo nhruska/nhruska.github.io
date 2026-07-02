@@ -455,21 +455,21 @@
       "note": "live full-band performance, not an isolated backing track - use as a play-along reference"
     }
   ],
-  "sample in a jar|phish|G|major": [
+  "sample in a jar|phish|A|major": [
     {
       "id": "X8hqMBcr368",
       "label": "Phish - Sample in a Jar (The Spectrum '97) - Guitar Backing Track",
-      "note": "key mismatch - song's actual key is A major per chord charts (A C G A E Em D), catalog lists G"
+      "note": "exact key - catalog corrected to A major (was mislabeled G)"
     },
     {
       "id": "Ao5iDef-duA",
       "label": "Sample In A Jar Jam Phish Style Guitar Backing Track (A Minor)",
-      "note": "A minor jam-style variant, key mismatch vs catalog G major"
+      "note": "A minor jam-style variant (relative feel, works over A)"
     },
     {
       "id": "x6dRu6ijGj4",
       "label": "Phish - Sample In A Jar (karaoke)",
-      "note": "karaoke/full track, actual key A major not G per catalog"
+      "note": "karaoke/full track in A major"
     }
   ],
   "waste|phish|D|major": [

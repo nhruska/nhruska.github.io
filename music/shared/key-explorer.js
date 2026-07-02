@@ -88,11 +88,21 @@
     var F = opts.frets || 7;
     var supportsStart = !!pack.scaleDiagram.supportsStart;
     var startFret = 0;
+    // boxWrap is a COLUMN holding the diagram + (optionally) the position control,
+    // so the control always sits BENEATH the fretboard regardless of the host
+    // container's layout - the Studio's .bt-st-scale is a flex row, which would
+    // otherwise place a sibling control beside the diagram.
     var boxWrap = document.createElement('div'); boxWrap.className = 'scaleBoxWrap';
     container.appendChild(boxWrap);
+    var diagBox = document.createElement('div'); diagBox.className = 'scaleDiagBox';
+    boxWrap.appendChild(diagBox);
+    // Clamp the WINDOW to POS_CAP, not just the start fret: a shifted window shows
+    // min(F, POS_CAP - startFret + 1) frets, so the last position renders 10-14
+    // and never draws frets past the top-of-neck cap the comments promise.
+    function shownFrets() { return startFret === 0 ? F : Math.min(F, POS_CAP - startFret + 1); }
     function renderBox() {
-      boxWrap.innerHTML = '';
-      boxWrap.appendChild(pack.scaleDiagram(rootPc, pcs, F, startFret));
+      diagBox.innerHTML = '';
+      diagBox.appendChild(pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret));
     }
     renderBox();
     if (supportsStart) {
@@ -105,16 +115,19 @@
       fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
       fwd.setAttribute('aria-label', 'Shift the scale up the neck');
       function refresh() {
-        var endFret = startFret === 0 ? F : (startFret + F - 1);
+        var shown = shownFrets();
+        var endFret = startFret === 0 ? shown : (startFret + shown - 1);
         lbl.textContent = 'frets ' + startFret + '-' + endFret;
         back.disabled = startFret <= 0;
-        fwd.disabled = (startFret + POS_STEP) > POS_CAP;
+        // Forward stops once the NEXT window would start past the cap's last
+        // useful position (the 10-14 window); same 0/5/10 stops as before.
+        fwd.disabled = (startFret + POS_STEP) > POS_CAP - POS_STEP + 1;
       }
       back.onclick = function () { startFret = Math.max(0, startFret - POS_STEP); renderBox(); refresh(); };
-      fwd.onclick = function () { if (startFret + POS_STEP > POS_CAP) return; startFret += POS_STEP; renderBox(); refresh(); };
+      fwd.onclick = function () { if (fwd.disabled) return; startFret += POS_STEP; renderBox(); refresh(); };
       refresh();
       ctrl.appendChild(back); ctrl.appendChild(lbl); ctrl.appendChild(fwd);
-      container.appendChild(ctrl);
+      boxWrap.appendChild(ctrl);
     }
     return boxWrap;
   }

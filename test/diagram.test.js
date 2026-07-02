@@ -74,7 +74,7 @@ test('markers in a shifted window use TRUE fret numbers, not window-relative one
   // window spans true frets 10-16 -> true markers 12 and 15 fall inside it
   assert.deepStrictEqual(p.markers, [12, 15]);
 });
-test('a window with no standard marker frets reports an empty markers list (never crashes)', function () {
+test('a shifted window whose span contains only fret 9 reports exactly that marker', function () {
   var p = D.scalePlan({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 2, startFret: 8 });
   // true frets 8-9: no marker in {3,5,7,9,12,...} - wait 9 IS a marker, use 8-9 -> [9]
   assert.deepStrictEqual(p.markers, [9]);
