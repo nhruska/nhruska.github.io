@@ -409,6 +409,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
    reads as THE next step (the old prose hint buried it). */
 .pickKeyCta{display:block;width:100%;margin:2px 0 8px;}
+/* Solo-over-backing bridge: a compact link-style row, not a full-height .btn - it
+   sits in the FIXED compose top, so every saved pixel is above-the-fold chord list.
+   Accent + dashed border keep it recognizably tappable at the smaller size. */
+.soloBackingBtn{display:block;width:100%;flex:none;padding:6px 10px;min-height:0;font-size:.76rem;font-weight:600;background:transparent;border:1px dashed var(--accent-dim);color:var(--accent);border-radius:9px;}
+.soloBackingBtn:active{background:var(--accent-deep);border-color:var(--accent);}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
