@@ -105,42 +105,99 @@
     return wrap;
   }
 
-  // ----- scale map: a horizontal neck showing every scale tone in low position -----
-  // opts: { openPcs:[pc per string, low->high], scalePcs:[pc,...], rootPc, frets }
+  // ----- scale map: a horizontal neck showing every scale tone in a fret window -----
+  // opts: { openPcs:[pc per string, low->high], scalePcs:[pc,...], rootPc, frets, startFret }
   // Root tones glow in the live --accent; other tones are dim. Note letters labelled.
+  // startFret (default 0) slides the window up the neck for soloing beyond the first
+  // position: 0 keeps the original open-string + frets-1..F window; >0 drops the open
+  // column entirely and shows F frets starting at startFret, labelled with their TRUE
+  // fret numbers (a player fingers by the real number, not a relative one).
   var NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  function scale(opts) {
+  var MARK_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21]; // standard neck position-marker frets
+
+  // ----- pure fret-window math (exported for Node unit tests; no DOM touched) -----
+  // scalePlan({openPcs, scalePcs, rootPc, frets, startFret}) -> the column plan scale()
+  // renders from:
+  //   showOpen   - true only when startFret is 0 (open strings get their own column)
+  //   trueFrets  - the F fretted columns' TRUE fret numbers, in left-to-right order
+  //                (never includes fret 0 - that's the separate open column, showOpen-gated)
+  //   markers    - MARK_FRETS entries that fall inside this window (already true numbers)
+  //   notesOn(s) - fn(stringIndex) -> [{ fret, pc, isRoot }] in-scale notes on that string,
+  //                left-to-right column order (fret 0 / open included only when showOpen)
+  function scalePlan(opts) {
     opts = opts || {};
     var openPcs = opts.openPcs || [], scalePcs = opts.scalePcs || [], rootPc = opts.rootPc;
-    var F = opts.frets || 7, n = openPcs.length;
-    var wrap = document.createElement('div'); wrap.className = 'scaleBox';
-    if (!n || !scalePcs.length) return wrap;
+    var F = opts.frets > 0 ? opts.frets : 7;
+    var startFret = opts.startFret > 0 ? opts.startFret : 0;
+    var showOpen = startFret === 0;
+    var trueFrets = [];
+    for (var i = 0; i < F; i++) trueFrets.push(showOpen ? (i + 1) : (startFret + i));
     var inScale = {}; scalePcs.forEach(function (p) { inScale[((p % 12) + 12) % 12] = true; });
-    var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 19, dotR = 8.2;
-    var nutX = padX + openColW, W = nutX + F * fretW + padX, H = padY * 2 + (n - 1) * strSpace;
+    var markers = MARK_FRETS.filter(function (fn) { return trueFrets.indexOf(fn) !== -1; });
+    function notesOn(s) {
+      var openPc = openPcs[s], out = [];
+      if (showOpen) {
+        var opc = ((openPc % 12) + 12) % 12;
+        if (inScale[opc]) out.push({ fret: 0, pc: opc, isRoot: opc === rootPc });
+      }
+      trueFrets.forEach(function (fn) {
+        var pc = ((openPc + fn) % 12 + 12) % 12;
+        if (inScale[pc]) out.push({ fret: fn, pc: pc, isRoot: pc === rootPc });
+      });
+      return out;
+    }
+    return {
+      showOpen: showOpen, frets: F, startFret: startFret, trueFrets: trueFrets,
+      start: trueFrets.length ? trueFrets[0] : startFret, end: trueFrets.length ? trueFrets[trueFrets.length - 1] : startFret,
+      markers: markers, notesOn: notesOn
+    };
+  }
+
+  function scale(opts) {
+    opts = opts || {};
+    var openPcs = opts.openPcs || [], n = openPcs.length;
+    var wrap = document.createElement('div'); wrap.className = 'scaleBox';
+    if (!n || !(opts.scalePcs && opts.scalePcs.length)) return wrap;
+    var plan = scalePlan(opts);
+    var F = plan.frets, showOpen = plan.showOpen, trueFrets = plan.trueFrets;
+    // dotR/strSpace sized so the 10px note-name labels (phone-DPI floor for SVG
+    // text, CLAUDE.md) fit their circles with clearance between adjacent strings.
+    var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 21, dotR = 9.2;
+    var nutX = showOpen ? (padX + openColW) : padX;
+    var W = nutX + F * fretW + padX, H = padY * 2 + (n - 1) * strSpace;
     function yOf(s) { return padY + (n - 1 - s) * strSpace; } // low string (index 0) at the bottom
+    // column index: 0 = the open-string column (only when showOpen), 1..F = trueFrets[0..F-1]
+    function xOf(col) { return col === 0 ? (padX + openColW / 2) : (nutX + (col - 0.5) * fretW); }
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
-    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (H - padY) + '" stroke="#3a4150" stroke-width="' + (f === 0 ? 3 : 1) + '"/>'; }
+    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (H - padY) + '" stroke="#3a4150" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
     for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" stroke-width="1"/>'; }
-    [3, 5, 7, 9, 12].forEach(function (fn) { if (fn <= F) { svg += '<text x="' + (nutX + (fn - 0.5) * fretW) + '" y="' + (H - 1) + '" fill="#6b7280" font-size="8" font-family="monospace" text-anchor="middle">' + fn + '</text>'; } });
+    // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
+    // these are TRUE fret numbers even in a shifted window (plan.markers already reflects that).
+    plan.markers.forEach(function (fn) {
+      var col = trueFrets.indexOf(fn) + 1;
+      svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
+    });
     for (var s2 = 0; s2 < n; s2++) {
       var y2 = yOf(s2);
-      for (var f2 = 0; f2 <= F; f2++) {
-        var pc = ((openPcs[s2] + f2) % 12 + 12) % 12;
-        if (!inScale[pc]) continue;
-        var cx = f2 === 0 ? (padX + openColW / 2) : (nutX + (f2 - 0.5) * fretW);
-        var isRoot = pc === rootPc;
+      plan.notesOn(s2).forEach(function (note) {
+        var col = (note.fret === 0 && showOpen) ? 0 : (trueFrets.indexOf(note.fret) + 1);
+        var cx = xOf(col), isRoot = note.isRoot;
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
         var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : '';
         svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + '/>';
-        svg += '<text x="' + cx + '" y="' + (y2 + 3) + '" fill="' + tf + '" font-size="8.5" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + NOTE_NAMES[pc] + '</text>';
-      }
+        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + NOTE_NAMES[note.pc] + '</text>';
+      });
     }
     svg += '</svg>';
     wrap.innerHTML = svg;
     return wrap;
   }
 
-  global.Diagram = { render: render, baseFret: baseFret, scale: scale };
+  global.Diagram = { render: render, baseFret: baseFret, scale: scale, scalePlan: scalePlan };
+
+  // expose the pure fret-window math for Node unit tests (no DOM needed)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports.scalePlan = scalePlan;
+  }
 
 })(typeof window !== 'undefined' ? window : this);

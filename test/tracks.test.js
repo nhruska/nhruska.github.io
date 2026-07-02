@@ -131,4 +131,127 @@ test('P3 seed end-to-end: a composed A-minor key surfaces matched tracks', funct
   assert.ok(c && c.rank > 0 && /relative/.test(c.why || ''), 'relative major surfaces, labelled');
 });
 
+// --- Practice Studio 4-mode fidelity: resolveScaleMode ---------------------
+test('resolveScaleMode: capitalized inputs map to the right circle mode', function () {
+  assert.strictEqual(T.resolveScaleMode('Minor'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('Dorian'), 'dorian');
+  assert.strictEqual(T.resolveScaleMode('Mixolydian'), 'mixolydian');
+});
+test('resolveScaleMode: lowercase family + mode names', function () {
+  assert.strictEqual(T.resolveScaleMode('minor'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('major'), 'ionian');
+  assert.strictEqual(T.resolveScaleMode('aeolian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('ionian'), 'ionian');
+  assert.strictEqual(T.resolveScaleMode('dorian'), 'dorian');
+  assert.strictEqual(T.resolveScaleMode('mixolydian'), 'mixolydian');
+});
+test('resolveScaleMode: missing/undefined defaults to ionian (safe major)', function () {
+  assert.strictEqual(T.resolveScaleMode(undefined), 'ionian');
+  assert.strictEqual(T.resolveScaleMode(null), 'ionian');
+  assert.strictEqual(T.resolveScaleMode(''), 'ionian');
+});
+test('resolveScaleMode: unsupported modes coarsen to their major/minor family', function () {
+  // phrygian is minor-family -> aeolian (NOT ionian - the original bug), lydian major-family -> ionian
+  assert.strictEqual(T.resolveScaleMode('phrygian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('Phrygian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('locrian'), 'aeolian');
+  assert.strictEqual(T.resolveScaleMode('lydian'), 'ionian');
+});
+test('resolveScaleMode: the reported bug - A Minor no longer renders a major scale', function () {
+  // regression: 'Minor' used to fall through familyMode()==='ionian', lighting C#/G#.
+  // Now it resolves to aeolian, whose A-scale is A B C D E F G (no sharps).
+  var pcs = T.notesToPcs(Circle.scale('A', T.resolveScaleMode('Minor')));
+  assert.deepStrictEqual(pcs, [9, 11, 0, 2, 4, 5, 7]);
+});
+test('resolveScaleMode: A Dorian and G Mixolydian light their true modal tones', function () {
+  // A dorian = A B C D E F# G  (raised 6th vs aeolian)
+  assert.deepStrictEqual(T.notesToPcs(Circle.scale('A', T.resolveScaleMode('Dorian'))), [9, 11, 0, 2, 4, 6, 7]);
+  // G mixolydian = G A B C D E F  (lowered 7th vs ionian)
+  assert.deepStrictEqual(T.notesToPcs(Circle.scale('G', T.resolveScaleMode('Mixolydian'))), [7, 9, 11, 0, 2, 4, 5]);
+});
+
+/* ---------- studioTheory wiring (the real Studio path, not just resolveScaleMode) ---------- */
+test('studioTheory: A Dorian renders a true dorian scale (F#, natural G)', function () {
+  var th = T.studioTheory('A', 'Dorian');
+  assert.ok(th, 'theory bundle should resolve');
+  assert.strictEqual(th.scaleMode, 'dorian');
+  assert.deepStrictEqual(th.notes, ['A', 'B', 'C', 'D', 'E', 'F#', 'G']);
+});
+test('studioTheory: G Mixolydian renders a true mixolydian scale (natural F)', function () {
+  var th = T.studioTheory('G', 'Mixolydian');
+  assert.strictEqual(th.scaleMode, 'mixolydian');
+  assert.deepStrictEqual(th.notes, ['G', 'A', 'B', 'C', 'D', 'E', 'F']);
+});
+test('studioTheory: capitalized Minor is aeolian, never ionian (the regression)', function () {
+  var th = T.studioTheory('A', 'Minor');
+  assert.strictEqual(th.scaleMode, 'aeolian');
+  assert.deepStrictEqual(th.notes, ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+});
+test('studioTheory: diatonic chords + degrees follow the resolved mode', function () {
+  var th = T.studioTheory('A', 'Dorian');
+  assert.strictEqual(th.chords.length, 7);
+  assert.strictEqual(th.degrees.length, 7);
+  assert.strictEqual(th.pcs.length, 7);
+});
+test('studioTheory: unresolvable key returns null (caller falls back to player/search)', function () {
+  assert.strictEqual(T.studioTheory('H', 'major'), null);
+});
+
+/* ---------- overlay re-key migration (catalog-key corrections must not orphan
+ * a user's curated urls: trackKey embeds the key, so the stored key moves) ---------- */
+test('migrateUrls re-keys a legacy overlay entry and deletes the old key', function () {
+  var o = { 'sample in a jar|phish|G|major': 'vid1' };
+  assert.strictEqual(T.migrateUrls(o), true);
+  assert.deepStrictEqual(o, { 'sample in a jar|phish|A|major': 'vid1' });
+});
+test('migrateUrls never clobbers an entry already saved under the new key', function () {
+  var o = { 'sample in a jar|phish|G|major': 'old', 'sample in a jar|phish|A|major': 'new' };
+  assert.strictEqual(T.migrateUrls(o), true); // old key still deleted
+  assert.deepStrictEqual(o, { 'sample in a jar|phish|A|major': 'new' });
+});
+test('migrateUrls is a no-op (returns false, no save-back) when nothing is legacy', function () {
+  var o = { 'blues in a|x|A|minor': 'keep' };
+  assert.strictEqual(T.migrateUrls(o), false);
+  assert.deepStrictEqual(o, { 'blues in a|x|A|minor': 'keep' });
+  assert.strictEqual(T.migrateUrls({}), false);
+});
+test('migrateUrls re-keys a modal overlay saved under the old coarsened-major identity', function () {
+  var o = { 'santana dorian jam in e minor|search|E|major': 'vidD' };
+  assert.strictEqual(T.migrateUrls(o), true);
+  assert.deepStrictEqual(o, { 'santana dorian jam in e minor|search|E|dorian': 'vidD' });
+});
+
+// --- modal tracks in the keyed finder (the invisible-dorian bug) -----------
+test('a dorian track surfaces in its minor-family keyed search', function () {
+  var tracks = [{ title: 'Santana style', genre: 'latin', key: 'E', mode: 'dorian', yt: 'x' }];
+  var out = T.filterTracks(tracks, 'all', 'E', 'minor');
+  assert.strictEqual(out.length, 1, 'dorian track must be visible in an E-minor-family search');
+  assert.strictEqual(out[0].rank, 0, 'same-root modal track is an exact-family match');
+});
+test('a mixolydian track surfaces in its major-family keyed search', function () {
+  var tracks = [{ title: 'Dead style', genre: 'jam', key: 'G', mode: 'mixolydian', yt: 'x' }];
+  var out = T.filterTracks(tracks, 'all', 'G', 'major');
+  assert.strictEqual(out.length, 1, 'mixolydian track must be visible in a G-major-family search');
+});
+
+// --- trackKey 4-mode serialization (overlay identity) -----------------------
+test('trackKey serializes the full 4-mode vocabulary distinctly', function () {
+  var base = { title: 'X', artist: 'Y', key: 'E' };
+  var kMaj = T.trackKey(Object.assign({}, base, { mode: 'major' }));
+  var kDor = T.trackKey(Object.assign({}, base, { mode: 'dorian' }));
+  var kMix = T.trackKey(Object.assign({}, base, { mode: 'mixolydian' }));
+  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix));
+  assert.notStrictEqual(kDor, kMaj); // the collision codex flagged
+  assert.strictEqual(T.trackKey(Object.assign({}, base, { mode: 'weird' })), kMaj); // unknown -> major
+});
+
+// --- mode-honest key labels everywhere a key renders as text ----------------
+test('keyLabelFor matches the Studio label convention', function () {
+  assert.strictEqual(T.keyLabelFor('A', 'major'), 'A');
+  assert.strictEqual(T.keyLabelFor('A', 'minor'), 'Am');
+  assert.strictEqual(T.keyLabelFor('E', 'dorian'), 'E dorian');
+  assert.strictEqual(T.keyLabelFor('G', 'Mixolydian'), 'G mixolydian');
+  assert.strictEqual(T.keyLabelFor('C', null), 'C');
+});
+
 run();

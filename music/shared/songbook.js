@@ -195,6 +195,33 @@
     });
     return html;
   }
+  // Stage/Perform auto-fit scale: shrinks the sheet until it fits BOTH the
+  // available height AND width, or grows a short song up to a cap. Lyric lines
+  // render with white-space:pre (no wrapping), so a height-only fit lets a
+  // short song scale up past its own width and clip words off-screen - width
+  // must always be allowed to win. Pure + Node-testable; DOM callers pass real
+  // measurements (see applyPerfFont).
+  function fitScale(availH, needH, availW, needW) {
+    var heightScale = needH > 0 ? availH / needH : Infinity;
+    var widthScale = needW > 0 ? availW / needW : Infinity;
+    var scale = Math.min(heightScale, widthScale);
+    if (!isFinite(scale)) scale = 1;
+    return Math.max(0.5, Math.min(2.2, scale));
+  }
+
+  // Key/mode payload for the "Solo over it" Studio bridge - TRANSPOSE-AWARE on
+  // both paths. An explicit record key moves with the current transpose (the
+  // chords on screen are shifted, so the Studio must follow or the player
+  // solos in the wrong key); an implicit one derives from the already-transposed
+  // sequence the same way repertoire.js's Key facet does. Pure + Node-testable.
+  function soloKeyFor(song, transposedSeq, st, Repertoire) {
+    if (song && song.key && song.mode) {
+      return { key: st ? tpose(song.key, st) : song.key, mode: song.mode };
+    }
+    var R = Repertoire || global.Repertoire;
+    if (R && typeof R.deriveKey === 'function') return R.deriveKey({ seq: transposedSeq });
+    return { key: null, mode: null };
+  }
 
   /* =====================================================================
    * Songbook.mount(opts)
@@ -571,7 +598,17 @@
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + c + '">' + c + '</span>'; }).join('') + '</div>';
-      var canSolo = s.custom && typeof openStudioCb === 'function' && s.key && s.mode;
+      // "Solo over it" used to require s.custom (only progressions built in Compose
+      // carried a key/mode). Any song can bridge to the Studio if we can determine a
+      // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
+      // backing track's authoritative key/mode onto it, which beats re-deriving from
+      // the first chord (a non-tonic opener would mislabel). Fall back to the raw
+      // record; soloKeyFor still derives from the TRANSPOSED seq when neither has
+      // an explicit key, so soloing always matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
       var body;
@@ -604,7 +641,19 @@
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
-        openStudioCb({ id: s.id, title: s.t, artist: s.a, key: s.key, mode: s.mode, custom: true, yt: (csv && csv.yt) || s.yt || null });
+        // Re-resolve the merged record at CLICK time: the tracks catalog loads
+        // async, so the merged key/mode (and its curated video) may not have
+        // existed when this view rendered - a fast Solo tap must not be stuck
+        // with the render-time snapshot.
+        var mr = null;
+        for (var mi = 0; mi < REPERTOIRE.length; mi++) { if (REPERTOIRE[mi].id === s.id) { mr = REPERTOIRE[mi]; break; } }
+        var sk = soloKeyFor((mr && mr.key && mr.mode) ? mr : s, seq, STATE.transpose);
+        // Locked interface: no `custom:true` for a catalog song (it isn't a saved
+        // custom item, so there's nothing for the Studio's "Edit this track" link
+        // to look up). Custom songs keep the exact payload shape they always had.
+        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || (mr && mr.yt) || s.yt || null };
+        if (s.custom) payload.custom = true;
+        openStudioCb(payload);
       };
       if (s.custom) {
         var act = el.practiceBody.querySelector('.actions');
@@ -770,9 +819,11 @@
       var inner = pSheet.firstElementChild;
       if (!inner) { pSheet.style.setProperty('--pscale', 1); return; }
       pSheet.style.setProperty('--pscale', 1);            // measure at base size
-      var avail = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
-      var need = inner.scrollHeight;
-      var scale = need > 0 ? Math.max(0.8, Math.min(2.2, avail / need)) : 1;
+      var availH = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
+      var needH = inner.scrollHeight;
+      var availW = pSheet.clientWidth;
+      var needW = inner.scrollWidth; // white-space:pre lyric lines never wrap - width must win
+      var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
     }
     function updateStageBtns() {
@@ -1419,34 +1470,130 @@
       });
       el.suggest.appendChild(row);
     }
+    /* ---- inline save UI (replaces native prompt()/alert()/confirm() in the
+     * save + solo-backing flows). Built on demand, above the progression box,
+     * so it costs zero vertical space until it's actually used (per the "one
+     * screen, above the fold" rule) - and torn down again the moment it's
+     * dismissed, rather than reserving a permanent row. ---- */
+    var composeRow = null, composeToast = null, toastTimer = null;
+    function ensureComposeUI() {
+      if (!el.prog || !el.prog.parentNode) return false;
+      if (!composeRow) {
+        composeRow = document.createElement('div');
+        composeRow.className = 'composeRow';
+        composeRow.hidden = true;
+        el.prog.parentNode.insertBefore(composeRow, el.prog);
+      }
+      if (!composeToast) {
+        composeToast = document.createElement('div');
+        composeToast.className = 'composeToast';
+        composeToast.hidden = true;
+        el.prog.parentNode.insertBefore(composeToast, el.prog);
+      }
+      return true;
+    }
+    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
+    // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
+    // itself after ~3s so it never permanently claims screen space.
+    function showComposeToast(msg, isErr) {
+      if (!ensureComposeUI()) return;
+      clearTimeout(toastTimer);
+      composeToast.textContent = msg;
+      composeToast.className = 'composeToast' + (isErr ? ' err' : '');
+      composeToast.hidden = false;
+      toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
+    }
+    // Inline name-entry row (replaces prompt()). done(name|null) fires once -
+    // the trimmed name on Save/Enter, or null on Cancel/Escape (same contract
+    // prompt() had: null == the user backed out).
+    function openSaveNameRow(defaultName, done) {
+      if (!ensureComposeUI()) { done(defaultName); return; }
+      hideComposeRow();
+      composeRow.hidden = false;
+      var input = document.createElement('input');
+      input.type = 'text'; input.className = 'composeRowInput';
+      input.placeholder = defaultName; input.value = defaultName;
+      input.setAttribute('aria-label', 'Progression name');
+      var saveBtn = document.createElement('button');
+      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save';
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
+      var settled = false;
+      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name); }
+      saveBtn.onclick = function () { finish(input.value.trim() || defaultName); };
+      cancelBtn.onclick = function () { finish(null); };
+      input.onkeydown = function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim() || defaultName); }
+        else if (e.key === 'Escape') { finish(null); }
+      };
+      composeRow.appendChild(input); composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
+      input.focus();
+    }
+    // Inline two-choice row (replaces confirm()). onPick('save'|'skip') fires once.
+    function openSoloChoiceRow(onPick) {
+      if (!ensureComposeUI()) { onPick('skip'); return; }
+      hideComposeRow();
+      composeRow.hidden = false;
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Save this progression so a video you attach in the Studio sticks?';
+      var saveBtn = document.createElement('button');
+      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
+      var skipBtn = document.createElement('button');
+      skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Skip';
+      var settled = false;
+      function finish(choice) { if (settled) return; settled = true; hideComposeRow(); onPick(choice); }
+      saveBtn.onclick = function () { finish('save'); };
+      skipBtn.onclick = function () { finish('skip'); };
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
+      composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+    }
     // Derive key/mode for a saved progression the same way repertoire.js's
     // deriveKey() does (first-chord regex) - reuse it directly (pure, node-tested)
     // rather than duplicating the regex. Falls back to the explicit songKey when
     // one was picked in Compose (more reliable than re-parsing chord #1, e.g. a
     // vi-IV-I-V progression built from a picked key starts on the relative chord).
     function deriveProgressionKey(seq) {
-      if (songKey.root) return { key: songKey.root, mode: songKey.mode === 'Minor' ? 'minor' : 'major' };
+      // songKey.mode is one of the 4 Compose mode names (Major/Minor/Mixolydian/
+      // Dorian); lowercase is the exact locked-interface vocabulary. The old
+      // `=== 'Minor' ? 'minor' : 'major'` ternary silently relabeled Dorian (a
+      // minor-family mode) as major and discarded Mixolydian entirely - a
+      // progression built in Dorian would solo over the wrong scale.
+      if (songKey.root) return { key: songKey.root, mode: songKey.mode.toLowerCase() };
       var d = global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null };
       return { key: d.key, mode: d.mode || 'major' };
     }
     // Save the in-progress Compose progression as a stable custom song (cs.id).
     // Populates key/mode (Task 2 requirement 1, locked-interface contract) so the
-    // saved song is immediately eligible for "Solo over it" + the Studio. Returns
-    // the saved song object, or null if there was nothing to save / the user
-    // cancelled the name prompt.
-    function saveProgression() {
-      if (progression.length === 0) { alert('Build a progression first.'); return null; }
-      var name = prompt('Name this progression:', 'My progression');
-      if (name === null) return null;
-      name = name.trim() || 'My progression';
-      var km = deriveProgressionKey(progression);
-      var cs = {
-        id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
-        seq: progression.slice(), custom: true, key: km.key, mode: km.mode, yt: null
-      };
-      customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
-      alert('Saved to your Songs (filter “Mine”). You can add it to a setlist and perform it.');
-      return cs;
+    // saved song is immediately eligible for "Solo over it" + the Studio.
+    //
+    // Async by necessity: the inline name row (openSaveNameRow) needs a user tap
+    // before a name is known, so this can no longer return synchronously the way
+    // the old prompt()-based version did. done(record|null) fires once - the
+    // saved record on Save, or null if there was nothing to save / the user
+    // cancelled the name row. `done` is optional (the plain Save button doesn't
+    // need the result - the inline toast already gives feedback).
+    function saveProgression(done) {
+      done = done || function () {};
+      if (progression.length === 0) { showComposeToast('Build a progression first.', true); done(null); return; }
+      // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
+      // the progression and key panel stay live behind it. What gets saved is
+      // what the user asked to save - not whatever the session mutated into
+      // (or cleared to) while the row was open.
+      var snapSeq = progression.slice();
+      var km = deriveProgressionKey(snapSeq);
+      openSaveNameRow('My progression', function (name) {
+        if (name === null) { done(null); return; } // cancelled
+        var cs = {
+          id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+          seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
+        };
+        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        showComposeToast('Saved to your Repertoire');
+        done(cs);
+      });
     }
     // Create a brand-new custom item from the Add/Edit form (Requirement 3, Task 2).
     // No seq -> a standalone custom TRACK (no chord sheet; playable straight from
@@ -1529,7 +1676,7 @@
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () { progression = []; cTpose = 0; renderProg(); renderKey(); };
-    if (el.cSave) el.cSave.onclick = saveProgression;
+    if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     // "?" help: re-show the starter progressions inside the progression box. Toggles off
     // if already forced (and there's a progression to fall back to).
@@ -1545,28 +1692,30 @@
     // studio instead of seeding a finder view. seedBackingKey stays wired as a no-op
     // fallback when no studio callback is present.
     //
-    // Bug fix (Task 2, requirement 5 + the root-caused video-persistence bug): the
-    // old code passed a THROWAWAY object ({title:'Solo practice', ...}) with no
-    // stable id, so any video pasted into the resulting Studio session had nothing
-    // to attach to and vanished on close. Gate video curation behind a SAVED
-    // progression: prompt to save first (cs.id is what a video attaches to, via
-    // the Add/Edit form's updateCustomItem), then open the Studio for that saved
-    // song - matching the locked-interface object shape exactly (id/title/artist/key/mode/custom).
+    // Bug fix (video-persistence): the ephemeral path passes a THROWAWAY object
+    // ({title:'Solo practice', ...}) with no stable id, so any video pasted into
+    // that Studio session has nothing to attach to and vanishes on close. Gate
+    // video curation behind a SAVED progression via the inline choice row
+    // (replaces the old confirm()/prompt()/alert() chain - no native dialogs):
+    // "Save & open Studio" saves first (cs.id is what a video attaches to, via
+    // the Add/Edit form's updateCustomItem) then opens the Studio for that saved
+    // song, matching the locked-interface shape exactly (id/title/artist/key/
+    // mode/custom); "Skip" opens the ephemeral Studio unchanged.
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
-        var wantsVideo = confirm(
-          'Save this progression first so a video you attach in the Studio actually sticks?\n\n'
-          + 'OK = save, then open Studio (video will persist - attach it via Edit in the Studio).\n'
-          + 'Cancel = open Studio without saving (any video you paste will NOT be kept).'
-        );
-        if (wantsVideo) {
-          var saved = saveProgression();
-          if (!saved) return; // user cancelled the save-name prompt
-          openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
-          return;
-        }
-        openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode });
+        openSoloChoiceRow(function (choice) {
+          if (choice === 'save') {
+            saveProgression(function (saved) {
+              if (!saved) return; // user cancelled the inline name row
+              openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+            });
+            return;
+          }
+          // Skip: open the ephemeral Studio without saving (locked vocabulary is
+          // lowercase - songKey.mode is one of the capitalized Compose names).
+          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
+        });
       } else {
         setLibType('repertoire');
         switchTab('library');
@@ -1659,6 +1808,8 @@
     noteToPc: noteToPc,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
+    fitScale: fitScale,
+    soloKeyFor: soloKeyFor,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

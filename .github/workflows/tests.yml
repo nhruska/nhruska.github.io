@@ -1,0 +1,26 @@
+# Runs the dependency-free unit suite (test/run-all.js aggregates the
+# per-file self-runners) on every PR and on pushes to main, so a green
+# checkmark actually proves the tests ran - they were previously manual-only.
+#
+# NOTE: like pr-preview.yml, this workflow does not run for the PR that first
+# introduces it (GitHub only trusts workflows it knows from main). It gates
+# every subsequent PR.
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node test/run-all.js

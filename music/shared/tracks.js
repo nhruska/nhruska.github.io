@@ -43,7 +43,10 @@
     ];
   }
   function trackMatch(t, compat) {
-    var tk = normRoot(t.key), tm = t.mode || 'major';
+    // Coarsen the track's mode to its major/minor FAMILY before comparing:
+    // compat rows only speak major/minor, so a raw 'dorian'/'mixolydian'
+    // t.mode would never match and the track vanishes from keyed results.
+    var tk = normRoot(t.key), tm = normMode(t.mode);
     for (var j = 0; j < compat.length; j++) {
       if (compat[j].key === tk && compat[j].mode === tm) return compat[j];
     }
@@ -105,7 +108,12 @@
   function trackKey(t) {
     t = t || {};
     function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
-    return [norm(t.title), norm(t.artist), normRoot(t.key), (t.mode === 'minor' ? 'minor' : 'major')].join('|');
+    // Serialize the FULL 4-mode vocabulary: coarsening dorian/mixolydian to
+    // 'major' let a modal track collide with a same-title/artist/key major row
+    // in the url overlay. Unknown/absent modes still default to 'major'.
+    var m = norm(t.mode);
+    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian') m = 'major';
+    return [norm(t.title), norm(t.artist), normRoot(t.key), m].join('|');
   }
   // Overlay a { trackKey: videoId } map onto a seed list, returning NEW track
   // objects so the original seed is never mutated. A track that already has a
@@ -149,10 +157,88 @@
   function normMode(mode) {
     return /min|aeolian|dorian|phrygian|locrian/.test(String(mode == null ? '' : mode).toLowerCase()) ? 'minor' : 'major';
   }
+  // Resolve any incoming mode string to the ACTUAL scale mode the Practice Studio
+  // renders. The Studio teaches 4 modes faithfully: major/minor plus the two most
+  // common modal colours (dorian, mixolydian). Accepts lowercase circle-family
+  // names, legacy capitalized inputs (Major/Minor/Dorian/Mixolydian), and bare
+  // family words - anything it does not recognize coarsens to the major/minor
+  // family via normMode (never throws, never silently lands on ionian for a
+  // minor-family input like phrygian). Unlike familyMode this preserves the modal
+  // colour so an A Dorian track lights a Dorian scale, not a plain minor one.
+  function resolveScaleMode(mode) {
+    var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    if (m === 'ionian' || m === 'major') return 'ionian';
+    if (m === 'aeolian' || m === 'minor') return 'aeolian';
+    if (m === 'dorian') return 'dorian';
+    if (m === 'mixolydian') return 'mixolydian';
+    return familyMode(normMode(mode));
+  }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
+  // Mode-honest short key label: 'A' (major), 'Am' (minor), 'A dorian' /
+  // 'G mixolydian' (modal). Used by the curation-queue rows; the Studio meta
+  // derives its own from studioTheory. Library/finder facet labels still
+  // coarsen modal modes - unifying them is queued in the UI-polish arc.
+  function keyLabelFor(key, mode) {
+    var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    if (m === 'minor' || m === 'aeolian') return key + 'm';
+    if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
+    return key;
+  }
+  // Circle source: window.Circle in the browser (classic scripts). Under Node
+  // the IIFE's `global` is this module's own exports object, so a test can
+  // never inject Circle there - fall back to a guarded require so the REAL
+  // studioTheory is drivable from test/tracks.test.js. No-op in the browser.
+  function circleRef() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./circle.js'); } catch (e) {}
+    }
+    return null;
+  }
+  // The Practice Studio's theory bundle for a key+mode: scale notes, pitch
+  // classes, degrees, diatonic chords, display label. Module-scope + exported
+  // so tests can drive the SAME function the Studio wiring calls (a direct
+  // resolveScaleMode test alone would let the openStudio path regress green).
+  // Returns null when Circle is absent or the key is unresolvable (callers
+  // fall back to the bare player / a YouTube search).
+  function studioTheory(key, mode) {
+    var C = circleRef(), k = normRoot(key), rp = rootIndex(k);
+    if (!C || rp < 0) return null;
+    var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
+    return {
+      key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
+      degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
+      label: shortMode(C.modeInfo(scaleMode).label)
+    };
+  }
 
   var STORE = 'bt.custom.v1';
   var URLSTORE = 'music.trackUrls.v1';   // { [trackKey]: videoId } overlay for curated tracks
+  // Catalog-key corrections change a track's trackKey() storage identity, which
+  // would orphan a curated url the user saved under the OLD key. Old -> new map,
+  // applied once when the overlay loads; an existing entry under the new key is
+  // never clobbered. Module-level + exported so the remap is testable.
+  var LEGACY_TRACKKEYS = {
+    'sample in a jar|phish|G|major': 'sample in a jar|phish|A|major',
+    // trackKey used to coarsen modal modes to 'major' - overlays saved for the
+    // 6 modal seed tracks re-key to their true-mode identity.
+    'grateful dead style mixolydian jam in g|search|G|major': 'grateful dead style mixolydian jam in g|search|G|mixolydian',
+    'southern rock mixolydian jam in e|search|E|major': 'southern rock mixolydian jam in e|search|E|mixolydian',
+    'sweet mixolydian jam in d|search|D|major': 'sweet mixolydian jam in d|search|D|mixolydian',
+    'santana dorian jam in e minor|search|E|major': 'santana dorian jam in e minor|search|E|dorian',
+    'carlos style dorian jam in a|search|A|major': 'carlos style dorian jam in a|search|A|dorian',
+    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian'
+  };
+  function migrateUrls(o) {
+    var changed = false;
+    Object.keys(LEGACY_TRACKKEYS).forEach(function (oldK) {
+      if (o[oldK] == null) return;
+      var newK = LEGACY_TRACKKEYS[oldK];
+      if (o[newK] == null) o[newK] = o[oldK];
+      delete o[oldK]; changed = true;
+    });
+    return changed;
+  }
   var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
   var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 
@@ -214,7 +300,12 @@
     }
     function saveCustom(a) { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} }
     function loadUrls() {
-      try { var s = localStorage.getItem(URLSTORE); var o = s ? JSON.parse(s) : {}; return (o && typeof o === 'object') ? o : {}; }
+      try {
+        var s = localStorage.getItem(URLSTORE); var o = s ? JSON.parse(s) : {};
+        o = (o && typeof o === 'object') ? o : {};
+        if (migrateUrls(o)) saveUrls(o); // re-key legacy overlays once, then persist
+        return o;
+      }
       catch (e) { return {}; }
     }
     function saveUrls(o) { try { localStorage.setItem(URLSTORE, JSON.stringify(o)); } catch (e) {} }
@@ -235,6 +326,9 @@
 
     function openSearch(q) { window.open(youtubeSearchUrl(q), '_blank', 'noopener'); }
     function openPlayer(t) {
+      // No video = nothing to embed: a bare iframe would load /embed/undefined.
+      // Send the player to a YouTube search for the track instead.
+      if (!t.yt) { openSearch(searchQuery(t)); return; }
       elPlayer.innerHTML =
         '<div class="bt-pl-box" role="dialog" aria-label="Player">'
         + '<div class="bt-pl-head"><span class="bt-pl-t">' + esc(t.title || '') + '</span>'
@@ -253,79 +347,132 @@
      * one tap away. Needs the instrument pack (for the fretboard + chord shapes);
      * without one we fall back to the bare player. The iframe never reloads as you
      * scroll the theory below it. */
-    function studioTheory(key, mode) {
-      var C = global.Circle, k = normRoot(key), rp = rootIndex(k);
-      if (!C || rp < 0) return null;
-      var scaleMode = familyMode(mode), notes = C.scale(k, scaleMode);
-      return {
-        key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
-        degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
-        label: shortMode(C.modeInfo(scaleMode).label)
-      };
+    // Maps the Studio's resolved circle.js scale-mode name (ionian/aeolian/dorian/
+    // mixolydian) to the lowercase major/minor/dorian/mixolydian vocabulary the
+    // "walk the cycle" deep-link params use (matching songbook.js's inversions link -
+    // triad-inversions.html doesn't read ?mode= yet, but the vocabulary stays
+    // consistent for whenever it does).
+    var SCALE_MODE_TO_RECORD_MODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian' };
+    // Deep-link to the same "Walk the full cycle up the neck" inversions page the
+    // Compose tab links (songbook.js), now surfaced from the Practice Studio too -
+    // carries the active instrument profile (so the page opens on the same fretboard)
+    // and the track's key/mode. Profile id comes from the page URL first (explicit),
+    // then the last-selected-profile fallback in localStorage; omitted if neither
+    // resolves (the page still works with just ?key=, defaulting its own profile).
+    function inversionsHref(th) {
+      var params = [];
+      try {
+        var qp = new URLSearchParams(location.search).get('p');
+        var pid = qp || localStorage.getItem('music.activeProfile.v1');
+        if (pid) params.push('p=' + encodeURIComponent(pid));
+      } catch (e) {}
+      if (th.key) params.push('key=' + encodeURIComponent(th.key));
+      var modeParam = SCALE_MODE_TO_RECORD_MODE[th.scaleMode];
+      if (modeParam) params.push('mode=' + encodeURIComponent(modeParam));
+      return 'triad-inversions.html' + (params.length ? '?' + params.join('&') : '');
     }
+    // studioTheory now lives at module scope (exported for tests) - see above.
     function buildWhy(box, th) {
       var C = global.Circle;
       var strip = th.notes.map(function (n, i) {
         return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(th.degrees[i]) + '</span></div>';
       }).join('');
-      // player-facing key name: "A minor" reads better than "A Aeolian"
-      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label;
+      // player-facing key name: "A minor" reads better than "A Aeolian"; modal
+      // colours (dorian/mixolydian) read as their own names ("A dorian").
+      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees — '
         + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
-          selected: { root: th.key, mode: th.scaleMode === 'aeolian' ? 'minor' : 'major' }
+          selected: { root: th.key, mode: normMode(th.scaleMode) }
         }));
       }
     }
     function openStudio(t) {
+      // Rehydrate from the merged track list BEFORE rendering: a bridge payload
+      // (songbook's "Solo over it") carries only the song record's yt, so a
+      // curated overlay url saved for the SAME track would be silently ignored
+      // on first open. Match by trackKey; a yt the payload already carries wins.
+      if (!t.yt) {
+        var hydrated = state.tracks.filter(function (x) { return trackKey(x) === trackKey(t); })[0];
+        if (hydrated && hydrated.yt) t = Object.assign({}, t, { yt: hydrated.yt, ytSource: hydrated.ytSource });
+      }
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
-      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
+      // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
+      // "G mixolydian" (modal). th.label is the mode name from circle.js.
+      var keyLabel = th.scaleMode === 'ionian' ? esc(th.key)
+        : th.scaleMode === 'aeolian' ? esc(th.key) + 'm'
+        : esc(th.key + ' ' + th.label.toLowerCase());
+      var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
+      // Whether this session's video is attachable determines the no-video hint
+      // wording below, so compute the seed-track check up front.
+      var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
       // Iframe when a curated yt id is present; otherwise a tap-to-search card.
       // The HUD (scale + chords + circle) stays in both cases - the harmony
-      // teacher is the point; the embedded player is convenience.
+      // teacher is the point; the embedded player is convenience. The hint's
+      // attach instruction matches what's actually rendered: seed tracks have
+      // the paste editor below, custom items attach via Edit, and an ephemeral
+      // session (no editor at all) gets no attach instruction.
+      var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
+        : isSeedTrack ? ' Paste the one you like below.'
+        : '';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
         : '<div class="bt-st-search">'
           + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">'
           + 'Watch on YouTube &#8599;</a>'
-          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match. Paste the one you like below. The HUD below works either way.</div>'
+          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
           + '</div>';
       // Add/edit-video-URL affordance. Custom user tracks/songs own their yt id
       // directly and are curated through the Add/Edit form now (Task 2, M2), not
       // an inline paste-box - so for t.custom we show a single plain link instead
       // (only when the host wired opts.onEditRequest; otherwise nothing renders,
-      // degrading gracefully). Curated (non-custom) seed tracks keep the original
-      // inline paste/clear editor unchanged.
+      // degrading gracefully). The inline paste/clear overlay editor is keyed by
+      // trackKey into the localStorage url overlay, so it only makes sense for a
+      // real CURATED seed track (one whose key resurfaces in the finder). An
+      // ephemeral studio session (e.g. Solo practice) has a trackKey in no
+      // catalog - pasting a url there writes an overlay entry that never
+      // resurfaces (silent data loss), so it gets NO url editor. Compose-flow
+      // sessions save-first to attach a video. (isSeedTrack computed above,
+      // where the no-video hint wording needs it.)
       var urlEditor = t.custom
         ? (opts.onEditRequest
           ? '<div class="bt-st-urled" data-urled>'
             + '<button class="bt-st-editlink" data-editrequest type="button">Edit this track to add a video</button>'
             + '</div>'
           : '')
-        : '<div class="bt-st-urled" data-urled>'
-        + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
-        + '<div class="bt-st-urled-row">'
-        + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
-        + '<button data-urlsave class="bt-st-urled-save" type="button">Save</button>'
-        + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
-        + '</div></div>';
+        : (isSeedTrack
+          ? '<div class="bt-st-urled" data-urled>'
+            + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
+            + '<div class="bt-st-urled-row">'
+            + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+            + '<button data-urlsave class="bt-st-urled-save" type="button">Save</button>'
+            + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
+            + '</div></div>'
+          : '');
+      // .bt-st-stage wraps the pinned header + video: one column in portrait,
+      // the left pane in the landscape two-pane split (CSS). Practice content
+      // (scale, chords) leads the scrollable body; the url-curation editor sits
+      // last, just above the "why" toggle - plumbing after the practice.
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
+        + '<div class="bt-st-stage">'
         + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + '<button class="bt-st-x" type="button">close</button></div>'
         + playerBlock
+        + '</div>'
         + '<div class="bt-st-body">'
-        + urlEditor
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · ' + esc(th.notes.join(' ')) + '</div>'
-        + '<div class="bt-st-scale" data-scale></div></div>'
+        + '<div class="bt-st-scale" data-scale></div>'
+        + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key — tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
+        + urlEditor
         + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes — the circle</button>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
@@ -428,7 +575,7 @@
     function queueRow(t) {
       var el = document.createElement('div');
       el.className = 'bt-qcard';
-      var meta = [esc(t.key) + (t.mode === 'minor' ? 'm' : ''), t.bpm ? esc(t.bpm) + ' bpm' : '', esc(t.genre || '')]
+      var meta = [esc(keyLabelFor(t.key, t.mode)), t.bpm ? esc(t.bpm) + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
       el.innerHTML =
         '<div class="bt-qrow"><span class="bt-qtitle">' + esc(t.title || '') + '</span>'
@@ -668,7 +815,8 @@
     searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
-    notesToPcs: notesToPcs, normMode: normMode, mount: mount,
+    notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
+    studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

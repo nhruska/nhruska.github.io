@@ -240,8 +240,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .strobe.sharp .strobeInner{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,transparent 10px 20px);opacity:.7;}
 .strobe.locked{border-color:var(--good);box-shadow:0 0 14px rgba(94,234,212,.45);}
 .strobe.locked .strobeInner{background:repeating-linear-gradient(90deg,var(--good) 0 10px,transparent 10px 20px);opacity:.9;}
-.strobeLbl{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-size:.54rem;
-  letter-spacing:.04em;color:var(--txt-dim);font-family:'Space Mono',monospace;pointer-events:none;}
+/* the caption sits ON TOP of the moving stripe pattern - a dark backdrop band
+   keeps it legible in stopped/drifting/locked states alike without touching
+   the stripe/status colours themselves (those stay fixed per the tuner-trust
+   rule; only the label's own readability changes here). */
+.strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
+  letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
+  padding:3px 4px 2px;background:rgba(13,15,18,.72);}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
@@ -415,6 +420,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x pan-y;}
 .scaleBox::-webkit-scrollbar{display:none;}
 .scaleBox svg{display:block;}
+/* Position-shift control (walk the scale up the neck): a single compact row under
+   the scale box, kept to one line per the one-screen rule - back/forward buttons
+   flank a small "frets N-M" readout. Buttons are >=42px so they're comfortably
+   tappable on phone; shown only when the pack supports startFret (see key-explorer.js). */
+.scaleBoxWrap{margin-bottom:2px;}
+.scalePosCtrl{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 10px;}
+.scalePosBtn{min-width:42px;min-height:42px;border:1px solid var(--line-strong);border-radius:10px;background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.95rem;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,transform .08s,opacity .15s;}
+.scalePosBtn:active{transform:scale(.94);}
+.scalePosBtn:disabled{opacity:.32;cursor:default;}
+.scalePosLbl{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--txt-dim);letter-spacing:.03em;min-width:76px;text-align:center;}
 /* HSR Chain - three cards across showing I-IV-V (or mode equivalent) using
    the same hand shape slid up the neck. The Roman numeral on each card makes
    the function explicit; the diagram below is via the adapter's diagramClosed
@@ -449,6 +464,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* progression box: built chords (#prog) on top; #suggest below carries the next-chord
    picks (non-empty) or the starter progressions (empty / "?" pressed). */
 .progBox{margin-bottom:8px;}
+/* Inline save UI (songbook.js: composeRow/composeToast) - replaces native
+   prompt()/alert()/confirm() in the save + solo-backing flows. Rendered on
+   demand right above the progression box; zero footprint until used. */
+.composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
+.composeRow[hidden]{display:none;}
+.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);font-family:inherit;font-size:.85rem;}
+.composeRowInput:focus{outline:none;border-color:var(--accent);}
+.composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
+.composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
+.composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
+.composeToast[hidden]{display:none;}
+.composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
 /* key/mode fly-out (roots + mode toggle + solo scale). The chip that opens it lives in
    the button bar now; this is just the drop-down, hidden by default (no row when closed). */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
@@ -518,7 +545,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTitle{font-weight:800;font-size:1.4rem;line-height:1.06;flex:0 0 auto;letter-spacing:-.02em;}
 .pArtist{font-size:.82rem;color:var(--txt-dim);margin:3px 0 7px;flex:0 0 auto;}
 .pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent);font-weight:700;margin-bottom:9px;flex:0 0 auto;}
-.pSheet{flex:1 1 auto;overflow-y:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
+/* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
+   the sheet within the viewport width itself, but manual font-size steps (A+/A-)
+   can still push a long unwrapped (white-space:pre) lyric line past the edge - let
+   it scroll rather than silently clip. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
+/* pInner shrink-wraps to its widest pre line so applyPerfFont's scrollWidth
+   measurement sees the CONTENT width. As a plain block it would fill pSheet,
+   pinning needW >= availW and silently blocking the short-song auto UPSCALE
+   (only downscales could ever fire). */
+.pSheet .pInner{width:max-content;}
 .pSheet::-webkit-scrollbar{width:0;}
 /* font-size scales with --pscale (perform Size control / auto-fit) */
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}

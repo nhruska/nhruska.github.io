@@ -429,7 +429,7 @@
       });
       return best ? [voicingFor(names[0]), best.IV, best.V] : null;
     }
-    return {
+    var adapter = {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
       diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
@@ -440,9 +440,12 @@
       },
       // scale map for the active instrument: open-string pitch classes + the scale's
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).
-      scaleDiagram: function (rootPc, scalePcs, frets) {
+      // startFret (optional) slides the window up the neck - see scaleDiagram.supportsStart
+      // below, which is how KeyExplorer.renderScale feature-detects this before offering
+      // the position-shift control.
+      scaleDiagram: function (rootPc, scalePcs, frets, startFret) {
         var openPcs = profile.strings.map(function (s) { return freqPc(s.f); });
-        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7 });
+        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0 });
       },
       playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
       playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },
@@ -453,6 +456,12 @@
         var q = el('quickTune'); if (q) q.onclick = function () { engine.switchTab('tune'); };
       }
     };
+    // Feature flag KeyExplorer.renderScale checks before offering the position-shift
+    // control - a pack that doesn't set this (none exist today, but future ones might)
+    // degrades cleanly: renderScale still renders the frets-0-7 diagram, just without
+    // the up/down buttons.
+    adapter.scaleDiagram.supportsStart = true;
+    return adapter;
   }
 
   function loadScript(src) {
