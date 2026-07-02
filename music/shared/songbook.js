@@ -185,8 +185,24 @@
     });
     return out.join('');
   }
+  // Lyrics with the [chord] tokens stripped - the sing-along view. Lines that
+  // were pure chord calls (all tokens, no words) vanish rather than leaving
+  // blank rows.
+  function renderLyricsOnly(sheet) {
+    var out = [], last = null;
+    sheet.forEach(function (pair) {
+      var sect = pair[0], line = pair[1];
+      if (sect && sect !== last) { out.push('<div class="sect">' + sect + '</div>'); last = sect; }
+      var lyr = line.replace(/\[([^\]]+)\]/g, '').replace(/[ ]{2,}/g, ' ');
+      if (lyr.trim().length) out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>');
+    });
+    return out.join('');
+  }
+  // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
+  // 'both' (default) = chords positioned over lyrics.
   function renderSheet(song, st, view) {
     if (view === 'chords') return renderChordOnly(song.sheet, st);
+    if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
@@ -249,6 +265,32 @@
     };
   }
 
+  // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
+  // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
+  // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
+  // - tpose and the key readout are pitch-class based). Tries up to the 11 other
+  // pitch classes in tap direction, skipping unplayable ones; null when nothing
+  // else is playable (caller no-ops, matching the old stuck-at-end behavior).
+  // Pure + Node-testable; `playable` is the caller's seqPlayable predicate.
+  function nextTranspose(cur, dir, playable) {
+    for (var n = 1; n <= 11; n++) {
+      var cand = cur + dir * n;
+      while (cand > 6) cand -= 12;
+      while (cand <= -6) cand += 12;
+      if (playable(cand)) return cand;
+    }
+    return null;
+  }
+
+  // YouTube search URL for a repertoire/song record - the query the ytSearch
+  // action opens. Pure + Node-testable; shared by the list-item action ladder
+  // and the song-view "Hear it on YouTube" link.
+  function ytSearchURL(s) {
+    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
+      .filter(Boolean).join(' ');
+    return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
   /* =====================================================================
    * Songbook.mount(opts)
    *
@@ -271,7 +313,7 @@
    *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pSpeedR, pSpeedV, pCtrls,
-   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords,
+   *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
    *     // compose (optional; needs a chord pack for diagrams/audio)
    *     prog, suggest, catChips, buildGrid, cClear, cSave, cMax, cTup, cTdown, keyChipSlot,
    *     // maximize overlay (chord pack diagrams)
@@ -372,15 +414,26 @@
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
     // perform-screen prefs (scroll speed, view, font size), remembered per device.
-    var PERF_KEY = prefix + ".perfprefs.v1";
-    function loadPerfPrefs() { try { var r = localStorage.getItem(PERF_KEY); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } }
+    // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
+    // chords-over-lyrics, which is now called 'both' - migrate it as such.
+    var PERF_KEY = prefix + ".perfprefs.v2";
+    var PERF_KEY_V1 = prefix + ".perfprefs.v1";
+    function loadPerfPrefs() {
+      try {
+        var r = localStorage.getItem(PERF_KEY);
+        if (r) return JSON.parse(r);
+        var v1 = localStorage.getItem(PERF_KEY_V1);
+        if (v1) { var p = JSON.parse(v1); if (p.view === 'lyrics') p.view = 'both'; return p; }
+        return {};
+      } catch (e) { return {}; }
+    }
     function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: STATE.performView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
-      performView: (_pp.view === 'chords' ? 'chords' : 'lyrics'),
+      performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
       fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
@@ -444,9 +497,7 @@
     }
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
-      var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-        .filter(Boolean).join(' ');
-      window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
+      window.open(ytSearchURL(s), '_blank', 'noopener');
     }
     // Where a repertoire tap lands (approach A): a chord sheet opens the song screen
     // (openPractice); a pure backing track opens the Practice Studio (solo scale +
@@ -508,16 +559,25 @@
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
 
-    /* ===================== SONG (modes: Practice / Stage) ===================== */
-    // A song opens in the merged Practice view (chords + lyrics, or chords-only via
-    // the inline toggle). Stage is a one-shot action — it launches the fullscreen
+    /* ===================== SONG (views: Lyrics / Chords / Both + Stage) ===================== */
+    // A song opens in one of three sheet views - Lyrics (sing-along), Chords
+    // (campfire bars) or Both (chords over lyrics, the default) - picked via the
+    // segmented control. Stage is a one-shot action - it launches the fullscreen
     // perform overlay over whichever view you're on, but is never persisted as the
     // default-open mode (otherwise every song-tap would trap you in fullscreen with
     // no way back to the chords).
-    var CHORDVIEW_KEY = prefix + ".chordsonly.v1";
-    function loadChordsOnly() { try { return localStorage.getItem(CHORDVIEW_KEY) === '1'; } catch (e) { return false; } }
-    function saveChordsOnly(v) { try { localStorage.setItem(CHORDVIEW_KEY, v ? '1' : '0'); } catch (e) { } }
-    STATE.chordsOnly = loadChordsOnly();
+    var SONGVIEW_KEY = prefix + ".songview.v1";
+    var CHORDVIEW_KEY = prefix + ".chordsonly.v1"; // legacy 2-way toggle - migration source only
+    function loadSongView() {
+      try {
+        var v = localStorage.getItem(SONGVIEW_KEY);
+        if (v === 'lyrics' || v === 'chords' || v === 'both') return v;
+        // legacy: chords-only '1' maps to Chords; the old Practice view was chords-over-lyrics = Both
+        return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
+      } catch (e) { return 'both'; }
+    }
+    function saveSongView(v) { try { localStorage.setItem(SONGVIEW_KEY, v); } catch (e) { } }
+    STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
@@ -548,8 +608,10 @@
       renderPractice(); // refresh the queue-nav position (n / N) for the new order
     }
     function setMode(m) {
-      // Stage performs the live queue from the current position (one-shot; not sticky)
-      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0); return; }
+      // Stage performs the live queue from the current position (one-shot; not sticky).
+      // Seed the overlay with the song view's transpose so Stage opens in the key
+      // you were just practicing in, not the original (UAT item 8).
+      if (m === 'stage') { if (STATE.current) startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose); return; }
     }
 
     function renderPractice() {
@@ -572,7 +634,9 @@
       el.practiceBody.style.display = 'block';
       var seq = s.seq.map(function (c) { return tpose(c, STATE.transpose); });
       var inSet = STATE.setlist.indexOf(s.id) >= 0;
-      var chordsOnly = !!STATE.chordsOnly;
+      // Custom (composed) sheets are chord calls with no lyric text - Lyrics/Both
+      // would render empty, so the view is pinned to Chords for them.
+      var view = s.custom ? 'chords' : STATE.songView;
       var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
       // setlist checkmark toggle (top-right, alongside the maximize icon when
@@ -584,17 +648,19 @@
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + maxBtn
         + '</div></div>';
-      // mode row: 2-way switch (Practice / chords-only toggle) + compact transpose
-      // chip, in the same row — plus a clearly-labeled Stage CTA (a distinct button,
-      // not a third switch tab, per Nik's "make fullscreen entry more discoverable").
+      // view row: Lyrics / Chords / Both segmented + compact transpose chip +
+      // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
+      // locked decision - replaces the full-width Stage CTA).
+      function segBtn(v, lbl) {
+        var dis = s.custom && v !== 'chords';
+        return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
+          + (dis ? ' disabled' : '') + ' aria-pressed="' + (view === v ? 'true' : 'false') + '">' + lbl + '</button>';
+      }
       var switcher = '<div class="practiceRow">'
-        + '<div class="modeSwitch">'
-        + '<button data-m="full" class="' + (!chordsOnly ? 'on' : '') + '">Practice</button>'
-        + '<button data-m="chords" class="' + (chordsOnly ? 'on' : '') + '">Chords only</button>'
-        + '</div>'
+        + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + seq[0] + '</span><button id="tUp" title="Transpose up">+</button></div>'
-        + '</div>'
-        + '<button class="stageCta" id="stageBtn" title="Perform fullscreen"><span class="stageIcon" aria-hidden="true">⛶</span> Stage · Perform fullscreen</button>';
+        + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
+        + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
@@ -614,16 +680,22 @@
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
       var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
       var actions = '<div class="actions">' + soloBtn + '</div>';
+      // Hear the real recording: same YouTube search the list-item action ladder
+      // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
+      // not the sheet).
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
       var body;
-      if (chordsOnly) {
+      if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
-          + actions;
+          + actions
+          + ytLink;
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, s.custom ? 'chords' : 'lyrics') + '</div>'
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
           + actions
+          + ytLink
           + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
@@ -631,7 +703,7 @@
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
-        b.onclick = function () { STATE.chordsOnly = (b.dataset.m === 'chords'); saveChordsOnly(STATE.chordsOnly); renderPractice(); };
+        b.onclick = function () { if (b.disabled) return; STATE.songView = b.dataset.v; saveSongView(STATE.songView); renderPractice(); };
       });
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
@@ -681,12 +753,8 @@
       }
     }
     function shiftKey(dir) {
-      var cur = STATE.transpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(STATE.current.seq, cand)) { STATE.transpose = cand; renderPractice(); return; }
-      }
+      var cand = nextTranspose(STATE.transpose, dir, function (st) { return seqPlayable(STATE.current.seq, st); });
+      if (cand !== null) { STATE.transpose = cand; renderPractice(); }
     }
 
     /* ===================== MAXIMIZE (chord pack diagrams) ===================== */
@@ -783,11 +851,13 @@
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
-    // single song straight from Practice / the "Play now" hero).
-    function startPerform(ids, startIdx) {
+    // single song straight from Practice / the "Play now" hero). seedTpose carries
+    // the song view's transpose into the opening song (absent = original key);
+    // prev/next still reset to 0 per song, as before.
+    function startPerform(ids, startIdx, seedTpose) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
-      STATE.performDim = false; STATE.performTpose = 0;
+      STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
@@ -805,10 +875,11 @@
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
     if (el.pDimBtn) el.pDimBtn.onclick = function () { STATE.performDim = !STATE.performDim; if (performEl) performEl.classList.toggle('dim', STATE.performDim); };
-    // stage controls panel (scroll speed + font size + lyrics/chords view)
+    // stage controls panel (scroll speed + font size + lyrics/chords/both view)
     if (el.pCtrls) el.pCtrls.onclick = function () { STATE.ctrlsOpen = !STATE.ctrlsOpen; if (el.pSpeed) el.pSpeed.classList.toggle('on', STATE.ctrlsOpen || STATE.scrolling); };
     if (el.pViewLyrics) el.pViewLyrics.onclick = function () { setPerformView('lyrics'); };
     if (el.pViewChords) el.pViewChords.onclick = function () { setPerformView('chords'); };
+    if (el.pViewBoth) el.pViewBoth.onclick = function () { setPerformView('both'); };
     if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
     if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; applyPerfFont(); updateStageBtns(); savePerfPrefs(); };
@@ -833,15 +904,12 @@
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
       if (el.pViewLyrics) el.pViewLyrics.classList.toggle('on', STATE.performView === 'lyrics');
       if (el.pViewChords) el.pViewChords.classList.toggle('on', STATE.performView === 'chords');
+      if (el.pViewBoth) el.pViewBoth.classList.toggle('on', STATE.performView === 'both');
     }
     function perfShift(dir) {
       var s = songById(QUEUE.current());
-      var cur = STATE.performTpose;
-      for (var n = 1; n <= 6; n++) {
-        var cand = cur + dir * n;
-        if (Math.abs(cand) > 6) break;
-        if (seqPlayable(s.seq, cand)) { STATE.performTpose = cand; showPerform(); return; }
-      }
+      var cand = nextTranspose(STATE.performTpose, dir, function (st) { return seqPlayable(s.seq, st); });
+      if (cand !== null) { STATE.performTpose = cand; showPerform(); }
     }
     function showPerform() {
       var s = songById(QUEUE.current());
@@ -1817,6 +1885,8 @@
     isMine: isMine,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
+    ytSearchURL: ytSearchURL,
+    nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,

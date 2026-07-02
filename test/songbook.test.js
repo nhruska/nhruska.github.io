@@ -188,4 +188,72 @@ test('libraryEmptyState with no key filter keeps the plain message, no link', fu
     { message: 'Nothing in your repertoire matches.', clearKey: false });
 });
 
+/* ---------- renderSheet tri-view: lyrics / chords / both ---------- */
+var triSong = { sheet: [["Verse", "[C]Hello [G]world"], ["", "[Am]  [F]"]] };
+test('renderSheet both (default) positions chords over lyrics', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'both');
+  assert.ok(html.indexOf('class="crd"') >= 0, 'chord row expected');
+  assert.ok(html.indexOf('Hello') >= 0 && html.indexOf('world') >= 0, 'lyric text expected');
+  // legacy/default fallthrough: any unknown view token renders the combined sheet
+  assert.strictEqual(Songbook.renderSheet(triSong, 0, undefined), html);
+});
+test('renderSheet lyrics strips chord tokens and drops pure-chord lines', function () {
+  var html = Songbook.renderSheet(triSong, 0, 'lyrics');
+  assert.ok(html.indexOf('Hello world') >= 0, 'lyric text expected without token gaps');
+  assert.strictEqual(html.indexOf('class="crd"'), -1, 'no chord row in lyrics view');
+  assert.strictEqual(html.indexOf('Am'), -1, 'pure-chord line must vanish');
+  assert.ok(html.indexOf('Verse') >= 0, 'section headers stay');
+});
+test('renderSheet chords stays the campfire chord-bar view (transposed)', function () {
+  var html = Songbook.renderSheet(triSong, 2, 'chords');
+  assert.ok(html.indexOf('>D<') >= 0 && html.indexOf('>Bm<') >= 0, 'bars transpose (+2: C->D, Am->Bm)');
+  assert.strictEqual(html.indexOf('Hello'), -1, 'no lyric text in chords view');
+});
+
+/* ---------- nextTranspose: transpose steps wrap at the range ends ---------- */
+function always() { return true; }
+test('nextTranspose steps by one semitone inside the range', function () {
+  assert.strictEqual(Songbook.nextTranspose(0, 1, always), 1);
+  assert.strictEqual(Songbook.nextTranspose(0, -1, always), -1);
+  assert.strictEqual(Songbook.nextTranspose(3, 1, always), 4);
+});
+test('nextTranspose wraps at the top: +6 then + lands on -5 (same cycle, keeps going)', function () {
+  assert.strictEqual(Songbook.nextTranspose(6, 1, always), -5);
+});
+test('nextTranspose wraps at the bottom: -5 then - lands on +6 (-6 normalizes to its enharmonic +6)', function () {
+  assert.strictEqual(Songbook.nextTranspose(-5, -1, always), 6);
+  assert.strictEqual(Songbook.nextTranspose(6, -1, always), 5); // and back down the far side
+});
+test('nextTranspose cycles through ALL 12 keys on repeated + taps', function () {
+  var seen = {}, cur = 0;
+  for (var i = 0; i < 12; i++) { seen[cur] = true; cur = Songbook.nextTranspose(cur, 1, always); }
+  assert.strictEqual(Object.keys(seen).length, 12, 'twelve distinct transposes before repeating');
+  assert.strictEqual(cur, 0, 'thirteenth tap is back where we started');
+});
+test('nextTranspose skips unplayable candidates ACROSS the wrap boundary', function () {
+  // at +5, everything from +6 through -3 unvoiceable -> the next + must land on -2
+  var playable = function (st) { return st === -2 || st === 5; };
+  assert.strictEqual(Songbook.nextTranspose(5, 1, playable), -2);
+});
+test('nextTranspose returns null when no other transpose is playable (caller no-ops)', function () {
+  assert.strictEqual(Songbook.nextTranspose(2, 1, function (st) { return st === 2; }), null);
+  assert.strictEqual(Songbook.nextTranspose(0, 1, function () { return false; }), null);
+});
+
+/* ---------- ytSearchURL: the song-view "Hear it on YouTube" link ---------- */
+test('ytSearchURL builds title + artist + key into one encoded query', function () {
+  var url = Songbook.ytSearchURL({ t: 'Hey Jude', a: 'The Beatles', key: 'F' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Hey Jude The Beatles F key'));
+});
+test('ytSearchURL accepts long-form fields and skips the missing ones', function () {
+  var url = Songbook.ytSearchURL({ title: 'Jolene', artist: 'Dolly Parton' });
+  assert.strictEqual(url, 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Jolene Dolly Parton'));
+});
+test('ytSearchURL encodes attribute-hostile characters so the double-quoted href cannot break out', function () {
+  var url = Songbook.ytSearchURL({ t: 'Me & You "live"', a: 'X<Y' });
+  assert.strictEqual(url.split('?')[1].indexOf('&'), -1, 'raw & must not survive into the query');
+  assert.strictEqual(url.indexOf('"'), -1, 'raw double quote must not survive');
+  assert.strictEqual(url.indexOf('<'), -1, 'raw < must not survive');
+});
+
 run();
