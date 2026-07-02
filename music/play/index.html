@@ -112,7 +112,9 @@
                the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
                toggle (#keyModes), and the key title + Triads & Inversions link
                (#keyView; the solo scale + HSR moved to the Studio). The In-key|All toggle
-               (#catChips) sits below, still in the fixed region. -->
+               (#catChips) sits below in the fixed region, but is HIDDEN together
+               with the chord list whenever this fly-out is open (.composeWrap.keyOpen)
+               so Compose needs no vertical scroll. -->
           <div class="keyFlyout" id="keyFlyout" hidden>
             <div class="keyRoots" id="keyRoots"></div>
             <div class="chips keyModes" id="keyModes"></div>
@@ -179,8 +181,8 @@
   <div class="pKey" id="pKeyLine"></div>
   <div class="pSheet" id="pSheet"></div>
   <div class="pSpeed" id="pSpeed">
-    <div class="psRow"><label>Size</label><div class="psBtns"><button class="psBtn" id="pFontDown">A−</button><button class="psBtn" id="pFontAuto">Auto</button><button class="psBtn" id="pFontUp">A+</button></div></div>
     <div class="psRow"><label>View</label><div class="psBtns"><button class="psBtn" id="pViewLyrics">Lyrics</button><button class="psBtn" id="pViewChords">Chords</button><button class="psBtn" id="pViewBoth">Both</button></div></div>
+    <div class="psRow"><label>Size</label><div class="psBtns"><button class="psBtn" id="pFontDown">A−</button><button class="psBtn" id="pFontAuto">Auto</button><button class="psBtn" id="pFontUp">A+</button></div></div>
   </div>
   <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
 </div>

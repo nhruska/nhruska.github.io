@@ -465,7 +465,8 @@
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
     function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
-    // perform-screen prefs (scroll speed, view, font size), remembered per device.
+    // perform-screen prefs (scroll speed + view), remembered per device. Font
+    // size is NOT persisted - Stage force-opens auto every time (UAT r3).
     // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
     // chords-over-lyrics, which is now called 'both' - migrate it as such.
     var PERF_KEY = prefix + ".perfprefs.v2";
@@ -486,15 +487,18 @@
     // would let staging one custom song (forced 'chords') leak into every later
     // setlist Perform. (Assigned just after STATE is built, below.)
     var stageDefaultView;
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, size: STATE.fontMode === 'auto' ? 'auto' : STATE.fontScale })); } catch (e) { } }
+    // NOTE: font size is intentionally NOT persisted - Stage force-defaults to
+    // auto on every open (UAT r3), so a cross-reload size would be dead. Manual
+    // A-/A+ still holds in STATE within a Stage session (across prev/next).
+    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); } catch (e) { } }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
       setEditMode: false, lastRemoved: null, // set-edit mode gates reorder/remove; lastRemoved enables undo
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
-      fontMode: (typeof _pp.size === 'number' ? 'manual' : 'auto'),
-      fontScale: (typeof _pp.size === 'number' ? _pp.size : 1), ctrlsOpen: false,
+      fontMode: 'auto', // Stage always opens auto-fit (size not persisted; see savePerfPrefs)
+      fontScale: 1, ctrlsOpen: false,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
     };
     STATE.setlist = loadSet();
@@ -948,6 +952,11 @@
       if (seedView === 'lyrics' || seedView === 'chords' || seedView === 'both') {
         STATE.performView = seedView;
       }
+      // Default to auto-fit font on every Stage open (UAT r3) - a manual A-/A+
+      // size set in one song shouldn't carry into the next open. Reset the stale
+      // scale too, so the first A-/A+ after opening steps from the neutral base
+      // (auto re-measures immediately, so the 1 is only the manual-step anchor).
+      STATE.fontMode = 'auto'; STATE.fontScale = 1;
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
@@ -1424,6 +1433,12 @@
       }
       // The fly-out (roots + mode toggle + Triads & Inversions link) opens/closes with the chip.
       if (el.keyFlyout) el.keyFlyout.hidden = !keyPopoverOpen;
+      // Picking a key and picking chords are mutually exclusive - hide the chord
+      // picker (In-key/All toggle + chord list + solo-backing CTA) while the
+      // key/mode fly-out is open, so the fly-out uses that freed height and the
+      // Compose tab fits with no vertical scroll.
+      var cwrap = el.keyFlyout && el.keyFlyout.closest ? el.keyFlyout.closest('.composeWrap') : null;
+      if (cwrap) cwrap.classList.toggle('keyOpen', keyPopoverOpen);
       // Root grid is always visible INSIDE the fly-out now (no separate popover).
       el.keyRoots.hidden = false;
       el.keyRoots.innerHTML = '';
