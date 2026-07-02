@@ -106,4 +106,11 @@ test('pack WITHOUT supportsStart: classic 3-arg call, no control rendered', func
   assert.strictEqual(findByClass(boxWrap, 'scalePosCtrl'), null, 'no position control without the flag');
 });
 
+test('the SHIPPED adapter declares supportsStart (source contract - fake packs alone would let its removal ship green)', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '../music/play/index.html'), 'utf8');
+  assert.ok(/adapter\.scaleDiagram\.supportsStart\s*=\s*true/.test(src),
+    'music/play/index.html no longer sets scaleDiagram.supportsStart - the position control would silently vanish app-wide');
+});
+
 run();

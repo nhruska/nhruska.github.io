@@ -174,8 +174,10 @@
     return familyMode(normMode(mode));
   }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
-  // Mode-honest short key label used everywhere a track's key renders as text:
-  // 'A' (major), 'Am' (minor), 'A dorian' / 'G mixolydian' (modal).
+  // Mode-honest short key label: 'A' (major), 'Am' (minor), 'A dorian' /
+  // 'G mixolydian' (modal). Used by the curation-queue rows; the Studio meta
+  // derives its own from studioTheory. Library/finder facet labels still
+  // coarsen modal modes - unifying them is queued in the UI-polish arc.
   function keyLabelFor(key, mode) {
     var m = String(mode == null ? '' : mode).trim().toLowerCase();
     if (m === 'minor' || m === 'aeolian') return key + 'm';

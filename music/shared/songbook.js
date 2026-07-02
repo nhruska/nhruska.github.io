@@ -641,10 +641,17 @@
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
+        // Re-resolve the merged record at CLICK time: the tracks catalog loads
+        // async, so the merged key/mode (and its curated video) may not have
+        // existed when this view rendered - a fast Solo tap must not be stuck
+        // with the render-time snapshot.
+        var mr = null;
+        for (var mi = 0; mi < REPERTOIRE.length; mi++) { if (REPERTOIRE[mi].id === s.id) { mr = REPERTOIRE[mi]; break; } }
+        var sk = soloKeyFor((mr && mr.key && mr.mode) ? mr : s, seq, STATE.transpose);
         // Locked interface: no `custom:true` for a catalog song (it isn't a saved
         // custom item, so there's nothing for the Studio's "Edit this track" link
         // to look up). Custom songs keep the exact payload shape they always had.
-        var payload = { id: s.id, title: s.t, artist: s.a, key: soloKey.key, mode: soloKey.mode, yt: (csv && csv.yt) || s.yt || null };
+        var payload = { id: s.id, title: s.t, artist: s.a, key: sk.key, mode: sk.mode, yt: (csv && csv.yt) || (mr && mr.yt) || s.yt || null };
         if (s.custom) payload.custom = true;
         openStudioCb(payload);
       };

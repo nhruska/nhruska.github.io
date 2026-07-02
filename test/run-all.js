@@ -13,17 +13,19 @@ if (files.length === 0) {
   console.error('run-all: no *.test.js files discovered in ' + dir);
   process.exit(1);
 }
-var failedFiles = 0, totalLine = [];
+var failedFiles = 0;
 
 files.forEach(function (f) {
   var r = cp.spawnSync(process.execPath, [path.join(dir, f)], { encoding: 'utf8' });
   var out = (r.stdout || '').trim();
   var last = out.split('\n').pop() || '(no output)';
-  var ok = r.status === 0;
+  // A true spawn failure yields status null (never 0), so it already counts
+  // as FAIL; surfacing r.error keeps the cause visible in CI logs.
+  var ok = r.status === 0 && !r.error;
   console.log((ok ? 'PASS  ' : 'FAIL  ') + f + '  - ' + last);
-  totalLine.push(f + ': ' + last);
   if (!ok) {
     failedFiles++;
+    if (r.error) console.log('spawn error: ' + r.error);
     // Surface the failing file's full output so CI logs show the assertion.
     console.log(out);
     if (r.stderr) console.log(r.stderr);
