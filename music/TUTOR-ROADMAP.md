@@ -37,6 +37,8 @@ A standalone, unlinked sandbox at `music/tutor/` explores what a persona/chat-st
 
 **Wave 2 (`music/TUTOR-CHALLENGES-CHECKLIST.md`):** the tutor now genuinely *acts*, not just talks - `mini-compose.js` (a tutor-owned practice-widget state machine, reusing `Circle.diatonic`/`Songbook.tpose` so the theory matches the real app exactly) exposes reducers (`setKey`, `buildProgression`, `addChord`, `transpose`, `selectTrack`) that both a scripted AI demo and the human's taps drive through the same code path. `challenges.js` scripts 2 microlearning scenarios (build I-IV-V, then ii-V-I) - the AI demos the move on the widget, hands control to you, checks your answer against the roman-numeral shape (order-sensitive, key-agnostic), and gives pass/fail feedback. Still a tutor-owned mini clone, not the real Compose/Tracks (interviewed 2026-07-02: real-app control would need a new public API on `songbook.js`/`tracks.js`, deliberately deferred) and still scripted, no live LLM.
 
+**Wave 3 (`music/TUTOR-SOLOING-CHALLENGES-CHECKLIST.md`):** graduates from "how to build a progression" to "using what you built." Adds a `reinterpretKey` reducer (same-progression, new key/mode lens - unlike `setKey`'s fresh-start clear) and 4 `'identify'`-kind challenges answered via multiple-choice quick-replies: solo over your progression, transpose and solo again, solo over a (mocked) backing track, swap to the relative minor and solo again. Every challenge now ends with a shared reflection check-in ("how did that feel - clicked, shape-not-why, or still fuzzy"). Still mocked backing tracks (no real YouTube/network), still scripted.
+
 ## Theory primitives the tutor teaches
 
 - **Parallel vs relative.** Parallel (C major <-> C minor): same home note, different notes, chord qualities flip (I-IV-V -> i-iv-v). Relative (C major <-> A minor): same 7 notes, different home - why A-minor and C-major scales both solo over a C-major progression.
@@ -48,6 +50,25 @@ A standalone, unlinked sandbox at `music/tutor/` explores what a persona/chat-st
 - **Build grid** ("all chords"): chromatic, key-independent. The All segment of the In-key|All toggle; renders in the scrolling chord list (Phase 1).
 - **In-key chord list**: diatonic to key + mode. The In-key segment of the toggle; renders in the scrolling chord list (Phase 1).
 - **Solo scale + HSR I-IV-V chain + "Walk the full cycle" inversions link**: teaching content, now inside the key/mode chip's fly-out (below the roots + mode toggle); carries `?key=`/`?mode=` to the inversions page. Feeds Phases 3-4.
+
+## What Phase 5 (song-form coaching) would need - discovery notes, 2026-07-02
+
+Not built - scoping only, per this session's direction: lock the soloing curriculum first (wave 3), then move this way. Captured now so the shape is grounded when we do.
+
+**The feature, concretely:** a song = an ordered list of **sections** (intro/verse/chorus/bridge/outro/...), each with its own progression (today's single-progression model, repeated per section). The new problem Phase 5 actually introduces isn't "more progressions" - it's **judging whether the transition from one section's last chord to the next section's first chord is pleasing** (a smooth pivot) or jarring, and helping pick a next-section key/progression that reads as intentional rather than random.
+
+**Data model:** `Song = { sections: [{ label, key, mode, progression, bars? }] }`. Whether `bars`/timing is needed depends on whether Phase 5 cares about section LENGTH (probably eventually, not necessarily for a v1 that's purely chord-transition coaching).
+
+**Transition-quality heuristic - the actual new theory needed, buildable from what's already in `Circle.js`:**
+- **Circle-of-fifths distance** between section A's key and section B's key (`Circle.position` gives each key a 0-11 slot on the wheel already) - a small distance reads as a smooth modulation, a large one as a jump. Cheap, reuses existing code, no new theory to author.
+- **Common-tone / pivot-chord check** - intersect `Circle.diatonic(keyA, modeA)` and `Circle.diatonic(keyB, modeB)`'s chord sets; a shared chord is a valid pivot (classic common-chord modulation) and names an actual "use THIS chord to bridge" suggestion, not just a smooth/jarring verdict.
+- **Direct relationship check** - is B's key the dominant, subdominant, or relative of A's key? `Circle.neighbors(keyA, modeA)` already returns exactly this list with human-readable "why" strings - directly reusable as the explanation text for a "why this transition works" callout.
+
+**UI shape (sketch, not committed):** a vertical list of section cards, each rendering through the SAME mini-compose widget wave 2/3 already built (one widget instance per section, not a new component) - with a transition indicator between adjacent cards (color-coded by the heuristic above, or naming a suggested pivot chord).
+
+**Reuse inventory (why this is a smaller lift than it sounds):** `Circle.js` (distance/pivot/neighbors - no new theory functions needed, just new callers), `mini-compose.js` (becomes an array of per-section states instead of one), `challenges.js`'s pattern (a "pick a pleasing next-section key" challenge is a natural `'identify'`-kind extension once the heuristic exists).
+
+**Where this lands:** if it graduates past this sandbox, it's a genuinely new feature on the real Compose (multi-section song builder), which is exactly what Phase 5 already names as PLANNED on the curriculum table above - this discovery pass is effectively becoming that phase's spec.
 
 ## Open follow-ups
 

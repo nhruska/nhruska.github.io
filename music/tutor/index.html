@@ -47,6 +47,7 @@ body{display:flex;flex-direction:column;max-width:560px;margin:0 auto;height:100
 .quickReplies{display:flex;flex-wrap:wrap;gap:7px;align-self:flex-start;max-width:92%;margin-top:2px}
 .qr{background:var(--surface-2);color:var(--accent);border:1px solid var(--accent-dim);border-radius:20px;padding:8px 13px;font-size:.78rem;font-weight:600;cursor:pointer}
 .qr:active{background:var(--accent-deep);transform:scale(.97)}
+.qr:disabled{opacity:.35;cursor:default}
 
 /* ---- practice widget (wave 2: the AI actually manipulates this) ---- */
 .widget{border-bottom:1px solid var(--line);background:var(--bg-2);padding:12px 14px;display:flex;flex-direction:column;gap:9px}
@@ -223,6 +224,19 @@ function appendMessage(role, text) {
   return el;
 }
 
+// Quick-reply rows are chat HISTORY - they never get removed, they just
+// accumulate turn after turn. With only 2 challenges (wave 2) an identically
+// labeled button like "Next challenge" only ever existed once in a session,
+// so this was invisible. With 6 challenges, several "Next challenge" rows
+// can be live in the DOM simultaneously; without disabling a used row, a
+// tap on an OLD one (visible on scroll-back) silently replays a stale
+// challenge instead of advancing. Once any button in a group is used,
+// disable every button in THAT group - it stays visible as history, but is
+// no longer actionable.
+function disableGroup(wrap) {
+  wrap.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+}
+
 function appendQuickReplies(options) {
   if (!options || !options.length) return;
   var wrap = document.createElement('div');
@@ -230,7 +244,30 @@ function appendQuickReplies(options) {
   options.forEach(function (label) {
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'qr'; b.textContent = label;
-    b.addEventListener('click', function () { send(label); });
+    b.addEventListener('click', function () { disableGroup(wrap); send(label); });
+    wrap.appendChild(b);
+  });
+  thread.appendChild(wrap);
+  scrollToEnd();
+}
+
+// Like appendQuickReplies, but each button carries its OWN click handler
+// (onPick(item)) instead of routing through send()'s free-chat provider.
+// Used for anything that controls challenge-flow state directly (scale
+// answers, "Next challenge", reflection picks) - avoids the fragile pattern
+// of trying to keyword-match control labels against the free-chat trigger.
+function appendChoiceReplies(items, onPick) {
+  if (!items || !items.length) return;
+  var wrap = document.createElement('div');
+  wrap.className = 'quickReplies';
+  items.forEach(function (item) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'qr'; b.textContent = item.label;
+    b.addEventListener('click', function () {
+      disableGroup(wrap);
+      appendMessage('user', item.label);
+      onPick(item);
+    });
     wrap.appendChild(b);
   });
   thread.appendChild(wrap);
@@ -331,11 +368,16 @@ function pulseKeyChip() {
 
 // Applies one demo action (as emitted by a challenge's demoActions()) to the
 // widget state through the SAME mini-compose reducers the human's taps use.
+// 'highlight' (and any unrecognized type) is a visual-only beat: no state
+// change, just a pulse, so a challenge can pause for emphasis without
+// pretending to have acted on the widget.
 function applyDemoAction(action) {
   if (action.type === 'clearProgression') widgetState = MiniCompose.clearProgression(widgetState);
   else if (action.type === 'addChord') widgetState = MiniCompose.addChord(widgetState, action.chord);
   else if (action.type === 'setKey') widgetState = MiniCompose.setKey(widgetState, action.root, action.mode);
+  else if (action.type === 'reinterpretKey') widgetState = MiniCompose.reinterpretKey(widgetState, action.root, action.mode);
   else if (action.type === 'transpose') widgetState = MiniCompose.transpose(widgetState, action.semitones);
+  else if (action.type === 'selectTrack') widgetState = MiniCompose.selectTrack(widgetState, action.track);
   renderWidget();
   pulseKeyChip();
 }
@@ -365,6 +407,7 @@ function renderPicker() {
   });
 }
 
+// ---- 'build' kind: widget picker + Check button (wave 2) ----------------
 function enterYourTurn(challenge) {
   widgetState = challenge.setup(widgetState);
   renderWidget();
@@ -375,11 +418,29 @@ function enterYourTurn(challenge) {
   appendMessage('tutor', challenge.prompt);
 }
 
+// ---- 'identify' kind: question + scale-option quick-replies (wave 3) ----
+function askIdentifyQuestion(challenge) {
+  var question = typeof challenge.question === 'function' ? challenge.question(widgetState) : challenge.question;
+  appendMessage('tutor', question);
+  var options = challenge.options(widgetState);
+  appendChoiceReplies(options, function (chosen) {
+    var result = challenge.check(widgetState, chosen.id);
+    appendMessage('tutor', result.message);
+    if (result.pass) afterChallengePass();
+    else askIdentifyQuestion(challenge); // let them try the same question again
+  });
+}
+
 function startChallengeFlow(id) {
   var challenge = TutorChallenges.byId(id);
   if (!challenge) return;
   activeChallenge = challenge;
   challengeIndex = TutorChallenges.CHALLENGES.indexOf(challenge);
+  // Restarting from the top (e.g. re-tapping "Try a challenge" after
+  // finishing all 6) resets to the original key/mode - otherwise a replay
+  // could inherit challenge 6's relative-minor reinterpretation, and "Build
+  // I-IV-V" (uppercase, major quality) would be demoed in a minor key.
+  if (challengeIndex === 0) widgetState = MiniCompose.initialState(context.key, context.mode);
   widget.hidden = false;
   wPickerWrap.hidden = true;
   wActions.hidden = true;
@@ -390,9 +451,29 @@ function startChallengeFlow(id) {
   setTimeout(function () {
     hideTyping();
     playDemoActions(challenge.demoActions(widgetState), function () {
-      enterYourTurn(challenge);
+      if (challenge.kind === 'identify') askIdentifyQuestion(challenge);
+      else enterYourTurn(challenge);
     });
   }, 500);
+}
+
+// Runs after ANY challenge (build or identify) passes - a shared reflection
+// beat before moving on, per this session's ask ("give feedback on how it
+// felt, what worked, what's still unclear"). Kept as scripted quick-replies
+// (not free text) since there's no live model here to actually understand
+// open-ended prose - see music/tutor/challenges.js REFLECTION_* for why.
+function afterChallengePass() {
+  appendMessage('tutor', TutorChallenges.REFLECTION_PROMPT);
+  appendChoiceReplies(TutorChallenges.REFLECTION_OPTIONS, function (picked) {
+    appendMessage('tutor', TutorChallenges.REFLECTION_RESPONSES[picked.id]);
+    var next = TutorChallenges.CHALLENGES[challengeIndex + 1];
+    if (next) {
+      appendChoiceReplies([{ id: 'next', label: 'Next challenge' }], function () { startChallengeFlow(next.id); });
+    } else {
+      appendMessage('tutor', 'That was the last challenge in this prototype - nice work.');
+      endChallenges();
+    }
+  });
 }
 
 function endChallenges() {
@@ -416,40 +497,18 @@ wCheck.addEventListener('click', function () {
   wActions.hidden = true;
   appendMessage('tutor', result.message);
   if (result.pass) {
-    var next = TutorChallenges.CHALLENGES[challengeIndex + 1];
-    if (next) {
-      appendQuickReplies(['Next challenge']);
-    } else {
-      appendMessage('tutor', 'That was the last challenge in this prototype - nice work.');
-      endChallenges();
-    }
+    afterChallengePass();
   } else {
-    appendQuickReplies(['Try again']);
+    appendChoiceReplies([{ id: 'retry', label: 'Try again' }], function () { enterYourTurn(activeChallenge); });
   }
 });
 
-// Quick-replies that control the challenge flow are intercepted here rather
-// than sent through the free-chat provider (send() already routes a raw
-// "Try a challenge" typed message via CHALLENGE_TRIGGER above).
-document.getElementById('thread').addEventListener('click', function (e) {
-  var btn = e.target.closest ? e.target.closest('.qr') : null;
-  if (!btn) return;
-  var label = btn.textContent;
-  if (label === 'Try a challenge') {
-    e.stopImmediatePropagation();
-    appendMessage('user', label);
-    startChallengeFlow(TutorChallenges.CHALLENGES[0].id);
-  } else if (label === 'Next challenge' && activeChallenge) {
-    e.stopImmediatePropagation();
-    appendMessage('user', label);
-    var next = TutorChallenges.CHALLENGES[challengeIndex + 1];
-    if (next) startChallengeFlow(next.id);
-  } else if (label === 'Try again' && activeChallenge) {
-    e.stopImmediatePropagation();
-    appendMessage('user', label);
-    enterYourTurn(activeChallenge);
-  }
-}, true);
+// Every "Try a challenge" chip (opening turn and the one endChallenges()
+// re-shows) is a plain appendQuickReplies button, so it routes through
+// send() -> CHALLENGE_TRIGGER -> startChallengeFlow(CHALLENGES[0]) exactly
+// like typing "let's practice" would. "Next challenge" / "Try again" /
+// scale answers / reflection picks all use appendChoiceReplies instead,
+// each wired to its own handler above - no keyword-matching needed for those.
 
 // ---- settings drawer ----------------------------------------------------
 var settingsBtn = document.getElementById('settingsBtn');

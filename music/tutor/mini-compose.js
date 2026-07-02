@@ -29,6 +29,15 @@
   function setKey(state, root, mode) {
     return Object.assign({}, state, { key: root || state.key, mode: mode || state.mode, progression: [] });
   }
+  // Same fields as setKey, but does NOT clear the progression - this is the
+  // "same chords, new lens" move (wave 3's relative/parallel scale-swap
+  // challenge): the built progression stays exactly as-is, only the key/mode
+  // label used for scale + roman-numeral math changes. setKey's fresh-start
+  // clear is right when starting a NEW challenge in a new key; this reducer
+  // is right when demonstrating that a fixed progression can be reinterpreted.
+  function reinterpretKey(state, root, mode) {
+    return Object.assign({}, state, { key: root || state.key, mode: mode || state.mode });
+  }
   function buildProgression(state, chords) {
     return Object.assign({}, state, { progression: (chords || []).slice() });
   }
@@ -75,6 +84,7 @@
     MOCK_TRACKS: MOCK_TRACKS,
     initialState: initialState,
     setKey: setKey,
+    reinterpretKey: reinterpretKey,
     buildProgression: buildProgression,
     addChord: addChord,
     removeLast: removeLast,

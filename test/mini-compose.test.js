@@ -44,6 +44,20 @@ test('setKey does not mutate the original state', function () {
   assert.strictEqual(s.key, 'C');
 });
 
+test('reinterpretKey changes key/mode but KEEPS the progression (unlike setKey)', function () {
+  var s = MiniCompose.buildProgression(MiniCompose.initialState('G', 'major'), ['G', 'C', 'D']);
+  var s2 = MiniCompose.reinterpretKey(s, 'E', 'minor');
+  assert.strictEqual(s2.key, 'E');
+  assert.strictEqual(s2.mode, 'minor');
+  assert.deepStrictEqual(s2.progression, ['G', 'C', 'D']);
+});
+test('reinterpretKey does not mutate the original state', function () {
+  var s = MiniCompose.buildProgression(MiniCompose.initialState('G', 'major'), ['G', 'C', 'D']);
+  MiniCompose.reinterpretKey(s, 'E', 'minor');
+  assert.strictEqual(s.key, 'G');
+  assert.deepStrictEqual(s.progression, ['G', 'C', 'D']);
+});
+
 test('buildProgression replaces the progression wholesale', function () {
   var s = MiniCompose.buildProgression(MiniCompose.initialState('G', 'major'), ['G', 'C', 'D']);
   assert.deepStrictEqual(s.progression, ['G', 'C', 'D']);
