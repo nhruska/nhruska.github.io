@@ -819,8 +819,11 @@
         el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
         el.setEdit.classList.toggle('on', STATE.setEditMode);
       }
+      // Clear (✕) hides on an empty setlist too - a destructive control with
+      // nothing to destroy is dead weight in the header (pilot polish audit).
+      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
       if (STATE.setlist.length === 0) {
-        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs with the + button.</div>';
+        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
         STATE.setEditMode = false; STATE.lastRemoved = null;

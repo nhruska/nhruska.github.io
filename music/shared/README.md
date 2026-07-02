@@ -174,7 +174,7 @@ Songbook.tpose(chord, semitones)   // transpose a chord name
 Songbook.tposeLine(line, semitones)// transpose all [chords] in a lyric line
 Songbook.splitChord(chord)         // -> { root, qual } or null
 Songbook.chordRootFreq(chord)      // root frequency (Hz) relative to middle C
-Songbook.renderSheet(song, st, view) // view: "lyrics" | "chords"
+Songbook.renderSheet(song, st, view) // view: "lyrics" (words only) | "chords" (bars) | "both" (chords over lyrics; default)
 Songbook.ROOTS                     // ["C","C#",...,"B"]
 ```
 
