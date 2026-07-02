@@ -1422,7 +1422,7 @@
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
-      // The fly-out (roots + mode toggle + solo scale) opens/closes with the chip.
+      // The fly-out (roots + mode toggle + Triads & Inversions link) opens/closes with the chip.
       if (el.keyFlyout) el.keyFlyout.hidden = !keyPopoverOpen;
       // Root grid is always visible INSIDE the fly-out now (no separate popover).
       el.keyRoots.hidden = false;
@@ -1968,10 +1968,14 @@
       // instead of failing the tabExists check and falling back to Library.
       if (savedTab === 'setlist' || savedTab === 'set') savedTab = 'jam';
       else if (savedTab === 'tracks' || savedTab === 'repertoire') savedTab = 'library';
-      // Pre-Jam versions also kept Set/Perform as a Library SUBVIEW persisted
-      // under libType.v1 - a user who last left that subview reopens in Jam.
-      if (!savedTab || savedTab === 'library') {
-        if (localStorage.getItem(prefix + '.libType.v1') === 'set') savedTab = 'jam';
+      // Pre-Jam versions kept Set/Perform as a Library SUBVIEW under libType.v1
+      // (never written by this version). Consume it ONCE: migrate to Jam and
+      // REMOVE the legacy key - otherwise a migrated user who later chooses
+      // Library would be forced back to Jam on every reload (the sticky-marker
+      // bug), since libType.v1 would keep overriding the real saved tab.
+      if (localStorage.getItem(prefix + '.libType.v1') === 'set') {
+        try { localStorage.removeItem(prefix + '.libType.v1'); } catch (e) {}
+        if (!savedTab || savedTab === 'library') savedTab = 'jam';
       }
       // match by iterating buttons (not a built selector) so a malformed stored value can't
       // throw a selector SyntaxError and abort the restore.
