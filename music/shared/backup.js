@@ -27,7 +27,12 @@
   var SCHEMA_KEY = 'music.schema.v1'; // stores the integer THIS device is on
 
   // Namespaces the app owns. Everything under these is user data worth backing up.
-  var OWNED_PREFIXES = ['songbook.', 'bt.', 'music.'];
+  // `roadcase-` is the PER-INSTRUMENT songbook namespace the play app mounts with
+  // (storagePrefix: 'roadcase-' + profile.id) - it holds each instrument's setlist,
+  // composed progressions and perform prefs, so it MUST be captured. `songbook.` is
+  // the engine's default prefix (other mount points). Missing `roadcase-` here is a
+  // data-loss bug: the setlist + progressions would silently not back up.
+  var OWNED_PREFIXES = ['songbook.', 'roadcase-', 'bt.', 'music.'];
   // ...except these: dev-only scratch, the schema marker, and the device-local
   // "last backed up" stamp (carrying an old stamp into a restore would mislead).
   var EXCLUDE = ['music.devlog.', 'music.lastBackup.', SCHEMA_KEY];
@@ -102,19 +107,28 @@
   // sheet summary AND the restore-confirm preview so the user sees WHAT moves.
   function describe(data) {
     data = data || {};
+    var keys = Object.keys(data);
     function has(k) { return typeof data[k] === 'string'; }
     function arrLen(k) { try { var a = JSON.parse(data[k]); return Array.isArray(a) ? a.length : 0; } catch (e) { return 0; } }
     function objLen(k) { try { var o = JSON.parse(data[k]); return (o && typeof o === 'object') ? Object.keys(o).length : 0; } catch (e) { return 0; } }
     function plural(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
+    function anyKey(pred) { return keys.some(pred); }
+    function sumArr(pred) { var n = 0; keys.forEach(function (k) { if (pred(k)) n += arrLen(k); }); return n; }
+    // Match by SUFFIX, not exact name: the play app namespaces per instrument
+    // (roadcase-<profile>.setlist.v1 etc.), so counts aggregate across instruments.
+    var isSetlist = function (k) { return /\.setlist\.v1$/.test(k); };
+    // .custom.v1 is progressions (per-instrument) EXCEPT bt.custom.v1, which is tracks.
+    var isProg = function (k) { return /\.custom\.v1$/.test(k) && k !== 'bt.custom.v1'; };
+    var isPref = function (k) { return /\.(perfprefs\.v2|songview\.v1|chordsonly\.v1|activeTab\.v1|last\.v1)$/.test(k); };
     var lines = [];
-    if (has('songbook.setlist.v1')) lines.push({ label: 'Setlist', detail: plural(arrLen('songbook.setlist.v1'), 'song') });
-    if (has('songbook.custom.v1')) lines.push({ label: 'Saved progressions', detail: plural(arrLen('songbook.custom.v1'), 'progression') });
+    if (anyKey(isSetlist)) lines.push({ label: 'Setlist', detail: plural(sumArr(isSetlist), 'song') });
+    if (anyKey(isProg)) lines.push({ label: 'Saved progressions', detail: plural(sumArr(isProg), 'progression') });
     if (has('bt.custom.v1')) lines.push({ label: 'Custom tracks', detail: plural(arrLen('bt.custom.v1'), 'track') });
     if (has('music.trackUrls.v1')) lines.push({ label: 'Curated track links', detail: plural(objLen('music.trackUrls.v1'), 'link') });
     var prefs = [];
-    if (has('music.accent.v1')) prefs.push('accent colour');
+    if (has('music.accent.v1')) prefs.push('accent color');
     if (has('music.activeProfile.v1')) prefs.push('instrument');
-    if (['songbook.perfprefs.v2', 'songbook.songview.v1', 'songbook.activeTab.v1', 'songbook.last.v1'].some(has)) prefs.push('view + screen prefs');
+    if (anyKey(isPref)) prefs.push('view + screen prefs');
     if (prefs.length) lines.push({ label: 'Preferences', detail: prefs.join(', ') });
     return lines;
   }

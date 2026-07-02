@@ -43,6 +43,21 @@ test('owned() accepts app namespaces, rejects foreign + excluded keys', function
   assert.strictEqual(Backup.owned(null), false);
 });
 
+/* ---------- REGRESSION: the per-instrument roadcase namespace must be captured ---------- */
+test('owned() + snapshot capture the per-instrument roadcase namespace', function () {
+  assert.strictEqual(Backup.owned('roadcase-ukulele-gcea.setlist.v1'), true);
+  assert.strictEqual(Backup.owned('roadcase-guitar-standard.custom.v1'), true);
+  var s = fakeStore({
+    'roadcase-ukulele-gcea.setlist.v1': '["s1","s2"]',
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":"p1"}]',
+    'music.accent.v1': '#5eead4'
+  });
+  var snap = Backup.snapshot(s, null);
+  // the setlist + progressions (roadcase-namespaced) MUST be in the backup, not just accent
+  assert.strictEqual(snap.data['roadcase-ukulele-gcea.setlist.v1'], '["s1","s2"]');
+  assert.strictEqual(snap.data['roadcase-ukulele-gcea.custom.v1'], '[{"id":"p1"}]');
+});
+
 /* ---------- snapshot() only captures owned keys ---------- */
 test('snapshot() captures owned keys only and stamps version + time', function () {
   var s = fakeStore({
@@ -102,20 +117,23 @@ test('restore() ignores any foreign keys smuggled into data', function () {
 });
 
 /* ---------- describe() translates keys into human counts ---------- */
-test('describe() summarises keys as songbook concepts with real counts', function () {
+test('describe() aggregates per-instrument setlists/progressions with real counts', function () {
   var lines = Backup.describe({
-    'songbook.setlist.v1': '["a","b","c"]',
-    'bt.custom.v1': '[{"t":"x"},{"t":"y"}]',
+    'roadcase-ukulele-gcea.setlist.v1': '["a","b","c"]',
+    'roadcase-guitar-standard.setlist.v1': '["d","e"]',       // aggregates -> 5 songs
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":1},{"id":2}]', // progressions (per-instrument)
+    'bt.custom.v1': '[{"t":"x"}]',                            // tracks, NOT progressions
     'music.trackUrls.v1': '{"k1":"v","k2":"v"}',
     'music.accent.v1': '#5eead4',
     'music.activeProfile.v1': 'ukulele-gcea'
   });
   var byLabel = {};
   lines.forEach(function (l) { byLabel[l.label] = l.detail; });
-  assert.strictEqual(byLabel['Setlist'], '3 songs');
-  assert.strictEqual(byLabel['Custom tracks'], '2 tracks');
+  assert.strictEqual(byLabel['Setlist'], '5 songs');            // summed across instruments
+  assert.strictEqual(byLabel['Saved progressions'], '2 progressions');
+  assert.strictEqual(byLabel['Custom tracks'], '1 track');      // bt.custom.v1 stays tracks, not progressions
   assert.strictEqual(byLabel['Curated track links'], '2 links');
-  assert.strictEqual(byLabel['Preferences'], 'accent colour, instrument');
+  assert.strictEqual(byLabel['Preferences'], 'accent color, instrument');
 });
 test('describe() singularises a count of one and skips absent keys', function () {
   var lines = Backup.describe({ 'songbook.setlist.v1': '["only"]' });
