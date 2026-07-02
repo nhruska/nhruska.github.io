@@ -320,6 +320,24 @@
     });
     return all;
   }
+  // Remap the setlist when a fork shadows/reverts its catalog original: replace EVERY
+  // slot holding fromId with toId (fork create: kN->mN), or REMOVE every fromId slot
+  // when toId is null (plain delete). Mutates in place (keeps the array ref the queue
+  // holds) and returns whether anything changed. Pure + Node-testable.
+  function remapSetlist(setlist, fromId, toId) {
+    if (!Array.isArray(setlist)) return false;
+    var changed = false;
+    if (toId == null) {
+      for (var i = setlist.length - 1; i >= 0; i--) {
+        if (setlist[i] === fromId) { setlist.splice(i, 1); changed = true; }
+      }
+    } else {
+      for (var j = 0; j < setlist.length; j++) {
+        if (setlist[j] === fromId) { setlist[j] = toId; changed = true; }
+      }
+    }
+    return changed;
+  }
   // Which record the Studio (video + solo HUD) should open for a Repertoire row.
   // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
   // never as a merged backing SEED track (rec._track), which would drop the user's
@@ -331,12 +349,13 @@
   function studioTarget(rec) {
     if (!rec) return rec;
     if (rec.custom) {
-      return {
-        id: rec.id,
+      // Preserve ALL of the custom/fork's fields (yt AND video, key, mode, id...) and
+      // only ADD the title/artist the Studio reads (custom songs store them as t/a).
+      // Hand-picking fields dropped rec.video, which the playability gate accepts.
+      return Object.assign({}, rec, {
         title: rec.t != null ? rec.t : rec.title,
-        artist: rec.a != null ? rec.a : rec.artist,
-        key: rec.key, mode: rec.mode, yt: rec.yt, custom: true
-      };
+        artist: rec.a != null ? rec.a : rec.artist
+      });
     }
     return rec._track || rec;
   }
@@ -1868,15 +1887,8 @@
       if (f.y != null) cs.y = f.y;
       // Forking a SETLISTED catalog song: rebuildAll shadows the catalog kN id, so
       // the setlist slot pointing at it would go dangling (the song vanishes from
-      // the set). Remap EVERY slot holding it to the new fork id so the entry is
-      // REPLACED, not lost - the setlist still holds the song, now as your fork.
-      if (cs.forkOf) {
-        var remapped = false;
-        for (var si = 0; si < STATE.setlist.length; si++) {
-          if (STATE.setlist[si] === cs.forkOf) { STATE.setlist[si] = cs.id; remapped = true; }
-        }
-        if (remapped) saveSet();
-      }
+      // the set). Remap kN -> the new fork id so the entry is REPLACED, not lost.
+      if (cs.forkOf && remapSetlist(STATE.setlist, cs.forkOf, cs.id)) saveSet();
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       return cs;
     }
@@ -1899,17 +1911,9 @@
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
       saveCustom();
       // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore the
-      // catalog id into EVERY slot that held the fork (keep the song setlisted). A
-      // plain custom delete has no original to fall back to, so drop those slots.
-      var restore = (victim && victim.forkOf) ? victim.forkOf : null;
-      var touched = false;
-      for (var di = STATE.setlist.length - 1; di >= 0; di--) {
-        if (STATE.setlist[di] === id) {
-          if (restore) STATE.setlist[di] = restore; else STATE.setlist.splice(di, 1);
-          touched = true;
-        }
-      }
-      if (touched) saveSet();
+      // catalog id into every slot that held the fork (keep the song setlisted). A
+      // plain custom delete has no original to fall back to, so drop those slots (null).
+      if (remapSetlist(STATE.setlist, id, (victim && victim.forkOf) ? victim.forkOf : null)) saveSet();
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
@@ -2149,6 +2153,7 @@
     shadowedCatalogIds: shadowedCatalogIds,
     buildAllSongs: buildAllSongs,
     buildSheetFromSeq: buildSheetFromSeq,
+    remapSetlist: remapSetlist,
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,

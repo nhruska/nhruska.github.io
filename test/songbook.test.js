@@ -203,6 +203,39 @@ test('buildAllSongs: does not mutate the source catalog (fresh records with ids)
   assert.ok(cat[0].id == null, 'source catalog record left untouched');
 });
 
+/* ---- remapSetlist: the setlist slot mutation on fork-shadow (kN->mN) and revert
+ * (mN->kN or drop). Extracted + tested so the private STATE.setlist chain has a real
+ * regression guard, not just the live Playwright pass. ---- */
+test('remapSetlist: fork replaces EVERY catalog-id slot with the fork id (not just the first)', function () {
+  var sl = ['k1', 'k3', 'k1'];           // duplicate defensive case
+  assert.strictEqual(Songbook.remapSetlist(sl, 'k1', 'm9'), true);
+  assert.deepStrictEqual(sl, ['m9', 'k3', 'm9']);
+});
+test('remapSetlist: revert with a restore id replaces every fork slot with the catalog id', function () {
+  var sl = ['m9', 'k3'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'm9', 'k1'), true);
+  assert.deepStrictEqual(sl, ['k1', 'k3']);
+});
+test('remapSetlist: plain delete (toId null) REMOVES every matching slot', function () {
+  var sl = ['m9', 'k3', 'm9'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'm9', null), true);
+  assert.deepStrictEqual(sl, ['k3']);
+});
+test('remapSetlist: no match -> unchanged + returns false', function () {
+  var sl = ['k3', 'k4'];
+  assert.strictEqual(Songbook.remapSetlist(sl, 'k1', 'm9'), false);
+  assert.deepStrictEqual(sl, ['k3', 'k4']);
+});
+test('remapSetlist: mutates in place (keeps the array reference the queue holds)', function () {
+  var sl = ['k1']; var ref = sl;
+  Songbook.remapSetlist(sl, 'k1', 'm9');
+  assert.strictEqual(ref, sl);           // same reference, mutated
+  assert.deepStrictEqual(ref, ['m9']);
+});
+test('remapSetlist: a non-array is safe (returns false)', function () {
+  assert.strictEqual(Songbook.remapSetlist(null, 'k1', 'm9'), false);
+});
+
 /* ---- studioTarget: a fork's OWN video must reach the Studio, not the merged
  * backing SEED track. This is the call-chain the play/action button uses
  * (repertoireAction -> openStudioCb(studioTarget(rec))); for a sheet-bearing
@@ -233,6 +266,13 @@ test('studioTarget: a custom BACKING TRACK (already title/artist) passes those t
   var out = Songbook.studioTarget(track);
   assert.strictEqual(out.title, 'Jam');   // falls back to rec.title when rec.t absent
   assert.strictEqual(out.artist, 'Nobody');
+});
+test('studioTarget: preserves a custom rec.video field (the playability gate accepts it)', function () {
+  // repertoireAction gates on (rec.yt || rec.video); a hand-picked normalize dropped
+  // rec.video, leaving the Studio with no playable media (volley 6 High).
+  var out = Songbook.studioTarget({ id: 'm5', custom: true, t: 'V', a: '', key: 'C', mode: 'major', video: 'VIDurl' });
+  assert.strictEqual(out.video, 'VIDurl');
+  assert.strictEqual(out.title, 'V');
 });
 test('studioTarget: a NON-custom merged song still opens the seed track (unchanged)', function () {
   var seed = { id: 't3', yt: 'SEEDvideoEE', key: 'G' };
