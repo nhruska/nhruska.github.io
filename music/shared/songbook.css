@@ -317,7 +317,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    (the All-chords .chordGrid tiles already do, which is why that view scrolls). */
 .chordGrid .chord,
 .inKeyLead .chord,
-.hsrChain .chord,
 .chordCell,
 .keyPalette .chordCell,
 .chordSeg,
@@ -331,16 +330,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyClearBtn{touch-action:pan-y;}
 .prog .slot .chord,
 .suggRow .chord.suggPick,
-.chordGrid .chord,
-.hsrChain .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+.chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
 .prog .slot .chord .chord-name,
 .suggRow .chord.suggPick .chord-name,
-.chordGrid .chord .chord-name,
-.hsrChain .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
+.chordGrid .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
 .prog .slot .chord:active,
 .suggRow .chord.suggPick:active,
-.chordGrid .chord:active,
-.hsrChain .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
+.chordGrid .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
 .suggRow .chord.suggPick{border-color:var(--accent-dim);}
 .suggRow .chord.suggPick .chord-name{color:var(--accent);}
 .suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
@@ -384,10 +380,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyTitle span{color:var(--accent);font-size:.76rem;font-weight:600;margin-left:6px;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
 .keyPalette{margin-bottom:2px;}
-/* Each diatonic chord tile uses the same layout as the suggCell and hsrCard:
-   diagram on top + Roman numeral below. Keeps the visual consistent across
-   all three palettes (chord name bold at top via .chord-name, Roman muted at
-   bottom via .rn). */
+/* Each diatonic chord tile uses the same layout as the suggCell: diagram on
+   top + Roman numeral below. Keeps the visual consistent across the palettes
+   (chord name bold at top via .chord-name, Roman muted at bottom via .rn). */
 .keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* ---- Adaptive chord surface (Phase 1) ----
@@ -430,20 +425,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .scalePosBtn:active{transform:scale(.94);}
 .scalePosBtn:disabled{opacity:.32;cursor:default;}
 .scalePosLbl{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--txt-dim);letter-spacing:.03em;min-width:76px;text-align:center;}
-/* HSR Chain - three cards across showing I-IV-V (or mode equivalent) using
-   the same hand shape slid up the neck. The Roman numeral on each card makes
-   the function explicit; the diagram below is via the adapter's diagramClosed
-   so even profiles that have idiomatic open voicings get the moveable barre
-   pattern that teaches HSR. */
-.hsrChain{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 6px;}
-/* HSR chain card matches the layout of suggCell + chordCell: outer wrapper is
-   a plain flex column (no border) - the inner .chord (the diagram) gets the
-   bordered tile styling via the broader selector above, and the Roman numeral
-   sits BELOW the bordered tile as small muted text, identical to .rn used by
-   .suggCell. Keeps the visual hierarchy consistent across all three palettes. */
-.hsrCard{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
-.hsrCard.sel .chord{border-color:var(--accent);background:var(--accent-deep);}
-.hsrRoman{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
+/* Deep-dive link (Compose fly-out "Triads & Inversions" + the Studio's
+   "Walk the full cycle" - tracks.js renders the same class). The HSR chain
+   cards this used to sit under left Compose with the fly-out scale (locked
+   decision: the Studio owns fretboard/scale teaching). */
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
 /* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
@@ -494,14 +479,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
-   IN-KEY cells (.chordCell) and starters (.progPick), the HSR chain cards, and the
-   next-chord suggestion chips. */
+   IN-KEY cells (.chordCell) and starters (.progPick), and the next-chord suggestion
+   chips. */
 .maxNote{flex:0 0 auto;font-size:.7rem;color:var(--warn);font-weight:600;margin:0 2px 10px;}
 .composeWrap.maxed .keyView .chordGrid .chord,
 .composeWrap.maxed #buildGrid .chord,
 .composeWrap.maxed .inKeyLead .chordCell,
 .composeWrap.maxed .progPick,
-.composeWrap.maxed .hsrChain .hsrCard,
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}

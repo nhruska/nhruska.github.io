@@ -92,10 +92,6 @@
     Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
   };
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
-  function scalePcs(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
-    return m.steps.map(function (s) { return (rp + s) % 12; });
-  }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
@@ -1257,102 +1253,28 @@
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
-      // #keyView now lives INSIDE the key/mode fly-out (below the roots + mode toggle), so
-      // the solo scale + HSR chain + inversions link show when the fly-out is open.
-      if (!songKey.root) {
-        el.keyView.innerHTML = '<p class="keyHint">Pick a key to see the scale to solo over.</p>';
-        return;
-      }
+      // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
+      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
+      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
+      // HSR chain moved out entirely. What remains: the key readout line and a
+      // "Triads & Inversions" deep-dive link that opens in the current instrument +
+      // key context.
+      if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
       title.innerHTML = '<strong>' + keyRoot + ' ' + MODES[keyMode].label + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
-
-      // Solo scale via the shared KeyExplorer. The in-key DIATONIC CHORD palette used
-      // to render here too, but it now lives ONLY on the adaptive chord surface
-      // (buildGrid -> the chord list above this fly-out, which leads with the in-key
-      // chords when a key is set) so the diatonic chords are never duplicated across two
-      // surfaces. This fly-out keeps the teaching content: title, the solo scale box, the
-      // I-IV-V HSR chain, and the "Walk the full cycle" inversions link. Guarded so a
-      // future script-load reorder degrades (scale skipped, HSR + title still render)
-      // instead of hard-crashing.
-      if (global.KeyExplorer) {
-        var pcs = scalePcs(keyRoot, keyMode);
-        global.KeyExplorer.renderScale(el.keyView, pack, rootPc(keyRoot), pcs, {
-          label: 'Solo over it · ' + pcs.map(function (p) { return ROOTS[p]; }).join(' '),
-          frets: 7
-        });
-      }
-
-      // I-IV-V shape chain - HSR-style: I uses the profile's home shape (often
-      // open), IV uses a closed movable shape, V is IV slid up 2 frets. The
-      // teaching: V is adjacent to IV (same hand shape, 2-fret slide). I sits
-      // in a different family - you "rotate" into it via hammer/transform. The
-      // adapter's chainVoicings honors this. For HSR-by-design profiles (Cigar
-      // Box, Banjo) the same closed barre is the home shape so I+IV+V all use
-      // the same family - that profile IS the HSR loop in one shape.
-      renderHsrChain();
-    }
-    // I-IV-V (degree indices 0, 3, 4) - mode-aware: minor modes give i-iv-v.
-    // Reuses chordsFromDegrees so any future progression patterns slot in here.
-    function renderHsrChain() {
-      var keyRoot = songKey.root, keyMode = songKey.mode;
-      if (!el.keyView || !keyRoot || !pack) return;
-      var chain = chordsFromDegrees(keyRoot, keyMode, [0, 3, 4]);
-      if (!chain.length) return;
-      var quals = (MODES[keyMode] && MODES[keyMode].quals) || ["", "", "", "", "", "", ""];
-      var romanBase = ['I', 'IV', 'V'];
-      var labels = [0, 3, 4].map(function (deg, i) {
-        return (quals[deg] === 'm' || quals[deg] === 'dim') ? romanBase[i].toLowerCase() : romanBase[i];
-      });
-      // diagramChain picks a single template family across all three names so
-      // the eye sees the same hand shape slid up. Fallback to per-chord
-      // diagramClosed when the adapter doesn't expose the chain method.
-      var diagrams;
-      if (typeof pack.diagramChain === 'function') {
-        diagrams = pack.diagramChain(chain, 'small');
-      } else if (typeof pack.diagramClosed === 'function') {
-        diagrams = chain.map(function (c) { return pack.diagramClosed(c, 'small'); });
-      } else {
-        diagrams = chain.map(function (c) { return packDiagram(c, 'small'); });
-      }
-      var hsrLbl = document.createElement('div'); hsrLbl.className = 'keySubLbl';
-      hsrLbl.textContent = 'I IV V · V is IV slid up 2 frets';
-      el.keyView.appendChild(hsrLbl);
-      var row = document.createElement('div'); row.className = 'hsrChain';
-      chain.forEach(function (c, i) {
-        // Same vertical layout as the diatonic palette + "Add Nth chord" row:
-        // chord name (top, inside diagram via chord-name span) -> diagram ->
-        // Roman numeral (bottom). Moving Roman from above to below the diagram
-        // makes the chord name the most prominent label and matches the other
-        // palettes.
-        var card = document.createElement('div'); card.className = 'hsrCard';
-        card.appendChild(diagrams[i]);
-        var rn = document.createElement('span'); rn.className = 'hsrRoman'; rn.textContent = labels[i];
-        card.appendChild(rn);
-        card.onclick = function () {
-          addChord(c); packPlayChord(c);
-          card.classList.add('sel'); setTimeout(function () { card.classList.remove('sel'); }, 220);
-        };
-        row.appendChild(card);
-      });
-      el.keyView.appendChild(row);
-      // Deep-dive: the same I-IV-V relationship walked all the way up the neck
-      // using shape rotations (C-shape -> A-shape -> F-shape) and the Hammer /
-      // Slide / Rotate / Flip operations. Not the default surface; linked here
-      // for the curious.
+      // Carry the current instrument AND key so the inversions page opens in context -
+      // same instrument profile, pre-selected to this key. mode rides along too so a
+      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var more = document.createElement('a');
       more.className = 'hsrMore';
-      // Carry the current instrument AND key so the inversions page opens in context -
-      // same instrument profile, pre-selected to this key (the cycle is the same I-IV-V,
-      // now anchored to where the user is actually composing). mode rides along too so a
-      // future minor-cycle variant can read it; the page ignores params it doesn't use.
       var invParams = [];
       if (PROFILE_ID) invParams.push('p=' + encodeURIComponent(PROFILE_ID));
-      if (keyRoot) invParams.push('key=' + encodeURIComponent(keyRoot));
-      if (keyMode) invParams.push('mode=' + encodeURIComponent(keyMode));
-      more.href = 'triad-inversions.html' + (invParams.length ? '?' + invParams.join('&') : '');
-      more.textContent = 'Walk the full cycle up the neck →';
+      invParams.push('key=' + encodeURIComponent(keyRoot));
+      invParams.push('mode=' + encodeURIComponent(keyMode));
+      more.href = 'triad-inversions.html?' + invParams.join('&');
+      more.textContent = 'Triads & Inversions →';
       el.keyView.appendChild(more);
     }
 
