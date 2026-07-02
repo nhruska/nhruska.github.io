@@ -32,13 +32,21 @@
     return String(raw || '').split(/[\s,]+/).map(function (s) { return s.trim(); }).filter(Boolean);
   }
   function seqToText(seq) { return (Array.isArray(seq) ? seq : []).join(' '); }
+  // The 4-mode vocabulary the Compose flow saves (locked interface). The form
+  // must round-trip ALL of them - a select limited to major/minor silently
+  // rewrote dorian/mixolydian songs to major on every edit.
+  var MODES = ['major', 'minor', 'dorian', 'mixolydian'];
+  function normFormMode(v) {
+    var m = String(v == null ? '' : v).trim().toLowerCase();
+    return MODES.indexOf(m) >= 0 ? m : 'major';
+  }
   // Read the form's current field state into the { title, artist, key, mode,
   // genre, seq, yt } shape songbook.js's create/updateCustomItem expect.
   function readFields(form, parseYouTubeId) {
     var title = form.querySelector('[data-title]').value.trim();
     var artist = form.querySelector('[data-artist]').value.trim();
     var keyRaw = form.querySelector('[data-key]').value.trim();
-    var mode = form.querySelector('[data-mode]').value === 'minor' ? 'minor' : 'major';
+    var mode = normFormMode(form.querySelector('[data-mode]').value);
     var genre = form.querySelector('[data-genre]').value.trim();
     var seq = parseSeq(form.querySelector('[data-seq]').value);
     var urlRaw = form.querySelector('[data-url]').value.trim();
@@ -67,7 +75,7 @@
       var title = it.t || it.title || '';
       var artist = it.a || it.artist || '';
       var key = it.key || '';
-      var mode = it.mode || 'major';
+      var mode = normFormMode(it.mode);
       var genre = it.genre || '';
       var seqText = seqToText(it.seq);
       var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
@@ -82,8 +90,7 @@
         + '<div class="rf-grid">'
         + '<div><label class="rf-lbl">Key</label><select data-key class="bt-in"><option value="">-</option>' + rootOpts + '</select></div>'
         + '<div><label class="rf-lbl">Mode</label><select data-mode class="bt-in">'
-        + '<option value="major"' + (mode === 'major' ? ' selected' : '') + '>major</option>'
-        + '<option value="minor"' + (mode === 'minor' ? ' selected' : '') + '>minor</option>'
+        + MODES.map(function (m) { return '<option value="' + m + '"' + (mode === m ? ' selected' : '') + '>' + m + '</option>'; }).join('')
         + '</select></div></div>'
         + '<label class="rf-lbl">Genre</label><input data-genre class="bt-in" value="' + esc(genre) + '" placeholder="Genre (optional)" autocomplete="off">'
         + '<label class="rf-lbl">Chords <span class="rf-opt">(optional - leave blank for a video-only track)</span></label>'
@@ -125,7 +132,7 @@
     return { open: open, close: close };
   }
 
-  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields };
+  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES };
   global.RepertoireForm = RepertoireForm;
   if (typeof module !== 'undefined' && module.exports) module.exports = RepertoireForm;
 

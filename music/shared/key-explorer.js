@@ -68,6 +68,21 @@
   // voicings the same way) - past it there's nothing meaningful left to solo into.
   var POS_STEP = 5, POS_CAP = 14;
 
+  // Pure window math for the position control - exported so the cap/step
+  // behavior is regression-testable without a DOM. startFret 0 is the open
+  // window (F frets + the open column); a shifted window truncates at the cap.
+  function posWindow(startFret, F, step, cap) {
+    var shown = startFret === 0 ? F : Math.min(F, cap - startFret + 1);
+    return {
+      shown: shown,
+      end: startFret === 0 ? shown : (startFret + shown - 1),
+      canBack: startFret > 0,
+      // Forward stops once the NEXT window would start past the cap's last
+      // useful position (the 10-14 window); same 0/5/10 stops as before.
+      canFwd: (startFret + step) <= (cap - step + 1)
+    };
+  }
+
   /* renderScale(container, pack, rootPc, pcs, opts)
    *   pack    - the instrument adapter (needs pack.scaleDiagram)
    *   rootPc  - pitch-class index of the tonic
@@ -99,7 +114,7 @@
     // Clamp the WINDOW to POS_CAP, not just the start fret: a shifted window shows
     // min(F, POS_CAP - startFret + 1) frets, so the last position renders 10-14
     // and never draws frets past the top-of-neck cap the comments promise.
-    function shownFrets() { return startFret === 0 ? F : Math.min(F, POS_CAP - startFret + 1); }
+    function shownFrets() { return posWindow(startFret, F, POS_STEP, POS_CAP).shown; }
     function renderBox() {
       diagBox.innerHTML = '';
       diagBox.appendChild(pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret));
@@ -115,13 +130,10 @@
       fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
       fwd.setAttribute('aria-label', 'Shift the scale up the neck');
       function refresh() {
-        var shown = shownFrets();
-        var endFret = startFret === 0 ? shown : (startFret + shown - 1);
-        lbl.textContent = 'frets ' + startFret + '-' + endFret;
-        back.disabled = startFret <= 0;
-        // Forward stops once the NEXT window would start past the cap's last
-        // useful position (the 10-14 window); same 0/5/10 stops as before.
-        fwd.disabled = (startFret + POS_STEP) > POS_CAP - POS_STEP + 1;
+        var w = posWindow(startFret, F, POS_STEP, POS_CAP);
+        lbl.textContent = 'frets ' + startFret + '-' + w.end;
+        back.disabled = !w.canBack;
+        fwd.disabled = !w.canFwd;
       }
       back.onclick = function () { startFret = Math.max(0, startFret - POS_STEP); renderBox(); refresh(); };
       fwd.onclick = function () { if (fwd.disabled) return; startFret += POS_STEP; renderBox(); refresh(); };
@@ -132,7 +144,7 @@
     return boxWrap;
   }
 
-  var KeyExplorer = { renderChords: renderChords, renderScale: renderScale };
+  var KeyExplorer = { renderChords: renderChords, renderScale: renderScale, posWindow: posWindow };
   global.KeyExplorer = KeyExplorer;
   if (typeof module !== 'undefined' && module.exports) module.exports = KeyExplorer;
 

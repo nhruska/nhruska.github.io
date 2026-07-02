@@ -464,7 +464,7 @@
     {
       "id": "Ao5iDef-duA",
       "label": "Sample In A Jar Jam Phish Style Guitar Backing Track (A Minor)",
-      "note": "A minor jam-style variant (relative feel, works over A)"
+      "note": "A minor (PARALLEL minor) jam variant - darker color than the A-major original; pick only if you want the minor feel"
     },
     {
       "id": "x6dRu6ijGj4",
@@ -527,7 +527,7 @@
     {
       "id": "POHQX1iJJGI",
       "label": "The Beatles - Ob La Di Ob La da GUITAR BACKING TRACK",
-      "note": "song is Bb capo 1, sounds in A - matches catalog key"
+      "note": "original recording sounds in Bb (played as A shapes with capo 1); catalog lists A major - confirm fit by ear"
     },
     {
       "id": "DPnSqAFibK4",

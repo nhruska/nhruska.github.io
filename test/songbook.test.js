@@ -134,5 +134,12 @@ test('soloKeyFor: no explicit key derives from the ALREADY-TRANSPOSED sequence',
 test('soloKeyFor: no key and no deriver yields the null payload (solo affordance hidden)', function () {
   assert.deepStrictEqual(Songbook.soloKeyFor({ t: 'x' }, ['C'], 0, null), { key: null, mode: null });
 });
+// Drive the REAL deriver too (not just fakeRep) so the actual
+// Repertoire.deriveKey integration can't regress green behind the mock.
+var RealRepertoire = require('../music/shared/repertoire.js');
+test('soloKeyFor derives through the REAL Repertoire.deriveKey', function () {
+  assert.deepStrictEqual(Songbook.soloKeyFor({}, ['G', 'C', 'D'], 0, RealRepertoire), { key: 'G', mode: 'major' });
+  assert.deepStrictEqual(Songbook.soloKeyFor({}, ['Am', 'F', 'C'], 0, RealRepertoire), { key: 'A', mode: 'minor' });
+});
 
 run();

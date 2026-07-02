@@ -196,6 +196,23 @@
 
   var STORE = 'bt.custom.v1';
   var URLSTORE = 'music.trackUrls.v1';   // { [trackKey]: videoId } overlay for curated tracks
+  // Catalog-key corrections change a track's trackKey() storage identity, which
+  // would orphan a curated url the user saved under the OLD key. Old -> new map,
+  // applied once when the overlay loads; an existing entry under the new key is
+  // never clobbered. Module-level + exported so the remap is testable.
+  var LEGACY_TRACKKEYS = {
+    'sample in a jar|phish|G|major': 'sample in a jar|phish|A|major'
+  };
+  function migrateUrls(o) {
+    var changed = false;
+    Object.keys(LEGACY_TRACKKEYS).forEach(function (oldK) {
+      if (o[oldK] == null) return;
+      var newK = LEGACY_TRACKKEYS[oldK];
+      if (o[newK] == null) o[newK] = o[oldK];
+      delete o[oldK]; changed = true;
+    });
+    return changed;
+  }
   var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
   var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 
@@ -257,7 +274,12 @@
     }
     function saveCustom(a) { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} }
     function loadUrls() {
-      try { var s = localStorage.getItem(URLSTORE); var o = s ? JSON.parse(s) : {}; return (o && typeof o === 'object') ? o : {}; }
+      try {
+        var s = localStorage.getItem(URLSTORE); var o = s ? JSON.parse(s) : {};
+        o = (o && typeof o === 'object') ? o : {};
+        if (migrateUrls(o)) saveUrls(o); // re-key legacy overlays once, then persist
+        return o;
+      }
       catch (e) { return {}; }
     }
     function saveUrls(o) { try { localStorage.setItem(URLSTORE, JSON.stringify(o)); } catch (e) {} }
@@ -757,7 +779,7 @@
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
-    studioTheory: studioTheory, mount: mount,
+    studioTheory: studioTheory, migrateUrls: migrateUrls, mount: mount,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

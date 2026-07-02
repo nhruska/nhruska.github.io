@@ -40,7 +40,7 @@ test('startFret omitted defaults identically to startFret=0', function () {
     assert.deepStrictEqual(withZero[k], omitted[k], 'field ' + k + ' should match');
   });
 });
-test('shifted window (startFret=5) spans 5 true frets, no open column', function () {
+test('shifted window (startFret=5) spans true frets 5-11, no open column', function () {
   var p = D.scalePlan({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 7, startFret: 5 });
   assert.strictEqual(p.showOpen, false);
   assert.deepStrictEqual(p.trueFrets, [5, 6, 7, 8, 9, 10, 11]);

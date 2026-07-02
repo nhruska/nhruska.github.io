@@ -74,4 +74,23 @@ test('readFields: no video field at all is valid (optional field)', function () 
   assert.strictEqual(f._urlInvalid, false);
 });
 
+/* ---- 4-mode round-trip (the modal-rewrite bug: a major/minor-only select
+ * silently rewrote dorian/mixolydian songs to major on every edit) ---- */
+test('normFormMode round-trips the full 4-mode vocabulary', function () {
+  assert.strictEqual(RF.normFormMode('dorian'), 'dorian');
+  assert.strictEqual(RF.normFormMode('Mixolydian'), 'mixolydian');
+  assert.strictEqual(RF.normFormMode('minor'), 'minor');
+  assert.strictEqual(RF.normFormMode('MAJOR'), 'major');
+  assert.strictEqual(RF.normFormMode(''), 'major');
+  assert.strictEqual(RF.normFormMode(null), 'major');
+  assert.strictEqual(RF.normFormMode('locrian'), 'major'); // outside the form vocabulary -> safe default
+});
+test('MODES is the locked 4-mode vocabulary the select renders', function () {
+  assert.deepStrictEqual(RF.MODES, ['major', 'minor', 'dorian', 'mixolydian']);
+});
+test('readFields round-trips a dorian item without rewriting it to major', function () {
+  var f = RF.readFields(fakeForm({ title: 'Modal jam', artist: '', key: 'A', mode: 'dorian', genre: '', seq: 'Am D', url: '' }), fakeParseYouTubeId);
+  assert.strictEqual(f.mode, 'dorian');
+});
+
 run();

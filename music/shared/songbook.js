@@ -1567,12 +1567,17 @@
     function saveProgression(done) {
       done = done || function () {};
       if (progression.length === 0) { showComposeToast('Build a progression first.', true); done(null); return; }
+      // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
+      // the progression and key panel stay live behind it. What gets saved is
+      // what the user asked to save - not whatever the session mutated into
+      // (or cleared to) while the row was open.
+      var snapSeq = progression.slice();
+      var km = deriveProgressionKey(snapSeq);
       openSaveNameRow('My progression', function (name) {
         if (name === null) { done(null); return; } // cancelled
-        var km = deriveProgressionKey(progression);
         var cs = {
           id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
-          seq: progression.slice(), custom: true, key: km.key, mode: km.mode, yt: null
+          seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
         customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
         showComposeToast('Saved to your Repertoire');
