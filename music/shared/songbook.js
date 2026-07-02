@@ -949,8 +949,10 @@
         STATE.performView = seedView;
       }
       // Default to auto-fit font on every Stage open (UAT r3) - a manual A-/A+
-      // size set in one song shouldn't carry into the next open; auto re-measures.
-      STATE.fontMode = 'auto';
+      // size set in one song shouldn't carry into the next open. Reset the stale
+      // scale too, so the first A-/A+ after opening steps from the neutral base
+      // (auto re-measures immediately, so the 1 is only the manual-step anchor).
+      STATE.fontMode = 'auto'; STATE.fontScale = 1;
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
       // show the overlay BEFORE rendering so auto-fit can measure a real height
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }

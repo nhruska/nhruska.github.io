@@ -481,12 +481,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
    to the Studio). The chip that opens it lives in the button bar now; this is just the
    drop-down, hidden by default (no row when closed). */
-.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);}
+.keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .keyFlyout[hidden]{display:none;}
-/* UAT r3 - eliminate Compose scroll: picking a key and picking chords are
-   mutually exclusive, so while the key/mode fly-out is open, hide the chord
-   picker (In-key|All toggle + chord list + solo-backing CTA). The fly-out then
-   uses that freed height and the tab fits with no vertical overflow. */
+/* UAT r3 - eliminate Compose scroll: while the key/mode fly-out is open, hide
+   the chord picker (In-key|All toggle + chord list + solo-backing CTA) so the
+   fly-out uses that freed height and the tab fits with no vertical overflow.
+   The underlying chord list still rebuilds on a root/mode pick - it's only
+   hidden, not torn down - so it's current the moment the fly-out closes. */
 .composeWrap.keyOpen #catChips,
 .composeWrap.keyOpen .composeChords,
 .composeWrap.keyOpen #soloBackingBtn{display:none;}
