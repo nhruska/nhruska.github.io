@@ -226,7 +226,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: ‘choose from your song library’, compose: ‘build a progression’, tracks: ‘find a track in your key’, practice: ‘now playing’, jam: ‘your selected songs’ };
+  var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
