@@ -1158,7 +1158,9 @@
           onAction: function () { ytSearch(s); }
         }));
       });
-      if (bar) bar.style.display = 'flex';
+      // Hide the Start-performance bar while editing - reordering/removing isn't
+      // "ready to play", and it keeps the edit surface focused (UAT: Nik).
+      if (bar) bar.style.display = STATE.setEditMode ? 'none' : 'flex';
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
