@@ -1092,11 +1092,23 @@
     if (el.maxClose) el.maxClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseMax(); };
 
     /* ===================== SETLIST ===================== */
+    // Subtle transient toast - a lightweight "it happened" cue (UAT: Nik).
+    // Adds get a toast (removes already have the persistent Undo affordance).
+    var toastEl, toastTimer;
+    function showToast(msg) {
+      if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      toastEl.textContent = msg;
+      toastEl.classList.add('on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { if (toastEl) toastEl.classList.remove('on'); }, 1600);
+    }
     function toggleSet(id) {
       var pos = STATE.setlist.indexOf(id);
+      var adding = pos < 0;
       if (pos >= 0) STATE.setlist.splice(pos, 1); else STATE.setlist.push(id);
       saveSet(); renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
+      if (adding) showToast('Added to setlist');
     }
     function renderSetlist() {
       if (!el.setBody) return;
@@ -1158,7 +1170,9 @@
           onAction: function () { ytSearch(s); }
         }));
       });
-      if (bar) bar.style.display = 'flex';
+      // Hide the Start-performance bar while editing - reordering/removing isn't
+      // "ready to play", and it keeps the edit surface focused (UAT: Nik).
+      if (bar) bar.style.display = STATE.setEditMode ? 'none' : 'flex';
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
@@ -1341,6 +1355,8 @@
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
+      // Only offer Clear when there's a progression to clear (UAT: Nik).
+      if (el.cClear) el.cClear.hidden = progression.length === 0;
       // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
       // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
       // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
@@ -1834,6 +1850,32 @@
       invParams.push('mode=' + encodeURIComponent(keyMode));
       more.href = 'triad-inversions.html?' + invParams.join('&');
       more.textContent = 'Triads & Inversions →';
+      // Open the deep-dive as a full-screen in-app modal (iframe) instead of
+      // navigating away - mirrors the curate-videos overlay. The href stays as a
+      // no-JS / direct-open fallback; the iframed page self-themes off
+      // music.theme.v1, so it matches Light/Dark. Registers with NavHistory so
+      // Android back closes the modal, not the app.
+      more.onclick = function (e) {
+        e.preventDefault();
+        var url = more.getAttribute('href');
+        var ov = document.getElementById('invModal');
+        if (!ov) {
+          ov = document.createElement('div');
+          ov.id = 'invModal';
+          ov.className = 'invModal';
+          ov.innerHTML = '<div class="invModal-box" role="dialog" aria-modal="true" aria-label="Triads & Inversions">'
+            + '<button class="invModal-x" type="button" aria-label="Close">✕</button>'
+            + '<iframe class="invModal-frame" title="Triads & Inversions"></iframe></div>';
+          document.body.appendChild(ov);
+          var close = function () { ov.classList.remove('on'); var f = ov.querySelector('.invModal-frame'); if (f) f.removeAttribute('src'); };
+          ov._close = close;
+          ov.querySelector('.invModal-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else close(); };
+          ov.onclick = function (ev) { if (ev.target === ov) { if (window.NavHistory) window.NavHistory.dismiss(); else close(); } };
+        }
+        ov.querySelector('.invModal-frame').src = url;
+        ov.classList.add('on');
+        if (window.NavHistory) window.NavHistory.open('inversions', ov._close);
+      };
       el.keyView.appendChild(more);
     }
 
@@ -1972,7 +2014,7 @@
       }
       return true;
     }
-    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
+    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); } }
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
     // itself after ~3s so it never permanently claims screen space - unless
     // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
@@ -1996,6 +2038,9 @@
       if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      // Present the save name-entry as a MODAL (backdrop + centered card) so the
+      // user can't hit Clear / add more chords / other controls mid-save (UAT: Nik).
+      composeRow.classList.add('asModal');
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;

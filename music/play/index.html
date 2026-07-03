@@ -46,7 +46,8 @@
   .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
   /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
      sheet on phone; the accent chooser lives here now, not the Tune tab. */
-  #settingsBtn{font-size:1.15rem;line-height:1;}
+  #settingsBtn{line-height:0;}
+  #settingsBtn svg{width:21px;height:21px;display:block;}
   .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
     background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
     padding:0 12px calc(12px + env(safe-area-inset-bottom));}
@@ -83,7 +84,7 @@
   <div class="appbar">
     <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
-    <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false">⚙</button>
+    <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
     <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
@@ -112,8 +113,8 @@
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
         <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
-          <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
-          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button>
+          <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button></div>
         <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
         <div id="setBody"></div>
       </div>
