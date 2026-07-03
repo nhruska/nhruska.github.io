@@ -95,7 +95,7 @@
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     var out = [];
     m.steps.forEach(function (s, i) {
       if (m.quals[i] === "dim") return;
@@ -188,7 +188,7 @@
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
   function chordsFromDegrees(root, modeKey, degrees) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     return degrees.map(function (deg) {
       var i = ((deg % 7) + 7) % 7;
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];

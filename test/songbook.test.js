@@ -77,6 +77,13 @@ test('mode names are case-normalized (saved items carry lowercase modes) - codex
   assert.strictEqual(Songbook.romanInKey('F', 'D', 'minor'), 'III');   // not chromatic bIII
   assert.strictEqual(Songbook.romanInKey('C', 'D', 'mixolydian'), 'VII');
   assert.strictEqual(Songbook.chordInKey('G', 'C', 'MAJOR'), true);
+  // codex V4: the completion path must survive lowercase modes too - no
+  // `undefined` chord ever leaks into a completion chip
+  assert.deepStrictEqual(Songbook.chordsFromDegrees('D', 'minor', [0, 4]), ['Dm', 'Am']);
+  var lc = Songbook.completions(['C', 'G', 'Am'], 'C', 'major');
+  assert.ok(lc.length > 0, 'lowercase-major completions must not be empty');
+  lc.forEach(function (c) { assert.ok(c.chord, 'completion chord must never be undefined'); });
+  assert.ok(lc.some(function (c) { return c.chord === 'F'; }), 'I-V-vi -> IV still completes');
 });
 test('romanInKey casing across suffix families (7ths, m7b5, maj7) - codex V2', function () {
   assert.strictEqual(Songbook.romanInKey('Dm7', 'C', 'Major'), 'ii');
