@@ -754,6 +754,14 @@
     }
     function renderSongs() {
       if (!el.songsList) return;
+      // Compose calling this right after a save happens while the Library
+      // SCREEN is still hidden (display:none - the Compose tab is the one on
+      // screen) - offsetParent goes null under a hidden ancestor (the same
+      // visibility heuristic self-serve-execution's render-verify rule uses).
+      // Only consume pendingHighlightId once the Library is ACTUALLY the
+      // screen the user is looking at, or the highlight would fire-and-fade
+      // invisibly and never be seen. Until then it just keeps waiting.
+      var visible = !!el.songsList.offsetParent;
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
@@ -772,9 +780,11 @@
         el.songsList.innerHTML = '';
         el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
+        if (visible) pendingHighlightId = null; // shown its chance - nothing to find here
         return;
       }
       el.songsList.innerHTML = '';
+      var justSavedEl = null;
       filtered.forEach(function (rec) {
         var sid = rec.id;
         // only chord-sheet items can join a setlist; a pure/video-only track (no
@@ -782,16 +792,48 @@
         // is insufficient: a seq-less custom track has an id too.
         var canAdd = sid != null && hasChordSheet(songById(sid));
         var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
+        // L1 (pilot UAT): a yt-sourced standalone track with no curated artist
+        // stores the literal sentinel 'search' (tracks.json placeholder meaning
+        // "no fixed artist, resolve via search") - showing it verbatim reads as
+        // a band literally named "search". Display-only override; the real
+        // `rec` (used below for navigation/actions) is untouched.
+        var displayRec = rec;
+        var artistVal = rec.artist != null ? rec.artist : rec.a;
+        if (artistVal === 'search') {
+          displayRec = Object.assign({}, rec, { artist: 'Unknown', a: 'Unknown' });
+        } else if (!artistVal) {
+          // Artist-mirrors-title fix (S5): a Compose-saved song stores no artist
+          // (rather than a hardcoded placeholder that duplicated the title) - but
+          // list-item.js pairs a blank artist with the year regardless, printing
+          // a bare "· 2026" with nothing before the dot. Drop the year too so an
+          // artist-less row shows no meta line at all - "no artist known", not a
+          // render glitch.
+          displayRec = Object.assign({}, rec, { y: null, year: null });
+        }
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
-        el.songsList.appendChild(global.ListItem.render(rec, {
+        var node = global.ListItem.render(displayRec, {
           segment: 'library',
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
           onAdd: canAdd ? function () { toggleSet(sid); } : null,
           onAction: function () { repertoireAction(rec); }
-        }));
+        });
+        el.songsList.appendChild(node);
+        if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
       });
       if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length;
+      // Post-save discoverability (B3 pilot UAT: "after saving, it's hidden near
+      // the bottom of the library's song list") - scroll the new row into view
+      // and give it a brief accent pulse (CSS handles the ~2s fade) so it's
+      // findable without hunting a long list. Consumed only on a visible render
+      // (found or not - a filtered-out item has had its one visible chance).
+      if (visible && pendingHighlightId != null) {
+        if (justSavedEl) {
+          if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          justSavedEl.classList.add('justSaved');
+        }
+        pendingHighlightId = null;
+      }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
@@ -898,7 +940,10 @@
       // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
-        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
+        // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
+        // artist (no hardcoded placeholder to duplicate the title) - omit the
+        // ' · ' separator entirely rather than showing a leading, artist-less dot.
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + '</div></div>';
@@ -1225,7 +1270,8 @@
       if (!s) return;
       if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
       if (el.pTitle) el.pTitle.textContent = s.t;
-      if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
+      // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
+      if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
       // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
       // persisted before that guard could still hold one - render a gentle
       // placeholder instead of crashing on s.seq.map.
@@ -1898,6 +1944,11 @@
      * screen, above the fold" rule) - and torn down again the moment it's
      * dismissed, rather than reserving a permanent row. ---- */
     var composeRow = null, composeToast = null, toastTimer = null;
+    // One-shot id for the post-save discoverability scroll+highlight (B3 pilot
+    // UAT) - set by saveProgression right before the renderSongs() call that
+    // will actually paint the new row, consumed (cleared) on the next
+    // renderSongs() regardless of whether a matching row was found.
+    var pendingHighlightId = null;
     function ensureComposeUI() {
       if (!el.prog || !el.prog.parentNode) return false;
       if (!composeRow) {
@@ -1916,39 +1967,54 @@
     }
     function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
-    // itself after ~3s so it never permanently claims screen space.
-    function showComposeToast(msg, isErr) {
+    // itself after ~3s so it never permanently claims screen space - unless
+    // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
+    // seconds"), in which case it stays until the next explicit toast/clear.
+    function showComposeToast(msg, isErr, persist) {
       if (!ensureComposeUI()) return;
       clearTimeout(toastTimer);
       composeToast.textContent = msg;
       composeToast.className = 'composeToast' + (isErr ? ' err' : '');
       composeToast.hidden = false;
-      toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
+      if (!persist) toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
     }
-    // Inline name-entry row (replaces prompt()). done(name|null) fires once -
-    // the trimmed name on Save/Enter, or null on Cancel/Escape (same contract
-    // prompt() had: null == the user backed out).
+    // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
+    // fires once - the trimmed name on Save/Enter (plus whether the "Add to
+    // setlist" checkbox was checked), or null on Cancel/Escape (same contract
+    // prompt() had: null == the user backed out; addToSetlist is meaningless then).
     function openSaveNameRow(defaultName, done) {
-      if (!ensureComposeUI()) { done(defaultName); return; }
+      if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;
       input.setAttribute('aria-label', 'Progression name');
+      // G4/FORK-1 (B3 pilot UAT): a saved custom song is one tap from
+      // performance-ready without a second trip to the Library row's own
+      // setToggle - checked by default, same "add to setlist" mechanism as
+      // the practice-view setToggle (toggleSet), wired by the caller.
+      var setLabel = document.createElement('label');
+      setLabel.className = 'composeRowSetToggle';
+      var setCheck = document.createElement('input');
+      setCheck.type = 'checkbox'; setCheck.checked = true;
+      setCheck.setAttribute('aria-label', 'Add to setlist');
+      setLabel.appendChild(setCheck);
+      setLabel.appendChild(document.createTextNode('Add to setlist'));
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save';
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
       var settled = false;
-      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name); }
+      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name, setCheck.checked); }
       saveBtn.onclick = function () { finish(input.value.trim() || defaultName); };
       cancelBtn.onclick = function () { finish(null); };
       input.onkeydown = function (e) {
         if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim() || defaultName); }
         else if (e.key === 'Escape') { finish(null); }
       };
-      composeRow.appendChild(input); composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
+      composeRow.appendChild(input); composeRow.appendChild(setLabel);
+      composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
       input.focus();
     }
     // Inline two-choice row (replaces confirm()). onPick('save'|'skip') fires once.
@@ -2011,18 +2077,29 @@
       // saved song" choice. The chord edits + any re-key flow straight onto cs.
       if (savedComposeId && customById(savedComposeId)) {
         var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
-        if (upd) { showComposeToast('Updated ' + upd.t); done(upd); return; }
+        if (upd) { showComposeToast('Updated ' + upd.t, false, true); done(upd); return; }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
       }
-      openSaveNameRow('My progression', function (name) {
+      // S6 (B3 pilot UAT handoff): 'Original track' reads as a real title where
+      // 'My progression' read as placeholder text left behind. The ARTIST is left
+      // empty rather than mirrored to the same string (S5 finding: a hardcoded
+      // 'My progression' artist duplicated the title in the Studio's YouTube
+      // query once the title default changed too) - the Library row and the
+      // song/stage headers already omit an empty artist cleanly.
+      openSaveNameRow('Original track', function (name, addToSetlist) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
-          id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+          id: 'm' + Date.now(), t: name, a: '', y: new Date().getFullYear(), d: 'Mine',
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
-        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips();
+        // Post-save discoverability (B3): flag the new row for renderSongs() to
+        // scroll-to + highlight - whichever call actually paints it (below, or
+        // toggleSet's own renderSongs() when the checkbox added it to the set).
+        pendingHighlightId = cs.id;
+        if (addToSetlist) toggleSet(cs.id); else renderSongs();
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast('Saved to your Repertoire');
+        showComposeToast('Saved to your Repertoire', false, true);
         done(cs);
       });
     }
@@ -2073,6 +2150,17 @@
       // catalog id into every slot that held the fork (keep the song setlisted). A
       // plain custom delete has no original to fall back to, so drop those slots (null).
       if (remapSetlist(STATE.setlist, id, (victim && victim.forkOf) ? victim.forkOf : null)) saveSet();
+      // D3s (pilot UAT): a deleted song must not stay reachable via the active
+      // running-order queue or a stale STATE.current. Both delete call sites
+      // already switchTab('library') right after this returns, but switchTab
+      // pushes a NavHistory entry whose Back-button close callback replays
+      // applyTab('practice') -> renderPractice() - which would otherwise render
+      // the just-deleted song as a still-fully-formed ghost object (its own
+      // setToggle could even re-add the dead id back into the setlist). Purging
+      // the queue + clearing STATE.current here makes renderPractice's existing
+      // "!STATE.current -> empty state" guard the one that actually fires.
+      QUEUE.remove(id);
+      if (STATE.current && STATE.current.id === id) STATE.current = null;
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }

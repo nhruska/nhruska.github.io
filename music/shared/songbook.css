@@ -92,6 +92,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem{position:relative;display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;cursor:pointer;transition:transform .08s,border-color .15s,background .15s;}
 .listItem:active{transform:scale(.99);background:var(--surface-2);}
 .listItem.inSet{border-color:var(--accent-dim);background:var(--accent-deep);}
+/* B3 post-save discoverability: a brief accent pulse on the row a save just
+   landed on, so it's findable in a long/scrolled library list. Fades on its
+   own (no JS cleanup needed) - never blocks interaction, never persists. */
+@keyframes justSavedPulse{from{box-shadow:0 0 0 2px var(--accent);}to{box-shadow:0 0 0 2px transparent;}}
+.listItem.justSaved{animation:justSavedPulse 2s ease-out;}
 .listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent);flex:0 0 auto;min-width:22px;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
@@ -165,7 +170,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:8px;cursor:pointer;transition:background .15s,transform .08s,color .15s;}
 .transposeChip button:active{transform:scale(.86);background:var(--accent);color:#06201c;}
-.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 6px;min-width:24px;text-align:center;}
+/* D2s: ch (not px) so the reserved width tracks the monospace glyph itself -
+   a min-width in px only covers a fixed pixel count and lets a wider label
+   (e.g. "A" -> "A#" after transposing) grow past it, shifting the buttons
+   on either side. +12px accounts for the 0 6px padding: box-sizing is
+   border-box (global reset) so a bare `3ch` min-width would count that
+   padding AGAINST the 3 characters instead of reserving room for them,
+   still letting 2-char labels overflow it. calc(3ch + 12px) reserves a
+   full 3 characters of text room on top of the existing padding. */
+.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 6px;min-width:calc(3ch + 12px);text-align:center;}
 .modeSwitch button:disabled{opacity:.35;cursor:default;}
 /* Stage: compact fullscreen icon button on the view row (replaces the old
  * full-width CTA) - accent-filled so the perform entry stays discoverable. */
@@ -506,6 +519,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeRowInput:focus{outline:none;border-color:var(--accent);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
 .composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
+/* G4/FORK-1: "Add to setlist" checkbox on the save row - own line (flex:1 1
+   100% forces the wrap), checkbox + label kept on one compact line together. */
+.composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--txt-soft);cursor:pointer;}
+.composeRowSetToggle input{margin:0;}
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
