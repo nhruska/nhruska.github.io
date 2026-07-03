@@ -597,4 +597,17 @@ test('solo-button gate pins hidden + inline display, and renderKey runs at init'
   assert.ok(!/cHelp/.test(src), 'cHelp references must stay removed');
 });
 
+test('ytSearchURL: sentinel + custom-record query hygiene (codex #91)', function () {
+  function q(url) { return decodeURIComponent(url.split('=', 2)[1]).replace(/\+/g, ' '); }
+  // the 'search' artist sentinel never reaches the query
+  assert.strictEqual(q(Songbook.ytSearchURL({ t: 'Slow Blues', a: 'search', key: 'A' })), 'Slow Blues A key');
+  // a normal record keeps title + artist + key
+  assert.strictEqual(q(Songbook.ytSearchURL({ t: 'Ripple', a: 'Grateful Dead', key: 'G' })), 'Ripple Grateful Dead G key');
+  // an artist-less CUSTOM save folds genre + chords (there is no recording to find)
+  var u = q(Songbook.ytSearchURL({ t: 'Original track', a: '', key: 'D', custom: true, genre: 'folk', seq: ['Dm', ' ', 'Am'] }));
+  assert.strictEqual(u, 'Original track D key folk Dm Am');
+  // a custom record without seq degrades to the plain query
+  assert.strictEqual(q(Songbook.ytSearchURL({ t: 'Original track', a: '', custom: true })), 'Original track');
+});
+
 run();

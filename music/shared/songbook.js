@@ -500,8 +500,20 @@
   // action opens. Pure + Node-testable; shared by the list-item action ladder
   // and the song-view "Hear it on YouTube" link.
   function ytSearchURL(s) {
-    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-      .filter(Boolean).join(' ');
+    // the 'search' placeholder is a data sentinel, never a real artist - keep it
+    // out of the QUERY too, not just the display (codex #91: displayRec masked
+    // it for rendering while the action ladder still passed the raw record).
+    var artist = s.a || s.artist;
+    if (artist === 'search') artist = '';
+    var parts = [s.t || s.title, artist, s.key ? s.key + ' key' : ''];
+    // custom songs (Compose saves) have no recording to find - fold genre +
+    // chords so the search lands on something playable instead of title-only.
+    if (s.custom && Array.isArray(s.seq)) {
+      var toks = s.seq.map(function (c) { return String(c == null ? '' : c).trim(); }).filter(Boolean);
+      if (s.genre) parts.push(s.genre);
+      if (toks.length) parts.push(toks.join(' '));
+    }
+    var q = parts.filter(Boolean).join(' ');
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
   }
 
@@ -752,6 +764,19 @@
       if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
+    // Display-only record override shared by EVERY ListItem render site (library
+    // + setlist - codex #91 caught the setlist rendering raw records):
+    // - artist sentinel 'search' (tracks.json placeholder = "resolve via search")
+    //   reads as a band literally named "search" -> show 'Unknown'.
+    // - an artist-less Compose save would pair a blank artist with the year,
+    //   printing a bare "· 2026" -> drop the year so no meta line renders.
+    // The real record (navigation/actions/queries) is never mutated.
+    function displayRecFor(rec) {
+      var artistVal = rec.artist != null ? rec.artist : rec.a;
+      if (artistVal === 'search') return Object.assign({}, rec, { artist: 'Unknown', a: 'Unknown' });
+      if (!artistVal) return Object.assign({}, rec, { y: null, year: null });
+      return rec;
+    }
     function renderSongs() {
       if (!el.songsList) return;
       // Compose calling this right after a save happens while the Library
@@ -780,7 +805,8 @@
         el.songsList.innerHTML = '';
         el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
-        if (visible) pendingHighlightId = null; // shown its chance - nothing to find here
+        // do NOT consume here: a filtered/empty render never showed the row -
+        // the highlight stays pending until the row actually appears (codex #91).
         return;
       }
       el.songsList.innerHTML = '';
@@ -792,26 +818,8 @@
         // is insufficient: a seq-less custom track has an id too.
         var canAdd = sid != null && hasChordSheet(songById(sid));
         var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
-        // L1 (pilot UAT): a yt-sourced standalone track with no curated artist
-        // stores the literal sentinel 'search' (tracks.json placeholder meaning
-        // "no fixed artist, resolve via search") - showing it verbatim reads as
-        // a band literally named "search". Display-only override; the real
-        // `rec` (used below for navigation/actions) is untouched.
-        var displayRec = rec;
-        var artistVal = rec.artist != null ? rec.artist : rec.a;
-        if (artistVal === 'search') {
-          displayRec = Object.assign({}, rec, { artist: 'Unknown', a: 'Unknown' });
-        } else if (!artistVal) {
-          // Artist-mirrors-title fix (S5): a Compose-saved song stores no artist
-          // (rather than a hardcoded placeholder that duplicated the title) - but
-          // list-item.js pairs a blank artist with the year regardless, printing
-          // a bare "· 2026" with nothing before the dot. Drop the year too so an
-          // artist-less row shows no meta line at all - "no artist known", not a
-          // render glitch.
-          displayRec = Object.assign({}, rec, { y: null, year: null });
-        }
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
-        var node = global.ListItem.render(displayRec, {
+        var node = global.ListItem.render(displayRecFor(rec), {
           segment: 'library',
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
@@ -825,13 +833,12 @@
       // Post-save discoverability (B3 pilot UAT: "after saving, it's hidden near
       // the bottom of the library's song list") - scroll the new row into view
       // and give it a brief accent pulse (CSS handles the ~2s fade) so it's
-      // findable without hunting a long list. Consumed only on a visible render
-      // (found or not - a filtered-out item has had its one visible chance).
-      if (visible && pendingHighlightId != null) {
-        if (justSavedEl) {
-          if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          justSavedEl.classList.add('justSaved');
-        }
+      // findable without hunting a long list. Consumed ONLY when the row was
+      // actually found and highlighted - a filtered/empty visible render keeps
+      // the highlight pending for the render that really shows it (codex #91).
+      if (visible && pendingHighlightId != null && justSavedEl) {
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        justSavedEl.classList.add('justSaved');
         pendingHighlightId = null;
       }
     }
@@ -1130,7 +1137,7 @@
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
-        body.appendChild(global.ListItem.render(s, {
+        body.appendChild(global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
@@ -1974,8 +1981,11 @@
       if (!ensureComposeUI()) return;
       clearTimeout(toastTimer);
       composeToast.textContent = msg;
-      composeToast.className = 'composeToast' + (isErr ? ' err' : '');
+      composeToast.className = 'composeToast' + (isErr ? ' err' : '') + (persist ? ' tap' : '');
       composeToast.hidden = false;
+      // a persistent toast must still be dismissable (codex #91: no clear path
+      // could strand stale text indefinitely) - one tap hides it.
+      composeToast.onclick = function () { composeToast.hidden = true; };
       if (!persist) toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
     }
     // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
