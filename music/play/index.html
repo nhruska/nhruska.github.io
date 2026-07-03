@@ -50,6 +50,8 @@
   .setSummary{margin:0 0 14px;display:flex;flex-direction:column;gap:5px;}
   .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
   .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
+  .setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
+  .setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
   .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
   .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:12px;}
   .setAbout{color:var(--ink-faint);font-size:.74rem;text-align:center;padding-bottom:0;}
@@ -213,7 +215,7 @@
     </div>
     <div class="setSec">
       <div class="setLbl">Your songbook</div>
-      <p class="setHint">Everything below lives only on this device. Back up saves it to a file (drop it in Drive or Files); Restore reads that file on a new phone to bring it across. Restore adds and overwrites these items - it never deletes anything already here.</p>
+      <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
       <div class="setSummary" id="dataSummary" aria-live="polite"></div>
       <div class="setBtns">
         <button class="btn" id="btnBackup" type="button">Back up</button>
@@ -780,19 +782,32 @@
     function renderSummary() {
       var el = document.getElementById('dataSummary'); if (!el || !window.Backup) return;
       var lines = Backup.describe(Backup.collect(localStorage), instrumentNames());
-      if (!lines.length) { el.innerHTML = '<div class="empty">Nothing saved on this device yet.</div>'; return; }
-      el.innerHTML = lines.map(function (l) {
-        return '<div class="row"><span class="k"></span><span class="v"></span></div>';
-      }).join('');
-      var rows = el.querySelectorAll('.row');
-      lines.forEach(function (l, i) { rows[i].querySelector('.k').textContent = l.label; rows[i].querySelector('.v').textContent = l.detail; });
+      el.textContent = '';
+      if (!lines.length) {
+        var empty = document.createElement('div'); empty.className = 'empty';
+        empty.textContent = 'Nothing saved on this device yet.'; el.appendChild(empty); return;
+      }
+      function row(cls, k, v) {
+        var r = document.createElement('div'); r.className = 'row' + (cls ? ' ' + cls : '');
+        var ks = document.createElement('span'); ks.className = 'k'; ks.textContent = k; r.appendChild(ks);
+        if (v != null) { var vs = document.createElement('span'); vs.className = 'v'; vs.textContent = v; r.appendChild(vs); }
+        el.appendChild(r);
+      }
+      lines.forEach(function (l) {
+        if (l.rows && l.rows.length) {           // per-instrument: header, then one row each
+          row('head', l.label, null);
+          l.rows.forEach(function (r) { row('sub', r.k, r.v); });
+        } else {
+          row('', l.label, l.detail);
+        }
+      });
     }
     function showVersion() {
       var el = document.getElementById('appVer'); if (!el) return;
-      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = 'Music - running online (not yet installed offline)'; return; }
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = 'Running online. Not yet installed offline.'; return; }
       try {
         var mc = new MessageChannel();
-        mc.port1.onmessage = function (ev) { if (ev.data && ev.data.version) el.textContent = 'Music - offline build ' + ev.data.version; };
+        mc.port1.onmessage = function (ev) { if (ev.data && ev.data.version) el.textContent = 'Offline build ' + ev.data.version; };
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
       } catch (e) {}
     }
@@ -833,9 +848,9 @@
           var v = Backup.validate(payload);
           if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
           var lines = Backup.describe(payload.data, instrumentNames());
-          var manifest = lines.length ? lines.map(function (l) { return '- ' + l.label + ': ' + l.detail; }).join('\n') : '- (nothing recognisable in this file)';
+          var manifest = lines.length ? lines.map(function (l) { return '• ' + l.label + ': ' + l.detail; }).join('\n') : '• Nothing recognizable in this file.';
           var when = payload.exportedAt ? ' from ' + payload.exportedAt.slice(0, 10) : '';
-          if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? This adds and overwrites these items - it won\'t delete anything already here.')) return;
+          if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.')) return;
           try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
           alert('Restored your songbook. Reloading the app.'); location.reload();
         };

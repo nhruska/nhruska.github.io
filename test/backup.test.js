@@ -128,12 +128,15 @@ test('describe() breaks setlists/progressions down PER INSTRUMENT', function () 
     'music.activeProfile.v1': 'ukulele-gcea'
   });
   var byLabel = {};
-  lines.forEach(function (l) { byLabel[l.label] = l.detail; });
-  assert.strictEqual(byLabel['Setlist'], 'Ukulele 3 · Guitar 2');   // sorted by count desc, named
-  assert.strictEqual(byLabel['Saved progressions'], '2 progressions'); // single instrument -> plain count
-  assert.strictEqual(byLabel['Custom tracks'], '1 track');          // bt.custom.v1 stays tracks
-  assert.strictEqual(byLabel['Curated track links'], '2 links');
-  assert.strictEqual(byLabel['Preferences'], 'accent color, instrument');
+  lines.forEach(function (l) { byLabel[l.label] = l; });
+  assert.strictEqual(byLabel['Setlist'].detail, 'Ukulele 3 · Guitar 2');   // inline form (for the confirm dialog)
+  // multi-instrument also carries per-instrument rows for one-per-line rendering
+  assert.deepStrictEqual(byLabel['Setlist'].rows, [{ k: 'Ukulele', v: '3 songs' }, { k: 'Guitar', v: '2 songs' }]);
+  assert.strictEqual(byLabel['Saved progressions'].detail, '2 progressions'); // single instrument -> plain, no rows
+  assert.ok(!byLabel['Saved progressions'].rows);
+  assert.strictEqual(byLabel['Custom tracks'].detail, '1 track');          // bt.custom.v1 stays tracks
+  assert.strictEqual(byLabel['Curated track links'].detail, '2 links');
+  assert.strictEqual(byLabel['Preferences'].detail, 'accent color, instrument');
 });
 test('describe() uses provided instrument display names (trimmed at " - ")', function () {
   var lines = Backup.describe(

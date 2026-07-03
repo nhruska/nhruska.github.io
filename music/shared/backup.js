@@ -82,7 +82,7 @@
     if (payload.app !== 'music') return { ok: false, error: 'not a Music backup' };
     if (typeof payload.schema !== 'number') return { ok: false, error: 'missing schema version' };
     if (!payload.data || typeof payload.data !== 'object') return { ok: false, error: 'no data in backup' };
-    if (payload.schema > SCHEMA_VERSION) return { ok: false, error: 'backup is from a newer app version (' + payload.schema + ' > ' + SCHEMA_VERSION + ') - update the app first' };
+    if (payload.schema > SCHEMA_VERSION) return { ok: false, error: 'this backup was made by a newer version of the app. Update the app first' };
     return { ok: true };
   }
 
@@ -140,17 +140,24 @@
       out.sort(function (a, b) { return b.n - a.n; });
       return out;
     }
-    // "20 songs" for one namespace; "Ukulele 20 · Guitar 4" across instruments.
-    function breakdown(items, one) {
+    // One instrument -> a plain "{label}: 20 songs" line. Several instruments ->
+    // the same line PLUS `rows` (one {k:name, v:"20 songs"} per instrument) so the
+    // UI can render one instrument per row instead of an ugly wrapping "·" list.
+    // `detail` is always the inline form (used by the restore-confirm text).
+    function categoryLine(label, items, one) {
       if (!items.length) return null;
-      if (items.length === 1) return plural(items[0].n, one);
-      return items.map(function (it) { return it.name + ' ' + it.n; }).join(' · ');
+      if (items.length === 1) return { label: label, detail: plural(items[0].n, one) };
+      return {
+        label: label,
+        detail: items.map(function (it) { return it.name + ' ' + it.n; }).join(' · '),
+        rows: items.map(function (it) { return { k: it.name, v: plural(it.n, one) }; })
+      };
     }
     var lines = [];
-    var setD = breakdown(perInstrument('.setlist.v1'), 'song');
-    if (setD) lines.push({ label: 'Setlist', detail: setD });
-    var progD = breakdown(perInstrument('.custom.v1'), 'progression');
-    if (progD) lines.push({ label: 'Saved progressions', detail: progD });
+    var setLine = categoryLine('Setlist', perInstrument('.setlist.v1'), 'song');
+    if (setLine) lines.push(setLine);
+    var progLine = categoryLine('Saved progressions', perInstrument('.custom.v1'), 'progression');
+    if (progLine) lines.push(progLine);
     var tracks = has('bt.custom.v1') ? arrLen('bt.custom.v1') : 0;
     if (tracks > 0) lines.push({ label: 'Custom tracks', detail: plural(tracks, 'track') });
     var links = has('music.trackUrls.v1') ? objLen('music.trackUrls.v1') : 0;
