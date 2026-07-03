@@ -41,8 +41,9 @@ jobs:
             const branchUrl = `https://github.com/${hOwner}/${hName}/tree/${branchPath}`;
             // Branch-form githack root: the DEFAULT for the tuning links so the preview
             // tracks the latest push (slashed branch names resolve on githack). The
-            // commit-pinned `base` (githack at the SHA) is offered as the "Commit
-            // preview" link for isolated per-commit testing.
+            // commit-pinned `base` (githack at the SHA) is the "Commit" link for isolated
+            // per-commit testing ONLY; it 404s after the PR merges and its branch is deleted
+            // (commit gets GC'd), so it must never be the default tap target.
             const baseBranch = `https://raw.githack.com/${hOwner}/${hName}/${branchPath}`;
             const liveUrl = `https://${owner}.github.io/music/play/`;
             // The profile label + branch are PR-controlled; truncate FIRST, THEN
@@ -86,7 +87,7 @@ jobs:
               '',
               '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
-              `**Commit preview** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (pin for isolated testing) · **Branch** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
+              `**Branch preview** [music/play](${baseBranch}/music/play/) (tracks latest push - the default) · **Commit** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (isolated per-commit testing; EXPIRES after merge) · **Source** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

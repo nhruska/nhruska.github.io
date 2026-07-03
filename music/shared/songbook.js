@@ -811,16 +811,15 @@
       // a catalog song.
       var forcedChords = s.custom && !s.forkOf;
       var view = forcedChords ? 'chords' : STATE.songView;
-      var maxBtn = pack ? '<button class="iconBtn" id="maxOpenBtn" title="Maximize chords">⤢</button>' : '';
       // header: icon-only back arrow (top-left, beside the title) + a compact
-      // setlist checkmark toggle (top-right, alongside the maximize icon when
-      // present) — both above the fold, no separate row.
+      // setlist checkmark toggle (top-right). The Stage (⛶) button in the view
+      // row below is the single fullscreen/maximize control (t2 - the old ⤢
+      // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
-        + maxBtn
         + '</div></div>';
       // view row: Lyrics / Chords / Both segmented + compact transpose chip +
       // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
@@ -858,20 +857,21 @@
       // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
       // not the sheet). The MERGED record feeds the query so track-derived
       // fields (key etc.) match what the ladder builds from.
-      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear it on YouTube ↗</a>';
+      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>';
       var body;
       if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
           + actions
-          + ytLink;
+          + '<div class="lyricsLinks">' + ytLink + '</div>';
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
+        var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
           + actions
-          + ytLink
-          + '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
+          // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
+          + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
@@ -886,8 +886,6 @@
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
-      var maxOpen = el.practiceBody.querySelector('#maxOpenBtn');
-      if (maxOpen) maxOpen.onclick = function () { openMaxWith(seq); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -944,6 +942,9 @@
     }
 
     /* ===================== MAXIMIZE (chord pack diagrams) ===================== */
+    // Raw DOM close for the inversions overlay - idempotent, must NOT call
+    // NavHistory.dismiss (that's the button/back-button path, not this).
+    function rawCloseMax() { if (el.maxOv) el.maxOv.classList.remove('on'); }
     function openMaxWith(chords) {
       if (!el.maxOv || !el.maxGrid || !pack) return;
       el.maxGrid.innerHTML = '';
@@ -953,8 +954,9 @@
         el.maxGrid.appendChild(bd);
       });
       el.maxOv.classList.add('on');
+      if (window.NavHistory) NavHistory.open('inversions', rawCloseMax);
     }
-    if (el.maxClose) el.maxClose.onclick = function () { el.maxOv.classList.remove('on'); };
+    if (el.maxClose) el.maxClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseMax(); };
 
     /* ===================== SETLIST ===================== */
     function toggleSet(id) {
@@ -1039,6 +1041,9 @@
     var performEl = el.perform, pSheet = el.pSheet;
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
+    // Raw DOM close for the Stage overlay - idempotent, must NOT call
+    // NavHistory.dismiss (that's the button/back-button path, not this).
+    function rawCloseStage() { relWake(); if (performEl) performEl.classList.remove('on'); }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -1065,13 +1070,14 @@
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
+      if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
-    if (el.pClose) el.pClose.onclick = function () { relWake(); if (performEl) performEl.classList.remove('on'); };
+    if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
     if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
     if (el.pNext) el.pNext.onclick = function () {
       if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { relWake(); if (performEl) performEl.classList.remove('on'); }
+      else { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -2122,12 +2128,16 @@
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
-    function switchTab(name) {
-      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
-      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
-      // old internal callers + deep links still land in the right place.
-      if (name === 'setlist' || name === 'set') name = 'jam';
-      else if (name === 'tracks' || name === 'repertoire') name = 'library';
+    // Tracks the screen actually on-screen (post legacy-name normalization).
+    // Set once INIT resolves the first-shown screen (see below); drives the
+    // screen/tab back-history wiring in switchTab.
+    var currentTab = null;
+    // Renders the tab/screen switch WITHOUT touching the back-history stack.
+    // Used by: the CLOSE side of a screen back-history entry (returning to the
+    // previous screen - calling switchTab there would push a second entry),
+    // and any future same-name refresh. `name` must already be normalized
+    // (the legacy-name remap lives in switchTab, below).
+    function applyTab(name) {
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
@@ -2140,6 +2150,26 @@
       if (viewEl) viewEl.scrollTop = 0;
       if (el.ctxLine && CONTEXTS[name] != null) el.ctxLine.textContent = CONTEXTS[name];
       if (pack && typeof pack.onSwitchTab === 'function') pack.onSwitchTab(name);
+    }
+    // USER-facing tab/screen switch (tab-bar taps, opening Practice, etc).
+    // Pushes ONE back-history layer per actual screen change so hardware/gesture
+    // Back returns to the PREVIOUS screen instead of leaving the app straight
+    // away; its close fn calls applyTab (never switchTab, which would push a
+    // second entry) to restore the prior screen.
+    function switchTab(name) {
+      // Legacy tab names resolve to the new surfaces: setlist/set -> the Jam tab
+      // (the Set / Perform surface), tracks/repertoire -> the unified Library, so
+      // old internal callers + deep links still land in the right place. Runs
+      // BEFORE computing `from` / calling applyTab so both compare the
+      // normalized name.
+      if (name === 'setlist' || name === 'set') name = 'jam';
+      else if (name === 'tracks' || name === 'repertoire') name = 'library';
+      var from = currentTab;
+      applyTab(name);
+      if (from && from !== name && window.NavHistory) {
+        NavHistory.open('screen:' + name, function () { applyTab(from); currentTab = from; });
+      }
+      currentTab = name;
     }
     document.querySelectorAll('.tabbar button').forEach(function (b) { b.onclick = function () { switchTab(b.dataset.tab); }; });
 
@@ -2189,9 +2219,14 @@
       // throw a selector SyntaxError and abort the restore.
       document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
       if (savedTab && savedTab !== 'library' && tabExists) {
-        switchTab(savedTab);
+        switchTab(savedTab); // from=null (currentTab unset yet) -> no history push, just sets currentTab
       }
     } catch (e) {}
+    // No restore above set currentTab (savedTab was library, missing, or its
+    // button didn't exist) -> the markup's default-shown screen (Library) is
+    // what's on screen. Seed currentTab to match so the FIRST real user
+    // navigation correctly pushes a back-history layer.
+    if (!currentTab) currentTab = 'library';
 
     /* ---- controller ---- */
     return {

@@ -121,18 +121,19 @@ const SITE={
 };
 
 /* ============================================================
-   PROJECTS  —  TO ADD A NEW TOOL:
-   1) Drop its folder under an instrument (e.g.  /music/guitar/index.html )
-   2) Add an entry to the TOP of this array:
+   PROJECTS  —  TO ADD A NEW INSTRUMENT:
+   Every instrument is a PROFILE inside the ONE app (music/play/?p=<id>) - no
+   per-instrument folder. Add its profile under shared/profiles/ (+ manifest.json),
+   then add an entry to the TOP of this array:
         {
-          title:"My Tool",
+          title:"My Instrument",
           desc:"One line on what it does.",
-          path:"guitar/",          // folder name + trailing slash (relative to /music/)
-          cat:"Guitar",            // instrument => becomes a filter chip
-          tags:["tuner","chords"], // optional, for search + display
-          status:"live"            // live | wip | poc | idea
+          path:"play/?p=<profile-id>",  // the id from shared/profiles/manifest.json
+          cat:"My Instrument",          // becomes a filter chip
+          tags:["tuner","songbook"],    // optional, for search + display
+          status:"live"                 // live | wip | poc | idea
         }
-   3) Commit / PR. The card appears automatically.
+   Commit / PR. The card appears automatically.
 ============================================================ */
 const PROJECTS=[
   {

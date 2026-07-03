@@ -315,10 +315,13 @@
         + '<div class="bt-qpanel-list" data-qlist></div></div>';
       var list = elQueuePanel.querySelector('[data-qlist]');
       rows.forEach(function (t) { list.appendChild(queueRow(t)); });
-      elQueuePanel.querySelector('[data-qclose]').onclick = closeQueuePanel;
-      elQueuePanel.onclick = function (e) { if (e.target === elQueuePanel) closeQueuePanel(); };
+      elQueuePanel.querySelector('[data-qclose]').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closeQueuePanel(); };
+      elQueuePanel.onclick = function (e) { if (e.target === elQueuePanel) { if (window.NavHistory) window.NavHistory.dismiss(); else closeQueuePanel(); } };
     }
-    function openQueuePanel() { renderQueuePanel(); elQueuePanel.classList.add('on'); }
+    function openQueuePanel() {
+      renderQueuePanel(); elQueuePanel.classList.add('on');
+      if (window.NavHistory) window.NavHistory.open('queue', closeQueuePanel);
+    }
     function closeQueuePanel() { elQueuePanel.classList.remove('on'); elQueuePanel.innerHTML = ''; }
 
     function loadCustom() {
@@ -363,8 +366,9 @@
         + '<div class="bt-pl-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
         + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>';
       elPlayer.classList.add('on');
-      elPlayer.querySelector('.bt-pl-x').onclick = closePlayer;
-      elPlayer.onclick = function (e) { if (e.target === elPlayer) closePlayer(); };
+      elPlayer.querySelector('.bt-pl-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
+      elPlayer.onclick = function (e) { if (e.target === elPlayer) { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); } };
+      if (window.NavHistory) window.NavHistory.open('player', closePlayer);
     }
     function closePlayer() { elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = ''; }
 
@@ -569,7 +573,13 @@
         openStudio(merged);
       };
       var editReq = elPlayer.querySelector('[data-editrequest]');
-      if (editReq) editReq.onclick = function () { closePlayer(); opts.onEditRequest(t); };
+      if (editReq) editReq.onclick = function () {
+        // Transition Studio -> Edit form: close the studio DOM + let the form take over
+        // its history slot (no stale studio layer left under the form). settleAfter does
+        // the replace; falls back to the raw sequence without NavHistory.
+        if (window.NavHistory) NavHistory.settleAfter(closePlayer, function () { opts.onEditRequest(t); });
+        else { closePlayer(); opts.onEditRequest(t); }
+      };
       // Inline "add the video you found" for a custom song with no video yet: parse the
       // pasted URL, write it via the host (cs.yt), and re-open the Studio so the embed
       // shows immediately.
@@ -581,7 +591,8 @@
         var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
-      elPlayer.querySelector('.bt-st-x').onclick = closePlayer;
+      elPlayer.querySelector('.bt-st-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
+      if (window.NavHistory) window.NavHistory.open('studio', closePlayer);
     }
 
     // The harmony-teacher HUD (scale + chords-in-key + circle) is the point - the

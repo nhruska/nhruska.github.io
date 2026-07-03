@@ -16,7 +16,10 @@
  *             the dialog "Make it mine" / delete -> "Revert to original"),
  *       item: {...} (edit mode: the existing custom song/track to prefill; also
  *             the fork seed in fork+create mode),
- *       onSave: function(fields) -> saved item or null (host persists),
+ *       onSave: function(fields) (host persists; may navigate). A VALID save always
+ *             closes the form (via NavHistory.settleAfter) - the return value is no
+ *             longer a close-veto. Invalid input (empty title / bad URL) is caught
+ *             BEFORE onSave and keeps the form open.
  *       onDelete: function() (edit mode only; optional)
  *     }
  * ===================================================================== */
@@ -70,6 +73,13 @@
     var current = null; // { mode, item, onSave, onDelete }
 
     function close() { el.classList.remove('on'); el.innerHTML = ''; current = null; }
+    // User-initiated close: route through NavHistory.dismiss() so the pushed
+    // history entry pops in step with the DOM close (single close path via
+    // popstate -> close). Falls back to the raw close() if no layer is open.
+    function dismissForm() {
+      if (global.NavHistory && global.NavHistory.depth()) global.NavHistory.dismiss();
+      else close();
+    }
 
     function render() {
       var editing = current.mode === 'edit';
@@ -114,8 +124,8 @@
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
-      el.querySelector('[data-close]').onclick = close;
-      el.onclick = function (e) { if (e.target === el) close(); };
+      el.querySelector('[data-close]').onclick = dismissForm;
+      el.onclick = function (e) { if (e.target === el) dismissForm(); };
       var urlIn = el.querySelector('[data-url]');
       urlIn.oninput = function () { urlIn.classList.remove('bad'); };
       var titleIn = el.querySelector('[data-title]');
@@ -125,15 +135,31 @@
         if (!f.title) { titleIn.classList.add('bad'); try { titleIn.focus({ preventScroll: true }); } catch (e2) { titleIn.focus(); } return; }
         if (f._urlInvalid) { urlIn.classList.add('bad'); try { urlIn.focus({ preventScroll: true }); } catch (e2) { urlIn.focus(); } return; }
         delete f._urlRaw; delete f._urlInvalid;
-        var saved = current.onSave && current.onSave(f);
-        if (saved !== false) close();
+        // Save may navigate (fork -> Practice, edit-with-video -> Studio) or not (plain
+        // add). settleAfter runs onSave FIRST then closes the form, so onSave's new layer
+        // takes the form's history slot (no async back/push race) and a save error stays
+        // visible with the form open; a no-nav save collapses the slot. Falls back to the
+        // raw save+close when NavHistory is absent.
+        // Capture the callback into a local (defensive: keeps this robust even if
+        // settleAfter's close ordering changes so `current` is nulled before onSave runs).
+        var onSave = current.onSave;
+        var doSave = function () { if (onSave) onSave(f); };
+        if (global.NavHistory) global.NavHistory.settleAfter(close, doSave);
+        else { doSave(); close(); }
       };
       if (current.onDelete) {
         var delBtn = el.querySelector('[data-delete]');
         if (delBtn) delBtn.onclick = function () {
           var msg = fork ? 'Revert to the original song? Your edits and video will be removed.'
             : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
-          if (confirm(msg)) { current.onDelete(); close(); }
+          if (confirm(msg)) {
+            // Delete navigates (switchTab('library')): same transition hand-off as save.
+            // Capture onDelete FIRST (close() nulls current before runNext runs).
+            var onDelete = current.onDelete;
+            var doDelete = function () { if (onDelete) onDelete(); };
+            if (global.NavHistory) global.NavHistory.settleAfter(close, doDelete);
+            else { doDelete(); close(); }
+          }
         };
       }
     }
@@ -141,6 +167,7 @@
     function open(o) {
       current = { mode: o.mode === 'edit' ? 'edit' : 'create', fork: !!o.fork, item: o.item || null, onSave: o.onSave || null, onDelete: o.onDelete || null };
       render();
+      if (global.NavHistory) global.NavHistory.open('form', close);
     }
 
     return { open: open, close: close };

@@ -45,6 +45,10 @@ Rules of thumb:
 - **Default to the branch link.** Only reach for the commit-pinned link when isolation is the point.
 - Always **curl-verify** the link is `200` before handing it over, and make it a live tappable markdown link (per the global tappable-links discipline). When the user is on their phone, also send it via the telegram surface.
 - `.github/workflows/pr-preview.yml` posts these automatically on every PR (per-instrument tuning links + labelled Commit / Branch / Deployed links). The per-instrument links default to the **branch** form; the **Commit** labelled link is there for isolated testing.
+- **Merged work:** link the DEPLOYED GitHub Pages URL (https://nhruska.github.io/music/play/) - never a githack link. Commit-pinned githack URLs 404 after merge (branch deleted - commit garbage-collected); branch-level githack URLs die with the branch too.
+- **Open PR:** the branch-level githack link is the default tap target (tracks every push during the PR's life).
+- **Commit-pinned githack links** are for isolated per-commit testing ONLY, always labeled "(expires after merge)" - NEVER send one to Telegram or put one in a CTA/footer as the primary link.
+- **The app's "must be served over http(s)" boot banner** also fires on a dead-commit 404 (any manifest fetch failure) - if a preview link shows it, suspect an expired commit link first, not a serving-scheme problem.
 
 ## CI
 - `.github/workflows/tests.yml` runs `node test/run-all.js` (the node unit suite) on PRs.
