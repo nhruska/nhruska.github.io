@@ -272,4 +272,69 @@ test('lesson flat-hint fires only for lowered sharp notes (extraction guard)', f
   assert.strictEqual(altFor({ dir: 'lower', to: 'F' }, esc), '');    // natural target: no hint
 });
 
+/* ---------- customSearchQuery + tintWheel (codex #89 volley-1) ---------- */
+test('customSearchQuery folds genre + progression into the query, skipping junk tokens', function () {
+  assert.strictEqual(
+    T.customSearchQuery({ artist: 'Me', title: 'Jam 1', genre: 'blues', seq: ['Dm', 'A#', 'C'] }),
+    'Me Jam 1 blues Dm A# C backing track');
+  // no genre, no seq -> still a sane query
+  assert.strictEqual(T.customSearchQuery({ title: 'Idea' }), 'Idea backing track');
+  // empty/whitespace chord tokens are dropped (user-edited progressions)
+  assert.strictEqual(
+    T.customSearchQuery({ title: 'X', seq: ['Dm', '', '  ', 'C'] }),
+    'X Dm C backing track');
+  // empty seq array behaves like no seq
+  assert.strictEqual(T.customSearchQuery({ title: 'X', seq: [] }), 'X backing track');
+  // and it URL-encodes cleanly through youtubeSearchUrl (the # in A# survives encoding)
+  var url = T.youtubeSearchUrl(T.customSearchQuery({ title: 'X', seq: ['A#'] }));
+  assert.ok(url.indexOf('A%23') >= 0, url);
+});
+
+/* minimal DOM stub for tintWheel: labels with previousElementSibling wedges */
+function stubWheel(labels) {
+  function el(cls) {
+    var classes = cls.slice();
+    return {
+      classList: {
+        contains: function (c) { return classes.indexOf(c) >= 0; },
+        add: function (c) { if (classes.indexOf(c) < 0) classes.push(c); }
+      },
+      _classes: classes
+    };
+  }
+  var nodes = labels.map(function (txt) {
+    var wedge = el(['cofWedge']);
+    var label = el(['cofLabel']);
+    label.textContent = txt;
+    label.previousElementSibling = wedge;
+    return label;
+  });
+  return {
+    nodes: nodes,
+    querySelectorAll: function (sel) { return sel === '.cofLabel' ? nodes : []; }
+  };
+}
+test('tintWheel marks the relative key strong + V/IV dim on the real Circle contract', function () {
+  var C = require('../music/shared/circle.js');
+  // A major: neighbors = E (V), D (IV), F#m (relative minor)
+  var labels = C.ORDER.map(function (r) { return C.spellRoot(r) + ''; })
+    .concat(C.ORDER.map(function (r) { return C.spellRoot(r) + 'm'; }));
+  var wheel = stubWheel(labels);
+  T.tintWheel(wheel, C, 'A', 'major');
+  function classesOf(txt) {
+    for (var i = 0; i < wheel.nodes.length; i++) if (wheel.nodes[i].textContent === txt) return wheel.nodes[i].previousElementSibling._classes.join(',');
+    return '(missing)';
+  }
+  assert.ok(classesOf('F#m').indexOf('cofWedge-rel') >= 0, 'relative minor F#m tinted: ' + classesOf('F#m'));
+  assert.ok(classesOf('E').indexOf('cofWedge-nb') >= 0, 'V (E) tinted: ' + classesOf('E'));
+  assert.ok(classesOf('D').indexOf('cofWedge-nb') >= 0, 'IV (D) tinted: ' + classesOf('D'));
+  assert.ok(classesOf('A').indexOf('cofWedge-rel') < 0, 'tonic not rel-tinted');
+});
+test('tintWheel survives a wheel with unexpected labels (no throw, no tint)', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = stubWheel(['nonsense', 'labels']);
+  T.tintWheel(wheel, C, 'A', 'major'); // must not throw
+  assert.strictEqual(wheel.nodes[0].previousElementSibling._classes.join(','), 'cofWedge');
+});
+
 run();

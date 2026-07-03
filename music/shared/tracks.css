@@ -216,7 +216,7 @@
      did nothing; removed. tracks.js's tintWheel() now marks the relative key
      (.cofWedge-rel, strong) + the V/IV neighbors (.cofWedge-nb, dimmer) as a static
      teaching cue instead - no click affordance, no dead-end tap. */
-  .cofWedge{fill:var(--surface-2);stroke:var(--bg);stroke-width:1.5;cursor:pointer;transition:fill .12s;}
+  .cofWedge{fill:var(--surface-2);stroke:var(--bg);stroke-width:1.5;cursor:default;transition:fill .12s;}
   .cofWedge.on{fill:var(--accent);}
   .cofWedge-rel{fill:var(--accent-dim);}
   .cofWedge-nb{fill:var(--accent-deep);}

@@ -91,9 +91,35 @@
     if (t.artist) p.push(t.artist);
     if (t.title) p.push(t.title);
     if (t.genre) p.push(t.genre);
-    if (Array.isArray(t.seq) && t.seq.length) p.push(t.seq.join(' '));
+    if (Array.isArray(t.seq)) {
+      var toks = t.seq.filter(function (c) { return c && String(c).trim(); });
+      if (toks.length) p.push(toks.join(' '));
+    }
     p.push('backing track');
     return p.join(' ');
+  }
+  // Tint the Studio's circle-of-fifths wheel: relative key (strong) + V/IV
+  // (dimmer). Post-processes circle.js's renderWheel DOM by matching label
+  // text - exported for tests so a circle.js DOM-contract change fails loudly
+  // instead of silently dropping the tint (codex #89 V1).
+  function tintWheel(wheelEl, C, key, mode) {
+    var nb = C.neighbors(key, mode);
+    if (!nb || nb.length < 3) return;
+    function mark(entry, cls) {
+    if (!entry || !entry.root) return;
+    var label = C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
+    var texts = wheelEl.querySelectorAll('.cofLabel');
+    for (var i = 0; i < texts.length; i++) {
+      if (texts[i].textContent !== label) continue;
+      var wedge = texts[i].previousElementSibling;
+      if (wedge && wedge.classList.contains('cofWedge')) wedge.classList.add('cofWedge-' + cls);
+      texts[i].classList.add('cofLabel-' + cls);
+      break;
+    }
+    }
+    mark(nb[2], 'rel');  // relative minor (or relative major, if the track itself is minor)
+    mark(nb[0], 'nb');   // a fifth up (V) - dimmer
+    mark(nb[1], 'nb');   // a fifth down (IV) - dimmer
   }
   function filterQuery(genre, root, mode) {
     var g = (genre && genre !== 'all') ? genre + ' ' : '';
@@ -427,25 +453,6 @@
     // returned DOM by matching each neighbor's rendered label text ("A"/"Am") to
     // its <text>, then tints that text's immediately-preceding <path> (the wedge
     // renderWheel appends right before its own label) - no circle.js edit needed.
-    function tintWheel(wheelEl, C, key, mode) {
-      var nb = C.neighbors(key, mode);
-      if (!nb || nb.length < 3) return;
-      function mark(entry, cls) {
-        if (!entry || !entry.root) return;
-        var label = C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
-        var texts = wheelEl.querySelectorAll('.cofLabel');
-        for (var i = 0; i < texts.length; i++) {
-          if (texts[i].textContent !== label) continue;
-          var wedge = texts[i].previousElementSibling;
-          if (wedge && wedge.classList.contains('cofWedge')) wedge.classList.add('cofWedge-' + cls);
-          texts[i].classList.add('cofLabel-' + cls);
-          break;
-        }
-      }
-      mark(nb[2], 'rel');  // relative minor (or relative major, if the track itself is minor)
-      mark(nb[0], 'nb');   // a fifth up (V) - dimmer
-      mark(nb[1], 'nb');   // a fifth down (IV) - dimmer
-    }
     // studioTheory now lives at module scope (exported for tests) - see above.
     function buildWhy(box, th) {
       var C = global.Circle;
@@ -461,7 +468,7 @@
       if (C && C.renderWheel) {
         var mode = normMode(th.scaleMode);
         var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
-        try { tintWheel(wheelEl, C, th.key, mode); } catch (e) {}
+        try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF tint skipped (wheel DOM contract changed?):', e); }
         box.querySelector('.bt-st-wheel').appendChild(wheelEl);
       }
     }
@@ -951,7 +958,7 @@
 
   var Tracks = {
     compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
-    searchQuery: searchQuery, customSearchQuery: customSearchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
+    searchQuery: searchQuery, customSearchQuery: customSearchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl, tintWheel: tintWheel,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
