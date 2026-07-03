@@ -1327,7 +1327,6 @@
     }
     function addChord(c) {
       if (progression.length >= 8) return;
-      forceStarters = false;
       progression.push(c);
       // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
       // one, so the key chip + in-key palette light up without a key-panel trip. The
@@ -1371,7 +1370,6 @@
     // chord palette + solo scale below match what just got filled in.
     function loadProgression(degrees) {
       var root = songKey.root || "C";
-      forceStarters = false; // a progression is loaded now - leave the starters view
       // a named pattern sets an explicit Major key (patterns are major-diatonic)
       songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
@@ -1402,7 +1400,23 @@
       buildKeyPicker();
       // P3: the "Solo over a backing track" CTA appears once a key + progression
       // are established (the roadmap precondition for backing-track soloing).
-      if (el.soloBackingBtn) el.soloBackingBtn.hidden = !(songKey.root && progression.length);
+      if (el.soloBackingBtn) {
+        var showSolo = !!(songKey.root && progression.length);
+        el.soloBackingBtn.hidden = !showSolo;
+        // C1 (pilot UAT): songbook.css sets `.soloBackingBtn{display:block}`
+        // unconditionally - unlike every other hide-via-[hidden] element in this
+        // file (.chips, .keyFlyout, .composeRow, ...), it has no paired
+        // `.soloBackingBtn[hidden]{display:none}` rule, so the author stylesheet's
+        // display:block cascades over the UA [hidden] rule and the button stayed
+        // visible (and tappable) even with 0 or 1 chords and no key. That falsely
+        // "live" button is what read as a one-chord "dead tap" (C3): nothing
+        // happens because songKey.root is still null, not because the click
+        // handler has a >=2-chord gate (grepped - it doesn't; the >=2 threshold
+        // that DOES exist is inferKey's, and it's deliberate - one chord can't
+        // establish a key). Pin display inline (wins over any external
+        // stylesheet rule short of !important) so hidden actually hides it.
+        el.soloBackingBtn.style.display = showSolo ? '' : 'none';
+      }
     }
     function composeTpose(st) {
       if (!progression.length) return;
@@ -1810,15 +1824,11 @@
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
     }
-    // The "?" help button can FORCE the starter list to show even when a progression
-    // exists (so the starters stay reachable after you've begun). Cleared as soon as a
-    // chord is added/loaded so the box returns to its normal built-chord + next-chord view.
-    var forceStarters = false;
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
-      if (progression.length === 0 || forceStarters) {
-        // Empty state (or "?" pressed): show common progressions so the user has
+      if (progression.length === 0) {
+        // Empty state: show common progressions so the user has
         // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
         // in with the In key / All content) so the fixed top region stays short.
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
@@ -2153,12 +2163,6 @@
     };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
-    // "?" help: re-show the starter progressions inside the progression box. Toggles off
-    // if already forced (and there's a progression to fall back to).
-    if (el.cHelp) el.cHelp.onclick = function () {
-      forceStarters = (progression.length === 0) ? true : !forceStarters;
-      renderSuggest();
-    };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     // P3 (M3): "Solo over a backing track" opens the Practice Studio directly for the
@@ -2184,7 +2188,13 @@
         // - with the Edit button, since it's a real saved song. No duplicate.
         if (savedComposeId && customById(savedComposeId)) {
           saveProgression(function (saved) {
-            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+            // S5 handoff: seq + genre widen the payload so the Studio's custom
+            // search query (tracks.js) can enrich "Watch on YouTube" with the
+            // actual chords/genre instead of the bare title. Additive fields
+            // only - saved.genre is normally undefined for a Compose-saved
+            // progression (saveProgression sets no genre), which is fine: the
+            // consumer treats a falsy genre as "omit it".
+            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true, seq: saved.seq, genre: saved.genre });
           });
           return;
         }
@@ -2193,7 +2203,7 @@
           if (choice === 'save') {
             saveProgression(function (saved) {
               if (!saved) return; // user cancelled the inline name row
-              openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+              openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true, seq: saved.seq, genre: saved.genre });
             });
             return;
           }
@@ -2271,6 +2281,11 @@
     renderKeyView();
     renderProgPicks();
     renderProg();
+    // C1: renderKey() is what actually gates #soloBackingBtn's hidden state +
+    // inline display (see renderKey above) - nothing else in INIT calls it, so
+    // without this the button's very first paint relies on the CSS cascade bug
+    // this fix works around, showing it before any key/chord exists.
+    renderKey();
 
     // Give the chord pack a chance to wire its own UI (e.g. the Tune tab).
     if (pack && typeof pack.init === 'function') {
