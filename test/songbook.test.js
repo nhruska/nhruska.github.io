@@ -450,17 +450,17 @@ test('libraryFilter: a real genre named "mine" filters as a genre, NOT as owners
 /* ---------- keyed zero-results empty state (why-is-my-list-empty visibility) ---------- */
 test('libraryEmptyState names the active key filter and asks for the clearing link', function () {
   assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'Am' }),
-    { message: 'Nothing in your repertoire matches in Am.', clearKey: true });
+    { message: 'Nothing matches in Am.', clearKey: true });
   assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'F#' }),
-    { message: 'Nothing in your repertoire matches in F#.', clearKey: true });
+    { message: 'Nothing matches in F#.', clearKey: true });
 });
 test('libraryEmptyState with no key filter keeps the plain message, no link', function () {
   assert.deepStrictEqual(Songbook.libraryEmptyState({ key: 'all' }),
-    { message: 'Nothing in your repertoire matches.', clearKey: false });
+    { message: 'Nothing matches.', clearKey: false });
   assert.deepStrictEqual(Songbook.libraryEmptyState({}),
-    { message: 'Nothing in your repertoire matches.', clearKey: false });
+    { message: 'Nothing matches.', clearKey: false });
   assert.deepStrictEqual(Songbook.libraryEmptyState(null),
-    { message: 'Nothing in your repertoire matches.', clearKey: false });
+    { message: 'Nothing matches.', clearKey: false });
 });
 
 /* ---------- renderSheet tri-view: lyrics / chords / both ---------- */
