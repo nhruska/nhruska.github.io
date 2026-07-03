@@ -122,6 +122,27 @@
       : /^m(?!aj)/.test(suf) ? 'm' : '';
     return q === m.quals[deg];
   }
+  // Mode-aware roman numeral for a chord in a KNOWN key: diatonic degrees get the
+  // mode-correct numeral (III, VI, VII in minor - matching what the Studio's
+  // Circle.diatonic labels), while non-diatonic/borrowed chords keep the
+  // chromatic parallel-major label from Circle.romanFor (bVII in major, I for a
+  // borrowed major tonic in minor). Without this, a Compose chip said "bIII" for
+  // F in D minor while the Studio said "III" for the same chord (pilot UAT).
+  var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  function romanInKey(chord, root, modeKey) {
+    var m = MODES[modeKey];
+    var cm = /^([A-G][#b]?)/.exec((chord || '').trim());
+    if (m && cm && chordInKey(chord, root, modeKey)) {
+      var deg = m.steps.indexOf(((rootPc(cm[1]) - rootPc(root)) % 12 + 12) % 12);
+      var q = m.quals[deg];
+      var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
+      return q === 'dim' ? rn + '°' : rn;
+    }
+    // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
+    // `global` is this module's exports, so fall back to require.
+    var C = global.Circle || (typeof require === 'function' ? require('./circle.js') : null);
+    return (C && C.romanFor) ? C.romanFor(chord, root) : '';
+  }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
@@ -1215,6 +1236,14 @@
     // transposer used to be two independent key notions and drifted; now a transpose
     // moves songKey.root so the readout, palette and solo scale all follow.
     function labelTonic() { return songKey.root || progression[0]; }
+    // ONE roman-label path for every Compose surface (progression slots, in-key
+    // palette, suggestion chips): mode-aware in a known key so labels match the
+    // Studio's diatonic numerals; chromatic romanFor vs the first chord otherwise.
+    function labelRoman(c) {
+      if (songKey.root) return romanInKey(c, songKey.root, songKey.mode);
+      var t = labelTonic();
+      return (t && global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, t) : '';
+    }
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
@@ -1240,10 +1269,8 @@
           var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
           slot.appendChild(d);
           // interval relative to the key — think I IV V, not shapes
-          if (global.Circle && global.Circle.romanFor) {
-            var rn = global.Circle.romanFor(c, tonic);
-            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
-          }
+          var rn = labelRoman(c);
+          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
           rm.onclick = function (e) {
             e.stopPropagation(); progression.splice(i, 1);
@@ -1498,7 +1525,7 @@
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
         if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-            return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+            return { chord: c, roman: labelRoman(c) };
           });
           // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
@@ -1735,7 +1762,7 @@
       var chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
-      var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
+      var rn = labelRoman(c);
       var html = '<span class="scName">' + escHTML(c) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
@@ -2300,6 +2327,7 @@
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
     chordInKey: chordInKey,
+    romanInKey: romanInKey,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,

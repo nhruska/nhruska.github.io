@@ -57,6 +57,22 @@ test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pi
   assert.strictEqual(Songbook.chordInKey('Caug', 'C', 'Major'), false);
   assert.strictEqual(Songbook.chordInKey('C+', 'C', 'Major'), false);
 });
+test('romanInKey labels diatonic degrees mode-correctly, borrowed chords chromatically', function () {
+  // D minor: the natural degrees read III/VI/VII (matching the Studio), never bIII/bVI/bVII
+  assert.strictEqual(Songbook.romanInKey('Dm', 'D', 'Minor'), 'i');
+  assert.strictEqual(Songbook.romanInKey('F', 'D', 'Minor'), 'III');
+  assert.strictEqual(Songbook.romanInKey('A#', 'D', 'Minor'), 'VI');
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'Minor'), 'VII');
+  assert.strictEqual(Songbook.romanInKey('Edim', 'D', 'Minor'), 'ii°');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Minor'), 'v');
+  // borrowed/non-diatonic falls through to the chromatic romanFor label
+  assert.strictEqual(Songbook.romanInKey('D', 'D', 'Minor'), 'I');   // major tonic borrowed in minor
+  assert.strictEqual(Songbook.romanInKey('A#', 'C', 'Major'), 'bVII'); // borrowed in major stays flat-labeled
+  // major + mixolydian sanity
+  assert.strictEqual(Songbook.romanInKey('G', 'C', 'Major'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Mixolydian'), 'v');
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'Mixolydian'), 'VII');
+});
 test('every shipped PROGRESSION renders the Roman pattern it claims (round-trip via Circle.romanFor)', function () {
   var EXPECTED = {
     '4-chord song': 'I V vi IV',
