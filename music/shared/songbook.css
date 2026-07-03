@@ -21,7 +21,14 @@
   /* legacy aliases used by markup + inline JS */
   --paper:var(--bg);--paper-2:var(--surface);--paper-3:var(--surface-2);--paper-edge:var(--surface-2);
   --ink:var(--txt);--ink-soft:var(--txt-soft);--ink-faint:var(--txt-dim);
-  --brass:#7fb8ad;--brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
+  /* --brass = the muted "label" highlight (section labels VERSE/CHORUS, the
+     Hear-on-YouTube / Genius links, capo + meta dots). Tied to the theme accent so
+     it RE-SKINS when the accent picker changes, and muted (mixed toward the dim text)
+     so it reads as SECONDARY to the bright --accent chord highlights. The literal is
+     the fallback for browsers without color-mix (keeps the prior fixed brass). */
+  --brass:#7fb8ad;
+  --brass:color-mix(in srgb, var(--accent) 62%, var(--txt-dim));
+  --brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
@@ -185,7 +192,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent);color:#06201c;}
-.lyricsLink{display:block;text-align:center;margin-top:12px;color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px;font-weight:500;}
+/* both secondary links on one centered row (t3) */
+.lyricsLinks{display:flex;justify-content:center;align-items:center;gap:6px 22px;flex-wrap:wrap;margin-top:12px;}
+.lyricsLink{color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px 6px;font-weight:500;white-space:nowrap;}
 .lyricsLink:active{color:var(--accent);}
 .note{font-size:.69rem;color:var(--txt-dim);text-align:center;margin-top:5px;line-height:1.45;}
 .setHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
