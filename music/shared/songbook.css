@@ -16,6 +16,11 @@
   --line:#262b34;--line-strong:#323a45;
   --txt:#e8ebf0;--txt-soft:#b6bcc6;--txt-dim:#8a92a0;
   --accent:#5eead4;--accent-dim:#244b45;--accent-deep:#16302c;
+  /* accent as TEXT/line (readable on the surface). Dark = the vivid accent; light darkens it. */
+  --accent-ink:var(--accent);
+  --glow:rgba(94,234,212,.06);
+  /* translucent (frosted) surfaces - flip per theme */
+  --appbar-bg:rgba(20,23,28,.85);--label-scrim:rgba(13,15,18,.72);
   --warn:#fbbf24;--bad:#f87171;--good:#5eead4;
   --shadow:rgba(0,0,0,.5);
   /* legacy aliases used by markup + inline JS */
@@ -29,28 +34,59 @@
   --brass:#7fb8ad;
   --brass:color-mix(in srgb, var(--accent) 62%, var(--txt-dim));
   --brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
+  /* text/icon placed ON an --accent fill (dark on bright teal) - same in light + dark */
+  --on-accent:var(--on-accent);
+  --on-danger:#fff;
+  /* Perform 'stage' palette: fixed warm-amber-on-black teleprompter look; does NOT follow the app theme. */
+  --stage-bg:#000;--stage-panel:#141414;--stage-panel-2:#1c1c1c;
+  --stage-line:#333;--stage-line-soft:#444;
+  --stage-ink:#f0ead8;--stage-ink-soft:#cfc9b8;--stage-ink-dim:#bbb;
+  --stage-amber:#ffce6a;--stage-on-amber:#000;
+  --video-bg:#000;
+  /* chord-diagram (diagram.js SVG) structural colors - flip per theme */
+  --dg-grid:#3a4150;--dg-nut:#e8ebf0;--dg-base:#9aa3b2;
+  --dg-dot:#2a3340;--dg-dot-line:#4b5563;--dg-note:#cbd5e1;
+  --dg-mute:#7a8294;--dg-fret-lbl:#6b7280;
 }
+
+/* Light theme  -  <html data-theme="light"> (set at boot by the Settings
+ * Auto/Light/Dark control). Only FLIPPING tokens are overridden; the accent
+ * family + --accent-ink re-derive per theme in JS (applyAccent). Stage +
+ * on-accent stay fixed. Tuner status (--warn/--bad/--good) stay fixed too. */
+:root[data-theme="light"]{
+  --bg:#eef1f4;--bg-2:#e3e8ee;--surface:#ffffff;--surface-2:#f2f5f8;
+  --line:#d6dce3;--line-strong:#bcc5cf;
+  --txt:#161b22;--txt-soft:#3f4854;--txt-dim:#5f6875;
+  --shadow:rgba(20,30,45,.14);--glow:rgba(13,148,136,.05);
+  --accent-dim:#bfe6df;--accent-deep:#e7f6f2;--accent-ink:#0f766e;
+  --dg-grid:#aab4c0;--dg-nut:#2b3440;--dg-base:#5f6875;
+  --dg-dot:#dfe6ee;--dg-dot-line:#9aa7b5;--dg-note:#334155;
+  --dg-mute:#7a8494;--dg-fret-lbl:#6b7686;
+  --appbar-bg:rgba(238,241,244,.82);--label-scrim:rgba(238,241,244,.82);
+}
+:root[data-theme="light"] body{-webkit-font-smoothing:auto;}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
-  background-image:radial-gradient(1100px 360px at 50% -8%,rgba(94,234,212,.06),transparent 70%);
+  background-image:radial-gradient(1100px 360px at 50% -8%,var(--glow),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
 /* Slim header (one screen, above the fold): compact padding + smaller brand, the
    instrument picker the only control here. ♪ quick-tune lives in the Tune tab and
    the accent picker moved there too — both were redundant in the always-on bar. */
-.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:rgba(20,23,28,.85);backdrop-filter:blur(8px);z-index:10;}
+.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 .appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:11px;font-size:1.05rem;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
-.ab-btn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
+.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:11px;font-size:1.05rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
+.ab-btn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{flex:0 0 auto;display:flex;gap:2px;padding:6px 6px calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);background:var(--bg-2);border-top:1px solid var(--line);}
 .tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:8px 2px 6px;border-radius:11px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
-.tabbar button.on{color:var(--accent);background:var(--accent-deep);}
+.tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);}
 .tabbar button .icn{font-size:1.05rem;line-height:1;}
 .tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
 .screen{display:none;}
@@ -59,7 +95,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .searchWrap{position:relative;margin-bottom:11px;}
 .search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 40px 12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);}
 .search::placeholder{color:var(--txt-dim);}
-.search:focus{outline:none;border-color:var(--accent);}
+.search:focus{outline:none;border-color:var(--accent-ink);}
 /* clear (x) button - shown only when the search field has text (toggled in JS via [hidden]) */
 .searchClear{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
 .searchClear:hover{color:var(--txt);background:var(--surface-2);}
@@ -69,7 +105,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chips::-webkit-scrollbar{display:none;}
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:18px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
-.chip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Library head row: search (flex) + the +Add entry point, one row. The old
    Repertoire|Set type toggle is retired - Set/Perform lives on the Jam tab. */
 .libSearchRow{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
@@ -97,7 +133,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    own (no JS cleanup needed) - never blocks interaction, never persists. */
 @keyframes justSavedPulse{from{box-shadow:0 0 0 2px var(--accent);}to{box-shadow:0 0 0 2px transparent;}}
 .listItem.justSaved{animation:justSavedPulse 2s ease-out;}
-.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent);flex:0 0 auto;min-width:22px;line-height:1.3;}
+.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;min-width:22px;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
 /* Title bumped for the arm's-length <1s glance; meta + artist raised off --txt-dim
@@ -106,26 +142,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Setup pair (capo + key) live together, right of the title. Key is KEY-FIRST; an
  * unknown key shows a quiet "Key?" rather than a year (which read as the key). */
 .listItem .li-tags{display:flex;align-items:baseline;gap:6px;flex:0 0 auto;}
-.listItem .li-tag{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:.82rem;flex:0 0 auto;}
+.listItem .li-tag{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent-ink);font-size:.82rem;flex:0 0 auto;}
 .listItem .li-tag.isKeyUnknown{color:var(--txt-dim);font-weight:400;}
 .listItem .li-capo{font-family:'Space Mono',monospace;font-weight:700;font-size:.72rem;color:var(--brass);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:1px 6px;border-radius:6px;flex:0 0 auto;}
 .listItem .li-artist{font-size:.79rem;color:var(--txt-soft);margin-top:2px;}
-.listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
+.listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent-ink);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
 .listItem .li-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--txt-soft);align-items:center;}
 .listItem .li-meta .dot{width:4px;height:4px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
 /* Action is a real padded target + box/underline so Video vs Search isn't colour-only.
  * Movement-cancel (in JS) is the scroll-grab guard; the padded box is the hit area. */
 .listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;}
-.listItem .li-act-play{color:var(--accent);background:var(--accent-deep);}
+.listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
 .listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
 .listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
-.listItem.inSet .li-add{background:var(--accent);color:#06201c;border-color:var(--accent);}
+.listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Edit-mode reorder/remove targets enlarged (>=32px, gapped) - only rendered in
  * edit-set mode, so they no longer sit always-hot on the scroll rail. */
 .listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
-.listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:#06201c;}
+.listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
 .listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;min-width:40px;min-height:40px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
@@ -135,11 +171,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Persistent undo banner for the last set removal. */
 .setUndo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:9px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
 /* Edit-set toggle: ghost button that lights up accent when editing. */
-#setEdit.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+#setEdit.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
 /* One-tap key-filter clearing link inside the zero-results empty state. */
-.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
-.empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:#06201c;}
+.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:var(--on-accent);}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px;}
@@ -148,17 +184,17 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
-.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
-.iconBtn:active{transform:scale(.9);background:var(--accent);color:#06201c;border-color:var(--accent);}
-.iconBtn.setBtn.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+.iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .viewToggle{display:flex;margin:8px 0 13px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .viewToggle button:active{transform:scale(.96);}
 .viewToggle button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
 /* queue nav: prev / position / next — shown in Practice when a setlist is loaded */
 .queueNav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;}
-.queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
-.queueNav button:active{transform:scale(.94);background:var(--accent);color:#06201c;}
+.queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
+.queueNav button:active{transform:scale(.94);background:var(--accent);color:var(--on-accent);}
 .queueNav button:disabled{opacity:.32;cursor:default;color:var(--txt-dim);}
 .queueNav .qPos{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-dim);letter-spacing:.04em;}
 /* song-view row: Lyrics/Chords/Both segmented + compact transpose chip + Stage icon, one row.
@@ -171,7 +207,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .modeSwitch button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
 .transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
 .transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:8px;cursor:pointer;transition:background .15s,transform .08s,color .15s;}
-.transposeChip button:active{transform:scale(.86);background:var(--accent);color:#06201c;}
+.transposeChip button:active{transform:scale(.86);background:var(--accent);color:var(--on-accent);}
 /* D2s: ch (not px) so the reserved width tracks the monospace glyph itself -
    a min-width in px only covers a fixed pixel count and lets a wider label
    (e.g. "A" -> "A#" after transposing) grow past it, shifting the buttons
@@ -180,37 +216,37 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    padding AGAINST the 3 characters instead of reserving room for them,
    still letting 2-char labels overflow it. calc(3ch + 12px) reserves a
    full 3 characters of text room on top of the existing padding. */
-.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);padding:0 6px;min-width:calc(3ch + 12px);text-align:center;}
+.transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);padding:0 6px;min-width:calc(3ch + 12px);text-align:center;}
 .modeSwitch button:disabled{opacity:.35;cursor:default;}
 /* Stage: compact fullscreen icon button on the view row (replaces the old
  * full-width CTA) - accent-filled so the perform entry stays discoverable. */
 .stageGo{height:auto;min-height:44px;width:40px;background:var(--accent-deep);border-color:var(--accent-dim);}
-.stageGo:active{background:var(--accent);color:#06201c;border-color:var(--accent);}
+.stageGo:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Campfire: big chords-only, sized for jamming with the phone on the table */
 .campfireSheet{padding:18px 14px;}
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
 .chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent);border:1px solid var(--line-strong);padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
-.chordChips .c:active{transform:scale(.9);background:var(--accent);color:#06201c;}
+.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}
 .sect:first-child{margin-top:0;}
 /* practice sheet sized for arm's-length reading (phone on a strap / music stand) */
 .lyrLine{font-size:.98rem;line-height:1.32;white-space:pre;margin-bottom:11px;color:var(--txt);}
-.lyrLine .crd{color:var(--accent);font-weight:700;}
+.lyrLine .crd{color:var(--accent-ink);font-weight:700;}
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
-.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:7px;padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent);}
+.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:7px;padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
-.btn.red{background:var(--accent);border-color:var(--accent);color:#06201c;}
+.btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
 /* both secondary links on one centered row (t3) */
 .lyricsLinks{display:flex;justify-content:center;align-items:center;gap:6px 22px;flex-wrap:wrap;margin-top:12px;}
 .lyricsLink{color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px 6px;font-weight:500;white-space:nowrap;}
-.lyricsLink:active{color:var(--accent);}
+.lyricsLink:active{color:var(--accent-ink);}
 .note{font-size:.69rem;color:var(--txt-dim);text-align:center;margin-top:5px;line-height:1.45;}
 .setHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
 .setHead .ti h2{font-weight:800;font-size:1.45rem;letter-spacing:-.02em;}
@@ -240,8 +276,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tStr{flex:1 1 calc((100% - 18px) / 4);min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 3px;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s,box-shadow .2s;}
 .tStrings:has(.tStr:nth-child(5)) .tStr{flex-basis:calc((100% - 12px) / 3);}
 .tStr:active{transform:scale(.95);}
-.tStr.droning{background:var(--accent-deep);border-color:var(--accent);box-shadow:0 0 24px rgba(94,234,212,.22);}
-.tStr .n{font-family:'Space Mono',monospace;font-weight:700;font-size:1.45rem;line-height:1;color:var(--accent);}
+.tStr.droning{background:var(--accent-deep);border-color:var(--accent-ink);box-shadow:0 0 24px rgba(94,234,212,.22);}
+.tStr .n{font-family:'Space Mono',monospace;font-weight:700;font-size:1.45rem;line-height:1;color:var(--accent-ink);}
 .tStr .l{display:none;}
 .tStr .hz{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);white-space:nowrap;}
 /* Auto-tuner card is the Tune tab's hero: flex:1 lets it absorb whatever
@@ -253,16 +289,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
 .tCard .row{display:flex;gap:8px;flex-wrap:wrap;}
-.tBtn{border:1px solid var(--accent);background:var(--accent);color:#06201c;font-family:inherit;font-weight:600;font-size:.8rem;padding:10px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s;}
+.tBtn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-family:inherit;font-weight:600;font-size:.8rem;padding:10px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s;}
 .tBtn:active{transform:scale(.95);}
-.tBtn.ghost{background:transparent;color:var(--accent);}
+.tBtn.ghost{background:transparent;color:var(--accent-ink);}
 .relStep{display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
 .relStep:last-child{border-bottom:none;}
-.relStep .rn{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:1.2rem;width:22px;text-align:center;flex:0 0 auto;}
+.relStep .rn{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent-ink);font-size:1.2rem;width:22px;text-align:center;flex:0 0 auto;}
 .relStep .rt{flex:1;font-size:.8rem;line-height:1.45;color:var(--txt-soft);}
 .relStep .rt b{color:var(--txt);font-weight:700;}
-.relStep .rp{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent);font-family:'Space Mono';font-weight:700;font-size:.86rem;width:44px;height:44px;border-radius:10px;cursor:pointer;flex:0 0 auto;transition:transform .08s,background .15s,color .15s;}
-.relStep .rp:active{transform:scale(.88);background:var(--accent);color:#06201c;}
+.relStep .rp{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono';font-weight:700;font-size:.86rem;width:44px;height:44px;border-radius:10px;cursor:pointer;flex:0 0 auto;transition:transform .08s,background .15s,color .15s;}
+.relStep .rp:active{transform:scale(.88);background:var(--accent);color:var(--on-accent);}
 .micBox{margin-top:4px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;}
 /* Start-mic: a real one-handed touch target (>=56px tall, full row width via
    the existing .actions/.btn flex:1) for holding an instrument in the other
@@ -299,7 +335,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    rule; only the label's own readability changes here). */
 .strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
   letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
-  padding:3px 4px 2px;background:rgba(13,15,18,.72);}
+  padding:3px 4px 2px;background:var(--label-scrim);}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
@@ -328,7 +364,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
    area, which would overlap the chord tile and steal play-taps from the diagram below. */
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
-.prog .slot .rm:active{background:var(--bad);color:#fff;transform:scale(.85);}
+.prog .slot .rm:active{background:var(--bad);color:var(--on-danger);transform:scale(.85);}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
@@ -341,18 +377,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    A chord that COMPLETES a famous progression gets an accent glow (no name caption -
    the caption blew the chip width and wrapped the row). */
 .suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
-.suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent);}
-.suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent);}
+.suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent-ink);}
+.suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-.suggChip.complete{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
+.suggChip.complete{border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
 .progPick{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;
   background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:9px 12px;
   transition:transform .08s,border-color .15s,background .15s;}
-.progPick:active{transform:scale(.96);background:var(--surface-2);border-color:var(--accent);}
-.progPick .ppRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);letter-spacing:.02em;white-space:nowrap;}
+.progPick:active{transform:scale(.96);background:var(--surface-2);border-color:var(--accent-ink);}
+.progPick .ppRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);letter-spacing:.02em;white-space:nowrap;}
 .progPick .ppName{font-size:.66rem;color:var(--txt-dim);font-weight:600;white-space:nowrap;}
 .cActions{display:flex;gap:8px;margin:14px 0;}
 /* touch-action:pan-y - the chord tiles are a vertical grid (no horizontal scroll of its
@@ -393,9 +429,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggRow .chord.suggPick:active,
 .chordGrid .chord:active{transform:scale(.92);border-color:var(--accent-dim);}
 .suggRow .chord.suggPick{border-color:var(--accent-dim);}
-.suggRow .chord.suggPick .chord-name{color:var(--accent);}
-.suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent);}
-.chordGrid .chord.sel{border-color:var(--accent);background:var(--accent-deep);}
+.suggRow .chord.suggPick .chord-name{color:var(--accent-ink);}
+.suggRow .chord.suggPick:active{background:var(--accent-deep);border-color:var(--accent-ink);}
+.chordGrid .chord.sel{border-color:var(--accent-ink);background:var(--accent-deep);}
 /* ---- Key filter (top of the single Chords panel) ---- */
 /* The filter row: the injected key chip (#keyPickerCompact) + the mode toggle (#keyModes),
    with the 12-root popover (#keyRoots) dropping in below the chip on demand. Sits above
@@ -411,15 +447,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    the same size and the button bar never jumps as the key name changes; overflow ellipsis
    guards an unexpectedly long label. 'shifted' lights it when transposed off the built-in
    key (mirrors the retired #cKey readout indicator). */
-.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
-.keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent);transform:scale(.95);}
+.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
+.keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.95);}
 .keyPickerCompact[hidden]{display:none;}
-.keyPickerCompact.shifted{color:#06201c;background:var(--accent);border-color:var(--accent);}
-.keyPickerCompact.shifted .kpcMode{color:#06201c;}
-.keyPickerCompact.shifted .kpcCaret{color:#06201c;}
+.keyPickerCompact.shifted{color:var(--on-accent);background:var(--accent);border-color:var(--accent-ink);}
+.keyPickerCompact.shifted .kpcMode{color:var(--on-accent);}
+.keyPickerCompact.shifted .kpcCaret{color:var(--on-accent);}
 .keyPickerCompact .kpcMode{color:var(--txt-soft);font-weight:600;overflow:hidden;text-overflow:ellipsis;}
 .keyPickerCompact .kpcCaret{font-size:.7rem;color:var(--accent-dim);transition:transform .15s;flex:0 0 auto;}
-.keyPickerCompact[aria-expanded="true"] .kpcCaret{transform:rotate(180deg);color:var(--accent);}
+.keyPickerCompact[aria-expanded="true"] .kpcCaret{transform:rotate(180deg);color:var(--accent-ink);}
 /* Slot the chip is injected into - inline so it sits inside the button-bar flex row. */
 .keyChipSlot{display:inline-flex;flex:0 0 auto;}
 /* Root grid - lives inside the key/mode fly-out now (always shown there). All 12 roots
@@ -432,7 +468,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyHint{color:var(--txt-dim);font-size:.82rem;margin:8px 2px 2px;}
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
 .keyTitle strong{color:var(--txt);font-weight:800;}
-.keyTitle span{color:var(--accent);font-size:.76rem;font-weight:600;margin-left:6px;}
+.keyTitle span{color:var(--accent-ink);font-size:.76rem;font-weight:600;margin-left:6px;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
 .keyPalette{margin-bottom:2px;}
 /* Each diatonic chord tile uses the same layout as the suggCell: diagram on
@@ -453,7 +489,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
 .chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
 .chordSegBtn:active{transform:scale(.98);}
-.chordSegBtn.on{background:var(--accent-deep);color:var(--accent);}
+.chordSegBtn.on{background:var(--accent-deep);color:var(--accent-ink);}
 /* the chromatic category tabs keep the horizontal-scroll pill-row behavior (now a direct
    child of the scroll area, not .adaptiveChips). */
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
@@ -465,15 +501,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Solo-over-backing bridge: a compact link-style row, not a full-height .btn - it
    sits in the FIXED compose top, so every saved pixel is above-the-fold chord list.
    Accent + dashed border keep it recognizably tappable at the smaller size. */
-.soloBackingBtn{display:block;width:100%;flex:none;padding:6px 10px;min-height:0;font-size:.76rem;font-weight:600;background:transparent;border:1px dashed var(--accent-dim);color:var(--accent);border-radius:9px;}
-.soloBackingBtn:active{background:var(--accent-deep);border-color:var(--accent);}
+.soloBackingBtn{display:block;width:100%;flex:none;padding:6px 10px;min-height:0;font-size:.76rem;font-weight:600;background:transparent;border:1px dashed var(--accent-dim);color:var(--accent-ink);border-radius:9px;}
+.soloBackingBtn:active{background:var(--accent-deep);border-color:var(--accent-ink);}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
 /* "+ all chords" expander: a quiet full-width control under the in-key lead */
 .allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
 .allChordsToggle:active{transform:scale(.98);}
-.allChordsToggle.open{border-style:solid;border-color:var(--accent);color:var(--txt);}
+.allChordsToggle.open{border-style:solid;border-color:var(--accent-ink);color:var(--txt);}
 .allChordsToggle .acHint{font-weight:600;font-size:.66rem;color:var(--txt-dim);letter-spacing:.02em;}
 .scaleBox{overflow-x:auto;padding:4px 0 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x pan-y;}
 .scaleBox::-webkit-scrollbar{display:none;}
@@ -492,7 +528,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    "Walk the full cycle" - tracks.js renders the same class). The HSR chain
    cards this used to sit under left Compose with the fly-out scale (locked
    decision: the Studio owns fretboard/scale teaching). */
-.hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
+.hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent-ink);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
 /* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
 /* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
@@ -518,7 +554,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
 .composeRow[hidden]{display:none;}
 .composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);font-family:inherit;font-size:.85rem;}
-.composeRowInput:focus{outline:none;border-color:var(--accent);}
+.composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
 .composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
 /* G4/FORK-1: "Add to setlist" checkbox on the save row - own line (flex:1 1
@@ -526,7 +562,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--txt-soft);cursor:pointer;
   min-height:44px;padding:4px 2px;} /* one-handed mobile tap target (codex #91) */
 .composeRowSetToggle input{margin:0;width:18px;height:18px;flex:0 0 auto;}
-.composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent);border:1px solid var(--accent-dim);}
+.composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);}
 .composeToast.tap{cursor:pointer;} /* persistent toast: tap anywhere on it to dismiss */
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
@@ -599,7 +635,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 }
 .bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
-.bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent);}
+.bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent-ink);}
 @media (orientation:landscape){.bigC .nm{font-size:1.35rem;}}
 .perform{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) calc(env(safe-area-inset-right,0px) + 16px) 0 calc(env(safe-area-inset-left,0px) + 16px);}
 .perform.on{display:flex;}
@@ -607,11 +643,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop .pos{font-family:'Space Mono',monospace;color:var(--txt-dim);font-size:.8rem;font-weight:700;}
 .pTop .tools{display:flex;gap:6px;align-items:center;}
 .pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:9px;font-family:'Space Mono';font-weight:700;font-size:.9rem;cursor:pointer;}
-.pTop .pmini:active{background:var(--accent);color:#06201c;}
+.pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
 .pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:9px;font-size:1.05rem;cursor:pointer;}
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.05;flex:0 0 auto;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);margin:2px 0 3px;flex:0 0 auto;}
-.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
+.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
 /* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let
@@ -634,12 +670,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed.on{display:flex;}
 .pSpeed .psRow{display:flex;align-items:center;gap:11px;}
 .pSpeed label{flex:0 0 42px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;}
-.pSpeed input{flex:1;accent-color:var(--accent);}
-.pSpeed .sv{font-family:'Space Mono';font-weight:700;font-size:.74rem;color:var(--accent);width:30px;text-align:right;}
+.pSpeed input{flex:1;accent-color:var(--accent-ink);}
+.pSpeed .sv{font-family:'Space Mono';font-weight:700;font-size:.74rem;color:var(--accent-ink);width:30px;text-align:right;}
 .pSpeed .psBtns{flex:1;display:flex;gap:6px;}
 .pSpeed .psBtn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .pSpeed .psBtn:active{transform:scale(.94);}
-.pSpeed .psBtn.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+.pSpeed .psBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
    disabled, matching the practice modeSwitch - the disable was functional-only. */
 .pSpeed .psBtn:disabled{opacity:.35;cursor:default;}
@@ -660,19 +696,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pSpeed .psBtns{min-width:0;}
   .pSpeed .psBtn{min-width:0;padding:8px 4px;font-size:.72rem;}
 }
-.perform.dim{background:#000;}
-.perform.dim .lyrLine{color:#f0ead8;}
-.perform.dim .lyrLine .crd{color:#ffce6a;}
-.perform.dim .chordOnly{color:#ffce6a;}
-.perform.dim .chordOnly .bar{color:#f0ead8;background:#141414;border-color:#333;}
-.perform.dim .sect{color:#ffce6a;}
-.perform.dim .pTitle,.perform.dim .pArtist,.perform.dim .pos{color:#f0ead8;}
-.perform.dim .pKey{color:#ffce6a;}
-.perform.dim .x,.perform.dim .pmini{color:#f0ead8;border-color:#333;background:#141414;}
-.perform.dim .btn{background:#ffce6a;color:#000;border-color:#ffce6a;}
-.perform.dim .btn.ghost{background:transparent;color:#f0ead8;border-color:#444;}
-.perform.dim .pSpeed{background:#141414;border-color:#333;}
-.perform.dim .pSpeed label{color:#bbb;}
-.perform.dim .pSpeed .psBtn{background:#1c1c1c;border-color:#333;color:#cfc9b8;}
-.perform.dim .pSpeed .psBtn.on{background:#ffce6a;color:#000;border-color:#ffce6a;}
+.perform.dim{background:var(--stage-bg);}
+.perform.dim .lyrLine{color:var(--stage-ink);}
+.perform.dim .lyrLine .crd{color:var(--stage-amber);}
+.perform.dim .chordOnly{color:var(--stage-amber);}
+.perform.dim .chordOnly .bar{color:var(--stage-ink);background:var(--stage-panel);border-color:var(--stage-line);}
+.perform.dim .sect{color:var(--stage-amber);}
+.perform.dim .pTitle,.perform.dim .pArtist,.perform.dim .pos{color:var(--stage-ink);}
+.perform.dim .pKey{color:var(--stage-amber);}
+.perform.dim .x,.perform.dim .pmini{color:var(--stage-ink);border-color:var(--stage-line);background:var(--stage-panel);}
+.perform.dim .btn{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
+.perform.dim .btn.ghost{background:transparent;color:var(--stage-ink);border-color:var(--stage-line-soft);}
+.perform.dim .pSpeed{background:var(--stage-panel);border-color:var(--stage-line);}
+.perform.dim .pSpeed label{color:var(--stage-ink-dim);}
+.perform.dim .pSpeed .psBtn{background:var(--stage-panel-2);border-color:var(--stage-line);color:var(--stage-ink-soft);}
+.perform.dim .pSpeed .psBtn.on{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 footer{display:none;}

@@ -22,23 +22,23 @@
   .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;
     transition:border-color .15s,color .15s;}
-  .bt-more-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .bt-more-btn .ar{color:var(--accent);}
+  .bt-more-btn:hover{border-color:var(--accent-ink);color:var(--accent-ink);}
+  .bt-more-btn .ar{color:var(--accent-ink);}
   /* curate form */
   .bt-add{margin:12px 0 6px;}
   .bt-add-toggle{background:transparent;border:1px solid var(--line);color:var(--txt-dim);font-family:inherit;
     font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:10px;cursor:pointer;}
-  .bt-add-toggle:hover{color:var(--accent);border-color:var(--line-strong);}
+  .bt-add-toggle:hover{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;
     padding:13px;display:flex;flex-direction:column;gap:9px;}
   .bt-add-panel[hidden]{display:none;}
   .bt-in{width:100%;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--txt);
     font-family:inherit;font-size:.88rem;padding:10px 12px;border-radius:9px;}
-  .bt-in:focus{outline:none;border-color:var(--accent);}
-  .bt-in.bad{border-color:#f87171;}
+  .bt-in:focus{outline:none;border-color:var(--accent-ink);}
+  .bt-in.bad{border-color:var(--bad);}
   .bt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
   .bt-add-actions{display:flex;gap:9px;align-items:center;}
-  .bt-add-save{flex:1;background:var(--accent);color:#06201c;border:none;font-family:inherit;font-weight:700;
+  .bt-add-save{flex:1;background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
     font-size:.86rem;padding:11px;border-radius:10px;cursor:pointer;}
   .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
     font-size:.82rem;cursor:pointer;padding:8px;}
@@ -48,18 +48,18 @@
     color:var(--txt-dim);margin-bottom:8px;}
   .bt-st-urled-row{display:flex;gap:8px;align-items:center;}
   .bt-st-urled-row .bt-in{flex:1;}
-  .bt-st-urled-save{background:var(--accent);color:#06201c;border:none;font-family:inherit;font-weight:700;
+  .bt-st-urled-save{background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
     font-size:.82rem;padding:10px 14px;border-radius:9px;cursor:pointer;white-space:nowrap;}
   .bt-st-urled-clear{background:transparent;border:1px solid var(--line-strong);color:var(--txt-dim);
     font-family:inherit;font-weight:600;font-size:.8rem;padding:9px 12px;border-radius:9px;cursor:pointer;white-space:nowrap;}
-  .bt-st-urled-clear:hover{color:#f87171;border-color:#f87171;}
+  .bt-st-urled-clear:hover{color:var(--bad);border-color:var(--bad);}
   /* curation queue */
   .bt-curate-bar{margin:6px 0 2px;}
   .bt-curate-bar:empty{display:none;}
   .bt-curate-btn{width:100%;background:transparent;border:1px solid var(--line);color:var(--txt-dim);
     font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:10px;cursor:pointer;}
-  .bt-curate-btn:hover{color:var(--accent);border-color:var(--line-strong);}
-  .bt-curate-btn.on{color:var(--accent);border-color:var(--line-strong);}
+  .bt-curate-btn:hover{color:var(--accent-ink);border-color:var(--line-strong);}
+  .bt-curate-btn.on{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-queue[hidden]{display:none;}
   .bt-qhead{font-size:1.05rem;font-weight:700;margin:8px 0 4px;}
   .bt-qhint{color:var(--txt-dim);font-size:.82rem;line-height:1.6;margin-bottom:14px;}
@@ -67,7 +67,7 @@
     display:flex;flex-direction:column;gap:9px;}
   .bt-qrow{display:flex;align-items:baseline;gap:10px;justify-content:space-between;}
   .bt-qtitle{font-weight:700;font-size:.95rem;}
-  .bt-qsearch{color:var(--accent);font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;
+  .bt-qsearch{color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;
     text-decoration:none;white-space:nowrap;}
   .bt-qsearch:hover{text-decoration:underline;}
   .bt-qmeta{color:var(--txt-dim);font-size:.78rem;}
@@ -75,7 +75,7 @@
   .bt-qcand-lbl{font-family:'Space Mono',monospace;font-size:.66rem;letter-spacing:.05em;color:var(--txt-dim);margin-bottom:6px;}
   .bt-qcand{display:block;width:100%;text-align:left;background:var(--bg-2);border:1px solid var(--line-strong);
     color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:6px;}
-  .bt-qcand:hover{border-color:var(--accent);}
+  .bt-qcand:hover{border-color:var(--accent-ink);}
   .bt-qcand-note{color:var(--txt-dim);font-size:.72rem;margin-left:6px;}
   /* visible curate entry point under the Library list (curateBarEl host) - quiet,
      self-hides when there's nothing to curate */
@@ -86,7 +86,7 @@
   .bt-qpanel{position:fixed;inset:0;z-index:50;display:none;align-items:stretch;justify-content:center;
     background:rgba(0,0,0,.78);padding:calc(max(env(safe-area-inset-top,0px), 16px)) 12px calc(env(safe-area-inset-bottom,0px) + 12px);}
   .bt-qpanel.on{display:flex;}
-  .bt-qpanel-box{width:100%;max-width:640px;background:var(--paper,#0d0f12);border:1px solid var(--line-strong);
+  .bt-qpanel-box{width:100%;max-width:640px;background:var(--paper);border:1px solid var(--line-strong);
     border-radius:14px;display:flex;flex-direction:column;overflow:hidden;padding:12px 14px;}
   .bt-qpanel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex:0 0 auto;}
   .bt-qpanel-head .bt-qhead{margin:0;}
@@ -101,8 +101,8 @@
   .bt-pl-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-pl-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
     font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
-  .bt-pl-x:hover{color:var(--accent);border-color:var(--accent);}
-  .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+  .bt-pl-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
+  .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);}
   .bt-pl-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
 
   /* Practice Studio: pinned track on top, fretboard scale (hero) + chords + circle below.
@@ -121,11 +121,11 @@
     border-bottom:1px solid var(--line-strong);}
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .bt-st-meta{font-size:.78rem;color:var(--accent);margin-top:1px;}
+  .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
   .bt-st-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
     font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
-  .bt-st-x:hover{color:var(--accent);border-color:var(--accent);}
-  .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;flex:0 0 auto;}
+  .bt-st-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
+  .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   /* No-yt fallback: the Practice Studio still loads (HUD intact), the iframe slot
      becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
@@ -133,14 +133,14 @@
   .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
   .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
-    font-weight:700;font-size:.92rem;color:var(--accent);text-decoration:none;
+    font-weight:700;font-size:.92rem;color:var(--accent-ink);text-decoration:none;
     border:1px solid var(--accent-dim);background:var(--accent-deep);
     padding:10px 16px;border-radius:10px;min-height:44px;}
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
-  .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
+  .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);
     margin-bottom:9px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
@@ -165,21 +165,21 @@
   .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s,background .15s,border-color .15s;
     outline:2px solid transparent;outline-offset:2px;}
   .bt-st-chip:active{transform:scale(.96);}
-  .bt-st-chip.sel{outline-color:var(--accent);}
-  .bt-st-chip.sel + .rn{color:var(--accent);}
+  .bt-st-chip.sel{outline-color:var(--accent-ink);}
+  .bt-st-chip.sel + .rn{color:var(--accent-ink);}
   /* S1 (operator UAT): "Walk the full cycle up the neck" (.hsrMore, styled globally
      in songbook.css for the Compose tab) and this "Why these notes" toggle used to
      read like plain headings - no shared visual language marking either as
      tappable. Style both as a matching accent-colored underlined link/button here,
      scoped to the Studio only (.bt-studio .hsrMore) so the Compose tab's own
      .hsrMore look is untouched. */
-  .bt-studio .hsrMore{color:var(--accent);font-weight:700;text-decoration:underline;
+  .bt-studio .hsrMore{color:var(--accent-ink);font-weight:700;text-decoration:underline;
     text-decoration-color:var(--accent-dim);text-underline-offset:3px;border-bottom:none;padding-bottom:0;}
-  .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent);}
+  .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent-ink);}
   .bt-st-why-toggle{align-self:flex-start;background:transparent;border:none;padding:4px 0;
-    color:var(--accent);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
+    color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
     text-decoration:underline;text-decoration-color:var(--accent-dim);text-underline-offset:3px;}
-  .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent);}
+  .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent-ink);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
   /* SHORT landscape (phone held sideways): use the width. Two panes side by side -
@@ -221,7 +221,7 @@
   .cofWedge-rel{fill:var(--accent-dim);}
   .cofWedge-nb{fill:var(--accent-deep);}
   .cofLabel{fill:var(--txt-soft);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
-  .cofLabel.on{fill:#06201c;}
+  .cofLabel.on{fill:var(--on-accent);}
   .cofLabel-rel{fill:var(--accent);}
   .cofLabel-nb{fill:var(--txt-soft);}
   .cofPanel:not(:empty){margin:6px 0 12px;}
@@ -232,10 +232,10 @@
   /* uniform 44px tiles so longer names (C#dim, F#m) don't squash + every tile is a thumb target */
   .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:46px;min-height:44px;}
   .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
-  .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);}
+  .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
   .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
   .cofNb{display:flex;flex-wrap:wrap;gap:6px;}
-  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
+  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
   .cofNbChip:active{transform:scale(.94);}
   .cofNbChip b{font-weight:700;}
   /* modes layer + interval degrees (Phase 2.x) */
@@ -244,14 +244,14 @@
   .cofModeChip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
-  .cofModeChip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+  .cofModeChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .cofScale{display:flex;gap:4px;margin:0 0 9px;}
   .cofDeg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);
     border:1px solid var(--line);border-radius:8px;padding:6px 2px;min-width:0;}
   .cofDeg.char{background:var(--accent-deep);border-color:var(--accent-dim);}
   .cofDeg .nt{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:var(--txt);}
-  .cofDeg.char .nt{color:var(--accent);}
+  .cofDeg.char .nt{color:var(--accent-ink);}
   .cofDeg .dg{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--txt-dim);}
-  .cofDeg.char .dg{color:var(--accent);}
+  .cofDeg.char .dg{color:var(--accent-ink);}
   .cofHint{font-size:.72rem;color:var(--txt-soft);margin:0 0 12px;line-height:1.5;}
-  .cofHint b{color:var(--accent);font-weight:700;}
+  .cofHint b{color:var(--accent-ink);font-weight:700;}

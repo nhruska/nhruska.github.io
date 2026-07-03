@@ -75,14 +75,14 @@
     var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
     // nut bar (window starts at fret 1) or base-fret label (high shape)
     if (base === 1) {
-      svg += '<rect x="' + (padX - o.nutPad) + '" y="' + (padY - o.nutPad - 1) + '" width="' + (cols * sx + 2 * o.nutPad) + '" height="' + o.nutH + '" fill="#e8ebf0" rx="1"/>';
+      svg += '<rect x="' + (padX - o.nutPad) + '" y="' + (padY - o.nutPad - 1) + '" width="' + (cols * sx + 2 * o.nutPad) + '" height="' + o.nutH + '" fill="#e8ebf0" style="fill:var(--dg-nut)" rx="1"/>';
     } else {
-      svg += '<text x="' + (padX - o.basePad) + '" y="' + (padY + sy * 0.55) + '" fill="#9aa3b2" font-size="' + o.baseFont + '" font-family="monospace" text-anchor="end">' + base + '</text>';
+      svg += '<text x="' + (padX - o.basePad) + '" y="' + (padY + sy * 0.55) + '" fill="#9aa3b2" style="fill:var(--dg-base)" font-size="' + o.baseFont + '" font-family="monospace" text-anchor="end">' + base + '</text>';
     }
     // string verticals
-    for (var st = 0; st < n; st++) { var x = padX + st * sx; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (padY + rows * sy) + '" stroke="#3a4150" stroke-width="' + o.sw + '"/>'; }
+    for (var st = 0; st < n; st++) { var x = padX + st * sx; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + (padY + rows * sy) + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="' + o.sw + '"/>'; }
     // fret horizontals
-    for (var r = 0; r <= rows; r++) { var y = padY + r * sy; svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (padX + cols * sx) + '" y2="' + y + '" stroke="#3a4150" stroke-width="' + o.sw + '"/>'; }
+    for (var r = 0; r <= rows; r++) { var y = padY + r * sy; svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (padX + cols * sx) + '" y2="' + y + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="' + o.sw + '"/>'; }
     // per-string markers
     frets.forEach(function (fr, s) {
       var x = padX + s * sx;
@@ -93,11 +93,11 @@
         // (SVG presentation attributes can't read CSS vars; the hex is a fallback).
         svg += '<circle cx="' + x + '" cy="' + y + '" r="' + o.dotR + '" fill="#5eead4" stroke="#2a4f49" stroke-width="1.3" style="fill:var(--accent);stroke:var(--accent-dim)"/>';
       } else if (fr === 0) {
-        svg += '<circle cx="' + x + '" cy="' + (padY - o.markY) + '" r="' + o.markR + '" fill="none" stroke="#e8ebf0" stroke-width="' + o.markSw + '"/>';
+        svg += '<circle cx="' + x + '" cy="' + (padY - o.markY) + '" r="' + o.markR + '" fill="none" stroke="#e8ebf0" style="stroke:var(--dg-nut)" stroke-width="' + o.markSw + '"/>';
       } else { // muted
         var mY = padY - o.markY, d = o.markR;
-        svg += '<line x1="' + (x - d) + '" y1="' + (mY - d) + '" x2="' + (x + d) + '" y2="' + (mY + d) + '" stroke="#7a8294" stroke-width="' + o.markSw + '"/>';
-        svg += '<line x1="' + (x - d) + '" y1="' + (mY + d) + '" x2="' + (x + d) + '" y2="' + (mY - d) + '" stroke="#7a8294" stroke-width="' + o.markSw + '"/>';
+        svg += '<line x1="' + (x - d) + '" y1="' + (mY - d) + '" x2="' + (x + d) + '" y2="' + (mY + d) + '" stroke="#7a8294" style="stroke:var(--dg-mute)" stroke-width="' + o.markSw + '"/>';
+        svg += '<line x1="' + (x - d) + '" y1="' + (mY + d) + '" x2="' + (x + d) + '" y2="' + (mY - d) + '" stroke="#7a8294" style="stroke:var(--dg-mute)" stroke-width="' + o.markSw + '"/>';
       }
     });
     svg += '</svg>';
@@ -175,21 +175,21 @@
     // column index: 0 = the open-string column (only when showOpen), 1..F = trueFrets[0..F-1]
     function xOf(col) { return col === 0 ? (padX + openColW / 2) : (nutX + (col - 0.5) * fretW); }
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
-    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + boardBot + '" stroke="#3a4150" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
-    for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" stroke-width="1"/>'; }
+    for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + boardBot + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
+    for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="1"/>'; }
     for (var s2 = 0; s2 < n; s2++) {
       var y2 = yOf(s2);
       plan.notesOn(s2).forEach(function (note) {
         var col = (note.fret === 0 && showOpen) ? 0 : (trueFrets.indexOf(note.fret) + 1);
         var cx = xOf(col), isRoot = note.isRoot;
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
-        var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : '';
+        var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : ' style="fill:var(--dg-dot);stroke:var(--dg-dot-line)"';
         svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + '/>';
         // Prefer the caller's spelling (opts.names[pc] - canonical sharp post-FORK-4,
         // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
         // fall back to the sharp table.
         var noteName = (opts.names && opts.names[note.pc]) || NOTE_NAMES[note.pc];
-        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + noteName + '</text>';
+        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:var(--on-accent)"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
       });
     }
     // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
@@ -198,7 +198,7 @@
     // so the numbers can never hide behind the note dots again.
     plan.markers.forEach(function (fn) {
       var col = trueFrets.indexOf(fn) + 1;
-      svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
+      svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" style="fill:var(--dg-fret-lbl)" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
     });
     svg += '</svg>';
     wrap.innerHTML = svg;
