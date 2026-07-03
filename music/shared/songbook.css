@@ -129,6 +129,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
 .listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;min-width:40px;min-height:40px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
+/* J2: setlist edit-mode remove reads as destructive (li-rm only renders in edit mode). */
+#setBody .li-rm{border-color:var(--bad);color:var(--bad);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
 /* Persistent undo banner for the last set removal. */
 .setUndo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:9px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
@@ -216,7 +218,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .setHead .btn{flex:0 0 auto;padding:12px 16px;}
 .setEmpty{text-align:center;padding:44px 18px;color:var(--txt-dim);font-size:.95rem;line-height:1.6;}
 /* (.setItem retired -> .listItem in 'set' mode; see the unified block above.) */
-.setBar{display:flex;gap:8px;margin-top:16px;}
+.setBar{display:flex;gap:8px;margin-bottom:14px;}
 /* #s-tune: full-viewport, no-scroll layout (mirrors #s-compose's fixed-top /
    flex-hero pattern below). #s-tune fills the .view's available height;
    .tunerWrap is the single flex column inside it. Every direct child is
