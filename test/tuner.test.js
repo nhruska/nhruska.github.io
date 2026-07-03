@@ -140,18 +140,18 @@ test('isOutlier: no running estimate yet means nothing is a glitch', function ()
 });
 
 // ---- asymmetric tuning advice (tune UP from flat; sharp = overshoot) ----
-test('tuneHint: lock zone -2..+1¢ is landable coming up from flat', function () {
+test('tuneHint: lock zone -3..+2¢ is landable coming up from flat (T4: widened green zone)', function () {
   assert.strictEqual(T.tuneHint(0), 'near');
-  assert.strictEqual(T.tuneHint(1), 'near');
+  assert.strictEqual(T.tuneHint(2), 'near');    // a hair sharp still lands (was overshoot at +2)
   assert.strictEqual(T.tuneHint(-1), 'near');
-  assert.strictEqual(T.tuneHint(-2), 'near');   // a hair flat still counts as in tune
-  assert.strictEqual(T.tuneHint(-3), 'flat');   // clearly flat -> keep coming up
+  assert.strictEqual(T.tuneHint(-3), 'near');   // a hair flat still counts as in tune
+  assert.strictEqual(T.tuneHint(-4), 'flat');   // clearly flat -> keep coming up
   assert.strictEqual(T.tuneHint(-30), 'flat');
 });
-test('tuneHint: tight on the SHARP side — +2¢ is already overshoot', function () {
-  assert.strictEqual(T.tuneHint(2), 'sharp');
+test('tuneHint: still tight on the SHARP side — +3¢ is overshoot', function () {
+  assert.strictEqual(T.tuneHint(3), 'sharp');
   assert.strictEqual(T.tuneHint(25), 'sharp');
-  assert.notStrictEqual(T.tuneHint(2), 'near'); // sharp must never read as in-tune
+  assert.notStrictEqual(T.tuneHint(3), 'near'); // clearly sharp must never read as in-tune
 });
 
 run();

@@ -156,12 +156,16 @@
   }
   // Tuning advice for "always tune UP from flat" (approach pitch from below so the
   // string seats under tension). Asymmetric + biased to the way you actually land:
-  //   'flat'  (≤ -3¢)      keep coming up — the good direction
-  //   'near'  (-2..+1¢)    you're on it — lock (landable coming up from below)
-  //   'sharp' (≥ +2¢)      overshot — drop below and re-approach (tight on sharp)
+  //   'flat'  (≤ -4¢)      keep coming up — the good direction
+  //   'near'  (-3..+2¢)    you're on it — lock (the GREEN zone; now aligned to the
+  //                        needlePos ±3 in-tune band, widened from the old -2..+1
+  //                        which was so tight a well-tuned string still read as overshoot)
+  //   'sharp' (≥ +3¢)      overshot — drop below and re-approach (still tight on sharp)
+  // (T4: the -4 / +3 thresholds are the live-tunable green-zone knobs — widen if the
+  //  owner reports green is still hard to land, tighten if it greens while audibly off.)
   function tuneHint(cents) {
-    if (cents >= 2) return 'sharp';
-    if (cents <= -3) return 'flat';
+    if (cents >= 3) return 'sharp';
+    if (cents <= -4) return 'flat';
     return 'near';
   }
   function micToggle() {
@@ -221,10 +225,19 @@
       }
       var freq = median(freqHist);
       var tgt = nearest(freq);
-      // Note-name hysteresis: don't flip the displayed string on a transient -
-      // require a few consistent frames before committing to a new string.
+      // Note-name hysteresis: don't flip the displayed string on a transient, and
+      // don't thrash when a note sits near the midpoint between two strings. Require
+      // the candidate to be CLEARLY closer (SWITCH_MARGIN cents) for SWITCH_FRAMES
+      // consecutive frames. (T4: both are live-tunable — raise to steady a flickering
+      // name, lower if a genuinely new string is slow to appear. Was: 3 frames, no margin.)
+      var SWITCH_FRAMES = 5, SWITCH_MARGIN = 20;
       if (lockedString === null) { lockedString = tgt; switchFrames = 0; }
-      else if (tgt !== lockedString) { if (++switchFrames >= 3) { lockedString = tgt; switchFrames = 0; } }
+      else if (tgt !== lockedString) {
+        var dNew = Math.abs(1200 * Math.log2(freq / tgt.f));
+        var dOld = Math.abs(1200 * Math.log2(freq / lockedString.f));
+        if (dOld - dNew > SWITCH_MARGIN) { if (++switchFrames >= SWITCH_FRAMES) { lockedString = tgt; switchFrames = 0; } }
+        else { switchFrames = 0; }
+      }
       else { switchFrames = 0; }
       var shown = lockedString;
       var cents = Math.round(1200 * Math.log2(freq / shown.f)), hint = tuneHint(cents);
@@ -234,9 +247,17 @@
       if (hint === 'near') inTuneHold = 8; else if (hint === 'sharp') inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
       var locked = inTuneHold > 0;
       // Zoomed needle, driven by the same smoothed value as the cents readout.
-      // SNAP only when the string itself changes; otherwise glide steadily, so
-      // honing the last few cents stays rock-steady (no fast/slow jumpiness).
-      var target = needlePos(cents), k = (shown !== prevShown) ? 0.45 : 0.2;
+      // ASYMMETRIC smoothing — fast ATTACK, slow RELEASE. The tension the owner felt
+      // ("jitters" wants MORE damping, "slow to settle" wants LESS) is one knob pulled
+      // two ways; splitting it by distance-to-target resolves both: a new string or a
+      // big error catches up FAST, honing the last few cents damps HEAVY so the needle
+      // sits dead still. (T4: these four k's are the live-iteration surface — raise the
+      // honing k if it feels laggy near centre, lower it if it still jitters.)
+      var target = needlePos(cents), acents = Math.abs(cents), k;
+      if (shown !== prevShown) k = 0.5;        // new string   — snap to it
+      else if (acents > 15) k = 0.35;          // far off      — track quickly (fast attack)
+      else if (acents > 5) k = 0.16;           // closing in   — moderate
+      else k = 0.07;                           // honing (<5¢) — heavy damping, no jitter (slow release)
       prevShown = shown;
       needleEMA += (target - needleEMA) * k; needle.style.left = needleEMA.toFixed(1) + '%';
       // Colour the workflow: green = there; amber = flat, keep coming UP (the good
