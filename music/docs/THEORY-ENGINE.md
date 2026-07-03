@@ -10,37 +10,46 @@ Owner-approved design decisions are marked with their decision IDs.
 The engine computes on PITCH CLASSES (integers 0-11): intervals, diatonic
 qualities, scale degrees, key relationships, transposition. None of that
 depends on how a note is spelled - the math is exact and unaffected by any
-naming policy. Spelling is a display concern with three name-emitting
-surfaces, all echoing the same sharp table and all pitch-class-normalized on
-input: circle.js's spelling functions (spellScale/spellRoot/keyName),
-songbook.js's chord builders (its ROOTS table drives diatonicChords /
-chordsFromDegrees), and the suggestion seed map (SUGG in play/index.html).
-Consequence: the naming policy below is swappable (per release, eventually
-per user preference) by changing those display surfaces only - the theory
-computations, their tests, and stored data are untouched by any respelling.
-Canonical sharps is the current policy, not a structural commitment.
+naming policy. Spelling is a display concern owned by a SINGLE source of truth:
+circle.js's key-aware layer (spellScaleKeyAware / diatonicKeyAware / keyLabel /
+spellKeyAware). The theory surfaces DELEGATE to it - songbook.js's Compose chips +
+key picker and tracks.js's Studio scale/chords/fretboard all call the circle.js
+key-aware functions rather than re-spelling (#85 SSOT: songbook.js keeps only an
+inline canonical-sharp fallback for the circle-absent case, mirroring how it
+already pulls MODE_STEPS from circle). Pitch-class math, its tests, and stored
+data are untouched by any respelling, so the policy below is swappable (per
+release, eventually per user preference) by changing that one engine. Key-aware
+conventional spelling is the current policy, not a structural commitment.
 
-## Note naming: canonical sharps (FORK-4)
+## Note naming: key-aware conventional spelling (#85, reverses FORK-4)
 
-- The app uses ONE spelling per pitch class, everywhere: C C# D D# E F F# G G# A A# B.
-- What you pick is what every surface shows: choose D#, and the key label, scale,
-  chords-in-key, circle of fifths and fret notes all say D# - never Eb.
-- Flat input is accepted (typing or importing Bb resolves to A#), but flats never
-  appear in output.
-- Known costs, accepted for consistency on a fretboard/tab-oriented surface:
-  - Scale listings do not follow letter-per-degree notation rules. D# mixolydian
-    renders as D# F G G# A# C C# (letters repeat; no E or B appears). A
-    notation-literate reader will notice - it is intentional.
-  - Some names diverge from common usage (the app says A# where charts say Bb).
-    The Studio's mode lesson bridges this with "often written Bb" hints in its
-    prose; labels stay canonical.
-- Instrument chord voicings are found enharmonically: a request for A# finds a
-  hand-curated Bb fingering. The displayed name stays canonical.
+- The app spells each key the way a musician reads it: FLAT keys render flats,
+  SHARP keys render sharps, C/naturals stay natural. F major is F G A Bb C D E
+  (never A#); G major is G A B C D E F#; Db major is Db Eb F Gb Ab Bb C.
+- Scale spelling follows letter-per-degree notation rules: each of the seven
+  degrees takes the next letter name, so no letter repeats or is skipped (F major
+  uses B-flat for its 4th, not A-sharp). This REVERSES the earlier FORK-4
+  "canonical sharp everywhere" policy, whose known cost was exactly this (D#
+  mixolydian rendered D# F G G# A# C C#, letters repeating).
+- Chromatic (out-of-key) notes follow the key's flat/sharp orientation: a passing
+  F#/Gb reads Gb in a flat key, F# in a sharp key.
+- The KEY PICKER and key labels show the conventional name while the stored value
+  stays canonical-sharp (so transpose / chord-membership / filtering are unchanged
+  - only the label flips): the A# button reads "Bb", C# reads "Db".
+- The tritone key is spelled on the sharp side (F# major, D# minor), so F# major
+  legitimately carries an E#.
+- Instrument chord voicings are found enharmonically, bidirectionally: flat keys
+  hit the curated flat fingerings (Bb, Eb, Ab, Db) directly; a canonical-sharp
+  request still resolves too. The displayed name follows the key.
+- NOT yet key-aware (kept canonical, deliberate follow-up): the circle-of-fifths
+  WHEEL labels + its neighbour tinting (parallel-key spelling + tint-string
+  matching need their own pass), and the Library/Repertoire key facet + curated
+  track-data labels.
 
 ## Roman numerals: mode-degree convention
 
 - Diatonic chords are numbered by their position in the selected mode's own
-  scale: in D minor, F is III, A# is VI, C is VII (classical/modal convention).
+  scale: in D minor, F is III, Bb is VI, C is VII (classical/modal convention).
 - This intentionally differs from the parallel-major convention common in
   rock/jam charts (bIII, bVI, bVII). One convention is used consistently across
   Compose and the Studio - that consistency is the point.
@@ -70,7 +79,7 @@ Verified golden paths (start with the tonic, tap the first suggestion 3 times):
 | Key | Path | Romans |
 |---|---|---|
 | C Major | C -> G -> Am -> F | I V vi IV (the "4-chord song") |
-| D Minor | Dm -> Am -> A# -> F | i v VI III (A7 = V appears in the row) |
+| D Minor | Dm -> Am -> Bb -> F | i v VI III (A7 = V appears in the row) |
 | A Minor | Am -> Em -> F -> C | i v VI III |
 
 ## Known limitations (documented, not hidden)
@@ -83,5 +92,6 @@ Verified golden paths (start with the tonic, tap the first suggestion 3 times):
 - The mode-degree numeral convention (VII in mixolydian rather than bVII) can
   differ from what jam-pedagogy content teaches. If pilot feedback shows
   confusion, the revisit is app-wide, not per-surface.
-- The canonical-sharp policy does not yet cover the Library/Repertoire key
-  facet or curated track data labels (planned follow-up wave).
+- Key-aware spelling covers the Compose + Studio theory surfaces; the circle-of-
+  fifths wheel, the Library/Repertoire key facet and curated track-data labels
+  remain canonical-sharp (see "Note naming" above - deliberate follow-up wave).
