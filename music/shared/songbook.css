@@ -204,20 +204,38 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .setEmpty{text-align:center;padding:44px 18px;color:var(--txt-dim);font-size:.95rem;line-height:1.6;}
 /* (.setItem retired -> .listItem in 'set' mode; see the unified block above.) */
 .setBar{display:flex;gap:8px;margin-top:16px;}
-.tunerWrap h2{font-weight:800;font-size:1.2rem;margin-bottom:2px;letter-spacing:-.02em;}
+/* #s-tune: full-viewport, no-scroll layout (mirrors #s-compose's fixed-top /
+   flex-hero pattern below). #s-tune fills the .view's available height;
+   .tunerWrap is the single flex column inside it. Every direct child is
+   fixed-size by default (flex:0 0 auto); the auto-tuner card (.tCard) is the
+   hero and expands to absorb whatever vertical space is left, with the
+   reference-tone strings and the accent picker pinned below it. */
+#s-tune{height:100%;}
+.tunerWrap{display:flex;flex-direction:column;height:100%;min-height:0;}
+.tunerWrap > *{flex:0 0 auto;}
 .tunerWrap .sub{font-size:.74rem;color:var(--txt-dim);margin-bottom:8px;}
 .tCanvasWrap{background:var(--bg-2);border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:6px;position:relative;overflow:hidden;}
 #tCanvas{display:block;width:100%;height:70px;}
 .tCanvasLbl{position:absolute;top:9px;left:13px;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--txt-dim);letter-spacing:.14em;}
-.tStrings{display:flex;gap:6px;margin:8px 0 4px;}
-.tStr{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 3px;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s,box-shadow .2s;}
+/* Reference tones: 4-string profiles fill one row (basis = 1/4 width); 5+
+   string profiles (guitar's 6, banjo's 5) wrap to a 3-per-row grid instead of
+   squeezing every button down to a sliver. :has() feature-detects a 5th
+   button so no per-instrument JS/markup hook is needed. */
+.tStrings{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
+.tStr{flex:1 1 calc((100% - 18px) / 4);min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 3px;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s,box-shadow .2s;}
+.tStrings:has(.tStr:nth-child(5)) .tStr{flex-basis:calc((100% - 12px) / 3);}
 .tStr:active{transform:scale(.95);}
 .tStr.droning{background:var(--accent-deep);border-color:var(--accent);box-shadow:0 0 24px rgba(94,234,212,.22);}
 .tStr .n{font-family:'Space Mono',monospace;font-weight:700;font-size:1.45rem;line-height:1;color:var(--accent);}
 .tStr .l{display:none;}
 .tStr .hz{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);white-space:nowrap;}
-.tCard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px;margin-top:9px;}
-.tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;}
+/* Auto-tuner card is the Tune tab's hero: flex:1 lets it absorb whatever
+   vertical space #tuneTuneRow / #tStrings / the accent picker don't need, so
+   the whole tab fills the viewport with no scroll. overflow-y:auto is a
+   safety net for very short viewports (landscape phone), not the normal
+   path. */
+.tCard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px;margin-top:9px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
+.tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
 .tCard .row{display:flex;gap:8px;flex-wrap:wrap;}
 .tBtn{border:1px solid var(--accent);background:var(--accent);color:#06201c;font-family:inherit;font-weight:600;font-size:.8rem;padding:10px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s;}
@@ -230,7 +248,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .relStep .rt b{color:var(--txt);font-weight:700;}
 .relStep .rp{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent);font-family:'Space Mono';font-weight:700;font-size:.86rem;width:44px;height:44px;border-radius:10px;cursor:pointer;flex:0 0 auto;transition:transform .08s,background .15s,color .15s;}
 .relStep .rp:active{transform:scale(.88);background:var(--accent);color:#06201c;}
-.micBox{margin-top:4px;}
+.micBox{margin-top:4px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+/* Start-mic: a real one-handed touch target (>=56px tall, full row width via
+   the existing .actions/.btn flex:1) for holding an instrument in the other
+   hand while tapping to start/stop the needle. */
+#micToggle{min-height:56px;font-size:1rem;}
 .micMeter{position:relative;height:54px;margin:8px 2px 2px;}
 .micMeter .scale{position:absolute;top:28px;left:0;right:0;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--bad) 0%,var(--warn) 32%,var(--good) 50%,var(--warn) 68%,var(--bad) 100%);opacity:.55;}
 /* in-tune target zone (±3¢ in the zoomed needle map) — a band to park the needle
