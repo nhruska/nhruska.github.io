@@ -94,8 +94,19 @@
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
+  // SSOT (#85): spelling is owned by circle.js. Delegate to Circle.diatonicKeyAware so the
+  // Compose chips spell KEY-AWARE (F major -> Bb, not A#) from the SAME engine the Studio
+  // uses — never a parallel table. Same chord SET (dim degrees filtered out, scale-degree
+  // order); only the note spelling comes from the shared source. The inline ROOTS
+  // derivation stays ONLY as the circle-absent fallback (identical set, canonical sharp).
   function diatonicChords(root, modeKey) {
-    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
+    var C = global.Circle, mk = canonMode(modeKey);
+    if (C && C.diatonicKeyAware && CIRCLE_MODE[mk]) {
+      return C.diatonicKeyAware(root, CIRCLE_MODE[mk])
+        .filter(function (d) { return d.quality !== "dim"; })
+        .map(function (d) { return d.chord; });
+    }
+    var rp = rootPc(root), m = MODES[mk]; if (rp == null || !m) return [];
     var out = [];
     m.steps.forEach(function (s, i) {
       if (m.quals[i] === "dim") return;
@@ -1730,7 +1741,10 @@
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
-        b.textContent = r;
+        // SSOT (#85): the LABEL is the conventional key name (Bb, not A#) from circle.js,
+        // keyed to the current mode; the button VALUE `r` stays canonical-sharp so key
+        // state / transpose / chord filtering are unchanged.
+        b.textContent = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(r, songKey.mode) : r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
           // Picking a root sets the explicit key and KEEPS the panel open so the mode
@@ -1821,7 +1835,9 @@
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      // SSOT (#85): key title reads the conventional name (Bb major, not A# major) from circle.js
+      var keyDisp = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(keyRoot, keyMode) : keyRoot;
+      title.innerHTML = '<strong>' + escHTML(keyDisp) + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
