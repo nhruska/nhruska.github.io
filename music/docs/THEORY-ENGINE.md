@@ -10,12 +10,15 @@ Owner-approved design decisions are marked with their decision IDs.
 The engine computes on PITCH CLASSES (integers 0-11): intervals, diatonic
 qualities, scale degrees, key relationships, transposition. None of that
 depends on how a note is spelled - the math is exact and unaffected by any
-naming policy. Spelling happens in one thin display layer (circle.js
-spellScale/spellRoot/keyName), and all name INPUT normalizes to pitch class
-before comparison. Consequence: the naming policy below is swappable (per
-release, eventually per user preference) WITHOUT touching the theory engine,
-its tests, or any stored data. Canonical sharps is the current policy, not a
-structural commitment.
+naming policy. Spelling is a display concern with three name-emitting
+surfaces, all echoing the same sharp table and all pitch-class-normalized on
+input: circle.js's spelling functions (spellScale/spellRoot/keyName),
+songbook.js's chord builders (its ROOTS table drives diatonicChords /
+chordsFromDegrees), and the suggestion seed map (SUGG in play/index.html).
+Consequence: the naming policy below is swappable (per release, eventually
+per user preference) by changing those display surfaces only - the theory
+computations, their tests, and stored data are untouched by any respelling.
+Canonical sharps is the current policy, not a structural commitment.
 
 ## Note naming: canonical sharps (FORK-4)
 

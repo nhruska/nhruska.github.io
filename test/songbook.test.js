@@ -85,6 +85,26 @@ test('romanInKey casing across suffix families (7ths, m7b5, maj7) - codex V2', f
   assert.strictEqual(Songbook.romanInKey('G7', 'C', 'Major'), 'V');
   assert.strictEqual(Songbook.romanInKey('Gm7', 'D', 'Minor'), 'iv');
 });
+test('mergeSuggestionRow: chip-row merge semantics (filter, float, dedupe, cap, fallback) - codex V3', function () {
+  var m = Songbook.mergeSuggestionRow;
+  // key filter drops out-of-key picks (D/E major junk in D minor)
+  assert.deepStrictEqual(m(['Am', 'D', 'E', 'Gm'], [], 'D', 'Minor'), ['Am', 'Gm']);
+  // completions float FIRST and are deduped out of the picks
+  assert.deepStrictEqual(m(['G', 'Am', 'F'], ['F'], 'C', 'Major'), ['F', 'G', 'Am']);
+  // a completion the ranker never surfaced still leads the row
+  assert.deepStrictEqual(m(['G', 'Am'], ['Dm'], 'C', 'Major'), ['Dm', 'G', 'Am']);
+  // cap at 5 (completions + picks)
+  assert.deepStrictEqual(m(['G', 'Am', 'F', 'Em', 'Dm'], ['C'], 'C', 'Major'),
+    ['C', 'G', 'Am', 'F', 'Em']);
+  // all-out-of-key -> fallback keeps the unfiltered picks (borrowed beats none)
+  assert.deepStrictEqual(m(['D', 'E'], [], 'C', 'Minor'), ['D', 'E']);
+  // no key -> no filtering
+  assert.deepStrictEqual(m(['D', 'E'], [], null, 'Major'), ['D', 'E']);
+  // whitelisted harmonic-minor V7 survives the filter
+  assert.deepStrictEqual(m(['A7', 'E'], [], 'D', 'Minor'), ['A7']);
+  // empty picks + completions only
+  assert.deepStrictEqual(m([], ['F'], 'C', 'Major'), ['F']);
+});
 test('romanInKey labels diatonic degrees mode-correctly, borrowed chords chromatically', function () {
   // D minor: the natural degrees read III/VI/VII (matching the Studio), never bIII/bVI/bVII
   assert.strictEqual(Songbook.romanInKey('Dm', 'D', 'Minor'), 'i');

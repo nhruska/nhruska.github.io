@@ -59,8 +59,9 @@
 
   // ---- canonical note spelling (sharps only) ---------------------------------
   // ONE spelling table app-wide: the sharp ROOTS row, indexed by pitch class.
-  // The key picker offers sharps only and the chord packs are sharp-named
-  // (F#m, A#), so every derived label echoes the exact name the user picked -
+  // The key picker offers sharps only and every label is sharp-canonical
+  // (voicing TABLES may key shapes under either spelling - the pack seam
+  // resolves enharmonically), so every derived label echoes what the user picked -
   // D# stays D#, never Eb. Flat INPUT still normalizes (norm/F2S); flats just
   // never appear in output. (The old letter-per-degree/fewest-accidentals
   // speller chose Eb for D# mixolydian while the chord chips said A# - one key,

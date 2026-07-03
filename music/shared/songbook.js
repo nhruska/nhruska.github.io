@@ -165,6 +165,25 @@
     var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
     return (C && C.romanFor) ? C.romanFor(chord, root) : '';
   }
+  // The suggestion chip-row merge, pure and testable (codex V3): filter the
+  // Markov picks to the key (chordInKey; fall back to unfiltered when the
+  // filter empties - a borrowed suggestion beats none), dedupe against the
+  // progression-completing chords, float completions to the FRONT (their
+  // accent glow must read first), cap at 5.
+  //   picks: ranked Markov suggestions; completes: chord names that finish a
+  //   famous progression; root/modeKey: the selected key (root null = no key).
+  function mergeSuggestionRow(picks, completes, root, modeKey) {
+    var row = (picks || []).slice();
+    if (root) {
+      var inKeyPicks = row.filter(function (c) { return chordInKey(c, root, modeKey); });
+      if (inKeyPicks.length) row = inKeyPicks;
+    }
+    (completes || []).forEach(function (chord) {
+      var i = row.indexOf(chord);
+      if (i >= 0) row.splice(i, 1);
+    });
+    return (completes || []).concat(row).slice(0, 5);
+  }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
@@ -1828,25 +1847,12 @@
         (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
       });
 
-      var picks = suggestNext(progression);
-      // C4 (pilot UAT): the Markov map is key-AGNOSTIC (chord -> common followers),
-      // so in D minor it happily offers D / E / A - major-family chords that then get
-      // roman-labeled against the minor key ("D (I)") and read as wrong-mode nonsense.
-      // When a key is set, keep only picks that are diatonic to it (root on a scale
-      // degree + matching triad quality). If the filter empties the list (e.g. the
-      // progression itself is out-of-key), fall back to the unfiltered picks - a
-      // borrowed suggestion beats none, and its roman is at least honestly chromatic.
-      if (songKey.root) {
-        var inKeyPicks = picks.filter(function (c) { return chordInKey(c, songKey.root, songKey.mode); });
-        if (inKeyPicks.length) picks = inKeyPicks;
-      }
-      // make sure any completing chord is actually in the list (the Markov ranker might
-      // not surface it), and float completions to the front so the highlight reads first.
-      Object.keys(completeBy).forEach(function (chord) {
-        var i = picks.indexOf(chord);
-        if (i >= 0) picks.splice(i, 1);
-      });
-      picks = Object.keys(completeBy).concat(picks).slice(0, 5);
+      // C4 (pilot UAT): the Markov map is key-AGNOSTIC; when a key is set the row
+      // filters to it, completions float first, capped at 5 - the whole merge is
+      // the pure mergeSuggestionRow (unit-tested; codex V3 wanted chip-row-level
+      // coverage the closure could not give).
+      var picks = mergeSuggestionRow(suggestNext(progression), Object.keys(completeBy),
+        songKey.root, songKey.mode);
       if (!picks.length) {
         var hint = document.createElement('p');
         hint.className = 'keyHint suggEmpty';
@@ -2350,6 +2356,7 @@
     chordsFromDegrees: chordsFromDegrees,
     chordInKey: chordInKey,
     romanInKey: romanInKey,
+    mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,
