@@ -214,8 +214,9 @@
   // chord-progression suggestion map (instrument-agnostic chord names).
   // Canonically SHARP names (FORK-4): the whole app labels A#, D#m - never Bb, Ebm -
   // so a suggestion chip can't show "Bb" beside an in-key palette that says "A#".
-  // Shape lookup stays intact: the chord packs resolve enharmonics (A# finds a
-  // Bb-keyed fingering) via their shapeFor() resolver.
+  // Shape lookup stays intact: the LIVE adapter resolves enharmonics via
+  // profileVoicing() in buildAdapter below (A# finds a Bb-keyed profile
+  // fingering); the legacy standalone packs carry the same logic as shapeFor().
   var SUGG = {
     C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
     A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "A#", "Am"],

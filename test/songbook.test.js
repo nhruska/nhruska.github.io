@@ -71,6 +71,20 @@ test('harmonic-minor exception: V and V7 are in-key in Minor (owner ruling, coun
   assert.strictEqual(Songbook.romanInKey('A7', 'D', 'Minor'), 'V');
   assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Minor'), 'v');
 });
+test('mode names are case-normalized (saved items carry lowercase modes) - codex V2', function () {
+  assert.strictEqual(Songbook.chordInKey('A7', 'D', 'minor'), true);   // whitelist works lowercase
+  assert.strictEqual(Songbook.chordInKey('F', 'D', 'minor'), true);
+  assert.strictEqual(Songbook.romanInKey('F', 'D', 'minor'), 'III');   // not chromatic bIII
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'mixolydian'), 'VII');
+  assert.strictEqual(Songbook.chordInKey('G', 'C', 'MAJOR'), true);
+});
+test('romanInKey casing across suffix families (7ths, m7b5, maj7) - codex V2', function () {
+  assert.strictEqual(Songbook.romanInKey('Dm7', 'C', 'Major'), 'ii');
+  assert.strictEqual(Songbook.romanInKey('Bm7b5', 'C', 'Major'), 'vii°');
+  assert.strictEqual(Songbook.romanInKey('Fmaj7', 'C', 'Major'), 'IV');
+  assert.strictEqual(Songbook.romanInKey('G7', 'C', 'Major'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Gm7', 'D', 'Minor'), 'iv');
+});
 test('romanInKey labels diatonic degrees mode-correctly, borrowed chords chromatically', function () {
   // D minor: the natural degrees read III/VI/VII (matching the Studio), never bIII/bVI/bVII
   assert.strictEqual(Songbook.romanInKey('Dm', 'D', 'Minor'), 'i');

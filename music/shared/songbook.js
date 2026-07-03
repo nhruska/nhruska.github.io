@@ -114,8 +114,17 @@
   // i -> V(7) -> i is the default cadence of real minor-key songs; strict
   // natural-minor gating stripped the most-played chord from every minor key.
   // Vmaj7 stays out (not the harmonic-minor dominant).
+  // Mode names are case-normalized: saved custom items carry lowercase modes
+  // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
+  // capitalized keys - both must hit the same table (codex V2 medium; same trap
+  // class Circle.modeKey already guards).
+  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian' };
+  function canonMode(modeKey) {
+    return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
+  }
   function chordInKey(chord, root, modeKey) {
-    var m = MODES[modeKey], rp = rootPc(root);
+    var mk = canonMode(modeKey);
+    var m = MODES[mk], rp = rootPc(root);
     var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
     if (!m || rp == null || !cm) return false;
     var cp = rootPc(cm[1]); if (cp == null) return false;
@@ -125,7 +134,7 @@
     var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
       : /^(aug|\+)/.test(suf) ? 'aug'
       : /^m(?!aj)/.test(suf) ? 'm' : '';
-    if (modeKey === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
+    if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
     return q === m.quals[deg];
   }
   // Mode-aware roman numeral for a chord in a KNOWN key: diatonic degrees get the
@@ -136,9 +145,10 @@
   // F in D minor while the Studio said "III" for the same chord (pilot UAT).
   var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   function romanInKey(chord, root, modeKey) {
-    var m = MODES[modeKey];
+    var mk = canonMode(modeKey);
+    var m = MODES[mk];
     var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
-    if (m && cm && chordInKey(chord, root, modeKey)) {
+    if (m && cm && chordInKey(chord, root, mk)) {
       var deg = m.steps.indexOf(((rootPc(cm[1]) - rootPc(root)) % 12 + 12) % 12);
       // Case by the CHORD's own quality, not the degree's natural quality: the
       // whitelisted harmonic-minor V is MAJOR on a degree whose natural triad is
@@ -1268,11 +1278,11 @@
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans (via tonic), or the maxed cap. A mode toggle re-calls
-      // renderProg but changes none of these (romans are root-relative), so a rebuild
-      // would just flash the strip with identical content. Suggestions still refresh
-      // below (completions are mode-aware).
-      var sig = progression.join(',') + '|' + tonic + '|' + maxed;
+      // key-relative romans, or the maxed cap. labelRoman is MODE-aware (a mode
+      // toggle flips bVII <-> VII on the same chord), so the mode is part of the
+      // visible signature - omitting it left stale romans after a mode change
+      // (codex V2 high).
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';

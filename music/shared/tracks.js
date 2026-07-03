@@ -722,7 +722,10 @@
       // when the changed note is a sharp. Labels/chips stay canonical.
       var SHARP2FLAT = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
       var parts = ch.map(function (c) {
-        var alt = SHARP2FLAT[c.to] ? ', often written ' + esc(SHARP2FLAT[c.to]) : '';
+        // LOWERED notes only: charts write a lowered 7th as Bb, but a RAISED
+        // 4th is universally F# - "often written Gb" there would be wrong
+        // pedagogy (codex V2 medium).
+        var alt = (c.dir === 'lower' && SHARP2FLAT[c.to]) ? ', often written ' + esc(SHARP2FLAT[c.to]) : '';
         return 'the ' + ORD[c.degree] + ' ' + (c.dir === 'raise' ? 'raised' : 'lowered')
           + ' (<b>' + esc(c.from) + ' → ' + esc(c.to) + '</b>' + alt + ')';
       }).join(', ');

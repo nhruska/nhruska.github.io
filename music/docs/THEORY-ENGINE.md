@@ -5,6 +5,18 @@ what to play next. Written for a musician audience (including gigging and
 classically trained players) - these are deliberate simplifications, not bugs.
 Owner-approved design decisions are marked with their decision IDs.
 
+## Architecture: pitch-class core, spelling as a display policy
+
+The engine computes on PITCH CLASSES (integers 0-11): intervals, diatonic
+qualities, scale degrees, key relationships, transposition. None of that
+depends on how a note is spelled - the math is exact and unaffected by any
+naming policy. Spelling happens in one thin display layer (circle.js
+spellScale/spellRoot/keyName), and all name INPUT normalizes to pitch class
+before comparison. Consequence: the naming policy below is swappable (per
+release, eventually per user preference) WITHOUT touching the theory engine,
+its tests, or any stored data. Canonical sharps is the current policy, not a
+structural commitment.
+
 ## Note naming: canonical sharps (FORK-4)
 
 - The app uses ONE spelling per pitch class, everywhere: C C# D D# E F F# G G# A A# B.
