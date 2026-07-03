@@ -836,16 +836,23 @@
       } catch (e) { alert('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); return; }
       try { file = new File([blob], name, { type: 'application/json' }); } catch (e) {}
       // Prefer the OS share sheet on mobile (save to Drive / Files / send to self);
-      // fall back to a plain download everywhere else.
-      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-        navigator.share({ files: [file], title: 'Music songbook backup' })
-          .then(markBackedUp)
-          .catch(function (err) { if (err && err.name === 'AbortError') return; downloadBlob(blob, name); markBackedUp(); });
-      } else { downloadBlob(blob, name); markBackedUp(); }
+      // fall back to a plain download everywhere else. The whole branch is guarded:
+      // canShare/share can throw synchronously on some engines, and downloadBlob can
+      // fail - surface a message instead of leaving the user staring at a dead button.
+      try {
+        var canShareFiles = false;
+        try { canShareFiles = !!(file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share); } catch (e) { canShareFiles = false; }
+        if (canShareFiles) {
+          navigator.share({ files: [file], title: 'Music songbook backup' })
+            .then(markBackedUp)
+            .catch(function (err) { if (err && err.name === 'AbortError') return; try { downloadBlob(blob, name); markBackedUp(); } catch (e2) { alert('Could not save the backup file.'); } });
+        } else { downloadBlob(blob, name); markBackedUp(); }
+      } catch (e) { alert('Could not save the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); }
     };
     if (btnRestore && fileIn) {
       btnRestore.onclick = function () { fileIn.click(); };
       fileIn.onchange = function () {
+        if (!window.Backup) { alert('Restore is unavailable right now.'); return; }
         var f = this.files && this.files[0]; this.value = ''; if (!f) return;
         var rd = new FileReader();
         rd.onload = function () {
@@ -854,7 +861,9 @@
           if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
           var lines = Backup.describe(payload.data, instrumentNames());
           var manifest = lines.length ? lines.map(function (l) { return '• ' + l.label + ': ' + l.detail; }).join('\n') : '• Nothing recognizable in this file.';
-          var when = payload.exportedAt ? ' from ' + payload.exportedAt.slice(0, 10) : '';
+          // Only slice a STRING exportedAt - a malformed-but-valid payload could carry
+          // a number/object here, which would throw on .slice().
+          var when = (typeof payload.exportedAt === 'string') ? ' from ' + payload.exportedAt.slice(0, 10) : '';
           if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.')) return;
           try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
           alert('Restored your songbook. Reloading the app.'); location.reload();

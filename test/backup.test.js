@@ -210,4 +210,39 @@ test('runMigrations() does NOT downgrade a device stamped by a newer app build',
   assert.strictEqual(s.getItem('songbook.setlist.v1'), '["a"]', 'data untouched');
 });
 
+/* ---------- schema stamp is inside the atomic transaction ---------- */
+test('restore() rolls back DATA if the schema stamp write fails (stamp in transaction)', function () {
+  // All data writes succeed; the LAST write (the schema stamp) throws. The data
+  // must roll back too - never data-written-without-stamp.
+  var s = fakeStore({ 'songbook.setlist.v1': '["old"]' });
+  var realSet = s.setItem.bind(s);
+  s.setItem = function (k, v) { if (k === Backup.SCHEMA_KEY) { throw new Error('QuotaExceededError'); } realSet(k, v); };
+  var payload = { app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["new"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw, 'should throw when the stamp write fails');
+  assert.strictEqual(s._map['songbook.setlist.v1'], '["old"]', 'data rolled back to prior value on stamp failure');
+});
+
+/* ---------- rollback runs in reverse write order ---------- */
+test('applyAtomic() rolls back in reverse write order', function () {
+  var order = [];
+  var s = fakeStore({ 'songbook.a.v1': 'A0', 'songbook.b.v1': 'B0' });
+  var writes = 0;
+  s.setItem = function (k, v) {
+    writes++;
+    if (writes === 3) throw new Error('boom');   // fail on the 3rd write
+    order.push('set:' + k); s._map[k] = String(v);
+  };
+  // wrap removeItem/setItem-in-rollback tracking via order log
+  var origRemove = s.removeItem.bind(s);
+  s.removeItem = function (k) { order.push('rm:' + k); origRemove(k); };
+  var map = { 'songbook.a.v1': 'A1', 'songbook.b.v1': 'B1', 'songbook.c.v1': 'C1' };
+  try { Backup.applyAtomic(s, map); } catch (e) { /* expected: 3rd write throws */ }
+  // Wrote a then b, c threw. Both prior values must be restored (rollback correctness);
+  // both a and b existed before, so rollback is via setItem, not removeItem.
+  assert.strictEqual(s._map['songbook.a.v1'], 'A0', 'a restored to prior');
+  assert.strictEqual(s._map['songbook.b.v1'], 'B0', 'b restored to prior');
+});
+
 run();

@@ -95,45 +95,54 @@
 
   // Apply a {key:value} map to a Storage-like object ATOMICALLY: capture the prior
   // value of every key first, then write; if any setItem throws (quota exceeded,
-  // storage blocked), roll every written key back to its prior value and rethrow.
-  // localStorage has no transactions, so "atomic" here means all-or-nothing from
-  // the caller's view - a failed apply leaves the store exactly as it was found.
-  // Returns the number of keys written.
-  function applyAtomic(store, map) {
-    var keys = Object.keys(map).filter(function (k) { return owned(k) && typeof map[k] === 'string'; });
+  // storage blocked), roll every written key back and rethrow. localStorage has no
+  // transactions, so "atomic" here means all-or-nothing from the caller's view - a
+  // failed apply leaves the store exactly as it was found.
+  //
+  // `also` (optional) is an {key:value} map of NON-owned keys (e.g. the schema
+  // marker) that must be written in the SAME transaction. The stamp cannot sit
+  // outside the atomic set: if data writes succeed but the stamp throws, the store
+  // would carry the data with a stale marker. Including it here means a stamp
+  // failure rolls the data back too. Returns the number of owned data keys written.
+  function applyAtomic(store, map, also) {
+    var dataKeys = Object.keys(map).filter(function (k) { return owned(k) && typeof map[k] === 'string'; });
+    var extraKeys = also ? Object.keys(also).filter(function (k) { return typeof also[k] === 'string'; }) : [];
+    var all = dataKeys.concat(extraKeys);
+    var valueOf = function (k) { return (map[k] != null && owned(k)) ? map[k] : also[k]; };
     var prior = {}, had = {};
-    keys.forEach(function (k) { var p = store.getItem(k); had[k] = (p !== null && p !== undefined); prior[k] = p; });
+    all.forEach(function (k) { var p = store.getItem(k); had[k] = (p !== null && p !== undefined); prior[k] = p; });
     var written = [];
     try {
-      for (var i = 0; i < keys.length; i++) { store.setItem(keys[i], map[keys[i]]); written.push(keys[i]); }
+      for (var i = 0; i < all.length; i++) { store.setItem(all[i], valueOf(all[i])); written.push(all[i]); }
     } catch (e) {
-      // Roll back everything we wrote this call, restoring prior value or removing
-      // keys that did not exist before, so no partial-restore state survives.
-      for (var j = 0; j < written.length; j++) {
+      // Roll back in REVERSE write order: undo the most-recent (space-consuming)
+      // write first so restoring an earlier, larger prior value has the freed room
+      // and does not itself hit quota. Track whether every undo succeeded so the
+      // error message does not falsely claim "no changes were made".
+      var clean = true;
+      for (var j = written.length - 1; j >= 0; j--) {
         var wk = written[j];
-        try { if (had[wk]) store.setItem(wk, prior[wk]); else store.removeItem(wk); } catch (e2) { /* best-effort */ }
+        try { if (had[wk]) store.setItem(wk, prior[wk]); else store.removeItem(wk); } catch (e2) { clean = false; }
       }
-      var msg = (e && /quota|exceed/i.test(String(e.name) + String(e.message)))
-        ? 'not enough storage space to restore this backup on this device'
-        : 'restore failed while writing - no changes were made';
-      throw new Error(msg);
+      var quota = e && /quota|exceed/i.test(String(e.name) + String(e.message));
+      var msg = quota ? 'not enough storage space to restore this backup on this device'
+                      : 'restore failed while writing';
+      throw new Error(msg + (clean ? ' - no changes were made' : ' - and the store could not be fully rolled back'));
     }
-    return keys.length;
+    return dataKeys.length;
   }
 
-  // Restore a backup into a Storage-like object. Migrates first, then writes.
-  // ADDITIVE by default: keys the backup doesn't mention are left as-is. Atomic:
-  // a mid-write failure (quota, blocked storage) rolls back and throws, so the
-  // store is never left half-restored. Returns the number of keys written.
+  // Restore a backup into a Storage-like object. Migrates first, then writes. The
+  // data AND the schema stamp go through ONE atomic apply, so a failure anywhere
+  // (quota, blocked storage) leaves the store exactly as found - never half
+  // restored, never data-without-stamp. ADDITIVE: keys the backup doesn't mention
+  // are left as-is. Returns the number of data keys written.
   function restore(store, payload) {
     var v = validate(payload);
     if (!v.ok) throw new Error(v.error);
     var data = migrate(payload.data, payload.schema);
-    var n = applyAtomic(store, data);
-    // Only stamp the schema AFTER the data write fully succeeds - so the marker
-    // never claims a shape the store did not actually receive.
-    store.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
-    return n;
+    var stamp = {}; stamp[SCHEMA_KEY] = String(SCHEMA_VERSION);
+    return applyAtomic(store, data, stamp);
   }
 
   // Human-readable summary of a {key:value} data map, translating raw keys into
@@ -219,12 +228,15 @@
       // newer stamp and the data untouched; the newer build will manage it.
       if (cur > SCHEMA_VERSION) return;
       if (cur < SCHEMA_VERSION) {
-        // Migrate is pure (returns a new map without writing); apply atomically so
-        // a mid-write failure rolls back rather than leaving a half-migrated store.
-        // Stamp only after the write fully succeeds.
-        applyAtomic(store, migrate(collect(store), cur));
+        // Migrate is pure (returns a new map without writing); apply atomically WITH
+        // the stamp in the same transaction, so a mid-write failure rolls back the
+        // data AND leaves the old stamp - never migrated-data-with-stale-marker.
+        var stamp = {}; stamp[SCHEMA_KEY] = String(SCHEMA_VERSION);
+        applyAtomic(store, migrate(collect(store), cur), stamp);
+      } else {
+        // Already current (or unmarked baseline): just stamp; no data rewrite.
+        store.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
       }
-      store.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
     } catch (e) { /* storage blocked (private mode) - the app still runs */ }
   }
 
