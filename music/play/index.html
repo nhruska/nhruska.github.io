@@ -69,7 +69,7 @@
     <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
-        <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+        <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
         <div id="setBody"></div>
@@ -168,7 +168,7 @@
   </div>
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
-    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Jam</span></button>
+    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Setlist</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -226,7 +226,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: ‘choose from your song library’, compose: ‘build a progression’, tracks: ‘find a track in your key’, practice: ‘now playing’, jam: ‘your selected songs’ };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);

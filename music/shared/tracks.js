@@ -514,7 +514,7 @@
         + '<div class="bt-st-body">'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it · <span class="bt-st-notes">' + esc(th.notes.join(' ')) + '</span></div>'
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes">' + esc(th.notes.join(' ')) + '</span></div>'
         + '<div class="bt-st-scale" data-scale></div>'
         + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'

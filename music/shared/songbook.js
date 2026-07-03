@@ -715,7 +715,7 @@
         // of the data-derived genres; shown only when a custom item exists (facet
         // chips reflect what is actually in the repertoire).
         if (REPERTOIRE.some(isMine)) {
-          el.genreChips.appendChild(chipBtn('Mine', STATE.mineOnly,
+          el.genreChips.appendChild(chipBtn('mine', STATE.mineOnly,
             function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
         }
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
@@ -791,7 +791,7 @@
           onAction: function () { repertoireAction(rec); }
         }));
       });
-      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length + ' in repertoire';
+      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length;
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
@@ -1942,7 +1942,7 @@
       composeRow.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Save this progression so a video you attach in the Studio sticks?';
+      msg.textContent = 'Save to add a video backing track or skip to practice';
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
       var skipBtn = document.createElement('button');
