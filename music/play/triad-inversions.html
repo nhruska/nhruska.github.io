@@ -33,6 +33,9 @@ body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 1
 .appBar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .backLink{display:inline-flex;align-items:center;gap:6px;color:var(--accent-ink);text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-strong)}
 .backLink:active{background:var(--accent-deep)}
+/* In the in-app modal (iframe), the modal's own close button handles exit;
+   hide this page's back link so it can't nest the app inside the modal. */
+.embedded .backLink{display:none}
 .instBadge{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.66rem;font-weight:700;color:var(--accent-ink);letter-spacing:.06em;padding:5px 8px;border-radius:7px;background:var(--accent-deep);border:1px solid var(--accent-dim)}
 /* Instrument picker - same look as the main app's #profilePicker so the
    artifact's header reads as an extension of the Music shell. */
@@ -120,6 +123,8 @@ h1 .em{color:var(--accent-ink)}
    entries as music/play/index.html. localStorage read is sync + small.   */
 (function () {
   'use strict';
+  try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); }
+  catch (e) { document.documentElement.classList.add('embedded'); }
   var PALETTE = [
     { a: '#5eead4', d: '#244b45', p: '#16302c' },
     { a: '#6ee7a8', d: '#235a3e', p: '#143226' },
