@@ -103,12 +103,17 @@
     });
     return out;
   }
-  // Does `chord` belong to the key's diatonic set? Its root must sit on a scale
-  // degree AND its triad quality must match that degree's quality - a 7th reduces
-  // to its triad (D7 counts as D in G major; Dm7 does not). Used to keep the
-  // key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
+  // Does `chord` belong to the key's usable in-key set? Its root must sit on a
+  // scale degree AND its triad quality must match that degree's quality - a 7th
+  // reduces to its triad (D7 counts as D in G major; Dm7 does not). Used to keep
+  // the key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
   // Suffix parsing mirrors Circle.suffixQuality: half-diminished (m7b5/ø) reduces
   // to dim; aug/+ maps to 'aug', which no mode's quals contain -> never diatonic.
+  // HARMONIC-MINOR EXCEPTION (owner ruling, volley-1 council D1): in Minor, the
+  // degree-5 MAJOR triad and dominant 7th (A / A7 in D minor) are admitted -
+  // i -> V(7) -> i is the default cadence of real minor-key songs; strict
+  // natural-minor gating stripped the most-played chord from every minor key.
+  // Vmaj7 stays out (not the harmonic-minor dominant).
   function chordInKey(chord, root, modeKey) {
     var m = MODES[modeKey], rp = rootPc(root);
     var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
@@ -120,6 +125,7 @@
     var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
       : /^(aug|\+)/.test(suf) ? 'aug'
       : /^m(?!aj)/.test(suf) ? 'm' : '';
+    if (modeKey === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
     return q === m.quals[deg];
   }
   // Mode-aware roman numeral for a chord in a KNOWN key: diatonic degrees get the
@@ -131,10 +137,16 @@
   var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   function romanInKey(chord, root, modeKey) {
     var m = MODES[modeKey];
-    var cm = /^([A-G][#b]?)/.exec((chord || '').trim());
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
     if (m && cm && chordInKey(chord, root, modeKey)) {
       var deg = m.steps.indexOf(((rootPc(cm[1]) - rootPc(root)) % 12 + 12) % 12);
-      var q = m.quals[deg];
+      // Case by the CHORD's own quality, not the degree's natural quality: the
+      // whitelisted harmonic-minor V is MAJOR on a degree whose natural triad is
+      // minor - it must read 'V', not 'v'. For strictly-diatonic chords the two
+      // qualities coincide, so this changes nothing else.
+      var suf = cm[2].toLowerCase();
+      var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+        : /^m(?!aj)/.test(suf) ? 'm' : '';
       var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
       return q === 'dim' ? rn + '°' : rn;
     }

@@ -36,7 +36,7 @@ test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pi
   // D minor: i=Dm ii°=Edim III=F iv=Gm v=Am VI=A# VII=C
   assert.strictEqual(Songbook.chordInKey('Dm', 'D', 'Minor'), true);
   assert.strictEqual(Songbook.chordInKey('D', 'D', 'Minor'), false);  // major tonic is NOT in-key
-  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Minor'), false);  // major V is borrowed
+  // (the major V in minor is IN by the harmonic-minor exception - see its own test below)
   assert.strictEqual(Songbook.chordInKey('Am', 'D', 'Minor'), true);
   assert.strictEqual(Songbook.chordInKey('A#', 'D', 'Minor'), true);
   assert.strictEqual(Songbook.chordInKey('Bb', 'D', 'Minor'), true);  // flat input normalizes
@@ -56,6 +56,20 @@ test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pi
   assert.strictEqual(Songbook.chordInKey('Bm7b5', 'C', 'Major'), true);
   assert.strictEqual(Songbook.chordInKey('Caug', 'C', 'Major'), false);
   assert.strictEqual(Songbook.chordInKey('C+', 'C', 'Major'), false);
+});
+test('harmonic-minor exception: V and V7 are in-key in Minor (owner ruling, council D1)', function () {
+  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Minor'), true);    // V in D minor
+  assert.strictEqual(Songbook.chordInKey('A7', 'D', 'Minor'), true);   // V7
+  assert.strictEqual(Songbook.chordInKey('E7', 'A', 'Minor'), true);   // V7 in A minor
+  assert.strictEqual(Songbook.chordInKey('B7', 'E', 'Minor'), true);   // V7 in E minor
+  assert.strictEqual(Songbook.chordInKey('Am', 'D', 'Minor'), true);   // natural v still in
+  assert.strictEqual(Songbook.chordInKey('Amaj7', 'D', 'Minor'), false); // Vmaj7 is NOT the harmonic dominant
+  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Dorian'), false);  // exception is Minor-only
+  assert.strictEqual(Songbook.chordInKey('E', 'C', 'Major'), false);   // III-major in major still out
+  // the whitelisted V labels by the CHORD's quality: 'V', never 'v'
+  assert.strictEqual(Songbook.romanInKey('A', 'D', 'Minor'), 'V');
+  assert.strictEqual(Songbook.romanInKey('A7', 'D', 'Minor'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Minor'), 'v');
 });
 test('romanInKey labels diatonic degrees mode-correctly, borrowed chords chromatically', function () {
   // D minor: the natural degrees read III/VI/VII (matching the Studio), never bIII/bVI/bVII

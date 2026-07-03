@@ -716,9 +716,15 @@
       var ch = C.modeChange(state.key, state.scaleMode), info = C.modeInfo(state.scaleMode);
       if (!ch.length) return '<b>' + esc(shortMode(label)) + '</b> - the home scale you measure the others against.';
       var ref = info.ref === 'aeolian' ? 'natural minor' : 'major';
+      // Bridge to real-world charts (owner ruling, council D3): the app labels
+      // canonically SHARP (FORK-4), but tutorials teach "lower the 7th to Bb" -
+      // so the LESSON PROSE (this one surface only) adds "often written Bb"
+      // when the changed note is a sharp. Labels/chips stay canonical.
+      var SHARP2FLAT = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
       var parts = ch.map(function (c) {
+        var alt = SHARP2FLAT[c.to] ? ', often written ' + esc(SHARP2FLAT[c.to]) : '';
         return 'the ' + ORD[c.degree] + ' ' + (c.dir === 'raise' ? 'raised' : 'lowered')
-          + ' (<b>' + esc(c.from) + ' → ' + esc(c.to) + '</b>)';
+          + ' (<b>' + esc(c.from) + ' → ' + esc(c.to) + '</b>' + alt + ')';
       }).join(', ');
       return '<b>' + esc(shortMode(label)) + '</b> = ' + ref + ' with ' + parts + '.';
     }
