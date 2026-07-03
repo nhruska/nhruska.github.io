@@ -80,6 +80,21 @@
     p.push('backing track');
     return p.join(' ');
   }
+  // S5 (operator UAT): a custom "My progression" song has no real artist/title to
+  // search by - searchQuery's bare "<name> My progression backing track" returns
+  // generic, unrelated results. Fold in the genre + the actual chord progression
+  // (when the song carries one) so the search finds a stylistically/harmonically
+  // relevant backing track instead. Curated (non-custom) tracks keep plain
+  // searchQuery - they already have a real artist/title.
+  function customSearchQuery(t) {
+    var p = [];
+    if (t.artist) p.push(t.artist);
+    if (t.title) p.push(t.title);
+    if (t.genre) p.push(t.genre);
+    if (Array.isArray(t.seq) && t.seq.length) p.push(t.seq.join(' '));
+    p.push('backing track');
+    return p.join(' ');
+  }
   function filterQuery(genre, root, mode) {
     var g = (genre && genre !== 'all') ? genre + ' ' : '';
     var k = root ? (' in ' + root + (mode === 'minor' ? ' minor' : ' major')) : '';
@@ -403,6 +418,34 @@
       if (modeParam) params.push('mode=' + encodeURIComponent(modeParam));
       return 'triad-inversions.html' + (params.length ? '?' + params.join('&') : '');
     }
+    // S2/FORK-3 (owner-ruled): the Studio's "why these notes" wheel is a read-only
+    // teaching aid - it has no onPick wired (the interactive key-picker wheel lives
+    // in the retired #s-tracks container, permanently hidden). Statically tint the
+    // relative key (+ dimmer for the V/IV neighbors) so the wheel still teaches
+    // something on sight, without implying any wedge is tappable. circle.js's
+    // renderWheel is shared with that hidden picker, so this post-processes the
+    // returned DOM by matching each neighbor's rendered label text ("A"/"Am") to
+    // its <text>, then tints that text's immediately-preceding <path> (the wedge
+    // renderWheel appends right before its own label) - no circle.js edit needed.
+    function tintWheel(wheelEl, C, key, mode) {
+      var nb = C.neighbors(key, mode);
+      if (!nb || nb.length < 3) return;
+      function mark(entry, cls) {
+        if (!entry || !entry.root) return;
+        var label = C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
+        var texts = wheelEl.querySelectorAll('.cofLabel');
+        for (var i = 0; i < texts.length; i++) {
+          if (texts[i].textContent !== label) continue;
+          var wedge = texts[i].previousElementSibling;
+          if (wedge && wedge.classList.contains('cofWedge')) wedge.classList.add('cofWedge-' + cls);
+          texts[i].classList.add('cofLabel-' + cls);
+          break;
+        }
+      }
+      mark(nb[2], 'rel');  // relative minor (or relative major, if the track itself is minor)
+      mark(nb[0], 'nb');   // a fifth up (V) - dimmer
+      mark(nb[1], 'nb');   // a fifth down (IV) - dimmer
+    }
     // studioTheory now lives at module scope (exported for tests) - see above.
     function buildWhy(box, th) {
       var C = global.Circle;
@@ -416,9 +459,10 @@
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
         + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
-        box.querySelector('.bt-st-wheel').appendChild(C.renderWheel({
-          selected: { root: th.key, mode: normMode(th.scaleMode) }
-        }));
+        var mode = normMode(th.scaleMode);
+        var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
+        try { tintWheel(wheelEl, C, th.key, mode); } catch (e) {}
+        box.querySelector('.bt-st-wheel').appendChild(wheelEl);
       }
     }
     function openStudio(t) {
@@ -451,28 +495,33 @@
       var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
         : isSeedTrack ? ' Paste the one you like below.'
         : '';
+      // S5: a custom song built from a chord progression (t.seq) has no real
+      // artist/title to search by - enrich the query with its genre + chords
+      // instead of the bare (unhelpful) "My progression backing track" search.
+      var ytQuery = (t.custom && Array.isArray(t.seq) && t.seq.length) ? customSearchQuery(t) : searchQuery(t);
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
         : '<div class="bt-st-search">'
-          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(searchQuery(t))) + '" target="_blank" rel="noopener">'
+          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(ytQuery)) + '" target="_blank" rel="noopener">'
           + 'Watch on YouTube &#8599;</a>'
           + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
           + '</div>';
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
-      // exists. HAS a video -> a single "Edit song details" button (the Add/Edit form
-      // changes the URL AND title/chords/genre). NO video -> a quick inline paste box
-      // to attach the video you just found on YouTube (writes cs.yt via onSetVideo),
-      // plus an "edit song details" link for the fuller changes. The paste box needs
-      // opts.onSetVideo (host writes cs.yt); the edit link needs opts.onEditRequest;
-      // each renders only when its callback is wired (graceful degrade). A seed track
-      // keeps the trackUrl-overlay editor; an ephemeral session (no id/onSetVideo)
-      // gets nothing (a pasted url would have nothing to attach to).
+      // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
+      // the URL AND title/chords/genre - one unified affordance, not "edit to add a
+      // video"). NO video -> a quick inline paste box to attach the video you just
+      // found on YouTube (writes cs.yt via onSetVideo), plus an "edit song details"
+      // link for the fuller changes. The paste box needs opts.onSetVideo (host writes
+      // cs.yt); the edit link needs opts.onEditRequest; each renders only when its
+      // callback is wired (graceful degrade). A seed track keeps the trackUrl-overlay
+      // editor; an ephemeral session (no id/onSetVideo) gets nothing (a pasted url
+      // would have nothing to attach to).
       var urlEditor = t.custom
         ? (t.yt
           ? (opts.onEditRequest
-            ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit song details</button></div>'
+            ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit</button></div>'
             : '')
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled>'
@@ -902,7 +951,7 @@
 
   var Tracks = {
     compatibleKeys: compatibleKeys, filterTracks: filterTracks, uniqueGenres: uniqueGenres,
-    searchQuery: searchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
+    searchQuery: searchQuery, customSearchQuery: customSearchQuery, filterQuery: filterQuery, youtubeSearchUrl: youtubeSearchUrl,
     embedUrl: embedUrl, parseYouTubeId: parseYouTubeId, mergeTracks: mergeTracks,
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
