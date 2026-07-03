@@ -19,6 +19,8 @@
   /* accent as TEXT/line (readable on the surface). Dark = the vivid accent; light darkens it. */
   --accent-ink:var(--accent);
   --glow:rgba(94,234,212,.06);
+  /* translucent (frosted) surfaces - flip per theme */
+  --appbar-bg:rgba(20,23,28,.85);--label-scrim:rgba(13,15,18,.72);
   --warn:#fbbf24;--bad:#f87171;--good:#5eead4;
   --shadow:rgba(0,0,0,.5);
   /* legacy aliases used by markup + inline JS */
@@ -60,6 +62,7 @@
   --dg-grid:#aab4c0;--dg-nut:#2b3440;--dg-base:#5f6875;
   --dg-dot:#dfe6ee;--dg-dot-line:#9aa7b5;--dg-note:#334155;
   --dg-mute:#7a8494;--dg-fret-lbl:#6b7686;
+  --appbar-bg:rgba(238,241,244,.82);--label-scrim:rgba(238,241,244,.82);
 }
 :root[data-theme="light"] body{-webkit-font-smoothing:auto;}
 
@@ -72,7 +75,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Slim header (one screen, above the fold): compact padding + smaller brand, the
    instrument picker the only control here. ♪ quick-tune lives in the Tune tab and
    the accent picker moved there too — both were redundant in the always-on bar. */
-.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:rgba(20,23,28,.85);backdrop-filter:blur(8px);z-index:10;}
+.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 .appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -332,7 +335,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    rule; only the label's own readability changes here). */
 .strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
   letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
-  padding:3px 4px 2px;background:rgba(13,15,18,.72);}
+  padding:3px 4px 2px;background:var(--label-scrim);}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
