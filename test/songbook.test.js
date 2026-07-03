@@ -582,4 +582,19 @@ test('renderSheet lyrics/both views escape section labels and injected tags', fu
   });
 });
 
+/* ---------- Solo-button visibility pin (codex #90 V1 medium) ----------
+ * renderKey() is closure-bound, so pin the SOURCE contract: the gate must set
+ * BOTH the hidden attribute AND inline style.display (songbook.css's
+ * .soloBackingBtn{display:block} defeats the UA [hidden] rule - the C1/C3
+ * root cause), and renderKey() must run at INIT for the first paint. */
+test('solo-button gate pins hidden + inline display, and renderKey runs at init', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/el\.soloBackingBtn\.hidden = !showSolo/.test(src), 'hidden-attribute half of the gate missing');
+  assert.ok(/el\.soloBackingBtn\.style\.display = showSolo \? '' : 'none'/.test(src), 'inline-display half of the gate missing (CSS display:block would defeat [hidden] again)');
+  var initM = /\/\/ first paint[\s\S]{0,200}renderKey\(\);/.test(src) || /renderKey\(\);\s*\/\/ init/.test(src) || /init[\s\S]{0,400}renderKey\(\)/i.test(src);
+  assert.ok(initM, 'renderKey() init call not found');
+  assert.ok(!/forceStarters/.test(src), 'forceStarters must stay removed');
+  assert.ok(!/cHelp/.test(src), 'cHelp references must stay removed');
+});
+
 run();

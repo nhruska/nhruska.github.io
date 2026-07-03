@@ -1289,8 +1289,8 @@
     function renderProg() {
       if (!el.prog) return;
       // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
-      // sits on .composeWrap so it covers BOTH regions: the fixed top (starters + toggle)
-      // AND the scrolling chord list (in-key cells + all-chords tiles).
+      // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
+      // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
       var maxed = progression.length >= 8;
       var wrap = document.querySelector('.composeWrap');
       if (wrap) wrap.classList.toggle('maxed', maxed);
@@ -1426,6 +1426,12 @@
       // scale never drift from what's actually sounding. If a key center exists
       // (explicit pick, or one derived earlier) shift its root by the same delta;
       // otherwise derive it fresh from the now-transposed first chord.
+      // DELIBERATE (codex #90 V1): this first-chord fallback can establish a key
+      // from a ONE-chord progression - a transpose is an explicit act on the
+      // progression, and deriveProgressionKey applies the same chord-1 fallback
+      // at save time. The Solo button appearing after that is wanted (owner C3:
+      // one-chord solo should be easy), not a leak of the inferKey >=2 rule
+      // (which governs passive auto-inference only).
       if (songKey.root) {
         songKey.root = tpose(songKey.root, st);
       } else {
