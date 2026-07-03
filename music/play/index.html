@@ -23,18 +23,39 @@
     font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
   .picker:focus{outline:none;border-color:var(--accent);}
   .picker:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  /* accent-colour chooser lives in the Tune tab now (not the always-on header) */
-  .tuneTheme{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;}
-  .themeWrap{position:relative;}
-  #themeBtn{font-size:1.3rem;line-height:1;}
-  .themePop{position:absolute;bottom:calc(100% + 8px);right:0;z-index:30;display:flex;gap:9px;flex-wrap:wrap;
-    width:202px;padding:12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:13px;
-    box-shadow:0 14px 34px rgba(0,0,0,.5);animation:fadeUp .18s ease;}
-  .themePop[hidden]{display:none;}
+  /* accent swatches - rendered inline in the Settings sheet (accentSwatches) */
   .sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;padding:0;
     background:var(--sc);transition:transform .08s;}
   .sw:active{transform:scale(.88);}
   .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
+  /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
+     sheet on phone; the accent chooser lives here now, not the Tune tab. */
+  #settingsBtn{font-size:1.15rem;line-height:1;}
+  .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
+    padding:0 12px calc(12px + env(safe-area-inset-bottom));}
+  .setOv[hidden]{display:none;}
+  .setCard{width:100%;max-width:520px;max-height:86dvh;overflow-y:auto;background:var(--surface-2);
+    border:1px solid var(--line-strong);border-radius:16px 16px 0 0;padding:16px 16px 22px;
+    box-shadow:0 -14px 40px rgba(0,0,0,.55);}
+  .setHd{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .setHd h2{margin:0;font-size:1.15rem;}
+  .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:4px 8px;}
+  .setSec{padding:16px 0;border-top:1px solid var(--line-strong);}
+  .setSec:first-of-type{border-top:0;padding-top:6px;}
+  .setLbl{font-weight:600;margin-bottom:11px;}
+  .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
+  .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
+  .setBtns{display:flex;gap:10px;}
+  .setBtns .btn{flex:1;}
+  .setSummary{margin:0 0 14px;display:flex;flex-direction:column;gap:5px;}
+  .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
+  .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
+  .setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
+  .setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
+  .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
+  .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:12px;}
+  .setAbout{color:var(--ink-faint);font-size:.74rem;text-align:center;padding-bottom:0;}
 </style>
 </head>
 <body>
@@ -42,6 +63,7 @@
   <div class="appbar">
     <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
+    <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false">⚙</button>
   </div>
   <div class="view" id="view">
     <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
@@ -155,13 +177,7 @@
         </div>
         <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
-        <div class="tuneTheme">
-          <span class="sub">Accent colour</span>
-          <div class="themeWrap">
-            <button class="ab-btn" id="themeBtn" title="Accent colour" aria-label="Choose accent colour" aria-haspopup="true" aria-expanded="false">●</button>
-            <div class="themePop" id="themePop" role="menu" aria-label="Accent colour" hidden></div>
-          </div>
-        </div>
+        <!-- Accent colour moved to the Settings sheet (gear in the appbar). -->
       </div>
     </section>
   </div>
@@ -186,6 +202,29 @@
   <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
 </div>
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
+<!-- Settings sheet: accent colour + whole-songbook backup/restore + which
+     offline build is actually running. Opened by the appbar gear (#settingsBtn). -->
+<div class="setOv" id="setOv" hidden>
+  <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setSec">
+      <div class="setLbl">Accent color</div>
+      <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
+    </div>
+    <div class="setSec">
+      <div class="setLbl">Your songbook</div>
+      <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+      <div class="setSummary" id="dataSummary" aria-live="polite"></div>
+      <div class="setBtns">
+        <button class="btn" id="btnBackup" type="button">Back up</button>
+        <button class="btn ghost" id="btnRestore" type="button">Restore</button>
+        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="setMeta" id="lastBackup">Last backed up: never</div>
+    </div>
+    <div class="setSec setAbout"><span id="appVer">Music</span></div>
+  </div>
+</div>
 
 <!-- Shared, instrument-agnostic runtime -->
 <script src="../shared/nav-history.js"></script>
@@ -666,9 +705,13 @@
     .catch(function (err) { fail('Could not load (' + err.message + '). This page must be served over http(s) - open it via GitHub Pages or a local server.'); });
 })();
 </script>
-<!-- Accent-colour chooser. Re-skins the --accent family live (the tuner's
-     red/amber/green status colours are left alone) and remembers the choice
-     across instruments. Spectrum runs teal -> ... -> a warm amber/yellow. -->
+<!-- Schema/versioned backup+restore engine (shared/backup.js). Loaded before
+     the inline Settings script so runMigrations() can run at boot. -->
+<script src="../shared/backup.js"></script>
+<!-- Settings: accent colour + whole-songbook backup/restore + which offline
+     build is running. The accent chooser re-skins the --accent family live
+     (tuner red/amber/green status colours are left alone). Backup/Restore move
+     the whole songbook between devices via a JSON file (see shared/backup.js). -->
 <script>
 (function () {
   'use strict';
@@ -682,41 +725,169 @@
     { n: 'Coral',  a: '#fb923c', d: '#5c3115', p: '#38200d' },
     { n: 'Amber',  a: '#fbbf24', d: '#5c4715', p: '#38290b' }
   ];
-  var KEY = 'music.accent.v1';
+  var ACCENT_KEY = 'music.accent.v1';
+  var LAST_BACKUP_KEY = 'music.lastBackup.v1';
   function apply(t) {
     var r = document.documentElement.style;
     r.setProperty('--accent', t.a);
     r.setProperty('--accent-dim', t.d);
     r.setProperty('--accent-deep', t.p);
   }
-  function current() {
-    try { var v = localStorage.getItem(KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
+  function currentAccent() {
+    try { var v = localStorage.getItem(ACCENT_KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
     return PALETTE[0];
   }
-  // apply persisted accent immediately (documentElement exists already) to avoid a flash
-  apply(current());
+  // paint the saved accent before first paint (documentElement already exists)
+  apply(currentAccent());
+  // bring THIS device's stored data up to the current schema before the app reads it
+  try { if (window.Backup) Backup.runMigrations(localStorage); } catch (e) {}
+
+  function relWhen(iso) {
+    if (!iso) return 'never';
+    var then = new Date(iso); if (isNaN(then.getTime())) return 'unknown';
+    var s = Math.max(0, (Date.now() - then.getTime()) / 1000);
+    if (s < 90) return 'just now';
+    var m = s / 60; if (m < 90) return Math.round(m) + ' min ago';
+    var h = m / 60; if (h < 36) return Math.round(h) + ' hr ago';
+    var d = h / 24; if (d < 14) return Math.round(d) + ' days ago';
+    return then.toISOString().slice(0, 10);
+  }
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.getElementById('themeBtn'), pop = document.getElementById('themePop');
-    if (!btn || !pop) return;
-    function mark(active) {
-      pop.querySelectorAll('.sw').forEach(function (s) { s.classList.toggle('on', s.dataset.a === active.a); });
+    /* accent swatches - rendered inline in the Settings sheet */
+    var swWrap = document.getElementById('accentSwatches');
+    function markAccent(active) {
+      if (!swWrap) return;
+      swWrap.querySelectorAll('.sw').forEach(function (s) { s.classList.toggle('on', s.dataset.a === active.a); });
     }
-    PALETTE.forEach(function (t) {
-      var s = document.createElement('button');
-      s.className = 'sw'; s.type = 'button'; s.dataset.a = t.a;
-      s.style.setProperty('--sc', t.a);
-      s.title = t.n; s.setAttribute('role', 'menuitemradio'); s.setAttribute('aria-label', t.n);
-      s.onclick = function () { apply(t); try { localStorage.setItem(KEY, t.a); } catch (e) {} mark(t); close(); };
-      pop.appendChild(s);
-    });
-    mark(current());
-    function open() { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
-    function close() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
-    btn.onclick = function (e) { e.stopPropagation(); pop.hidden ? open() : close(); };
-    pop.addEventListener('click', function (e) { e.stopPropagation(); });
-    document.addEventListener('click', function () { if (!pop.hidden) close(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) close(); });
+    if (swWrap) {
+      PALETTE.forEach(function (t) {
+        var s = document.createElement('button');
+        s.className = 'sw'; s.type = 'button'; s.dataset.a = t.a;
+        s.style.setProperty('--sc', t.a);
+        s.title = t.n; s.setAttribute('role', 'radio'); s.setAttribute('aria-label', t.n);
+        s.onclick = function () { apply(t); try { localStorage.setItem(ACCENT_KEY, t.a); } catch (e) {} markAccent(t); };
+        swWrap.appendChild(s);
+      });
+      markAccent(currentAccent());
+    }
+
+    /* settings sheet open/close */
+    var ov = document.getElementById('setOv'),
+        openBtn = document.getElementById('settingsBtn'),
+        closeBtn = document.getElementById('setClose');
+    function renderLastBackup() {
+      var el = document.getElementById('lastBackup'); if (!el) return;
+      var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
+      el.textContent = 'Last backed up: ' + relWhen(iso);
+    }
+    // Live "what's on THIS device" summary, so the counts are visible before a
+    // backup (and the origin/empty-storage case is obvious at a glance).
+    // profile id -> display name, read off the instrument picker, so the manifest
+    // reads "Ukulele 20 · Guitar 4" (setlists/progressions are per-instrument).
+    function instrumentNames() {
+      var m = {}, sel = document.getElementById('profilePicker');
+      if (sel) Array.prototype.forEach.call(sel.options, function (o) { if (o.value) m[o.value] = o.textContent; });
+      return m;
+    }
+    function renderSummary() {
+      var el = document.getElementById('dataSummary'); if (!el || !window.Backup) return;
+      var lines = Backup.describe(Backup.collect(localStorage), instrumentNames());
+      el.textContent = '';
+      if (!lines.length) {
+        var empty = document.createElement('div'); empty.className = 'empty';
+        empty.textContent = 'Nothing saved on this device yet.'; el.appendChild(empty); return;
+      }
+      function row(cls, k, v) {
+        var r = document.createElement('div'); r.className = 'row' + (cls ? ' ' + cls : '');
+        var ks = document.createElement('span'); ks.className = 'k'; ks.textContent = k; r.appendChild(ks);
+        if (v != null) { var vs = document.createElement('span'); vs.className = 'v'; vs.textContent = v; r.appendChild(vs); }
+        el.appendChild(r);
+      }
+      lines.forEach(function (l) {
+        if (l.rows && l.rows.length) {           // per-instrument: header, then one row each
+          row('head', l.label, null);
+          l.rows.forEach(function (r) { row('sub', r.k, r.v); });
+        } else {
+          row('', l.label, l.detail);
+        }
+      });
+    }
+    function showVersion() {
+      var el = document.getElementById('appVer'); if (!el) return;
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = 'Running online. Not yet installed offline.'; return; }
+      try {
+        var mc = new MessageChannel();
+        mc.port1.onmessage = function (ev) { if (ev.data && ev.data.version) el.textContent = 'Offline build ' + ev.data.version; };
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
+      } catch (e) {}
+    }
+    function openSettings() { if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true'); renderSummary(); renderLastBackup(); showVersion(); }
+    function closeSettings() { if (!ov) return; ov.hidden = true; if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
+    if (openBtn) openBtn.onclick = openSettings;
+    if (closeBtn) closeBtn.onclick = closeSettings;
+    if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
+
+    /* backup + restore */
+    function markBackedUp() { try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch (e) {} renderLastBackup(); }
+    var btnBackup = document.getElementById('btnBackup'),
+        btnRestore = document.getElementById('btnRestore'),
+        fileIn = document.getElementById('restoreFile');
+    if (btnBackup) btnBackup.onclick = function () {
+      if (!window.Backup) { alert('Backup is unavailable right now.'); return; }
+      // Snapshot + serialize can throw (storage blocked, or a songbook large enough
+      // to trip a stringify/Blob limit); fail loud instead of silently doing nothing.
+      var payload, json, name, blob, file = null;
+      try {
+        payload = Backup.snapshot(localStorage, new Date().toISOString());
+        json = JSON.stringify(payload, null, 2);
+        name = 'music-songbook-' + payload.exportedAt.slice(0, 10) + '.json';
+        blob = new Blob([json], { type: 'application/json' });
+      } catch (e) { alert('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); return; }
+      try { file = new File([blob], name, { type: 'application/json' }); } catch (e) {}
+      // Prefer the OS share sheet on mobile (save to Drive / Files / send to self);
+      // fall back to a plain download everywhere else. The whole branch is guarded:
+      // canShare/share can throw synchronously on some engines, and downloadBlob can
+      // fail - surface a message instead of leaving the user staring at a dead button.
+      try {
+        var canShareFiles = false;
+        try { canShareFiles = !!(file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share); } catch (e) { canShareFiles = false; }
+        if (canShareFiles) {
+          navigator.share({ files: [file], title: 'Music songbook backup' })
+            .then(markBackedUp)
+            .catch(function (err) { if (err && err.name === 'AbortError') return; try { downloadBlob(blob, name); markBackedUp(); } catch (e2) { alert('Could not save the backup file.'); } });
+        } else { downloadBlob(blob, name); markBackedUp(); }
+      } catch (e) { alert('Could not save the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); }
+    };
+    if (btnRestore && fileIn) {
+      btnRestore.onclick = function () { fileIn.click(); };
+      fileIn.onchange = function () {
+        if (!window.Backup) { alert('Restore is unavailable right now.'); return; }
+        var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          var payload; try { payload = JSON.parse(rd.result); } catch (e) { alert('That file is not a valid backup (not JSON).'); return; }
+          var v = Backup.validate(payload);
+          if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
+          var lines = Backup.describe(payload.data, instrumentNames());
+          var manifest = lines.length ? lines.map(function (l) { return '• ' + l.label + ': ' + l.detail; }).join('\n') : '• Nothing recognizable in this file.';
+          // Only slice a STRING exportedAt - a malformed-but-valid payload could carry
+          // a number/object here, which would throw on .slice().
+          var when = (typeof payload.exportedAt === 'string') ? ' from ' + payload.exportedAt.slice(0, 10) : '';
+          if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.')) return;
+          try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
+          alert('Restored your songbook. Reloading the app.'); location.reload();
+        };
+        rd.onerror = function () { alert('Could not read that file. Try selecting the backup again.'); };
+        rd.readAsText(f);
+      };
+    }
   });
 })();
 </script>

@@ -1,0 +1,271 @@
+/* =====================================================================
+ * backup.test.js  -  unit tests for the schema/versioned backup+restore.
+ * Run: node test/backup.test.js   (no deps; pure Node assert)
+ * ===================================================================== */
+'use strict';
+var assert = require('assert');
+var Backup = require('../music/shared/backup.js');
+
+var passed = 0, failed = 0, cases = [];
+function test(name, fn) { cases.push([name, fn]); }
+function run() {
+  cases.forEach(function (c) {
+    try { c[1](); passed++; console.log('  ✓ ' + c[0]); }
+    catch (e) { failed++; console.log('  ✗ ' + c[0] + '\n      ' + e.message); }
+  });
+  console.log('\n' + passed + ' passed, ' + failed + ' failed');
+  process.exit(failed ? 1 : 0);
+}
+
+/* ---------- a minimal Storage-like fake ---------- */
+function fakeStore(seed) {
+  var map = {};
+  if (seed) Object.keys(seed).forEach(function (k) { map[k] = seed[k]; });
+  return {
+    get length() { return Object.keys(map).length; },
+    key: function (i) { return Object.keys(map)[i]; },
+    getItem: function (k) { return Object.prototype.hasOwnProperty.call(map, k) ? map[k] : null; },
+    setItem: function (k, v) { map[k] = String(v); },
+    removeItem: function (k) { delete map[k]; },
+    _map: map
+  };
+}
+
+/* ---------- owned() namespace gate ---------- */
+test('owned() accepts app namespaces, rejects foreign + excluded keys', function () {
+  assert.strictEqual(Backup.owned('songbook.setlist.v1'), true);
+  assert.strictEqual(Backup.owned('bt.custom.v1'), true);
+  assert.strictEqual(Backup.owned('music.accent.v1'), true);
+  assert.strictEqual(Backup.owned('someothersite.token'), false);
+  assert.strictEqual(Backup.owned('music.devlog.v1'), false);      // dev-only excluded
+  assert.strictEqual(Backup.owned('music.lastBackup.v1'), false);  // device-local stamp excluded
+  assert.strictEqual(Backup.owned(Backup.SCHEMA_KEY), false);      // the marker itself excluded
+  assert.strictEqual(Backup.owned(null), false);
+});
+
+/* ---------- REGRESSION: the per-instrument roadcase namespace must be captured ---------- */
+test('owned() + snapshot capture the per-instrument roadcase namespace', function () {
+  assert.strictEqual(Backup.owned('roadcase-ukulele-gcea.setlist.v1'), true);
+  assert.strictEqual(Backup.owned('roadcase-guitar-standard.custom.v1'), true);
+  var s = fakeStore({
+    'roadcase-ukulele-gcea.setlist.v1': '["s1","s2"]',
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":"p1"}]',
+    'music.accent.v1': '#5eead4'
+  });
+  var snap = Backup.snapshot(s, null);
+  // the setlist + progressions (roadcase-namespaced) MUST be in the backup, not just accent
+  assert.strictEqual(snap.data['roadcase-ukulele-gcea.setlist.v1'], '["s1","s2"]');
+  assert.strictEqual(snap.data['roadcase-ukulele-gcea.custom.v1'], '[{"id":"p1"}]');
+});
+
+/* ---------- snapshot() only captures owned keys ---------- */
+test('snapshot() captures owned keys only and stamps version + time', function () {
+  var s = fakeStore({
+    'songbook.setlist.v1': '["a","b"]',
+    'music.accent.v1': '#5eead4',
+    'bt.custom.v1': '[]',
+    'music.devlog.v1': 'noise',        // excluded
+    'unrelated.key': 'x'               // foreign
+  });
+  var snap = Backup.snapshot(s, '2026-07-02T00:00:00.000Z');
+  assert.strictEqual(snap.app, 'music');
+  assert.strictEqual(snap.schema, Backup.SCHEMA_VERSION);
+  assert.strictEqual(snap.exportedAt, '2026-07-02T00:00:00.000Z');
+  assert.deepStrictEqual(Object.keys(snap.data).sort(), ['bt.custom.v1', 'music.accent.v1', 'songbook.setlist.v1']);
+  assert.strictEqual(snap.data['music.devlog.v1'], undefined);
+  assert.strictEqual(snap.data['unrelated.key'], undefined);
+});
+
+/* ---------- validate() ---------- */
+test('validate() accepts a good backup and rejects malformed ones', function () {
+  // Contract change (Volley 1): an empty-data backup is now REJECTED. Restoring it
+  // writes nothing yet the UI would report "Restored", masking a wrong/corrupt file.
+  // A valid backup must carry at least one restorable owned key.
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: {} }).ok, false);
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["a"]' } }).ok, true);
+  assert.strictEqual(Backup.validate(null).ok, false);
+  assert.strictEqual(Backup.validate({ app: 'other', schema: 1, data: {} }).ok, false);
+  assert.strictEqual(Backup.validate({ app: 'music', data: {} }).ok, false);          // no schema
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1 }).ok, false);          // no data
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 999, data: {} }).ok, false); // from the future
+});
+
+/* ---------- restore() round-trips onto a fresh device ---------- */
+test('restore() writes owned keys onto a fresh store and stamps the schema', function () {
+  var oldPhone = fakeStore({
+    'songbook.setlist.v1': '["song1","song2"]',
+    'songbook.custom.v1': '[{"id":"x"}]',
+    'music.accent.v1': '#a78bfa'
+  });
+  var snap = Backup.snapshot(oldPhone, '2026-07-02T00:00:00.000Z');
+  var json = JSON.stringify(snap);                 // survives serialization (the real transport)
+
+  var newPhone = fakeStore();
+  var n = Backup.restore(newPhone, JSON.parse(json));
+  assert.strictEqual(n, 3);
+  assert.strictEqual(newPhone.getItem('songbook.setlist.v1'), '["song1","song2"]');
+  assert.strictEqual(newPhone.getItem('music.accent.v1'), '#a78bfa');
+  assert.strictEqual(newPhone.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION));
+});
+
+test('restore() throws on an invalid payload', function () {
+  var s = fakeStore();
+  assert.throws(function () { Backup.restore(s, { app: 'other' }); });
+});
+
+test('restore() ignores any foreign keys smuggled into data', function () {
+  var s = fakeStore();
+  var n = Backup.restore(s, { app: 'music', schema: 1, data: { 'songbook.last.v1': 'song9', 'evil.key': 'x' } });
+  assert.strictEqual(n, 1);                          // only the owned key written
+  assert.strictEqual(s.getItem('evil.key'), null);
+});
+
+/* ---------- describe() translates keys into human counts ---------- */
+test('describe() breaks setlists/progressions down PER INSTRUMENT', function () {
+  var lines = Backup.describe({
+    'roadcase-ukulele-gcea.setlist.v1': '["a","b","c"]',       // Ukulele 3
+    'roadcase-guitar-standard.setlist.v1': '["d","e"]',        // Guitar 2
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":1},{"id":2}]',  // progressions, ukulele only
+    'bt.custom.v1': '[{"t":"x"}]',                             // tracks, NOT progressions
+    'music.trackUrls.v1': '{"k1":"v","k2":"v"}',
+    'music.accent.v1': '#5eead4',
+    'music.activeProfile.v1': 'ukulele-gcea'
+  });
+  var byLabel = {};
+  lines.forEach(function (l) { byLabel[l.label] = l; });
+  assert.strictEqual(byLabel['Setlist'].detail, 'Ukulele 3 · Guitar 2');   // inline form (for the confirm dialog)
+  // multi-instrument also carries per-instrument rows for one-per-line rendering
+  assert.deepStrictEqual(byLabel['Setlist'].rows, [{ k: 'Ukulele', v: '3 songs' }, { k: 'Guitar', v: '2 songs' }]);
+  assert.strictEqual(byLabel['Saved progressions'].detail, '2 progressions'); // single instrument -> plain, no rows
+  assert.ok(!byLabel['Saved progressions'].rows);
+  assert.strictEqual(byLabel['Custom tracks'].detail, '1 track');          // bt.custom.v1 stays tracks
+  assert.strictEqual(byLabel['Curated track links'].detail, '2 links');
+  assert.strictEqual(byLabel['Preferences'].detail, 'accent color, instrument');
+});
+test('describe() uses provided instrument display names (trimmed at " - ")', function () {
+  var lines = Backup.describe(
+    { 'roadcase-ukulele-gcea.setlist.v1': '["a","b"]', 'roadcase-guitar-standard.setlist.v1': '["c"]' },
+    { 'ukulele-gcea': 'Ukulele', 'guitar-standard': 'Guitar - Standard' }
+  );
+  assert.strictEqual(lines[0].label, 'Setlist');
+  assert.strictEqual(lines[0].detail, 'Ukulele 2 · Guitar 1');
+});
+test('describe() singularises a single instrument and skips absent keys', function () {
+  var lines = Backup.describe({ 'roadcase-ukulele-gcea.setlist.v1': '["only"]' });
+  assert.strictEqual(lines.length, 1);
+  assert.strictEqual(lines[0].label, 'Setlist');
+  assert.strictEqual(lines[0].detail, '1 song');
+});
+test('describe() skips empty/malformed keys instead of showing zeros', function () {
+  var lines = Backup.describe({ 'bt.custom.v1': 'not json', 'roadcase-ukulele-gcea.setlist.v1': '{}' });
+  assert.strictEqual(lines.length, 0); // both resolve to 0 -> no noise rows
+});
+
+/* ---------- migrate() is an identity at the current version ---------- */
+test('migrate() is a no-op from v1 to v1', function () {
+  var data = { 'songbook.setlist.v1': '["a"]' };
+  assert.deepStrictEqual(Backup.migrate(data, 1), data);
+});
+
+/* ---------- runMigrations() stamps an unmarked device as the baseline ---------- */
+test('runMigrations() stamps an existing (unmarked) device at the baseline', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), null);
+  Backup.runMigrations(s);
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION));
+  assert.strictEqual(s.getItem('songbook.setlist.v1'), '["a"]'); // data untouched at v1
+});
+
+/* ---------- validate() rejects malformed / empty payloads ---------- */
+test('validate() rejects array data, foreign-only keys, and non-string values', function () {
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: [] }).ok, false);      // array, not a map
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'foreign.k': 'v' } }).ok, false); // no owned keys
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': 42 } }).ok, false); // non-string value
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["a"]' } }).ok, true);
+});
+
+/* ---------- atomic restore rolls back on a mid-write quota throw ---------- */
+test('restore() is atomic: a quota throw mid-write rolls back, store unchanged', function () {
+  // Seed a device that already holds real data; a restore that throws partway must
+  // leave EXACTLY this state, not a half-applied mix.
+  var s = fakeStore({ 'songbook.setlist.v1': '["old"]', 'music.accent.v1': '"blue"' });
+  var writes = 0;
+  s.setItem = function (k, v) { if (++writes === 2) { var e = new Error('QuotaExceededError'); e.name = 'QuotaExceededError'; throw e; } s._map[k] = String(v); };
+  var payload = { app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["new1","new2"]', 'roadcase-ukulele-gcea.setlist.v1': '["x"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw, 'restore should throw on quota');
+  assert.ok(/storage space/i.test(threw.message), 'quota message surfaced: ' + threw.message);
+  assert.strictEqual(s._map['songbook.setlist.v1'], '["old"]', 'first key rolled back to prior value');
+  assert.ok(!('roadcase-ukulele-gcea.setlist.v1' in s._map), 'new key removed on rollback');
+  assert.strictEqual(s._map['music.accent.v1'], '"blue"', 'untouched key intact');
+});
+
+/* ---------- downgrade guard: a newer-stamped device is left alone ---------- */
+test('runMigrations() does NOT downgrade a device stamped by a newer app build', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 1)); // pretend a future build ran
+  Backup.runMigrations(s);
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION + 1), 'newer stamp preserved, not lied down to current');
+  assert.strictEqual(s.getItem('songbook.setlist.v1'), '["a"]', 'data untouched');
+});
+
+/* ---------- schema stamp is inside the atomic transaction ---------- */
+test('restore() rolls back DATA if the schema stamp write fails (stamp in transaction)', function () {
+  // All data writes succeed; the LAST write (the schema stamp) throws. The data
+  // must roll back too - never data-written-without-stamp.
+  var s = fakeStore({ 'songbook.setlist.v1': '["old"]' });
+  var realSet = s.setItem.bind(s);
+  s.setItem = function (k, v) { if (k === Backup.SCHEMA_KEY) { throw new Error('QuotaExceededError'); } realSet(k, v); };
+  var payload = { app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["new"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw, 'should throw when the stamp write fails');
+  assert.strictEqual(s._map['songbook.setlist.v1'], '["old"]', 'data rolled back to prior value on stamp failure');
+});
+
+/* ---------- rollback runs in reverse write order ---------- */
+test('applyAtomic() rolls back in reverse write order', function () {
+  var order = [];
+  var s = fakeStore({ 'songbook.a.v1': 'A0', 'songbook.b.v1': 'B0' });
+  var writes = 0;
+  s.setItem = function (k, v) {
+    writes++;
+    if (writes === 3) throw new Error('boom');   // fail on the 3rd write
+    order.push('set:' + k); s._map[k] = String(v);
+  };
+  // wrap removeItem/setItem-in-rollback tracking via order log
+  var origRemove = s.removeItem.bind(s);
+  s.removeItem = function (k) { order.push('rm:' + k); origRemove(k); };
+  var map = { 'songbook.a.v1': 'A1', 'songbook.b.v1': 'B1', 'songbook.c.v1': 'C1' };
+  try { Backup.applyAtomic(s, map); } catch (e) { /* expected: 3rd write throws */ }
+  // Wrote a then b, c threw. Both prior values must be restored (rollback correctness);
+  // both a and b existed before, so rollback is via setItem, not removeItem.
+  assert.strictEqual(s._map['songbook.a.v1'], 'A0', 'a restored to prior');
+  assert.strictEqual(s._map['songbook.b.v1'], 'B0', 'b restored to prior');
+});
+
+/* ---------- restore() refuses to downgrade a newer-stamped device ---------- */
+test('restore() refuses when the device holds a newer schema than this build', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["newshape"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 1)); // device upgraded by a future build
+  var payload = { app: 'music', schema: Backup.SCHEMA_VERSION, data: { 'songbook.setlist.v1': '["oldshape"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw && /newer data/i.test(threw.message), 'restore refused with newer-data message');
+  assert.strictEqual(s.getItem('songbook.setlist.v1'), '["newshape"]', 'newer data NOT overwritten');
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION + 1), 'stamp NOT downgraded');
+});
+
+/* ---------- snapshot() labels the backup with the device's real schema ---------- */
+test('snapshot() stamps the DEVICE schema, so an old build cannot mislabel newer data', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 2)); // device is newer than this build
+  var snap = Backup.snapshot(s, null);
+  assert.strictEqual(snap.schema, Backup.SCHEMA_VERSION + 2, 'backup labeled with the true (newer) device schema');
+  // a normal device stamps the build version
+  var s2 = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  assert.strictEqual(Backup.snapshot(s2, null).schema, Backup.SCHEMA_VERSION);
+});
+
+run();

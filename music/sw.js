@@ -11,7 +11,7 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v61';
+var CACHE = 'music-v62';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -24,7 +24,7 @@ var CORE = [
   './play/triad-inversions.html',
   './shared/nav-history.js',
   './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js', './shared/candidates.js',
-  './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js',
+  './shared/songbook.js', './shared/tuner.js', './shared/diagram.js', './shared/audio.js', './shared/backup.js',
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
   './shared/profiles/ukulele-gcea.js', './shared/profiles/guitar-standard.js',
@@ -44,6 +44,15 @@ self.addEventListener('activate', function (e) {
       return Promise.all(keys.map(function (k) { if (k !== CACHE) return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );
+});
+
+// Answer the app's "which build am I actually running?" query. The controlling
+// worker replies with its CACHE tag, so Settings can show whether the installed
+// PWA has picked up the latest push or is still serving an older precache.
+self.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'GET_VERSION' && e.ports && e.ports[0]) {
+    e.ports[0].postMessage({ version: CACHE });
+  }
 });
 
 self.addEventListener('fetch', function (e) {
