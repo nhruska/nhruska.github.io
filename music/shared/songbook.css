@@ -393,7 +393,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .cActions{display:flex;gap:8px;margin:14px 0;}
 /* touch-action:pan-y - the chord tiles are a vertical grid (no horizontal scroll of its
    own), so a vertical swipe over it MUST pan the page/accordion, never get trapped. */
-.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;touch-action:pan-y;}
+/* Track min = 84px so a cell holds a full chord card. A 6-string guitar diagram is an
+   86px-wide SVG; its card adds padding+border to ~100px. At the old 72px min, a wide
+   (laptop) viewport's auto-fill collapsed cells to ~79px - narrower than the card - so
+   the in-key cards overflowed their cells and overlapped, and the fixed-width SVG spilled
+   past the scroll container (the few-px horizontal scroll). 84px keeps phones (<=412px,
+   e.g. Pixel 10) at the same 4-column count while widening laptop cells (6 -> 5 columns)
+   enough that the native-size diagram fits - so nothing shrinks below the phone-DPI label
+   floor. */
+.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;touch-action:pan-y;}
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
    grid, so every chord box reads the same. Suggestions add an accent border to
    signal "tap to add"; the current progression and the picker stay neutral. */
@@ -474,7 +482,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Each diatonic chord tile uses the same layout as the suggCell: diagram on
    top + Roman numeral below. Keeps the visual consistent across the palettes
    (chord name bold at top via .chord-name, Roman muted at bottom via .rn). */
-.keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;}
+/* Clamp the bordered card to its cell (min-width:0 lets the cell shrink to the grid
+   track). Without this the card is content-sized (~100px) and, being centered in a
+   narrower cell, overflows into its neighbours - the in-key overlap. The All-chords
+   tiles never had this because there the card IS the grid item, already clamped to the
+   track; this makes the in-key card behave the same. */
+.keyPalette .chordCell > .chord{max-width:100%;box-sizing:border-box;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* ---- Adaptive chord surface (Phase 1) ----
    #catChips in the Chords panel becomes a vertical stack: the in-key lead palette (or
