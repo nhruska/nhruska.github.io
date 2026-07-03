@@ -117,34 +117,41 @@ test('restore() ignores any foreign keys smuggled into data', function () {
 });
 
 /* ---------- describe() translates keys into human counts ---------- */
-test('describe() aggregates per-instrument setlists/progressions with real counts', function () {
+test('describe() breaks setlists/progressions down PER INSTRUMENT', function () {
   var lines = Backup.describe({
-    'roadcase-ukulele-gcea.setlist.v1': '["a","b","c"]',
-    'roadcase-guitar-standard.setlist.v1': '["d","e"]',       // aggregates -> 5 songs
-    'roadcase-ukulele-gcea.custom.v1': '[{"id":1},{"id":2}]', // progressions (per-instrument)
-    'bt.custom.v1': '[{"t":"x"}]',                            // tracks, NOT progressions
+    'roadcase-ukulele-gcea.setlist.v1': '["a","b","c"]',       // Ukulele 3
+    'roadcase-guitar-standard.setlist.v1': '["d","e"]',        // Guitar 2
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":1},{"id":2}]',  // progressions, ukulele only
+    'bt.custom.v1': '[{"t":"x"}]',                             // tracks, NOT progressions
     'music.trackUrls.v1': '{"k1":"v","k2":"v"}',
     'music.accent.v1': '#5eead4',
     'music.activeProfile.v1': 'ukulele-gcea'
   });
   var byLabel = {};
   lines.forEach(function (l) { byLabel[l.label] = l.detail; });
-  assert.strictEqual(byLabel['Setlist'], '5 songs');            // summed across instruments
-  assert.strictEqual(byLabel['Saved progressions'], '2 progressions');
-  assert.strictEqual(byLabel['Custom tracks'], '1 track');      // bt.custom.v1 stays tracks, not progressions
+  assert.strictEqual(byLabel['Setlist'], 'Ukulele 3 · Guitar 2');   // sorted by count desc, named
+  assert.strictEqual(byLabel['Saved progressions'], '2 progressions'); // single instrument -> plain count
+  assert.strictEqual(byLabel['Custom tracks'], '1 track');          // bt.custom.v1 stays tracks
   assert.strictEqual(byLabel['Curated track links'], '2 links');
   assert.strictEqual(byLabel['Preferences'], 'accent color, instrument');
 });
-test('describe() singularises a count of one and skips absent keys', function () {
-  var lines = Backup.describe({ 'songbook.setlist.v1': '["only"]' });
+test('describe() uses provided instrument display names (trimmed at " - ")', function () {
+  var lines = Backup.describe(
+    { 'roadcase-ukulele-gcea.setlist.v1': '["a","b"]', 'roadcase-guitar-standard.setlist.v1': '["c"]' },
+    { 'ukulele-gcea': 'Ukulele', 'guitar-standard': 'Guitar - Standard' }
+  );
+  assert.strictEqual(lines[0].label, 'Setlist');
+  assert.strictEqual(lines[0].detail, 'Ukulele 2 · Guitar 1');
+});
+test('describe() singularises a single instrument and skips absent keys', function () {
+  var lines = Backup.describe({ 'roadcase-ukulele-gcea.setlist.v1': '["only"]' });
   assert.strictEqual(lines.length, 1);
   assert.strictEqual(lines[0].label, 'Setlist');
   assert.strictEqual(lines[0].detail, '1 song');
 });
-test('describe() tolerates malformed values without throwing', function () {
-  var lines = Backup.describe({ 'bt.custom.v1': 'not json', 'songbook.setlist.v1': '{}' });
-  // malformed array -> 0; still lists the label rather than crashing
-  assert.strictEqual(lines.length, 2);
+test('describe() skips empty/malformed keys instead of showing zeros', function () {
+  var lines = Backup.describe({ 'bt.custom.v1': 'not json', 'roadcase-ukulele-gcea.setlist.v1': '{}' });
+  assert.strictEqual(lines.length, 0); // both resolve to 0 -> no noise rows
 });
 
 /* ---------- migrate() is an identity at the current version ---------- */

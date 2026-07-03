@@ -770,9 +770,16 @@
     }
     // Live "what's on THIS device" summary, so the counts are visible before a
     // backup (and the origin/empty-storage case is obvious at a glance).
+    // profile id -> display name, read off the instrument picker, so the manifest
+    // reads "Ukulele 20 · Guitar 4" (setlists/progressions are per-instrument).
+    function instrumentNames() {
+      var m = {}, sel = document.getElementById('profilePicker');
+      if (sel) Array.prototype.forEach.call(sel.options, function (o) { if (o.value) m[o.value] = o.textContent; });
+      return m;
+    }
     function renderSummary() {
       var el = document.getElementById('dataSummary'); if (!el || !window.Backup) return;
-      var lines = Backup.describe(Backup.collect(localStorage));
+      var lines = Backup.describe(Backup.collect(localStorage), instrumentNames());
       if (!lines.length) { el.innerHTML = '<div class="empty">Nothing saved on this device yet.</div>'; return; }
       el.innerHTML = lines.map(function (l) {
         return '<div class="row"><span class="k"></span><span class="v"></span></div>';
@@ -825,7 +832,7 @@
           var payload; try { payload = JSON.parse(rd.result); } catch (e) { alert('That file is not a valid backup (not JSON).'); return; }
           var v = Backup.validate(payload);
           if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
-          var lines = Backup.describe(payload.data);
+          var lines = Backup.describe(payload.data, instrumentNames());
           var manifest = lines.length ? lines.map(function (l) { return '- ' + l.label + ': ' + l.detail; }).join('\n') : '- (nothing recognisable in this file)';
           var when = payload.exportedAt ? ' from ' + payload.exportedAt.slice(0, 10) : '';
           if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? This adds and overwrites these items - it won\'t delete anything already here.')) return;

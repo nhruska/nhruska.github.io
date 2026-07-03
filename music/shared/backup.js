@@ -105,30 +105,60 @@
   // songbook concepts with real counts ("Setlist: 12 songs", not "1 item").
   // Returns an ordered array of { label, detail } lines. Used for the Settings
   // sheet summary AND the restore-confirm preview so the user sees WHAT moves.
-  function describe(data) {
-    data = data || {};
+  // `names` (optional) maps a profile id -> display name (from the app's instrument
+  // picker) so the per-instrument breakdown reads "Ukulele 20 · Guitar 4".
+  function describe(data, names) {
+    data = data || {}; names = names || {};
     var keys = Object.keys(data);
     function has(k) { return typeof data[k] === 'string'; }
     function arrLen(k) { try { var a = JSON.parse(data[k]); return Array.isArray(a) ? a.length : 0; } catch (e) { return 0; } }
     function objLen(k) { try { var o = JSON.parse(data[k]); return (o && typeof o === 'object') ? Object.keys(o).length : 0; } catch (e) { return 0; } }
     function plural(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
     function anyKey(pred) { return keys.some(pred); }
-    function sumArr(pred) { var n = 0; keys.forEach(function (k) { if (pred(k)) n += arrLen(k); }); return n; }
-    // Match by SUFFIX, not exact name: the play app namespaces per instrument
-    // (roadcase-<profile>.setlist.v1 etc.), so counts aggregate across instruments.
-    var isSetlist = function (k) { return /\.setlist\.v1$/.test(k); };
-    // .custom.v1 is progressions (per-instrument) EXCEPT bt.custom.v1, which is tracks.
-    var isProg = function (k) { return /\.custom\.v1$/.test(k) && k !== 'bt.custom.v1'; };
-    var isPref = function (k) { return /\.(perfprefs\.v2|songview\.v1|chordsonly\.v1|activeTab\.v1|last\.v1)$/.test(k); };
+    // Short instrument name: the picker's display name before its " - <tuning>",
+    // else the prettified id's instrument segment (ukulele-gcea -> Ukulele).
+    function shortName(id) {
+      var n = names[id];
+      if (n) return String(n).split(' - ')[0];
+      var inst = String(id).split('-')[0];
+      return inst ? inst.charAt(0).toUpperCase() + inst.slice(1) : id;
+    }
+    // Per-instrument counts for a key suffix. Setlists/progressions live under
+    // roadcase-<profile>.<suffix>; the Jam/Mine views show ONE instrument, so a
+    // per-instrument breakdown reconciles the manifest with what's on screen.
+    // Skips empty namespaces. bt.custom.v1 is tracks, never a progression.
+    function perInstrument(suffix) {
+      var out = [];
+      keys.forEach(function (k) {
+        if (k.length <= suffix.length || k.slice(-suffix.length) !== suffix) return;
+        if (suffix === '.custom.v1' && k === 'bt.custom.v1') return;
+        var n = arrLen(k); if (n <= 0) return;
+        var ns = k.slice(0, -suffix.length);
+        var id = ns.indexOf('roadcase-') === 0 ? ns.slice(9) : ns;
+        out.push({ id: id, name: shortName(id), n: n });
+      });
+      out.sort(function (a, b) { return b.n - a.n; });
+      return out;
+    }
+    // "20 songs" for one namespace; "Ukulele 20 · Guitar 4" across instruments.
+    function breakdown(items, one) {
+      if (!items.length) return null;
+      if (items.length === 1) return plural(items[0].n, one);
+      return items.map(function (it) { return it.name + ' ' + it.n; }).join(' · ');
+    }
     var lines = [];
-    if (anyKey(isSetlist)) lines.push({ label: 'Setlist', detail: plural(sumArr(isSetlist), 'song') });
-    if (anyKey(isProg)) lines.push({ label: 'Saved progressions', detail: plural(sumArr(isProg), 'progression') });
-    if (has('bt.custom.v1')) lines.push({ label: 'Custom tracks', detail: plural(arrLen('bt.custom.v1'), 'track') });
-    if (has('music.trackUrls.v1')) lines.push({ label: 'Curated track links', detail: plural(objLen('music.trackUrls.v1'), 'link') });
+    var setD = breakdown(perInstrument('.setlist.v1'), 'song');
+    if (setD) lines.push({ label: 'Setlist', detail: setD });
+    var progD = breakdown(perInstrument('.custom.v1'), 'progression');
+    if (progD) lines.push({ label: 'Saved progressions', detail: progD });
+    var tracks = has('bt.custom.v1') ? arrLen('bt.custom.v1') : 0;
+    if (tracks > 0) lines.push({ label: 'Custom tracks', detail: plural(tracks, 'track') });
+    var links = has('music.trackUrls.v1') ? objLen('music.trackUrls.v1') : 0;
+    if (links > 0) lines.push({ label: 'Curated track links', detail: plural(links, 'link') });
     var prefs = [];
     if (has('music.accent.v1')) prefs.push('accent color');
     if (has('music.activeProfile.v1')) prefs.push('instrument');
-    if (anyKey(isPref)) prefs.push('view + screen prefs');
+    if (anyKey(function (k) { return /\.(perfprefs\.v2|songview\.v1|chordsonly\.v1|activeTab\.v1|last\.v1)$/.test(k); })) prefs.push('view + screen prefs');
     if (prefs.length) lines.push({ label: 'Preferences', detail: prefs.join(', ') });
     return lines;
   }
