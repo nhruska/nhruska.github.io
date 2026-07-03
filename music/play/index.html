@@ -69,7 +69,7 @@
     <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
-        <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+        <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
         <div id="setBody"></div>
@@ -96,7 +96,6 @@
             <span class="keyChipSlot" id="keyChipSlot"></span>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
-            <button class="iconBtn" id="cHelp" title="Show starter progressions" aria-label="Show starter progressions">?</button>
             <span class="ctrlSpacer"></span>
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
@@ -130,8 +129,8 @@
           <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
         </div>
         <!-- The ONLY scroll area: the chord list, led by the suggestion surface
-             (#suggest - starter progressions when empty, next-chord chips otherwise;
-             the "?" button re-shows the starters at any time). In-key cells
+             (#suggest - starter progressions when empty, next-chord chips
+             otherwise; no manual toggle). In-key cells
              (.chordCell) and All-chords tiles (.chord) keep touch-action:pan-y so a
              vertical swipe scrolls them. -->
         <div class="composeChords" id="composeChords">
@@ -168,7 +167,7 @@
   </div>
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
-    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Jam</span></button>
+    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Setlist</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -226,7 +225,7 @@
     A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -626,7 +625,7 @@
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'), pViewBoth: el('pViewBoth'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         composeChords: el('composeChords'),
-        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'), soloBackingBtn: el('soloBackingBtn'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
