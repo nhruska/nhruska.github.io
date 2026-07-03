@@ -1,30 +1,61 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UX Persona Mission - Phase 1: Personas + Theory Audit</title>
+<title>UX Persona Mission - Living Record (Phase 1-2)</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
-:root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140}
-@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea}}
-body{margin:0;padding:20px;font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:820px;margin:0 auto}
-h1{font-size:1.3rem;margin:8px 0 2px}h2{font-size:1.05rem;margin:26px 0 8px;color:var(--acc)}
-.sub{color:var(--dim);font-size:.85rem;margin-bottom:18px}
+:root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140;--ok:#5eead4}
+@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea;--ok:#0f8a74}}
+body{margin:0;padding:20px;font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:860px;margin:0 auto}
+h1{font-size:1.3rem;margin:8px 0 2px}h2{font-size:1.05rem;margin:28px 0 8px;color:var(--acc)}h3{font-size:.95rem;margin:14px 0 4px}
+.sub{color:var(--dim);font-size:.85rem;margin-bottom:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
-.card h3{margin:0 0 6px;font-size:1rem}.card .who{color:var(--dim);font-size:.85rem}
-.tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:.75rem;margin-right:6px}
+.card .who{color:var(--dim);font-size:.85rem}
+.tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:.75rem;margin:2px 6px 2px 0}
 .kill{color:var(--warn);font-size:.85rem}
-table{border-collapse:collapse;width:100%;font-size:.85rem}
-th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+table{border-collapse:collapse;width:100%;font-size:.84rem;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{color:var(--dim);font-weight:600}
-.big{font-size:1.6rem;font-weight:800}.good{color:var(--acc)}.warn{color:var(--warn)}
+.big{font-size:1.55rem;font-weight:800}.good{color:var(--ok)}.warn{color:var(--warn)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
+.status{display:inline-block;border-radius:8px;padding:1px 8px;font-size:.75rem;font-weight:700}
+.s-done{background:var(--acc);color:#06201c}.s-run{background:var(--warn);color:#231a00}.s-wait{border:1px solid var(--line);color:var(--dim)}
+code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 4px;font-size:.85em}
 .foot{margin-top:26px;color:var(--dim);font-size:.78rem}
+blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:var(--dim)}
 </style></head><body>
-<h1>UX Persona Mission - Phase 1</h1>
-<div class="sub">Music app - personas locked + deterministic theory audit - 2026-07-03 - branch claude/ux-persona-mission - ADVISORY (no gate)</div>
+<h1>UX Persona Mission - Living Record</h1>
+<div class="sub">Music app - persona-driven UX / theory-credibility enhancement - started 2026-07-03 - branch claude/ux-persona-mission - updated after theory-hardening directive</div>
 
-<h2>The four personas (round 1: your musician friends)</h2>
+<h2>Mission status</h2>
+<table>
+<tr><th>Phase</th><th>What</th><th>Status</th></tr>
+<tr><td>1</td><td>Personas locked (4, real-friend anchored)</td><td><span class="status s-done">DONE</span></td></tr>
+<tr><td>2a</td><td>Deterministic theory audit (1008 checks)</td><td><span class="status s-done">DONE - 0 bugs</span></td></tr>
+<tr><td>2a+</td><td>Adversarial review: music-theory-professor persona (codex/GPT-5.5) attacking the audit's ground truth AND the app's outputs</td><td><span class="status s-run">RUNNING</span></td></tr>
+<tr><td>2b</td><td>Playwright persona walkthroughs J1-J4 (thumb-zone, destructive-tap, JIT gaps)</td><td><span class="status s-wait">NEXT</span></td></tr>
+<tr><td>3</td><td>plan:council (Fable chair + 4 seats)</td><td><span class="status s-wait">QUEUED</span></td></tr>
+<tr><td>4</td><td>Codex adversarial on the candidate plan + resolution</td><td><span class="status s-wait">QUEUED</span></td></tr>
+<tr><td>5</td><td>Sprint plan -&gt; <strong>HARD GATE: Nik's telegram approval</strong></td><td><span class="status s-wait">GATE</span></td></tr>
+<tr><td>6</td><td>Execute sprint 1 (draft PRs only; Nik merges)</td><td><span class="status s-wait">AFTER GATE</span></td></tr>
+</table>
+
+<h2>Decision log (operator decisions, binding)</h2>
+<table>
+<tr><th>#</th><th>Decision</th><th>Detail / why</th><th>Source</th></tr>
+<tr><td>D1</td><td>End state = plan + execute sprint 1</td><td>Mission gates on plan approval, then implements sprint-1 atomic items as DRAFT PRs. Nik merges - the run never does.</td><td>Interview 2026-07-03</td></tr>
+<tr><td>D2</td><td>Personas = Nik's musician friends</td><td>Aspiring full-timers, classically-trained/pianists, first-time guitarists, shape-fluent improvers. Not synthetic archetypes - real expected users.</td><td>Interview</td></tr>
+<tr><td>D3</td><td>Theory must be rock solid or the app is dismissed</td><td>Deterministic + verifiable. Where a REAL user choice exists (e.g. spelling), make it a Setting with a one-time prompt persisted to localStorage - never a silent guess.</td><td>Interview + directive</td></tr>
+<tr><td>D4</td><td>Theory correctness must survive an adversarial music-theory-professor review</td><td>The deterministic audit self-graded its own ground truth. A codex professor persona now attacks BOTH the audit encoding and the app outputs. Confirmed findings fold back into deterministic checks (audit -&gt; unit tests in a sprint PR).</td><td>Directive, this session</td></tr>
+<tr><td>D5</td><td>One-hand operation is a hard constraint</td><td>All personas hold an instrument; one free thumb; mis-taps are normal. NO accidental delete/edit - destructive actions gated (edit-mode / confirm / undo / movement-cancel).</td><td>Interview</td></tr>
+<tr><td>D6</td><td>Just-in-time guidance, one-shot dismissible notables</td><td>Tools/theory surface at the point of need; hint panels show once, dismissible, persisted. No theory walls (matches TUTOR-ROADMAP).</td><td>Interview</td></tr>
+<tr><td>D7</td><td>HITL = hard gate at plan approval only</td><td>Advisory artifacts (telegram + email + githack) at every phase; the run BLOCKS exactly once, before execution.</td><td>Interview</td></tr>
+<tr><td>D8</td><td>Fable orchestration, cheap-routed swarms</td><td>Fable chairs council/resolution/plan-synthesis only (extra-usage credits, ~2x Opus, explicitly approved). Sonnet implements, Haiku transcribes, codex adversarial on its own quota.</td><td>Interview</td></tr>
+<tr><td>D9</td><td>Dry-run phases 1-2 first, then full run ("3 1")</td><td>Personas + testing produced attentively for quality sanity-check; mission then proceeds autonomously to the gate.</td><td>Selection "3 1"</td></tr>
+</table>
+
+<h2>The four personas</h2>
 <div class="grid">
 <div class="card"><h3>P1 - The Aspiring Pro</h3><div class="who">Gigging weekly, going full-time. Phone power user.</div>
 <div><span class="tag">Setlist</span><span class="tag">Perform</span><span class="tag">Reliability</span></div>
@@ -39,28 +70,43 @@ th{color:var(--dim);font-weight:600}
 <div><span class="tag">Compose loop</span><span class="tag">Solo/Studio</span><span class="tag">JIT theory</span></div>
 <div class="kill">Dismissed by: friction in the core loop, "what" without the "why".</div></div>
 </div>
-<div class="card"><strong>Every persona:</strong> holding the instrument - one free thumb - arm's-length glances - a mis-tap must never delete or edit anything.</div>
+<div class="card"><strong>Prior coverage honored:</strong> the 2026-06-30 HF council + codex pass already fixed the Library list (legibility, movement-cancelled actions, edit-set mode + persistent undo). M3 songs/tracks merge is approved-but-unbuilt; no sprint item may collide with it. This round targets Compose, Tune, Studio, first-run, theory credibility, JIT guidance.</div>
 
-<h2>Theory audit (phase 2a) - 12 roots x 4 modes, 1008 checks</h2>
+<h2>Theory audit - detail (phase 2a)</h2>
 <div class="grid">
-<div class="card"><div class="big good">0 BUGS</div>Pitch classes, chord qualities, roman numerals all conservatory-correct. The credibility foundation holds.</div>
-<div class="card"><div class="big warn">128 spelling deltas</div>24 of 48 key x mode contexts show at least one canonical-sharp spelling a trained reader flags (F major: A# where scores say Bb).</div>
+<div class="card"><div class="big good">0 BUGS</div>1008 checks: every pitch class, triad quality, and roman numeral is theory-correct across 12 roots x 4 modes (Major, Minor, Mixolydian, Dorian).</div>
+<div class="card"><div class="big warn">128 spelling deltas</div>In 24/48 contexts the canonical-sharp display differs from written-music convention (all pitch-correct; zero are errors of sound).</div>
 </div>
-<table><tr><th>Worst contexts</th><th>Deltas</th><th>Example</th></tr>
-<tr><td>C# Major (Db)</td><td>10</td><td>app D# / truth Eb</td></tr>
-<tr><td>A# Minor (Bb minor)</td><td>10</td><td>app C# / truth Db</td></tr>
-<tr><td>G# Mixolydian (Ab)</td><td>10</td><td>app A# / truth Bb</td></tr>
-<tr><td>F Minor</td><td>8</td><td>app G# / truth Ab</td></tr>
-<tr><td>F Major</td><td>2</td><td>app A# / truth Bb</td></tr></table>
-<div class="card"><strong>Implication (P2):</strong> not bugs - the FORK-4 canonical-sharp decision working as designed. But half of all contexts read "wrong" to the trained eye. Candidate sprint item: a <em>spelling preference</em> setting (canonical sharps vs written-music flats), one-time prompt, persisted - with this audit as its regression fixture. Council will weigh it.</div>
-
-<h2>What runs next (no action needed)</h2>
+<h3>Methodology (attackable, by design)</h3>
+<blockquote>Ground truth built independently of the app: letter-sequential spelling (7 letters, each once; accidentals bb..## absorb differences) + triad qualities from stacked thirds + conventional key names by fewest-accidentals (tie -&gt; sharps). App outputs via its own exported functions (<code>Circle.spellScale</code>, <code>Songbook.chordsFromDegrees</code>, <code>Songbook.romanInKey</code>). Every delta classified BUG (wrong sound/label) vs CONVENTION (right sound, non-traditional spelling). Weakness acknowledged: the same author wrote both sides - hence the professor pass (D4).</blockquote>
+<h3>Roman-numeral convention - what the app actually does (the professor's V1/V2 questions)</h3>
 <table>
-<tr><th>Phase</th><th>What</th><th>Gate</th></tr>
-<tr><td>2b</td><td>Playwright persona walkthroughs J1-J4 (thumb-zone, destructive-tap, JIT gaps)</td><td>advisory</td></tr>
-<tr><td>3</td><td>plan:council - Fable chair + 4 seats</td><td>advisory</td></tr>
-<tr><td>4</td><td>Codex adversarial + resolution</td><td>advisory</td></tr>
-<tr><td>5</td><td>Sprint plan</td><td><strong>HARD GATE - your telegram approval</strong></td></tr>
+<tr><th>Case</th><th>App shows</th><th>Convention family</th></tr>
+<tr><td>Diatonic chord, in-mode (D in E Mixolydian)</td><td><code>VII</code> (plain mode-degree)</td><td>Classical/modal-analysis style</td></tr>
+<tr><td>Same chord, borrowed (D in E Major)</td><td><code>bVII</code> (chromatic, major-relative)</td><td>Pop/lead-sheet style</td></tr>
+<tr><td>Minor key degrees 3/6/7 (C Minor)</td><td><code>III VI VII</code></td><td>Classical (lead-sheet would write bIII bVI bVII)</td></tr>
+<tr><td>Diminished</td><td>lowercase + <code>°</code> (vii°)</td><td>Both</td></tr>
 </table>
-<div class="foot">Canonical sources: docs/plans/ux-personas-20260703.md - music/dev/theory-audit.js - goal spec docs/plans/goal-ux-persona-mission-20260703.md</div>
+<div class="card"><strong>Comment:</strong> the hybrid is internally consistent and defensible, but it means the SAME chord relabels when the mode toggles (bVII &lt;-&gt; VII by design). P2 likely reads the modal plain-VII as classical-correct; P4's jam vocabulary ("the Mixolydian bVII") may expect the flat. Professor verdict pending; council decides presentation (keep / switch / follow-the-setting).</div>
+<h3>Spelling deltas - worst contexts</h3>
+<table><tr><th>Context</th><th>Deltas</th><th>Example (app vs written)</th></tr>
+<tr><td>C# Major (= Db)</td><td>10</td><td>D# vs Eb, A# vs Bb</td></tr>
+<tr><td>A# Minor (= Bb minor)</td><td>10</td><td>C# vs Db</td></tr>
+<tr><td>G# Mixolydian (= Ab)</td><td>10</td><td>A# vs Bb</td></tr>
+<tr><td>F Minor / G# Major / D# Dorian ...</td><td>8 each</td><td>G# vs Ab</td></tr>
+<tr><td>F Major</td><td>2</td><td>A# vs Bb (the canonical example)</td></tr></table>
+
+<h2>Open decisions (for professor -&gt; council -&gt; Nik)</h2>
+<table>
+<tr><th>#</th><th>Fork</th><th>Options on the table</th><th>Adjudicator</th></tr>
+<tr><td>O1</td><td>Spelling preference setting</td><td>Ship contextual-flats as an opt-in Setting (one-time prompt, localStorage, display-layer only, audit as regression fixture) vs keep sharps-only</td><td>Professor traps -&gt; council -&gt; sprint plan -&gt; Nik gate</td></tr>
+<tr><td>O2</td><td>Roman convention (V1/V2)</td><td>Keep hybrid / switch to lead-sheet flats / tie to the O1 setting</td><td>Professor -&gt; council</td></tr>
+<tr><td>O3</td><td>M3 merge interplay</td><td>Include M3 slice(s) in sprint 1 vs keep sprint 1 clear of Library structure</td><td>Council -&gt; Nik gate</td></tr>
+<tr><td>O4</td><td>Sub-decision M3-5 (finder rehome A vs B)</td><td>Already flagged in UX-FRICTION-LOG; only relevant if O3 includes M3</td><td>Nik</td></tr>
+</table>
+
+<h2>Delivery + guardrails (standing)</h2>
+<div class="card">Advisory artifacts at every phase via telegram + email + this githack page - reply to any ping to redirect. The run blocks ONLY at sprint-plan approval. Draft PRs only; zero merges; zero pushes to main; SW cache bump with any CORE change; localStorage changes ride backup.js schema rules; theory changes require the audit + professor-derived tests green.</div>
+
+<div class="foot">Canonical sources on branch claude/ux-persona-mission: docs/plans/goal-ux-persona-mission-20260703.md (spec) - docs/plans/ux-personas-20260703.md (personas) - music/dev/theory-audit.js (deterministic audit) - music/dev/theory-dossier.js (professor dossier generator). This page updates as phases complete.</div>
 </body></html>
