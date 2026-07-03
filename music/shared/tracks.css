@@ -179,13 +179,15 @@
      when vertical space is scarce. The .bt-st-frame's 16/9 aspect-ratio holds at
      the narrower pane width; safe-area padding guards the notch.
 
-     Gated on `max-height:600px` (t1): a desktop/large browser is ALSO landscape but
-     has plenty of height, so it must NOT split - it falls through to the default
-     `.bt-studio` rule above (flex-direction:column, max-width:680px, margin:0 auto),
-     keeping the video (top) and theory (bottom) together as one centered column.
-     Bare `orientation:landscape` used to fire on every desktop window and tore the
-     top/bottom apart into a wide two-pane spread. */
-  @media (orientation:landscape) and (max-height:600px){
+     Gated on `max-height:600px` AND `pointer:coarse` (t1): a desktop/large browser is
+     ALSO landscape but has plenty of height, so it must NOT split - it falls through to
+     the default `.bt-studio` rule above (flex-direction:column, max-width:540px,
+     margin:0 auto), keeping the video (top) and theory (bottom) together as one
+     centered column. `pointer:coarse` further excludes a SHORT desktop / DevTools-docked
+     window (fine pointer, short height) from the split - only a touch device held
+     sideways qualifies. Bare `orientation:landscape` used to fire on every desktop
+     window and tore the top/bottom apart into a wide two-pane spread. */
+  @media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
     .bt-studio{flex-direction:row;max-width:none;
       padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
     .bt-st-stage{flex:0 0 48%;max-width:48%;overflow-y:auto;-webkit-overflow-scrolling:touch;
