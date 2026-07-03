@@ -1349,6 +1349,20 @@
       var t = labelTonic();
       return (t && global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, t) : '';
     }
+    // #85 display consistency: spell a chord's root KEY-AWARE relative to the current
+    // song key, so the progression / suggestions / key chip never show a sharp where the
+    // in-key palette shows a flat (the D# -> Ab mismatch), and stay consistent AFTER a
+    // transpose (tpose stores canonical; we respell at render). STORAGE is untouched -
+    // shape lookup + transpose math are enharmonic-tolerant - only the shown name comes
+    // from the circle.js SSOT. No key set -> leave the token as-is.
+    function displayChord(c) {
+      var C = global.Circle;
+      if (!songKey.root || !C || !C.spellKeyAware) return c;
+      var m = /^([A-G][#bx]*)(.*)$/.exec((c || '').trim());
+      if (!m) return c;
+      var pc = noteToPc(m[1]);
+      return pc == null ? c : C.spellKeyAware(pc, songKey.root, songKey.mode) + m[2];
+    }
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
@@ -1365,13 +1379,13 @@
       // toggle flips bVII <-> VII on the same chord), so the mode is part of the
       // visible signature - omitting it left stale romans after a mode change
       // (codex V2 high).
-      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.root + '|' + songKey.mode + '|' + maxed;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
         progression.forEach(function (c, i) {
           var slot = document.createElement('div'); slot.className = 'slot';
-          var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
+          var d = packDiagram(displayChord(c), 'small'); d.onclick = function () { packPlayChord(c); };
           slot.appendChild(d);
           // interval relative to the key — think I IV V, not shapes
           var rn = labelRoman(c);
@@ -1722,8 +1736,11 @@
         var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
+        // #85: chip shows the conventional key name (Eb, not D#) from the SSOT, matching
+        // the picker/title/chords; the stored songKey.root stays canonical.
+        var chipKey = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(songKey.root, songKey.mode) : songKey.root;
         chip.innerHTML = songKey.root
-          ? (songKey.root + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          ? (escHTML(chipKey) + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
@@ -1893,7 +1910,7 @@
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
-      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      var html = '<span class="scName">' + escHTML(displayChord(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
