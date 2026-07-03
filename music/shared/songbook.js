@@ -1355,6 +1355,8 @@
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
+      // Only offer Clear when there's a progression to clear (UAT: Nik).
+      if (el.cClear) el.cClear.hidden = progression.length === 0;
       // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
       // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
       // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
@@ -2012,7 +2014,7 @@
       }
       return true;
     }
-    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
+    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); } }
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
     // itself after ~3s so it never permanently claims screen space - unless
     // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
@@ -2036,6 +2038,9 @@
       if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      // Present the save name-entry as a MODAL (backdrop + centered card) so the
+      // user can't hit Clear / add more chords / other controls mid-save (UAT: Nik).
+      composeRow.classList.add('asModal');
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;

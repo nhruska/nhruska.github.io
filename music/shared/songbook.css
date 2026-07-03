@@ -554,6 +554,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    demand right above the progression box; zero footprint until used. */
 .composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
 .composeRow[hidden]{display:none;}
+/* Save name-entry as a modal: centered card + full-screen backdrop that
+   intercepts taps, so Clear / adding chords / other controls are blocked. */
+.composeRow.asModal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:75;width:calc(100% - 32px);max-width:420px;margin:0;box-shadow:0 20px 60px var(--shadow);}
+.composeRow.asModal::before{content:'';position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.55);}
 .composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);font-family:inherit;font-size:.85rem;}
 .composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
@@ -562,7 +566,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    100% forces the wrap), checkbox + label kept on one compact line together. */
 .composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--txt-soft);cursor:pointer;
   min-height:44px;padding:4px 2px;} /* one-handed mobile tap target (codex #91) */
-.composeRowSetToggle input{margin:0;width:18px;height:18px;flex:0 0 auto;}
+.composeRowSetToggle input{margin:0;width:18px;height:18px;flex:0 0 auto;accent-color:var(--accent);}
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);}
 .composeToast.tap{cursor:pointer;} /* persistent toast: tap anywhere on it to dismiss */
 .composeToast[hidden]{display:none;}
