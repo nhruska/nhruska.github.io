@@ -78,7 +78,11 @@ test('snapshot() captures owned keys only and stamps version + time', function (
 
 /* ---------- validate() ---------- */
 test('validate() accepts a good backup and rejects malformed ones', function () {
-  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: {} }).ok, true);
+  // Contract change (Volley 1): an empty-data backup is now REJECTED. Restoring it
+  // writes nothing yet the UI would report "Restored", masking a wrong/corrupt file.
+  // A valid backup must carry at least one restorable owned key.
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: {} }).ok, false);
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["a"]' } }).ok, true);
   assert.strictEqual(Backup.validate(null).ok, false);
   assert.strictEqual(Backup.validate({ app: 'other', schema: 1, data: {} }).ok, false);
   assert.strictEqual(Backup.validate({ app: 'music', data: {} }).ok, false);          // no schema
@@ -170,6 +174,40 @@ test('runMigrations() stamps an existing (unmarked) device at the baseline', fun
   Backup.runMigrations(s);
   assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION));
   assert.strictEqual(s.getItem('songbook.setlist.v1'), '["a"]'); // data untouched at v1
+});
+
+/* ---------- validate() rejects malformed / empty payloads ---------- */
+test('validate() rejects array data, foreign-only keys, and non-string values', function () {
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: [] }).ok, false);      // array, not a map
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'foreign.k': 'v' } }).ok, false); // no owned keys
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': 42 } }).ok, false); // non-string value
+  assert.strictEqual(Backup.validate({ app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["a"]' } }).ok, true);
+});
+
+/* ---------- atomic restore rolls back on a mid-write quota throw ---------- */
+test('restore() is atomic: a quota throw mid-write rolls back, store unchanged', function () {
+  // Seed a device that already holds real data; a restore that throws partway must
+  // leave EXACTLY this state, not a half-applied mix.
+  var s = fakeStore({ 'songbook.setlist.v1': '["old"]', 'music.accent.v1': '"blue"' });
+  var writes = 0;
+  s.setItem = function (k, v) { if (++writes === 2) { var e = new Error('QuotaExceededError'); e.name = 'QuotaExceededError'; throw e; } s._map[k] = String(v); };
+  var payload = { app: 'music', schema: 1, data: { 'songbook.setlist.v1': '["new1","new2"]', 'roadcase-ukulele-gcea.setlist.v1': '["x"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw, 'restore should throw on quota');
+  assert.ok(/storage space/i.test(threw.message), 'quota message surfaced: ' + threw.message);
+  assert.strictEqual(s._map['songbook.setlist.v1'], '["old"]', 'first key rolled back to prior value');
+  assert.ok(!('roadcase-ukulele-gcea.setlist.v1' in s._map), 'new key removed on rollback');
+  assert.strictEqual(s._map['music.accent.v1'], '"blue"', 'untouched key intact');
+});
+
+/* ---------- downgrade guard: a newer-stamped device is left alone ---------- */
+test('runMigrations() does NOT downgrade a device stamped by a newer app build', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 1)); // pretend a future build ran
+  Backup.runMigrations(s);
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION + 1), 'newer stamp preserved, not lied down to current');
+  assert.strictEqual(s.getItem('songbook.setlist.v1'), '["a"]', 'data untouched');
 });
 
 run();

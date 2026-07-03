@@ -825,10 +825,15 @@
         fileIn = document.getElementById('restoreFile');
     if (btnBackup) btnBackup.onclick = function () {
       if (!window.Backup) { alert('Backup is unavailable right now.'); return; }
-      var payload = Backup.snapshot(localStorage, new Date().toISOString());
-      var json = JSON.stringify(payload, null, 2);
-      var name = 'music-songbook-' + payload.exportedAt.slice(0, 10) + '.json';
-      var blob = new Blob([json], { type: 'application/json' }), file = null;
+      // Snapshot + serialize can throw (storage blocked, or a songbook large enough
+      // to trip a stringify/Blob limit); fail loud instead of silently doing nothing.
+      var payload, json, name, blob, file = null;
+      try {
+        payload = Backup.snapshot(localStorage, new Date().toISOString());
+        json = JSON.stringify(payload, null, 2);
+        name = 'music-songbook-' + payload.exportedAt.slice(0, 10) + '.json';
+        blob = new Blob([json], { type: 'application/json' });
+      } catch (e) { alert('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); return; }
       try { file = new File([blob], name, { type: 'application/json' }); } catch (e) {}
       // Prefer the OS share sheet on mobile (save to Drive / Files / send to self);
       // fall back to a plain download everywhere else.
@@ -854,6 +859,7 @@
           try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
           alert('Restored your songbook. Reloading the app.'); location.reload();
         };
+        rd.onerror = function () { alert('Could not read that file. Try selecting the backup again.'); };
         rd.readAsText(f);
       };
     }

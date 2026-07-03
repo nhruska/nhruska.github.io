@@ -81,22 +81,57 @@
     if (!payload || typeof payload !== 'object') return { ok: false, error: 'not a backup file' };
     if (payload.app !== 'music') return { ok: false, error: 'not a Music backup' };
     if (typeof payload.schema !== 'number') return { ok: false, error: 'missing schema version' };
-    if (!payload.data || typeof payload.data !== 'object') return { ok: false, error: 'no data in backup' };
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) return { ok: false, error: 'no data in backup' };
     if (payload.schema > SCHEMA_VERSION) return { ok: false, error: 'this backup was made by a newer version of the app. Update the app first' };
+    // A well-formed-but-empty backup (no restorable owned keys) is almost always a
+    // wrong/corrupt file, not an intentional wipe. Reject so restore can't report
+    // "Restored" after writing nothing. (restore() itself is additive; validate is
+    // the guard against silently applying a payload that carries no songbook data.)
+    var restorable = 0, dk = Object.keys(payload.data);
+    for (var i = 0; i < dk.length; i++) { if (owned(dk[i]) && typeof payload.data[dk[i]] === 'string') restorable++; }
+    if (restorable === 0) return { ok: false, error: 'this backup has no songbook data to restore' };
     return { ok: true };
   }
 
+  // Apply a {key:value} map to a Storage-like object ATOMICALLY: capture the prior
+  // value of every key first, then write; if any setItem throws (quota exceeded,
+  // storage blocked), roll every written key back to its prior value and rethrow.
+  // localStorage has no transactions, so "atomic" here means all-or-nothing from
+  // the caller's view - a failed apply leaves the store exactly as it was found.
+  // Returns the number of keys written.
+  function applyAtomic(store, map) {
+    var keys = Object.keys(map).filter(function (k) { return owned(k) && typeof map[k] === 'string'; });
+    var prior = {}, had = {};
+    keys.forEach(function (k) { var p = store.getItem(k); had[k] = (p !== null && p !== undefined); prior[k] = p; });
+    var written = [];
+    try {
+      for (var i = 0; i < keys.length; i++) { store.setItem(keys[i], map[keys[i]]); written.push(keys[i]); }
+    } catch (e) {
+      // Roll back everything we wrote this call, restoring prior value or removing
+      // keys that did not exist before, so no partial-restore state survives.
+      for (var j = 0; j < written.length; j++) {
+        var wk = written[j];
+        try { if (had[wk]) store.setItem(wk, prior[wk]); else store.removeItem(wk); } catch (e2) { /* best-effort */ }
+      }
+      var msg = (e && /quota|exceed/i.test(String(e.name) + String(e.message)))
+        ? 'not enough storage space to restore this backup on this device'
+        : 'restore failed while writing - no changes were made';
+      throw new Error(msg);
+    }
+    return keys.length;
+  }
+
   // Restore a backup into a Storage-like object. Migrates first, then writes.
-  // ADDITIVE by default: keys the backup doesn't mention are left as-is. Returns
-  // the number of keys written.
+  // ADDITIVE by default: keys the backup doesn't mention are left as-is. Atomic:
+  // a mid-write failure (quota, blocked storage) rolls back and throws, so the
+  // store is never left half-restored. Returns the number of keys written.
   function restore(store, payload) {
     var v = validate(payload);
     if (!v.ok) throw new Error(v.error);
     var data = migrate(payload.data, payload.schema);
-    var n = 0;
-    Object.keys(data).forEach(function (k) {
-      if (owned(k) && typeof data[k] === 'string') { store.setItem(k, data[k]); n++; }
-    });
+    var n = applyAtomic(store, data);
+    // Only stamp the schema AFTER the data write fully succeeds - so the marker
+    // never claims a shape the store did not actually receive.
     store.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
     return n;
   }
@@ -177,9 +212,17 @@
     try {
       var cur = parseInt(store.getItem(SCHEMA_KEY) || '1', 10);
       if (!(cur >= 1)) cur = 1;
+      // DOWNGRADE GUARD: this device was stamped by a NEWER app build than the one
+      // now running (e.g. an old cached PWA loaded after an update wrote a higher
+      // schema). We cannot safely read or rewrite data in a shape we do not know,
+      // and stamping DOWN to SCHEMA_VERSION would make the marker lie. Leave the
+      // newer stamp and the data untouched; the newer build will manage it.
+      if (cur > SCHEMA_VERSION) return;
       if (cur < SCHEMA_VERSION) {
-        var migrated = migrate(collect(store), cur);
-        Object.keys(migrated).forEach(function (k) { if (owned(k) && typeof migrated[k] === 'string') store.setItem(k, migrated[k]); });
+        // Migrate is pure (returns a new map without writing); apply atomically so
+        // a mid-write failure rolls back rather than leaving a half-migrated store.
+        // Stamp only after the write fully succeeds.
+        applyAtomic(store, migrate(collect(store), cur));
       }
       store.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
     } catch (e) { /* storage blocked (private mode) - the app still runs */ }
@@ -193,6 +236,7 @@
     collect: collect,
     migrate: migrate,
     snapshot: snapshot,
+    applyAtomic: applyAtomic,
     validate: validate,
     describe: describe,
     restore: restore,
