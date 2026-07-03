@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
+<script>
+/* Set theme + accent hue before first paint to avoid a flash. Full accent
+   derivation runs in the Settings script below; the CSS light fallbacks
+   (--accent-dim/deep/ink in :root[data-theme=light]) cover the brief gap. */
+(function(){try{
+  var t=localStorage.getItem('music.theme.v1');
+  if(t!=='light'&&t!=='dark'&&t!=='auto')t='auto';
+  var eff=(t==='light'||t==='dark')?t
+    :((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+  document.documentElement.setAttribute('data-theme',eff);
+  var a=localStorage.getItem('music.accent.v1'); if(a){document.documentElement.style.setProperty('--accent',a);}
+  var m=document.querySelector('meta[name="theme-color"]'); if(m)m.setAttribute('content',eff==='light'?'#eef1f4':'#0d0f12');
+}catch(e){}})();
+</script>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <!-- Installable / offline (PWA): manifest + service worker (registered at end of body). -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -46,6 +60,10 @@
   .setLbl{font-weight:600;margin-bottom:11px;}
   .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
   .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
+  .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
+  .thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+  .thSeg.on{background:var(--accent);color:var(--on-accent);}
+  .thSeg:active{transform:scale(.97);}
   .setBtns{display:flex;gap:10px;}
   .setBtns .btn{flex:1;}
   .setSummary{margin:0 0 14px;display:flex;flex-direction:column;gap:5px;}
@@ -207,6 +225,11 @@
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setSec">
+      <div class="setLbl">Theme</div>
+      <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
+      <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+    </div>
     <div class="setSec">
       <div class="setLbl">Accent color</div>
       <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
@@ -726,19 +749,62 @@
     { n: 'Amber',  a: '#fbbf24', d: '#5c4715', p: '#38290b' }
   ];
   var ACCENT_KEY = 'music.accent.v1';
+  var THEME_KEY = 'music.theme.v1';   // 'auto' | 'light' | 'dark'
   var LAST_BACKUP_KEY = 'music.lastBackup.v1';
+  var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+  function storedTheme() {
+    try { var v = localStorage.getItem(THEME_KEY); if (v === 'light' || v === 'dark' || v === 'auto') return v; } catch (e) {}
+    return 'auto';
+  }
+  // 'auto' resolves against the OS setting; explicit light/dark win.
+  function effectiveTheme() {
+    var m = storedTheme();
+    if (m === 'auto') return (mql && mql.matches) ? 'light' : 'dark';
+    return m;
+  }
+  // Apply the accent for the ACTIVE theme. Dark uses each swatch's hand-tuned
+  // dim/deep (pixel-identical to pre-theme builds) with ink = the vivid accent.
+  // Light re-derives pale dim/deep + a darkened, legible ink from the accent hue
+  // via color-mix, so ANY picked accent stays readable on light surfaces.
   function apply(t) {
     var r = document.documentElement.style;
     r.setProperty('--accent', t.a);
-    r.setProperty('--accent-dim', t.d);
-    r.setProperty('--accent-deep', t.p);
+    if (effectiveTheme() === 'light') {
+      r.setProperty('--accent-dim',  'color-mix(in srgb, ' + t.a + ' 30%, #ffffff)');
+      r.setProperty('--accent-deep', 'color-mix(in srgb, ' + t.a + ' 14%, #ffffff)');
+      r.setProperty('--accent-ink',  'color-mix(in srgb, ' + t.a + ' 62%, #0a1f1b)');
+    } else {
+      r.setProperty('--accent-dim', t.d);
+      r.setProperty('--accent-deep', t.p);
+      r.setProperty('--accent-ink', t.a);
+    }
   }
   function currentAccent() {
     try { var v = localStorage.getItem(ACCENT_KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
     return PALETTE[0];
   }
-  // paint the saved accent before first paint (documentElement already exists)
-  apply(currentAccent());
+  // Set <html data-theme> + browser-chrome colour, then (re)paint the accent for
+  // that theme. Called at boot, on user pick, and on OS change while in 'auto'.
+  function applyTheme() {
+    var eff = effectiveTheme();
+    document.documentElement.setAttribute('data-theme', eff);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', eff === 'light' ? '#eef1f4' : '#0d0f12');
+    apply(currentAccent());
+  }
+  function setTheme(mode) {
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+    applyTheme();
+  }
+  // paint theme + accent before first paint (documentElement already exists)
+  applyTheme();
+  // live-follow the OS while in 'auto'
+  if (mql) {
+    var onOS = function () { if (storedTheme() === 'auto') applyTheme(); };
+    if (mql.addEventListener) mql.addEventListener('change', onOS);
+    else if (mql.addListener) mql.addListener(onOS);
+  }
   // bring THIS device's stored data up to the current schema before the app reads it
   try { if (window.Backup) Backup.runMigrations(localStorage); } catch (e) {}
 
@@ -775,6 +841,27 @@
         swWrap.appendChild(s);
       });
       markAccent(currentAccent());
+    }
+
+    /* theme: Auto / Light / Dark segmented control */
+    var thWrap = document.getElementById('themeSeg');
+    var THEMES = [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']];
+    function markTheme(mode) {
+      if (!thWrap) return;
+      thWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === mode;
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (thWrap) {
+      THEMES.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' theme');
+        b.onclick = function () { setTheme(pair[0]); markTheme(pair[0]); markAccent(currentAccent()); };
+        thWrap.appendChild(b);
+      });
+      markTheme(storedTheme());
     }
 
     /* settings sheet open/close */
