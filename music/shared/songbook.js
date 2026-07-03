@@ -1092,11 +1092,23 @@
     if (el.maxClose) el.maxClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseMax(); };
 
     /* ===================== SETLIST ===================== */
+    // Subtle transient toast - a lightweight "it happened" cue (UAT: Nik).
+    // Adds get a toast (removes already have the persistent Undo affordance).
+    var toastEl, toastTimer;
+    function showToast(msg) {
+      if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      toastEl.textContent = msg;
+      toastEl.classList.add('on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { if (toastEl) toastEl.classList.remove('on'); }, 1600);
+    }
     function toggleSet(id) {
       var pos = STATE.setlist.indexOf(id);
+      var adding = pos < 0;
       if (pos >= 0) STATE.setlist.splice(pos, 1); else STATE.setlist.push(id);
       saveSet(); renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
+      if (adding) showToast('Added to setlist');
     }
     function renderSetlist() {
       if (!el.setBody) return;
