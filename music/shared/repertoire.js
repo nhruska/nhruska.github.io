@@ -16,6 +16,12 @@
 (function (global) {
   'use strict';
 
+  // Canonical-sharp respelling (matches circle.js / songbook.js / tracks.js) -
+  // a record's raw key/chord root may be spelled with a flat (Bb, Eb, ...);
+  // every derived label (facet chip, filter compare) goes through this so the
+  // Key facet always speaks the same sharp names as the rest of the app.
+  var F2S = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
+
   // Match on a normalized title+artist. Lowercase, strip punctuation, drop a
   // leading article ("the "), collapse spaces - so "Three Little Birds" /
   // "three little birds" / "The Beatles" vs "Beatles" all coalesce.
@@ -45,12 +51,15 @@
     return { key: null, mode: null };
   }
   // Short key label for the Key filter facet + chip: "Am", "C", or null.
+  // Root is respelled canonical-sharp (F2S) so a record whose data says 'Bb'
+  // labels and matches as 'A#', same as the rest of the app (FORK-4).
   function keyLabel(rec) {
     var k = deriveKey(rec);
     if (!k.key) return null;
+    var root = F2S[k.key] || k.key;
     var minor = String(k.mode || '').toLowerCase().indexOf('min') === 0
       || /aeolian|dorian|phrygian|locrian/.test(String(k.mode || '').toLowerCase());
-    return k.key + (minor ? 'm' : '');
+    return root + (minor ? 'm' : '');
   }
 
   // Merge a song record + its matched track record into one unified item.
@@ -150,7 +159,7 @@
     out.sort();
     return out;
   }
-  var KEY_ORDER = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'];
+  var KEY_ORDER = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
   function keyRank(label) {
     var minor = /m$/.test(label);
     var root = minor ? label.slice(0, -1) : label;
@@ -184,7 +193,7 @@
   var Repertoire = {
     norm: norm, matchKey: matchKey, deriveKey: deriveKey, keyLabel: keyLabel,
     mergeRec: mergeRec, build: build, playability: playability,
-    genres: genres, keys: keys, filter: filter
+    genres: genres, keys: keys, filter: filter, KEY_ORDER: KEY_ORDER
   };
   global.Repertoire = Repertoire;
   if (typeof module !== 'undefined' && module.exports) module.exports = Repertoire;
