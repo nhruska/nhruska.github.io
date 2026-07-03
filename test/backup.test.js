@@ -245,4 +245,27 @@ test('applyAtomic() rolls back in reverse write order', function () {
   assert.strictEqual(s._map['songbook.b.v1'], 'B0', 'b restored to prior');
 });
 
+/* ---------- restore() refuses to downgrade a newer-stamped device ---------- */
+test('restore() refuses when the device holds a newer schema than this build', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["newshape"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 1)); // device upgraded by a future build
+  var payload = { app: 'music', schema: Backup.SCHEMA_VERSION, data: { 'songbook.setlist.v1': '["oldshape"]' } };
+  var threw = null;
+  try { Backup.restore(s, payload); } catch (e) { threw = e; }
+  assert.ok(threw && /newer data/i.test(threw.message), 'restore refused with newer-data message');
+  assert.strictEqual(s.getItem('songbook.setlist.v1'), '["newshape"]', 'newer data NOT overwritten');
+  assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION + 1), 'stamp NOT downgraded');
+});
+
+/* ---------- snapshot() labels the backup with the device's real schema ---------- */
+test('snapshot() stamps the DEVICE schema, so an old build cannot mislabel newer data', function () {
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  s.setItem(Backup.SCHEMA_KEY, String(Backup.SCHEMA_VERSION + 2)); // device is newer than this build
+  var snap = Backup.snapshot(s, null);
+  assert.strictEqual(snap.schema, Backup.SCHEMA_VERSION + 2, 'backup labeled with the true (newer) device schema');
+  // a normal device stamps the build version
+  var s2 = fakeStore({ 'songbook.setlist.v1': '["a"]' });
+  assert.strictEqual(Backup.snapshot(s2, null).schema, Backup.SCHEMA_VERSION);
+});
+
 run();

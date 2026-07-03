@@ -70,10 +70,22 @@
     return data;
   }
 
+  // Read the schema THIS device is stamped with (>=1), independent of the build's
+  // SCHEMA_VERSION. Used to detect a device carrying newer-shape data than the
+  // running build knows about (old cached page after an app update).
+  function deviceSchema(store) {
+    try { var n = parseInt(store.getItem(SCHEMA_KEY) || String(SCHEMA_VERSION), 10); return (n >= 1) ? n : SCHEMA_VERSION; }
+    catch (e) { return SCHEMA_VERSION; }
+  }
+
   // A portable backup object. `data` holds raw string values exactly as stored,
-  // so restore is a byte-faithful write (no re-serialization drift).
+  // so restore is a byte-faithful write (no re-serialization drift). The backup is
+  // labeled with the DEVICE's actual schema, not the build's SCHEMA_VERSION: an old
+  // cached build snapshotting a device already upgraded to a newer shape must NOT
+  // mislabel that data as its own older version - it stamps the true (newer) schema
+  // so newer-shape data is never silently downgraded on a later restore.
   function snapshot(store, nowIso) {
-    return { app: 'music', schema: SCHEMA_VERSION, exportedAt: nowIso || null, data: collect(store) };
+    return { app: 'music', schema: Math.max(deviceSchema(store), SCHEMA_VERSION), exportedAt: nowIso || null, data: collect(store) };
   }
 
   // Is this parsed object a restorable Music backup? Returns {ok, error}.
@@ -140,6 +152,13 @@
   function restore(store, payload) {
     var v = validate(payload);
     if (!v.ok) throw new Error(v.error);
+    // DOWNGRADE GUARD (mirror of runMigrations'): if THIS device already holds a
+    // newer schema than the running build understands, an old cached page must not
+    // write older-shape data over it and stamp the marker back down - that destroys
+    // newer data and makes the marker lie. Refuse; the user updates the app first.
+    if (deviceSchema(store) > SCHEMA_VERSION) {
+      throw new Error('this device has newer data than this version of the app can restore into. Update the app first');
+    }
     var data = migrate(payload.data, payload.schema);
     var stamp = {}; stamp[SCHEMA_KEY] = String(SCHEMA_VERSION);
     return applyAtomic(store, data, stamp);
@@ -248,6 +267,7 @@
     collect: collect,
     migrate: migrate,
     snapshot: snapshot,
+    deviceSchema: deviceSchema,
     applyAtomic: applyAtomic,
     validate: validate,
     describe: describe,
