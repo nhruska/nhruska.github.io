@@ -130,9 +130,10 @@
   }
   // note name -> chromatic pitch class (0-11), parsed generically from the letter
   // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
-  // handles every enharmonic spelling circle.js can emit — E#, B#, Cb, Fb and
-  // double accidentals — so exotic keys (F# major spells E#, D# minor too) light
-  // ALL seven scale tones on the fretboard, matching the note label. -1 if unparseable.
+  // handles every enharmonic spelling — E#, B#, Cb, Fb and double accidentals.
+  // circle.js no longer emits those (canonical sharp table, FORK-4), but freeform
+  // user input and legacy saved data still can, so the generic parser stays.
+  // -1 if unparseable.
   var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   function noteToPc(name) {
     var m = /^([A-Ga-g])([#b]*)$/.exec(String(name == null ? '' : name).trim());
@@ -526,9 +527,9 @@
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
       try {
-        // Key-aware fretboard spelling: map each scale pitch-class to the note name
-        // the scale actually uses (Bb, not A#, in F major) so the dots match the
-        // "Solo over it" list above. Non-scale pcs fall back to sharps in the diagram.
+        // Fretboard spelling: map each scale pitch-class to the note name the scale
+        // carries (canonical sharps post-FORK-4: A#, not Bb, in F major) so the dots
+        // match the "Solo over it" list above, whatever names th.notes holds.
         var nameByPc = [];
         th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
         global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7, names: nameByPc });

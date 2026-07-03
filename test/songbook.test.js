@@ -32,6 +32,31 @@ test('chordsFromDegrees transposes the SAME degrees to any key', function () {
 test('chordsFromDegrees keeps every degree incl. the diminished vii (unlike the jam palette)', function () {
   assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Major', [6]), ['Bdim']);
 });
+test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pilot UAT)', function () {
+  // D minor: i=Dm ii°=Edim III=F iv=Gm v=Am VI=A# VII=C
+  assert.strictEqual(Songbook.chordInKey('Dm', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('D', 'D', 'Minor'), false);  // major tonic is NOT in-key
+  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Minor'), false);  // major V is borrowed
+  assert.strictEqual(Songbook.chordInKey('Am', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('A#', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('Bb', 'D', 'Minor'), true);  // flat input normalizes
+  assert.strictEqual(Songbook.chordInKey('E', 'D', 'Minor'), false);  // ii must be dim, not major
+  assert.strictEqual(Songbook.chordInKey('Edim', 'D', 'Minor'), true);
+  // 7ths reduce to their triad quality
+  assert.strictEqual(Songbook.chordInKey('D7', 'G', 'Major'), true);  // V7 in G
+  assert.strictEqual(Songbook.chordInKey('C#7', 'D', 'Minor'), false);
+  assert.strictEqual(Songbook.chordInKey('Am7', 'G', 'Major'), true); // ii7
+  // dim + out-of-scale roots
+  assert.strictEqual(Songbook.chordInKey('F#dim', 'G', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('F#m', 'D', 'Minor'), false); // root off-scale
+  assert.strictEqual(Songbook.chordInKey('', 'D', 'Minor'), false);
+  assert.strictEqual(Songbook.chordInKey('Dm', null, 'Minor'), false);
+  // half-diminished reduces to dim (the diatonic vii of a major key); aug is never diatonic
+  assert.strictEqual(Songbook.chordInKey('F#m7b5', 'G', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('Bm7b5', 'C', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('Caug', 'C', 'Major'), false);
+  assert.strictEqual(Songbook.chordInKey('C+', 'C', 'Major'), false);
+});
 test('every shipped PROGRESSION renders the Roman pattern it claims (round-trip via Circle.romanFor)', function () {
   var EXPECTED = {
     '4-chord song': 'I V vi IV',

@@ -30,6 +30,17 @@
     Cmaj7: [0, 0, 0, 2], Dmaj7: [2, 2, 2, 4], Emaj7: [1, 3, 0, 2], Fmaj7: [2, 4, 1, 3], Gmaj7: [0, 2, 2, 2], Amaj7: [1, 1, 0, 0], Bmaj7: [3, 3, 2, 2],
     Cm7: [3, 3, 3, 3], Dm7: [2, 2, 1, 3], Em7: [0, 2, 0, 2], Fm7: [1, 3, 1, 3], Gm7: [0, 2, 1, 1], Am7: [0, 0, 0, 0], Bm7: [2, 2, 2, 2]
   };
+  // Enharmonic-tolerant shape lookup (FORK-4, pilot UAT): the app labels chords
+  // canonically SHARP (A#, D#m ...) while this table names some shapes with flats
+  // (Bb, Eb, Bbm ...). Try the exact name first, then the same chord with its
+  // root respelled enharmonically - so 'A#' finds the Bb shape. The DISPLAY name
+  // stays whatever the caller passed; only the shape lookup is tolerant.
+  var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
+  function shapeFor(name) {
+    if (CHORDS[name]) return CHORDS[name];
+    var m = /^([A-G][#b])(.*)$/.exec(name || '');
+    return (m && ENH[m[1]]) ? CHORDS[ENH[m[1]] + m[2]] : undefined;
+  }
 
   // Open-string set handed to the shared tuner (display order top-to-bottom).
   var TUNER_STRINGS = [
@@ -74,7 +85,7 @@
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
   }
   function strumChord(name, t, dur) {
-    var f = CHORDS[name]; if (!f) return;
+    var f = shapeFor(name); if (!f) return;
     [0, 1, 2, 3].forEach(function (s, i) { if (f[s] < 0) return; pluck(freqForString(s, f[s]), t + i * 0.018, dur, 1 - i * 0.05); });
   }
   function strumTap(name) { var a = ctx(); a.resume(); strumChord(name, a.currentTime + 0.02, 1.3); }
@@ -84,7 +95,7 @@
   // known-path innerHTML can never become a sink if a token ever slips through.
   function escName(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function bigDiagram(name) {
-    var f = CHORDS[name];
+    var f = shapeFor(name);
     var wrap = document.createElement('div'); wrap.className = 'bigC';
     if (!f) { wrap.textContent = name; return wrap; }
     var W = 140, H = 178, padX = 20, padY = 28, cols = 3, rows = 4;
@@ -103,7 +114,7 @@
     return wrap;
   }
   function smallDiagram(name) {
-    var f = CHORDS[name];
+    var f = shapeFor(name);
     var wrap = document.createElement('div'); wrap.className = 'chord';
     if (!f) { wrap.textContent = name; return wrap; }
     var W = 58, H = 72, padX = 8, padY = 12, cols = 3, rows = 4;
@@ -128,8 +139,8 @@
   global.ChordPackUkulele = {
     meta: { instrument: 'ukulele', tuning: 'GCEA', strings: 4, stringNames: ['G', 'C', 'E', 'A'] },
 
-    // does this exact chord name have a fingering?
-    hasChord: function (name) { return !!CHORDS[name]; },
+    // does this chord (exact or enharmonic-respelled root) have a fingering?
+    hasChord: function (name) { return !!shapeFor(name); },
 
     // a fingering diagram element. size: 'small' (compose grid) | 'big' (maximize)
     diagram: function (name, size) { return size === 'big' ? bigDiagram(name) : smallDiagram(name); },

@@ -103,6 +103,25 @@
     });
     return out;
   }
+  // Does `chord` belong to the key's diatonic set? Its root must sit on a scale
+  // degree AND its triad quality must match that degree's quality - a 7th reduces
+  // to its triad (D7 counts as D in G major; Dm7 does not). Used to keep the
+  // key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
+  // Suffix parsing mirrors Circle.suffixQuality: half-diminished (m7b5/ø) reduces
+  // to dim; aug/+ maps to 'aug', which no mode's quals contain -> never diatonic.
+  function chordInKey(chord, root, modeKey) {
+    var m = MODES[modeKey], rp = rootPc(root);
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
+    if (!m || rp == null || !cm) return false;
+    var cp = rootPc(cm[1]); if (cp == null) return false;
+    var deg = m.steps.indexOf(((cp - rp) % 12 + 12) % 12);
+    if (deg < 0) return false;
+    var suf = cm[2].toLowerCase();
+    var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+      : /^(aug|\+)/.test(suf) ? 'aug'
+      : /^m(?!aj)/.test(suf) ? 'm' : '';
+    return q === m.quals[deg];
+  }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
@@ -1761,6 +1780,17 @@
       });
 
       var picks = suggestNext(progression);
+      // C4 (pilot UAT): the Markov map is key-AGNOSTIC (chord -> common followers),
+      // so in D minor it happily offers D / E / A - major-family chords that then get
+      // roman-labeled against the minor key ("D (I)") and read as wrong-mode nonsense.
+      // When a key is set, keep only picks that are diatonic to it (root on a scale
+      // degree + matching triad quality). If the filter empties the list (e.g. the
+      // progression itself is out-of-key), fall back to the unfiltered picks - a
+      // borrowed suggestion beats none, and its roman is at least honestly chromatic.
+      if (songKey.root) {
+        var inKeyPicks = picks.filter(function (c) { return chordInKey(c, songKey.root, songKey.mode); });
+        if (inKeyPicks.length) picks = inKeyPicks;
+      }
       // make sure any completing chord is actually in the list (the Markov ranker might
       // not surface it), and float completions to the front so the highlight reads first.
       Object.keys(completeBy).forEach(function (chord) {
@@ -2269,6 +2299,7 @@
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    chordInKey: chordInKey,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,

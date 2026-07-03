@@ -75,9 +75,9 @@ test('G major diatonic includes the F# leading tone', function () {
   var d = Circle.diatonic('G', 'major');
   assert.strictEqual(names(d), 'G Am Bm C D Em F#dim');
 });
-test('diatonic spells flat keys with flats (Bb major)', function () {
+test('diatonic spells canonically sharp (Bb input normalizes to A# major)', function () {
   var d = Circle.diatonic('Bb', 'major');
-  assert.strictEqual(names(d), 'Bb Cm Dm Eb F Gm Adim'); // Bb/Eb, not A#/D#
+  assert.strictEqual(names(d), 'A# Cm Dm D# F Gm Adim'); // sharps app-wide (FORK-4)
   assert.strictEqual(d.length, 7);
 });
 test('unknown root returns empty diatonic', function () {
@@ -85,14 +85,14 @@ test('unknown root returns empty diatonic', function () {
 });
 
 /* ---------- modes: scales, degrees, the "one note changed" ---------- */
-test('scale() spells each letter A-G once, key-aware (flats on the flat side)', function () {
+test('scale() spells canonically sharp - one table app-wide (FORK-4)', function () {
   assert.deepStrictEqual(Circle.scale('C', 'major'), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
   assert.deepStrictEqual(Circle.scale('A', 'dorian'), ['A', 'B', 'C', 'D', 'E', 'F#', 'G']);
   assert.deepStrictEqual(Circle.scale('G', 'mixolydian'), ['G', 'A', 'B', 'C', 'D', 'E', 'F']);
-  assert.deepStrictEqual(Circle.scale('C', 'minor'), ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb']); // flats, not D#/G#/A#
-  assert.deepStrictEqual(Circle.scale('Bb', 'major'), ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']);
-  assert.deepStrictEqual(Circle.scale('F#', 'major'), ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']); // E#, not F
-  assert.deepStrictEqual(Circle.scale('A#', 'major'), Circle.scale('Bb', 'major')); // sharp input spells the flat key
+  assert.deepStrictEqual(Circle.scale('C', 'minor'), ['C', 'D', 'D#', 'F', 'G', 'G#', 'A#']); // sharps, never flats
+  assert.deepStrictEqual(Circle.scale('Bb', 'major'), ['A#', 'C', 'D', 'D#', 'F', 'G', 'A']); // flat input -> sharp output
+  assert.deepStrictEqual(Circle.scale('F#', 'major'), ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'F']); // table names only, no E#
+  assert.deepStrictEqual(Circle.scale('A#', 'major'), Circle.scale('Bb', 'major')); // enharmonic inputs, identical output
 });
 test('no double-accidentals on any wheel-reachable key (ORDER x UI modes)', function () {
   var modes = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
@@ -108,14 +108,32 @@ test('dark modes on sharp roots stay readable (C# minor, not Db double-flats)', 
   assert.deepStrictEqual(Circle.scale('C#', 'aeolian'), ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B']);
   assert.deepStrictEqual(Circle.scale('G#', 'phrygian'), ['G#', 'A', 'B', 'C#', 'D#', 'E', 'F#']);
 });
-test('keyName() gives the conventional spelling of a root (flat side flats)', function () {
-  assert.strictEqual(Circle.keyName('A#'), 'Bb');
-  assert.strictEqual(Circle.keyName('D#'), 'Eb');
-  assert.strictEqual(Circle.keyName('G#'), 'Ab');
-  assert.strictEqual(Circle.keyName('C#'), 'Db');
-  assert.strictEqual(Circle.keyName('F#'), 'F#'); // F#/Gb -> keep F#
+test('keyName() echoes the canonical sharp name of a root', function () {
+  assert.strictEqual(Circle.keyName('A#'), 'A#');
+  assert.strictEqual(Circle.keyName('D#'), 'D#'); // what the user picked is what shows
+  assert.strictEqual(Circle.keyName('G#'), 'G#');
+  assert.strictEqual(Circle.keyName('C#'), 'C#');
+  assert.strictEqual(Circle.keyName('F#'), 'F#');
   assert.strictEqual(Circle.keyName('F'), 'F');
-  assert.strictEqual(Circle.keyName('Bb'), 'Bb'); // already flat, idempotent
+  assert.strictEqual(Circle.keyName('Bb'), 'A#'); // flat input normalizes to the table
+});
+test('D# stays D# in every derived surface - never Eb (S4/C5, pilot UAT)', function () {
+  assert.deepStrictEqual(Circle.scale('D#', 'mixolydian'), ['D#', 'F', 'G', 'G#', 'A#', 'C', 'C#']);
+  var d = Circle.diatonic('D#', 'mixolydian');
+  assert.strictEqual(d[0].chord, 'D#');
+  assert.strictEqual(d[0].roman, 'I');
+  assert.strictEqual(Circle.spellRoot('D#', 'minor'), 'D#');
+  assert.strictEqual(Circle.diatonic('D#', 'minor')[0].chord, 'D#m');
+});
+test('modeKey is case-insensitive - a capitalized mode never falls back to major', function () {
+  assert.deepStrictEqual(Circle.diatonic('D', 'Minor'), Circle.diatonic('D', 'minor'));
+  assert.deepStrictEqual(Circle.scale('C', 'MAJOR'), Circle.scale('C', 'major'));
+  assert.deepStrictEqual(Circle.scaleDegrees('Dorian'), Circle.scaleDegrees('dorian'));
+  // the D-minor palette itself, sharp-spelled: i ii° III iv v VI VII
+  var d = Circle.diatonic('D', 'Minor');
+  assert.strictEqual(names(d), 'Dm Edim F Gm Am A# C');
+  assert.deepStrictEqual(d.map(function (x) { return x.roman; }),
+    ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']);
 });
 test('scaleDegrees() labels intervals against the major scale', function () {
   assert.deepStrictEqual(Circle.scaleDegrees('dorian'), ['1', '2', '♭3', '4', '5', '6', '♭7']);
@@ -133,8 +151,8 @@ test('modeChange() reports the note that moves vs the parent scale', function ()
     { degree: 7, from: 'F#', to: 'F', dir: 'lower' });
   assert.deepStrictEqual(Circle.modeChange('C', 'major'), []); // a reference scale changes nothing
   assert.deepStrictEqual(Circle.modeChange('A', 'minor'), []);
-  var x = Circle.modeChange('C', 'mixolydian'); // the lesson should read B -> Bb, not B -> A#
-  assert.deepStrictEqual({ from: x[0].from, to: x[0].to }, { from: 'B', to: 'Bb' });
+  var x = Circle.modeChange('C', 'mixolydian'); // canonical sharp: the lowered 7th reads A#
+  assert.deepStrictEqual({ from: x[0].from, to: x[0].to }, { from: 'B', to: 'A#' });
 });
 test('modeInfo() carries family + label', function () {
   assert.strictEqual(Circle.modeInfo('dorian').family, 'minor');
