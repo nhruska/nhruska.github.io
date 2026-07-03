@@ -185,8 +185,9 @@
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
         var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : '';
         svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + '/>';
-        // Prefer the caller's key-aware spelling (opts.names[pc], e.g. Bb in F major)
-        // so the fretboard matches the "Solo over it" note list; fall back to sharps.
+        // Prefer the caller's spelling (opts.names[pc] - canonical sharp post-FORK-4,
+        // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
+        // fall back to the sharp table.
         var noteName = (opts.names && opts.names[note.pc]) || NOTE_NAMES[note.pc];
         svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:#06201c"' : '') + '>' + noteName + '</text>';
       });

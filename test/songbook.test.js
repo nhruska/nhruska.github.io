@@ -32,6 +32,102 @@ test('chordsFromDegrees transposes the SAME degrees to any key', function () {
 test('chordsFromDegrees keeps every degree incl. the diminished vii (unlike the jam palette)', function () {
   assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Major', [6]), ['Bdim']);
 });
+test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pilot UAT)', function () {
+  // D minor: i=Dm ii°=Edim III=F iv=Gm v=Am VI=A# VII=C
+  assert.strictEqual(Songbook.chordInKey('Dm', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('D', 'D', 'Minor'), false);  // major tonic is NOT in-key
+  // (the major V in minor is IN by the harmonic-minor exception - see its own test below)
+  assert.strictEqual(Songbook.chordInKey('Am', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('A#', 'D', 'Minor'), true);
+  assert.strictEqual(Songbook.chordInKey('Bb', 'D', 'Minor'), true);  // flat input normalizes
+  assert.strictEqual(Songbook.chordInKey('E', 'D', 'Minor'), false);  // ii must be dim, not major
+  assert.strictEqual(Songbook.chordInKey('Edim', 'D', 'Minor'), true);
+  // 7ths reduce to their triad quality
+  assert.strictEqual(Songbook.chordInKey('D7', 'G', 'Major'), true);  // V7 in G
+  assert.strictEqual(Songbook.chordInKey('C#7', 'D', 'Minor'), false);
+  assert.strictEqual(Songbook.chordInKey('Am7', 'G', 'Major'), true); // ii7
+  // dim + out-of-scale roots
+  assert.strictEqual(Songbook.chordInKey('F#dim', 'G', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('F#m', 'D', 'Minor'), false); // root off-scale
+  assert.strictEqual(Songbook.chordInKey('', 'D', 'Minor'), false);
+  assert.strictEqual(Songbook.chordInKey('Dm', null, 'Minor'), false);
+  // half-diminished reduces to dim (the diatonic vii of a major key); aug is never diatonic
+  assert.strictEqual(Songbook.chordInKey('F#m7b5', 'G', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('Bm7b5', 'C', 'Major'), true);
+  assert.strictEqual(Songbook.chordInKey('Caug', 'C', 'Major'), false);
+  assert.strictEqual(Songbook.chordInKey('C+', 'C', 'Major'), false);
+});
+test('harmonic-minor exception: V and V7 are in-key in Minor (owner ruling, council D1)', function () {
+  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Minor'), true);    // V in D minor
+  assert.strictEqual(Songbook.chordInKey('A7', 'D', 'Minor'), true);   // V7
+  assert.strictEqual(Songbook.chordInKey('E7', 'A', 'Minor'), true);   // V7 in A minor
+  assert.strictEqual(Songbook.chordInKey('B7', 'E', 'Minor'), true);   // V7 in E minor
+  assert.strictEqual(Songbook.chordInKey('Am', 'D', 'Minor'), true);   // natural v still in
+  assert.strictEqual(Songbook.chordInKey('Amaj7', 'D', 'Minor'), false); // Vmaj7 is NOT the harmonic dominant
+  assert.strictEqual(Songbook.chordInKey('A', 'D', 'Dorian'), false);  // exception is Minor-only
+  assert.strictEqual(Songbook.chordInKey('E', 'C', 'Major'), false);   // III-major in major still out
+  // the whitelisted V labels by the CHORD's quality: 'V', never 'v'
+  assert.strictEqual(Songbook.romanInKey('A', 'D', 'Minor'), 'V');
+  assert.strictEqual(Songbook.romanInKey('A7', 'D', 'Minor'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Minor'), 'v');
+});
+test('mode names are case-normalized (saved items carry lowercase modes) - codex V2', function () {
+  assert.strictEqual(Songbook.chordInKey('A7', 'D', 'minor'), true);   // whitelist works lowercase
+  assert.strictEqual(Songbook.chordInKey('F', 'D', 'minor'), true);
+  assert.strictEqual(Songbook.romanInKey('F', 'D', 'minor'), 'III');   // not chromatic bIII
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'mixolydian'), 'VII');
+  assert.strictEqual(Songbook.chordInKey('G', 'C', 'MAJOR'), true);
+  // codex V4: the completion path must survive lowercase modes too - no
+  // `undefined` chord ever leaks into a completion chip
+  assert.deepStrictEqual(Songbook.chordsFromDegrees('D', 'minor', [0, 4]), ['Dm', 'Am']);
+  var lc = Songbook.completions(['C', 'G', 'Am'], 'C', 'major');
+  assert.ok(lc.length > 0, 'lowercase-major completions must not be empty');
+  lc.forEach(function (c) { assert.ok(c.chord, 'completion chord must never be undefined'); });
+  assert.ok(lc.some(function (c) { return c.chord === 'F'; }), 'I-V-vi -> IV still completes');
+});
+test('romanInKey casing across suffix families (7ths, m7b5, maj7) - codex V2', function () {
+  assert.strictEqual(Songbook.romanInKey('Dm7', 'C', 'Major'), 'ii');
+  assert.strictEqual(Songbook.romanInKey('Bm7b5', 'C', 'Major'), 'vii°');
+  assert.strictEqual(Songbook.romanInKey('Fmaj7', 'C', 'Major'), 'IV');
+  assert.strictEqual(Songbook.romanInKey('G7', 'C', 'Major'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Gm7', 'D', 'Minor'), 'iv');
+});
+test('mergeSuggestionRow: chip-row merge semantics (filter, float, dedupe, cap, fallback) - codex V3', function () {
+  var m = Songbook.mergeSuggestionRow;
+  // key filter drops out-of-key picks (D/E major junk in D minor)
+  assert.deepStrictEqual(m(['Am', 'D', 'E', 'Gm'], [], 'D', 'Minor'), ['Am', 'Gm']);
+  // completions float FIRST and are deduped out of the picks
+  assert.deepStrictEqual(m(['G', 'Am', 'F'], ['F'], 'C', 'Major'), ['F', 'G', 'Am']);
+  // a completion the ranker never surfaced still leads the row
+  assert.deepStrictEqual(m(['G', 'Am'], ['Dm'], 'C', 'Major'), ['Dm', 'G', 'Am']);
+  // cap at 5 (completions + picks)
+  assert.deepStrictEqual(m(['G', 'Am', 'F', 'Em', 'Dm'], ['C'], 'C', 'Major'),
+    ['C', 'G', 'Am', 'F', 'Em']);
+  // all-out-of-key -> fallback keeps the unfiltered picks (borrowed beats none)
+  assert.deepStrictEqual(m(['D', 'E'], [], 'C', 'Minor'), ['D', 'E']);
+  // no key -> no filtering
+  assert.deepStrictEqual(m(['D', 'E'], [], null, 'Major'), ['D', 'E']);
+  // whitelisted harmonic-minor V7 survives the filter
+  assert.deepStrictEqual(m(['A7', 'E'], [], 'D', 'Minor'), ['A7']);
+  // empty picks + completions only
+  assert.deepStrictEqual(m([], ['F'], 'C', 'Major'), ['F']);
+});
+test('romanInKey labels diatonic degrees mode-correctly, borrowed chords chromatically', function () {
+  // D minor: the natural degrees read III/VI/VII (matching the Studio), never bIII/bVI/bVII
+  assert.strictEqual(Songbook.romanInKey('Dm', 'D', 'Minor'), 'i');
+  assert.strictEqual(Songbook.romanInKey('F', 'D', 'Minor'), 'III');
+  assert.strictEqual(Songbook.romanInKey('A#', 'D', 'Minor'), 'VI');
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'Minor'), 'VII');
+  assert.strictEqual(Songbook.romanInKey('Edim', 'D', 'Minor'), 'ii°');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Minor'), 'v');
+  // borrowed/non-diatonic falls through to the chromatic romanFor label
+  assert.strictEqual(Songbook.romanInKey('D', 'D', 'Minor'), 'I');   // major tonic borrowed in minor
+  assert.strictEqual(Songbook.romanInKey('A#', 'C', 'Major'), 'bVII'); // borrowed in major stays flat-labeled
+  // major + mixolydian sanity
+  assert.strictEqual(Songbook.romanInKey('G', 'C', 'Major'), 'V');
+  assert.strictEqual(Songbook.romanInKey('Am', 'D', 'Mixolydian'), 'v');
+  assert.strictEqual(Songbook.romanInKey('C', 'D', 'Mixolydian'), 'VII');
+});
 test('every shipped PROGRESSION renders the Roman pattern it claims (round-trip via Circle.romanFor)', function () {
   var EXPECTED = {
     '4-chord song': 'I V vi IV',

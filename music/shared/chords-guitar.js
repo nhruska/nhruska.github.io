@@ -48,6 +48,17 @@
     Ab: [4, 6, 6, 5, 4, 4], Bbm: [-1, 1, 3, 3, 2, 1], Db: [-1, 4, 6, 6, 6, 4], Eb: [-1, 6, 8, 8, 8, 6],
     'F#7': [2, 4, 2, 3, 2, 2], 'G#m': [4, 6, 6, 4, 4, 4]
   };
+  // Enharmonic-tolerant shape lookup (FORK-4, pilot UAT): the app labels chords
+  // canonically SHARP (A#, D#m ...) while this table names some shapes with flats
+  // (Bb, Eb, Bbm ...). Try the exact name first, then the same chord with its
+  // root respelled enharmonically - so 'A#' finds the Bb shape. The DISPLAY name
+  // stays whatever the caller passed; only the shape lookup is tolerant.
+  var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
+  function shapeFor(name) {
+    if (CHORDS[name]) return CHORDS[name];
+    var m = /^([A-G][#b])(.*)$/.exec(name || '');
+    return (m && ENH[m[1]]) ? CHORDS[ENH[m[1]] + m[2]] : undefined;
+  }
 
   // Open-string set handed to the shared tuner (low-E / 6th at top, guitar convention).
   var TUNER_STRINGS = [
@@ -94,7 +105,7 @@
     o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
   }
   function strumChord(name, t, dur) {
-    var f = CHORDS[name]; if (!f) return;
+    var f = shapeFor(name); if (!f) return;
     // strum low-to-high; skip muted strings; slight stagger between strings.
     var i = 0;
     [0, 1, 2, 3, 4, 5].forEach(function (s) {
@@ -119,7 +130,7 @@
   }
   function escName(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function drawDiagram(name, opts) {
-    var f = CHORDS[name];
+    var f = shapeFor(name);
     var wrap = document.createElement('div'); wrap.className = opts.wrapClass;
     // name is user-controlled for custom songs (freeform seq tokens reach this
     // via the Maximize diagram path), so escape before it enters innerHTML - the
@@ -184,8 +195,8 @@
   global.ChordPackGuitar = {
     meta: { instrument: 'guitar', tuning: 'EADGBE', strings: 6, stringNames: ['E', 'A', 'D', 'G', 'B', 'E'] },
 
-    // does this exact chord name have a fingering?
-    hasChord: function (name) { return !!CHORDS[name]; },
+    // does this chord (exact or enharmonic-respelled root) have a fingering?
+    hasChord: function (name) { return !!shapeFor(name); },
 
     // a fingering diagram element. size: 'small' (compose grid) | 'big' (maximize)
     diagram: function (name, size) { return size === 'big' ? bigDiagram(name) : smallDiagram(name); },

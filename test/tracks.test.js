@@ -254,4 +254,22 @@ test('keyLabelFor matches the Studio label convention', function () {
   assert.strictEqual(T.keyLabelFor('C', null), 'C');
 });
 
+/* ---------- modeHint "often written Bb" gate (codex V2 fix, V3 test ask) ----------
+ * modeHint is closure-bound in mount(), so extract the SHARP2FLAT table + the
+ * alt-expression from the source and assert the gate: the flat hint fires ONLY
+ * for LOWERED sharp notes (lowered 7th -> "often written Bb"); a RAISED note
+ * (lydian/dorian F#) must never claim "often written Gb". */
+test('lesson flat-hint fires only for lowered sharp notes (extraction guard)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  var mapM = /var SHARP2FLAT = \{[^}]*\};/.exec(src);
+  var altM = /var alt = \(c\.dir === 'lower' && SHARP2FLAT\[c\.to\]\)[^;]*;/.exec(src);
+  assert.ok(mapM, 'SHARP2FLAT table not found in tracks.js modeHint');
+  assert.ok(altM, "lowered-only alt gate not found (dir === 'lower' check missing?)");
+  var altFor = new Function('c', 'esc', mapM[0] + '\n' + altM[0] + '\nreturn alt;');
+  var esc = function (x) { return String(x); };
+  assert.strictEqual(altFor({ dir: 'lower', to: 'A#' }, esc), ', often written Bb');
+  assert.strictEqual(altFor({ dir: 'raise', to: 'F#' }, esc), '');   // lydian 4th: never "Gb"
+  assert.strictEqual(altFor({ dir: 'lower', to: 'F' }, esc), '');    // natural target: no hint
+});
+
 run();

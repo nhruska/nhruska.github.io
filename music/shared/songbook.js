@@ -95,7 +95,7 @@
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     var out = [];
     m.steps.forEach(function (s, i) {
       if (m.quals[i] === "dim") return;
@@ -103,11 +103,92 @@
     });
     return out;
   }
+  // Does `chord` belong to the key's usable in-key set? Its root must sit on a
+  // scale degree AND its triad quality must match that degree's quality - a 7th
+  // reduces to its triad (D7 counts as D in G major; Dm7 does not). Used to keep
+  // the key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
+  // Suffix parsing mirrors Circle.suffixQuality: half-diminished (m7b5/ø) reduces
+  // to dim; aug/+ maps to 'aug', which no mode's quals contain -> never diatonic.
+  // HARMONIC-MINOR EXCEPTION (owner ruling, volley-1 council D1): in Minor, the
+  // degree-5 MAJOR triad and dominant 7th (A / A7 in D minor) are admitted -
+  // i -> V(7) -> i is the default cadence of real minor-key songs; strict
+  // natural-minor gating stripped the most-played chord from every minor key.
+  // Vmaj7 stays out (not the harmonic-minor dominant).
+  // Mode names are case-normalized: saved custom items carry lowercase modes
+  // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
+  // capitalized keys - both must hit the same table (codex V2 medium; same trap
+  // class Circle.modeKey already guards).
+  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian' };
+  function canonMode(modeKey) {
+    return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
+  }
+  function chordInKey(chord, root, modeKey) {
+    var mk = canonMode(modeKey);
+    var m = MODES[mk], rp = rootPc(root);
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
+    if (!m || rp == null || !cm) return false;
+    var cp = rootPc(cm[1]); if (cp == null) return false;
+    var deg = m.steps.indexOf(((cp - rp) % 12 + 12) % 12);
+    if (deg < 0) return false;
+    var suf = cm[2].toLowerCase();
+    var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+      : /^(aug|\+)/.test(suf) ? 'aug'
+      : /^m(?!aj)/.test(suf) ? 'm' : '';
+    if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
+    return q === m.quals[deg];
+  }
+  // Mode-aware roman numeral for a chord in a KNOWN key: diatonic degrees get the
+  // mode-correct numeral (III, VI, VII in minor - matching what the Studio's
+  // Circle.diatonic labels), while non-diatonic/borrowed chords keep the
+  // chromatic parallel-major label from Circle.romanFor (bVII in major, I for a
+  // borrowed major tonic in minor). Without this, a Compose chip said "bIII" for
+  // F in D minor while the Studio said "III" for the same chord (pilot UAT).
+  var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  function romanInKey(chord, root, modeKey) {
+    var mk = canonMode(modeKey);
+    var m = MODES[mk];
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
+    if (m && cm && chordInKey(chord, root, mk)) {
+      var deg = m.steps.indexOf(((rootPc(cm[1]) - rootPc(root)) % 12 + 12) % 12);
+      // Case by the CHORD's own quality, not the degree's natural quality: the
+      // whitelisted harmonic-minor V is MAJOR on a degree whose natural triad is
+      // minor - it must read 'V', not 'v'. For strictly-diatonic chords the two
+      // qualities coincide, so this changes nothing else.
+      var suf = cm[2].toLowerCase();
+      var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+        : /^m(?!aj)/.test(suf) ? 'm' : '';
+      var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
+      return q === 'dim' ? rn + '°' : rn;
+    }
+    // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
+    // `global` is this module's exports, so fall back to require.
+    var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
+    return (C && C.romanFor) ? C.romanFor(chord, root) : '';
+  }
+  // The suggestion chip-row merge, pure and testable (codex V3): filter the
+  // Markov picks to the key (chordInKey; fall back to unfiltered when the
+  // filter empties - a borrowed suggestion beats none), dedupe against the
+  // progression-completing chords, float completions to the FRONT (their
+  // accent glow must read first), cap at 5.
+  //   picks: ranked Markov suggestions; completes: chord names that finish a
+  //   famous progression; root/modeKey: the selected key (root null = no key).
+  function mergeSuggestionRow(picks, completes, root, modeKey) {
+    var row = (picks || []).slice();
+    if (root) {
+      var inKeyPicks = row.filter(function (c) { return chordInKey(c, root, modeKey); });
+      if (inKeyPicks.length) row = inKeyPicks;
+    }
+    (completes || []).forEach(function (chord) {
+      var i = row.indexOf(chord);
+      if (i >= 0) row.splice(i, 1);
+    });
+    return (completes || []).concat(row).slice(0, 5);
+  }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
   function chordsFromDegrees(root, modeKey, degrees) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     return degrees.map(function (deg) {
       var i = ((deg % 7) + 7) % 7;
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
@@ -1196,6 +1277,14 @@
     // transposer used to be two independent key notions and drifted; now a transpose
     // moves songKey.root so the readout, palette and solo scale all follow.
     function labelTonic() { return songKey.root || progression[0]; }
+    // ONE roman-label path for every Compose surface (progression slots, in-key
+    // palette, suggestion chips): mode-aware in a known key so labels match the
+    // Studio's diatonic numerals; chromatic romanFor vs the first chord otherwise.
+    function labelRoman(c) {
+      if (songKey.root) return romanInKey(c, songKey.root, songKey.mode);
+      var t = labelTonic();
+      return (t && global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, t) : '';
+    }
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
@@ -1208,11 +1297,11 @@
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans (via tonic), or the maxed cap. A mode toggle re-calls
-      // renderProg but changes none of these (romans are root-relative), so a rebuild
-      // would just flash the strip with identical content. Suggestions still refresh
-      // below (completions are mode-aware).
-      var sig = progression.join(',') + '|' + tonic + '|' + maxed;
+      // key-relative romans, or the maxed cap. labelRoman is MODE-aware (a mode
+      // toggle flips bVII <-> VII on the same chord), so the mode is part of the
+      // visible signature - omitting it left stale romans after a mode change
+      // (codex V2 high).
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
@@ -1221,10 +1310,8 @@
           var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
           slot.appendChild(d);
           // interval relative to the key — think I IV V, not shapes
-          if (global.Circle && global.Circle.romanFor) {
-            var rn = global.Circle.romanFor(c, tonic);
-            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
-          }
+          var rn = labelRoman(c);
+          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
           rm.onclick = function (e) {
             e.stopPropagation(); progression.splice(i, 1);
@@ -1479,7 +1566,7 @@
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
         if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-            return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+            return { chord: c, roman: labelRoman(c) };
           });
           // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
@@ -1716,7 +1803,7 @@
       var chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
-      var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
+      var rn = labelRoman(c);
       var html = '<span class="scName">' + escHTML(c) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
@@ -1760,14 +1847,12 @@
         (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
       });
 
-      var picks = suggestNext(progression);
-      // make sure any completing chord is actually in the list (the Markov ranker might
-      // not surface it), and float completions to the front so the highlight reads first.
-      Object.keys(completeBy).forEach(function (chord) {
-        var i = picks.indexOf(chord);
-        if (i >= 0) picks.splice(i, 1);
-      });
-      picks = Object.keys(completeBy).concat(picks).slice(0, 5);
+      // C4 (pilot UAT): the Markov map is key-AGNOSTIC; when a key is set the row
+      // filters to it, completions float first, capped at 5 - the whole merge is
+      // the pure mergeSuggestionRow (unit-tested; codex V3 wanted chip-row-level
+      // coverage the closure could not give).
+      var picks = mergeSuggestionRow(suggestNext(progression), Object.keys(completeBy),
+        songKey.root, songKey.mode);
       if (!picks.length) {
         var hint = document.createElement('p');
         hint.className = 'keyHint suggEmpty';
@@ -2269,6 +2354,9 @@
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    chordInKey: chordInKey,
+    romanInKey: romanInKey,
+    mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,

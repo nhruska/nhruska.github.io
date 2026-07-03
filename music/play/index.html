@@ -211,14 +211,19 @@
   function el(id) { return document.getElementById(id); }
 
   // chord-progression suggestion map (instrument-agnostic chord names).
+  // Canonically SHARP names (FORK-4): the whole app labels A#, D#m - never Bb, Ebm -
+  // so a suggestion chip can't show "Bb" beside an in-key palette that says "A#".
+  // Shape lookup stays intact: the LIVE adapter resolves enharmonics via
+  // profileVoicing() in buildAdapter below (A# finds a Bb-keyed profile
+  // fingering); the legacy standalone packs carry the same logic as shapeFor().
   var SUGG = {
     C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
-    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "Bb", "Am"],
+    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "A#", "Am"],
     B: ["E", "A", "F#7", "E7", "G"], Am: ["F", "G", "C", "Dm", "E7"], Em: ["C", "G", "D", "Am", "B7"],
-    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "Eb", "Bb"],
-    Cm: ["G7", "Fm", "Ab", "Eb", "Bb"], Fm: ["C7", "Bbm", "Db", "Ab", "Eb"],
+    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "D#", "A#"],
+    Cm: ["G7", "Fm", "G#", "D#", "A#"], Fm: ["C7", "A#m", "C#", "G#", "D#"],
     G7: ["C", "Am", "F", "Em"], C7: ["F", "Dm", "G", "Am"], D7: ["G", "Em", "C", "Bm"],
-    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
+    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
   var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
@@ -327,15 +332,27 @@
     var openFreqs = profile.strings.map(function (s) { return s.f; });
     var templates = buildTemplates(profile.chords);
     var triadStyle = augmentTriadShapes(profile, templates);
+    // Enharmonic-tolerant profile lookup (FORK-4): the app requests canonical
+    // SHARP names (A#, D#m) while some profiles' hand-curated voicings are keyed
+    // with flats (mandolin's Bb). Try the exact name, then the root respelled,
+    // so the curated open shape wins over a movable approximation either way.
+    // The DISPLAY name stays whatever the caller passed.
+    var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
+    function profileVoicing(name) {
+      if (!profile.chords) return null;
+      if (profile.chords[name]) return profile.chords[name];
+      var m = /^([A-G][#b])(.*)$/.exec(name || '');
+      return (m && ENH[m[1]]) ? (profile.chords[ENH[m[1]] + m[2]] || null) : null;
+    }
     // explicit profile voicing first; else a movable shape; else null (name-only)
     function voicingFor(name) {
-      return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
+      return profileVoicing(name) || movableVoicing(templates, name) || null;
     }
     // HSR Chain wants the CLOSED (movable) shape so I/IV/V show the same hand
     // shape slid up the neck. If the profile only has an open shape (no closed
     // template), fall back so the chord still renders.
     function closedVoicingFor(name) {
-      return movableVoicing(templates, name) || (profile.chords && profile.chords[name]) || null;
+      return movableVoicing(templates, name) || profileVoicing(name) || null;
     }
     // I-IV-V chain voicings.
     // On artifact-supported instruments (uke with the augmented C-shape/F-shape
