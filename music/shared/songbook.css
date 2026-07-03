@@ -34,8 +34,11 @@
   --brass:#7fb8ad;
   --brass:color-mix(in srgb, var(--accent) 62%, var(--txt-dim));
   --brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
-  /* text/icon placed ON an --accent fill (dark on bright teal) - same in light + dark */
-  --on-accent:var(--on-accent);
+  /* text/icon placed ON an --accent fill (dark, legible on EVERY accent incl.
+     light ones like amber/coral) - same in light + dark. Must be a literal, not
+     var(--on-accent): a self-reference resolves empty and falls back to inherited
+     --txt (dark in light theme, but WHITE in dark theme -> illegible on a light accent). */
+  --on-accent:#06201c;
   --on-danger:#fff;
   /* Perform 'stage' palette: fixed warm-amber-on-black teleprompter look; does NOT follow the app theme. */
   --stage-bg:#000;--stage-panel:#141414;--stage-panel-2:#1c1c1c;
