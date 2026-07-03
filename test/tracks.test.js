@@ -290,51 +290,85 @@ test('customSearchQuery folds genre + progression into the query, skipping junk 
   assert.ok(url.indexOf('A%23') >= 0, url);
 });
 
-/* minimal DOM stub for tintWheel: labels with previousElementSibling wedges */
-function stubWheel(labels) {
-  function el(cls) {
-    var classes = cls.slice();
-    return {
-      classList: {
-        contains: function (c) { return classes.indexOf(c) >= 0; },
-        add: function (c) { if (classes.indexOf(c) < 0) classes.push(c); }
-      },
-      _classes: classes
-    };
+/* DOM stub rich enough to run the REAL Circle.renderWheel (createElementNS,
+ * setAttribute, appendChild, addEventListener, classList) so the tint test
+ * pins the ACTUAL render contract - a render-order change fails here instead
+ * of silently dropping the tint at runtime (codex #89 V2). */
+function domEl(tag) {
+  var attrs = {}, children = [];
+  var el = {
+    tagName: tag, attrs: attrs, children: children, textContent: '',
+    style: {}, previousElementSibling: null, className: '',
+    setAttribute: function (k, v) {
+      attrs[k] = String(v);
+      if (k === 'class') el.className = String(v);
+    },
+    getAttribute: function (k) { return attrs[k] != null ? attrs[k] : null; },
+    appendChild: function (c) {
+      c.previousElementSibling = children.length ? children[children.length - 1] : null;
+      children.push(c); return c;
+    },
+    addEventListener: function () {},
+    classList: {
+      contains: function (c) { return el.className.split(/\s+/).indexOf(c) >= 0; },
+      add: function (c) { if (!el.classList.contains(c)) el.className = (el.className + ' ' + c).trim(); }
+    },
+    querySelectorAll: function (sel) {
+      var cls = sel.replace('.', ''), out = [];
+      (function walk(n) {
+        n.children.forEach(function (c) {
+          if (c.classList.contains(cls)) out.push(c);
+          walk(c);
+        });
+      })(el);
+      return out;
+    }
+  };
+  return el;
+}
+function realWheel(C, key, mode) {
+  var origDoc = global.document;
+  global.document = {
+    createElement: function (t) { return domEl(t); },
+    createElementNS: function (ns, t) { return domEl(t); }
+  };
+  try { return C.renderWheel({ selected: { root: key, mode: mode } }); }
+  finally { global.document = origDoc; }
+}
+test('tintWheel marks the relative key strong + V/IV dim on the REAL renderWheel output', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = realWheel(C, 'A', 'major');
+  T.tintWheel(wheel, C, 'A', 'major');
+  function wedgeClasses(labelText) {
+    var labels = wheel.querySelectorAll('.cofLabel');
+    for (var i = 0; i < labels.length; i++) {
+      if (labels[i].textContent === labelText) {
+        var w = labels[i].previousElementSibling;
+        return (w && w.classList.contains('cofWedge')) ? w.className : '(no wedge sibling)';
+      }
+    }
+    return '(label missing)';
   }
+  assert.ok(wedgeClasses('F#m').indexOf('cofWedge-rel') >= 0, 'relative minor F#m: ' + wedgeClasses('F#m'));
+  assert.ok(wedgeClasses('E').indexOf('cofWedge-nb') >= 0, 'V (E): ' + wedgeClasses('E'));
+  assert.ok(wedgeClasses('D').indexOf('cofWedge-nb') >= 0, 'IV (D): ' + wedgeClasses('D'));
+  assert.ok(wedgeClasses('A').indexOf('cofWedge-rel') < 0, 'tonic untinted');
+});
+/* keep a tiny hand stub only for the graceful-degradation case */
+function stubWheel(labels) {
   var nodes = labels.map(function (txt) {
-    var wedge = el(['cofWedge']);
-    var label = el(['cofLabel']);
-    label.textContent = txt;
-    label.previousElementSibling = wedge;
+    var wedge = domEl('path'); wedge.setAttribute('class', 'cofWedge');
+    var label = domEl('text'); label.setAttribute('class', 'cofLabel');
+    label.textContent = txt; label.previousElementSibling = wedge;
     return label;
   });
-  return {
-    nodes: nodes,
-    querySelectorAll: function (sel) { return sel === '.cofLabel' ? nodes : []; }
-  };
+  return { nodes: nodes, querySelectorAll: function (sel) { return sel === '.cofLabel' ? nodes : []; } };
 }
-test('tintWheel marks the relative key strong + V/IV dim on the real Circle contract', function () {
-  var C = require('../music/shared/circle.js');
-  // A major: neighbors = E (V), D (IV), F#m (relative minor)
-  var labels = C.ORDER.map(function (r) { return C.spellRoot(r) + ''; })
-    .concat(C.ORDER.map(function (r) { return C.spellRoot(r) + 'm'; }));
-  var wheel = stubWheel(labels);
-  T.tintWheel(wheel, C, 'A', 'major');
-  function classesOf(txt) {
-    for (var i = 0; i < wheel.nodes.length; i++) if (wheel.nodes[i].textContent === txt) return wheel.nodes[i].previousElementSibling._classes.join(',');
-    return '(missing)';
-  }
-  assert.ok(classesOf('F#m').indexOf('cofWedge-rel') >= 0, 'relative minor F#m tinted: ' + classesOf('F#m'));
-  assert.ok(classesOf('E').indexOf('cofWedge-nb') >= 0, 'V (E) tinted: ' + classesOf('E'));
-  assert.ok(classesOf('D').indexOf('cofWedge-nb') >= 0, 'IV (D) tinted: ' + classesOf('D'));
-  assert.ok(classesOf('A').indexOf('cofWedge-rel') < 0, 'tonic not rel-tinted');
-});
 test('tintWheel survives a wheel with unexpected labels (no throw, no tint)', function () {
   var C = require('../music/shared/circle.js');
   var wheel = stubWheel(['nonsense', 'labels']);
   T.tintWheel(wheel, C, 'A', 'major'); // must not throw
-  assert.strictEqual(wheel.nodes[0].previousElementSibling._classes.join(','), 'cofWedge');
+  assert.strictEqual(wheel.nodes[0].previousElementSibling.className, 'cofWedge');
 });
 
 run();

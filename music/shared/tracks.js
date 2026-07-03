@@ -92,7 +92,8 @@
     if (t.title) p.push(t.title);
     if (t.genre) p.push(t.genre);
     if (Array.isArray(t.seq)) {
-      var toks = t.seq.filter(function (c) { return c && String(c).trim(); });
+      var toks = t.seq.map(function (c) { return String(c == null ? '' : c).trim(); })
+        .filter(Boolean);
       if (toks.length) p.push(toks.join(' '));
     }
     p.push('backing track');
