@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Music">
 <!-- Shared songbook styles (theme + all components). -->
@@ -90,7 +91,7 @@
     <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
-        <div class="setHead"><div class="ti"><h2>The Setlist</h2><p id="setCount">No songs yet</p></div>
+        <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
         <div id="setBody"></div>
@@ -117,7 +118,6 @@
             <span class="keyChipSlot" id="keyChipSlot"></span>
             <button class="iconBtn" id="cTup" title="Transpose up a semitone">♯</button>
             <button class="iconBtn" id="cMax" title="Maximize chords">⤢</button>
-            <button class="iconBtn" id="cHelp" title="Show starter progressions" aria-label="Show starter progressions">?</button>
             <span class="ctrlSpacer"></span>
             <button class="btn ghost ctrlBtn" id="cClear">Clear</button>
             <button class="btn red ctrlBtn" id="cSave">Save</button>
@@ -151,8 +151,8 @@
           <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
         </div>
         <!-- The ONLY scroll area: the chord list, led by the suggestion surface
-             (#suggest - starter progressions when empty, next-chord chips otherwise;
-             the "?" button re-shows the starters at any time). In-key cells
+             (#suggest - starter progressions when empty, next-chord chips
+             otherwise; no manual toggle). In-key cells
              (.chordCell) and All-chords tiles (.chord) keep touch-action:pan-y so a
              vertical swipe scrolls them. -->
         <div class="composeChords" id="composeChords">
@@ -167,8 +167,6 @@
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
-        <h2>Tune Up</h2>
-        <div class="sub">Play a string - the needle shows how sharp or flat you are.</div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub" style="margin:14px 0 8px">Tuning</div>
           <div class="chips" id="tuneTunings"></div>
@@ -185,7 +183,7 @@
   </div>
   <div class="tabbar">
     <button class="on" data-tab="library"><span class="icn">♪</span><span class="lbl">Library</span></button>
-    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Jam</span></button>
+    <button data-tab="jam"><span class="icn">♬</span><span class="lbl">Setlist</span></button>
     <button data-tab="compose"><span class="icn">✎</span><span class="lbl">Compose</span></button>
     <button data-tab="tune"><span class="icn">◴</span><span class="lbl">Tune</span></button>
   </div>
@@ -251,17 +249,22 @@
   function el(id) { return document.getElementById(id); }
 
   // chord-progression suggestion map (instrument-agnostic chord names).
+  // Canonically SHARP names (FORK-4): the whole app labels A#, D#m - never Bb, Ebm -
+  // so a suggestion chip can't show "Bb" beside an in-key palette that says "A#".
+  // Shape lookup stays intact: the LIVE adapter resolves enharmonics via
+  // profileVoicing() in buildAdapter below (A# finds a Bb-keyed profile
+  // fingering); the legacy standalone packs carry the same logic as shapeFor().
   var SUGG = {
     C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
-    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "Bb", "Am"],
+    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "A#", "Am"],
     B: ["E", "A", "F#7", "E7", "G"], Am: ["F", "G", "C", "Dm", "E7"], Em: ["C", "G", "D", "Am", "B7"],
-    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "Eb", "Bb"],
-    Cm: ["G7", "Fm", "Ab", "Eb", "Bb"], Fm: ["C7", "Bbm", "Db", "Ab", "Eb"],
+    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "D#", "A#"],
+    Cm: ["G7", "Fm", "G#", "D#", "A#"], Fm: ["C7", "A#m", "C#", "G#", "D#"],
     G7: ["C", "Am", "F", "Em"], C7: ["F", "Dm", "G", "Am"], D7: ["G", "Em", "C", "Bm"],
-    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["Bb", "Dm", "C", "Gm"],
+    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
     B7: ["E", "G#m", "C#m", "F#m"]
   };
-  var CONTEXTS_BASE = { library: 'your repertoire', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'tonight’s running order' };
+  var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
 
   function rootFreq(name) {
     if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
@@ -367,15 +370,27 @@
     var openFreqs = profile.strings.map(function (s) { return s.f; });
     var templates = buildTemplates(profile.chords);
     var triadStyle = augmentTriadShapes(profile, templates);
+    // Enharmonic-tolerant profile lookup (FORK-4): the app requests canonical
+    // SHARP names (A#, D#m) while some profiles' hand-curated voicings are keyed
+    // with flats (mandolin's Bb). Try the exact name, then the root respelled,
+    // so the curated open shape wins over a movable approximation either way.
+    // The DISPLAY name stays whatever the caller passed.
+    var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
+    function profileVoicing(name) {
+      if (!profile.chords) return null;
+      if (profile.chords[name]) return profile.chords[name];
+      var m = /^([A-G][#b])(.*)$/.exec(name || '');
+      return (m && ENH[m[1]]) ? (profile.chords[ENH[m[1]] + m[2]] || null) : null;
+    }
     // explicit profile voicing first; else a movable shape; else null (name-only)
     function voicingFor(name) {
-      return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
+      return profileVoicing(name) || movableVoicing(templates, name) || null;
     }
     // HSR Chain wants the CLOSED (movable) shape so I/IV/V show the same hand
     // shape slid up the neck. If the profile only has an open shape (no closed
     // template), fall back so the chord still renders.
     function closedVoicingFor(name) {
-      return movableVoicing(templates, name) || (profile.chords && profile.chords[name]) || null;
+      return movableVoicing(templates, name) || profileVoicing(name) || null;
     }
     // I-IV-V chain voicings.
     // On artifact-supported instruments (uke with the augmented C-shape/F-shape
@@ -649,7 +664,7 @@
         pViewLyrics: el('pViewLyrics'), pViewChords: el('pViewChords'), pViewBoth: el('pViewBoth'),
         prog: el('prog'), suggest: el('suggest'), catChips: el('catChips'), buildGrid: el('buildGrid'),
         composeChords: el('composeChords'),
-        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'), cHelp: el('cHelp'),
+        cClear: el('cClear'), cSave: el('cSave'), cMax: el('cMax'),
         cTup: el('cTup'), cTdown: el('cTdown'), cKey: el('cKey'), soloBackingBtn: el('soloBackingBtn'),
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),

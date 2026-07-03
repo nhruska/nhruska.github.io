@@ -95,7 +95,7 @@
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
   function diatonicChords(root, modeKey) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     var out = [];
     m.steps.forEach(function (s, i) {
       if (m.quals[i] === "dim") return;
@@ -103,11 +103,92 @@
     });
     return out;
   }
+  // Does `chord` belong to the key's usable in-key set? Its root must sit on a
+  // scale degree AND its triad quality must match that degree's quality - a 7th
+  // reduces to its triad (D7 counts as D in G major; Dm7 does not). Used to keep
+  // the key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
+  // Suffix parsing mirrors Circle.suffixQuality: half-diminished (m7b5/ø) reduces
+  // to dim; aug/+ maps to 'aug', which no mode's quals contain -> never diatonic.
+  // HARMONIC-MINOR EXCEPTION (owner ruling, volley-1 council D1): in Minor, the
+  // degree-5 MAJOR triad and dominant 7th (A / A7 in D minor) are admitted -
+  // i -> V(7) -> i is the default cadence of real minor-key songs; strict
+  // natural-minor gating stripped the most-played chord from every minor key.
+  // Vmaj7 stays out (not the harmonic-minor dominant).
+  // Mode names are case-normalized: saved custom items carry lowercase modes
+  // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
+  // capitalized keys - both must hit the same table (codex V2 medium; same trap
+  // class Circle.modeKey already guards).
+  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian' };
+  function canonMode(modeKey) {
+    return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
+  }
+  function chordInKey(chord, root, modeKey) {
+    var mk = canonMode(modeKey);
+    var m = MODES[mk], rp = rootPc(root);
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
+    if (!m || rp == null || !cm) return false;
+    var cp = rootPc(cm[1]); if (cp == null) return false;
+    var deg = m.steps.indexOf(((cp - rp) % 12 + 12) % 12);
+    if (deg < 0) return false;
+    var suf = cm[2].toLowerCase();
+    var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+      : /^(aug|\+)/.test(suf) ? 'aug'
+      : /^m(?!aj)/.test(suf) ? 'm' : '';
+    if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
+    return q === m.quals[deg];
+  }
+  // Mode-aware roman numeral for a chord in a KNOWN key: diatonic degrees get the
+  // mode-correct numeral (III, VI, VII in minor - matching what the Studio's
+  // Circle.diatonic labels), while non-diatonic/borrowed chords keep the
+  // chromatic parallel-major label from Circle.romanFor (bVII in major, I for a
+  // borrowed major tonic in minor). Without this, a Compose chip said "bIII" for
+  // F in D minor while the Studio said "III" for the same chord (pilot UAT).
+  var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  function romanInKey(chord, root, modeKey) {
+    var mk = canonMode(modeKey);
+    var m = MODES[mk];
+    var cm = /^([A-G][#b]?)(.*)$/.exec((chord || '').trim());
+    if (m && cm && chordInKey(chord, root, mk)) {
+      var deg = m.steps.indexOf(((rootPc(cm[1]) - rootPc(root)) % 12 + 12) % 12);
+      // Case by the CHORD's own quality, not the degree's natural quality: the
+      // whitelisted harmonic-minor V is MAJOR on a degree whose natural triad is
+      // minor - it must read 'V', not 'v'. For strictly-diatonic chords the two
+      // qualities coincide, so this changes nothing else.
+      var suf = cm[2].toLowerCase();
+      var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
+        : /^m(?!aj)/.test(suf) ? 'm' : '';
+      var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
+      return q === 'dim' ? rn + '°' : rn;
+    }
+    // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
+    // `global` is this module's exports, so fall back to require.
+    var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
+    return (C && C.romanFor) ? C.romanFor(chord, root) : '';
+  }
+  // The suggestion chip-row merge, pure and testable (codex V3): filter the
+  // Markov picks to the key (chordInKey; fall back to unfiltered when the
+  // filter empties - a borrowed suggestion beats none), dedupe against the
+  // progression-completing chords, float completions to the FRONT (their
+  // accent glow must read first), cap at 5.
+  //   picks: ranked Markov suggestions; completes: chord names that finish a
+  //   famous progression; root/modeKey: the selected key (root null = no key).
+  function mergeSuggestionRow(picks, completes, root, modeKey) {
+    var row = (picks || []).slice();
+    if (root) {
+      var inKeyPicks = row.filter(function (c) { return chordInKey(c, root, modeKey); });
+      if (inKeyPicks.length) row = inKeyPicks;
+    }
+    (completes || []).forEach(function (chord) {
+      var i = row.indexOf(chord);
+      if (i >= 0) row.splice(i, 1);
+    });
+    return (completes || []).concat(row).slice(0, 5);
+  }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).
   // Unlike diatonicChords this keeps EVERY degree (incl. the diminished vii°), so a
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
   function chordsFromDegrees(root, modeKey, degrees) {
-    var rp = rootPc(root), m = MODES[modeKey]; if (rp == null || !m) return [];
+    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
     return degrees.map(function (deg) {
       var i = ((deg % 7) + 7) % 7;
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
@@ -393,7 +474,7 @@
   function libraryEmptyState(sel) {
     var key = sel && sel.key && sel.key !== 'all' ? sel.key : null;
     return {
-      message: key ? 'Nothing in your repertoire matches in ' + key + '.' : 'Nothing in your repertoire matches.',
+      message: key ? 'Nothing matches in ' + key + '.' : 'Nothing matches.',
       clearKey: !!key
     };
   }
@@ -419,8 +500,20 @@
   // action opens. Pure + Node-testable; shared by the list-item action ladder
   // and the song-view "Hear it on YouTube" link.
   function ytSearchURL(s) {
-    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-      .filter(Boolean).join(' ');
+    // the 'search' placeholder is a data sentinel, never a real artist - keep it
+    // out of the QUERY too, not just the display (codex #91: displayRec masked
+    // it for rendering while the action ladder still passed the raw record).
+    var artist = s.a || s.artist;
+    if (artist === 'search') artist = '';
+    var parts = [s.t || s.title, artist, s.key ? s.key + ' key' : ''];
+    // custom songs (Compose saves) have no recording to find - fold genre +
+    // chords so the search lands on something playable instead of title-only.
+    if (s.custom && Array.isArray(s.seq)) {
+      var toks = s.seq.map(function (c) { return String(c == null ? '' : c).trim(); }).filter(Boolean);
+      if (s.genre) parts.push(s.genre);
+      if (toks.length) parts.push(toks.join(' '));
+    }
+    var q = parts.filter(Boolean).join(' ');
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
   }
 
@@ -634,7 +727,7 @@
         // of the data-derived genres; shown only when a custom item exists (facet
         // chips reflect what is actually in the repertoire).
         if (REPERTOIRE.some(isMine)) {
-          el.genreChips.appendChild(chipBtn('Mine', STATE.mineOnly,
+          el.genreChips.appendChild(chipBtn('mine', STATE.mineOnly,
             function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
         }
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
@@ -671,8 +764,29 @@
       if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
+    // Display-only record override shared by EVERY ListItem render site (library
+    // + setlist - codex #91 caught the setlist rendering raw records):
+    // - artist sentinel 'search' (tracks.json placeholder = "resolve via search")
+    //   reads as a band literally named "search" -> show 'Unknown'.
+    // - an artist-less Compose save would pair a blank artist with the year,
+    //   printing a bare "· 2026" -> drop the year so no meta line renders.
+    // The real record (navigation/actions/queries) is never mutated.
+    function displayRecFor(rec) {
+      var artistVal = rec.artist != null ? rec.artist : rec.a;
+      if (artistVal === 'search') return Object.assign({}, rec, { artist: 'Unknown', a: 'Unknown' });
+      if (!artistVal) return Object.assign({}, rec, { y: null, year: null });
+      return rec;
+    }
     function renderSongs() {
       if (!el.songsList) return;
+      // Compose calling this right after a save happens while the Library
+      // SCREEN is still hidden (display:none - the Compose tab is the one on
+      // screen) - offsetParent goes null under a hidden ancestor (the same
+      // visibility heuristic self-serve-execution's render-verify rule uses).
+      // Only consume pendingHighlightId once the Library is ACTUALLY the
+      // screen the user is looking at, or the highlight would fire-and-fade
+      // invisibly and never be seen. Until then it just keeps waiting.
+      var visible = !!el.songsList.offsetParent;
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
@@ -691,9 +805,12 @@
         el.songsList.innerHTML = '';
         el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
+        // do NOT consume here: a filtered/empty render never showed the row -
+        // the highlight stays pending until the row actually appears (codex #91).
         return;
       }
       el.songsList.innerHTML = '';
+      var justSavedEl = null;
       filtered.forEach(function (rec) {
         var sid = rec.id;
         // only chord-sheet items can join a setlist; a pure/video-only track (no
@@ -702,15 +819,28 @@
         var canAdd = sid != null && hasChordSheet(songById(sid));
         var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
-        el.songsList.appendChild(global.ListItem.render(rec, {
+        var node = global.ListItem.render(displayRecFor(rec), {
           segment: 'library',
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
           onAdd: canAdd ? function () { toggleSet(sid); } : null,
           onAction: function () { repertoireAction(rec); }
-        }));
+        });
+        el.songsList.appendChild(node);
+        if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
       });
-      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length + ' in repertoire';
+      if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length;
+      // Post-save discoverability (B3 pilot UAT: "after saving, it's hidden near
+      // the bottom of the library's song list") - scroll the new row into view
+      // and give it a brief accent pulse (CSS handles the ~2s fade) so it's
+      // findable without hunting a long list. Consumed ONLY when the row was
+      // actually found and highlighted - a filtered/empty visible render keeps
+      // the highlight pending for the render that really shows it (codex #91).
+      if (visible && pendingHighlightId != null && justSavedEl) {
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        justSavedEl.classList.add('justSaved');
+        pendingHighlightId = null;
+      }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
@@ -817,7 +947,10 @@
       // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
-        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
+        // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
+        // artist (no hardcoded placeholder to duplicate the title) - omit the
+        // ' · ' separator entirely rather than showing a leading, artist-less dot.
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + '</div></div>';
@@ -1004,7 +1137,7 @@
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
-        body.appendChild(global.ListItem.render(s, {
+        body.appendChild(global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
@@ -1144,7 +1277,8 @@
       if (!s) return;
       if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
       if (el.pTitle) el.pTitle.textContent = s.t;
-      if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
+      // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
+      if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
       // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
       // persisted before that guard could still hold one - render a gentle
       // placeholder instead of crashing on s.seq.map.
@@ -1196,23 +1330,31 @@
     // transposer used to be two independent key notions and drifted; now a transpose
     // moves songKey.root so the readout, palette and solo scale all follow.
     function labelTonic() { return songKey.root || progression[0]; }
+    // ONE roman-label path for every Compose surface (progression slots, in-key
+    // palette, suggestion chips): mode-aware in a known key so labels match the
+    // Studio's diatonic numerals; chromatic romanFor vs the first chord otherwise.
+    function labelRoman(c) {
+      if (songKey.root) return romanInKey(c, songKey.root, songKey.mode);
+      var t = labelTonic();
+      return (t && global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, t) : '';
+    }
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
       // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
-      // sits on .composeWrap so it covers BOTH regions: the fixed top (starters + toggle)
-      // AND the scrolling chord list (in-key cells + all-chords tiles).
+      // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
+      // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
       var maxed = progression.length >= 8;
       var wrap = document.querySelector('.composeWrap');
       if (wrap) wrap.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans (via tonic), or the maxed cap. A mode toggle re-calls
-      // renderProg but changes none of these (romans are root-relative), so a rebuild
-      // would just flash the strip with identical content. Suggestions still refresh
-      // below (completions are mode-aware).
-      var sig = progression.join(',') + '|' + tonic + '|' + maxed;
+      // key-relative romans, or the maxed cap. labelRoman is MODE-aware (a mode
+      // toggle flips bVII <-> VII on the same chord), so the mode is part of the
+      // visible signature - omitting it left stale romans after a mode change
+      // (codex V2 high).
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
@@ -1221,10 +1363,8 @@
           var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
           slot.appendChild(d);
           // interval relative to the key — think I IV V, not shapes
-          if (global.Circle && global.Circle.romanFor) {
-            var rn = global.Circle.romanFor(c, tonic);
-            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
-          }
+          var rn = labelRoman(c);
+          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
           rm.onclick = function (e) {
             e.stopPropagation(); progression.splice(i, 1);
@@ -1240,7 +1380,6 @@
     }
     function addChord(c) {
       if (progression.length >= 8) return;
-      forceStarters = false;
       progression.push(c);
       // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
       // one, so the key chip + in-key palette light up without a key-panel trip. The
@@ -1284,7 +1423,6 @@
     // chord palette + solo scale below match what just got filled in.
     function loadProgression(degrees) {
       var root = songKey.root || "C";
-      forceStarters = false; // a progression is loaded now - leave the starters view
       // a named pattern sets an explicit Major key (patterns are major-diatonic)
       songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
@@ -1315,7 +1453,23 @@
       buildKeyPicker();
       // P3: the "Solo over a backing track" CTA appears once a key + progression
       // are established (the roadmap precondition for backing-track soloing).
-      if (el.soloBackingBtn) el.soloBackingBtn.hidden = !(songKey.root && progression.length);
+      if (el.soloBackingBtn) {
+        var showSolo = !!(songKey.root && progression.length);
+        el.soloBackingBtn.hidden = !showSolo;
+        // C1 (pilot UAT): songbook.css sets `.soloBackingBtn{display:block}`
+        // unconditionally - unlike every other hide-via-[hidden] element in this
+        // file (.chips, .keyFlyout, .composeRow, ...), it has no paired
+        // `.soloBackingBtn[hidden]{display:none}` rule, so the author stylesheet's
+        // display:block cascades over the UA [hidden] rule and the button stayed
+        // visible (and tappable) even with 0 or 1 chords and no key. That falsely
+        // "live" button is what read as a one-chord "dead tap" (C3): nothing
+        // happens because songKey.root is still null, not because the click
+        // handler has a >=2-chord gate (grepped - it doesn't; the >=2 threshold
+        // that DOES exist is inferKey's, and it's deliberate - one chord can't
+        // establish a key). Pin display inline (wins over any external
+        // stylesheet rule short of !important) so hidden actually hides it.
+        el.soloBackingBtn.style.display = showSolo ? '' : 'none';
+      }
     }
     function composeTpose(st) {
       if (!progression.length) return;
@@ -1325,6 +1479,12 @@
       // scale never drift from what's actually sounding. If a key center exists
       // (explicit pick, or one derived earlier) shift its root by the same delta;
       // otherwise derive it fresh from the now-transposed first chord.
+      // DELIBERATE (codex #90 V1): this first-chord fallback can establish a key
+      // from a ONE-chord progression - a transpose is an explicit act on the
+      // progression, and deriveProgressionKey applies the same chord-1 fallback
+      // at save time. The Solo button appearing after that is wanted (owner C3:
+      // one-chord solo should be easy), not a leak of the inferKey >=2 rule
+      // (which governs passive auto-inference only).
       if (songKey.root) {
         songKey.root = tpose(songKey.root, st);
       } else {
@@ -1479,7 +1639,7 @@
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
         if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
-            return { chord: c, roman: (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, keyRoot) : '' };
+            return { chord: c, roman: labelRoman(c) };
           });
           // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
@@ -1716,22 +1876,18 @@
       var chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
-      var rn = (global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, tonic) : '';
+      var rn = labelRoman(c);
       var html = '<span class="scName">' + escHTML(c) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
       return chip;
     }
-    // The "?" help button can FORCE the starter list to show even when a progression
-    // exists (so the starters stay reachable after you've begun). Cleared as soon as a
-    // chord is added/loaded so the box returns to its normal built-chord + next-chord view.
-    var forceStarters = false;
     function renderSuggest() {
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
-      if (progression.length === 0 || forceStarters) {
-        // Empty state (or "?" pressed): show common progressions so the user has
+      if (progression.length === 0) {
+        // Empty state: show common progressions so the user has
         // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
         // in with the In key / All content) so the fixed top region stays short.
         var lbl = document.createElement('div'); lbl.className = 'suggLbl';
@@ -1760,14 +1916,12 @@
         (completeBy[cmp.chord] = completeBy[cmp.chord] || []).push(cmp.name);
       });
 
-      var picks = suggestNext(progression);
-      // make sure any completing chord is actually in the list (the Markov ranker might
-      // not surface it), and float completions to the front so the highlight reads first.
-      Object.keys(completeBy).forEach(function (chord) {
-        var i = picks.indexOf(chord);
-        if (i >= 0) picks.splice(i, 1);
-      });
-      picks = Object.keys(completeBy).concat(picks).slice(0, 5);
+      // C4 (pilot UAT): the Markov map is key-AGNOSTIC; when a key is set the row
+      // filters to it, completions float first, capped at 5 - the whole merge is
+      // the pure mergeSuggestionRow (unit-tested; codex V3 wanted chip-row-level
+      // coverage the closure could not give).
+      var picks = mergeSuggestionRow(suggestNext(progression), Object.keys(completeBy),
+        songKey.root, songKey.mode);
       if (!picks.length) {
         var hint = document.createElement('p');
         hint.className = 'keyHint suggEmpty';
@@ -1797,6 +1951,11 @@
      * screen, above the fold" rule) - and torn down again the moment it's
      * dismissed, rather than reserving a permanent row. ---- */
     var composeRow = null, composeToast = null, toastTimer = null;
+    // One-shot id for the post-save discoverability scroll+highlight (B3 pilot
+    // UAT) - set by saveProgression right before the renderSongs() call that
+    // will actually paint the new row, consumed (cleared) on the next
+    // renderSongs() regardless of whether a matching row was found.
+    var pendingHighlightId = null;
     function ensureComposeUI() {
       if (!el.prog || !el.prog.parentNode) return false;
       if (!composeRow) {
@@ -1815,39 +1974,57 @@
     }
     function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
-    // itself after ~3s so it never permanently claims screen space.
-    function showComposeToast(msg, isErr) {
+    // itself after ~3s so it never permanently claims screen space - unless
+    // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
+    // seconds"), in which case it stays until the next explicit toast/clear.
+    function showComposeToast(msg, isErr, persist) {
       if (!ensureComposeUI()) return;
       clearTimeout(toastTimer);
       composeToast.textContent = msg;
-      composeToast.className = 'composeToast' + (isErr ? ' err' : '');
+      composeToast.className = 'composeToast' + (isErr ? ' err' : '') + (persist ? ' tap' : '');
       composeToast.hidden = false;
-      toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
+      // a persistent toast must still be dismissable (codex #91: no clear path
+      // could strand stale text indefinitely) - one tap hides it.
+      composeToast.onclick = function () { composeToast.hidden = true; };
+      if (!persist) toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
     }
-    // Inline name-entry row (replaces prompt()). done(name|null) fires once -
-    // the trimmed name on Save/Enter, or null on Cancel/Escape (same contract
-    // prompt() had: null == the user backed out).
+    // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
+    // fires once - the trimmed name on Save/Enter (plus whether the "Add to
+    // setlist" checkbox was checked), or null on Cancel/Escape (same contract
+    // prompt() had: null == the user backed out; addToSetlist is meaningless then).
     function openSaveNameRow(defaultName, done) {
-      if (!ensureComposeUI()) { done(defaultName); return; }
+      if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;
       input.setAttribute('aria-label', 'Progression name');
+      // G4/FORK-1 (B3 pilot UAT): a saved custom song is one tap from
+      // performance-ready without a second trip to the Library row's own
+      // setToggle - checked by default, same "add to setlist" mechanism as
+      // the practice-view setToggle (toggleSet), wired by the caller.
+      var setLabel = document.createElement('label');
+      setLabel.className = 'composeRowSetToggle';
+      var setCheck = document.createElement('input');
+      setCheck.type = 'checkbox'; setCheck.checked = true;
+      setCheck.setAttribute('aria-label', 'Add to setlist');
+      setLabel.appendChild(setCheck);
+      setLabel.appendChild(document.createTextNode('Add to setlist'));
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save';
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
       var settled = false;
-      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name); }
+      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name, setCheck.checked); }
       saveBtn.onclick = function () { finish(input.value.trim() || defaultName); };
       cancelBtn.onclick = function () { finish(null); };
       input.onkeydown = function (e) {
         if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim() || defaultName); }
         else if (e.key === 'Escape') { finish(null); }
       };
-      composeRow.appendChild(input); composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
+      composeRow.appendChild(input); composeRow.appendChild(setLabel);
+      composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
       input.focus();
     }
     // Inline two-choice row (replaces confirm()). onPick('save'|'skip') fires once.
@@ -1857,7 +2034,7 @@
       composeRow.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Save this progression so a video you attach in the Studio sticks?';
+      msg.textContent = 'Save to add a video backing track or skip to practice';
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
       var skipBtn = document.createElement('button');
@@ -1910,18 +2087,29 @@
       // saved song" choice. The chord edits + any re-key flow straight onto cs.
       if (savedComposeId && customById(savedComposeId)) {
         var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
-        if (upd) { showComposeToast('Updated ' + upd.t); done(upd); return; }
+        if (upd) { showComposeToast('Updated ' + upd.t, false, true); done(upd); return; }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
       }
-      openSaveNameRow('My progression', function (name) {
+      // S6 (B3 pilot UAT handoff): 'Original track' reads as a real title where
+      // 'My progression' read as placeholder text left behind. The ARTIST is left
+      // empty rather than mirrored to the same string (S5 finding: a hardcoded
+      // 'My progression' artist duplicated the title in the Studio's YouTube
+      // query once the title default changed too) - the Library row and the
+      // song/stage headers already omit an empty artist cleanly.
+      openSaveNameRow('Original track', function (name, addToSetlist) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
-          id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+          id: 'm' + Date.now(), t: name, a: '', y: new Date().getFullYear(), d: 'Mine',
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
-        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips();
+        // Post-save discoverability (B3): flag the new row for renderSongs() to
+        // scroll-to + highlight - whichever call actually paints it (below, or
+        // toggleSet's own renderSongs() when the checkbox added it to the set).
+        pendingHighlightId = cs.id;
+        if (addToSetlist) toggleSet(cs.id); else renderSongs();
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast('Saved to your Repertoire');
+        showComposeToast('Saved to your Repertoire', false, true);
         done(cs);
       });
     }
@@ -1972,6 +2160,17 @@
       // catalog id into every slot that held the fork (keep the song setlisted). A
       // plain custom delete has no original to fall back to, so drop those slots (null).
       if (remapSetlist(STATE.setlist, id, (victim && victim.forkOf) ? victim.forkOf : null)) saveSet();
+      // D3s (pilot UAT): a deleted song must not stay reachable via the active
+      // running-order queue or a stale STATE.current. Both delete call sites
+      // already switchTab('library') right after this returns, but switchTab
+      // pushes a NavHistory entry whose Back-button close callback replays
+      // applyTab('practice') -> renderPractice() - which would otherwise render
+      // the just-deleted song as a still-fully-formed ghost object (its own
+      // setToggle could even re-add the dead id back into the setlist). Purging
+      // the queue + clearing STATE.current here makes renderPractice's existing
+      // "!STATE.current -> empty state" guard the one that actually fires.
+      QUEUE.remove(id);
+      if (STATE.current && STATE.current.id === id) STATE.current = null;
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
@@ -2068,12 +2267,6 @@
     };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
-    // "?" help: re-show the starter progressions inside the progression box. Toggles off
-    // if already forced (and there's a progression to fall back to).
-    if (el.cHelp) el.cHelp.onclick = function () {
-      forceStarters = (progression.length === 0) ? true : !forceStarters;
-      renderSuggest();
-    };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
     // P3 (M3): "Solo over a backing track" opens the Practice Studio directly for the
@@ -2099,7 +2292,13 @@
         // - with the Edit button, since it's a real saved song. No duplicate.
         if (savedComposeId && customById(savedComposeId)) {
           saveProgression(function (saved) {
-            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+            // S5 handoff: seq + genre widen the payload so the Studio's custom
+            // search query (tracks.js) can enrich "Watch on YouTube" with the
+            // actual chords/genre instead of the bare title. Additive fields
+            // only - saved.genre is normally undefined for a Compose-saved
+            // progression (saveProgression sets no genre), which is fine: the
+            // consumer treats a falsy genre as "omit it".
+            if (saved) openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true, seq: saved.seq, genre: saved.genre });
           });
           return;
         }
@@ -2108,7 +2307,7 @@
           if (choice === 'save') {
             saveProgression(function (saved) {
               if (!saved) return; // user cancelled the inline name row
-              openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true });
+              openStudioCb({ id: saved.id, title: saved.t, artist: saved.a, key: saved.key, mode: saved.mode, custom: true, seq: saved.seq, genre: saved.genre });
             });
             return;
           }
@@ -2186,6 +2385,11 @@
     renderKeyView();
     renderProgPicks();
     renderProg();
+    // C1: renderKey() is what actually gates #soloBackingBtn's hidden state +
+    // inline display (see renderKey above) - nothing else in INIT calls it, so
+    // without this the button's very first paint relies on the CSS cascade bug
+    // this fix works around, showing it before any key/chord exists.
+    renderKey();
 
     // Give the chord pack a chance to wire its own UI (e.g. the Tune tab).
     if (pack && typeof pack.init === 'function') {
@@ -2269,6 +2473,9 @@
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    chordInKey: chordInKey,
+    romanInKey: romanInKey,
+    mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
     degreeOf: degreeOf,
     completions: completions,
