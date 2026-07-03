@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
+<!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
+<script src="../shared/theme.js"></script>
 <script>
-/* Set theme + accent hue before first paint to avoid a flash. Full accent
+/* Set theme + accent hue before first paint to avoid a flash. The full accent
    derivation runs in the Settings script below; the CSS light fallbacks
    (--accent-dim/deep/ink in :root[data-theme=light]) cover the brief gap. */
 (function(){try{
-  var t=localStorage.getItem('music.theme.v1');
-  if(t!=='light'&&t!=='dark'&&t!=='auto')t='auto';
-  var eff=(t==='light'||t==='dark')?t
-    :((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+  var stored=localStorage.getItem('music.theme.v1');
+  var prefersLight=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches);
+  var eff=window.Theme?Theme.effectiveTheme(stored,prefersLight)
+    :((stored==='light'||stored==='dark')?stored:(prefersLight?'light':'dark'));
   document.documentElement.setAttribute('data-theme',eff);
   var a=localStorage.getItem('music.accent.v1'); if(a){document.documentElement.style.setProperty('--accent',a);}
   var m=document.querySelector('meta[name="theme-color"]'); if(m)m.setAttribute('content',eff==='light'?'#eef1f4':'#0d0f12');
@@ -757,28 +759,17 @@
     try { var v = localStorage.getItem(THEME_KEY); if (v === 'light' || v === 'dark' || v === 'auto') return v; } catch (e) {}
     return 'auto';
   }
-  // 'auto' resolves against the OS setting; explicit light/dark win.
+  // 'auto' resolves against the OS setting; explicit light/dark win. (shared: theme.js)
   function effectiveTheme() {
-    var m = storedTheme();
-    if (m === 'auto') return (mql && mql.matches) ? 'light' : 'dark';
-    return m;
+    return Theme.effectiveTheme(storedTheme(), !!(mql && mql.matches));
   }
   // Apply the accent for the ACTIVE theme. Dark uses each swatch's hand-tuned
   // dim/deep (pixel-identical to pre-theme builds) with ink = the vivid accent.
   // Light re-derives pale dim/deep + a darkened, legible ink from the accent hue
-  // via color-mix, so ANY picked accent stays readable on light surfaces.
+  // via color-mix, so ANY picked accent stays readable on light surfaces. (shared: theme.js)
   function apply(t) {
-    var r = document.documentElement.style;
-    r.setProperty('--accent', t.a);
-    if (effectiveTheme() === 'light') {
-      r.setProperty('--accent-dim',  'color-mix(in srgb, ' + t.a + ' 30%, #ffffff)');
-      r.setProperty('--accent-deep', 'color-mix(in srgb, ' + t.a + ' 14%, #ffffff)');
-      r.setProperty('--accent-ink',  'color-mix(in srgb, ' + t.a + ' 62%, #0a1f1b)');
-    } else {
-      r.setProperty('--accent-dim', t.d);
-      r.setProperty('--accent-deep', t.p);
-      r.setProperty('--accent-ink', t.a);
-    }
+    var vars = Theme.accentVars(effectiveTheme(), t.a, t.d, t.p), r = document.documentElement.style;
+    for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) r.setProperty(k, vars[k]); }
   }
   function currentAccent() {
     try { var v = localStorage.getItem(ACCENT_KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
