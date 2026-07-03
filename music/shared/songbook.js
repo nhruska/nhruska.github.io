@@ -140,7 +140,7 @@
     }
     // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
     // `global` is this module's exports, so fall back to require.
-    var C = global.Circle || (typeof require === 'function' ? require('./circle.js') : null);
+    var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
     return (C && C.romanFor) ? C.romanFor(chord, root) : '';
   }
   // build a concrete chord list from 0-indexed scale degrees in a key (transposable).

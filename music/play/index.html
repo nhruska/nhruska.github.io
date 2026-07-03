@@ -332,15 +332,27 @@
     var openFreqs = profile.strings.map(function (s) { return s.f; });
     var templates = buildTemplates(profile.chords);
     var triadStyle = augmentTriadShapes(profile, templates);
+    // Enharmonic-tolerant profile lookup (FORK-4): the app requests canonical
+    // SHARP names (A#, D#m) while some profiles' hand-curated voicings are keyed
+    // with flats (mandolin's Bb). Try the exact name, then the root respelled,
+    // so the curated open shape wins over a movable approximation either way.
+    // The DISPLAY name stays whatever the caller passed.
+    var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
+    function profileVoicing(name) {
+      if (!profile.chords) return null;
+      if (profile.chords[name]) return profile.chords[name];
+      var m = /^([A-G][#b])(.*)$/.exec(name || '');
+      return (m && ENH[m[1]]) ? (profile.chords[ENH[m[1]] + m[2]] || null) : null;
+    }
     // explicit profile voicing first; else a movable shape; else null (name-only)
     function voicingFor(name) {
-      return (profile.chords && profile.chords[name]) || movableVoicing(templates, name) || null;
+      return profileVoicing(name) || movableVoicing(templates, name) || null;
     }
     // HSR Chain wants the CLOSED (movable) shape so I/IV/V show the same hand
     // shape slid up the neck. If the profile only has an open shape (no closed
     // template), fall back so the chord still renders.
     function closedVoicingFor(name) {
-      return movableVoicing(templates, name) || (profile.chords && profile.chords[name]) || null;
+      return movableVoicing(templates, name) || profileVoicing(name) || null;
     }
     // I-IV-V chain voicings.
     // On artifact-supported instruments (uke with the augmented C-shape/F-shape
