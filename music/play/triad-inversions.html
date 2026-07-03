@@ -14,33 +14,45 @@
      <script> below reads music.accent.v1 from localStorage and overrides if
      the user picked a different accent in the app. */
   --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c;
+  --accent-ink:var(--accent); --on-accent:#06201c;
+  /* chord-diagram (inline SVG) structural colors - flip per theme */
+  --dg-grid:#3a4150; --dg-nut:#e8ebf0; --dg-base:#9aa3b2; --dg-mute:#7a8294;
+}
+/* Light theme - <html data-theme="light"> set at boot from music.theme.v1
+   (mirrors the main app; accent + --accent-ink re-derived in the boot script). */
+:root[data-theme="light"]{
+  --bg:#eef1f4; --bg-2:#e3e8ee; --surface:#ffffff; --surface-2:#f2f5f8;
+  --line:#d6dce3; --line-strong:#bcc5cf;
+  --txt:#161b22; --txt-soft:#3f4854; --txt-dim:#5f6875; --txt-faint:#8a93a0; --ink-faint:#7a8494;
+  --accent-dim:#bfe6df; --accent-deep:#e7f6f2; --accent-ink:#0f766e;
+  --dg-grid:#aab4c0; --dg-nut:#2b3440; --dg-base:#5f6875; --dg-mute:#7a8494;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--txt);font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 24px);min-height:100dvh}
 .appBar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-.backLink{display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-strong)}
+.backLink{display:inline-flex;align-items:center;gap:6px;color:var(--accent-ink);text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-strong)}
 .backLink:active{background:var(--accent-deep)}
-.instBadge{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.66rem;font-weight:700;color:var(--accent);letter-spacing:.06em;padding:5px 8px;border-radius:7px;background:var(--accent-deep);border:1px solid var(--accent-dim)}
+.instBadge{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.66rem;font-weight:700;color:var(--accent-ink);letter-spacing:.06em;padding:5px 8px;border-radius:7px;background:var(--accent-deep);border:1px solid var(--accent-dim)}
 /* Instrument picker - same look as the main app's #profilePicker so the
    artifact's header reads as an extension of the Music shell. */
 .instPicker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer}
-.instPicker:focus{outline:none;border-color:var(--accent)}
+.instPicker:focus{outline:none;border-color:var(--accent-ink)}
 h1{font-size:1.18rem;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
-h1 .em{color:var(--accent)}
+h1 .em{color:var(--accent-ink)}
 .lede{color:var(--txt-soft);font-size:.84rem;line-height:1.5;margin:6px 0 14px}
 /* Key picker */
 .keyChips{display:flex;gap:5px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
 .keyChips::-webkit-scrollbar{display:none}
 .keyChip{flex:0 0 auto;min-width:46px;padding:8px 6px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--txt-soft);font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:.86rem;letter-spacing:.04em;cursor:pointer;text-align:center;transition:transform .08s,background .15s,border-color .15s,color .15s}
 .keyChip:active{transform:scale(.94)}
-.keyChip.on{background:var(--accent-deep);border-color:var(--accent);color:var(--accent)}
+.keyChip.on{background:var(--accent-deep);border-color:var(--accent-ink);color:var(--accent-ink)}
 /* Cycle */
 .keyBlock{margin:0 0 18px}
 .keyHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .keyHead h2{font-size:.98rem;margin:0;font-weight:800}
-.keyHead h2 .deg{color:var(--accent);font-weight:600;font-size:.74rem;margin-left:8px;letter-spacing:.04em}
-.posLbl{font-size:.78rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding:7px 12px;background:var(--accent-deep);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
+.keyHead h2 .deg{color:var(--accent-ink);font-weight:600;font-size:.74rem;margin-left:8px;letter-spacing:.04em}
+.posLbl{font-size:.78rem;font-weight:800;color:var(--accent-ink);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding:7px 12px;background:var(--accent-deep);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
 /* Step card is non-interactive - no click handler, no shake-on-tap, no
    .on selection state, no text selection. The diagram + info just sits
    and reads. user-select:none kills the long-press selection that was
@@ -52,7 +64,7 @@ h1 .em{color:var(--accent)}
    as "IA". Roman is monospace accent-colored, chord letter is sans-serif
    white, with a 14px gap. */
 .step .role{display:flex;align-items:baseline;gap:14px;margin-bottom:1px}
-.step .roman{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:1.4rem;color:var(--accent);letter-spacing:.06em;line-height:1}
+.step .roman{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;font-size:1.4rem;color:var(--accent-ink);letter-spacing:.06em;line-height:1}
 .step .chord{font-weight:800;font-size:1.15rem;color:var(--txt);letter-spacing:-.01em;line-height:1}
 .step .shape{font-size:.72rem;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.06em}
 .step .frets{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.68rem;color:var(--ink-faint);margin-top:2px}
@@ -65,7 +77,7 @@ h1 .em{color:var(--accent)}
    the pills were noise, not signal. */
 .transition{display:flex;align-items:flex-start;gap:8px;margin:2px 0 2px 14px;font-size:.76rem;color:var(--txt-dim);padding:6px 10px;border-left:2px solid var(--line-strong);line-height:1.4}
 .flipBox{background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5;color:var(--txt-soft)}
-.flipBox .head{margin-bottom:6px;color:var(--accent);font-weight:700}
+.flipBox .head{margin-bottom:6px;color:var(--accent-ink);font-weight:700}
 /* Explainers */
 .explainerLbl{font-size:.6rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px}
 .explainer{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
@@ -80,11 +92,11 @@ h1 .em{color:var(--accent)}
 .explainer .explainerBody li{margin:4px 0}
 .explainer .explainerBody strong{color:var(--txt)}
 .explainer .explainerBody .inst{margin:8px 0;padding:8px 12px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--accent-dim);font-size:.8rem}
-.explainer .explainerBody .inst.cur{border-left-color:var(--accent);background:var(--accent-deep)}
-.explainer .explainerBody .inst strong{color:var(--accent)}
+.explainer .explainerBody .inst.cur{border-left-color:var(--accent-ink);background:var(--accent-deep)}
+.explainer .explainerBody .inst strong{color:var(--accent-ink)}
 .fingerLegend{display:flex;gap:10px;margin-top:10px;font-size:.7rem;color:var(--txt-dim);flex-wrap:wrap}
 .fingerLegend span{display:inline-flex;align-items:center;gap:3px}
-.fingerLegend .swatch{display:inline-block;width:16px;height:16px;border-radius:50%;color:#06201c;font-weight:700;font-size:.64rem;text-align:center;line-height:16px;background:var(--accent);font-family:'Space Mono',monospace}
+.fingerLegend .swatch{display:inline-block;width:16px;height:16px;border-radius:50%;color:var(--on-accent);font-weight:700;font-size:.64rem;text-align:center;line-height:16px;background:var(--accent);font-family:'Space Mono',monospace}
 .dismiss{margin-top:10px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-dim);font-family:inherit;font-weight:600;font-size:.72rem;padding:6px 12px;border-radius:8px;cursor:pointer}
 .dismiss:active{background:var(--surface-2);transform:scale(.96)}
 .explainerFooter{display:flex;justify-content:center;margin:14px 0 6px}
@@ -95,9 +107,11 @@ h1 .em{color:var(--accent)}
 .fallback{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:16px;margin:14px 0;font-size:.84rem;line-height:1.5;color:var(--txt-soft)}
 .fallback strong{color:var(--txt)}
 .fallback .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.fallback .actions a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;color:var(--accent);text-decoration:none;font-size:.78rem;font-weight:600;background:var(--accent-deep);border:1px solid var(--accent-dim)}
+.fallback .actions a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;color:var(--accent-ink);text-decoration:none;font-size:.78rem;font-weight:600;background:var(--accent-deep);border:1px solid var(--accent-dim)}
 .fallback .actions a.alt{background:var(--surface-2);color:var(--txt-soft);border-color:var(--line-strong)}
 </style>
+<!-- Shared theme-resolution helpers (same source as the main app). -->
+<script src="../shared/theme.js"></script>
 </head>
 <body>
 <script>
@@ -124,10 +138,28 @@ h1 .em{color:var(--accent)}
       }
     }
   } catch (e) {}
-  var r = document.documentElement.style;
-  r.setProperty('--accent', active.a);
-  r.setProperty('--accent-dim', active.d);
-  r.setProperty('--accent-deep', active.p);
+  // Follow the app's Light/Dark/Auto choice (music.theme.v1) the same way the
+  // main shell does - via the shared theme.js. Auto tracks the OS live.
+  var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  function storedTheme() {
+    try { var v = localStorage.getItem('music.theme.v1'); if (v === 'light' || v === 'dark' || v === 'auto') return v; } catch (e) {}
+    return 'auto';
+  }
+  function paint() {
+    var eff = window.Theme ? Theme.effectiveTheme(storedTheme(), !!(mql && mql.matches))
+      : (function () { var s = storedTheme(); return (s === 'light' || s === 'dark') ? s : ((mql && mql.matches) ? 'light' : 'dark'); })();
+    document.documentElement.setAttribute('data-theme', eff);
+    var vars = window.Theme ? Theme.accentVars(eff, active.a, active.d, active.p)
+      : { '--accent': active.a, '--accent-dim': active.d, '--accent-deep': active.p, '--accent-ink': active.a };
+    var r = document.documentElement.style;
+    for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) r.setProperty(k, vars[k]); }
+  }
+  paint();
+  if (mql) {
+    var onOS = function () { if (storedTheme() === 'auto') paint(); };
+    if (mql.addEventListener) mql.addEventListener('change', onOS);
+    else if (mql.addListener) mql.addListener(onOS);
+  }
 })();
 </script>
 
@@ -487,17 +519,17 @@ function renderDiagram(frets, fingers) {
   const H = padY + showRows * sy + 6;
   let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="${-labelPad} 0 ${W} ${H}">`;
   if (base === 1) {
-    svg += `<rect x="${padX-1}" y="${padY-2}" width="${cols*sx+2}" height="3" fill="#e8ebf0" rx="1"/>`;
+    svg += `<rect x="${padX-1}" y="${padY-2}" width="${cols*sx+2}" height="3" fill="#e8ebf0" style="fill:var(--dg-nut)" rx="1"/>`;
   } else {
-    svg += `<text x="${padX-labelOff}" y="${padY+sy*0.6}" fill="#9aa3b2" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
+    svg += `<text x="${padX-labelOff}" y="${padY+sy*0.6}" fill="#9aa3b2" style="fill:var(--dg-base)" font-size="${baseFont}" font-family="'Space Mono',monospace" text-anchor="end">${base}</text>`;
   }
   for (let s = 0; s < n; s++) {
     const x = padX + s * sx;
-    svg += `<line x1="${x}" y1="${padY}" x2="${x}" y2="${padY + showRows * sy}" stroke="#3a4150" stroke-width="${sw}"/>`;
+    svg += `<line x1="${x}" y1="${padY}" x2="${x}" y2="${padY + showRows * sy}" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="${sw}"/>`;
   }
   for (let r = 0; r <= showRows; r++) {
     const y = padY + r * sy;
-    svg += `<line x1="${padX}" y1="${y}" x2="${padX + cols * sx}" y2="${y}" stroke="#3a4150" stroke-width="${sw}"/>`;
+    svg += `<line x1="${padX}" y1="${y}" x2="${padX + cols * sx}" y2="${y}" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="${sw}"/>`;
   }
   frets.forEach((fr, s) => {
     const x = padX + s * sx;
@@ -510,11 +542,11 @@ function renderDiagram(frets, fingers) {
         svg += `<text x="${x}" y="${y+3.5}" fill="var(--bg)" font-size="10" font-weight="700" font-family="'Space Mono',monospace" text-anchor="middle">${f}</text>`;
       }
     } else if (fr === 0) {
-      svg += `<circle cx="${x}" cy="${padY - markY}" r="${markR}" fill="none" stroke="#e8ebf0" stroke-width="1.4"/>`;
+      svg += `<circle cx="${x}" cy="${padY - markY}" r="${markR}" fill="none" stroke="#e8ebf0" style="stroke:var(--dg-nut)" stroke-width="1.4"/>`;
     } else {
       const mY = padY - markY, d = markR;
-      svg += `<line x1="${x-d}" y1="${mY-d}" x2="${x+d}" y2="${mY+d}" stroke="#7a8294" stroke-width="1.5"/>`;
-      svg += `<line x1="${x-d}" y1="${mY+d}" x2="${x+d}" y2="${mY-d}" stroke="#7a8294" stroke-width="1.5"/>`;
+      svg += `<line x1="${x-d}" y1="${mY-d}" x2="${x+d}" y2="${mY+d}" stroke="#7a8294" style="stroke:var(--dg-mute)" stroke-width="1.5"/>`;
+      svg += `<line x1="${x-d}" y1="${mY+d}" x2="${x+d}" y2="${mY-d}" stroke="#7a8294" style="stroke:var(--dg-mute)" stroke-width="1.5"/>`;
     }
   });
   svg += '</svg>';

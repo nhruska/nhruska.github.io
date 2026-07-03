@@ -84,11 +84,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{flex:0 0 auto;display:flex;gap:2px;padding:6px 6px calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);background:var(--bg-2);border-top:1px solid var(--line);}
-.tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:8px 2px 6px;border-radius:11px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
+.tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
 .tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);}
 .tabbar button .icn{font-size:1.05rem;line-height:1;}
-.tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+.tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;}
 .screen{display:none;}
 .screen.on{display:block;animation:fadeUp .26s cubic-bezier(.2,.7,.3,1);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
@@ -712,3 +712,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .perform.dim .pSpeed .psBtn{background:var(--stage-panel-2);border-color:var(--stage-line);color:var(--stage-ink-soft);}
 .perform.dim .pSpeed .psBtn.on{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 footer{display:none;}
+
+/* Triads & Inversions deep-dive: full-screen in-app modal (iframe of
+   triad-inversions.html), opened from the key fly-out. Mirrors the curate
+   overlay; the iframed page self-themes off music.theme.v1. */
+.invModal{position:fixed;inset:0;z-index:70;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.6);}
+.invModal.on{display:flex;}
+.invModal-box{position:relative;width:100%;max-width:600px;height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.5);}
+.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:38px;height:38px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.invModal-x:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
+.invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}

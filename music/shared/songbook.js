@@ -1834,6 +1834,32 @@
       invParams.push('mode=' + encodeURIComponent(keyMode));
       more.href = 'triad-inversions.html?' + invParams.join('&');
       more.textContent = 'Triads & Inversions →';
+      // Open the deep-dive as a full-screen in-app modal (iframe) instead of
+      // navigating away - mirrors the curate-videos overlay. The href stays as a
+      // no-JS / direct-open fallback; the iframed page self-themes off
+      // music.theme.v1, so it matches Light/Dark. Registers with NavHistory so
+      // Android back closes the modal, not the app.
+      more.onclick = function (e) {
+        e.preventDefault();
+        var url = more.getAttribute('href');
+        var ov = document.getElementById('invModal');
+        if (!ov) {
+          ov = document.createElement('div');
+          ov.id = 'invModal';
+          ov.className = 'invModal';
+          ov.innerHTML = '<div class="invModal-box" role="dialog" aria-modal="true" aria-label="Triads & Inversions">'
+            + '<button class="invModal-x" type="button" aria-label="Close">✕</button>'
+            + '<iframe class="invModal-frame" title="Triads & Inversions"></iframe></div>';
+          document.body.appendChild(ov);
+          var close = function () { ov.classList.remove('on'); var f = ov.querySelector('.invModal-frame'); if (f) f.removeAttribute('src'); };
+          ov._close = close;
+          ov.querySelector('.invModal-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else close(); };
+          ov.onclick = function (ev) { if (ev.target === ov) { if (window.NavHistory) window.NavHistory.dismiss(); else close(); } };
+        }
+        ov.querySelector('.invModal-frame').src = url;
+        ov.classList.add('on');
+        if (window.NavHistory) window.NavHistory.open('inversions', ov._close);
+      };
       el.keyView.appendChild(more);
     }
 
