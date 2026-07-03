@@ -11,5 +11,10 @@ Thumbs.db
 __pycache__/
 *.pyc
 
+# node deps for the local render-verify harness only (no-build site; not a real dep)
+node_modules/
+package.json
+package-lock.json
+
 # session files = local continuity, never commit to this PUBLIC repo (keep the rest of .claude visible to signal CC usage)
 .claude/sessions/
