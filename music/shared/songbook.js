@@ -474,7 +474,7 @@
   function libraryEmptyState(sel) {
     var key = sel && sel.key && sel.key !== 'all' ? sel.key : null;
     return {
-      message: key ? 'Nothing in your repertoire matches in ' + key + '.' : 'Nothing in your repertoire matches.',
+      message: key ? 'Nothing matches in ' + key + '.' : 'Nothing matches.',
       clearKey: !!key
     };
   }
