@@ -103,4 +103,38 @@ test('filter narrows by q, genre and key independently', function () {
   assert.strictEqual(R.filter(list, { genre: 'all', key: 'all', q: '' }).length, 2);
 });
 
+test('KEY_ORDER speaks canonical sharps only (FORK-4 extended to Library facet)', function () {
+  var flats = ['Db', 'Ab', 'Eb', 'Bb', 'Gb'];
+  R.KEY_ORDER.forEach(function (k) {
+    assert.strictEqual(flats.indexOf(k), -1, 'KEY_ORDER should not contain flat name: ' + k);
+  });
+  assert.deepStrictEqual(R.KEY_ORDER, ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']);
+});
+
+test('a record whose data says a flat key groups + labels under the canonical sharp facet', function () {
+  var list = R.build([], [{ title: 'Flat Key Track', artist: 'X', key: 'Bb', mode: 'major', genre: 'soul' }]);
+  assert.strictEqual(R.keyLabel(list[0]), 'A#', 'Bb-keyed record labels as A#');
+  var ks = R.keys(list);
+  assert.deepStrictEqual(ks, ['A#'], 'facet list holds the sharp name, not Bb');
+  assert.strictEqual(R.filter(list, { key: 'A#' }).length, 1, 'picking the A# chip matches the Bb-keyed record');
+  assert.strictEqual(R.filter(list, { key: 'Bb' }).length, 0, 'the raw flat spelling is not a valid facet selector');
+});
+
+test('keys() facet never contains a flat name across a mixed sharp/flat dataset', function () {
+  var list = R.build([], [
+    { title: 'A', artist: 'A', key: 'Db', mode: 'major', genre: 'x' },
+    { title: 'B', artist: 'B', key: 'G#', mode: 'minor', genre: 'x' },
+    { title: 'C', artist: 'C', key: 'Eb', mode: 'major', genre: 'x' }
+  ]);
+  var ks = R.keys(list);
+  var flats = ['Db', 'Ab', 'Eb', 'Bb', 'Gb'];
+  ks.forEach(function (kl) {
+    var root = /m$/.test(kl) ? kl.slice(0, -1) : kl;
+    assert.strictEqual(flats.indexOf(root), -1, 'facet label should not be flat-spelled: ' + kl);
+  });
+  assert.ok(ks.indexOf('C#') >= 0, 'Db normalized to C#: ' + ks.join(','));
+  assert.ok(ks.indexOf('G#m') >= 0, 'G#-minor label retained: ' + ks.join(','));
+  assert.ok(ks.indexOf('D#') >= 0, 'Eb normalized to D#: ' + ks.join(','));
+});
+
 run();
