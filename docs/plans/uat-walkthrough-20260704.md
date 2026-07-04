@@ -17,3 +17,9 @@
 - **U2:** "fretboard section links are all different sizes. I can expect equal sections." -> position-pager segments now equal-width (fixed in S-STUDIO-POLISH).
 - **U3:** "selecting a chord on the solo screen, the highlight dot bg a dark shade with black font on top - hard to read." -> per-class dot ink vars, both themes (fixed in S-STUDIO-POLISH).
 - **U4:** "two links at the bottom wrap the text. shorten the linked text so no wrap." -> link labels shortened (fixed in S-STUDIO-POLISH).
+
+## U8 - Progression strip: degrade + wrap instead of horizontal scroll (operator, 2026-07-04)
+
+**Operator verbatim-essence:** "when count chords over width, convert to existing smaller chord icon without chart. wrap chords to keep in view without scroll horiz."
+
+**Spec sketch (S-PROG-WRAP, Tier-0 relay - fires when S-COMPOSE-POLISH2 frees the region):** when the progression's chord count exceeds what fits one row at diagram-card size, the strip re-renders ALL entries as the existing compact chord token (name + roman, no diagram chart) and flex-WRAPS - no horizontal scroll. Tap/remove interactions unchanged. Threshold derived from measured width, not hardcoded count. A7 gate: wrapped height at 12 chords must hold the one-screen budget at 412x915 (compact tokens ~2 rows vs today's scrolling diagram row - measure). Amends the D-CAP12 note ("strip scrolls") to "strip degrades + wraps".

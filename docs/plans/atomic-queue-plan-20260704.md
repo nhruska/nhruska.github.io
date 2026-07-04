@@ -7,6 +7,7 @@
 | # | Item | Spec source | Fires when |
 |---|---|---|---|
 | 0.1 | **S-LAYOUT-SSOT** (operator directive, this date): single source of truth for chord-tile/diagram geometry (CSS vars + diagram.js metrics from ONE block) so layout constants cannot fork; + a targeted layout regression suite (tile/diagram measurements at 360/412/768/1440 px AND 1.0/1.3 font scale, overlap assertions) | This plan + U5 class history (#96, U5) | compose-polish2 lands (adjacent files) |
+| 0.1b | **S-PROG-WRAP** (U8, operator): progression strip degrades to the existing compact chord token (no chart) + flex-wraps past one row - kills horizontal scroll; amends D-CAP12's scroll note | uat U8 | compose-polish2 lands (same songbook region/css) |
 | 0.2 | S-DIAGRAM-PREF steps 1-2 (pref prompt via Notables + patterns render consuming the step-0 classifier) | short-specs + wiki page | step-0 + nudge + polish2 land (notables/diagram free) |
 | 0.3 | M-5 buildAdapter extraction -> shared/chord-pack-adapter.js + real tests | analysis A3 | any slot |
 | 0.4 | M-8a SUGG table -> shared module + FORK-4 spelling-agreement test | analysis A7 | any slot |
