@@ -234,4 +234,29 @@ test('S-BLUES canon matrix size: 12 roots x 3 solo scales = 36', function () {
     'expected 36 S-BLUES canon checks, ran ' + soloCanonChecked + ' - a root or scale vanished from SOLO_SCALE_CANON');
 });
 
+/* ---------- M-GUIDE W2: BLUES_KEY canon (I7/IV7/V7 harmonizing palette) ------
+ * Distinct from SOLO_SCALE_CANON above (the 6-note SOLO scale): this is the
+ * palette-kind KEY MODEL (Circle.bluesKey), 12 roots x literal 'C7 F7 G7'-style
+ * strings, hand-computed against the sharp pitch-class table (NOT read from
+ * circle.js's own ROOTS array), matching m-guide-ia-20260704.md section 1's
+ * palette table verbatim (professor-verified, all 12 cells). ------------- */
+var BLUES_KEY_CANON = {
+  C: 'C7 F7 G7', 'C#': 'C#7 F#7 G#7', D: 'D7 G7 A7', 'D#': 'D#7 G#7 A#7',
+  E: 'E7 A7 B7', F: 'F7 A#7 C7', 'F#': 'F#7 B7 C#7', G: 'G7 C7 D7',
+  'G#': 'G#7 C#7 D#7', A: 'A7 D7 E7', 'A#': 'A#7 D#7 F7', B: 'B7 E7 F#7'
+};
+var bluesKeyCanonChecked = 0;
+Object.keys(BLUES_KEY_CANON).forEach(function (root) {
+  bluesKeyCanonChecked++;
+  test('BLUES_KEY canon: ' + root + ' blues = ' + BLUES_KEY_CANON[root], function () {
+    var bk = Circle.bluesKey(root);
+    assert.strictEqual(bk.map(function (c) { return c.chord; }).join(' '), BLUES_KEY_CANON[root]);
+    assert.deepStrictEqual(bk.map(function (c) { return c.roman; }), ['I7', 'IV7', 'V7']);
+  });
+});
+test('BLUES_KEY canon matrix size: 12 roots x (3 chords + 3 romans) = 12', function () {
+  assert.strictEqual(bluesKeyCanonChecked, 12,
+    'expected 12 BLUES_KEY canon checks, ran ' + bluesKeyCanonChecked + ' - a root vanished from BLUES_KEY_CANON');
+});
+
 run();

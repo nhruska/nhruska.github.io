@@ -194,4 +194,45 @@ test('romanFor() labels any chord by its interval from the key (the first chord)
   assert.strictEqual(rf('???', 'C'), '');
 });
 
+/* ---------- M-GUIDE W2: BLUES_KEY / bluesKey / chordTones ---------- */
+test('bluesKey(root) derives I7/IV7/V7 at offsets 0/5/7 - full literal check for C', function () {
+  var bk = Circle.bluesKey('C');
+  assert.strictEqual(bk.length, 3);
+  assert.deepStrictEqual(bk, [
+    { roman: 'I7', chord: 'C7', root: 'C', quality: '7' },
+    { roman: 'IV7', chord: 'F7', root: 'F', quality: '7' },
+    { roman: 'V7', chord: 'G7', root: 'G', quality: '7' }
+  ]);
+});
+test('bluesKey: flat input normalizes (Bb -> A# blues palette)', function () {
+  assert.deepStrictEqual(names(Circle.bluesKey('Bb')).split(' '), names(Circle.bluesKey('A#')).split(' '));
+});
+test('bluesKey: unknown root -> [] (safe, matches soloScale/diatonic contract)', function () {
+  assert.deepStrictEqual(Circle.bluesKey('H'), []);
+});
+test('BLUES_KEY registry: label + soloDefault wire the Studio\'s default scale-on-pick', function () {
+  assert.strictEqual(Circle.BLUES_KEY.label, 'Blues');
+  assert.strictEqual(Circle.BLUES_KEY.soloDefault, 'blues');
+  assert.strictEqual(Circle.BLUES_KEY.degrees.length, 3);
+});
+test('chordTones: app-vocabulary suffixes (triad + maj7 +11 / other trailing 7 +10)', function () {
+  assert.deepStrictEqual(Circle.chordTones('C').sort(function (a, b) { return a - b; }), [0, 4, 7]);
+  assert.deepStrictEqual(Circle.chordTones('Cm').sort(function (a, b) { return a - b; }), [0, 3, 7]);
+  assert.deepStrictEqual(Circle.chordTones('Cdim').sort(function (a, b) { return a - b; }), [0, 3, 6]);
+  assert.deepStrictEqual(Circle.chordTones('Caug').sort(function (a, b) { return a - b; }), [0, 4, 8]);
+  assert.deepStrictEqual(Circle.chordTones('C7').sort(function (a, b) { return a - b; }), [0, 4, 7, 10]);
+  assert.deepStrictEqual(Circle.chordTones('Cmaj7').sort(function (a, b) { return a - b; }), [0, 4, 7, 11]);
+  assert.deepStrictEqual(Circle.chordTones('Cm7').sort(function (a, b) { return a - b; }), [0, 3, 7, 10]);
+});
+test('chordTones: unknown suffix falls back to the bare triad (never throws)', function () {
+  assert.deepStrictEqual(Circle.chordTones('Csus4').sort(function (a, b) { return a - b; }), [0, 4, 7]);
+});
+test('chordTones: unresolvable root -> [] (safe)', function () {
+  assert.deepStrictEqual(Circle.chordTones('Zmaj7'), []);
+  assert.deepStrictEqual(Circle.chordTones(''), []);
+});
+test('chordTones: transposes correctly for a non-C root (D7)', function () {
+  assert.deepStrictEqual(Circle.chordTones('D7').sort(function (a, b) { return a - b; }), [2, 6, 9, 0].sort(function (a, b) { return a - b; }));
+});
+
 run();

@@ -214,6 +214,11 @@
     if (m === 'aeolian' || m === 'minor') return 'aeolian';
     if (m === 'dorian') return 'dorian';
     if (m === 'mixolydian') return 'mixolydian';
+    // M-GUIDE W2: Blues is a harmonizing key model (I7/IV7/V7, songbook.js MODES.Blues),
+    // not a circle-of-fifths mode - resolve it explicitly before the major/minor
+    // family fallback so a Blues-keyed Compose progression opens the Studio on its
+    // own blues scale + BLUES_KEY palette (studioTheory below), not a coarsened major.
+    if (m === 'blues') return 'blues';
     return familyMode(normMode(mode));
   }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
@@ -225,6 +230,7 @@
     var m = String(mode == null ? '' : mode).trim().toLowerCase();
     if (m === 'minor' || m === 'aeolian') return key + 'm';
     if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
+    if (m === 'blues') return key + ' blues'; // M-GUIDE W2
     return key;
   }
   // Circle source: window.Circle in the browser (classic scripts). Under Node
@@ -258,7 +264,18 @@
   function studioTheory(key, mode) {
     var C = circleRef(), k = normRoot(key), rp = rootIndex(k);
     if (!C || rp < 0) return null;
-    var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
+    var scaleMode = resolveScaleMode(mode);
+    // M-GUIDE W2: Blues has no Circle.MODE_INFO/diatonic() entry (it is the solo
+    // 'blues' scale plus the separate BLUES_KEY I7/IV7/V7 palette, not a circle-
+    // of-fifths mode) - branch before the generic diatonic path below.
+    if (scaleMode === 'blues') {
+      var bnotes = C.soloScale(k, 'blues');
+      return {
+        key: k, scaleMode: scaleMode, rootPc: rp, notes: bnotes, pcs: notesToPcs(bnotes),
+        degrees: C.soloScaleDegrees('blues'), chords: C.bluesKey(k), label: 'Blues'
+      };
+    }
+    var notes = C.scale(k, scaleMode);
     return {
       key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
       degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
@@ -713,6 +730,11 @@
           { id: 'pentMinor', label: 'Pent minor' },
           { id: 'blues', label: 'Blues' }
         ];
+        // M-GUIDE W2: when the mode chip ITSELF is already Blues (th.scaleMode ===
+        // 'blues'), the standalone 'blues' chip would just re-select the same
+        // bundle under a redundant second button - drop it -> [Blues | Pent major
+        // | Pent minor].
+        if (th.scaleMode === 'blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
         var curId = 'mode';
         function render() {
           chipsEl.innerHTML = CHIPS.map(function (c) {

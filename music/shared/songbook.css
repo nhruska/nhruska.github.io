@@ -494,8 +494,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    readout) AND toggles the key/mode fly-out. FIXED WIDTH so "C Maj" and "G# Mixo" render
    the same size and the button bar never jumps as the key name changes; overflow ellipsis
    guards an unexpectedly long label. 'shifted' lights it when transposed off the built-in
-   key (mirrors the retired #cKey readout indicator). */
-.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
+   key (mirrors the retired #cKey readout indicator). M-GUIDE W2: 80->88px - Blues is NOT
+   abbreviated (MODE_SHORT.Blues = 'Blues', full word, by design per the IA), so "G# Blues"
+   needs 8 more px than the old "G# Mixo" longest-case to clear the chip-clip fold gate. */
+.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:88px;min-width:88px;max-width:88px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
 .keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.95);}
 .keyPickerCompact[hidden]{display:none;}
 .keyPickerCompact.shifted{color:var(--on-accent);background:var(--accent);border-color:var(--accent-ink);}
