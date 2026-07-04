@@ -19,17 +19,18 @@
    * .bt-card/.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta/.bt-open/.bt-why item rules
    * were retired here to keep one source of truth for the Library list item. */
   .bt-more{margin:14px 0 6px;}
+  /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - full-width button-styled oddball. */
   .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
-    font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;
     transition:border-color .15s,color .15s;}
   .bt-more-btn:hover{border-color:var(--accent-ink);color:var(--accent-ink);}
   .bt-more-btn .ar{color:var(--accent-ink);}
   /* curate form */
   .bt-add{margin:12px 0 6px;}
   .bt-add-toggle{background:transparent;border:1px solid var(--line);color:var(--txt-dim);font-family:inherit;
-    font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:10px;cursor:pointer;}
+    font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:var(--r-btn-sm);cursor:pointer;}
   .bt-add-toggle:hover{color:var(--accent-ink);border-color:var(--line-strong);}
-  .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;
+  .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
     padding:13px;display:flex;flex-direction:column;gap:9px;}
   .bt-add-panel[hidden]{display:none;}
   .bt-in{width:100%;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--txt);
@@ -38,8 +39,10 @@
   .bt-in.bad{border-color:var(--bad);}
   .bt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
   .bt-add-actions{display:flex;gap:9px;align-items:center;}
+  /* M-DESIGN-ENFORCE E3: 10px -> var(--r-btn) (11px) - a primary full-width Save action,
+     same bucket as .btn.red/.bt-add-save's songbook.css siblings, not the compact icon bucket. */
   .bt-add-save{flex:1;background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
-    font-size:.86rem;padding:11px;border-radius:10px;cursor:pointer;}
+    font-size:.86rem;padding:11px;border-radius:var(--r-btn);cursor:pointer;}
   .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
     font-size:.82rem;cursor:pointer;padding:8px;}
   /* in-studio add/edit-video-URL editor */
@@ -48,22 +51,23 @@
     color:var(--txt-dim);margin-bottom:8px;}
   .bt-st-urled-row{display:flex;gap:8px;align-items:center;}
   .bt-st-urled-row .bt-in{flex:1;}
+  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact button oddballs. */
   .bt-st-urled-save{background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
-    font-size:.82rem;padding:10px 14px;border-radius:9px;cursor:pointer;white-space:nowrap;}
+    font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;white-space:nowrap;}
   .bt-st-urled-clear{background:transparent;border:1px solid var(--line-strong);color:var(--txt-dim);
-    font-family:inherit;font-weight:600;font-size:.8rem;padding:9px 12px;border-radius:9px;cursor:pointer;white-space:nowrap;}
+    font-family:inherit;font-weight:600;font-size:.8rem;padding:9px 12px;border-radius:var(--r-btn-sm);cursor:pointer;white-space:nowrap;}
   .bt-st-urled-clear:hover{color:var(--bad);border-color:var(--bad);}
   /* curation queue */
   .bt-curate-bar{margin:6px 0 2px;}
   .bt-curate-bar:empty{display:none;}
   .bt-curate-btn{width:100%;background:transparent;border:1px solid var(--line);color:var(--txt-dim);
-    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:10px;cursor:pointer;}
+    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;}
   .bt-curate-btn:hover{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-curate-btn.on{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-queue[hidden]{display:none;}
   .bt-qhead{font-size:1.05rem;font-weight:700;margin:8px 0 4px;}
   .bt-qhint{color:var(--txt-dim);font-size:.82rem;line-height:1.6;margin-bottom:14px;}
-  .bt-qcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:11px;
+  .bt-qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;margin-bottom:11px;
     display:flex;flex-direction:column;gap:9px;}
   .bt-qrow{display:flex;align-items:baseline;gap:10px;justify-content:space-between;}
   .bt-qtitle{font-weight:700;font-size:.95rem;}
@@ -99,8 +103,9 @@
     border-radius:14px;overflow:hidden;}
   .bt-pl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;}
   .bt-pl-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact close-button oddball. */
   .bt-pl-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
+    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:var(--r-btn-sm);cursor:pointer;flex:0 0 auto;}
   .bt-pl-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
   .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);}
   .bt-pl-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
@@ -122,8 +127,9 @@
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
+  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact close-button oddball. */
   .bt-st-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
+    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:var(--r-btn-sm);cursor:pointer;flex:0 0 auto;}
   .bt-st-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
@@ -135,7 +141,7 @@
   .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
     font-weight:700;font-size:.92rem;color:var(--accent-ink);text-decoration:none;
     border:1px solid var(--accent-dim);background:var(--accent-deep);
-    padding:10px 16px;border-radius:10px;min-height:44px;}
+    padding:10px 16px;border-radius:var(--r-btn-sm);min-height:44px;}
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -154,8 +160,10 @@
      of horizontal-scrolling: exactly 4 short labels fit one row at 412px, wrap
      is just the safety net. */
   .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
+  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - a genuine pill-shaped
+     chip; converges onto the .chip family's canonical radius (songbook.css). */
   .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
-    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
   .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
@@ -259,7 +267,7 @@
   .cofLabel-rel{fill:var(--accent);}
   .cofLabel-nb{fill:var(--txt-soft);}
   .cofPanel:not(:empty){margin:6px 0 12px;}
-  .cofPanelInner{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
+  .cofPanelInner{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;}
   .cofKeyName{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;}
   .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
   .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
@@ -275,8 +283,9 @@
   /* modes layer + interval degrees (Phase 2.x) */
   .cofModes{display:flex;gap:5px;overflow-x:auto;margin:2px 0 11px;padding-bottom:2px;scrollbar-width:none;}
   .cofModes::-webkit-scrollbar{display:none;}
+  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - see .bt-st-scalechip above. */
   .cofModeChip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
-    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
   .cofModeChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .cofScale{display:flex;gap:4px;margin:0 0 9px;}

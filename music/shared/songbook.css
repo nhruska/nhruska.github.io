@@ -34,6 +34,29 @@
   --brass:#7fb8ad;
   --brass:color-mix(in srgb, var(--accent) 62%, var(--txt-dim));
   --brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
+  /* M-DESIGN-ENFORCE E1 (U10 camouflage finding, engineering-wiki/systems/
+     ssot-registry.md): a GUIDANCE surface for Notables.renderBanner() cards,
+     distinct from --accent-deep/--accent-dim (the SELECTION-surface pair
+     .listItem.inSet/.setUndo/etc. use). Computed off --txt-dim (a genuinely
+     NEUTRAL, accent-INDEPENDENT hue direction) rather than --brass - an
+     earlier draft tried --brass, but --brass is ITSELF an accent-mix, so at
+     any accent hue its diluted tint converges back toward the accent-deep
+     family once mixed further into --surface-2 (confirmed too subtle in a
+     live Playwright screenshot, light theme especially, where every pastel
+     surface trends toward white). --txt-dim carries zero accent hue, so
+     --guide-bg reads as "neutral app chrome talking", never "you selected
+     this", at ANY user-chosen accent color, not just the default teal.
+     Declared ONCE here (not re-declared under the light override below) -
+     same lazy per-theme technique as --brass itself: recomputes automatically
+     because --txt-dim/--surface-2/--line-strong already differ per theme.
+     See .notableBanner below (the ONE consumer; the law requires every
+     consumer inherit this one primitive, not a per-instance restyle) - its
+     left accent stripe (var(--brass)) supplies the "branded" touch instead,
+     since a decorative 3px stripe carries no text-contrast obligation.
+     Screenshot-verified side-by-side against .listItem.inSet at 412x915,
+     both themes (PR body). */
+  --guide-bg:color-mix(in srgb, var(--txt-dim) 16%, var(--surface-2));
+  --guide-line:color-mix(in srgb, var(--txt-dim) 55%, var(--line-strong));
   /* text/icon placed ON an --accent fill (dark, legible on EVERY accent incl.
      light ones like amber/coral) - same in light + dark. Must be a literal, not
      var(--on-accent): a self-reference resolves empty and falls back to inherited
@@ -50,6 +73,39 @@
   --dg-grid:#3a4150;--dg-nut:#e8ebf0;--dg-base:#9aa3b2;
   --dg-dot:#2a3340;--dg-dot-line:#4b5563;--dg-note:#cbd5e1;
   --dg-mute:#7a8294;--dg-fret-lbl:#6b7280;
+}
+
+/* ===== M-DESIGN-ENFORCE E3: radius token block =====
+ * THE ELEMENT CONSISTENCY LAW (music/CLAUDE.md; engineering-wiki/systems/
+ * ssot-registry.md) names a radius scatter (7-13px oddballs) among BUTTON-
+ * family components as a design-enforce finding (component-conventions.md's
+ * "KNOWN SCATTER" line). These five tokens are the SSOT for radius BY
+ * SEMANTIC ROLE - a component that is one of these roles must consume the
+ * var, never a re-hardcoded literal. Guarded by test/consistency-lint.test.js.
+ * Theme-independent (radius doesn't flip light/dark), so ONE bare block.
+ * VALUES are the actual per-class MAJORITY found by inventory (not a fixed
+ * default) - --r-card is 13px (not 14) because 6 of 8 card-shaped consumers
+ * (.listItem, .tCanvasWrap, .tCard, .bt-add-panel, .bt-qcard, .cofPanelInner)
+ * already agree on 13; --r-chip-pill is 18px by USAGE weight (`.chip` is the
+ * one reused-everywhere primitive per ui-primitives.md, vs 2 narrow 16px
+ * clones), not raw rule-count. See the PR body's migration table for the
+ * full inventory + before/after values.
+ * Scope note (deliberate, not an oversight): this pass tokenizes + migrates
+ * the flagged BUTTON scatter (7-13px -> --r-btn/--r-btn-sm), the pill-shaped
+ * chip oddballs (--r-chip-pill), and the 14/15px card oddballs (--r-card).
+ * It does NOT force-migrate: chord-diagram tiles (S-LAYOUT-SSOT's own
+ * geometry domain, a different concern from radius); modal/overlay boxes
+ * (component-conventions.md documents 14-16px as their OWN accepted range,
+ * distinct from --r-card's card range); or text-input radii beyond the one
+ * consumer that already matched (component-conventions.md documents 9-12px
+ * as an ACCEPTED range for .search/.bt-in, not a scatter finding) - all
+ * three explicitly out of scope for this wave. */
+:root{
+  --r-btn:11px;       /* primary/secondary buttons + segmented-control CONTAINERS (.modeSwitch/.viewToggle/.transposeChip) */
+  --r-btn-sm:10px;    /* icon/compact buttons + segmented-control INNER buttons */
+  --r-chip-pill:18px; /* pill-shaped chip/token controls (the .chip family primitive) */
+  --r-card:13px;      /* card/panel surfaces incl. .listItem (NOT modals/overlays - those stay their own 14-16px range) */
+  --r-input:10px;     /* text-input controls (see scope note above: not force-applied to every input) */
 }
 
 /* Light theme  -  <html data-theme="light"> (set at boot by the Settings
@@ -82,12 +138,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 .appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:11px;font-size:1.05rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
+.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.05rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
 .ab-btn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{flex:0 0 auto;display:flex;gap:2px;padding:6px 6px calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);background:var(--bg-2);border-top:1px solid var(--line);}
-.tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
+.tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:var(--r-btn-sm);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
 .tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);}
 .tabbar button .icn{font-size:1.05rem;line-height:1;}
@@ -106,7 +162,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .chips[hidden]{display:none;}
 .chips::-webkit-scrollbar{display:none;}
-.chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:18px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
+.chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:var(--r-chip-pill);cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Library head row: search (flex) + the +Add entry point, one row. The old
@@ -128,7 +184,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * stack items identically; per-segment differences are only the leading number
  * (set), the trailing affordance (add vs reorder/remove), and the action label. */
 .songs,.bt-results,#setBody{display:flex;flex-direction:column;gap:9px;}
-.listItem{position:relative;display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;cursor:pointer;transition:transform .08s,border-color .15s,background .15s;}
+.listItem{position:relative;display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;cursor:pointer;transition:transform .08s,border-color .15s,background .15s;}
 .listItem:active{transform:scale(.99);background:var(--surface-2);}
 .listItem.inSet{border-color:var(--accent-dim);background:var(--accent-deep);}
 /* B3 post-save discoverability: a brief accent pulse on the row a save just
@@ -186,26 +242,35 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #setEdit.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
 /* One-tap key-filter clearing link inside the zero-results empty state. */
-.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.empty .emptyClear{display:block;margin:12px auto 0;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 18px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:var(--on-accent);}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 
-.detail{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px;}
+/* M-DESIGN-ENFORCE E3: 15px -> var(--r-card) (13px) - the card-radius majority (see the
+   :root token block above); a 2px reduction on the song-detail panel, imperceptible next
+   to its 16px content padding. */
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;}
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
 .detailHead .ti{flex:1;min-width:0;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
-.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:10px;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-.viewToggle{display:flex;margin:8px 0 13px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
-.viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
+.viewToggle{display:flex;margin:8px 0 13px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:4px;}
+.viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .viewToggle button:active{transform:scale(.96);}
-.viewToggle button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
+/* D-SELECTED-ACCENT (M-DESIGN-ENFORCE E2, shipped): converges onto the SAME
+   accent-fill grammar as .chip.on/.modeSwitch button.on below - was the
+   surface-2 + box-shadow-ring look the law flagged as a duplicate selected-
+   state grammar (engineering-wiki/systems/ssot-registry.md Duplication
+   watchlist; component-conventions.md's Segmented controls row). No
+   border-color override needed: the base rule has border:none. */
+.viewToggle button.on{background:var(--accent);color:var(--on-accent);}
 /* queue nav: prev / position / next — shown in Practice when a setlist is loaded */
 .queueNav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;}
-.queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
+.queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
 .queueNav button:active{transform:scale(.94);background:var(--accent);color:var(--on-accent);}
 .queueNav button:disabled{opacity:.32;cursor:default;color:var(--txt-dim);}
 .queueNav .qPos{font-family:'Space Mono',monospace;font-weight:700;font-size:.74rem;color:var(--txt-dim);letter-spacing:.04em;}
@@ -213,12 +278,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * Ultra-narrow screens (<350px) give the segmented its own line rather than clip labels. */
 .practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 14px;}
 @media (max-width:349px){.practiceRow{flex-wrap:wrap;}.practiceRow .modeSwitch{flex-basis:100%;}}
-.modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:3px;}
-.modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:3px;}
+.modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}
-.modeSwitch button.on{background:var(--surface-2);color:var(--txt);box-shadow:0 0 0 1px var(--line-strong);}
-.transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:4px;}
-.transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:8px;cursor:pointer;transition:background .15s,transform .08s,color .15s;}
+/* D-SELECTED-ACCENT (M-DESIGN-ENFORCE E2, shipped 2026-07-04): this is the
+   NAMED offender in component-conventions.md's Segmented controls row -
+   surface-2 + box-shadow ring, DIFFERENT from .chip.on's accent-fill grammar
+   even though both mean "this is the current selection." Converges here onto
+   the SAME accent-fill language (background:accent, color:on-accent) as
+   .chip.on / #setEdit.on / .iconBtn.setBtn.on / .pSpeed .psBtn.on - ONE
+   selected-state grammar app-wide, per the law. No border-color override
+   needed: the base rule has border:none (unlike .chip, which does). */
+.modeSwitch button.on{background:var(--accent);color:var(--on-accent);}
+.transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:4px;}
+.transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,transform .08s,color .15s;}
 .transposeChip button:active{transform:scale(.86);background:var(--accent);color:var(--on-accent);}
 /* D2s: ch (not px) so the reserved width tracks the monospace glyph itself -
    a min-width in px only covers a fixed pixel count and lets a wider label
@@ -251,7 +324,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
 .chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:7px;padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
-.btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:11px;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
+.btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
@@ -278,7 +351,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tunerWrap{display:flex;flex-direction:column;height:100%;min-height:0;}
 .tunerWrap > *{flex:0 0 auto;}
 .tunerWrap .sub{font-size:.74rem;color:var(--txt-dim);margin-bottom:8px;}
-.tCanvasWrap{background:var(--bg-2);border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:6px;position:relative;overflow:hidden;}
+.tCanvasWrap{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:10px;margin-bottom:6px;position:relative;overflow:hidden;}
 #tCanvas{display:block;width:100%;height:70px;}
 .tCanvasLbl{position:absolute;top:9px;left:13px;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--txt-dim);letter-spacing:.14em;}
 /* Reference tones: 4-string profiles fill one row (basis = 1/4 width); 5+
@@ -298,11 +371,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    the whole tab fills the viewport with no scroll. overflow-y:auto is a
    safety net for very short viewports (landscape phone), not the normal
    path. */
-.tCard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px;margin-top:9px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
+.tCard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px;margin-top:9px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
 .tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
 .tCard .row{display:flex;gap:8px;flex-wrap:wrap;}
-.tBtn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-family:inherit;font-weight:600;font-size:.8rem;padding:10px 15px;border-radius:10px;cursor:pointer;transition:transform .08s,background .15s;}
+.tBtn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-family:inherit;font-weight:600;font-size:.8rem;padding:10px 15px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s;}
 .tBtn:active{transform:scale(.95);}
 .tBtn.ghost{background:transparent;color:var(--accent-ink);}
 .relStep{display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
@@ -310,7 +383,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .relStep .rn{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent-ink);font-size:1.2rem;width:22px;text-align:center;flex:0 0 auto;}
 .relStep .rt{flex:1;font-size:.8rem;line-height:1.45;color:var(--txt-soft);}
 .relStep .rt b{color:var(--txt);font-weight:700;}
-.relStep .rp{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono';font-weight:700;font-size:.86rem;width:44px;height:44px;border-radius:10px;cursor:pointer;flex:0 0 auto;transition:transform .08s,background .15s,color .15s;}
+.relStep .rp{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono';font-weight:700;font-size:.86rem;width:44px;height:44px;border-radius:var(--r-btn-sm);cursor:pointer;flex:0 0 auto;transition:transform .08s,background .15s,color .15s;}
 .relStep .rp:active{transform:scale(.88);background:var(--accent);color:var(--on-accent);}
 .micBox{margin-top:4px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;}
 /* Start-mic: a real one-handed touch target (>=56px tall, full row width via
@@ -658,7 +731,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Segmented "In key | All" toggle: ONE control (in the FIXED #catChips) that swaps the
    scrolling chord list's content. A pill pair, full-width, each segment >=44px tall. */
 #catChips{margin-bottom:8px;}
-.chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;}
+/* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - was an oddball against the
+   sibling segmented-control containers (.modeSwitch/.viewToggle), both already 11px. */
+.chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
 .chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
 .chordSegBtn:active{transform:scale(.98);}
@@ -680,7 +755,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
 /* "+ all chords" expander: a quiet full-width control under the in-key lead */
-.allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
+/* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - a full-width button-styled
+   toggle; migrated with the other button-family oddballs. */
+.allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:var(--r-btn);cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
 .allChordsToggle:active{transform:scale(.98);}
 .allChordsToggle.open{border-style:solid;border-color:var(--accent-ink);color:var(--txt);}
 .allChordsToggle .acHint{font-weight:600;font-size:.66rem;color:var(--txt-dim);letter-spacing:.02em;}
@@ -693,7 +770,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    tappable on phone; shown only when the pack supports startFret (see key-explorer.js). */
 .scaleBoxWrap{margin-bottom:2px;}
 .scalePosCtrl{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 10px;}
-.scalePosBtn{min-width:42px;min-height:42px;border:1px solid var(--line-strong);border-radius:10px;background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.95rem;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,transform .08s,opacity .15s;}
+.scalePosBtn{min-width:42px;min-height:42px;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.95rem;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,transform .08s,opacity .15s;}
 .scalePosBtn:active{transform:scale(.94);}
 .scalePosBtn:disabled{opacity:.32;cursor:default;}
 .scalePosLbl{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--txt-dim);letter-spacing:.03em;min-width:76px;text-align:center;}
@@ -741,7 +818,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    otherwise cover the input and Save/Cancel (F10). max-height + internal
    scroll is the guard if a short viewport still can't fit it. */
 .composeRow.asModal{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10vh);transform:translateX(-50%);z-index:75;width:calc(100% - 32px);max-width:420px;max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 20px 60px var(--shadow);}
-.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.85rem;}
+.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:var(--r-input);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.85rem;}
 .composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
 .composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
@@ -792,7 +869,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    when space is tight, so nothing overflows. */
 .ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
 /* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
-.ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:9px;}
+/* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact icon-button oddball. */
+.ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:var(--r-btn-sm);}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
 /* S-CLEARGUARD: visual-only resequence (DOM/tab order unchanged - this app is
@@ -830,7 +908,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #catChips .chip{display:inline-flex;align-items:center;min-height:44px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
-.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:10px;font-size:1.1rem;cursor:pointer;color:var(--txt);}
+.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
 /* Chord-expand grid fills the screen per orientation (one screen, no scroll):
    portrait = 2 per row, rows scroll; landscape = 4 across in a single row that
    fits the height. SVG diagrams scale to their cell via the viewBox. */
@@ -846,7 +924,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .maxGrid{grid-template-columns:repeat(4,1fr);align-content:center;gap:12px;overflow:hidden;}
   .maxGrid .bigC svg{width:auto;height:auto;max-width:100%;max-height:62vh;}
 }
-.bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:8px;transition:transform .08s,background .15s;}
+/* M-DESIGN-ENFORCE E3: 14px -> var(--r-card) (13px) - the card-radius majority. */
+.bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:var(--r-card);padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
 .bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent-ink);}
 @media (orientation:landscape){.bigC .nm{font-size:1.35rem;}}
@@ -855,9 +934,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex:0 0 auto;margin-bottom:6px;}
 .pTop .pos{font-family:'Space Mono',monospace;color:var(--txt-dim);font-size:.8rem;font-weight:700;}
 .pTop .tools{display:flex;gap:6px;align-items:center;}
-.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:9px;font-family:'Space Mono';font-weight:700;font-size:.9rem;cursor:pointer;}
+/* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact icon-button oddballs. */
+.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:.9rem;cursor:pointer;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
-.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:9px;font-size:1.05rem;cursor:pointer;}
+.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:var(--r-btn-sm);font-size:1.05rem;cursor:pointer;}
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.05;flex:0 0 auto;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);margin:2px 0 3px;flex:0 0 auto;}
 .pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
@@ -932,7 +1012,7 @@ footer{display:none;}
 .invModal{position:fixed;inset:0;z-index:70;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.6);}
 .invModal.on{display:flex;}
 .invModal-box{position:relative;width:100%;max-width:600px;height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.5);}
-.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:38px;height:38px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:38px;height:38px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .invModal-x:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}
 
@@ -941,12 +1021,28 @@ footer{display:none;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
- * produced by Notables.renderBanner() in shared/notables.js. Same accent-
- * card look as .setUndo (accent-deep bg, accent-dim border) but with its
- * own class - a notable is shown-once-forever, not a scoped undo toast, so
- * it stays a separate, clearly-owned block. No consumer renders one yet;
- * S-FIRSTRUN / S-WHYNOTE / S-ROMAN mount it where they land. */
-.notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:10px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
+ * produced by Notables.renderBanner() in shared/notables.js.
+ * M-DESIGN-ENFORCE E1 (U10 camouflage finding, shipped): this USED TO share
+ * .setUndo's accent-deep/accent-dim SELECTION-surface look - exactly the
+ * "guidance banner reads as a selected row" camouflage the operator UAT
+ * flagged (engineering-wiki/systems/ssot-registry.md Duplication watchlist;
+ * component-conventions.md Findings register). Now uses the dedicated
+ * --guide-bg/--guide-line GUIDANCE tokens (declared in the :root block
+ * above, computed off --txt-dim - a genuinely accent-INDEPENDENT hue
+ * direction, not the --accent-deep/-dim selection family) PLUS a --brass
+ * left accent stripe for a touch of theme personality without tinting the
+ * whole surface, so a notable reads as "the app talking" at a glance,
+ * distinct from an in-setlist selected row (.listItem.inSet, still
+ * accent-deep/-dim). Screenshot-verified side-by-side against .listItem.inSet
+ * at 412x915, both themes (PR body). The dismiss icon uses --txt-soft, not
+ * --accent-ink - keeps the control neutral like the rest of the banner
+ * (contrast-checked >=4.5:1 in both themes; --accent-ink measured BELOW the
+ * floor against --guide-bg in light theme during verification). Own class
+ * (not folded into .setUndo) so a notable stays shown-once-forever, not a
+ * scoped undo toast - the two never fork by accident. Live consumers today:
+ * S-FIRSTRUN (songbook.js), S-WHYNOTE (tracks.js), S-BACKUP-NUDGE +
+ * S-DIAGRAM-PREF (play/index.html); S-ROMAN queued, not yet wired. */
+.notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--guide-bg);border:1px solid var(--guide-line);border-left:3px solid var(--brass);border-radius:11px;padding:10px 12px 10px 10px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
 .notableBanner-body{flex:1;min-width:0;line-height:1.4;}
-.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
-.notableBanner-x:active{transform:scale(.9);}
+.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--guide-line);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.notableBanner-x:active{transform:scale(.9);color:var(--txt);}

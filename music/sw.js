@@ -96,7 +96,7 @@
 // shared/songbook.css change again (the binary full/compact split becomes a
 // count-driven 3-stage density ladder: full <=4, fill-row 5-6, grid6 7-12).
 // No new/removed CORE paths.
-var CACHE = 'music-v103';
+var CACHE = 'music-v104';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
