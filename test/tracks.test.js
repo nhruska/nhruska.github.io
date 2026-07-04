@@ -204,6 +204,57 @@ test('studioTheory: unresolvable key returns null (caller falls back to player/s
   assert.strictEqual(T.studioTheory('H', 'major'), null);
 });
 
+/* ---------- S-BLUES: soloBundle (Studio scale-chip swap, SOLO LAYER ONLY) ---------- */
+test("soloBundle: scaleId 'mode' is identical to studioTheory (no reimplementation)", function () {
+  var th = T.studioTheory('A', 'minor');
+  var bundle = T.soloBundle('A', 'minor', 'mode');
+  assert.deepStrictEqual(bundle, { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label });
+});
+test('soloBundle: a falsy scaleId also delegates to studioTheory (default chip)', function () {
+  var th = T.studioTheory('G', 'major');
+  assert.deepStrictEqual(T.soloBundle('G', 'major', null), { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label });
+});
+test('soloBundle: pentMajor/pentMinor/blues route through Circle.soloScale, not studioTheory', function () {
+  var pm = T.soloBundle('A', 'major', 'pentMajor');
+  assert.deepStrictEqual(pm.notes, Circle.soloScale('A', 'pentMajor'));
+  assert.deepStrictEqual(pm.degrees, Circle.soloScaleDegrees('pentMajor'));
+  assert.strictEqual(pm.label, 'Pent major');
+  assert.strictEqual(pm.pcs.length, 5);
+
+  var mn = T.soloBundle('A', 'minor', 'pentMinor');
+  assert.deepStrictEqual(mn.notes, Circle.soloScale('A', 'pentMinor'));
+  assert.strictEqual(mn.label, 'Pent minor');
+  assert.strictEqual(mn.pcs.length, 5);
+
+  var bl = T.soloBundle('A', 'minor', 'blues');
+  assert.deepStrictEqual(bl.notes, ['A', 'C', 'D', 'D#', 'E', 'G']); // regime-A: sharp-spelled blue note
+  assert.strictEqual(bl.label, 'Blues');
+  assert.strictEqual(bl.pcs.length, 6);
+});
+test('soloBundle: unresolvable key -> null for every scaleId, including mode', function () {
+  assert.strictEqual(T.soloBundle('H', 'major', 'mode'), null);
+  assert.strictEqual(T.soloBundle('H', 'major', 'blues'), null);
+});
+test('soloBundle: unknown scaleId -> null (safe; never throws)', function () {
+  assert.strictEqual(T.soloBundle('A', 'minor', 'nonsense'), null);
+});
+test('soloScaleFraming: pent scales interpolate family; blues has its own fixed line; mode has none', function () {
+  assert.strictEqual(T.soloScaleFraming('pentMajor', 'major'),
+    'Five safe notes - one movable box shape; the same pattern works over every major mode here.');
+  assert.strictEqual(T.soloScaleFraming('pentMinor', 'minor'),
+    'Five safe notes - one movable box shape; the same pattern works over every minor mode here.');
+  assert.strictEqual(T.soloScaleFraming('blues'),
+    'Pent minor plus the b5 blue note - a passing color to bend through, not sit on.');
+  assert.strictEqual(T.soloScaleFraming('mode'), null);
+});
+test('harmonization-isolation: chords-in-key are identical before and after any solo-scale selection', function () {
+  var before = T.studioTheory('A', 'minor').chords;
+  // Exercise every non-mode scaleId - none of them may read or mutate diatonic()/chords.
+  ['pentMajor', 'pentMinor', 'blues'].forEach(function (scaleId) { T.soloBundle('A', 'minor', scaleId); });
+  var after = T.studioTheory('A', 'minor').chords;
+  assert.deepStrictEqual(after, before, 'chords-in-key must be untouched by any solo-scale chip tap');
+});
+
 /* ---------- overlay re-key migration (catalog-key corrections must not orphan
  * a user's curated urls: trackKey embeds the key, so the stored key moves) ---------- */
 test('migrateUrls re-keys a legacy overlay entry and deletes the old key', function () {
