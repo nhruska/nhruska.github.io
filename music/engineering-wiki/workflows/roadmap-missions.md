@@ -37,7 +37,7 @@ S-TONES (spelled chord tones), S-ROMAN + S-KEYPOLICY (roman-style setting + tie-
 
 | Item | Note |
 |---|---|
-| M3 songs/tracks full merge | Sprint-2 PRIMARY; fresh session; post-#98; operator pre-answers finder-rehome 5A/5B (5A recommended) |
+| M3 songs/tracks full merge | Sprint-2 PRIMARY; fresh session; post-#98; finder-rehome RESOLVED: 5A (operator 2026-07-04) - dissolve finder, curation to +Add/per-item edit, circle panel into Studio |
 | S-DIAGRAM-PREF | Expertise-adaptive display setting; spec home: [ux-philosophy/expertise-adaptive-display.md](../ux-philosophy/expertise-adaptive-display.md) |
 | S-CHIPS + S-EASYFILTER | fold into M3's unified filter bar (44px floor + progressive vocabulary disclosure) |
 | S-INVERSIONS | golden coverage for inversion/slash-bass spelling, post-#98 |
