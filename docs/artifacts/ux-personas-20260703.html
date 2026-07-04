@@ -59,6 +59,26 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 .foot{margin-top:16px;color:var(--dim);font-size:.68rem;border-top:1px solid var(--line);padding:12px 2px 0}
 .tag{display:inline-block;border:1px solid var(--brand-primary);color:var(--brand-secondary);border-radius:6px;padding:0 6px;font-size:.66rem;margin:1px 4px 1px 0}
 .pos{color:var(--ok)}.neg{color:var(--hot)}
+/* HUD additions */
+.lights{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 2px;font-size:.7rem;color:var(--dim)}
+.lt{display:inline-flex;align-items:center;gap:5px}
+.lamp{width:10px;height:10px;border-radius:50%;display:inline-block}
+.l-ok{background:#2E9E63;box-shadow:0 0 6px rgba(46,158,99,.6)}
+.l-run{background:var(--warn);box-shadow:0 0 6px rgba(240,180,41,.5)}
+.l-off{background:var(--line)}
+.pill{display:inline-block;border-radius:20px;padding:1px 9px;font-size:.64rem;font-weight:800;letter-spacing:.04em;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}
+.pl-task{background:var(--brand-primary)}
+.pl-decide{background:#6B46C1}
+.pl-pr{background:#2E9E63}
+.pl-doc{background:var(--brand-tertiary)}
+.pl-fix{background:#C2402F}
+.pl-next{background:var(--dim)}
+.fc{border:1px solid var(--line);border-left:4px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--card);padding:8px 10px;margin:6px 0;font-size:.8rem}
+.fc .fh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
+.fc .fw{color:var(--dim);font-size:.72rem;font-weight:600}
+.fc .fd{color:var(--dim);font-size:.76rem;margin-top:2px}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
 </style></head><body>
 
 <header class="brand-header">
@@ -76,25 +96,36 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 
 <!-- ============ ABOVE THE FOLD: OPERATOR COCKPIT ============ -->
 <div class="cockpit">
-<div class="state"><span style="color:var(--ok)">NOTHING NEEDED FROM YOU</span> - plan approved, 4 builder agents are implementing it now</div>
-<div style="font-size:.8rem;color:var(--dim);margin:4px 0">You approved the plan (choice A: no library-merge work this sprint). Next time I need you: reviewing the finished draft PRs. Steer anytime: reply on telegram or here.</div>
-<div class="keys" style="margin-top:8px">
-<span class="key" title="Compose Clear gets undo; bigger safer remove buttons">BUILDING: safety fixes</span>
-<span class="key" title="1008 theory checks become permanent tests">BUILDING: theory tests</span>
-<span class="key" title="show-once hint system">BUILDING: hint infra</span>
-<span class="key" title="setlist clear scroll-guard">BUILDING: setlist guard</span>
+<div class="state"><span style="color:var(--ok)">NOTHING NEEDED NOW</span> <span style="color:var(--dim);font-weight:400;font-size:.8rem">- your next 3 touchpoints are forecast below so you can plan ahead</span></div>
+<div class="lights">
+<span class="lt"><span class="lamp l-run"></span>BUILD 3 running / 3 landed</span>
+<span class="lt"><span class="lamp l-ok"></span>GATES none pending</span>
+<span class="lt"><span class="lamp l-ok"></span>TESTS 19/19 green</span>
+<span class="lt"><span class="lamp l-off"></span>WAVE 2 sleeping (needs #98)</span>
 </div>
-<div style="font-size:.78rem;color:var(--dim)">Then: 2 stacked items (first-run cues, "why" hint) - 3 more wait for <a href="https://github.com/nhruska/nhruska.github.io/pull/98">spelling PR #98</a> to merge. Full plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v2</a>.</div>
+
+<div style="font-size:.72rem;font-weight:700;color:var(--brand-secondary);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 2px">Your next touchpoints (forecast)</div>
+
+<div class="fc"><div class="fh"><span class="pill pl-you">1 - REVIEW + MERGE</span><span class="fw">tonight, when builders finish (~1h)</span></div>
+<div class="fd">4-6 draft PRs land with V&amp;V + previews. You review and merge IN THE LISTED ORDER (hint-infra base merges first; I retarget the stacked ones after). Prep needed: none - PR bodies carry everything. Est: 15-25 min on phone via previews.</div></div>
+
+<div class="fc"><div class="fh"><span class="pill pl-you">2 - DECIDE</span><span class="fw">anytime before sprint 2 (no rush)</span></div>
+<div class="fd">Two queued decisions you can answer via telegram whenever: (a) merge PR #98 when its own review completes - that wakes wave 2 (3 more items build automatically); (b) M3 finder-rehome 5A vs 5B for sprint 2 (council recommends 5A).</div></div>
+
+<div class="fc"><div class="fh"><span class="pill pl-you">3 - REVIEW</span><span class="fw">tomorrow-ish</span></div>
+<div class="fd">claude-config draft PR: the core-workflow primitives encoding today's interview answers (core-sdlc protocol, quality profiles, active stance, telegram convention, /mission command). Review at leisure - nothing blocks on it.</div></div>
+
+<div style="font-size:.78rem;color:var(--dim);margin-top:6px">Plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v2 (approved)</a> - building now: safety fixes, first-run cues, "why" hint - landed: theory tests, hint infra, setlist guard.</div>
 <div class="dots">
-<span class="dot d-done" title="interview + spec">0</span><span class="dot d-done" title="personas">1</span><span class="dot d-done" title="theory audit + professor">2</span><span class="dot d-done" title="walkthroughs">2b</span><span class="dot d-done" title="council + chair">3</span><span class="dot d-done" title="adversarial review">4</span><span class="dot d-done" title="YOUR GATE - approved">5</span><span class="dot d-run" title="building">6</span>
+<span class="dot d-done">0</span><span class="dot d-done">1</span><span class="dot d-done">2</span><span class="dot d-done">2b</span><span class="dot d-done">3</span><span class="dot d-done">4</span><span class="dot d-done">5</span><span class="dot d-run">6</span>
 <span style="margin-left:6px">all decisions made - build phase running</span>
 </div>
 </div>
 <div class="chips">
-<div class="chip"><div class="n">4/9</div><div class="l">items building now</div></div>
-<div class="chip"><div class="n">0</div><div class="l">theory bugs (2 verdicts)</div></div>
-<div class="chip"><div class="n">12/12</div><div class="l">review findings fixed in plan</div></div>
-<div class="chip"><div class="n">1</div><div class="l">tap-hazard P0 being fixed</div></div>
+<div class="chip"><div class="n">3/6</div><div class="l">wave-1 items landed</div></div>
+<div class="chip"><div class="n">19/19</div><div class="l">test files green</div></div>
+<div class="chip"><div class="n">0</div><div class="l">blockers on you</div></div>
+<div class="chip"><div class="n">3</div><div class="l">forecast touchpoints</div></div>
 </div>
 
 <!-- ============ TABS ============ -->
@@ -111,29 +142,33 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 </div>
 
 <div class="pane on" id="p-time">
-<h2>Mission timeline (relative order, one afternoon)</h2>
+<h2>Mission timeline (relative order, one day)</h2>
+<div class="legend"><span class="pill pl-you">YOU</span><span class="pill pl-task">TASK</span><span class="pill pl-decide">DECIDE</span><span class="pill pl-pr">PR</span><span class="pill pl-doc">DOC</span><span class="pill pl-fix">FIX</span><span class="pill pl-next">NEXT</span></div>
 <div class="wrapx"><table>
 <tr><th>#</th><th>Type</th><th>What</th><th>Why it was the right call</th></tr>
-<tr><td>1</td><td><span class="tag">YOU</span></td><td>Mission incantation typed on phone (/goal-interview + the vision block)</td><td>Fuzzy target -&gt; interview, not guesswork</td></tr>
-<tr><td>2</td><td><span class="tag">YOU</span></td><td>Interview round 1: 4 answers (end state, personas = your friends, one hard gate, deep budget)</td><td>Shared vision up front - prevents rework downstream</td></tr>
-<tr><td>3</td><td><span class="tag">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">Goal spec</a> committed (9 decisions, 5 principles)</td><td>Mission survives reboots/handoffs - state lives in git</td></tr>
-<tr><td>4</td><td><span class="tag">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">4 personas locked</a></td><td>Real expected users, deduped against prior HF work</td></tr>
-<tr><td>5</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit built + run</a>: 1008 checks, 0 bugs, 128 spelling deltas</td><td>Deterministic (zero-LLM) verification first - can't hallucinate</td></tr>
-<tr><td>6</td><td><span class="tag">FIX</span></td><td>Hung reviewer call diagnosed -&gt; DISCOVERED sibling <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> already building key-aware spelling</td><td>Diagnosing instead of blind-retrying surfaced parallel work; prevented a planning collision</td></tr>
-<tr><td>7</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a> (GPT-5.5): "NONE FOUND" + caught the audit's one soft spot</td><td>The verifier itself needed independent attack (your D4 directive)</td></tr>
-<tr><td>8</td><td><span class="tag">PR</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden trap cases posted to #98</a></td><td>One session's research became another session's test fixtures</td></tr>
-<tr><td>9</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">J1-J4 walkthroughs</a>: live probe found the P0 (Clear wipes work, no guard)</td><td>Robot probes + geometry beat opinion - every claim source-verified</td></tr>
-<tr><td>10</td><td><span class="tag">YOU</span></td><td>Core-workflow directive captured + "3 y" (M3 eligibility)</td><td>Typed-once -&gt; encoded forever (compound engineering)</td></tr>
-<tr><td>11</td><td><span class="tag">TASK</span></td><td>Council: 4 persona-lens seats in parallel (~3.5 min)</td><td>Independent perspectives before synthesis; unanimous no-M3 emerged, not imposed</td></tr>
-<tr><td>12</td><td><span class="tag">YOU</span></td><td>Interview round 2 (triage powers, gate semantics, profiles, telegram format)</td><td>Answers feed the reusable workflow system, not just this mission</td></tr>
-<tr><td>13</td><td><span class="tag">DECIDE</span></td><td>Fable chair synthesis: 8+1 plan, contested items ruled</td><td>Single accountable synthesis beats list-merging; premium model only at the judgment moment</td></tr>
-<tr><td>14</td><td><span class="tag">TASK</span></td><td>Adversarial review of the PLAN: REQUEST_CHANGES, 12 findings</td><td>Attacking the plan costs spec edits; attacking code later costs rework</td></tr>
-<tr><td>15</td><td><span class="tag">DECIDE</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">v2 amendments</a>: undo contract, stack protocol, named #98 seam, fold gate</td><td>Every finding became a binding, testable spec line</td></tr>
-<tr><td>16</td><td><span class="tag">YOU</span></td><td>GATE: approved with a single keystroke ("1" = approve + M3-A)</td><td>All context pre-staged -&gt; the human decision took one character</td></tr>
-<tr><td>17</td><td><span class="tag">TASK</span></td><td>Wave 1a: 4 builder agents launched in isolated worktrees (safety fixes, theory tests, hint infra, setlist guard)</td><td>File-ownership map from A2 makes parallel builds collision-free</td></tr>
-<tr><td>-</td><td><span class="tag">NEXT</span></td><td>Wave 1b stacks on hint infra -&gt; draft PRs + previews -&gt; your review; wave 2 wakes when #98 merges</td><td>-</td></tr>
+<tr><td>1</td><td><span class="pill pl-you">YOU</span></td><td>Mission incantation typed on phone (/goal-interview + the vision block)</td><td>Fuzzy target -&gt; interview, not guesswork</td></tr>
+<tr><td>2</td><td><span class="pill pl-you">YOU</span></td><td>Interview round 1: 4 answers (end state, personas = your friends, one hard gate, deep budget)</td><td>Shared vision up front - prevents rework downstream</td></tr>
+<tr><td>3</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">Goal spec</a> committed (9 decisions, 5 principles)</td><td>Mission survives reboots/handoffs - state lives in git</td></tr>
+<tr><td>4</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">4 personas locked</a></td><td>Real expected users, deduped against prior HF work</td></tr>
+<tr><td>5</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit built + run</a>: 1008 checks, 0 bugs, 128 spelling deltas</td><td>Deterministic (zero-LLM) verification first - can't hallucinate</td></tr>
+<tr><td>6</td><td><span class="pill pl-fix">FIX</span></td><td>Hung reviewer call diagnosed -&gt; DISCOVERED sibling <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> already building key-aware spelling</td><td>Diagnosing instead of blind-retrying surfaced parallel work; prevented a planning collision</td></tr>
+<tr><td>7</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a> (GPT-5.5): "NONE FOUND" + caught the audit's one soft spot</td><td>The verifier itself needed independent attack (your D4 directive)</td></tr>
+<tr><td>8</td><td><span class="pill pl-pr">PR</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden trap cases posted to #98</a></td><td>One session's research became another session's test fixtures</td></tr>
+<tr><td>9</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">J1-J4 walkthroughs</a>: live probe found the P0 (Clear wipes work, no guard)</td><td>Robot probes + geometry beat opinion - every claim source-verified</td></tr>
+<tr><td>10</td><td><span class="pill pl-you">YOU</span></td><td>Core-workflow directive captured + "3 y" (M3 eligibility)</td><td>Typed-once -&gt; encoded forever (compound engineering)</td></tr>
+<tr><td>11</td><td><span class="pill pl-task">TASK</span></td><td>Council: 4 persona-lens seats in parallel (~3.5 min)</td><td>Independent perspectives before synthesis; unanimous no-M3 emerged, not imposed</td></tr>
+<tr><td>12</td><td><span class="pill pl-you">YOU</span></td><td>Interview round 2 (triage powers, gate semantics, profiles, telegram format)</td><td>Answers feed the reusable workflow system, not just this mission</td></tr>
+<tr><td>13</td><td><span class="pill pl-decide">DECIDE</span></td><td>Fable chair synthesis: 8+1 plan, contested items ruled</td><td>Single accountable synthesis beats list-merging; premium model only at the judgment moment</td></tr>
+<tr><td>14</td><td><span class="pill pl-task">TASK</span></td><td>Adversarial review of the PLAN: REQUEST_CHANGES, 12 findings</td><td>Attacking the plan costs spec edits; attacking code later costs rework</td></tr>
+<tr><td>15</td><td><span class="pill pl-decide">DECIDE</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">v2 amendments</a>: undo contract, stack protocol, named #98 seam, fold gate</td><td>Every finding became a binding, testable spec line</td></tr>
+<tr><td>16</td><td><span class="pill pl-you">YOU</span></td><td>GATE: approved with a single keystroke ("1" = approve + M3-A)</td><td>All context pre-staged -&gt; the human decision took one character</td></tr>
+<tr><td>17</td><td><span class="pill pl-task">TASK</span></td><td>Wave 1a: 4 builder agents launched in isolated worktrees (safety fixes, theory tests, hint infra, setlist guard)</td><td>File-ownership map from A2 makes parallel builds collision-free</td></tr>
+<tr><td>18</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-golden-a">theory canon suite</a> (1008 assertions; self-tested by deliberate corruption)</td><td>The verifier proves it can fail before we trust its pass</td></tr>
+<tr><td>19</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-notables">hint infra</a> (single-slot arbitration, backup-safe storage) -&gt; wave 1b stacked on it</td><td>Infra first, consumers stack - the A1 protocol in action</td></tr>
+<tr><td>20</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-setx">setlist guard</a> (movement-cancel + 44px, geometry-diff verified, one honest out-of-scope finding logged)</td><td>Scope discipline: found a pre-existing gap, documented it, didn't smuggle the fix</td></tr>
+<tr><td>-</td><td><span class="pill pl-next">NEXT</span></td><td>3 builders finish -&gt; draft PRs + previews -&gt; <strong>your touchpoint 1</strong> (review+merge in listed order); wave 2 wakes on #98</td><td>-</td></tr>
 </table></div>
-<div class="card">Interaction economics so far: <strong>5 operator touchpoints</strong> (1 incantation, 2 interview rounds, 1 directive, 1 single-keystroke gate) carried the whole mission; everything else ran autonomously with advisory pings.</div>
+<div class="card">Interaction economics so far: <strong>~8 operator touchpoints</strong> (1 incantation, 2 interview rounds, 1 directive, 1 single-keystroke gate) carried the whole mission; everything else ran autonomously with advisory pings.</div>
 </div>
 
 <div class="pane" id="p-plan">
