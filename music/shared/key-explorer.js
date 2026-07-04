@@ -98,13 +98,20 @@
    *   pack    - the instrument adapter (needs pack.scaleDiagram)
    *   rootPc  - pitch-class index of the tonic
    *   pcs     - scale pitch classes
-   *   opts: label (optional 'Solo over it ...'), frets (default 7)
+   *   opts: label (optional 'Solo over it ...'), frets (default 7), tones
+   *         (optional; M-GUIDE W3a chord-tone targeting - see diagram.js's
+   *         Diagram.scale() opts.tones contract)
    * No-ops (returns null) when the pack can't render a scale or pcs is empty.
    * When the pack exposes pack.scaleDiagram.supportsStart, also renders a compact
    * back/forward position control beneath the diagram so the player can walk the
    * scale up the neck. Packs that don't set the flag keep the classic 3-arg
    * scaleDiagram call and get no control; they do share the boxWrap/diagBox
-   * wrapper structure (needed so flex-row hosts lay out identically). */
+   * wrapper structure (needed so flex-row hosts lay out identically).
+   *
+   * The returned boxWrap ALSO carries setTones(tones) (M-GUIDE W3a): re-renders
+   * ONLY diagBox with new opts.tones, preserving startFret - use this instead of
+   * a full renderScale() re-call when just toggling a chord target on/off, so
+   * the player's position-walk isn't reset by the re-mark. */
   function renderScale(container, pack, rootPc, pcs, opts) {
     opts = opts || {};
     if (!(pack && typeof pack.scaleDiagram === 'function' && pcs && pcs.length)) return null;
@@ -115,6 +122,7 @@
     var F = opts.frets || defaultFrets(pack);
     var supportsStart = !!pack.scaleDiagram.supportsStart;
     var startFret = 0;
+    var curTones = opts.tones || null;
     // boxWrap is a COLUMN holding the diagram + (optionally) the position control,
     // so the control always sits BENEATH the fretboard regardless of the host
     // container's layout - the Studio's .bt-st-scale is a flex row, which would
@@ -130,9 +138,9 @@
     function renderBox() {
       diagBox.innerHTML = '';
       // Packs without the supportsStart flag get the classic 3-arg call - no
-      // startFret leaks into a signature that never declared it.
+      // startFret/tones leak into a signature that never declared them.
       diagBox.appendChild(supportsStart
-        ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret, opts.names)
+        ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret, opts.names, curTones)
         : pack.scaleDiagram(rootPc, pcs, F));
     }
     renderBox();
@@ -157,6 +165,9 @@
       ctrl.appendChild(back); ctrl.appendChild(lbl); ctrl.appendChild(fwd);
       boxWrap.appendChild(ctrl);
     }
+    // M-GUIDE W3a: re-render just diagBox with new tones - startFret (closure
+    // var above) is untouched, so a target toggle never resets the position walk.
+    boxWrap.setTones = function (tones) { curTones = tones || null; renderBox(); };
     return boxWrap;
   }
 

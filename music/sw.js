@@ -11,7 +11,7 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v82';
+var CACHE = 'music-v83';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -23,6 +23,9 @@ var CORE = [
   // Precaching keeps it available offline alongside the rest of the play surface.
   './play/triad-inversions.html',
   './shared/nav-history.js',
+  // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
+  // order) - both W3a's Studio and W3b's Compose solo chips call it.
+  './shared/solo-guide.js',
   './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js', './shared/candidates.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/notables.js',

@@ -41,8 +41,8 @@ function run() {
 /* ---- recording fake pack ---- */
 function fakePack(supportsStart) {
   var calls = [];
-  function scaleDiagram(rootPc, pcs, frets, startFret) {
-    calls.push({ args: arguments.length, frets: frets, startFret: startFret });
+  function scaleDiagram(rootPc, pcs, frets, startFret, names, tones) {
+    calls.push({ args: arguments.length, frets: frets, startFret: startFret, tones: tones });
     return makeEl('svg');
   }
   if (supportsStart) scaleDiagram.supportsStart = true;
@@ -104,6 +104,40 @@ test('pack WITHOUT supportsStart: classic 3-arg call, no control rendered', func
   var boxWrap = KE.renderScale(host, pack, 0, [0, 2, 4], { frets: 7 });
   assert.strictEqual(pack.calls[0].args, 3, 'startFret must not leak into a 3-arg pack contract');
   assert.strictEqual(findByClass(boxWrap, 'scalePosCtrl'), null, 'no position control without the flag');
+});
+
+/* ---------- M-GUIDE W3a: opts.tones passthrough + boxWrap.setTones() ---------- */
+test('opts.tones is forwarded to pack.scaleDiagram as the 6th positional arg', function () {
+  var pack = fakePack(true), host = makeEl('div');
+  var tones = { byPc: { 0: 'root' }, rubPc: null };
+  KE.renderScale(host, pack, 0, [0, 2, 4], { frets: 7, tones: tones });
+  assert.strictEqual(pack.calls[0].tones, tones);
+});
+test('boxWrap.setTones(tones) re-renders diagBox ONLY, preserving startFret (no position reset)', function () {
+  var pack = fakePack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 2, 4, 5, 7, 9, 11], { frets: 7 });
+  var p = ctrlParts(boxWrap);
+  p.fwd.onclick(); // walk to startFret 5
+  assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, 5);
+  assert.strictEqual(typeof boxWrap.setTones, 'function');
+  var newTones = { byPc: { 2: 'chord' }, rubPc: 1 };
+  boxWrap.setTones(newTones);
+  var last = pack.calls[pack.calls.length - 1];
+  assert.strictEqual(last.startFret, 5, 'setTones must not reset the position walk');
+  assert.strictEqual(last.tones, newTones);
+  // label + button state should also be unaffected by a tones-only re-render
+  assert.strictEqual(p.lbl.textContent, 'frets 5-11');
+});
+test('boxWrap.setTones(null) clears tones on the next renderBox call', function () {
+  var pack = fakePack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 2, 4], { frets: 7, tones: { byPc: { 0: 'root' }, rubPc: null } });
+  boxWrap.setTones(null);
+  assert.strictEqual(pack.calls[pack.calls.length - 1].tones, null);
+});
+test('pack WITHOUT supportsStart: tones never leaks into the classic 3-arg call', function () {
+  var pack = fakePack(false), host = makeEl('div');
+  KE.renderScale(host, pack, 0, [0, 2, 4], { frets: 7, tones: { byPc: {}, rubPc: null } });
+  assert.strictEqual(pack.calls[0].args, 3);
 });
 
 test('the SHIPPED adapter declares supportsStart (source contract - fake packs alone would let its removal ship green)', function () {

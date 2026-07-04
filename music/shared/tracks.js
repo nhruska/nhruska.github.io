@@ -308,25 +308,65 @@
     var info = C.soloScaleInfo(scaleId);
     return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
   }
-  // S-BLUES: canned per-selection teaching caption (A9 discipline - no theory
-  // computed here, just static prose keyed on scaleId + the scale's own
-  // family, P5-voiced). 'mode' scaleId -> null (no caption; keeps that chip's
-  // on-screen footprint identical to pre-S-BLUES). `family` is Circle.
-  // Player-true captions (P5 adversarial fold, 2026-07-04): per-scale lines in
-  // position-player language. Static strings only (A9); family interpolation kept
-  // for pentMajor's relative-pent line. Box-position LABELS are queued
-  // (S-BLUES-BOXES) - captions must not promise them.
-  function soloScaleFraming(scaleId, family) {
-    if (scaleId === 'pentMajor') {
-      return 'The inside sound over ' + family + ' and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.';
-    }
-    if (scaleId === 'pentMinor') {
-      return 'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.';
-    }
-    if (scaleId === 'blues') {
-      return 'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.';
+  // M-GUIDE W3a (D-CARDS-STATIC): soloScaleFraming MOVED VERBATIM to solo-guide.js
+  // as SoloGuide.framing(scaleId, family) - same behavior, same P5-voiced static
+  // strings. Moved (not duplicated) so W3b's Compose solo chips (songbook.js) can
+  // call the identical function without depending on tracks.js.
+  // Same guarded-reference pattern as circleRef()/notablesRef() above: window.SoloGuide
+  // in the browser, a require() fallback in Node so tracks.test.js and solo-guide.test.js
+  // share one require-cache module instance (not a duplicate).
+  function soloGuideRef() {
+    if (global.SoloGuide) return global.SoloGuide;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./solo-guide.js'); } catch (e) {}
     }
     return null;
+  }
+  // M-GUIDE W3a (section 2, chord-tone targeting): pure pc-arithmetic classifier,
+  // intersection-only (D-TARGET - a chord tone outside the current scale never
+  // lights up; the blues card carries that advice instead). Precedence root >
+  // chord > blue > scale (blue is defaultTones' job below, not this fn's). The
+  // chord's root is parsed locally (not read off Circle.chordTones' internal pc
+  // order) so this stays independent of that function's array shape. Returns
+  // null when chordName is falsy/unresolvable - callers treat that as "no target".
+  function targetTones(scalePcs, scaleRootPc, chordName) {
+    var C = circleRef();
+    if (!C || !chordName) return null;
+    var m = /^([A-Ga-g][#b]?)/.exec(String(chordName).trim());
+    if (!m) return null;
+    var chordRootPc = rootIndex(normRoot(m[1]));
+    if (chordRootPc < 0) return null;
+    var ctPcs = C.chordTones(chordName);
+    if (!ctPcs.length) return null;
+    var inScale = {};
+    (scalePcs || []).forEach(function (p) { inScale[((p % 12) + 12) % 12] = true; });
+    var byPc = {};
+    ctPcs.forEach(function (p) {
+      var pc = ((p % 12) + 12) % 12;
+      if (!inScale[pc]) return; // ghost dots deferred - D-TARGET
+      byPc[pc] = (pc === chordRootPc) ? 'root' : 'chord';
+    });
+    // dominant-quality rub: chordTones carries BOTH the major 3rd (+4) and the
+    // dominant 7th (+10) -> the target's minor-3rd-equivalent (root+3) is the rub
+    // note (e.g. Eb over C7, Bb over G7 in C blues; nothing over a plain IV7).
+    var rubPc = null;
+    if (ctPcs.indexOf((chordRootPc + 4) % 12) >= 0 && ctPcs.indexOf((chordRootPc + 10) % 12) >= 0) {
+      var cand = (chordRootPc + 3) % 12;
+      if (inScale[cand]) rubPc = cand;
+    }
+    return { byPc: byPc, rubPc: rubPc };
+  }
+  // M-GUIDE W3a: the ALWAYS-ON default mark (independent of any active target) -
+  // the blues solo scale's b5 (scaleRootPc+6), whenever the blues scale renders.
+  // bundle.pcs[0] is always the scale's own root pc (every SOLO_SCALES/diatonic
+  // formula starts at semitone 0), so this works for both a studioTheory bundle
+  // and a soloBundle() chip-swap result without needing a separate rootPc field.
+  function defaultTones(bundle) {
+    if (!bundle || bundle.label !== 'Blues' || !bundle.pcs || !bundle.pcs.length) return null;
+    var rootPc = bundle.pcs[0];
+    var bluePc = (rootPc + 6) % 12;
+    var byPc = {}; byPc[bluePc] = 'blue';
+    return { byPc: byPc, rubPc: null };
   }
   // S-WHYNOTE (sprint-1 item 6, stretch; A9-bound): a one-shot JIT "why" notable
   // at the Compose -> Studio hand-off (openStudio below - the seam where the
@@ -589,12 +629,84 @@
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
       // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
-      // "G mixolydian" (modal). th.label is the mode name from circle.js.
-      var keyLabel = th.scaleMode === 'ionian' ? esc(th.key)
-        : th.scaleMode === 'aeolian' ? esc(th.key) + 'm'
-        : esc(th.key + ' ' + th.label.toLowerCase());
+      // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
+      // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
+      // textContent - keyLabel (escaped) still feeds the innerHTML meta line.
+      var keyLabelPlain = th.scaleMode === 'ionian' ? th.key
+        : th.scaleMode === 'aeolian' ? th.key + 'm'
+        : (th.key + ' ' + th.label.toLowerCase());
+      var keyLabel = esc(keyLabelPlain);
       var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
+      // M-GUIDE W3a (section 2/3): chord-tone targeting + per-scale guidance card
+      // state, scoped to this Studio open. scaleBoxWrap is the live boxWrap
+      // returned by KeyExplorer.renderScale - toggling a target calls its
+      // setTones() (preserves the position-walk); switching a solo-scale chip
+      // does a full renderScale() and replaces this reference. curBundle/curScaleId
+      // track whichever solo bundle is currently on-screen (the "mode" bundle = th
+      // itself, or a soloBundle() chip-swap result) so a chord-target toggle can
+      // re-derive tones against the RIGHT scale.
+      var scaleBoxWrap = null, activeTargetChord = null, curBundle = th, curScaleId = 'mode';
+      // scaleId 'mode' resolves to th.scaleMode (one of the 5 SoloGuide-known
+      // modal keys, incl. 'blues'); any other scaleId (pentMajor/pentMinor/blues
+      // chip) IS the SoloGuide key directly.
+      function scaleKeyFor(scaleId, modeScaleKey) {
+        return (scaleId && scaleId !== 'mode') ? scaleId : modeScaleKey;
+      }
+      // Merge the always-on default mark (blue note) with the active target's
+      // root/chord/rub, active-target entries winning on any pc collision (D-TARGET
+      // precedence root > chord > blue > scale). Returns null when there is
+      // nothing to mark at all, so the fretboard renders byte-identical to the
+      // pre-targeting default (Diagram.scale's own opts.tones-absent contract).
+      function computeTones(bundle, scaleId) {
+        var scalePcs = (bundle && bundle.pcs) || [];
+        var scaleRootPc = scalePcs.length ? scalePcs[0] : null;
+        var merged = {}, rubPc = null;
+        var def = defaultTones(bundle);
+        if (def) { for (var k in def.byPc) if (Object.prototype.hasOwnProperty.call(def.byPc, k)) merged[k] = def.byPc[k]; }
+        if (activeTargetChord) {
+          var tt = targetTones(scalePcs, scaleRootPc, activeTargetChord);
+          if (tt) {
+            for (var k2 in tt.byPc) if (Object.prototype.hasOwnProperty.call(tt.byPc, k2)) merged[k2] = tt.byPc[k2];
+            rubPc = tt.rubPc;
+          }
+        }
+        return (Object.keys(merged).length || rubPc != null) ? { byPc: merged, rubPc: rubPc } : null;
+      }
+      // Renders the 5 labeled SoloGuide.card lines into the Guide box (guarded -
+      // solo-guide.js may not have loaded). Called on Studio open + every chip
+      // select (re-derives, per m-guide-ia-20260704.md section 3), regardless of
+      // the box's hidden state, so content is never stale when the toggle opens.
+      function renderGuide(scaleKey, notes) {
+        if (!guideBox) return;
+        var SG = soloGuideRef();
+        var card = SG ? SG.card(scaleKey, notes) : null;
+        if (!card) { guideBox.innerHTML = ''; return; }
+        var rows = [['When', card.chooseWhen], ['Resolve', card.resolveTo], ['Watch', card.hangOn],
+          ['Phrase', card.startEnd], ['Shapes', card.shapes]];
+        guideBox.innerHTML = rows.map(function (r) {
+          return '<div class="bt-st-guide-row"><span class="bt-st-guide-lbl">' + esc(r[0]) + '</span>'
+            + '<span class="bt-st-guide-txt">' + esc(r[1]) + '</span></div>';
+        }).join('');
+      }
+      function renderTargetCaption() {
+        if (!targetCapEl) return;
+        if (!activeTargetChord) { targetCapEl.hidden = true; targetCapEl.textContent = ''; return; }
+        targetCapEl.hidden = false;
+        targetCapEl.textContent = 'Showing ' + activeTargetChord + ' inside ' + keyLabelPlain
+          + ' - accent = chord root, filled = chord tones.';
+      }
+      // Chords-in-key tap toggles that chord as the fretboard's target (in addition
+      // to the existing play-on-tap behavior) - one target surface, per section 2.
+      // Re-tapping the active target clears it; tapping a different chord switches.
+      function toggleTarget(chordName, tileEl) {
+        activeTargetChord = (activeTargetChord === chordName) ? null : chordName;
+        var cells = elPlayer.querySelectorAll('.bt-st-chordcell .chord');
+        Array.prototype.forEach.call(cells, function (el) { el.classList.remove('targeted'); });
+        if (activeTargetChord) tileEl.classList.add('targeted');
+        renderTargetCaption();
+        if (scaleBoxWrap && typeof scaleBoxWrap.setTones === 'function') scaleBoxWrap.setTones(computeTones(curBundle, curScaleId));
+      }
       // Whether this session's video is attachable determines the no-video hint
       // wording below, so compute the seed-track check up front.
       var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
@@ -680,7 +792,16 @@
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
         + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
-        + '<div class="bt-st-scale" data-scale></div></div>'
+        // M-GUIDE W3a: per-scale mentor card (SoloGuide) - reuses the
+        // .bt-st-why-toggle/.bt-st-why visual pattern verbatim (composed, not a
+        // new chip variant). Collapsed by default; renderGuide() re-derives on
+        // every chip select.
+        + '<button class="bt-st-why-toggle" data-guidetoggle type="button">Guide</button>'
+        + '<div class="bt-st-why" data-guide hidden></div>'
+        + '<div class="bt-st-scale" data-scale></div>'
+        // M-GUIDE W3a: chord-tone targeting caption - reuses .bt-st-scaleframe's
+        // look; static text, interpolates only already-rendered labels (A9).
+        + '<div class="bt-st-scaleframe" data-targetcap hidden></div></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
         // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
@@ -691,6 +812,10 @@
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      // M-GUIDE W3a: Guide toggle/box + target caption element refs (built above
+      // in the template string, so they exist as soon as elPlayer.innerHTML lands).
+      var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
+      var targetCapEl = elPlayer.querySelector('[data-targetcap]');
       // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
       // content it explains - built via the shared Notables banner (same
       // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
@@ -712,8 +837,11 @@
         // match the "Solo over it" list above, whatever names th.notes holds.
         var nameByPc = [];
         th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
-        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { names: nameByPc });
+        scaleBoxWrap = global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs,
+          { names: nameByPc, tones: computeTones(th, 'mode') });
       } catch (e) {}
+      // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
+      renderGuide(th.scaleMode, th.notes);
       // S-BLUES: the scale-chip row - [Mode label | Pent major | Pent minor |
       // Blues]. Default = 'mode' (th itself; the fretboard/notes already
       // rendered above are its output, so no re-render on open). A tap
@@ -755,14 +883,20 @@
           render();
           notesEl.textContent = bundle.notes.join(' ');
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
-          var framing = info ? soloScaleFraming(scaleId, info.family) : null;
+          var SG = soloGuideRef();
+          var framing = (info && SG) ? SG.framing(scaleId, info.family) : null;
           if (framing) { frameEl.textContent = framing; frameEl.hidden = false; }
           else { frameEl.textContent = ''; frameEl.hidden = true; }
+          // M-GUIDE W3a: re-apply the active target (if any) against the NEW bundle,
+          // and re-derive the Guide card for whichever solo scale is now on-screen.
+          curBundle = bundle; curScaleId = scaleId;
+          renderGuide(scaleKeyFor(scaleId, th.scaleMode), bundle.notes);
           try {
             scaleEl.innerHTML = '';
             var chipNameByPc = [];
             bundle.notes.forEach(function (nm, i) { chipNameByPc[bundle.pcs[i]] = nm; });
-            global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs, { names: chipNameByPc });
+            scaleBoxWrap = global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs,
+              { names: chipNameByPc, tones: computeTones(bundle, scaleId) });
           } catch (e) {}
         }
         render();
@@ -779,12 +913,18 @@
         onTap: function (c, d) {
           try { pack.playChord(c); } catch (e) {}
           d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
+          // M-GUIDE W3a (section 2): one target surface - tap toggles the fretboard
+          // chord-tone target in addition to the existing play behavior.
+          toggleTarget(c, d);
         }
       });
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {
         var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
         if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
+      };
+      if (guideToggle && guideBox) guideToggle.onclick = function () {
+        var show = guideBox.hidden; guideBox.hidden = !show; guideToggle.classList.toggle('on', show);
       };
       // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
       var urlIn = elPlayer.querySelector('[data-urlin]'),
@@ -1142,7 +1282,10 @@
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     whynoteText: whynoteText, whynoteBanner: whynoteBanner,
     // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
-    soloBundle: soloBundle, soloScaleFraming: soloScaleFraming,
+    soloBundle: soloBundle,
+    // M-GUIDE W3a (section 2): chord-tone targeting - pure pc classifiers,
+    // exported for direct unit tests independent of the Studio DOM wiring.
+    targetTones: targetTones, defaultTones: defaultTones,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

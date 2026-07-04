@@ -273,6 +273,9 @@
 <script src="../shared/notables.js"></script>
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/repertoire-form.js"></script>
+<!-- M-GUIDE W3a: SoloGuide (per-scale mentor cards + framing) - before songbook.js
+     AND tracks.js so both W3a's Studio and W3b's Compose solo chips can call it. -->
+<script src="../shared/solo-guide.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
 <script src="../shared/diagram.js"></script>
@@ -546,10 +549,13 @@
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).
       // startFret (optional) slides the window up the neck - see scaleDiagram.supportsStart
       // below, which is how KeyExplorer.renderScale feature-detects this before offering
-      // the position-shift control.
-      scaleDiagram: function (rootPc, scalePcs, frets, startFret, names) {
+      // the position-shift control. tones (optional, M-GUIDE W3a) forwards straight
+      // through to Diagram.scale's own opts.tones contract - this is the ONE choke
+      // point every instrument profile's scale map renders through, so the pass-
+      // through lives here rather than per-profile.
+      scaleDiagram: function (rootPc, scalePcs, frets, startFret, names, tones) {
         var openPcs = profile.strings.map(function (s) { return freqPc(s.f); });
-        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0, names: names });
+        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0, names: names, tones: tones });
       },
       playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
       playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },

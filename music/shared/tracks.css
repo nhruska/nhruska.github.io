@@ -222,9 +222,12 @@
   @media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
     .bt-studio{flex-direction:row;max-width:none;
       padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
-    .bt-st-stage{flex:0 0 48%;max-width:48%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    /* M-GUIDE W3a (D-LANDSCAPE-FLEX): stage narrowed 48% -> 44% and the scrollable
+       body tightened (padding 12px 12px 18px -> 10px 12px, gap 12px -> 10px) - the
+       Guide card + target caption added more content to the same short-height pane. */
+    .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
-    .bt-st-body{flex:1 1 auto;}
+    .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
   }
   /* (.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta item rules retired -> .listItem.) */
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
@@ -278,3 +281,28 @@
   .cofDeg.char .dg{color:var(--accent-ink);}
   .cofHint{font-size:.72rem;color:var(--txt-soft);margin:0 0 12px;line-height:1.5;}
   .cofHint b{color:var(--accent-ink);font-weight:700;}
+
+/* =====================================================================
+ * M-GUIDE W3a (m-guide-ia-20260704.md sections 2-3) - chord-tone targeting
+ * (kx-*) + the per-scale mentor card (Guide). New section, appended once;
+ * do not scatter kx-*/guide rules elsewhere in this file.
+ * ===================================================================== */
+  /* Chord-tone targeting dot colors (diagram.js Diagram.scale opts.tones).
+   * kx-root/kx-scale intentionally carry NO rule here - they reuse the existing
+   * root/non-root fill diagram.js already applies (no visual change from today's
+   * default). Only kx-chord/kx-blue need their own theme-safe var - diagram.js
+   * itself picks --on-accent ink for their note text (same bright-fill treatment
+   * as a root dot), inline at render time, so no CSS override is needed here. */
+  :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;}
+  :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;}
+  /* Active chord-tone target: persistent outline on the tapped chords-in-key tile
+   * (composes the existing .bt-st-chip.sel accent-outline language, just not
+   * auto-clearing after 220ms). */
+  .bt-st-chordcell .chord.targeted{outline:2px solid var(--accent-ink);outline-offset:2px;}
+  /* Per-scale mentor card (Guide): reuses .bt-st-why-toggle/.bt-st-why verbatim
+   * for the toggle + collapse behavior (composed, not a new chip variant) - only
+   * the 5 labeled rows inside are new. */
+  .bt-st-guide-row{display:flex;gap:8px;padding:4px 0;font-size:.78rem;line-height:1.45;}
+  .bt-st-guide-lbl{flex:0 0 auto;width:58px;font-family:'Space Mono',monospace;font-size:.62rem;
+    font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);padding-top:1px;}
+  .bt-st-guide-txt{color:var(--txt-soft);}

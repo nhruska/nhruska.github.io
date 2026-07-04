@@ -36,6 +36,28 @@ One-shot relative/parallel "why" teaching notable at Studio entry (whynoteText/w
 
 Tracks without a curated video show the search card + paste editor; curated URLs persist in the music.trackUrls overlay keyed by trackKey. The candidates queue (candidates.js) seeds pre-researched suggestions. Finder-tab retirement is part of M3 (sprint 2) - the Studio remains reachable from the merged repertoire.
 
+## Chord-tone targeting (M-GUIDE W3a, D-TARGET) [STABLE]
+
+Chords-in-key doubles as the target surface: tapping a chord (in addition to playing it) marks that chord's tones on the currently-rendered solo scale, precedence root > chord > blue > scale - `Tracks.targetTones(scalePcs, scaleRootPc, chordName)` (pure pc arithmetic, tracks.js) intersects `Circle.chordTones(chord)` against the scale, INTERSECTION-ONLY (a chord tone outside the scale never lights up - the blues card carries that advice instead, not a ghost dot). A dominant-quality target (has both the major 3rd and the b7) also marks a "rub" note (chordRootPc+3, dashed ring) when it's in scale - e.g. Eb over C7 in C blues, nothing over a plain IV7 whose rub candidate falls outside the scale. `Tracks.defaultTones(bundle)` is the separate ALWAYS-ON mark: the blues solo scale's b5, independent of any active target.
+
+`Diagram.scale(opts)` renders the classes via `opts.tones = { byPc: {pc: class}, rubPc }` (diagram.js) - EXTEND not overlay: absent `opts.tones` renders byte-identical to the pre-targeting default (SHA-256 locked in diagram.dom.test.js). `KeyExplorer.renderScale` forwards `opts.tones` through to `pack.scaleDiagram` as its 6th positional arg (the ONE adapter implementation in play/index.html); the returned `boxWrap` carries `setTones(tones)` to re-mark WITHOUT resetting the position-walk (a toggle should never reset `startFret`). A chip switch (Mode/Pent major/Pent minor/Blues) re-applies the same active target against the new bundle's pcs.
+
+A static caption renders under the fretboard while a target is active ("Showing C7 inside A blues - accent = chord root, filled = chord tones.") - interpolates only already-rendered labels (A9), never a theory computation of its own.
+
+## Guidance cards - SoloGuide (M-GUIDE W3a, D-CARDS-STATIC) [STABLE]
+
+A `Guide` toggle (mirrors `.bt-st-why-toggle`/`.bt-st-why` verbatim - composed, not a new chip variant) sits under the framing line, collapsed by default, re-deriving on every scale-chip select. Content comes from a NEW standalone module, `music/shared/solo-guide.js` (`window.SoloGuide`), loaded before both songbook.js and tracks.js so Compose's solo chips (W3b) can call the identical `framing()` without depending on tracks.js:
+
+- `SoloGuide.framing(scaleId, family)` - MOVED verbatim from tracks.js's old `soloScaleFraming` (identical behavior).
+- `SoloGuide.cards` - the raw 7-key x 5-block table (`ionian, aeolian, dorian, mixolydian, pentMajor, pentMinor, blues`), read-only.
+- `SoloGuide.card(scaleKey, notes)` - interpolates `{i}` degree-index placeholders against the caller's current note-name array; unknown key -> null, no DOM, no throw.
+
+Content is curated static prose only (A9 discipline, zero theory derivation) - see [decisions.md](../decisions.md) SOLO-BOUNDARY and the professor-fold amendments below.
+
+## Landscape split refine (M-GUIDE W3a, D-LANDSCAPE-FLEX) [STABLE]
+
+The existing coarse-pointer landscape two-pane split (`.bt-studio{flex-direction:row}`, gated on `(orientation:landscape) and (max-height:600px) and (pointer:coarse)`) tightened to fit the Guide card + target caption's added content: stage pane 48% -> 44%, `.bt-st-body` padding `12px 12px 18px` -> `10px 12px`, gap `12px` -> `10px`.
+
 ---
 
-**Anchors verified:** tracks.js:196-296 (studioTheory, normMode), ~459-516 (inversionsHref, buildWhy), ~517-687 (openStudio incl. rehydration + scale chips + whynote), songbook.js ~817-830 (bridge), notables.js, candidates.js, docs/plans/wiki-ia-20260704.md §3c
+**Anchors verified:** tracks.js:196-296 (studioTheory, normMode), ~459-516 (inversionsHref, buildWhy), ~517-687 (openStudio incl. rehydration + scale chips + whynote), targetTones/defaultTones/computeTones/toggleTarget/renderGuide (openStudio region), solo-guide.js (SoloGuide), diagram.js `scale()` opts.tones, key-explorer.js `renderScale`/`setTones`, tracks.css EOF kx-*/guide section + landscape media query, songbook.js ~817-830 (bridge), notables.js, candidates.js, docs/plans/m-guide-ia-20260704.md §§2-3, 5, 8

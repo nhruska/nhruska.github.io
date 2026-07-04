@@ -46,10 +46,19 @@ One-time prompt (D3 settings-with-prompt pattern; via Notables, never at first-r
 
 Where a diagram appears in teaching context, co-locate: the diagram (styled per preference) + roman numeral (function) + inversion label (hand shape) + key context. The learner reads dots; the seasoned player reads shape/position/inversion. Same surface, both respected.
 
+## Chord-tone targeting is the deterministic guidance layer (M-GUIDE W3a)
+
+Targeting (see [systems/practice-studio.md](../systems/practice-studio.md)) is the mechanism that answers "where do I actually put my fingers over THIS chord" without a single curated fact: `Circle.chordTones()` intersected against the current scale, pure pc arithmetic, computed identically for any key/chord/scale. It is the pattern-first philosophy above made literal - the fretboard itself lights the answer, no finger-number instruction needed. The mentor cards (SoloGuide) are the deliberate exception and stay separate:
+
+- **Targeting = derived, deterministic, infinite coverage** - works for any of the 12 roots x any chord quality, zero curated data.
+- **Cards (SoloGuide) = curated, static, finite coverage (D-CARDS-STATIC)** - 7 known scale keys, hand-written P5-voiced prose, `{i}`-index interpolation only. They exist because "when to reach for this scale" and "what to do at the ends of a phrase" are judgment calls a pc-arithmetic function cannot derive - the same reason S-DIAGRAM-PREF's fingering labels above are deferred pending a curated shape classifier, not computed.
+
+The two compose on one screen exactly per "One surface, two readers" above: the fretboard's colored dots (derived) sit right beside the Guide card's prose (curated) - a seasoned player reads the dots, a learner reads the card, neither needs the other.
+
 ## Backlog: full HSR Lens
 
 The complete hammer/slide/rotate visual loop (transitions between shape families up the neck) stays future work; the Studio scale view + S-DIAGRAM-PREF are the pragmatic first slice.
 
 ---
 
-**Anchors verified:** key-explorer.js:69-152 (posWindow, renderScale), diagram.js (render + sizes), docs/hsr-notes.md (shape families, HSR Lens - absorbed), notables.js (prompt infra), goal spec P5 + operator omission verbatim, sprint A9 static-template discipline (pattern for any new copy)
+**Anchors verified:** key-explorer.js:69-152 (posWindow, renderScale), diagram.js (render + sizes, opts.tones), tracks.js targetTones/defaultTones (M-GUIDE W3a), solo-guide.js (SoloGuide card/framing), docs/hsr-notes.md (shape families, HSR Lens - absorbed), notables.js (prompt infra), goal spec P5 + operator omission verbatim, sprint A9 static-template discipline (pattern for any new copy), docs/plans/m-guide-ia-20260704.md §§2-3
