@@ -39,7 +39,13 @@
 // S-PROG-WRAP/S-BLUES-BOXES bumps that landed while this branch was in
 // flight - re-verify max+1 against origin/main immediately before push if
 // any further sibling CACHE bump lands first.
-var CACHE = 'music-v92';
+// S-COMPOSE-POLISH2 (2026-07-04): v92->v93 - buildGrid tile geometry clamps
+// (UAT U5), quality-filter scroll anchor (U6), solo-CTA choice row promoted
+// to the composeModalBackdrop modal pattern (U7). Rebased onto the v92 tip
+// above (this branch originally cut from v88, before #129/#130/#131/#132/
+// #133/#134 landed) - no new/removed CORE paths. check-cache-bump.sh
+// re-verified against origin/main immediately before push.
+var CACHE = 'music-v93';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

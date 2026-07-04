@@ -472,6 +472,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog .slot .chord,
 .suggRow .chord.suggPick,
 .chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
+/* UAT U5 (2026-07-04, operator Pixel walkthrough): the All-view #buildGrid tiles
+   render .chord DIRECTLY as the grid item (no wrapping .chordCell like the
+   in-key view above), so they never got that view's own min-width:0 +
+   max-width:100% clamp (.keyPalette .chordCell / .keyPalette .chordCell >
+   .chord, above) - the exact hardening the comment on .chordGrid's grid-template
+   already documents as the fix for this SAME 86px-guitar-SVG-vs-84px-track
+   squeeze. Investigated under simulated Android font scaling (root font-size up
+   to 1.5x) plus a 360-432px viewport sweep - no live overlap reproduced in
+   Chromium (see the PR body for the measurement table), but this closes the
+   parity gap: a diagram wider than its column now shrinks to fit instead of
+   visually bleeding into the next tile. */
+.chordGrid .chord{min-width:0;}
+.chordGrid .chord svg{max-width:100%;height:auto;display:block;}
 .prog .slot .chord .chord-name,
 .suggRow .chord.suggPick .chord-name,
 .chordGrid .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt);}
