@@ -607,19 +607,36 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    demand right above the progression box; zero footprint until used. */
 .composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
 .composeRow[hidden]{display:none;}
-/* Save name-entry as a modal: centered card + full-screen backdrop that
-   intercepts taps, so Clear / adding chords / other controls are blocked. */
-.composeRow.asModal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:75;width:calc(100% - 32px);max-width:420px;margin:0;box-shadow:0 20px 60px var(--shadow);}
-.composeRow.asModal::before{content:'';position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.55);}
-.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);font-family:inherit;font-size:.85rem;}
+/* Full-viewport dim layer for the save-name modal - a real sibling element
+   (songbook.js: composeModalBackdrop), NOT a ::before on the card. The prior
+   ::before with z-index:-1 painted ABOVE the card's own background (CSS2.1
+   stacking order: an element's own background paints first/bottom, THEN its
+   negative-z-index children, then its in-flow content) - so the dim overlay
+   washed out the card instead of sitting behind it (F9). A separate, lower
+   z-index sibling can never repaint over the card. */
+.composeModalBackdrop{position:fixed;inset:0;z-index:74;background:rgba(0,0,0,.55);}
+.composeModalBackdrop[hidden]{display:none;}
+/* Save name-entry as a modal: an OPAQUE --surface card (never blended with the
+   dim layer above), anchored near the TOP of the viewport rather than
+   vertical-center - a soft mobile keyboard (~50% of a 412x915 viewport) would
+   otherwise cover the input and Save/Cancel (F10). max-height + internal
+   scroll is the guard if a short viewport still can't fit it. */
+.composeRow.asModal{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10vh);transform:translateX(-50%);z-index:75;width:calc(100% - 32px);max-width:420px;max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 20px 60px var(--shadow);}
+.composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.85rem;}
 .composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
 .composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
 /* G4/FORK-1: "Add to setlist" checkbox on the save row - own line (flex:1 1
-   100% forces the wrap), checkbox + label kept on one compact line together. */
-.composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--txt-soft);cursor:pointer;
+   100% forces the wrap), checkbox + label kept on one compact line together.
+   Full-contrast --txt (not --txt-soft) so the label reads clearly on the
+   solid modal card (F9). */
+.composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--txt);cursor:pointer;
   min-height:44px;padding:4px 2px;} /* one-handed mobile tap target (codex #91) */
 .composeRowSetToggle input{margin:0;width:18px;height:18px;flex:0 0 auto;accent-color:var(--accent);}
+/* Save/Cancel on the save-name modal only (scoped to .asModal, not the
+   shared .ctrlBtn used by the Compose action bar's own Clear/Save) - >=44px
+   tall tap targets (F10 spec item 3). */
+.composeRow.asModal .ctrlBtn{min-height:44px;}
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);}
 .composeToast.tap{cursor:pointer;} /* persistent toast: tap anywhere on it to dismiss */
 .composeToast[hidden]{display:none;}

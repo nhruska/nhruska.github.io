@@ -2115,7 +2115,7 @@
      * so it costs zero vertical space until it's actually used (per the "one
      * screen, above the fold" rule) - and torn down again the moment it's
      * dismissed, rather than reserving a permanent row. ---- */
-    var composeRow = null, composeToast = null, toastTimer = null;
+    var composeRow = null, composeToast = null, toastTimer = null, composeModalBackdrop = null;
     // One-shot id for the post-save discoverability scroll+highlight (B3 pilot
     // UAT) - set by saveProgression right before the renderSongs() call that
     // will actually paint the new row, consumed (cleared) on the next
@@ -2123,6 +2123,18 @@
     var pendingHighlightId = null;
     function ensureComposeUI() {
       if (!el.prog || !el.prog.parentNode) return false;
+      if (!composeModalBackdrop) {
+        // Real full-viewport dim layer, a SIBLING of composeRow - not a ::before
+        // pseudo-element on the card (F9 root cause: a negative z-index child
+        // paints ABOVE the stacking-context root's own background per CSS2.1
+        // painting order, so the old `.asModal::before{z-index:-1}` washed OUT
+        // the card's background/text instead of sitting behind it). A separate
+        // lower z-index element can never repaint over its own card.
+        composeModalBackdrop = document.createElement('div');
+        composeModalBackdrop.className = 'composeModalBackdrop';
+        composeModalBackdrop.hidden = true;
+        el.prog.parentNode.insertBefore(composeModalBackdrop, el.prog);
+      }
       if (!composeRow) {
         composeRow = document.createElement('div');
         composeRow.className = 'composeRow';
@@ -2137,7 +2149,10 @@
       }
       return true;
     }
-    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); } }
+    function hideComposeRow() {
+      if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); }
+      if (composeModalBackdrop) composeModalBackdrop.hidden = true;
+    }
 
     // ---- S-CLEARGUARD (sprint-1 #1): Compose Clear undo banner ----
     // F1: Clear used to wipe the built progression with NO guard (native
@@ -2227,9 +2242,12 @@
       if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
-      // Present the save name-entry as a MODAL (backdrop + centered card) so the
-      // user can't hit Clear / add more chords / other controls mid-save (UAT: Nik).
+      // Present the save name-entry as a MODAL (backdrop + top-anchored card) so
+      // the user can't hit Clear / add more chords / other controls mid-save
+      // (UAT: Nik), and the card stays clear of a soft keyboard (F10 - see the
+      // top-anchor position in .composeRow.asModal, not vertical-center).
       composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;
