@@ -62,6 +62,17 @@
     return parent;
   }
 
+  // Default fret-window depth per instrument (D-FRETS-4STR, m-guide-ia-20260704.md
+  // section 5): 4-string necks (uke/mandolin/mandola/cigar box) get a taller 12-fret
+  // window - a 7-fret open window covers less musical value per fret on 4 strings
+  // than on 6+. Banjo(5) and guitars keep the classic 7-fret window. Exported for
+  // direct testing. Geometry verified: the F=12 open window (349px: 15+19 nut/open
+  // col + 12*25 fret width + 15 pad) fits 412-portrait content and the landscape
+  // right pane; posWindow's 0/5/10 walk + the fret-14 cap both hold unchanged.
+  function defaultFrets(pack) {
+    return (pack && pack.meta && pack.meta.strings <= 4) ? 12 : 7;
+  }
+
   // Position-shift step/cap for the "walk the scale up the neck" control. STEP mirrors
   // how far a hand naturally slides in one move; CAP is the practical top-of-neck fret
   // this app already uses elsewhere (play/index.html's chainFitsFretboard caps chord
@@ -101,7 +112,7 @@
       var sLbl = document.createElement('div'); sLbl.className = 'keySubLbl';
       sLbl.textContent = opts.label; container.appendChild(sLbl);
     }
-    var F = opts.frets || 7;
+    var F = opts.frets || defaultFrets(pack);
     var supportsStart = !!pack.scaleDiagram.supportsStart;
     var startFret = 0;
     // boxWrap is a COLUMN holding the diagram + (optionally) the position control,
@@ -149,7 +160,7 @@
     return boxWrap;
   }
 
-  var KeyExplorer = { renderChords: renderChords, renderScale: renderScale, posWindow: posWindow };
+  var KeyExplorer = { renderChords: renderChords, renderScale: renderScale, posWindow: posWindow, defaultFrets: defaultFrets };
   global.KeyExplorer = KeyExplorer;
   if (typeof module !== 'undefined' && module.exports) module.exports = KeyExplorer;
 

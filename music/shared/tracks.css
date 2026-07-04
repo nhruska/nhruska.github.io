@@ -117,7 +117,7 @@
   /* Header + video pane. Portrait: a normal top-pinned column (head + frame stack,
      body scrolls below). Landscape: the fixed left pane of the two-pane split. */
   .bt-st-stage{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;}
-  .bt-st-head{display:flex;align-items:center;gap:10px;padding:11px 14px;flex:0 0 auto;
+  .bt-st-head{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:0 0 auto;
     border-bottom:1px solid var(--line-strong);}
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -139,13 +139,13 @@
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
+    padding:12px 12px 18px;display:flex;flex-direction:column;gap:12px;}
   /* S-WHYNOTE: .bt-st-body already spaces flex children via `gap`, so the shared
      .notableBanner's own margin-bottom (songbook.css) would double up the gap
      below the banner - zero it here, scoped to this one owned placement. */
   .bt-st-notable{margin-bottom:0;}
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);
-    margin-bottom:9px;font-weight:700;}
+    margin-bottom:6px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
   /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
@@ -153,12 +153,12 @@
      so the chip visual language reads consistently app-wide - but wraps instead
      of horizontal-scrolling: exactly 4 short labels fit one row at 412px, wrap
      is just the safety net. */
-  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
   .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
   .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 10px;}
+  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
   .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
   /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
@@ -192,6 +192,13 @@
   .bt-studio .hsrMore{color:var(--accent-ink);font-weight:700;text-decoration:underline;
     text-decoration-color:var(--accent-dim);text-underline-offset:3px;border-bottom:none;padding-bottom:0;}
   .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent-ink);}
+  /* m-guide-ia-20260704.md section 5 chrome-trim (4): "walk the cycle" link + the
+     "why these notes" toggle share one row instead of a row each - saves vertical
+     space. Zero the global .hsrMore vertical margin here only (Compose's own
+     .hsrMore look, defined in songbook.css, is untouched) so the row doesn't grow
+     taller than the toggle button beside it. */
+  .bt-st-linkrow{display:flex;align-items:center;gap:14px;}
+  .bt-st-linkrow .hsrMore{margin:0;}
   .bt-st-why-toggle{align-self:flex-start;background:transparent;border:none;padding:4px 0;
     color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
     text-decoration:underline;text-decoration-color:var(--accent-dim);text-underline-offset:3px;}

@@ -194,6 +194,54 @@
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
     });
   }
+  // MODAL INTERCHANGE core (Phase 2), extracted per m-guide-ia-20260704.md section 4.5 so
+  // BOTH the explicit-key path (mount()'s convertToMode) and the keyless mode-change
+  // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
+  // ROOT against `targetMode`'s steps (offset from tonicRoot) to find its scale degree,
+  // then re-qualifies to that degree's quality, re-basing any 7th-type extension that
+  // survives the quality flip (major degree keeps maj7-ness, else collapses to a
+  // dominant/minor 7; a dim degree keeps the bare dim triad). A chord whose root is NOT
+  // a degree of the target mode (chromatic/borrowed) is left UNCHANGED (best-effort
+  // rule, decision D3) - round-trip is not perfect for those chords (accepted).
+  // `sourceMode` is accepted now for parity with every call site and W2's blues-aware
+  // rules; unused by this diatonic-only mapping.
+  function convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode) {
+    var m = MODES[targetMode];
+    if (!chords || !chords.length || !m) return chords ? chords.slice() : [];
+    var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
+    if (tonicPc == null) return chords.slice();
+    var steps = m.steps, quals = m.quals;
+    return chords.map(function (c) {
+      var p = splitChord(c);
+      if (!p) return c;
+      var rpc = rootPc(p.root);
+      if (rpc == null) return c;
+      var offset = ((rpc - tonicPc) % 12 + 12) % 12;
+      var i = steps.indexOf(offset);
+      if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
+      var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished
+      // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
+      var ext = "";
+      if (/maj7$/.test(p.qual)) ext = "maj7-like";
+      else if (/m7$/.test(p.qual)) ext = "min7-like";
+      else if (/7$/.test(p.qual)) ext = "dom7-like";
+      var suffix;
+      if (ext === "") {
+        suffix = baseQual; // plain triad -> target triad quality
+      } else if (baseQual === "dim") {
+        suffix = "dim"; // keep the bare diminished triad on a dim degree
+      } else if (baseQual === "m") {
+        // minor degree: a 7th becomes a minor 7th (m7); a maj7 over a minor degree is
+        // uncommon - normalize to m7 to keep the chord diatonic-feeling.
+        suffix = "m7";
+      } else { // baseQual === "" -> major degree
+        // major degree: a maj7 stays maj7; a dominant/minor 7 becomes a dominant 7
+        // (the usual major-degree 7th in these jam styles).
+        suffix = (ext === "maj7-like") ? "maj7" : "7";
+      }
+      return p.root + suffix;
+    });
+  }
   // The canon — famous progressions, by 0-indexed major-scale degree. All diatonic
   // to MAJOR so they fill cleanly from any major key; modal/borrowed ones (Andalusian,
   // i-bVII-bVI) need a different derivation and are a deliberate follow-up.
@@ -1613,19 +1661,13 @@
       cTpose += st;
       // Move the song key with the chords so the readout, diatonic palette and solo
       // scale never drift from what's actually sounding. If a key center exists
-      // (explicit pick, or one derived earlier) shift its root by the same delta;
-      // otherwise derive it fresh from the now-transposed first chord.
-      // DELIBERATE (codex #90 V1): this first-chord fallback can establish a key
-      // from a ONE-chord progression - a transpose is an explicit act on the
-      // progression, and deriveProgressionKey applies the same chord-1 fallback
-      // at save time. The Solo button appearing after that is wanted (owner C3:
-      // one-chord solo should be easy), not a leak of the inferKey >=2 rule
-      // (which governs passive auto-inference only).
+      // (explicit pick, or one derived earlier) shift its root by the same delta.
+      // D-KEYLESS (m-guide-ia-20260704.md section 4.3): keyless STAYS keyless on
+      // transpose - supersedes codex #90 V1's first-chord-fallback per operator
+      // input I4. Accepted consequence: the Solo CTA no longer lights from a
+      // keyless transpose alone; the pick-a-key CTA carries that path instead.
       if (songKey.root) {
         songKey.root = tpose(songKey.root, st);
-      } else {
-        var p0 = splitChord(progression[0]);
-        if (p0) songKey.root = p0.root;
       }
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
@@ -1635,56 +1677,20 @@
     // target mode's degree quality. C Major I-IV-V (C F G) -> C Minor i-iv-v (Cm Fm Gm).
     // Distinct from transpose (composeTpose): transpose moves roots and keeps qualities;
     // this keeps roots and flips qualities. Called by the one key/mode filter (#keyModes)
-    // whenever the mode changes with a progression present - so the filter always keeps
-    // the built chords in sync with the chosen mode (no separate re-harmonize button).
-    // Best-effort by the user's decision: a chord whose root is NOT a scale degree of the
-    // target mode (a chromatic/borrowed root) is left UNCHANGED rather than guessed at.
-    // A preserved 7th-type extension is re-based onto the new triad quality where the
-    // base triad maps to "" (major) or "m" (minor); on a "dim" degree we keep the bare
-    // dim triad. Round-trip is not perfect for chromatic chords (acceptable).
+    // whenever the mode changes with a progression present AND a key is explicitly set -
+    // the keyless case (no root yet) is handled directly by the mode-chip handler via
+    // the same pure fn, without resurrecting a root (D-KEYLESS, m-guide-ia-20260704.md
+    // section 4). The mapping itself (best-effort: a chromatic/borrowed root is left
+    // unchanged; a 7th extension re-bases onto the new triad quality) lives in the pure,
+    // exported convertProgressionQualities() above (section 4.5) so both paths share it.
     function convertToMode(targetMode) {
       if (!progression.length || !MODES[targetMode]) return;
       invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
       // Parallel = same tonic. Use the explicit/derived song key root; else the first
       // chord's root. rootPc handles flat spellings; if it can't resolve, bail safely.
       var tonicRoot = songKey.root || (splitChord(progression[0]) || {}).root || null;
-      var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
-      if (tonicPc == null) return;
-      var steps = MODES[targetMode].steps, quals = MODES[targetMode].quals;
-      progression = progression.map(function (c) {
-        var p = splitChord(c);
-        if (!p) return c;
-        var rpc = rootPc(p.root);
-        if (rpc == null) return c;
-        var offset = ((rpc - tonicPc) % 12 + 12) % 12;
-        var i = steps.indexOf(offset);
-        if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
-        var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished
-        // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
-        // Re-base it onto the target triad quality: major degree -> maj7 keeps its own
-        // maj7-ness only if it was maj7; a dominant 7 stays a dominant 7; a minor 7
-        // becomes minor on a minor degree, etc. Simpler+correct rule: rebuild from the
-        // base triad and re-attach the extension class that survives a quality flip.
-        var ext = "";
-        if (/maj7$/.test(p.qual)) ext = "maj7-like";
-        else if (/m7$/.test(p.qual)) ext = "min7-like";
-        else if (/7$/.test(p.qual)) ext = "dom7-like";
-        var suffix;
-        if (ext === "") {
-          suffix = baseQual; // plain triad -> target triad quality
-        } else if (baseQual === "dim") {
-          suffix = "dim"; // keep the bare diminished triad on a dim degree
-        } else if (baseQual === "m") {
-          // minor degree: a 7th becomes a minor 7th (m7); a maj7 over a minor degree is
-          // uncommon - normalize to m7 to keep the chord diatonic-feeling.
-          suffix = "m7";
-        } else { // baseQual === "" -> major degree
-          // major degree: a maj7 stays maj7; a dominant/minor 7 becomes a dominant 7
-          // (the usual major-degree 7th in these jam styles).
-          suffix = (ext === "maj7-like") ? "maj7" : "7";
-        }
-        return p.root + suffix;
-      });
+      if (tonicRoot == null || rootPc(tonicRoot) == null) return;
+      progression = convertProgressionQualities(progression, targetMode, tonicRoot, songKey.mode);
       // Parallel interchange keeps the tonic fixed; only the mode changes. Roots do not
       // move, so cTpose (the transpose-from-origin readout) is intentionally untouched.
       songKey.root = tonicRoot;
@@ -1919,28 +1925,50 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Re-tapping the CURRENT mode is a no-op confirm: change nothing, just close
-          // the panel (when a root is set - the gesture is complete). The old
-          // unconditional convertToMode call re-derived a key from the first chord and
-          // could swap the chord list underneath the user on a same-mode tap.
+          // Re-tapping the CURRENT mode is a no-op confirm: change nothing. With a
+          // root set the gesture is complete - close the panel. With NO root yet
+          // (F12 dead-chip fix, m-guide-ia-20260704.md section 4.1) the chip is
+          // already the selected one; still re-render so it stays visibly live/on
+          // and the panel stays open for a real pick, instead of doing nothing.
           if (mk === songKey.mode) {
             if (songKey.root) { keyPopoverOpen = false; buildKeyPicker(); }
+            else { buildKeyPicker(); }
             return;
           }
           // A real mode change re-harmonizes the built progression (solo-practice
           // scope): the one key/mode filter keeps the chords in sync - a root change
-          // transposes, a mode change re-qualifies. convertToMode sets songKey.mode,
-          // closes the panel + re-renders. If the progression is empty there's nothing
-          // to harmonize, so just set the mode, close (root + mode both chosen = the
-          // gesture is done; with no root yet, stay open for the root pick) and
-          // re-render the palette.
-          if (progression.length) {
-            convertToMode(mk); // invalidates internally
+          // transposes, a mode change re-qualifies.
+          if (songKey.root) {
+            // Explicit key: convertToMode owns convert + set root/mode/explicit +
+            // close + full re-render (unchanged path). If the progression is empty
+            // there's nothing to harmonize, so just set the mode and close (root +
+            // mode both chosen = the gesture is done).
+            if (progression.length) {
+              convertToMode(mk); // invalidates internally
+            } else {
+              invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
+              songKey.mode = mk;
+              keyPopoverOpen = false;
+              renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            }
           } else {
+            // D-KEYLESS mode-change (m-guide-ia-20260704.md section 4.2): no root yet,
+            // so re-qualify the progression around the FIRST CHORD's root (the tonic
+            // labelRoman already measures against) via the shared pure fn - but the
+            // root itself STAYS null (no resurrection, unlike the old unconditional
+            // convertToMode call) and the panel stays OPEN so mode taps keep landing.
             invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
-            songKey.mode = mk;
-            if (songKey.root) keyPopoverOpen = false;
-            renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            if (progression.length) {
+              var firstChordRoot = (splitChord(progression[0]) || {}).root || null;
+              if (firstChordRoot) {
+                progression = convertProgressionQualities(progression, mk, firstChordRoot, songKey.mode);
+              }
+              songKey.mode = mk;
+              renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid(); renderSuggest();
+            } else {
+              songKey.mode = mk;
+              renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            }
           }
         };
         el.keyModes.appendChild(b);
@@ -2736,6 +2764,7 @@
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    convertProgressionQualities: convertProgressionQualities,
     chordInKey: chordInKey,
     romanInKey: romanInKey,
     mergeSuggestionRow: mergeSuggestionRow,

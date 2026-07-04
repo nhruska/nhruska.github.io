@@ -660,11 +660,14 @@
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
         + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
-        + '<div class="bt-st-scale" data-scale></div>'
-        + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
+        + '<div class="bt-st-scale" data-scale></div></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button>'
+        // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
+        // and the "why these notes" toggle merge onto one row (.bt-st-linkrow) instead
+        // of each owning its own row - saves vertical space in the scrollable body.
+        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a>'
+        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button></div>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
@@ -689,7 +692,7 @@
         // match the "Solo over it" list above, whatever names th.notes holds.
         var nameByPc = [];
         th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
-        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7, names: nameByPc });
+        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { names: nameByPc });
       } catch (e) {}
       // S-BLUES: the scale-chip row - [Mode label | Pent major | Pent minor |
       // Blues]. Default = 'mode' (th itself; the fretboard/notes already
@@ -734,7 +737,7 @@
             scaleEl.innerHTML = '';
             var chipNameByPc = [];
             bundle.notes.forEach(function (nm, i) { chipNameByPc[bundle.pcs[i]] = nm; });
-            global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs, { frets: 7, names: chipNameByPc });
+            global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs, { names: chipNameByPc });
           } catch (e) {}
         }
         render();
