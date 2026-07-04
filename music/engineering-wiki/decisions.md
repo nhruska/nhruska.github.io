@@ -62,6 +62,7 @@ Source: [docs/plans/ux-sprint-1-20260703.md](../../docs/plans/ux-sprint-1-202607
 | S-DIAGRAM-PREF | Queued; spec home [ux-philosophy/expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) |
 | DECOM | Legacy docs absorbed into this wiki then stubbed/deleted per the IA disposition table (grep-before-DELETE) |
 | P5-FOLD | P5 seasoned-player adversarial pass on PR #118 (2026-07-05), folded pre-merge into the same PR | Two changes: (1) ghost dots for out-of-scale chord tones - see D-TARGET amendment; (2) rewrote most SoloGuide card blocks toward chord-relative ("target the CURRENT chord") advice + fixed the pentMajor relative-minor-pent distance (three frets, not two) - supersedes section-8B wherever both touched the same block (dorian.hangOn, pentMinor.startEnd, blues.resolveTo) |
+| M3-5A | Finder rehome on songs/tracks merge: DISSOLVE (5A) - curation to +Add/per-item edit, circle panel into the Studio; option 5B (playable-filter mode) rejected | operator 2026-07-04 | [uat + queue](../../docs/plans/QUEUE.md) |
 
 ## Related
 

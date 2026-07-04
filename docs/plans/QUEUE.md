@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| M-GUIDE: Blues-as-a-key + scale mentorship (targeting + cards) + solo chips in Compose + F12/clear-key + fretboard density | operator-initiated at M2 close; interview done (4 answers); IA next | [goal-m-guide-mission-20260704.md](goal-m-guide-mission-20260704.md) |
+| (idle - M-GUIDE SHIPPED 2026-07-04: Blues key + targeting/ghost dots + mentor cards + Compose chips + density, v85; 4 adversarial rounds, 10 catches folded) | next launch: any SHORT trigger | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
