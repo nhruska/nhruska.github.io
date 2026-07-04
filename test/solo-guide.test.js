@@ -79,7 +79,7 @@ test('card: out-of-range index interpolates blank, never the literal word "undef
 /* ---------- P5 seasoned-player adversarial fold (2026-07-05) - supersedes
  * section-8B wherever both amended the same block (dorian.hangOn,
  * pentMinor.startEnd, blues.resolveTo). Folded pre-merge into PR #118. ---------- */
-test('professor micro-pass: blues.resolveTo scopes the rub to I7 (supersedes the P5 line - over IV7/V7 the b3 is that chord's b7, not a rub)', function () {
+test("professor micro-pass: blues.resolveTo scopes the rub to I7 (supersedes the P5 line - over IV7/V7 the b3 is that chord's b7, not a rub)", function () {
   assert.strictEqual(SoloGuide.cards.blues.resolveTo,
     "Aim at the current chord's 3rd, b7, or root; {4} is neutral. Over I7, bend {1} toward 3.");
 });
