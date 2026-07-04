@@ -31,6 +31,7 @@
 | [instrument-profiles.md](systems/instrument-profiles.md) | Pack contract; enharmonic shape lookup; HGT/HSR shape families; triad-inversions deep link |
 | [practice-studio.md](systems/practice-studio.md) | The Studio overlay: solo panel, position walk, buildWhy circle, curation loop, Compose bridge |
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
+| [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
 
 ## workflows/ - how we work on it
 
@@ -55,5 +56,6 @@
 | Key picker / transpose behavior | systems/compose-key-system.md |
 | localStorage / backup / migration | systems/data-model.md |
 | SW cache / offline | systems/offline-pwa.md |
+| Chord tiles overlapping / diagram spilling past its cell | systems/layout-tokens.md |
 | How to verify before shipping | workflows/dev-verify-ship.md |
 | What is planned / deferred | workflows/roadmap-missions.md |
