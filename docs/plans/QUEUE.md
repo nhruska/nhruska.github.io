@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| (idle - M2 SHIPPED 2026-07-04: wiki live, scales live v80, PR #108) | next launch: any SHORT trigger | [wiki-adversarial-fold-20260704.md](wiki-adversarial-fold-20260704.md) |
+| M-GUIDE: Blues-as-a-key + scale mentorship (targeting + cards) + solo chips in Compose + F12/clear-key + fretboard density | operator-initiated at M2 close; interview done (4 answers); IA next | [goal-m-guide-mission-20260704.md](goal-m-guide-mission-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
