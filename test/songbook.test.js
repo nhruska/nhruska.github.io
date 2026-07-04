@@ -18,6 +18,10 @@ if (typeof global.window === 'undefined') global.window = global;
 // land on the SAME global as above) before songbook.js.
 require('../music/shared/esc.js');
 require('../music/shared/list-item.js');
+// S-TOAST (UAT U9): showToast/showComposeToast are now thin delegates to the
+// shared toast.js primitive (see its own test/toast.test.js for unit
+// coverage) - must be required before songbook.js for the same reason.
+require('../music/shared/toast.js');
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
 var Repertoire = require('../music/shared/repertoire.js');
@@ -1082,6 +1086,64 @@ test('H4: toggleSet on a throwing (quota-exceeded) store shows a truthful failur
   assert.strictEqual(toast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
   assert.strictEqual(toast.classList.contains('err'), true, 'a failed setlist add must carry the err class');
   assert.notStrictEqual(toast.textContent, 'Added to setlist', 'must never claim success on a setlist write that threw');
+});
+
+/* =====================================================================
+ * S-TOAST (UAT U9): the exact end-to-end repro - Compose Save with the
+ * default-checked "Add to setlist" box fires toggleSet()'s Library toast
+ * (showToast, 1600ms auto-hide) THEN, in the same synchronous tick,
+ * saveProgression's showComposeToast(..., persist: true). Before the
+ * toast.js extraction, showComposeToast's clearTimeout(toastTimer) silently
+ * killed the Library toast's pending auto-hide via the shared `var
+ * toastTimer` both functions used to declare in Songbook.mount()'s closure -
+ * leaving "Added to setlist" stuck on-screen forever (the operator's
+ * screenshot). This drives that exact call sequence with a fake clock (no
+ * real 1600ms wait) and proves the Library toast's auto-hide still fires.
+ * ===================================================================== */
+test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on schedule even though a persist:true Compose toast fires in the same tick', function () {
+  var nextId = 1, scheduled = {}, cleared = [];
+  var realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
+  global.setTimeout = function (cb, ms) { var id = nextId++; scheduled[id] = { cb: cb, ms: ms }; return id; };
+  global.clearTimeout = function (id) { cleared.push(id); delete scheduled[id]; };
+  var m;
+  try {
+    m = mountForSaveTests();
+    buildAndSaveAddToSetlist(m); // toggleSet's showToast, THEN showComposeToast(persist:true) - same tick
+  } finally {
+    global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
+  }
+  var libraryToast = findPlainToast();
+  var composeToast = findComposeToast(m);
+  assert.ok(libraryToast, 'expected the Library .toast element in document.body');
+  assert.strictEqual(libraryToast.textContent, 'Added to setlist');
+  assert.ok(composeToast, 'expected the Compose .composeToast element');
+  assert.strictEqual(composeToast.textContent, 'Saved to your Repertoire');
+  // buildAndSaveAddToSetlist also taps a chord tile twice on the way in, and
+  // each tap schedules its OWN unrelated 220ms "sel" class-removal timer
+  // (songbook.js's chord-tile tap animation, nothing to do with toasts) - so
+  // total scheduled count is noisy. Isolate by duration instead: the Library
+  // toast's own 1600ms auto-hide must be the ONLY 1600ms-duration timer, and
+  // the persist:true Compose toast must have scheduled NO 3000ms timer at all
+  // (that's the bug's exact mechanism - it must neither clobber A's timer
+  // nor schedule one of its own it would never clear).
+  var byDuration = {};
+  Object.keys(scheduled).forEach(function (id) {
+    var ms = scheduled[id].ms;
+    byDuration[ms] = (byDuration[ms] || []).concat([Number(id)]);
+  });
+  assert.strictEqual((byDuration[1600] || []).length, 1, 'exactly one pending 1600ms auto-hide timer (the Library toast\'s)');
+  assert.strictEqual((byDuration[3000] || []).length, 0, 'a persist:true Compose toast must schedule NO 3000ms timer');
+  assert.strictEqual(libraryToast.classList.contains('on'), true, 'Library toast is visible immediately after showToast()');
+  assert.strictEqual(composeToast.hidden, false, 'Compose toast (persist:true) is visible with no timer of its own');
+  // Fire the Library toast's own scheduled auto-hide (simulates the real
+  // 1600ms elapsing) - this is the assertion that FAILED before the fix
+  // (the timer had already been silently cancelled and would never fire).
+  var id = byDuration[1600][0];
+  scheduled[id].cb();
+  assert.strictEqual(libraryToast.classList.contains('on'), false, 'Library toast must auto-hide once its own timer elapses - the U9 regression');
+  // The persist:true Compose toast must remain completely untouched by the
+  // Library toast's own hide - the two hosts are fully independent.
+  assert.strictEqual(composeToast.hidden, false, 'Compose toast (persist:true) must stay visible - unaffected by the unrelated Library toast auto-hiding');
 });
 
 /* =====================================================================

@@ -20,6 +20,7 @@
 | [personas.md](ux-philosophy/personas.md) | P1-P5 (incl. the Seasoned Guitarist), JTBD, dismissal triggers, journey matrix |
 | [interaction-safety.md](ux-philosophy/interaction-safety.md) | Destructive-guard taxonomy; scroll-rail rule; wireTap; undo contract; notables one-shot pattern |
 | [expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) | Dots vs clean patterns; hand-position/fingering guidance; muscle-memory framing; S-DIAGRAM-PREF spec home |
+| [ui-primitives.md](ux-philosophy/ui-primitives.md) | TOAST vs NOTABLE vs MODAL vs CHIP/TOKEN taxonomy; toast.js primitive (S-TOAST/U9 fix); candidate toast placements |
 
 ## systems/ - how it runs
 
@@ -50,6 +51,7 @@
 | Roman numeral looks wrong | theory-engine/harmonization.md |
 | A destructive control / undo | ux-philosophy/interaction-safety.md |
 | One-shot hint/banner | ux-philosophy/interaction-safety.md (notables) |
+| A toast / transient feedback / which UI primitive to use | ux-philosophy/ui-primitives.md |
 | Chord diagram / fretboard rendering | systems/instrument-profiles.md |
 | Studio / solo panel / backing tracks | systems/practice-studio.md |
 | Key picker / transpose behavior | systems/compose-key-system.md |

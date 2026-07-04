@@ -294,6 +294,11 @@
      list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
      tracks.js all delegate to it. -->
 <script src="../shared/esc.js"></script>
+<!-- toast.js: S-TOAST (UAT U9 fix) - the shared per-host timer-isolation
+     primitive both showToast() and showComposeToast() in songbook.js
+     delegate to. Loads early, alongside esc.js, since any consumer could
+     show a toast. -->
+<script src="../shared/toast.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
 <script src="../shared/circle.js"></script>

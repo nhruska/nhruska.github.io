@@ -1470,14 +1470,25 @@
     // 'err' class name for forward-compat with a future .toast.err rule -
     // songbook.css is out of this mission's grant, so there is no red styling
     // yet, but the message itself is always truthful (see toggleSet below).
-    var toastEl, toastTimer;
+    // S-TOAST (UAT U9): delegates to the shared toast.js primitive, which owns
+    // ITS OWN per-host timer - the fix for the "Added to setlist" toast that
+    // used to get its auto-hide silently cancelled by showComposeToast below
+    // (both used to share ONE `var toastTimer` in this closure - see toast.js
+    // header comment for the full root-cause trace).
+    var toastEl;
     function showToast(msg, isErr) {
       if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
-      toastEl.textContent = msg;
-      toastEl.classList.toggle('err', !!isErr);
-      toastEl.classList.add('on');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(function () { if (toastEl) toastEl.classList.remove('on'); }, 1600);
+      global.Toast.show(msg, {
+        host: toastEl,
+        error: isErr,
+        duration: 1600,
+        onShow: function (host, m, isErrFlag) {
+          host.textContent = m;
+          host.classList.toggle('err', !!isErrFlag);
+          host.classList.add('on');
+        },
+        onHide: function (host) { host.classList.remove('on'); }
+      });
     }
     function toggleSet(id) {
       var pos = STATE.setlist.indexOf(id);
@@ -2527,7 +2538,7 @@
      * so it costs zero vertical space until it's actually used (per the "one
      * screen, above the fold" rule) - and torn down again the moment it's
      * dismissed, rather than reserving a permanent row. ---- */
-    var composeRow = null, composeToast = null, toastTimer = null, composeModalBackdrop = null;
+    var composeRow = null, composeToast = null, composeModalBackdrop = null;
     // One-shot id for the post-save discoverability scroll+highlight (B3 pilot
     // UAT) - set by saveProgression right before the renderSongs() call that
     // will actually paint the new row, consumed (cleared) on the next
@@ -2644,16 +2655,28 @@
     // itself after ~3s so it never permanently claims screen space - unless
     // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
     // seconds"), in which case it stays until the next explicit toast/clear.
+    // S-TOAST (UAT U9): delegates to the shared toast.js primitive - see its
+    // header comment and showToast() above for the shared-`toastTimer` root
+    // cause this replaces. Every call still goes through its OWN host
+    // (composeToast), so this toast's timer can never be clobbered by, nor
+    // clobber, the unrelated Library toast above.
     function showComposeToast(msg, isErr, persist) {
       if (!ensureComposeUI()) return;
-      clearTimeout(toastTimer);
-      composeToast.textContent = msg;
-      composeToast.className = 'composeToast' + (isErr ? ' err' : '') + (persist ? ' tap' : '');
-      composeToast.hidden = false;
-      // a persistent toast must still be dismissable (codex #91: no clear path
-      // could strand stale text indefinitely) - one tap hides it.
-      composeToast.onclick = function () { composeToast.hidden = true; };
-      if (!persist) toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
+      global.Toast.show(msg, {
+        host: composeToast,
+        error: isErr,
+        persist: persist,
+        duration: 3000,
+        onShow: function (host, m, isErrFlag) {
+          host.textContent = m;
+          host.className = 'composeToast' + (isErrFlag ? ' err' : '') + (persist ? ' tap' : '');
+          host.hidden = false;
+          // a persistent toast must still be dismissable (codex #91: no clear path
+          // could strand stale text indefinitely) - one tap hides it.
+          host.onclick = function () { host.hidden = true; };
+        },
+        onHide: function (host) { host.hidden = true; }
+      });
     }
     // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
     // fires once - the trimmed name on Save/Enter (plus whether the "Add to
