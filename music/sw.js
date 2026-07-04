@@ -61,7 +61,15 @@
 // music.schema.version stays in the envelope on purpose - M-6 follow-ups
 // #1/#2/#3). No new/removed CORE paths. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v97';
+// docs(storage-migrate) header-note follow-up: ->v97, no code change.
+// S-PROG-WRAP (2026-07-04, UAT U8): v97->v98 - shared/songbook.js and
+// shared/songbook.css change (progression strip degrades to the existing
+// compact chord token + flex-wraps past the diagram-row overflow threshold).
+// Rebased past #137's v94, #135's v95, #138's v96 AND #139's v97 (four
+// sibling collisions landed while this branch was in flight; originally cut
+// from #136's v93) - no new/removed CORE paths. check-cache-bump.sh
+// re-verified against origin/main immediately before push.
+var CACHE = 'music-v98';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
