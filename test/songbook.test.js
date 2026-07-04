@@ -1265,33 +1265,54 @@ test('COMPOSE_MAX is exported as 12 (D-CAP12, up from the old 8-chord cap)', fun
   assert.strictEqual(Songbook.COMPOSE_MAX, 12);
 });
 
-/* ---------- progStripMode (S-PROG-WRAP, UAT U8): measured-width threshold, never a hardcoded count ---------- */
-test('progStripMode: a diagram row that fits the strip stays full (unchanged behavior)', function () {
-  // 4 cards x 84px + 3 gaps x 8px = 336 + 24 = 360; strip has 400 -> fits
-  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 400), 'full');
+/* ---------- progStripMode (S-PROG-WRAP-2, UAT U8b): COUNT-driven staged
+ * density ladder - full diagram cards (1-4) -> one-row compact tokens (5-6)
+ * -> a fixed 6-per-row compact grid (7-12, so 12 = two clean rows of 6).
+ * Measured width is consulted only as a GUARD for pathological narrow
+ * viewports (demotes one stage early rather than let a stage's natural
+ * minimum size get squeezed) - it can never PROMOTE back up past the
+ * count-driven candidate. Supersedes S-PROG-WRAP's pure width-driven binary
+ * full/compact split (see D-PROG-WRAP, amended). ---------- */
+test('progStripMode: count alone picks the stage when width is generous - the ladder boundaries', function () {
+  assert.strictEqual(Songbook.progStripMode(1, 84, 8, 2000), 'full');
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 2000), 'full');
+  assert.strictEqual(Songbook.progStripMode(5, 84, 8, 2000), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(6, 84, 8, 2000), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(7, 84, 8, 2000), 'grid6');
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 2000), 'grid6');
 });
-test('progStripMode: the same card/gap size overflows the strip once count grows -> compact', function () {
-  // 12 cards x 84px + 11 gaps x 8px = 1008 + 88 = 1096; strip only has 400 -> overflow
-  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 400), 'compact');
-});
-test('progStripMode: the SAME count fits a wider strip and overflows a narrower one - width drives the call, not count alone', function () {
-  // 6 cards x 84 + 5 gaps x 8 = 504 + 40 = 544
-  assert.strictEqual(Songbook.progStripMode(6, 84, 8, 600), 'full');
-  assert.strictEqual(Songbook.progStripMode(6, 84, 8, 500), 'compact');
-});
-test('progStripMode: an exact fit (needW === availW) is NOT an overflow - the boundary is exclusive', function () {
-  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8), 'full');
-  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8 - 1), 'compact');
-});
-test('progStripMode: 0 chords never compact even in a tiny strip - nothing to wrap', function () {
+test('progStripMode: 0 chords is always full - nothing to lay out, regardless of width', function () {
   assert.strictEqual(Songbook.progStripMode(0, 84, 8, 10), 'full');
 });
-test('progStripMode: an unmeasured container (availW <= 0, e.g. before first layout) defaults to full, never spuriously compacts', function () {
-  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 0), 'full');
-  assert.strictEqual(Songbook.progStripMode(12, 84, 8, -5), 'full');
+test('progStripMode: a too-narrow strip demotes the full stage one step early (to fill-row) rather than shrink the diagram cards', function () {
+  // 4 cards x 84 + 3 gaps x 8 = 336 + 24 = 360 (overflows a 300px strip);
+  // 4 compact tokens x 58 + 3 gaps x 8 = 232 + 24 = 256 (fits 300) -> fill-row, not grid6
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 300), 'fill-row');
 });
-test('progStripMode: an unmeasured card width (cardW <= 0, e.g. the probe was unavailable) defaults to full', function () {
-  assert.strictEqual(Songbook.progStripMode(12, 0, 8, 400), 'full');
+test('progStripMode: the full-stage width-guard boundary is exclusive - an exact fit stays full', function () {
+  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8), 'full');
+  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8 - 1), 'fill-row');
+});
+test('progStripMode: an impossibly narrow strip cascades both guards in one call - a full candidate can demote all the way to grid6', function () {
+  // 4 cards never fit (360 > 50) -> fill-row; 4 tokens never fit either (256 > 50) -> grid6
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 50), 'grid6');
+});
+test('progStripMode: the fill-row-stage width-guard boundary is exclusive too', function () {
+  // 5 tokens x 58 + 4 gaps x 8 = 290 + 32 = 322
+  assert.strictEqual(Songbook.progStripMode(5, 84, 8, 322), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(5, 84, 8, 321), 'grid6');
+});
+test('progStripMode: grid6 is the floor stage - no further demotion even at an impossibly narrow width', function () {
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 1), 'grid6');
+});
+test('progStripMode: an unmeasured strip (availW <= 0, e.g. before first layout) never demotes - the count-driven candidate stands', function () {
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 0), 'full');
+  assert.strictEqual(Songbook.progStripMode(5, 84, 8, -5), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 0), 'grid6');
+});
+test('progStripMode: an unmeasured card width (cardW <= 0, e.g. the probe was unavailable) never demotes either', function () {
+  assert.strictEqual(Songbook.progStripMode(4, 0, 8, 10), 'full');
+  assert.strictEqual(Songbook.progStripMode(12, 0, 8, 10), 'grid6');
 });
 
 /* ---------- PROGRESSIONS: the two Blues starters carry mode + preview ---------- */
@@ -1563,12 +1584,20 @@ test('U7: "Skip" resolves to skip and opens the ephemeral Studio directly (no sa
 });
 
 /* =====================================================================
- * S-PROG-WRAP (2026-07-04, UAT U8) - progression strip degrade+wrap.
- * progStripMode's pure-fn coverage lives above, near COMPOSE_MAX. These are
- * the DOM-level checks the pure fn can't cover on its own: does renderProg
- * actually build the compact/full markup correctly, does the existing .rm
- * remover still work in compact mode, and does the mode flip back to full
- * when the progression shrinks below threshold again.
+ * S-PROG-WRAP-2 (2026-07-04, UAT U8b) - staged density ladder.
+ * progStripMode's pure-fn coverage (the count-driven stage + width-guard
+ * demotion) lives above, near COMPOSE_MAX. These are the DOM-level checks
+ * the pure fn can't cover on its own: does renderProg actually build the
+ * right markup per stage (diagram cards vs compact tokens, grid column
+ * count), does the existing .rm remover still work in every stage, and does
+ * the stage re-derive correctly as the progression grows/shrinks across a
+ * boundary.
+ *
+ * Node has no real layout engine, so these tests assert the STRUCTURAL
+ * contract only (stage class, child count, inline grid-template-columns
+ * presence/absence) - not literal rendered row counts. The visual claim
+ * ("11 chords is a clean 6+5, never a 3rd row") is confirmed live via
+ * Playwright (see the PR's manual test plan), not here.
  *
  * Same minimal-stub-document mount() approach as the harnesses above,
  * dedicated (not reusing mountForSaveTests/mountForGridTests) so setting
@@ -1613,67 +1642,129 @@ function fireListeners(el, type, evt) {
 // no touch events at all still fires" case.
 function tapWired(el) { fireListeners(el, 'click', { stopPropagation: function () {} }); }
 
-test('S-PROG-WRAP: a progression that fits the strip renders diagram cards (full mode), .wrapped absent', function () {
+// Tap the first "All chords" tile (the C major tile - deterministic, per
+// buildGrid's default 'all' view + Major-first CATS ordering) N times to
+// build an N-chord progression without depending on a named starter's exact
+// length (no PROGRESSIONS entry is 5, 6, 7, or 11 chords long). Content
+// (all-C) doesn't matter for these structural/layout assertions - count and
+// DOM shape are what's under test.
+function tapChords(m, n) {
+  var tile = m.elMap.buildGrid.children[0];
+  for (var i = 0; i < n; i++) tile.onclick();
+}
+function stageClasses(prog) {
+  return ['full', 'fill-row', 'grid6'].filter(function (c) { return prog.classList.contains(c); });
+}
+
+test('S-PROG-WRAP-2: 1-4 chords render as full diagram cards (stage "full"), fill-row/grid6 absent', function () {
   var m = mountForProgWrapTests();
-  m.elMap.prog.clientWidth = 1000; // plenty of room for 3 cards at the 84px fallback width
-  loadStarterByName(m, 'Three-chord rock'); // degrees [0,3,4] in C Major -> C F G
-  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), false);
+  m.elMap.prog.clientWidth = 1000; // plenty of room
+  loadStarterByName(m, 'Three-chord rock'); // C F G
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['full']);
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, '', 'full stage is flexbox - no grid-template-columns needed');
   assert.strictEqual(m.elMap.prog.children.length, 3);
   m.elMap.prog.children.forEach(function (slot) {
-    assert.ok(slot.children.some(function (c) { return c.className === 'chord'; }), 'full mode must render the diagram .chord element');
-    assert.ok(!slot.children.some(function (c) { return c.className === 'suggChip'; }), 'full mode must not use the compact suggChip token');
+    assert.ok(slot.children.some(function (c) { return c.className === 'chord'; }), 'full stage must render the diagram .chord element');
+    assert.ok(!slot.children.some(function (c) { return c.className === 'suggChip'; }), 'full stage must not use the compact suggChip token');
   });
 });
 
-test('S-PROG-WRAP: a progression whose diagram row would overflow the strip degrades to compact tokens (name + roman, no diagram) and flex-wraps', function () {
+test('S-PROG-WRAP-2: 5 chords render compact tokens in a ONE-ROW grid sized to the exact count (stage "fill-row")', function () {
   var m = mountForProgWrapTests();
-  m.elMap.prog.clientWidth = 50; // narrow strip - even one 84px fallback card overflows
-  loadStarterByName(m, '4-chord song'); // degrees [0,4,5,3] in C Major -> C G Am F -> I V vi IV
-  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), true, 'the strip must switch to wrap mode');
-  assert.strictEqual(m.elMap.prog.children.length, 4);
-  var names = [], romans = [];
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 5);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['fill-row']);
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, 'repeat(5, 1fr)');
+  assert.strictEqual(m.elMap.prog.children.length, 5);
   m.elMap.prog.children.forEach(function (slot) {
-    assert.ok(!slot.children.some(function (c) { return c.className === 'chord'; }), 'compact mode must not render the diagram element');
-    var chip = slot.children.filter(function (c) { return c.className === 'suggChip'; })[0];
-    assert.ok(chip, 'expected the existing suggChip token, reused verbatim (not a 4th chip variant)');
-    var nm = chip.children.filter(function (c) { return c.className === 'scName'; })[0];
-    var rn = chip.children.filter(function (c) { return c.className === 'scRn'; })[0];
-    names.push(nm.textContent); romans.push(rn.textContent);
+    assert.ok(!slot.children.some(function (c) { return c.className === 'chord'; }), 'fill-row must not render the diagram element');
+    assert.ok(slot.children.some(function (c) { return c.className === 'suggChip'; }), 'expected the existing suggChip token, reused verbatim (not a 4th chip variant)');
   });
-  assert.deepStrictEqual(names, ['C', 'G', 'Am', 'F']);
-  assert.deepStrictEqual(romans, ['I', 'V', 'vi', 'IV']);
 });
 
-test('S-PROG-WRAP: removing a chord from a compact slot (the x button) works the same as full mode', function () {
+test('S-PROG-WRAP-2: 6 chords - the ladder\'s upper fill-row boundary - still one row, grid sized to 6', function () {
   var m = mountForProgWrapTests();
-  m.elMap.prog.clientWidth = 50;
-  loadStarterByName(m, '4-chord song'); // C G Am F
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 6);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['fill-row']);
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, 'repeat(6, 1fr)');
+});
+
+test('S-PROG-WRAP-2: 7 chords cross into the FIXED 6-column grid (stage "grid6"), not fill-row', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 7);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['grid6']);
+  // grid6 is a FIXED 6 columns (CSS-only) regardless of the actual count - no
+  // inline gridTemplateColumns override, unlike fill-row.
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, '');
+  assert.strictEqual(m.elMap.prog.children.length, 7);
+});
+
+test('S-PROG-WRAP-2: 11 chords (the operator-reported 5+5+1 orphan-row bug) stay in the fixed 6-col grid - no per-count column override that could reintroduce an odd row split', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 11);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['grid6']);
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, '', 'grid6\'s 6 columns come from static CSS, never a JS-computed count - the fixed track list is what guarantees a clean 6+5, not a 5+5+1');
+  assert.strictEqual(m.elMap.prog.children.length, 11);
+});
+
+test('S-PROG-WRAP-2: 12 chords (the COMPOSE_MAX cap) is exactly two clean rows of 6', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 12);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['grid6']);
+  assert.strictEqual(m.elMap.prog.children.length, 12);
+});
+
+test('S-PROG-WRAP-2: removing a chord from a compact slot (the x button) still works in fill-row and grid6', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 7); // grid6
+  var rm7 = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
+  assert.ok(rm7, 'expected the remove (x) button on a grid6 slot');
+  tapWired(rm7);
+  assert.strictEqual(m.elMap.prog.children.length, 6, 'removing from a grid6 slot must shrink the progression by one');
+  var rm6 = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
+  assert.ok(rm6, 'expected the remove (x) button on a fill-row slot');
+  tapWired(rm6);
+  assert.strictEqual(m.elMap.prog.children.length, 5, 'removing from a fill-row slot must shrink the progression by one');
+});
+
+test('S-PROG-WRAP-2: removing chords crosses stage boundaries downward - grid6 -> fill-row -> full', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000;
+  tapChords(m, 7);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['grid6']);
+  function removeFirst() {
+    var rm = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
+    tapWired(rm);
+  }
+  removeFirst(); // 6 left
+  assert.strictEqual(m.elMap.prog.children.length, 6);
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['fill-row'], '6 chords must flip back to fill-row');
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, 'repeat(6, 1fr)');
+  removeFirst(); removeFirst(); // 4 left
   assert.strictEqual(m.elMap.prog.children.length, 4);
-  var secondSlot = m.elMap.prog.children[1]; // G
-  var rm = secondSlot.children.filter(function (c) { return c.className === 'rm'; })[0];
-  assert.ok(rm, 'expected the remove (x) button on a compact slot');
-  tapWired(rm);
-  assert.strictEqual(m.elMap.prog.children.length, 3, 'removing from a compact slot must shrink the progression by one');
-  var names = m.elMap.prog.children.map(function (slot) {
-    var chip = slot.children.filter(function (c) { return c.className === 'suggChip'; })[0];
-    return chip.children.filter(function (c) { return c.className === 'scName'; })[0].textContent;
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['full'], '4 chords must flip back to full diagram cards');
+  assert.strictEqual(m.elMap.prog.style.gridTemplateColumns, '');
+  m.elMap.prog.children.forEach(function (slot) {
+    assert.ok(slot.children.some(function (c) { return c.className === 'chord'; }), 'must render the diagram element again after flipping back to full');
+    assert.ok(!slot.children.some(function (c) { return c.className === 'suggChip'; }), 'must not still show the compact token after flipping back to full');
   });
-  assert.deepStrictEqual(names, ['C', 'Am', 'F'], 'G must be the one removed, remaining order preserved');
 });
 
-test('S-PROG-WRAP: removing chords back below the threshold flips the strip back to full diagram-card mode', function () {
+test('S-PROG-WRAP-2: a too-narrow strip demotes the full stage early (width guard) rather than shrinking the diagram cards', function () {
   var m = mountForProgWrapTests();
-  m.elMap.prog.clientWidth = 250; // 3 cards (3*84+2*8=268) overflow; 2 cards (2*84+1*8=176) fit
-  loadStarterByName(m, 'Three-chord rock'); // C F G
-  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), true, '3 chords at the 84px fallback card width overflow a 250px strip');
-  var slot0 = m.elMap.prog.children[0];
-  var rm = slot0.children.filter(function (c) { return c.className === 'rm'; })[0];
-  tapWired(rm); // remove the first chord (C) -> F, G remain
-  assert.strictEqual(m.elMap.prog.children.length, 2);
-  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), false, '2 chords must fit and flip back to full diagram mode');
-  var remainingSlot = m.elMap.prog.children[0];
-  assert.ok(remainingSlot.children.some(function (c) { return c.className === 'chord'; }), 'must render the diagram element again after flipping back to full');
-  assert.ok(!remainingSlot.children.some(function (c) { return c.className === 'suggChip'; }), 'must not still show the compact token after flipping back');
+  // 4 cards x 84 + 3 gaps x 8 = 360 (overflows 300); 4 tokens x 58 + 3 gaps x 8 = 256 (fits 300)
+  m.elMap.prog.clientWidth = 300;
+  loadStarterByName(m, '4-chord song'); // C G Am F
+  assert.deepStrictEqual(stageClasses(m.elMap.prog), ['fill-row'], 'a too-narrow strip must demote rather than shrink the diagram cards');
+  assert.strictEqual(m.elMap.prog.children.length, 4);
+  m.elMap.prog.children.forEach(function (slot) {
+    assert.ok(slot.children.some(function (c) { return c.className === 'suggChip'; }));
+  });
 });
 
 run();

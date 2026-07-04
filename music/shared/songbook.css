@@ -361,10 +361,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .progTools{display:flex;align-items:center;gap:6px;}
-/* one-row horizontal filmstrip (was flex-wrap, which pushed a 4th chord to a 2nd row).
-   touch-action:pan-x = horizontal pan handled here, vertical gestures pass to the page
-   scroll (fixes the "stuck / few pixels at a time" trap from a nested h-scroller). */
-.prog{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
+/* S-PROG-WRAP-2 (UAT U8b, docs/plans/uat-walkthrough-20260704.md section U8b;
+   supersedes S-PROG-WRAP's binary full/compact split - see D-PROG-WRAP,
+   amended, engineering-wiki/decisions.md): a COUNT-driven staged density
+   ladder, never a free flex-wrap (the plain flex-wrap this replaced was a
+   real regression once - it pushed a 4th chord to a 2nd row unconditionally).
+   The base rule below is shared box chrome ONLY (bg, border, radius, padding,
+   gap) - each stage class fully owns its own layout mode, so there's no
+   "default" nowrap/scroll fallback to reconcile with the stage rules. Never
+   horizontal-scrolls in ANY stage (overflow-x:hidden). overflow-y MUST stay
+   explicit here (not just omitted): setting overflow-x to a non-'visible'
+   value silently forces overflow-y to compute as 'auto' too per the CSS
+   overflow spec's paired-longhand rule, which would turn a 2-row grid6 strip
+   into a clipped scroll box instead of growing its FIXED (non-scrolling)
+   composeTop region - the actual intended behavior (A7 fold-budget check
+   lives in the manual test plan, not in CSS clipping). JS (progStripMode,
+   songbook.js renderProg) picks the stage class + (for fill-row) the inline
+   grid-template-columns per render; a resize re-check can flip stages live
+   (Songbook's resize listener). */
+.prog{display:flex;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
 .prog::-webkit-scrollbar{display:none;}
 /* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
    + wraps"): the unconditional flex-wrap the comment above warns against was a
@@ -380,6 +395,36 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog.wrapped{flex-wrap:wrap;overflow-x:hidden;overflow-y:visible;touch-action:auto;align-content:flex-start;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:var(--prog-tile-min);}
+/* Stage 1 (1-4 chords): full diagram cards, ONE row, never scrolls. Each slot
+   flex-grows (capped by max-width - a "sane bound", never literally
+   edge-to-edge) so the row fills evenly rather than sitting left-packed with
+   a bare gap; justify-content:center keeps any leftover space symmetric.
+   Cards are never SHRUNK below their natural diagram size here -
+   progStripMode's width guard demotes to fill-row a stage early instead, for
+   a viewport too narrow to fit even that natural size (see the JS-side
+   comment on progStripMode). */
+.prog.full{flex-wrap:nowrap;justify-content:center;}
+.prog.full .slot{flex:1 1 0;max-width:150px;min-width:0;}
+/* Stage 2 (5-6 chords, or an early width-guard demotion from stage 1): the
+   existing compact chord token (suggChip - see the compact-token rules
+   below), ONE row, equal-width columns that fill the strip. The column COUNT
+   varies with the actual chord count, so the track list is set inline by
+   renderProg per render (grid6 below is fixed at 6 and needs no inline
+   style). */
+.prog.fill-row{display:grid;}
+/* Stage 3 (7-12 chords): the SAME compact token, but a FIXED 6-column grid -
+   12 chords (the COMPOSE_MAX cap) is exactly two clean rows of 6, never a 3rd
+   orphan row (the binary mode's failure shape this ladder replaces: an
+   11-chord progression used to flex-wrap as 5+5+1). align-content:flex-start
+   keeps a short (7-11 chord) grid's row(s) pinned to the top of the strip's
+   min-height rather than centered/stretched across it. */
+.prog.grid6{display:grid;grid-template-columns:repeat(6,1fr);align-content:flex-start;}
+/* Both compact stages: the token must fill its OWN grid cell, not just sit at
+   its 58px CSS min-width - .slot's flex layout (below) centers children by
+   default, which would otherwise leave a narrow token adrift in a wide cell. */
+.prog.fill-row .suggChip,
+.prog.grid6 .suggChip{width:100%;min-width:0;}
+.prog .slot .chord{min-width:62px;}
 /* When empty the #suggest starters (top of the chord list below) carry the
    call-to-action, so the empty #prog collapses (no min-height, no placeholder)
    instead of showing a redundant prompt. */
@@ -763,11 +808,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.maxed .inKeyLead .chordCell,
 .composeWrap.maxed .progPick,
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
-/* S-PROG-WRAP (UAT U8): the compact progression token reuses .suggChip verbatim
-   (same class - not a 4th chip variant), but the maxed-dim rule above targets
-   the NEXT-CHORD suggestion chip's "add more" role, which must NOT extend to a
-   chord already IN the progression - the cap's whole point is "remove one to
-   add another," so the progression's own slots (compact or diagram) must stay
+/* S-PROG-WRAP / S-PROG-WRAP-2 (UAT U8, U8b): the compact progression token
+   reuses .suggChip verbatim (same class - not a 4th chip variant), but the
+   maxed-dim rule above targets the NEXT-CHORD suggestion chip's "add more"
+   role, which must NOT extend to a chord already IN the progression - the
+   cap's whole point is "remove one to add another," so the progression's own
+   slots (whichever of the full/fill-row/grid6 stages is active) must stay
    tappable at the cap. 4 class selectors beats the 3-class rule above
    regardless of source order. */
 .composeWrap.maxed .prog .suggChip{opacity:1;pointer-events:auto;}

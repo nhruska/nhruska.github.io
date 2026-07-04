@@ -30,6 +30,26 @@
 
 **Spec sketch (S-PROG-WRAP, Tier-0 relay - fires when S-COMPOSE-POLISH2 frees the region):** when the progression's chord count exceeds what fits one row at diagram-card size, the strip re-renders ALL entries as the existing compact chord token (name + roman, no diagram chart) and flex-WRAPS - no horizontal scroll. Tap/remove interactions unchanged. Threshold derived from measured width, not hardcoded count. A7 gate: wrapped height at 12 chords must hold the one-screen budget at 412x915 (compact tokens ~2 rows vs today's scrolling diagram row - measure). Amends the D-CAP12 note ("strip scrolls") to "strip degrades + wraps".
 
+**Shipped as S-PROG-WRAP (PR #141):** width-measured `full`/`compact` binary threshold + flex-wrap. A7 verified: composeTop 379px of 915 with the 12-bar loaded.
+
+### U8b - Staged density ladder, not a binary flex-wrap (operator, 2026-07-04, follow-up screenshot at 11 chords)
+
+**Operator verbatim:** "make 6 per row so no 3rd row wrap. degrade at 8, 10...? keep 3 and 4 chord songs to fill box... gets smaller as you build. keep logical count per row and degrade up to 12 being 2 rows of 6 without shrinking common progressions of 3, 4, etc."
+
+**Root cause of the follow-up:** S-PROG-WRAP's binary `full`/`compact` split was width-only - once a progression's diagram row overflowed, EVERY chord (regardless of count) fell back to the browser's natural flex-wrap line break. At 11 chords on the operator's viewport this broke as an uneven 5+5+1 - a 3rd, mostly-empty row - because flex-wrap has no concept of "keep a logical count per row."
+
+**Spec (S-PROG-WRAP-2): a COUNT-driven staged density ladder**, CSS Grid instead of free flex-wrap:
+
+| Stage | Chords | Render | Row logic |
+|---|---|---|---|
+| `full` | 1-4 | Diagram cards, sized to fill the strip evenly (grow within sane bounds - "fill box"), never shrunk | Flexbox, one row |
+| `fill-row` | 5-6 | Compact token (name + roman, no chart), sized to fill one row evenly | CSS Grid, `repeat(count, 1fr)` |
+| `grid6` | 7-12 | Compact token | CSS Grid, FIXED `repeat(6, 1fr)` - 12 = exactly 2 rows of 6, never a 3rd orphan row |
+
+Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD that demotes a stage one step early (never shrinking a card/token below its natural size) - it never overrides the count-driven stage on a normal viewport.
+
+**Shipped as S-PROG-WRAP-2 (this PR):** `progStripMode` reworked to the 3-stage ladder above; `renderProg` toggles `full`/`fill-row`/`grid6` classes on `.prog` and sets the inline `grid-template-columns` for the `fill-row` stage; CSS reworked around the 3 stage classes. Verified live at 412x915: 3/4 chords render as full-size diagram cards filling the row, 5/6 as one compact row, 7-12 as a clean 6-per-row grid (11 as 6+5, 12 as 6+6), with removal re-staging correctly across every boundary.
+
 ## U9 - "Added to setlist" toast never auto-hides (operator, 2026-07-04, screenshot)
 
 **Operator verbatim-essence:** "The added to setlist toast confirmation never disappears - navigated to my setlist and it's still showing. We don't have any other patterns that use this, although I think it is valid. Where else could we place this type of non-intrusive message? Should we make it part of our UI Primitives Library?"

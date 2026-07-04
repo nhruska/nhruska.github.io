@@ -92,7 +92,11 @@
 // #141's v98 (this branch originally cut from #135's v95) - no new/removed
 // CORE paths. check-cache-bump.sh re-verified against origin/main
 // immediately before push.
-var CACHE = 'music-v101';
+// S-PROG-WRAP-2 (2026-07-04, UAT U8b): v98->v99 - shared/songbook.js and
+// shared/songbook.css change again (the binary full/compact split becomes a
+// count-driven 3-stage density ladder: full <=4, fill-row 5-6, grid6 7-12).
+// No new/removed CORE paths.
+var CACHE = 'music-v102';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
