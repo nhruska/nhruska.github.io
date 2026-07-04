@@ -67,6 +67,9 @@ Source: [docs/plans/ux-sprint-1-20260703.md](../../docs/plans/ux-sprint-1-202607
 | P5-FOLD | P5 seasoned-player adversarial pass on PR #118 (2026-07-05), folded pre-merge into the same PR | Two changes: (1) ghost dots for out-of-scale chord tones - see D-TARGET amendment; (2) rewrote most SoloGuide card blocks toward chord-relative ("target the CURRENT chord") advice + fixed the pentMajor relative-minor-pent distance (three frets, not two) - supersedes section-8B wherever both touched the same block (dorian.hangOn, pentMinor.startEnd, blues.resolveTo) |
 | M3-5A | Finder rehome on songs/tracks merge: DISSOLVE (5A) - curation to +Add/per-item edit, circle panel into the Studio; option 5B (playable-filter mode) rejected | operator 2026-07-04 | [uat + queue](../../docs/plans/QUEUE.md) |
 | D-TEMPO-REMOVED | tempo.js + test deleted as dead code (zero consumers since inception; operator: never used it). Git history preserves; re-roll a beat clock only if the tutor roadmap earns it | operator 2026-07-04 | analysis B1 disposition |
+| D-CAP12-CONFIRMED | 12-chord Compose cap confirmed by operator after live testing (veto window closed) | operator Tier-1 pick 2026-07-04 (1.4) | - |
+| D-STORAGE-LS-MIGRATE | Client storage stays localStorage + versioned schema inventory + migration runner (gh #77 CLOSED by this decision; #76 becomes the spec) | operator Tier-1 pick 2026-07-04 (1.2); IndexedDB explicitly rejected at current scale | [data-model](systems/data-model.md) |
+| D-SELECTED-ACCENT | ONE selected-state grammar app-wide: accent-fill (chips' language); .modeSwitch adopts it | operator Tier-1 pick 2026-07-04 (atomic-queue-plan 1.1); build item S-SELECTED-GRAMMAR | [atomic plan](../../docs/plans/atomic-queue-plan-20260704.md) |
 
 ## Related
 
