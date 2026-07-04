@@ -20,6 +20,10 @@
 | S2 | Sprint 2: M3 songs/tracks full merge | Operator answers finder-rehome **5A or 5B** (one keyword) + #98 merged | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
 | S3 | S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view | Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow) | Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch |
 | S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + hand-position/fingering guidance) | Operator gate on a drafted spec (I draft from M2's wiki content; 5-min review) | Spec to be DRAFTED during M2 close (the wiki's expertise-adaptive philosophy page becomes its foundation) |
+| S5 | S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern) | **go save-truth** | Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger) |
+| S6 | S-HARDEN bundle (3 tiny parallel agents): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests | **go harden** | Spec = analysis A4+A5+A6 (all S effort, mechanical, proven risk classes) |
+| S7 | S-TEMPO: wire the orphaned tap-tempo engine (tempo.js, tested, zero consumers) into Perform - tap button + beat pulse | **go tempo** | Spec = analysis B1 |
+| S8 | S-BACKUP-NUDGE: one-shot Notable "back up your library" via free priority slot + backup.describe() | **go backup-nudge** | Spec = analysis B2 (pairs with S5) |
 
 ## MID (vision known - needs a spec interview, ~15-30 min each; batchable in one sitting)
 
@@ -29,6 +33,11 @@
 | M-2 | Tutor Phase 5: song-form coaching (AABA, sections -> whole songs) | TUTOR-ROADMAP Phase 5 (PLANNED) |
 | M-3 | Strum-engine revival (draft PR #88: Karplus-Strong + humanized hand) | Existing draft PR - needs vision refresh + quality gate |
 | M-4 | Music-app regression suite in CI (Playwright journeys J1-J4 + T-plans as automation) | Sprint-1 harness + test plan exist; needs CI-shape decision (box OOM rule -> CI-dispatched) |
+| M-5 | buildAdapter extraction (inline HTML -> shared/chord-pack-adapter.js + real tests) - before next instrument profile or HSR Lens | [analysis A3](analysis-refactor-enhance-20260704.md) |
+| M-6 | Client-storage strategy + schema inventory (issues #76 + #77) - the strategic layer above S-SAVE-TRUTH | gh #76/#77 + analysis A1 context |
+| M-7 | Jam picker (19 curated records, zero consuming code) + data-model.md drift fix | analysis B3 |
+| M-8 | SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview) | analysis A7 + B5 |
+| M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
 
 ## LONG (ideas - need a vision interview before anything)
 
@@ -36,6 +45,8 @@
 - Setlist sharing / export for bandmates
 - More instrument profiles + per-instrument voicing depth (operator signal: "huge toolset for guitarists AND OTHERS")
 - Audio-input features beyond tuner (chord recognition?) - speculative, needs operator vision
+- Compose UX redesign: tabs + Related Keys lens (gh #44)
+- Setlist touch drag-to-reorder (gh #92)
 
 ## Operating rules
 
