@@ -105,7 +105,7 @@
     blues: {
       chooseWhen: '12-bar or dominant grooves - the rub is the point.',
       resolveTo: "Aim at the current chord's 3rd, b7, or root; {4} is neutral. Over I7, bend {1} toward 3.",
-      hangOn: 'Usually pass through {3}; park there only for obvious tension.',
+      hangOn: 'Pass through {3}; park there only for obvious tension.',
       startEnd: "Start on {1}, {2}, or {4}; close on that chord's root, 3rd, b7, or {4}.",
       shapes: 'Tap a chord above - its tones light up; hollow dots are outside notes you add by ear.'
     }
