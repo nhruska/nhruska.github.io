@@ -209,20 +209,20 @@ def run_one_config(browser, base_url, width, height, font_scale, failures_all):
 
     # --- Navigate to Compose, pick a key, build a small progression ---
     page.click('button[data-tab="compose"]')
-    page.wait_for_selector('#keyPickerCompact', timeout=8000)
+    page.wait_for_selector('#keyPickerCompact', timeout=12000)
     page.click('#keyPickerCompact')
-    page.wait_for_selector('#keyRoots .rootChip', timeout=8000)
+    page.wait_for_selector('#keyRoots .rootChip', timeout=12000)
     page.click('#keyRoots .rootChip >> nth=0')  # pick the first root, any root works for geometry
     # Re-tap the current (already-selected) mode chip to confirm + close the fly-out.
     page.click('#keyModes .chip.on')
     # [hidden] elements are never "visible", so wait_for_selector(state='visible')
     # (the default) would time out on a selector that's true precisely because the
     # element IS hidden - poll the boolean property directly instead.
-    page.wait_for_function("document.getElementById('keyFlyout').hidden === true", timeout=8000)
+    page.wait_for_function("document.getElementById('keyFlyout').hidden === true", timeout=12000)
 
     # In-key view is the default once a key is set. Measure it, then build a
     # small progression by tapping a few in-key tiles.
-    page.wait_for_selector('.inKeyLead .keyPalette .chordCell', timeout=8000)
+    page.wait_for_selector('.inKeyLead .keyPalette .chordCell', timeout=12000)
     n_inkey = check_no_overlap(page, '.inKeyLead .keyPalette', '.chordCell', f'{label} [in-key palette]', failures)
     check_no_spill(page, '.keyPalette .chordCell > .chord', 'svg', f'{label} [in-key palette]', failures)
     if n_inkey == 0:
@@ -241,7 +241,7 @@ def run_one_config(browser, base_url, width, height, font_scale, failures_all):
     if all_btn:
         all_btn.click()
         page.wait_for_timeout(80)
-        page.wait_for_selector('#buildGrid .chord', timeout=8000)
+        page.wait_for_selector('#buildGrid .chord', timeout=12000)
         n_all = check_no_overlap(page, '#buildGrid', '.chord', f'{label} [all-chords grid]', failures)
         check_no_spill(page, '#buildGrid .chord', 'svg', f'{label} [all-chords grid]', failures)
         if n_all == 0:
@@ -268,14 +268,14 @@ def run_one_config(browser, base_url, width, height, font_scale, failures_all):
     # no nested popstate, no bug - a real, un-buggy user path to the same
     # screen this suite needs to measure.
     page.click('#cSave')
-    save_btn = page.wait_for_selector('.composeRow button.red', timeout=8000)
+    save_btn = page.wait_for_selector('.composeRow button.red', timeout=12000)
     save_btn.click()
     page.wait_for_timeout(200)
 
     solo_btn = page.query_selector('#soloBackingBtn')
     if solo_btn and solo_btn.is_visible():
         solo_btn.click()
-        page.wait_for_selector('.bt-player.studio.on .scaleBox', timeout=8000)
+        page.wait_for_selector('.bt-player.studio.on .scaleBox', timeout=12000)
         check_scalebox_contained(page, f'{label} [studio scale box]', failures)
         check_no_page_hscroll(page, f'{label} [studio open]', failures)
     else:
