@@ -21,7 +21,7 @@
 // shared/repertoire.js and shared/repertoire-form.js are all loaded by
 // play/index.html's script order but had never been precached, so an install
 // before ever having gone online would 404 on those files offline.
-var CACHE = 'music-v87';
+var CACHE = 'music-v88';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -39,7 +39,7 @@ var CORE = [
   // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
   // order) - both W3a's Studio and W3b's Compose solo chips call it.
   './shared/solo-guide.js',
-  './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js', './shared/candidates.js',
+  './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tracks.js', './shared/candidates.js',
   // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).
