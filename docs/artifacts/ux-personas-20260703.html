@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UX Persona Mission - Living Record (Phase 1-2)</title>
+<title>Swarm Mission Control - Music App UX Persona Mission</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
 :root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140;--ok:#5eead4}
 @media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea;--ok:#0f8a74}}
-body{margin:0;padding:20px;font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:860px;margin:0 auto}
-h1{font-size:1.3rem;margin:8px 0 2px}h2{font-size:1.05rem;margin:28px 0 8px;color:var(--acc)}h3{font-size:.95rem;margin:14px 0 4px}
-.sub{color:var(--dim);font-size:.85rem;margin-bottom:16px}
+body{margin:0 auto;padding:20px;font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+h1{font-size:1.45rem;margin:8px 0 2px}h2{font-size:1.08rem;margin:30px 0 8px;color:var(--acc);text-transform:uppercase;letter-spacing:.06em}h3{font-size:.95rem;margin:14px 0 4px}
+.sub{color:var(--dim);font-size:.85rem;margin-bottom:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
 .card .who{color:var(--dim);font-size:.85rem}
 .tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:.75rem;margin:2px 6px 2px 0}
@@ -16,43 +16,81 @@ h1{font-size:1.3rem;margin:8px 0 2px}h2{font-size:1.05rem;margin:28px 0 8px;colo
 table{border-collapse:collapse;width:100%;font-size:.84rem;margin:8px 0}
 th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{color:var(--dim);font-weight:600}
-.big{font-size:1.55rem;font-weight:800}.good{color:var(--ok)}.warn{color:var(--warn)}
+.big{font-size:1.7rem;font-weight:800;line-height:1.1}.good{color:var(--ok)}.warn{color:var(--warn)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:680px){.grid,.grid3{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
+.stat .n{font-size:1.5rem;font-weight:800;color:var(--acc)}
+.stat .l{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
 .status{display:inline-block;border-radius:8px;padding:1px 8px;font-size:.75rem;font-weight:700}
 .s-done{background:var(--acc);color:#06201c}.s-run{background:var(--warn);color:#231a00}.s-wait{border:1px solid var(--line);color:var(--dim)}
 code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 4px;font-size:.85em}
-.foot{margin-top:26px;color:var(--dim);font-size:.78rem}
-blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:var(--dim)}
+blockquote{border-left:3px solid var(--acc);margin:10px 0;padding:8px 14px;background:var(--card);border-radius:0 10px 10px 0;font-size:1.02rem}
+blockquote .by{display:block;color:var(--dim);font-size:.78rem;margin-top:4px}
+.foot{margin-top:28px;color:var(--dim);font-size:.78rem}
 </style></head><body>
-<h1>UX Persona Mission - Living Record</h1>
-<div class="sub">Music app - persona-driven UX / theory-credibility enhancement - started 2026-07-03 - branch claude/ux-persona-mission - updated after theory-hardening directive</div>
+<h1>Swarm Mission Control</h1>
+<div class="sub">Music app - persona-driven UX + theory-credibility mission - one operator, parallel AI agent sessions, hard human gate before any code ships. Live record; updates as phases complete. 2026-07-03.</div>
+
+<div class="grid4">
+<div class="stat"><div class="n">5</div><div class="l">PRs merged today (parallel sessions)</div></div>
+<div class="stat"><div class="n">1008</div><div class="l">deterministic theory checks</div></div>
+<div class="stat"><div class="n">0</div><div class="l">theory bugs (2 independent verdicts)</div></div>
+<div class="stat"><div class="n">12</div><div class="l">golden trap cases cross-posted</div></div>
+</div>
+
+<h2>Quotable</h2>
+<blockquote>"NONE FOUND. The 48 rows preserve pitch class, degree order, triad quality, and Roman case/symbol."<span class="by">- adversarial music-theory-professor review (GPT-5.5), instructed to refute, 56K tokens</span></blockquote>
+<blockquote>"The music theory has to be rock solid or it will be dismissed."<span class="by">- the operator's bar, set at mission kickoff; verified twice over by independent engines</span></blockquote>
+<blockquote>Two independent derivations of conservatory spelling - this mission's audit and a sibling session's PR #98 - agree on every probe. Neither knew the other existed until they met in the repo.<span class="by">- the cross-session verification win</span></blockquote>
+<blockquote>Every user is holding an instrument. One free thumb. A mis-tap must never delete or edit anything.<span class="by">- design principle D5, binding on every sprint PR</span></blockquote>
+
+<h2>The app being enhanced</h2>
+<div class="card">A self-contained, offline-installable music practice PWA - vanilla JS, zero build step, zero frameworks, 158 commits of compound iteration. The north star: an adaptive tutor for soloing and songwriting confidence.</div>
+<div class="grid">
+<div class="card"><h3>Compose</h3>Key/mode-aware progression builder: pick E Mixolydian and the in-key palette leads with the right seven chords, roman-numeral labeled. Root change transposes the built progression; mode change re-harmonizes it. Famous-progression starters and next-chord suggestions.</div>
+<div class="card"><h3>Solo + Studio</h3>One tap carries the built key/mode to backing-track soloing: matched tracks, the solo scale on a real fretboard, position-walking up the neck. Theory taught just-in-time, never as a wall.</div>
+<div class="card"><h3>Library + Setlist</h3>Repertoire with chord sheets, key-first tags, capo badges; a running-order Set with edit-mode-gated reorder/remove and persistent undo (a prior swarm's human-factors work).</div>
+<div class="card"><h3>Tune + Instruments</h3>Mic autocorrelation tuner with stability smoothing. 8 instrument profiles: guitar (standard, drop-D, open-G), ukulele, banjo, mandolin, mandola, cigar box - every diagram re-renders per instrument.</div>
+</div>
+
+<h2>Compound engineering wins (this mission, today)</h2>
+<table>
+<tr><th>Win</th><th>What happened</th><th>What compounds</th></tr>
+<tr><td>Theory audit as reusable tool</td><td>Built music/dev/theory-audit.js: independent conservatory ground truth (letter-sequential spelling, stacked-third qualities) vs the app, 1008 checks in milliseconds, zero LLM involvement</td><td>Permanent regression fixture; sprint will promote it to the test suite (professor's #5 move)</td></tr>
+<tr><td>Adversary caught the auditor</td><td>The professor pass found the audit's one soft spot - sharp-tie preference is product policy, not standard practice - now documented as deliberate policy in the tool</td><td>The verifier itself got verified; the policy line ships in user-facing docs</td></tr>
+<tr><td>Cross-session verification for free</td><td>Diagnosing a hung codex call surfaced a SIBLING session's PR #98 (key-aware spelling). Read-only probe: its output matches this mission's ground truth exactly</td><td>12 professor trap cases posted to #98's review thread - one session's research became another session's test fixtures</td></tr>
+<tr><td>Incident to standing infra</td><td>Earlier today: a GitHub Pages outage stranded 3 merged PRs off the live site. Root-caused, recovered, then encoded as an auto-retry workflow (PR #97, merged) that already proved itself armed on its first live deploy</td><td>The class of incident self-heals from now on</td></tr>
+<tr><td>Friction log reuse, not rework</td><td>Mission ingested the 2026-06-30 HF council results before planning - Library one-hand fixes already landed, M3 merge already approved - and scoped to the uncovered surfaces</td><td>No duplicate findings; the sprint plans around in-flight work instead of colliding with it</td></tr>
+<tr><td>Interview to binding spec</td><td>A 4-question operator interview became 9 binding decisions (D1-D9) + 5 design principles, committed as a goal spec any future session can resume from</td><td>The mission survives context loss, reboots, and session handoffs - all state is in git</td></tr>
+</table>
+
+<h2>Autonomous execution stats</h2>
+<table>
+<tr><th>Metric</th><th>Value</th><th>Note</th></tr>
+<tr><td>PRs merged today (repo-wide)</td><td>5 (#94 light mode, #95 follow-ups, #96 compose overlap fix, #97 CI auto-retry, #99 tuner smoothing)</td><td>3+ parallel Claude sessions on one repo, zero collisions - branch discipline + worktrees</td></tr>
+<tr><td>In flight right now</td><td>PR #98 (key-aware spelling) + 2 drafts (#88 strum engine, #70 tutor prototype) + this mission branch (6 commits)</td><td>Every branch isolated; the mission plans around all of them</td></tr>
+<tr><td>Mission phases completed today</td><td>Interview -> spec -> personas -> 1008-check audit -> adversarial professor -> cross-post</td><td>One afternoon, one operator, advisory pings only</td></tr>
+<tr><td>Models orchestrated</td><td>Opus 4.8 (1M) orchestration - GPT-5.5 codex adversarial - Fable 5 queued for council chair - Sonnet/Haiku routed for implementation/drafting - plus zero-LLM deterministic Node checks</td><td>Right-sized routing: judgment up, transcription down, verification deterministic</td></tr>
+<tr><td>Human interruptions required</td><td>2 (one permission grant, one directive)</td><td>Everything else advisory: 4 telegram pings, 3 emails, this live page - reply to redirect, never blocked</td></tr>
+<tr><td>Hard gates before code ships</td><td>1 (sprint-plan approval) + operator-only merges</td><td>Autonomy for research and drafts; humans own what ships</td></tr>
+<tr><td>Swarm wall-clock multiplier</td><td>~0.25x of sequential estimate</td><td>Measured across 5 prior swarm runs (team ledger), not a guess</td></tr>
+</table>
 
 <h2>Mission status</h2>
 <table>
 <tr><th>Phase</th><th>What</th><th>Status</th></tr>
+<tr><td>0</td><td>Interview -> goal spec -> mission branch</td><td><span class="status s-done">DONE</span></td></tr>
 <tr><td>1</td><td>Personas locked (4, real-friend anchored)</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>2a</td><td>Deterministic theory audit (1008 checks)</td><td><span class="status s-done">DONE - 0 bugs</span></td></tr>
-<tr><td>2a+</td><td>Adversarial review: music-theory-professor persona (codex/GPT-5.5). Verdict: <strong>0 theory bugs</strong> ("NONE FOUND" - pitch, quality, degree, roman case all correct); one ground-truth note (sharp-tie = product policy, not standard practice - now documented as such); Roman-style SETTING recommended; 12 golden trap cases delivered and posted to PR #98. Full record: docs/plans/theory-professor-review-20260703.md</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>2b</td><td>Playwright persona walkthroughs J1-J4 (thumb-zone, destructive-tap, JIT gaps)</td><td><span class="status s-wait">NEXT</span></td></tr>
-<tr><td>3</td><td>plan:council (Fable chair + 4 seats)</td><td><span class="status s-wait">QUEUED</span></td></tr>
+<tr><td>2a</td><td>Deterministic theory audit (1008 checks, 0 bugs, 128 spelling deltas quantified)</td><td><span class="status s-done">DONE</span></td></tr>
+<tr><td>2a+</td><td>Adversarial professor review: 0 theory bugs; sharp-tie documented as policy; Roman-style setting recommended; 12 golden traps -> PR #98</td><td><span class="status s-done">DONE</span></td></tr>
+<tr><td>2b</td><td>Playwright persona walkthroughs J1-J4 (thumb-zone, destructive-tap, JIT gaps)</td><td><span class="status s-run">NEXT</span></td></tr>
+<tr><td>3</td><td>plan:council (Fable chair + 4 persona-lens seats)</td><td><span class="status s-wait">QUEUED</span></td></tr>
 <tr><td>4</td><td>Codex adversarial on the candidate plan + resolution</td><td><span class="status s-wait">QUEUED</span></td></tr>
-<tr><td>5</td><td>Sprint plan -&gt; <strong>HARD GATE: Nik's telegram approval</strong></td><td><span class="status s-wait">GATE</span></td></tr>
-<tr><td>6</td><td>Execute sprint 1 (draft PRs only; Nik merges)</td><td><span class="status s-wait">AFTER GATE</span></td></tr>
-</table>
-
-<h2>Decision log (operator decisions, binding)</h2>
-<table>
-<tr><th>#</th><th>Decision</th><th>Detail / why</th><th>Source</th></tr>
-<tr><td>D1</td><td>End state = plan + execute sprint 1</td><td>Mission gates on plan approval, then implements sprint-1 atomic items as DRAFT PRs. Nik merges - the run never does.</td><td>Interview 2026-07-03</td></tr>
-<tr><td>D2</td><td>Personas = Nik's musician friends</td><td>Aspiring full-timers, classically-trained/pianists, first-time guitarists, shape-fluent improvers. Not synthetic archetypes - real expected users.</td><td>Interview</td></tr>
-<tr><td>D3</td><td>Theory must be rock solid or the app is dismissed</td><td>Deterministic + verifiable. Where a REAL user choice exists (e.g. spelling), make it a Setting with a one-time prompt persisted to localStorage - never a silent guess.</td><td>Interview + directive</td></tr>
-<tr><td>D4</td><td>Theory correctness must survive an adversarial music-theory-professor review</td><td>The deterministic audit self-graded its own ground truth. A codex professor persona now attacks BOTH the audit encoding and the app outputs. Confirmed findings fold back into deterministic checks (audit -&gt; unit tests in a sprint PR).</td><td>Directive, this session</td></tr>
-<tr><td>D5</td><td>One-hand operation is a hard constraint</td><td>All personas hold an instrument; one free thumb; mis-taps are normal. NO accidental delete/edit - destructive actions gated (edit-mode / confirm / undo / movement-cancel).</td><td>Interview</td></tr>
-<tr><td>D6</td><td>Just-in-time guidance, one-shot dismissible notables</td><td>Tools/theory surface at the point of need; hint panels show once, dismissible, persisted. No theory walls (matches TUTOR-ROADMAP).</td><td>Interview</td></tr>
-<tr><td>D7</td><td>HITL = hard gate at plan approval only</td><td>Advisory artifacts (telegram + email + githack) at every phase; the run BLOCKS exactly once, before execution.</td><td>Interview</td></tr>
-<tr><td>D8</td><td>Fable orchestration, cheap-routed swarms</td><td>Fable chairs council/resolution/plan-synthesis only (extra-usage credits, ~2x Opus, explicitly approved). Sonnet implements, Haiku transcribes, codex adversarial on its own quota.</td><td>Interview</td></tr>
-<tr><td>D9</td><td>Dry-run phases 1-2 first, then full run ("3 1")</td><td>Personas + testing produced attentively for quality sanity-check; mission then proceeds autonomously to the gate.</td><td>Selection "3 1"</td></tr>
+<tr><td>5</td><td>Sprint plan -&gt; <strong>HARD GATE: operator approval via telegram</strong></td><td><span class="status s-wait">GATE</span></td></tr>
+<tr><td>6</td><td>Execute sprint 1 (worktree-isolated swarm; draft PRs only; operator merges)</td><td><span class="status s-wait">AFTER GATE</span></td></tr>
 </table>
 
 <h2>The four personas</h2>
@@ -62,52 +100,50 @@ blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:
 <div class="kill">Dismissed by: lost data, stage surprises, slow flows.</div></div>
 <div class="card"><h3>P2 - The Conservatory Pianist</h3><div class="who">Formal theory, new to the fretboard. Most credibility-sensitive.</div>
 <div><span class="tag">Compose</span><span class="tag">Theory</span><span class="tag">Studio</span></div>
-<div class="kill">Dismissed by: ONE wrong spelling/label. F major showing A# reads as an error.</div></div>
+<div class="kill">Dismissed by: ONE wrong spelling or label.</div></div>
 <div class="card"><h3>P3 - The First-Timer</h3><div class="who">Just bought a guitar. No theory. Consumer-app expectations.</div>
 <div><span class="tag">First-run</span><span class="tag">Tune</span><span class="tag">Easy songs</span></div>
 <div class="kill">Dismissed by: jargon walls, no obvious start, fear of breaking things.</div></div>
-<div class="card"><h3>P4 - The Shape-Fluent Improver</h3><div class="who">Nik-like: chords+shapes fluent, leveling up scales/modes/keys.</div>
+<div class="card"><h3>P4 - The Shape-Fluent Improver</h3><div class="who">Chords and shapes internalized; leveling up scales, modes, keys.</div>
 <div><span class="tag">Compose loop</span><span class="tag">Solo/Studio</span><span class="tag">JIT theory</span></div>
 <div class="kill">Dismissed by: friction in the core loop, "what" without the "why".</div></div>
 </div>
-<div class="card"><strong>Prior coverage honored:</strong> the 2026-06-30 HF council + codex pass already fixed the Library list (legibility, movement-cancelled actions, edit-set mode + persistent undo). M3 songs/tracks merge is approved-but-unbuilt; no sprint item may collide with it. This round targets Compose, Tune, Studio, first-run, theory credibility, JIT guidance.</div>
-<div class="card"><strong>Multi-agent surface note (added after discovery):</strong> the repo has parallel in-flight workstreams - PR #98 key-aware spelling (sibling session, own codex review running), PR #88 strum engine (draft), PR #70 tutor prototype (draft). The sprint plan must slot around ALL of them: spelling friction findings defer to #98; no file-level collisions with open branches; walkthrough findings on main are re-checked against #98's regime where spelling-adjacent.</div>
+<div class="card"><strong>Every persona:</strong> holding the instrument - one free thumb - arm's-length glances - mis-taps are normal, so destructive actions are gated (edit-mode / confirm / undo / movement-cancel).</div>
 
-<h2>Theory audit - detail (phase 2a)</h2>
+<h2>Decision log (operator decisions, binding)</h2>
+<table>
+<tr><th>#</th><th>Decision</th><th>Detail / why</th></tr>
+<tr><td>D1</td><td>End state = plan + execute sprint 1</td><td>Gate on plan approval, then implement sprint-1 items as DRAFT PRs. Operator merges - the run never does.</td></tr>
+<tr><td>D2</td><td>Personas = the operator's musician friends</td><td>Aspiring full-timers, classically-trained pianists, first-time guitarists, shape-fluent improvers. Real expected users, not synthetic archetypes.</td></tr>
+<tr><td>D3</td><td>Theory rock solid or dismissed</td><td>Deterministic + verifiable. Where a REAL user choice exists, make it a Setting with a one-time prompt - never a silent guess.</td></tr>
+<tr><td>D4</td><td>Theory must survive an adversarial professor</td><td>The deterministic audit self-graded its own ground truth, so a professor persona attacked both the encoding and the app. Verdict above.</td></tr>
+<tr><td>D5</td><td>One-hand operation is a hard constraint</td><td>Instrument in hand, one free thumb, no accidental delete/edit - ever.</td></tr>
+<tr><td>D6</td><td>Just-in-time guidance, one-shot dismissible notables</td><td>Tools surface at the point of need; hints show once, dismissible, persisted.</td></tr>
+<tr><td>D7</td><td>HITL = one hard gate</td><td>Advisory artifacts at every phase (telegram + email + this page); the run blocks exactly once, before execution.</td></tr>
+<tr><td>D8</td><td>Fable orchestration, cheap-routed swarms</td><td>Premium model chairs the three judgment moments only; Sonnet implements, Haiku transcribes, codex adversarial on its own quota.</td></tr>
+<tr><td>D9</td><td>Dry-run phases 1-2, then full run</td><td>Quality sanity-check on personas + findings before autonomous continuation.</td></tr>
+</table>
+
+<h2>Theory deep-dive (for the skeptics)</h2>
 <div class="grid">
-<div class="card"><div class="big good">0 BUGS</div>1008 checks: every pitch class, triad quality, and roman numeral is theory-correct across 12 roots x 4 modes (Major, Minor, Mixolydian, Dorian).</div>
-<div class="card"><div class="big warn">128 spelling deltas</div>In 24/48 contexts the canonical-sharp display differs from written-music convention (all pitch-correct; zero are errors of sound).</div>
+<div class="card"><div class="big good">0 BUGS</div>1008 checks + an adversarial professor: every pitch class, triad quality, and roman numeral is correct across 12 roots x 4 modes (Major, Minor, Mixolydian, Dorian).</div>
+<div class="card"><div class="big warn">128 deltas -> resolved by design</div>Canonical-sharp spelling reads "wrong" to trained eyes in 24/48 contexts (F major showing A# for Bb). PR #98 (sibling session) implements key-aware conventional spelling; this mission's audit confirmed its output independently.</div>
 </div>
-<h3>Methodology (attackable, by design)</h3>
-<blockquote>Ground truth built independently of the app: letter-sequential spelling (7 letters, each once; accidentals bb..## absorb differences) + triad qualities from stacked thirds + conventional key names by fewest-accidentals (tie -&gt; sharps). App outputs via its own exported functions (<code>Circle.spellScale</code>, <code>Songbook.chordsFromDegrees</code>, <code>Songbook.romanInKey</code>). Every delta classified BUG (wrong sound/label) vs CONVENTION (right sound, non-traditional spelling). Weakness acknowledged: the same author wrote both sides - hence the professor pass (D4).</blockquote>
-<h3>Roman-numeral convention - what the app actually does (the professor's V1/V2 questions)</h3>
 <table>
-<tr><th>Case</th><th>App shows</th><th>Convention family</th></tr>
-<tr><td>Diatonic chord, in-mode (D in E Mixolydian)</td><td><code>VII</code> (plain mode-degree)</td><td>Classical/modal-analysis style</td></tr>
-<tr><td>Same chord, borrowed (D in E Major)</td><td><code>bVII</code> (chromatic, major-relative)</td><td>Pop/lead-sheet style</td></tr>
-<tr><td>Minor key degrees 3/6/7 (C Minor)</td><td><code>III VI VII</code></td><td>Classical (lead-sheet would write bIII bVI bVII)</td></tr>
-<tr><td>Diminished</td><td>lowercase + <code>°</code> (vii°)</td><td>Both</td></tr>
-</table>
-<div class="card"><strong>Comment:</strong> the hybrid is internally consistent and defensible, but it means the SAME chord relabels when the mode toggles (bVII &lt;-&gt; VII by design). P2 likely reads the modal plain-VII as classical-correct; P4's jam vocabulary ("the Mixolydian bVII") may expect the flat. Professor verdict pending; council decides presentation (keep / switch / follow-the-setting).</div>
-<h3>Spelling deltas - worst contexts</h3>
-<table><tr><th>Context</th><th>Deltas</th><th>Example (app vs written)</th></tr>
-<tr><td>C# Major (= Db)</td><td>10</td><td>D# vs Eb, A# vs Bb</td></tr>
-<tr><td>A# Minor (= Bb minor)</td><td>10</td><td>C# vs Db</td></tr>
-<tr><td>G# Mixolydian (= Ab)</td><td>10</td><td>A# vs Bb</td></tr>
-<tr><td>F Minor / G# Major / D# Dorian ...</td><td>8 each</td><td>G# vs Ab</td></tr>
-<tr><td>F Major</td><td>2</td><td>A# vs Bb (the canonical example)</td></tr></table>
-
-<h2>Open decisions (for professor -&gt; council -&gt; Nik)</h2>
-<table>
-<tr><th>#</th><th>Fork</th><th>Options on the table</th><th>Adjudicator</th></tr>
-<tr><td>O1</td><td>Spelling preference <strong>- SUPERSEDED by PR #98</strong></td><td>A parallel session is implementing key-aware conventional spelling app-wide (circle.js SSOT: F major -&gt; Bb; C# major renders as Db). Read-only probe confirms its output matches this mission's independent conservatory ground truth exactly - two independent derivations agree. Mission consumes #98 as backdrop; our audit is offered as #98's deterministic regression fixture; professor's trap list (T4) feeds its verification.</td><td>PR #98 (sibling session) + Nik merge</td></tr>
-<tr><td>O2</td><td>Roman convention (V1/V2) <strong>- professor verdict in</strong></td><td>Professor recommends a <em>Roman Numeral Style</em> SETTING: Classical Mode-Local (current hybrid; conservatory-correct, serves P2) vs Lead-Sheet Major-Relative (bIII/bVI/bVII; serves P4 jam vocabulary). Matches the operator's settings-with-one-time-prompt pattern (D3). Council ranks it (sprint candidate S-ROMAN); also S-TONES (chord tones with spelling: E#dim = E# G# B) and S-GOLDEN (promote audit + 12 traps to permanent test suite).</td><td>Council -&gt; Nik gate</td></tr>
-<tr><td>O3</td><td>M3 merge interplay</td><td>Include M3 slice(s) in sprint 1 vs keep sprint 1 clear of Library structure</td><td>Council -&gt; Nik gate</td></tr>
-<tr><td>O4</td><td>Sub-decision M3-5 (finder rehome A vs B)</td><td>Already flagged in UX-FRICTION-LOG; only relevant if O3 includes M3</td><td>Nik</td></tr>
+<tr><th>Roman-numeral case</th><th>App shows</th><th>Professor's verdict</th></tr>
+<tr><td>Diatonic in-mode (D in E Mixolydian)</td><td><code>VII</code> (mode-local)</td><td rowspan="3">Both conventions are legitimate for different audiences: keep Classical Mode-Local for conservatory eyes, offer Lead-Sheet Major-Relative (bIII bVI bVII) for jam vocabulary - as a user SETTING with a one-time prompt (sprint candidate S-ROMAN).</td></tr>
+<tr><td>Borrowed (D in E Major)</td><td><code>bVII</code> (chromatic)</td></tr>
+<tr><td>Minor degrees 3/6/7 (C Minor)</td><td><code>III VI VII</code> (classical)</td></tr>
 </table>
 
-<h2>Delivery + guardrails (standing)</h2>
-<div class="card">Advisory artifacts at every phase via telegram + email + this githack page - reply to any ping to redirect. The run blocks ONLY at sprint-plan approval. Draft PRs only; zero merges; zero pushes to main; SW cache bump with any CORE change; localStorage changes ride backup.js schema rules; theory changes require the audit + professor-derived tests green.</div>
+<h2>Open decisions</h2>
+<table>
+<tr><th>#</th><th>Fork</th><th>State</th></tr>
+<tr><td>O1</td><td>Spelling preference</td><td><strong>SUPERSEDED by PR #98</strong> - key-aware conventional spelling in flight; mission audit + professor traps now serve as its verification fixtures</td></tr>
+<tr><td>O2</td><td>Roman convention</td><td>Professor verdict in: ship as a setting (S-ROMAN). Council ranks it with S-TONES (spelled chord tones) and S-GOLDEN (permanent golden suite)</td></tr>
+<tr><td>O3</td><td>M3 songs/tracks merge interplay</td><td>Council decides: include M3 slice(s) in sprint 1 vs keep clear of Library structure</td></tr>
+<tr><td>O4</td><td>Finder rehome (M3 sub-decision A vs B)</td><td>Operator call, only if O3 includes M3</td></tr>
+</table>
 
-<div class="foot">Canonical sources on branch claude/ux-persona-mission: docs/plans/goal-ux-persona-mission-20260703.md (spec) - docs/plans/ux-personas-20260703.md (personas) - music/dev/theory-audit.js (deterministic audit) - music/dev/theory-dossier.js (professor dossier generator). This page updates as phases complete.</div>
+<div class="foot">Branch claude/ux-persona-mission - canonical sources: docs/plans/goal-ux-persona-mission-20260703.md (spec) - docs/plans/ux-personas-20260703.md (personas) - docs/plans/theory-professor-review-20260703.md (professor disposition) - music/dev/theory-audit.js + theory-dossier.js (tools). Guardrails: draft PRs only, zero merges, zero pushes to main, one hard human gate. This page is the mission's living record.</div>
 </body></html>
