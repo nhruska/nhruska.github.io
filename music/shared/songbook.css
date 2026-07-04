@@ -783,3 +783,14 @@ footer{display:none;}
 /* Subtle transient toast (add-to-setlist cue etc). Sits above the tab bar. */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
+ * produced by Notables.renderBanner() in shared/notables.js. Same accent-
+ * card look as .setUndo (accent-deep bg, accent-dim border) but with its
+ * own class - a notable is shown-once-forever, not a scoped undo toast, so
+ * it stays a separate, clearly-owned block. No consumer renders one yet;
+ * S-FIRSTRUN / S-WHYNOTE / S-ROMAN mount it where they land. */
+.notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:10px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
+.notableBanner-body{flex:1;min-width:0;line-height:1.4;}
+.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.notableBanner-x:active{transform:scale(.9);}
