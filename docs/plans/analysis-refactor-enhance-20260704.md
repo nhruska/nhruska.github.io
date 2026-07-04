@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | B1 | ~~Orphaned tap-tempo engine~~ RESOLVED 2026-07-04: REMOVED as dead code (operator: never used; git history preserves) | D-TEMPO-REMOVED | - | - | done |
 | B2 | **Backup-staleness nudge** via free Notables priority slot + existing backup.describe() | notables.js PRIORITY; play/index.html:768,876 | Proactively mitigates A1's user-facing risk; A9-compliant one-shot | S | SHORT |
-| B3 | **jam field: 19 curated records, zero consuming code** (wiki/code DRIFT - data-model.md documents behavior that does not exist) | songs.json jam:true x19; data-model.md | Play-now jam picker: curation done, only selection + entry point missing | S/M | SHORT-MID |
+| B3 | ~~jam field~~ ANALYSIS PREMISE STALE: the entry point EXISTED and was deliberately removed 2026-07-01 (8cf0647, operator interview - unregistered at analysis time). Closed won't-do; D-HERO-REMOVED registered; static-affordance fork -> Tier-2 | agent-stop archaeology | - | closed |
 | B4 | **3 chip components redeclare base styles** (.chip / .bt-st-scalechip / .bt-st-chip); W3b about to add a 4th | songbook.css:109-111; tracks.css:157-160,181-185 | Visual drift a returning user feels | S - **FOLDED INTO M-GUIDE W3 spawn prompts** (timing) | NOW |
 | B5 | **Two "selected" visual languages** - chips = accent fill; modeSwitch = surface+ring | songbook.css:111,219; tracks.css:158 | Inconsistent selection grammar across screens; pick one (taste call - batch interview) | S | MID |
 
