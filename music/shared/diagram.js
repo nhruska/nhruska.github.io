@@ -146,10 +146,28 @@
       });
       return out;
     }
+    // Ghost notes (M-GUIDE W3a, P5 seasoned-player fold): the SAME per-string
+    // fret math as notesOn() above, but for pcs OUTSIDE the scale - a target
+    // chord's tone the current scale doesn't contain (e.g. C# over A7 in A
+    // blues). wantedPcs is a CALL-TIME set (which chord is targeted can change
+    // without rebuilding the whole plan), unlike scalePcs which is fixed here.
+    function ghostsOn(s, wantedPcs) {
+      var openPc = openPcs[s], out = [];
+      var wanted = {}; (wantedPcs || []).forEach(function (p) { wanted[((p % 12) + 12) % 12] = true; });
+      if (showOpen) {
+        var opc = ((openPc % 12) + 12) % 12;
+        if (wanted[opc]) out.push({ fret: 0, pc: opc });
+      }
+      trueFrets.forEach(function (fn) {
+        var pc = ((openPc + fn) % 12 + 12) % 12;
+        if (wanted[pc]) out.push({ fret: fn, pc: pc });
+      });
+      return out;
+    }
     return {
       showOpen: showOpen, frets: F, startFret: startFret, trueFrets: trueFrets,
       start: trueFrets.length ? trueFrets[0] : startFret, end: trueFrets.length ? trueFrets[trueFrets.length - 1] : startFret,
-      markers: markers, notesOn: notesOn
+      markers: markers, notesOn: notesOn, ghostsOn: ghostsOn
     };
   }
 
@@ -177,6 +195,12 @@
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
     for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + boardBot + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
     for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="1"/>'; }
+    // M-GUIDE W3a (section 2, chord-tone targeting): opts.tones = { byPc: {pc:
+    // class}, rubPc } is an EXTEND-not-overlay addition. Absent/falsy -> every
+    // dot below renders byte-identical to the pre-targeting default (regression-
+    // locked in diagram.dom.test.js) - the tones-aware branch below only ever
+    // runs when a caller explicitly opts in.
+    var tones = opts.tones || null;
     for (var s2 = 0; s2 < n; s2++) {
       var y2 = yOf(s2);
       plan.notesOn(s2).forEach(function (note) {
@@ -184,13 +208,49 @@
         var cx = xOf(col), isRoot = note.isRoot;
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
         var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : ' style="fill:var(--dg-dot);stroke:var(--dg-dot-line)"';
-        svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + '/>';
+        // Targeting overlay: precedence root > chord > blue > scale (D-TARGET).
+        // 'root'/'scale' classes keep the existing fill/stroke untouched; only
+        // 'chord'/'blue' swap in their own theme-safe CSS vars. The rub modifier
+        // (dashed ring) never changes fill/stroke, only adds stroke-dasharray.
+        var classAttr = '', dash = '';
+        if (tones) {
+          var cls = (tones.byPc && tones.byPc[note.pc]) || (isRoot ? 'root' : 'scale');
+          var isRub = tones.rubPc === note.pc;
+          classAttr = ' class="kxDot kx-' + cls + (isRub ? ' kx-rub' : '') + '"';
+          if (cls === 'chord') st = ' style="fill:var(--kx-chord);stroke:var(--kx-chord)"';
+          else if (cls === 'blue') st = ' style="fill:var(--kx-blue);stroke:var(--kx-blue)"';
+          if (isRub) dash = ' stroke-dasharray="3 2"';
+        }
+        svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + classAttr + dash + '/>';
         // Prefer the caller's spelling (opts.names[pc] - canonical sharp post-FORK-4,
         // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
         // fall back to the sharp table.
         var noteName = (opts.names && opts.names[note.pc]) || NOTE_NAMES[note.pc];
-        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (isRoot ? ' style="fill:var(--on-accent)"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
+        // kx-chord/kx-blue dots are bright/saturated fills (same brightness class as
+        // --accent) - their note text needs the same dark on-accent ink as a root
+        // note, not the light --dg-note used against the default dark dot fill.
+        var textOnBright = isRoot || cls === 'chord' || cls === 'blue';
+        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (textOnBright ? ' style="fill:var(--on-accent)"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
       });
+    }
+    // GHOST DOTS (M-GUIDE W3a, P5 seasoned-player fold): a target chord's tones
+    // that fall OUTSIDE the current scale render as hollow (fill:none) outline
+    // dots at their correct fret position - same per-string fret math as the
+    // in-scale dots above (plan.ghostsOn mirrors plan.notesOn), just for pcs the
+    // scale doesn't contain. Zero ghosts when no target is active (tones.ghostPcs
+    // absent/empty) - this block never runs in that case, preserving the
+    // opts.tones-absent byte-identical render.
+    if (tones && tones.ghostPcs && tones.ghostPcs.length) {
+      for (var sG = 0; sG < n; sG++) {
+        var yG = yOf(sG);
+        plan.ghostsOn(sG, tones.ghostPcs).forEach(function (gnote) {
+          var colG = (gnote.fret === 0 && showOpen) ? 0 : (trueFrets.indexOf(gnote.fret) + 1);
+          var cxG = xOf(colG);
+          svg += '<circle cx="' + cxG + '" cy="' + yG + '" r="' + dotR + '" fill="none" stroke="#94a3b8" stroke-width="1.2" style="stroke:var(--kx-ghost)" class="kxDot kx-ghost"/>';
+          var ghostName = (opts.names && opts.names[gnote.pc]) || NOTE_NAMES[gnote.pc];
+          svg += '<text x="' + cxG + '" y="' + (yG + 3.5) + '" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle" style="fill:var(--kx-ghost)">' + esc(ghostName) + '</text>';
+        });
+      }
     }
     // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
     // these are TRUE fret numbers even in a shifted window (plan.markers already reflects

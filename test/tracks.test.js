@@ -262,15 +262,70 @@ test('soloBundle: unresolvable key -> null for every scaleId, including mode', f
 test('soloBundle: unknown scaleId -> null (safe; never throws)', function () {
   assert.strictEqual(T.soloBundle('A', 'minor', 'nonsense'), null);
 });
-test('soloScaleFraming: pent scales interpolate family; blues has its own fixed line; mode has none', function () {
-  assert.strictEqual(T.soloScaleFraming('pentMajor', 'major'),
-    'The inside sound over major and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.');
-  assert.strictEqual(T.soloScaleFraming('pentMinor', 'minor'),
-    'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.');
-  assert.strictEqual(T.soloScaleFraming('blues'),
-    'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.');
-  assert.strictEqual(T.soloScaleFraming('mode'), null);
+// soloScaleFraming MOVED to solo-guide.js (M-GUIDE W3a, D-CARDS-STATIC) as
+// SoloGuide.framing() - its coverage now lives in test/solo-guide.test.js.
+
+/* ---------- M-GUIDE W3a (section 2, P5-folded 2026-07-05): targetTones /
+ * defaultTones - chord-tone targeting, pure pc arithmetic. C blues scale pcs
+ * (Circle.soloScale('C','blues')): [0, 3, 5, 6, 7, 10] = C D# F F# G A#.
+ * GHOST DOTS (P5 fold): a chord tone OUTSIDE the scale is no longer silently
+ * dropped (the original D-TARGET "intersection-only" deferral) - it comes back
+ * as ghostPcs so the caller can render it hollow. ---------- */
+test('targetTones: C7 over C blues - root/chord marks, rub at D#(Eb); E (major 3rd) is now a GHOST pc (P5 fold)', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'C7');
+  assert.deepStrictEqual(tt.byPc, { 0: 'root', 7: 'chord', 10: 'chord' }, JSON.stringify(tt.byPc));
+  assert.strictEqual(tt.rubPc, 3, 'rub should land on D#/Eb (chordRootPc+3)');
+  assert.deepStrictEqual(tt.ghostPcs, [4], 'E (the major 3rd, pc 4) is outside C blues -> ghost, not dropped');
 });
+test('targetTones: G7 over C blues - rub at A#(Bb); B and D (pcs 11, 2) are ghosts, matching the plan\'s worked example', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'G7');
+  assert.deepStrictEqual(tt.byPc, { 7: 'root', 5: 'chord' });
+  assert.strictEqual(tt.rubPc, 10, 'rub should land on A#/Bb');
+  assert.deepStrictEqual(tt.ghostPcs.slice().sort(function (a, b) { return a - b; }), [2, 11]);
+});
+test('targetTones: F7 over C blues - dominant-quality but the rub candidate (Ab) is out of scale -> no rub; A (pc 9) is a ghost', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'F7');
+  assert.deepStrictEqual(tt.byPc, { 5: 'root', 0: 'chord', 3: 'chord' });
+  assert.strictEqual(tt.rubPc, null, 'F7\'s rub candidate (Ab, pc 8) is not in the C blues scale');
+  assert.deepStrictEqual(tt.ghostPcs, [9]);
+});
+test('targetTones: A blues + A7 -> C# (pc 1, the major 3rd - "the money note") is a ghost (P5\'s exact must-fix example)', function () {
+  var scalePcs = Circle.soloScale('A', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 9, 'A7');
+  assert.deepStrictEqual(tt.ghostPcs, [1], 'C# (pc 1) must surface as a ghost, not be silently hidden');
+  assert.strictEqual(tt.byPc[9], 'root');
+});
+test('targetTones: falsy/unresolvable chordName -> null (no target)', function () {
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, null), null);
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, ''), null);
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, 'Zmaj7'), null);
+});
+test('targetTones: no scale-pc intersection -> every chord tone surfaces as a ghost, never throws', function () {
+  var tt = T.targetTones([], 0, 'C7');
+  assert.deepStrictEqual(tt.byPc, {});
+  assert.strictEqual(tt.rubPc, null);
+  assert.deepStrictEqual(tt.ghostPcs.slice().sort(function (a, b) { return a - b; }), [0, 4, 7, 10]);
+});
+test('defaultTones: marks the blues scale\'s b5 (scaleRootPc+6) whenever bundle.label is Blues', function () {
+  var bundle = { label: 'Blues', pcs: [0, 3, 5, 6, 7, 10] };
+  assert.deepStrictEqual(T.defaultTones(bundle), { byPc: { 6: 'blue' }, rubPc: null });
+});
+test('defaultTones: non-blues bundle (or missing/empty pcs) -> null', function () {
+  assert.strictEqual(T.defaultTones({ label: 'Ionian', pcs: [0, 2, 4, 5, 7, 9, 11] }), null);
+  assert.strictEqual(T.defaultTones(null), null);
+  assert.strictEqual(T.defaultTones({ label: 'Blues', pcs: [] }), null);
+});
+test('defaultTones works uniformly for a soloBundle()-shaped bundle (no rootPc field, just pcs)', function () {
+  var bundle = T.soloBundle('A', 'minor', 'blues'); // {notes, pcs, degrees, label} - no rootPc
+  assert.strictEqual(bundle.label, 'Blues');
+  var def = T.defaultTones(bundle);
+  assert.ok(def, 'expected a blue-note mark for a blues soloBundle result');
+  assert.strictEqual(Object.keys(def.byPc).length, 1);
+});
+
 test('harmonization-isolation: chords-in-key are identical before and after any solo-scale selection', function () {
   var before = T.studioTheory('A', 'minor').chords;
   // Exercise every non-mode scaleId - none of them may read or mutate diatonic()/chords.

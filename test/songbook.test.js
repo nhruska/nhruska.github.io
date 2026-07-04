@@ -15,6 +15,8 @@ if (typeof global.window === 'undefined') global.window = global;
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
 var Repertoire = require('../music/shared/repertoire.js');
+// M-GUIDE W3a merged: solo-guide.js now exists (see the soloChipCaption tests below).
+var SoloGuide = require('../music/shared/solo-guide.js');
 require('../music/shared/queue.js'); // sets global.Queue - mount()'s QUEUE = global.Queue.createQueue()
 var lsReset = require('./helpers/local-storage-reset.js');
 
@@ -1142,17 +1144,18 @@ test('soloChipScale: unresolvable root -> null (never throws)', function () {
 test('soloChipCaption: never captions the default/mode chip', function () {
   assert.strictEqual(Songbook.soloChipCaption('mode'), null);
 });
-// SoloGuide (shared/solo-guide.js) ships in the sibling W3a wave, merge order
-// free relative to this one - as of THIS branch it has not landed yet, so the
-// guarded require() fallback fails closed. That is exactly the contract this
-// locks: absent SoloGuide -> null caption, never a throw, chips fully usable.
-// (Once W3a merges, solo-guide.js will exist and these calls will start
-// resolving to real text - a strictly stronger, not weaker, outcome; the wave-
-// close integration is expected to extend this coverage at that point.)
-test('soloChipCaption: absent SoloGuide (W3a not yet merged) degrades to null for every scale id, never throws', function () {
-  assert.strictEqual(Songbook.soloChipCaption('pentMajor'), null);
-  assert.strictEqual(Songbook.soloChipCaption('pentMinor'), null);
-  assert.strictEqual(Songbook.soloChipCaption('blues'), null);
+// SoloGuide (shared/solo-guide.js) shipped in the sibling W3a wave (merge-order
+// free relative to this one, per the guarded require() above) - now that both
+// waves are integrated, soloChipCaption resolves to SoloGuide.framing()'s real
+// text, exactly as the pre-merge test's own comment anticipated ("a strictly
+// stronger, not weaker, outcome").
+test('soloChipCaption: resolves the REAL SoloGuide.framing() text once solo-guide.js is present (W3a integrated)', function () {
+  assert.strictEqual(Songbook.soloChipCaption('pentMajor'), SoloGuide.framing('pentMajor', Circle.soloScaleInfo('pentMajor').family));
+  assert.strictEqual(Songbook.soloChipCaption('pentMinor'), SoloGuide.framing('pentMinor', Circle.soloScaleInfo('pentMinor').family));
+  assert.strictEqual(Songbook.soloChipCaption('blues'), SoloGuide.framing('blues', Circle.soloScaleInfo('blues').family));
+});
+test('soloChipCaption: still never throws for an unknown scale id (safe-null contract preserved)', function () {
+  assert.strictEqual(Songbook.soloChipCaption('nonsense'), null);
 });
 test('isolation: solo-chip derivation never touches harmonization (chordInKey/romanInKey outputs identical before/after chip taps)', function () {
   var beforeIn = Songbook.chordInKey('Am', 'C', 'Major');
