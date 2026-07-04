@@ -101,6 +101,12 @@
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
+    <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time dots|patterns
+         fretboard-diagram preference prompt, rendered/managed entirely by
+         the Settings inline script below (renderDiagramPrefPrompt). Sits
+         OUTSIDE every .screen, same rationale as backupNudgeSlot below - it
+         can fire the first time ANY chord diagram renders, on any tab. -->
+    <div class="notableSlot" id="diagramPrefSlot"></div>
     <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
          backup-staleness nudge, rendered/managed entirely by the Settings
          inline script below (renderBackupNudge). Sits OUTSIDE every .screen
@@ -258,6 +264,14 @@
         <div class="setLbl">Accent color</div>
         <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
       </div>
+      <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
+           the dots|patterns pref can be changed any time - not just at the
+           one-time Notables prompt (#diagramPrefSlot above). -->
+      <div class="setSec">
+        <div class="setLbl">Fretboard diagrams</div>
+        <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
+        <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns with hand position and shape names once you're moving by feel.</p>
+      </div>
       <div class="setSec">
         <div class="setLbl">Your songbook</div>
         <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
@@ -280,6 +294,11 @@
      list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
      tracks.js all delegate to it. -->
 <script src="../shared/esc.js"></script>
+<!-- toast.js: S-TOAST (UAT U9 fix) - the shared per-host timer-isolation
+     primitive both showToast() and showComposeToast() in songbook.js
+     delegate to. Loads early, alongside esc.js, since any consumer could
+     show a toast. -->
+<script src="../shared/toast.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
 <script src="../shared/circle.js"></script>
@@ -294,11 +313,15 @@
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
 <!-- S-DIAGRAM-PREF step 0: curated shape classifier (family/rootString/
-     inversion/barreFret per voicing). Loaded before diagram.js - nothing
-     consumes it yet (wiring-only, per the step-0 spec); the step 1/2
-     'patterns' render wave wires a caller in. Dependency-free (no circle.js
-     coupling) - see the module header for why. -->
+     inversion/barreFret per voicing). Loaded before diagram.js. Dependency-
+     free (no circle.js coupling) - see the module header for why. -->
 <script src="../shared/shape-classify.js"></script>
+<!-- S-DIAGRAM-PREF steps 1-2: the dots|patterns preference + the decision of
+     what label (if any) 'patterns' mode shows - the ONE place that knows
+     both "the pref key is music.diagram.pref.v1" and "ask ShapeClassify for
+     a label." Loaded after shape-classify.js (consumes it), before diagram.js
+     (diagram.js itself stays agnostic of both - see its own header). -->
+<script src="../shared/diagram-pref.js"></script>
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
 <script src="../shared/tracks.js"></script>
@@ -324,6 +347,9 @@
   // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
   // - was inline + untestable-except-via-regex-extraction here. See
   // window.ChordPackAdapter.buildAdapter(profile), called below in start().
+  // S-DIAGRAM-PREF steps 1-2's patternLabel wiring (diagram/diagramClosed/
+  // diagramChain computing the label via DiagramPref.labelFor()) lives
+  // inside that module now too - see its own comments.
 
   function loadScript(src) {
     return new Promise(function (res, rej) {
@@ -628,6 +654,38 @@
       markTheme(storedTheme());
     }
 
+    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): Dots / Patterns segmented control -
+       the Settings-row setter for music.diagram.pref.v1 (shared/diagram-pref.js
+       owns the storage; this is DOM glue only, mirroring the Theme control
+       above verbatim - same .themeSeg/.thSeg classes, same wiring shape). */
+    var dpWrap = document.getElementById('diagramPrefSeg');
+    var DIAGRAM_PREFS = [['dots', 'Dots'], ['patterns', 'Patterns']];
+    function markDiagramPref(val) {
+      if (!dpWrap) return;
+      dpWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === val;
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (dpWrap && window.DiagramPref) {
+      DIAGRAM_PREFS.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' fretboard diagrams');
+        b.onclick = function () {
+          DiagramPref.set(pair[0]);
+          markDiagramPref(pair[0]);
+          // Picking here also settles the one-time prompt below, if it's
+          // still open or still eligible to fire later - the user just
+          // answered the same question this Settings row asks.
+          if (window.Notables) Notables.dismiss('diagrampref');
+          var slot = document.getElementById('diagramPrefSlot'); if (slot) slot.innerHTML = '';
+        };
+        dpWrap.appendChild(b);
+      });
+      markDiagramPref(DiagramPref.get());
+    }
+
     /* settings sheet open/close */
     var ov = document.getElementById('setOv'),
         openBtn = document.getElementById('settingsBtn'),
@@ -684,6 +742,51 @@
     if (closeBtn) closeBtn.onclick = closeSettings;
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
+
+    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time "how do you read a
+       fretboard?" prompt, in the 'diagrampref' Notables slot (after roman,
+       before backup - notables.js PRIORITY). Trigger: diagram.js's render()
+       dispatches music:diagram-rendered every time an ACTUAL chord diagram
+       draws (any tab, any screen - see its header) - so this fires at "the
+       first chord-diagram surface" without touching songbook.js/tracks.js/
+       key-explorer.js at all. Eligibility ALSO requires firstrun to be
+       dismissed already ("never first-run" - the spec's explicit ordering);
+       Notables' own priority arbitration alone doesn't guarantee that, since
+       firstrun could simply not be claiming the slot at this exact moment
+       (e.g. the user is on a different tab) without yet being shown+closed. */
+    function renderDiagramPrefPrompt() {
+      var slot = document.getElementById('diagramPrefSlot');
+      if (!slot || !window.Notables || !window.DiagramPref) return;
+      if (slot.childNodes.length) return;              // already showing - one at a time
+      if (Notables.isDismissed('diagrampref')) return;  // picked (or X'd) already - permanent, per notables.js's one-shot contract
+      if (!Notables.isDismissed('firstrun')) return;    // never before the first-run cue has been shown+closed
+      if (!Notables.claim('diagrampref')) return;       // a higher-priority notable (roman/whynote/firstrun) holds the slot right now
+      // diagrampref now outranks backup - defensively clear a stale backup
+      // banner in ITS OWN slot rather than leaving two notables visible at
+      // once (notables.js arbitrates state, not DOM; each consumer owns its
+      // own slot's cleanup - see renderBackupNudge below for the mirror case).
+      var backupSlot = document.getElementById('backupNudgeSlot'); if (backupSlot) backupSlot.innerHTML = '';
+      function choose(pref) {
+        DiagramPref.set(pref);
+        markDiagramPref(pref);
+        Notables.dismiss('diagrampref');
+        slot.innerHTML = '';
+      }
+      var banner = Notables.renderBanner({
+        consumerId: 'diagrampref',
+        html: '<div style="margin-bottom:8px;font-weight:600;">How do you read a fretboard?</div>'
+          + '<button type="button" class="dgPrefOpt" data-pref="dots" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">1. Dots and finger numbers (I\'m learning new shapes)</button>'
+          + '<button type="button" class="dgPrefOpt" data-pref="patterns" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">2. Clean patterns with hand position (I move by feel)</button>',
+        onDismiss: function () { slot.innerHTML = ''; } // the banner's own [x] - dismisses forever, defaults to 'dots' (honest one-shot semantics, no re-offer)
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      var opts = banner.querySelectorAll ? banner.querySelectorAll('.dgPrefOpt') : [];
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-pref')); });
+      }
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:diagram-rendered', renderDiagramPrefPrompt);
 
     /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
        backup-staleness nudge in the free LOWEST Notables priority slot

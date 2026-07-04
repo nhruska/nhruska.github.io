@@ -20,6 +20,7 @@
 | [personas.md](ux-philosophy/personas.md) | P1-P5 (incl. the Seasoned Guitarist), JTBD, dismissal triggers, journey matrix |
 | [interaction-safety.md](ux-philosophy/interaction-safety.md) | Destructive-guard taxonomy; scroll-rail rule; wireTap; undo contract; notables one-shot pattern |
 | [expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) | Dots vs clean patterns; hand-position/fingering guidance; muscle-memory framing; S-DIAGRAM-PREF spec home |
+| [ui-primitives.md](ux-philosophy/ui-primitives.md) | TOAST vs NOTABLE vs MODAL vs CHIP/TOKEN taxonomy; toast.js primitive (S-TOAST/U9 fix); candidate toast placements |
 
 ## systems/ - how it runs
 
@@ -31,6 +32,7 @@
 | [instrument-profiles.md](systems/instrument-profiles.md) | Pack contract; enharmonic shape lookup; HGT/HSR shape families; triad-inversions deep link |
 | [practice-studio.md](systems/practice-studio.md) | The Studio overlay: solo panel, position walk, buildWhy circle, curation loop, Compose bridge |
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
+| [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
 
 ## workflows/ - how we work on it
 
@@ -50,10 +52,12 @@
 | Roman numeral looks wrong | theory-engine/harmonization.md |
 | A destructive control / undo | ux-philosophy/interaction-safety.md |
 | One-shot hint/banner | ux-philosophy/interaction-safety.md (notables) |
+| A toast / transient feedback / which UI primitive to use | ux-philosophy/ui-primitives.md |
 | Chord diagram / fretboard rendering | systems/instrument-profiles.md |
 | Studio / solo panel / backing tracks | systems/practice-studio.md |
 | Key picker / transpose behavior | systems/compose-key-system.md |
 | localStorage / backup / migration | systems/data-model.md |
 | SW cache / offline | systems/offline-pwa.md |
+| Chord tiles overlapping / diagram spilling past its cell | systems/layout-tokens.md |
 | How to verify before shipping | workflows/dev-verify-ship.md |
 | What is planned / deferred | workflows/roadmap-missions.md |

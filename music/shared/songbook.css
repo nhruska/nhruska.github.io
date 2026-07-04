@@ -381,6 +381,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    (Songbook's resize listener). */
 .prog{display:flex;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
 .prog::-webkit-scrollbar{display:none;}
+/* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
+   + wraps"): the unconditional flex-wrap the comment above warns against was a
+   real regression (an early wrap pushed a 4th chord to row 2) - this
+   reintroduction is threshold-gated, not unconditional. JS (progStripMode,
+   songbook.js renderProg) only adds .wrapped once the diagram-card row would
+   genuinely overflow the strip, so a normal 2-4 chord progression still gets
+   the one-row nowrap+scroll behavior above, untouched. overflow-y stays
+   visible - .prog sits in the FIXED (non-scrolling) composeTop region, so a
+   taller wrapped strip grows the fixed region's own height rather than
+   clipping content (A7 fold-budget check lives in the manual test plan, not
+   in CSS clipping). */
+.prog.wrapped{flex-wrap:wrap;overflow-x:hidden;overflow-y:visible;touch-action:auto;align-content:flex-start;}
+.prog .slot{flex:0 0 auto;}
+.prog .slot .chord{min-width:var(--prog-tile-min);}
 /* Stage 1 (1-4 chords): full diagram cards, ONE row, never scrolls. Each slot
    flex-grows (capped by max-width - a "sane bound", never literally
    edge-to-edge) so the row fills evenly rather than sitting left-packed with
@@ -476,15 +490,41 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .cActions{display:flex;gap:8px;margin:14px 0;}
 /* touch-action:pan-y - the chord tiles are a vertical grid (no horizontal scroll of its
    own), so a vertical swipe over it MUST pan the page/accordion, never get trapped. */
-/* Track min = 84px so a cell holds a full chord card. A 6-string guitar diagram is an
-   86px-wide SVG; its card adds padding+border to ~100px. At the old 72px min, a wide
-   (laptop) viewport's auto-fill collapsed cells to ~79px - narrower than the card - so
-   the in-key cards overflowed their cells and overlapped, and the fixed-width SVG spilled
-   past the scroll container (the few-px horizontal scroll). 84px keeps phones (<=412px,
-   e.g. Pixel 10) at the same 4-column count while widening laptop cells (6 -> 5 columns)
-   enough that the native-size diagram fits - so nothing shrinks below the phone-DPI label
-   floor. */
-.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;touch-action:pan-y;}
+/* ===== S-LAYOUT-SSOT: chord-tile/diagram geometry token block =====
+ * ONE declared source for the numeric constants that keep a chord-diagram
+ * SVG from spilling into its neighbour (the U5/#96 overlap bug class) - see
+ * music/engineering-wiki/systems/layout-tokens.md for the full contract,
+ * the independent-by-design constants this deliberately does NOT fold in
+ * (diagram.js's per-string-count SIZES, .prog's scroll-strip floor), and
+ * the ONE known gap it surfaces but doesn't fix (tracks.css .bt-st-chords).
+ * --dg-canvas-w is a documentation-anchor, not a live coupling: diagram.js
+ * emits a plain SVG string and cannot read a CSS var, so this promotes what
+ * used to be a prose-only "86px" comment into a real value --tile-min
+ * derives from, so the two numbers can't silently drift apart again. */
+:root{
+  --dg-canvas-w:86px;  /* diagram.js SIZES.small canvas width, 6-string guitar (widest 'small' diagram): W=2*12+5*9.6=72, +labelPad 14 = 86 - see diagram.js's cross-ref comment on SIZES.small */
+  --tile-min:calc(var(--dg-canvas-w) - 2px);  /* .chordGrid track min - just under the reference canvas so the shrink-to-fit clamp below does negligible work in the common case */
+  --tile-gap:8px;  /* .chordGrid gap */
+  /* --prog-tile-min is INDEPENDENT-BY-DESIGN, not derived from --dg-canvas-w:
+     .prog (below) is a horizontally-SCROLLING filmstrip (overflow-x:auto,
+     flex:0 0 auto slots) - tiles render at their natural SVG width and are
+     never squeezed by their container, so there is no overlap-by-squeeze
+     risk the way there is in a minmax(...,1fr) grid. This is a minimum
+     touch/visual-size FLOOR (e.g. a 1-string reduced shape), not a
+     squeeze-fit value - see music/engineering-wiki/systems/layout-tokens.md. */
+  --prog-tile-min:62px;
+}
+/* Track min was 84px (now var(--tile-min), which computes to the same 84px)
+   so a cell holds a full chord card. A 6-string guitar diagram is an
+   86px-wide SVG (var(--dg-canvas-w)); its card adds padding+border to ~100px.
+   At the old 72px min, a wide (laptop) viewport's auto-fill collapsed cells
+   to ~79px - narrower than the card - so the in-key cards overflowed their
+   cells and overlapped, and the fixed-width SVG spilled past the scroll
+   container (the few-px horizontal scroll). The current min keeps phones
+   (<=412px, e.g. Pixel 10) at the same 4-column count while widening laptop
+   cells (6 -> 5 columns) enough that the native-size diagram fits - so
+   nothing shrinks below the phone-DPI label floor. */
+.chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile-min),1fr));gap:var(--tile-gap);touch-action:pan-y;}
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
    grid, so every chord box reads the same. Suggestions add an accent border to
    signal "tap to add"; the current progression and the picker stay neutral. */
@@ -519,13 +559,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    render .chord DIRECTLY as the grid item (no wrapping .chordCell like the
    in-key view above), so they never got that view's own min-width:0 +
    max-width:100% clamp (.keyPalette .chordCell / .keyPalette .chordCell >
-   .chord, above) - the exact hardening the comment on .chordGrid's grid-template
-   already documents as the fix for this SAME 86px-guitar-SVG-vs-84px-track
-   squeeze. Investigated under simulated Android font scaling (root font-size up
-   to 1.5x) plus a 360-432px viewport sweep - no live overlap reproduced in
-   Chromium (see the PR body for the measurement table), but this closes the
-   parity gap: a diagram wider than its column now shrinks to fit instead of
-   visually bleeding into the next tile. */
+   .chord, above) - the exact hardening the S-LAYOUT-SSOT token block above
+   (music/engineering-wiki/systems/layout-tokens.md) already documents as the
+   fix for this SAME --dg-canvas-w-vs---tile-min squeeze. Investigated under
+   simulated Android font scaling (root font-size up to 1.5x) plus a 360-432px
+   viewport sweep - no live overlap reproduced in Chromium (see the PR body
+   for the measurement table; scripts/layout-check.py now automates this
+   sweep), but this closes the parity gap: a diagram wider than its column
+   now shrinks to fit instead of visually bleeding into the next tile. */
 .chordGrid .chord{min-width:0;}
 .chordGrid .chord svg{max-width:100%;height:auto;display:block;}
 .prog .slot .chord .chord-name,
@@ -601,7 +642,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    track). Without this the card is content-sized (~100px) and, being centered in a
    narrower cell, overflows into its neighbours - the in-key overlap. The All-chords
    tiles never had this because there the card IS the grid item, already clamped to the
-   track; this makes the in-key card behave the same. */
+   track; this makes the in-key card behave the same. Same S-LAYOUT-SSOT contract as
+   the .chordGrid token block above (music/engineering-wiki/systems/layout-tokens.md) -
+   this is the ADDITIONAL clamp layer the in-key view needs because of its extra
+   .chordCell wrapper (the All-grid's .chord is the direct grid item, so its own
+   .chordGrid .chord{min-width:0} + svg{max-width:100%} suffice there). */
 .keyPalette .chordCell > .chord{max-width:100%;box-sizing:border-box;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 /* ---- Adaptive chord surface (Phase 1) ----

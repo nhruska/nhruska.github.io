@@ -163,7 +163,15 @@
   .bt-st-scale{display:flex;justify-content:center;}
   /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
      taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width
-     columns + bottom-aligned cells line every roman up regardless of diagram height. */
+     columns + bottom-aligned cells line every roman up regardless of diagram height.
+     S-LAYOUT-SSOT KNOWN GAP (music/engineering-wiki/systems/layout-tokens.md, not fixed by
+     that pass - out of its required scope): unlike songbook.css's .chordGrid, this grid has
+     no minmax(var(--tile-min),...) floor and .bt-st-chordcell has no equivalent of
+     .chordGrid .chord svg{max-width:100%} - at a 360px viewport this grid's 4 columns
+     compute to ~79.5px each, narrower than --dg-canvas-w (86px, the 6-string-guitar
+     reference canvas), the same squeeze the U5/#96 bug class names elsewhere. Candidate
+     fix, when picked up: mirror .chordGrid .chord svg's clamp onto
+     .bt-st-chordcell .chord svg. */
   .bt-st-chords{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px;align-items:end;}
   .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
   .bt-st-chordcell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
