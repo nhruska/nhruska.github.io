@@ -27,7 +27,13 @@
 // branch, S-BACKUP-NUDGE) to avoid the identical-string collision the v83
 // incident (PR #117) caught - check-cache-bump.sh re-verified against
 // origin/main immediately before push.
-var CACHE = 'music-v90';
+// S-BLUES-BOXES (2026-07-04): v90->v91 - key-explorer.js/tracks.js/tracks.css
+// change (named Box 1-5 positions on the Studio scale pager), rebased onto
+// the v90 tip above (this branch originally cut from v88, before #130/#131
+// landed) - no new CORE paths, but the discipline is "bump on any
+// shared/play diff" regardless. check-cache-bump.sh re-verified against
+// origin/main immediately before push.
+var CACHE = 'music-v91';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

@@ -79,6 +79,171 @@
   // voicings the same way) - past it there's nothing meaningful left to solo into.
   var POS_STEP = 5, POS_CAP = 14;
 
+  /* ---------------------------------------------------------------------
+   * S-BLUES-BOXES: named box positions (Box 1-5) for the pentatonic/blues
+   * scale-chip selections, riding this same posWindow pager. Pure pitch-
+   * class math - no DOM, node-testable - so the position-control wiring
+   * below can offer a "snap to box start" walk instead of the fixed
+   * 0/5/10 step whenever the active solo scale is pentMajor/pentMinor/blues.
+   *
+   * The 5 boxes are the classic CAGED-derived teaching windows: each box's
+   * START FRET is the natural fret (on the LOWEST string, index 0 of the
+   * caller's openPcs - "lowest" per this codebase's existing string-index
+   * convention, not necessarily lowest acoustic pitch on a re-entrant neck
+   * like ukulele) where the NEXT pentatonic-minor scale degree occurs, above
+   * the previous box's fret. blues rides the SAME 5 windows as pentMinor
+   * (S-BLUES §3a: blues = pentMinor + the b5 passing tone - a 6th note that
+   * never earns its own box). pentMajor is "the same shapes" as its relative
+   * minor (solo-scales.md): box windows derive from the relative-minor root
+   * (rootPc - 3), then each box's labeled root-string anchor is re-solved
+   * for the ACTUAL major rootPc the caller asked for, so the highlighted
+   * tonic always matches the query, not the shape's internal reference root.
+   * ------------------------------------------------------------------- */
+  var PENT_MINOR_OFFSETS = [0, 3, 5, 7, 10]; // root, b3, 4, 5, b7 - one per box
+
+  function mod12(n) { return ((n % 12) + 12) % 12; }
+
+  // pentMajor's box SHAPES are its relative minor's (a minor 3rd, 3
+  // semitones, below); every other scaleId (pentMinor, blues) uses its own
+  // rootPc directly as the shape's reference root.
+  function boxShapeRoot(rootPc, scaleId) {
+    return scaleId === 'pentMajor' ? mod12(rootPc - 3) : mod12(rootPc);
+  }
+
+  // The fret >= floor on a string whose open pitch class is openPc where pc
+  // occurs (walking up in octaves as needed to clear floor).
+  function fretOf(pc, openPc, floor) {
+    var f = mod12(pc - openPc);
+    while (f < floor) f += 12;
+    return f;
+  }
+
+  // Across every string (any reasonable octave), the (string, fret) pair
+  // closest to targetFret where pc occurs - ties broken by lowest string
+  // index, then lowest fret. Always resolves to something (a pc recurs
+  // every 12 frets on any single string), satisfying the "anchor to the
+  // lowest string containing the root pc in that window" fallback for
+  // small (4-string) necks without any special-casing.
+  function nearestAnchor(pc, openPcs, targetFret) {
+    var wanted = mod12(pc), best = null;
+    openPcs.forEach(function (openPc, s) {
+      var base = mod12(wanted - openPc);
+      [base, base + 12, base + 24].forEach(function (f) {
+        if (f < 0) return;
+        var d = Math.abs(f - targetFret);
+        if (!best || d < best.d || (d === best.d && s < best.string) ||
+          (d === best.d && s === best.string && f < best.fret)) {
+          best = { string: s, fret: f, d: d };
+        }
+      });
+    });
+    return best ? { string: best.string, fret: best.fret } : { string: 0, fret: targetFret };
+  }
+
+  // English ordinal suffix (6 -> '6th', 1 -> '1st') for the box label text.
+  function ordinal(n) {
+    var v = n % 100;
+    if (v >= 11 && v <= 13) return n + 'th';
+    switch (n % 10) {
+      case 1: return n + 'st';
+      case 2: return n + 'nd';
+      case 3: return n + 'rd';
+      default: return n + 'th';
+    }
+  }
+
+  /* boxes(rootPc, scaleId, openPcs) -> [{ n, startFret, rootString, label,
+   * moveHint }, ...] (n: 1-5, in scale-degree order - NOT necessarily
+   * ascending by startFret; a wrapped box can sit below an earlier one, the
+   * classic "Box 5 sits just below Box 1" teaching shape).
+   *   rootPc  - the scale's actual tonic pitch class (0-11); for pentMajor
+   *             this is the MAJOR root, even though the shape itself is
+   *             computed from the relative minor (see boxShapeRoot above).
+   *   scaleId - 'pentMajor' | 'pentMinor' | 'blues'
+   *   openPcs - open pitch class per string, in the SAME declared order as
+   *             the instrument profile's `strings` array (index 0 = the
+   *             array's first entry - this codebase's "lowest string"
+   *             convention; see profiles/*.js `l` labels).
+   * moveHint is template-generated (A9 discipline - no curated per-box
+   * prose): the fret delta to the NEXT box walking up the neck (by
+   * startFret, not by box number - a player slides to whichever box comes
+   * next physically), or a loop-back note for the box at the top of the
+   * mapped (0-14) range.
+   * Safe/empty: returns [] when rootPc or openPcs is missing. */
+  function boxes(rootPc, scaleId, openPcs) {
+    if (rootPc == null || !openPcs || !openPcs.length) return [];
+    var shapeRoot = boxShapeRoot(rootPc, scaleId);
+    var anchorOpenPc = mod12(openPcs[0]);
+    var raw = [];
+    PENT_MINOR_OFFSETS.forEach(function (offset, i) {
+      var pc = mod12(shapeRoot + offset);
+      var floor = i === 0 ? 0 : raw[i - 1] + 1;
+      raw.push(fretOf(pc, anchorOpenPc, floor));
+    });
+    // Wrap-fix: fold anything past the pager cap back down an octave,
+    // never below fret 0 (MVC contract: "subtract 12 when a start would
+    // exceed the pager cap of 14; keep startFret >= 0").
+    var frets = raw.map(function (f) {
+      while (f > POS_CAP && (f - 12) >= 0) f -= 12;
+      return f;
+    });
+    var list = frets.map(function (startFret, i) {
+      var n = i + 1;
+      var anchor = nearestAnchor(rootPc, openPcs, startFret);
+      var stringNumber = openPcs.length - anchor.string; // this codebase's display convention (see profiles/*.js)
+      return {
+        n: n,
+        startFret: startFret,
+        rootString: anchor.string,
+        label: 'Box ' + n + ' - root on ' + ordinal(stringNumber) + ' string, fret ' + anchor.fret,
+        moveHint: ''
+      };
+    });
+    // moveHint walks the NECK order (ascending startFret), not the n order -
+    // sort a shallow copy (same object refs) so mutating box.moveHint here
+    // is reflected in `list`, which stays in n:1..5 order for the caller.
+    var neckOrder = list.slice().sort(function (a, b) { return a.startFret - b.startFret; });
+    neckOrder.forEach(function (box, i) {
+      if (i < neckOrder.length - 1) {
+        var next = neckOrder[i + 1], delta = next.startFret - box.startFret;
+        box.moveHint = 'slide up ' + delta + ' fret' + (delta === 1 ? '' : 's') + ' to Box ' + next.n;
+      } else {
+        box.moveHint = 'top of the mapped range - the pattern repeats an octave up from Box ' + neckOrder[0].n;
+      }
+    });
+    return list;
+  }
+
+  // Natural-letter pitch classes (no octave) - the profiles' `strings[].n`
+  // field is always a bare natural letter today, but '#'/'b' suffixes are
+  // handled too so a future accidental-tuned profile degrades safely
+  // instead of returning null.
+  var NATURAL_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function pcOfNoteName(name) {
+    var s = String(name == null ? '' : name).trim();
+    if (!s) return null;
+    var base = NATURAL_PC[s.charAt(0).toUpperCase()];
+    if (base == null) return null;
+    var pc = base;
+    for (var i = 1; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (c === '#') pc += 1; else if (c.toLowerCase() === 'b') pc -= 1;
+    }
+    return mod12(pc);
+  }
+
+  // The Studio-wiring convenience: derive boxes()'s openPcs arg straight
+  // from the pack's own adapter metadata (play/index.html's
+  // adapter.meta.stringNames), so callers never touch note-name parsing.
+  // null (not []) when the pack can't supply string names - callers treat
+  // that as "box mode unavailable", same as an unresolvable rootPc.
+  function openPcsFromPack(pack) {
+    var names = pack && pack.meta && pack.meta.stringNames;
+    if (!names || !names.length) return null;
+    var pcs = names.map(pcOfNoteName);
+    return pcs.every(function (p) { return p != null; }) ? pcs : null;
+  }
+
   // Pure window math for the position control - exported so the cap/step
   // behavior is regression-testable without a DOM. startFret 0 is the open
   // window (F frets + the open column); a shifted window truncates at the cap.
@@ -100,13 +265,24 @@
    *   pcs     - scale pitch classes
    *   opts: label (optional 'Solo over it ...'), frets (default 7), tones
    *         (optional; M-GUIDE W3a chord-tone targeting - see diagram.js's
-   *         Diagram.scale() opts.tones contract)
+   *         Diagram.scale() opts.tones contract), boxScaleId (optional,
+   *         S-BLUES-BOXES - see below)
    * No-ops (returns null) when the pack can't render a scale or pcs is empty.
    * When the pack exposes pack.scaleDiagram.supportsStart, also renders a compact
    * back/forward position control beneath the diagram so the player can walk the
    * scale up the neck. Packs that don't set the flag keep the classic 3-arg
    * scaleDiagram call and get no control; they do share the boxWrap/diagBox
    * wrapper structure (needed so flex-row hosts lay out identically).
+   *
+   * S-BLUES-BOXES: when opts.boxScaleId is 'pentMajor'/'pentMinor'/'blues'
+   * (the caller's currently-active solo scale-chip) AND the pack supports
+   * position-start, the back/forward buttons SNAP to box() start frets
+   * (physical neck order, ascending) instead of the fixed 0/5/10 walk, and a
+   * '.scaleBoxChip' element (sibling of the ctrl row) shows the current
+   * box's label whenever startFret lands exactly on one - hidden otherwise.
+   * Any other scaleId (mode scales - the 7-note modes) keeps the classic
+   * walk untouched. Silently degrades to the classic walk if the pack can't
+   * supply openPcsFromPack() (e.g. no meta.stringNames) - never throws.
    *
    * The returned boxWrap ALSO carries setTones(tones) (M-GUIDE W3a): re-renders
    * ONLY diagBox with new opts.tones, preserving startFret - use this instead of
@@ -145,6 +321,36 @@
     }
     renderBox();
     if (supportsStart) {
+      // S-BLUES-BOXES: box() list for the active scale-chip, in NECK order
+      // (ascending startFret) - empty unless opts.boxScaleId is one of the 3
+      // box-eligible ids AND the pack can supply openPcsFromPack(). Kept
+      // read-only/local to this renderScale() call (a chip switch always
+      // calls renderScale() fresh, so no stale box list can leak across
+      // scale-chip selections).
+      var boxScaleId = opts.boxScaleId || null;
+      var neckOrder = [];
+      if (boxScaleId) {
+        var tuningPcs = openPcsFromPack(pack);
+        if (tuningPcs) {
+          try { neckOrder = boxes(rootPc, boxScaleId, tuningPcs).slice().sort(function (a, b) { return a.startFret - b.startFret; }); }
+          catch (e) { neckOrder = []; }
+        }
+      }
+      function currentBox() {
+        for (var i = 0; i < neckOrder.length; i++) if (neckOrder[i].startFret === startFret) return neckOrder[i];
+        return null;
+      }
+      // dir: +1 forward (next HIGHER box start), -1 back (next LOWER box
+      // start). null when there is none in that direction.
+      function nextBoxFret(dir) {
+        var pick = null;
+        neckOrder.forEach(function (b) {
+          if (dir > 0 ? b.startFret > startFret : b.startFret < startFret) {
+            if (pick == null || (dir > 0 ? b.startFret < pick : b.startFret > pick)) pick = b.startFret;
+          }
+        });
+        return pick;
+      }
       var ctrl = document.createElement('div'); ctrl.className = 'scalePosCtrl';
       var back = document.createElement('button');
       back.type = 'button'; back.className = 'scalePosBtn'; back.textContent = String.fromCharCode(0x25C0);
@@ -153,17 +359,51 @@
       var fwd = document.createElement('button');
       fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
       fwd.setAttribute('aria-label', 'Shift the scale up the neck');
+      // Box-name chip: only allocated when a box list actually resolved, so
+      // every non-box (mode-scale) render stays byte-identical to before.
+      var chipEl = null;
+      if (neckOrder.length) { chipEl = document.createElement('div'); chipEl.className = 'scaleBoxChip'; chipEl.hidden = true; }
       function refresh() {
         var w = posWindow(startFret, F, POS_STEP, POS_CAP);
         lbl.textContent = 'frets ' + startFret + '-' + w.end;
-        back.disabled = !w.canBack;
-        fwd.disabled = !w.canFwd;
+        if (neckOrder.length) {
+          back.disabled = nextBoxFret(-1) == null;
+          fwd.disabled = nextBoxFret(1) == null;
+          if (chipEl) {
+            var cur = currentBox();
+            chipEl.hidden = !cur;
+            chipEl.textContent = cur ? cur.label : '';
+          }
+        } else {
+          back.disabled = !w.canBack;
+          fwd.disabled = !w.canFwd;
+        }
       }
-      back.onclick = function () { startFret = Math.max(0, startFret - POS_STEP); renderBox(); refresh(); };
-      fwd.onclick = function () { if (fwd.disabled) return; startFret += POS_STEP; renderBox(); refresh(); };
+      back.onclick = function () {
+        if (neckOrder.length) {
+          if (back.disabled) return;
+          var pf = nextBoxFret(-1);
+          if (pf != null) startFret = pf;
+        } else {
+          startFret = Math.max(0, startFret - POS_STEP);
+        }
+        renderBox(); refresh();
+      };
+      fwd.onclick = function () {
+        if (neckOrder.length) {
+          if (fwd.disabled) return;
+          var nf = nextBoxFret(1);
+          if (nf != null) startFret = nf;
+        } else {
+          if (fwd.disabled) return;
+          startFret += POS_STEP;
+        }
+        renderBox(); refresh();
+      };
       refresh();
       ctrl.appendChild(back); ctrl.appendChild(lbl); ctrl.appendChild(fwd);
       boxWrap.appendChild(ctrl);
+      if (chipEl) boxWrap.appendChild(chipEl);
     }
     // M-GUIDE W3a: re-render just diagBox with new tones - startFret (closure
     // var above) is untouched, so a target toggle never resets the position walk.
@@ -171,7 +411,12 @@
     return boxWrap;
   }
 
-  var KeyExplorer = { renderChords: renderChords, renderScale: renderScale, posWindow: posWindow, defaultFrets: defaultFrets };
+  var KeyExplorer = {
+    renderChords: renderChords, renderScale: renderScale, posWindow: posWindow, defaultFrets: defaultFrets,
+    // S-BLUES-BOXES: pure box-position math + its pack-metadata helper,
+    // exported for direct Node tests independent of the renderScale DOM wiring.
+    boxes: boxes, openPcsFromPack: openPcsFromPack
+  };
   global.KeyExplorer = KeyExplorer;
   if (typeof module !== 'undefined' && module.exports) module.exports = KeyExplorer;
 

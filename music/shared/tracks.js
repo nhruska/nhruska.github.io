@@ -307,6 +307,21 @@
     var info = C.soloScaleInfo(scaleId);
     return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
   }
+  // S-BLUES-BOXES: which of the 3 box-eligible scale ids (pentMajor/
+  // pentMinor/blues) applies to the CURRENTLY selected chip - so the
+  // Studio's named-box chip + pager-snap (KeyExplorer.renderScale's
+  // opts.boxScaleId) only activate for those, never for a 7-note mode
+  // scale. scaleId 'mode' resolves via modeScaleMode (th.scaleMode): the
+  // ONLY 'mode' case that's box-eligible is the M-GUIDE W2 Blues key (its
+  // own scale IS the SOLO_SCALES.blues 6-note set) - every other mode
+  // (ionian/aeolian/dorian/mixolydian) keeps the classic fixed 0/5/10 walk.
+  // Module-scope + exported (mirrors soloBundle/scaleKeyFor) so this is
+  // directly unit-testable without the Studio DOM.
+  var BOX_SCALE_IDS = { pentMajor: true, pentMinor: true, blues: true };
+  function boxScaleIdFor(scaleId, modeScaleMode) {
+    if (scaleId && scaleId !== 'mode') return BOX_SCALE_IDS[scaleId] ? scaleId : null;
+    return modeScaleMode === 'blues' ? 'blues' : null;
+  }
   // M-GUIDE W3a (D-CARDS-STATIC): soloScaleFraming MOVED VERBATIM to solo-guide.js
   // as SoloGuide.framing(scaleId, family) - same behavior, same P5-voiced static
   // strings. Moved (not duplicated) so W3b's Compose solo chips (songbook.js) can
@@ -854,7 +869,7 @@
         var nameByPc = [];
         th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
         scaleBoxWrap = global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs,
-          { names: nameByPc, tones: computeTones(th, 'mode') });
+          { names: nameByPc, tones: computeTones(th, 'mode'), boxScaleId: boxScaleIdFor('mode', th.scaleMode) });
       } catch (e) {}
       // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
       renderGuide(th.scaleMode, th.notes);
@@ -912,7 +927,7 @@
             var chipNameByPc = [];
             bundle.notes.forEach(function (nm, i) { chipNameByPc[bundle.pcs[i]] = nm; });
             scaleBoxWrap = global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs,
-              { names: chipNameByPc, tones: computeTones(bundle, scaleId) });
+              { names: chipNameByPc, tones: computeTones(bundle, scaleId), boxScaleId: boxScaleIdFor(scaleId, th.scaleMode) });
           } catch (e) {}
         }
         render();
@@ -1299,6 +1314,10 @@
     whynoteText: whynoteText, whynoteBanner: whynoteBanner,
     // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
     soloBundle: soloBundle,
+    // S-BLUES-BOXES: which scale-chip selections are box-eligible (pentMajor/
+    // pentMinor/blues) - exported for direct unit tests independent of the
+    // Studio DOM wiring (mirrors the soloBundle export above it).
+    boxScaleIdFor: boxScaleIdFor,
     // M-GUIDE W3a (section 2): chord-tone targeting - pure pc classifiers,
     // exported for direct unit tests independent of the Studio DOM wiring.
     targetTones: targetTones, defaultTones: defaultTones,
