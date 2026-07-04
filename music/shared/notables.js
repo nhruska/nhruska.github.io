@@ -9,7 +9,8 @@
  * persisted "already shown, never again" bookkeeping, plus a ready-styled
  * dismissible banner element. Consumers wire their own call sites on top of
  * this file (S-FIRSTRUN + S-WHYNOTE in songbook.js/tracks.js; S-BACKUP-NUDGE
- * in play/index.html's Settings script; S-ROMAN not yet wired).
+ * + S-DIAGRAM-PREF in play/index.html's Settings script; S-ROMAN not yet
+ * wired).
  *
  * Storage: ONE key, `music.notables.v1` = { consumerId: dismissedEpochMs }.
  * It falls under backup.js's `music.` prefix (OWNED_PREFIXES), so it is
@@ -59,10 +60,15 @@
   // Lower index = higher priority. An unlisted consumerId (no entry here,
   // no explicit `priority` passed to claim()) falls back to the lowest
   // priority - after every named one - so it never silently outranks them.
-  // 'backup' (S-BACKUP-NUDGE) is deliberately last: the backup-staleness nudge
-  // never preempts onboarding/theory guidance, it only shows when nothing
-  // higher-priority is claiming the slot.
-  var PRIORITY = ['firstrun', 'whynote', 'roman', 'backup'];
+  // 'diagrampref' (S-DIAGRAM-PREF steps 1-2) sits after 'roman' (a queued,
+  // not-yet-wired settings nudge) and before 'backup' (S-BACKUP-NUDGE) per
+  // the spec's explicit ordering (music/engineering-wiki/ux-philosophy/
+  // expertise-adaptive-display.md): onboarding/theory guidance still wins,
+  // but the one-time dots/patterns prompt still outranks the lower-urgency
+  // backup-staleness nudge. 'backup' stays deliberately last: it never
+  // preempts anything, it only shows when nothing higher-priority claims
+  // the slot.
+  var PRIORITY = ['firstrun', 'whynote', 'roman', 'diagrampref', 'backup'];
 
   function priorityOf(consumerId, explicitPriority) {
     if (typeof explicitPriority === 'number' && !isNaN(explicitPriority)) return explicitPriority;
