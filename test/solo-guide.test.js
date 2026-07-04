@@ -79,17 +79,17 @@ test('card: out-of-range index interpolates blank, never the literal word "undef
 /* ---------- P5 seasoned-player adversarial fold (2026-07-05) - supersedes
  * section-8B wherever both amended the same block (dorian.hangOn,
  * pentMinor.startEnd, blues.resolveTo). Folded pre-merge into PR #118. ---------- */
-test('P5 fold: blues.resolveTo carries the chord-relative rewrite (supersedes 8B)', function () {
+test('professor micro-pass: blues.resolveTo scopes the rub to I7 (supersedes the P5 line - over IV7/V7 the b3 is that chord's b7, not a rub)', function () {
   assert.strictEqual(SoloGuide.cards.blues.resolveTo,
-    "Aim at the current chord's 3rd, b7, or root; {4} is neutral; {1} (rub) bends toward 3.");
+    "Aim at the current chord's 3rd, b7, or root; {4} is neutral. Over I7, bend {1} toward 3.");
 });
 test('P5 fold: pentMinor.startEnd carries the rewrite (supersedes 8B; bend advice moved fully to hangOn)', function () {
   assert.strictEqual(SoloGuide.cards.pentMinor.startEnd,
     'Start on {1} or {3}; close on {0}, {3}, or the current chord root.');
 });
-test('P5 fold: dorian.hangOn carries the rewrite (supersedes 8B)', function () {
+test('professor micro-pass: dorian.hangOn names the natural-6 (supersedes the P5 line - "m6 shade" reads as a minor-6 interval; the dorian 6th is major)', function () {
   assert.strictEqual(SoloGuide.cards.dorian.hangOn,
-    "{5} IS the dorian color - m6 shade over i; over IV it's the 3rd.");
+    "{5} IS the dorian color - the natural-6 over i; over IV it's the 3rd.");
 });
 test('P5 must-fix: pentMajor.shapes says THREE frets lower, not the factually-wrong "two frets down"', function () {
   assert.strictEqual(SoloGuide.cards.pentMajor.shapes,
