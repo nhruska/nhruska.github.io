@@ -44,6 +44,10 @@ Chords-in-key doubles as the target surface: tapping a chord (in addition to pla
 
 A static caption renders under the fretboard while a target is active ("Showing C7 inside A blues - accent = chord root, filled = chord tones, hollow = chord tone outside the scale.") - interpolates only already-rendered labels (A9), never a theory computation of its own.
 
+**U3 fix (operator UAT 2026-07-04):** `kx-chord`/`kx-blue` note text used to share the root dot's `--on-accent` ink; tracks.css now defines per-class `--kx-chord-ink`/`--kx-blue-ink` (both themes) so the text stays readable against the deliberately-darkened light-theme fills - see [decisions.md](../decisions.md) if this needs re-litigating.
+
+**U2 fix (operator UAT 2026-07-04):** the position-pager (`key-explorer.js` `.scalePosCtrl`/`.scalePosBtn`) is now an explicit 44px box (was 42px, below the app's GRIP touch floor) with a less extreme disabled-state fade, so back/forward read as equal-size in both states - override lives in tracks.css (loads after songbook.css's base rule).
+
 ## Guidance cards - SoloGuide (M-GUIDE W3a, D-CARDS-STATIC) [STABLE]
 
 A `Guide` toggle (mirrors `.bt-st-why-toggle`/`.bt-st-why` verbatim - composed, not a new chip variant) sits under the framing line, collapsed by default, re-deriving on every scale-chip select. Content comes from a NEW standalone module, `music/shared/solo-guide.js` (`window.SoloGuide`), loaded before both songbook.js and tracks.js so Compose's solo chips (W3b) can call the identical `framing()` without depending on tracks.js:
@@ -60,4 +64,4 @@ The existing coarse-pointer landscape two-pane split (`.bt-studio{flex-direction
 
 ---
 
-**Anchors verified:** tracks.js:196-296 (studioTheory, normMode), ~459-516 (inversionsHref, buildWhy), ~517-687 (openStudio incl. rehydration + scale chips + whynote), targetTones/defaultTones/computeTones/toggleTarget/renderGuide (openStudio region), solo-guide.js (SoloGuide), diagram.js `scale()` opts.tones + `scalePlan()`'s `ghostsOn`, key-explorer.js `renderScale`/`setTones`, tracks.css EOF kx-*/guide section (incl. `--kx-ghost`) + landscape media query, songbook.js ~817-830 (bridge), notables.js, candidates.js, docs/plans/m-guide-ia-20260704.md §§2-3, 5, 8; P5 seasoned-player adversarial fold (2026-07-05, PR #118)
+**Anchors verified:** tracks.js:196-296 (studioTheory, normMode), ~459-516 (inversionsHref, buildWhy), ~517-687 (openStudio incl. rehydration + scale chips + whynote), targetTones/defaultTones/computeTones/toggleTarget/renderGuide (openStudio region), solo-guide.js (SoloGuide), diagram.js `scale()` opts.tones + `scalePlan()`'s `ghostsOn`, key-explorer.js `renderScale`/`setTones`, tracks.css EOF kx-* / guide section (incl. `--kx-ghost`, `--kx-chord-ink`/`--kx-blue-ink`, the U2 `.scalePosBtn` 44px override) + landscape media query, songbook.js ~817-830 (bridge), notables.js, candidates.js, docs/plans/m-guide-ia-20260704.md §§2-3, 5, 8, docs/plans/uat-walkthrough-20260704.md U2-U4; P5 seasoned-player adversarial fold (2026-07-05, PR #118); S-STUDIO-POLISH (2026-07-04)

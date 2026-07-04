@@ -13,7 +13,9 @@
 'use strict';
 // A10 (parallel-conflict resolution): W3a bumped v82->v83, W3b (merged first,
 // #117) bumped v82->v84 in parallel - max+1 of the two.
-var CACHE = 'music-v85';
+// S-STUDIO-POLISH (2026-07-04): v85->v86 - pager touch-floor/disabled-fade fix,
+// per-class kx-chord/kx-blue text ink, shortened Studio link labels.
+var CACHE = 'music-v86';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

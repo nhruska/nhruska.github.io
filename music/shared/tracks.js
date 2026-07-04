@@ -820,8 +820,12 @@
         // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
         // and the "why these notes" toggle merge onto one row (.bt-st-linkrow) instead
         // of each owning its own row - saves vertical space in the scrollable body.
-        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a>'
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button></div>'
+        // U4 (operator UAT 2026-07-04): shortened from "Walk the full cycle up
+        // the neck →" / "Why these notes - the circle" - the long labels wrapped
+        // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
+        // just tighter so both fit on one line side by side.
+        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a>'
+        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes?</button></div>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
