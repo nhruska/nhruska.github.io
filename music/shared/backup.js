@@ -233,6 +233,48 @@
     return lines;
   }
 
+  // S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): thresholds for the
+  // one-shot backup-staleness nudge (rendered via the free 'backup' Notables
+  // priority slot in play/index.html). Below NUDGE_MIN_SONGS the data-loss risk
+  // is low enough to stay silent; above it, the clock only matters once it has
+  // actually run past NUDGE_STALE_DAYS (or never run at all).
+  var NUDGE_MIN_SONGS = 3;
+  var NUDGE_STALE_DAYS = 30;
+
+  // Total songs at risk across EVERY instrument's setlist (roadcase-<id>.setlist.v1,
+  // summed) - the same namespace describe()'s 'Setlist' category counts, just
+  // collapsed to one number instead of a per-instrument breakdown. Progressions/
+  // tracks aren't folded in here: the nudge message talks about "songs"
+  // specifically, matching the vocabulary the Settings summary already uses.
+  function songCount(data) {
+    data = data || {};
+    var total = 0;
+    Object.keys(data).forEach(function (k) {
+      if (k.length <= 11 || k.slice(-11) !== '.setlist.v1') return;
+      try { var a = JSON.parse(data[k]); if (Array.isArray(a)) total += a.length; } catch (e) { /* skip malformed */ }
+    });
+    return total;
+  }
+
+  // Pure eligibility/message decision - never touches storage directly, so a
+  // caller (play/index.html) supplies the ingredients (songCount(collect(...)),
+  // the raw music.lastBackup.v1 ISO string or null, and `nowMs` for tests to pin).
+  // Returns { eligible, message }; message is null when not eligible so callers
+  // can render nothing without a truthiness dance on `message` itself.
+  function backupNudgeState(count, lastBackupIso, nowMs) {
+    nowMs = (typeof nowMs === 'number' && !isNaN(nowMs)) ? nowMs : Date.now();
+    count = (typeof count === 'number' && count > 0) ? count : 0;
+    if (count < NUDGE_MIN_SONGS) return { eligible: false, message: null };
+    var songWord = count + ' song' + (count === 1 ? '' : 's');
+    var then = lastBackupIso ? new Date(lastBackupIso).getTime() : NaN;
+    if (!lastBackupIso || isNaN(then)) {
+      return { eligible: true, message: 'Back up your library - ' + songWord + ', never backed up.' };
+    }
+    var days = Math.floor((nowMs - then) / 86400000);
+    if (days < NUDGE_STALE_DAYS) return { eligible: false, message: null };
+    return { eligible: true, message: 'Back up your library - last backed up ' + days + ' day' + (days === 1 ? '' : 's') + ' ago.' };
+  }
+
   // Boot-time: bring THIS device's stored data up to the current schema before
   // the app reads it. No-op at v1 (just stamps existing users as the baseline);
   // the hook future breaking changes run through.
@@ -263,6 +305,8 @@
     SCHEMA_VERSION: SCHEMA_VERSION,
     SCHEMA_KEY: SCHEMA_KEY,
     OWNED_PREFIXES: OWNED_PREFIXES,
+    NUDGE_MIN_SONGS: NUDGE_MIN_SONGS,
+    NUDGE_STALE_DAYS: NUDGE_STALE_DAYS,
     owned: owned,
     collect: collect,
     migrate: migrate,
@@ -271,6 +315,8 @@
     applyAtomic: applyAtomic,
     validate: validate,
     describe: describe,
+    songCount: songCount,
+    backupNudgeState: backupNudgeState,
     restore: restore,
     runMigrations: runMigrations
   };

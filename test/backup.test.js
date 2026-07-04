@@ -257,6 +257,56 @@ test('restore() refuses when the device holds a newer schema than this build', f
   assert.strictEqual(s.getItem(Backup.SCHEMA_KEY), String(Backup.SCHEMA_VERSION + 1), 'stamp NOT downgraded');
 });
 
+/* ---------- S-BACKUP-NUDGE: songCount() sums setlist entries across instruments ---------- */
+test('songCount() sums setlist entries across every instrument, ignores everything else', function () {
+  assert.strictEqual(Backup.songCount({
+    'roadcase-ukulele-gcea.setlist.v1': '["a","b","c"]',
+    'roadcase-guitar-standard.setlist.v1': '["d","e"]',
+    'roadcase-ukulele-gcea.custom.v1': '[{"id":1},{"id":2}]', // progressions, NOT counted
+    'bt.custom.v1': '[{"t":"x"}]',                             // tracks, NOT counted
+    'music.accent.v1': '#5eead4'
+  }), 5);
+  assert.strictEqual(Backup.songCount({}), 0);
+  assert.strictEqual(Backup.songCount(), 0);
+  // malformed JSON under a real setlist key is skipped, not thrown
+  assert.strictEqual(Backup.songCount({ 'roadcase-x.setlist.v1': 'not json' }), 0);
+});
+
+/* ---------- S-BACKUP-NUDGE: backupNudgeState() truth table ---------- */
+test('backupNudgeState() stays silent below the song-count floor regardless of staleness', function () {
+  assert.strictEqual(Backup.backupNudgeState(0, null).eligible, false);
+  assert.strictEqual(Backup.backupNudgeState(2, null).eligible, false);
+  assert.strictEqual(Backup.backupNudgeState(Backup.NUDGE_MIN_SONGS - 1, '2020-01-01T00:00:00.000Z').eligible, false);
+});
+
+test('backupNudgeState() is eligible when never backed up, at/above the song floor', function () {
+  var s = Backup.backupNudgeState(Backup.NUDGE_MIN_SONGS, null);
+  assert.strictEqual(s.eligible, true);
+  assert.strictEqual(s.message, 'Back up your library - 3 songs, never backed up.');
+  // a malformed lastBackup string reads the same as never-backed-up
+  var s2 = Backup.backupNudgeState(5, 'not-a-date');
+  assert.strictEqual(s2.eligible, true);
+  assert.ok(/never backed up/.test(s2.message));
+});
+
+test('backupNudgeState() stays silent while the last backup is within the staleness window', function () {
+  var now = Date.parse('2026-07-04T00:00:00.000Z');
+  var recent = new Date(now - (Backup.NUDGE_STALE_DAYS - 1) * 86400000).toISOString();
+  assert.strictEqual(Backup.backupNudgeState(10, recent, now).eligible, false);
+  var exactlyAtFloor = new Date(now - (Backup.NUDGE_STALE_DAYS - 1) * 86400000 - 1).toISOString();
+  assert.strictEqual(Backup.backupNudgeState(10, exactlyAtFloor, now).eligible, false);
+});
+
+test('backupNudgeState() becomes eligible once the last backup is >= the staleness floor', function () {
+  var now = Date.parse('2026-07-04T00:00:00.000Z');
+  var stale = new Date(now - Backup.NUDGE_STALE_DAYS * 86400000).toISOString();
+  var s = Backup.backupNudgeState(4, stale, now);
+  assert.strictEqual(s.eligible, true);
+  assert.strictEqual(s.message, 'Back up your library - last backed up 30 days ago.');
+  var wayStale = new Date(now - 41 * 86400000).toISOString();
+  assert.strictEqual(Backup.backupNudgeState(4, wayStale, now).message, 'Back up your library - last backed up 41 days ago.');
+});
+
 /* ---------- snapshot() labels the backup with the device's real schema ---------- */
 test('snapshot() stamps the DEVICE schema, so an old build cannot mislabel newer data', function () {
   var s = fakeStore({ 'songbook.setlist.v1': '["a"]' });

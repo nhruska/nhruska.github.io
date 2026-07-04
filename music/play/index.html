@@ -95,6 +95,12 @@
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
+    <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
+         backup-staleness nudge, rendered/managed entirely by the Settings
+         inline script below (renderBackupNudge). Sits OUTSIDE every .screen
+         so it shows above whichever tab is active, not just Library - a
+         device-wide concern, unlike the per-Library firstrun/whynote notables. -->
+    <div class="notableSlot" id="backupNudgeSlot"></div>
     <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
          by repertoire.js). Search + Genre + Key chips filter the list; +Add sits on
          the search row. The old #typeToggle (Repertoire|Set) is retired - the Set /
@@ -937,8 +943,42 @@
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
+    /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
+       backup-staleness nudge in the free LOWEST Notables priority slot
+       ('backup' - after firstrun/whynote/roman, notables.js PRIORITY). The
+       eligibility/message decision is pure (Backup.songCount + .backupNudgeState,
+       shared/backup.js); this is just the DOM glue - claim the slot, render the
+       shared .notableBanner into #backupNudgeSlot, tap opens Settings (no new
+       UI surface), and auto-RELEASE (never dismiss) the instant a backup
+       actually completes so the banner can't linger showing stale advice. */
+    function renderBackupNudge() {
+      var slot = document.getElementById('backupNudgeSlot');
+      if (!slot || !window.Notables || !window.Backup) return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('backup')) return;
+      var lastIso = null; try { lastIso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
+      var count = Backup.songCount(Backup.collect(localStorage));
+      var state = Backup.backupNudgeState(count, lastIso);
+      if (!state.eligible) { Notables.release('backup'); return; }
+      if (!Notables.claim('backup')) return; // a higher-priority notable holds the slot right now
+      var banner = Notables.renderBanner({
+        consumerId: 'backup',
+        text: state.message,
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      banner.style.cursor = 'pointer';
+      banner.addEventListener('click', function (e) {
+        // the x button already handled its own tap (dismiss) via its own onclick -
+        // don't ALSO open Settings when that's what the tap was for.
+        if (e.target && e.target.closest && e.target.closest('.notableBanner-x')) return;
+        openSettings();
+      });
+      slot.appendChild(banner);
+    }
+
     /* backup + restore */
-    function markBackedUp() { try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch (e) {} renderLastBackup(); }
+    function markBackedUp() { try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch (e) {} renderLastBackup(); renderBackupNudge(); }
     var btnBackup = document.getElementById('btnBackup'),
         btnRestore = document.getElementById('btnRestore'),
         fileIn = document.getElementById('restoreFile');
@@ -991,6 +1031,8 @@
         rd.readAsText(f);
       };
     }
+
+    renderBackupNudge();
   });
 })();
 </script>

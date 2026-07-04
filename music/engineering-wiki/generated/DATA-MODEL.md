@@ -61,6 +61,10 @@ Settings-driven whole-songbook snapshot:
 
 Keep `test/backup.test.js` green on any storage-touching change.
 
+## Backup-staleness nudge (D-BACKUP-NUDGE)
+
+A one-shot Notables consumer (`'backup'`, the free LOWEST priority slot - `firstrun` > `whynote` > `roman` > `backup`) nudges an established user who is carrying real risk: `Backup.songCount(data)` sums setlist entries across every instrument; `Backup.backupNudgeState(count, lastBackupIso, nowMs)` is eligible once the song count clears a floor (3) AND the device is either never-backed-up or past a staleness window (30 days). Both are pure and storage-free. All DOM wiring (claim, render into `#backupNudgeSlot`, tap opens Settings, auto-release on backup) lives in `play/index.html`'s Settings script - never touches songbook.js.
+
 ## Instrument profiles - the pack contract
 
 Each `music/shared/profiles/<id>.js` self-registers into `window.MusicProfiles`:
