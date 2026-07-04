@@ -2749,32 +2749,62 @@
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save';
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
-      var settled = false;
-      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name, setCheck.checked); }
+      // S-NAVHIST (2026-07-04, PR #144 finding): rawClose (DOM-only) and
+      // deliver (the done() callback, which MAY open a new NavHistory layer -
+      // the solo-flow's Save chains straight into openStudioCb) are kept as
+      // SEPARATE functions so Save/Enter can route through NavHistory.settleAfter
+      // directly instead of NavHistory.dismiss(). `delivered` guards done() from
+      // firing twice (settleAfter's own trailing history.back(), when nothing
+      // opened a new layer, replays through the registered closeFn below).
+      var rawSettled = false;
+      function rawClose() { if (rawSettled) return; rawSettled = true; hideComposeRow(); }
+      var delivered = false;
+      function deliver(name) { if (delivered) return; delivered = true; done(name, setCheck.checked); }
       // UAT U7 (2026-07-04): backdrop tap / Escape / hardware-gesture Back all
-      // dismiss like Cancel - routed through NavHistory.dismiss() (not finish()
-      // directly) so the pushed history layer unwinds in step with the modal,
-      // per the WIRING CONTRACT in nav-history.js ("close BUTTON onclick:
-      // NavHistory.dismiss, NOT the raw close directly" - calling finish()
-      // straight from a button would leave a ghost history entry for the next
-      // hardware Back to trip over). Falls back to a direct finish() when
-      // NavHistory isn't loaded (e.g. a bare test harness). Defaults to null
-      // (Cancel) so a hardware Back press - which fires popstate DIRECTLY,
-      // never through this dismiss() wrapper - resolves to Cancel rather than
+      // dismiss like Cancel. Cancel/backdrop/Escape never open a new layer, so
+      // they stay on NavHistory.dismiss() (the pushed history layer unwinds in
+      // step with the modal, per the WIRING CONTRACT). Defaults to null (Cancel)
+      // so a hardware Back press - which fires popstate DIRECTLY, bypassing the
+      // settleAfter/dismiss calls below - resolves to Cancel rather than
       // silently confirming whatever pendingDismiss last held.
+      //
+      // Save/Enter is DIFFERENT (S-NAVHIST, PR #144 finding): its outcome MAY
+      // open a new NavHistory layer, so it routes directly through settleAfter
+      // instead, bypassing dismiss()'s history.back()+popstate path entirely.
+      // The prior dismiss()-based wiring let that NavHistory.open() run from
+      // INSIDE nav-history.js's popstate `while` loop (see its own settleAfter()
+      // doc comment - exactly the "closing one layer opens another" case that
+      // function exists to handle safely), double-popping the just-opened layer
+      // shut immediately (the name row would flash open then close, one step
+      // before the "Studio flashes open then closes" symptom the PR reported).
       var pendingDismiss = null;
-      function dismiss(name) {
+      function choose(name) {
         pendingDismiss = name;
-        if (window.NavHistory) window.NavHistory.dismiss(); else finish(name);
+        if (window.NavHistory) window.NavHistory.settleAfter(rawClose, function () { deliver(name); });
+        else { rawClose(); deliver(name); }
       }
-      saveBtn.onclick = function () { dismiss(input.value.trim() || defaultName); };
-      cancelBtn.onclick = function () { dismiss(null); };
+      function cancel() {
+        pendingDismiss = null;
+        if (window.NavHistory) window.NavHistory.dismiss(); else { rawClose(); deliver(null); }
+      }
+      saveBtn.onclick = function () { choose(input.value.trim() || defaultName); };
+      cancelBtn.onclick = cancel;
       input.onkeydown = function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); dismiss(input.value.trim() || defaultName); }
-        else if (e.key === 'Escape') { dismiss(null); }
+        if (e.key === 'Enter') { e.preventDefault(); choose(input.value.trim() || defaultName); }
+        else if (e.key === 'Escape') { cancel(); }
       };
-      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { dismiss(null); };
-      if (window.NavHistory) window.NavHistory.open('composeModal', function () { finish(pendingDismiss); });
+      if (composeModalBackdrop) composeModalBackdrop.onclick = cancel;
+      // Hardware/gesture Back bypasses all of the above (a real popstate fires
+      // directly - no JS interposition point exists before it). This registered
+      // closeFn is the only thing that then runs, from INSIDE nav-history.js's
+      // popstate `while` loop - deferring `deliver` one tick lets the loop
+      // finish unwinding before any nested NavHistory.open() the delivered
+      // choice might trigger (pendingDismiss defaults to null/Cancel here, which
+      // never opens anything, but the defer is cheap, uniform insurance).
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose();
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
       composeRow.appendChild(input); composeRow.appendChild(setLabel);
       composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
       input.focus();
@@ -2804,24 +2834,48 @@
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
       var skipBtn = document.createElement('button');
       skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Skip';
-      var settled = false;
-      function finish(choice) { if (settled) return; settled = true; hideComposeRow(); onPick(choice); }
-      // See the matching comment in openSaveNameRow above: buttons route
-      // through NavHistory.dismiss() (not finish() directly) so the pushed
-      // history layer unwinds in step with the modal - no ghost Back entry.
+      var delivered = false;
+      // S-NAVHIST (2026-07-04, PR #144 finding): 'save' hands this SAME
+      // composeRow container off to openSaveNameRow (it re-renders in place -
+      // not a separate DOM layer, and openSaveNameRow already clears+repopulates
+      // it as its own first step) - hiding it here too would wipe the name row
+      // it just rendered. 'skip' opens the Studio (a fully separate surface),
+      // so THIS row's own DOM genuinely needs clearing.
+      function rawClose(choice) { if (choice !== 'save') hideComposeRow(); }
+      function deliver(choice) { if (delivered) return; delivered = true; onPick(choice); }
       // pendingDismiss defaults to 'skip' so a hardware Back press (which
-      // fires popstate directly, bypassing this dismiss() wrapper) resolves
-      // to the conservative choice, matching backdrop/Escape below.
+      // bypasses the settleAfter path below entirely - see below) resolves to
+      // the conservative choice, matching backdrop/Escape.
       var pendingDismiss = 'skip';
-      function dismiss(choice) {
+      // Both outcomes MAY open a new NavHistory layer (Save -> the name-entry
+      // row, reusing this modal slot; Skip -> the Studio) - route directly
+      // through settleAfter, NOT NavHistory.dismiss(). dismiss() closes via
+      // history.back() -> popstate -> nav-history.js's popstate `while` loop,
+      // and a NavHistory.open() call made from a closeFn running INSIDE that
+      // loop re-triggers its stack.length recheck, double-popping the
+      // just-opened layer immediately shut (PR #144's "Studio flashes open
+      // then closes" finding). settleAfter runs outside that loop entirely -
+      // no double-pop possible.
+      function choose(choice) {
         pendingDismiss = choice;
-        if (window.NavHistory) window.NavHistory.dismiss(); else finish(choice);
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(choice); }, function () { deliver(choice); });
+        else { rawClose(choice); deliver(choice); }
       }
-      saveBtn.onclick = function () { dismiss('save'); };
-      skipBtn.onclick = function () { dismiss('skip'); };
-      composeRow.onkeydown = function (e) { if (e.key === 'Escape') dismiss('skip'); };
-      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { dismiss('skip'); };
-      if (window.NavHistory) window.NavHistory.open('composeModal', function () { finish(pendingDismiss); });
+      saveBtn.onclick = function () { choose('save'); };
+      skipBtn.onclick = function () { choose('skip'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('skip'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('skip'); };
+      // Hardware/gesture Back bypasses all of the above (a real popstate fires
+      // directly - no JS interposition point exists before it). This registered
+      // closeFn is the only thing that then runs, from INSIDE nav-history.js's
+      // popstate `while` loop - deferring `deliver` one tick lets the loop
+      // finish unwinding before any nested NavHistory.open() the delivered
+      // choice triggers (the 'skip' default opens the Studio), avoiding the
+      // same double-pop.
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose(pendingDismiss);
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
       btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);

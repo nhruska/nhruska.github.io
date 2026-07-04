@@ -96,7 +96,15 @@
 // shared/songbook.css change again (the binary full/compact split becomes a
 // count-driven 3-stage density ladder: full <=4, fill-row 5-6, grid6 7-12).
 // No new/removed CORE paths.
-var CACHE = 'music-v104';
+// S-NAVHIST (2026-07-04, PR #144 finding): v104->v105 - shared/songbook.js
+// changes only (openSoloChoiceRow/openSaveNameRow's Save/Skip/backdrop/Escape
+// now route through NavHistory.settleAfter() directly instead of
+// NavHistory.dismiss(), fixing the "Solo over it -> Skip on a never-saved
+// progression" double-pop bug - the Studio, and the save-name row one step
+// earlier, used to flash open then immediately close). No new/removed CORE
+// paths. check-cache-bump.sh re-verified against origin/main immediately
+// before push.
+var CACHE = 'music-v105';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
