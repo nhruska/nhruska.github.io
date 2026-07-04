@@ -313,24 +313,52 @@
   // from 8 to fit the 12-bar starters above. ONE shared const replaces both the
   // addChord and renderProg `>= 8` gates so it can never drift between the two.
   var COMPOSE_MAX = 12;
-  // S-PROG-WRAP (UAT U8, docs/plans/uat-walkthrough-20260704.md section U8;
-  // amends D-CAP12's "strip scrolls" note to "strip degrades + wraps"): once the
-  // progression's diagram-card row would need more width than the strip actually
-  // has, EVERY slot re-renders as the existing compact chord token (name + roman,
-  // no diagram - see suggChip()) and the strip flex-wraps instead of horizontal-
-  // scrolling. The threshold is the REAL row width the full render would need
-  // (count cards + (count-1) gaps) vs the strip's REAL available width - never a
-  // hardcoded chord count, so a wider viewport or a pack with bigger/smaller
-  // diagrams (guitar vs ukulele) both still degrade at the right point. Pure +
+  // S-PROG-WRAP-2 (UAT U8b, docs/plans/uat-walkthrough-20260704.md section U8b;
+  // supersedes S-PROG-WRAP's pure width-driven binary full/compact split - see
+  // D-PROG-WRAP, amended): a COUNT-driven staged density ladder, so a short
+  // progression keeps generous full diagram cards instead of shrinking to
+  // match however crowded a 12-chord strip would be. Three stages:
+  //   'full'      1-4 chords  - diagram cards, one row, flex-grown to fill it
+  //               (capped - "sane bounds" - never shrunk below their natural
+  //               size; see the width guard below for what happens instead).
+  //   'fill-row'  5-6 chords  - the existing compact chord token (suggChip:
+  //               name + roman, no diagram), one row, equal columns sized to
+  //               fill the strip.
+  //   'grid6'     7-12 chords - the same compact token, but a FIXED 6-column
+  //               grid, so 12 chords (the COMPOSE_MAX cap) is exactly two
+  //               clean rows of 6 - never a 3rd orphan row, never horizontal
+  //               scroll (the binary mode's failure shape: 11 chords used to
+  //               flex-wrap as 5+5+1).
+  // Measured width is still consulted, but ONLY as a GUARD for pathological
+  // narrow viewports: if a stage's row would overflow the strip at its
+  // chords' NATURAL minimum size (cardW for full, the compact token's own
+  // CSS min-width for fill-row - TOKEN_MIN_W below, matching .suggChip's
+  // min-width in songbook.css), demote ONE stage early (full -> fill-row ->
+  // grid6) rather than let cards/tokens shrink below their floor - the guard
+  // can cascade both demotions in a single call if the viewport is narrow
+  // enough to overflow both. grid6 is the floor stage: no further demotion,
+  // since there is nowhere lower to fall back to (accepted: at an extreme
+  // viewport its columns may render under their comfortable minimum). Pure +
   // Node-testable, same contract shape as fitScale above: the DOM caller
-  // (renderProg) measures cardW/gapW/availW for real and passes them in. Boundary
-  // is exclusive (an exact fit stays 'full', never wraps early); any unmeasured
-  // input (cardW/availW <= 0, e.g. before first layout) defaults to 'full' so a
-  // missing measurement can never spuriously force compact.
+  // (renderProg) measures cardW/gapW/availW for real and passes them in.
+  // Every width-guard boundary is exclusive (an exact fit never demotes early)
+  // and an unmeasured input (cardW/availW <= 0, e.g. before first layout)
+  // never demotes - the count-driven candidate stands, matching the original
+  // "missing measurement defaults safe" invariant.
+  var TOKEN_MIN_W = 58; // .suggChip{min-width:58px} in songbook.css
   function progStripMode(count, cardW, gapW, availW) {
-    if (count <= 0 || cardW <= 0 || availW <= 0) return 'full';
-    var needW = count * cardW + Math.max(0, count - 1) * gapW;
-    return needW > availW ? 'compact' : 'full';
+    if (count <= 0) return 'full';
+    var stage = count <= 4 ? 'full' : count <= 6 ? 'fill-row' : 'grid6';
+    if (cardW <= 0 || availW <= 0) return stage; // unmeasured -> never demote
+    if (stage === 'full') {
+      var fullNeed = count * cardW + Math.max(0, count - 1) * gapW;
+      if (fullNeed > availW) stage = 'fill-row';
+    }
+    if (stage === 'fill-row') {
+      var tokenNeed = count * TOKEN_MIN_W + Math.max(0, count - 1) * gapW;
+      if (tokenNeed > availW) stage = 'grid6';
+    }
+    return stage;
   }
   // 0-indexed MAJOR-scale degree of a chord in a key (-1 if its root isn't a scale
   // tone). Used to recognize a progression-in-progress against the canon.
@@ -1804,17 +1832,27 @@
       if (wrap) wrap.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
-      // S-PROG-WRAP (UAT U8): degrade to the compact chord token + flex-wrap
-      // once the full diagram row would need more width than the strip actually
-      // has - progStripMode is measured, never a hardcoded chord count.
+      // S-PROG-WRAP-2 (UAT U8b): count-driven staged density ladder - full
+      // diagram cards (1-4) -> one-row compact tokens (5-6) -> a fixed
+      // 6-column compact grid (7-12, so 12 = two clean rows of 6).
+      // progStripMode measures real widths only as a narrow-viewport GUARD
+      // (early demotion); it never promotes back up past the count-driven
+      // candidate stage.
       var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW());
-      el.prog.classList.toggle('wrapped', mode === 'compact');
+      el.prog.classList.toggle('full', mode === 'full');
+      el.prog.classList.toggle('fill-row', mode === 'fill-row');
+      el.prog.classList.toggle('grid6', mode === 'grid6');
+      // 'fill-row' is the only stage whose column count varies with the
+      // progression length - grid6 is a FIXED 6 columns (CSS-only) and full
+      // is a flexbox row (no column count needed), so only fill-row needs an
+      // inline grid-template-columns per render.
+      el.prog.style.gridTemplateColumns = (mode === 'fill-row') ? 'repeat(' + progression.length + ', 1fr)' : '';
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans, the maxed cap, or the compact/full mode. labelRoman is
+      // key-relative romans, the maxed cap, or the stage. labelRoman is
       // MODE-aware (a mode toggle flips bVII <-> VII on the same chord), so the
       // mode is part of the visible signature - omitting it left stale romans
-      // after a mode change (codex V2 high). Same reasoning for the strip mode:
-      // a resize that flips compact<->full must force a repaint even though the
+      // after a mode change (codex V2 high). Same reasoning for the strip stage:
+      // a resize that flips between stages must force a repaint even though the
       // chords/tonic/songKey.mode/maxed didn't change.
       var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed + '|' + mode;
       if (sig !== lastProgSig) {
@@ -1823,7 +1861,7 @@
         progression.forEach(function (c, i) {
           var slot = document.createElement('div'); slot.className = 'slot';
           var rn = labelRoman(c);
-          if (mode === 'compact') {
+          if (mode !== 'full') {
             // S-PROG-WRAP: the SAME compact token the "Next chord" suggestion
             // row already uses (suggChip/scName/scRn classes) - reused
             // verbatim, not a 4th chip variant. Built via createElement +
