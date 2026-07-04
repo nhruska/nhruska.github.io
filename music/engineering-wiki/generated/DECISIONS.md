@@ -22,6 +22,7 @@ Load-bearing decisions, their rationale, and where each is implemented. If a dec
 | JIT | One-shot dismissible notables for guidance | Show once, persist the dismissal, single-slot priority arbitration | [UX-PHILOSOPHY.md](UX-PHILOSOPHY.md) |
 | SOLO-BOUNDARY | 5/6-note scales never harmonize | Pentatonics and blues are solo-layer only - no triad palette | [THEORY.md](THEORY.md) |
 | BLUE-NOTE-A | Regime-A blue note spells sharp (`A blues = A C D D# E G`) | FORK-4 one-table consistency beats notation convention until PR #98; flips to Eb via the one-provider seam | [THEORY.md](THEORY.md) |
+| D-BACKUP-NUDGE | One-shot backup-staleness nudge via the free LOWEST Notables priority slot | `notables.js` PRIORITY gains `backup` after `firstrun`/`whynote`/`roman` (never preempts onboarding guidance); pure eligibility in `backup.js` (song-count floor of 3 AND never-backed-up-or-30-days-stale); DOM wiring lives entirely in `play/index.html`, zero songbook.js changes; auto-releases (not dismiss) the instant a backup completes | [DATA-MODEL.md](DATA-MODEL.md) |
 
 ## Sprint-1 amendments (all folded and shipped)
 

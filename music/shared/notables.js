@@ -2,12 +2,14 @@
  * notables.js  -  one-shot dismissible "notable" infrastructure.
  * ---------------------------------------------------------------------
  * A NOTABLE is a one-time, dismissible tip/prompt (a first-run cue, a JIT
- * "why" explainer at a mode hand-off, a roman-numeral settings nudge, ...).
+ * "why" explainer at a mode hand-off, a roman-numeral settings nudge, a
+ * backup-staleness nudge, ...).
  * At most ONE may render at a time - this module is the single arbiter
  * that decides which consumer (if any) holds that slot right now, plus the
  * persisted "already shown, never again" bookkeeping, plus a ready-styled
- * dismissible banner element. No consumer wires this in yet - siblings
- * (S-FIRSTRUN, S-WHYNOTE, S-ROMAN) add the call sites on top of this file.
+ * dismissible banner element. Consumers wire their own call sites on top of
+ * this file (S-FIRSTRUN + S-WHYNOTE in songbook.js/tracks.js; S-BACKUP-NUDGE
+ * in play/index.html's Settings script; S-ROMAN not yet wired).
  *
  * Storage: ONE key, `music.notables.v1` = { consumerId: dismissedEpochMs }.
  * It falls under backup.js's `music.` prefix (OWNED_PREFIXES), so it is
@@ -22,10 +24,11 @@
  *       consumer can never claim again (already shown, once, forever).
  *       Otherwise: the first claimant into an EMPTY slot wins. A later
  *       claim only wins by PREEMPTING a lower-priority holder - lower
- *       PRIORITY index wins ('firstrun' > 'whynote' > 'roman', per the
- *       sprint amendment). `priority` is optional: omit it to use the
- *       built-in table; pass an explicit number to override it (for a
- *       future consumer not yet in the table, or a one-off test). Equal
+ *       PRIORITY index wins ('firstrun' > 'whynote' > 'roman' > 'backup',
+ *       per the sprint amendment + S-BACKUP-NUDGE). `priority` is optional:
+ *       omit it to use the built-in table; pass an explicit number to
+ *       override it (for a future consumer not yet in the table, or a
+ *       one-off test). Equal
  *       priority does NOT preempt - first-come keeps the slot, so two
  *       simultaneous same-priority claims never both grant true (the
  *       "double-fire" case). At most one consumerId ever holds the slot.
@@ -56,7 +59,10 @@
   // Lower index = higher priority. An unlisted consumerId (no entry here,
   // no explicit `priority` passed to claim()) falls back to the lowest
   // priority - after every named one - so it never silently outranks them.
-  var PRIORITY = ['firstrun', 'whynote', 'roman'];
+  // 'backup' (S-BACKUP-NUDGE) is deliberately last: the backup-staleness nudge
+  // never preempts onboarding/theory guidance, it only shows when nothing
+  // higher-priority is claiming the slot.
+  var PRIORITY = ['firstrun', 'whynote', 'roman', 'backup'];
 
   function priorityOf(consumerId, explicitPriority) {
     if (typeof explicitPriority === 'number' && !isNaN(explicitPriority)) return explicitPriority;
