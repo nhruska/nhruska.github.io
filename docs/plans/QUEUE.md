@@ -41,7 +41,7 @@
 | M-4 | Music-app regression suite in CI (Playwright journeys J1-J4 + T-plans as automation) | Sprint-1 harness + test plan exist; needs CI-shape decision (box OOM rule -> CI-dispatched) |
 | M-5 | buildAdapter extraction (inline HTML -> shared/chord-pack-adapter.js + real tests) - before next instrument profile or HSR Lens | [analysis A3](analysis-refactor-enhance-20260704.md) |
 | M-6 | Client-storage strategy + schema inventory (issues #76 + #77) - the strategic layer above S-SAVE-TRUTH | gh #76/#77 + analysis A1 context |
-| M-7 | Jam picker (19 curated records, zero consuming code) + data-model.md drift fix | analysis B3 |
+| M-7 | ~~Jam picker~~ CLOSED WON'T-DO (2026-07-04): the entry point was DELIBERATELY removed by operator interview 3 days earlier (commit 8cf0647, never registered - now D-HERO-REMOVED); re-adding = re-litigation. OPEN FORK for Tier-2 sitting: a lightweight STATIC jam-now affordance (no show/hide-on-filter) - operator call | agent stop + git archaeology |
 | M-8 | SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview) | analysis A7 + B5 |
 | M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
 | M-10 | M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required | [uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding |
