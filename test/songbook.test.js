@@ -1225,6 +1225,21 @@ test('soloChipScale: unresolvable root -> null (never throws)', function () {
   assert.strictEqual(Songbook.soloChipScale('H', 'Major', 'mode'), null);
   assert.strictEqual(Songbook.soloChipScale('H', 'Major', 'pentMajor'), null);
 });
+// S-CHIPS-PLUS (P5 W3 verdict): the Blues-key row's freed 4th slot is
+// Mixolydian - resolved via Circle.spellScale directly (independent of
+// keyMode, matching how pentMajor/pentMinor/blues already resolve), checked
+// across 3 roots per the mission's V&V bar.
+test('soloChipScale: the mixolydian chip resolves via Circle.spellScale for 3 roots (Blues-key row 4th chip)', function () {
+  ['A', 'C', 'G'].forEach(function (root) {
+    assert.deepStrictEqual(Songbook.soloChipScale(root, 'Blues', 'mixolydian'), Circle.spellScale(root, 'mixolydian'));
+  });
+});
+test('soloChipScale: mixolydian chip is independent of keyMode, like the other non-mode chips', function () {
+  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Major', 'mixolydian'), Circle.spellScale('E', 'mixolydian'));
+});
+test('soloChipScale: mixolydian chip on an unresolvable root -> null (never throws)', function () {
+  assert.strictEqual(Songbook.soloChipScale('H', 'Blues', 'mixolydian'), null);
+});
 test('soloChipCaption: never captions the default/mode chip', function () {
   assert.strictEqual(Songbook.soloChipCaption('mode'), null);
 });
@@ -1241,14 +1256,57 @@ test('soloChipCaption: resolves the REAL SoloGuide.framing() text once solo-guid
 test('soloChipCaption: still never throws for an unknown scale id (safe-null contract preserved)', function () {
   assert.strictEqual(Songbook.soloChipCaption('nonsense'), null);
 });
+// S-CHIPS-PLUS: framing() has no mixolydian branch - the caption falls back to
+// SoloGuide.card('mixolydian').chooseWhen, which needs no {i} note
+// interpolation for that block (P5 W3 verdict: "trivially reachable").
+test('soloChipCaption: mixolydian resolves via SoloGuide.card().chooseWhen (framing() has no mixolydian branch)', function () {
+  assert.strictEqual(Songbook.soloChipCaption('mixolydian'), SoloGuide.card('mixolydian').chooseWhen);
+  assert.strictEqual(typeof Songbook.soloChipCaption('mixolydian'), 'string');
+});
+
+/* ---------- S-CHIPS-PLUS: the degrees line under the notes line (P5 W3
+ * verdict - "how do these notes function"). soloChipDegrees mirrors
+ * soloChipScale's own scaleId routing so a chip's notes and its degrees
+ * always describe the SAME scale; tested the same DOM-less way. */
+test('soloChipDegrees: the mode chip returns the KEY scale degrees via Circle.scaleDegrees (A Major = ionian)', function () {
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Major', 'mode'), Circle.scaleDegrees('ionian'));
+});
+test('soloChipDegrees: Minor/Mixolydian/Dorian mode chips map through CIRCLE_MODE, matching soloChipScale', function () {
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Minor', 'mode'), Circle.scaleDegrees('aeolian'));
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Mixolydian', 'mode'), Circle.scaleDegrees('mixolydian'));
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Dorian', 'mode'), Circle.scaleDegrees('dorian'));
+});
+test('soloChipDegrees: pentMajor/pentMinor/blues chips read Circle.soloScaleDegrees directly, independent of the key mode', function () {
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Major', 'pentMajor'), Circle.soloScaleDegrees('pentMajor'));
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Major', 'pentMinor'), Circle.soloScaleDegrees('pentMinor'));
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Major', 'blues'), Circle.soloScaleDegrees('blues'));
+});
+test('soloChipDegrees: the mode chip on a BLUES key IS the blues scale degrees (matches soloChipScale dedup)', function () {
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Blues', 'mode'), Circle.soloScaleDegrees('blues'));
+});
+test('soloChipDegrees: the mixolydian chip (Blues-key 4th chip) resolves via Circle.scaleDegrees', function () {
+  assert.deepStrictEqual(Songbook.soloChipDegrees('Blues', 'mixolydian'), Circle.scaleDegrees('mixolydian'));
+});
+// An unrecognized scaleId is not special-cased (mirrors soloChipScale exactly)
+// so it falls through to the KEY's own mode-chip derivation - only an
+// unresolvable/unknown KEY MODE (no CIRCLE_MODE entry) yields null, same
+// safe-empty contract as soloChipScale's unresolvable-root case.
+test('soloChipDegrees: an unresolvable key mode -> null (never throws)', function () {
+  assert.strictEqual(Songbook.soloChipDegrees('Nonsense', 'mode'), null);
+  assert.strictEqual(Songbook.soloChipDegrees('Nonsense', 'anything'), null);
+});
 test('isolation: solo-chip derivation never touches harmonization (chordInKey/romanInKey outputs identical before/after chip taps)', function () {
   var beforeIn = Songbook.chordInKey('Am', 'C', 'Major');
   var beforeRoman = Songbook.romanInKey('G', 'C', 'Major');
   Songbook.soloChipScale('C', 'Major', 'pentMajor');
   Songbook.soloChipScale('C', 'Major', 'pentMinor');
   Songbook.soloChipScale('C', 'Major', 'blues');
+  Songbook.soloChipScale('C', 'Blues', 'mixolydian');
+  Songbook.soloChipDegrees('C', 'pentMajor');
+  Songbook.soloChipDegrees('Blues', 'mixolydian');
   Songbook.soloChipCaption('pentMajor');
   Songbook.soloChipCaption('blues');
+  Songbook.soloChipCaption('mixolydian');
   assert.strictEqual(Songbook.chordInKey('Am', 'C', 'Major'), beforeIn);
   assert.strictEqual(Songbook.romanInKey('G', 'C', 'Major'), beforeRoman);
 });
