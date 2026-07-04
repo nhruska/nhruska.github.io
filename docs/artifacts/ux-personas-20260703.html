@@ -50,25 +50,31 @@ code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 3px;font-size:
 
 <!-- ============ ABOVE THE FOLD: OPERATOR COCKPIT ============ -->
 <div class="cockpit">
-<div class="state">GATE LIVE - sprint-1 v2 awaits your call (phase 4 done: 12 adversarial findings, all folded)</div>
-<div class="need">Reply on telegram or in-session:</div>
-<div class="keys"><span class="key hot">approve</span><span class="key hot">adjust: &lt;text&gt;</span><span class="key hot">stop</span><span class="key">M3: A = none (rec)</span><span class="key">M3: B = spec-only</span></div>
-<div style="font-size:.78rem;color:var(--dim)">Plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v1</a> - 8 core + 1 stretch, wave 2 gated on <a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> merging. Council unanimous: no M3 slice.</div>
+<div class="state"><span style="color:var(--ok)">NOTHING NEEDED FROM YOU</span> - plan approved, 4 builder agents are implementing it now</div>
+<div style="font-size:.8rem;color:var(--dim);margin:4px 0">You approved the plan (choice A: no library-merge work this sprint). Next time I need you: reviewing the finished draft PRs. Steer anytime: reply on telegram or here.</div>
+<div class="keys" style="margin-top:8px">
+<span class="key" title="Compose Clear gets undo; bigger safer remove buttons">BUILDING: safety fixes</span>
+<span class="key" title="1008 theory checks become permanent tests">BUILDING: theory tests</span>
+<span class="key" title="show-once hint system">BUILDING: hint infra</span>
+<span class="key" title="setlist clear scroll-guard">BUILDING: setlist guard</span>
+</div>
+<div style="font-size:.78rem;color:var(--dim)">Then: 2 stacked items (first-run cues, "why" hint) - 3 more wait for <a href="https://github.com/nhruska/nhruska.github.io/pull/98">spelling PR #98</a> to merge. Full plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v2</a>.</div>
 <div class="dots">
-<span class="dot d-done" title="interview/spec">0</span><span class="dot d-done" title="personas">1</span><span class="dot d-done" title="theory audit + professor">2</span><span class="dot d-done" title="walkthroughs">2b</span><span class="dot d-done" title="council + chair">3</span><span class="dot d-done" title="adversarial">4</span><span class="dot d-run" title="GATE">5</span><span class="dot d-wait" title="execute">6</span>
-<span style="margin-left:6px">0-4 done - 5 GATE LIVE - 6 swarm on approve</span>
+<span class="dot d-done" title="interview + spec">0</span><span class="dot d-done" title="personas">1</span><span class="dot d-done" title="theory audit + professor">2</span><span class="dot d-done" title="walkthroughs">2b</span><span class="dot d-done" title="council + chair">3</span><span class="dot d-done" title="adversarial review">4</span><span class="dot d-done" title="YOUR GATE - approved">5</span><span class="dot d-run" title="building">6</span>
+<span style="margin-left:6px">all decisions made - build phase running</span>
 </div>
 </div>
 <div class="chips">
-<div class="chip"><div class="n">8+1</div><div class="l">sprint items</div></div>
-<div class="chip"><div class="n">0</div><div class="l">theory bugs x2 verdicts</div></div>
-<div class="chip"><div class="n">5</div><div class="l">PRs merged today</div></div>
-<div class="chip"><div class="n">1</div><div class="l">P0 found (Clear)</div></div>
+<div class="chip"><div class="n">4/9</div><div class="l">items building now</div></div>
+<div class="chip"><div class="n">0</div><div class="l">theory bugs (2 verdicts)</div></div>
+<div class="chip"><div class="n">12/12</div><div class="l">review findings fixed in plan</div></div>
+<div class="chip"><div class="n">1</div><div class="l">tap-hazard P0 being fixed</div></div>
 </div>
 
 <!-- ============ TABS ============ -->
 <div class="tabs" id="tabs">
-<button class="tab on" data-p="plan">Plan</button>
+<button class="tab on" data-p="time">Timeline</button>
+<button class="tab" data-p="plan">Plan</button>
 <button class="tab" data-p="find">Findings</button>
 <button class="tab" data-p="theory">Theory</button>
 <button class="tab" data-p="council">Council</button>
@@ -78,8 +84,34 @@ code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 3px;font-size:
 <button class="tab" data-p="app">App+Personas</button>
 </div>
 
-<div class="pane on" id="p-plan">
-<h2>Sprint 1 - plan v2 (adversarial-resolved, AT GATE)</h2>
+<div class="pane on" id="p-time">
+<h2>Mission timeline (relative order, one afternoon)</h2>
+<div class="wrapx"><table>
+<tr><th>#</th><th>Type</th><th>What</th><th>Why it was the right call</th></tr>
+<tr><td>1</td><td><span class="tag">YOU</span></td><td>Mission incantation typed on phone (/goal-interview + the vision block)</td><td>Fuzzy target -&gt; interview, not guesswork</td></tr>
+<tr><td>2</td><td><span class="tag">YOU</span></td><td>Interview round 1: 4 answers (end state, personas = your friends, one hard gate, deep budget)</td><td>Shared vision up front - prevents rework downstream</td></tr>
+<tr><td>3</td><td><span class="tag">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">Goal spec</a> committed (9 decisions, 5 principles)</td><td>Mission survives reboots/handoffs - state lives in git</td></tr>
+<tr><td>4</td><td><span class="tag">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">4 personas locked</a></td><td>Real expected users, deduped against prior HF work</td></tr>
+<tr><td>5</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit built + run</a>: 1008 checks, 0 bugs, 128 spelling deltas</td><td>Deterministic (zero-LLM) verification first - can't hallucinate</td></tr>
+<tr><td>6</td><td><span class="tag">FIX</span></td><td>Hung reviewer call diagnosed -&gt; DISCOVERED sibling <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> already building key-aware spelling</td><td>Diagnosing instead of blind-retrying surfaced parallel work; prevented a planning collision</td></tr>
+<tr><td>7</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a> (GPT-5.5): "NONE FOUND" + caught the audit's one soft spot</td><td>The verifier itself needed independent attack (your D4 directive)</td></tr>
+<tr><td>8</td><td><span class="tag">PR</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden trap cases posted to #98</a></td><td>One session's research became another session's test fixtures</td></tr>
+<tr><td>9</td><td><span class="tag">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">J1-J4 walkthroughs</a>: live probe found the P0 (Clear wipes work, no guard)</td><td>Robot probes + geometry beat opinion - every claim source-verified</td></tr>
+<tr><td>10</td><td><span class="tag">YOU</span></td><td>Core-workflow directive captured + "3 y" (M3 eligibility)</td><td>Typed-once -&gt; encoded forever (compound engineering)</td></tr>
+<tr><td>11</td><td><span class="tag">TASK</span></td><td>Council: 4 persona-lens seats in parallel (~3.5 min)</td><td>Independent perspectives before synthesis; unanimous no-M3 emerged, not imposed</td></tr>
+<tr><td>12</td><td><span class="tag">YOU</span></td><td>Interview round 2 (triage powers, gate semantics, profiles, telegram format)</td><td>Answers feed the reusable workflow system, not just this mission</td></tr>
+<tr><td>13</td><td><span class="tag">DECIDE</span></td><td>Fable chair synthesis: 8+1 plan, contested items ruled</td><td>Single accountable synthesis beats list-merging; premium model only at the judgment moment</td></tr>
+<tr><td>14</td><td><span class="tag">TASK</span></td><td>Adversarial review of the PLAN: REQUEST_CHANGES, 12 findings</td><td>Attacking the plan costs spec edits; attacking code later costs rework</td></tr>
+<tr><td>15</td><td><span class="tag">DECIDE</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">v2 amendments</a>: undo contract, stack protocol, named #98 seam, fold gate</td><td>Every finding became a binding, testable spec line</td></tr>
+<tr><td>16</td><td><span class="tag">YOU</span></td><td>GATE: approved with a single keystroke ("1" = approve + M3-A)</td><td>All context pre-staged -&gt; the human decision took one character</td></tr>
+<tr><td>17</td><td><span class="tag">TASK</span></td><td>Wave 1a: 4 builder agents launched in isolated worktrees (safety fixes, theory tests, hint infra, setlist guard)</td><td>File-ownership map from A2 makes parallel builds collision-free</td></tr>
+<tr><td>-</td><td><span class="tag">NEXT</span></td><td>Wave 1b stacks on hint infra -&gt; draft PRs + previews -&gt; your review; wave 2 wakes when #98 merges</td><td>-</td></tr>
+</table></div>
+<div class="card">Interaction economics so far: <strong>5 operator touchpoints</strong> (1 incantation, 2 interview rounds, 1 directive, 1 single-keystroke gate) carried the whole mission; everything else ran autonomously with advisory pings.</div>
+</div>
+
+<div class="pane" id="p-plan">
+<h2>Sprint 1 - plan v2 (adversarial-resolved, APPROVED)</h2>
 <div class="wrapx"><table>
 <tr><th>#</th><th>Item</th><th>Wave</th><th>Mechanism ruling</th></tr>
 <tr><td>1</td><td>S-CLEARGUARD + S-SLOTX (one PR)</td><td>1a</td><td>Persistent UNDO (not confirm) + Clear away from Save; slot-x 44px + movement-cancel; covers Compose AND Studio; PR body re-runs full destructive inventory</td></tr>
