@@ -68,10 +68,11 @@ function accCount(spelling) {
   return spelling.reduce(function (n, s) { return n + (s.length - 1); }, 0);
 }
 // conventional tonic name for a pitch class in a mode: try both enharmonic
-// candidates, keep the letter-sequential spelling with fewer accidentals
-// (tie -> flats, matching written-music practice for e.g. Gb vs F#: F# wins 6v6? no -
-// F# major 6 sharps vs Gb major 6 flats is a true tie; prefer sharp then, matching
-// guitar practice).
+// candidates, keep the letter-sequential spelling with fewer accidentals.
+// TIE -> SHARPS is a deterministic PRODUCT POLICY, not standard practice
+// (professor-adversarial finding, 2026-07-03: F#/Gb major and D#/Eb minor are
+// legitimate equal-accidental spellings in the literature; guitar practice
+// leans sharp, so ties render sharp here - documented, deliberate, deterministic).
 var SHARP_NAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 var FLAT_NAME = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 function conventional(pc, steps) {

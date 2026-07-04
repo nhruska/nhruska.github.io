@@ -33,7 +33,7 @@ blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:
 <tr><th>Phase</th><th>What</th><th>Status</th></tr>
 <tr><td>1</td><td>Personas locked (4, real-friend anchored)</td><td><span class="status s-done">DONE</span></td></tr>
 <tr><td>2a</td><td>Deterministic theory audit (1008 checks)</td><td><span class="status s-done">DONE - 0 bugs</span></td></tr>
-<tr><td>2a+</td><td>Adversarial review: music-theory-professor persona (codex/GPT-5.5) attacking the audit's ground truth AND the app's outputs. First launch wedged on stdin (invocation bug, no output consumed); relaunched with the fixed pattern + regime-aware prompt</td><td><span class="status s-run">RUNNING (attempt 2)</span></td></tr>
+<tr><td>2a+</td><td>Adversarial review: music-theory-professor persona (codex/GPT-5.5). Verdict: <strong>0 theory bugs</strong> ("NONE FOUND" - pitch, quality, degree, roman case all correct); one ground-truth note (sharp-tie = product policy, not standard practice - now documented as such); Roman-style SETTING recommended; 12 golden trap cases delivered and posted to PR #98. Full record: docs/plans/theory-professor-review-20260703.md</td><td><span class="status s-done">DONE</span></td></tr>
 <tr><td>2b</td><td>Playwright persona walkthroughs J1-J4 (thumb-zone, destructive-tap, JIT gaps)</td><td><span class="status s-wait">NEXT</span></td></tr>
 <tr><td>3</td><td>plan:council (Fable chair + 4 seats)</td><td><span class="status s-wait">QUEUED</span></td></tr>
 <tr><td>4</td><td>Codex adversarial on the candidate plan + resolution</td><td><span class="status s-wait">QUEUED</span></td></tr>
@@ -101,7 +101,7 @@ blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:
 <table>
 <tr><th>#</th><th>Fork</th><th>Options on the table</th><th>Adjudicator</th></tr>
 <tr><td>O1</td><td>Spelling preference <strong>- SUPERSEDED by PR #98</strong></td><td>A parallel session is implementing key-aware conventional spelling app-wide (circle.js SSOT: F major -&gt; Bb; C# major renders as Db). Read-only probe confirms its output matches this mission's independent conservatory ground truth exactly - two independent derivations agree. Mission consumes #98 as backdrop; our audit is offered as #98's deterministic regression fixture; professor's trap list (T4) feeds its verification.</td><td>PR #98 (sibling session) + Nik merge</td></tr>
-<tr><td>O2</td><td>Roman convention (V1/V2)</td><td>Keep hybrid / switch to lead-sheet flats / tie to the O1 setting</td><td>Professor -&gt; council</td></tr>
+<tr><td>O2</td><td>Roman convention (V1/V2) <strong>- professor verdict in</strong></td><td>Professor recommends a <em>Roman Numeral Style</em> SETTING: Classical Mode-Local (current hybrid; conservatory-correct, serves P2) vs Lead-Sheet Major-Relative (bIII/bVI/bVII; serves P4 jam vocabulary). Matches the operator's settings-with-one-time-prompt pattern (D3). Council ranks it (sprint candidate S-ROMAN); also S-TONES (chord tones with spelling: E#dim = E# G# B) and S-GOLDEN (promote audit + 12 traps to permanent test suite).</td><td>Council -&gt; Nik gate</td></tr>
 <tr><td>O3</td><td>M3 merge interplay</td><td>Include M3 slice(s) in sprint 1 vs keep sprint 1 clear of Library structure</td><td>Council -&gt; Nik gate</td></tr>
 <tr><td>O4</td><td>Sub-decision M3-5 (finder rehome A vs B)</td><td>Already flagged in UX-FRICTION-LOG; only relevant if O3 includes M3</td><td>Nik</td></tr>
 </table>
