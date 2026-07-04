@@ -61,3 +61,6 @@
 | Chord tiles overlapping / diagram spilling past its cell | systems/layout-tokens.md |
 | How to verify before shipping | workflows/dev-verify-ship.md |
 | What is planned / deferred | workflows/roadmap-missions.md |
+
+| [ux-philosophy/component-conventions.md](ux-philosophy/component-conventions.md) | Design-system conventions + tokens |
+| [systems/ssot-registry.md](systems/ssot-registry.md) | SSOT registry + consistency law |

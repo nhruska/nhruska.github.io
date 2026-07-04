@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| S-BLUES-BOXES + S-BACKUP-NUDGE + S-CHIPS-PLUS in flight (longer-leash delegation 2026-07-04); S-TEMPO resolved as REMOVAL | three parallel agents, disjoint grants, CACHE guarded | [fold record](m-guide-adversarial-fold-20260704.md) |
+| M-DESIGN-ENFORCE wave 1 (operator law 2026-07-04): U10 guidance-surface split, selected-grammar unify (D-SELECTED-ACCENT), radius tokens, consistency lint growth | absorbs S-SELECTED-GRAMMAR; ELEMENT CONSISTENCY LAW encoded in music/CLAUDE.md + ssot-registry.md | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
@@ -24,6 +24,12 @@
 | S6 | ~~S-HARDEN~~ FIRED -> NOW (2026-07-04): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests | **go harden** | Spec = analysis A4+A5+A6 + toggleSet 'Added to setlist' unconditional-toast fix (same A1 bug shape, flagged in #116) + SW verify script asserts CACHE differs from origin/main when shared/ files changed (identical-string v83 collision, PR #117) |
 | S8 | S-BACKUP-NUDGE: one-shot Notable "back up your library" via free priority slot + backup.describe() | **go backup-nudge** | Spec = analysis B2 (pairs with S5) |
 | S9 | S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots | **go chips-plus** | Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission |
+
+### Newly queued (findings)
+
+| # | Item | Source |
+|---|---|---|
+| S-NAVHIST | NavHistory double-pop on Solo->Skip path (real bug, live-reproduced) | PR #144 finding |
 
 ## MID (vision known - needs a spec interview, ~15-30 min each; batchable in one sitting)
 
