@@ -4,81 +4,79 @@
 <title>HiTL Mission Control</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
-/* Problem Solutions brand - tokens per skills/corporate-brand/brands/problem-solutions.html.md
-   (light default per html-surface profile; dark via the brand's own dark theme block) */
+/* HiTL Mission Control - legibility-first restyle (operator directive 2026-07-04).
+   Brand (PS) lives in the HEADER + accents only; BODY optimizes contrast/size/spacing.
+   Dark tuned first (operator's phone surface), light kept print-safe. */
 :root{
---brand-primary:#29AAE1;--brand-primary-soft:#4FC0F1;--brand-secondary:#2075BC;--brand-tertiary:#105480;
---brand-slate:#354254;--brand-radius:8px;
---bg:#FFFFFF;--bg2:#F4F6F8;--card:#FFFFFF;--txt:#354254;--dim:#6B7280;
---acc:#2075BC;--accg:rgba(41,170,225,.18);--warn:#946200;--line:rgba(41,170,225,.14);--ok:#2075BC;--hot:#c2402f}
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
 @media (prefers-color-scheme: dark){:root{
---bg:#1A1F2E;--bg2:#252B3B;--card:#2A3044;--txt:#FFFFFF;--dim:#9CA3AF;
---acc:#29AAE1;--accg:rgba(41,170,225,.25);--warn:#f0b429;--line:rgba(41,170,225,.20);--ok:#29AAE1;--hot:#ff7a6b}}
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
 *{box-sizing:border-box}
-body{margin:0 auto;padding:0 0 20px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
-a{color:var(--acc);text-decoration:none}
-a:hover{color:var(--brand-secondary);text-decoration:underline}
-.brand-header{border-bottom:1px solid var(--line);padding:14px 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--bg)}
-.brand-logo{width:28px;height:22px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
-.wordmark{display:flex;align-items:center;gap:10px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
-.wordmark .light{font-weight:300;opacity:.85}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
 .wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
-.hmeta{flex:1 1 100%;padding:0 2px}
-h1{font-size:1.05rem;margin:6px 0 0}
-.sub{color:var(--dim);font-size:.72rem;margin-bottom:8px}
-.wrap{padding:0 12px}
-.cockpit{background:var(--card);border:1px solid var(--brand-primary);border-radius:var(--brand-radius);padding:10px 12px;margin:8px 0;box-shadow:0 0 20px var(--accg)}
-.cockpit .state{font-size:.95rem;font-weight:800}
-.cockpit .need{color:var(--warn);font-weight:700;font-size:.85rem;margin:6px 0 2px}
-.keys{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.key{border:1px solid var(--line);border-radius:var(--brand-radius);padding:3px 9px;font-size:.78rem;font-weight:700;background:var(--bg)}
-.key.hot{border-color:var(--brand-primary);color:var(--brand-secondary);background:var(--accg)}
-.dots{display:flex;gap:4px;align-items:center;margin:8px 0 2px;font-size:.68rem;color:var(--dim);flex-wrap:wrap}
-.dot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;border:1px solid var(--line)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+h1 span{display:block;font-size:.85rem;color:var(--dim);font-weight:500}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.fc .fd a{white-space:nowrap}
+.dots{display:flex;gap:6px;align-items:center;margin:14px 0 0;font-size:.8rem;font-weight:600;color:var(--dim);flex-wrap:wrap}
+.dot{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;border:1px solid var(--line)}
 .d-done{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
-.d-run{background:var(--warn);color:#fff;border-color:var(--warn)}
+.d-run{background:var(--warn);color:#1a1200;border-color:var(--warn)}
 .d-wait{color:var(--dim)}
-.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
-.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:6px 4px;text-align:center}
-.chip .n{font-size:1.05rem;font-weight:800;color:var(--brand-primary)}
-.chip .l{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
-.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.tab{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:var(--brand-radius);padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0 12px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:9px 16px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab.on{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
 .pane{display:none}
 .pane.on{display:block}
-h2{font-size:.92rem;margin:14px 0 6px;color:var(--brand-secondary);text-transform:uppercase;letter-spacing:.05em}
-table{border-collapse:collapse;width:100%;font-size:.76rem;margin:6px 0}
-th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
-th{color:var(--dim);font-weight:600}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 12px;margin:8px 0;font-size:.82rem}
-blockquote{border-left:4px solid var(--brand-primary);margin:8px 0;padding:6px 10px;background:var(--bg2);border-radius:0 var(--brand-radius) var(--brand-radius) 0;font-size:.85rem}
-blockquote .by{display:block;color:var(--dim);font-size:.68rem;margin-top:3px}
-code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.85em}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+tr:nth-child(even) td{background:color-mix(in srgb, var(--bg2) 55%, var(--card))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+blockquote{border-left:5px solid var(--brand-primary);margin:12px 0;padding:10px 14px;background:var(--bg2);border-radius:0 var(--brand-radius) var(--brand-radius) 0;font-size:1rem;line-height:1.55}
+blockquote .by{display:block;color:var(--dim);font-size:.8rem;margin-top:6px}
+code{background:var(--accg);border-radius:4px;padding:1px 5px;font-size:.9em;font-weight:600}
 .wrapx{overflow-x:auto}
-.foot{margin-top:16px;color:var(--dim);font-size:.68rem;border-top:1px solid var(--line);padding:12px 2px 0}
-.tag{display:inline-block;border:1px solid var(--brand-primary);color:var(--brand-secondary);border-radius:6px;padding:0 6px;font-size:.66rem;margin:1px 4px 1px 0}
-.pos{color:var(--ok)}.neg{color:var(--hot)}
-/* HUD additions */
-.lights{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 2px;font-size:.7rem;color:var(--dim)}
-.lt{display:inline-flex;align-items:center;gap:5px}
-.lamp{width:10px;height:10px;border-radius:50%;display:inline-block}
-.l-ok{background:#2E9E63;box-shadow:0 0 6px rgba(46,158,99,.6)}
-.l-run{background:var(--warn);box-shadow:0 0 6px rgba(240,180,41,.5)}
-.l-off{background:var(--line)}
-.pill{display:inline-block;border-radius:20px;padding:1px 9px;font-size:.64rem;font-weight:800;letter-spacing:.04em;color:#fff;white-space:nowrap}
-.pl-you{background:#B7791F}
-.pl-task{background:var(--brand-primary)}
-.pl-decide{background:#6B46C1}
-.pl-pr{background:#2E9E63}
-.pl-doc{background:var(--brand-tertiary)}
-.pl-fix{background:#C2402F}
-.pl-next{background:var(--dim)}
-.fc{border:1px solid var(--line);border-left:4px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--card);padding:8px 10px;margin:6px 0;font-size:.8rem}
-.fc .fh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
-.fc .fw{color:var(--dim);font-size:.72rem;font-weight:600}
-.fc .fd{color:var(--dim);font-size:.76rem;margin-top:2px}
-.legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;letter-spacing:.03em;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-task{background:var(--brand-secondary)}.pl-decide{background:#7C5CBF}
+.pl-pr{background:#22845C}.pl-doc{background:#4A6572}.pl-fix{background:#C0392B}.pl-next{background:#5A6B7E}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.key{border:1px solid var(--line);border-radius:8px;padding:5px 12px;font-size:.85rem;font-weight:700;background:var(--card);color:var(--txt)}
+.pos{color:var(--ok);font-weight:700}.neg{color:var(--hot);font-weight:700}
+.tag{display:inline-block;border:1px solid var(--brand-primary);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:.78rem;font-weight:700;margin:2px 6px 2px 0}
+ol.steps{margin:6px 0 4px;padding-left:22px}
+ol.steps li{margin:5px 0;line-height:1.5}
+.exp{color:var(--ok);font-weight:700}
 </style></head><body>
 
 <header class="brand-header">
@@ -96,41 +94,37 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 
 <!-- ============ ABOVE THE FOLD: OPERATOR COCKPIT ============ -->
 <div class="cockpit">
-<div class="state"><span style="color:var(--warn)">YOUR MOVE - TOUCHPOINT 1 ACTIVE</span> <span style="color:var(--dim);font-weight:400;font-size:.8rem">- all 6 builders landed; 6 draft PRs await review + merge</span></div>
+<div class="state"><span class="pos">SHIPPED</span> - all 8 sprint PRs merged and LIVE (build v78)</div>
+<div class="statesub">You said "merge all - I'm trusting you." Receipt: 6 planned PRs + 2 of your same-night UAT fixes merged in order, every conflict resolved with the full test suite green at each step, and the one deploy hiccup self-healed by the retry workflow we shipped yesterday. Nothing is waiting on anyone.</div>
 <div class="lights">
-<span class="lt"><span class="lamp l-ok"></span>BUILD 6/6 landed</span>
-<span class="lt"><span class="lamp l-run"></span>REVIEW 6 PRs waiting on you</span>
-<span class="lt"><span class="lamp l-ok"></span>TESTS 19/19 green</span>
+<span class="lt"><span class="lamp l-ok"></span>MERGED 8/8</span>
+<span class="lt"><span class="lamp l-ok"></span>LIVE v78 on the site</span>
+<span class="lt"><span class="lamp l-ok"></span>TESTS 21/21 files green</span>
 <span class="lt"><span class="lamp l-off"></span>WAVE 2 sleeping (needs #98)</span>
 </div>
-
-<div style="font-size:.72rem;font-weight:700;color:var(--brand-secondary);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 2px">Your next touchpoints (forecast)</div>
-
-<div class="fc" style="border-left-color:var(--warn)"><div class="fh"><span class="pill pl-you">1 - REVIEW + MERGE</span><span class="fw">ACTIVE NOW - est 15-25 min</span></div>
-<div class="fd">Merge in this order (I rebase/retarget between merges - just go top to bottom): <a href="https://github.com/nhruska/nhruska.github.io/pull/100">#100 Clear undo (P0)</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/101">#101 theory canon</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/102">#102 hint infra (do NOT delete branch)</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/105">#105 setlist guard</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/103">#103 first-run cues</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/104">#104 why hint</a>. Combined 1+5 pre-verified (suite green, 0px fold). Preview: <a href="https://raw.githack.com/nhruska/nhruska.github.io/claude/ux-s1-clearguard/music/play/">clearguard branch</a>.</div></div>
-
-<div class="fc"><div class="fh"><span class="pill pl-you">2 - DECIDE</span><span class="fw">anytime before sprint 2 (no rush)</span></div>
-<div class="fd">Two queued decisions you can answer via telegram whenever: (a) merge PR #98 when its own review completes - that wakes wave 2 (3 more items build automatically); (b) M3 finder-rehome 5A vs 5B for sprint 2 (council recommends 5A).</div></div>
-
-<div class="fc"><div class="fh"><span class="pill pl-you">3 - REVIEW</span><span class="fw">tomorrow-ish</span></div>
-<div class="fd">claude-config draft PR: the core-workflow primitives encoding today's interview answers (core-sdlc protocol, quality profiles, active stance, telegram convention, /mission command). Review at leisure - nothing blocks on it.</div></div>
-
-<div style="font-size:.78rem;color:var(--dim);margin-top:6px">Plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v2 (approved)</a> - building now: safety fixes, first-run cues, "why" hint - landed: theory tests, hint infra, setlist guard.</div>
+<div class="fchead">Your next touchpoints (forecast)</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">1 - VERIFY</span><span class="fw">whenever you have 10-15 min</span></div>
+<div class="fd">Walk the 8 features on the <a href="https://nhruska.github.io/music/play/">live app</a> using the <strong>Verify tab below</strong> (T1-T8, one-handed on the Pixel). Anything that feels off becomes a finding + fix PR - just reply with the T-number.</div></div>
+<div class="fc"><div class="fh"><span class="pill pl-you">2 - DECIDE</span><span class="fw">anytime, no rush</span></div>
+<div class="fd">(a) Merge <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> when its review completes - wakes wave 2 (3 theory items build automatically). (b) M3 finder-rehome: <strong>5A or 5B</strong> for sprint 2 (council recommends 5A).</div></div>
+<div class="fc"><div class="fh"><span class="pill pl-you">3 - REVIEW</span><span class="fw">at leisure</span></div>
+<div class="fd"><a href="https://github.com/nhruska/claude-config/pull/593">claude-config PR #593</a>: the core-workflow primitives from yesterday's interview (core-sdlc protocol, quality profiles, active stance, telegram convention, /mission).</div></div>
 <div class="dots">
-<span class="dot d-done">0</span><span class="dot d-done">1</span><span class="dot d-done">2</span><span class="dot d-done">2b</span><span class="dot d-done">3</span><span class="dot d-done">4</span><span class="dot d-done">5</span><span class="dot d-run">6</span>
-<span style="margin-left:6px">all decisions made - build phase running</span>
+<span class="dot d-done">0</span><span class="dot d-done">1</span><span class="dot d-done">2</span><span class="dot d-done">2b</span><span class="dot d-done">3</span><span class="dot d-done">4</span><span class="dot d-done">5</span><span class="dot d-done">6</span>
+<span style="margin-left:8px">sprint 1 shipped - wave 2 wakes on #98</span>
 </div>
 </div>
 <div class="chips">
-<div class="chip"><div class="n">6/6</div><div class="l">wave-1 items landed</div></div>
-<div class="chip"><div class="n">19/19</div><div class="l">test files green</div></div>
-<div class="chip"><div class="n">6</div><div class="l">PRs waiting on you</div></div>
-<div class="chip"><div class="n">3</div><div class="l">forecast touchpoints</div></div>
+<div class="chip"><div class="n">8/8</div><div class="l">PRs merged + live</div></div>
+<div class="chip"><div class="n">v78</div><div class="l">deployed build</div></div>
+<div class="chip"><div class="n">21/21</div><div class="l">test files green</div></div>
+<div class="chip"><div class="n">2</div><div class="l">same-night UAT fixes</div></div>
 </div>
 
 <!-- ============ TABS ============ -->
 <div class="tabs" id="tabs">
-<button class="tab on" data-p="time">Timeline</button>
+<button class="tab on" data-p="verify">Verify</button>
+<button class="tab" data-p="time">Timeline</button>
 <button class="tab" data-p="plan">Plan</button>
 <button class="tab" data-p="find">Findings</button>
 <button class="tab" data-p="theory">Theory</button>
@@ -141,7 +135,43 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 <button class="tab" data-p="app">App+Personas</button>
 </div>
 
-<div class="pane on" id="p-time">
+<div class="pane on" id="p-verify">
+<h2>Verify the shipped features (T1-T8, ~10-15 min, one-handed)</h2>
+<div class="card">Test on the <a href="https://nhruska.github.io/music/play/">live app</a>. If anything looks stale on first open, reload once (the new build is v78 - check Settings' bottom line). Full printable steps: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-test-plan.md">test-plan doc</a>.</div>
+
+<div class="card"><strong>T1 - Clear undo (the P0)</strong>
+<ol class="steps"><li>Compose: pick E Mixolydian, add 3-4 chords, tap Clear (now far LEFT, away from Save).</li>
+<li><span class="exp">Expect:</span> progression empties + an Undo banner (no browser popup). Undo restores everything exactly.</li>
+<li>Clear again, then add any chord. <span class="exp">Expect:</span> banner disappears (edits invalidate undo - by design).</li></ol></div>
+
+<div class="card"><strong>T2 - Chord-remove buttons</strong>
+<ol class="steps"><li>Tap a chord's x slightly off-center. <span class="exp">Expect:</span> easy hit.</li>
+<li>Put your thumb ON an x and drag to scroll. <span class="exp">Expect:</span> scrolls, nothing removed.</li></ol></div>
+
+<div class="card"><strong>T3 - Save dialog (your F9/F10)</strong>
+<ol class="steps"><li>Save a 2-chord progression. <span class="exp">Expect:</span> SOLID readable card near the TOP; "Add to setlist" crisp.</li>
+<li>Tap the name field. <span class="exp">Expect:</span> keyboard opens; input + checkbox + Save/Cancel all still visible.</li></ol></div>
+
+<div class="card"><strong>T4 - Settings (your F11)</strong>
+<ol class="steps"><li>Open the gear. <span class="exp">Expect:</span> title+X pinned top; buttons pinned bottom; ONE line under them with build + last backup.</li>
+<li>Scroll the middle; toggle theme. <span class="exp">Expect:</span> bars stay pinned; theme flips instantly.</li></ol></div>
+
+<div class="card"><strong>T5 - First-run cue</strong> (needs a fresh profile - use an incognito tab)
+<ol class="steps"><li><span class="exp">Expect on Library:</span> one banner - tap-a-song + easy-3-chord nudge. Dismiss.</li>
+<li>Reload. <span class="exp">Expect:</span> never returns. Your normal profile never sees it.</li></ol></div>
+
+<div class="card"><strong>T6 - "Why this scale works" hint</strong> (same incognito session, after T5)
+<ol class="steps"><li>Compose -> key/mode -> chord -> "Solo over a backing track".</li>
+<li><span class="exp">Expect in Studio:</span> one relative/parallel "why" note for your key. Dismiss = forever.</li></ol></div>
+
+<div class="card"><strong>T7 - Setlist clear guard</strong>
+<ol class="steps"><li>Thumb ON the setlist header ✕, drag to scroll. <span class="exp">Expect:</span> scrolls, no dialog.</li>
+<li>Deliberate tap. <span class="exp">Expect:</span> "Clear your setlist?" confirm (cancel it). Edit-mode remove x is bigger, undo intact.</li></ol></div>
+
+<div class="card"><strong>T8 - Theory canon (nothing to tap)</strong> - 1008 conservatory assertions now guard every future change; a regression fails CI naming the exact key/mode/degree.</div>
+</div>
+
+<div class="pane" id="p-time">
 <h2>Mission timeline (relative order, one day)</h2>
 <div class="legend"><span class="pill pl-you">YOU</span><span class="pill pl-task">TASK</span><span class="pill pl-decide">DECIDE</span><span class="pill pl-pr">PR</span><span class="pill pl-doc">DOC</span><span class="pill pl-fix">FIX</span><span class="pill pl-next">NEXT</span></div>
 <div class="wrapx"><table>
@@ -166,9 +196,14 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 <tr><td>18</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-golden-a">theory canon suite</a> (1008 assertions; self-tested by deliberate corruption)</td><td>The verifier proves it can fail before we trust its pass</td></tr>
 <tr><td>19</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-notables">hint infra</a> (single-slot arbitration, backup-safe storage) -&gt; wave 1b stacked on it</td><td>Infra first, consumers stack - the A1 protocol in action</td></tr>
 <tr><td>20</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-setx">setlist guard</a> (movement-cancel + 44px, geometry-diff verified, one honest out-of-scope finding logged)</td><td>Scope discipline: found a pre-existing gap, documented it, didn't smuggle the fix</td></tr>
-<tr><td>-</td><td><span class="pill pl-next">NEXT</span></td><td>3 builders finish -&gt; draft PRs + previews -&gt; <strong>your touchpoint 1</strong> (review+merge in listed order); wave 2 wakes on #98</td><td>-</td></tr>
+<tr><td>21</td><td><span class="pill pl-you">YOU</span></td><td>Live UAT on the preview: 3 findings (modal contrast, keyboard-covered modal, settings structure) + "merge all - I'm trusting you"</td><td>Steering mid-flight without blocking the train</td></tr>
+<tr><td>22</td><td><span class="pill pl-task">TASK</span></td><td>Merge train: 6 PRs in dependency order; 5 conflicts resolved (union helpers, shared test helper API reconciled x3, distinct SW bumps v72-v76), suite green at every step</td><td>Choreography stayed on the agent; the human decision stayed one word</td></tr>
+<tr><td>23</td><td><span class="pill pl-fix">FIX</span></td><td>Pages deploy failed once mid-train -&gt; the #97 auto-retry workflow fired and healed it, unattended</td><td>Yesterday's incident became today's non-event</td></tr>
+<tr><td>24</td><td><span class="pill pl-pr">PR</span></td><td>Same-night UAT fixes built + merged: <a href="https://github.com/nhruska/nhruska.github.io/pull/107">#107 save-dialog</a> (root cause: backdrop ::before painting over its own card) + <a href="https://github.com/nhruska/nhruska.github.io/pull/106">#106 settings sticky layout</a></td><td>UAT finding -&gt; shipped fix in under 2 hours</td></tr>
+<tr><td>25</td><td><span class="pill pl-task">TASK</span></td><td><strong>Sprint 1 LIVE: v78 on nhruska.github.io</strong> - 8 PRs, 21/21 test files, all features deployed</td><td>-</td></tr>
+<tr><td>-</td><td><span class="pill pl-next">NEXT</span></td><td>You verify T1-T8 at leisure; wave 2 (3 theory items) wakes when #98 merges; M3 = sprint 2</td><td>-</td></tr>
 </table></div>
-<div class="card">Interaction economics so far: <strong>~8 operator touchpoints</strong> (1 incantation, 2 interview rounds, 1 directive, 1 single-keystroke gate) carried the whole mission; everything else ran autonomously with advisory pings.</div>
+<div class="card">Interaction economics, full mission: <strong>~10 operator touchpoints</strong> (incl. one two-word merge authorization that shipped 8 PRs) (1 incantation, 2 interview rounds, 1 directive, 1 single-keystroke gate) carried the whole mission; everything else ran autonomously with advisory pings.</div>
 </div>
 
 <div class="pane" id="p-plan">
