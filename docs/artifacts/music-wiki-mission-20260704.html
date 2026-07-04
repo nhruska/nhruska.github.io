@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HiTL Mission Control - M2 Wiki + Scales</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-now{background:#22845C}.pl-short{background:var(--brand-secondary)}.pl-mid{background:#7C5CBF}.pl-long{background:#5A6B7E}
+.pos{color:var(--ok);font-weight:700}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>HiTL Mission Control - M2: Wiki + Guitarist Toolset</h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/music-wiki-mission">branch</a> - started 2026-07-04 - <a href="https://raw.githack.com/nhruska/nhruska.github.io/claude/ux-persona-mission/docs/artifacts/ux-personas-20260703.html">Mission 1 pane (sprint 1, closed)</a></div>
+
+<div class="cockpit">
+<div class="state"><span class="pos">RUNNING</span> - engineering-wiki (absorb + decom old docs) + pentatonic/blues scales in the Studio</div>
+<div class="statesub">Trust mode: merge on green. Fable IA is synthesizing the page tree + scales plan; wiki-drafter fan-out and the scales implementer follow automatically. The plan-ahead QUEUE is now live below - the never-dormant pipeline you specced.</div>
+<div class="lights">
+<span class="lt"><span class="lamp l-run"></span>IA synthesizing (Fable)</span>
+<span class="lt"><span class="lamp l-off"></span>Drafters + scales implementer queued</span>
+<span class="lt"><span class="lamp l-off"></span>Professor + P5 adversarial queued</span>
+<span class="lt"><span class="lamp l-ok"></span>Sprint 1 LIVE v78</span>
+</div>
+<div class="fchead">Your next touchpoints (forecast)</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">1 - REFILL THE QUEUE</span><span class="fw">one batch sitting, ~30-45 min, anytime</span></div>
+<div class="fd">The highest-leverage thing you can do now: one interview sitting converts the MID candidates (tutor phase 4, phase 5, strum revival, CI regression) into gated SHORT specs - that is what keeps swarms saturated while you sleep. Also 2 one-worders: <strong>5A or 5B</strong> (unlocks sprint 2) and merge <a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> when ready (wakes wave 2).</div></div>
+<div class="fc"><div class="fh"><span class="pill pl-you">2 - VERIFY BATCH</span><span class="fw">when M2 ships (est later today)</span></div>
+<div class="fd">One review window: T1-T8 from sprint 1 (in the M1 pane) + M2's wiki spot-check + the new scales in the Studio. Adversarial pre-passes done - your judgment is taste/vision only.</div></div>
+</div>
+<div class="chips">
+<div class="chip"><div class="n">1</div><div class="l">mission in flight</div></div>
+<div class="chip"><div class="n">3</div><div class="l">SHORT (launch-ready)</div></div>
+<div class="chip"><div class="n">4</div><div class="l">MID (need interview)</div></div>
+<div class="chip"><div class="n">~0</div><div class="l">dormant quota target</div></div>
+</div>
+
+<h2>The plan-ahead queue (never dormant)</h2>
+<div class="wrapx"><table>
+<tr><th>Horizon</th><th>Items</th><th>To advance</th></tr>
+<tr><td><span class="pill pl-now">NOW</span></td><td>M2: wiki + pentatonic/blues scales</td><td>running (trust mode)</td></tr>
+<tr><td><span class="pill pl-short">SHORT</span></td><td>S1 Wave-2 theory items (auto-fires on #98 merge) - S2 Sprint-2 M3 merge (needs your "5A" or "5B") - S3 expertise-adaptive display (spec drafts itself from M2's wiki; 5-min gate)</td><td>triggers only - already gated</td></tr>
+<tr><td><span class="pill pl-mid">MID</span></td><td>Tutor Phase 4 (decoupled solo selector) - Phase 5 (song-form coaching) - strum-engine #88 revival - CI regression suite</td><td>ONE batch interview sitting gates all four</td></tr>
+<tr><td><span class="pill pl-long">LONG</span></td><td>practice streaks - setlist sharing - deeper instrument voicings - audio recognition</td><td>vision interviews, whenever</td></tr>
+</table></div>
+<div class="card">Full queue with operating rules: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/music-wiki-mission/docs/plans/QUEUE.md">docs/plans/QUEUE.md</a>. Rule 1: SHORT items launch autonomously when their trigger fires - gated once, at spec time, never re-asked. Scorecard now tracks dormant-quota-hours (target ~0) and SHORT-queue depth (target >=2).</div>
+
+<h2>M2 phases</h2>
+<div class="wrapx"><table>
+<tr><th>#</th><th>Phase</th><th>Status</th></tr>
+<tr><td>0</td><td>Branch + spec + amendments (same-pane reverted; absorb+decom; scales BUILT in-mission)</td><td class="pos">DONE</td></tr>
+<tr><td>1</td><td>Fable IA: page tree, absorb/decom table, scales plan, fan-out assignments</td><td>RUNNING</td></tr>
+<tr><td>2</td><td>Drafter fan-out (4 namespaces) + scales implementer (solo layer, 12-root tests)</td><td>queued</td></tr>
+<tr><td>3</td><td>11-doc generation proof + wiki:lint</td><td>queued</td></tr>
+<tr><td>4</td><td>Adversarial x2: professor (blue-note spelling!) + P5 seasoned guitarist (patterns/muscle memory)</td><td>queued</td></tr>
+<tr><td>5</td><td>Trust-merge on green (suite + lint + links + no-tells)</td><td>queued</td></tr>
+<tr><td>6</td><td>Close: S-DIAGRAM-PREF spec drafted -> SHORT, scorecard, session save</td><td>queued</td></tr>
+</table></div>
+
+<div class="foot">Spec: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/music-wiki-mission/docs/plans/goal-music-wiki-mission-20260704.md">goal-music-wiki-mission-20260704.md</a> - Queue: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/music-wiki-mission/docs/plans/QUEUE.md">QUEUE.md</a> - Mission 1 record: <a href="https://raw.githack.com/nhruska/nhruska.github.io/claude/ux-persona-mission/docs/artifacts/ux-personas-20260703.html">sprint-1 pane</a>. Trust mode: draft-quality never ships - suite + lint + adversarial fold gate every merge.</div>
+</div>
+</body></html>

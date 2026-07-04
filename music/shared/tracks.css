@@ -148,6 +148,18 @@
     margin-bottom:9px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
+  /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
+     blues), solo layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below)
+     so the chip visual language reads consistently app-wide - but wraps instead
+     of horizontal-scrolling: exactly 4 short labels fit one row at 412px, wrap
+     is just the safety net. */
+  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
+    transition:background .12s,color .12s,border-color .12s;}
+  .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 10px;}
+  .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
   /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
      taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width

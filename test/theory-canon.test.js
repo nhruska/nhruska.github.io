@@ -194,4 +194,44 @@ test('theory canon matrix size: 12 roots x 4 modes x 21 checks = 1008', function
     'vanished from SHARP_NAME/MODE_STEPS, silently narrowing this canon)');
 });
 
+/* ---------- S-BLUES canon: solo-scale (pentatonic/blues) name literals -----
+ * REGIME-A (now, [TRACKS-#98]): Circle.soloScale() spells every note through
+ * the SAME canonical-sharp spell() the rest of this module uses (FORK-4) - one
+ * provider, one seam (see circle.js's SOLO_SCALES block comment). So the blue
+ * note (blues' formula[3], a flat 5th) renders SHARP-spelled here (e.g. A
+ * blues = A C D D# E G - the b5 is D#, not Eb) rather than key-aware-
+ * flattened. That is REGIME-A policy, not a bug: Regime B (S-BLUES-B, queued
+ * on #98) will swap in a key-aware spelling once spellScaleKeyAware/keyLabel
+ * land. 12 roots x 3 solo scales x literal name array below, hand-computed
+ * against the sharp pitch-class table (not read from circle.js's own ROOTS
+ * array), so a regression that breaks BOTH the app and a copy-pasted
+ * expectation in lockstep can't slip through. -------------------------- */
+var SOLO_SCALE_CANON = {
+  C:  { pentMajor: 'C D E G A',       pentMinor: 'C D# F G A#',    blues: 'C D# F F# G A#' },
+  'C#': { pentMajor: 'C# D# F G# A#', pentMinor: 'C# E F# G# B',   blues: 'C# E F# G G# B' },
+  D:  { pentMajor: 'D E F# A B',      pentMinor: 'D F G A C',      blues: 'D F G G# A C' },
+  'D#': { pentMajor: 'D# F G A# C',   pentMinor: 'D# F# G# A# C#', blues: 'D# F# G# A A# C#' },
+  E:  { pentMajor: 'E F# G# B C#',    pentMinor: 'E G A B D',      blues: 'E G A A# B D' },
+  F:  { pentMajor: 'F G A C D',       pentMinor: 'F G# A# C D#',   blues: 'F G# A# B C D#' },
+  'F#': { pentMajor: 'F# G# A# C# D#', pentMinor: 'F# A B C# E',   blues: 'F# A B C C# E' },
+  G:  { pentMajor: 'G A B D E',       pentMinor: 'G A# C D F',     blues: 'G A# C C# D F' },
+  'G#': { pentMajor: 'G# A# C D# F',  pentMinor: 'G# B C# D# F#',  blues: 'G# B C# D D# F#' },
+  A:  { pentMajor: 'A B C# E F#',     pentMinor: 'A C D E G',      blues: 'A C D D# E G' },
+  'A#': { pentMajor: 'A# C D F G',    pentMinor: 'A# C# D# F G#',  blues: 'A# C# D# E F G#' },
+  B:  { pentMajor: 'B C# D# F# G#',   pentMinor: 'B D E F# A',     blues: 'B D E F F# A' }
+};
+var soloCanonChecked = 0;
+Object.keys(SOLO_SCALE_CANON).forEach(function (root) {
+  Object.keys(SOLO_SCALE_CANON[root]).forEach(function (scaleId) {
+    soloCanonChecked++;
+    test('S-BLUES canon: ' + root + ' ' + scaleId + ' = ' + SOLO_SCALE_CANON[root][scaleId], function () {
+      assert.strictEqual(Circle.soloScale(root, scaleId).join(' '), SOLO_SCALE_CANON[root][scaleId]);
+    });
+  });
+});
+test('S-BLUES canon matrix size: 12 roots x 3 solo scales = 36', function () {
+  assert.strictEqual(soloCanonChecked, 36,
+    'expected 36 S-BLUES canon checks, ran ' + soloCanonChecked + ' - a root or scale vanished from SOLO_SCALE_CANON');
+});
+
 run();

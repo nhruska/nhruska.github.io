@@ -265,6 +265,49 @@
       label: shortMode(C.modeInfo(scaleMode).label)
     };
   }
+  // S-BLUES: the Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
+  // scaleId 'mode' (or falsy) delegates straight to studioTheory() so the
+  // default chip is IDENTICAL to pre-S-BLUES Studio behavior (no
+  // reimplementation, no drift risk). Any other scaleId (a Circle.SOLO_SCALES
+  // key: pentMajor/pentMinor/blues) reads ONLY Circle.soloScale/soloScaleDegrees/
+  // soloScaleInfo - it never touches C.diatonic()/chords, so chords-in-key,
+  // buildWhy, and whynote are untouched by any chip tap (see the
+  // harmonization-isolation test in tracks.test.js). Module-scope + exported
+  // so tests drive the SAME function the Studio chip wiring calls. Returns
+  // null when Circle/key/scaleId can't resolve (callers keep the prior bundle
+  // on-screen rather than clearing it).
+  function soloBundle(key, mode, scaleId) {
+    if (!scaleId || scaleId === 'mode') {
+      var th = studioTheory(key, mode);
+      return th ? { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label } : null;
+    }
+    var C = circleRef(), k = normRoot(key);
+    if (!C || rootIndex(k) < 0 || typeof C.soloScale !== 'function') return null;
+    var notes = C.soloScale(k, scaleId);
+    if (!notes.length) return null;
+    var info = C.soloScaleInfo(scaleId);
+    return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
+  }
+  // S-BLUES: canned per-selection teaching caption (A9 discipline - no theory
+  // computed here, just static prose keyed on scaleId + the scale's own
+  // family, P5-voiced). 'mode' scaleId -> null (no caption; keeps that chip's
+  // on-screen footprint identical to pre-S-BLUES). `family` is Circle.
+  // Player-true captions (P5 adversarial fold, 2026-07-04): per-scale lines in
+  // position-player language. Static strings only (A9); family interpolation kept
+  // for pentMajor's relative-pent line. Box-position LABELS are queued
+  // (S-BLUES-BOXES) - captions must not promise them.
+  function soloScaleFraming(scaleId, family) {
+    if (scaleId === 'pentMajor') {
+      return 'The inside sound over ' + family + ' and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.';
+    }
+    if (scaleId === 'pentMinor') {
+      return 'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.';
+    }
+    if (scaleId === 'blues') {
+      return 'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.';
+    }
+    return null;
+  }
   // S-WHYNOTE (sprint-1 item 6, stretch; A9-bound): a one-shot JIT "why" notable
   // at the Compose -> Studio hand-off (openStudio below - the seam where the
   // solo-scale panel first renders for a key+mode). TWO STATIC templates only,
@@ -612,7 +655,11 @@
         + '<div class="bt-st-body">'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes">' + esc(th.notes.join(' ')) + '</span></div>'
+        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + esc(th.notes.join(' ')) + '</span></div>'
+        // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
+        // Solo layer only - swapping a chip here never touches chords-in-key below.
+        + '<div class="bt-st-scalechips" data-scalechips></div>'
+        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
         + '<div class="bt-st-scale" data-scale></div>'
         + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
@@ -644,6 +691,54 @@
         th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
         global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7, names: nameByPc });
       } catch (e) {}
+      // S-BLUES: the scale-chip row - [Mode label | Pent major | Pent minor |
+      // Blues]. Default = 'mode' (th itself; the fretboard/notes already
+      // rendered above are its output, so no re-render on open). A tap
+      // re-derives ONLY the solo bundle (notes line, framing caption,
+      // fretboard) via soloBundle() - chords-in-key (already rendered below),
+      // buildWhy, and whynote all stay keyed to `th`, untouched by any chip.
+      (function wireScaleChips() {
+        var chipsEl = elPlayer.querySelector('[data-scalechips]');
+        var frameEl = elPlayer.querySelector('[data-scaleframe]');
+        var notesEl = elPlayer.querySelector('[data-solonotes]');
+        var scaleEl = elPlayer.querySelector('[data-scale]');
+        if (!chipsEl) return;
+        var C = circleRef();
+        var CHIPS = [
+          { id: 'mode', label: th.label },
+          { id: 'pentMajor', label: 'Pent major' },
+          { id: 'pentMinor', label: 'Pent minor' },
+          { id: 'blues', label: 'Blues' }
+        ];
+        var curId = 'mode';
+        function render() {
+          chipsEl.innerHTML = CHIPS.map(function (c) {
+            return '<button class="bt-st-scalechip' + (curId === c.id ? ' on' : '') + '" data-scaleid="' + esc(c.id) + '" type="button">'
+              + esc(c.label) + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(chipsEl.querySelectorAll('.bt-st-scalechip'), function (b) {
+            b.onclick = function () { select(b.getAttribute('data-scaleid')); };
+          });
+        }
+        function select(scaleId) {
+          var bundle = soloBundle(t.key, t.mode, scaleId);
+          if (!bundle) return;
+          curId = scaleId;
+          render();
+          notesEl.textContent = bundle.notes.join(' ');
+          var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
+          var framing = info ? soloScaleFraming(scaleId, info.family) : null;
+          if (framing) { frameEl.textContent = framing; frameEl.hidden = false; }
+          else { frameEl.textContent = ''; frameEl.hidden = true; }
+          try {
+            scaleEl.innerHTML = '';
+            var chipNameByPc = [];
+            bundle.notes.forEach(function (nm, i) { chipNameByPc[bundle.pcs[i]] = nm; });
+            global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs, { frets: 7, names: chipNameByPc });
+          } catch (e) {}
+        }
+        render();
+      })();
       global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
         wrap: false,
         cellClass: 'bt-st-chordcell',
@@ -1018,6 +1113,8 @@
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     whynoteText: whynoteText, whynoteBanner: whynoteBanner,
+    // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
+    soloBundle: soloBundle, soloScaleFraming: soloScaleFraming,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied
