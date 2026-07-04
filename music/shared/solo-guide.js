@@ -71,7 +71,7 @@
     dorian: {
       chooseWhen: 'Minor jams with a lift - Santana vamps, funk grooves.',
       resolveTo: 'On i, land on {0}, {2}, or {4}; hold {5} when the vamp supports the color.',
-      hangOn: "{5} IS the dorian color - m6 shade over i; over IV it's the 3rd.",
+      hangOn: "{5} IS the dorian color - the natural-6 over i; over IV it's the 3rd.",
       startEnd: 'Start on {4}, {2}, or {5}; end on {0} or a chord tone of the vamp.',
       shapes: 'For i-IV vamps, work the i and IV arpeggios; let {5} connect them.'
     },
@@ -104,7 +104,7 @@
     },
     blues: {
       chooseWhen: '12-bar or dominant grooves - the rub is the point.',
-      resolveTo: "Aim at the current chord's 3rd, b7, or root; {4} is neutral; {1} (rub) bends toward 3.",
+      resolveTo: "Aim at the current chord's 3rd, b7, or root; {4} is neutral. Over I7, bend {1} toward 3.",
       hangOn: 'Usually pass through {3}; park there only for obvious tension.',
       startEnd: "Start on {1}, {2}, or {4}; close on that chord's root, 3rd, b7, or {4}.",
       shapes: 'Tap a chord above - its tones light up; hollow dots are outside notes you add by ear.'
