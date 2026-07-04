@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| S-BLUES-BOXES + S-BACKUP-NUDGE in flight (longer-leash operator delegation 2026-07-04); S-TEMPO resolved as REMOVAL (dead code, operator call) | two parallel agents, disjoint grants | [fold record](m-guide-adversarial-fold-20260704.md) |
+| S-BLUES-BOXES + S-BACKUP-NUDGE + S-CHIPS-PLUS in flight (longer-leash delegation 2026-07-04); S-TEMPO resolved as REMOVAL | three parallel agents, disjoint grants, CACHE guarded | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
@@ -19,7 +19,7 @@
 | S1 | Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B | PR #98 merges (event-triggered) | Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED |
 | S2 | Sprint 2: M3 songs/tracks full merge | **5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: #98 merged + 30-min spec-formalize interview | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
 | S3 | S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view | Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow) | Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch |
-| S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + hand-position/fingering guidance) | Operator gate on a drafted spec (I draft from M2's wiki content; 5-min review) | Spec to be DRAFTED during M2 close (the wiki's expertise-adaptive philosophy page becomes its foundation) |
+| S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + shape-classifier step 0) | **REVIEW-READY: spec already drafted + P5-folded** - 5-min read, then one keyword (go S-DIAGRAM-PREF) | [short-specs-20260704.md](short-specs-20260704.md) + canonical detail in the wiki expertise-adaptive-display page |
 | S5 | S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern) | **go save-truth** | Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger) |
 | S6 | ~~S-HARDEN~~ FIRED -> NOW (2026-07-04): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests | **go harden** | Spec = analysis A4+A5+A6 + toggleSet 'Added to setlist' unconditional-toast fix (same A1 bug shape, flagged in #116) + SW verify script asserts CACHE differs from origin/main when shared/ files changed (identical-string v83 collision, PR #117) |
 | S8 | S-BACKUP-NUDGE: one-shot Notable "back up your library" via free priority slot + backup.describe() | **go backup-nudge** | Spec = analysis B2 (pairs with S5) |
