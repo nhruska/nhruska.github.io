@@ -23,6 +23,20 @@
 (function (global) {
   'use strict';
 
+  // S-LAYOUT-SSOT cross-reference (music/engineering-wiki/systems/layout-tokens.md):
+  // sx/padX (below) plus the labelPad computed in render() determine the rendered
+  // SVG canvas width (canvasW = padX*2 + cols*sx + labelPad) - the quantity
+  // music/shared/songbook.css's --dg-canvas-w token documents for the WIDEST
+  // 'small' case (a 6-string guitar, cols=5: 12*2 + 5*9.6 + 14 = 86px), which
+  // --tile-min (.chordGrid's grid-template-columns) is tuned to comfortably fit.
+  // This object is DELIBERATELY NOT tokenized into that CSS var - canvasW is
+  // computed per string-count at render time (a 4-string ukulele produces a
+  // narrower canvas from this SAME object), not a single fixed pixel value a
+  // CSS custom property could hold, and this file emits a plain SVG string so
+  // it cannot read a CSS var even if it wanted to. If sx/padX/labelPad ever
+  // change for 'small', re-derive --dg-canvas-w by hand in songbook.css and
+  // re-run scripts/layout-check.py (the live render-verify regression suite)
+  // to confirm --tile-min still comfortably fits the new canvas width.
   var SIZES = {
     // baseFont sized to render readable digit on phone screens. Was 7.5 (small)
     // - the "5" / "10" digits were technically present in the SVG but crammed

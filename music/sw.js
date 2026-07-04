@@ -83,7 +83,16 @@
 // while this branch was in flight; originally cut at v97) - max+1 discipline,
 // same as every prior sibling collision above. check-cache-bump.sh
 // re-verified against origin/main immediately before push.
-var CACHE = 'music-v100';
+// S-LAYOUT-SSOT (2026-07-04): v98->v99 - songbook.css gains the chord-tile/
+// diagram geometry token block (:root --dg-canvas-w/--tile-min/--tile-gap/
+// --prog-tile-min), tracks.css gains a documentation comment (no rule
+// change), diagram.js gains a cross-reference comment (no metric change) -
+// CACHE bump per the CORE-vs-diff discipline even though no new CORE path
+// was added (an already-precached file's CONTENT changed). Rebased past
+// #141's v98 (this branch originally cut from #135's v95) - no new/removed
+// CORE paths. check-cache-bump.sh re-verified against origin/main
+// immediately before push.
+var CACHE = 'music-v101';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
