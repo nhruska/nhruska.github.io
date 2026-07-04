@@ -45,7 +45,14 @@
 // above (this branch originally cut from v88, before #129/#130/#131/#132/
 // #133/#134 landed) - no new/removed CORE paths. check-cache-bump.sh
 // re-verified against origin/main immediately before push.
-var CACHE = 'music-v93';
+// S-EXTRACT (2026-07-05): v93->v94 - two NEW CORE paths: shared/
+// chord-pack-adapter.js + shared/sugg.js (buildAdapter + the chord-
+// suggestion map extracted out of play/index.html's inline bootstrap,
+// analysis-refactor-enhance-20260704 A3/A7). Rebased past #134's v92 AND
+// #136's v93 (two sibling collisions in a row while this branch was in
+// flight; same A10/#117 max+1 discipline each time) - check-cache-bump.sh
+// re-verified against origin/main immediately before push.
+var CACHE = 'music-v94';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -68,6 +75,9 @@ var CORE = [
   // order) - both W3a's Studio and W3b's Compose solo chips call it.
   './shared/solo-guide.js',
   './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tracks.js', './shared/candidates.js',
+  // chord-pack-adapter.js/sugg.js: S-EXTRACT (A3/A7) - script-tagged in
+  // play/index.html right after candidates.js (see the CACHE-bump comment above).
+  './shared/chord-pack-adapter.js', './shared/sugg.js',
   // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).

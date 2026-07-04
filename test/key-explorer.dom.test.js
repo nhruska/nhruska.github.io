@@ -142,9 +142,12 @@ test('pack WITHOUT supportsStart: tones never leaks into the classic 3-arg call'
 
 test('the SHIPPED adapter declares supportsStart (source contract - fake packs alone would let its removal ship green)', function () {
   var fs = require('fs'), path = require('path');
-  var src = fs.readFileSync(path.join(__dirname, '../music/play/index.html'), 'utf8');
+  // S-EXTRACT (analysis-refactor-enhance-20260704 A3): buildAdapter moved out
+  // of play/index.html into shared/chord-pack-adapter.js - the source
+  // contract now anchors there instead.
+  var src = fs.readFileSync(path.join(__dirname, '../music/shared/chord-pack-adapter.js'), 'utf8');
   assert.ok(/adapter\.scaleDiagram\.supportsStart\s*=\s*true/.test(src),
-    'music/play/index.html no longer sets scaleDiagram.supportsStart - the position control would silently vanish app-wide');
+    'music/shared/chord-pack-adapter.js no longer sets scaleDiagram.supportsStart - the position control would silently vanish app-wide');
 });
 
 /* ---------- S-BLUES-BOXES: opts.boxScaleId pager-snap + box chip ---------- */

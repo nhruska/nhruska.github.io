@@ -10,7 +10,7 @@ How the app runs as a static PWA with no build step: classic-script load order, 
 
 Pure static HTML + vanilla JS: classic script tags, relative paths, no bundler, no npm build. Served by GitHub Pages (or any local HTTP server; the mic tuner needs a secure context). Every module exports to window (window.Songbook, window.Circle, ...).
 
-Load order is dependency order (music/play/index.html script block, ~lines 266-284): theme.js (pre-paint) -> esc -> nav-history -> queue -> tempo -> circle -> key-explorer -> list-item -> notables -> repertoire -> repertoire-form -> songbook -> tuner -> diagram -> audio -> tracks -> candidates -> inline bootstrap. esc.js loads first (S-HARDEN, analysis-refactor-enhance-20260704 A5) because list-item/notables/repertoire-form/songbook/diagram/tracks all delegate their local `esc()`/`escHTML()` to it (`global.Esc.esc`) instead of each carrying its own divergent copy - a [test/sw-verify.test.js](../../../test/sw-verify.test.js) guard now asserts every shared/*.js `<script src>` tag is also CORE-precached in sw.js (A6), catching exactly this kind of load-order-dependent gap.
+Load order is dependency order (music/play/index.html script block, ~lines 266-298): theme.js (pre-paint) -> esc -> nav-history -> queue -> tempo -> circle -> key-explorer -> list-item -> notables -> repertoire -> repertoire-form -> songbook -> tuner -> diagram -> audio -> tracks -> candidates -> chord-pack-adapter -> sugg -> inline bootstrap. esc.js loads first (S-HARDEN, analysis-refactor-enhance-20260704 A5) because list-item/notables/repertoire-form/songbook/diagram/tracks all delegate their local `esc()`/`escHTML()` to it (`global.Esc.esc`) instead of each carrying its own divergent copy - a [test/sw-verify.test.js](../../../test/sw-verify.test.js) guard now asserts every shared/*.js `<script src>` tag is also CORE-precached in sw.js (A6), catching exactly this kind of load-order-dependent gap. chord-pack-adapter.js and sugg.js load right before the inline bootstrap (S-EXTRACT, A3/A7) - both are consumed immediately by it (`window.ChordPackAdapter.buildAdapter`, `window.Sugg.SUGG`).
 
 ## Boot sequence (inline bootstrap) [STABLE]
 
@@ -23,7 +23,7 @@ Load order is dependency order (music/play/index.html script block, ~lines 266-2
 
 ## Chord-pack adapter - the ONLY instrument-specific seam [STABLE]
 
-`buildAdapter(profile)` wraps pure profile data into the pack contract consumed everywhere:
+`buildAdapter(profile)` (music/shared/chord-pack-adapter.js, `window.ChordPackAdapter.buildAdapter` - moved out of play/index.html's inline bootstrap by S-EXTRACT, analysis-refactor-enhance-20260704 A3, so it's require()-able and direct-tested; see [test/live-adapter.test.js](../../../test/live-adapter.test.js)) wraps pure profile data into the pack contract consumed everywhere:
 
 | Method | Purpose |
 |---|---|
@@ -48,4 +48,4 @@ An "instrument" IS a tuning profile (guitar-standard vs guitar-dropd are sibling
 
 ---
 
-**Anchors verified:** music/play/index.html (script order ~266-281; bootstrap ~284-569: activeId, buildPicker, buildAdapter, movableVoicing, augmentTriadShapes), music/shared/README.md (module map, pack contract), tracks.js circleRef/notablesRef, music/CLAUDE.md:100 (no build step)
+**Anchors verified:** music/play/index.html (script order ~266-304; bootstrap ~305-498: activeId, buildPicker, start), music/shared/chord-pack-adapter.js (buildAdapter, movableVoicing, augmentTriadShapes - S-EXTRACT A3), music/shared/sugg.js (SUGG - S-EXTRACT A7), music/shared/README.md (module map, pack contract), tracks.js circleRef/notablesRef, music/CLAUDE.md:100 (no build step)
