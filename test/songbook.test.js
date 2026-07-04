@@ -866,7 +866,14 @@ function makeStubEl(tag) {
     removeChild: function (c) { var i = e.children.indexOf(c); if (i >= 0) e.children.splice(i, 1); return c; },
     setAttribute: function (k, v) { e.attrs[k] = v; },
     addEventListener: function () {},
-    focus: function () {},
+    // UAT U6/U7 (2026-07-04): both spy-recording, purely additive - no
+    // existing test reads _focusCalls/_scrollCalls, so this can't regress
+    // anything already passing. focus() records a call count (U7: "focus
+    // lands in the dialog"); scrollIntoView() records each call's opts (U6:
+    // the quality-filter scroll anchor) - neither exists on a real DOM
+    // element by default here, so callers must guard-check before use.
+    focus: function () { e._focusCalls = (e._focusCalls || 0) + 1; },
+    scrollIntoView: function (opts) { e._scrollCalls = (e._scrollCalls || []); e._scrollCalls.push(opts); },
     click: function () { if (e.onclick) e.onclick(); }
   };
   e.classList = {
@@ -1309,6 +1316,151 @@ test('isolation: solo-chip derivation never touches harmonization (chordInKey/ro
   Songbook.soloChipCaption('mixolydian');
   assert.strictEqual(Songbook.chordInKey('Am', 'C', 'Major'), beforeIn);
   assert.strictEqual(Songbook.romanInKey('G', 'C', 'Major'), beforeRoman);
+});
+
+/* =====================================================================
+ * S-COMPOSE-POLISH2 (2026-07-04, operator Pixel UAT round 2) - U6 quality-
+ * filter scroll anchor + U7 solo-CTA modal presentation. Same minimal-stub-
+ * document mount() approach as the A1/H4 harnesses above; a dedicated
+ * mountForGridTests()/mountForSoloChoiceTests() (rather than reusing
+ * mountForSaveTests()) so the added el.composeChords/el.suggest/
+ * el.soloBackingBtn stubs can't affect the existing A1/H4 assertions above.
+ * ===================================================================== */
+function mountForGridTests() {
+  global.localStorage = lsReset.fakeStore();
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'gridtest', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+function findTabRow(m) {
+  var row = null;
+  m.elMap.composeChords.children.forEach(function (c) { if (c.className === 'catTabRow') row = c; });
+  return row;
+}
+
+test('U6: the initial (unflagged) buildGrid render never scroll-anchors the filter row', function () {
+  var m = mountForGridTests();
+  var row = findTabRow(m);
+  assert.ok(row, 'expected the All-view catTabRow to render by default (no key set)');
+  assert.ok(!row._scrollCalls || row._scrollCalls.length === 0, 'initial render must not scroll-anchor');
+});
+
+test('U6: tapping a quality-filter chip re-renders catTabRow AND scroll-anchors it to the top of the visible area', function () {
+  var m = mountForGridTests();
+  var firstRow = findTabRow(m);
+  var minorChip = firstRow.children[1]; // ['Major'(on), 'Minor', '7th', 'Maj7', 'Min7'] - tap 'Minor'
+  minorChip.onclick();
+  var newRow = findTabRow(m);
+  assert.notStrictEqual(newRow, firstRow, 'buildGrid rebuilds a fresh catTabRow node on every call');
+  assert.ok(newRow._scrollCalls && newRow._scrollCalls.length === 1, 'the filter tap must scroll-anchor the REBUILT row exactly once');
+  assert.deepStrictEqual(newRow._scrollCalls[0], { block: 'start', behavior: 'auto' });
+});
+
+test('U6: switching the In-key|All segmented toggle (not a quality-filter tap) never scroll-anchors', function () {
+  var m = mountForGridTests();
+  var seg = m.elMap.catChips.children[0]; // .chordSeg
+  var allBtn = seg.children[1]; // ['In key', 'All'] - re-tap 'All' (re-render, same view)
+  allBtn.onclick();
+  var row = findTabRow(m);
+  assert.ok(row, 'All view still renders after the segmented toggle');
+  assert.ok(!row._scrollCalls || row._scrollCalls.length === 0, 'the In-key|All toggle must never anchor - only a quality-filter tap does');
+});
+
+function mountForSoloChoiceTests(openStudioSpy) {
+  global.localStorage = lsReset.fakeStore();
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div'),
+    soloBackingBtn: makeStubEl('button')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'solotest', el: elMap, openStudio: openStudioSpy });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+function findComposeRow(m) {
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  return row;
+}
+function findComposeBackdrop(m) {
+  var bd = null;
+  m.wrapper.children.forEach(function (c) { if (c.className === 'composeModalBackdrop') bd = c; });
+  return bd;
+}
+// Loads a starter progression (sets songKey.root + a non-empty progression in
+// ONE tap - the two prerequisites soloBackingBtn's onclick guards on) via the
+// empty-state suggestion row's first starter button, then taps Solo-over -
+// "never saved this session" -> openSoloChoiceRow(...).
+function startSoloChoice(m) {
+  var startRow = m.elMap.suggest.children[1]; // [0]=label, [1]=progPickRow
+  startRow.children[0].onclick(); // loadProgression(PROGRESSIONS[0])
+  m.elMap.soloBackingBtn.onclick();
+}
+
+test('U7: openSoloChoiceRow presents as a modal (asModal + backdrop dim + dialog a11y + focus) - matching the save-name modal pattern', function () {
+  var m = mountForSoloChoiceTests(function () {});
+  startSoloChoice(m);
+  var row = findComposeRow(m);
+  var backdrop = findComposeBackdrop(m);
+  assert.ok(row, 'expected composeRow to be created');
+  assert.ok(row.classList.contains('asModal'), 'solo-choice row must present as a modal, same as the save-name row');
+  assert.strictEqual(row.hidden, false);
+  assert.ok(backdrop, 'expected the composeModalBackdrop to be created');
+  assert.strictEqual(backdrop.hidden, false, 'backdrop must be shown while the solo-choice modal is open');
+  assert.strictEqual(row.attrs.role, 'dialog');
+  assert.strictEqual(row.attrs['aria-modal'], 'true');
+  assert.ok(row._focusCalls >= 1, 'the dialog itself must receive focus (no input to focus, unlike the save-name row)');
+});
+
+test('U7: backdrop tap dismisses the solo-choice modal as Skip (no NavHistory loaded in this harness -> falls back to the direct close)', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  findComposeBackdrop(m).onclick();
+  assert.strictEqual(picks.length, 1, 'expected the ephemeral-Studio open to fire exactly once (Skip semantics)');
+  assert.strictEqual(picks[0].title, 'Solo practice', 'backdrop dismiss must resolve to Skip, not Save');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after dismiss');
+  assert.strictEqual(findComposeBackdrop(m).hidden, true, 'the backdrop must be re-hidden after dismiss');
+});
+
+test('U7: Escape dismisses the solo-choice modal as Skip', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  findComposeRow(m).onkeydown({ key: 'Escape' });
+  assert.strictEqual(picks.length, 1);
+  assert.strictEqual(picks[0].title, 'Solo practice');
+});
+
+test('U7: "Save & open Studio" resolves to save (not skip) and chains into the save-name modal before opening the Studio', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  var btnRow = findComposeRow(m).children[1]; // [msg, btnRow]
+  btnRow.children[0].onclick(); // 'Save & open Studio'
+  assert.strictEqual(picks.length, 0, 'Save must open the NAME row first, not the Studio directly');
+  var nameRow = findComposeRow(m);
+  assert.ok(nameRow.classList.contains('asModal'), 'saveProgression chains straight into the save-name modal');
+  nameRow.children[2].onclick(); // [input, setLabel, saveBtn, cancelBtn] - saveBtn
+  assert.strictEqual(picks.length, 1, 'confirming the save-name row must now open the Studio for the saved song');
+  assert.strictEqual(picks[0].custom, true);
+});
+
+test('U7: "Skip" resolves to skip and opens the ephemeral Studio directly (no save-name row)', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  var btnRow = findComposeRow(m).children[1];
+  btnRow.children[1].onclick(); // 'Skip'
+  assert.strictEqual(picks.length, 1);
+  assert.strictEqual(picks[0].title, 'Solo practice');
+  assert.strictEqual(findComposeRow(m).hidden, true);
 });
 
 run();

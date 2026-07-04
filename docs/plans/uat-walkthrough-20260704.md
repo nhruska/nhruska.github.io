@@ -18,6 +18,12 @@
 - **U3:** "selecting a chord on the solo screen, the highlight dot bg a dark shade with black font on top - hard to read." -> per-class dot ink vars, both themes (fixed in S-STUDIO-POLISH).
 - **U4:** "two links at the bottom wrap the text. shorten the linked text so no wrap." -> link labels shortened (fixed in S-STUDIO-POLISH).
 
+## U5-U7 - Compose walkthrough round 2 (operator, 2026-07-04, Pixel, post-v88)
+
+- **U5:** "the guitar chords are still overlapping" (All grid, phone) - parent repro at default DPI clean; investigating device font-scale geometry; defensive tile clamps shipped (S-COMPOSE-POLISH2). If it persists on-device, suspect stale PWA precache - operator to check Settings build line.
+- **U6:** "clicking one of the filters, the scrolling portion snaps back to the top... suggested chords are hidden... first thing shown should be the filters" - filter-row scroll anchoring shipped (S-COMPOSE-POLISH2).
+- **U7:** "the confirmation when clicking solo over a backing track is hidden in the page... should be a dialog that disables the rest of the page with a dim filter" - promoted to the app's modal standard (S-COMPOSE-POLISH2).
+
 ## U8 - Progression strip: degrade + wrap instead of horizontal scroll (operator, 2026-07-04)
 
 **Operator verbatim-essence:** "when count chords over width, convert to existing smaller chord icon without chart. wrap chords to keep in view without scroll horiz."

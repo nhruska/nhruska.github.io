@@ -24,6 +24,8 @@ Fret arrays are per-string (low->high display order): -1 muted, 0 open, N frette
 
 Canonical-sharp names come in (FORK-4); profile hashes may key voicings under flats (a hand-curated "Bb" fingering). Lookup: exact name first, then the enharmonic twin, then movable-template fallback. The DISPLAY name never changes - only the fingering source. [TRACKS-#98] (regime B shows conventional names; the tolerant lookup already handles both directions)
 
+The lookup (`profileVoicing` inside `buildAdapter`) lives in [music/shared/chord-pack-adapter.js](../../shared/chord-pack-adapter.js) (moved out of play/index.html's inline bootstrap by S-EXTRACT, analysis-refactor-enhance-20260704 A3) - require()-able and direct-tested against real guitar-standard/ukulele-gcea fixtures in [test/live-adapter.test.js](../../../test/live-adapter.test.js).
+
 ## HGT/HSR shape families (absorbed from hsr-notes) [STABLE]
 
 **Harmonic Geometry Transfer:** ukulele GCEA's lower three strings (G C E) carry the same interval geometry as guitar's D G B set (P4 + M3) - movable-shape muscle memory transfers across instruments. Shape families (C-family, F-family, A-family) name the movable barre forms; the **Hammer / Slide / Rotate** vocabulary describes moving between I-IV-V shapes up the neck (hammer within a position, slide a shape +2 frets, rotate into the next family). The triad-inversions page teaches this cycle; the future HSR Lens (backlog) would overlay it live.
@@ -34,4 +36,4 @@ music/play/triad-inversions.html accepts `?p=<profile-id>&key=<root>&mode=<mode>
 
 ---
 
-**Anchors verified:** profiles/* + manifest.json, diagram.js:30-106 (+labelPad rationale comments), key-explorer.js posWindow, tracks.js inversionsHref, docs/hsr-notes.md (absorbed; stub remains), play/index.html buildAdapter enharmonic retry
+**Anchors verified:** profiles/* + manifest.json, diagram.js:30-106 (+labelPad rationale comments), key-explorer.js posWindow, tracks.js inversionsHref, docs/hsr-notes.md (absorbed; stub remains), shared/chord-pack-adapter.js buildAdapter enharmonic retry (S-EXTRACT A3)
