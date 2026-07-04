@@ -292,14 +292,19 @@
   // computed here, just static prose keyed on scaleId + the scale's own
   // family, P5-voiced). 'mode' scaleId -> null (no caption; keeps that chip's
   // on-screen footprint identical to pre-S-BLUES). `family` is Circle.
-  // SOLO_SCALES[scaleId].family ('major'/'minor'); unused (and unnecessary)
-  // for 'blues', which has no family framing.
+  // Player-true captions (P5 adversarial fold, 2026-07-04): per-scale lines in
+  // position-player language. Static strings only (A9); family interpolation kept
+  // for pentMajor's relative-pent line. Box-position LABELS are queued
+  // (S-BLUES-BOXES) - captions must not promise them.
   function soloScaleFraming(scaleId, family) {
-    if (scaleId === 'pentMajor' || scaleId === 'pentMinor') {
-      return 'Five safe notes - one movable box shape; the same pattern works over every ' + family + ' mode here.';
+    if (scaleId === 'pentMajor') {
+      return 'The inside sound over ' + family + ' and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.';
+    }
+    if (scaleId === 'pentMinor') {
+      return 'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.';
     }
     if (scaleId === 'blues') {
-      return 'Pent minor plus the b5 blue note - a passing color to bend through, not sit on.';
+      return 'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.';
     }
     return null;
   }

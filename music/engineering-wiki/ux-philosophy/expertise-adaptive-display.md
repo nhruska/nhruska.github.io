@@ -37,7 +37,8 @@ One-time prompt (D3 settings-with-prompt pattern; via Notables, never at first-r
 > 2. Clean patterns with hand position (I move by feel)
 
 - **Storage:** `music.diagram.pref.v1` = 'dots' | 'patterns' (additive key; defensive read; default 'dots').
-- **'patterns' rendering:** same fret data, same canvas; strip finger numbers + open/mute chrome; add a hand-position label (e.g. "barre at 3, C-family shape, 1st inversion") and, where the surface knows it, suggested fingering as TEXT (index/middle/ring/pinky), not dots.
+- **Prerequisite (build step 0, P5 fold):** a SHAPE CLASSIFIER - curated shape-family metadata per voicing (family, root string, inversion, barre fret). The current data path has fret arrays only; without the classifier the promised labels are hand-waving. Ship the classifier (curated table per profile, movable-template aware) before the rendering toggle.
+- **'patterns' rendering:** same fret data, same canvas; KEEP the voicing facts (X/O marks, base-fret digit, root/degree tinting) - pros do not hate dots, they hate unlabeled INSTRUCTION dots; strip finger-number instruction chrome; add the classifier's label ("E-shape barre, root on 6, 1st inversion") and fingering as TEXT where curated.
 - **Never changes:** WHICH diagrams/chords/scales show (style only); the solo scale view (already pattern-first); any theory output.
 - **Out of scope:** hiding diagrams, new visual chrome, per-chord custom overlays.
 

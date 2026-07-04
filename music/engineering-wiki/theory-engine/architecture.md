@@ -14,12 +14,12 @@ The engine computes on pitch classes (integers 0-11): intervals, diatonic qualit
 |---|---|---|
 | Scale intervals | `Circle.MODE_STEPS` (circle.js:34-37) | Semitone formula per mode (e.g., Major = [0,2,4,5,7,9,11]) |
 | Diatonic triads | Stacked thirds within mode (circle.js:107-119) | Pitch class + quality; roman degree + case |
-| Scale degrees | Interval comparison vs Major (circle.js:82-87) | "1 2 b3 4 5 6 b7" (aeolian) |
+| Scale degrees | Interval comparison vs Major (circle.js:82-87) | "1 2 b3 4 5 b6 b7" (aeolian) |
 | Key relationships | Tonic + mode name (circle.js:206-216) | Neighbor roots (fifth up/down, relative) |
 
-Consequence: the naming policy is swappable at display time (per release, eventually per user preference) by changing the three name-emitting surfaces only - the theory computations, their tests, and stored data are untouched.
+Consequence: the naming policy is swappable at display time (per release, eventually per user preference) by changing the four name-emitting surfaces only - the theory computations, their tests, and stored data are untouched.
 
-## Three name-emitting surfaces (all canonical-sharp) [STABLE]
+## Four name-emitting surfaces (all canonical-sharp) [STABLE]
 
 Every surface echoes the same sharp table (ROOTS row, circle.js:20) and normalizes flat input on entry (F2S lookup, circle.js:21-22):
 
@@ -28,6 +28,7 @@ Every surface echoes the same sharp table (ROOTS row, circle.js:20) and normaliz
 | Scale spelling | `Circle.spellScale(root, mode)` (circle.js:69-72) | Sharp note names per pitch class; mode does not affect spelling [TRACKS-#98] |
 | Diatonic chords | `Songbook.diatonicChords(root, modeKey)` (songbook.js:97-105) | Sharp-named roots from the ROOTS table (songbook.js:69, mirrors circle.js ROOTS) |
 | Suggestion seed map | `SUGG` (play/index.html:295-304) | Hand-curated progression followers; all roots are sharp-canonical |
+| Solo scales | `Circle.soloScale(root, scaleId)` (SOLO_SCALES block) | Pentatonic/blues names via the same internal spell() provider - the regime-B seam swaps only this provider [TRACKS-#98] |
 
 Flat input resolves to sharp on load: "Bb" -> "A#" (norm() / F2S lookup). Flats never appear in output or persisted data. [STABLE]
 
@@ -54,7 +55,7 @@ Diatonic chords are numbered by their position in the selected mode's own scale 
 - D minor (aeolian): F = III (the 3rd degree of aeolian), A# = VI, C = VII
 - D major (ionian): D = I, E = II, F# = III
 
-Non-diatonic/borrowed chords keep chromatic labels: A# in D major = bVII (circle.js:141-151). [STABLE]
+Non-diatonic/borrowed chords keep chromatic labels: C in D major = bVII (circle.js:141-151). [STABLE]
 
 Quality casing follows the chord itself: major/augmented = upper case (V, V+); minor/diminished = lower case (v, ii°). [STABLE]
 

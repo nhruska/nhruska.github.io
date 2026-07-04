@@ -12,7 +12,7 @@ Core suite: test/theory-canon.test.js. Node-side, dependency-free. Asserts pitch
 
 | Dimension | Checks | Never checks |
 |---|---|---|
-| Pitch class | Scale pc sequence + chord pc per mode | Spelling (a display policy, not a correctness fact) |
+| Pitch class | Scale pc sequence + chord pc per mode | Spelling in the CORE 1008 checks (display policy); the S-BLUES block DOES assert regime-A spelling literals deliberately, as the change-detector for the regime flip |
 | Quality | Triad quality from stacked thirds | - |
 | Roman degree + case | Position in mode; casing by chord quality | Letter names (F# vs Gb is a regime choice) |
 

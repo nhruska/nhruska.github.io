@@ -7,7 +7,7 @@ The theory engine is the app's credibility core: one wrong chord spelling or sca
 
 ## Pitch-class core vs. spelling-as-display
 
-The engine computes on pitch classes (0-11): intervals, diatonic qualities, degrees, key relationships, transposition. That math is exact and independent of naming. Spelling is a separate, swappable display layer fed by three name-emitting surfaces, all currently canonical-sharp:
+The engine computes on pitch classes (0-11): intervals, diatonic qualities, degrees, key relationships, transposition. That math is exact and independent of naming. Spelling is a separate, swappable display layer fed by four name-emitting surfaces, all currently canonical-sharp:
 
 | Surface | Emits |
 |---|---|
@@ -58,7 +58,7 @@ Twelve adversarial "golden trap" cases gate regime B's acceptance (F major -> `F
 
 Triads are built by stacking thirds within the mode's own scale (root, +2 degrees for the third, +4 for the fifth; measure the resulting intervals for quality). Diminished degrees are computed correctly but dropped from the strumming palette - solo scales retain every tone.
 
-**Roman numerals are mode-local:** a chord is numbered by its position in the currently-selected mode (D minor: F = III; A# = VI). Borrowed/non-diatonic chords keep chromatic labels (A# in D major = bVII). Quality casing follows the chord itself, not the degree's natural quality - so a harmonic-minor V (a major triad on a naturally-minor degree) reads V, not v.
+**Roman numerals are mode-local:** a chord is numbered by its position in the currently-selected mode (D minor: F = III; A# = VI). Borrowed/non-diatonic chords keep chromatic labels (C in D major = bVII). Quality casing follows the chord itself, not the degree's natural quality - so a harmonic-minor V (a major triad on a naturally-minor degree) reads V, not v.
 
 **Harmonic-minor exception:** in minor keys, the major triad on degree 5 (and its dominant 7th) counts as in-key, because i -> V -> i is the default cadence of real minor-key songs. Vmaj7 stays out.
 

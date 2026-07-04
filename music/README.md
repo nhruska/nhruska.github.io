@@ -18,7 +18,7 @@ Everything works offline once loaded. The only thing that needs a network connec
 
 ## Who it is for
 
-Whether you read music fluently, just picked up an instrument last week, or have twenty years of neck time and want the theory to catch up to your hands, the app adapts what it shows without ever talking down. See [engineering-wiki/generated/UX-PHILOSOPHY.md](engineering-wiki/generated/UX-PHILOSOPHY.md) for the full picture of who this is built for.
+Whether you read music fluently, just picked up an instrument last week, or have twenty years of neck time and want the theory to catch up to your hands, the app meets you where you are: the scale-position pager is live today, and a clean chord-pattern view for shape-fluent players is queued (S-DIAGRAM-PREF). See [engineering-wiki/generated/UX-PHILOSOPHY.md](engineering-wiki/generated/UX-PHILOSOPHY.md) for the full picture of who this is built for.
 
 ## Quick dev start
 

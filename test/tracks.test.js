@@ -240,11 +240,11 @@ test('soloBundle: unknown scaleId -> null (safe; never throws)', function () {
 });
 test('soloScaleFraming: pent scales interpolate family; blues has its own fixed line; mode has none', function () {
   assert.strictEqual(T.soloScaleFraming('pentMajor', 'major'),
-    'Five safe notes - one movable box shape; the same pattern works over every major mode here.');
+    'The inside sound over major and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.');
   assert.strictEqual(T.soloScaleFraming('pentMinor', 'minor'),
-    'Five safe notes - one movable box shape; the same pattern works over every minor mode here.');
+    'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.');
   assert.strictEqual(T.soloScaleFraming('blues'),
-    'Pent minor plus the b5 blue note - a passing color to bend through, not sit on.');
+    'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.');
   assert.strictEqual(T.soloScaleFraming('mode'), null);
 });
 test('harmonization-isolation: chords-in-key are identical before and after any solo-scale selection', function () {

@@ -29,7 +29,9 @@ Interval steps per mode (Circle.MODE_STEPS, circle.js:34-37). Studio-curated tea
 | pentMinor | Minor pentatonic | [0,3,5,7,10] | 1 b3 4 5 b7 | aeolian, dorian, phrygian |
 | blues | Blues | [0,3,5,6,7,10] | 1 b3 4 b5 5 b7 | pentMinor + the b5 blue note |
 
-Degree glyphs use the flat sign matching circle.js scaleDegrees. The subset rows are pitch-class-set FACTS, tested in test/solo-scales.test.js - "one movable pattern works over every mode in the family" is a pc-set proof, not marketing. [STABLE]
+Degree glyphs use the flat sign matching circle.js scaleDegrees. The subset rows are pitch-class-set FACTS, tested in test/solo-scales.test.js. Player phrasing of the same fact: the relative-pent trick - C major pent IS the A minor pent shape; keep C as home. [STABLE]
+
+**Box-position labels (Box 1-5, root-string + start-fret callouts) are QUEUED (S-BLUES-BOXES)** - the position pager walks the windows today; named boxes are the P5-requested enhancement. Captions and docs must not promise boxes until it ships. [ROADMAP reviewed 2026-07-04]
 
 ## Code home (S-BLUES §3b) [STABLE]
 
@@ -44,13 +46,14 @@ Additive block in circle.js (the interval SSOT - a second theory module would fo
 
 Studio solo section gets one chip row `.bt-st-scalechips`: [Mode label | Pent major | Pent minor | Blues]. Default = the mode scale (Studio open behavior unchanged). A tap re-derives ONLY the solo bundle - notes line, degrees, fretboard via `KeyExplorer.renderScale` - through the pure `Tracks.soloBundle(key, mode, scaleId)`. Untouched by design: chords-in-key, buildWhy wheel, whynote banner, the Compose palette. No persistence (display preference belongs to the queued S-DIAGRAM-PREF).
 
-Framing copy per selection (static templates, P5-voiced):
-- Pent: "Five safe notes - one movable box shape; the same pattern works over every {family} mode here."
-- Blues: "Pent minor plus the b5 blue note - a passing color to bend through, not sit on."
+Framing copy per selection (static templates; P5-fold rewrite, player-true):
+- Pent major: "The inside sound over {family} and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home."
+- Pent minor: "Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck."
+- Blues: "Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub."
 
 ## Blue-note spelling - both regimes (S-BLUES §3d) [TRACKS-#98]
 
-**Regime A (current, canonical-sharp):** all names via spell(); `A blues = A C D D# E G`. The blue note renders sharp-spelled because FORK-4's one-table rule is what keeps the scale list and the fretboard in agreement. Do NOT special-case it. This is documented policy, exactly like the sharp-tie precedent the professor classified policy-not-bug.
+**Regime A (current, canonical-sharp):** all names via spell(); `A blues = A C D D# E G`. The blue note renders sharp-spelled because FORK-4's one-table rule is what keeps the scale list and the fretboard in agreement. Do NOT special-case it. This is documented policy, exactly like the sharp-tie precedent the professor classified policy-not-bug. Player-honesty note (P5): the b5 SHOWS as D# today and will READ as Eb once key-aware spelling lands (S-BLUES-B, queued on #98) - the pitch is right; the letter is scheduled.
 
 **Regime B (post-#98, S-BLUES-B - queued, not built):** pentatonic names come from subsetting `spellScaleKeyAware(root, parentMode)` at the pentatonic degrees; the blue note = the key-aware 5th-degree LETTER flattened one semitone (A blues -> Eb, never D#; invariant: the blue note spells b5, never #4). Consumes ONLY the named #98 seam (`spellScaleKeyAware`, `keyLabel`); if #98 merges without them, S-BLUES-B is BLOCKED, not improvised.
 
