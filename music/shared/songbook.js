@@ -1936,7 +1936,8 @@
       if (chordView === 'inkey' || chordView === 'all') return chordView;
       return songKey.root ? 'inkey' : 'all';
     }
-    function buildGrid() {
+    function buildGrid(opts) {
+      opts = opts || {};
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid;
       // FLATTENED layout split:
@@ -2017,13 +2018,25 @@
         var b = document.createElement('button');
         b.className = 'chip' + (cat === allChordsActiveCat ? ' on' : '');
         b.textContent = cat;
-        b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
+        // UAT U6 (2026-07-04): tapping a quality chip flags this rebuild as a
+        // filter tap so the anchor below only fires here - never on the FIRST
+        // render of the All view (which should stay at its natural scroll spot).
+        b.onclick = function () { allChordsActiveCat = cat; buildGrid({ anchorFilterRow: true }); };
         tabRow.appendChild(b);
       });
       if (scroller) scroller.insertBefore(tabRow, grid);
       (CATS[allChordsActiveCat] || []).forEach(function (c) {
         grid.appendChild(wireTap(packDiagram(c, 'small'), c));
       });
+      // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter
+      // (Major/Minor/7th/Maj7/Min7) rebuilds #catTabRow + #buildGrid in place, but
+      // the scroll area (#composeChords) was snapping back near the top afterward -
+      // re-surfacing the #suggest starter strip and hiding the just-tapped filter
+      // row + its results below the fold. Anchor the filter row to the top of the
+      // visible scroll area instead, so results are immediately visible and the
+      // suggestion strip scrolls above. Instant jump (behavior:'auto') - a smooth
+      // animation here read as jank on the actual tap, not "the filter I tapped".
+      if (opts.anchorFilterRow && tabRow) tabRow.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
 
     /* ---- Key: pick a key -> its diatonic chord palette (the solo scale/HSR
@@ -2449,6 +2462,15 @@
         composeRow = document.createElement('div');
         composeRow.className = 'composeRow';
         composeRow.hidden = true;
+        // UAT U7 (2026-07-04): every composeRow-as-modal consumer (save-name
+        // entry, solo-CTA choice) presents as a dialog when .asModal is on -
+        // set the a11y contract + a focus target here ONCE rather than per
+        // opener. tabIndex lets a button-less modal (the solo-choice row) call
+        // composeRow.focus() directly (a plain div isn't focusable otherwise);
+        // harmless for the save-name row, which focuses its own input instead.
+        composeRow.setAttribute('role', 'dialog');
+        composeRow.setAttribute('aria-modal', 'true');
+        composeRow.tabIndex = -1;
         el.prog.parentNode.insertBefore(composeRow, el.prog);
       }
       if (!composeToast) {
@@ -2579,21 +2601,52 @@
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
       var settled = false;
       function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name, setCheck.checked); }
-      saveBtn.onclick = function () { finish(input.value.trim() || defaultName); };
-      cancelBtn.onclick = function () { finish(null); };
+      // UAT U7 (2026-07-04): backdrop tap / Escape / hardware-gesture Back all
+      // dismiss like Cancel - routed through NavHistory.dismiss() (not finish()
+      // directly) so the pushed history layer unwinds in step with the modal,
+      // per the WIRING CONTRACT in nav-history.js ("close BUTTON onclick:
+      // NavHistory.dismiss, NOT the raw close directly" - calling finish()
+      // straight from a button would leave a ghost history entry for the next
+      // hardware Back to trip over). Falls back to a direct finish() when
+      // NavHistory isn't loaded (e.g. a bare test harness). Defaults to null
+      // (Cancel) so a hardware Back press - which fires popstate DIRECTLY,
+      // never through this dismiss() wrapper - resolves to Cancel rather than
+      // silently confirming whatever pendingDismiss last held.
+      var pendingDismiss = null;
+      function dismiss(name) {
+        pendingDismiss = name;
+        if (window.NavHistory) window.NavHistory.dismiss(); else finish(name);
+      }
+      saveBtn.onclick = function () { dismiss(input.value.trim() || defaultName); };
+      cancelBtn.onclick = function () { dismiss(null); };
       input.onkeydown = function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim() || defaultName); }
-        else if (e.key === 'Escape') { finish(null); }
+        if (e.key === 'Enter') { e.preventDefault(); dismiss(input.value.trim() || defaultName); }
+        else if (e.key === 'Escape') { dismiss(null); }
       };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { dismiss(null); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () { finish(pendingDismiss); });
       composeRow.appendChild(input); composeRow.appendChild(setLabel);
       composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
       input.focus();
     }
     // Inline two-choice row (replaces confirm()). onPick('save'|'skip') fires once.
+    //
+    // UAT U7 (2026-07-04, operator Pixel walkthrough): this used to render as a
+    // plain inline composeRow - no backdrop, no dim, nothing stopping the rest
+    // of the page from reading as still-interactive - so the confirmation got
+    // lost among the surrounding controls ("hidden in the page"). It now
+    // presents through the SAME composeModalBackdrop pattern openSaveNameRow
+    // already uses (sprint-1 S-MODAL): dimmed backdrop, centered/top-anchored
+    // card, page behind inert. Dismiss paths (backdrop tap / Escape / hardware
+    // Back) all resolve to 'skip' - the same "did nothing destructive, just
+    // didn't confirm" semantics Cancel has on the save-name modal, and the
+    // conservative choice here too (Skip never persists anything; Save does).
     function openSoloChoiceRow(onPick) {
       if (!ensureComposeUI()) { onPick('skip'); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
       msg.textContent = 'Save to add a video backing track or skip to practice';
@@ -2603,12 +2656,27 @@
       skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Skip';
       var settled = false;
       function finish(choice) { if (settled) return; settled = true; hideComposeRow(); onPick(choice); }
-      saveBtn.onclick = function () { finish('save'); };
-      skipBtn.onclick = function () { finish('skip'); };
+      // See the matching comment in openSaveNameRow above: buttons route
+      // through NavHistory.dismiss() (not finish() directly) so the pushed
+      // history layer unwinds in step with the modal - no ghost Back entry.
+      // pendingDismiss defaults to 'skip' so a hardware Back press (which
+      // fires popstate directly, bypassing this dismiss() wrapper) resolves
+      // to the conservative choice, matching backdrop/Escape below.
+      var pendingDismiss = 'skip';
+      function dismiss(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.dismiss(); else finish(choice);
+      }
+      saveBtn.onclick = function () { dismiss('save'); };
+      skipBtn.onclick = function () { dismiss('skip'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') dismiss('skip'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { dismiss('skip'); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () { finish(pendingDismiss); });
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
       btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
       composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
     }
     // Derive key/mode for a saved progression the same way repertoire.js's
     // deriveKey() does (first-chord regex) - reuse it directly (pure, node-tested)
