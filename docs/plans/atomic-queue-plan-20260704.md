@@ -12,6 +12,7 @@
 | 0.3 | M-5 buildAdapter extraction -> shared/chord-pack-adapter.js + real tests | analysis A3 | any slot |
 | 0.4 | M-8a SUGG table -> shared module + FORK-4 spelling-agreement test | analysis A7 | any slot |
 | 0.5 | M-7 jam picker (19 curated records; wiki data-model defines selection + fewest-chord backfill; entry = existing Play-now surface, default flagged veto-able) | analysis B3 + data-model.md | any slot |
+| 0.1c | **S-UIPRIMS-EXPAND** (operator directive): ui-primitives.md grows full component/token conventions (button, label, link, modal, accordion, tab, fonts/color/contrast, spacing, touch+safety) + NEW systems/ssot-registry.md (SSOT owner table + duplication watchlist) | wiki-doc-drafter running; parent assembles on S-TOAST landing (page compose) | drafter + S-TOAST |
 | 0.6 | ccp/claude-config: #593 amendments (plan-ahead rule, core-sdlc queue-read, /mission --queue) + Mission Control skill scaffold | learnings tickets | parent-side, any time |
 
 ## Event-gated - zero decisions, waiting on PR #98 merge
