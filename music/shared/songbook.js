@@ -479,6 +479,20 @@
     };
   }
 
+  // S-FIRSTRUN (sprint-1 item 4, F4): the fresh-profile Library guidance cue,
+  // built on the one-shot Notables infra (music/shared/notables.js). Pure
+  // decision fn, Node-testable without a DOM: given a Notables module (real or
+  // stub), decide whether the 'firstrun' consumer should render on THIS call -
+  // dependency-injected (Notables param) same pattern as libraryFilter's
+  // injected Rep, so tests drive a real Notables instance directly. Returns
+  // false without claiming if already dismissed (show-once); otherwise
+  // attempts Notables.claim('firstrun') and returns whatever it grants.
+  function firstrunShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('firstrun')) return false;
+    return Notables.claim('firstrun');
+  }
+
   // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
   // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
   // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
@@ -827,6 +841,30 @@
       if (!artistVal) return Object.assign({}, rec, { y: null, year: null });
       return rec;
     }
+    // S-FIRSTRUN (F4): the fresh-profile Library cue - teaches BOTH "tap a song
+    // to open it" and "the chord-count badge tells you the easy ones" in one
+    // compact banner, above the song list (never on the search/chip filter
+    // chrome renderFilterChips owns, so it survives the future M3 filter-bar
+    // rework). renderSongs() calls this on every render; firstrunBannerEl
+    // guards against re-inserting a duplicate node on re-renders (search
+    // typing, chip taps, tab switches) once it's already showing. Once the x
+    // dismisses it, Notables persists that forever and this stays a no-op.
+    var firstrunBannerEl = null;
+    function renderFirstrunNotable() {
+      if (firstrunBannerEl || !el.libSongs || !el.songsList || !global.Notables) return;
+      if (!firstrunShouldRender(global.Notables)) return; // dismissed, or slot held elsewhere - skip silently
+      var banner = global.Notables.renderBanner({
+        consumerId: 'firstrun',
+        text: 'Tap any song to open its chords. Songs marked with a low chord count (like 3 chords) are the easiest place to start.',
+        onDismiss: function () {
+          if (firstrunBannerEl && firstrunBannerEl.parentNode) firstrunBannerEl.parentNode.removeChild(firstrunBannerEl);
+          firstrunBannerEl = null;
+        }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      firstrunBannerEl = banner;
+      el.libSongs.insertBefore(banner, el.songsList);
+    }
     function renderSongs() {
       if (!el.songsList) return;
       // Compose calling this right after a save happens while the Library
@@ -837,6 +875,7 @@
       // screen the user is looking at, or the highlight would fire-and-fade
       // invisibly and never be seen. Until then it just keeps waiting.
       var visible = !!el.songsList.offsetParent;
+      renderFirstrunNotable();
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
@@ -2675,6 +2714,7 @@
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
+    firstrunShouldRender: firstrunShouldRender,
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
