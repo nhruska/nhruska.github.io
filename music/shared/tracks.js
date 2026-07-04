@@ -190,11 +190,10 @@
   function notesToPcs(notes) {
     return (notes || []).map(noteToPc).filter(function (p) { return p >= 0; });
   }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies.
+  function esc(s) { return global.Esc.esc(s); }
   function focusNoJump(el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
   function familyMode(m) { return m === 'minor' ? 'aeolian' : 'ionian'; }
   // P3: coarsen any mode name (Major/Minor or a church mode) to the major/minor

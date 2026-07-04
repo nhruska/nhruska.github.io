@@ -397,7 +397,11 @@
   // the localStorage import path accept freeform tokens, so chord names and
   // section labels are user-controlled strings, not trusted vocabulary. The
   // quote entity makes the same helper safe inside attribute values.
-  function escHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of ~8
+  // divergent local copies. Name kept (escHTML, not esc) - this file's ~19
+  // call sites are unchanged.
+  function escHTML(s) { return global.Esc.esc(s); }
 
   function renderLyricLine(raw) {
     var chordRow = "", lyricRow = "", last = 0, m;
@@ -652,27 +656,16 @@
   // Movement-cancelled tap guard: fires fn only if a touch on `el` did NOT move
   // past the threshold (a tap, not a scroll-grab dragging over this button while
   // the thumb scrolls the setlist rail). Mouse clicks (no touch events) are
-  // unaffected. This is a LOCAL COPY of music/shared/list-item.js's wireTap() -
-  // not imported, since this is a classic-<script>-tag codebase with no module
-  // loader across files. Keep the two in sync if the tap-cancel logic changes;
-  // a future pass could hoist both into one tiny shared module (noted, not done
-  // here - out of this task's scope). Pure + Node-testable (exported below).
-  function wireTapCancel(el, fn) {
-    if (!el || !fn) return;
-    var sx = 0, sy = 0, moved = false;
-    el.addEventListener('touchstart', function (e) {
-      var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false;
-    }, { passive: true });
-    el.addEventListener('touchmove', function (e) {
-      var t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) moved = true;
-    }, { passive: true });
-    el.addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (moved) return;
-      fn();
-    });
-  }
+  // unaffected.
+  // S-HARDEN (analysis-refactor-enhance-20260704 A4): this used to be a LOCAL
+  // COPY of music/shared/list-item.js's wireTap() (the "future pass" this
+  // comment used to defer). Now a thin delegate - the ONE implementation lives
+  // in list-item.js, loaded before this file everywhere it's consumed
+  // (play/index.html script order; test/songbook.test.js requires it first).
+  // Name + export kept (wireTapCancel) so callers and the existing regression
+  // suite (test/songbook.test.js) are untouched. Pure + Node-testable
+  // (exported below).
+  function wireTapCancel(el, fn) { return global.ListItem.wireTap(el, fn); }
   // S-CLEARGUARD (sprint-1 #1, A3 binding contract): pure snapshot build/apply
   // for the Compose Clear undo banner - extracted so the undo correctness
   // property (a snapshot is a fully INDEPENDENT copy, never aliased to the
@@ -889,6 +882,12 @@
         return false;
       }
     }
+    // A1/H4 shared failure message (analysis-refactor-enhance-20260704): the one
+    // truthful "didn't actually save" message for any USER-INITIATED save whose
+    // underlying safeSet() write failed. Shared by saveProgression's create/
+    // update branches (D-SAVE-TRUTH) and toggleSet's setlist-add branch
+    // (S-HARDEN H4) so the wording can't drift between the two.
+    var SAVE_FAIL_MSG = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
 
     /* ---------- custom (composed) progressions ---------- */
     var CUSTOM_KEY = prefix + ".custom.v1";
@@ -1396,10 +1395,15 @@
     /* ===================== SETLIST ===================== */
     // Subtle transient toast - a lightweight "it happened" cue (UAT: Nik).
     // Adds get a toast (removes already have the persistent Undo affordance).
+    // isErr (S-HARDEN H4) mirrors showComposeToast's err flag: toggles the same
+    // 'err' class name for forward-compat with a future .toast.err rule -
+    // songbook.css is out of this mission's grant, so there is no red styling
+    // yet, but the message itself is always truthful (see toggleSet below).
     var toastEl, toastTimer;
-    function showToast(msg) {
+    function showToast(msg, isErr) {
       if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
       toastEl.textContent = msg;
+      toastEl.classList.toggle('err', !!isErr);
       toastEl.classList.add('on');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { if (toastEl) toastEl.classList.remove('on'); }, 1600);
@@ -1408,9 +1412,15 @@
       var pos = STATE.setlist.indexOf(id);
       var adding = pos < 0;
       if (pos >= 0) STATE.setlist.splice(pos, 1); else STATE.setlist.push(id);
-      saveSet(); renderSongs(); renderSetlist();
+      // S-HARDEN H4 (analysis-refactor-enhance-20260704 A1 bug shape): saveSet()
+      // can silently fail (quota/blocked storage) - branch the toast on its real
+      // result instead of claiming success unconditionally, same pattern as
+      // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
+      // way - they rely on the persistent Undo affordance, out of this fix's scope).
+      var ok = saveSet();
+      renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
-      if (adding) showToast('Added to setlist');
+      if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
     }
     function renderSetlist() {
       if (!el.setBody) return;
@@ -1631,26 +1641,13 @@
     var savedComposeId = null;
     // S-SLOTX (sprint-1 #1, F2): movement-cancelled tap for the progression
     // slot remover - fires fn only if the touch did NOT move (a tap, not a
-    // scroll-grab on the horizontal .prog filmstrip). Adapted from
-    // list-item.js's wireTap (same mechanism, kept local here since this
-    // file owns the Compose/Studio progression-strip region, not list-item.js).
-    // Mouse clicks (no touch events) are unaffected.
-    function composeWireTap(el, fn) {
-      if (!el || !fn) return;
-      var sx = 0, sy = 0, moved = false;
-      el.addEventListener('touchstart', function (e) {
-        var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false;
-      }, { passive: true });
-      el.addEventListener('touchmove', function (e) {
-        var t = e.touches[0];
-        if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) moved = true;
-      }, { passive: true });
-      el.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (moved) return;
-        fn(e);
-      });
-    }
+    // scroll-grab on the horizontal .prog filmstrip). Mouse clicks (no touch
+    // events) are unaffected.
+    // S-HARDEN (analysis-refactor-enhance-20260704 A4): thin delegate to
+    // list-item.js's wireTap (the SSOT - see wireTapCancel above for the same
+    // move). Name kept - test/songbook.test.js asserts this call site is wired
+    // through composeWireTap by name, not a raw onclick.
+    function composeWireTap(el, fn) { return global.ListItem.wireTap(el, fn); }
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -2577,7 +2574,9 @@
       // by both branches below (update-in-place + fresh save) - a quota/blocked-storage
       // write must never tell the user it saved (the app's #1 named fatal-dismissal
       // trigger is exactly this: a saved song silently vanishing after being told it saved).
-      var SAVE_FAIL_MSG = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
+      // SAVE_FAIL_MSG is hoisted to mount()'s top scope (near safeSet) as of
+      // S-HARDEN H4 so toggleSet's setlist-add branch can reuse the exact same
+      // wording instead of drifting its own copy.
       // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
       // the progression and key panel stay live behind it. What gets saved is
       // what the user asked to save - not whatever the session mutated into

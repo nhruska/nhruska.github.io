@@ -115,6 +115,9 @@ h1 .em{color:var(--accent-ink)}
 </style>
 <!-- Shared theme-resolution helpers (same source as the main app). -->
 <script src="../shared/theme.js"></script>
+<!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - this page's own esc()
+     below delegates to it. -->
+<script src="../shared/esc.js"></script>
 </head>
 <body>
 <script>
@@ -267,11 +270,10 @@ function loadScript(src) {
 // (label, tuning, id) come from our own profile scripts today but a future
 // schema drift / external profile source could turn them into an injection
 // vector. Defensive escape on every untrusted-by-default field.
-function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+// esc.js (loaded above) - this was the strictest of ~8 divergent copies (the
+// only one escaping ' too); esc.js's escape set now matches it everywhere.
+function esc(s) { return Esc.esc(s); }
 
 // ---- pitch + interval helpers ---------------------------------------------
 const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];

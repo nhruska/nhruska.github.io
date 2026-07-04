@@ -15,7 +15,13 @@
 // #117) bumped v82->v84 in parallel - max+1 of the two.
 // S-STUDIO-POLISH (2026-07-04): v85->v86 - pager touch-floor/disabled-fade fix,
 // per-class kx-chord/kx-blue text ink, shortened Studio link labels.
-var CACHE = 'music-v86';
+// S-HARDEN (2026-07-04): v86->v87 - adds shared/esc.js (new shared module,
+// A5); ALSO backfills 3 pre-existing CORE gaps the new verify script
+// (test/sw-verify.test.js, A6) caught on its first run - shared/list-item.js,
+// shared/repertoire.js and shared/repertoire-form.js are all loaded by
+// play/index.html's script order but had never been precached, so an install
+// before ever having gone online would 404 on those files offline.
+var CACHE = 'music-v87';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -26,11 +32,18 @@ var CORE = [
   // triad-inversions.html is the deep-dive walkthrough linked from the Compose tab.
   // Precaching keeps it available offline alongside the rest of the play surface.
   './play/triad-inversions.html',
+  // esc.js: the ONE HTML-escape util (S-HARDEN A5) - loaded before every
+  // shared/*.js consumer in both play/index.html and play/triad-inversions.html.
+  './shared/esc.js',
   './shared/nav-history.js',
   // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
   // order) - both W3a's Studio and W3b's Compose solo chips call it.
   './shared/solo-guide.js',
   './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tempo.js', './shared/tracks.js', './shared/candidates.js',
+  // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
+  // 3 are script-tagged in play/index.html but were missing from CORE (see
+  // the CACHE-bump comment above).
+  './shared/list-item.js', './shared/repertoire.js', './shared/repertoire-form.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/notables.js',
  './shared/theme.js', './shared/audio.js', './shared/backup.js',

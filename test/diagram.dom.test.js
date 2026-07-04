@@ -15,6 +15,12 @@ global.document = {
   createElement: function (tag) { return { tagName: tag, className: '', innerHTML: '' }; }
 };
 
+// S-HARDEN (analysis-refactor-enhance-20260704 A5): diagram.js's esc() is now
+// a delegate to esc.js's Esc.esc (the ghost-dot label path below calls it) -
+// alias window to the real global BEFORE requiring either, same pattern as
+// test/songbook.test.js, so both modules' IIFEs land on one shared object.
+if (typeof global.window === 'undefined') global.window = global;
+require('../music/shared/esc.js');
 var D = require('../music/shared/diagram.js');
 
 var passed = 0, failed = 0, cases = [];
