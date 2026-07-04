@@ -6,7 +6,13 @@
  * ===================================================================== */
 'use strict';
 var assert = require('assert');
-var resetLocalStorage = require('./helpers/local-storage-reset.js');
+var lsReset = require('./helpers/local-storage-reset.js');
+// compat shim over the shared helper's {clear, fakeStore} API: the callable
+// shape these tests use (fresh global store per case, optional seed object).
+function resetLocalStorage(seed) {
+  global.localStorage = lsReset.fakeStore();
+  if (seed) Object.keys(seed).forEach(function (k) { global.localStorage.setItem(k, seed[k]); });
+}
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
