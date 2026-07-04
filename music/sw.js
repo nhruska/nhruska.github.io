@@ -61,7 +61,7 @@
 // music.schema.version stays in the envelope on purpose - M-6 follow-ups
 // #1/#2/#3). No new/removed CORE paths. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v96';
+var CACHE = 'music-v97';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
