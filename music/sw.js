@@ -33,7 +33,11 @@
 // landed) - no new CORE paths, but the discipline is "bump on any
 // shared/play diff" regardless. check-cache-bump.sh re-verified against
 // origin/main immediately before push.
-var CACHE = 'music-v91';
+// M-6 STORAGE-MIGRATE (2026-07-04): v91->v92 - new shared/storage-migrate.js
+// (versioned localStorage boot migration runner, gh #76/#77), script-tagged
+// in play/index.html - new CORE path. check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v92';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -47,6 +51,9 @@ var CORE = [
   // esc.js: the ONE HTML-escape util (S-HARDEN A5) - loaded before every
   // shared/*.js consumer in both play/index.html and play/triad-inversions.html.
   './shared/esc.js',
+  // storage-migrate.js: versioned localStorage boot migration runner (M-6),
+  // loaded first in play/index.html (before every other shared/*.js consumer).
+  './shared/storage-migrate.js',
   './shared/nav-history.js',
   // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
   // order) - both W3a's Studio and W3b's Compose solo chips call it.
