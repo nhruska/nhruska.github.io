@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| M-DESIGN-ENFORCE wave 1 (operator law 2026-07-04): U10 guidance-surface split, selected-grammar unify (D-SELECTED-ACCENT), radius tokens, consistency lint growth | absorbs S-SELECTED-GRAMMAR; ELEMENT CONSISTENCY LAW encoded in music/CLAUDE.md + ssot-registry.md | [fold record](m-guide-adversarial-fold-20260704.md) |
+| **TIER-0 DRAINED (2026-07-04, v105)** - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
