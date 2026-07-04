@@ -17,7 +17,7 @@
 | # | Mission | Trigger / launch condition | Spec state |
 |---|---|---|---|
 | S1 | Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B | PR #98 merges (event-triggered) | Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED |
-| S2 | Sprint 2: M3 songs/tracks full merge | Operator answers finder-rehome **5A or 5B** (one keyword) + #98 merged | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
+| S2 | Sprint 2: M3 songs/tracks full merge | **5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: #98 merged + 30-min spec-formalize interview | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
 | S3 | S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view | Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow) | Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch |
 | S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + hand-position/fingering guidance) | Operator gate on a drafted spec (I draft from M2's wiki content; 5-min review) | Spec to be DRAFTED during M2 close (the wiki's expertise-adaptive philosophy page becomes its foundation) |
 | S5 | S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern) | **go save-truth** | Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger) |
@@ -38,6 +38,7 @@
 | M-7 | Jam picker (19 curated records, zero consuming code) + data-model.md drift fix | analysis B3 |
 | M-8 | SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview) | analysis A7 + B5 |
 | M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
+| M-10 | M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required | [uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding |
 
 ## LONG (ideas - need a vision interview before anything)
 
