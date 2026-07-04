@@ -40,19 +40,15 @@
  * note below) so this detector does not misclassify a device that only has
  * triad-inversions prefs as "fresh."
  *
- * Known composition gaps (named follow-ups, NOT done this wave - out of this
- * mission's edit grant, which is read-only on backup.js):
- *   1. VERSION_KEY ('music.schema.version') falls under backup.js's 'music.'
- *      OWNED_PREFIXES, so it is NOT yet excluded there the way backup.js's
- *      own SCHEMA_KEY ('music.schema.v1') is (see backup.js's EXCLUDE list).
- *      Follow-up: add 'music.schema.version' to backup.js's EXCLUDE array so
- *      this device-local marker is never swept into a user's backup file as
- *      if it were songbook data.
- *   2. backup.js's restore() does not currently call this file's run() after
- *      writing a payload. Follow-up: have restore() call
- *      StorageMigrate.run(store) once it finishes writing, so a backup taken
- *      on an older build (before some future migration existed) still gets
- *      that migration applied to the restored device.
+ * Composition with backup.js (RESOLVED 2026-07-04, PR #138 - supersedes this
+ * file's original follow-up notes):
+ *   1. VERSION_KEY ('music.schema.version') DELIBERATELY stays IN the backup
+ *      envelope (NOT excluded): a backup carries the schema version of its
+ *      data, and restore() replays this runner afterward, so old backups
+ *      migrate correctly. Excluding it would leave a NEW version marker over
+ *      OLD restored data and silently skip migrations.
+ *   2. backup.js restore() now calls StorageMigrate.run() after a successful
+ *      atomic apply (guarded; see backup.js).
  *   3. play/triad-inversions.html's 'tri.*' keys are outside backup.js's
  *      OWNED_PREFIXES entirely (a pre-existing gap, not introduced here) -
  *      those prefs are not currently backed up/restored at all. Documented
