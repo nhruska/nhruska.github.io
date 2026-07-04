@@ -365,10 +365,27 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog:empty{min-height:0;padding:0;border:0;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-/* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
-   area, which would overlap the chord tile and steal play-taps from the diagram below. */
-.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
-.prog .slot .rm:active{background:var(--bad);color:var(--on-danger);transform:scale(.85);}
+/* S-SLOTX (sprint-1 #1, F2): >=44px TAP target via padding - glyph size
+   unchanged. Supersedes the old "24px clears WCAG 2.5.8, no oversized hit
+   area" note: the sprint-1 geometry audit found 24px still invites
+   wrong-chord removal in this destructive-tap context, so the binding spec
+   (A-amendments) calls for 44px here too. The VISIBLE circle is a ::before
+   sized 24x24 (unchanged from before this change) positioned at the button's
+   ORIGINAL top:-7px/right:-7px visual spot; the button itself grows to 44x44
+   around that SAME center (10px of invisible padding on every side), so the
+   glyph/circle look identical to before and only the tap target is bigger.
+   isolation:isolate scopes the ::before's z-index:-1 to this button only (it
+   paints behind the × text, never affecting sibling stacking). The enlarged
+   box does reach ~10px further into the chord diagram below/left than the
+   old 24px box did (unavoidable given the diagram sits directly under this
+   badge) - movement-cancelled taps (composeWireTap in songbook.js) keep a
+   scroll-grab from misfiring either target, and if the extra overlap proves
+   too eager in review, narrowing the bottom/left inset here is a one-line
+   follow-up (top/right can stay generous since that's open .prog padding). */
+.prog .slot .rm{position:absolute;top:-17px;right:-17px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
+.prog .slot .rm::before{content:'';position:absolute;inset:10px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.prog .slot .rm:active::before{background:var(--bad);}
+.prog .slot .rm:active{color:var(--on-danger);transform:scale(.85);}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
@@ -608,16 +625,24 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.keyOpen #maxNote{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
-/* SINGLE control row, no wrap: [♭] [key/mode chip] [♯] [⤢] [?] | [Clear] [Save].
-   Must fit 375px (content width ~347px after the .view 14px side padding). Icon buttons
-   and the buttons are compacted in this context; the chip is a fixed 96px. The spacer
-   flexes to push Clear/Save to the right but collapses to 0 first when space is tight, so
-   nothing overflows. */
+/* SINGLE control row, no wrap. DOM order is [♭] [key/mode chip] [♯] [⤢] [?] |
+   [Clear] [Save]; VISUAL order (via #cClear{order}, below) moves Clear to the
+   front: [Clear] [♭] [chip] [♯] [⤢] [?] | [Save] - S-CLEARGUARD/F1/F8: Clear
+   sat directly beside Save (mis-reach hazard for a thumb stretching from an
+   instrument grip); this maximizes the on-screen distance between the two
+   without changing the row's height or which elements are in it. Must fit
+   375px (content width ~347px after the .view 14px side padding). Icon
+   buttons and the buttons are compacted in this context; the chip is a fixed
+   96px. The spacer flexes to push Save to the right but collapses to 0 first
+   when space is tight, so nothing overflows. */
 .ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
 /* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
 .ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:9px;}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
+/* S-CLEARGUARD: visual-only resequence (DOM/tab order unchanged - this app is
+   touch-first; see composeWireTap/wireTap for the actual tap-safety layer). */
+.ctrlBar #cClear{order:-1;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
    IN-KEY cells (.chordCell) and starters (.progPick), and the next-chord suggestion
