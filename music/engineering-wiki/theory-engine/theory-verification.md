@@ -49,6 +49,10 @@ Rule: no hand-coded scale/chord table anywhere else in the codebase. Everything 
 
 test/solo-scales.test.js carries the pentatonic/blues fixtures (12 roots x 3 scales) and the subset proofs; theory-canon carries the regime-A literals (incl. `A blues = A C D D# E G`) with the REGIME-A comment marking the deliberate change point for S-BLUES-B.
 
+## BLUES_KEY_CANON (M-GUIDE W2) [STABLE]
+
+A SEPARATE canon block in theory-canon.test.js, distinct from the S-BLUES solo-scale literals above: 12 roots x hand-computed `'C7 F7 G7'`-style literal chord strings (NOT read from `circle.js`'s own ROOTS array, so a regression to both the app and a copy-pasted expectation in lockstep can't slip through), asserted against `Circle.bluesKey(root).map(c => c.chord).join(' ')`, plus a roman lock (`['I7','IV7','V7']`, every root) and a matrix-size lock (12). This is the harmonizing-key-model canon (I7/IV7/V7 palette), not the 6-note solo-scale canon - the two are independently verified so a regression in either representation is caught without the other masking it. The palette table itself was professor-verified (all 12 cells) as part of the m-guide-ia-20260704.md section 8 design-review fold before implementation.
+
 ---
 
-**Anchors verified:** test/theory-canon.test.js (encoder + cases + corruption-test lineage), test/solo-scales.test.js, docs/plans/theory-professor-review-20260703.md, circle.js MODE_STEPS/SOLO_SCALES
+**Anchors verified:** test/theory-canon.test.js (encoder + cases + corruption-test lineage, BLUES_KEY_CANON block), test/solo-scales.test.js, docs/plans/theory-professor-review-20260703.md, circle.js MODE_STEPS/SOLO_SCALES/BLUES_KEY, m-guide-ia-20260704.md section 1 (palette table) + section 8 (professor fold verdict)
