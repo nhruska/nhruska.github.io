@@ -323,14 +323,23 @@ test('a mixolydian track surfaces in its major-family keyed search', function ()
 });
 
 // --- trackKey 4-mode serialization (overlay identity) -----------------------
-test('trackKey serializes the full 4-mode vocabulary distinctly', function () {
+test('trackKey serializes the full 5-mode vocabulary distinctly (incl. blues, M-GUIDE W2)', function () {
   var base = { title: 'X', artist: 'Y', key: 'E' };
   var kMaj = T.trackKey(Object.assign({}, base, { mode: 'major' }));
   var kDor = T.trackKey(Object.assign({}, base, { mode: 'dorian' }));
   var kMix = T.trackKey(Object.assign({}, base, { mode: 'mixolydian' }));
-  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix));
+  var kBlu = T.trackKey(Object.assign({}, base, { mode: 'blues' }));
+  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix) && /\|blues$/.test(kBlu));
   assert.notStrictEqual(kDor, kMaj); // the collision codex flagged
   assert.strictEqual(T.trackKey(Object.assign({}, base, { mode: 'weird' })), kMaj); // unknown -> major
+});
+test('trackKey: blues identity does not collide with major (professor finding, PR #115) - IDENTITY only, normMode facet coarsening unchanged', function () {
+  var kBlu = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'blues' });
+  var kMaj = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'major' });
+  assert.notStrictEqual(kBlu, kMaj, 'a saved/curated blues track must not collide with a same-title/artist/key major row');
+  // the Library/finder FACET coarsening (normMode) is a SEPARATE, unchanged concern -
+  // blues still coarsens to the major family there, per the IA ruling.
+  assert.strictEqual(T.normMode('blues'), 'major');
 });
 
 // --- mode-honest key labels everywhere a key renders as text ----------------

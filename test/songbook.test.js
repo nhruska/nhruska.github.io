@@ -887,12 +887,41 @@ test('convertProgressionQualities: Blues -> Blues is idempotent (palette roots s
 test('convertProgressionQualities: a maj7/m7 surviving from Blues on a palette root keeps its own extension-class (not stripped)', function () {
   assert.deepStrictEqual(Songbook.convertProgressionQualities(['Cmaj7'], 'Major', 'C', 'Blues'), ['Cmaj7']);
 });
+test('convertProgressionQualities: targetMode is canonicalized - lowercase "blues"/"major" (the saved-item/bridge vocabulary) work identically to the capitalized form (professor finding, PR #115)', function () {
+  // lowercase 'blues' target must NOT silently no-op (MODES['blues'] is undefined;
+  // only MODES['Blues'] exists) - canonMode(targetMode) must resolve it first.
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'F', 'G'], 'blues', 'C', 'Major'),
+    ['C7', 'F7', 'G7']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'F', 'G'], 'blues', 'C', 'Major'),
+    Songbook.convertProgressionQualities(['C', 'F', 'G'], 'Blues', 'C', 'Major'), 'lowercase and capitalized targetMode must match');
+  // lowercase 'major' target must strip the palette 7ths back the same as 'Major'
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'major', 'C', 'Blues'),
+    ['C', 'F', 'G']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'major', 'C', 'Blues'),
+    Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'Major', 'C', 'Blues'), 'lowercase and capitalized targetMode must match');
+});
 
 /* ---------- completions: Blues never auto-completes (category mismatch, never inferred) ---------- */
 test('completions: Blues top guard always returns [] regardless of progression content', function () {
   assert.deepStrictEqual(Songbook.completions(['C7', 'F7', 'G7'], 'C', 'Blues'), []);
   assert.deepStrictEqual(Songbook.completions(['C7', 'F7', 'G7'], 'C', 'blues'), []); // lowercase too
   assert.deepStrictEqual(Songbook.completions([], 'C', 'Blues'), []);
+});
+test('completions: a mode-carrying (Blues) starter never leaks into a non-Blues key\'s completion canon (professor finding, PR #115)', function () {
+  // Before Blues starters existed, ["C"] in C Major only ever matched the diatonic
+  // canon (4-chord song / 50s-doo-wop / Pop-Axis / Pachelbel, all starting on I).
+  // "Quick-change blues" ALSO starts on degree 0 (I7), so without the p.mode guard
+  // it would coincidentally prefix-match here too and leak a bogus completion.
+  var preBluesExpected = Songbook.completions(['C'], 'C', 'Major').map(function (c) { return c.name; }).sort();
+  assert.ok(preBluesExpected.indexOf('12-bar blues') === -1, 'sanity: 12-bar blues must not appear');
+  assert.ok(preBluesExpected.indexOf('Quick-change blues') === -1, 'sanity: Quick-change blues must not appear');
+  // the actual regression check: no p.mode-carrying entry contributes ANY completion,
+  // across every prefix length a Blues starter could coincidentally share
+  [['C'], ['C', 'F'], ['C', 'C'], ['C', 'F', 'C']].forEach(function (seed) {
+    var names = Songbook.completions(seed, 'C', 'Major').map(function (c) { return c.name; });
+    assert.ok(names.indexOf('12-bar blues') === -1, '12-bar blues leaked for seed ' + seed.join(' '));
+    assert.ok(names.indexOf('Quick-change blues') === -1, 'Quick-change blues leaked for seed ' + seed.join(' '));
+  });
 });
 
 /* ---------- COMPOSE_MAX (D-CAP12): the shared cap constant ---------- */

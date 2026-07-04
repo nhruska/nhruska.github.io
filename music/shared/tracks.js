@@ -150,11 +150,14 @@
   function trackKey(t) {
     t = t || {};
     function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
-    // Serialize the FULL 4-mode vocabulary: coarsening dorian/mixolydian to
-    // 'major' let a modal track collide with a same-title/artist/key major row
-    // in the url overlay. Unknown/absent modes still default to 'major'.
+    // Serialize the FULL 5-mode vocabulary (M-GUIDE W2 adds 'blues'): coarsening
+    // dorian/mixolydian/blues to 'major' let a modal/blues track collide with a
+    // same-title/artist/key major row in the url overlay. Unknown/absent modes
+    // still default to 'major'. IDENTITY only - the Library/finder FACET still
+    // coarsens 'blues' to the major family via normMode (unchanged, per the IA);
+    // this is a narrower, separate concern (a stable storage key, not a UI facet).
     var m = norm(t.mode);
-    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian') m = 'major';
+    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian' && m !== 'blues') m = 'major';
     return [norm(t.title), norm(t.artist), normRoot(t.key), m].join('|');
   }
   // Overlay a { trackKey: videoId } map onto a seed list, returning NEW track

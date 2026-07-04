@@ -236,7 +236,12 @@
   // re-qualification (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7
   // keeps its own extension-class survival (not stripped).
   function convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode) {
-    var m = MODES[targetMode];
+    // Canonicalize targetMode the SAME way sourceMode already is below (canonMode) -
+    // callers outside the in-app UI (saved/custom items, the bridge payload) carry
+    // the lowercase MODE_CANON vocabulary ('blues', 'major', ...); a bare MODES[targetMode]
+    // lookup silently no-ops on those (codex finding, PR #115).
+    var tm = canonMode(targetMode);
+    var m = MODES[tm];
     if (!chords || !chords.length || !m) return chords ? chords.slice() : [];
     var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
     if (tonicPc == null) return chords.slice();
@@ -332,6 +337,12 @@
     if (degs.indexOf(-1) >= 0) return []; // a borrowed chord -> not a clean canon match
     var out = [];
     PROGRESSIONS.forEach(function (p) {
+      // Mode-carrying starters (the W2 Blues entries) are explicit-only - their
+      // degrees index into a 3-entry palette, not the 7-degree MAJOR_STEPS canon
+      // this loop matches against, so a coincidental degree-index prefix match
+      // (e.g. both starting on degree 0) would leak a Blues-derived "completion"
+      // into a plain Major/Minor/Mixolydian/Dorian session (codex finding, PR #115).
+      if (p.mode) return;
       if (p.degrees.length <= degs.length) return;        // nothing left to add
       var isPrefix = degs.every(function (d, i) { return d === p.degrees[i]; });
       if (!isPrefix) return;
