@@ -21,9 +21,10 @@
 | S3 | S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view | Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow) | Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch |
 | S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + hand-position/fingering guidance) | Operator gate on a drafted spec (I draft from M2's wiki content; 5-min review) | Spec to be DRAFTED during M2 close (the wiki's expertise-adaptive philosophy page becomes its foundation) |
 | S5 | S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern) | **go save-truth** | Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger) |
-| S6 | S-HARDEN bundle (3 tiny parallel agents): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests | **go harden** | Spec = analysis A4+A5+A6 (all S effort, mechanical, proven risk classes) |
+| S6 | S-HARDEN bundle (3 tiny parallel agents): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests | **go harden** | Spec = analysis A4+A5+A6 + toggleSet 'Added to setlist' unconditional-toast fix (same A1 bug shape, flagged in #116) + SW verify script asserts CACHE differs from origin/main when shared/ files changed (identical-string v83 collision, PR #117) |
 | S7 | S-TEMPO: wire the orphaned tap-tempo engine (tempo.js, tested, zero consumers) into Perform - tap button + beat pulse | **go tempo** | Spec = analysis B1 |
 | S8 | S-BACKUP-NUDGE: one-shot Notable "back up your library" via free priority slot + backup.describe() | **go backup-nudge** | Spec = analysis B2 (pairs with S5) |
+| S9 | S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots | **go chips-plus** | Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission |
 
 ## MID (vision known - needs a spec interview, ~15-30 min each; batchable in one sitting)
 
