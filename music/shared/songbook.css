@@ -160,13 +160,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* Edit-mode reorder/remove targets enlarged (>=32px, gapped) - only rendered in
- * edit-set mode, so they no longer sit always-hot on the scroll rail. */
+/* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
+ * edit-set mode, so they no longer sit always-hot on the scroll rail.
+ * NOTE (S-SETX rider, sprint-1): li-up/li-dn are 40x32 - BELOW the 44px floor
+ * in both dimensions. Out of this rider's scope (only li-rm was named 40->44
+ * in the sprint plan); flagged to the backlog rather than resized here, since
+ * growing them would also grow .li-ctrl's stacked height (70px) past li-body's
+ * content height and shift the row - the exact regression the "no layout
+ * shift" acceptance criterion guards against. */
 .listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
-.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;min-width:40px;min-height:40px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
+/* S-SETX rider b: 40x40 -> >=44x44 via padding (NOT a bigger glyph - the "x"
+ * stays font-size:1.2rem). min-width/min-height set the deterministic floor;
+ * padding keeps the glyph from crowding the now-larger border box. */
+.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
 /* J2: setlist edit-mode remove reads as destructive (li-rm only renders in edit mode). */
 #setBody .li-rm{border-color:var(--bad);color:var(--bad);}

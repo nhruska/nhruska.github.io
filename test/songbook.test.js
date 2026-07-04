@@ -684,4 +684,69 @@ test('ytSearchURL: sentinel + custom-record query hygiene (codex #91)', function
   assert.strictEqual(q(Songbook.ytSearchURL({ t: 'Original track', a: '', custom: true })), 'Original track');
 });
 
+/* ---------- wireTapCancel (S-SETX rider a: setlist Clear movement-cancel) ----------
+ * Minimal fake element (addEventListener/dispatch only) - same "just enough DOM"
+ * approach as test/diagram.dom.test.js, no jsdom dependency. Drives the REAL
+ * exported wireTapCancel through touchstart/touchmove/click, mirroring exactly
+ * how a scroll-grab vs a tap looks on the wire. */
+function FakeTapEl() { this._h = {}; }
+FakeTapEl.prototype.addEventListener = function (type, fn) { (this._h[type] = this._h[type] || []).push(fn); };
+FakeTapEl.prototype.fire = function (type, evt) { (this._h[type] || []).forEach(function (fn) { fn(evt); }); };
+function touch(x, y) { return { touches: [{ clientX: x, clientY: y }] }; }
+function clickEvt() { return { stopPropagation: function () {} }; }
+
+test('wireTapCancel: a still tap (no touchmove past threshold) fires fn', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(103, 98)); // 3px, well under the 10px threshold
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTapCancel: a scroll-grab (touchmove > 10px) suppresses fn (setlist Clear must not fire)', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(100, 130)); // 30px vertical scroll-grab
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0);
+});
+
+test('wireTapCancel: threshold is exclusive-over-10px and checks EITHER axis', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(0, 0));
+  el.fire('touchmove', touch(11, 0)); // x-only breach
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0, 'x-axis breach alone must cancel');
+
+  var el2 = new FakeTapEl(), fired2 = 0;
+  Songbook.wireTapCancel(el2, function () { fired2++; });
+  el2.fire('touchstart', touch(0, 0));
+  el2.fire('touchmove', touch(0, 10)); // exactly at threshold, not over
+  el2.fire('click', clickEvt());
+  assert.strictEqual(fired2, 1, 'exactly-10px move must still count as a tap');
+});
+
+test('wireTapCancel: a mouse click with no touch events at all still fires (desktop unaffected)', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTapCancel: no-op guard when el or fn is missing (never throws)', function () {
+  assert.doesNotThrow(function () { Songbook.wireTapCancel(null, function () {}); });
+  assert.doesNotThrow(function () { Songbook.wireTapCancel(new FakeTapEl(), null); });
+});
+
+test('setClear wiring: routed through wireTapCancel, not a raw .onclick= (movement-cancel guard, S-SETX)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/wireTapCancel\(el\.setClear,/.test(src), 'el.setClear must be wired via wireTapCancel(), not a raw onclick=');
+  assert.ok(!/el\.setClear\.onclick\s*=/.test(src), 'a raw el.setClear.onclick= would bypass the movement-cancel guard');
+  // the underlying confirm() + clear behavior must be unchanged (rider keeps it, only adds the guard)
+  assert.ok(/confirm\('Clear your setlist\?'\)/.test(src), 'the native confirm() prompt text must stay unchanged');
+});
+
 run();

@@ -517,6 +517,30 @@
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
   }
 
+  // Movement-cancelled tap guard: fires fn only if a touch on `el` did NOT move
+  // past the threshold (a tap, not a scroll-grab dragging over this button while
+  // the thumb scrolls the setlist rail). Mouse clicks (no touch events) are
+  // unaffected. This is a LOCAL COPY of music/shared/list-item.js's wireTap() -
+  // not imported, since this is a classic-<script>-tag codebase with no module
+  // loader across files. Keep the two in sync if the tap-cancel logic changes;
+  // a future pass could hoist both into one tiny shared module (noted, not done
+  // here - out of this task's scope). Pure + Node-testable (exported below).
+  function wireTapCancel(el, fn) {
+    if (!el || !fn) return;
+    var sx = 0, sy = 0, moved = false;
+    el.addEventListener('touchstart', function (e) {
+      var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false;
+    }, { passive: true });
+    el.addEventListener('touchmove', function (e) {
+      var t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) moved = true;
+    }, { passive: true });
+    el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (moved) return;
+      fn();
+    });
+  }
   // S-CLEARGUARD (sprint-1 #1, A3 binding contract): pure snapshot build/apply
   // for the Compose Clear undo banner - extracted so the undo correctness
   // property (a snapshot is a fully INDEPENDENT copy, never aliased to the
@@ -1205,10 +1229,13 @@
       if (!STATE.setEditMode) STATE.lastRemoved = null; // leaving edit mode dismisses the undo affordance
       renderSetlist();
     };
-    if (el.setClear) el.setClear.onclick = function () {
+    // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
+    // header rail must not fire the destructive Clear confirm(). Behavior is
+    // otherwise unchanged - same native confirm(), same effect.
+    if (el.setClear) wireTapCancel(el.setClear, function () {
       if (STATE.setlist.length === 0) return;
       if (confirm('Clear your setlist?')) { STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
-    };
+    });
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
@@ -2659,6 +2686,7 @@
     completions: completions,
     inferKey: inferKey,
     ROOTS: ROOTS,
+    wireTapCancel: wireTapCancel,
     buildClearSnapshot: buildClearSnapshot,
     applyClearSnapshot: applyClearSnapshot
   };
