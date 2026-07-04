@@ -4,46 +4,72 @@
 <title>HiTL Mission Control</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
-:root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140;--ok:#5eead4;--hot:#ff7a6b}
-@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea;--ok:#0f8a74;--hot:#c2402f}}
+/* Problem Solutions brand - tokens per skills/corporate-brand/brands/problem-solutions.html.md
+   (light default per html-surface profile; dark via the brand's own dark theme block) */
+:root{
+--brand-primary:#29AAE1;--brand-primary-soft:#4FC0F1;--brand-secondary:#2075BC;--brand-tertiary:#105480;
+--brand-slate:#354254;--brand-radius:8px;
+--bg:#FFFFFF;--bg2:#F4F6F8;--card:#FFFFFF;--txt:#354254;--dim:#6B7280;
+--acc:#2075BC;--accg:rgba(41,170,225,.18);--warn:#946200;--line:rgba(41,170,225,.14);--ok:#2075BC;--hot:#c2402f}
+@media (prefers-color-scheme: dark){:root{
+--bg:#1A1F2E;--bg2:#252B3B;--card:#2A3044;--txt:#FFFFFF;--dim:#9CA3AF;
+--acc:#29AAE1;--accg:rgba(41,170,225,.25);--warn:#f0b429;--line:rgba(41,170,225,.20);--ok:#29AAE1;--hot:#ff7a6b}}
 *{box-sizing:border-box}
-body{margin:0 auto;padding:10px 12px 20px;font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
-a{color:var(--acc);text-decoration:none;border-bottom:1px dotted var(--acc)}
-h1{font-size:1.05rem;margin:2px 0 0}
+body{margin:0 auto;padding:0 0 20px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:none}
+a:hover{color:var(--brand-secondary);text-decoration:underline}
+.brand-header{border-bottom:1px solid var(--line);padding:14px 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--bg)}
+.brand-logo{width:28px;height:22px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:10px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.85}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+.hmeta{flex:1 1 100%;padding:0 2px}
+h1{font-size:1.05rem;margin:6px 0 0}
 .sub{color:var(--dim);font-size:.72rem;margin-bottom:8px}
-.cockpit{background:var(--card);border:1px solid var(--acc);border-radius:12px;padding:10px 12px;margin:8px 0}
+.wrap{padding:0 12px}
+.cockpit{background:var(--card);border:1px solid var(--brand-primary);border-radius:var(--brand-radius);padding:10px 12px;margin:8px 0;box-shadow:0 0 20px var(--accg)}
 .cockpit .state{font-size:.95rem;font-weight:800}
 .cockpit .need{color:var(--warn);font-weight:700;font-size:.85rem;margin:6px 0 2px}
 .keys{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.key{border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:.78rem;font-weight:700;background:var(--bg)}
-.key.hot{border-color:var(--warn);color:var(--warn)}
+.key{border:1px solid var(--line);border-radius:var(--brand-radius);padding:3px 9px;font-size:.78rem;font-weight:700;background:var(--bg)}
+.key.hot{border-color:var(--brand-primary);color:var(--brand-secondary);background:var(--accg)}
 .dots{display:flex;gap:4px;align-items:center;margin:8px 0 2px;font-size:.68rem;color:var(--dim);flex-wrap:wrap}
 .dot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;border:1px solid var(--line)}
-.d-done{background:var(--acc);color:#06201c;border-color:var(--acc)}
-.d-run{background:var(--warn);color:#231a00;border-color:var(--warn)}
+.d-done{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+.d-run{background:var(--warn);color:#fff;border-color:var(--warn)}
 .d-wait{color:var(--dim)}
 .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
-.chip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center}
-.chip .n{font-size:1.05rem;font-weight:800;color:var(--acc)}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:6px 4px;text-align:center}
+.chip .n{font-size:1.05rem;font-weight:800;color:var(--brand-primary)}
 .chip .l{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
 .tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.tab{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:9px;padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
-.tab.on{background:var(--acc);color:#06201c;border-color:var(--acc)}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:var(--brand-radius);padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
 .pane{display:none}
 .pane.on{display:block}
-h2{font-size:.92rem;margin:14px 0 6px;color:var(--acc);text-transform:uppercase;letter-spacing:.05em}
+h2{font-size:.92rem;margin:14px 0 6px;color:var(--brand-secondary);text-transform:uppercase;letter-spacing:.05em}
 table{border-collapse:collapse;width:100%;font-size:.76rem;margin:6px 0}
 th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
 th{color:var(--dim);font-weight:600}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.82rem}
-blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:6px 10px;background:var(--card);border-radius:0 8px 8px 0;font-size:.85rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 12px;margin:8px 0;font-size:.82rem}
+blockquote{border-left:4px solid var(--brand-primary);margin:8px 0;padding:6px 10px;background:var(--bg2);border-radius:0 var(--brand-radius) var(--brand-radius) 0;font-size:.85rem}
 blockquote .by{display:block;color:var(--dim);font-size:.68rem;margin-top:3px}
-code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 3px;font-size:.85em}
+code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.85em}
 .wrapx{overflow-x:auto}
-.foot{margin-top:16px;color:var(--dim);font-size:.68rem}
-.tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:7px;padding:0 6px;font-size:.66rem;margin:1px 4px 1px 0}
+.foot{margin-top:16px;color:var(--dim);font-size:.68rem;border-top:1px solid var(--line);padding:12px 2px 0}
+.tag{display:inline-block;border:1px solid var(--brand-primary);color:var(--brand-secondary);border-radius:6px;padding:0 6px;font-size:.66rem;margin:1px 4px 1px 0}
 .pos{color:var(--ok)}.neg{color:var(--hot)}
 </style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
 
 <h1>HiTL Mission Control <span style="color:var(--dim);font-weight:400;font-size:.75rem">- Music app UX persona mission</span></h1>
 <div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">branch</a> - 2026-07-03 - updates as phases complete</div>
@@ -238,4 +264,5 @@ code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 3px;font-size:
   var h=location.hash.replace('#','');if(h&&document.getElementById('p-'+h))show(h);
 })();
 </script>
+</div>
 </body></html>
