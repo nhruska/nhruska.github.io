@@ -73,11 +73,17 @@
    * diminished degree dropped from the strummable palette (kept in the solo scale).
    * If circle is somehow absent, the inline steps are an identical fallback. */
   var CIRCLE_MODE = { Major: "ionian", Minor: "aeolian", Mixolydian: "mixolydian", Dorian: "dorian" };
+  // Blues is a PALETTE-KIND key model (I7/IV7/V7, m-guide-ia-20260704.md section 1),
+  // not a 7-note circle-of-fifths mode - it stays OUT of CIRCLE_MODE on purpose
+  // (syncStepsFromCircle below only iterates CIRCLE_MODE's keys, so Blues.steps is
+  // never overwritten by a nonexistent Circle.MODE_STEPS.blues). `romans` is a
+  // Blues-only field (diatonic modes fall back to RN_UP in romanInKey below).
   var MODES = {
     Major:      { label: "Major",      steps: [0, 2, 4, 5, 7, 9, 11], quals: ["", "m", "m", "", "", "m", "dim"] },
     Minor:      { label: "Minor",      steps: [0, 2, 3, 5, 7, 8, 10], quals: ["m", "dim", "", "m", "m", "", ""] },
     Mixolydian: { label: "Mixolydian", steps: [0, 2, 4, 5, 7, 9, 10], quals: ["", "m", "dim", "", "m", "m", ""] },
-    Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] }
+    Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] },
+    Blues:      { label: "Blues",      steps: [0, 5, 7],             quals: ["7", "7", "7"], romans: ["I", "IV", "V"] }
   };
   (function syncStepsFromCircle() {
     var C = global.Circle;
@@ -89,7 +95,8 @@
   })();
   var MODE_HINT = {
     Major: "bright, resolved", Minor: "dark, moody",
-    Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
+    Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful",
+    Blues: "12-bar swagger - three 7th chords"
   };
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
@@ -118,7 +125,7 @@
   // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
   // capitalized keys - both must hit the same table (codex V2 medium; same trap
   // class Circle.modeKey already guards).
-  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian' };
+  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian', blues: 'Blues' };
   function canonMode(modeKey) {
     return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
   }
@@ -134,6 +141,10 @@
     var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
       : /^(aug|\+)/.test(suf) ? 'aug'
       : /^m(?!aj)/.test(suf) ? 'm' : '';
+    // BLUES palette degree (I7/IV7/V7, m.quals[deg] === '7'): in-key is the root as
+    // a plain major triad OR its dominant 7th - deliberately no ii/dim/maj7/subs
+    // (D-BLUES-KEY minimalism; the "All" chord view is the escape hatch).
+    if (m.quals[deg] === '7') return q === '' && (suf === '' || suf === '7');
     if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
     return q === m.quals[deg];
   }
@@ -157,8 +168,15 @@
       var suf = cm[2].toLowerCase();
       var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
         : /^m(?!aj)/.test(suf) ? 'm' : '';
-      var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
-      return q === 'dim' ? rn + '°' : rn;
+      // m.romans (Blues only) overrides the generic 7-degree RN_UP table; every
+      // other mode falls back to RN_UP unchanged.
+      var romans = m.romans || RN_UP;
+      var rn = (q === 'm' || q === 'dim') ? romans[deg].toLowerCase() : romans[deg];
+      if (q === 'dim') return rn + '°';
+      // BLUES palette degree: the dominant 7th IS the diagnostic label (I7/IV7/V7);
+      // a plain triad on the same root reads the bare numeral (I/IV/V).
+      if (m.quals[deg] === '7' && suf === '7') return rn + '7';
+      return rn;
     }
     // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
     // `global` is this module's exports, so fall back to require.
@@ -189,8 +207,12 @@
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
   function chordsFromDegrees(root, modeKey, degrees) {
     var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
+    // Generalized over the mode's OWN degree count (7 for diatonic modes, 3 for
+    // Blues' I7/IV7/V7 palette) instead of a hardcoded 7, so a 12-bar blues
+    // starter's degrees [0,0,0,0,1,1,...] wrap mod 3, not mod 7.
+    var len = m.steps.length;
     return degrees.map(function (deg) {
-      var i = ((deg % 7) + 7) % 7;
+      var i = ((deg % len) + len) % len;
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
     });
   }
@@ -203,30 +225,58 @@
   // dominant/minor 7; a dim degree keeps the bare dim triad). A chord whose root is NOT
   // a degree of the target mode (chromatic/borrowed) is left UNCHANGED (best-effort
   // rule, decision D3) - round-trip is not perfect for those chords (accepted).
-  // `sourceMode` is accepted now for parity with every call site and W2's blues-aware
-  // rules; unused by this diatonic-only mapping.
+  // `sourceMode` feeds the W2 blues-aware rules below (Major/Minor/Mixo/Dorian <->
+  // Blues): converting INTO Blues collapses any palette-degree root to a dominant
+  // 7th (baseQual === '7', regardless of the original extension); converting OUT
+  // OF Blues (fromBlues guard) only re-qualifies a chord whose root sits on the
+  // BLUES PALETTE (offsets 0/5/7 from tonicRoot, the professor-fold amendment
+  // 8A - NOT "any target-mode degree") - anything else (a user-added secondary
+  // like A7 over a C blues) is left byte-for-byte unchanged, and a bare dominant
+  // 7th surviving from a palette root is treated as a plain triad before target
+  // re-qualification (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7
+  // keeps its own extension-class survival (not stripped).
   function convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode) {
-    var m = MODES[targetMode];
+    // Canonicalize targetMode the SAME way sourceMode already is below (canonMode) -
+    // callers outside the in-app UI (saved/custom items, the bridge payload) carry
+    // the lowercase MODE_CANON vocabulary ('blues', 'major', ...); a bare MODES[targetMode]
+    // lookup silently no-ops on those (codex finding, PR #115).
+    var tm = canonMode(targetMode);
+    var m = MODES[tm];
     if (!chords || !chords.length || !m) return chords ? chords.slice() : [];
     var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
     if (tonicPc == null) return chords.slice();
     var steps = m.steps, quals = m.quals;
+    var fromBlues = canonMode(sourceMode) === 'Blues';
     return chords.map(function (c) {
       var p = splitChord(c);
       if (!p) return c;
       var rpc = rootPc(p.root);
       if (rpc == null) return c;
       var offset = ((rpc - tonicPc) % 12 + 12) % 12;
+      // BLUES-SOURCE GUARD (professor fold 8A, supersedes the section-1 dom-7-strip
+      // scope): a chord surviving FROM Blues only re-qualifies when its root sits on
+      // the BLUES PALETTE (I7/IV7/V7 -> offsets 0,5,7 from the blues tonic) - not on
+      // any degree the TARGET mode happens to have there. A user-added secondary
+      // (A7 over a C blues) is not palette material; leave it fully unchanged.
+      if (fromBlues && offset !== 0 && offset !== 5 && offset !== 7) return c;
       var i = steps.indexOf(offset);
       if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
-      var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished
+      var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished, "7" blues dominant
       // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
       var ext = "";
       if (/maj7$/.test(p.qual)) ext = "maj7-like";
       else if (/m7$/.test(p.qual)) ext = "min7-like";
       else if (/7$/.test(p.qual)) ext = "dom7-like";
+      // dom-7-strip (fold 8A): a plain dominant 7th surviving from a Blues palette
+      // root is treated as a bare triad before re-qualification; m7/maj7 keep their
+      // own extension-class survival (handled by the branches below, untouched here).
+      if (fromBlues && ext === "dom7-like") ext = "";
       var suffix;
-      if (ext === "") {
+      if (baseQual === "7") {
+        // target degree IS a Blues palette root (I7/IV7/V7): the extension class
+        // always collapses to the dominant 7th, regardless of what it was.
+        suffix = "7";
+      } else if (ext === "") {
         suffix = baseQual; // plain triad -> target triad quality
       } else if (baseQual === "dim") {
         suffix = "dim"; // keep the bare diminished triad on a dim degree
@@ -244,15 +294,25 @@
   }
   // The canon — famous progressions, by 0-indexed major-scale degree. All diatonic
   // to MAJOR so they fill cleanly from any major key; modal/borrowed ones (Andalusian,
-  // i-bVII-bVI) need a different derivation and are a deliberate follow-up.
+  // i-bVII-bVI) need a different derivation and are a deliberate follow-up. W2 adds
+  // two mode-carrying Blues starters (degrees are 0-indexed into MODES.Blues' own
+  // 3-entry palette: 0=I7, 1=IV7, 2=V7 - chordsFromDegrees' mod-3 generalization
+  // above resolves them) - `mode` + `preview` are OPTIONAL fields the diatonic
+  // entries above simply omit (loadProgression/renderSuggest default them).
   var PROGRESSIONS = [
     { name: "4-chord song",     degrees: [0, 4, 5, 3] }, // I  V  vi IV
     { name: "50s / doo-wop",    degrees: [0, 5, 3, 4] }, // I  vi IV V
     { name: "Pop / Axis",       degrees: [5, 3, 0, 4] }, // vi IV I  V
     { name: "Three-chord rock", degrees: [0, 3, 4] },    // I  IV V
     { name: "Jazz turnaround",  degrees: [1, 4, 0] },    // ii V  I
-    { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] } // I V vi iii IV I IV V
+    { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] }, // I V vi iii IV I IV V
+    { name: "12-bar blues",       mode: "Blues", degrees: [0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" },
+    { name: "Quick-change blues", mode: "Blues", degrees: [0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" }
   ];
+  // D-CAP12 (m-guide-ia-20260704.md section 1): the Compose progression cap, raised
+  // from 8 to fit the 12-bar starters above. ONE shared const replaces both the
+  // addChord and renderProg `>= 8` gates so it can never drift between the two.
+  var COMPOSE_MAX = 12;
   // 0-indexed MAJOR-scale degree of a chord in a key (-1 if its root isn't a scale
   // tone). Used to recognize a progression-in-progress against the canon.
   var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
@@ -268,11 +328,21 @@
   // Returns [{ name, chord, degree }], the canon entries this progression is a strict
   // diatonic prefix of (longest-context first). Empty if no canon matches.
   function completions(progression, tonic, keyMode) {
+    // Blues never auto-completes: degreeOf measures against the MAJOR-scale
+    // canon (7 degrees), which is a category mismatch for the 3-degree Blues
+    // palette - explicit pick or a Blues starter carries this key, never inference.
+    if (canonMode(keyMode) === 'Blues') return [];
     if (!progression.length || !tonic) return [];
     var degs = progression.map(function (c) { return degreeOf(c, tonic); });
     if (degs.indexOf(-1) >= 0) return []; // a borrowed chord -> not a clean canon match
     var out = [];
     PROGRESSIONS.forEach(function (p) {
+      // Mode-carrying starters (the W2 Blues entries) are explicit-only - their
+      // degrees index into a 3-entry palette, not the 7-degree MAJOR_STEPS canon
+      // this loop matches against, so a coincidental degree-index prefix match
+      // (e.g. both starting on degree 0) would leak a Blues-derived "completion"
+      // into a plain Major/Minor/Mixolydian/Dorian session (codex finding, PR #115).
+      if (p.mode) return;
       if (p.degrees.length <= degs.length) return;        // nothing left to add
       var isPrefix = degs.every(function (d, i) { return d === p.degrees[i]; });
       if (!isPrefix) return;
@@ -1519,10 +1589,11 @@
       if (!el.prog) return;
       // Only offer Clear when there's a progression to clear (UAT: Nik).
       if (el.cClear) el.cClear.hidden = progression.length === 0;
-      // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
-      // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
-      // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
-      var maxed = progression.length >= 8;
+      // Gray out the choosers once the COMPOSE_MAX cap (addChord, D-CAP12) is reached.
+      // The .maxed class sits on .composeWrap so it covers BOTH regions: the fixed top
+      // (controls + key chip; starters render in the scrolling #suggest now) AND the
+      // scrolling chord list (in-key cells + all-chords tiles).
+      var maxed = progression.length >= COMPOSE_MAX;
       var wrap = document.querySelector('.composeWrap');
       if (wrap) wrap.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
@@ -1560,7 +1631,7 @@
       renderSuggest();
     }
     function addChord(c) {
-      if (progression.length >= 8) return;
+      if (progression.length >= COMPOSE_MAX) return; // D-CAP12
       invalidateClearUndo(); // A3: adding a chord invalidates any pending Clear-undo
       progression.push(c);
       // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
@@ -1599,17 +1670,18 @@
       }
       return songKey.root !== prevRoot || songKey.mode !== prevMode;
     }
-    // Fill the progression from a named pattern, in the user's key (default C Major).
-    // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
-    // root if there is one, force the mode to Major, and sync the key picker so the
+    // Fill the progression from a named pattern entry, in the user's key (default C
+    // Major). Most patterns are major-diatonic, so we anchor to a Major key by
+    // default; a W2 Blues starter carries its own `p.mode` (Blues), overriding that
+    // default - keep the picked root if there is one, and sync the key picker so the
     // chord palette + solo scale below match what just got filled in.
-    function loadProgression(degrees) {
+    function loadProgression(p) {
       invalidateClearUndo(); // A3: a starter pattern replaces the buffer wholesale
       var root = songKey.root || "C";
-      // a named pattern sets an explicit Major key (patterns are major-diatonic)
-      songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
+      // a named pattern sets an explicit key; mode follows the entry (Major default)
+      songKey.root = root; songKey.mode = p.mode || "Major"; songKey.explicit = true;
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
-      progression = chordsFromDegrees(root, songKey.mode, degrees);
+      progression = chordsFromDegrees(root, songKey.mode, p.degrees);
       cTpose = 0;
       savedComposeId = null; // a starter is a NEW progression - detach from any saved song
       renderProg(); renderKey();
@@ -1624,7 +1696,7 @@
     }
     // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
     // Full labels are used everywhere else (key picker chip, key-view title).
-    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor' };
+    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       // The song key/mode is now shown by the button-bar chip (#keyPickerCompact), which
@@ -2089,11 +2161,14 @@
         var row = document.createElement('div'); row.className = 'progPickRow';
         PROGRESSIONS.forEach(function (p) {
           var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
-          var roman = chordsFromDegrees('C', 'Major', p.degrees)
+          // A Blues starter carries its own short p.preview ('I7 IV7 V7') - the
+          // generic per-slot derivation below is Major-diatonic-only and would
+          // mislabel a 12-bar/quick-change fill (12 slots collapsing to 3 romans).
+          var roman = p.preview || chordsFromDegrees('C', 'Major', p.degrees)
             .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, 'C') : c; })
             .join(' ');
           b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
-          b.onclick = function () { loadProgression(p.degrees); };
+          b.onclick = function () { loadProgression(p); };
           row.appendChild(b);
         });
         el.suggest.appendChild(row);
@@ -2769,6 +2844,7 @@
     romanInKey: romanInKey,
     mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
+    COMPOSE_MAX: COMPOSE_MAX, // D-CAP12: the Compose progression cap (12)
     degreeOf: degreeOf,
     completions: completions,
     inferKey: inferKey,

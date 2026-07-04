@@ -8,7 +8,9 @@ The solo layer: mode scales, pentatonic major/minor, and blues - what you solo W
 
 ## The solo-vs-harmonization boundary [STABLE]
 
-Five- and six-note scales NEVER get a diatonic triad palette. Harmonization (chords-in-key, roman labels, mode re-harmonize) runs exclusively on 7-note modes. Pentatonics and blues exist ONLY in the solo layer: the Studio's scale panel, fretboard rendering, and degree labels. A chip selection changes what you solo with - never what the progression harmonizes to. [STABLE]
+**Amended by M-GUIDE W2** (m-guide-ia-20260704.md section 1, professor-fold-confirmed display-only per section 8C): Blues now ALSO exists as a separate, palette-KIND harmonizing key model - `songbook.js MODES.Blues` / `Circle.BLUES_KEY` (I7/IV7/V7, 3 degrees) - reachable via an explicit Compose mode pick or a Blues starter. The boundary below narrows accordingly: **PENTATONICS never harmonize** (pentMajor/pentMinor stay solo-layer-only, no triad palette, exactly as before); Blues is the one solo-layer scale that now has a harmonizing counterpart, and the two are DELIBERATELY KEPT SEPARATE - the SOLO_SCALES.blues 6-note scale (this page) never feeds chordInKey/romanInKey/completions, and BLUES_KEY's 3-note I7/IV7/V7 palette never feeds the solo fretboard/degree rendering. See [harmonization.md](harmonization.md) for the full BLUES_KEY contract.
+
+Five- and six-note SOLO scales NEVER get a diatonic triad palette (this remains true for pentatonics unconditionally, and for the blues SOLO scale specifically - only the separate BLUES_KEY model harmonizes). Harmonization (chords-in-key, roman labels, mode re-harmonize) runs on 7-note modes plus the one 3-degree Blues palette. Pentatonics exist ONLY in the solo layer: the Studio's scale panel, fretboard rendering, and degree labels. A chip selection changes what you solo with - never what the progression harmonizes to. [STABLE]
 
 ## Mode scales (7 notes) [STABLE]
 
@@ -46,6 +48,8 @@ Additive block in circle.js (the interval SSOT - a second theory module would fo
 
 Studio solo section gets one chip row `.bt-st-scalechips`: [Mode label | Pent major | Pent minor | Blues]. Default = the mode scale (Studio open behavior unchanged). A tap re-derives ONLY the solo bundle - notes line, degrees, fretboard via `KeyExplorer.renderScale` - through the pure `Tracks.soloBundle(key, mode, scaleId)`. Untouched by design: chords-in-key, buildWhy wheel, whynote banner, the Compose palette. No persistence (display preference belongs to the queued S-DIAGRAM-PREF).
 
+**M-GUIDE W2 dedupe:** when the Studio's own mode chip IS already Blues (`th.scaleMode === 'blues'` - i.e. the track/progression is keyed in the BLUES_KEY harmonizing model), the standalone 'Blues' chip is filtered out of the row to avoid a redundant second button offering the identical bundle - the row becomes [Blues | Pent major | Pent minor] (3 chips). Every other mode (major/minor/dorian/mixolydian) still shows all 4.
+
 Framing copy per selection (static templates; P5-fold rewrite, player-true):
 - Pent major: "The inside sound over {family} and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home."
 - Pent minor: "Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck."
@@ -62,9 +66,9 @@ Code seam: soloScale routes every name through ONE internal provider; S-BLUES-B 
 ## Testing (S-BLUES §3e) [STABLE]
 
 - test/solo-scales.test.js: 12 roots x 3 scales - pcs match steps mod 12; names match spell(); degree arrays exact; lengths 5/5/6; unknown id safe.
-- test/theory-canon.test.js: scales-canon literals (incl. `A blues = A C D D# E G` with the REGIME-A comment marking the deliberate Eb flip at S-BLUES-B).
-- test/tracks.test.js: soloBundle per id; 'mode' delegates to studioTheory; harmonization-isolation (chords identical before/after any chip selection).
+- test/theory-canon.test.js: scales-canon literals (incl. `A blues = A C D D# E G` with the REGIME-A comment marking the deliberate Eb flip at S-BLUES-B); also BLUES_KEY_CANON (the SEPARATE harmonizing-model canon, W2) - 12 roots x literal `C7 F7 G7`-style chord strings + the `['I7','IV7','V7']` roman lock.
+- test/tracks.test.js: soloBundle per id; 'mode' delegates to studioTheory; harmonization-isolation (chords identical before/after any chip selection - W2 adds the inverse case: a Blues-mode Studio's own I7/IV7/V7 chords survive every solo-scale chip tap).
 
 ---
 
-**Anchors verified:** circle.js:34-37 (MODE_STEPS) + SOLO_SCALES block, tracks.js solo section + soloBundle, key-explorer.js renderScale (97-152), wiki-ia-20260704.md §3 (binding seam), test/solo-scales.test.js, test/theory-canon.test.js
+**Anchors verified:** circle.js:34-37 (MODE_STEPS) + SOLO_SCALES block, circle.js BLUES_KEY/bluesKey block (post-SOLO_SCALES, W2), tracks.js solo section + soloBundle + studioTheory's blues branch + the CHIPS dedupe filter, key-explorer.js renderScale (97-152), wiki-ia-20260704.md §3 (binding seam) + section 8C (wheel-tint display-only confirmation), test/solo-scales.test.js, test/theory-canon.test.js
