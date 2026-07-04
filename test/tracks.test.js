@@ -7,7 +7,12 @@ var assert = require('assert');
 var T = require('../music/shared/tracks.js');
 var Circle = require('../music/shared/circle.js');
 var Notables = require('../music/shared/notables.js');
-var resetLocalStorage = require('./helpers/local-storage-reset.js');
+var lsReset = require('./helpers/local-storage-reset.js');
+// compat shim over the shared helper's {clear, fakeStore} API (same as notables.test.js)
+function resetLocalStorage(seed) {
+  global.localStorage = lsReset.fakeStore();
+  if (seed) Object.keys(seed).forEach(function (k) { global.localStorage.setItem(k, seed[k]); });
+}
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
