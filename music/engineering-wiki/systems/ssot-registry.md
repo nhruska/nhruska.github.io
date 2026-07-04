@@ -39,12 +39,12 @@ Canonical inventory of app-wide singletons: each quantity's ONE owner, its consu
 
 | Pattern | Locations | Status |
 |---|---|---|
-| Selected-state grammar (accent-fill vs surface+ring) | .chip family vs .modeSwitch | D-SELECTED-ACCENT ruled; build = design-enforce wave |
-| Notable surface vs selection surface | notable banner vs .listItem inSet highlight | U10 - design-enforce wave |
-| Border-radius scatter (7-13px) | button variants across css files | design-enforce wave (tokenize) |
+| Selected-state grammar (accent-fill vs surface+ring) | .chip family vs .modeSwitch/.viewToggle | SHIPPED (M-DESIGN-ENFORCE wave 1, D-ENFORCE-1): both now `background:var(--accent);color:var(--on-accent)`; guarded by [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) |
+| Notable surface vs selection surface | notable banner vs .listItem inSet highlight | SHIPPED (M-DESIGN-ENFORCE wave 1, D-ENFORCE-1): dedicated `--guide-bg`/`--guide-line` tokens (accent-independent, off `--txt-dim`) + `--brass` left stripe; screenshot-verified both themes |
+| Border-radius scatter (7-13px) | button variants across css files | SHIPPED (M-DESIGN-ENFORCE wave 1, D-ENFORCE-1): 5 radius-by-role tokens (`--r-btn`/`--r-btn-sm`/`--r-chip-pill`/`--r-card`/`--r-input`), migrated oddballs to the per-class majority value |
 | .bt-st-chords missing the SVG clamp | tracks.css (same U5/#96 class) | flagged by #144; fix queued |
 | Pentatonic/blues key-aware spelling | circle.js regime A | blocked on #98 (S-BLUES-B) |
 
 ---
 
-**Anchors verified:** circle.js:34-37 + SOLO_SCALES/BLUES_KEY blocks; esc.js; list-item.js wireTap+render; toast.js (PR #145); songbook.css :root tokens (PR #144); chord-pack-adapter.js + sugg.js (PR #137); shape-classify.js (PR #134); storage-migrate.js (PR #135); backup.js (PR #138); solo-guide.js (PR #118); sw.js + scripts/check-cache-bump.sh; decisions.md registry rows.
+**Anchors verified:** circle.js:34-37 + SOLO_SCALES/BLUES_KEY blocks; esc.js; list-item.js wireTap+render; toast.js (PR #145); songbook.css :root tokens (PR #144; `--guide-bg`/`--guide-line`/radius-token blocks, M-DESIGN-ENFORCE wave 1); chord-pack-adapter.js + sugg.js (PR #137); shape-classify.js (PR #134); storage-migrate.js (PR #135); backup.js (PR #138); solo-guide.js (PR #118); sw.js + scripts/check-cache-bump.sh; test/consistency-lint.test.js (E1/E2/E3 static guards); decisions.md registry rows (D-SELECTED-ACCENT, D-ENFORCE-1).

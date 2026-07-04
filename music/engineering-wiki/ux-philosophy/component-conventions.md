@@ -12,9 +12,9 @@ The app's design-system reference: canonical style/convention per element class,
 |---|---|---|
 | Primary save (accent fill) | .btn.red ([songbook.css](../../shared/songbook.css) ~:254-257) | var(--accent) fill, var(--on-accent) text (always-dark, both themes); the ONLY accent-filled button; :active scale(.97) |
 | Secondary (ghost) | .btn.ghost | transparent bg, var(--txt-soft) text, same active scale - default for non-destructive actions |
-| Icon buttons | .iconBtn (~:199-201) | 44x44, var(--surface-2) bg, var(--accent-ink) glyph, radius 10px; active flips to accent fill + on-accent |
+| Icon buttons | .iconBtn (~:199-201) | 44x44, var(--surface-2) bg, var(--accent-ink) glyph, radius var(--r-btn-sm); active flips to accent fill + on-accent |
 | Quick keys (transpose, queue nav, reorder) | .transposeChip button / .queueNav button / .li-up/.li-dn | surface-2 + line-strong border; active scale(.9). KNOWN DEBT: li-up/dn 40x32 sits below the 44px floor (registered) |
-| Segmented controls | .modeSwitch / .viewToggle (~:202-219) | container bg-2 + 4px padding + radius 11; on-state = surface-2 + shadow ring TODAY - D-SELECTED-ACCENT rules this converges on the accent-fill grammar (design-enforce wave) |
+| Segmented controls | .modeSwitch / .viewToggle (~:202-219) | container bg-2 + 4px padding + radius var(--r-btn); on-state = accent-fill (background:var(--accent), color:var(--on-accent)) - D-SELECTED-ACCENT SHIPPED (M-DESIGN-ENFORCE wave 1): was surface-2 + shadow ring, now the SAME grammar as .chip.on |
 | Bottom-nav tabs | .tabbar button (~:90-94) | column icon+label, flex-1 (44px+ wide); active = accent-deep bg + accent-ink; label .6rem uppercase 800 |
 | Close/X | .setHd .x / .bt-st-x / .rf-x | transparent, txt-soft, 44px hit via padding; color-change feedback only (no scale) - the one sanctioned no-scale button family |
 
@@ -65,19 +65,19 @@ The palette is the :root custom-property block in [songbook.css](../../shared/so
 ## Spacing / radius / motion
 
 - Gaps: 8px button rows, 6px chip rows, 8-10px grids, 11-13px list padding, 14-16px cards.
-- Radius: 11px buttons, 10px icon/secondary, 18px pill chips, 13-15px cards, 14-16px modals, 9-12px inputs. KNOWN SCATTER (7-13px oddballs) - tokenization in the design-enforce wave.
+- Radius: SHIPPED as 5 SSOT tokens (M-DESIGN-ENFORCE wave 1, songbook.css :root token block; guarded by [test/consistency-lint.test.js](../../../test/consistency-lint.test.js)) - `--r-btn` (11px: buttons + segmented-control containers), `--r-btn-sm` (10px: icon/compact buttons + segmented-control inner buttons), `--r-chip-pill` (18px: the .chip family), `--r-card` (13px: card/panel surfaces incl. .listItem), `--r-input` (10px: applied narrowly - see scope note below). Values are the actual per-class MAJORITY found by inventory, not a fixed default (`--r-card` is 13, not a rounder 14, because 6 of 8 card-shaped consumers already agreed on 13). Modals/overlays (.rf-box, .bt-pl-box, .bt-qpanel-box) keep their OWN 14-16px range, deliberately un-tokenized - a modal is a different bucket from a card. `.search`/`.bt-in` (9-12px) also stay un-tokenized - documented as an accepted input-radius range, not the scatter finding; only the one input consumer that already matched (`.composeRowInput`) was tokenized.
 - Motion: transform .08s (press), background/border .15s, opacity .12-.15s; animations fadeUp .26s (screen enter), justSavedPulse 2s (save feedback). Nothing longer without a reason.
 
 ## Findings register (from the 2026-07-04 audit)
 
 | Finding | Severity | Disposition |
 |---|---|---|
-| Guidance notable shares the selection surface (U10 camouflage) | HIGH (operator UAT) | design-enforce wave: distinct guidance surface token |
-| Selected-state dual grammar (chips vs modeSwitch) | MED | D-SELECTED-ACCENT ruled: accent-fill everywhere; design-enforce wave |
-| Radius scatter | LOW | tokenize in design-enforce wave |
+| Guidance notable shares the selection surface (U10 camouflage) | HIGH (operator UAT) | SHIPPED (M-DESIGN-ENFORCE wave 1): distinct `--guide-bg`/`--guide-line` guidance-surface tokens, computed off `--txt-dim` (accent-independent) + a `--brass` left accent stripe; screenshot-verified both themes |
+| Selected-state dual grammar (chips vs modeSwitch) | MED | SHIPPED (M-DESIGN-ENFORCE wave 1): D-SELECTED-ACCENT - `.modeSwitch button.on` / `.viewToggle button.on` now use the same accent-fill grammar as `.chip.on` |
+| Radius scatter | LOW | SHIPPED (M-DESIGN-ENFORCE wave 1): 5 radius-by-role tokens, migrated button/chip/card oddballs - see the Radius line above |
 | li-up/dn below 44px floor | MED | registered debt (setlist-edit rider) |
 | kx ink vars theme-fragility | MED | correct today ([tracks.css](../../shared/tracks.css) + diagram.js per U3); any fill change re-verifies >=4.5:1 |
 
 ---
 
-**Anchors verified:** songbook.css :root tokens + component classes (~:14-520); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, U3/U4/U7 rows); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP).
+**Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token blocks); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, U3/U4/U7 rows); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards).
