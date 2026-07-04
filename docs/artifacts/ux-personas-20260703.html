@@ -96,18 +96,18 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 
 <!-- ============ ABOVE THE FOLD: OPERATOR COCKPIT ============ -->
 <div class="cockpit">
-<div class="state"><span style="color:var(--ok)">NOTHING NEEDED NOW</span> <span style="color:var(--dim);font-weight:400;font-size:.8rem">- your next 3 touchpoints are forecast below so you can plan ahead</span></div>
+<div class="state"><span style="color:var(--warn)">YOUR MOVE - TOUCHPOINT 1 ACTIVE</span> <span style="color:var(--dim);font-weight:400;font-size:.8rem">- all 6 builders landed; 6 draft PRs await review + merge</span></div>
 <div class="lights">
-<span class="lt"><span class="lamp l-run"></span>BUILD 3 running / 3 landed</span>
-<span class="lt"><span class="lamp l-ok"></span>GATES none pending</span>
+<span class="lt"><span class="lamp l-ok"></span>BUILD 6/6 landed</span>
+<span class="lt"><span class="lamp l-run"></span>REVIEW 6 PRs waiting on you</span>
 <span class="lt"><span class="lamp l-ok"></span>TESTS 19/19 green</span>
 <span class="lt"><span class="lamp l-off"></span>WAVE 2 sleeping (needs #98)</span>
 </div>
 
 <div style="font-size:.72rem;font-weight:700;color:var(--brand-secondary);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 2px">Your next touchpoints (forecast)</div>
 
-<div class="fc"><div class="fh"><span class="pill pl-you">1 - REVIEW + MERGE</span><span class="fw">tonight, when builders finish (~1h)</span></div>
-<div class="fd">4-6 draft PRs land with V&amp;V + previews. You review and merge IN THE LISTED ORDER (hint-infra base merges first; I retarget the stacked ones after). Prep needed: none - PR bodies carry everything. Est: 15-25 min on phone via previews.</div></div>
+<div class="fc" style="border-left-color:var(--warn)"><div class="fh"><span class="pill pl-you">1 - REVIEW + MERGE</span><span class="fw">ACTIVE NOW - est 15-25 min</span></div>
+<div class="fd">Merge in this order (I rebase/retarget between merges - just go top to bottom): <a href="https://github.com/nhruska/nhruska.github.io/pull/100">#100 Clear undo (P0)</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/101">#101 theory canon</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/102">#102 hint infra (do NOT delete branch)</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/105">#105 setlist guard</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/103">#103 first-run cues</a> -&gt; <a href="https://github.com/nhruska/nhruska.github.io/pull/104">#104 why hint</a>. Combined 1+5 pre-verified (suite green, 0px fold). Preview: <a href="https://raw.githack.com/nhruska/nhruska.github.io/claude/ux-s1-clearguard/music/play/">clearguard branch</a>.</div></div>
 
 <div class="fc"><div class="fh"><span class="pill pl-you">2 - DECIDE</span><span class="fw">anytime before sprint 2 (no rush)</span></div>
 <div class="fd">Two queued decisions you can answer via telegram whenever: (a) merge PR #98 when its own review completes - that wakes wave 2 (3 more items build automatically); (b) M3 finder-rehome 5A vs 5B for sprint 2 (council recommends 5A).</div></div>
@@ -122,9 +122,9 @@ code{background:rgba(41,170,225,.08);border-radius:4px;padding:0 3px;font-size:.
 </div>
 </div>
 <div class="chips">
-<div class="chip"><div class="n">3/6</div><div class="l">wave-1 items landed</div></div>
+<div class="chip"><div class="n">6/6</div><div class="l">wave-1 items landed</div></div>
 <div class="chip"><div class="n">19/19</div><div class="l">test files green</div></div>
-<div class="chip"><div class="n">0</div><div class="l">blockers on you</div></div>
+<div class="chip"><div class="n">6</div><div class="l">PRs waiting on you</div></div>
 <div class="chip"><div class="n">3</div><div class="l">forecast touchpoints</div></div>
 </div>
 
