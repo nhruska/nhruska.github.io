@@ -1,9 +1,15 @@
 /* =====================================================================
- * diagram.dom.test.js  -  drives the REAL Diagram.scale() through a minimal
- * stub document and inspects the produced SVG STRING: the fret-number labels
- * must paint AFTER the note dots (SVG paints in document order - the old
- * order hid the numbers behind the bottom string's dots) and the canvas must
- * reserve a label band below the board so the two can't collide at all.
+ * diagram.dom.test.js  -  drives the REAL Diagram.scale() AND Diagram.render()
+ * through a minimal stub document and inspects the produced SVG/HTML STRING.
+ * scale(): the fret-number labels must paint AFTER the note dots (SVG paints
+ * in document order - the old order hid the numbers behind the bottom
+ * string's dots) and the canvas must reserve a label band below the board so
+ * the two can't collide at all.
+ * render() (S-DIAGRAM-PREF step 2): opts.patternLabel is EXTEND-not-overlay -
+ * absent renders byte-identical to the pre-existing chord-diagram output;
+ * present appends an escaped caption below the diagram, nothing else changes.
+ * Also covers notifyRendered()'s music:diagram-rendered CustomEvent trigger
+ * hook (S-DIAGRAM-PREF step 1).
  * Run: node test/diagram.dom.test.js
  * ===================================================================== */
 'use strict';
@@ -196,6 +202,67 @@ test('ghost dots still respect z-order: fret-number labels paint AFTER them too'
   var lastGhostCircle = svg.lastIndexOf('kx-ghost');
   var firstMarker = svg.indexOf(MARKER_FILL);
   assert.ok(firstMarker > lastGhostCircle, 'marker labels must paint after ghost dots too');
+});
+
+/* ---------- S-DIAGRAM-PREF step 2: Diagram.render()'s opts.patternLabel is
+ * EXTEND-not-overlay, same contract as scale()'s opts.tones above. ---------- */
+var E_OPEN = [0, 2, 2, 1, 0, 0]; // guitar open E - a real, classifiable voicing
+
+test('opts.patternLabel ABSENT -> byte-identical chord-diagram render, small size (SHA-256 lock)', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E' });
+  var hash = crypto.createHash('sha256').update(el.innerHTML).digest('hex');
+  // Locked at the moment opts.patternLabel was introduced (music/shared/
+  // diagram.js, S-DIAGRAM-PREF step 2). A hash mismatch means the label-
+  // absent render path changed - re-verify deliberately before updating.
+  assert.strictEqual(hash, '47a0d049153b841f4b8270e3210299c4d53ab9459d89e6fc963aeb9f7588ce32');
+});
+test('opts.patternLabel ABSENT -> byte-identical chord-diagram render, big size (SHA-256 lock)', function () {
+  var el = D.render(E_OPEN, { size: 'big', name: 'E' });
+  var hash = crypto.createHash('sha256').update(el.innerHTML).digest('hex');
+  assert.strictEqual(hash, 'e3d216a3bef5d0eb0dfd17e08117955064ca9724ad75266315fca0789c585b58');
+});
+test('opts.patternLabel present appends an escaped caption; the diagram markup ahead of it is untouched', function () {
+  var label = 'open E shape, root on 6, root position';
+  var withLabel = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: label });
+  var withoutLabel = D.render(E_OPEN, { size: 'small', name: 'E' });
+  var labelStart = withLabel.innerHTML.indexOf('<div class="dg-shapeLabel"');
+  assert.ok(labelStart > 0, 'expected a dg-shapeLabel div appended to the render');
+  assert.strictEqual(withLabel.innerHTML.slice(0, labelStart), withoutLabel.innerHTML,
+    'everything before the label div must render identically to the label-absent output');
+  assert.ok(withLabel.innerHTML.indexOf(label) >= 0, 'expected the label text itself in the render');
+});
+test('opts.patternLabel escapes HTML-unsafe characters (never raw-injects markup)', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: '<script>x</script>' });
+  assert.strictEqual(el.innerHTML.indexOf('<script>x</script>'), -1, 'must not render an unescaped <script> tag');
+  assert.ok(el.innerHTML.indexOf('&lt;script&gt;') >= 0, 'expected the HTML-escaped form');
+});
+test('opts.patternLabel as an empty string behaves like absent (no label div rendered)', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: '' });
+  assert.strictEqual(el.innerHTML.indexOf('dg-shapeLabel'), -1, 'empty string must not render a label div');
+});
+
+/* ---------- S-DIAGRAM-PREF step 1: notifyRendered()'s trigger hook ---------- */
+test('render() with a real voicing dispatches exactly one music:diagram-rendered CustomEvent', function () {
+  var fired = 0;
+  var origDispatch = global.dispatchEvent, origCE = global.CustomEvent;
+  global.CustomEvent = function (type) { this.type = type; };
+  global.dispatchEvent = function (ev) { if (ev && ev.type === 'music:diagram-rendered') fired++; };
+  try { D.render(E_OPEN, { size: 'small', name: 'E' }); }
+  finally { global.dispatchEvent = origDispatch; global.CustomEvent = origCE; }
+  assert.strictEqual(fired, 1, 'expected exactly one dispatch for a real chord render');
+});
+test('render() with no frets (name-only placeholder) never dispatches the trigger signal', function () {
+  var fired = 0;
+  var origDispatch = global.dispatchEvent, origCE = global.CustomEvent;
+  global.CustomEvent = function (type) { this.type = type; };
+  global.dispatchEvent = function (ev) { if (ev && ev.type === 'music:diagram-rendered') fired++; };
+  try { D.render(null, { size: 'small', name: 'Zzz' }); }
+  finally { global.dispatchEvent = origDispatch; global.CustomEvent = origCE; }
+  assert.strictEqual(fired, 0, 'a name-only fallback (no real chord data) must not fire the trigger signal');
+});
+test('render() is a safe no-op signal-wise when window.dispatchEvent/CustomEvent are absent (Node test harness default)', function () {
+  assert.strictEqual(typeof global.dispatchEvent, 'undefined', 'precondition: no dispatchEvent stub active');
+  assert.doesNotThrow(function () { D.render(E_OPEN, { size: 'small', name: 'E' }); });
 });
 
 run();

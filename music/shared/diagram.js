@@ -11,7 +11,14 @@
  * Replaces the per-instrument renderers that used to live in each chord
  * pack. A profile supplies only the fret arrays (data); this draws them.
  *
- *   Diagram.render(frets, { size:'small'|'big', name:'C' }) -> HTMLElement
+ *   Diagram.render(frets, { size:'small'|'big', name:'C', patternLabel:'' })
+ *     -> HTMLElement
+ *   opts.patternLabel (optional, S-DIAGRAM-PREF step 2): a pre-computed
+ *   string drawn as a small caption below the diagram - e.g. the shape-
+ *   classify.js label ("E-shape barre, root on 6, root position"). Absent/
+ *   falsy renders byte-identical to the pre-existing output; this module
+ *   never reads the dots/patterns preference or calls ShapeClassify itself
+ *   (see shared/diagram-pref.js, the caller-side decision layer).
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -31,6 +38,19 @@
   // besides play/index.html's; both now get the strict &<>"' superset).
   function esc(s) { return global.Esc.esc(s); }
 
+  // S-DIAGRAM-PREF step 1 trigger hook: fires a lightweight signal every time
+  // an ACTUAL chord diagram draws (never the name-only "no chord" fallback
+  // below), so play/index.html can mount the one-time dots/patterns
+  // preference prompt at "the first chord-diagram surface" without this
+  // generic, instrument-agnostic renderer knowing anything about Notables,
+  // localStorage, or which screen/tab is active. Guarded: the Node test
+  // harness (test/diagram.dom.test.js) stubs only `document`, never
+  // `window.dispatchEvent`/`CustomEvent`, so this is a safe no-op there.
+  function notifyRendered() {
+    if (typeof global.dispatchEvent !== 'function' || typeof global.CustomEvent !== 'function') return;
+    try { global.dispatchEvent(new global.CustomEvent('music:diagram-rendered')); } catch (e) { /* ignore */ }
+  }
+
   function baseFret(frets) {
     var fretted = frets.filter(function (x) { return x > 0; });
     if (!fretted.length) return 1;
@@ -46,6 +66,7 @@
     wrap.className = o.wrapClass;
     var nameSpan = '<span class="' + o.nameClass + '">' + esc(name) + '</span>';
     if (!frets || !frets.length) { wrap.innerHTML = nameSpan; return wrap; }
+    notifyRendered();
 
     var n = frets.length, cols = n - 1;
     var sx = o.sx, padX = o.padX, padY = o.padY;
@@ -105,7 +126,21 @@
       }
     });
     svg += '</svg>';
-    wrap.innerHTML = nameSpan + svg;
+    // S-DIAGRAM-PREF step 2 ('patterns' render): opts.patternLabel is an
+    // EXTEND-not-overlay addition - same contract as scale()'s opts.tones
+    // below. Absent/falsy (every existing caller, and every 'dots'-pref or
+    // unclassifiable-voicing call under the new caller) renders BYTE-
+    // IDENTICAL to the pre-existing output (regression-locked in
+    // diagram.dom.test.js). This renderer stays agnostic of the dots/
+    // patterns preference and of ShapeClassify entirely - it just draws
+    // whatever text string it's handed, or nothing; see diagram-pref.js for
+    // who decides WHETHER to pass one and what it says.
+    var labelHtml = opts.patternLabel
+      ? '<div class="dg-shapeLabel" style="max-width:100%;word-break:break-word;white-space:normal;'
+        + 'font-size:.62rem;line-height:1.25;text-align:center;font-family:monospace;'
+        + 'color:var(--ink-faint,#9aa3b2);margin-top:2px;">' + esc(opts.patternLabel) + '</div>'
+      : '';
+    wrap.innerHTML = nameSpan + svg + labelHtml;
     return wrap;
   }
 
@@ -276,10 +311,13 @@
   global.Diagram = { render: render, baseFret: baseFret, scale: scale, scalePlan: scalePlan };
 
   // expose the pure fret-window math for Node unit tests (no DOM needed), plus
-  // scale() for the stub-document render tests (label band + paint order).
+  // scale() for the stub-document render tests (label band + paint order), plus
+  // render() (S-DIAGRAM-PREF step 2: opts.patternLabel + notifyRendered() dots/
+  // patterns regression coverage - test/diagram.dom.test.js).
   if (typeof module !== 'undefined' && module.exports) {
     module.exports.scalePlan = scalePlan;
     module.exports.scale = scale;
+    module.exports.render = render;
   }
 
 })(typeof window !== 'undefined' ? window : this);

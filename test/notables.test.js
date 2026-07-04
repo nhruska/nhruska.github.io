@@ -178,12 +178,12 @@ test('renderBanner() applies an extra className when given', function () {
 });
 
 /* ---------- PRIORITY table is exposed and in the expected order ---------- */
-test('PRIORITY exposes the sprint order: firstrun > whynote > roman > backup', function () {
-  assert.deepStrictEqual(Notables.PRIORITY, ['firstrun', 'whynote', 'roman', 'backup']);
+test('PRIORITY exposes the sprint order: firstrun > whynote > roman > diagrampref > backup', function () {
+  assert.deepStrictEqual(Notables.PRIORITY, ['firstrun', 'whynote', 'roman', 'diagrampref', 'backup']);
 });
 
 /* ---------- S-BACKUP-NUDGE: 'backup' is the lowest priority, never preempts ---------- */
-test('backup notable never preempts roman/whynote/firstrun, but wins an empty slot', function () {
+test('backup notable never preempts roman/whynote/firstrun/diagrampref, but wins an empty slot', function () {
   resetLocalStorage();
   Notables._resetArbitration();
   assert.strictEqual(Notables.claim('roman'), true);
@@ -192,6 +192,26 @@ test('backup notable never preempts roman/whynote/firstrun, but wins an empty sl
   assert.strictEqual(Notables.claim('backup'), true);    // empty slot -> backup wins
   assert.strictEqual(Notables.claim('whynote'), true);   // whynote preempts backup
   assert.strictEqual(Notables.claim('backup'), false);
+});
+
+/* ---------- S-DIAGRAM-PREF: 'diagrampref' outranks 'backup' but loses to
+ * 'roman'/'whynote'/'firstrun' - the spec's explicit ordering. ---------- */
+test('diagrampref preempts backup but never roman/whynote/firstrun', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('backup'), true);        // empty slot -> backup wins
+  assert.strictEqual(Notables.claim('diagrampref'), true);    // diagrampref preempts backup
+  assert.strictEqual(Notables.claim('backup'), false);        // backup still loses while diagrampref holds
+  assert.strictEqual(Notables.claim('roman'), true);          // roman preempts diagrampref
+  assert.strictEqual(Notables.claim('diagrampref'), false);   // diagrampref now loses to roman
+});
+test('diagrampref, once dismissed, never claims again (one-shot, matches every other notable)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('diagrampref'), true);
+  Notables.dismiss('diagrampref');
+  assert.strictEqual(Notables.isDismissed('diagrampref'), true);
+  assert.strictEqual(Notables.claim('diagrampref'), false);
 });
 
 run();
