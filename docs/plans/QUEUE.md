@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| S-HARDEN in flight (fired 2026-07-04, operator delegated pick: wireTap x1, shared esc, SW verify guards, toggleSet toast) | one agent, sequential workstreams (all touch songbook.js) | [fold record](m-guide-adversarial-fold-20260704.md) |
+| (idle - S-HARDEN SHIPPED 2026-07-04 v87, PR #124: wireTap SSOT, shared esc.js, sw-verify + check-cache-bump guards, truthful setlist toast) | next launch: any SHORT trigger | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
