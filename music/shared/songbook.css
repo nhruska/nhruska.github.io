@@ -160,13 +160,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* Edit-mode reorder/remove targets enlarged (>=32px, gapped) - only rendered in
- * edit-set mode, so they no longer sit always-hot on the scroll rail. */
+/* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
+ * edit-set mode, so they no longer sit always-hot on the scroll rail.
+ * NOTE (S-SETX rider, sprint-1): li-up/li-dn are 40x32 - BELOW the 44px floor
+ * in both dimensions. Out of this rider's scope (only li-rm was named 40->44
+ * in the sprint plan); flagged to the backlog rather than resized here, since
+ * growing them would also grow .li-ctrl's stacked height (70px) past li-body's
+ * content height and shift the row - the exact regression the "no layout
+ * shift" acceptance criterion guards against. */
 .listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
-.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;min-width:40px;min-height:40px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
+/* S-SETX rider b: 40x40 -> >=44x44 via padding (NOT a bigger glyph - the "x"
+ * stays font-size:1.2rem). min-width/min-height set the deterministic floor;
+ * padding keeps the glyph from crowding the now-larger border box. */
+.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
 /* J2: setlist edit-mode remove reads as destructive (li-rm only renders in edit mode). */
 #setBody .li-rm{border-color:var(--bad);color:var(--bad);}
@@ -365,10 +374,37 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog:empty{min-height:0;padding:0;border:0;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-/* 24px clears the WCAG 2.5.8 (24px) target floor on its own; no oversized ::before hit
-   area, which would overlap the chord tile and steal play-taps from the diagram below. */
-.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;}
-.prog .slot .rm:active{background:var(--bad);color:var(--on-danger);transform:scale(.85);}
+/* S-SLOTX (sprint-1 #1, F2): >=44px TAP target via padding - glyph size
+   unchanged. Supersedes the old "24px clears WCAG 2.5.8, no oversized hit
+   area" note: the sprint-1 geometry audit found 24px still invites
+   wrong-chord removal in this destructive-tap context, so the binding spec
+   calls for 44px here too. The VISIBLE circle is a ::before, still 24x24 and
+   still anchored at the SAME top:-7px/right:-7px corner as before this
+   change, so it looks and sits exactly where it did. The button (the tap
+   target) keeps that IDENTICAL top:-7px/right:-7px anchor too - deliberately
+   NOT centered growth: `.prog` has `overflow:auto` (implied overflow-y, per
+   its overflow-x:auto), so growing the badge upward/rightward past its old
+   footprint clips the added area against the *scroll container's own edge*,
+   producing a silently-dead invisible zone (verified live via Playwright
+   elementFromPoint - a symmetric top:-17px/right:-17px 44x44 box measurably
+   lost its top ~4px to that clip). Growing DOWN and LEFT instead - toward
+   the slot's own interior, which is never clipped - reaches 44x44 with a
+   fully live hit area; the tradeoff is more overlap with the chord diagram
+   below (already an accepted cost here - movement-cancelled taps via
+   composeWireTap in songbook.js keep a scroll-grab from misfiring either
+   target, same rationale as the original "no oversized hit area" note this
+   supersedes). isolation:isolate scopes the ::before's z-index:-1 to this
+   button only (paints it behind the × text without affecting sibling
+   stacking). The old `transform:scale(.85)` press-feedback is DROPPED here
+   (color-only feedback now) - verified live via Playwright that a
+   mousedown-time scale-shrink moves the box's edges inward before mouseup,
+   so a tap near the (now much bigger) 44px edge can miss the shrunken
+   hit-box entirely and silently produce no click. Reliability of the full
+   44px area wins over the press-animation flourish. */
+.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:5px 5px 0 0;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
+.prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.prog .slot .rm:active::before{background:var(--bad);}
+.prog .slot .rm:active{color:var(--on-danger);}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
@@ -608,16 +644,24 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.keyOpen #maxNote{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
-/* SINGLE control row, no wrap: [♭] [key/mode chip] [♯] [⤢] [?] | [Clear] [Save].
-   Must fit 375px (content width ~347px after the .view 14px side padding). Icon buttons
-   and the buttons are compacted in this context; the chip is a fixed 96px. The spacer
-   flexes to push Clear/Save to the right but collapses to 0 first when space is tight, so
-   nothing overflows. */
+/* SINGLE control row, no wrap. DOM order is [♭] [key/mode chip] [♯] [⤢] [?] |
+   [Clear] [Save]; VISUAL order (via #cClear{order}, below) moves Clear to the
+   front: [Clear] [♭] [chip] [♯] [⤢] [?] | [Save] - S-CLEARGUARD/F1/F8: Clear
+   sat directly beside Save (mis-reach hazard for a thumb stretching from an
+   instrument grip); this maximizes the on-screen distance between the two
+   without changing the row's height or which elements are in it. Must fit
+   375px (content width ~347px after the .view 14px side padding). Icon
+   buttons and the buttons are compacted in this context; the chip is a fixed
+   96px. The spacer flexes to push Save to the right but collapses to 0 first
+   when space is tight, so nothing overflows. */
 .ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
 /* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
 .ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:9px;}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
+/* S-CLEARGUARD: visual-only resequence (DOM/tab order unchanged - this app is
+   touch-first; see composeWireTap/wireTap for the actual tap-safety layer). */
+.ctrlBar #cClear{order:-1;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
    IN-KEY cells (.chordCell) and starters (.progPick), and the next-chord suggestion
@@ -748,3 +792,14 @@ footer{display:none;}
 /* Subtle transient toast (add-to-setlist cue etc). Sits above the tab bar. */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
+ * produced by Notables.renderBanner() in shared/notables.js. Same accent-
+ * card look as .setUndo (accent-deep bg, accent-dim border) but with its
+ * own class - a notable is shown-once-forever, not a scoped undo toast, so
+ * it stays a separate, clearly-owned block. No consumer renders one yet;
+ * S-FIRSTRUN / S-WHYNOTE / S-ROMAN mount it where they land. */
+.notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:10px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
+.notableBanner-body{flex:1;min-width:0;line-height:1.4;}
+.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.notableBanner-x:active{transform:scale(.9);}

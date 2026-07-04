@@ -597,6 +597,80 @@ test('solo-button gate pins hidden + inline display, and renderKey runs at init'
   assert.ok(!/cHelp/.test(src), 'cHelp references must stay removed');
 });
 
+/* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------
+ * The binding correctness property: buildClearSnapshot/applyClearSnapshot must
+ * be a fully INDEPENDENT copy - later progression/songKey mutations (add/remove
+ * chord, transpose, mode or key change) must never leak into a pending Undo,
+ * and restoring must never hand back a live alias into the stored snapshot
+ * (a second Clear->Undo cycle would otherwise corrupt the first). */
+test('buildClearSnapshot is an independent copy - mutating the source after does not touch it', function () {
+  var progression = ['C', 'G', 'Am', 'F'];
+  var songKey = { root: 'C', mode: 'Major', explicit: true };
+  var snap = Songbook.buildClearSnapshot(progression, 2, songKey, 'm123');
+  // Mutate the ORIGINALS after the snapshot was taken (the equivalent of the
+  // user rebuilding a new progression right after Clear).
+  progression.push('Dm'); progression.length = 0;
+  songKey.root = 'G'; songKey.mode = 'Minor'; songKey.explicit = false;
+  assert.deepStrictEqual(snap.progression, ['C', 'G', 'Am', 'F']);
+  assert.strictEqual(snap.cTpose, 2);
+  assert.deepStrictEqual(snap.songKey, { root: 'C', mode: 'Major', explicit: true });
+  assert.strictEqual(snap.savedComposeId, 'm123');
+});
+test('applyClearSnapshot returns an independent copy - mutating the result does not corrupt the stored snapshot', function () {
+  var snap = Songbook.buildClearSnapshot(['E', 'A', 'Bm', 'D'], -1, { root: 'E', mode: 'Mixolydian', explicit: true }, null);
+  var restored = Songbook.applyClearSnapshot(snap);
+  assert.deepStrictEqual(restored.progression, ['E', 'A', 'Bm', 'D']);
+  assert.strictEqual(restored.cTpose, -1);
+  assert.deepStrictEqual(restored.songKey, { root: 'E', mode: 'Mixolydian', explicit: true });
+  assert.strictEqual(restored.savedComposeId, null);
+  // Mutate what the caller got back (as if the app kept editing after Undo) -
+  // the SAVED snapshot object must be untouched, so a second Undo (if the
+  // snapshot were still referenced) would still restore the true original.
+  restored.progression.push('G'); restored.songKey.root = 'F#';
+  assert.deepStrictEqual(snap.progression, ['E', 'A', 'Bm', 'D']);
+  assert.strictEqual(snap.songKey.root, 'E');
+});
+test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear state (A3 contract)', function () {
+  var snap = Songbook.buildClearSnapshot(['G', 'D', 'Em', 'C'], 3, { root: 'G', mode: 'Major', explicit: false }, 'm999');
+  assert.deepStrictEqual(Songbook.applyClearSnapshot(snap), {
+    progression: ['G', 'D', 'Em', 'C'], cTpose: 3,
+    songKey: { root: 'G', mode: 'Major', explicit: false }, savedComposeId: 'm999'
+  });
+});
+
+/* ---------- Clear-undo wiring pin (A3: "ANY subsequent mutating action
+ * invalidates it") ----------
+ * The DOM-wired call sites can't run through jsdom-free unit tests, so pin
+ * the SOURCE contract the same way the solo-button gate above does: every
+ * enumerated mutating action (add/remove chord, transpose, mode change, key
+ * change, Save) calls invalidateClearUndo(), Clear itself never regresses to
+ * a native confirm(), and the slot remover is movement-cancelled (not a raw
+ * onclick) per S-SLOTX. */
+test('Clear-undo: every A3-listed mutating action invalidates, Clear never regresses to confirm(), slot-x is movement-cancelled', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  // Clear builds a snapshot and shows the banner - never a native confirm().
+  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,900}?\};/.exec(src);
+  assert.ok(clearBlock, 'cClear.onclick handler not found');
+  assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
+  assert.ok(/showClearUndoBanner\(\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner');
+  // (matches an actual confirm('...') CALL, not the word appearing in a code comment)
+  assert.ok(!/confirm\(['"]/.test(clearBlock[0]), 'Clear must NEVER use a native confirm() dialog (A3)');
+  // Each A3-listed mutating action calls invalidateClearUndo() somewhere in its body.
+  ['function addChord\\(c\\) \\{', 'function composeTpose\\(st\\) \\{', 'function convertToMode\\(targetMode\\) \\{', 'function loadProgression\\(degrees\\) \\{', 'function saveProgression\\(done\\) \\{'].forEach(function (headRe) {
+    var re = new RegExp(headRe + '[\\s\\S]{0,300}?invalidateClearUndo\\(\\)');
+    assert.ok(re.test(src), 'missing invalidateClearUndo() near ' + headRe);
+  });
+  // remove-chord (the slot .rm tap) and the key root/mode pickers are anonymous
+  // closures - just confirm the call count is at least 8 (one per identified
+  // mutating site: addChord, remove-chord, composeTpose, convertToMode,
+  // loadProgression, saveProgression, root-pick, empty-prog mode-set, keyClear).
+  var count = (src.match(/invalidateClearUndo\(\)/g) || []).length;
+  assert.ok(count >= 8, 'expected invalidateClearUndo() at every A3 mutating site, found ' + count);
+  // S-SLOTX: the slot remover is movement-cancelled (composeWireTap), not a raw onclick.
+  assert.ok(/composeWireTap\(rm, function/.test(src), 'slot remover must be movement-cancelled via composeWireTap, not a raw onclick');
+  assert.ok(!/rm\.onclick = function/.test(src), 'slot remover must not regress to a raw onclick');
+});
+
 test('ytSearchURL: sentinel + custom-record query hygiene (codex #91)', function () {
   function q(url) { return decodeURIComponent(url.split('=', 2)[1]).replace(/\+/g, ' '); }
   // the 'search' artist sentinel never reaches the query
@@ -608,6 +682,71 @@ test('ytSearchURL: sentinel + custom-record query hygiene (codex #91)', function
   assert.strictEqual(u, 'Original track D key folk Dm Am');
   // a custom record without seq degrades to the plain query
   assert.strictEqual(q(Songbook.ytSearchURL({ t: 'Original track', a: '', custom: true })), 'Original track');
+});
+
+/* ---------- wireTapCancel (S-SETX rider a: setlist Clear movement-cancel) ----------
+ * Minimal fake element (addEventListener/dispatch only) - same "just enough DOM"
+ * approach as test/diagram.dom.test.js, no jsdom dependency. Drives the REAL
+ * exported wireTapCancel through touchstart/touchmove/click, mirroring exactly
+ * how a scroll-grab vs a tap looks on the wire. */
+function FakeTapEl() { this._h = {}; }
+FakeTapEl.prototype.addEventListener = function (type, fn) { (this._h[type] = this._h[type] || []).push(fn); };
+FakeTapEl.prototype.fire = function (type, evt) { (this._h[type] || []).forEach(function (fn) { fn(evt); }); };
+function touch(x, y) { return { touches: [{ clientX: x, clientY: y }] }; }
+function clickEvt() { return { stopPropagation: function () {} }; }
+
+test('wireTapCancel: a still tap (no touchmove past threshold) fires fn', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(103, 98)); // 3px, well under the 10px threshold
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTapCancel: a scroll-grab (touchmove > 10px) suppresses fn (setlist Clear must not fire)', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(100, 130)); // 30px vertical scroll-grab
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0);
+});
+
+test('wireTapCancel: threshold is exclusive-over-10px and checks EITHER axis', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('touchstart', touch(0, 0));
+  el.fire('touchmove', touch(11, 0)); // x-only breach
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0, 'x-axis breach alone must cancel');
+
+  var el2 = new FakeTapEl(), fired2 = 0;
+  Songbook.wireTapCancel(el2, function () { fired2++; });
+  el2.fire('touchstart', touch(0, 0));
+  el2.fire('touchmove', touch(0, 10)); // exactly at threshold, not over
+  el2.fire('click', clickEvt());
+  assert.strictEqual(fired2, 1, 'exactly-10px move must still count as a tap');
+});
+
+test('wireTapCancel: a mouse click with no touch events at all still fires (desktop unaffected)', function () {
+  var el = new FakeTapEl(), fired = 0;
+  Songbook.wireTapCancel(el, function () { fired++; });
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTapCancel: no-op guard when el or fn is missing (never throws)', function () {
+  assert.doesNotThrow(function () { Songbook.wireTapCancel(null, function () {}); });
+  assert.doesNotThrow(function () { Songbook.wireTapCancel(new FakeTapEl(), null); });
+});
+
+test('setClear wiring: routed through wireTapCancel, not a raw .onclick= (movement-cancel guard, S-SETX)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/wireTapCancel\(el\.setClear,/.test(src), 'el.setClear must be wired via wireTapCancel(), not a raw onclick=');
+  assert.ok(!/el\.setClear\.onclick\s*=/.test(src), 'a raw el.setClear.onclick= would bypass the movement-cancel guard');
+  // the underlying confirm() + clear behavior must be unchanged (rider keeps it, only adds the guard)
+  assert.ok(/confirm\('Clear your setlist\?'\)/.test(src), 'the native confirm() prompt text must stay unchanged');
 });
 
 run();

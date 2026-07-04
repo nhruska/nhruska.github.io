@@ -140,6 +140,10 @@
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
+  /* S-WHYNOTE: .bt-st-body already spaces flex children via `gap`, so the shared
+     .notableBanner's own margin-bottom (songbook.css) would double up the gap
+     below the banner - zero it here, scoped to this one owned placement. */
+  .bt-st-notable{margin-bottom:0;}
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);
     margin-bottom:9px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
