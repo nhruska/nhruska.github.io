@@ -192,6 +192,49 @@
     return wrap;
   }
 
+  // ---- S-BLUES: pentatonic + blues scales, SOLO LAYER ONLY -------------------
+  // Zero surface in diatonic()/romanFor()/triadQuality() - these are consumed
+  // exclusively by the Practice Studio's scale-swap chips (tracks.js), never by
+  // harmonization (chords-in-key, buildWhy, whynote). formula = semitones from
+  // the root; degrees use the SAME flat glyph (♭) as scaleDegrees() above.
+  //
+  // Regime A (NOW, [TRACKS-#98]): soloScale() spells every note through the
+  // SAME spell() the rest of this module uses (FORK-4 canonical sharps) - one
+  // provider, one seam. So the blue note (blues' formula[3], a flat 5th) comes
+  // out SHARP-spelled like any other chromatic tone (e.g. A blues = A C D D# E
+  // G) rather than key-aware-flattened. This is NOT special-cased here - doing
+  // so would break the list==fretboard invariant every other scale/chord
+  // surface on this screen already honors (see spellScale's header comment).
+  //
+  // Regime B (S-BLUES-B, post-#98, NOT built now): the pentatonic degrees would
+  // spell key-aware via spellScaleKeyAware(root, parentMode), and the blue note
+  // would spell as the key-aware 5th-degree LETTER flattened (b5 never #4).
+  // soloScale() routes every name through this ONE internal provider call by
+  // design, so that regime swap only needs to swap the provider inside
+  // soloScale() once #98 lands spellScaleKeyAware/keyLabel - nothing else in
+  // this file, or in tracks.js, needs to change.
+  //
+  // Subset proofs (asserted in test/solo-scales.test.js against MODE_STEPS):
+  // pentMajor's formula is a subset of ionian/lydian/mixolydian; pentMinor's
+  // formula is a subset of aeolian/dorian/phrygian.
+  var SOLO_SCALES = {
+    pentMajor: { label: 'Pent major', kind: 'pent', family: 'major', formula: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'] },
+    pentMinor: { label: 'Pent minor', kind: 'pent', family: 'minor', formula: [0, 3, 5, 7, 10], degrees: ['1', '♭3', '4', '5', '♭7'] },
+    blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] }
+  };
+  // Names via spell() - see the regime comment above. Unknown root or unknown
+  // scaleId -> [] (safe; never throws, matching pcOf/spellScale's own contract).
+  function soloScale(root, scaleId) {
+    var pc = pcOf(root), s = SOLO_SCALES[scaleId];
+    if (pc < 0 || !s) return [];
+    return s.formula.map(function (iv) { return spell(pc + iv); });
+  }
+  function soloScaleDegrees(scaleId) {
+    var s = SOLO_SCALES[scaleId];
+    return s ? s.degrees.slice() : [];
+  }
+  function soloScaleInfo(scaleId) { return SOLO_SCALES[scaleId] || null; }
+
   var Circle = {
     ORDER: ORDER,
     position: position,
@@ -226,7 +269,12 @@
     modeChange: modeChange,
     modeInfo: function (mode) { return MODE_INFO[modeKey(mode)]; },
     MODE_INFO: MODE_INFO,
-    renderWheel: renderWheel
+    renderWheel: renderWheel,
+    // S-BLUES: solo-layer-only pentatonic/blues scales - see the block above.
+    SOLO_SCALES: SOLO_SCALES,
+    soloScale: soloScale,
+    soloScaleDegrees: soloScaleDegrees,
+    soloScaleInfo: soloScaleInfo
   };
 
   global.Circle = Circle;
