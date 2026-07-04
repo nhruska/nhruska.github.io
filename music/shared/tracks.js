@@ -238,6 +238,17 @@
     }
     return null;
   }
+  // Same guarded-reference pattern as circleRef() above, for the S-NOTABLES
+  // singleton: window.Notables in the browser, a require() fallback in Node so
+  // test/tracks.test.js drives the SAME module instance test/notables.test.js
+  // exercises directly (shared require-cache entry, not a duplicate).
+  function notablesRef() {
+    if (global.Notables) return global.Notables;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./notables.js'); } catch (e) {}
+    }
+    return null;
+  }
   // The Practice Studio's theory bundle for a key+mode: scale notes, pitch
   // classes, degrees, diatonic chords, display label. Module-scope + exported
   // so tests can drive the SAME function the Studio wiring calls (a direct
@@ -253,6 +264,36 @@
       degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
       label: shortMode(C.modeInfo(scaleMode).label)
     };
+  }
+  // S-WHYNOTE (sprint-1 item 6, stretch; A9-bound): a one-shot JIT "why" notable
+  // at the Compose -> Studio hand-off (openStudio below - the seam where the
+  // solo-scale panel first renders for a key+mode). TWO STATIC templates only,
+  // chosen by a plain string switch on th.scaleMode - zero new theory derivation.
+  // modeName reuses the exact major/minor/label.toLowerCase() mapping buildWhy
+  // already computes for its own "A minor" display line (no new lookup either).
+  // Interpolates only th.key + that mode name - both are labels the Studio
+  // already renders elsewhere on the same screen.
+  function whynoteText(key, scaleMode, label) {
+    var modeName = scaleMode === 'aeolian' ? 'minor' : scaleMode === 'ionian' ? 'major' : label.toLowerCase();
+    if (scaleMode === 'ionian') {
+      return 'Why this scale works: ' + key + ' major and its relative minor share the same notes - solo either over this progression.';
+    }
+    // Minor/modal (aeolian, dorian, mixolydian): the parallel-phrased equivalent -
+    // true for all three (each differs from its parallel major by at least one
+    // degree), so one template covers the whole non-ionian family.
+    return 'Why this scale works: ' + key + ' ' + modeName + ' and its parallel major share the same home note, not the same notes - stick with ' + key + ' ' + modeName + ' here.';
+  }
+  // Consumer-side claim + template pick for the 'whynote' notable slot (priority
+  // order + show-once persistence are notables.js's job, not re-implemented here).
+  // Returns Notables.renderBanner()-ready opts when the slot is won (first ever
+  // call, or a repeat call while still un-dismissed); returns null when the slot
+  // is denied (already dismissed forever, OR a higher-priority notable - firstrun
+  // outranks whynote - currently holds it) or Notables isn't loaded. Callers skip
+  // silently on null, matching the notables.js consumer contract.
+  function whynoteBanner(th) {
+    var N = notablesRef();
+    if (!N || typeof N.claim !== 'function' || !N.claim('whynote')) return null;
+    return { consumerId: 'whynote', text: whynoteText(th.key, th.scaleMode, th.label), className: 'bt-st-notable' };
   }
 
   var STORE = 'bt.custom.v1';
@@ -580,6 +621,18 @@
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
+      // content it explains - built via the shared Notables banner (same
+      // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
+      // whynoteBanner(th) already folds in the claim() check + show-once/priority
+      // arbitration; a null return (dismissed forever, or preempted by a
+      // higher-priority notable) skips silently, per the notables.js contract.
+      try {
+        var wnOpts = whynoteBanner(th);
+        var wnEl = wnOpts ? notablesRef().renderBanner(wnOpts) : null;
+        var wnBody = wnEl && elPlayer.querySelector('.bt-st-body');
+        if (wnBody) wnBody.insertBefore(wnEl, wnBody.firstChild);
+      } catch (e) {}
       // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
@@ -964,6 +1017,7 @@
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
+    whynoteText: whynoteText, whynoteBanner: whynoteBanner,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied
