@@ -734,6 +734,69 @@
    *
    * Returns a controller: { switchTab, openSong, getState, getSongs, rebuild }
    * ===================================================================== */
+  // M-GUIDE W3b (m-guide-ia-20260704.md section 3, "Compose solo chips"): the
+  // Compose key-view solo-scale PREVIEW (wired inside mount()'s renderKeyView,
+  // below) is a decoupled, non-persisted layer - chip taps re-derive ONLY that
+  // block, never songKey/progression/palette/grid. Circle-only derivation
+  // (Songbook stays Tracks-agnostic), so it works whether or not tracks.js/
+  // solo-guide.js are loaded at all. Hoisted to module scope (rather than
+  // nested inside mount()) so these pure helpers are directly Node-testable
+  // and exportable on the public surface below, matching every other pure
+  // helper in this file (chordInKey, romanInKey, convertProgressionQualities, ...).
+  function keyViewCircle() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./circle.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // SoloGuide (W3a, shared/solo-guide.js) is optional - it ships in a sibling
+  // wave whose merge order is free relative to this one. Absent module (not
+  // yet merged, or the browser didn't load the script) -> no caption, chips
+  // still work fully (locked seam guard, m-guide-ia-20260704.md section 3).
+  function keyViewSoloGuide() {
+    if (global.SoloGuide) return global.SoloGuide;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./solo-guide.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // Pure + exported for tests: the note names for one chip. scaleId is one of
+  // 'mode' | 'pentMajor' | 'pentMinor' | 'blues'. 'mode' resolves to the KEY's
+  // own scale - the 6-note blues scale when keyMode is Blues (which is exactly
+  // why the Blues-key row dedupes the standalone Blues chip: it would show the
+  // same notes under a second button), else the mode's 7-note Circle scale via
+  // CIRCLE_MODE. Unresolvable root/Circle/mode -> null (caller keeps whatever
+  // was on-screen rather than clearing it, matching soloScale's own contract).
+  function soloChipScale(root, keyMode, scaleId) {
+    var C = keyViewCircle();
+    if (!C) return null;
+    if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
+      var notes = C.soloScale(root, scaleId);
+      return notes.length ? notes : null;
+    }
+    var mk = canonMode(keyMode);
+    if (mk === 'Blues') {
+      var bluesNotes = C.soloScale(root, 'blues');
+      return bluesNotes.length ? bluesNotes : null;
+    }
+    var circleMode = CIRCLE_MODE[mk];
+    if (!circleMode || typeof C.spellScale !== 'function') return null;
+    var scaleNotes = C.spellScale(root, circleMode);
+    return scaleNotes.length ? scaleNotes : null;
+  }
+  // Pure + exported for tests: the one-line teaching caption for a chip, or
+  // null. 'mode' never captions (mirrors the Practice Studio, which never
+  // captions its default/mode chip even when that scale happens to be Blues -
+  // tracks.js wireScaleChips: `info = scaleId !== 'mode' ? ... : null`).
+  // SoloGuide absence -> null, never throws (guarded contract above).
+  function soloChipCaption(scaleId) {
+    if (scaleId === 'mode') return null;
+    var C = keyViewCircle(), SG = keyViewSoloGuide();
+    if (!C || !SG || typeof SG.framing !== 'function') return null;
+    var info = (typeof C.soloScaleInfo === 'function') ? C.soloScaleInfo(scaleId) : null;
+    return SG.framing(scaleId, info && info.family) || null;
+  }
   function mount(opts) {
     opts = opts || {};
     var el = opts.el || {};
@@ -2052,16 +2115,62 @@
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
       // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
-      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
-      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
-      // HSR chain moved out entirely. What remains: the key readout line and a
-      // "Triads & Inversions" deep-dive link that opens in the current instrument +
-      // key context.
+      // The fly-out is a pure key/mode PICKER (locked decision: the Studio owns the
+      // fretboard + guidance cards + chord-tone targeting) - the I-IV-V HSR chain
+      // stays out entirely. What it DOES carry (M-GUIDE W3b): a lightweight, purely
+      // decoupled solo-scale PREVIEW (chip row + notes + one-line caption) so you
+      // can preview what you'd solo with before ever opening the Studio - plus the
+      // key readout line and the "Triads & Inversions" deep-dive link.
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
       title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
+      // M-GUIDE W3b: solo-scale PREVIEW row - DECOUPLED (isolation-tested below).
+      // A chip tap here re-renders ONLY this block; it never touches songKey,
+      // progression, the In-key palette, or the grid, and nothing persists across
+      // renders (every renderKeyView() call defaults back to the mode's own
+      // scale). See engineering-wiki/systems/compose-key-system.md.
+      (function renderSoloChips() {
+        var wrap = document.createElement('div');
+        var chipsRow = document.createElement('div'); chipsRow.className = 'keySoloScale';
+        var notesLine = document.createElement('div'); notesLine.className = 'keySoloNotes';
+        var frameLine = document.createElement('div'); frameLine.className = 'keySoloFrame'; frameLine.hidden = true;
+        var scaleLabel = (MODES[keyMode] && MODES[keyMode].label) || escHTML(String(keyMode));
+        var CHIPS = [
+          { id: 'mode', label: scaleLabel },
+          { id: 'pentMajor', label: 'Pent major' },
+          { id: 'pentMinor', label: 'Pent minor' },
+          { id: 'blues', label: 'Blues' }
+        ];
+        // Blues-key dedup: when the KEY's own mode is already Blues, the standalone
+        // Blues chip would just re-select the identical 6-note scale under a second
+        // button - drop it (mirrors the Practice Studio's th.scaleMode === 'blues' fold).
+        if (canonMode(keyMode) === 'Blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+        var curChipId = 'mode';
+        function renderChips() {
+          chipsRow.innerHTML = CHIPS.map(function (c) {
+            return '<button type="button" class="chip' + (curChipId === c.id ? ' on' : '') + '" data-soloscale="' + escHTML(c.id) + '">' + escHTML(c.label) + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(chipsRow.querySelectorAll('.chip'), function (b) {
+            b.onclick = function () { selectChip(b.getAttribute('data-soloscale')); };
+          });
+        }
+        function selectChip(scaleId) {
+          var notes = soloChipScale(keyRoot, keyMode, scaleId);
+          if (!notes) return; // unresolvable -> keep whatever was already on-screen
+          curChipId = scaleId;
+          renderChips();
+          notesLine.innerHTML = 'Solo over it - <strong>' + escHTML(notes.join(' ')) + '</strong>';
+          var caption = soloChipCaption(scaleId);
+          if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
+          else { frameLine.textContent = ''; frameLine.hidden = true; }
+        }
+        renderChips();
+        selectChip('mode'); // default every render: the key's own scale, never persisted
+        wrap.appendChild(chipsRow); wrap.appendChild(notesLine); wrap.appendChild(frameLine);
+        el.keyView.appendChild(wrap);
+      })();
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
       // future minor-cycle variant can read it; the page ignores params it doesn't use.
@@ -2851,7 +2960,10 @@
     ROOTS: ROOTS,
     wireTapCancel: wireTapCancel,
     buildClearSnapshot: buildClearSnapshot,
-    applyClearSnapshot: applyClearSnapshot
+    applyClearSnapshot: applyClearSnapshot,
+    // M-GUIDE W3b: Compose key-view solo-scale preview - pure derivation, exposed for tests
+    soloChipScale: soloChipScale,
+    soloChipCaption: soloChipCaption
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 

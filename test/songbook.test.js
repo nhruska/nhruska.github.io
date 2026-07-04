@@ -941,4 +941,56 @@ test('PROGRESSIONS: the 12-bar and quick-change Blues starters carry mode + prev
   assert.ok(blues.some(function (p) { return p.name === 'Quick-change blues'; }));
 });
 
+/* ---------- M-GUIDE W3b: Compose key-view solo-scale PREVIEW (decoupled,
+ * non-persisted - m-guide-ia-20260704.md section 3). Pure derivation only;
+ * the DOM-touching chip row lives in renderKeyView (untestable here), so the
+ * tiny data-derivation it calls is extracted to soloChipScale/soloChipCaption
+ * and tested directly, per the DOM-less pattern this file already follows. */
+test('soloChipScale: the mode chip returns the KEY scale via Circle.spellScale (A Major = ionian)', function () {
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'mode'), Circle.spellScale('A', 'ionian'));
+});
+test('soloChipScale: Minor/Mixolydian/Dorian mode chips map through CIRCLE_MODE (aeolian/mixolydian/dorian)', function () {
+  assert.deepStrictEqual(Songbook.soloChipScale('D', 'Minor', 'mode'), Circle.spellScale('D', 'aeolian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('G', 'Mixolydian', 'mode'), Circle.spellScale('G', 'mixolydian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Dorian', 'mode'), Circle.spellScale('E', 'dorian'));
+});
+test('soloChipScale: pentMajor/pentMinor/blues chips read Circle.soloScale directly, independent of the key mode', function () {
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMajor'), Circle.soloScale('A', 'pentMajor'));
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMinor'), Circle.soloScale('A', 'pentMinor'));
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'blues'), Circle.soloScale('A', 'blues'));
+});
+test('soloChipScale: the mode chip on a BLUES key IS the 6-note blues scale (why the Blues-key row dedupes the standalone Blues chip)', function () {
+  assert.deepStrictEqual(Songbook.soloChipScale('C', 'Blues', 'mode'), Circle.soloScale('C', 'blues'));
+});
+test('soloChipScale: unresolvable root -> null (never throws)', function () {
+  assert.strictEqual(Songbook.soloChipScale('H', 'Major', 'mode'), null);
+  assert.strictEqual(Songbook.soloChipScale('H', 'Major', 'pentMajor'), null);
+});
+test('soloChipCaption: never captions the default/mode chip', function () {
+  assert.strictEqual(Songbook.soloChipCaption('mode'), null);
+});
+// SoloGuide (shared/solo-guide.js) ships in the sibling W3a wave, merge order
+// free relative to this one - as of THIS branch it has not landed yet, so the
+// guarded require() fallback fails closed. That is exactly the contract this
+// locks: absent SoloGuide -> null caption, never a throw, chips fully usable.
+// (Once W3a merges, solo-guide.js will exist and these calls will start
+// resolving to real text - a strictly stronger, not weaker, outcome; the wave-
+// close integration is expected to extend this coverage at that point.)
+test('soloChipCaption: absent SoloGuide (W3a not yet merged) degrades to null for every scale id, never throws', function () {
+  assert.strictEqual(Songbook.soloChipCaption('pentMajor'), null);
+  assert.strictEqual(Songbook.soloChipCaption('pentMinor'), null);
+  assert.strictEqual(Songbook.soloChipCaption('blues'), null);
+});
+test('isolation: solo-chip derivation never touches harmonization (chordInKey/romanInKey outputs identical before/after chip taps)', function () {
+  var beforeIn = Songbook.chordInKey('Am', 'C', 'Major');
+  var beforeRoman = Songbook.romanInKey('G', 'C', 'Major');
+  Songbook.soloChipScale('C', 'Major', 'pentMajor');
+  Songbook.soloChipScale('C', 'Major', 'pentMinor');
+  Songbook.soloChipScale('C', 'Major', 'blues');
+  Songbook.soloChipCaption('pentMajor');
+  Songbook.soloChipCaption('blues');
+  assert.strictEqual(Songbook.chordInKey('Am', 'C', 'Major'), beforeIn);
+  assert.strictEqual(Songbook.romanInKey('G', 'C', 'Major'), beforeRoman);
+});
+
 run();

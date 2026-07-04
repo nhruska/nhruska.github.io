@@ -466,7 +466,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyPickerCompact,
 .keyRoots,
 .rootChip,
-.keyClearBtn{touch-action:pan-y;}
+.keyClearBtn,
+.keySoloScale,
+.keySoloScale .chip{touch-action:pan-y;}
 .prog .slot .chord,
 .suggRow .chord.suggPick,
 .chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
@@ -519,6 +521,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
 .keyTitle strong{color:var(--txt);font-weight:800;}
 .keyTitle span{color:var(--accent-ink);font-size:.76rem;font-weight:600;margin-left:6px;}
+/* M-GUIDE W3b: Compose key-view solo-scale PREVIEW row (decoupled, non-persisted -
+   see compose-key-system.md). Composes the existing .chip base class for the
+   buttons themselves - this rule only lays out the row; no new chip-variant
+   border/background/radius (3 chip variants already exist app-wide). */
+.keySoloScale{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
+.keySoloNotes{font-size:.82rem;color:var(--txt-soft);margin:0 0 4px;}
+.keySoloNotes strong{color:var(--txt);font-weight:600;}
+.keySoloFrame{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 10px;}
+.keySoloFrame[hidden]{display:none;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}
 .keyPalette{margin-bottom:2px;}
 /* Each diatonic chord tile uses the same layout as the suggCell: diagram on
@@ -693,6 +704,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
+/* solo-scale preview chips (M-GUIDE W3b) - same 44px thumb floor */
+.keySoloScale .chip{display:inline-flex;align-items:center;min-height:44px;}
 /* keyboard focus ring - the app previously stripped all outlines (a11y regression).
    No border-radius here: the outline follows each element's own radius; setting it
    would square off pill chips/buttons when focused. */
