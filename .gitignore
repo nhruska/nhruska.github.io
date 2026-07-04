@@ -18,3 +18,7 @@ package-lock.json
 
 # session files = local continuity, never commit to this PUBLIC repo (keep the rest of .claude visible to signal CC usage)
 .claude/sessions/
+
+# agent worktrees (Agent tool + manual)
+.claude/worktrees/
+.worktrees/
