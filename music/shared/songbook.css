@@ -369,23 +369,33 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    unchanged. Supersedes the old "24px clears WCAG 2.5.8, no oversized hit
    area" note: the sprint-1 geometry audit found 24px still invites
    wrong-chord removal in this destructive-tap context, so the binding spec
-   (A-amendments) calls for 44px here too. The VISIBLE circle is a ::before
-   sized 24x24 (unchanged from before this change) positioned at the button's
-   ORIGINAL top:-7px/right:-7px visual spot; the button itself grows to 44x44
-   around that SAME center (10px of invisible padding on every side), so the
-   glyph/circle look identical to before and only the tap target is bigger.
-   isolation:isolate scopes the ::before's z-index:-1 to this button only (it
-   paints behind the × text, never affecting sibling stacking). The enlarged
-   box does reach ~10px further into the chord diagram below/left than the
-   old 24px box did (unavoidable given the diagram sits directly under this
-   badge) - movement-cancelled taps (composeWireTap in songbook.js) keep a
-   scroll-grab from misfiring either target, and if the extra overlap proves
-   too eager in review, narrowing the bottom/left inset here is a one-line
-   follow-up (top/right can stay generous since that's open .prog padding). */
-.prog .slot .rm{position:absolute;top:-17px;right:-17px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
-.prog .slot .rm::before{content:'';position:absolute;inset:10px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+   calls for 44px here too. The VISIBLE circle is a ::before, still 24x24 and
+   still anchored at the SAME top:-7px/right:-7px corner as before this
+   change, so it looks and sits exactly where it did. The button (the tap
+   target) keeps that IDENTICAL top:-7px/right:-7px anchor too - deliberately
+   NOT centered growth: `.prog` has `overflow:auto` (implied overflow-y, per
+   its overflow-x:auto), so growing the badge upward/rightward past its old
+   footprint clips the added area against the *scroll container's own edge*,
+   producing a silently-dead invisible zone (verified live via Playwright
+   elementFromPoint - a symmetric top:-17px/right:-17px 44x44 box measurably
+   lost its top ~4px to that clip). Growing DOWN and LEFT instead - toward
+   the slot's own interior, which is never clipped - reaches 44x44 with a
+   fully live hit area; the tradeoff is more overlap with the chord diagram
+   below (already an accepted cost here - movement-cancelled taps via
+   composeWireTap in songbook.js keep a scroll-grab from misfiring either
+   target, same rationale as the original "no oversized hit area" note this
+   supersedes). isolation:isolate scopes the ::before's z-index:-1 to this
+   button only (paints it behind the × text without affecting sibling
+   stacking). The old `transform:scale(.85)` press-feedback is DROPPED here
+   (color-only feedback now) - verified live via Playwright that a
+   mousedown-time scale-shrink moves the box's edges inward before mouseup,
+   so a tap near the (now much bigger) 44px edge can miss the shrunken
+   hit-box entirely and silently produce no click. Reliability of the full
+   44px area wins over the press-animation flourish. */
+.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:5px 5px 0 0;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
+.prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .prog .slot .rm:active::before{background:var(--bad);}
-.prog .slot .rm:active{color:var(--on-danger);transform:scale(.85);}
+.prog .slot .rm:active{color:var(--on-danger);}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
