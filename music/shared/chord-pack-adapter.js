@@ -24,10 +24,17 @@
  * can't cross the module boundary - functionally identical, just no longer
  * indirected through the page's private helper name.
  *
- * window.Diagram / window.ChordAudio / window.Tuner / window.Songbook stay
- * lazy global lookups (unchanged) - callers keep supplying them via script
- * order in play/index.html and play/triad-inversions.html; a Node test stubs
- * window.Diagram/window.ChordAudio to inspect the fret math without a DOM.
+ * S-DIAGRAM-PREF steps 1-2 (2026-07-06, post-S-EXTRACT rebase): diagram/
+ * diagramClosed/diagramChain now also compute an optional patternLabel via
+ * window.DiagramPref.labelFor(profile.id, name, frets) and pass it through
+ * to Diagram.render() - '' whenever the pref is 'dots' or the voicing isn't
+ * classifiable. See shared/diagram-pref.js and shared/diagram.js.
+ *
+ * window.Diagram / window.ChordAudio / window.Tuner / window.Songbook /
+ * window.DiagramPref stay lazy global lookups (unchanged) - callers keep
+ * supplying them via script order in play/index.html and play/
+ * triad-inversions.html; a Node test stubs window.Diagram/window.ChordAudio
+ * to inspect the fret math without a DOM.
  *
  * Load AFTER circle.js (so window.Songbook.noteToPc/chordRootFreq, if
  * mounted, are available - both optional, a no-Songbook context falls back
@@ -267,14 +274,26 @@
       });
       return best ? [voicingFor(names[0]), best.IV, best.V] : null;
     }
+    // S-DIAGRAM-PREF steps 1-2: this is the ONE choke point every chord
+    // diagram in the app renders through (mirrors the scaleDiagram comment
+    // below), so it's where the 'patterns' label gets computed and handed to
+    // the generic, pref-agnostic Diagram.render(). '' (falsy) whenever the
+    // pref is 'dots' or the voicing isn't classifiable - diagram.js then
+    // renders byte-identical to the pre-existing output. See shared/
+    // diagram-pref.js for the decision; window.DiagramPref is an optional
+    // lookup (undefined in a test/DOM stub that doesn't load it) so this
+    // degrades to no label rather than throwing.
+    function labelFor(name, frets) {
+      return window.DiagramPref ? window.DiagramPref.labelFor(profile.id, name, frets) : '';
+    }
     var adapter = {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
-      diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
-      diagramClosed: function (name, size) { return window.Diagram.render(closedVoicingFor(name), { size: size, name: name }); },
+      diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets) }); },
+      diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets) }); },
       diagramChain: function (names, size) {
         var voicings = chainVoicings(names);
-        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i] }); });
+        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i], patternLabel: labelFor(names[i], frets) }); });
       },
       // scale map for the active instrument: open-string pitch classes + the scale's
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).
