@@ -120,4 +120,46 @@ test('opts.tones present but a pc has no explicit class -> falls back to root/sc
   assert.strictEqual(svg.indexOf('kx-chord'), -1, 'no chord entries -> no kx-chord class anywhere');
 });
 
+/* ---------- P5 seasoned-player fold (2026-07-05): ghost dots for chord tones
+ * OUTSIDE the current scale - supersedes the original D-TARGET "intersection-
+ * only" deferral (hiding the money note taught the wrong habit). ---------- */
+test('opts.tones.ghostPcs renders hollow kx-ghost dots (fill:none, --kx-ghost stroke) at the correct fret position', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10]; // C blues solo scale (C D# F F# G A#) - E (pc 4) is NOT in it
+  var el = D.scale({
+    openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 7: 'chord', 10: 'chord' }, rubPc: 3, ghostPcs: [4] }
+  });
+  var svg = el.innerHTML;
+  assert.ok(svg.indexOf('kx-ghost') >= 0, 'expected a kx-ghost dot for pc 4 (E, the C7 major 3rd, outside C blues)');
+  var ghostIdx = svg.indexOf('kx-ghost');
+  var circleStart = svg.lastIndexOf('<circle', ghostIdx);
+  var circleTag = svg.slice(circleStart, svg.indexOf('/>', circleStart) + 2);
+  assert.ok(circleTag.indexOf('fill="none"') >= 0, 'ghost dot must be hollow (fill:none), got: ' + circleTag);
+  assert.ok(circleTag.indexOf('var(--kx-ghost)') >= 0, 'ghost dot must use the theme-safe --kx-ghost var, got: ' + circleTag);
+  // note text right after the ghost circle also uses --kx-ghost ink
+  var textIdx = svg.indexOf('<text', ghostIdx);
+  var textEl = svg.slice(textIdx, svg.indexOf('</text>', textIdx));
+  assert.ok(textEl.indexOf('var(--kx-ghost)') >= 0, 'ghost note text must use --kx-ghost, got: ' + textEl);
+});
+test('opts.tones.ghostPcs ABSENT or empty -> zero kx-ghost dots (no target active = no ghosts)', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var noGhostKey = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 7: 'chord', 10: 'chord' }, rubPc: 3 } });
+  assert.strictEqual(noGhostKey.innerHTML.indexOf('kx-ghost'), -1, 'ghostPcs key absent -> no ghost dots');
+  var emptyGhosts = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root' }, rubPc: null, ghostPcs: [] } });
+  assert.strictEqual(emptyGhosts.innerHTML.indexOf('kx-ghost'), -1, 'empty ghostPcs array -> no ghost dots');
+});
+test('ghost dots still respect z-order: fret-number labels paint AFTER them too', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var el = D.scale({
+    openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 7: 'chord', 10: 'chord' }, rubPc: 3, ghostPcs: [4] }
+  });
+  var svg = el.innerHTML;
+  var lastGhostCircle = svg.lastIndexOf('kx-ghost');
+  var firstMarker = svg.indexOf(MARKER_FILL);
+  assert.ok(firstMarker > lastGhostCircle, 'marker labels must paint after ghost dots too');
+});
+
 run();

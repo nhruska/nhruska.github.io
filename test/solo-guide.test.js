@@ -1,14 +1,17 @@
 /* =====================================================================
  * solo-guide.test.js  -  unit tests for M-GUIDE W3a's SoloGuide module
  * (music/shared/solo-guide.js): the locked seam contract (framing/cards/
- * card), the {i}-index interpolation, the section-8B verbatim corrections,
- * and the copy budget (block <=90 chars, card <=70 words) + tells-clean
- * punctuation lint per m-guide-ia-20260704.md section 3.
+ * card), the {i}-index interpolation, the P5 seasoned-player adversarial
+ * fold (2026-07-05, supersedes the section-8B professor-fold corrections
+ * wherever both touched the same block), and the copy budget (block <=90
+ * chars, card <=70 words) + tells-clean punctuation lint per
+ * m-guide-ia-20260704.md section 3.
  *
  * Run: node test/solo-guide.test.js   (no deps; pure Node assert)
  * ===================================================================== */
 'use strict';
 var assert = require('assert');
+var Circle = require('../music/shared/circle.js');
 var SoloGuide = require('../music/shared/solo-guide.js');
 
 var passed = 0, failed = 0, cases = [];
@@ -27,8 +30,11 @@ var BLOCKS = ['chooseWhen', 'resolveTo', 'hangOn', 'startEnd', 'shapes'];
 
 /* ---------- framing() - moved verbatim from tracks.js, behavior identical ---------- */
 test('framing: pent scales interpolate family; blues has its own fixed line; mode has none', function () {
+  // P5 fold (2026-07-05): "two frets down" was a factual error (relative minor
+  // is a minor 3rd = THREE frets below) - fixed here to match the identical
+  // correction in cards.pentMajor.shapes.
   assert.strictEqual(SoloGuide.framing('pentMajor', 'major'),
-    'The inside sound over major and dominant vamps - same shape as its relative minor pent, two frets down; keep the root as home.');
+    'The inside sound over major and dominant vamps - same shape as its relative minor pent, three frets lower; keep the root as home.');
   assert.strictEqual(SoloGuide.framing('pentMinor', 'minor'),
     'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.');
   assert.strictEqual(SoloGuide.framing('blues'),
@@ -54,46 +60,55 @@ test('card: unknown scaleKey -> null (safe; never throws)', function () {
 test('card: {i} placeholders interpolate the caller-supplied note names, by index', function () {
   var notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']; // C ionian
   var c = SoloGuide.card('ionian', notes);
-  assert.strictEqual(c.resolveTo, 'Land on C or E; G always parks safe.');
-  assert.strictEqual(c.hangOn, "Don't sit on F over the I - pass through it; A is the sweet color.");
-  assert.strictEqual(c.startEnd, 'Start phrases on E or G, end them on C.');
+  assert.strictEqual(c.resolveTo, "On I, land on C, E, or G; elsewhere, land on that chord's root or 3rd.");
+  assert.strictEqual(c.hangOn, 'Over I, F wants to resolve to E unless you mean sus; A is the major-6 color.');
+  assert.strictEqual(c.startEnd, 'Start on E or G; close on a chord tone, not automatically C.');
+});
+test('card: pentMajor index mapping is correct against its degree array (1 2 3 5 6) - P5\'s "1/3/5 land" claim', function () {
+  var notes = Circle.soloScale('A', 'pentMajor'); // ['A','B','C#','E','F#'] = degrees 1,2,3,5,6
+  assert.deepStrictEqual(notes, ['A', 'B', 'C#', 'E', 'F#']);
+  var c = SoloGuide.card('pentMajor', notes);
+  // {0}=degree1(A), {2}=degree3(C#), {3}=degree5(E) - matches P5's "1/3/5 land"
+  assert.strictEqual(c.resolveTo, "Over I, A, C#, or E land. Over IV and V, target that chord's own tones.");
 });
 test('card: out-of-range index interpolates blank, never the literal word "undefined"', function () {
   var c = SoloGuide.card('aeolian', ['A']); // aeolian uses indices up to {6}; only {0} is real here
   assert.ok(c.shapes.indexOf('undefined') === -1, c.shapes);
 });
 
-/* ---------- section-8B professor-fold corrections (verbatim, supersede section-3) ---------- */
-test('8B correction: blues.resolveTo carries the amended copy verbatim', function () {
+/* ---------- P5 seasoned-player adversarial fold (2026-07-05) - supersedes
+ * section-8B wherever both amended the same block (dorian.hangOn,
+ * pentMinor.startEnd, blues.resolveTo). Folded pre-merge into PR #118. ---------- */
+test('P5 fold: blues.resolveTo carries the chord-relative rewrite (supersedes 8B)', function () {
   assert.strictEqual(SoloGuide.cards.blues.resolveTo,
-    "Aim at the root of the chord you're over; {4} always lands; {1} is the rub - resolve it by ear.");
+    "Aim at the current chord's 3rd, b7, or root; {4} is neutral; {1} (rub) bends toward 3.");
 });
-test('8B correction: pentMinor.startEnd carries the amended copy verbatim', function () {
+test('P5 fold: pentMinor.startEnd carries the rewrite (supersedes 8B; bend advice moved fully to hangOn)', function () {
   assert.strictEqual(SoloGuide.cards.pentMinor.startEnd,
-    'A classic move: bend {2} toward {3}. Start on {1}, end on {0}.');
+    'Start on {1} or {3}; close on {0}, {3}, or the current chord root.');
 });
-test('8B correction: dorian.hangOn carries the amended copy verbatim', function () {
+test('P5 fold: dorian.hangOn carries the rewrite (supersedes 8B)', function () {
   assert.strictEqual(SoloGuide.cards.dorian.hangOn,
-    '{5} IS the dorian color - lean on it over the i chord; over IV it turns into the 3rd.');
+    "{5} IS the dorian color - m6 shade over i; over IV it's the 3rd.");
+});
+test('P5 must-fix: pentMajor.shapes says THREE frets lower, not the factually-wrong "two frets down"', function () {
+  assert.strictEqual(SoloGuide.cards.pentMajor.shapes,
+    'Same notes as the relative minor pent, THREE frets lower - same box, different home note.');
+  assert.ok(!/two frets/i.test(SoloGuide.cards.pentMajor.shapes), 'the old wrong claim must not survive anywhere in the card');
+});
+test('P5 must-fix: no card claims the factually-wrong "zero-risk" framing for pentMajor.chooseWhen', function () {
+  assert.ok(!/zero-risk/i.test(SoloGuide.cards.pentMajor.chooseWhen), SoloGuide.cards.pentMajor.chooseWhen);
 });
 
 /* ---------- copy budget lint (m-guide-ia-20260704.md section 3: block <=90 chars,
  * card <=70 words) - measured on the PRE-interpolation static template text, since
- * that is what the budget was written against. ONE documented exception: the
- * section-8B blues.resolveTo correction is a BINDING verbatim amendment (95 chars)
- * that supersedes the general soft budget - allowlisted explicitly here so a
- * FUTURE overage elsewhere still fails loudly. */
-var BLOCK_BUDGET_EXCEPTIONS = { 'blues.resolveTo': 95 };
-test('copy budget: every block <=90 chars (except the documented 8B verbatim exception)', function () {
+ * that is what the budget was written against. Every block fits cleanly under 90
+ * chars post-P5-fold - no allowlisted exceptions remain. */
+test('copy budget: every block <=90 chars', function () {
   SCALE_KEYS.forEach(function (key) {
     BLOCKS.forEach(function (b) {
       var text = SoloGuide.cards[key][b];
       var id = key + '.' + b;
-      var allowed = BLOCK_BUDGET_EXCEPTIONS[id];
-      if (allowed != null) {
-        assert.strictEqual(text.length, allowed, id + ' allowlisted length changed - re-verify against the 8B transcript');
-        return;
-      }
       assert.ok(text.length <= 90, id + ' is ' + text.length + ' chars, budget is <=90');
     });
   });

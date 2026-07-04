@@ -292,9 +292,12 @@
    * root/non-root fill diagram.js already applies (no visual change from today's
    * default). Only kx-chord/kx-blue need their own theme-safe var - diagram.js
    * itself picks --on-accent ink for their note text (same bright-fill treatment
-   * as a root dot), inline at render time, so no CSS override is needed here. */
-  :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;}
-  :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;}
+   * as a root dot), inline at render time, so no CSS override is needed here.
+   * --kx-ghost (P5 fold): the hollow/outline color for a target chord's tones
+   * OUTSIDE the current scale - diagram.js renders these fill:none, stroke +
+   * text both --kx-ghost, so no separate CSS rule is needed for them either. */
+  :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;--kx-ghost:#94a3b8;}
+  :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;--kx-ghost:#64748b;}
   /* Active chord-tone target: persistent outline on the tapped chords-in-key tile
    * (composes the existing .bt-st-chip.sel accent-outline language, just not
    * auto-clearing after 220ms). */

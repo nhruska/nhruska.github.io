@@ -322,13 +322,20 @@
     }
     return null;
   }
-  // M-GUIDE W3a (section 2, chord-tone targeting): pure pc-arithmetic classifier,
-  // intersection-only (D-TARGET - a chord tone outside the current scale never
-  // lights up; the blues card carries that advice instead). Precedence root >
-  // chord > blue > scale (blue is defaultTones' job below, not this fn's). The
-  // chord's root is parsed locally (not read off Circle.chordTones' internal pc
-  // order) so this stays independent of that function's array shape. Returns
-  // null when chordName is falsy/unresolvable - callers treat that as "no target".
+  // M-GUIDE W3a (section 2, chord-tone targeting): pure pc-arithmetic classifier.
+  // Precedence root > chord > blue > scale (blue is defaultTones' job below, not
+  // this fn's). The chord's root is parsed locally (not read off Circle.chordTones'
+  // internal pc order) so this stays independent of that function's array shape.
+  // Returns null when chordName is falsy/unresolvable - callers treat that as "no
+  // target".
+  //
+  // GHOST DOTS (P5 seasoned-player adversarial fold, 2026-07-05, supersedes the
+  // original D-TARGET "intersection-only" deferral): a chord tone OUTSIDE the
+  // current scale is exactly the note a seasoned player reaches for on purpose
+  // (e.g. C# - the major 3rd - over A7 in A blues is the money note that IS the
+  // rub's resolution target). Hiding it taught the wrong habit. ghostPcs carries
+  // those out-of-scale chord tones so the caller can render them as hollow dots
+  // at their correct fret positions - never as a filled kx-chord/kx-root mark.
   function targetTones(scalePcs, scaleRootPc, chordName) {
     var C = circleRef();
     if (!C || !chordName) return null;
@@ -340,10 +347,10 @@
     if (!ctPcs.length) return null;
     var inScale = {};
     (scalePcs || []).forEach(function (p) { inScale[((p % 12) + 12) % 12] = true; });
-    var byPc = {};
+    var byPc = {}, ghostPcs = [];
     ctPcs.forEach(function (p) {
       var pc = ((p % 12) + 12) % 12;
-      if (!inScale[pc]) return; // ghost dots deferred - D-TARGET
+      if (!inScale[pc]) { if (ghostPcs.indexOf(pc) < 0) ghostPcs.push(pc); return; }
       byPc[pc] = (pc === chordRootPc) ? 'root' : 'chord';
     });
     // dominant-quality rub: chordTones carries BOTH the major 3rd (+4) and the
@@ -354,7 +361,7 @@
       var cand = (chordRootPc + 3) % 12;
       if (inScale[cand]) rubPc = cand;
     }
-    return { byPc: byPc, rubPc: rubPc };
+    return { byPc: byPc, rubPc: rubPc, ghostPcs: ghostPcs };
   }
   // M-GUIDE W3a: the ALWAYS-ON default mark (independent of any active target) -
   // the blues solo scale's b5 (scaleRootPc+6), whenever the blues scale renders.
@@ -654,14 +661,17 @@
         return (scaleId && scaleId !== 'mode') ? scaleId : modeScaleKey;
       }
       // Merge the always-on default mark (blue note) with the active target's
-      // root/chord/rub, active-target entries winning on any pc collision (D-TARGET
-      // precedence root > chord > blue > scale). Returns null when there is
-      // nothing to mark at all, so the fretboard renders byte-identical to the
-      // pre-targeting default (Diagram.scale's own opts.tones-absent contract).
+      // root/chord/rub/ghost, active-target entries winning on any pc collision
+      // (D-TARGET precedence root > chord > blue > scale). Returns null when
+      // there is nothing to mark at all, so the fretboard renders byte-identical
+      // to the pre-targeting default (Diagram.scale's own opts.tones-absent
+      // contract). ghostPcs (P5 fold) passes through untouched - a ghost note is
+      // by definition NOT in the scale, so it never participates in the byPc
+      // precedence merge.
       function computeTones(bundle, scaleId) {
         var scalePcs = (bundle && bundle.pcs) || [];
         var scaleRootPc = scalePcs.length ? scalePcs[0] : null;
-        var merged = {}, rubPc = null;
+        var merged = {}, rubPc = null, ghostPcs = [];
         var def = defaultTones(bundle);
         if (def) { for (var k in def.byPc) if (Object.prototype.hasOwnProperty.call(def.byPc, k)) merged[k] = def.byPc[k]; }
         if (activeTargetChord) {
@@ -669,9 +679,11 @@
           if (tt) {
             for (var k2 in tt.byPc) if (Object.prototype.hasOwnProperty.call(tt.byPc, k2)) merged[k2] = tt.byPc[k2];
             rubPc = tt.rubPc;
+            ghostPcs = tt.ghostPcs || [];
           }
         }
-        return (Object.keys(merged).length || rubPc != null) ? { byPc: merged, rubPc: rubPc } : null;
+        return (Object.keys(merged).length || rubPc != null || ghostPcs.length)
+          ? { byPc: merged, rubPc: rubPc, ghostPcs: ghostPcs } : null;
       }
       // Renders the 5 labeled SoloGuide.card lines into the Guide box (guarded -
       // solo-guide.js may not have loaded). Called on Studio open + every chip
@@ -693,8 +705,9 @@
         if (!targetCapEl) return;
         if (!activeTargetChord) { targetCapEl.hidden = true; targetCapEl.textContent = ''; return; }
         targetCapEl.hidden = false;
+        // P5 fold: legend gains the hollow/ghost-dot meaning - kept to one line.
         targetCapEl.textContent = 'Showing ' + activeTargetChord + ' inside ' + keyLabelPlain
-          + ' - accent = chord root, filled = chord tones.';
+          + ' - accent = chord root, filled = chord tones, hollow = chord tone outside the scale.';
       }
       // Chords-in-key tap toggles that chord as the fretboard's target (in addition
       // to the existing play-on-tap behavior) - one target surface, per section 2.
