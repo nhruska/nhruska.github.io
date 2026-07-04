@@ -11,7 +11,9 @@
  * cross-origin (fonts/icons). Bump CACHE to roll out a new precache.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v83';
+// A10 (parallel-conflict resolution): W3a bumped v82->v83, W3b (merged first,
+// #117) bumped v82->v84 in parallel - max+1 of the two.
+var CACHE = 'music-v85';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

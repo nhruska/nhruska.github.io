@@ -734,6 +734,69 @@
    *
    * Returns a controller: { switchTab, openSong, getState, getSongs, rebuild }
    * ===================================================================== */
+  // M-GUIDE W3b (m-guide-ia-20260704.md section 3, "Compose solo chips"): the
+  // Compose key-view solo-scale PREVIEW (wired inside mount()'s renderKeyView,
+  // below) is a decoupled, non-persisted layer - chip taps re-derive ONLY that
+  // block, never songKey/progression/palette/grid. Circle-only derivation
+  // (Songbook stays Tracks-agnostic), so it works whether or not tracks.js/
+  // solo-guide.js are loaded at all. Hoisted to module scope (rather than
+  // nested inside mount()) so these pure helpers are directly Node-testable
+  // and exportable on the public surface below, matching every other pure
+  // helper in this file (chordInKey, romanInKey, convertProgressionQualities, ...).
+  function keyViewCircle() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./circle.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // SoloGuide (W3a, shared/solo-guide.js) is optional - it ships in a sibling
+  // wave whose merge order is free relative to this one. Absent module (not
+  // yet merged, or the browser didn't load the script) -> no caption, chips
+  // still work fully (locked seam guard, m-guide-ia-20260704.md section 3).
+  function keyViewSoloGuide() {
+    if (global.SoloGuide) return global.SoloGuide;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./solo-guide.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // Pure + exported for tests: the note names for one chip. scaleId is one of
+  // 'mode' | 'pentMajor' | 'pentMinor' | 'blues'. 'mode' resolves to the KEY's
+  // own scale - the 6-note blues scale when keyMode is Blues (which is exactly
+  // why the Blues-key row dedupes the standalone Blues chip: it would show the
+  // same notes under a second button), else the mode's 7-note Circle scale via
+  // CIRCLE_MODE. Unresolvable root/Circle/mode -> null (caller keeps whatever
+  // was on-screen rather than clearing it, matching soloScale's own contract).
+  function soloChipScale(root, keyMode, scaleId) {
+    var C = keyViewCircle();
+    if (!C) return null;
+    if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
+      var notes = C.soloScale(root, scaleId);
+      return notes.length ? notes : null;
+    }
+    var mk = canonMode(keyMode);
+    if (mk === 'Blues') {
+      var bluesNotes = C.soloScale(root, 'blues');
+      return bluesNotes.length ? bluesNotes : null;
+    }
+    var circleMode = CIRCLE_MODE[mk];
+    if (!circleMode || typeof C.spellScale !== 'function') return null;
+    var scaleNotes = C.spellScale(root, circleMode);
+    return scaleNotes.length ? scaleNotes : null;
+  }
+  // Pure + exported for tests: the one-line teaching caption for a chip, or
+  // null. 'mode' never captions (mirrors the Practice Studio, which never
+  // captions its default/mode chip even when that scale happens to be Blues -
+  // tracks.js wireScaleChips: `info = scaleId !== 'mode' ? ... : null`).
+  // SoloGuide absence -> null, never throws (guarded contract above).
+  function soloChipCaption(scaleId) {
+    if (scaleId === 'mode') return null;
+    var C = keyViewCircle(), SG = keyViewSoloGuide();
+    if (!C || !SG || typeof SG.framing !== 'function') return null;
+    var info = (typeof C.soloScaleInfo === 'function') ? C.soloScaleInfo(scaleId) : null;
+    return SG.framing(scaleId, info && info.family) || null;
+  }
   function mount(opts) {
     opts = opts || {};
     var el = opts.el || {};
@@ -800,10 +863,37 @@
       return (seq || []).every(function (c) { return packHasChord(tpose(c, st)); });
     }
 
+    // A1 (analysis-refactor-enhance-20260704): the single write seam every save*
+    // function below routes through. Mirrors backup.js's applyAtomic quota-detect
+    // (same /quota|exceed/i test against e.name+e.message) but WITHOUT its multi-key
+    // atomic-rollback machinery - a routine save is one key, so there is nothing to
+    // roll back on failure (the prior value for that key is simply left in place,
+    // since a throwing setItem never overwrote it). Returns true on a real write,
+    // false if storage threw (quota exceeded, blocked/private-mode storage, etc.).
+    // Callers decide whether a false return needs USER-visible feedback: saveProgression
+    // (Compose "Save to Repertoire") does; the passive prefs/last-opened/song-view
+    // writes fail soft (console signal only) per the app's #1 fatal-dismissal trigger
+    // being an unconditional SUCCESS message on a save that silently didn't happen -
+    // not the passive writes, which never claimed success to begin with.
+    var _safeSetWarned = {}; // one console.warn per key for the life of this mount - a
+    // blocked-storage device would otherwise spam the console on every keystroke-driven
+    // passive save (e.g. the perform-speed slider firing savePerfPrefs repeatedly).
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, value); return true; }
+      catch (e) {
+        if (!_safeSetWarned[key]) {
+          _safeSetWarned[key] = true;
+          var quota = e && /quota|exceed/i.test(String(e.name) + String(e.message));
+          console.warn('[songbook] storage write failed for ' + key + (quota ? ' (quota exceeded)' : '') + ' - further failures for this key are suppressed this session:', e);
+        }
+        return false;
+      }
+    }
+
     /* ---------- custom (composed) progressions ---------- */
     var CUSTOM_KEY = prefix + ".custom.v1";
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customSongs)); } catch (e) { } }
+    function saveCustom() { return safeSet(CUSTOM_KEY, JSON.stringify(customSongs)); }
     var customSongs = loadCustom();
     // Fork-to-custom SHADOW + composed-custom append: the pure fold lives in the
     // module-scope buildAllSongs(catalog, customs) (exported + unit-tested). Deleting
@@ -814,11 +904,14 @@
     /* ---------- state + persistence ---------- */
     var STORE_KEY = prefix + ".setlist.v1";
     function loadSet() { try { var r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveSet() { try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE.setlist)); } catch (e) { } }
+    function saveSet() { return safeSet(STORE_KEY, JSON.stringify(STATE.setlist)); }
     // last-opened song, so the app can greet you already holding a song to play.
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
-    function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
+    // Passive (no user-visible confirmation anywhere it's called) - fails soft via
+    // safeSet's console signal. See safeSet's header comment for the user-initiated
+    // vs passive split this mission drew.
+    function saveLast(id) { return safeSet(LAST_KEY, id); }
     // perform-screen prefs (scroll speed + view), remembered per device. Font
     // size is NOT persisted - Stage force-opens auto every time (UAT r3).
     // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
@@ -844,7 +937,8 @@
     // NOTE: font size is intentionally NOT persisted - Stage force-defaults to
     // auto on every open (UAT r3), so a cross-reload size would be dead. Manual
     // A-/A+ still holds in STATE within a Stage session (across prev/next).
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); } catch (e) { } }
+    // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -1072,7 +1166,8 @@
         return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
       } catch (e) { return 'both'; }
     }
-    function saveSongView(v) { try { localStorage.setItem(SONGVIEW_KEY, v); } catch (e) { } }
+    // Passive - see safeSet's header comment (a view-toggle tap doesn't need a toast).
+    function saveSongView(v) { return safeSet(SONGVIEW_KEY, v); }
     STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
@@ -2052,16 +2147,62 @@
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
       // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
-      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
-      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
-      // HSR chain moved out entirely. What remains: the key readout line and a
-      // "Triads & Inversions" deep-dive link that opens in the current instrument +
-      // key context.
+      // The fly-out is a pure key/mode PICKER (locked decision: the Studio owns the
+      // fretboard + guidance cards + chord-tone targeting) - the I-IV-V HSR chain
+      // stays out entirely. What it DOES carry (M-GUIDE W3b): a lightweight, purely
+      // decoupled solo-scale PREVIEW (chip row + notes + one-line caption) so you
+      // can preview what you'd solo with before ever opening the Studio - plus the
+      // key readout line and the "Triads & Inversions" deep-dive link.
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
       title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
+      // M-GUIDE W3b: solo-scale PREVIEW row - DECOUPLED (isolation-tested below).
+      // A chip tap here re-renders ONLY this block; it never touches songKey,
+      // progression, the In-key palette, or the grid, and nothing persists across
+      // renders (every renderKeyView() call defaults back to the mode's own
+      // scale). See engineering-wiki/systems/compose-key-system.md.
+      (function renderSoloChips() {
+        var wrap = document.createElement('div');
+        var chipsRow = document.createElement('div'); chipsRow.className = 'keySoloScale';
+        var notesLine = document.createElement('div'); notesLine.className = 'keySoloNotes';
+        var frameLine = document.createElement('div'); frameLine.className = 'keySoloFrame'; frameLine.hidden = true;
+        var scaleLabel = (MODES[keyMode] && MODES[keyMode].label) || escHTML(String(keyMode));
+        var CHIPS = [
+          { id: 'mode', label: scaleLabel },
+          { id: 'pentMajor', label: 'Pent major' },
+          { id: 'pentMinor', label: 'Pent minor' },
+          { id: 'blues', label: 'Blues' }
+        ];
+        // Blues-key dedup: when the KEY's own mode is already Blues, the standalone
+        // Blues chip would just re-select the identical 6-note scale under a second
+        // button - drop it (mirrors the Practice Studio's th.scaleMode === 'blues' fold).
+        if (canonMode(keyMode) === 'Blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+        var curChipId = 'mode';
+        function renderChips() {
+          chipsRow.innerHTML = CHIPS.map(function (c) {
+            return '<button type="button" class="chip' + (curChipId === c.id ? ' on' : '') + '" data-soloscale="' + escHTML(c.id) + '">' + escHTML(c.label) + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(chipsRow.querySelectorAll('.chip'), function (b) {
+            b.onclick = function () { selectChip(b.getAttribute('data-soloscale')); };
+          });
+        }
+        function selectChip(scaleId) {
+          var notes = soloChipScale(keyRoot, keyMode, scaleId);
+          if (!notes) return; // unresolvable -> keep whatever was already on-screen
+          curChipId = scaleId;
+          renderChips();
+          notesLine.innerHTML = 'Solo over it - <strong>' + escHTML(notes.join(' ')) + '</strong>';
+          var caption = soloChipCaption(scaleId);
+          if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
+          else { frameLine.textContent = ''; frameLine.hidden = true; }
+        }
+        renderChips();
+        selectChip('mode'); // default every render: the key's own scale, never persisted
+        wrap.appendChild(chipsRow); wrap.appendChild(notesLine); wrap.appendChild(frameLine);
+        el.keyView.appendChild(wrap);
+      })();
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
       // future minor-cycle variant can read it; the page ignores params it doesn't use.
@@ -2432,6 +2573,11 @@
       done = done || function () {};
       invalidateClearUndo(); // S-CLEARGUARD/A3: Save invalidates any pending Clear-undo
       if (progression.length === 0) { showComposeToast('Build a progression first.', true); done(null); return; }
+      // A1 (analysis-refactor-enhance-20260704): one truthful failure message shared
+      // by both branches below (update-in-place + fresh save) - a quota/blocked-storage
+      // write must never tell the user it saved (the app's #1 named fatal-dismissal
+      // trigger is exactly this: a saved song silently vanishing after being told it saved).
+      var SAVE_FAIL_MSG = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
       // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
       // the progression and key panel stay live behind it. What gets saved is
       // what the user asked to save - not whatever the session mutated into
@@ -2443,7 +2589,18 @@
       // saved song" choice. The chord edits + any re-key flow straight onto cs.
       if (savedComposeId && customById(savedComposeId)) {
         var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
-        if (upd) { showComposeToast('Updated ' + upd.t, false, true); done(upd); return; }
+        if (upd) {
+          // updateCustomItem already persisted via its own internal saveCustom() call
+          // (that function body sits outside this mission's line-region grant, shared
+          // with 2 other call sites that have different null-semantics - see PR notes).
+          // Re-invoking saveCustom() here writes the SAME already-mutated customSongs
+          // array again (a harmless repeat of the identical value) purely to observe
+          // THIS write's real success/failure - the only way to get a truthful signal
+          // for the "Updated" toast without touching updateCustomItem's body.
+          var updOk = saveCustom();
+          showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk, true);
+          done(upd); return;
+        }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
       }
       // S6 (B3 pilot UAT handoff): 'Original track' reads as a real title where
@@ -2458,14 +2615,21 @@
           id: 'm' + Date.now(), t: name, a: '', y: new Date().getFullYear(), d: 'Mine',
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
-        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips();
+        customSongs.push(cs);
+        var ok = saveCustom();
+        rebuildAll(); renderFilterChips();
         // Post-save discoverability (B3): flag the new row for renderSongs() to
         // scroll-to + highlight - whichever call actually paints it (below, or
         // toggleSet's own renderSongs() when the checkbox added it to the set).
         pendingHighlightId = cs.id;
         if (addToSetlist) toggleSet(cs.id); else renderSongs();
+        // Linked regardless of write success: the record lives in customSongs for
+        // this session either way (Studio/Setlist keep working until reload), so a
+        // second Save click correctly takes the update-in-place branch above rather
+        // than creating a duplicate. It will NOT survive a reload if storage stays
+        // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast('Saved to your Repertoire', false, true);
+        showComposeToast(ok ? 'Saved to your Repertoire' : SAVE_FAIL_MSG, !ok, true);
         done(cs);
       });
     }
@@ -2851,7 +3015,10 @@
     ROOTS: ROOTS,
     wireTapCancel: wireTapCancel,
     buildClearSnapshot: buildClearSnapshot,
-    applyClearSnapshot: applyClearSnapshot
+    applyClearSnapshot: applyClearSnapshot,
+    // M-GUIDE W3b: Compose key-view solo-scale preview - pure derivation, exposed for tests
+    soloChipScale: soloChipScale,
+    soloChipCaption: soloChipCaption
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 
