@@ -72,3 +72,18 @@
 | S-CHIPS | Filter-chip thumb-floor bump within one-screen budget | P3 P1 | D5 |
 
 Method notes: journey harness at scratchpad journeys.py; screenshots j-*.png; raw geometry journeys.json. Robot could not open a song via `.liTitle` selector (no such class) - finding F4's "invisible affordance" observation stands on the visible-action analysis, not the robot failure.
+
+---
+
+## Addendum - operator UAT findings (2026-07-04, live preview pass on clearguard branch, Pixel)
+
+### F9 - P1 - Compose Save modal: low-contrast text on gray overlay [P1/P4 | operator screenshot]
+Input label/checkbox text washes out against the dim overlay ("Add to setlist" barely readable). Fix: solid card surface (var(--card)) + full-contrast text + border; both themes.
+
+### F10 - P1 - Mobile keyboard covers the Save modal [all personas | operator screenshot]
+Centered modal + soft keyboard = input caret and Save/Cancel buttons hidden behind the keyboard. Fix: top-anchor the dialog (or visualViewport-aware positioning) so input AND actions stay visible while typing at 412x915.
+
+### F11 - P2 - Settings panel structure [operator spec]
+Restructure: STICKY top (Settings title + close X), scrollable contents (or accordion), STICKY bottom = action buttons row ABOVE a single meta line (build version + last backup together on ONE line).
+
+**Routing:** sprint-1 addendum items S-MODAL (F9+F10, one PR) + S-SETTINGS (F11) - operator-injected mid-touchpoint-1, built immediately on origin/main; rebase-over-#100 expected if it merges first.
