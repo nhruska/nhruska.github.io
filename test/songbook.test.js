@@ -5,9 +5,18 @@
  * ===================================================================== */
 'use strict';
 var assert = require('assert');
+// A1 harness (the safe-save / Songbook.mount() tests near the bottom of this file):
+// every shared module attaches to `(typeof window !== 'undefined' ? window : this)`
+// - in the browser that's one shared `window`, so `global.Queue` / `global.Repertoire`
+// resolve inside songbook.js's mount(). Node has no `window`; alias it to the real
+// global object BEFORE any require so each module's IIFE lands on the SAME object,
+// mirroring production instead of each getting its own isolated `this`.
+if (typeof global.window === 'undefined') global.window = global;
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
 var Repertoire = require('../music/shared/repertoire.js');
+require('../music/shared/queue.js'); // sets global.Queue - mount()'s QUEUE = global.Queue.createQueue()
+var lsReset = require('./helpers/local-storage-reset.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -290,7 +299,18 @@ test('soloKeyFor: no explicit key derives from the ALREADY-TRANSPOSED sequence',
   assert.deepStrictEqual(out, { key: 'B', mode: 'minor' });
 });
 test('soloKeyFor: no key and no deriver yields the null payload (solo affordance hidden)', function () {
-  assert.deepStrictEqual(Songbook.soloKeyFor({ t: 'x' }, ['C'], 0, null), { key: null, mode: null });
+  // The A1 harness at the bottom of this file aliases global.window so Songbook's
+  // mount() tests can share `global.Queue`/`global.Repertoire` the way production
+  // scripts share one `window` - which legitimately populates the global.Repertoire
+  // fallback those tests need. Null it out for just this assertion so the "truly no
+  // deriver reachable, not even via the global fallback" path stays exercised.
+  var savedGlobalRepertoire = global.Repertoire;
+  delete global.Repertoire;
+  try {
+    assert.deepStrictEqual(Songbook.soloKeyFor({ t: 'x' }, ['C'], 0, null), { key: null, mode: null });
+  } finally {
+    global.Repertoire = savedGlobalRepertoire;
+  }
 });
 // Drive the REAL deriver too (not just fakeRep) so the actual
 // Repertoire.deriveKey integration can't regress green behind the mock.
@@ -808,6 +828,159 @@ test('setClear wiring: routed through wireTapCancel, not a raw .onclick= (moveme
   assert.ok(!/el\.setClear\.onclick\s*=/.test(src), 'a raw el.setClear.onclick= would bypass the movement-cancel guard');
   // the underlying confirm() + clear behavior must be unchanged (rider keeps it, only adds the guard)
   assert.ok(/confirm\('Clear your setlist\?'\)/.test(src), 'the native confirm() prompt text must stay unchanged');
+});
+
+/* =====================================================================
+ * A1 (analysis-refactor-enhance-20260704) - truthful save feedback.
+ * ---------------------------------------------------------------------
+ * saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView and saveProgression's
+ * toast are private closures inside Songbook.mount(opts) - not reachable as
+ * standalone exports. Driving them for real means actually mounting, which
+ * needs a DOM. Same ~25-line minimal-stub-document approach already used by
+ * test/key-explorer.dom.test.js (no jsdom dependency), extended just enough
+ * for the compose-save UI (el.prog/catChips/buildGrid/cSave -> the toast +
+ * inline save-name row saveProgression drives).
+ *
+ * saveCustom's return value is exercised directly through the OBSERVABLE
+ * toast text/class it drives (the strongest proof: it's the same code path
+ * a real user hits). saveSet/saveLast/savePerfPrefs/saveSongView route
+ * through the identical safeSet() helper and are passive (no UI signal, not
+ * reachable through the mount() controller surface) - validating safeSet via
+ * saveCustom's observable effect covers their shared implementation too.
+ * ===================================================================== */
+function makeStubEl(tag) {
+  var e = {
+    tagName: tag, children: [], className: '', textContent: '', hidden: false,
+    disabled: false, attrs: {}, style: {}, parentNode: null, onclick: null,
+    onkeydown: null, dataset: {}, value: '', checked: false,
+    appendChild: function (c) { c.parentNode = e; e.children.push(c); return c; },
+    insertBefore: function (c) { c.parentNode = e; e.children.push(c); return c; },
+    removeChild: function (c) { var i = e.children.indexOf(c); if (i >= 0) e.children.splice(i, 1); return c; },
+    setAttribute: function (k, v) { e.attrs[k] = v; },
+    addEventListener: function () {},
+    focus: function () {},
+    click: function () { if (e.onclick) e.onclick(); }
+  };
+  e.classList = {
+    _set: {},
+    add: function (c) { this._set[c] = true; },
+    remove: function (c) { delete this._set[c]; },
+    toggle: function (c, on) { if (on === undefined) { if (this._set[c]) delete this._set[c]; else this._set[c] = true; } else if (on) this._set[c] = true; else delete this._set[c]; },
+    contains: function (c) { return !!this._set[c]; }
+  };
+  Object.defineProperty(e, 'innerHTML', {
+    get: function () { return ''; },
+    set: function (v) { if (v === '') e.children = []; }
+  });
+  return e;
+}
+if (typeof global.document === 'undefined') {
+  global.document = {
+    createElement: makeStubEl,
+    createTextNode: function (t) { return { textContent: t, nodeType: 3 }; },
+    body: makeStubEl('body'),
+    getElementById: function () { return null; },
+    querySelector: function () { return null; },
+    querySelectorAll: function () { return []; }
+  };
+}
+// A fresh Songbook.mount() with just enough `el` for the Compose save UI
+// (ensureComposeUI needs el.prog.parentNode; buildGrid needs catChips+buildGrid
+// to actually build chord tiles; cSave is the Save button's own onclick target).
+function mountForSaveTests() {
+  global.localStorage = lsReset.fakeStore();
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = { prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'), cSave: makeStubEl('button') };
+  var ctrl = Songbook.mount({ storagePrefix: 'a1test', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+// Taps the first built chord tile twice (a 2-chord progression), clicks Save,
+// then drives the inline name row's own Save button (defaultName accepted,
+// "Add to setlist" unchecked so the toggleSet/"Added to setlist" path - out
+// of this mission's line-region grant - never fires and can't muddy the assert).
+function buildAndSave(m) {
+  var tile = m.elMap.buildGrid.children[0];
+  tile.onclick(); tile.onclick();
+  m.elMap.cSave.onclick();
+  var composeRow = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) composeRow = c; });
+  if (!composeRow) throw new Error('A1 harness: composeRow was not created - ensureComposeUI() likely returned false');
+  var setCheck = composeRow.children[1].children[0]; // setLabel -> its checkbox
+  setCheck.checked = false;
+  composeRow.children[2].onclick(); // saveBtn -> finish(defaultName) -> saveProgression's done callback
+}
+function findComposeToast(m) {
+  var t = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeToast') === 0) t = c; });
+  return t;
+}
+// showComposeToast sets `.className` as a plain string ('composeToast err tap'),
+// not via classList.add() - this stub's classList is a separate no-sync object
+// (see makeStubEl), so class membership must be checked on the className string.
+function hasClass(el, cls) { return (' ' + el.className + ' ').indexOf(' ' + cls + ' ') >= 0; }
+
+test('A1: saveProgression on a healthy store shows the real success toast (not an err toast)', function () {
+  var m = mountForSaveTests();
+  buildAndSave(m);
+  var toast = findComposeToast(m);
+  assert.strictEqual(toast.textContent, 'Saved to your Repertoire');
+  assert.strictEqual(hasClass(toast, 'err'), false, 'a successful save must not carry the err class');
+});
+
+test('A1: saveProgression on a throwing (quota-exceeded) store shows a truthful failure toast, never the success message', function () {
+  var m = mountForSaveTests();
+  var thrown = 0, warned = 0;
+  var origWarn = console.warn;
+  console.warn = function () { warned++; };
+  global.localStorage.setItem = function () {
+    thrown++;
+    var e = new Error('The quota has been exceeded.');
+    e.name = 'QuotaExceededError';
+    throw e;
+  };
+  try {
+    buildAndSave(m);
+  } finally {
+    console.warn = origWarn;
+  }
+  assert.ok(thrown > 0, 'the stubbed setItem must actually have been called (proves the write was attempted, not skipped)');
+  var toast = findComposeToast(m);
+  assert.strictEqual(toast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
+  assert.strictEqual(hasClass(toast, 'err'), true, 'a failed save must carry the err class');
+  assert.notStrictEqual(toast.textContent, 'Saved to your Repertoire', 'must never claim success on a write that threw');
+  assert.strictEqual(warned, 1, 'safeSet must console.warn exactly once for this key, not spam per attempt');
+});
+
+test('A1: the update-in-place branch ("Updated ...") is equally truthful on a throwing store, and warns only once per key', function () {
+  var m = mountForSaveTests();
+  // First save succeeds (healthy store) - links savedComposeId so a second Save
+  // on the same buffer takes the update-in-place branch (not a fresh create).
+  buildAndSave(m);
+  assert.strictEqual(findComposeToast(m).textContent, 'Saved to your Repertoire');
+  // Add one more chord, then start failing storage, then Save again -> the
+  // "Updated ..." branch, not the create branch.
+  var tile = m.elMap.buildGrid.children[0];
+  tile.onclick();
+  var warned = 0;
+  var origWarn = console.warn;
+  console.warn = function () { warned++; };
+  global.localStorage.setItem = function () {
+    var e = new Error('The quota has been exceeded.');
+    e.name = 'QuotaExceededError';
+    throw e;
+  };
+  m.elMap.cSave.onclick(); // no name row this time - savedComposeId is already set
+  console.warn = origWarn;
+  var toast = findComposeToast(m);
+  assert.strictEqual(toast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
+  assert.strictEqual(hasClass(toast, 'err'), true);
+  assert.ok(!/^Updated /.test(toast.textContent), 'must not show the "Updated ..." success wording on a write that threw');
+  // the update-in-place branch attempts CUSTOM_KEY twice in one click (once inside
+  // updateCustomItem's own internal saveCustom(), once more when saveProgression
+  // re-invokes saveCustom() to observe a truthful result - see the code comment at
+  // that call site) - both throw, but safeSet warns only once per key.
+  assert.strictEqual(warned, 1, 'safeSet must suppress the repeat warning for the same key within one mount');
 });
 
 /* =====================================================================
