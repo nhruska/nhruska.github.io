@@ -67,28 +67,28 @@ th{color:var(--txt);font-weight:700;background:var(--bg2)}
 <div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-ia-20260704.md">binding IA + professor fold</a> - started 2026-07-04 - <a href="https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html">M2 pane</a> - <a href="https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html">M1 pane</a></div>
 
 <div class="cockpit">
-<div class="state"><span class="run">IN FLIGHT</span> - Wave 1 <span class="pos">SHIPPED (v81)</span>, Wave 2 building (Blues as a real key), Wave 3 queued (targeting + cards + landscape + Compose chips)</div>
-<div class="statesub">Born from your four post-M2 phone notes. The professor reviewed the DESIGN before any code existed and caught 2 real errors on paper (a conversion rule that would have silently degraded your A7 to Am, and a Dorian card teaching the color note over the wrong chord). Both fixed in the binding IA before Wave 2 spawned. Trust mode: merges on green, theory gated by the adversarial pair, never by you.</div>
+<div class="state"><span class="pos">MISSION CLOSED - SHIPPED (v85)</span> - Blues is a real key, the fretboard targets chord tones (with ghost dots), the mentor cards are player-true, Compose previews your solo scale, small necks got 12 frets</div>
+<div class="statesub">Four phone notes became five merged waves in one day. FOUR adversarial rounds, TEN catches, all folded: the professor killed 2 design bugs on paper and 3 seam bugs in code; the seasoned player forced ghost dots (the I7 money note), rewrote the cards to chord-of-the-bar truth, and caught a fretboard-math error ("two frets" - it is three); the professor then corrected 2 of the player's own lines. The deterministic canon stayed green the whole time - every catch lived where tests cannot see. S-SAVE-TRUTH (the data-loss bug) also shipped in parallel.</div>
 <div class="lights">
 <span class="lt"><span class="lamp l-ok"></span>IA ruled + prof fold</span>
 <span class="lt"><span class="lamp l-ok"></span>W1 MERGED v81</span>
-<span class="lt"><span class="lamp l-run"></span>W2 Blues key (building)</span>
-<span class="lt"><span class="lamp l-off"></span>W3a targeting/cards</span>
-<span class="lt"><span class="lamp l-off"></span>W3b Compose chips</span>
-<span class="lt"><span class="lamp l-run"></span>Refactor/enhancement scan (feeds QUEUE)</span>
+<span class="lt"><span class="lamp l-ok"></span>W2 Blues key MERGED v82</span>
+<span class="lt"><span class="lamp l-ok"></span>W3a targeting+cards+ghosts MERGED v85</span>
+<span class="lt"><span class="lamp l-ok"></span>W3b Compose chips MERGED v84</span>
+<span class="lt"><span class="lamp l-ok"></span>QUEUE filled: 9 SHORT / 10 MID / 6 LONG</span>
 </div>
 <div class="fchead">Your next touchpoints (forecast)</div>
 <div class="fc"><div class="fh"><span class="pill pl-you">NONE REQUIRED UNTIL CLOSE</span><span class="fw">trust mode active</span></div>
-<div class="fd">Every gate inside this mission is machine- or adversary-held. One taste decision was made autonomously and is flagged for your veto: <strong>the Compose chord cap rose 8 -&gt; 12</strong> so a real 12-bar fits (D-CAP12). If 12 feels wrong in hand, say so and it reverts in minutes.</div></div>
+<div class="fd">Mission closed - nothing gated on you. Standing veto window: <strong>the Compose chord cap rose 8 -&gt; 12</strong> (D-CAP12) so a real 12-bar fits. One word reverts it.</div></div>
 <div class="fc"><div class="fh"><span class="pill pl-you">VERIFY BATCH (whenever)</span><span class="fw">grows as waves land</span></div>
-<div class="fd">Live now (v81): clear the key in Compose - the mode chips stay tappable and transposing never resurrects a key (your F12 bug); open the Studio on ukulele - 12 frets instead of 7. After W2: pick "A Blues" in the key chooser - palette becomes A7 D7 E7 labeled I7 IV7 V7, with 12-bar starters. After W3: tap a chord and watch its tones light up inside your scale, open the Guide cards, rotate to landscape.</div></div>
+<div class="fd">ALL LIVE at v85: (V1) clear the key - mode chips stay tappable, transpose stays keyless; (V2) ukulele Studio - 12 frets; (V3) key chooser - A + Blues - palette A7 D7 E7 as I7 IV7 V7, load the 12-bar starter, Studio reads "A blues"; (V4) tap A7 in the Studio - its tones light up, the hollow C# ghost dot is the money note, open Guide for the mentor cards, rotate for landscape. Also live: truthful save errors when storage is full (S-SAVE-TRUTH).</div></div>
 </div>
 
 <div class="chips">
 <div class="chip"><div class="n">4</div><div class="l">operator notes -&gt; features</div></div>
-<div class="chip"><div class="n">2</div><div class="l">design bugs killed on paper</div></div>
+<div class="chip"><div class="n">10</div><div class="l">adversarial catches folded</div></div>
 <div class="chip"><div class="n">12</div><div class="l">roots canon-locked (blues)</div></div>
-<div class="chip"><div class="n">4</div><div class="l">PRs forecast (W1-W3b)</div></div>
+<div class="chip"><div class="n">9</div><div class="l">PRs merged (v80 -&gt; v85)</div></div>
 </div>
 
 <h2>Timeline</h2>
@@ -99,9 +99,9 @@ th{color:var(--txt);font-weight:700;background:var(--bg2)}
 <tr><td><span class="pill pl-agent">FABLE IA</span></td><td>Design chair</td><td>Binding design (<a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-ia-20260704.md">IA doc</a>): Blues rides the existing MODES machinery (no parallel key system); deterministic targeting classes; locked SoloGuide seam so two W3 agents can run in parallel; caught 2 repo-vs-spec conflicts itself.</td></tr>
 <tr><td><span class="pill pl-adv">ADVERSARY</span></td><td>Professor (GPT-5.5)</td><td>DESIGN-level refutation pass, pre-code: verified all 12 palette cells + the rub rule, FAILED the Blues-&gt;Major conversion (your added A7 would have become Am) and the Dorian card (color note aimed at the wrong chord). Folded as <a href="https://github.com/nhruska/nhruska.github.io/pull/111">PR #111</a>. Cost: one codex pass. Saved: a shipped theory bug.</td></tr>
 <tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Wave 1</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/112">PR #112</a> (v81): F12 dead-chip fixed, keyless-until-pick semantics, 12-fret windows on 4-string necks, Studio chrome trim. 99 songbook tests (was 91); live Playwright walked the exact repro from your note.</td></tr>
-<tr><td><span class="pill pl-agent">RUNNING</span></td><td>Wave 2</td><td>Blues as a harmonizing key: I7/IV7/V7 palette, 12-bar + quick-change starters, cap 12, Studio wiring (scale default = blues). Canon extends 12 roots x palette + romans. Merges only on suite + canon green.</td></tr>
-<tr><td><span class="pill pl-next">QUEUED</span></td><td>Wave 3a + 3b</td><td>Parallel behind a locked seam: chord-tone targeting + mentor cards + landscape (3a) and the decoupled solo chips in Compose (3b). P5 adversarial pass gates the card voice.</td></tr>
-<tr><td><span class="pill pl-next">QUEUED</span></td><td>Close</td><td>Adversarial fold record, wiki updated in-mission (no doc drift), QUEUE refresh, scorecard, this pane flips to SHIPPED.</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Wave 2</td><td>Blues as a harmonizing key: I7/IV7/V7 palette, 12-bar + quick-change starters, cap 12, Studio wiring (scale default = blues). Canon extends 12 roots x palette + romans. Merges only on suite + canon green.</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Wave 3a + 3b</td><td>Parallel behind the locked SoloGuide seam - both first-pass green. P5 then forced ghost dots + card rewrites (folded same PR); the professor micro-passed P5's own lines and fixed two. <a href="https://github.com/nhruska/nhruska.github.io/pull/118">#118</a> / <a href="https://github.com/nhruska/nhruska.github.io/pull/117">#117</a></td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Close</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-adversarial-fold-20260704.md">Fold record</a> (4 rounds, 10 catches), wiki updated in-mission, QUEUE idle with 9 SHORT one-keyword launches ready.</td></tr>
 </table></div>
 
 <h2>Decisions registered this mission</h2>
