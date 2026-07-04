@@ -57,3 +57,11 @@ Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD t
 **Root cause (parent-verified in source):** `var toastTimer` declared TWICE inside Songbook.mount()'s closure (library toast ~1454, compose toast block ~2441) - var hoisting makes them ONE shared variable; the two toast systems clobber each other's hide timer. Pre-existing latent bug, made visible by the truthful-toast traffic (#124).
 
 **Fix (S-TOAST, in flight):** extraction, not a patch - shared/toast.js primitive owning its own timer (ARIA live region, error/persist variants preserved), both call sites delegate. Ships WITH the operator-requested wiki page ux-philosophy/ui-primitives.md (toast/notable/modal/chip taxonomy + candidate placements: backup done, restore done, pref saved, transpose applied, setlist ops with undo).
+
+## U10 - Guidance notable camouflaged by selection-surface rows (operator, 2026-07-04, screenshot)
+
+**Operator verbatim-essence:** "I like the guidance... but it camouflaged with the highlight rows. Make a prim and enforce consistency - for each element in each view in the whole app so I don't have to type that again."
+
+**Grounding:** Library view - the guidance notable banner and the in-setlist row highlight both use the same pale accent surface; guidance (educational) wears selection's (state) clothes. Fix at the PRIMITIVE: notables get their OWN surface token, distinct from selection surfaces, app-wide.
+
+**Standing directive encoded:** THE ELEMENT CONSISTENCY LAW - music/CLAUDE.md + wiki ssot-registry.md. Never needs re-typing: consistency findings now route to primitives by law.

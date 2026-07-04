@@ -365,3 +365,8 @@
     font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--on-accent);
     background:var(--accent);border-radius:12px;padding:4px 10px;display:inline-block;}
   .scaleBoxChip[hidden]{display:none;}
+
+/* U5-class clamp parity (finding from PR #144's layout audit): the Studio
+   chords-in-key row lacked the SVG max-width guard the Compose grids carry.
+   Same defense-in-depth, same reason - see systems/layout-tokens.md. */
+.bt-st-chords .chordCell svg{max-width:100%;height:auto}

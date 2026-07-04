@@ -56,3 +56,7 @@ Rules of thumb:
 - `.github/workflows/tests.yml` runs `node test/run-all.js` (the node unit suite) on PRs.
 - `.github/workflows/pr-preview.yml` posts the githack preview comment.
 - No other CI gates merging; it's a personal static site.
+
+## Element Consistency Law (operator directive 2026-07-04, standing)
+
+Every UI element class has ONE primitive; every view COMPOSES primitives; two different meanings never share one look; UAT consistency findings are fixed at the PRIMITIVE, never the instance; divergence is a lint failure. Canonical: [engineering-wiki/systems/ssot-registry.md](engineering-wiki/systems/ssot-registry.md) (the law + registry) + [engineering-wiki/ux-philosophy/component-conventions.md](engineering-wiki/ux-philosophy/component-conventions.md) (the conventions).
