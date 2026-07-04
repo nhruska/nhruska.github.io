@@ -343,3 +343,17 @@
  * ===================================================================== */
   .scalePosBtn{width:44px;height:44px;min-width:44px;min-height:44px;}
   .scalePosBtn:disabled{opacity:.5;}
+
+/* =====================================================================
+ * S-BLUES-BOXES - the named-box chip key-explorer.js renders as a sibling
+ * of .scalePosCtrl whenever the active solo scale is pentMajor/pentMinor/
+ * blues and the pager's current position lands exactly on a box start.
+ * Composes the SAME accent-filled-pill language as .bt-st-scalechip.on
+ * above (this IS "the current box is active", same visual idea as an
+ * active chip) - centered, monospace fret/string text to match .scalePosLbl.
+ * Not a button (informational only; the pager buttons already drive it).
+ * ===================================================================== */
+  .scaleBoxChip{text-align:center;margin:-4px 0 8px;font-family:'Space Mono',monospace;
+    font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--on-accent);
+    background:var(--accent);border-radius:12px;padding:4px 10px;display:inline-block;}
+  .scaleBoxChip[hidden]{display:none;}

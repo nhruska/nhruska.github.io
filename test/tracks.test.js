@@ -262,6 +262,28 @@ test('soloBundle: unresolvable key -> null for every scaleId, including mode', f
 test('soloBundle: unknown scaleId -> null (safe; never throws)', function () {
   assert.strictEqual(T.soloBundle('A', 'minor', 'nonsense'), null);
 });
+
+/* ---------- S-BLUES-BOXES: boxScaleIdFor (which chip selections are box-eligible) ---------- */
+test('boxScaleIdFor: an explicit pentMajor/pentMinor/blues chip is always box-eligible, regardless of the underlying mode', function () {
+  assert.strictEqual(T.boxScaleIdFor('pentMajor', 'ionian'), 'pentMajor');
+  assert.strictEqual(T.boxScaleIdFor('pentMinor', 'aeolian'), 'pentMinor');
+  assert.strictEqual(T.boxScaleIdFor('blues', 'dorian'), 'blues');
+});
+test('boxScaleIdFor: the mode chip is box-eligible ONLY when the track\'s own mode IS blues (M-GUIDE W2)', function () {
+  assert.strictEqual(T.boxScaleIdFor('mode', 'blues'), 'blues');
+});
+test('boxScaleIdFor: the mode chip stays non-box for every 7-note mode (ionian/aeolian/dorian/mixolydian)', function () {
+  ['ionian', 'aeolian', 'dorian', 'mixolydian'].forEach(function (m) {
+    assert.strictEqual(T.boxScaleIdFor('mode', m), null, m + ' should not be box-eligible');
+  });
+});
+test('boxScaleIdFor: falsy scaleId behaves like \'mode\' (soloBundle\'s own falsy contract)', function () {
+  assert.strictEqual(T.boxScaleIdFor(null, 'blues'), 'blues');
+  assert.strictEqual(T.boxScaleIdFor(undefined, 'ionian'), null);
+});
+test('boxScaleIdFor: an unknown non-mode scaleId is never box-eligible (safe)', function () {
+  assert.strictEqual(T.boxScaleIdFor('nonsense', 'ionian'), null);
+});
 // soloScaleFraming MOVED to solo-guide.js (M-GUIDE W3a, D-CARDS-STATIC) as
 // SoloGuide.framing() - its coverage now lives in test/solo-guide.test.js.
 

@@ -147,4 +147,71 @@ test('the SHIPPED adapter declares supportsStart (source contract - fake packs a
     'music/play/index.html no longer sets scaleDiagram.supportsStart - the position control would silently vanish app-wide');
 });
 
+/* ---------- S-BLUES-BOXES: opts.boxScaleId pager-snap + box chip ---------- */
+function fakeGuitarPack(supportsStart) {
+  var pack = fakePack(supportsStart);
+  pack.meta = { stringNames: ['E', 'A', 'D', 'G', 'B', 'E'] };
+  return pack;
+}
+function chipOf(boxWrap) { return findByClass(boxWrap, 'scaleBoxChip'); }
+
+test('boxScaleId absent: no scaleBoxChip element at all (byte-identical to pre-boxes DOM)', function () {
+  var pack = fakeGuitarPack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7 });
+  assert.strictEqual(chipOf(boxWrap), null);
+});
+
+test('boxScaleId set (A pentMinor, guitar): forward SNAPS through box starts (0 -> 3 -> 5 -> 8 -> 10 -> 12), not the fixed 0/5/10 walk', function () {
+  var pack = fakeGuitarPack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
+  var p = ctrlParts(boxWrap);
+  var expected = [3, 5, 8, 10, 12];
+  expected.forEach(function (want) {
+    p.fwd.onclick();
+    assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, want, 'expected snap to fret ' + want);
+  });
+  assert.strictEqual(p.fwd.disabled, true, 'forward disables once the highest box (fret 12) is reached');
+});
+
+test('boxScaleId set: the chip shows "Box 1 - root on 6th string, fret 5" exactly when startFret lands on Box 1, hidden otherwise', function () {
+  var pack = fakeGuitarPack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
+  var p = ctrlParts(boxWrap), chip = chipOf(boxWrap);
+  assert.ok(chip, 'chip element must exist once a box list resolves');
+  assert.strictEqual(chip.hidden, true, 'no box aligns with the initial open (fret 0) window');
+  p.fwd.onclick(); // -> fret 3 (Box 5, wrapped)
+  assert.strictEqual(chip.hidden, false);
+  assert.strictEqual(chip.textContent, 'Box 5 - root on 3rd string, fret 2');
+  p.fwd.onclick(); // -> fret 5 (Box 1)
+  assert.strictEqual(chip.textContent, 'Box 1 - root on 6th string, fret 5');
+});
+
+test('boxScaleId set: back SNAPS to the previous lower box start and re-disables at the lowest one', function () {
+  var pack = fakeGuitarPack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
+  var p = ctrlParts(boxWrap);
+  p.fwd.onclick(); p.fwd.onclick(); p.fwd.onclick(); // -> 3, 5, 8
+  assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, 8);
+  p.back.onclick();
+  assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, 5);
+  p.back.onclick();
+  assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, 3);
+  assert.strictEqual(p.back.disabled, true, 'back disables once the lowest box (fret 3) is reached');
+});
+
+test('boxScaleId set but pack lacks meta.stringNames: degrades to the classic fixed 0/5/10 walk, no chip, never throws', function () {
+  var pack = fakePack(true), host = makeEl('div'); // no .meta at all
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
+  var p = ctrlParts(boxWrap);
+  assert.strictEqual(chipOf(boxWrap), null);
+  p.fwd.onclick();
+  assert.strictEqual(pack.calls[pack.calls.length - 1].startFret, 5, 'classic fixed step still applies');
+});
+
+test('boxScaleId set on a MODE (non-pentatonic) render is the caller\'s job to omit - passing it anyway still only affects the pager, never the diagram call shape', function () {
+  var pack = fakeGuitarPack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
+  assert.strictEqual(pack.calls[0].args, 6, 'the 6-arg supportsStart call shape is unaffected by box mode');
+});
+
 run();
