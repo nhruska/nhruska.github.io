@@ -51,6 +51,8 @@
 
 ## Operating rules
 
+0. **Atomic tier plan active:** [atomic-queue-plan-20260704.md](atomic-queue-plan-20260704.md) - Tier-0 relay-launches autonomously (5-builder cap); Tier-1 quick picks asked as one round; Tier-2 = one batched sitting. This section governs launch order until superseded.
+
 1. SHORT items launch autonomously when their trigger fires and quota is available - INFO ping, no gate re-ask (they were gated at spec time).
 2. MID -> SHORT requires one operator interview sitting (batch several per sitting - that is the front-loading).
 3. LONG -> MID requires a vision interview (fuzzier, longer).
