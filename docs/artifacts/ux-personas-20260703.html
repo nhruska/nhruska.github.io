@@ -137,7 +137,7 @@ ol.steps li{margin:5px 0;line-height:1.5}
 
 <div class="pane on" id="p-verify">
 <h2>Verify the shipped features (T1-T8, ~10-15 min, one-handed)</h2>
-<div class="card">Test on the <a href="https://nhruska.github.io/music/play/">live app</a>. If anything looks stale on first open, reload once (the new build is v78 - check Settings' bottom line). Full printable steps: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-test-plan.md">test-plan doc</a>.</div>
+<div class="card">Test on the <a href="https://nhruska.github.io/music/play/">live app</a>. If anything looks stale on first open, reload once (the new build is v78 - check Settings' bottom line). Full printable steps: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-test-plan.md">test-plan doc</a>.</div>
 
 <div class="card"><strong>T1 - Clear undo (the P0)</strong>
 <ol class="steps"><li>Compose: pick E Mixolydian, add 3-4 chords, tap Clear (now far LEFT, away from Save).</li>
@@ -178,19 +178,19 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <tr><th>#</th><th>Type</th><th>What</th><th>Why it was the right call</th></tr>
 <tr><td>1</td><td><span class="pill pl-you">YOU</span></td><td>Mission incantation typed on phone (/goal-interview + the vision block)</td><td>Fuzzy target -&gt; interview, not guesswork</td></tr>
 <tr><td>2</td><td><span class="pill pl-you">YOU</span></td><td>Interview round 1: 4 answers (end state, personas = your friends, one hard gate, deep budget)</td><td>Shared vision up front - prevents rework downstream</td></tr>
-<tr><td>3</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">Goal spec</a> committed (9 decisions, 5 principles)</td><td>Mission survives reboots/handoffs - state lives in git</td></tr>
-<tr><td>4</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">4 personas locked</a></td><td>Real expected users, deduped against prior HF work</td></tr>
-<tr><td>5</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit built + run</a>: 1008 checks, 0 bugs, 128 spelling deltas</td><td>Deterministic (zero-LLM) verification first - can't hallucinate</td></tr>
+<tr><td>3</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/goal-ux-persona-mission-20260703.md">Goal spec</a> committed (9 decisions, 5 principles)</td><td>Mission survives reboots/handoffs - state lives in git</td></tr>
+<tr><td>4</td><td><span class="pill pl-doc">DOC</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-personas-20260703.md">4 personas locked</a></td><td>Real expected users, deduped against prior HF work</td></tr>
+<tr><td>5</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/dev/theory-audit.js">Theory audit built + run</a>: 1008 checks, 0 bugs, 128 spelling deltas</td><td>Deterministic (zero-LLM) verification first - can't hallucinate</td></tr>
 <tr><td>6</td><td><span class="pill pl-fix">FIX</span></td><td>Hung reviewer call diagnosed -&gt; DISCOVERED sibling <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> already building key-aware spelling</td><td>Diagnosing instead of blind-retrying surfaced parallel work; prevented a planning collision</td></tr>
-<tr><td>7</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a> (GPT-5.5): "NONE FOUND" + caught the audit's one soft spot</td><td>The verifier itself needed independent attack (your D4 directive)</td></tr>
+<tr><td>7</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a> (GPT-5.5): "NONE FOUND" + caught the audit's one soft spot</td><td>The verifier itself needed independent attack (your D4 directive)</td></tr>
 <tr><td>8</td><td><span class="pill pl-pr">PR</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden trap cases posted to #98</a></td><td>One session's research became another session's test fixtures</td></tr>
-<tr><td>9</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">J1-J4 walkthroughs</a>: live probe found the P0 (Clear wipes work, no guard)</td><td>Robot probes + geometry beat opinion - every claim source-verified</td></tr>
+<tr><td>9</td><td><span class="pill pl-task">TASK</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-findings-20260703.md">J1-J4 walkthroughs</a>: live probe found the P0 (Clear wipes work, no guard)</td><td>Robot probes + geometry beat opinion - every claim source-verified</td></tr>
 <tr><td>10</td><td><span class="pill pl-you">YOU</span></td><td>Core-workflow directive captured + "3 y" (M3 eligibility)</td><td>Typed-once -&gt; encoded forever (compound engineering)</td></tr>
 <tr><td>11</td><td><span class="pill pl-task">TASK</span></td><td>Council: 4 persona-lens seats in parallel (~3.5 min)</td><td>Independent perspectives before synthesis; unanimous no-M3 emerged, not imposed</td></tr>
 <tr><td>12</td><td><span class="pill pl-you">YOU</span></td><td>Interview round 2 (triage powers, gate semantics, profiles, telegram format)</td><td>Answers feed the reusable workflow system, not just this mission</td></tr>
 <tr><td>13</td><td><span class="pill pl-decide">DECIDE</span></td><td>Fable chair synthesis: 8+1 plan, contested items ruled</td><td>Single accountable synthesis beats list-merging; premium model only at the judgment moment</td></tr>
 <tr><td>14</td><td><span class="pill pl-task">TASK</span></td><td>Adversarial review of the PLAN: REQUEST_CHANGES, 12 findings</td><td>Attacking the plan costs spec edits; attacking code later costs rework</td></tr>
-<tr><td>15</td><td><span class="pill pl-decide">DECIDE</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">v2 amendments</a>: undo contract, stack protocol, named #98 seam, fold gate</td><td>Every finding became a binding, testable spec line</td></tr>
+<tr><td>15</td><td><span class="pill pl-decide">DECIDE</span></td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-20260703.md">v2 amendments</a>: undo contract, stack protocol, named #98 seam, fold gate</td><td>Every finding became a binding, testable spec line</td></tr>
 <tr><td>16</td><td><span class="pill pl-you">YOU</span></td><td>GATE: approved with a single keystroke ("1" = approve + M3-A)</td><td>All context pre-staged -&gt; the human decision took one character</td></tr>
 <tr><td>17</td><td><span class="pill pl-task">TASK</span></td><td>Wave 1a: 4 builder agents launched in isolated worktrees (safety fixes, theory tests, hint infra, setlist guard)</td><td>File-ownership map from A2 makes parallel builds collision-free</td></tr>
 <tr><td>18</td><td><span class="pill pl-pr">PR</span></td><td>Builder landed: <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-s1-golden-a">theory canon suite</a> (1008 assertions; self-tested by deliberate corruption)</td><td>The verifier proves it can fail before we trust its pass</td></tr>
@@ -220,7 +220,7 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <tr><td>8</td><td>S-ROMAN + S-KEYPOLICY</td><td>2 post-#98</td><td>Roman-style Setting, default Classical; JIT one-time prompt at first roman surface (never first-run)</td></tr>
 <tr><td>9</td><td>S-GOLDEN-B</td><td>2 post-#98</td><td>12 professor traps into test/</td></tr>
 </table></div>
-<div class="card"><strong>M3 gate choice:</strong> A (recommended) = zero slices; M3 becomes sprint-2 primary, fresh session, post-#98, 5A/5B pre-resolved. B = spec+fixtures down-payment only. Full plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">ux-sprint-1-20260703.md</a></div>
+<div class="card"><strong>M3 gate choice:</strong> A (recommended) = zero slices; M3 becomes sprint-2 primary, fresh session, post-#98, 5A/5B pre-resolved. B = spec+fixtures down-payment only. Full plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-20260703.md">ux-sprint-1-20260703.md</a></div>
 <div class="card"><strong>Backlog:</strong> M3 (sprint-2) - S-CHIPS + S-EASYFILTER (into M3 bar) - S-INVERSIONS - SETX phase 2 - F6 #98 rider - full Phase 4 selector.</div>
 </div>
 
@@ -237,7 +237,7 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <tr><td>F7</td><td class="pos">+</td><td>KEEP: Save-&gt;Studio interstitial, wireTap, edit-set+undo, roman-labeled suggestions</td></tr>
 <tr><td>F8</td><td>P2</td><td>Six sub-44px controls in Compose top; Clear adjacent Save</td></tr>
 </table></div>
-<div class="card">Method: live destructive probe (4 slots -&gt; 0 on one Clear tap), per-screen geometry classification, source verification of every behavioral claim. Full doc: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">ux-findings-20260703.md</a></div>
+<div class="card">Method: live destructive probe (4 slots -&gt; 0 on one Clear tap), per-screen geometry classification, source verification of every behavioral claim. Full doc: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-findings-20260703.md">ux-findings-20260703.md</a></div>
 </div>
 
 <div class="pane" id="p-theory">
@@ -246,8 +246,8 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <div class="chip"><div class="n pos">0 BUGS</div><div class="l">1008 checks + adversarial professor</div></div>
 <div class="chip"><div class="n" style="color:var(--warn)">128</div><div class="l">spelling deltas -&gt; resolved by PR #98</div></div>
 </div>
-<blockquote>"NONE FOUND. The 48 rows preserve pitch class, degree order, triad quality, and Roman case/symbol."<span class="by">- music-theory-professor persona (GPT-5.5), instructed to refute - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">full review</a></span></blockquote>
-<div class="card"><strong>Professor outputs:</strong> sharp-tie = product policy (documented in <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">the audit</a>) - Roman-style SETTING recommended (Classical vs Lead-Sheet) - spelled chord tones - <a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden traps posted to PR #98</a>. Cross-session win: #98's key-aware output matches this mission's independent ground truth exactly.</div>
+<blockquote>"NONE FOUND. The 48 rows preserve pitch class, degree order, triad quality, and Roman case/symbol."<span class="by">- music-theory-professor persona (GPT-5.5), instructed to refute - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/theory-professor-review-20260703.md">full review</a></span></blockquote>
+<div class="card"><strong>Professor outputs:</strong> sharp-tie = product policy (documented in <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/dev/theory-audit.js">the audit</a>) - Roman-style SETTING recommended (Classical vs Lead-Sheet) - spelled chord tones - <a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden traps posted to PR #98</a>. Cross-session win: #98's key-aware output matches this mission's independent ground truth exactly.</div>
 </div>
 
 <div class="pane" id="p-council">
@@ -266,12 +266,12 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <h2>Compound engineering wins</h2>
 <div class="wrapx"><table>
 <tr><th>Win</th><th>What compounds</th></tr>
-<tr><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit as reusable tool</a> (1008 checks, ms, zero LLM)</td><td>Permanent regression fixture (sprint item 2)</td></tr>
+<tr><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/dev/theory-audit.js">Theory audit as reusable tool</a> (1008 checks, ms, zero LLM)</td><td>Permanent regression fixture (sprint item 2)</td></tr>
 <tr><td>Adversary caught the auditor (sharp-tie = policy)</td><td>The verifier itself got verified</td></tr>
 <tr><td>Cross-session verification (<a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> matches mission ground truth)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">Trap cases now fixtures in #98's thread</a></td></tr>
 <tr><td>Incident -&gt; standing infra (<a href="https://github.com/nhruska/nhruska.github.io/pull/97">#97 Pages auto-retry</a>)</td><td>Deploy flakes self-heal; proved armed on first live run</td></tr>
 <tr><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/docs/UX-FRICTION-LOG.md">Friction-log reuse</a></td><td>No duplicate findings; plans around in-flight work</td></tr>
-<tr><td>Interview -&gt; <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">binding goal spec</a></td><td>Mission survives reboots + handoffs (all state in git)</td></tr>
+<tr><td>Interview -&gt; <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/goal-ux-persona-mission-20260703.md">binding goal spec</a></td><td>Mission survives reboots + handoffs (all state in git)</td></tr>
 </table></div>
 </div>
 
@@ -324,7 +324,7 @@ ol.steps li{margin:5px 0;line-height:1.5}
 <blockquote>Two independent derivations of conservatory spelling agree on every probe. Neither knew the other existed until they met in the repo.<span class="by">- the cross-session verification win</span></blockquote>
 </div>
 
-<div class="foot">Sources on <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">the mission branch</a>: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">spec</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">personas</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">findings</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">professor</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint plan</a>. Draft PRs only - zero merges - one hard human gate.</div>
+<div class="foot">Sources on <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">the mission branch</a>: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/goal-ux-persona-mission-20260703.md">spec</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-personas-20260703.md">personas</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-findings-20260703.md">findings</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/theory-professor-review-20260703.md">professor</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-20260703.md">sprint plan</a>. Draft PRs only - zero merges - one hard human gate.</div>
 
 <script>
 (function(){
