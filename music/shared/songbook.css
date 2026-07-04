@@ -366,6 +366,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    scroll (fixes the "stuck / few pixels at a time" trap from a nested h-scroller). */
 .prog{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
 .prog::-webkit-scrollbar{display:none;}
+/* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
+   + wraps"): the unconditional flex-wrap the comment above warns against was a
+   real regression (an early wrap pushed a 4th chord to row 2) - this
+   reintroduction is threshold-gated, not unconditional. JS (progStripMode,
+   songbook.js renderProg) only adds .wrapped once the diagram-card row would
+   genuinely overflow the strip, so a normal 2-4 chord progression still gets
+   the one-row nowrap+scroll behavior above, untouched. overflow-y stays
+   visible - .prog sits in the FIXED (non-scrolling) composeTop region, so a
+   taller wrapped strip grows the fixed region's own height rather than
+   clipping content (A7 fold-budget check lives in the manual test plan, not
+   in CSS clipping). */
+.prog.wrapped{flex-wrap:wrap;overflow-x:hidden;overflow-y:visible;touch-action:auto;align-content:flex-start;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:62px;}
 /* When empty the #suggest starters (top of the chord list below) carry the
@@ -720,6 +732,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.maxed .inKeyLead .chordCell,
 .composeWrap.maxed .progPick,
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
+/* S-PROG-WRAP (UAT U8): the compact progression token reuses .suggChip verbatim
+   (same class - not a 4th chip variant), but the maxed-dim rule above targets
+   the NEXT-CHORD suggestion chip's "add more" role, which must NOT extend to a
+   chord already IN the progression - the cap's whole point is "remove one to
+   add another," so the progression's own slots (compact or diagram) must stay
+   tappable at the cap. 4 class selectors beats the 3-class rule above
+   regardless of source order. */
+.composeWrap.maxed .prog .suggChip{opacity:1;pointer-events:auto;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
 /* solo-scale preview chips (M-GUIDE W3b) - same 44px thumb floor */

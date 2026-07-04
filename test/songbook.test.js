@@ -865,7 +865,15 @@ function makeStubEl(tag) {
     insertBefore: function (c) { c.parentNode = e; e.children.push(c); return c; },
     removeChild: function (c) { var i = e.children.indexOf(c); if (i >= 0) e.children.splice(i, 1); return c; },
     setAttribute: function (k, v) { e.attrs[k] = v; },
-    addEventListener: function () {},
+    // S-PROG-WRAP (UAT U8): real listener recording (was a total no-op) so an
+    // element wired via composeWireTap/wireTapCancel (list-item.js's wireTap
+    // calls addEventListener directly, never a plain .onclick=) can be driven
+    // from a test - fire via fireListeners() below. No existing test called
+    // .click() or otherwise depended on addEventListener staying inert (the
+    // dedicated wireTapCancel suite uses its own separate FakeTapEl), so this
+    // is purely additive capability, not a behavior change for any passing test.
+    _listeners: {},
+    addEventListener: function (type, fn) { (e._listeners[type] = e._listeners[type] || []).push(fn); },
     // UAT U6/U7 (2026-07-04): both spy-recording, purely additive - no
     // existing test reads _focusCalls/_scrollCalls, so this can't regress
     // anything already passing. focus() records a call count (U7: "focus
@@ -1195,6 +1203,35 @@ test('COMPOSE_MAX is exported as 12 (D-CAP12, up from the old 8-chord cap)', fun
   assert.strictEqual(Songbook.COMPOSE_MAX, 12);
 });
 
+/* ---------- progStripMode (S-PROG-WRAP, UAT U8): measured-width threshold, never a hardcoded count ---------- */
+test('progStripMode: a diagram row that fits the strip stays full (unchanged behavior)', function () {
+  // 4 cards x 84px + 3 gaps x 8px = 336 + 24 = 360; strip has 400 -> fits
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 400), 'full');
+});
+test('progStripMode: the same card/gap size overflows the strip once count grows -> compact', function () {
+  // 12 cards x 84px + 11 gaps x 8px = 1008 + 88 = 1096; strip only has 400 -> overflow
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 400), 'compact');
+});
+test('progStripMode: the SAME count fits a wider strip and overflows a narrower one - width drives the call, not count alone', function () {
+  // 6 cards x 84 + 5 gaps x 8 = 504 + 40 = 544
+  assert.strictEqual(Songbook.progStripMode(6, 84, 8, 600), 'full');
+  assert.strictEqual(Songbook.progStripMode(6, 84, 8, 500), 'compact');
+});
+test('progStripMode: an exact fit (needW === availW) is NOT an overflow - the boundary is exclusive', function () {
+  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8), 'full');
+  assert.strictEqual(Songbook.progStripMode(3, 84, 8, 3 * 84 + 2 * 8 - 1), 'compact');
+});
+test('progStripMode: 0 chords never compact even in a tiny strip - nothing to wrap', function () {
+  assert.strictEqual(Songbook.progStripMode(0, 84, 8, 10), 'full');
+});
+test('progStripMode: an unmeasured container (availW <= 0, e.g. before first layout) defaults to full, never spuriously compacts', function () {
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 0), 'full');
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, -5), 'full');
+});
+test('progStripMode: an unmeasured card width (cardW <= 0, e.g. the probe was unavailable) defaults to full', function () {
+  assert.strictEqual(Songbook.progStripMode(12, 0, 8, 400), 'full');
+});
+
 /* ---------- PROGRESSIONS: the two Blues starters carry mode + preview ---------- */
 test('PROGRESSIONS: the 12-bar and quick-change Blues starters carry mode + preview fields', function () {
   var blues = Songbook.PROGRESSIONS.filter(function (p) { return p.mode === 'Blues'; });
@@ -1461,6 +1498,120 @@ test('U7: "Skip" resolves to skip and opens the ephemeral Studio directly (no sa
   assert.strictEqual(picks.length, 1);
   assert.strictEqual(picks[0].title, 'Solo practice');
   assert.strictEqual(findComposeRow(m).hidden, true);
+});
+
+/* =====================================================================
+ * S-PROG-WRAP (2026-07-04, UAT U8) - progression strip degrade+wrap.
+ * progStripMode's pure-fn coverage lives above, near COMPOSE_MAX. These are
+ * the DOM-level checks the pure fn can't cover on its own: does renderProg
+ * actually build the compact/full markup correctly, does the existing .rm
+ * remover still work in compact mode, and does the mode flip back to full
+ * when the progression shrinks below threshold again.
+ *
+ * Same minimal-stub-document mount() approach as the harnesses above,
+ * dedicated (not reusing mountForSaveTests/mountForGridTests) so setting
+ * elMap.prog.clientWidth here can't affect any other suite's assertions.
+ * clientWidth is a plain stub property (no real layout engine) - progCardW's
+ * off-screen probe measures offsetWidth, which is undefined on these stub
+ * elements, so it deterministically falls back to its documented 84px
+ * constant; progGapW/progAvailW fall back to 8px/clientWidth respectively
+ * (no window.getComputedStyle in Node) - all three fallbacks are asserted
+ * against directly in the width arithmetic below rather than left implicit.
+ * ===================================================================== */
+function mountForProgWrapTests() {
+  global.localStorage = lsReset.fakeStore();
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'progwraptest', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+// Loads a named PROGRESSIONS starter via the empty-state suggestion row (the
+// same #suggest -> progPickRow -> loadProgression(p) path startSoloChoice
+// above drives for its first entry) - lets these tests pick a KNOWN chord set
+// (with known romans) by name instead of depending on buildGrid's tile order.
+function loadStarterByName(m, name) {
+  var startRow = m.elMap.suggest.children[1]; // [0]=label, [1]=progPickRow
+  var idx = Songbook.PROGRESSIONS.map(function (p) { return p.name; }).indexOf(name);
+  if (idx < 0) throw new Error('loadStarterByName: unknown starter "' + name + '"');
+  startRow.children[idx].onclick();
+}
+// Fires a stub element's real recorded listeners for `type` (see makeStubEl's
+// addEventListener) - the composeWireTap/wireTap path list-item.js wires
+// .rm through, which a plain .onclick()/.click() call can't reach.
+function fireListeners(el, type, evt) {
+  (el._listeners[type] || []).forEach(function (fn) { fn(evt); });
+}
+// Simulates a plain mouse tap through wireTap: no touchstart/touchmove fired,
+// so wireTap's internal `moved` flag stays false and the click handler runs
+// fn(e) - matching the dedicated wireTapCancel suite's own "mouse click with
+// no touch events at all still fires" case.
+function tapWired(el) { fireListeners(el, 'click', { stopPropagation: function () {} }); }
+
+test('S-PROG-WRAP: a progression that fits the strip renders diagram cards (full mode), .wrapped absent', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 1000; // plenty of room for 3 cards at the 84px fallback width
+  loadStarterByName(m, 'Three-chord rock'); // degrees [0,3,4] in C Major -> C F G
+  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), false);
+  assert.strictEqual(m.elMap.prog.children.length, 3);
+  m.elMap.prog.children.forEach(function (slot) {
+    assert.ok(slot.children.some(function (c) { return c.className === 'chord'; }), 'full mode must render the diagram .chord element');
+    assert.ok(!slot.children.some(function (c) { return c.className === 'suggChip'; }), 'full mode must not use the compact suggChip token');
+  });
+});
+
+test('S-PROG-WRAP: a progression whose diagram row would overflow the strip degrades to compact tokens (name + roman, no diagram) and flex-wraps', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 50; // narrow strip - even one 84px fallback card overflows
+  loadStarterByName(m, '4-chord song'); // degrees [0,4,5,3] in C Major -> C G Am F -> I V vi IV
+  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), true, 'the strip must switch to wrap mode');
+  assert.strictEqual(m.elMap.prog.children.length, 4);
+  var names = [], romans = [];
+  m.elMap.prog.children.forEach(function (slot) {
+    assert.ok(!slot.children.some(function (c) { return c.className === 'chord'; }), 'compact mode must not render the diagram element');
+    var chip = slot.children.filter(function (c) { return c.className === 'suggChip'; })[0];
+    assert.ok(chip, 'expected the existing suggChip token, reused verbatim (not a 4th chip variant)');
+    var nm = chip.children.filter(function (c) { return c.className === 'scName'; })[0];
+    var rn = chip.children.filter(function (c) { return c.className === 'scRn'; })[0];
+    names.push(nm.textContent); romans.push(rn.textContent);
+  });
+  assert.deepStrictEqual(names, ['C', 'G', 'Am', 'F']);
+  assert.deepStrictEqual(romans, ['I', 'V', 'vi', 'IV']);
+});
+
+test('S-PROG-WRAP: removing a chord from a compact slot (the x button) works the same as full mode', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 50;
+  loadStarterByName(m, '4-chord song'); // C G Am F
+  assert.strictEqual(m.elMap.prog.children.length, 4);
+  var secondSlot = m.elMap.prog.children[1]; // G
+  var rm = secondSlot.children.filter(function (c) { return c.className === 'rm'; })[0];
+  assert.ok(rm, 'expected the remove (x) button on a compact slot');
+  tapWired(rm);
+  assert.strictEqual(m.elMap.prog.children.length, 3, 'removing from a compact slot must shrink the progression by one');
+  var names = m.elMap.prog.children.map(function (slot) {
+    var chip = slot.children.filter(function (c) { return c.className === 'suggChip'; })[0];
+    return chip.children.filter(function (c) { return c.className === 'scName'; })[0].textContent;
+  });
+  assert.deepStrictEqual(names, ['C', 'Am', 'F'], 'G must be the one removed, remaining order preserved');
+});
+
+test('S-PROG-WRAP: removing chords back below the threshold flips the strip back to full diagram-card mode', function () {
+  var m = mountForProgWrapTests();
+  m.elMap.prog.clientWidth = 250; // 3 cards (3*84+2*8=268) overflow; 2 cards (2*84+1*8=176) fit
+  loadStarterByName(m, 'Three-chord rock'); // C F G
+  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), true, '3 chords at the 84px fallback card width overflow a 250px strip');
+  var slot0 = m.elMap.prog.children[0];
+  var rm = slot0.children.filter(function (c) { return c.className === 'rm'; })[0];
+  tapWired(rm); // remove the first chord (C) -> F, G remain
+  assert.strictEqual(m.elMap.prog.children.length, 2);
+  assert.strictEqual(m.elMap.prog.classList.contains('wrapped'), false, '2 chords must fit and flip back to full diagram mode');
+  var remainingSlot = m.elMap.prog.children[0];
+  assert.ok(remainingSlot.children.some(function (c) { return c.className === 'chord'; }), 'must render the diagram element again after flipping back to full');
+  assert.ok(!remainingSlot.children.some(function (c) { return c.className === 'suggChip'; }), 'must not still show the compact token after flipping back');
 });
 
 run();

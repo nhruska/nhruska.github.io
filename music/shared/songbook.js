@@ -313,6 +313,25 @@
   // from 8 to fit the 12-bar starters above. ONE shared const replaces both the
   // addChord and renderProg `>= 8` gates so it can never drift between the two.
   var COMPOSE_MAX = 12;
+  // S-PROG-WRAP (UAT U8, docs/plans/uat-walkthrough-20260704.md section U8;
+  // amends D-CAP12's "strip scrolls" note to "strip degrades + wraps"): once the
+  // progression's diagram-card row would need more width than the strip actually
+  // has, EVERY slot re-renders as the existing compact chord token (name + roman,
+  // no diagram - see suggChip()) and the strip flex-wraps instead of horizontal-
+  // scrolling. The threshold is the REAL row width the full render would need
+  // (count cards + (count-1) gaps) vs the strip's REAL available width - never a
+  // hardcoded chord count, so a wider viewport or a pack with bigger/smaller
+  // diagrams (guitar vs ukulele) both still degrade at the right point. Pure +
+  // Node-testable, same contract shape as fitScale above: the DOM caller
+  // (renderProg) measures cardW/gapW/availW for real and passes them in. Boundary
+  // is exclusive (an exact fit stays 'full', never wraps early); any unmeasured
+  // input (cardW/availW <= 0, e.g. before first layout) defaults to 'full' so a
+  // missing measurement can never spuriously force compact.
+  function progStripMode(count, cardW, gapW, availW) {
+    if (count <= 0 || cardW <= 0 || availW <= 0) return 'full';
+    var needW = count * cardW + Math.max(0, count - 1) * gapW;
+    return needW > availW ? 'compact' : 'full';
+  }
   // 0-indexed MAJOR-scale degree of a chord in a key (-1 if its root isn't a scale
   // tone). Used to recognize a progression-in-progress against the canon.
   var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
@@ -1709,6 +1728,49 @@
       wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(name) + '</span>';
       return wrap;
     }
+    // S-PROG-WRAP (UAT U8): real measurements feeding progStripMode's decision -
+    // the DOM-caller half of the fitScale-style contract (pure fn takes plain
+    // numbers; the caller measures the real page and passes them in).
+    //
+    // Card width: a diagram's SVG size is fixed per chord PACK + size, content-
+    // independent (drawDiagram's W/H opts never vary by chord - chords-guitar.js/
+    // chords-ukulele.js), so ONE off-screen probe per pack gives an accurate width
+    // for every future check - including the very first render of a 12-chord
+    // starter loaded straight into an EMPTY progression, where no prior full-mode
+    // slot exists yet to measure from. Probes the actual first chord in the
+    // progression (guaranteed renderable by this pack) rather than a guessed name
+    // like "C" (which may not exist in every custom/exotic pack).
+    var _progCardW = null, _progCardWPack = null;
+    function progCardW() {
+      if (!progression.length) return 0; // nothing to measure/degrade yet
+      if (_progCardW != null && _progCardWPack === pack) return _progCardW;
+      var probe = packDiagram(progression[0], 'small');
+      if (probe.style) { probe.style.position = 'absolute'; probe.style.visibility = 'hidden'; probe.style.left = '-9999px'; probe.style.top = '-9999px'; }
+      document.body.appendChild(probe);
+      var w = probe.offsetWidth;
+      document.body.removeChild(probe);
+      // 84 ~= the guitar small-diagram box (70px SVG + 6px x2 padding + 1px x2
+      // border - chords-guitar.js smallDiagram + songbook.css .chord) - only hit
+      // when offsetWidth is unavailable (a headless/no-layout DOM, e.g. tests).
+      _progCardW = (w > 0) ? w : 84;
+      _progCardWPack = pack;
+      return _progCardW;
+    }
+    function progGapW() {
+      if (!el.prog || typeof global.getComputedStyle !== 'function') return 8; // matches .prog{gap:8px} in songbook.css
+      var cs = global.getComputedStyle(el.prog);
+      var g = parseFloat(cs.columnGap || cs.gap);
+      return (g > 0) ? g : 8;
+    }
+    function progAvailW() {
+      if (!el.prog) return 0;
+      var w = el.prog.clientWidth || 0;
+      if (typeof global.getComputedStyle === 'function') {
+        var cs = global.getComputedStyle(el.prog);
+        w -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      }
+      return w;
+    }
     // What tonic do we measure intervals against? The chosen key when one is set
     // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
     // the first chord as a sensible default for free-built progressions.
@@ -1742,25 +1804,52 @@
       if (wrap) wrap.classList.toggle('maxed', maxed);
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
+      // S-PROG-WRAP (UAT U8): degrade to the compact chord token + flex-wrap
+      // once the full diagram row would need more width than the strip actually
+      // has - progStripMode is measured, never a hardcoded chord count.
+      var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW());
+      el.prog.classList.toggle('wrapped', mode === 'compact');
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans, or the maxed cap. labelRoman is MODE-aware (a mode
-      // toggle flips bVII <-> VII on the same chord), so the mode is part of the
-      // visible signature - omitting it left stale romans after a mode change
-      // (codex V2 high).
-      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
+      // key-relative romans, the maxed cap, or the compact/full mode. labelRoman is
+      // MODE-aware (a mode toggle flips bVII <-> VII on the same chord), so the
+      // mode is part of the visible signature - omitting it left stale romans
+      // after a mode change (codex V2 high). Same reasoning for the strip mode:
+      // a resize that flips compact<->full must force a repaint even though the
+      // chords/tonic/songKey.mode/maxed didn't change.
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed + '|' + mode;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
         progression.forEach(function (c, i) {
           var slot = document.createElement('div'); slot.className = 'slot';
-          var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
-          slot.appendChild(d);
-          // interval relative to the key — think I IV V, not shapes
           var rn = labelRoman(c);
-          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+          if (mode === 'compact') {
+            // S-PROG-WRAP: the SAME compact token the "Next chord" suggestion
+            // row already uses (suggChip/scName/scRn classes) - reused
+            // verbatim, not a 4th chip variant. Built via createElement +
+            // textContent (not innerHTML, unlike suggChip() itself) so the
+            // remove button below stays a plain sibling and content is
+            // trivially inspectable. .composeWrap.maxed dims THIS class's
+            // chooser role at the cap (see songbook.css); the progression's
+            // OWN slots must stay interactive at cap (remove one to add
+            // another) - the `.prog .suggChip` CSS carve-out exempts them.
+            var tok = document.createElement('button'); tok.type = 'button'; tok.className = 'suggChip';
+            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = c;
+            tok.appendChild(nameSpan);
+            if (rn) { var rnSpan = document.createElement('span'); rnSpan.className = 'scRn'; rnSpan.textContent = rn; tok.appendChild(rnSpan); }
+            tok.onclick = function () { packPlayChord(c); };
+            slot.appendChild(tok);
+          } else {
+            var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
+            slot.appendChild(d);
+            // interval relative to the key — think I IV V, not shapes
+            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+          }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
           // S-SLOTX: movement-cancelled (composeWireTap, not a raw onclick) so a
           // scroll-grab on this horizontal filmstrip can't remove a chord.
+          // Unchanged by S-PROG-WRAP - the remover works identically in both
+          // full and compact mode.
           composeWireTap(rm, function () {
             invalidateClearUndo(); // A3: removing a chord invalidates any pending Clear-undo
             progression.splice(i, 1);
@@ -3050,6 +3139,17 @@
     renderKeyView();
     renderProgPicks();
     renderProg();
+    // S-PROG-WRAP (UAT U8): re-evaluate the strip's full/compact threshold on
+    // resize/orientation-change too, not just on add/remove - a phone rotated to
+    // landscape (wider strip) or a device with a narrower composeWrap needs the
+    // same degrade-or-restore check renderProg already runs on every mutation.
+    // window.addEventListener is a browser-only API (undefined under Node's
+    // test-stub `window`, matching the window.NavHistory guard pattern below) -
+    // guarded so this is a no-op outside a real browser. Max 12 slots means a
+    // plain re-render per resize tick is cheap enough to skip debouncing.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', function () { renderProg(); });
+    }
     // C1: renderKey() is what actually gates #soloBackingBtn's hidden state +
     // inline display (see renderKey above) - nothing else in INIT calls it, so
     // without this the button's very first paint relies on the CSS cascade bug
@@ -3145,6 +3245,7 @@
     mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
     COMPOSE_MAX: COMPOSE_MAX, // D-CAP12: the Compose progression cap (12)
+    progStripMode: progStripMode, // S-PROG-WRAP (UAT U8): full/compact strip threshold
     degreeOf: degreeOf,
     completions: completions,
     inferKey: inferKey,
