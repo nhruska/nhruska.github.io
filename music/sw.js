@@ -33,7 +33,13 @@
 // landed) - no new CORE paths, but the discipline is "bump on any
 // shared/play diff" regardless. check-cache-bump.sh re-verified against
 // origin/main immediately before push.
-var CACHE = 'music-v91';
+// S-DIAGRAM-PREF step 0 (2026-07-05): v91->v92 - adds shared/shape-classify.js
+// (new shared module, the shape classifier). Cut from the fresh origin/main
+// tip (e763c37) after re-pinning past the S-BACKUP-NUDGE/S-CHIPS-PLUS/
+// S-PROG-WRAP/S-BLUES-BOXES bumps that landed while this branch was in
+// flight - re-verify max+1 against origin/main immediately before push if
+// any further sibling CACHE bump lands first.
+var CACHE = 'music-v92';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -47,6 +53,10 @@ var CORE = [
   // esc.js: the ONE HTML-escape util (S-HARDEN A5) - loaded before every
   // shared/*.js consumer in both play/index.html and play/triad-inversions.html.
   './shared/esc.js',
+  // shape-classify.js: S-DIAGRAM-PREF step 0 (2026-07-05) - script-tagged in
+  // play/index.html before diagram.js; precached here so it's available
+  // offline from install, matching the S-HARDEN A6 discipline above.
+  './shared/shape-classify.js',
   './shared/nav-history.js',
   // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
   // order) - both W3a's Studio and W3b's Compose solo chips call it.

@@ -287,6 +287,12 @@
 <script src="../shared/solo-guide.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
+<!-- S-DIAGRAM-PREF step 0: curated shape classifier (family/rootString/
+     inversion/barreFret per voicing). Loaded before diagram.js - nothing
+     consumes it yet (wiring-only, per the step-0 spec); the step 1/2
+     'patterns' render wave wires a caller in. Dependency-free (no circle.js
+     coupling) - see the module header for why. -->
+<script src="../shared/shape-classify.js"></script>
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
 <script src="../shared/tracks.js"></script>
