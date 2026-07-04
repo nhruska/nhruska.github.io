@@ -528,6 +528,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keySoloScale{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
 .keySoloNotes{font-size:.82rem;color:var(--txt-soft);margin:0 0 4px;}
 .keySoloNotes strong{color:var(--txt);font-weight:600;}
+/* S-CHIPS-PLUS: the degrees line under the notes line - same styling family as
+   the Practice Studio's degree glyphs (tracks.css .cofDeg .dg: monospace, dim,
+   small) so "1 2 3 4 5 6 ♭7" reads as the SAME kind of label app-wide. */
+.keySoloDegrees{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);letter-spacing:.03em;margin:0 0 4px;}
+.keySoloDegrees[hidden]{display:none;}
 .keySoloFrame{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 10px;}
 .keySoloFrame[hidden]{display:none;}
 .keySubLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 8px;}

@@ -21,7 +21,13 @@
 // shared/repertoire.js and shared/repertoire-form.js are all loaded by
 // play/index.html's script order but had never been precached, so an install
 // before ever having gone online would 404 on those files offline.
-var CACHE = 'music-v88';
+// S-CHIPS-PLUS (2026-07-04): v88->v90 - shared/songbook.js and
+// shared/songbook.css changed (Mixolydian chip + degrees line in the Compose
+// solo preview). Bumped past v89 (known in-flight on a sibling agent's
+// branch, S-BACKUP-NUDGE) to avoid the identical-string collision the v83
+// incident (PR #117) caught - check-cache-bump.sh re-verified against
+// origin/main immediately before push.
+var CACHE = 'music-v90';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

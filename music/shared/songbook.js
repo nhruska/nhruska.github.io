@@ -755,18 +755,28 @@
     return null;
   }
   // Pure + exported for tests: the note names for one chip. scaleId is one of
-  // 'mode' | 'pentMajor' | 'pentMinor' | 'blues'. 'mode' resolves to the KEY's
-  // own scale - the 6-note blues scale when keyMode is Blues (which is exactly
-  // why the Blues-key row dedupes the standalone Blues chip: it would show the
-  // same notes under a second button), else the mode's 7-note Circle scale via
-  // CIRCLE_MODE. Unresolvable root/Circle/mode -> null (caller keeps whatever
-  // was on-screen rather than clearing it, matching soloScale's own contract).
+  // 'mode' | 'pentMajor' | 'pentMinor' | 'blues' | 'mixolydian'. 'mode' resolves
+  // to the KEY's own scale - the 6-note blues scale when keyMode is Blues
+  // (which is exactly why the Blues-key row dedupes the standalone Blues chip:
+  // it would show the same notes under a second button), else the mode's
+  // 7-note Circle scale via CIRCLE_MODE. 'mixolydian' (S-CHIPS-PLUS, P5 W3
+  // verdict) is the chip that fills the freed 4th slot on a Blues key - the
+  // dominant-scale option a player actually reaches for over I7-IV7-V7 - and
+  // resolves via Circle.spellScale directly, independent of keyMode, so it's
+  // callable the same way regardless of which key row a caller is testing.
+  // Unresolvable root/Circle/mode -> null (caller keeps whatever was on-screen
+  // rather than clearing it, matching soloScale's own contract).
   function soloChipScale(root, keyMode, scaleId) {
     var C = keyViewCircle();
     if (!C) return null;
     if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
       var notes = C.soloScale(root, scaleId);
       return notes.length ? notes : null;
+    }
+    if (scaleId === 'mixolydian') {
+      if (typeof C.spellScale !== 'function') return null;
+      var mixNotes = C.spellScale(root, 'mixolydian');
+      return mixNotes.length ? mixNotes : null;
     }
     var mk = canonMode(keyMode);
     if (mk === 'Blues') {
@@ -778,6 +788,36 @@
     var scaleNotes = C.spellScale(root, circleMode);
     return scaleNotes.length ? scaleNotes : null;
   }
+  // Pure + exported for tests (S-CHIPS-PLUS): the scale-degree glyphs for a
+  // chip (e.g. ['1','2','3','4','5','6','♭7']), root-independent (degree
+  // formulas don't depend on a root) - mirrors soloChipScale's own scaleId
+  // routing exactly so a chip's notes and its degrees always describe the
+  // SAME scale. Renders as the muted degrees line under the notes line (P5 W3
+  // verdict: "how do these notes function", not just their names). Circle
+  // absence, or an id neither this fn nor Circle recognizes -> null (caller
+  // hides the degrees line rather than showing a stale one).
+  function soloChipDegrees(keyMode, scaleId) {
+    var C = keyViewCircle();
+    if (!C) return null;
+    if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
+      var d = (typeof C.soloScaleDegrees === 'function') ? C.soloScaleDegrees(scaleId) : [];
+      return d.length ? d : null;
+    }
+    if (scaleId === 'mixolydian') {
+      if (typeof C.scaleDegrees !== 'function') return null;
+      var mixDeg = C.scaleDegrees('mixolydian');
+      return mixDeg.length ? mixDeg : null;
+    }
+    var mk = canonMode(keyMode);
+    if (mk === 'Blues') {
+      var bluesDeg = (typeof C.soloScaleDegrees === 'function') ? C.soloScaleDegrees('blues') : [];
+      return bluesDeg.length ? bluesDeg : null;
+    }
+    var circleMode = CIRCLE_MODE[mk];
+    if (!circleMode || typeof C.scaleDegrees !== 'function') return null;
+    var modeDeg = C.scaleDegrees(circleMode);
+    return modeDeg.length ? modeDeg : null;
+  }
   // Pure + exported for tests: the one-line teaching caption for a chip, or
   // null. 'mode' never captions (mirrors the Practice Studio, which never
   // captions its default/mode chip even when that scale happens to be Blues -
@@ -785,8 +825,20 @@
   // SoloGuide absence -> null, never throws (guarded contract above).
   function soloChipCaption(scaleId) {
     if (scaleId === 'mode') return null;
-    var C = keyViewCircle(), SG = keyViewSoloGuide();
-    if (!C || !SG || typeof SG.framing !== 'function') return null;
+    var SG = keyViewSoloGuide();
+    if (!SG) return null;
+    // S-CHIPS-PLUS: SoloGuide.framing() has no mixolydian branch (that table
+    // is curated per-scaleId prose from the S-BLUES era) - its card()'s
+    // chooseWhen already covers mixolydian and needs no {i} note
+    // interpolation for that block, so it's "trivially reachable" per the P5
+    // W3 verdict; guarded the same never-throws way as the framing() path.
+    if (scaleId === 'mixolydian') {
+      if (typeof SG.card !== 'function') return null;
+      var mixCard = SG.card('mixolydian');
+      return (mixCard && mixCard.chooseWhen) || null;
+    }
+    var C = keyViewCircle();
+    if (!C || typeof SG.framing !== 'function') return null;
     var info = (typeof C.soloScaleInfo === 'function') ? C.soloScaleInfo(scaleId) : null;
     return SG.framing(scaleId, info && info.family) || null;
   }
@@ -2164,6 +2216,11 @@
         var wrap = document.createElement('div');
         var chipsRow = document.createElement('div'); chipsRow.className = 'keySoloScale';
         var notesLine = document.createElement('div'); notesLine.className = 'keySoloNotes';
+        // S-CHIPS-PLUS: a degrees line under the notes line (P5 W3 verdict -
+        // "how do these notes function", not just their names). Same styling
+        // family as the Practice Studio's degree glyphs (tracks.js
+        // studioTheory/soloBundle -> Circle.scaleDegrees/soloScaleDegrees).
+        var degreesLine = document.createElement('div'); degreesLine.className = 'keySoloDegrees'; degreesLine.hidden = true;
         var frameLine = document.createElement('div'); frameLine.className = 'keySoloFrame'; frameLine.hidden = true;
         var scaleLabel = (MODES[keyMode] && MODES[keyMode].label) || escHTML(String(keyMode));
         var CHIPS = [
@@ -2175,7 +2232,14 @@
         // Blues-key dedup: when the KEY's own mode is already Blues, the standalone
         // Blues chip would just re-select the identical 6-note scale under a second
         // button - drop it (mirrors the Practice Studio's th.scaleMode === 'blues' fold).
-        if (canonMode(keyMode) === 'Blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+        // S-CHIPS-PLUS (P5 W3 verdict): the freed 4th slot becomes Mixolydian - the
+        // dominant-scale option a player actually reaches for over I7-IV7-V7 (Blues'
+        // own harmonizing palette is I7/IV7/V7, Circle.BLUES_KEY). Non-Blues keys
+        // keep their 4th chip as Blues, unchanged.
+        if (canonMode(keyMode) === 'Blues') {
+          CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+          CHIPS.push({ id: 'mixolydian', label: 'Mixolydian' });
+        }
         var curChipId = 'mode';
         function renderChips() {
           chipsRow.innerHTML = CHIPS.map(function (c) {
@@ -2191,13 +2255,18 @@
           curChipId = scaleId;
           renderChips();
           notesLine.innerHTML = 'Solo over it - <strong>' + escHTML(notes.join(' ')) + '</strong>';
+          // Degrees are best-effort labeling only - notes already resolved above,
+          // so a null/empty degrees result just hides the line, never blocks the chip.
+          var degrees = soloChipDegrees(keyMode, scaleId);
+          if (degrees && degrees.length) { degreesLine.textContent = degrees.join(' '); degreesLine.hidden = false; }
+          else { degreesLine.textContent = ''; degreesLine.hidden = true; }
           var caption = soloChipCaption(scaleId);
           if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
           else { frameLine.textContent = ''; frameLine.hidden = true; }
         }
         renderChips();
         selectChip('mode'); // default every render: the key's own scale, never persisted
-        wrap.appendChild(chipsRow); wrap.appendChild(notesLine); wrap.appendChild(frameLine);
+        wrap.appendChild(chipsRow); wrap.appendChild(notesLine); wrap.appendChild(degreesLine); wrap.appendChild(frameLine);
         el.keyView.appendChild(wrap);
       })();
       // Carry the current instrument AND key so the inversions page opens in context -
@@ -3017,7 +3086,9 @@
     applyClearSnapshot: applyClearSnapshot,
     // M-GUIDE W3b: Compose key-view solo-scale preview - pure derivation, exposed for tests
     soloChipScale: soloChipScale,
-    soloChipCaption: soloChipCaption
+    soloChipCaption: soloChipCaption,
+    // S-CHIPS-PLUS: degrees-line derivation, same export pattern as the two above
+    soloChipDegrees: soloChipDegrees
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 
