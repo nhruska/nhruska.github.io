@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HiTL Mission Control - M-GUIDE: Blues Key + Mentor Layer</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-agent{background:#22845C}.pl-adv{background:#8A3FBF}.pl-ship{background:var(--brand-secondary)}.pl-next{background:#5A6B7E}
+.pos{color:var(--ok);font-weight:700}.run{color:var(--warn);font-weight:700}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>HiTL Mission Control - M-GUIDE: Blues Key + Scale Mentor Layer</h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-ia-20260704.md">binding IA + professor fold</a> - started 2026-07-04 - <a href="https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html">M2 pane</a> - <a href="https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html">M1 pane</a></div>
+
+<div class="cockpit">
+<div class="state"><span class="run">IN FLIGHT</span> - Wave 1 <span class="pos">SHIPPED (v81)</span>, Wave 2 building (Blues as a real key), Wave 3 queued (targeting + cards + landscape + Compose chips)</div>
+<div class="statesub">Born from your four post-M2 phone notes. The professor reviewed the DESIGN before any code existed and caught 2 real errors on paper (a conversion rule that would have silently degraded your A7 to Am, and a Dorian card teaching the color note over the wrong chord). Both fixed in the binding IA before Wave 2 spawned. Trust mode: merges on green, theory gated by the adversarial pair, never by you.</div>
+<div class="lights">
+<span class="lt"><span class="lamp l-ok"></span>IA ruled + prof fold</span>
+<span class="lt"><span class="lamp l-ok"></span>W1 MERGED v81</span>
+<span class="lt"><span class="lamp l-run"></span>W2 Blues key (building)</span>
+<span class="lt"><span class="lamp l-off"></span>W3a targeting/cards</span>
+<span class="lt"><span class="lamp l-off"></span>W3b Compose chips</span>
+<span class="lt"><span class="lamp l-run"></span>Refactor/enhancement scan (feeds QUEUE)</span>
+</div>
+<div class="fchead">Your next touchpoints (forecast)</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">NONE REQUIRED UNTIL CLOSE</span><span class="fw">trust mode active</span></div>
+<div class="fd">Every gate inside this mission is machine- or adversary-held. One taste decision was made autonomously and is flagged for your veto: <strong>the Compose chord cap rose 8 -&gt; 12</strong> so a real 12-bar fits (D-CAP12). If 12 feels wrong in hand, say so and it reverts in minutes.</div></div>
+<div class="fc"><div class="fh"><span class="pill pl-you">VERIFY BATCH (whenever)</span><span class="fw">grows as waves land</span></div>
+<div class="fd">Live now (v81): clear the key in Compose - the mode chips stay tappable and transposing never resurrects a key (your F12 bug); open the Studio on ukulele - 12 frets instead of 7. After W2: pick "A Blues" in the key chooser - palette becomes A7 D7 E7 labeled I7 IV7 V7, with 12-bar starters. After W3: tap a chord and watch its tones light up inside your scale, open the Guide cards, rotate to landscape.</div></div>
+</div>
+
+<div class="chips">
+<div class="chip"><div class="n">4</div><div class="l">operator notes -&gt; features</div></div>
+<div class="chip"><div class="n">2</div><div class="l">design bugs killed on paper</div></div>
+<div class="chip"><div class="n">12</div><div class="l">roots canon-locked (blues)</div></div>
+<div class="chip"><div class="n">4</div><div class="l">PRs forecast (W1-W3b)</div></div>
+</div>
+
+<h2>Timeline</h2>
+<div class="wrapx"><table>
+<tr><th>Step</th><th>Who</th><th>What + why it was the right call</th></tr>
+<tr><td><span class="pill pl-you">YOU</span></td><td>Operator</td><td>Four phone notes at M2 close: pent/blues in the key chooser? scale mentorship? more fretboard? key-clear bug. Captured git-tracked (<a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/mission-inputs-guide-20260704.md">inputs</a>) before any interpretation.</td></tr>
+<tr><td><span class="pill pl-you">YOU</span></td><td>Interview</td><td>4 answers, ~1 min: Both layers (Blues harmonizes, pents never do - musically honest); targeting + cards; ALL 3 density levers; keyless-until-pick. Locked the whole mission's shape.</td></tr>
+<tr><td><span class="pill pl-agent">FABLE IA</span></td><td>Design chair</td><td>Binding design (<a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-ia-20260704.md">IA doc</a>): Blues rides the existing MODES machinery (no parallel key system); deterministic targeting classes; locked SoloGuide seam so two W3 agents can run in parallel; caught 2 repo-vs-spec conflicts itself.</td></tr>
+<tr><td><span class="pill pl-adv">ADVERSARY</span></td><td>Professor (GPT-5.5)</td><td>DESIGN-level refutation pass, pre-code: verified all 12 palette cells + the rub rule, FAILED the Blues-&gt;Major conversion (your added A7 would have become Am) and the Dorian card (color note aimed at the wrong chord). Folded as <a href="https://github.com/nhruska/nhruska.github.io/pull/111">PR #111</a>. Cost: one codex pass. Saved: a shipped theory bug.</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Wave 1</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/112">PR #112</a> (v81): F12 dead-chip fixed, keyless-until-pick semantics, 12-fret windows on 4-string necks, Studio chrome trim. 99 songbook tests (was 91); live Playwright walked the exact repro from your note.</td></tr>
+<tr><td><span class="pill pl-agent">RUNNING</span></td><td>Wave 2</td><td>Blues as a harmonizing key: I7/IV7/V7 palette, 12-bar + quick-change starters, cap 12, Studio wiring (scale default = blues). Canon extends 12 roots x palette + romans. Merges only on suite + canon green.</td></tr>
+<tr><td><span class="pill pl-next">QUEUED</span></td><td>Wave 3a + 3b</td><td>Parallel behind a locked seam: chord-tone targeting + mentor cards + landscape (3a) and the decoupled solo chips in Compose (3b). P5 adversarial pass gates the card voice.</td></tr>
+<tr><td><span class="pill pl-next">QUEUED</span></td><td>Close</td><td>Adversarial fold record, wiki updated in-mission (no doc drift), QUEUE refresh, scorecard, this pane flips to SHIPPED.</td></tr>
+</table></div>
+
+<h2>Decisions registered this mission</h2>
+<div class="wrapx"><table>
+<tr><th>ID</th><th>Call</th><th>Why</th></tr>
+<tr><td>D-KEYLESS</td><td>Clearing the key means keyless until YOU pick; transpose never re-derives a root</td><td>Your I4 note; supersedes the old codex #90 ruling</td></tr>
+<tr><td>D-BLUES-KEY</td><td>Blues joins the key chooser with a 3-chord dominant palette (I7 IV7 V7) - pentatonics stay solo-only</td><td>Pentatonics cannot harmonize; blues genuinely can - the musically-true answer to your I1</td></tr>
+<tr><td>D-CAP12</td><td>Compose chord cap 8 -&gt; 12</td><td>A real 12-bar must fit; strip already scrolls. YOUR VETO WINDOW</td></tr>
+<tr><td>D-FRETS-4STR</td><td>4-string instruments default to a 12-fret scale window</td><td>String count was the constraint, not the screen (your I3)</td></tr>
+<tr><td>D-TARGET</td><td>Targeting highlights chord tones INSIDE the scale only; out-of-scale ghost dots deferred</td><td>Deterministic + honest; the card copy carries the missing-major-3rd advice</td></tr>
+<tr><td>D-CARDS-STATIC</td><td>Mentor cards are curated static content in a new shared module</td><td>Offline PWA + zero-hallucination bar for teaching text</td></tr>
+<tr><td>D-LANDSCAPE-FLEX</td><td>Landscape refines the existing flex split (fretboard becomes the hero)</td><td>No second layout system to maintain</td></tr>
+</table></div>
+
+<h2>Verify steps (your batch, grows per wave)</h2>
+<div class="card">
+<strong>V1 - keyless (live now, v81):</strong> Compose -&gt; add C, F, G -&gt; open key chooser -&gt; tap the root to clear it -&gt; transpose +2. The key chip stays rootless. Tap Minor - chips respond, chords re-qualify, still no root. Pick a root - panel closes as always.<br>
+<strong>V2 - small necks (live now):</strong> switch to Ukulele -&gt; Studio -&gt; the scale fretboard shows frets 0-12.<br>
+<strong>V3 - Blues key (after W2):</strong> key chooser -&gt; A + Blues -&gt; In-key palette reads A7 D7 E7 (I7 IV7 V7) -&gt; Suggestions -&gt; load "12-bar blues" -&gt; 12 chords fill -&gt; Studio meta reads "A blues", chips [Blues | Pent major | Pent minor].<br>
+<strong>V4 - mentor layer (after W3):</strong> Studio -&gt; tap A7 in chords-in-key -&gt; its tones light inside the scale with the b3 rub ringed -&gt; open Guide -&gt; rotate to landscape.
+</div>
+
+<div class="foot">M-GUIDE mission - launched and run 2026-07-04 from four operator phone notes. Adversaries: theory professor (design + W2 gates), P5 seasoned-player persona (W3 gate). Pipeline: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md">QUEUE</a> holds wave-2-on-#98, S-DIAGRAM-PREF, S-BLUES-BOXES, M3 + 4 MID candidates. Problem Solutions - compound engineering.</div>
+</div>
+</body></html>
