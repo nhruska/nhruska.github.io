@@ -56,13 +56,13 @@ THE canonical registry of every key this app persists. Verified against `music/s
 | `music.notables.v1` | notables.js:57 | `{ consumerId: dismissedEpochMs }` | No - dismissal state | Yes | One-shot dismissible tip bookkeeping |
 | `music.devlog.v1` | backup.js:38 (EXCLUDE list only) | n/a | n/a | **No** - excluded | **Reserved, currently unused** - no code writes it; the prefix is pre-excluded for future dev-scratch use |
 | `music.schema.v1` | backup.js:26-27 (`SCHEMA_KEY`) | integer string | No - device-local stamp | **No** - excluded (is its own marker) | backup.js's OWN schema/migration engine (data-map transforms, backup/restore scope) - see the section below for how it differs from `StorageMigrate` |
-| `music.schema.version` | storage-migrate.js (`VERSION_KEY`) | integer string | No - device-local stamp | **Not yet excluded - GAP** | `StorageMigrate`'s marker (see below). Falls under the `music.` prefix so `backup.js` currently WOULD sweep it into a backup, unlike `music.schema.v1` which is deliberately excluded. **Follow-up (not this wave, backup.js is out of this mission's edit grant):** add `'music.schema.version'` to backup.js's `EXCLUDE` array |
+| `music.schema.version` | storage-migrate.js (`VERSION_KEY`) | integer string | No - device-local stamp | **Yes - deliberately** | `StorageMigrate`'s marker (see below). Falls under the `music.` prefix, same as `music.schema.v1` (backup.js's OWN marker) but - unlike that one - is NOT excluded. S-BACKUP-INTEGRATE (M-6 follow-up #1) made this explicit: the version travels WITH the data on purpose (paired with restore replaying `StorageMigrate.run()` - see below), superseding storage-migrate.js's own header note that had suggested excluding it |
 | `music.diagram.pref.v1` | **not implemented** - spec only ([ux-philosophy/expertise-adaptive-display.md](../ux-philosophy/expertise-adaptive-display.md):39) | `'dots'\|'patterns'` | No - pref | n/a (unwritten) | **Reserved for S-DIAGRAM-PREF** (queued, decisions.md). Spec already calls it "additive key; defensive read; default 'dots'" - ships safely under the existing additive-vs-breaking law with no migration needed |
-| `tri.activeKey.v1` | play/triad-inversions.html:565, 584-664 | string (note letter) | No - pref | **No - GAP** | Not under any `backup.js` `OWNED_PREFIXES` entry - pre-existing gap, surfaced by this inventory, not introduced by it |
-| `tri.dismissed.v1` | play/triad-inversions.html:566, 588-798 | array | No - dismissal state | **No - GAP** | Same gap as above |
-| `tri.firstVisitSeen.v1` | play/triad-inversions.html:567, 589-778 | `'1'` / absent | No - pref | **No - GAP** | Same gap as above |
+| `tri.activeKey.v1` | play/triad-inversions.html:565, 584-664 | string (note letter) | No - pref | **Yes** (S-BACKUP-INTEGRATE) | Joined `OWNED_PREFIXES` via M-6 follow-up #3 - was a pre-existing gap this inventory surfaced, not introduced by it |
+| `tri.dismissed.v1` | play/triad-inversions.html:566, 588-798 | array | No - dismissal state | **Yes** (S-BACKUP-INTEGRATE) | Same fix as above |
+| `tri.firstVisitSeen.v1` | play/triad-inversions.html:567, 589-778 | `'1'` / absent | No - pref | **Yes** (S-BACKUP-INTEGRATE) | Same fix as above |
 
-Every reader in this app is defensive (try/catch -> safe default). `backup.js`'s `OWNED_PREFIXES` (`songbook.`, `roadcase-`, `bt.`, `music.`) governs what backup/restore captures - note it does NOT include `tri.` (the `triad-inversions.html` prefix), a pre-existing gap this inventory surfaced (three rows above) rather than introduced.
+Every reader in this app is defensive (try/catch -> safe default). `backup.js`'s `OWNED_PREFIXES` (`songbook.`, `roadcase-`, `bt.`, `music.`, `tri.`) governs what backup/restore captures - `tri.` (the `triad-inversions.html` prefix) joined this wave (S-BACKUP-INTEGRATE, M-6 follow-up #3); it was a pre-existing gap this inventory surfaced, not introduced by it.
 
 ## SCHEMA_VERSION discipline (the additive-vs-breaking law) [STABLE]
 
@@ -82,7 +82,7 @@ Why: offline PWA - an old cached build can read data a newer build wrote. Additi
 | `register(fromVersion, fn)` | `fn(storageLike)` mutates the LIVE store directly (get/set/removeItem), must be idempotent; registers the migration that brings a device from `fromVersion` to `fromVersion + 1` |
 | `run(storageLike)` | Applies every pending migration in order, then stamps `CURRENT`. Returns `{from, to, ran}`. Never throws - fails soft on quota/blocked storage (same discipline as every other reader in this app) |
 
-**Not a replacement for backup.js's SCHEMA_VERSION engine** (previous section) - that engine transforms a `{key:value}` DATA MAP for the whole-snapshot backup/restore path and is scoped to `OWNED_PREFIXES`. `StorageMigrate` is lower-level and broader: its migrations touch the live store directly and are not restricted to any prefix list. They compose (a future backup restore should route through `StorageMigrate.run()` too - see the gap below), they do not compete.
+**Not a replacement for backup.js's SCHEMA_VERSION engine** (previous section) - that engine transforms a `{key:value}` DATA MAP for the whole-snapshot backup/restore path and is scoped to `OWNED_PREFIXES`. `StorageMigrate` is lower-level and broader: its migrations touch the live store directly and are not restricted to any prefix list. They compose - `backup.js`'s `restore()` now routes through `StorageMigrate.run()` too, see [Backup / Restore](#backup--restore-stable) below - they do not compete.
 
 **Fresh install vs pre-runner install.** When `music.schema.version` is absent, `StorageMigrate` distinguishes: no known-prefix key present anywhere -> fresh install, stamp `CURRENT` directly, run nothing. ANY known-prefix key present -> pre-runner install (predates this file), treat as version 0 and run every registered migration up to `CURRENT`. `KNOWN_PREFIXES` is deliberately a superset of `backup.js`'s `OWNED_PREFIXES` (it also includes `tri.`) so a device with only `triad-inversions.html` prefs isn't misclassified as fresh.
 
@@ -90,11 +90,11 @@ Why: offline PWA - an old cached build can read data a newer build wrote. Additi
 
 **Shipped state this wave**: `CURRENT = 1`, zero registered migrations - a behavior-preserving no-op baseline. No existing key changes shape. The value delivered is the rail, not a migration.
 
-**Known composition gaps (named follow-ups, NOT done this wave - backup.js is read-only in this mission's grant):**
+**Composition gaps - RESOLVED this wave (S-BACKUP-INTEGRATE, M-6 follow-ups #1/#2/#3):**
 
-1. `music.schema.version` is not yet in backup.js's `EXCLUDE` list, so it would currently be swept into a user's backup as if it were songbook data (unlike backup.js's own `SCHEMA_KEY`, which IS excluded). Add it there.
-2. `backup.js`'s `restore()` does not call `StorageMigrate.run()` after writing a payload. A backup taken on an older build should pass through any migration registered since, before the app reads the restored data.
-3. `tri.*` keys (triad-inversions.html) are outside `backup.js`'s `OWNED_PREFIXES` entirely - a pre-existing gap this inventory surfaced, not introduced by it. Fixing it is a backup.js change.
+1. ~~`music.schema.version` is not yet in backup.js's `EXCLUDE` list~~ - RESOLVED, but not the way this note originally suggested. It stays OUT of `EXCLUDE` deliberately: see "Version-in-envelope: why `music.schema.version` is never excluded" below.
+2. ~~`backup.js`'s `restore()` does not call `StorageMigrate.run()` after writing a payload~~ - RESOLVED. `restore()` now replays `StorageMigrate.run(store)` immediately after a successful atomic write (guarded - see below).
+3. ~~`tri.*` keys (triad-inversions.html) are outside `backup.js`'s `OWNED_PREFIXES` entirely~~ - RESOLVED. `tri.` joined `OWNED_PREFIXES`; see the inventory table above.
 
 Keep `test/storage-migrate.test.js` green on any change that touches this file or adds a migration.
 
@@ -106,9 +106,17 @@ Settings-driven whole-songbook snapshot (backup.js):
 |---|---|
 | snapshot(store, nowIso) | collect owned keys -> { app:'music', schema, exportedAt, data } |
 | validate(payload) | shape check + NEWER-schema refusal (downgrade guard) |
-| restore(store, payload) | run pending migrations, write ATOMICALLY (all-or-nothing rollback on quota/throw) |
+| restore(store, payload) | run pending migrations, write ATOMICALLY (all-or-nothing rollback on quota/throw), then replay `StorageMigrate.run()` |
 
 Keep test/backup.test.js green on any storage-touching change.
+
+### Version-in-envelope: why `music.schema.version` is never excluded [S-BACKUP-INTEGRATE]
+
+`music.schema.version` (`StorageMigrate.VERSION_KEY`) falls under the `music.` prefix like everything else in `OWNED_PREFIXES` and is deliberately left OUT of `EXCLUDE` - the opposite of what storage-migrate.js's own header note (M-6, before this mission) had suggested. The ruling: **version-in-envelope + restore-replays-the-runner is the correct pair**, not two independent fixes to pick from.
+
+Why: a backup must carry the SOURCE device's true `StorageMigrate` version alongside its data, not just the data. If the marker were excluded, restoring an old backup onto a fresh (or different) device would leave THAT device's own pre-existing marker - or none at all - sitting over data that is only as new as the backup's actual schema. `StorageMigrate.run()` would see "already current" (or "fresh install") and silently skip any migration the just-restored data still needs. Keeping the marker in the envelope means restore() writes the TRUE version alongside the data in the same atomic apply, and then `restore()` immediately calls `StorageMigrate.run(store)` so any migration registered since the backup was taken applies right away - rather than waiting for the next full page load (which is when `StorageMigrate`'s own auto-run normally fires). `StorageMigrate.run()` fails soft on its own (quota/blocked storage) and the replay call is additionally guarded (`typeof StorageMigrate !== 'undefined'`), so a migration hiccup can never undo an already-successful restore.
+
+This only matters where `storage-migrate.js` is actually wired: today that is `play/index.html` only. `play/triad-inversions.html` never loads `backup.js` at all, so `restore()` is unreachable there regardless - the guard is defensive, not load-bearing.
 
 ## Backup-staleness nudge [D-BACKUP-NUDGE, STABLE]
 
@@ -150,4 +158,4 @@ queued as a follow-up, same fix pattern.
 
 ---
 
-**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission), songbook.js:945-3016 (every roadcase- key), tracks.js:423-449 (bt./trackUrls + migrateUrls/LEGACY_TRACKKEYS), play/index.html:15-20,601,784-786 (pre-paint reads + PROFILE_KEY/ACCENT_KEY/THEME_KEY/LAST_BACKUP_KEY), play/triad-inversions.html:564-572 (tri.* keys), storage-migrate.js (whole file, this mission, M-6 STORAGE-MIGRATE)
+**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission), songbook.js:945-3016 (every roadcase- key), tracks.js:423-449 (bt./trackUrls + migrateUrls/LEGACY_TRACKKEYS), play/index.html:15-20,601,784-786 (pre-paint reads + PROFILE_KEY/ACCENT_KEY/THEME_KEY/LAST_BACKUP_KEY), play/triad-inversions.html:564-572 (tri.* keys), storage-migrate.js (whole file, M-6 STORAGE-MIGRATE), backup.js OWNED_PREFIXES/EXCLUDE/restore() (S-BACKUP-INTEGRATE, this mission - tri. prefix add, music.schema.version deliberately-not-excluded comment, post-restore StorageMigrate.run() replay), test/backup.test.js + test/storage-migrate.test.js (tri.* + version-in-envelope + migration-replay cases, this mission)

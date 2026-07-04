@@ -56,7 +56,12 @@
 // (versioned localStorage boot migration runner, gh #76/#77), script-tagged
 // in play/index.html - new CORE path. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v95';
+// S-BACKUP-INTEGRATE (2026-07-04): v95->v96 - shared/backup.js changes only
+// (restore() now replays StorageMigrate.run(), tri.* joins OWNED_PREFIXES,
+// music.schema.version stays in the envelope on purpose - M-6 follow-ups
+// #1/#2/#3). No new/removed CORE paths. check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v96';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

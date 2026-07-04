@@ -5,6 +5,7 @@
 'use strict';
 var assert = require('assert');
 var Backup = require('../music/shared/backup.js');
+var StorageMigrate = require('../music/shared/storage-migrate.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -316,6 +317,120 @@ test('snapshot() stamps the DEVICE schema, so an old build cannot mislabel newer
   // a normal device stamps the build version
   var s2 = fakeStore({ 'songbook.setlist.v1': '["a"]' });
   assert.strictEqual(Backup.snapshot(s2, null).schema, Backup.SCHEMA_VERSION);
+});
+
+/* ---------- S-BACKUP-INTEGRATE (M-6 follow-up #3): tri.* (triad-inversions.html)
+ * joins OWNED_PREFIXES - a pre-existing gap the M-6 inventory surfaced, not
+ * introduced by it (engineering-wiki/systems/data-model.md). ---------- */
+test('owned() + snapshot capture the tri.* triad-inversions namespace', function () {
+  assert.strictEqual(Backup.owned('tri.activeKey.v1'), true);
+  assert.strictEqual(Backup.owned('tri.dismissed.v1'), true);
+  assert.strictEqual(Backup.owned('tri.firstVisitSeen.v1'), true);
+  var s = fakeStore({
+    'tri.activeKey.v1': 'G',
+    'tri.dismissed.v1': '["intro"]',
+    'music.accent.v1': '#5eead4'
+  });
+  var snap = Backup.snapshot(s, null);
+  assert.strictEqual(snap.data['tri.activeKey.v1'], 'G');
+  assert.strictEqual(snap.data['tri.dismissed.v1'], '["intro"]');
+});
+
+test('restore() writes tri.* keys back onto a fresh store', function () {
+  var s = fakeStore();
+  var n = Backup.restore(s, {
+    app: 'music', schema: 1,
+    data: { 'tri.activeKey.v1': 'F', 'tri.firstVisitSeen.v1': '1' }
+  });
+  assert.strictEqual(n, 2);
+  assert.strictEqual(s.getItem('tri.activeKey.v1'), 'F');
+  assert.strictEqual(s.getItem('tri.firstVisitSeen.v1'), '1');
+});
+
+/* ---------- S-BACKUP-INTEGRATE (M-6 follow-up #1): music.schema.version
+ * (StorageMigrate's own marker) is deliberately NOT excluded - see the EXCLUDE
+ * comment in backup.js for the full version-in-envelope rationale. This test
+ * does NOT set global.StorageMigrate, so the post-restore replay hook stays a
+ * no-op here (same as every OTHER test above it in this file) - it only proves
+ * the write-path keeps the key in lockstep with the rest of the envelope. ---------- */
+test('music.schema.version is owned (not excluded) and round-trips through backup+restore', function () {
+  assert.strictEqual(Backup.owned('music.schema.version'), true);
+  assert.strictEqual(Backup.owned(Backup.SCHEMA_KEY), false); // backup's OWN marker stays excluded
+
+  var s = fakeStore({ 'songbook.setlist.v1': '["a"]', 'music.schema.version': '1' });
+  var snap = Backup.snapshot(s, null);
+  assert.strictEqual(snap.data['music.schema.version'], '1', 'the runner marker travels inside the envelope');
+
+  var dest = fakeStore();
+  Backup.restore(dest, snap);
+  assert.strictEqual(dest.getItem('music.schema.version'), '1', 'restore writes the SOURCE device true runner version');
+});
+
+/* ---------- S-BACKUP-INTEGRATE (M-6 follow-up #2): restore() replays
+ * StorageMigrate.run() after a successful write. Registers a throwaway
+ * migration into StorageMigrate's REGISTRY for the duration of this ONE test
+ * (global.StorageMigrate is set then deleted in `finally`, so no other test in
+ * this - or any other, since each *.test.js runs in its own child process per
+ * test/run-all.js - file observes it). Both scenarios live in ONE test body,
+ * matching storage-migrate.test.js's own "self-contained, order-independent"
+ * convention: CURRENT=1 exposes exactly ONE registrable slot (0->1), so a
+ * second test in this file could not register its own without colliding. ---------- */
+test('restore() replays a pending migration exactly once on a legacy backup, and skips it once current', function () {
+  var calls = 0;
+  StorageMigrate.register(0, function (store) {
+    calls++;
+    // Same idempotent-rename shape as storage-migrate.test.js's own registered
+    // step: read an old key, write its replacement, remove the old.
+    var old = store.getItem('roadcase-ukulele-gcea.legacy-demo.v1');
+    if (old != null) {
+      store.setItem('roadcase-ukulele-gcea.migrated-demo.v1', old);
+      store.removeItem('roadcase-ukulele-gcea.legacy-demo.v1');
+    }
+  });
+  global.StorageMigrate = StorageMigrate;
+  try {
+    // Scenario A: a backup taken BEFORE storage-migrate.js ever shipped - its
+    // data map has legacy-shaped owned keys but NO 'music.schema.version' key
+    // at all (the marker didn't exist yet on the device that made this backup).
+    var legacyPayload = {
+      app: 'music', schema: 1,
+      data: { 'roadcase-ukulele-gcea.legacy-demo.v1': 'hello', 'music.accent.v1': '#a78bfa' }
+    };
+    var s1 = fakeStore();
+    var n1 = Backup.restore(s1, legacyPayload);
+    assert.strictEqual(n1, 2, 'both owned data keys written');
+    assert.strictEqual(calls, 1, 'the 0->1 migration ran exactly once, replayed by restore()');
+    assert.strictEqual(s1.getItem('roadcase-ukulele-gcea.migrated-demo.v1'), 'hello');
+    assert.strictEqual(s1.getItem('roadcase-ukulele-gcea.legacy-demo.v1'), null);
+    assert.strictEqual(s1.getItem('music.accent.v1'), '#a78bfa');
+    assert.strictEqual(s1.getItem(StorageMigrate.VERSION_KEY), String(StorageMigrate.CURRENT), 'runner stamps CURRENT after replay');
+
+    // Scenario B: a backup that ALREADY carries a current-version marker (taken
+    // on a device that had already run this migration) must not re-run it.
+    var currentPayload = {
+      app: 'music', schema: 1,
+      data: { 'songbook.setlist.v1': '["a"]', 'music.schema.version': String(StorageMigrate.CURRENT) }
+    };
+    var s2 = fakeStore();
+    Backup.restore(s2, currentPayload);
+    assert.strictEqual(calls, 1, 'no additional migration run - the version-in-envelope marker was already current');
+    assert.strictEqual(s2.getItem(StorageMigrate.VERSION_KEY), String(StorageMigrate.CURRENT));
+    assert.strictEqual(s2.getItem('songbook.setlist.v1'), '["a"]');
+  } finally {
+    delete global.StorageMigrate; // never leak into any later test in this file
+  }
+});
+
+test('restore() never throws when StorageMigrate is not defined in this environment', function () {
+  // No global.StorageMigrate set (the default for every OTHER test in this
+  // file except the one above, which always cleans up in `finally`) - the
+  // guard in backup.js's restore() must no-op silently, exactly as it does
+  // today for every page that doesn't load storage-migrate.js.
+  assert.strictEqual(typeof global.StorageMigrate, 'undefined');
+  var s = fakeStore();
+  assert.doesNotThrow(function () {
+    Backup.restore(s, { app: 'music', schema: 1, data: { 'music.accent.v1': '#fff' } });
+  });
 });
 
 run();

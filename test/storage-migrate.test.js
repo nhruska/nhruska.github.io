@@ -6,6 +6,7 @@
 'use strict';
 var assert = require('assert');
 var StorageMigrate = require('../music/shared/storage-migrate.js');
+var Backup = require('../music/shared/backup.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -167,6 +168,20 @@ test('pre-runner install (legacy key, no marker) runs the registered 0->1 migrat
   assert.strictEqual(r2.to, 1);
   assert.deepStrictEqual(r2.ran, []);
   assert.strictEqual(calls, 1); // unchanged - never re-ran
+});
+
+/* ---------- S-BACKUP-INTEGRATE (M-6 follow-up #3): KNOWN_PREFIXES must stay a
+ * superset of backup.js's OWNED_PREFIXES (the module header's own documented
+ * invariant), so a device with data under any backup-owned prefix is never
+ * misclassified as "fresh install" by hasLegacyData(). Locks the cross-module
+ * contract now that 'tri.' exists in BOTH lists, so future drift (a new prefix
+ * added to one file but not the other) fails this test instead of silently
+ * misclassifying devices at their next boot. ---------- */
+test('KNOWN_PREFIXES stays a superset of backup.js OWNED_PREFIXES (cross-module invariant)', function () {
+  Backup.OWNED_PREFIXES.forEach(function (p) {
+    assert.ok(StorageMigrate.KNOWN_PREFIXES.indexOf(p) !== -1, 'missing from KNOWN_PREFIXES: ' + p);
+  });
+  assert.ok(StorageMigrate.KNOWN_PREFIXES.indexOf('tri.') !== -1, 'tri. present (backup.js OWNED_PREFIXES gained it, S-BACKUP-INTEGRATE)');
 });
 
 run();
