@@ -1,0 +1,67 @@
+# Solo Scales
+
+[Wiki](../index.md) > theory-engine > Solo Scales
+
+## Purpose
+
+The solo layer: mode scales, pentatonic major/minor, and blues - what you solo WITH, as distinct from what harmonizes the progression. Includes the S-BLUES contract (binding, per wiki-ia-20260704.md §3).
+
+## The solo-vs-harmonization boundary [STABLE]
+
+Five- and six-note scales NEVER get a diatonic triad palette. Harmonization (chords-in-key, roman labels, mode re-harmonize) runs exclusively on 7-note modes. Pentatonics and blues exist ONLY in the solo layer: the Studio's scale panel, fretboard rendering, and degree labels. A chip selection changes what you solo with - never what the progression harmonizes to. [STABLE]
+
+## Mode scales (7 notes) [STABLE]
+
+Interval steps per mode (Circle.MODE_STEPS, circle.js:34-37). Studio-curated teaching set = Major (ionian), Minor (aeolian), Mixolydian, Dorian; the full 7 modes are reachable via the circle-of-fifths surfaces. Rendered in canonical-sharp spelling. [TRACKS-#98]
+
+| Mode | Steps | Degrees |
+|---|---|---|
+| Ionian (Major) | [0,2,4,5,7,9,11] | 1 2 3 4 5 6 7 |
+| Aeolian (Minor) | [0,2,3,5,7,8,10] | 1 2 b3 4 5 b6 b7 |
+| Dorian | [0,2,3,5,7,9,10] | 1 2 b3 4 5 6 b7 |
+| Mixolydian | [0,2,4,5,7,9,10] | 1 2 3 4 5 6 b7 |
+
+## Pentatonic + blues tables (S-BLUES §3a) [STABLE]
+
+| id | Label | Steps | Degrees | Subset of |
+|---|---|---|---|---|
+| pentMajor | Major pentatonic | [0,2,4,7,9] | 1 2 3 5 6 | ionian, lydian, mixolydian |
+| pentMinor | Minor pentatonic | [0,3,5,7,10] | 1 b3 4 5 b7 | aeolian, dorian, phrygian |
+| blues | Blues | [0,3,5,6,7,10] | 1 b3 4 b5 5 b7 | pentMinor + the b5 blue note |
+
+Degree glyphs use the flat sign matching circle.js scaleDegrees. The subset rows are pitch-class-set FACTS, tested in test/solo-scales.test.js - "one movable pattern works over every mode in the family" is a pc-set proof, not marketing. [STABLE]
+
+## Code home (S-BLUES §3b) [STABLE]
+
+Additive block in circle.js (the interval SSOT - a second theory module would fork the single-source rule):
+
+- `Circle.SOLO_SCALES` - the registry
+- `Circle.soloScale(root, scaleId)` - note names (via the internal spell() provider)
+- `Circle.soloScaleDegrees(scaleId)` - degree labels
+- `Circle.soloScaleInfo(scaleId)` - metadata
+
+## UI surfacing (S-BLUES §3c) [STABLE]
+
+Studio solo section gets one chip row `.bt-st-scalechips`: [Mode label | Pent major | Pent minor | Blues]. Default = the mode scale (Studio open behavior unchanged). A tap re-derives ONLY the solo bundle - notes line, degrees, fretboard via `KeyExplorer.renderScale` - through the pure `Tracks.soloBundle(key, mode, scaleId)`. Untouched by design: chords-in-key, buildWhy wheel, whynote banner, the Compose palette. No persistence (display preference belongs to the queued S-DIAGRAM-PREF).
+
+Framing copy per selection (static templates, P5-voiced):
+- Pent: "Five safe notes - one movable box shape; the same pattern works over every {family} mode here."
+- Blues: "Pent minor plus the b5 blue note - a passing color to bend through, not sit on."
+
+## Blue-note spelling - both regimes (S-BLUES §3d) [TRACKS-#98]
+
+**Regime A (current, canonical-sharp):** all names via spell(); `A blues = A C D D# E G`. The blue note renders sharp-spelled because FORK-4's one-table rule is what keeps the scale list and the fretboard in agreement. Do NOT special-case it. This is documented policy, exactly like the sharp-tie precedent the professor classified policy-not-bug.
+
+**Regime B (post-#98, S-BLUES-B - queued, not built):** pentatonic names come from subsetting `spellScaleKeyAware(root, parentMode)` at the pentatonic degrees; the blue note = the key-aware 5th-degree LETTER flattened one semitone (A blues -> Eb, never D#; invariant: the blue note spells b5, never #4). Consumes ONLY the named #98 seam (`spellScaleKeyAware`, `keyLabel`); if #98 merges without them, S-BLUES-B is BLOCKED, not improvised.
+
+Code seam: soloScale routes every name through ONE internal provider; S-BLUES-B swaps only the provider.
+
+## Testing (S-BLUES §3e) [STABLE]
+
+- test/solo-scales.test.js: 12 roots x 3 scales - pcs match steps mod 12; names match spell(); degree arrays exact; lengths 5/5/6; unknown id safe.
+- test/theory-canon.test.js: scales-canon literals (incl. `A blues = A C D D# E G` with the REGIME-A comment marking the deliberate Eb flip at S-BLUES-B).
+- test/tracks.test.js: soloBundle per id; 'mode' delegates to studioTheory; harmonization-isolation (chords identical before/after any chip selection).
+
+---
+
+**Anchors verified:** circle.js:34-37 (MODE_STEPS) + SOLO_SCALES block, tracks.js solo section + soloBundle, key-explorer.js renderScale (97-152), wiki-ia-20260704.md §3 (binding seam), test/solo-scales.test.js, test/theory-canon.test.js
