@@ -23,6 +23,8 @@ One registry of load-bearing decisions, their rationale, and owning pages. If a 
 | JIT | One-shot dismissible notables for guidance | Show once, persist dismissal, single-slot priority arbitration | interaction-safety |
 | SOLO-BOUNDARY | 5/6-note scales never harmonize | Pentatonics/blues are solo-layer only; no triad palette | [theory-engine/solo-scales.md](theory-engine/solo-scales.md) |
 | BLUE-NOTE-A | Regime-A blue note spells sharp (`A blues = A C D D# E G`) `[TRACKS-#98]` | FORK-4 one-table consistency beats notation convention until #98; flips to Eb at S-BLUES-B via the one-provider seam | solo-scales |
+| D-KEYLESS | Keyless progressions stay keyless through mode change AND transpose | Supersedes codex #90 V1's first-chord-fallback per operator input I4; a mode change while keyless re-qualifies via the shared pure fn but never resurrects a root, and the fly-out stays open; also fixes the F12 dead-mode-chip (re-tapping the current mode with no root re-renders instead of no-op-ing) | [systems/compose-key-system.md](systems/compose-key-system.md) |
+| D-FRETS-4STR | 4-string necks default to a 12-fret Studio window, not 7 | `pack.meta.strings <= 4` (uke/mandolin/mandola/cigar box) - a 7-fret window covers less musical value per fret at 4 strings; banjo(5) and guitars keep 7 | [systems/practice-studio.md](systems/practice-studio.md) |
 
 ## Sprint-1 amendments (adversarial-review v2, all folded + shipped in v78)
 

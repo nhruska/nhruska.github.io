@@ -32,6 +32,59 @@ test('chordsFromDegrees transposes the SAME degrees to any key', function () {
 test('chordsFromDegrees keeps every degree incl. the diminished vii (unlike the jam palette)', function () {
   assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Major', [6]), ['Bdim']);
 });
+
+/* ---------- convertProgressionQualities (D-KEYLESS core, m-guide-ia-20260704.md
+ * section 4.5): the pure chord-mapping extracted out of convertToMode so both the
+ * explicit-key path AND the keyless mode-change handler share one implementation.
+ * No songKey mutation, no DOM - chords in, chords out. ---------- */
+test('Major -> Minor re-qualify: roots hold, degree qualities flip, a non-scale root stays unchanged', function () {
+  // C major I V vi IV (C G Am F) -> C minor: i and v and iv re-qualify minor;
+  // Am's root (offset 9) is not a degree of natural minor -> borrowed, left alone.
+  var out = Songbook.convertProgressionQualities(['C', 'G', 'Am', 'F'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['Cm', 'Gm', 'Am', 'Fm']);
+});
+test('borrowed/chromatic root (no degree at that offset in the target mode) is left unchanged', function () {
+  var out = Songbook.convertProgressionQualities(['F#', 'G'], 'Major', 'C', 'Minor');
+  assert.deepStrictEqual(out, ['F#', 'G']); // F# (offset 6) has no Major-scale degree; G (offset 7) is the diatonic V
+});
+test('same-mode conversion is idempotent: an already-diatonic progression maps to itself', function () {
+  var out = Songbook.convertProgressionQualities(['C', 'Am', 'F', 'G'], 'Major', 'C', 'Major');
+  assert.deepStrictEqual(out, ['C', 'Am', 'F', 'G']);
+});
+test('extension re-base: a minor-mode m7 tonic re-bases to a dominant 7 on the major-mode tonic', function () {
+  // Cm7 (i7 in C minor) -> C major: the tonic degree is now major, so the minor-7
+  // extension collapses to a plain dominant 7th (C7), not a mismatched Cmaj7/Cm7.
+  var out = Songbook.convertProgressionQualities(['Cm7'], 'Major', 'C', 'Minor');
+  assert.deepStrictEqual(out, ['C7']);
+});
+test('extension re-base: a dominant 7 landing on a minor degree becomes a minor 7', function () {
+  // G7 (V7 in C major) -> C minor: v is a minor degree, so the dominant 7th
+  // re-bases to a minor 7th (Gm7), not a mismatched G7/Gmaj7.
+  var out = Songbook.convertProgressionQualities(['G7'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['Gm7']);
+});
+test('extension re-base: any 7th-type extension landing on a dim degree collapses to the bare dim triad', function () {
+  // Bm7 -> C major: B (offset 11) is the vii° (dim) degree - the m7 extension
+  // never survives onto a dim degree (Bdim, not Bdim7/Bm7).
+  var out = Songbook.convertProgressionQualities(['Bm7'], 'Major', 'C', 'Minor');
+  assert.deepStrictEqual(out, ['Bdim']);
+});
+test('defensive no-ops: empty chords, unknown target mode, and unresolvable tonic all degrade to unchanged input (never throw)', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities([], 'Minor', 'C', 'Major'), []);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'G'], 'NotAMode', 'C', 'Major'), ['C', 'G']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'G'], 'Minor', null, 'Major'), ['C', 'G']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(null, 'Minor', 'C', 'Major'), []);
+});
+test('convertProgressionQualities is pure: never mutates the input array, always returns a fresh one', function () {
+  var chords = ['C', 'G', 'Am', 'F'];
+  var out = Songbook.convertProgressionQualities(chords, 'Minor', 'C', 'Major');
+  assert.notStrictEqual(out, chords, 'must return a new array, not the same reference');
+  assert.deepStrictEqual(chords, ['C', 'G', 'Am', 'F'], 'input array must be untouched');
+  // mutating the result afterward must never reach back into the source
+  out.push('Dm7');
+  assert.strictEqual(chords.length, 4);
+});
+
 test('chordInKey gates the Markov suggestions to the selected key + mode (C4, pilot UAT)', function () {
   // D minor: i=Dm ii°=Edim III=F iv=Gm v=Am VI=A# VII=C
   assert.strictEqual(Songbook.chordInKey('Dm', 'D', 'Minor'), true);

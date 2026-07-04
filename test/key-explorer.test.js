@@ -49,4 +49,22 @@ test('open window ignores the cap (startFret 0 is the classic first-position vie
   assert.strictEqual(w.canBack, false);
 });
 
+/* ---- defaultFrets (D-FRETS-4STR, m-guide-ia-20260704.md section 5) ----
+ * 4-string necks (uke/mandolin/mandola/cigar box) get a taller 12-fret open
+ * window; banjo(5) and guitars(6) keep the classic 7-fret window. */
+test('4-string pack (e.g. ukulele) defaults to a 12-fret window', function () {
+  assert.strictEqual(KE.defaultFrets({ meta: { strings: 4 } }), 12);
+});
+test('6-string pack (guitar) defaults to the classic 7-fret window', function () {
+  assert.strictEqual(KE.defaultFrets({ meta: { strings: 6 } }), 7);
+});
+test('5-string pack (banjo) stays at 7 - the 4-string cutoff is <=4, not <=5', function () {
+  assert.strictEqual(KE.defaultFrets({ meta: { strings: 5 } }), 7);
+});
+test('a pack with no meta (or no pack at all) degrades to 7, never throws', function () {
+  assert.strictEqual(KE.defaultFrets({}), 7);
+  assert.strictEqual(KE.defaultFrets(null), 7);
+  assert.strictEqual(KE.defaultFrets(undefined), 7);
+});
+
 run();
