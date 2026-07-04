@@ -83,7 +83,7 @@
 // while this branch was in flight; originally cut at v97) - max+1 discipline,
 // same as every prior sibling collision above. check-cache-bump.sh
 // re-verified against origin/main immediately before push.
-var CACHE = 'music-v99';
+var CACHE = 'music-v100';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
