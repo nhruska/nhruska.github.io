@@ -13,11 +13,10 @@
 (function (global) {
   'use strict';
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies.
+  function esc(s) { return global.Esc.esc(s); }
 
   // Normalize a song OR track record to ONE item shape. Songs use t/a/y/seq;
   // tracks use title/artist/key/mode/genre/bpm/capo/yt. Either is accepted, and
@@ -102,6 +101,13 @@
   // scroll-grab). Critical on the right rail, where the thumb scrolls + grips the
   // propped phone - codex flagged that a big always-hot button there fires on a
   // scroll-grab. Mouse clicks (no touch) are unaffected, so desktop still works.
+  //
+  // S-HARDEN (analysis-refactor-enhance-20260704 A4): this is now the SSOT for
+  // the pattern - songbook.js's wireTapCancel/composeWireTap delegate here
+  // instead of each carrying its own ~15-line copy. fn receives the triggering
+  // click event (composeWireTap's prior contract); the other call sites in this
+  // file and in songbook.js never read the argument, so passing it is a no-op
+  // for them.
   function wireTap(el, fn) {
     if (!el || !fn) return;
     var sx = 0, sy = 0, moved = false;
@@ -115,7 +121,7 @@
     el.addEventListener('click', function (e) {
       e.stopPropagation();
       if (moved) return;
-      fn();
+      fn(e);
     });
   }
 
@@ -214,7 +220,7 @@
 
   var ListItem = {
     normalize: normalize, action: action, keyLabel: keyLabel,
-    hazards: hazards, metaCells: metaCells, render: render
+    hazards: hazards, metaCells: metaCells, render: render, wireTap: wireTap
   };
   global.ListItem = ListItem;
   if (typeof module !== 'undefined' && module.exports) module.exports = ListItem;

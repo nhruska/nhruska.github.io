@@ -130,11 +130,11 @@
   }
 
   /* ---------- dismissible banner (app-styled; see songbook.css .notableBanner) ---------- */
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): the local esc() that used
+  // to live here was dead code - renderBanner() below never calls it (opts.html
+  // is trusted verbatim per its own contract; opts.text goes through
+  // .textContent, which is inherently safe). Removed rather than left as an
+  // unused delegate to the new shared esc.js.
 
   // opts: { consumerId, text (plain, escaped) | html (trusted, verbatim),
   //         className (extra class), onDismiss(consumerId) }

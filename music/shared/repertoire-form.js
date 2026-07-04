@@ -28,11 +28,10 @@
 
   var ROOTS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies.
+  function esc(s) { return global.Esc.esc(s); }
   // Parse a freeform chords/seq textarea (space or comma separated tokens) into
   // a clean chord-token array. Empty input -> [] (a standalone track, no sheet).
   function parseSeq(raw) {

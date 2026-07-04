@@ -74,4 +74,69 @@ test('metaCells: chords + track data -> count, hazard, bpm, genre (no per-chord 
   assert.deepStrictEqual(cells, ['2 chords', '7ths', '90 bpm', 'folk']);
 });
 
+/* ---------- wireTap (S-HARDEN A4: the SSOT movement-cancel tap guard) ----------
+ * songbook.js's wireTapCancel/composeWireTap now delegate here, so this is the
+ * authoritative test suite for the pattern - same "just enough DOM" fake
+ * element approach as test/songbook.test.js's (now-delegating) wireTapCancel
+ * tests, no jsdom dependency. */
+function FakeTapEl() { this._h = {}; }
+FakeTapEl.prototype.addEventListener = function (type, fn) { (this._h[type] = this._h[type] || []).push(fn); };
+FakeTapEl.prototype.fire = function (type, evt) { (this._h[type] || []).forEach(function (fn) { fn(evt); }); };
+function touch(x, y) { return { touches: [{ clientX: x, clientY: y }] }; }
+function clickEvt() { return { stopPropagation: function () {}, marker: 'click-evt' }; }
+
+test('wireTap: a still tap (no touchmove past threshold) fires fn', function () {
+  var el = new FakeTapEl(), fired = 0;
+  LI.wireTap(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(103, 98)); // 3px, well under the 10px threshold
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTap: a scroll-grab (touchmove > 10px) suppresses fn', function () {
+  var el = new FakeTapEl(), fired = 0;
+  LI.wireTap(el, function () { fired++; });
+  el.fire('touchstart', touch(100, 100));
+  el.fire('touchmove', touch(100, 130)); // 30px vertical scroll-grab
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0);
+});
+
+test('wireTap: threshold is exclusive-over-10px and checks EITHER axis', function () {
+  var el = new FakeTapEl(), fired = 0;
+  LI.wireTap(el, function () { fired++; });
+  el.fire('touchstart', touch(0, 0));
+  el.fire('touchmove', touch(11, 0)); // x-only breach
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 0, 'x-axis breach alone must cancel');
+
+  var el2 = new FakeTapEl(), fired2 = 0;
+  LI.wireTap(el2, function () { fired2++; });
+  el2.fire('touchstart', touch(0, 0));
+  el2.fire('touchmove', touch(0, 10)); // exactly at threshold, not over
+  el2.fire('click', clickEvt());
+  assert.strictEqual(fired2, 1, 'exactly-10px move must still count as a tap');
+});
+
+test('wireTap: a mouse click with no touch events at all still fires (desktop unaffected)', function () {
+  var el = new FakeTapEl(), fired = 0;
+  LI.wireTap(el, function () { fired++; });
+  el.fire('click', clickEvt());
+  assert.strictEqual(fired, 1);
+});
+
+test('wireTap: no-op guard when el or fn is missing (never throws)', function () {
+  assert.doesNotThrow(function () { LI.wireTap(null, function () {}); });
+  assert.doesNotThrow(function () { LI.wireTap(new FakeTapEl(), null); });
+});
+
+test('wireTap: fn receives the triggering click event (composeWireTap\'s prior contract, preserved on dedup)', function () {
+  var el = new FakeTapEl(), receivedArg;
+  LI.wireTap(el, function (e) { receivedArg = e; });
+  var evt = clickEvt();
+  el.fire('click', evt);
+  assert.strictEqual(receivedArg, evt, 'fn must receive the click event, not be called with zero args');
+});
+
 run();

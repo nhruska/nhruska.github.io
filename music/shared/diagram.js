@@ -25,7 +25,11 @@
     big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 14, markY: 16, markSw: 2, H: 184 }
   };
 
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies (this one was the only quote-unescaped variant
+  // besides play/index.html's; both now get the strict &<>"' superset).
+  function esc(s) { return global.Esc.esc(s); }
 
   function baseFret(frets) {
     var fretted = frets.filter(function (x) { return x > 0; });

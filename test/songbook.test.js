@@ -12,6 +12,12 @@ var assert = require('assert');
 // global object BEFORE any require so each module's IIFE lands on the SAME object,
 // mirroring production instead of each getting its own isolated `this`.
 if (typeof global.window === 'undefined') global.window = global;
+// S-HARDEN (analysis-refactor-enhance-20260704 A4/A5): songbook.js's
+// escHTML/wireTapCancel/composeWireTap are now thin delegates to esc.js's
+// Esc.esc and list-item.js's ListItem.wireTap - both must be required (and
+// land on the SAME global as above) before songbook.js.
+require('../music/shared/esc.js');
+require('../music/shared/list-item.js');
 var Songbook = require('../music/shared/songbook.js');
 var Circle = require('../music/shared/circle.js');
 var Repertoire = require('../music/shared/repertoire.js');
@@ -983,6 +989,84 @@ test('A1: the update-in-place branch ("Updated ...") is equally truthful on a th
   // re-invokes saveCustom() to observe a truthful result - see the code comment at
   // that call site) - both throw, but safeSet warns only once per key.
   assert.strictEqual(warned, 1, 'safeSet must suppress the repeat warning for the same key within one mount');
+});
+
+/* =====================================================================
+ * H4 (S-HARDEN, analysis-refactor-enhance-20260704 A1 bug shape): toggleSet's
+ * "Added to setlist" toast used to fire unconditionally regardless of whether
+ * saveSet() actually persisted. showToast() renders into document.body (not
+ * the local compose wrapper), so findPlainToast() below reads it from there -
+ * distinguished from a composeToast by requiring className to START WITH
+ * 'toast' (composeToast does NOT start with that substring, so no collision).
+ *
+ * The only reachable path to toggleSet in this stub-DOM harness is through
+ * saveProgression's own "Add to setlist" checkbox (checked by default in
+ * openSaveNameRow - buildAndSave above explicitly unchecks it to avoid this
+ * exact path). Leaving it checked exercises the REAL toggleSet code, just via
+ * a different caller than the Library "+" button production code takes -
+ * the unit under test (toggleSet's branching logic) is identical either way.
+ * ===================================================================== */
+function buildAndSaveAddToSetlist(m) {
+  var tile = m.elMap.buildGrid.children[0];
+  tile.onclick(); tile.onclick();
+  m.elMap.cSave.onclick();
+  var composeRow = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) composeRow = c; });
+  if (!composeRow) throw new Error('H4 harness: composeRow was not created - ensureComposeUI() likely returned false');
+  // setCheck defaults to checked=true (openSaveNameRow) - leave it as-is so
+  // addToSetlist fires toggleSet(cs.id) and its toast becomes observable.
+  composeRow.children[2].onclick(); // saveBtn -> finish(defaultName, true) -> saveProgression's done -> toggleSet
+}
+function findPlainToast() {
+  var kids = document.body.children, t = null;
+  for (var i = kids.length - 1; i >= 0; i--) {
+    if (kids[i].className && kids[i].className.indexOf('toast') === 0) { t = kids[i]; break; }
+  }
+  return t;
+}
+
+test('H4: toggleSet on a healthy store shows the real success toast (not the err class)', function () {
+  var m = mountForSaveTests();
+  buildAndSaveAddToSetlist(m);
+  var toast = findPlainToast();
+  assert.ok(toast, 'expected a .toast element in document.body after Add-to-setlist Save');
+  assert.strictEqual(toast.textContent, 'Added to setlist');
+  // showToast toggles 'err' via classList (not a plain className string like
+  // showComposeToast) - check classList.contains directly, not the hasClass
+  // helper above (which reads .className, the composeToast-specific shape).
+  assert.strictEqual(toast.classList.contains('err'), false, 'a successful setlist add must not carry the err class');
+});
+
+test('H4: toggleSet on a throwing (quota-exceeded) store shows a truthful failure toast, never "Added to setlist"', function () {
+  var m = mountForSaveTests();
+  var thrown = 0, warned = 0;
+  var origWarn = console.warn;
+  console.warn = function () { warned++; };
+  // First write (the song save itself, CUSTOM_KEY) succeeds; only the
+  // SECOND write (the setlist save, STORE_KEY) inside toggleSet must throw -
+  // otherwise the create branch itself would fail first and never reach
+  // toggleSet at all. Fail only on the setlist key.
+  var realSetItem = global.localStorage.setItem;
+  global.localStorage.setItem = function (key, value) {
+    if (key.indexOf('.setlist.') !== -1) {
+      thrown++;
+      var e = new Error('The quota has been exceeded.');
+      e.name = 'QuotaExceededError';
+      throw e;
+    }
+    return realSetItem.call(global.localStorage, key, value);
+  };
+  try {
+    buildAndSaveAddToSetlist(m);
+  } finally {
+    console.warn = origWarn;
+  }
+  assert.ok(thrown > 0, 'the stubbed setItem must actually have been called for the setlist key (proves the write was attempted, not skipped)');
+  var toast = findPlainToast();
+  assert.ok(toast, 'expected a .toast element in document.body even on a failed setlist save');
+  assert.strictEqual(toast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
+  assert.strictEqual(toast.classList.contains('err'), true, 'a failed setlist add must carry the err class');
+  assert.notStrictEqual(toast.textContent, 'Added to setlist', 'must never claim success on a setlist write that threw');
 });
 
 /* =====================================================================

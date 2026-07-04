@@ -264,6 +264,10 @@
 </div>
 
 <!-- Shared, instrument-agnostic runtime -->
+<!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - loads first since
+     list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
+     tracks.js all delegate to it. -->
+<script src="../shared/esc.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
 <script src="../shared/tempo.js"></script>
@@ -719,7 +723,10 @@
     });
   }
 
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded earlier in this file's script order) - was one of ~8
+  // divergent local copies.
+  function esc(s) { return Esc.esc(s); }
   function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + esc(msg) + '</div>'; }
 
   // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
