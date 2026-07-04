@@ -1,165 +1,209 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HiTL Mission Control - Music App UX Persona Mission</title>
+<title>HiTL Mission Control</title>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <style>
-:root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140;--ok:#5eead4}
-@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea;--ok:#0f8a74}}
-body{margin:0 auto;padding:20px;font:15px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
-h1{font-size:1.45rem;margin:8px 0 2px}h2{font-size:1.08rem;margin:30px 0 8px;color:var(--acc);text-transform:uppercase;letter-spacing:.06em}h3{font-size:.95rem;margin:14px 0 4px}
-.sub{color:var(--dim);font-size:.85rem;margin-bottom:14px}
+:root{--bg:#0e1116;--card:#161b24;--txt:#e8ebf0;--dim:#9aa3b2;--acc:#5eead4;--warn:#f0b429;--line:#2a3140;--ok:#5eead4;--hot:#ff7a6b}
+@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--txt:#1a2029;--dim:#5b6472;--acc:#0f8a74;--warn:#946200;--line:#dde2ea;--ok:#0f8a74;--hot:#c2402f}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:10px 12px 20px;font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
 a{color:var(--acc);text-decoration:none;border-bottom:1px dotted var(--acc)}
-a:hover{border-bottom-style:solid}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
-.card .who{color:var(--dim);font-size:.85rem}
-.tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:.75rem;margin:2px 6px 2px 0}
-.kill{color:var(--warn);font-size:.85rem}
-table{border-collapse:collapse;width:100%;font-size:.84rem;margin:8px 0}
-th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+h1{font-size:1.05rem;margin:2px 0 0}
+.sub{color:var(--dim);font-size:.72rem;margin-bottom:8px}
+.cockpit{background:var(--card);border:1px solid var(--acc);border-radius:12px;padding:10px 12px;margin:8px 0}
+.cockpit .state{font-size:.95rem;font-weight:800}
+.cockpit .need{color:var(--warn);font-weight:700;font-size:.85rem;margin:6px 0 2px}
+.keys{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.key{border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:.78rem;font-weight:700;background:var(--bg)}
+.key.hot{border-color:var(--warn);color:var(--warn)}
+.dots{display:flex;gap:4px;align-items:center;margin:8px 0 2px;font-size:.68rem;color:var(--dim);flex-wrap:wrap}
+.dot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;border:1px solid var(--line)}
+.d-done{background:var(--acc);color:#06201c;border-color:var(--acc)}
+.d-run{background:var(--warn);color:#231a00;border-color:var(--warn)}
+.d-wait{color:var(--dim)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center}
+.chip .n{font-size:1.05rem;font-weight:800;color:var(--acc)}
+.chip .l{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:9px;padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--acc);color:#06201c;border-color:var(--acc)}
+.pane{display:none}
+.pane.on{display:block}
+h2{font-size:.92rem;margin:14px 0 6px;color:var(--acc);text-transform:uppercase;letter-spacing:.05em}
+table{border-collapse:collapse;width:100%;font-size:.76rem;margin:6px 0}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
 th{color:var(--dim);font-weight:600}
-.big{font-size:1.7rem;font-weight:800;line-height:1.1}.good{color:var(--ok)}.warn{color:var(--warn)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:680px){.grid{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
-.stat .n{font-size:1.5rem;font-weight:800;color:var(--acc)}
-.stat .l{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
-.status{display:inline-block;border-radius:8px;padding:1px 8px;font-size:.75rem;font-weight:700}
-.s-done{background:var(--acc);color:#06201c}.s-run{background:var(--warn);color:#231a00}.s-wait{border:1px solid var(--line);color:var(--dim)}
-code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 4px;font-size:.85em}
-blockquote{border-left:3px solid var(--acc);margin:10px 0;padding:8px 14px;background:var(--card);border-radius:0 10px 10px 0;font-size:1.02rem}
-blockquote .by{display:block;color:var(--dim);font-size:.78rem;margin-top:4px}
-.foot{margin-top:28px;color:var(--dim);font-size:.78rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.82rem}
+blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:6px 10px;background:var(--card);border-radius:0 8px 8px 0;font-size:.85rem}
+blockquote .by{display:block;color:var(--dim);font-size:.68rem;margin-top:3px}
+code{background:rgba(128,128,128,.15);border-radius:4px;padding:0 3px;font-size:.85em}
+.wrapx{overflow-x:auto}
+.foot{margin-top:16px;color:var(--dim);font-size:.68rem}
+.tag{display:inline-block;border:1px solid var(--acc);color:var(--acc);border-radius:7px;padding:0 6px;font-size:.66rem;margin:1px 4px 1px 0}
+.pos{color:var(--ok)}.neg{color:var(--hot)}
 </style></head><body>
-<h1>HiTL Mission Control</h1>
-<div class="sub">The <a href="https://nhruska.github.io/music/play/">Music app</a> - persona-driven UX + theory-credibility mission - one operator, parallel AI agent sessions, hard human gate before any code ships. Live record on <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">branch claude/ux-persona-mission</a>. 2026-07-03.</div>
 
-<div class="grid4">
-<div class="stat"><div class="n">5</div><div class="l">PRs merged today (parallel sessions)</div></div>
-<div class="stat"><div class="n">1008</div><div class="l">deterministic theory checks</div></div>
-<div class="stat"><div class="n">0</div><div class="l">theory bugs (2 independent verdicts)</div></div>
-<div class="stat"><div class="n">8</div><div class="l">walkthrough findings -> 6 sprint candidates</div></div>
+<h1>HiTL Mission Control <span style="color:var(--dim);font-weight:400;font-size:.75rem">- Music app UX persona mission</span></h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">branch</a> - 2026-07-03 - updates as phases complete</div>
+
+<!-- ============ ABOVE THE FOLD: OPERATOR COCKPIT ============ -->
+<div class="cockpit">
+<div class="state">GATE LIVE - sprint-1 v2 awaits your call (phase 4 done: 12 adversarial findings, all folded)</div>
+<div class="need">Reply on telegram or in-session:</div>
+<div class="keys"><span class="key hot">approve</span><span class="key hot">adjust: &lt;text&gt;</span><span class="key hot">stop</span><span class="key">M3: A = none (rec)</span><span class="key">M3: B = spec-only</span></div>
+<div style="font-size:.78rem;color:var(--dim)">Plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint-1 v1</a> - 8 core + 1 stretch, wave 2 gated on <a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> merging. Council unanimous: no M3 slice.</div>
+<div class="dots">
+<span class="dot d-done" title="interview/spec">0</span><span class="dot d-done" title="personas">1</span><span class="dot d-done" title="theory audit + professor">2</span><span class="dot d-done" title="walkthroughs">2b</span><span class="dot d-done" title="council + chair">3</span><span class="dot d-done" title="adversarial">4</span><span class="dot d-run" title="GATE">5</span><span class="dot d-wait" title="execute">6</span>
+<span style="margin-left:6px">0-4 done - 5 GATE LIVE - 6 swarm on approve</span>
+</div>
+</div>
+<div class="chips">
+<div class="chip"><div class="n">8+1</div><div class="l">sprint items</div></div>
+<div class="chip"><div class="n">0</div><div class="l">theory bugs x2 verdicts</div></div>
+<div class="chip"><div class="n">5</div><div class="l">PRs merged today</div></div>
+<div class="chip"><div class="n">1</div><div class="l">P0 found (Clear)</div></div>
 </div>
 
-<h2>Quotable</h2>
-<blockquote>"NONE FOUND. The 48 rows preserve pitch class, degree order, triad quality, and Roman case/symbol."<span class="by">- adversarial music-theory-professor review (GPT-5.5), instructed to refute, 56K tokens - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">full disposition</a></span></blockquote>
-<blockquote>"The music theory has to be rock solid or it will be dismissed."<span class="by">- the operator's bar, set at mission kickoff; verified twice over by independent engines</span></blockquote>
-<blockquote>Two independent derivations of conservatory spelling - this mission's audit and a sibling session's <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> - agree on every probe. Neither knew the other existed until they met in the repo.<span class="by">- the cross-session verification win</span></blockquote>
-<blockquote>The app guards the setlist clear with a confirm - and wipes an 8-chord composition with zero guard, from a button parked next to Save.<span class="by">- finding F1 (P0), caught by a live destructive-tap probe, verified in source</span></blockquote>
-<blockquote>Every user is holding an instrument. One free thumb. A mis-tap must never delete or edit anything.<span class="by">- design principle D5, binding on every sprint PR</span></blockquote>
-
-<h2>The app being enhanced</h2>
-<div class="card">A self-contained, offline-installable music practice PWA - vanilla JS, zero build step, zero frameworks, 158 commits of compound iteration. Try it: <a href="https://nhruska.github.io/music/play/">nhruska.github.io/music/play</a>. North star: an adaptive tutor for soloing and songwriting confidence (<a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/TUTOR-ROADMAP.md">roadmap</a>).</div>
-<div class="grid">
-<div class="card"><h3>Compose</h3>Key/mode-aware progression builder: pick E Mixolydian and the in-key palette leads with the right seven chords, roman-numeral labeled. Root change transposes the built progression; mode change re-harmonizes it. Famous-progression starters and next-chord suggestions.</div>
-<div class="card"><h3>Solo + Studio</h3>One tap carries the built key/mode to backing-track soloing: matched tracks, the solo scale on a real fretboard, position-walking up the neck. Theory just-in-time, never a wall.</div>
-<div class="card"><h3>Library + Setlist</h3>Repertoire with chord sheets, key-first tags, capo badges; a running-order Set with edit-mode-gated reorder/remove and persistent undo (a prior swarm's <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/docs/UX-FRICTION-LOG.md">human-factors work</a>).</div>
-<div class="card"><h3>Tune + Instruments</h3>Mic autocorrelation tuner with stability smoothing (<a href="https://github.com/nhruska/nhruska.github.io/pull/99">sharpened today, PR #99</a>). 8 instrument profiles: guitar (standard, drop-D, open-G), ukulele, banjo, mandolin, mandola, cigar box.</div>
+<!-- ============ TABS ============ -->
+<div class="tabs" id="tabs">
+<button class="tab on" data-p="plan">Plan</button>
+<button class="tab" data-p="find">Findings</button>
+<button class="tab" data-p="theory">Theory</button>
+<button class="tab" data-p="council">Council</button>
+<button class="tab" data-p="wins">CE Wins</button>
+<button class="tab" data-p="stats">Stats</button>
+<button class="tab" data-p="log">Decisions</button>
+<button class="tab" data-p="app">App+Personas</button>
 </div>
 
-<h2>Compound engineering wins (today)</h2>
-<table>
-<tr><th>Win</th><th>What happened</th><th>What compounds</th></tr>
-<tr><td>Theory audit as reusable tool</td><td>Built <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">theory-audit.js</a>: independent conservatory ground truth vs the app, 1008 checks in milliseconds, zero LLM involvement</td><td>Permanent regression fixture; sprint promotes it into the test suite</td></tr>
-<tr><td>Adversary caught the auditor</td><td>The professor pass found the audit's one soft spot - sharp-tie preference is product policy, not standard practice - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">now documented as such in the tool</a></td><td>The verifier itself got verified</td></tr>
-<tr><td>Cross-session verification for free</td><td>Diagnosing a hung codex call surfaced a sibling session's <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> (key-aware spelling). Read-only probe: its output matches this mission's ground truth exactly</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 professor trap cases posted to #98's review thread</a> - one session's research became another session's test fixtures</td></tr>
-<tr><td>Incident to standing infra</td><td>A GitHub Pages outage stranded 3 merged PRs off the live site. Root-caused, recovered, then encoded as an <a href="https://github.com/nhruska/nhruska.github.io/pull/97">auto-retry workflow (PR #97)</a> that proved itself armed on its first live deploy</td><td>The incident class self-heals from now on</td></tr>
-<tr><td>Friction log reuse, not rework</td><td>Mission ingested the <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/docs/UX-FRICTION-LOG.md">2026-06-30 HF council results</a> before planning and scoped to the uncovered surfaces</td><td>No duplicate findings; the sprint plans around in-flight work</td></tr>
-<tr><td>Interview to binding spec</td><td>A 4-question operator interview became 9 binding decisions + 5 design principles, committed as a <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">goal spec</a> any future session can resume from</td><td>The mission survives context loss, reboots, and handoffs - all state is in git</td></tr>
-</table>
+<div class="pane on" id="p-plan">
+<h2>Sprint 1 - plan v2 (adversarial-resolved, AT GATE)</h2>
+<div class="wrapx"><table>
+<tr><th>#</th><th>Item</th><th>Wave</th><th>Mechanism ruling</th></tr>
+<tr><td>1</td><td>S-CLEARGUARD + S-SLOTX (one PR)</td><td>1a</td><td>Persistent UNDO (not confirm) + Clear away from Save; slot-x 44px + movement-cancel; covers Compose AND Studio; PR body re-runs full destructive inventory</td></tr>
+<tr><td>2</td><td>S-GOLDEN-A</td><td>1a</td><td>Promote 1008-check audit into test/ (current regime)</td></tr>
+<tr><td>3</td><td>S-NOTABLES</td><td>1a</td><td>One-shot dismissible infra; namespaced localStorage; backup.js seam</td></tr>
+<tr><td>4</td><td>S-FIRSTRUN</td><td>1b</td><td>Tap-to-open + easy-song cues on song rows (survives M3); stacks on 3</td></tr>
+<tr><td>5</td><td>S-SETX + 44px edit-set rider</td><td>1a</td><td>Keep confirm, add movement-cancel</td></tr>
+<tr><td>6</td><td>S-WHYNOTE (stretch)</td><td>1b</td><td>JIT relative/parallel "why" notable at Compose-&gt;Studio; static content only</td></tr>
+<tr><td>7</td><td>S-TONES</td><td>2 post-#98</td><td>Spelled chord tones; consume #98's seam</td></tr>
+<tr><td>8</td><td>S-ROMAN + S-KEYPOLICY</td><td>2 post-#98</td><td>Roman-style Setting, default Classical; JIT one-time prompt at first roman surface (never first-run)</td></tr>
+<tr><td>9</td><td>S-GOLDEN-B</td><td>2 post-#98</td><td>12 professor traps into test/</td></tr>
+</table></div>
+<div class="card"><strong>M3 gate choice:</strong> A (recommended) = zero slices; M3 becomes sprint-2 primary, fresh session, post-#98, 5A/5B pre-resolved. B = spec+fixtures down-payment only. Full plan: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">ux-sprint-1-20260703.md</a></div>
+<div class="card"><strong>Backlog:</strong> M3 (sprint-2) - S-CHIPS + S-EASYFILTER (into M3 bar) - S-INVERSIONS - SETX phase 2 - F6 #98 rider - full Phase 4 selector.</div>
+</div>
 
+<div class="pane" id="p-find">
+<h2>Walkthrough findings (J1-J4, Pixel-10, 0 console errors)</h2>
+<div class="wrapx"><table>
+<tr><th>#</th><th>Sev</th><th>Finding</th></tr>
+<tr><td>F1</td><td class="neg"><strong>P0</strong></td><td>Compose Clear wipes progression, NO guard - setlist clear HAS one; Clear sits beside Save in stretch zone</td></tr>
+<tr><td>F2</td><td>P1</td><td>Slot removers 24x24px (half the 44px floor), top zone, unguarded</td></tr>
+<tr><td>F3</td><td>P1</td><td>Setlist x: confirmed but not movement-cancelled, always-hot on rail (wireTap exists, unused here)</td></tr>
+<tr><td>F4</td><td>P1</td><td>Zero first-run guidance; tap-to-open affordance invisible (only "Search" shows)</td></tr>
+<tr><td>F5</td><td>P2</td><td>Filter chips ~30px in top third</td></tr>
+<tr><td>F6</td><td>P2</td><td>Key chips inherit #98 spelling - verification rider</td></tr>
+<tr><td>F7</td><td class="pos">+</td><td>KEEP: Save-&gt;Studio interstitial, wireTap, edit-set+undo, roman-labeled suggestions</td></tr>
+<tr><td>F8</td><td>P2</td><td>Six sub-44px controls in Compose top; Clear adjacent Save</td></tr>
+</table></div>
+<div class="card">Method: live destructive probe (4 slots -&gt; 0 on one Clear tap), per-screen geometry classification, source verification of every behavioral claim. Full doc: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">ux-findings-20260703.md</a></div>
+</div>
+
+<div class="pane" id="p-theory">
+<h2>Theory credibility (the P2 bar)</h2>
+<div class="chips" style="grid-template-columns:1fr 1fr">
+<div class="chip"><div class="n pos">0 BUGS</div><div class="l">1008 checks + adversarial professor</div></div>
+<div class="chip"><div class="n" style="color:var(--warn)">128</div><div class="l">spelling deltas -&gt; resolved by PR #98</div></div>
+</div>
+<blockquote>"NONE FOUND. The 48 rows preserve pitch class, degree order, triad quality, and Roman case/symbol."<span class="by">- music-theory-professor persona (GPT-5.5), instructed to refute - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">full review</a></span></blockquote>
+<div class="card"><strong>Professor outputs:</strong> sharp-tie = product policy (documented in <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">the audit</a>) - Roman-style SETTING recommended (Classical vs Lead-Sheet) - spelled chord tones - <a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden traps posted to PR #98</a>. Cross-session win: #98's key-aware output matches this mission's independent ground truth exactly.</div>
+</div>
+
+<div class="pane" id="p-council">
+<h2>Council (4 seats -&gt; Fable chair)</h2>
+<div class="wrapx"><table>
+<tr><th>Seat</th><th>Top pick</th><th>Notable position</th></tr>
+<tr><td>P3 Beginner advocate</td><td>S-FIRSTRUN</td><td>Drop S-ROMAN (jargon-prompt risk near first-run); proposed S-EASYFILTER (vocabulary disclosure)</td></tr>
+<tr><td>P2 Theory rigor</td><td>S-GOLDEN</td><td>Hard gate: ROMAN/TONES wait for #98; split GOLDEN into A/B; proposed S-KEYPOLICY</td></tr>
+<tr><td>D5 One-hand ergonomics</td><td>S-CLEARGUARD</td><td>Undo over confirm (grounded in app precedent); riders: cover Studio screen, 44px edit-set</td></tr>
+<tr><td>Product/roadmap</td><td>S-CLEARGUARD</td><td>Bundle with SLOTX; M3 = sprint-2 primary; proposed S-WHYNOTE (P4's "why")</td></tr>
+</table></div>
+<div class="card"><strong>Unanimous:</strong> no M3 slice in sprint 1 (three-way rebase collision with #98 + M3's own restructure). <strong>Chair rulings:</strong> ROMAN in-but-reshaped (JIT prompt), TONES hard-gated, CHIPS folded into M3, FIRSTRUN stays (persona balance), WHYNOTE in as stretch. Seat reports ran parallel (Sonnet); chair = Fable.</div>
+</div>
+
+<div class="pane" id="p-wins">
+<h2>Compound engineering wins</h2>
+<div class="wrapx"><table>
+<tr><th>Win</th><th>What compounds</th></tr>
+<tr><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Theory audit as reusable tool</a> (1008 checks, ms, zero LLM)</td><td>Permanent regression fixture (sprint item 2)</td></tr>
+<tr><td>Adversary caught the auditor (sharp-tie = policy)</td><td>The verifier itself got verified</td></tr>
+<tr><td>Cross-session verification (<a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> matches mission ground truth)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">Trap cases now fixtures in #98's thread</a></td></tr>
+<tr><td>Incident -&gt; standing infra (<a href="https://github.com/nhruska/nhruska.github.io/pull/97">#97 Pages auto-retry</a>)</td><td>Deploy flakes self-heal; proved armed on first live run</td></tr>
+<tr><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/docs/UX-FRICTION-LOG.md">Friction-log reuse</a></td><td>No duplicate findings; plans around in-flight work</td></tr>
+<tr><td>Interview -&gt; <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">binding goal spec</a></td><td>Mission survives reboots + handoffs (all state in git)</td></tr>
+</table></div>
+</div>
+
+<div class="pane" id="p-stats">
 <h2>Autonomous execution stats</h2>
-<table>
-<tr><th>Metric</th><th>Value</th><th>Note</th></tr>
-<tr><td>PRs merged today (repo-wide)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/94">#94 light mode</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/95">#95 follow-ups</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/96">#96 compose overlap fix</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/97">#97 CI auto-retry</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/99">#99 tuner smoothing</a></td><td>3+ parallel Claude sessions on one repo, zero collisions - branch discipline + worktrees</td></tr>
-<tr><td>In flight right now</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98 key-aware spelling</a> + drafts <a href="https://github.com/nhruska/nhruska.github.io/pull/88">#88 strum engine</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/70">#70 tutor prototype</a> + <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">this mission branch</a></td><td>Every branch isolated; the mission plans around all of them</td></tr>
-<tr><td>Mission phases completed today</td><td>Interview -> spec -> personas -> 1008-check audit -> adversarial professor -> cross-post -> J1-J4 walkthroughs (8 findings)</td><td>One afternoon, one operator, advisory pings only</td></tr>
-<tr><td>Models orchestrated</td><td>Opus 4.8 (1M) orchestration - GPT-5.5 codex adversarial - Fable 5 queued for council chair - Sonnet/Haiku routed for implementation/drafting - zero-LLM deterministic Node checks</td><td>Judgment up, transcription down, verification deterministic</td></tr>
-<tr><td>Human interruptions required</td><td>2 (one permission grant, one directive)</td><td>Everything else advisory: telegram pings, emails, this live page</td></tr>
-<tr><td>Hard gates before code ships</td><td>1 (sprint-plan approval) + operator-only merges</td><td>Autonomy for research and drafts; humans own what ships</td></tr>
-<tr><td>Swarm wall-clock multiplier</td><td>~0.25x of sequential estimate</td><td>Measured across 5 prior swarm runs (team ledger), not a guess</td></tr>
-</table>
-
-<h2>Mission status</h2>
-<table>
-<tr><th>Phase</th><th>What</th><th>Status</th></tr>
-<tr><td>0</td><td>Interview -> <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">goal spec</a> -> mission branch</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>1</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">Personas locked</a> (4, real-friend anchored)</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>2a</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">Deterministic theory audit</a> (1008 checks, 0 bugs, 128 spelling deltas quantified)</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>2a+</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Adversarial professor review</a>: 0 theory bugs; sharp-tie documented as policy; Roman-style setting recommended; <a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">12 golden traps -> PR #98</a></td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>2b</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">Persona walkthroughs J1-J4</a>: 11 screens, 0 console errors, live destructive probe -> 8 findings (1 P0), 6 sprint candidates</td><td><span class="status s-done">DONE</span></td></tr>
-<tr><td>3</td><td>plan:council (Fable chair + 4 persona-lens seats) ranking 9 sprint candidates</td><td><span class="status s-run">NEXT</span></td></tr>
-<tr><td>4</td><td>Codex adversarial on the candidate plan + resolution</td><td><span class="status s-wait">QUEUED</span></td></tr>
-<tr><td>5</td><td>Sprint plan -&gt; <strong>HARD GATE: operator approval via telegram</strong></td><td><span class="status s-wait">GATE</span></td></tr>
-<tr><td>6</td><td>Execute sprint 1 (worktree-isolated swarm; draft PRs only; operator merges)</td><td><span class="status s-wait">AFTER GATE</span></td></tr>
-</table>
-
-<h2>Walkthrough findings (phase 2b) - the headline items</h2>
-<table>
-<tr><th>#</th><th>Severity</th><th>Finding</th><th>Sprint candidate</th></tr>
-<tr><td>F1</td><td><strong>P0</strong></td><td>Compose <strong>Clear wipes the whole progression with NO confirm/undo</strong> - while the setlist clear HAS one (<a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/shared/songbook.js">songbook.js</a> guards one, not the other). And Clear sits beside Save in the top stretch zone.</td><td>S-CLEARGUARD</td></tr>
-<tr><td>F2</td><td>P1</td><td>Progression slot removers are 24x24px (half the 44px thumb floor), top zone, unguarded</td><td>S-SLOTX</td></tr>
-<tr><td>F3</td><td>P1</td><td>Setlist ✕: confirmed but NOT movement-cancelled, always-hot on the scroll rail - while <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/shared/list-item.js">list-item.js</a> ships wireTap for exactly this hazard</td><td>S-SETX</td></tr>
-<tr><td>F4</td><td>P1</td><td>Zero first-run guidance app-wide; a song row's only visible action is "Search" - body-tap-to-open is well built but invisible</td><td>S-NOTABLES + S-FIRSTRUN</td></tr>
-<tr><td>F5</td><td>P2</td><td>Filter chips ~30px tall in the top third (Library)</td><td>S-CHIPS</td></tr>
-<tr><td>F6</td><td>P2</td><td>Library key chips inherit <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> spelling - verification rider, not new work</td><td>rider on #98</td></tr>
-<tr><td>F7</td><td>+</td><td>Patterns to KEEP: Solo->Studio save interstitial, wireTap movement-cancel, edit-set mode + undo, roman-labeled suggestions ("JIT theory already leaking through in the right way")</td><td>-</td></tr>
-<tr><td>F8</td><td>P2</td><td>Six sub-44px controls concentrated in Compose's top stretch zone, Clear adjacent to Save</td><td>folds into S-CLEARGUARD</td></tr>
-</table>
-<div class="card">Full detail with geometry tables + method notes: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">ux-findings-20260703.md</a></div>
-
-<h2>The four personas</h2>
-<div class="grid">
-<div class="card"><h3>P1 - The Aspiring Pro</h3><div class="who">Gigging weekly, going full-time. Phone power user.</div>
-<div><span class="tag">Setlist</span><span class="tag">Perform</span><span class="tag">Reliability</span></div>
-<div class="kill">Dismissed by: lost data, stage surprises, slow flows.</div></div>
-<div class="card"><h3>P2 - The Conservatory Pianist</h3><div class="who">Formal theory, new to the fretboard. Most credibility-sensitive.</div>
-<div><span class="tag">Compose</span><span class="tag">Theory</span><span class="tag">Studio</span></div>
-<div class="kill">Dismissed by: ONE wrong spelling or label.</div></div>
-<div class="card"><h3>P3 - The First-Timer</h3><div class="who">Just bought a guitar. No theory. Consumer-app expectations.</div>
-<div><span class="tag">First-run</span><span class="tag">Tune</span><span class="tag">Easy songs</span></div>
-<div class="kill">Dismissed by: jargon walls, no obvious start, fear of breaking things.</div></div>
-<div class="card"><h3>P4 - The Shape-Fluent Improver</h3><div class="who">Chords and shapes internalized; leveling up scales, modes, keys.</div>
-<div><span class="tag">Compose loop</span><span class="tag">Solo/Studio</span><span class="tag">JIT theory</span></div>
-<div class="kill">Dismissed by: friction in the core loop, "what" without the "why".</div></div>
+<div class="wrapx"><table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>PRs merged today</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/94">#94</a> <a href="https://github.com/nhruska/nhruska.github.io/pull/95">#95</a> <a href="https://github.com/nhruska/nhruska.github.io/pull/96">#96</a> <a href="https://github.com/nhruska/nhruska.github.io/pull/97">#97</a> <a href="https://github.com/nhruska/nhruska.github.io/pull/99">#99</a> - 3+ parallel sessions, zero collisions</td></tr>
+<tr><td>In flight</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/98">#98</a> + drafts <a href="https://github.com/nhruska/nhruska.github.io/pull/88">#88</a>, <a href="https://github.com/nhruska/nhruska.github.io/pull/70">#70</a> + mission branch</td></tr>
+<tr><td>Council wall-clock</td><td>4 parallel seats ~3.5 min; Fable chair ~4 min</td></tr>
+<tr><td>Models</td><td>Opus 4.8 (1M) orchestration - GPT-5.5 adversarial - Fable 5 chair - Sonnet seats/implementers - Haiku drafting - zero-LLM deterministic checks</td></tr>
+<tr><td>Human interruptions</td><td>2 required (permission grant, directive); everything else advisory</td></tr>
+<tr><td>Hard gates</td><td>1 (sprint approval) + operator-only merges</td></tr>
+<tr><td>Swarm multiplier</td><td>~0.25x sequential wall-clock (team ledger, n=5)</td></tr>
+</table></div>
 </div>
-<div class="card"><strong>Every persona:</strong> holding the instrument - one free thumb - arm's-length glances - mis-taps are normal, so destructive actions are gated. Full write-ups: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">ux-personas-20260703.md</a></div>
 
-<h2>Decision log (operator decisions, binding)</h2>
-<table>
-<tr><th>#</th><th>Decision</th><th>Detail / why</th></tr>
-<tr><td>D1</td><td>End state = plan + execute sprint 1</td><td>Gate on plan approval, then implement sprint-1 items as DRAFT PRs. Operator merges - the run never does.</td></tr>
-<tr><td>D2</td><td>Personas = the operator's musician friends</td><td>Aspiring full-timers, classically-trained pianists, first-time guitarists, shape-fluent improvers.</td></tr>
-<tr><td>D3</td><td>Theory rock solid or dismissed</td><td>Deterministic + verifiable. Real user choices become Settings with a one-time prompt - never a silent guess.</td></tr>
-<tr><td>D4</td><td>Theory must survive an adversarial professor</td><td>The audit self-graded its own ground truth, so a professor persona attacked both the encoding and the app. <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">Verdict</a>: clean.</td></tr>
-<tr><td>D5</td><td>One-hand operation is a hard constraint</td><td>Instrument in hand, one free thumb, no accidental delete/edit - ever.</td></tr>
-<tr><td>D6</td><td>Just-in-time guidance, one-shot dismissible notables</td><td>Tools surface at the point of need; hints show once, dismissible, persisted.</td></tr>
-<tr><td>D7</td><td>HITL = one hard gate</td><td>Advisory artifacts at every phase (telegram + email + this page); the run blocks exactly once, before execution.</td></tr>
-<tr><td>D8</td><td>Fable orchestration, cheap-routed swarms</td><td>Premium model chairs the three judgment moments only; Sonnet implements, Haiku transcribes, codex adversarial on its own quota.</td></tr>
-<tr><td>D9</td><td>Dry-run phases 1-2, then full run</td><td>Quality sanity-check before autonomous continuation.</td></tr>
-</table>
-
-<h2>Theory deep-dive (for the skeptics)</h2>
-<div class="grid">
-<div class="card"><div class="big good">0 BUGS</div><a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">1008 checks</a> + an <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">adversarial professor</a>: every pitch class, triad quality, and roman numeral correct across 12 roots x 4 modes.</div>
-<div class="card"><div class="big warn">128 deltas -> resolved by design</div>Canonical-sharp spelling reads "wrong" to trained eyes in 24/48 contexts. <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a> implements key-aware conventional spelling; this mission's audit confirmed its output independently.</div>
+<div class="pane" id="p-log">
+<h2>Operator decision log</h2>
+<div class="wrapx"><table>
+<tr><th>#</th><th>Decision</th></tr>
+<tr><td>D1</td><td>Plan + execute sprint 1 as draft PRs; operator merges</td></tr>
+<tr><td>D2</td><td>Personas = real musician friends</td></tr>
+<tr><td>D3</td><td>Theory deterministic; real user choices -&gt; Settings + one-time prompt</td></tr>
+<tr><td>D4</td><td>Theory must survive adversarial professor (it did)</td></tr>
+<tr><td>D5</td><td>One-hand; no accidental destruct - ever</td></tr>
+<tr><td>D6</td><td>JIT guidance; one-shot dismissible notables</td></tr>
+<tr><td>D7</td><td>One hard gate (plan approval); advisory everywhere else</td></tr>
+<tr><td>D8</td><td>Fable chairs judgment moments; cheap-routed swarms</td></tr>
+<tr><td>D9</td><td>Dry-run 1-2, then autonomous ("3 1")</td></tr>
+<tr><td>O1</td><td>Spelling: SUPERSEDED by #98 (mission audit = its fixture)</td></tr>
+<tr><td>O2</td><td>Roman convention -&gt; Setting (professor verdict, sprint item 8)</td></tr>
+<tr><td>O3</td><td>M3 eligibility granted ("y"); council unanimously declines; gate choice A/B</td></tr>
+<tr><td>O4</td><td>Finder rehome 5A/5B - pre-resolve before sprint-2 M3</td></tr>
+</table></div>
 </div>
-<table>
-<tr><th>Roman-numeral case</th><th>App shows</th><th>Professor's verdict</th></tr>
-<tr><td>Diatonic in-mode (D in E Mixolydian)</td><td><code>VII</code> (mode-local)</td><td rowspan="3">Both conventions legitimate for different audiences: keep Classical Mode-Local for conservatory eyes, offer Lead-Sheet Major-Relative (bIII bVI bVII) for jam vocabulary - as a user SETTING with a one-time prompt (candidate S-ROMAN).</td></tr>
-<tr><td>Borrowed (D in E Major)</td><td><code>bVII</code> (chromatic)</td></tr>
-<tr><td>Minor degrees 3/6/7 (C Minor)</td><td><code>III VI VII</code> (classical)</td></tr>
-</table>
 
-<h2>Open decisions</h2>
-<table>
-<tr><th>#</th><th>Fork</th><th>State</th></tr>
-<tr><td>O1</td><td>Spelling preference</td><td><strong>SUPERSEDED by <a href="https://github.com/nhruska/nhruska.github.io/pull/98">PR #98</a></strong> - mission audit + <a href="https://github.com/nhruska/nhruska.github.io/pull/98#issuecomment-4880042768">professor traps</a> now serve as its verification fixtures</td></tr>
-<tr><td>O2</td><td>Roman convention</td><td>Professor verdict in: ship as a setting (S-ROMAN). Council ranks it with S-TONES and S-GOLDEN</td></tr>
-<tr><td>O3</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/docs/UX-FRICTION-LOG.md">M3 songs/tracks merge</a> interplay</td><td>Council decides: include M3 slice(s) in sprint 1 vs keep clear of Library structure</td></tr>
-<tr><td>O4</td><td>Finder rehome (M3 sub-decision A vs B)</td><td>Operator call, only if O3 includes M3</td></tr>
-</table>
+<div class="pane" id="p-app">
+<h2>The app + the personas</h2>
+<div class="card">Offline-installable PWA, vanilla JS, zero build step, 158 commits. <a href="https://nhruska.github.io/music/play/">Play it</a>. Compose (key/mode-aware progressions, roman labels) - Solo/Studio (scale on the fretboard over backing tracks) - Library/Setlist (chord sheets, perform mode) - Tune (mic autocorrelation) - 8 instrument profiles.</div>
+<div class="wrapx"><table>
+<tr><th>Persona</th><th>Dismissed by</th></tr>
+<tr><td><strong>P1 Aspiring Pro</strong> - gigging, going full-time</td><td>Lost data, stage surprises, slow flows</td></tr>
+<tr><td><strong>P2 Conservatory Pianist</strong> - theory-literate, new to the neck</td><td>ONE wrong spelling or label</td></tr>
+<tr><td><strong>P3 First-Timer</strong> - just bought a guitar</td><td>Jargon walls, no obvious start, fear of breaking things</td></tr>
+<tr><td><strong>P4 Shape-Fluent Improver</strong> - leveling up scales/modes/keys</td><td>Core-loop friction, "what" without "why"</td></tr>
+</table></div>
+<div class="card"><strong>Every persona:</strong> instrument in hand - one free thumb - mis-taps are normal, destructive actions gated.</div>
+<blockquote>"The app guards the setlist clear with a confirm - and wipes an 8-chord composition with zero guard, from a button parked next to Save."<span class="by">- F1, the mission's P0, now sprint item 1</span></blockquote>
+<blockquote>Two independent derivations of conservatory spelling agree on every probe. Neither knew the other existed until they met in the repo.<span class="by">- the cross-session verification win</span></blockquote>
+</div>
 
-<div class="foot">Canonical sources on <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">claude/ux-persona-mission</a>: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">goal spec</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">personas</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">professor review</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">walkthrough findings</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-audit.js">theory-audit.js</a> + <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/music/dev/theory-dossier.js">theory-dossier.js</a>. Guardrails: draft PRs only, zero merges, zero pushes to main, one hard human gate. This page is the mission's living record.</div>
+<div class="foot">Sources on <a href="https://github.com/nhruska/nhruska.github.io/tree/claude/ux-persona-mission">the mission branch</a>: <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/goal-ux-persona-mission-20260703.md">spec</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-personas-20260703.md">personas</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-findings-20260703.md">findings</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/theory-professor-review-20260703.md">professor</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/claude/ux-persona-mission/docs/plans/ux-sprint-1-20260703.md">sprint plan</a>. Draft PRs only - zero merges - one hard human gate.</div>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.tab'),panes=document.querySelectorAll('.pane');
+  function show(id){tabs.forEach(function(t){t.classList.toggle('on',t.dataset.p===id)});panes.forEach(function(p){p.classList.toggle('on',p.id==='p-'+id)});}
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.p);if(history.replaceState)history.replaceState(null,'','#'+t.dataset.p);});});
+  var h=location.hash.replace('#','');if(h&&document.getElementById('p-'+h))show(h);
+})();
+</script>
 </body></html>
