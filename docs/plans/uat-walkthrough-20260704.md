@@ -29,3 +29,11 @@
 **Operator verbatim-essence:** "when count chords over width, convert to existing smaller chord icon without chart. wrap chords to keep in view without scroll horiz."
 
 **Spec sketch (S-PROG-WRAP, Tier-0 relay - fires when S-COMPOSE-POLISH2 frees the region):** when the progression's chord count exceeds what fits one row at diagram-card size, the strip re-renders ALL entries as the existing compact chord token (name + roman, no diagram chart) and flex-WRAPS - no horizontal scroll. Tap/remove interactions unchanged. Threshold derived from measured width, not hardcoded count. A7 gate: wrapped height at 12 chords must hold the one-screen budget at 412x915 (compact tokens ~2 rows vs today's scrolling diagram row - measure). Amends the D-CAP12 note ("strip scrolls") to "strip degrades + wraps".
+
+## U9 - "Added to setlist" toast never auto-hides (operator, 2026-07-04, screenshot)
+
+**Operator verbatim-essence:** "The added to setlist toast confirmation never disappears - navigated to my setlist and it's still showing. We don't have any other patterns that use this, although I think it is valid. Where else could we place this type of non-intrusive message? Should we make it part of our UI Primitives Library?"
+
+**Root cause (parent-verified in source):** `var toastTimer` declared TWICE inside Songbook.mount()'s closure (library toast ~1454, compose toast block ~2441) - var hoisting makes them ONE shared variable; the two toast systems clobber each other's hide timer. Pre-existing latent bug, made visible by the truthful-toast traffic (#124).
+
+**Fix (S-TOAST, in flight):** extraction, not a patch - shared/toast.js primitive owning its own timer (ARIA live region, error/persist variants preserved), both call sites delegate. Ships WITH the operator-requested wiki page ux-philosophy/ui-primitives.md (toast/notable/modal/chip taxonomy + candidate placements: backup done, restore done, pref saved, transpose applied, setlist ops with undo).
