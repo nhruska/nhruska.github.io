@@ -6,6 +6,13 @@
 var assert = require('assert');
 var T = require('../music/shared/tracks.js');
 var Circle = require('../music/shared/circle.js');
+var Notables = require('../music/shared/notables.js');
+var lsReset = require('./helpers/local-storage-reset.js');
+// compat shim over the shared helper's {clear, fakeStore} API (same as notables.test.js)
+function resetLocalStorage(seed) {
+  global.localStorage = lsReset.fakeStore();
+  if (seed) Object.keys(seed).forEach(function (k) { global.localStorage.setItem(k, seed[k]); });
+}
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -369,6 +376,68 @@ test('tintWheel survives a wheel with unexpected labels (no throw, no tint)', fu
   var wheel = stubWheel(['nonsense', 'labels']);
   T.tintWheel(wheel, C, 'A', 'major'); // must not throw
   assert.strictEqual(wheel.nodes[0].previousElementSibling.className, 'cofWedge');
+});
+
+/* ---------- S-WHYNOTE (sprint-1 item 6): static template selection ---------- */
+test('whynoteText: major-family (ionian) uses the exact A9-specified relative-minor template', function () {
+  assert.strictEqual(
+    T.whynoteText('C', 'ionian', 'Major'),
+    'Why this scale works: C major and its relative minor share the same notes - solo either over this progression.');
+});
+test('whynoteText: minor (aeolian) uses the parallel-phrased equivalent', function () {
+  assert.strictEqual(
+    T.whynoteText('A', 'aeolian', 'Minor'),
+    'Why this scale works: A minor and its parallel major share the same home note, not the same notes - stick with A minor here.');
+});
+test('whynoteText: dorian and mixolydian share the same non-ionian template shape', function () {
+  assert.strictEqual(
+    T.whynoteText('E', 'dorian', 'Dorian'),
+    'Why this scale works: E dorian and its parallel major share the same home note, not the same notes - stick with E dorian here.');
+  assert.strictEqual(
+    T.whynoteText('G', 'mixolydian', 'Mixolydian'),
+    'Why this scale works: G mixolydian and its parallel major share the same home note, not the same notes - stick with G mixolydian here.');
+});
+test('whynoteText: only two templates exist - the switch is on scaleMode, nothing else', function () {
+  // same key+label, only scaleMode flips -> exactly the two known bodies, never a third shape
+  var ionian = T.whynoteText('D', 'ionian', 'Major');
+  var aeolian = T.whynoteText('D', 'aeolian', 'Minor');
+  assert.notStrictEqual(ionian, aeolian);
+  assert.ok(/relative minor/.test(ionian));
+  assert.ok(/parallel major/.test(aeolian));
+});
+
+/* ---------- S-WHYNOTE: claim/dismiss consumer logic (via Notables) ---------- */
+test('whynoteBanner: a fresh, un-dismissed slot grants renderBanner-ready opts', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  var opts = T.whynoteBanner(th);
+  assert.ok(opts, 'expected a granted banner on a fresh claim');
+  assert.strictEqual(opts.consumerId, 'whynote');
+  assert.strictEqual(opts.className, 'bt-st-notable');
+  assert.strictEqual(opts.text, T.whynoteText('C', 'ionian', 'Major'));
+});
+test('whynoteBanner: a repeat call while still un-dismissed keeps granting (idempotent re-claim)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  assert.ok(T.whynoteBanner(th), 'first open of the Studio grants the slot');
+  assert.ok(T.whynoteBanner(th), 'reopening the Studio before dismissal grants it again');
+});
+test('whynoteBanner: dismiss() persists forever - a later call skips silently (returns null)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  var th = T.studioTheory('A', 'minor');
+  assert.ok(T.whynoteBanner(th));
+  Notables.dismiss('whynote');
+  assert.strictEqual(T.whynoteBanner(th), null, 'a dismissed whynote must never render again');
+});
+test('whynoteBanner: a higher-priority notable (firstrun) already holding the slot preempts it', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun'), true); // firstrun outranks whynote in PRIORITY
+  var th = T.studioTheory('G', 'major');
+  assert.strictEqual(T.whynoteBanner(th), null, 'whynote must skip silently while firstrun holds the slot');
 });
 
 run();

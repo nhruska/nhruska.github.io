@@ -45,21 +45,28 @@
   .sw:active{transform:scale(.88);}
   .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
   /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
-     sheet on phone; the accent chooser lives here now, not the Tune tab. */
+     sheet on phone; the accent chooser lives here now, not the Tune tab.
+     Structure (F11): sticky .setHd top, scrollable .setPanelBody middle, sticky
+     .setFoot bottom - a plain flex column. The card's own height is auto up to
+     max-height, so short content never leaves a gap above the footer; only when
+     content exceeds max-height does .setPanelBody actually scroll. */
   #settingsBtn{line-height:0;}
   #settingsBtn svg{width:21px;height:21px;display:block;}
   .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
     background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
     padding:0 12px calc(12px + env(safe-area-inset-bottom));}
   .setOv[hidden]{display:none;}
-  .setCard{width:100%;max-width:520px;max-height:86dvh;overflow-y:auto;background:var(--surface-2);
-    border:1px solid var(--line-strong);border-radius:16px 16px 0 0;padding:16px 16px 22px;
+  .setCard{width:100%;max-width:520px;max-height:86dvh;display:flex;flex-direction:column;overflow:hidden;
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px 16px 0 0;
     box-shadow:0 -14px 40px rgba(0,0,0,.55);}
-  .setHd{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
+    padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
   .setHd h2{margin:0;font-size:1.15rem;}
-  .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:4px 8px;}
+  .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
+    display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+  .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
   .setSec{padding:16px 0;border-top:1px solid var(--line-strong);}
-  .setSec:first-of-type{border-top:0;padding-top:6px;}
+  .setSec:first-of-type{border-top:0;padding-top:16px;}
   .setLbl{font-weight:600;margin-bottom:11px;}
   .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
   .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
@@ -67,16 +74,17 @@
   .thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
   .thSeg.on{background:var(--accent);color:var(--on-accent);}
   .thSeg:active{transform:scale(.97);}
-  .setBtns{display:flex;gap:10px;}
-  .setBtns .btn{flex:1;}
-  .setSummary{margin:0 0 14px;display:flex;flex-direction:column;gap:5px;}
+  .setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
   .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
   .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
   .setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
   .setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
   .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
-  .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:12px;}
-  .setAbout{color:var(--ink-faint);font-size:.74rem;text-align:center;padding-bottom:0;}
+  .setFoot{flex:0 0 auto;border-top:1px solid var(--line-strong);padding:14px 16px 18px;}
+  .setBtns{display:flex;gap:10px;}
+  .setBtns .btn{flex:1;}
+  .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 </style>
 </head>
 <body>
@@ -228,27 +236,30 @@
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
-    <div class="setSec">
-      <div class="setLbl">Theme</div>
-      <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
-      <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+    <div class="setPanelBody" id="settingsBody">
+      <div class="setSec">
+        <div class="setLbl">Theme</div>
+        <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
+        <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+      </div>
+      <div class="setSec">
+        <div class="setLbl">Accent color</div>
+        <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
+      </div>
+      <div class="setSec">
+        <div class="setLbl">Your songbook</div>
+        <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+        <div class="setSummary" id="dataSummary" aria-live="polite"></div>
+      </div>
     </div>
-    <div class="setSec">
-      <div class="setLbl">Accent color</div>
-      <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
-    </div>
-    <div class="setSec">
-      <div class="setLbl">Your songbook</div>
-      <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
-      <div class="setSummary" id="dataSummary" aria-live="polite"></div>
+    <div class="setFoot">
       <div class="setBtns">
         <button class="btn" id="btnBackup" type="button">Back up</button>
         <button class="btn ghost" id="btnRestore" type="button">Restore</button>
         <input type="file" id="restoreFile" accept="application/json,.json" hidden>
       </div>
-      <div class="setMeta" id="lastBackup">Last backed up: never</div>
+      <div class="setMeta" id="setMetaLine"><span id="appVer">Music</span><span class="metaSep"> - </span><span id="lastBackup">Last backed up: never</span></div>
     </div>
-    <div class="setSec setAbout"><span id="appVer">Music</span></div>
   </div>
 </div>
 
@@ -259,6 +270,7 @@
 <script src="../shared/circle.js"></script>
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
+<script src="../shared/notables.js"></script>
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <script src="../shared/songbook.js"></script>

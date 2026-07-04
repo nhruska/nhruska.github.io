@@ -479,6 +479,20 @@
     };
   }
 
+  // S-FIRSTRUN (sprint-1 item 4, F4): the fresh-profile Library guidance cue,
+  // built on the one-shot Notables infra (music/shared/notables.js). Pure
+  // decision fn, Node-testable without a DOM: given a Notables module (real or
+  // stub), decide whether the 'firstrun' consumer should render on THIS call -
+  // dependency-injected (Notables param) same pattern as libraryFilter's
+  // injected Rep, so tests drive a real Notables instance directly. Returns
+  // false without claiming if already dismissed (show-once); otherwise
+  // attempts Notables.claim('firstrun') and returns whatever it grants.
+  function firstrunShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('firstrun')) return false;
+    return Notables.claim('firstrun');
+  }
+
   // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
   // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
   // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
@@ -515,6 +529,56 @@
     }
     var q = parts.filter(Boolean).join(' ');
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
+  // Movement-cancelled tap guard: fires fn only if a touch on `el` did NOT move
+  // past the threshold (a tap, not a scroll-grab dragging over this button while
+  // the thumb scrolls the setlist rail). Mouse clicks (no touch events) are
+  // unaffected. This is a LOCAL COPY of music/shared/list-item.js's wireTap() -
+  // not imported, since this is a classic-<script>-tag codebase with no module
+  // loader across files. Keep the two in sync if the tap-cancel logic changes;
+  // a future pass could hoist both into one tiny shared module (noted, not done
+  // here - out of this task's scope). Pure + Node-testable (exported below).
+  function wireTapCancel(el, fn) {
+    if (!el || !fn) return;
+    var sx = 0, sy = 0, moved = false;
+    el.addEventListener('touchstart', function (e) {
+      var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false;
+    }, { passive: true });
+    el.addEventListener('touchmove', function (e) {
+      var t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) moved = true;
+    }, { passive: true });
+    el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (moved) return;
+      fn();
+    });
+  }
+  // S-CLEARGUARD (sprint-1 #1, A3 binding contract): pure snapshot build/apply
+  // for the Compose Clear undo banner - extracted so the undo correctness
+  // property (a snapshot is a fully INDEPENDENT copy, never aliased to the
+  // live progression/songKey) is Node-testable without touching the DOM.
+  // buildClearSnapshot captures progression + cTpose + songKey + the linked
+  // saved-song id at the moment Clear is tapped; applyClearSnapshot hands
+  // back an equally independent copy so a restore can never leak a live
+  // reference back into the stored snapshot (which would let a later
+  // mutation corrupt an already-consumed undo).
+  function buildClearSnapshot(progression, cTpose, songKey, savedComposeId) {
+    return {
+      progression: progression.slice(),
+      cTpose: cTpose,
+      songKey: { root: songKey.root, mode: songKey.mode, explicit: songKey.explicit },
+      savedComposeId: savedComposeId
+    };
+  }
+  function applyClearSnapshot(snapshot) {
+    return {
+      progression: snapshot.progression.slice(),
+      cTpose: snapshot.cTpose,
+      songKey: { root: snapshot.songKey.root, mode: snapshot.songKey.mode, explicit: snapshot.songKey.explicit },
+      savedComposeId: snapshot.savedComposeId
+    };
   }
 
   /* =====================================================================
@@ -777,6 +841,30 @@
       if (!artistVal) return Object.assign({}, rec, { y: null, year: null });
       return rec;
     }
+    // S-FIRSTRUN (F4): the fresh-profile Library cue - teaches BOTH "tap a song
+    // to open it" and "the chord-count badge tells you the easy ones" in one
+    // compact banner, above the song list (never on the search/chip filter
+    // chrome renderFilterChips owns, so it survives the future M3 filter-bar
+    // rework). renderSongs() calls this on every render; firstrunBannerEl
+    // guards against re-inserting a duplicate node on re-renders (search
+    // typing, chip taps, tab switches) once it's already showing. Once the x
+    // dismisses it, Notables persists that forever and this stays a no-op.
+    var firstrunBannerEl = null;
+    function renderFirstrunNotable() {
+      if (firstrunBannerEl || !el.libSongs || !el.songsList || !global.Notables) return;
+      if (!firstrunShouldRender(global.Notables)) return; // dismissed, or slot held elsewhere - skip silently
+      var banner = global.Notables.renderBanner({
+        consumerId: 'firstrun',
+        text: 'Tap any song to open its chords. Songs marked with a low chord count (like 3 chords) are the easiest place to start.',
+        onDismiss: function () {
+          if (firstrunBannerEl && firstrunBannerEl.parentNode) firstrunBannerEl.parentNode.removeChild(firstrunBannerEl);
+          firstrunBannerEl = null;
+        }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      firstrunBannerEl = banner;
+      el.libSongs.insertBefore(banner, el.songsList);
+    }
     function renderSongs() {
       if (!el.songsList) return;
       // Compose calling this right after a save happens while the Library
@@ -787,6 +875,7 @@
       // screen the user is looking at, or the highlight would fire-and-fade
       // invisibly and never be seen. Until then it just keeps waiting.
       var visible = !!el.songsList.offsetParent;
+      renderFirstrunNotable();
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
@@ -1179,10 +1268,13 @@
       if (!STATE.setEditMode) STATE.lastRemoved = null; // leaving edit mode dismisses the undo affordance
       renderSetlist();
     };
-    if (el.setClear) el.setClear.onclick = function () {
+    // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
+    // header rail must not fire the destructive Clear confirm(). Behavior is
+    // otherwise unchanged - same native confirm(), same effect.
+    if (el.setClear) wireTapCancel(el.setClear, function () {
       if (STATE.setlist.length === 0) return;
       if (confirm('Clear your setlist?')) { STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
-    };
+    });
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
@@ -1324,6 +1416,28 @@
     // (no duplicate); "Solo over" opens its Studio directly (no re-prompt). Detached
     // on Clear or when a starter pattern replaces the buffer wholesale.
     var savedComposeId = null;
+    // S-SLOTX (sprint-1 #1, F2): movement-cancelled tap for the progression
+    // slot remover - fires fn only if the touch did NOT move (a tap, not a
+    // scroll-grab on the horizontal .prog filmstrip). Adapted from
+    // list-item.js's wireTap (same mechanism, kept local here since this
+    // file owns the Compose/Studio progression-strip region, not list-item.js).
+    // Mouse clicks (no touch events) are unaffected.
+    function composeWireTap(el, fn) {
+      if (!el || !fn) return;
+      var sx = 0, sy = 0, moved = false;
+      el.addEventListener('touchstart', function (e) {
+        var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false;
+      }, { passive: true });
+      el.addEventListener('touchmove', function (e) {
+        var t = e.touches[0];
+        if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) moved = true;
+      }, { passive: true });
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (moved) return;
+        fn(e);
+      });
+    }
     function packDiagram(name, size) {
       if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
       var wrap = document.createElement('div');
@@ -1382,12 +1496,15 @@
           var rn = labelRoman(c);
           if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-          rm.onclick = function (e) {
-            e.stopPropagation(); progression.splice(i, 1);
+          // S-SLOTX: movement-cancelled (composeWireTap, not a raw onclick) so a
+          // scroll-grab on this horizontal filmstrip can't remove a chord.
+          composeWireTap(rm, function () {
+            invalidateClearUndo(); // A3: removing a chord invalidates any pending Clear-undo
+            progression.splice(i, 1);
             var kc = reinferKey();
             renderProg(); renderSuggest(); renderKey();
             if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
-          };
+          });
           slot.appendChild(rm);
           el.prog.appendChild(slot);
         });
@@ -1396,6 +1513,7 @@
     }
     function addChord(c) {
       if (progression.length >= 8) return;
+      invalidateClearUndo(); // A3: adding a chord invalidates any pending Clear-undo
       progression.push(c);
       // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
       // one, so the key chip + in-key palette light up without a key-panel trip. The
@@ -1438,6 +1556,7 @@
     // root if there is one, force the mode to Major, and sync the key picker so the
     // chord palette + solo scale below match what just got filled in.
     function loadProgression(degrees) {
+      invalidateClearUndo(); // A3: a starter pattern replaces the buffer wholesale
       var root = songKey.root || "C";
       // a named pattern sets an explicit Major key (patterns are major-diatonic)
       songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
@@ -1489,6 +1608,7 @@
     }
     function composeTpose(st) {
       if (!progression.length) return;
+      invalidateClearUndo(); // A3: a transpose invalidates any pending Clear-undo
       progression = progression.map(function (c) { return tpose(c, st); });
       cTpose += st;
       // Move the song key with the chords so the readout, diatonic palette and solo
@@ -1524,6 +1644,7 @@
     // dim triad. Round-trip is not perfect for chromatic chords (acceptable).
     function convertToMode(targetMode) {
       if (!progression.length || !MODES[targetMode]) return;
+      invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
       // Parallel = same tonic. Use the explicit/derived song key root; else the first
       // chord's root. rootPc handles flat spellings; if it can't resolve, bail safely.
       var tonicRoot = songKey.root || (splitChord(progression[0]) || {}).root || null;
@@ -1749,6 +1870,7 @@
         b.textContent = r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
+          invalidateClearUndo(); // A3: a key (root) change invalidates any pending Clear-undo
           // Picking a root sets the explicit key and KEEPS the panel open so the mode
           // can be chosen in the same visit (root -> mode is one gesture; the old
           // close-on-root-pick forced a reopen to get minor). A mode tap - or re-tapping
@@ -1813,8 +1935,9 @@
           // gesture is done; with no root yet, stay open for the root pick) and
           // re-render the palette.
           if (progression.length) {
-            convertToMode(mk);
+            convertToMode(mk); // invalidates internally
           } else {
+            invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
             songKey.mode = mk;
             if (songKey.root) keyPopoverOpen = false;
             renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
@@ -2030,6 +2153,72 @@
       if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); }
       if (composeModalBackdrop) composeModalBackdrop.hidden = true;
     }
+
+    // ---- S-CLEARGUARD (sprint-1 #1): Compose Clear undo banner ----
+    // F1: Clear used to wipe the built progression with NO guard (native
+    // confirm() elsewhere in this file, nothing here). A3 (binding): the
+    // fix is a PERSISTENT undo banner, not a confirm() dialog - snapshot the
+    // full pre-Clear state (progression + cTpose + songKey + the linked
+    // saved-song id), and let ANY subsequent mutating action (add/remove
+    // chord, transpose, mode change, key change, Save) invalidate it. It is
+    // route-local, in-memory, session-only - no backup.js surface, dies on
+    // tab-switch/reload, same shape as the setlist's STATE.lastRemoved/
+    // .setUndo persistent-undo precedent F1 points to. It is a SEPARATE
+    // element/variable from composeRow/composeToast above (deliberately -
+    // so an unrelated save/solo-choice flow that calls hideComposeRow()
+    // can never silently clobber this banner's own DOM out from under its
+    // tracked snapshot), but reuses the .composeRow/.composeRowMsg/
+    // .composeRowBtns classes for the visual look (F7: "reuse this pattern
+    // for Clear-undo messaging" - the same interstitial styling as the
+    // Solo -> Studio "Save & open Studio / Skip" row below).
+    var clearUndoBanner = null, clearUndoSnapshot = null;
+    function ensureClearUndoBanner() {
+      if (!el.prog || !el.prog.parentNode) return false;
+      if (!clearUndoBanner) {
+        clearUndoBanner = document.createElement('div');
+        clearUndoBanner.className = 'composeRow';
+        clearUndoBanner.hidden = true;
+        el.prog.parentNode.insertBefore(clearUndoBanner, el.prog);
+      }
+      return true;
+    }
+    // Dismiss the banner AND drop the pending snapshot together - the two
+    // must never go out of sync (a visible banner with no snapshot, or a
+    // snapshot with no way to reach it, are both bugs).
+    function hideClearUndoBanner() {
+      clearUndoSnapshot = null;
+      if (clearUndoBanner) { clearUndoBanner.hidden = true; clearUndoBanner.innerHTML = ''; }
+    }
+    // Call at the top of every progression/songKey mutator (add/remove
+    // chord, transpose, mode change, key change, Save) - the A3 invalidation
+    // contract. A no-op when nothing is pending, so every call site can call
+    // it unconditionally with no extra guard.
+    function invalidateClearUndo() { if (clearUndoSnapshot) hideClearUndoBanner(); }
+    function showClearUndoBanner() {
+      if (!ensureClearUndoBanner() || !clearUndoSnapshot) return;
+      clearUndoBanner.hidden = false;
+      clearUndoBanner.innerHTML = '';
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Progression cleared.';
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost ctrlBtn'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var snap = clearUndoSnapshot; if (!snap) return;
+        var restored = applyClearSnapshot(snap);
+        progression = restored.progression; cTpose = restored.cTpose;
+        songKey.root = restored.songKey.root; songKey.mode = restored.songKey.mode; songKey.explicit = restored.songKey.explicit;
+        savedComposeId = restored.savedComposeId;
+        hideClearUndoBanner();
+        renderProg(); renderKey();
+        if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
+      };
+      btnRow.appendChild(undoBtn);
+      clearUndoBanner.appendChild(msg); clearUndoBanner.appendChild(btnRow);
+    }
+
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
     // itself after ~3s so it never permanently claims screen space - unless
     // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
@@ -2138,6 +2327,7 @@
     // need the result - the inline toast already gives feedback).
     function saveProgression(done) {
       done = done || function () {};
+      invalidateClearUndo(); // S-CLEARGUARD/A3: Save invalidates any pending Clear-undo
       if (progression.length === 0) { showComposeToast('Build a progression first.', true); done(null); return; }
       // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
       // the progression and key panel stay live behind it. What gets saved is
@@ -2321,12 +2511,18 @@
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
     if (el.cClear) el.cClear.onclick = function () {
+      if (!progression.length) return; // button is hidden then too - defensive no-op
+      // S-CLEARGUARD (F1/A3): snapshot the full pre-Clear state BEFORE wiping
+      // it, so the persistent Undo banner (shown below) can restore it
+      // exactly. Never a native confirm() - see the banner functions above.
+      clearUndoSnapshot = buildClearSnapshot(progression, cTpose, songKey, savedComposeId);
       progression = []; cTpose = 0;
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       var kc = reinferKey();
       renderProg(); renderKey();
       if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+      showClearUndoBanner();
     };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
@@ -2386,7 +2582,7 @@
     // The key/mode chip (#keyPickerCompact) is injected + wired by buildKeyPicker; it
     // opens the fly-out on tap (the old #cKey "snap back to key" readout is retired -
     // the chip is the unified key surface now).
-    if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
+    if (el.keyClear) el.keyClear.onclick = function () { invalidateClearUndo(); songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
@@ -2408,6 +2604,9 @@
       if (name === 'jam') renderSetlist();
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
+      // S-CLEARGUARD (A3): the Clear-undo banner is route-local - leaving Compose
+      // (for any other tab) dies the pending undo, same as a reload would.
+      if (name !== 'compose') invalidateClearUndo();
       var viewEl = document.getElementById('view');
       if (viewEl) viewEl.scrollTop = 0;
       if (el.ctxLine && CONTEXTS[name] != null) el.ctxLine.textContent = CONTEXTS[name];
@@ -2533,6 +2732,7 @@
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
+    firstrunShouldRender: firstrunShouldRender,
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
@@ -2543,7 +2743,10 @@
     degreeOf: degreeOf,
     completions: completions,
     inferKey: inferKey,
-    ROOTS: ROOTS
+    ROOTS: ROOTS,
+    wireTapCancel: wireTapCancel,
+    buildClearSnapshot: buildClearSnapshot,
+    applyClearSnapshot: applyClearSnapshot
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 
