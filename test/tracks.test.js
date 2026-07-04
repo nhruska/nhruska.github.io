@@ -204,6 +204,30 @@ test('studioTheory: unresolvable key returns null (caller falls back to player/s
   assert.strictEqual(T.studioTheory('H', 'major'), null);
 });
 
+/* ---------- M-GUIDE W2: Blues studioTheory/resolveScaleMode wiring ---------- */
+test('resolveScaleMode: blues resolves explicitly (not coarsened to major/minor family)', function () {
+  assert.strictEqual(T.resolveScaleMode('blues'), 'blues');
+  assert.strictEqual(T.resolveScaleMode('Blues'), 'blues'); // case-insensitive, matches every other branch
+});
+test('studioTheory: blues branches to the solo blues scale + BLUES_KEY palette, not diatonic()', function () {
+  var th = T.studioTheory('A', 'blues');
+  assert.strictEqual(th.scaleMode, 'blues');
+  assert.strictEqual(th.label, 'Blues');
+  assert.deepStrictEqual(th.notes, Circle.soloScale('A', 'blues'));
+  assert.deepStrictEqual(th.degrees, Circle.soloScaleDegrees('blues'));
+  assert.strictEqual(th.pcs.length, 6);
+  // chords come from Circle.bluesKey (I7/IV7/V7), never Circle.diatonic
+  assert.deepStrictEqual(th.chords, Circle.bluesKey('A'));
+  assert.strictEqual(th.chords.length, 3);
+  assert.deepStrictEqual(th.chords.map(function (c) { return c.chord; }), ['A7', 'D7', 'E7']);
+});
+test('studioTheory: blues (capitalized, as songKey.mode carries it) resolves identically to lowercase', function () {
+  assert.deepStrictEqual(T.studioTheory('C', 'Blues'), T.studioTheory('C', 'blues'));
+});
+test('studioTheory: blues unresolvable key returns null (same contract as every other mode)', function () {
+  assert.strictEqual(T.studioTheory('H', 'blues'), null);
+});
+
 /* ---------- S-BLUES: soloBundle (Studio scale-chip swap, SOLO LAYER ONLY) ---------- */
 test("soloBundle: scaleId 'mode' is identical to studioTheory (no reimplementation)", function () {
   var th = T.studioTheory('A', 'minor');
@@ -254,6 +278,12 @@ test('harmonization-isolation: chords-in-key are identical before and after any 
   var after = T.studioTheory('A', 'minor').chords;
   assert.deepStrictEqual(after, before, 'chords-in-key must be untouched by any solo-scale chip tap');
 });
+test('harmonization-isolation (M-GUIDE W2): a Blues-mode Studio\'s own I7/IV7/V7 chords survive every solo-scale chip tap', function () {
+  var before = T.studioTheory('A', 'blues').chords;
+  ['pentMajor', 'pentMinor'].forEach(function (scaleId) { T.soloBundle('A', 'blues', scaleId); });
+  var after = T.studioTheory('A', 'blues').chords;
+  assert.deepStrictEqual(after, before, 'a Blues studioTheory\'s chords-in-key (BLUES_KEY) must be untouched by any solo-scale chip tap');
+});
 
 /* ---------- overlay re-key migration (catalog-key corrections must not orphan
  * a user's curated urls: trackKey embeds the key, so the stored key moves) ---------- */
@@ -293,14 +323,23 @@ test('a mixolydian track surfaces in its major-family keyed search', function ()
 });
 
 // --- trackKey 4-mode serialization (overlay identity) -----------------------
-test('trackKey serializes the full 4-mode vocabulary distinctly', function () {
+test('trackKey serializes the full 5-mode vocabulary distinctly (incl. blues, M-GUIDE W2)', function () {
   var base = { title: 'X', artist: 'Y', key: 'E' };
   var kMaj = T.trackKey(Object.assign({}, base, { mode: 'major' }));
   var kDor = T.trackKey(Object.assign({}, base, { mode: 'dorian' }));
   var kMix = T.trackKey(Object.assign({}, base, { mode: 'mixolydian' }));
-  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix));
+  var kBlu = T.trackKey(Object.assign({}, base, { mode: 'blues' }));
+  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix) && /\|blues$/.test(kBlu));
   assert.notStrictEqual(kDor, kMaj); // the collision codex flagged
   assert.strictEqual(T.trackKey(Object.assign({}, base, { mode: 'weird' })), kMaj); // unknown -> major
+});
+test('trackKey: blues identity does not collide with major (professor finding, PR #115) - IDENTITY only, normMode facet coarsening unchanged', function () {
+  var kBlu = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'blues' });
+  var kMaj = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'major' });
+  assert.notStrictEqual(kBlu, kMaj, 'a saved/curated blues track must not collide with a same-title/artist/key major row');
+  // the Library/finder FACET coarsening (normMode) is a SEPARATE, unchanged concern -
+  // blues still coarsens to the major family there, per the IA ruling.
+  assert.strictEqual(T.normMode('blues'), 'major');
 });
 
 // --- mode-honest key labels everywhere a key renders as text ----------------
@@ -310,6 +349,10 @@ test('keyLabelFor matches the Studio label convention', function () {
   assert.strictEqual(T.keyLabelFor('E', 'dorian'), 'E dorian');
   assert.strictEqual(T.keyLabelFor('G', 'Mixolydian'), 'G mixolydian');
   assert.strictEqual(T.keyLabelFor('C', null), 'C');
+});
+test('keyLabelFor: blues reads "<key> blues" (M-GUIDE W2) - previously fell through to the bare key', function () {
+  assert.strictEqual(T.keyLabelFor('A', 'blues'), 'A blues');
+  assert.strictEqual(T.keyLabelFor('D', 'Blues'), 'D blues'); // case-insensitive like every other branch
 });
 
 /* ---------- modeHint "often written Bb" gate (codex V2 fix, V3 test ask) ----------

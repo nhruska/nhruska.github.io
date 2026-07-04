@@ -197,10 +197,18 @@ test('every shipped PROGRESSION renders the Roman pattern it claims (round-trip 
     'Pop / Axis': 'vi IV I V',
     'Three-chord rock': 'I IV V',
     'Jazz turnaround': 'ii V I',
-    'Pachelbel': 'I V vi iii IV I IV V'
+    'Pachelbel': 'I V vi iii IV I IV V',
+    // W2 Blues starters: chordsFromDegrees resolves them mod-3 into I7/IV7/V7 chords;
+    // this round-trip uses the GENERIC (mode-agnostic) Circle.romanFor, which does not
+    // append the '7' (that's Songbook.romanInKey's job, exercised separately below) -
+    // so the pattern here is the bare degree sequence (I/IV/V), not I7/IV7/V7.
+    '12-bar blues': 'I I I I IV IV I I V IV I V',
+    'Quick-change blues': 'I IV I I IV IV I I V IV I V'
   };
   Songbook.PROGRESSIONS.forEach(function (p) {
-    var chords = Songbook.chordsFromDegrees('C', 'Major', p.degrees);
+    // mode-aware: a Blues starter carries its OWN mode (p.mode), not the Major
+    // default every diatonic entry above relies on.
+    var chords = Songbook.chordsFromDegrees('C', p.mode || 'Major', p.degrees);
     // label against the KEY tonic (C), not the first chord — Axis starts on vi, not I
     var romans = chords.map(function (c) { return Circle.romanFor(c, 'C'); }).join(' ');
     assert.strictEqual(romans, EXPECTED[p.name], p.name + ' -> ' + romans);
@@ -729,7 +737,7 @@ test('Clear-undo: every A3-listed mutating action invalidates, Clear never regre
   // (matches an actual confirm('...') CALL, not the word appearing in a code comment)
   assert.ok(!/confirm\(['"]/.test(clearBlock[0]), 'Clear must NEVER use a native confirm() dialog (A3)');
   // Each A3-listed mutating action calls invalidateClearUndo() somewhere in its body.
-  ['function addChord\\(c\\) \\{', 'function composeTpose\\(st\\) \\{', 'function convertToMode\\(targetMode\\) \\{', 'function loadProgression\\(degrees\\) \\{', 'function saveProgression\\(done\\) \\{'].forEach(function (headRe) {
+  ['function addChord\\(c\\) \\{', 'function composeTpose\\(st\\) \\{', 'function convertToMode\\(targetMode\\) \\{', 'function loadProgression\\(p\\) \\{', 'function saveProgression\\(done\\) \\{'].forEach(function (headRe) {
     var re = new RegExp(headRe + '[\\s\\S]{0,300}?invalidateClearUndo\\(\\)');
     assert.ok(re.test(src), 'missing invalidateClearUndo() near ' + headRe);
   });
@@ -973,6 +981,137 @@ test('A1: the update-in-place branch ("Updated ...") is equally truthful on a th
   // re-invokes saveCustom() to observe a truthful result - see the code comment at
   // that call site) - both throw, but safeSet warns only once per key.
   assert.strictEqual(warned, 1, 'safeSet must suppress the repeat warning for the same key within one mount');
+});
+
+/* =====================================================================
+ * M-GUIDE W2: Blues as a harmonizing key model (I7/IV7/V7), per
+ * m-guide-ia-20260704.md section 1 as amended by section 8 (professor fold).
+ * ===================================================================== */
+
+/* ---------- chordInKey / romanInKey: Blues palette acceptance ---------- */
+test('chordInKey: Blues palette accepts plain triad OR dominant 7th, nothing else', function () {
+  // C blues: I7=C7 IV7=F7 V7=G7
+  assert.strictEqual(Songbook.chordInKey('C', 'C', 'Blues'), true);   // plain root
+  assert.strictEqual(Songbook.chordInKey('C7', 'C', 'Blues'), true);  // dominant 7th
+  assert.strictEqual(Songbook.chordInKey('F', 'C', 'Blues'), true);
+  assert.strictEqual(Songbook.chordInKey('F7', 'C', 'Blues'), true);
+  assert.strictEqual(Songbook.chordInKey('G', 'C', 'Blues'), true);
+  assert.strictEqual(Songbook.chordInKey('G7', 'C', 'Blues'), true);
+  // no ii/dim/maj7/subs - minimalist palette (D-BLUES-KEY)
+  assert.strictEqual(Songbook.chordInKey('Cm', 'C', 'Blues'), false);
+  assert.strictEqual(Songbook.chordInKey('Cmaj7', 'C', 'Blues'), false);
+  assert.strictEqual(Songbook.chordInKey('Am', 'C', 'Blues'), false);  // off-palette root
+  assert.strictEqual(Songbook.chordInKey('Cdim', 'C', 'Blues'), false);
+  assert.strictEqual(Songbook.chordInKey('C9', 'C', 'Blues'), false);  // not exactly '7'
+});
+test('romanInKey: Blues palette dominant 7th IS the label (C7=I7), plain root reads bare (C=I)', function () {
+  assert.strictEqual(Songbook.romanInKey('C7', 'C', 'Blues'), 'I7');
+  assert.strictEqual(Songbook.romanInKey('C', 'C', 'Blues'), 'I');
+  assert.strictEqual(Songbook.romanInKey('F7', 'C', 'Blues'), 'IV7');
+  assert.strictEqual(Songbook.romanInKey('F', 'C', 'Blues'), 'IV');
+  assert.strictEqual(Songbook.romanInKey('G7', 'C', 'Blues'), 'V7');
+  assert.strictEqual(Songbook.romanInKey('G', 'C', 'Blues'), 'V');
+  // borrowed root (A over a C blues) falls through to the chromatic label
+  assert.strictEqual(Songbook.romanInKey('A7', 'C', 'Blues'), Circle.romanFor('A7', 'C'));
+  // lowercase mode name (saved-item vocabulary) resolves the same
+  assert.strictEqual(Songbook.romanInKey('D7', 'D', 'blues'), 'I7');
+});
+
+/* ---------- chordsFromDegrees: mod-3 generalization over Blues' 3-degree palette ---------- */
+test('chordsFromDegrees: Blues wraps mod-3 (I7 IV7 V7), not mod-7', function () {
+  assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Blues', [0, 1, 2]), ['C7', 'F7', 'G7']);
+  assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Blues', [3, 4, 5]), ['C7', 'F7', 'G7']); // wraps
+  assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Blues', [-1]), ['G7']); // negative wraps to V7
+});
+test('chordsFromDegrees: the 12-bar blues fill in A matches the shipped starter exactly', function () {
+  assert.deepStrictEqual(
+    Songbook.chordsFromDegrees('A', 'Blues', [0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2]),
+    ['A7', 'A7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7']);
+});
+
+/* ---------- convertProgressionQualities: all 4 Blues directions (+ fold 8A) ---------- */
+test('convertProgressionQualities: Major -> Blues collapses palette roots to root+7, others unchanged', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'F', 'G'], 'Blues', 'C', 'Major'),
+    ['C7', 'F7', 'G7']);
+  // a prior extension is overridden regardless (I7/IV7/V7 is the whole point)
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['Cmaj7', 'Dm', 'G'], 'Blues', 'C', 'Major'),
+    ['C7', 'Dm', 'G7']); // Dm (offset 2) has no Blues-palette degree -> unchanged
+});
+test('convertProgressionQualities: Minor -> Blues, same palette-degree rule', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['Cm', 'Fm', 'Gm'], 'Blues', 'C', 'Minor'),
+    ['C7', 'F7', 'G7']);
+});
+test('convertProgressionQualities: Blues -> Major, professor fold 8A - only palette roots strip; A7 SURVIVES', function () {
+  // C blues [C7 F7 G7 A7] -> Major = [C F G A7] (A7 is not palette material - offset 9
+  // from tonic C is not in {0,5,7} - so it is left byte-for-byte unchanged, even
+  // though A sits on a valid Major-mode degree (vi) - fold 8A supersedes the old
+  // "root on a target degree" gate).
+  var out = Songbook.convertProgressionQualities(['C7', 'F7', 'G7', 'A7'], 'Major', 'C', 'Blues');
+  assert.deepStrictEqual(out, ['C', 'F', 'G', 'A7']);
+});
+test('convertProgressionQualities: Blues -> Minor, dom-7-strip on palette roots', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'Minor', 'C', 'Blues'),
+    ['Cm', 'Fm', 'Gm']);
+});
+test('convertProgressionQualities: Blues -> Blues is idempotent (palette roots stay dominant 7ths)', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'Blues', 'C', 'Blues'),
+    ['C7', 'F7', 'G7']);
+});
+test('convertProgressionQualities: a maj7/m7 surviving from Blues on a palette root keeps its own extension-class (not stripped)', function () {
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['Cmaj7'], 'Major', 'C', 'Blues'), ['Cmaj7']);
+});
+test('convertProgressionQualities: targetMode is canonicalized - lowercase "blues"/"major" (the saved-item/bridge vocabulary) work identically to the capitalized form (professor finding, PR #115)', function () {
+  // lowercase 'blues' target must NOT silently no-op (MODES['blues'] is undefined;
+  // only MODES['Blues'] exists) - canonMode(targetMode) must resolve it first.
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'F', 'G'], 'blues', 'C', 'Major'),
+    ['C7', 'F7', 'G7']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C', 'F', 'G'], 'blues', 'C', 'Major'),
+    Songbook.convertProgressionQualities(['C', 'F', 'G'], 'Blues', 'C', 'Major'), 'lowercase and capitalized targetMode must match');
+  // lowercase 'major' target must strip the palette 7ths back the same as 'Major'
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'major', 'C', 'Blues'),
+    ['C', 'F', 'G']);
+  assert.deepStrictEqual(Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'major', 'C', 'Blues'),
+    Songbook.convertProgressionQualities(['C7', 'F7', 'G7'], 'Major', 'C', 'Blues'), 'lowercase and capitalized targetMode must match');
+});
+
+/* ---------- completions: Blues never auto-completes (category mismatch, never inferred) ---------- */
+test('completions: Blues top guard always returns [] regardless of progression content', function () {
+  assert.deepStrictEqual(Songbook.completions(['C7', 'F7', 'G7'], 'C', 'Blues'), []);
+  assert.deepStrictEqual(Songbook.completions(['C7', 'F7', 'G7'], 'C', 'blues'), []); // lowercase too
+  assert.deepStrictEqual(Songbook.completions([], 'C', 'Blues'), []);
+});
+test('completions: a mode-carrying (Blues) starter never leaks into a non-Blues key\'s completion canon (professor finding, PR #115)', function () {
+  // Before Blues starters existed, ["C"] in C Major only ever matched the diatonic
+  // canon (4-chord song / 50s-doo-wop / Pop-Axis / Pachelbel, all starting on I).
+  // "Quick-change blues" ALSO starts on degree 0 (I7), so without the p.mode guard
+  // it would coincidentally prefix-match here too and leak a bogus completion.
+  var preBluesExpected = Songbook.completions(['C'], 'C', 'Major').map(function (c) { return c.name; }).sort();
+  assert.ok(preBluesExpected.indexOf('12-bar blues') === -1, 'sanity: 12-bar blues must not appear');
+  assert.ok(preBluesExpected.indexOf('Quick-change blues') === -1, 'sanity: Quick-change blues must not appear');
+  // the actual regression check: no p.mode-carrying entry contributes ANY completion,
+  // across every prefix length a Blues starter could coincidentally share
+  [['C'], ['C', 'F'], ['C', 'C'], ['C', 'F', 'C']].forEach(function (seed) {
+    var names = Songbook.completions(seed, 'C', 'Major').map(function (c) { return c.name; });
+    assert.ok(names.indexOf('12-bar blues') === -1, '12-bar blues leaked for seed ' + seed.join(' '));
+    assert.ok(names.indexOf('Quick-change blues') === -1, 'Quick-change blues leaked for seed ' + seed.join(' '));
+  });
+});
+
+/* ---------- COMPOSE_MAX (D-CAP12): the shared cap constant ---------- */
+test('COMPOSE_MAX is exported as 12 (D-CAP12, up from the old 8-chord cap)', function () {
+  assert.strictEqual(Songbook.COMPOSE_MAX, 12);
+});
+
+/* ---------- PROGRESSIONS: the two Blues starters carry mode + preview ---------- */
+test('PROGRESSIONS: the 12-bar and quick-change Blues starters carry mode + preview fields', function () {
+  var blues = Songbook.PROGRESSIONS.filter(function (p) { return p.mode === 'Blues'; });
+  assert.strictEqual(blues.length, 2, 'expected exactly 2 Blues starters');
+  blues.forEach(function (p) {
+    assert.strictEqual(p.preview, 'I7 IV7 V7');
+    assert.strictEqual(p.degrees.length, 12);
+  });
+  assert.ok(blues.some(function (p) { return p.name === '12-bar blues'; }));
+  assert.ok(blues.some(function (p) { return p.name === 'Quick-change blues'; }));
 });
 
 run();

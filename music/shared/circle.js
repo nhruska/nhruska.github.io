@@ -235,6 +235,46 @@
   }
   function soloScaleInfo(scaleId) { return SOLO_SCALES[scaleId] || null; }
 
+  // ---- M-GUIDE W2: Blues as a HARMONIZING key model (I7/IV7/V7), distinct from
+  // SOLO_SCALES.blues above (the 6-note solo scale). This is the palette-kind
+  // entry mirroring the SOLO_SCALES block's shape/pattern: a registry + a pure
+  // deriver, additive, zero surface in diatonic()/romanFor()/triadQuality().
+  // Consumed by songbook.js's MODES.Blues (the strummable I7/IV7/V7 palette)
+  // and the Practice Studio's chords-in-key row (tracks.js studioTheory).
+  var BLUES_KEY = {
+    label: 'Blues',
+    degrees: [ { roman: 'I7', semis: 0 }, { roman: 'IV7', semis: 5 }, { roman: 'V7', semis: 7 } ],
+    soloDefault: 'blues'
+  };
+  // bluesKey(root) -> [{roman:'I7', chord:'C7', root:'C', quality:'7'}, ...]. The
+  // 7th is suffix-only (a dominant 7 on each of the three degrees) - unknown/
+  // unresolvable root -> [] (matches soloScale/diatonic's own safe-empty contract).
+  function bluesKey(root) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    return BLUES_KEY.degrees.map(function (d) {
+      var r = spell(pc + d.semis);
+      return { roman: d.roman, chord: r + '7', root: r, quality: '7' };
+    });
+  }
+  // chordTones(chord) -> pitch classes of the chord (triad + optional 7th), pure
+  // pc arithmetic against the app's OWN suffixQuality vocabulary ('', m, dim, aug)
+  // plus 7th detection: maj7 adds the major 7th (+11); any OTHER trailing 7
+  // ('7', 'm7', 'm7b5', ...) adds the minor/dominant 7th (+10). Unknown suffixes
+  // fall back to the bare triad rather than throwing - exported so Studio-side
+  // chord-tone targeting (W3a) can intersect these against a scale's pcs.
+  function chordTones(chord) {
+    var p = chordParts(chord);
+    if (!p) return [];
+    var rpc = pcOf(p.root); if (rpc < 0) return [];
+    var q = suffixQuality(p.suffix);
+    var third = (q === 'min' || q === 'dim') ? 3 : 4;
+    var fifth = (q === 'dim') ? 6 : (q === 'aug') ? 8 : 7;
+    var pcs = [rpc, (rpc + third) % 12, (rpc + fifth) % 12];
+    if (/maj7$/i.test(p.suffix)) pcs.push((rpc + 11) % 12);
+    else if (/7$/.test(p.suffix)) pcs.push((rpc + 10) % 12);
+    return pcs;
+  }
+
   var Circle = {
     ORDER: ORDER,
     position: position,
@@ -274,7 +314,11 @@
     SOLO_SCALES: SOLO_SCALES,
     soloScale: soloScale,
     soloScaleDegrees: soloScaleDegrees,
-    soloScaleInfo: soloScaleInfo
+    soloScaleInfo: soloScaleInfo,
+    // M-GUIDE W2: Blues as a harmonizing key model (I7/IV7/V7) - see the block above.
+    BLUES_KEY: BLUES_KEY,
+    bluesKey: bluesKey,
+    chordTones: chordTones
   };
 
   global.Circle = Circle;
