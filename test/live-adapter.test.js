@@ -214,4 +214,54 @@ test('scaleDiagram passes through openPcs/rootPc/scalePcs and sets supportsStart
   assert.strictEqual(out.startFret, 0);
 });
 
+/* ---------- S-DIAGRAM-PREF steps 1-2 (post-S-EXTRACT rebase): diagram/
+ * diagramClosed/diagramChain now compute an optional patternLabel via
+ * window.DiagramPref.labelFor(profile.id, name, frets) and hand it to
+ * Diagram.render(). The pass-through Diagram.render stub above discards
+ * opts entirely (every OTHER test in this file relies on that), so these
+ * tests swap in a capturing stub just for this block and restore the
+ * pass-through stub afterward - no other assertion in this file is affected. ---------- */
+(function () {
+  var origRender = global.window.Diagram.render;
+  var origDiagramPref = global.window.DiagramPref;
+  function withCapture(fn) {
+    var captured = null;
+    global.window.Diagram.render = function (frets, opts) { captured = opts; return frets; };
+    try { fn(); } finally { global.window.Diagram.render = origRender; }
+    return captured;
+  }
+
+  test('diagram()/diagramClosed()/diagramChain() pass profile.id + name + frets to DiagramPref.labelFor()', function () {
+    var seen = [];
+    global.window.DiagramPref = { labelFor: function (profileId, name, frets) { seen.push([profileId, name, frets]); return 'stub-label'; } };
+    try {
+      withCapture(function () { gPack.diagram('E', 'small'); });
+      withCapture(function () { gPack.diagramClosed('E', 'small'); });
+      withCapture(function () { gPack.diagramChain(['C', 'F', 'G']); });
+    } finally { global.window.DiagramPref = origDiagramPref; }
+    assert.strictEqual(seen[0][0], 'guitar-standard', 'expected profile.id, not the instrument name');
+    assert.strictEqual(seen[0][1], 'E');
+    assert.deepStrictEqual(seen[0][2], GUITAR.chords.E);
+    assert.strictEqual(seen[1][1], 'E'); // diagramClosed, same chord name
+    assert.strictEqual(seen[2].length, 3); // diagramChain called labelFor once per chord in the chain
+  });
+
+  test('diagram()/diagramClosed()/diagramChain() forward DiagramPref.labelFor()\'s return value as opts.patternLabel', function () {
+    global.window.DiagramPref = { labelFor: function () { return 'E-shape barre, root on 6, root position'; } };
+    var optsD, optsC;
+    try {
+      optsD = withCapture(function () { gPack.diagram('E', 'small'); });
+      optsC = withCapture(function () { gPack.diagramClosed('E', 'small'); });
+    } finally { global.window.DiagramPref = origDiagramPref; }
+    assert.strictEqual(optsD.patternLabel, 'E-shape barre, root on 6, root position');
+    assert.strictEqual(optsC.patternLabel, 'E-shape barre, root on 6, root position');
+  });
+
+  test('patternLabel is "" (falsy) when window.DiagramPref is absent - degrades cleanly, never throws', function () {
+    global.window.DiagramPref = undefined;
+    var opts = withCapture(function () { gPack.diagram('E', 'small'); });
+    assert.strictEqual(opts.patternLabel, '');
+  });
+})();
+
 run();

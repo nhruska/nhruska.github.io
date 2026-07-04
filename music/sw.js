@@ -69,6 +69,21 @@
 // sibling collisions landed while this branch was in flight; originally cut
 // from #136's v93) - no new/removed CORE paths. check-cache-bump.sh
 // re-verified against origin/main immediately before push.
+// S-DIAGRAM-PREF steps 1-2 (2026-07-06): v98->v99 (max+1 over main's v98,
+// rebased a second time past #137/#135/#138/#139/#140/#141 which landed
+// while this branch was in flight) - adds shared/diagram-pref.js (new
+// shared module, the dots|patterns pref + label decision); diagram.js and
+// notables.js also changed (opts.patternLabel/notifyRendered(), the
+// 'diagrampref' priority slot) and play/index.html changed (the notable
+// prompt + Settings row wiring; the adapter wiring lives in shared/
+// chord-pack-adapter.js post-S-EXTRACT rebase). check-cache-bump.sh
+// S-TOAST (2026-07-05): v98->v99 - new CORE path shared/toast.js (the
+// shared per-host toast timer primitive, UAT U9 fix - see songbook.js
+// showToast/showComposeToast). Rebased past #141's v98 (S-PROG-WRAP landed
+// while this branch was in flight; originally cut at v97) - max+1 discipline,
+// same as every prior sibling collision above. check-cache-bump.sh
+// re-verified against origin/main immediately before push.
+var CACHE = 'music-v100';
 // S-LAYOUT-SSOT (2026-07-04): v98->v99 - songbook.css gains the chord-tile/
 // diagram geometry token block (:root --dg-canvas-w/--tile-min/--tile-gap/
 // --prog-tile-min), tracks.css gains a documentation comment (no rule
@@ -92,6 +107,9 @@ var CORE = [
   // esc.js: the ONE HTML-escape util (S-HARDEN A5) - loaded before every
   // shared/*.js consumer in both play/index.html and play/triad-inversions.html.
   './shared/esc.js',
+  // toast.js: S-TOAST (UAT U9) - shared per-host toast timer primitive,
+  // script-tagged in play/index.html right after esc.js.
+  './shared/toast.js',
   // storage-migrate.js: versioned localStorage boot migration runner (M-6),
   // loaded first in play/index.html (before every other shared/*.js consumer).
   './shared/storage-migrate.js',
@@ -99,6 +117,10 @@ var CORE = [
   // play/index.html before diagram.js; precached here so it's available
   // offline from install, matching the S-HARDEN A6 discipline above.
   './shared/shape-classify.js',
+  // diagram-pref.js: S-DIAGRAM-PREF steps 1-2 (2026-07-06) - script-tagged in
+  // play/index.html between shape-classify.js and diagram.js; precached here
+  // for the same offline-from-install reason.
+  './shared/diagram-pref.js',
   './shared/nav-history.js',
   // M-GUIDE W3a: solo-guide.js loads before songbook.js/tracks.js (index.html script
   // order) - both W3a's Studio and W3b's Compose solo chips call it.
