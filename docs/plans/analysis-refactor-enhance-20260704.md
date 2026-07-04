@@ -18,7 +18,7 @@
 
 | # | Finding | Evidence | Why a musician cares | Effort | Horizon |
 |---|---|---|---|---|---|
-| B1 | **Orphaned tap-tempo engine** - shared/tempo.js complete + unit-tested, ZERO runtime consumers | tempo.js header; test/tempo.test.js; grep: no createTempo/window.Tempo callers | Tap button + beat pulse in Perform = practice-tool win, logic already done | S/M | SHORT |
+| B1 | ~~Orphaned tap-tempo engine~~ RESOLVED 2026-07-04: REMOVED as dead code (operator: never used; git history preserves) | D-TEMPO-REMOVED | - | - | done |
 | B2 | **Backup-staleness nudge** via free Notables priority slot + existing backup.describe() | notables.js PRIORITY; play/index.html:768,876 | Proactively mitigates A1's user-facing risk; A9-compliant one-shot | S | SHORT |
 | B3 | **jam field: 19 curated records, zero consuming code** (wiki/code DRIFT - data-model.md documents behavior that does not exist) | songs.json jam:true x19; data-model.md | Play-now jam picker: curation done, only selection + entry point missing | S/M | SHORT-MID |
 | B4 | **3 chip components redeclare base styles** (.chip / .bt-st-scalechip / .bt-st-chip); W3b about to add a 4th | songbook.css:109-111; tracks.css:157-160,181-185 | Visual drift a returning user feels | S - **FOLDED INTO M-GUIDE W3 spawn prompts** (timing) | NOW |
