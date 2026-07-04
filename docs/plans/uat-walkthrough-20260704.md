@@ -11,3 +11,9 @@
 **Routing:** QUEUE MID as M-PERFORM (vision interview required - this is a product-direction item, not a patch). Probe questions for the interview: (1) what happened in the walkthrough moment - reading lyrics? losing place? chords too small? (2) reference artifact: which app/paper workflow does the user reach for instead (OnSong, Ultimate Guitar, paper binder)? (3) is the unit a SONG SHEET (lyrics+chords inline) or a PROGRESSION (what we render today)? (4) hands-free requirement level (foot pedal/auto-scroll/none)?
 
 **Status:** captured; awaiting vision interview (batch with MID sitting).
+
+## U2-U4 - Studio polish round (operator, 2026-07-04, post-v85 walkthrough)
+
+- **U2:** "fretboard section links are all different sizes. I can expect equal sections." -> position-pager segments now equal-width (fixed in S-STUDIO-POLISH).
+- **U3:** "selecting a chord on the solo screen, the highlight dot bg a dark shade with black font on top - hard to read." -> per-class dot ink vars, both themes (fixed in S-STUDIO-POLISH).
+- **U4:** "two links at the bottom wrap the text. shorten the linked text so no wrap." -> link labels shortened (fixed in S-STUDIO-POLISH).

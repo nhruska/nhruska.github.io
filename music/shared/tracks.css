@@ -285,19 +285,39 @@
 /* =====================================================================
  * M-GUIDE W3a (m-guide-ia-20260704.md sections 2-3) - chord-tone targeting
  * (kx-*) + the per-scale mentor card (Guide). New section, appended once;
- * do not scatter kx-*/guide rules elsewhere in this file.
+ * do not scatter kx-* or guide rules elsewhere in this file.
+ * U3 fix (operator UAT 2026-07-04): this comment used to end its "kx-*"
+ * mention immediately followed by a slash and "guide" with no separating
+ * space - that adjacency is a close-comment token, so it terminated THIS
+ * comment block early, silently swallowing the very next rule (the
+ * dark-theme :root block below setting --kx-chord/--kx-blue/--kx-ghost -
+ * browsers discard a malformed rule whose selector absorbs trailing comment
+ * text). Dark theme's kx-chord/kx-blue dots were rendering fill:black (the
+ * var resolved to empty, so the SVG default black won) - the light-theme
+ * override rule worked fine standalone, which is why this stayed invisible
+ * unless dark theme specifically was inspected. Keep a space before any
+ * slash that follows an asterisk in this file's comments.
  * ===================================================================== */
   /* Chord-tone targeting dot colors (diagram.js Diagram.scale opts.tones).
    * kx-root/kx-scale intentionally carry NO rule here - they reuse the existing
    * root/non-root fill diagram.js already applies (no visual change from today's
-   * default). Only kx-chord/kx-blue need their own theme-safe var - diagram.js
-   * itself picks --on-accent ink for their note text (same bright-fill treatment
-   * as a root dot), inline at render time, so no CSS override is needed here.
+   * default).
    * --kx-ghost (P5 fold): the hollow/outline color for a target chord's tones
    * OUTSIDE the current scale - diagram.js renders these fill:none, stroke +
    * text both --kx-ghost, so no separate CSS rule is needed for them either. */
   :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;--kx-ghost:#94a3b8;}
   :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;--kx-ghost:#64748b;}
+  /* U3 (operator UAT 2026-07-04): kx-chord/kx-blue note text used to share the
+   * root dot's --on-accent (dark) ink, on the assumption their fills were
+   * always bright like --accent. True in dark theme (fill bright -> dark ink
+   * reads fine), but the light-theme fills above are deliberately DARKENED for
+   * contrast against a white page bg - dark ink on a dark fill was the "black
+   * font on a dark dot" the operator flagged. Per-class ink var, computed for
+   * WCAG-normal-text contrast (>=4.5:1) against the ACTUAL fill in each theme:
+   * dark theme keeps --on-accent (7.95:1 vs --kx-chord, 6.27:1 vs --kx-blue);
+   * light theme flips to white (5.02:1 vs --kx-chord, 5.70:1 vs --kx-blue). */
+  :root{--kx-chord-ink:var(--on-accent);--kx-blue-ink:var(--on-accent);}
+  :root[data-theme="light"]{--kx-chord-ink:#fff;--kx-blue-ink:#fff;}
   /* Active chord-tone target: persistent outline on the tapped chords-in-key tile
    * (composes the existing .bt-st-chip.sel accent-outline language, just not
    * auto-clearing after 220ms). */
@@ -309,3 +329,17 @@
   .bt-st-guide-lbl{flex:0 0 auto;width:58px;font-family:'Space Mono',monospace;font-size:.62rem;
     font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);padding-top:1px;}
   .bt-st-guide-txt{color:var(--txt-soft);}
+
+/* =====================================================================
+ * U2 (operator UAT 2026-07-04) - Studio position-pager (key-explorer.js
+ * .scalePosCtrl/.scalePosBtn, base rule in songbook.css) read as "different
+ * sizes" at 412px: the base rule's 42x42 box sits below the app's 44px GRIP
+ * touch floor (decisions.md GRIP), and disabled:opacity .32 faded the back
+ * button's border to near-invisible against its own bg, so it visually
+ * shrunk next to the fully-opaque forward button even though the DOM box was
+ * identical. Override here (tracks.css loads AFTER songbook.css - same
+ * specificity, later wins): explicit equal 44x44 box on BOTH states, and a
+ * less extreme disabled fade so the box stays equally legible either way.
+ * ===================================================================== */
+  .scalePosBtn{width:44px;height:44px;min-width:44px;min-height:44px;}
+  .scalePosBtn:disabled{opacity:.5;}

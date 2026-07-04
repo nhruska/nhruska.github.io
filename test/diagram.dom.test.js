@@ -96,21 +96,51 @@ test('opts.tones present: root/chord/rub classes + CSS-var styles + dashed rub r
   assert.ok(svg.indexOf('kx-rub') >= 0, 'expected the rub modifier class on pc 3');
   assert.ok(svg.indexOf('stroke-dasharray="3 2"') >= 0, 'rub dot must render a dashed ring');
 });
-test('opts.tones present: chord/blue note text uses on-accent ink (legible against the bright kx fill)', function () {
+test('opts.tones present: root note text uses on-accent ink (legible against the bright --accent fill)', function () {
   var C_BLUES = [0, 3, 5, 6, 7, 10];
   var el = D.scale({
     openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
     tones: { byPc: { 0: 'root', 7: 'chord', 6: 'blue' }, rubPc: null }
   });
   var svg = el.innerHTML;
-  // grab the <text> immediately following each kx-chord / kx-blue circle
-  ['kx-chord', 'kx-blue'].forEach(function (cls) {
-    var circleIdx = svg.indexOf(cls);
-    assert.ok(circleIdx >= 0, 'expected a ' + cls + ' dot');
-    var textIdx = svg.indexOf('<text', circleIdx);
-    var textEl = svg.slice(textIdx, svg.indexOf('</text>', textIdx));
-    assert.ok(textEl.indexOf('style="fill:var(--on-accent)"') >= 0, cls + ' note text must use --on-accent, got: ' + textEl);
+  var circleIdx = svg.indexOf('kx-root');
+  assert.ok(circleIdx >= 0, 'expected a kx-root dot');
+  var textIdx = svg.indexOf('<text', circleIdx);
+  var textEl = svg.slice(textIdx, svg.indexOf('</text>', textIdx));
+  assert.ok(textEl.indexOf('style="fill:var(--on-accent)"') >= 0, 'root note text must use --on-accent, got: ' + textEl);
+});
+// U3 (operator UAT 2026-07-04): kx-chord/kx-blue used to share the root dot's
+// --on-accent ink, which is dark-on-dark in light theme (tracks.css darkens
+// --kx-chord/--kx-blue there for contrast against the page). Each class now
+// gets its own theme-safe ink var - tracks.css defines --kx-chord-ink and
+// --kx-blue-ink per theme; diagram.js just needs to reference the right var.
+test('opts.tones present: kx-chord note text uses --kx-chord-ink (not the shared --on-accent)', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var el = D.scale({
+    openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 7: 'chord' }, rubPc: null }
   });
+  var svg = el.innerHTML;
+  var circleIdx = svg.indexOf('kx-chord');
+  assert.ok(circleIdx >= 0, 'expected a kx-chord dot');
+  var textIdx = svg.indexOf('<text', circleIdx);
+  var textEl = svg.slice(textIdx, svg.indexOf('</text>', textIdx));
+  assert.ok(textEl.indexOf('style="fill:var(--kx-chord-ink)"') >= 0, 'kx-chord note text must use --kx-chord-ink, got: ' + textEl);
+  assert.strictEqual(textEl.indexOf('var(--on-accent)'), -1, 'kx-chord note text must NOT fall back to the shared --on-accent');
+});
+test('opts.tones present: kx-blue note text uses --kx-blue-ink (not the shared --on-accent)', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var el = D.scale({
+    openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 6: 'blue' }, rubPc: null }
+  });
+  var svg = el.innerHTML;
+  var circleIdx = svg.indexOf('kx-blue');
+  assert.ok(circleIdx >= 0, 'expected a kx-blue dot');
+  var textIdx = svg.indexOf('<text', circleIdx);
+  var textEl = svg.slice(textIdx, svg.indexOf('</text>', textIdx));
+  assert.ok(textEl.indexOf('style="fill:var(--kx-blue-ink)"') >= 0, 'kx-blue note text must use --kx-blue-ink, got: ' + textEl);
+  assert.strictEqual(textEl.indexOf('var(--on-accent)'), -1, 'kx-blue note text must NOT fall back to the shared --on-accent');
 });
 test('opts.tones present but a pc has no explicit class -> falls back to root/scale (not chord/blue)', function () {
   var el = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 7, tones: { byPc: {}, rubPc: null } });

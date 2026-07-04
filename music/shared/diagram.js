@@ -226,11 +226,15 @@
         // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
         // fall back to the sharp table.
         var noteName = (opts.names && opts.names[note.pc]) || NOTE_NAMES[note.pc];
-        // kx-chord/kx-blue dots are bright/saturated fills (same brightness class as
-        // --accent) - their note text needs the same dark on-accent ink as a root
-        // note, not the light --dg-note used against the default dark dot fill.
-        var textOnBright = isRoot || cls === 'chord' || cls === 'blue';
-        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (textOnBright ? ' style="fill:var(--on-accent)"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
+        // Root note text sits on the bright --accent fill -> dark --on-accent ink.
+        // U3 (operator UAT 2026-07-04): kx-chord/kx-blue used to share that SAME
+        // --on-accent ink on the assumption their fills were equally bright - true
+        // in dark theme, but tracks.css deliberately DARKENS --kx-chord/--kx-blue
+        // in light theme for contrast against the page bg, so dark-on-dark was
+        // unreadable there. Each class now gets its own theme-safe ink var (tracks.css
+        // picks the readable value per theme); 'scale'/no-tones text keeps --dg-note.
+        var textFillVar = isRoot ? '--on-accent' : (cls === 'chord' ? '--kx-chord-ink' : (cls === 'blue' ? '--kx-blue-ink' : null));
+        svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (textFillVar ? ' style="fill:var(' + textFillVar + ')"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
       });
     }
     // GHOST DOTS (M-GUIDE W3a, P5 seasoned-player fold): a target chord's tones
