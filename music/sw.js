@@ -21,7 +21,10 @@
 // shared/repertoire.js and shared/repertoire-form.js are all loaded by
 // play/index.html's script order but had never been precached, so an install
 // before ever having gone online would 404 on those files offline.
-var CACHE = 'music-v88';
+// S-BACKUP-NUDGE (2026-07-04): v88->v89 - backup-staleness nudge; no new CORE
+// files (backup.js/notables.js were already precached), just content changes
+// to shared/backup.js, shared/notables.js, and play/index.html.
+var CACHE = 'music-v89';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

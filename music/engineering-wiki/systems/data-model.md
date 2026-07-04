@@ -62,6 +62,24 @@ Settings-driven whole-songbook snapshot (backup.js):
 
 Keep test/backup.test.js green on any storage-touching change.
 
+## Backup-staleness nudge [D-BACKUP-NUDGE, STABLE]
+
+A one-shot Notables consumer (`'backup'`, the free LOWEST priority slot -
+`firstrun` > `whynote` > `roman` > `backup`) proactively surfaces Backup when
+an established user is carrying real risk: `Backup.songCount(data)` sums
+setlist entries across every instrument; `Backup.backupNudgeState(count,
+lastBackupIso, nowMs)` is the pure eligibility/message decision - eligible
+once `count >= NUDGE_MIN_SONGS` (3) AND (never backed up OR
+`>= NUDGE_STALE_DAYS` (30) since `music.lastBackup.v1`). Both live in
+backup.js so they're storage-free and unit-testable (test/backup.test.js).
+
+The DOM wiring (claim the slot, render into `#backupNudgeSlot` - outside every
+`.screen` so it shows above whichever tab is active, not just Library - tap
+opens Settings) lives entirely in play/index.html's Settings script; it never
+touches songbook.js. It auto-RELEASES (not dismiss) the instant
+`markBackedUp()` runs, so the banner cannot linger showing stale advice right
+after the user acted - only the x button persists a permanent dismissal.
+
 ## Routine-save write-truthfulness [D-SAVE-TRUTH, STABLE]
 
 songbook.js's routine saves (setlist, composed/custom songs, last-opened song, perform
@@ -84,4 +102,4 @@ queued as a follow-up, same fix pattern.
 
 ---
 
-**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission)
+**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission)

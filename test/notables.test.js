@@ -178,8 +178,20 @@ test('renderBanner() applies an extra className when given', function () {
 });
 
 /* ---------- PRIORITY table is exposed and in the expected order ---------- */
-test('PRIORITY exposes the sprint-1 order: firstrun > whynote > roman', function () {
-  assert.deepStrictEqual(Notables.PRIORITY, ['firstrun', 'whynote', 'roman']);
+test('PRIORITY exposes the sprint order: firstrun > whynote > roman > backup', function () {
+  assert.deepStrictEqual(Notables.PRIORITY, ['firstrun', 'whynote', 'roman', 'backup']);
+});
+
+/* ---------- S-BACKUP-NUDGE: 'backup' is the lowest priority, never preempts ---------- */
+test('backup notable never preempts roman/whynote/firstrun, but wins an empty slot', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('roman'), true);
+  assert.strictEqual(Notables.claim('backup'), false);   // roman still outranks backup
+  Notables.release('roman');
+  assert.strictEqual(Notables.claim('backup'), true);    // empty slot -> backup wins
+  assert.strictEqual(Notables.claim('whynote'), true);   // whynote preempts backup
+  assert.strictEqual(Notables.claim('backup'), false);
 });
 
 run();
