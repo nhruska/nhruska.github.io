@@ -30,16 +30,39 @@ Track records: `{ title, artist, genre, key (canonical sharp), mode, bpm?, capo?
 
 Library = ONE list: songs merged with matching tracks (repertoire.js). Match on normalized title+artist; key as tiebreak among multiple candidates; consumed tracks marked _used; unmatched tracks become standalone items. Merged records keep the song shape + gain track fields (genre/bpm/yt/_track) so the Studio can open them.
 
-## localStorage namespaces [STABLE]
+## localStorage key inventory [STABLE] (M-6 STORAGE-MIGRATE, gh #76/#77, D-STORAGE-LS-MIGRATE)
 
-| Prefix | Contents |
-|---|---|
-| songbook. | engine defaults (legacy) |
-| roadcase-<profileId> | per-instrument setlist.v1 + custom.v1 |
-| bt. | backing-tracks custom + curation |
-| music. | global: theme, accent, activeProfile, trackUrls, notables, lastBackup |
+THE canonical registry of every key this app persists. Verified against `music/shared/*.js` + `music/play/*.html` source (grep-swept, not hand-recalled) - if a key exists in the shipped code and isn't in this table, that's a doc bug: fix the table in the same change you find it.
 
-Every reader is defensive (try/catch -> safe default). backup.js OWNED_PREFIXES governs what backup/restore captures.
+**Columns:** *User data?* = would a reset of this key cost the user real content (songs, tracks, setlists) vs just a preference/derived value. *Backed up?* = captured by `backup.js`'s `OWNED_PREFIXES` sweep (`snapshot`/`restore`), independent of whether `StorageMigrate` (below) also tracks it.
+
+| Key | Owner (file:line) | Shape | User data? | Backed up? | Notes |
+|---|---|---|---|---|---|
+| `roadcase-<profileId>.custom.v1` | songbook.js:945 | array of composed/custom song records | **Yes - highest value** | Yes | Per-instrument namespace (`storagePrefix: 'roadcase-' + profile.id`, wired in play/index.html:698); `songbook.` is the engine's own default prefix, never used at runtime |
+| `roadcase-<profileId>.setlist.v1` | songbook.js:956 | array of song ids | Yes | Yes | The Jam set list |
+| `roadcase-<profileId>.last.v1` | songbook.js:960-965 | string (song id) | No - pref | Yes | Last-opened song; passive write (`safeSet`, D-SAVE-TRUTH) |
+| `roadcase-<profileId>.perfprefs.v2` | songbook.js:970-980 | `{speed, view}` | No - pref | Yes | `view` is tri-state `'lyrics'\|'chords'\|'both'` |
+| `roadcase-<profileId>.perfprefs.v1` | songbook.js:971 (read-only) | `{speed, view}`, `view` 2-state | No - pref | Yes (if still present) | **Migration SOURCE only** - `loadPerfPrefs()` falls back v2->v1 with a value transform (`view:'lyrics'`->`'both'`); ad-hoc, hand-rolled, the pattern `StorageMigrate` generalizes |
+| `roadcase-<profileId>.songview.v1` | songbook.js:1210 | string | No - pref | Yes | Supersedes legacy `chordsonly.v1` |
+| `roadcase-<profileId>.chordsonly.v1` | songbook.js:1211 (read-only) | `'1'` / absent | No - pref | Yes (if still present) | **Migration SOURCE only** - legacy 2-way toggle, read as a fallback when `songview.v1` is absent |
+| `roadcase-<profileId>.activeTab.v1` | songbook.js:2923-2934 | string (tab name) | No - pref | Yes | Reopen-where-you-left-off; legacy tab names (`'setlist'/'set'`, `'tracks'/'repertoire'`) normalized inline at read (songbook.js:3004-3009) |
+| `roadcase-<profileId>.libType.v1` | songbook.js:3015-3016 (read-only) | `'set'` / absent | No - pref | Yes (if still present) | **Legacy, consume-once-and-removed** - pre-Jam Set/Perform subview marker; read once then `removeItem`'d so it can never re-apply |
+| `bt.custom.v1` | tracks.js:423 | array of custom track records | **Yes** | Yes | User-added backing tracks |
+| `music.trackUrls.v1` | tracks.js:424 | `{ [trackKey]: videoId }` | No - curated overlay | Yes | `migrateUrls()` (tracks.js:429-449) re-keys `LEGACY_TRACKKEYS` inline on every load - another hand-rolled ad-hoc migration |
+| `music.activeProfile.v1` | play/index.html:601 (write) + tracks.js:605 (read) | string (profile id) | No - pref | Yes | Active instrument |
+| `music.accent.v1` | play/index.html:20 (pre-paint read), 784-816 (Settings) | string (hex color) | No - pref | Yes | Accent theme; the pre-paint read at :20 runs BEFORE any script-tagged module (FOUC prevention) |
+| `music.theme.v1` | play/index.html:15 (pre-paint read), 785-821 (Settings) | `'auto'\|'light'\|'dark'` | No - pref | Yes | Same pre-paint-read pattern as accent |
+| `music.lastBackup.v1` | play/index.html:786 | ISO date string | No - device-local stamp | **No** - excluded (backup.js EXCLUDE) | Carrying an old stamp into a restore would mislead |
+| `music.notables.v1` | notables.js:57 | `{ consumerId: dismissedEpochMs }` | No - dismissal state | Yes | One-shot dismissible tip bookkeeping |
+| `music.devlog.v1` | backup.js:38 (EXCLUDE list only) | n/a | n/a | **No** - excluded | **Reserved, currently unused** - no code writes it; the prefix is pre-excluded for future dev-scratch use |
+| `music.schema.v1` | backup.js:26-27 (`SCHEMA_KEY`) | integer string | No - device-local stamp | **No** - excluded (is its own marker) | backup.js's OWN schema/migration engine (data-map transforms, backup/restore scope) - see the section below for how it differs from `StorageMigrate` |
+| `music.schema.version` | storage-migrate.js (`VERSION_KEY`) | integer string | No - device-local stamp | **Not yet excluded - GAP** | `StorageMigrate`'s marker (see below). Falls under the `music.` prefix so `backup.js` currently WOULD sweep it into a backup, unlike `music.schema.v1` which is deliberately excluded. **Follow-up (not this wave, backup.js is out of this mission's edit grant):** add `'music.schema.version'` to backup.js's `EXCLUDE` array |
+| `music.diagram.pref.v1` | **not implemented** - spec only ([ux-philosophy/expertise-adaptive-display.md](../ux-philosophy/expertise-adaptive-display.md):39) | `'dots'\|'patterns'` | No - pref | n/a (unwritten) | **Reserved for S-DIAGRAM-PREF** (queued, decisions.md). Spec already calls it "additive key; defensive read; default 'dots'" - ships safely under the existing additive-vs-breaking law with no migration needed |
+| `tri.activeKey.v1` | play/triad-inversions.html:565, 584-664 | string (note letter) | No - pref | **No - GAP** | Not under any `backup.js` `OWNED_PREFIXES` entry - pre-existing gap, surfaced by this inventory, not introduced by it |
+| `tri.dismissed.v1` | play/triad-inversions.html:566, 588-798 | array | No - dismissal state | **No - GAP** | Same gap as above |
+| `tri.firstVisitSeen.v1` | play/triad-inversions.html:567, 589-778 | `'1'` / absent | No - pref | **No - GAP** | Same gap as above |
+
+Every reader in this app is defensive (try/catch -> safe default). `backup.js`'s `OWNED_PREFIXES` (`songbook.`, `roadcase-`, `bt.`, `music.`) governs what backup/restore captures - note it does NOT include `tri.` (the `triad-inversions.html` prefix), a pre-existing gap this inventory surfaced (three rows above) rather than introduced.
 
 ## SCHEMA_VERSION discipline (the additive-vs-breaking law) [STABLE]
 
@@ -49,6 +72,31 @@ Current SCHEMA_VERSION = 1; MIGRATIONS = {} (backup.js header).
 - **BREAKING** (rename/remove a field a reader depends on, retype, change a value's MEANING, reshape the container): bump SCHEMA_VERSION AND add the matching MIGRATIONS[n] step in the SAME commit.
 
 Why: offline PWA - an old cached build can read data a newer build wrote. Additive is safe both directions; breaking is only safe forward. The .vN suffix on key names guards nothing by itself - the migration runner is the seam.
+
+## Versioned boot migration runner: StorageMigrate [STABLE] (M-6 STORAGE-MIGRATE)
+
+`music/shared/storage-migrate.js` (`window.StorageMigrate`) generalizes the ad-hoc migration pattern already used twice in this app (`songbook.js`'s `loadPerfPrefs()` v1->v2 fallback, `tracks.js`'s `migrateUrls()` `LEGACY_TRACKKEYS` remap - both listed in the inventory above) into ONE registrable seam, so the NEXT breaking storage change is a `register()` call instead of another hand-rolled defensive read.
+
+| Fn | Behavior |
+|---|---|
+| `register(fromVersion, fn)` | `fn(storageLike)` mutates the LIVE store directly (get/set/removeItem), must be idempotent; registers the migration that brings a device from `fromVersion` to `fromVersion + 1` |
+| `run(storageLike)` | Applies every pending migration in order, then stamps `CURRENT`. Returns `{from, to, ran}`. Never throws - fails soft on quota/blocked storage (same discipline as every other reader in this app) |
+
+**Not a replacement for backup.js's SCHEMA_VERSION engine** (previous section) - that engine transforms a `{key:value}` DATA MAP for the whole-snapshot backup/restore path and is scoped to `OWNED_PREFIXES`. `StorageMigrate` is lower-level and broader: its migrations touch the live store directly and are not restricted to any prefix list. They compose (a future backup restore should route through `StorageMigrate.run()` too - see the gap below), they do not compete.
+
+**Fresh install vs pre-runner install.** When `music.schema.version` is absent, `StorageMigrate` distinguishes: no known-prefix key present anywhere -> fresh install, stamp `CURRENT` directly, run nothing. ANY known-prefix key present -> pre-runner install (predates this file), treat as version 0 and run every registered migration up to `CURRENT`. `KNOWN_PREFIXES` is deliberately a superset of `backup.js`'s `OWNED_PREFIXES` (it also includes `tri.`) so a device with only `triad-inversions.html` prefs isn't misclassified as fresh.
+
+**Wired at boot**: ONE `<script src="../shared/storage-migrate.js">` tag in play/index.html, placed first (before `theme.js`'s pre-paint read and every other shared/*.js consumer). The file self-runs `StorageMigrate.run(window.localStorage)` at script-load time in the browser only (guarded, never in Node/tests) - this IS the boot wiring; no inline call was added to index.html.
+
+**Shipped state this wave**: `CURRENT = 1`, zero registered migrations - a behavior-preserving no-op baseline. No existing key changes shape. The value delivered is the rail, not a migration.
+
+**Known composition gaps (named follow-ups, NOT done this wave - backup.js is read-only in this mission's grant):**
+
+1. `music.schema.version` is not yet in backup.js's `EXCLUDE` list, so it would currently be swept into a user's backup as if it were songbook data (unlike backup.js's own `SCHEMA_KEY`, which IS excluded). Add it there.
+2. `backup.js`'s `restore()` does not call `StorageMigrate.run()` after writing a payload. A backup taken on an older build should pass through any migration registered since, before the app reads the restored data.
+3. `tri.*` keys (triad-inversions.html) are outside `backup.js`'s `OWNED_PREFIXES` entirely - a pre-existing gap this inventory surfaced, not introduced by it. Fixing it is a backup.js change.
+
+Keep `test/storage-migrate.test.js` green on any change that touches this file or adds a migration.
 
 ## Backup / Restore [STABLE]
 
@@ -102,4 +150,4 @@ queued as a follow-up, same fix pattern.
 
 ---
 
-**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission)
+**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission), songbook.js:945-3016 (every roadcase- key), tracks.js:423-449 (bt./trackUrls + migrateUrls/LEGACY_TRACKKEYS), play/index.html:15-20,601,784-786 (pre-paint reads + PROFILE_KEY/ACCENT_KEY/THEME_KEY/LAST_BACKUP_KEY), play/triad-inversions.html:564-572 (tri.* keys), storage-migrate.js (whole file, this mission, M-6 STORAGE-MIGRATE)

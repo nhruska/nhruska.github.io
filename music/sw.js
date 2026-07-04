@@ -52,7 +52,11 @@
 // #136's v93 (two sibling collisions in a row while this branch was in
 // flight; same A10/#117 max+1 discipline each time) - check-cache-bump.sh
 // re-verified against origin/main immediately before push.
-var CACHE = 'music-v94';
+// M-6 STORAGE-MIGRATE (2026-07-04): ->v95 (max+1 over main's v94) - new shared/storage-migrate.js
+// (versioned localStorage boot migration runner, gh #76/#77), script-tagged
+// in play/index.html - new CORE path. check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v95';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -66,6 +70,9 @@ var CORE = [
   // esc.js: the ONE HTML-escape util (S-HARDEN A5) - loaded before every
   // shared/*.js consumer in both play/index.html and play/triad-inversions.html.
   './shared/esc.js',
+  // storage-migrate.js: versioned localStorage boot migration runner (M-6),
+  // loaded first in play/index.html (before every other shared/*.js consumer).
+  './shared/storage-migrate.js',
   // shape-classify.js: S-DIAGRAM-PREF step 0 (2026-07-05) - script-tagged in
   // play/index.html before diagram.js; precached here so it's available
   // offline from install, matching the S-HARDEN A6 discipline above.

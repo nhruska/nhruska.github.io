@@ -7,6 +7,12 @@
 <title>Music</title>
 <!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
 <script src="../shared/theme.js"></script>
+<!-- Versioned localStorage boot migration runner (M-6 STORAGE-MIGRATE, shared/
+     storage-migrate.js). Loaded first (before backup.js/songbook.js and every
+     other shared/*.js consumer, and before the pre-paint read just below) so
+     its self-run at load time completes before anything else reads persisted
+     state. Ships this wave as a no-op v1 baseline - see storage-migrate.js. -->
+<script src="../shared/storage-migrate.js"></script>
 <script>
 /* Set theme + accent hue before first paint to avoid a flash. The full accent
    derivation runs in the Settings script below; the CSS light fallbacks
