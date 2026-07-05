@@ -112,6 +112,48 @@ test('--guide-bg/--guide-line are declared once, computed off --txt-dim (a genui
 });
 
 /* ---------------------------------------------------------------------
+ * (a2) SOUNDING vs SELECTION vs GUIDANCE - three-way surface separation
+ * (M-EAR wave 1, engineering-wiki/systems/ssot-registry.md's Element
+ * Consistency Law: "derive a new --sound-* pair, add it to the consistency
+ * lint's semantic-separation assertions - the law grows with the system").
+ * ------------------------------------------------------------------- */
+
+test('.soundNote.sounding (the scale-audition marker) never re-adopts the SELECTION or GUIDANCE tokens', function () {
+  var body = ruleBody(songbookStripped, '.soundNote.sounding');
+  assert.ok(body !== null, 'expected a .soundNote.sounding rule in songbook.css');
+  assert.ok(body.indexOf('--accent-deep') === -1, '.soundNote.sounding must not use --accent-deep (SELECTION), got: ' + body);
+  assert.ok(body.indexOf('--accent-dim') === -1, '.soundNote.sounding must not use --accent-dim (SELECTION), got: ' + body);
+  assert.ok(body.indexOf('--guide-bg') === -1, '.soundNote.sounding must not use --guide-bg (GUIDANCE), got: ' + body);
+  assert.ok(body.indexOf('--guide-line') === -1, '.soundNote.sounding must not use --guide-line (GUIDANCE), got: ' + body);
+  assert.ok(body.indexOf('--sound-bg') >= 0, '.soundNote.sounding must consume var(--sound-bg), got: ' + body);
+  assert.ok(body.indexOf('--sound-line') >= 0, '.soundNote.sounding must consume var(--sound-line), got: ' + body);
+});
+
+test('known SELECTION/GUIDANCE-surface rules never adopt the SOUNDING tokens (--sound-bg/--sound-line)', function () {
+  [
+    ['.listItem.inSet', songbookStripped],
+    ['.setUndo', songbookStripped],
+    ['.notableBanner', songbookStripped],
+    ['.iconBtn.setBtn.on', songbookStripped]
+  ].forEach(function (pair) {
+    var body = ruleBody(pair[1], pair[0]);
+    assert.ok(body !== null, 'expected a ' + pair[0] + ' rule');
+    assert.ok(body.indexOf('--sound-bg') === -1, pair[0] + ' must not use --sound-bg (that is the SOUNDING-marker surface), got: ' + body);
+    assert.ok(body.indexOf('--sound-line') === -1, pair[0] + ' must not use --sound-line (that is the SOUNDING-marker surface), got: ' + body);
+  });
+});
+
+test('--sound-bg/--sound-line are declared per-theme with distinct literal values (not aliasing SELECTION/GUIDANCE)', function () {
+  var rootBlocks = songbookStripped.match(/:root(?:\[data-theme="light"\])?\s*\{[^}]*\}/g) || [];
+  var bareRoot = rootBlocks.filter(function (b) { return /^:root\s*\{/.test(b); }).join(' ');
+  var lightRoot = rootBlocks.filter(function (b) { return /^:root\[data-theme="light"\]\s*\{/.test(b); }).join(' ');
+  assert.ok(/--sound-bg:\s*#[0-9a-fA-F]{6}/.test(bareRoot), 'expected a literal-hex --sound-bg in the dark :root block, got: ' + bareRoot);
+  assert.ok(/--sound-line:\s*#[0-9a-fA-F]{6}/.test(bareRoot), 'expected a literal-hex --sound-line in the dark :root block, got: ' + bareRoot);
+  assert.ok(/--sound-bg:\s*#[0-9a-fA-F]{6}/.test(lightRoot), 'expected a literal-hex --sound-bg override in the light theme block, got: ' + lightRoot);
+  assert.ok(/--sound-line:\s*#[0-9a-fA-F]{6}/.test(lightRoot), 'expected a literal-hex --sound-line override in the light theme block, got: ' + lightRoot);
+});
+
+/* ---------------------------------------------------------------------
  * (b) ONE selected-state grammar app-wide (D-SELECTED-ACCENT, E2)
  * ------------------------------------------------------------------- */
 

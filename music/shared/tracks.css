@@ -154,6 +154,17 @@
     margin-bottom:6px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
+  /* M-EAR wave 1: the "how do these notes function" degrees line under the
+     notes line - mirrors Compose's .keySoloDegrees (songbook.css, S-CHIPS-PLUS)
+     verbatim so the Studio and Compose scale-audition surfaces read as ONE
+     composed primitive, not two divergent instances (Element Consistency Law). */
+  .bt-st-degrees{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);
+    letter-spacing:.03em;margin:2px 0 4px;}
+  /* M-EAR wave 1: the play/stop scale-audition toggle sits on the SAME row as
+     the "Solo over it" label, right-aligned, so it costs no extra vertical
+     space (one-screen-above-the-fold, music/CLAUDE.md). */
+  .bt-st-solorow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+  .bt-st-solorow .bt-st-lbl{margin-bottom:0;}
   /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
      blues), solo layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below)
      so the chip visual language reads consistently app-wide - but wraps instead

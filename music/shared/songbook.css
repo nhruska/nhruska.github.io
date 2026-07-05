@@ -57,6 +57,22 @@
      both themes (PR body). */
   --guide-bg:color-mix(in srgb, var(--txt-dim) 16%, var(--surface-2));
   --guide-line:color-mix(in srgb, var(--txt-dim) 55%, var(--line-strong));
+  /* M-EAR wave 1 (2026-07-04, engineering-wiki/systems/ssot-registry.md's
+     Element Consistency Law): the ".sounding" marker on a scale-audition
+     note/degree token - a THIRD surface, genuinely distinct from BOTH
+     --accent-deep/--accent-dim (SELECTION) and --guide-bg/--guide-line
+     (GUIDANCE). A violet hue carries no existing app semantic: not the teal
+     --accent (selection), not the neutral --txt-dim-derived guidance chrome,
+     and deliberately NOT color-mixed from --warn/--bad/--good (those are the
+     FIXED tuner/status colors - reusing one as an input would risk "this
+     note is sounding" reading as a tuner warning). Declared per-theme as
+     literal hex (like --accent-dim/--accent-deep/--accent-ink below), not a
+     single color-mix formula, because unlike --guide-bg's --txt-dim trick a
+     fresh hue has no existing per-theme-varying base to auto-derive from.
+     Contrast-checked >=4.5:1 both themes (component-conventions.md's text-
+     on-fill floor): dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on
+     #efe7fb = 5.12:1. Guarded by test/consistency-lint.test.js. */
+  --sound-bg:#3a2f57;--sound-line:#b39ddb;
   /* text/icon placed ON an --accent fill (dark, legible on EVERY accent incl.
      light ones like amber/coral) - same in light + dark. Must be a literal, not
      var(--on-accent): a self-reference resolves empty and falls back to inherited
@@ -118,6 +134,9 @@
   --txt:#161b22;--txt-soft:#3f4854;--txt-dim:#5f6875;
   --shadow:rgba(20,30,45,.14);--glow:rgba(13,148,136,.05);
   --accent-dim:#bfe6df;--accent-deep:#e7f6f2;--accent-ink:#0f766e;
+  /* M-EAR wave 1: light-theme override of the --sound-* pair declared in the
+     bare :root block above (same reasoning; see that comment). */
+  --sound-bg:#efe7fb;--sound-line:#6a4bc4;
   --dg-grid:#aab4c0;--dg-nut:#2b3440;--dg-base:#5f6875;
   --dg-dot:#dfe6ee;--dg-dot-line:#9aa7b5;--dg-note:#334155;
   --dg-mute:#7a8494;--dg-fret-lbl:#6b7686;
@@ -258,6 +277,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* M-EAR wave 1: the scale-audition play/stop toggle - ONE primitive, composed
+   by BOTH the Studio scale panel (tracks.js) and the Compose key preview
+   (songbook.js). Base = .iconBtn (44x44 icon button, component-conventions.md);
+   the STICKY on/playing state reuses the D-SELECTED-ACCENT accent-fill
+   grammar (same as .iconBtn.setBtn.on above), not a new one-off look - "while
+   playing" IS a selected/active state (music/CLAUDE.md's Element Consistency
+   Law). Compact so it fits inline beside the "Solo over it" label without
+   pushing content below the fold. */
+.soundToggle{width:32px;height:32px;font-size:.85rem;}
+.soundToggle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* The bouncing marker (M-EAR wave 1): a per-note token currently sounding, on
+   BOTH the notes line and the degrees line, on BOTH surfaces (Studio +
+   Compose). ONE primitive (--sound-bg/--sound-line, declared above) - not a
+   re-hardcoded literal, not the SELECTION or GUIDANCE token pair. Small pill
+   treatment (border-radius literal, like the .li-capo/.li-note tag pills -
+   these are inline text tokens, not buttons/chips/cards, so they sit outside
+   the 5 radius-by-role tokens' scope per component-conventions.md). */
+.soundNote{transition:background .12s,color .12s;border-radius:4px;}
+.soundNote.sounding{background:var(--sound-bg);color:var(--sound-line);padding:0 2px;}
 .viewToggle{display:flex;margin:8px 0 13px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:4px;}
 .viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .viewToggle button:active{transform:scale(.96);}
@@ -696,6 +734,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    buttons themselves - this rule only lays out the row; no new chip-variant
    border/background/radius (3 chip variants already exist app-wide). */
 .keySoloScale{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
+/* M-EAR wave 1: the play/stop audition toggle sits beside the notes line
+   (not its own row) - costs no extra vertical space, mirrors the Studio's
+   .bt-st-solorow layout (tracks.css) for the same reason. */
+.keySoloNotesRow{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .keySoloNotes{font-size:.82rem;color:var(--txt-soft);margin:0 0 4px;}
 .keySoloNotes strong{color:var(--txt);font-weight:600;}
 /* S-CHIPS-PLUS: the degrees line under the notes line - same styling family as

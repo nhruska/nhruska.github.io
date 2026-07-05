@@ -324,6 +324,10 @@
 <script src="../shared/diagram-pref.js"></script>
 <script src="../shared/diagram.js"></script>
 <script src="../shared/audio.js"></script>
+<!-- M-EAR wave 1: zero-dependency scale/mode audition (Sound.playScale) -
+     loads after audio.js (thematically the other shared audio primitive),
+     before tracks.js/songbook.js's toggle wiring calls it. -->
+<script src="../shared/sound.js"></script>
 <script src="../shared/tracks.js"></script>
 <script src="../shared/candidates.js"></script>
 <!-- S-EXTRACT (analysis-refactor-enhance-20260704 A3/A7): the chord-pack

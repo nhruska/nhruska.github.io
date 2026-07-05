@@ -104,7 +104,13 @@
 // earlier, used to flash open then immediately close). No new/removed CORE
 // paths. check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-var CACHE = 'music-v105';
+// M-EAR wave 1 (2026-07-04): v105->v106 - new shared/sound.js (the scale/mode
+// audition provider, script-tagged in play/index.html right after audio.js);
+// shared/tracks.js, shared/songbook.js, shared/tracks.css, shared/songbook.css
+// all change (the play/stop toggle + bouncing .sounding marker on the Studio
+// scale panel and the Compose key preview). New CORE path added below.
+// check-cache-bump.sh re-verified against origin/main immediately before push.
+var CACHE = 'music-v106';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -146,7 +152,11 @@ var CORE = [
   './shared/list-item.js', './shared/repertoire.js', './shared/repertoire-form.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/notables.js',
- './shared/theme.js', './shared/audio.js', './shared/backup.js',
+ './shared/theme.js', './shared/audio.js',
+  // sound.js: M-EAR wave 1 - the scale/mode audition provider, script-tagged
+  // in play/index.html right after audio.js.
+  './shared/sound.js',
+  './shared/backup.js',
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
   './shared/profiles/ukulele-gcea.js', './shared/profiles/guitar-standard.js',

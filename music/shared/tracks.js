@@ -578,7 +578,20 @@
       elPlayer.onclick = function (e) { if (e.target === elPlayer) { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); } };
       if (window.NavHistory) window.NavHistory.open('player', closePlayer);
     }
-    function closePlayer() { elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = ''; }
+    // M-EAR wave 1: the Studio's active scale-audition handle (Sound.playScale's
+    // return value), scoped here (same level as elPlayer/closePlayer, ABOVE
+    // openStudio) so closePlayer - shared by the plain player AND the Studio,
+    // the "tab/surface change" stop condition for whichever is open - can
+    // silence it on close regardless of which one is active. Sound.stopAll()
+    // is a defensive belt-and-suspenders call (harmless no-op if nothing is
+    // playing); studioSound itself resets openStudio's own toggle-icon state
+    // via its onStop callback (wired inside openStudio, below).
+    var studioSound = null;
+    function closePlayer() {
+      if (global.Sound) global.Sound.stopAll();
+      studioSound = null;
+      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
+    }
 
     /* ---- the Practice Studio: the track playing + the theory to solo over it ----
      * Scale-first layout: pinned backing track on top, the fretboard scale to
@@ -637,6 +650,24 @@
         try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF tint skipped (wheel DOM contract changed?):', e); }
         box.querySelector('.bt-st-wheel').appendChild(wheelEl);
       }
+    }
+    // M-EAR wave 1: per-note tokens (instead of one plain joined string) so
+    // the scale-audition marker can highlight the currently-sounding note.
+    // Each token carries data-i so onNote(i) (i % notes.length, see sound.js's
+    // header) can find and mark exactly one note + one degree per tick. The
+    // CONTAINER (.bt-st-notes/.bt-st-degrees, held via data-solonotes/
+    // data-solodegrees) keeps its own class for its own text treatment -
+    // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be,
+    // or a flat "Bb" renders as "BB" (.bt-st-notes opts the whole run out).
+    function renderNoteTokens(notes) {
+      return notes.map(function (n, i) {
+        return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
+      }).join(' ');
+    }
+    function renderDegreeTokens(degrees) {
+      return (degrees || []).map(function (d, i) {
+        return '<span class="soundNote" data-i="' + i + '">' + esc(d) + '</span>';
+      }).join(' ');
     }
     function openStudio(t) {
       // Rehydrate from the merged track list BEFORE rendering: a bridge payload
@@ -814,7 +845,12 @@
         + '<div class="bt-st-body">'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + esc(th.notes.join(' ')) + '</span></div>'
+        // M-EAR wave 1: the play/stop audition toggle sits on the label row;
+        // the notes + degrees lines are now per-note token spans (not one
+        // plain string) so onNote(i) can bounce a .sounding marker across them.
+        + '<div class="bt-st-sec"><div class="bt-st-solorow"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + renderNoteTokens(th.notes) + '</span></div>'
+        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button></div>'
+        + '<div class="bt-st-degrees" data-solodegrees>' + renderDegreeTokens(th.degrees) + '</div>'
         // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
@@ -847,6 +883,51 @@
       // in the template string, so they exist as soon as elPlayer.innerHTML lands).
       var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
       var targetCapEl = elPlayer.querySelector('[data-targetcap]');
+      // M-EAR wave 1: the play/stop scale-audition toggle + the notes/degrees
+      // token lines it bounces a marker across (curBundle already tracks
+      // whichever scale-chip is active - see the M-GUIDE W3a comment above).
+      var soundToggleEl = elPlayer.querySelector('[data-soundtoggle]');
+      var notesLineEl = elPlayer.querySelector('[data-solonotes]');
+      var degreesLineEl = elPlayer.querySelector('[data-solodegrees]');
+      function clearSoundMarks() {
+        [notesLineEl, degreesLineEl].forEach(function (c) {
+          if (!c) return;
+          Array.prototype.forEach.call(c.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
+        });
+      }
+      function markSoundingNote(i) {
+        [notesLineEl, degreesLineEl].forEach(function (c) {
+          var el = c && c.querySelector('[data-i="' + i + '"]');
+          if (el) el.classList.add('sounding');
+        });
+      }
+      function setSoundToggle(on) {
+        if (!soundToggleEl) return;
+        soundToggleEl.classList.toggle('on', on);
+        soundToggleEl.setAttribute('aria-pressed', on ? 'true' : 'false');
+        soundToggleEl.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
+        soundToggleEl.innerHTML = on ? '&#9632;' : '&#9658;';
+      }
+      // Chip switch, scale-mode change, and Studio close (closePlayer, above)
+      // all stop playback (implementation note #3, M-EAR wave 1 spec) -
+      // stopStudioSound() is the ONE place that does it, called from each.
+      function stopStudioSound() {
+        if (studioSound) { studioSound.stop(); studioSound = null; }
+        setSoundToggle(false);
+        clearSoundMarks();
+      }
+      if (soundToggleEl) {
+        soundToggleEl.onclick = function () {
+          if (studioSound) { stopStudioSound(); return; }
+          if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
+          var pcsLen = curBundle.pcs.length;
+          setSoundToggle(true);
+          studioSound = global.Sound.playScale(curBundle.pcs, {
+            onNote: function (i) { clearSoundMarks(); markSoundingNote(i % pcsLen); },
+            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); }
+          });
+        };
+      }
       // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
       // content it explains - built via the shared Notables banner (same
       // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
@@ -882,7 +963,6 @@
       (function wireScaleChips() {
         var chipsEl = elPlayer.querySelector('[data-scalechips]');
         var frameEl = elPlayer.querySelector('[data-scaleframe]');
-        var notesEl = elPlayer.querySelector('[data-solonotes]');
         var scaleEl = elPlayer.querySelector('[data-scale]');
         if (!chipsEl) return;
         var C = circleRef();
@@ -910,9 +990,14 @@
         function select(scaleId) {
           var bundle = soloBundle(t.key, t.mode, scaleId);
           if (!bundle) return;
+          // M-EAR wave 1 (implementation note #3): a scale-chip switch always
+          // stops any in-progress audition - the sounding scale is about to
+          // change out from under the marker.
+          stopStudioSound();
           curId = scaleId;
           render();
-          notesEl.textContent = bundle.notes.join(' ');
+          if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
+          if (degreesLineEl) degreesLineEl.innerHTML = renderDegreeTokens(bundle.degrees);
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
           var SG = soloGuideRef();
           var framing = (info && SG) ? SG.framing(scaleId, info.family) : null;
