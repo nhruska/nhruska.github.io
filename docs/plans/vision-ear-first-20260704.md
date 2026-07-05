@@ -31,3 +31,21 @@ The ear layer makes STRUM-ENGINE REVIVAL (#88, MID M-3) a FOUNDATION item, not a
 3. **Song anchors:** you name the known-songs per mode (your teaching repertoire = best anchors), or agents draft candidates for your veto?
 4. **Where does audition live:** Studio only, or also the Compose key chooser preview (tap = hear the scale you are previewing)?
 5. **M-CONSTRUCT merge:** fold song-construction into Tutor Phase 5's sitting item, or its own mission?
+
+## Interview answers (operator, 2026-07-04)
+
+| Q | Answer |
+|---|---|
+| 1 Sound source | **Synth for now** - lightweight, workflow-first, per-step improvement later. TECH RULING: zero-dependency Web Audio (no Tone.js - 200KB for unneeded capability); `shared/sound.js` provider with a documented SWAP SEAM (Karplus-Strong #88 or samples later swap the provider, consumers untouched) - same seam pattern as spell()/S-BLUES-B |
+| 2 Hum-along | **Slow loop + bouncing degree marker** (visual marker tracks the sounding note on the existing notes/degrees line) |
+| 3 Song anchors | **Agents draft, operator vetoes** (drafter launched; disputed modal attributions flagged, never asserted) |
+| 4 Where | **BOTH Studio and Compose preview** - "we need to hear along with the visuals for cognitive capture" |
+| 5 M-CONSTRUCT merge | PENDING |
+
+## M-EAR wave 1 spec (BINDING)
+
+- **shared/sound.js**: `Sound.noteHz(pc, octave)` (A440 equal temperament), `Sound.playScale(pcs, {rootOctave=4, bpm=~72, loop=true, onNote(i), onStop()})` - one AudioContext (lazy, user-gesture start per autoplay policy), simple envelope oscillator (triangle + decay - hummable, not harsh), loop until stop, octave-folded ascent root->root. THE SWAP SEAM: all timbre inside one internal `voice(freq, t, dur)`; provider swap = future wave.
+- **Studio**: a play/stop toggle on the scale panel; while playing, the notes line + degrees line get a moving `.sounding` highlight (the bouncing marker) via onNote(i). Chip switch stops playback. No persistence.
+- **Compose key preview**: same toggle on the preview block (W3b region); marker on its notes/degrees lines. Decoupled invariant holds (audio never touches progression state).
+- **Verification bar**: pure tests for noteHz (A4=440, C4~261.63, pc wrap) + scheduling math; OfflineAudioContext render test - render a short scale, assert non-silent buffer (RMS > 0) with expected duration (REAL audio evidence, not a mock); live Playwright: toggle -> AudioContext running + marker advances + zero console errors (headless audio = state + marker assertions).
+- CACHE bump; consistency lint untouched surfaces; wave 2 candidates (NOT now): A/B mode compare, degree speech, tempo control.
