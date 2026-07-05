@@ -1390,6 +1390,18 @@ test('soloChipCaption: mixolydian resolves via SoloGuide.card().chooseWhen (fram
   assert.strictEqual(Songbook.soloChipCaption('mixolydian'), SoloGuide.card('mixolydian').chooseWhen);
   assert.strictEqual(typeof Songbook.soloChipCaption('mixolydian'), 'string');
 });
+// S-REL-NAMES (U23): the optional 2nd arg (the key-view's own root) names the
+// concrete relative-key instance in the caption text, same as the Practice
+// Studio's renderGuide/select() call sites (tracks.js).
+test('soloChipCaption: a root NAMES the relative minor instance (pentMajor caption)', function () {
+  assert.strictEqual(Songbook.soloChipCaption('pentMajor', 'F'),
+    SoloGuide.framing('pentMajor', Circle.soloScaleInfo('pentMajor').family, 'F'));
+  assert.ok(/D minor pent/.test(Songbook.soloChipCaption('pentMajor', 'F')), Songbook.soloChipCaption('pentMajor', 'F'));
+});
+test('soloChipCaption: absent root degrades to the pre-S-REL-NAMES relationship-only wording (byte-identical to the no-root call)', function () {
+  assert.strictEqual(Songbook.soloChipCaption('pentMajor'), Songbook.soloChipCaption('pentMajor', undefined));
+  assert.ok(/the relative minor pent/.test(Songbook.soloChipCaption('pentMajor')), Songbook.soloChipCaption('pentMajor'));
+});
 
 /* ---------- S-CHIPS-PLUS: the degrees line under the notes line (P5 W3
  * verdict - "how do these notes function"). soloChipDegrees mirrors
