@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T11:01:49Z",
+  "generatedAt": "2026-07-05T11:15:36Z",
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +8,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T10:49:29Z",
-    "sha": "1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b",
-    "subject": "Retro panes (design-system day + ear-first night) + CC refresh (#183)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b"
+    "date": "2026-07-05T11:01:55Z",
+    "sha": "0a7fd6527979deacc5188464f752f6e19af8284c",
+    "subject": "cc: nightly snapshot refresh (#184)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/0a7fd6527979deacc5188464f752f6e19af8284c"
   },
   "commits": [
+    {
+      "date": "2026-07-05T11:01:55Z",
+      "sha": "0a7fd6527979deacc5188464f752f6e19af8284c",
+      "subject": "cc: nightly snapshot refresh (#184)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/0a7fd6527979deacc5188464f752f6e19af8284c"
+    },
     {
       "date": "2026-07-05T10:49:29Z",
       "sha": "1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b",
@@ -79,12 +85,6 @@
       "sha": "d67d9aca002cbb6badd3ddab23b78e56a5efcb3a",
       "subject": "S-REL-NAMES (U23): guidance names the instance, not just the relationship (#174)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/d67d9aca002cbb6badd3ddab23b78e56a5efcb3a"
-    },
-    {
-      "date": "2026-07-05T05:33:17Z",
-      "sha": "4af76c8c43b0a3d94154d566a6affb7b2afb0cab",
-      "subject": "capture: U23 name-the-instance guidance principle (relative-key interpolation) (#173)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4af76c8c43b0a3d94154d566a6affb7b2afb0cab"
     }
   ],
   "openPRs": [
@@ -147,6 +147,12 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T11:01:56Z",
+      "number": 184,
+      "title": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/184"
+    },
     {
       "mergedAt": "2026-07-05T10:49:29Z",
       "number": 183,
@@ -230,12 +236,6 @@
       "number": 170,
       "title": "M-DESIGN-ENFORCE 2: feedback-surface reconcile (U19) - one taxonomy, no native dialogs, toast+action undo",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/170"
-    },
-    {
-      "mergedAt": "2026-07-05T04:47:14Z",
-      "number": 169,
-      "title": "M-EAR 1.6: tempo control + unmissable sounding lights + legend primitive (U14-U16)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/169"
     }
   ],
   "deploy": {
