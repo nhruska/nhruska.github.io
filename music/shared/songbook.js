@@ -101,8 +101,19 @@
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
   // in these styles, and the chord pack can't voice them) — leaves the usable jam palette.
+  // SSOT (#85): spelling is owned by circle.js. Delegate to Circle.diatonicKeyAware so the
+  // Compose chips spell KEY-AWARE (F major -> Bb, not A#) from the SAME engine the Studio
+  // uses — never a parallel table. Same chord SET (dim degrees filtered out, scale-degree
+  // order); only the note spelling comes from the shared source. The inline ROOTS
+  // derivation stays ONLY as the circle-absent fallback (identical set, canonical sharp).
   function diatonicChords(root, modeKey) {
-    var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
+    var C = global.Circle, mk = canonMode(modeKey);
+    if (C && C.diatonicKeyAware && CIRCLE_MODE[mk]) {
+      return C.diatonicKeyAware(root, CIRCLE_MODE[mk])
+        .filter(function (d) { return d.quality !== "dim"; })
+        .map(function (d) { return d.chord; });
+    }
+    var rp = rootPc(root), m = MODES[mk]; if (rp == null || !m) return [];
     var out = [];
     m.steps.forEach(function (s, i) {
       if (m.quals[i] === "dim") return;
@@ -1945,6 +1956,20 @@
       var t = labelTonic();
       return (t && global.Circle && global.Circle.romanFor) ? global.Circle.romanFor(c, t) : '';
     }
+    // #85 display consistency: spell a chord's root KEY-AWARE relative to the current
+    // song key, so the progression / suggestions / key chip never show a sharp where the
+    // in-key palette shows a flat (the D# -> Ab mismatch), and stay consistent AFTER a
+    // transpose (tpose stores canonical; we respell at render). STORAGE is untouched -
+    // shape lookup + transpose math are enharmonic-tolerant - only the shown name comes
+    // from the circle.js SSOT. No key set -> leave the token as-is.
+    function displayChord(c) {
+      var C = global.Circle;
+      if (!songKey.root || !C || !C.spellKeyAware) return c;
+      var m = /^([A-G][#bx]*)(.*)$/.exec((c || '').trim());
+      if (!m) return c;
+      var pc = noteToPc(m[1]);
+      return pc == null ? c : C.spellKeyAware(pc, songKey.root, songKey.mode) + m[2];
+    }
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
@@ -1980,8 +2005,9 @@
       // mode is part of the visible signature - omitting it left stale romans
       // after a mode change (codex V2 high). Same reasoning for the strip stage:
       // a resize that flips between stages must force a repaint even though the
-      // chords/tonic/songKey.mode/maxed didn't change.
-      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed + '|' + mode;
+      // chords/tonic/songKey.mode/maxed didn't change. songKey.root joins the sig
+      // too (#85) so a key change re-renders the key-aware chord spellings.
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.root + '|' + songKey.mode + '|' + maxed + '|' + mode;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
@@ -1999,13 +2025,13 @@
             // OWN slots must stay interactive at cap (remove one to add
             // another) - the `.prog .suggChip` CSS carve-out exempts them.
             var tok = document.createElement('button'); tok.type = 'button'; tok.className = 'suggChip';
-            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = c;
+            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = displayChord(c);
             tok.appendChild(nameSpan);
             if (rn) { var rnSpan = document.createElement('span'); rnSpan.className = 'scRn'; rnSpan.textContent = rn; tok.appendChild(rnSpan); }
             tok.onclick = function () { packPlayChord(c); };
             slot.appendChild(tok);
           } else {
-            var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
+            var d = packDiagram(displayChord(c), 'small'); d.onclick = function () { packPlayChord(c); };
             slot.appendChild(d);
             // interval relative to the key — think I IV V, not shapes
             if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
@@ -2337,8 +2363,11 @@
         var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
+        // #85: chip shows the conventional key name (Eb, not D#) from the SSOT, matching
+        // the picker/title/chords; the stored songKey.root stays canonical.
+        var chipKey = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(songKey.root, songKey.mode) : songKey.root;
         chip.innerHTML = songKey.root
-          ? (songKey.root + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          ? (escHTML(chipKey) + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
@@ -2356,7 +2385,10 @@
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
-        b.textContent = r;
+        // SSOT (#85): the LABEL is the conventional key name (Bb, not A#) from circle.js,
+        // keyed to the current mode; the button VALUE `r` stays canonical-sharp so key
+        // state / transpose / chord filtering are unchanged.
+        b.textContent = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(r, songKey.mode) : r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
           invalidateClearUndo(); // A3: a key (root) change invalidates any pending Clear-undo
@@ -2479,7 +2511,9 @@
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      // SSOT (#85): key title reads the conventional name (Bb major, not A# major) from circle.js
+      var keyDisp = (global.Circle && global.Circle.keyLabel) ? global.Circle.keyLabel(keyRoot, keyMode) : keyRoot;
+      title.innerHTML = '<strong>' + escHTML(keyDisp) + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
       // M-GUIDE W3b: solo-scale PREVIEW row - DECOUPLED (isolation-tested below).
       // A chip tap here re-renders ONLY this block; it never touches songKey,
@@ -2702,7 +2736,7 @@
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
-      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      var html = '<span class="scName">' + escHTML(displayChord(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };

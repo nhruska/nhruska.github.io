@@ -277,11 +277,15 @@
         degrees: C.soloScaleDegrees('blues'), chords: C.bluesKey(k), label: 'Blues'
       };
     }
-    var notes = C.scale(k, scaleMode);
+    // #85: key-aware DISPLAY names (flat keys render flats: F major -> Bb, not A#).
+    // pcs are derived from the names but notesToPcs is spelling-agnostic, so the
+    // pitch classes the fretboard lights up are UNCHANGED — only the labels flip.
+    var notes = C.scaleKeyAware(k, scaleMode);
     return {
       key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
-      degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
-      label: shortMode(C.modeInfo(scaleMode).label)
+      degrees: C.scaleDegrees(scaleMode), chords: C.diatonicKeyAware(k, scaleMode),
+      label: shortMode(C.modeInfo(scaleMode).label),
+      keyLabel: C.keyLabel(k, scaleMode)   // conventional key-tonic name (A# -> Bb) for headings
     };
   }
   // S-BLUES: the Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
@@ -654,7 +658,7 @@
       var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
-        + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
+        + esc(th.keyLabel || th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         var mode = normMode(th.scaleMode);
         var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
@@ -1181,9 +1185,9 @@
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
       // Fretboard spelling: renderFretboard() maps each scale pitch-class to the
-      // note name the scale carries (canonical sharps post-FORK-4: A#, not Bb, in
-      // F major) so the dots match the "Solo over it" list above, whatever names
-      // th.notes holds - th itself is the 'mode' bundle (curBundle's initial value).
+      // note name the scale carries (key-aware post-#85: Bb, not A#, in F major)
+      // so the dots match the "Solo over it" list above, whatever names th.notes
+      // holds - th itself is the 'mode' bundle (curBundle's initial value).
       renderFretboard(th, 'mode');
       // M-EAR wave 1.6 (U16): initial legend render - 'mode' bundle, nothing
       // sounding yet (matches the fresh-open state renderFretboard(th,'mode')
@@ -1530,8 +1534,8 @@
       if (!elPanel || !global.Circle) return;
       if (!state.key) { elPanel.innerHTML = ''; return; }
       var C = global.Circle, label = C.modeInfo(state.scaleMode).label;
-      var dia = C.diatonic(state.key, state.scaleMode), nb = C.neighbors(state.key, state.mode);
-      var notes = C.scale(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      var dia = C.diatonicKeyAware(state.key, state.scaleMode), nb = C.neighbors(state.key, state.mode);
+      var notes = C.scaleKeyAware(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
       var changed = {}; C.modeChange(state.key, state.scaleMode).forEach(function (c) { changed[c.degree] = true; });
       var modeChips = MODE_ORDER.map(function (m) {
         return '<button class="cofModeChip' + (state.scaleMode === m ? ' on' : '') + '" data-mode="' + esc(m) + '">'
@@ -1546,7 +1550,7 @@
       }).join('');
       elPanel.innerHTML =
         '<div class="cofPanelInner">'
-        + '<div class="cofKeyName">' + esc(notes[0] || C.keyName(state.key)) + ' ' + esc(shortMode(label)) + '</div>'
+        + '<div class="cofKeyName">' + esc(notes[0] || C.keyLabel(state.key, state.scaleMode)) + ' ' + esc(shortMode(label)) + '</div>'
         + '<div class="cofModes">' + modeChips + '</div>'
         + '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">' + modeHint(C, label) + '</div>'
@@ -1554,7 +1558,7 @@
         + '<div class="cofChords">' + chords + '</div>'
         + '<div class="cofNbLbl">Explore next</div>'
         + '<div class="cofNb">'
-        + nb.map(function (x) { return nbChip(C.spellRoot(x.root, x.mode), x.mode, x.why); }).join('')
+        + nb.map(function (x) { return nbChip(C.keyLabel(x.root, x.mode), x.mode, x.why); }).join('')
         + '</div></div>';
       Array.prototype.forEach.call(elPanel.querySelectorAll('.cofModeChip'), function (b) {
         b.onclick = function () { state.scaleMode = b.getAttribute('data-mode'); state.mode = C.modeInfo(state.scaleMode).family; rerender(); };
@@ -1577,8 +1581,11 @@
     function renderKeys() {
       elKeys.innerHTML = '';
       elKeys.appendChild(chip('Any key', state.key === null, function () { state.key = null; rerender(); }));
+      // #85: chip LABEL is the conventional key name (Bb, not A#), keyed to the current
+      // maj/min mode; the stored value `k` stays canonical-sharp so track filtering is unchanged.
+      var C = circleRef();
       ROOTS.forEach(function (k) {
-        elKeys.appendChild(chip(k, state.key === k, function () { state.key = k; rerender(); }));
+        elKeys.appendChild(chip(C ? C.keyLabel(k, state.mode) : k, state.key === k, function () { state.key = k; rerender(); }));
       });
     }
     function renderMode() {

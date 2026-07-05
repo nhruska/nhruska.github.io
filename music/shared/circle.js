@@ -74,6 +74,65 @@
   function spellRoot(root, mode) { var pc = pcOf(root); return pc < 0 ? root : spell(pc); }
   function keyName(root) { return spellRoot(root); }
 
+  // ---- key-aware (conventional) note spelling — the #85 DISPLAY layer ----------
+  // #85 reverses FORK-4's "canonical sharp everywhere" for DISPLAY on the theory
+  // surfaces: a flat key renders flats (F major -> F G A Bb C D E, never A#), a
+  // sharp key renders sharps, naturals stay natural. The pitch-class CORE above is
+  // UNTOUCHED — spell()/spellScale()/pcOf()/the STORED key value stay canonical
+  // sharp (they back the key picker's value + the enharmonic chord-pack seam). This
+  // block is a pure re-spelling the Studio/Repertoire surfaces route through.
+  var LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  var SHARP_NAMES = ROOTS;                                          // ['C','C#','D',...]
+  var FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  // Conventional tonic spelling per pitch class — the practical key name a musician
+  // reads (Db not C#, Bb not A#; F# and D# at the tritone, sharp side). The two rows
+  // are relative-minor coherent: MINOR_KEY_ROOT[pc] is the relative minor of
+  // MAJOR_KEY_ROOT[(pc+3)%12], so a key and its relative share one accidental world.
+  var MAJOR_KEY_ROOT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+  var MINOR_KEY_ROOT = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+  // major-key pitch classes that carry FLATS (F,Bb,Eb,Ab,Db); the rest are
+  // sharp/natural. Minor keys defer to their relative major (pc+3). Drives only
+  // CHROMATIC (out-of-scale) spelling — diatonic notes are letter-per-degree correct.
+  var FLAT_MAJOR_PCS = [5, 10, 3, 8, 1];
+  function isMinorFamily(mode) { return MODE_INFO[modeKey(mode)].family === 'minor'; }
+  function isFlatKey(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return false;
+    var relMaj = isMinorFamily(mode) ? (pc + 3) % 12 : pc;
+    return FLAT_MAJOR_PCS.indexOf(relMaj) >= 0;
+  }
+  // the conventional name of a KEY's tonic (stored value 'A#' major -> 'Bb'; 'D#' minor stays 'D#')
+  function keyLabel(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return root;
+    return (isMinorFamily(mode) ? MINOR_KEY_ROOT : MAJOR_KEY_ROOT)[pc];
+  }
+  // accidental a letter needs to sit `d` semitones above its natural pitch class
+  function accFor(d) {
+    return d === 0 ? '' : d === 1 ? '#' : d === 2 ? '##' : d === 11 ? 'b' : d === 10 ? 'bb' : null;
+  }
+  // the scale spelled LETTER-PER-DEGREE: each degree takes the next letter name, the
+  // accidental chosen to hit the pitch class. This is what makes F major spell Bb
+  // (B-letter, one flat) not A#. Falls back to the canonical name only if a degree
+  // would need a >double accidental (exotic mode+key combos; never major/minor).
+  function spellScaleKeyAware(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    var tonic = keyLabel(root, mode), startIdx = LETTERS.indexOf(tonic.charAt(0));
+    return MODES[modeKey(mode)].map(function (s, i) {
+      var letter = LETTERS[(startIdx + i) % 7], target = (pc + s) % 12;
+      var acc = accFor(((target - LETTER_PC[letter]) % 12 + 12) % 12);
+      return acc === null ? spell(target) : letter + acc;
+    });
+  }
+  // one pitch class spelled in a key context: diatonic -> its scale-degree letter,
+  // chromatic -> the key's flat/sharp convention.
+  function spellKeyAware(pc, root, mode) {
+    pc = ((pc % 12) + 12) % 12;
+    var kp = pcOf(root); if (kp < 0) return spell(pc);
+    var steps = MODES[modeKey(mode)], names = spellScaleKeyAware(root, mode);
+    for (var i = 0; i < steps.length; i++) if ((kp + steps[i]) % 12 === pc) return names[i];
+    return (isFlatKey(root, mode) ? FLAT_NAMES : SHARP_NAMES)[pc];
+  }
+
   function position(root) { return ORDER.indexOf(norm(root)); }
   function atPosition(n) { return ORDER[((n % 12) + 12) % 12]; }
 
@@ -103,12 +162,13 @@
     if (third === 4 && fifth === 8) return { q: 'aug', t: 'aug' };
     return { q: '', t: 'maj' };
   }
-  // diatonic triads of any mode, built by stacking thirds within its own scale
-  function diatonic(root, mode) {
+  // diatonic triads of any mode, built by stacking thirds within its own scale.
+  // `names` supplies the degree spellings so the SAME triad math backs both the
+  // canonical-sharp `diatonic` and the key-aware `diatonicKeyAware` (#85).
+  function diatonicFrom(root, mode, names) {
     var pc = pcOf(root); if (pc < 0) return [];
-    var sc = spellScale(root, mode);                       // properly-spelled names
     var pcs = MODES[modeKey(mode)].map(function (s) { return (pc + s) % 12; }); // pcs from formula
-    return sc.map(function (r, i) {
+    return names.map(function (r, i) {
       var third = (((pcs[(i + 2) % 7] - pcs[i]) % 12) + 12) % 12;
       var fifth = (((pcs[(i + 4) % 7] - pcs[i]) % 12) + 12) % 12;
       var qq = triadQuality(third, fifth);
@@ -117,6 +177,9 @@
       return { roman: rn, chord: r + qq.q, root: r, quality: qq.q };
     });
   }
+  function diatonic(root, mode) { return diatonicFrom(root, mode, spellScale(root, mode)); }
+  // key-aware twin: chord roots spelled by the conventional key world (F major -> Bb IV)
+  function diatonicKeyAware(root, mode) { return diatonicFrom(root, mode, spellScaleKeyAware(root, mode)); }
   // split a chord token into its root note and its suffix (everything after the root)
   function chordParts(chord) {
     var m = /^([A-Ga-g][#b]?)(.*)$/.exec((chord || '').trim());
@@ -305,6 +368,12 @@
     spellRoot: spellRoot,
     spellScale: spellScale,
     scale: scale,
+    keyLabel: keyLabel,                    // #85: conventional key-tonic name (A# -> Bb)
+    isFlatKey: isFlatKey,
+    spellKeyAware: spellKeyAware,          // #85: one pc, spelled in a key context
+    spellScaleKeyAware: spellScaleKeyAware,// #85: the 7 scale notes, key-appropriate
+    scaleKeyAware: spellScaleKeyAware,
+    diatonicKeyAware: diatonicKeyAware,    // #85: diatonic triads, key-appropriate names
     scaleDegrees: scaleDegrees,
     modeChange: modeChange,
     modeInfo: function (mode) { return MODE_INFO[modeKey(mode)]; },

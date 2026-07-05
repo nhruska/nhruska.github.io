@@ -201,7 +201,13 @@
 // diagram.js (comment truth only), shared/backup.js (music.lastRestore.
 // joins EXCLUDE). check-cache-bump.sh re-verified against origin/main
 // immediately before push.
-var CACHE = 'music-v117';
+// #85 (key-aware note spelling, PR #98): v117->v118 - shared/circle.js
+// (key-aware display layer: spellScaleKeyAware/keyLabel/spellKeyAware +
+// diatonicFrom refactor), shared/songbook.js (Compose chips/key picker/
+// suggestions spell key-aware via displayChord/keyLabel), shared/tracks.js
+// (Studio scale/chords/fretboard/key chips delegate to scaleKeyAware/
+// diatonicKeyAware/keyLabel). build-stamp VERSION moves with this.
+var CACHE = 'music-v118';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
