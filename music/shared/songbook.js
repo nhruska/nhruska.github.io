@@ -2342,7 +2342,14 @@
       });
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
     }
+    // M-EAR wave 1: the Compose key-preview's active scale-audition handle -
+    // declared immediately outside renderKeyView (mirrors tracks.js's
+    // studioSound var, same reasoning) so a NEW renderKeyView() call (a
+    // key/mode change) can silence a playback a PREVIOUS call started,
+    // before the DOM subtree it was marking gets wiped below.
+    var composeSound = null;
     function renderKeyView() {
+      if (composeSound) { composeSound.stop(); composeSound = null; }
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
@@ -2373,6 +2380,63 @@
         // studioTheory/soloBundle -> Circle.scaleDegrees/soloScaleDegrees).
         var degreesLine = document.createElement('div'); degreesLine.className = 'keySoloDegrees'; degreesLine.hidden = true;
         var frameLine = document.createElement('div'); frameLine.className = 'keySoloFrame'; frameLine.hidden = true;
+        // M-EAR wave 1: per-note tokens (data-i) on notesLine/degreesLine so
+        // onNote(i) can bounce a .sounding marker across them, plus the
+        // play/stop toggle - composes the SAME .iconBtn.soundToggle primitive
+        // the Studio scale panel uses (tracks.js), not a one-off look
+        // (Element Consistency Law). notesRow puts the toggle beside the
+        // notes line without an extra vertical row (one-screen-above-the-fold).
+        var notesRow = document.createElement('div'); notesRow.className = 'keySoloNotesRow';
+        var soundToggle = document.createElement('button');
+        soundToggle.type = 'button'; soundToggle.className = 'iconBtn soundToggle keySoloSoundToggle';
+        soundToggle.setAttribute('aria-label', 'Hear this scale'); soundToggle.setAttribute('aria-pressed', 'false');
+        soundToggle.innerHTML = '&#9658;';
+        var curNotes = null; // the currently-selected chip's note names (for the toggle to derive pcs from)
+        function renderNoteTokens(notes) {
+          return notes.map(function (n, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(n) + '</span>'; }).join(' ');
+        }
+        function renderDegreeTokens(degrees) {
+          return (degrees || []).map(function (d, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(d) + '</span>'; }).join(' ');
+        }
+        function clearSoundMarks() {
+          [notesLine, degreesLine].forEach(function (c) {
+            Array.prototype.forEach.call(c.querySelectorAll('.sounding'), function (m) { m.classList.remove('sounding'); });
+          });
+        }
+        function markSoundingNote(i) {
+          [notesLine, degreesLine].forEach(function (c) {
+            var m = c.querySelector('[data-i="' + i + '"]');
+            if (m) m.classList.add('sounding');
+          });
+        }
+        function setSoundToggle(on) {
+          soundToggle.classList.toggle('on', on);
+          soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+          soundToggle.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
+          soundToggle.innerHTML = on ? '&#9632;' : '&#9658;';
+        }
+        // Chip switch and any renderKeyView() re-render (key/mode change, the
+        // popover closing - see the MutationObserver below) all stop playback
+        // (implementation note #3, M-EAR wave 1 spec) - this is the ONE place
+        // that does it for the Compose preview.
+        function stopComposeSound() {
+          if (composeSound) { composeSound.stop(); composeSound = null; }
+          setSoundToggle(false);
+          clearSoundMarks();
+        }
+        soundToggle.onclick = function () {
+          if (composeSound) { stopComposeSound(); return; }
+          if (!global.Sound || !curNotes) return;
+          // noteToPc (module scope, above) - the same generic note-name ->
+          // pitch-class parser chord transposition already uses.
+          var pcs = curNotes.map(noteToPc).filter(function (p) { return p !== null; });
+          if (!pcs.length) return;
+          setSoundToggle(true);
+          composeSound = global.Sound.playScale(pcs, {
+            onNote: function (i) { clearSoundMarks(); markSoundingNote(i % pcs.length); },
+            onStop: function () { composeSound = null; setSoundToggle(false); clearSoundMarks(); }
+          });
+        };
         var scaleLabel = (MODES[keyMode] && MODES[keyMode].label) || escHTML(String(keyMode));
         var CHIPS = [
           { id: 'mode', label: scaleLabel },
@@ -2403,13 +2467,18 @@
         function selectChip(scaleId) {
           var notes = soloChipScale(keyRoot, keyMode, scaleId);
           if (!notes) return; // unresolvable -> keep whatever was already on-screen
+          // M-EAR wave 1 (implementation note #3): a scale-chip switch always
+          // stops any in-progress audition - the sounding scale is about to
+          // change out from under the marker.
+          stopComposeSound();
           curChipId = scaleId;
+          curNotes = notes;
           renderChips();
-          notesLine.innerHTML = 'Solo over it - <strong>' + escHTML(notes.join(' ')) + '</strong>';
+          notesLine.innerHTML = 'Solo over it - <strong>' + renderNoteTokens(notes) + '</strong>';
           // Degrees are best-effort labeling only - notes already resolved above,
           // so a null/empty degrees result just hides the line, never blocks the chip.
           var degrees = soloChipDegrees(keyMode, scaleId);
-          if (degrees && degrees.length) { degreesLine.textContent = degrees.join(' '); degreesLine.hidden = false; }
+          if (degrees && degrees.length) { degreesLine.innerHTML = renderDegreeTokens(degrees); degreesLine.hidden = false; }
           else { degreesLine.textContent = ''; degreesLine.hidden = true; }
           var caption = soloChipCaption(scaleId);
           if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
@@ -2417,8 +2486,23 @@
         }
         renderChips();
         selectChip('mode'); // default every render: the key's own scale, never persisted
-        wrap.appendChild(chipsRow); wrap.appendChild(notesLine); wrap.appendChild(degreesLine); wrap.appendChild(frameLine);
+        notesRow.appendChild(notesLine); notesRow.appendChild(soundToggle);
+        wrap.appendChild(chipsRow); wrap.appendChild(notesRow); wrap.appendChild(degreesLine); wrap.appendChild(frameLine);
         el.keyView.appendChild(wrap);
+        // Closing the key/mode flyout popover (buildKeyPicker toggles
+        // el.keyFlyout.hidden - out of this function's grant, so observed
+        // rather than hooked directly) also silences an in-progress preview -
+        // "tab/surface change" (implementation note #3) for the one teardown
+        // path that doesn't re-run renderKeyView() itself. One-shot: the next
+        // renderKeyView() call rebuilds this whole block and re-observes.
+        try {
+          if (typeof MutationObserver !== 'undefined' && el.keyFlyout) {
+            var mo = new MutationObserver(function () {
+              if (el.keyFlyout.hidden) { stopComposeSound(); mo.disconnect(); }
+            });
+            mo.observe(el.keyFlyout, { attributes: true, attributeFilter: ['hidden'] });
+          }
+        } catch (e) {}
       })();
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
