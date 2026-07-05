@@ -908,6 +908,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeToast.tap{cursor:pointer;} /* persistent toast: tap anywhere on it to dismiss */
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
+/* TOAST+ACTION host modifier (M-DESIGN-ENFORCE wave 2, UAT U19; toast.js
+   Toast.showAction) - any undoable-outcome panel (setlist item-remove undo,
+   Compose Clear-undo) adds this class alongside its own visual class
+   (.setUndo, .composeRow) so it can host the shared countdown .toastBar
+   without each consumer re-declaring position:relative/overflow:hidden. */
+.toastAction{position:relative;overflow:hidden;}
+/* The countdown bar itself - toast.js creates + times it (Toast.showAction),
+   this file only styles it, so its look is identical everywhere it appears
+   (the SSOT point of a shared primitive). Accent-derived per component-
+   conventions.md token rule (never a hardcoded color); width is animated
+   from JS via an inline `transition`/`width` pair - this rule supplies the
+   static geometry + color only. */
+.toastBar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);pointer-events:none;}
+/* prefers-reduced-motion fallback (design refinement rule 4): NO width
+   animation - a static full-width stripe for the toast's whole lifetime.
+   The toast still auto-hides at its normal duration; only the motion is
+   suppressed. !important guards against toast.js's own inline width/
+   transition writes (it early-returns before touching the bar when this
+   class is present, but this is cheap, explicit insurance). */
+.toastBar-static{width:100% !important;transition:none !important;}
 /* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
    to the Studio). The chip that opens it lives in the button bar now; this is just the
    drop-down, hidden by default (no row when closed). */
@@ -1090,6 +1110,19 @@ footer{display:none;}
 /* Subtle transient toast (add-to-setlist cue etc). Sits above the tab bar. */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* HELP-icon convention (M-DESIGN-ENFORCE wave 2, UAT U19 - "help panels
+   clearly noted with an icon"): a portable, CSS-only marker for an
+   always-available explainer toggle (ui-primitives.md HELP primitive) -
+   add this class ALONGSIDE a toggle's own class (e.g. class="bt-st-why-
+   toggle helpIcon") to prefix its label with a small (i)-style glyph, no
+   markup change needed. Declared here (not tracks.css) so it is reusable
+   app-wide - songbook.css loads on every page, the app's cross-file class
+   SSOT (ssot-registry.md). Applying it to the existing why-toggle/Guide
+   family (tracks.js, M-EAR-1.6 grant) is a DEFERRED-TO-SIBLING follow-up,
+   not built in this mission - see component-conventions.md Findings
+   register. */
+.helpIcon::before{content:'\24D8';margin-right:.35em;opacity:.75;font-weight:400;}
 
 /* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
  * produced by Notables.renderBanner() in shared/notables.js.

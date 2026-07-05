@@ -150,7 +150,20 @@
 // that isn't curated, and this keeps that card's height in sync with its
 // row-mates regardless). check-cache-bump.sh re-verified against
 // origin/main immediately before this push.
-var CACHE = 'music-v112';
+// M-DESIGN-ENFORCE wave 2 (2026-07-05, UAT U19): v112->v113 - shared/toast.js
+// gains Toast.showAction()/.wirePauseOnTouch() (TOAST+ACTION undo primitive),
+// shared/songbook.js/songbook.css (setlist + Compose Clear undo banners
+// migrated onto it; .toastAction/.toastBar rules), play/index.html
+// (Settings backup/restore native confirm()/alert() replaced with the
+// app-styled Toast/Modal primitives). No new/removed CORE paths. Rebased
+// past #165's v110 (M-TRACKLIB wave 2a), #168's v111 (S-DIM-SHAPES), AND
+// #169's v112 (M-EAR wave 1.6, landed in parallel with the SAME v111->v112
+// target - the exact identical-string collision A10/#117 guards against) -
+// three sibling collisions while this branch was in flight (originally cut
+// from v109) - max+1 discipline, same as every prior sibling collision;
+// check-cache-bump.sh re-verified against origin/main immediately before
+// push.
+var CACHE = 'music-v113';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
