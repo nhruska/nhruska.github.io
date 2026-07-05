@@ -255,6 +255,8 @@ var RADIUS_CONSUMERS = [
   ['.bt-add-panel', tracksStripped, '--r-card'],
   ['.bt-qcard', tracksStripped, '--r-card'],
   ['.cofPanelInner', tracksStripped, '--r-card'],
+  // M-EAR wave 1.6 (U16): the Legend primitive's own card surface.
+  ['.legend', tracksStripped, '--r-card'],
   // --r-input (10px): text-input controls (narrow application - see the
   // :root token block's scope note; .search/.bt-in deliberately NOT migrated)
   ['.composeRowInput', songbookStripped, '--r-input']
@@ -269,6 +271,59 @@ RADIUS_CONSUMERS.forEach(function (entry) {
     assert.ok(m, '"' + selector + '" has no border-radius declaration, got: ' + body);
     assert.strictEqual(m[1].trim(), 'var(' + tokenVar + ')', '"' + selector + '" border-radius must be var(' + tokenVar + '), got: ' + m[1]);
   });
+});
+
+/* ---------------------------------------------------------------------
+ * (d) U20 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md,
+ * decisions.md D-EAR-1.6) - the accent-derived kx/sound palette. Every
+ * color declared INSIDE an `@supports (color: oklch(from red l c h))`
+ * feature-detect block must derive from `var(--accent)` via CSS Relative
+ * Color Syntax - never a stray literal hex smuggled into the "modern
+ * browser" palette layer. The literal-hex FALLBACK declarations OUTSIDE
+ * the @supports block (checked by the pre-existing `.sound-bg`/`.sound-line`
+ * literal-hex test above) are correct and expected - this assertion is
+ * scoped to the @supports block's own content only.
+ * ------------------------------------------------------------------- */
+
+function supportsBlockBody(stripped) {
+  var m = stripped.match(/@supports\s*\(color:\s*oklch\(from red l c h\)\)\s*\{([\s\S]*)\}\s*$/);
+  if (!m) return null;
+  // Trim to the LAST top-level closing brace that matches the @supports
+  // block's own opening one (a naive [\s\S]* is greedy to end-of-file,
+  // which is fine here since nothing follows the block in either file
+  // today - re-derive properly if that ever changes).
+  return m[1];
+}
+
+test('tracks.css: the U20 @supports palette block derives --kx-chord/--kx-blue from var(--accent) via oklch(), never a stray literal hex', function () {
+  var body = supportsBlockBody(tracksStripped);
+  assert.ok(body !== null, 'expected an @supports (color: oklch(from red l c h)) block in tracks.css');
+  assert.ok(body.indexOf('--kx-chord:oklch(from var(--accent)') >= 0, 'expected --kx-chord derived from var(--accent), got: ' + body);
+  assert.ok(body.indexOf('--kx-blue:oklch(from var(--accent)') >= 0, 'expected --kx-blue derived from var(--accent), got: ' + body);
+  assert.strictEqual(/#[0-9a-fA-F]{3,6}\b/.test(body), false, 'found a stray literal hex color inside the @supports palette block: ' + body);
+});
+
+test('songbook.css: the U20 @supports palette block derives --sound-bg/--sound-line from var(--accent) via oklch(), never a stray literal hex', function () {
+  var body = supportsBlockBody(songbookStripped);
+  assert.ok(body !== null, 'expected an @supports (color: oklch(from red l c h)) block in songbook.css');
+  assert.ok(body.indexOf('--sound-bg:oklch(from var(--accent)') >= 0, 'expected --sound-bg derived from var(--accent), got: ' + body);
+  assert.ok(body.indexOf('--sound-line:oklch(from var(--accent)') >= 0, 'expected --sound-line derived from var(--accent), got: ' + body);
+  assert.strictEqual(/#[0-9a-fA-F]{3,6}\b/.test(body), false, 'found a stray literal hex color inside the @supports palette block: ' + body);
+});
+
+test('U20: the complementary (sounding, h+180) and adjacent (chord/blue, h+-30) hue offsets are each declared exactly once per file, both themes', function () {
+  var tracksBody = supportsBlockBody(tracksStripped);
+  var songbookBody = supportsBlockBody(songbookStripped);
+  // tracks.css: 2 rule blocks (bare :root + light override), each declaring
+  // both --kx-chord (h + 30) and --kx-blue (h - 30) -> 2 occurrences apiece.
+  var chordPlus30 = (tracksBody.match(/calc\(h \+ 30\)/g) || []).length;
+  var bluesMinus30 = (tracksBody.match(/calc\(h - 30\)/g) || []).length;
+  assert.strictEqual(chordPlus30, 2, 'expected --kx-chord\'s h+30 offset declared once per theme (dark + light), got ' + chordPlus30);
+  assert.strictEqual(bluesMinus30, 2, 'expected --kx-blue\'s h-30 offset declared once per theme (dark + light), got ' + bluesMinus30);
+  // songbook.css: 2 rule blocks, each declaring --sound-bg AND --sound-line
+  // at h + 180 -> 4 occurrences total.
+  var complementary180 = (songbookBody.match(/calc\(h \+ 180\)/g) || []).length;
+  assert.strictEqual(complementary180, 4, 'expected the complementary h+180 offset on both --sound-bg and --sound-line, both themes (4 total), got ' + complementary180);
 });
 
 run();

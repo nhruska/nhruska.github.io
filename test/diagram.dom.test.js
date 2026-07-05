@@ -290,6 +290,38 @@ test('opts.patternLabel as an empty string behaves like absent (no label div ren
   assert.strictEqual(el.innerHTML.indexOf('dg-shapeLabel'), -1, 'empty string must not render a label div');
 });
 
+/* ---------- U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md):
+ * opts.reserveLabelSlot - card-height parity for an honest-null classifier
+ * result (e.g. an uncurated dim/aug quality) alongside classified siblings
+ * in the same row. ---------- */
+test('opts.reserveLabelSlot ABSENT (every pre-existing caller) -> byte-identical to the pre-U21 SHA-256 lock, small size', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E' });
+  var hash = crypto.createHash('sha256').update(el.innerHTML).digest('hex');
+  assert.strictEqual(hash, '47a0d049153b841f4b8270e3210299c4d53ab9459d89e6fc963aeb9f7588ce32');
+});
+test('opts.reserveLabelSlot=true + patternLabel empty -> renders an EMPTY dg-shapeLabel div (the reserved slot), never the classifier text', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: '', reserveLabelSlot: true });
+  var start = el.innerHTML.indexOf('<div class="dg-shapeLabel"');
+  assert.ok(start > 0, 'expected a dg-shapeLabel div even with an empty patternLabel');
+  var afterOpenTag = el.innerHTML.indexOf('>', start) + 1;
+  var closeTag = el.innerHTML.indexOf('</div>', afterOpenTag);
+  assert.strictEqual(el.innerHTML.slice(afterOpenTag, closeTag), '', 'expected the reserved slot to hold no text when patternLabel is empty');
+});
+test('opts.reserveLabelSlot=true reserves the SAME slot markup ahead of it as a classified sibling - only the inner text differs', function () {
+  var label = 'open E shape, root on 6, root position';
+  var classified = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: label, reserveLabelSlot: true });
+  var unclassified = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: '', reserveLabelSlot: true });
+  var classifiedLabelStart = classified.innerHTML.indexOf('<div class="dg-shapeLabel"');
+  var unclassifiedLabelStart = unclassified.innerHTML.indexOf('<div class="dg-shapeLabel"');
+  assert.strictEqual(classified.innerHTML.slice(0, classifiedLabelStart), unclassified.innerHTML.slice(0, unclassifiedLabelStart),
+    'the diagram markup ahead of the label div must be identical regardless of classifier result');
+  assert.ok(/min-height:3\.75em/.test(unclassified.innerHTML), 'expected the reserved slot to carry the same min-height as a populated slot, so an empty row-mate renders close to the same height');
+});
+test('opts.reserveLabelSlot=false (explicit) + empty patternLabel behaves like absent - no label div (does not accidentally reserve)', function () {
+  var el = D.render(E_OPEN, { size: 'small', name: 'E', patternLabel: '', reserveLabelSlot: false });
+  assert.strictEqual(el.innerHTML.indexOf('dg-shapeLabel'), -1, 'reserveLabelSlot:false must not render a label div for an empty label');
+});
+
 /* ---------- S-DIAGRAM-PREF step 1: notifyRendered()'s trigger hook ---------- */
 test('render() with a real voicing dispatches exactly one music:diagram-rendered CustomEvent', function () {
   var fired = 0;

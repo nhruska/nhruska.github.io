@@ -34,6 +34,20 @@ The app's design-system reference: canonical style/convention per element class,
 - Link rows: .lyricsLinks / .bt-st-linkrow - centered flex, gap 6px 22px; labels must not wrap at 412px (U4 precedent: shorten text, never wrap).
 - URLs users must tap are live links; never code-formatted.
 
+## Legend (dot-swatch + label rows)
+
+`shared/legend.js` (`window.Legend.render(classes) -> HTMLElement|null`, M-EAR wave 1.6, U16, decisions.md D-EAR-1.6) is THE primitive for "here's what each colored dot/mark means" - never hand-roll a prose caption sentence for a dot-class legend again (it replaced exactly that: the old M-GUIDE W3a target-caption sentence).
+
+| Convention | Detail |
+|---|---|
+| Fixed vocabulary | `LEGEND_ORDER = ['root','chord','blue','ghost','rub','sounding']` - a caller passes WHICH of these are currently visible on-screen (never a caller-invented class); unknown keys are silently dropped |
+| Swatch = real tokens, never approximated hex | Each swatch is a tiny inline SVG circle using the SAME `kx-*` class + `var(--kx-*/--accent*/--dg-dot*/--sound-*)` styling `diagram.js`'s actual fretboard dots use - a theme/accent change propagates to the legend for free. `test/legend.test.js`'s Tier 2 static lint enforces ZERO literal hex anywhere in `legend.js`'s source |
+| Container surface | `.legend` (tracks.css EOF) is a CARD surface - `--surface-2`/`--line`/`var(--r-card)` (same radius-by-role token every other card consumer uses, per the Spacing/radius section below), NOT a new surface token |
+| Row shape | `.legendRow` (flex, gap 8px) > `.legendSwatch` (the SVG) + `.legendLbl` (`.72rem`, `var(--txt-soft)` - the SAME ink family `.bt-st-guide-txt` already uses for a plain description row, no new text-color token) |
+| Order | Always renders in the FIXED `LEGEND_ORDER`, regardless of the caller's array order - root leads (the one class every scale render always has), then the D-TARGET precedence order (chord > blue > ghost), then the two MODIFIER classes (rub, sounding) last |
+| Null-when-empty | `render()` returns `null` (no DOM, no empty card) when the classes array is empty/falsy - same convention as `KeyExplorer.renderScale`/`Diagram.scale` |
+| Reuse, don't reinvent | Any future dot-class legend (a new theory surface, a Compose-side equivalent) MUST call `Legend.render()`, not hand-roll a second caption/legend component - extend `LEGEND_ORDER`/`DEFS` in `legend.js` if a genuinely new class is needed |
+
 ## Modal / Disclosure / Tabs
 
 - **Modal:** composeModalBackdrop standard (U7): dim backdrop, centered dialog, role=dialog + aria-modal, focus into dialog, Esc/hardware-Back/backdrop-tap all dismiss through NavHistory (no ghost history entries).
@@ -49,6 +63,21 @@ The app's design-system reference: canonical style/convention per element class,
 ## Color tokens
 
 The palette is the :root custom-property block in [songbook.css](../../shared/songbook.css) (dark default ~:14-52, light overrides ~:59-69) - THE token SSOT; never hardcode a color in a component rule. Key semantics: --txt/--txt-soft/--txt-dim (3-step text ladder); --accent (user-hue) with --accent-ink (readable-on-surface form: bright in dark theme, darkened in light), --accent-dim/--accent-deep (muted/deep selection surfaces), --on-accent (always-dark ink for accent fills); --brass (computed accent+dim mix for secondary highlights); --surface/--surface-2/--bg/--bg-2; --line/--line-strong; --warn/--bad/--good. Theme set pre-paint on <html data-theme>; accent hue persisted (music.accent.v1) and applied at runtime - any new accent-derived color MUST be computed (color-mix) so hue changes propagate.
+
+### Note palette (U20, M-EAR wave 1.6, decisions.md D-EAR-1.6)
+
+The kx-* fretboard dot-class colors (root/chord/blue/sounding) derive from the user's OWN `--accent` hue via **CSS Relative Color Syntax** (`oklch(from var(--accent) L C calc(h + offset))`), feature-detected behind `@supports (color: oklch(from red l c h))` - a literal-hex fallback pair (unchanged from pre-U20) covers browsers without support. Only the HUE (`h`) rotates per class; **L** (lightness) and **C** (chroma) are PINNED per theme so an unusually bright or muted user-chosen accent can't blow the contrast floor - only H tracks the picker.
+
+| Class | Hue offset | Dark theme L/C | Light theme L/C | Why this offset |
+|---|---|---|---|---|
+| root | 0 (= `--accent` itself) | n/a (uses `--accent` directly) | n/a | It IS home - no rotation |
+| chord (chord tone) | h + 30 | L .74 / C .15 | L .50 / C .16 | Adjacent - harmonious with root, still distinguishable |
+| blue (blue note) | h - 30 | L .74 / C .15 | L .48 / C .18 | Adjacent on the OTHER side from chord - distinct from both root and chord |
+| ghost (outside) | unchanged (neutral gray, `--kx-ghost`) | - | - | Deliberately an outline/absence signal, not a "note color" |
+| rub | no fill of its own (renders on a plain `--dg-dot` "scale" fill + dashed ring) | - | - | A MODIFIER, not a base class |
+| sounding | h + 180 (complementary) | L .22 / C .06 (bg), L .72 / C .10 (line) | L .93 / C .03 (bg), L .42 / C .18 (line) | Needs MAXIMUM perceptual distance - marks a transient "playing right now" state, not a persistent theory class |
+
+Declared: tracks.css (`--kx-chord`/`--kx-blue`, right after their literal-hex fallback), songbook.css (`--sound-bg`/`--sound-line`, right after their `:root[data-theme="light"]` fallback). Guarded by [test/consistency-lint.test.js](../../../test/consistency-lint.test.js)'s "(d) U20" block - every `@supports` palette declaration must derive from `var(--accent)`, zero stray literal hex inside that block. Live-verified (shipping PR's V&V): changing the accent picker re-colors BOTH the real fretboard dots AND the Legend swatches (shared/legend.js reuses the SAME kx-* classes) to the identical resolved color, in both themes - screenshots in the PR body. Not exhaustively re-verified against every one of the app's 7 accent choices; spot-checked at the default (teal) and one hue-shifted pick (coral, light theme) plus one dark-theme pick (violet).
 
 ## Fonts
 
@@ -80,4 +109,4 @@ The palette is the :root custom-property block in [songbook.css](../../shared/so
 
 ---
 
-**Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token blocks); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, U3/U4/U7 rows); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards).
+**Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token blocks); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, U3/U4/U7 rows, D-EAR-1.6); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards); shared/legend.js + [test/legend.test.js](../../../test/legend.test.js) (M-EAR wave 1.6, U16 - the Legend primitive + its no-raw-hex source lint).

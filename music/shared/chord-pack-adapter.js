@@ -286,14 +286,25 @@
     function labelFor(name, frets) {
       return window.DiagramPref ? window.DiagramPref.labelFor(profile.id, name, frets) : '';
     }
+    // U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md): a
+    // 'patterns'-mode caller reserves the label slot on EVERY card in a row
+    // (Diagram.render's opts.reserveLabelSlot), even one shape-classify.js
+    // can't classify (an honest-null dim/aug quality) - so unclassified
+    // cards keep the SAME height as their classified siblings instead of
+    // rendering visibly shorter. 'dots' mode (the default) never reserves,
+    // same as before this wave - zero visual change there. Reads the SAME
+    // pref labelFor() already reads, one place, no new storage key.
+    function reserveLabelSlot() {
+      return !!(window.DiagramPref && typeof window.DiagramPref.get === 'function' && window.DiagramPref.get() === 'patterns');
+    }
     var adapter = {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
-      diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets) }); },
-      diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets) }); },
+      diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets), reserveLabelSlot: reserveLabelSlot() }); },
+      diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets), reserveLabelSlot: reserveLabelSlot() }); },
       diagramChain: function (names, size) {
         var voicings = chainVoicings(names);
-        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i], patternLabel: labelFor(names[i], frets) }); });
+        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i], patternLabel: labelFor(names[i], frets), reserveLabelSlot: reserveLabelSlot() }); });
       },
       // scale map for the active instrument: open-string pitch classes + the scale's
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).
