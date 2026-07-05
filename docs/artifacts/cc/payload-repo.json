@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-05T15:28:07Z",
-  "generator": "command-center-gen.py@0.2.0 (panelkit 0.1.0)",
+  "generatedAt": "2026-07-05T15:57:06Z",
+  "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
   "status": "ok",
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T15:15:30Z",
-    "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
-    "subject": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (#188)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/c05bb40ce3b19b81bac0963506bbe9008ec767f3"
+    "date": "2026-07-05T15:54:48Z",
+    "sha": "2f6b38b0010c450258eb6e7aea5e3a00b2a87c54",
+    "subject": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3) (#189)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/2f6b38b0010c450258eb6e7aea5e3a00b2a87c54"
   },
   "commits": [
+    {
+      "date": "2026-07-05T15:54:48Z",
+      "sha": "2f6b38b0010c450258eb6e7aea5e3a00b2a87c54",
+      "subject": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3) (#189)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2f6b38b0010c450258eb6e7aea5e3a00b2a87c54"
+    },
     {
       "date": "2026-07-05T15:15:30Z",
       "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
@@ -84,20 +90,14 @@
       "sha": "2d917cec2c46999e1799947db7657fe3016f1d7d",
       "subject": "session-start: command-center generator = the sensing sweep (detect repo -> gather intel -> infer intent) (#180)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/2d917cec2c46999e1799947db7657fe3016f1d7d"
-    },
-    {
-      "date": "2026-07-05T07:23:35Z",
-      "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
-      "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
     }
   ],
   "openPRs": [
     {
-      "number": 189,
-      "title": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3)",
-      "branch": "claude/cc-reorder",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/189",
+      "number": 190,
+      "title": "cc: llms.txt agent layer - machine-readable twin beside payload-repo.json",
+      "branch": "claude/llms-txt",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/190",
       "draft": false,
       "ciState": "green",
       "checks": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745557497/job/85235723121"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745713945/job/85236142428"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745557512/job/85235723141"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745713934/job/85236142468"
         }
       ]
     },
@@ -177,99 +177,150 @@
   ],
   "recentMerges": [
     {
+      "createdAt": "2026-07-05T14:51:06Z",
+      "mergedAt": "2026-07-05T15:54:48Z",
+      "number": 189,
+      "title": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/189"
+    },
+    {
+      "createdAt": "2026-07-05T14:40:08Z",
       "mergedAt": "2026-07-05T15:15:31Z",
       "number": 188,
       "title": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/188"
     },
     {
+      "createdAt": "2026-07-05T13:28:47Z",
       "mergedAt": "2026-07-05T14:02:14Z",
       "number": 187,
       "title": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/187"
     },
     {
+      "createdAt": "2026-07-05T13:01:07Z",
       "mergedAt": "2026-07-05T13:11:33Z",
       "number": 186,
       "title": "cc: test-depth metric - 2117 executed cases, not 40 files",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/186"
     },
     {
+      "createdAt": "2026-07-05T12:11:21Z",
       "mergedAt": "2026-07-05T12:52:28Z",
       "number": 185,
       "title": "Case study: the music app - the method's origin, evidenced",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/185"
     },
     {
+      "createdAt": "2026-07-05T11:01:53Z",
       "mergedAt": "2026-07-05T11:01:56Z",
       "number": 184,
       "title": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/184"
     },
     {
+      "createdAt": "2026-07-05T10:47:13Z",
       "mergedAt": "2026-07-05T10:49:29Z",
       "number": 183,
       "title": "Retro panes (design-system day + ear-first night) + CC refresh: full mission record",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/183"
     },
     {
+      "createdAt": "2026-07-05T07:57:31Z",
       "mergedAt": "2026-07-05T07:57:33Z",
       "number": 182,
       "title": "cc-nightly: durable snapshot refresh workflow",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/182"
     },
     {
+      "createdAt": "2026-07-05T07:43:26Z",
       "mergedAt": "2026-07-05T07:56:54Z",
       "number": 181,
       "title": "Command Center v1 (repo layer): the parent artifact above the panes",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/181"
     },
     {
+      "createdAt": "2026-07-05T07:36:08Z",
       "mergedAt": "2026-07-05T07:36:11Z",
       "number": 180,
       "title": "Session-start: CC generator as the sensing sweep",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/180"
     },
     {
+      "createdAt": "2026-07-05T07:23:33Z",
       "mergedAt": "2026-07-05T07:23:35Z",
       "number": 179,
       "title": "Vision capture: command center hierarchy",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/179"
     },
     {
+      "createdAt": "2026-07-05T07:14:59Z",
       "mergedAt": "2026-07-05T07:16:50Z",
       "number": 178,
       "title": "S-TOAST-HOST: setlist-remove/library-delete undo banners no longer leave a visible empty pill (U24)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/178"
     },
     {
+      "createdAt": "2026-07-05T06:57:01Z",
       "mergedAt": "2026-07-05T06:57:03Z",
       "number": 177,
       "title": "Capture: U24",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/177"
     },
     {
+      "createdAt": "2026-07-05T06:30:12Z",
       "mergedAt": "2026-07-05T06:30:14Z",
       "number": 176,
       "title": "Vision capture: deterministic tutor",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/176"
     },
     {
+      "createdAt": "2026-07-05T06:10:58Z",
       "mergedAt": "2026-07-05T06:12:29Z",
       "number": 175,
       "title": "S-SET-INTEGRITY: dangling setlist refs - delete-heal + defensive nav + load-heal (U22)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/175"
-    },
-    {
-      "mergedAt": "2026-07-05T05:57:51Z",
-      "number": 174,
-      "title": "S-REL-NAMES: guidance names the instance (U23) + the concreteness principle",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/174"
     }
   ],
+  "lastCiRun": {
+    "workflowName": "Retry failed Pages deploy",
+    "status": "completed",
+    "conclusion": "skipped",
+    "runStartedAt": "2026-07-05T15:55:57Z",
+    "durationSeconds": 11,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28746447955",
+    "headBranch": "main"
+  },
+  "velocity": {
+    "window_days": 7,
+    "merged_count": 138,
+    "loc": {
+      "added": 36402,
+      "deleted": 5294
+    },
+    "loc_note": null,
+    "typical_merge_hours": 0.03,
+    "weekly": [
+      {
+        "week_start": "2026-06-28",
+        "loc_added": 36402,
+        "loc_deleted": 5294
+      },
+      {
+        "week_start": "2026-06-21",
+        "loc_added": 4411,
+        "loc_deleted": 908
+      },
+      {
+        "week_start": "2026-06-14",
+        "loc_added": 3054,
+        "loc_deleted": 365
+      }
+    ]
+  },
   "deploy": {
     "pages": {
-      "status": "built",
+      "status": "building",
       "htmlUrl": "https://nhruska.github.io/",
       "sourceBranch": "main",
       "buildType": "legacy"
