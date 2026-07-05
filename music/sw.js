@@ -180,7 +180,15 @@
 // counter's "N removed song(s) skipped" notice (Practice + Stage). No
 // new/removed CORE paths. check-cache-bump.sh re-verified against
 // origin/main immediately before push.
-var CACHE = 'music-v115';
+// S-TOAST-HOST (2026-07-05, UAT U24): v115->v116 - shared/songbook.css only
+// (`.setUndo[hidden]{display:none;}` - the missing CSS override for the
+// setlist item-remove undo banner AND the Library delete-undo banner, both
+// of which share the `.setUndo` class; `el.hidden = true` had zero visual
+// effect without it, leaving a visible empty pill after every toast
+// lifecycle completed). No JS logic changes, no new/removed CORE paths.
+// check-cache-bump.sh re-verified against origin/main immediately before
+// push.
+var CACHE = 'music-v116';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

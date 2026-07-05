@@ -284,8 +284,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* J2: setlist edit-mode remove reads as destructive (li-rm only renders in edit mode). */
 #setBody .li-rm{border-color:var(--bad);color:var(--bad);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
-/* Persistent undo banner for the last set removal. */
+/* Timed toast+action undo banner (S-TOAST+ACTION, UAT U19/U22) - shared skin for
+ * the setlist item-remove undo (showSetUndoBanner) and the Library delete-undo
+ * (showDeleteUndoBanner), both toggled via the DOM `hidden` attribute from JS. */
 .setUndo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:9px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
+/* S-TOAST-HOST (UAT U24): `.setUndo{display:flex}` is an AUTHOR-origin rule, which
+ * always outranks the user-agent's `[hidden]{display:none}` regardless of
+ * specificity (origin is resolved before specificity in the cascade) - so without
+ * this explicit override, setting `el.hidden = true` had ZERO visual effect and the
+ * emptied host (innerHTML cleared by paintSetUndoHidden/paintDelUndoHidden) stayed
+ * on screen as a visible, empty pill after every toast lifecycle completed. Same
+ * fix already applied to .composeToast[hidden] below - this class was the one
+ * instance of the pattern that got missed. */
+.setUndo[hidden]{display:none;}
 /* Edit-set toggle: ghost button that lights up accent when editing. */
 #setEdit.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .empty{text-align:center;color:var(--txt-dim);padding:36px 16px;font-size:.92rem;}
