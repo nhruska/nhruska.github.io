@@ -25,6 +25,27 @@ Pipeline:
 
 Stdlib only, plus the `gh` binary (already required elsewhere in this repo's
 toolchain - see rules/github-tool-selection.md).
+
+Built on the vendored panelkit SSOT (scripts/panelkit.py, vendored from
+claude-config skills/control-panel via its vendor-sync.sh; drift check:
+scripts/vendor-check.py) for gh_json, the canonical CI-status vocabulary,
+and the snapshot envelope. This retires this script's independently-
+reinvented run_gh/gh_json pair and its UPPERCASE CI enum (SUCCESS/FAILURE/
+PENDING/MIXED/NONE) - `ciState` now carries panelkit's canonical
+green/red/pending/unknown, the exact vocabulary unification panelkit was
+extracted to enforce (docs/artifacts/cc/repo.html updated in the same
+pass; it is the payload's only consumer). The `gh pr list` fetchers keep
+their cc-payload key shape (number/mergedAt/url) rather than adopting
+panelkit's REST fetchers whose keys differ (n/created_at) - the key-style
+knob is an upstreaming ask recorded in workflows-hub's org-ops ledger.
+
+Snapshot envelope (additive): top-level {generator, source_repo,
+freshness_seconds_at_render (always null at generation - render-time
+field), status, warnings}. Degradations that used to be silent or fatal
+now demote status: a failed PR-list fetch, an unknown Pages status, or an
+unavailable test-case count each append a warning and mark the payload
+partial; a failed commits fetch (the payload's spine) exits 1 WITHOUT
+writing so the last-good payload on disk is never clobbered.
 """
 
 import json
@@ -37,7 +58,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
+import panelkit  # noqa: E402  (vendored SSOT - see scripts/vendor-check.py)
+
 REPO_ROOT = SCRIPT_DIR.parent
+
+# Version stamping introduced with the panelkit adoption (2026-07-05).
+GEN_VERSION = "0.2.0"
 PLANS_DIR = REPO_ROOT / "docs" / "plans"
 ARTIFACTS_DIR = REPO_ROOT / "docs" / "artifacts"
 OUTPUT_PATH = ARTIFACTS_DIR / "cc" / "payload-repo.json"
@@ -51,60 +78,29 @@ REPO_URL = f"https://github.com/{REPO_SLUG}"
 LIVE_SW_URL = "https://nhruska.github.io/music/sw.js"
 
 
-def run_gh(args):
-    """Run a `gh` CLI call, return stdout. Raises RuntimeError on non-zero exit."""
-    result = subprocess.run(
-        ["gh"] + args, capture_output=True, text=True, cwd=REPO_ROOT
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"gh {' '.join(args)} failed: {result.stderr.strip()}")
-    return result.stdout
-
-
-def gh_json(args):
-    return json.loads(run_gh(args))
-
-
 def fetch_commits(limit=12):
     """HEAD + the last `limit` commits on the default branch (public data:
-    sha, subject line, author date, commit URL)."""
-    return gh_json(
-        [
-            "api",
-            f"repos/{REPO_SLUG}/commits",
-            "--jq",
-            f'.[0:{limit}] | [.[] | {{sha: .sha, subject: (.commit.message | split("\\n")[0]), date: .commit.author.date, url: .html_url}}]',
-        ]
+    sha, subject line, author date, commit URL). Returns None on fetch
+    failure - the caller treats that as fatal (the payload's spine)."""
+    result = panelkit.gh_json(
+        "api",
+        f"repos/{REPO_SLUG}/commits",
+        "--jq",
+        f'.[0:{limit}] | [.[] | {{sha: .sha, subject: (.commit.message | split("\\n")[0]), date: .commit.author.date, url: .html_url}}]',
     )
+    return result if isinstance(result, list) else None
 
 
-def ci_rollup_state(checks):
-    if not checks:
-        return "NONE"
-    conclusions = [c.get("conclusion") for c in checks]
-    statuses = [c.get("status") for c in checks]
-    if any(c == "FAILURE" for c in conclusions):
-        return "FAILURE"
-    if any(s != "COMPLETED" for s in statuses):
-        return "PENDING"
-    if all(c == "SUCCESS" for c in conclusions):
-        return "SUCCESS"
-    return "MIXED"
-
-
-def fetch_open_prs():
-    prs = gh_json(
-        [
-            "pr",
-            "list",
-            "--state",
-            "open",
-            "--limit",
-            "50",
-            "--json",
-            "number,title,headRefName,url,statusCheckRollup,isDraft",
-        ]
+def fetch_open_prs(envelope):
+    # -R keeps the call cwd-independent (the retired run_gh pinned cwd to
+    # REPO_ROOT; panelkit.gh_json deliberately does not set a cwd).
+    prs = panelkit.gh_json(
+        "pr", "list", "-R", REPO_SLUG, "--state", "open", "--limit", "50",
+        "--json", "number,title,headRefName,url,statusCheckRollup,isDraft",
     )
+    if not isinstance(prs, list):
+        panelkit.mark_partial(envelope, "open-PR list fetch failed - openPRs is empty this run")
+        return []
     out = []
     for pr in prs:
         checks = pr.get("statusCheckRollup") or []
@@ -115,7 +111,10 @@ def fetch_open_prs():
                 "branch": pr["headRefName"],
                 "url": pr["url"],
                 "draft": pr.get("isDraft", False),
-                "ciState": ci_rollup_state(checks),
+                # Canonical panelkit vocabulary (green/red/pending/unknown) -
+                # replaces this script's own UPPERCASE enum; repo.html's lamp/
+                # pill mapping updated in the same pass.
+                "ciState": panelkit.classify_ci_status_rollup(checks),
                 "checks": [
                     {
                         "name": c.get("name"),
@@ -131,32 +130,31 @@ def fetch_open_prs():
     return out
 
 
-def fetch_recent_merges(limit=15):
-    return gh_json(
-        [
-            "pr",
-            "list",
-            "--state",
-            "merged",
-            "--limit",
-            str(limit),
-            "--json",
-            "number,title,mergedAt,url",
-        ]
+def fetch_recent_merges(envelope, limit=15):
+    """Kept on `gh pr list` (not panelkit.fetch_recent_merges) so the cc
+    payload keeps its locked key shape (number/mergedAt/url vs panelkit's
+    n/created_at) - see the module docstring."""
+    merges = panelkit.gh_json(
+        "pr", "list", "-R", REPO_SLUG, "--state", "merged", "--limit", str(limit),
+        "--json", "number,title,mergedAt,url",
     )
+    if not isinstance(merges, list):
+        panelkit.mark_partial(envelope, "merged-PR list fetch failed - recentMerges is empty this run")
+        return []
+    return merges
 
 
-def fetch_pages_status():
-    try:
-        raw = gh_json(["api", f"repos/{REPO_SLUG}/pages"])
-        return {
-            "status": raw.get("status"),
-            "htmlUrl": raw.get("html_url"),
-            "sourceBranch": (raw.get("source") or {}).get("branch"),
-            "buildType": raw.get("build_type"),
-        }
-    except RuntimeError as e:
-        return {"status": "unknown", "error": str(e)}
+def fetch_pages_status(envelope):
+    raw = panelkit.gh_json("api", f"repos/{REPO_SLUG}/pages")
+    if not isinstance(raw, dict):
+        panelkit.mark_partial(envelope, "Pages status fetch failed - deploy.pages.status is unknown this run")
+        return {"status": "unknown", "error": "pages API fetch failed"}
+    return {
+        "status": raw.get("status"),
+        "htmlUrl": raw.get("html_url"),
+        "sourceBranch": (raw.get("source") or {}).get("branch"),
+        "buildType": raw.get("build_type"),
+    }
 
 
 def fetch_live_cache_version():
@@ -344,23 +342,41 @@ def ops_links():
 
 
 def main():
+    envelope = panelkit.new_envelope(
+        f"command-center-gen.py@{GEN_VERSION} (panelkit {panelkit.PANELKIT_VERSION})",
+        source_repo=REPO_SLUG,
+    )
+
     commits = fetch_commits()
+    if commits is None:
+        # The commits list is the payload's spine - never clobber the
+        # last-good payload with a blank one. Exit 1 is the loud signal
+        # (locally and in the cc-nightly workflow).
+        print("FAIL: commits fetch failed (gh auth/network?) - NOT writing; last-good payload preserved", file=sys.stderr)
+        return 1
     head = commits[0] if commits else None
-    open_prs = fetch_open_prs()
-    recent_merges = fetch_recent_merges()
-    pages = fetch_pages_status()
+    open_prs = fetch_open_prs(envelope)
+    recent_merges = fetch_recent_merges(envelope)
+    pages = fetch_pages_status(envelope)
     live_cache = fetch_live_cache_version()
     local_cache = local_cache_version()
     missions = discover_mission_panes()
     visions = discover_visions()
     queue = parse_queue()
     suite = suite_shape()
+    if suite.get("warning"):
+        panelkit.mark_partial(envelope, f"suite: {suite['warning']}")
     ops = ops_links()
 
     cache_match = (live_cache == local_cache) if (live_cache and local_cache) else None
 
     payload = {
-        "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generatedAt": envelope["generatedAt"],
+        "generator": envelope["generator"],
+        "source_repo": envelope["source_repo"],
+        "freshness_seconds_at_render": envelope["freshness_seconds_at_render"],
+        "status": envelope["status"],
+        "warnings": envelope["warnings"],
         "repo": {
             "owner": OWNER,
             "name": REPO,
@@ -391,7 +407,8 @@ def main():
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2) + "\n")
 
-    print(f"wrote {OUTPUT_PATH.relative_to(REPO_ROOT)}")
+    status_note = payload["status"] if payload["status"] == "ok" else f"{payload['status']}: {len(payload['warnings'])} warning(s)"
+    print(f"wrote {OUTPUT_PATH.relative_to(REPO_ROOT)} (status {status_note})")
     print(
         f"  head: {head['sha'][:7] if head else '?'} - {len(commits)} commits, "
         f"{len(open_prs)} open PRs, {len(recent_merges)} recent merges"

@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Vendored panelkit drift check
+        # Self-integrity layer (body vs stamp); the SSOT layer self-SKIPs
+        # here (no claude-config checkout in CI). Drift fails the nightly
+        # loudly instead of silently regenerating from a hand-edited copy.
+        run: python3 scripts/vendor-check.py
       - name: Generate payload
         env:
           GH_TOKEN: ${{ github.token }}

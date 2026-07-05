@@ -133,11 +133,15 @@ function fmtDate(iso){
 }
 
 // Single state->suffix mapping shared by the cockpit lamps (l-*) and the
-// per-PR CI pills (pl-*) - both surfaces classify the same 4 CI states.
+// per-PR CI pills (pl-*). ciState carries panelkit's canonical vocabulary
+// (green/red/pending/unknown - the vendored SSOT's CI unification, see
+// scripts/command-center-gen.py); the legacy UPPERCASE values are still
+// accepted so an older committed payload renders correctly until the
+// next nightly regen.
 function ciSuffix(state){
-  if (state === 'SUCCESS') return 'ok';
-  if (state === 'FAILURE') return 'fail';
-  if (state === 'PENDING' || state === 'MIXED') return 'run';
+  if (state === 'green' || state === 'SUCCESS') return 'ok';
+  if (state === 'red' || state === 'FAILURE') return 'fail';
+  if (state === 'pending' || state === 'PENDING' || state === 'MIXED') return 'run';
   return 'off';
 }
 function ciLampClass(state){ return 'l-' + ciSuffix(state); }
