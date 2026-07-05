@@ -307,6 +307,12 @@
 <script src="../shared/notables.js"></script>
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/repertoire-form.js"></script>
+<!-- yt-info.js: U17 (M-TRACKLIB w2a) - keyless YouTube oEmbed lookup + title
+     field-hint parsing, consumed by repertoire-form.js's Video URL suggest
+     row. Resolves Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both
+     load later in this file), so its position here is only "near its
+     consumer", not a hard dependency order. -->
+<script src="../shared/yt-info.js"></script>
 <!-- M-GUIDE W3a: SoloGuide (per-scale mentor cards + framing) - before songbook.js
      AND tracks.js so both W3a's Studio and W3b's Compose solo chips can call it. -->
 <script src="../shared/solo-guide.js"></script>

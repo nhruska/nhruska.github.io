@@ -27,6 +27,18 @@
 .rf-seq{resize:vertical;min-height:44px;font-family:'Space Mono',monospace;}
 .rf-actions{display:flex;gap:10px;margin-top:18px;}
 .rf-actions .btn{flex:1;}
+/* U17 (M-TRACKLIB w2a) - YT-prefill suggest row: same visual bucket as
+ * .rf-note (bg-2/line/radius 8), extended with an Apply/Dismiss action row. */
+.rf-yt-suggest{font-size:.8rem;color:var(--txt-dim);background:var(--bg-2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;margin:2px 0 4px;display:flex;flex-direction:column;gap:8px;}
+.rf-yt-suggest[hidden]{display:none;}
+.rf-yt-txt{color:var(--txt-soft);}
+.rf-yt-actions{display:flex;gap:8px;}
+.rf-yt-actions button{flex:1;min-height:44px;border:1px solid var(--line-strong);background:transparent;
+  color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.8rem;border-radius:var(--r-btn-sm);
+  cursor:pointer;transition:transform .08s,color .15s,border-color .15s;}
+.rf-yt-actions button:active{transform:scale(.97);}
+.rf-yt-apply{color:var(--accent-ink);border-color:var(--accent-ink);}
 /* Studio's plain "edit this track" link, replacing the retired inline paste-box
  * for t.custom items (Task 2 requirement 4). */
 .bt-st-editlink{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);

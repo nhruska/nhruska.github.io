@@ -105,4 +105,43 @@ test('readFields in FORK mode (no Chords field) leaves seq undefined, not a cras
   assert.strictEqual(f.title, 'Let It Be');
 });
 
+/* ---- applicableYtHints (U17, M-TRACKLIB w2a): apply-to-empty-only ------
+ * DOM wiring (wireYtSuggest) is Playwright/live-check territory (per this
+ * file's header note); this covers the pure decision logic it delegates to. */
+test('applicableYtHints: all fields empty -> every non-null hint is applicable', function () {
+  var out = RF.applicableYtHints(
+    { t: 'A Minor Blues Backing Track', a: 'QuickTracks', key: 'A', mode: 'minor', genre: 'blues', bpm: 80 },
+    { title: '', artist: '', key: '', mode: 'major', genre: '' }
+  );
+  assert.deepStrictEqual(out, { title: 'A Minor Blues Backing Track', artist: 'QuickTracks', key: 'A', mode: 'minor', genre: 'blues' });
+});
+test('applicableYtHints: a field the operator already typed into is NEVER overwritten', function () {
+  var out = RF.applicableYtHints(
+    { t: 'Suggested Title', a: 'Suggested Artist', key: 'G', mode: 'dorian', genre: 'funk' },
+    { title: 'My Own Title', artist: '', key: '', mode: 'major', genre: '' }
+  );
+  assert.strictEqual(out.title, undefined);
+  assert.strictEqual(out.artist, 'Suggested Artist');
+  assert.strictEqual(out.key, 'G');
+});
+test('applicableYtHints: key select already has a value -> key hint withheld', function () {
+  var out = RF.applicableYtHints({ t: null, a: null, key: 'D', mode: null, genre: null }, { key: 'C', mode: 'major' });
+  assert.strictEqual(out.key, undefined);
+});
+test('applicableYtHints: mode select already off its default -> mode hint withheld', function () {
+  var out = RF.applicableYtHints({ mode: 'mixolydian' }, { mode: 'dorian' });
+  assert.strictEqual(out.mode, undefined);
+});
+test('applicableYtHints: mode select still at the untouched default -> mode hint applies', function () {
+  var out = RF.applicableYtHints({ mode: 'mixolydian' }, { mode: 'major' });
+  assert.strictEqual(out.mode, 'mixolydian');
+});
+test('applicableYtHints: no hints at all -> empty applicable set', function () {
+  assert.deepStrictEqual(RF.applicableYtHints({}, { title: '', artist: '', key: '', mode: 'major', genre: '' }), {});
+});
+test('applicableYtHints: whitespace-only existing value counts as empty', function () {
+  var out = RF.applicableYtHints({ genre: 'rock' }, { genre: '   ' });
+  assert.strictEqual(out.genre, 'rock');
+});
+
 run();
