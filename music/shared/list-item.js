@@ -69,12 +69,16 @@
       : null;                                                             // no video -> no action shown
   }
 
-  // The short key label: "Am" for A minor, "C" for C major, null if no key.
+  // The key label, mode spelled out: "A minor" / "C major", null if no key.
+  // F34 (operator UAT): the old compact form showed "Am" for minor but a bare
+  // "C" for major - a bare letter read as incomplete. Spelling the mode out
+  // makes both symmetric and unambiguous. Display-only (the badge); no logic
+  // consumer keys off this string.
   function keyLabel(item) {
     if (!item.key) return null;
     var minor = String(item.mode || '').toLowerCase().indexOf('min') === 0
       || /aeolian|dorian|phrygian|locrian/.test(String(item.mode || '').toLowerCase());
-    return item.key + (minor ? 'm' : '');
+    return item.key + (minor ? ' minor' : ' major');
   }
 
   // Pre-commit difficulty signal (codex: a bare count loses the risk a player needs
