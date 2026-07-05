@@ -684,4 +684,26 @@ test('scaletipBanner: dismissed forever - a later call skips silently (returns n
   assert.strictEqual(T.scaletipBanner(th), null, 'a dismissed scaletip must never render again');
 });
 
+/* =====================================================================
+ * F32 (UI-std UAT): the Studio's dismiss is now the app's STANDARD back
+ * affordance (matches the song view's #backLib "iconBtn <-"), not the old
+ * bordered "close"-text pill (.bt-st-x, trailing on the right). openStudio's
+ * DOM-building is Playwright/live-check territory (same convention this
+ * file's siblings already use for mount/open-shaped output) - this pins the
+ * SOURCE contract instead, mirroring songbook.test.js's existing
+ * "solo-button gate pins hidden + inline display" source-regex test.
+ * ===================================================================== */
+test('F32: Studio dismiss is .bt-st-back (iconBtn, "<-" glyph, title=Back) - the old close-pill CLASS is retired from actual markup/selectors, not left dormant', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  // Targets the actual CODE usages (a rendered class attribute, a live selector
+  // call) rather than banning the bare substring outright - a comment
+  // documenting the retirement (e.g. "bt-st-x removed - see tracks.css") is
+  // fine to keep and should not fail this test.
+  assert.ok(!/class="bt-st-x"/.test(src), 'the old close-pill class must not appear in any rendered markup');
+  assert.ok(!/querySelector\('\.bt-st-x'\)/.test(src), 'no selector may still target the old close-pill class');
+  assert.ok(/class="iconBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose the shared .iconBtn convention (matches #backLib elsewhere)');
+  assert.ok(/title="Back" aria-label="Back"/.test(src), 'the dismiss control must carry the standard Back label/aria-label, not "close"');
+  assert.ok(/elPlayer\.querySelector\('\.bt-st-back'\)\.onclick/.test(src), 'the NavHistory.dismiss()/closePlayer() wiring must target the new .bt-st-back selector');
+});
+
 run();

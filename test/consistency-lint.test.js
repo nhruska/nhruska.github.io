@@ -238,7 +238,8 @@ var RADIUS_CONSUMERS = [
   ['.bt-st-urled-clear', tracksStripped, '--r-btn-sm'],
   ['.bt-curate-btn', tracksStripped, '--r-btn-sm'],
   ['.bt-pl-x', tracksStripped, '--r-btn-sm'],
-  ['.bt-st-x', tracksStripped, '--r-btn-sm'],
+  // F32 (UI-std UAT): .bt-st-x retired - the Studio dismiss is now .bt-st-back,
+  // composing the already-covered .iconBtn entry above (no new bare rule to add).
   ['.bt-st-ytlink', tracksStripped, '--r-btn-sm'],
   ['.rf-x', rfStripped, '--r-btn-sm'],
   ['.bt-st-editlink', rfStripped, '--r-btn-sm'],

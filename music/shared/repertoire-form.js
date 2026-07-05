@@ -236,9 +236,17 @@
         // U17 (M-TRACKLIB w2a): YT-prefill suggestion row - populated/shown by
         // wireYtSuggest() below, hidden until a valid video URL resolves info.
         + '<div class="rf-yt-suggest" data-yt-suggest hidden></div>'
+        // F33 (UAT): Delete/Revert renders FIRST (left, away from the one-hand
+        // thumb zone) and Save renders SECOND (the thumb-easy right slot) - the
+        // operator flagged the old order ("delete seems to be in a risky place...
+        // bottom right should be save") plus the wrong color ("delete buttons
+        // should be red" - .btn.red is actually the accent fill, a misnomer; see
+        // .btn.danger in songbook.css). The REAL Delete is genuinely destructive
+        // (.btn.danger); the fork "Revert to original" is NOT a delete (no data
+        // is destroyed, a slot is replaced in place) so it stays .btn.ghost.
         + '<div class="rf-actions">'
+        + (editing && current.onDelete ? '<button class="btn ' + (fork ? 'ghost' : 'danger') + '" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Library' : editing ? 'Save changes' : 'Create') + '</button>'
-        + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
       el.querySelector('[data-close]').onclick = dismissForm;

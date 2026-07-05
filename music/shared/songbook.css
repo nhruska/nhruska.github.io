@@ -413,6 +413,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
+/* F33 (UAT): genuinely destructive actions (repertoire-form.js's real Delete -
+   NOT the fork "Revert to original", which stays .btn.ghost since nothing is
+   destroyed there). ".btn.red" is a MISNOMER (it's the accent-fill primary,
+   not danger) - this is the actual red. Rest state mirrors the app's existing
+   destructive-at-rest convention (#setBody .li-rm: transparent bg + --bad
+   border/text); :active mirrors .prog .slot .rm's tap-flash (--bad fill +
+   --on-danger ink) - both precedents already shipped, just composed here as
+   a persistent .btn variant instead of an icon-only glyph. */
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad);}
+.btn.danger:active{background:var(--bad);color:var(--on-danger);border-color:var(--bad);}
 /* both secondary links on one centered row (t3) */
 .lyricsLinks{display:flex;justify-content:center;align-items:center;gap:6px 22px;flex-wrap:wrap;margin-top:12px;}
 .lyricsLink{color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px 6px;font-weight:500;white-space:nowrap;}
@@ -820,9 +830,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    row. Override the default .chips horizontal-flex behavior for this stacked layout. */
 .adaptiveChips{display:flex;flex-direction:column;gap:0;overflow:visible;margin-bottom:10px;}
 .inKeyLead{margin-bottom:4px;}
+/* F28+F29 (UI-std UAT): #catChips now SHARES its row with the Solo entry point
+   (#chordCtrlRow, play/index.html) instead of stacking a full-width CTA below it -
+   the toggle flexes to fill the remaining width beside the compact Solo button. */
+.chordCtrlRow{display:flex;align-items:stretch;gap:8px;margin-bottom:8px;}
 /* Segmented "In key | All" toggle: ONE control (in the FIXED #catChips) that swaps the
-   scrolling chord list's content. A pill pair, full-width, each segment >=44px tall. */
-#catChips{margin-bottom:8px;}
+   scrolling chord list's content. A pill pair, full-width (of its OWN flexed
+   column - see .chordCtrlRow above), each segment >=44px tall. */
+#catChips{flex:1 1 auto;margin:0;}
 /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - was an oddball against the
    sibling segmented-control containers (.modeSwitch/.viewToggle), both already 11px. */
 .chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
@@ -838,11 +853,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
    reads as THE next step (the old prose hint buried it). */
 .pickKeyCta{display:block;width:100%;margin:2px 0 8px;}
-/* Solo-over-backing bridge: a compact link-style row, not a full-height .btn - it
-   sits in the FIXED compose top, so every saved pixel is above-the-fold chord list.
-   Accent + dashed border keep it recognizably tappable at the smaller size. */
-.soloBackingBtn{display:block;width:100%;flex:none;padding:6px 10px;min-height:0;font-size:.76rem;font-weight:600;background:transparent;border:1px dashed var(--accent-dim);color:var(--accent-ink);border-radius:9px;}
-.soloBackingBtn:active{background:var(--accent-deep);border-color:var(--accent-ink);}
+/* Solo entry point (F28+F29, UAT): the SAME compact companion-button treatment on
+   BOTH surfaces - shares Compose's #chordCtrlRow (beside the In-key|All toggle)
+   and the song view's .practiceRow (beside Lyrics/Chords/Both + transpose + Stage -
+   see the .practiceRow rule below). Accent-outlined pill, matches the row's other
+   controls' height (44px floor via the host row's align-items:stretch) and radius
+   (--r-btn, per component-conventions.md's segmented-control convention) rather
+   than a bolted-on full-width CTA. Auto-hidden entirely (not disabled) when there's
+   nothing to solo over - songbook.js's canSolo gate / renderKey, unchanged. */
+.soloRowBtn{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:8px 14px;border-radius:var(--r-btn);border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;}
+.soloRowBtn:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.97);}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
@@ -963,9 +983,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    fly-out uses that freed height and the tab fits with no vertical overflow.
    The underlying chord list still rebuilds on a root/mode pick - it's only
    hidden, not torn down - so it's current the moment the fly-out closes. */
-.composeWrap.keyOpen #catChips,
+.composeWrap.keyOpen #chordCtrlRow,
 .composeWrap.keyOpen .composeChords,
-.composeWrap.keyOpen #soloBackingBtn,
 .composeWrap.keyOpen #maxNote{display:none;}
 /* the solo scale inside the fly-out gets a top divider from the mode toggle above it */
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}

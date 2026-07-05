@@ -1470,9 +1470,32 @@
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + '</div></div>';
+      // F28 (UI-std UAT): resolve the Solo entry point BEFORE the controls row is
+      // built, so the button lives IN that row (beside modeSwitch/transpose/stage) -
+      // directly above the chord content, not bolted on below the sheet where the
+      // operator flagged it as "in the way when you don't need it, and not in the
+      // right place when you do." "Solo over it" used to require s.custom (only
+      // progressions built in Compose carried a key/mode). Any song can bridge to
+      // the Studio if we can determine a key. Prefer the MERGED repertoire record:
+      // Repertoire.build copies a matched backing track's authoritative key/mode
+      // onto it, which beats re-deriving from the first chord (a non-tonic opener
+      // would mislabel). Fall back to the raw record; soloKeyFor still derives from
+      // the TRANSPOSED seq when neither has an explicit key, so soloing always
+      // matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
+      // Compact label ("Solo"; the title attr carries the full phrase) so it fits
+      // the SAME row as modeSwitch/transposeChip/stageGo at 375-412px - mirrors
+      // Compose's #chordCtrlRow treatment on the other surface (songbook.css
+      // .soloRowBtn). Entirely absent (not just disabled) when canSolo is false -
+      // no dead tap, no row filler.
+      var soloRowBtn = canSolo ? '<button class="btn soloRowBtn" id="soloOverBtn" title="Solo over it - open the Practice Studio">Solo</button>' : '';
       // view row: Lyrics / Chords / Both segmented + compact transpose chip +
-      // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
-      // locked decision - replaces the full-width Stage CTA).
+      // a compact Stage (fullscreen) icon button + (F28) the Solo entry point, all
+      // on ONE row (UAT round 2 locked decision - replaces the full-width Stage
+      // CTA; F28 UAT folds Solo into the same row instead of a separate CTA below).
       function segBtn(v, lbl) {
         var dis = forcedChords && v !== 'chords';
         return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
@@ -1482,6 +1505,7 @@
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
+        + soloRowBtn
         + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded.
       // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
@@ -1494,19 +1518,10 @@
         + (STATE.queueSkipNotice ? ' - ' + escHTML(STATE.queueSkipNotice) : '') + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
-      // "Solo over it" used to require s.custom (only progressions built in Compose
-      // carried a key/mode). Any song can bridge to the Studio if we can determine a
-      // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
-      // backing track's authoritative key/mode onto it, which beats re-deriving from
-      // the first chord (a non-tonic opener would mislabel). Fall back to the raw
-      // record; soloKeyFor still derives from the TRANSPOSED seq when neither has
-      // an explicit key, so soloing always matches what's on screen.
-      var mergedRec = null;
-      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
-      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
-      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
-      var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
-      var actions = '<div class="actions">' + soloBtn + '</div>';
+      // F28: the Solo button now lives in the practiceRow controls row above (the
+      // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
+      // action-ladder host appended further down for custom/catalog songs.
+      var actions = '<div class="actions"></div>';
       // Hear the real recording: same YouTube search the list-item action ladder
       // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
       // not the sheet). The MERGED record feeds the query so track-derived
@@ -2831,13 +2846,15 @@
         return;
       }
       var n = progression.length;
-      // Helpful "Add a Nth chord" guidance only for the first few; past that the panel's own
-      // "Next chord" summary already says it (avoid the duplicate header the user flagged).
-      if (n <= 3) {
-        var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-        lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : "Add a 4th chord:";
-        el.suggest.appendChild(lbl);
-      }
+      // Ordinal guidance ("Add a Nth chord:") for the first few; past that, F30
+      // (UAT): a label must ALWAYS sit directly above the suggested chords - the
+      // old "the panel's own summary already says it" rationale didn't hold (no
+      // other on-screen text names this row past the 4th chord), so it read as an
+      // unlabeled row of chips. Reuse the SAME .suggLbl primitive both branches
+      // already share (component-conventions.md section-label convention).
+      var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+      lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord";
+      el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
       // glow (no name caption - see suggChip).
@@ -2950,7 +2967,13 @@
     // chord, transpose, mode change, key change, Save) - the A3 invalidation
     // contract. A no-op when nothing is pending, so every call site can call
     // it unconditionally with no extra guard.
-    function invalidateClearUndo() { if (clearUndoSnapshot) hideClearUndoBanner(); }
+    // F31 (UAT): piggybacks hideComposeToast() onto the SAME choke point every
+    // mutating action already calls (add/remove chord, transpose, mode/key
+    // change, a starter load, Save itself) - a stale save-confirmation toast
+    // must not survive any of them, the identical "ANY mutating action
+    // invalidates prior transient state" contract A3 already applies to the
+    // Clear-undo banner below.
+    function invalidateClearUndo() { if (clearUndoSnapshot) hideClearUndoBanner(); hideComposeToast(); }
     function showClearUndoBanner() {
       if (!ensureClearUndoBanner() || !clearUndoSnapshot) return;
       clearUndoBanner.hidden = false;
@@ -2983,9 +3006,18 @@
     }
 
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
-    // itself after ~3s so it never permanently claims screen space - unless
-    // `persist` is set (B3 pilot UAT: "don't hide the [saved] name after a few
-    // seconds"), in which case it stays until the next explicit toast/clear.
+    // itself after ~3s so it never permanently claims screen space.
+    // F31 (UAT): the Save-confirmation call sites used to pass persist=true
+    // ("don't hide the [saved] name after a few seconds", B3 pilot UAT) - that
+    // reads as a lingering confirmation panel once a NEW progression starts
+    // before the user taps it away (operator repro: saved, built a new
+    // progression, the PREVIOUS save's confirmation was still on screen).
+    // Reversed: every current caller always auto-dismisses. `persist` stays
+    // available on this primitive (and the underlying toast.js `Toast.show`) for
+    // a future caller that genuinely needs a tap-to-dismiss toast, but nothing
+    // passes true today - see hideComposeToast() below for the explicit-clear
+    // half of the F31 fix (any subsequent mutating action ends a still-showing
+    // toast immediately, same "ANY mutating action invalidates" contract as A3).
     // S-TOAST (UAT U9): delegates to the shared toast.js primitive - see its
     // header comment and showToast() above for the shared-`toastTimer` root
     // cause this replaces. Every call still goes through its OWN host
@@ -3008,6 +3040,19 @@
         },
         onHide: function (host) { host.hidden = true; }
       });
+    }
+    // F31 (UAT): explicit-clear half of the fix, paired with dropping persist
+    // from the Save-confirmation calls above. Ends composeToast NOW (and cancels
+    // its pending auto-hide timer via Toast.hide()) rather than leaving a
+    // confirmation visible under whatever the user does next. Called from
+    // invalidateClearUndo() (the SAME choke point every mutating action already
+    // calls - add/remove chord, transpose, mode/key change, a starter load, Save
+    // itself) and from Clear directly (Clear does not route through
+    // invalidateClearUndo - it's what CREATES the undo snapshot, not what
+    // invalidates one).
+    function hideComposeToast() {
+      if (!composeToast) return;
+      global.Toast.hide(composeToast, { onHide: function (host) { host.hidden = true; } });
     }
     // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
     // fires once - the trimmed name on Save/Enter (plus whether the "Add to
@@ -3231,7 +3276,9 @@
           // THIS write's real success/failure - the only way to get a truthful signal
           // for the "Updated" toast without touching updateCustomItem's body.
           var updOk = saveCustom();
-          showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk, true);
+          // F31 (UAT): no persist - the confirmation always auto-dismisses now (see
+          // showComposeToast's header comment + hideComposeToast() below).
+          showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk);
           done(upd); return;
         }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
@@ -3262,7 +3309,8 @@
         // than creating a duplicate. It will NOT survive a reload if storage stays
         // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok, true);
+        // F31 (UAT): no persist - see showComposeToast's header comment.
+        showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok);
         done(cs);
       });
     }
@@ -3512,6 +3560,7 @@
       progression = []; cTpose = 0;
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
+      hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
       var kc = reinferKey();
       renderProg(); renderKey();
       if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }

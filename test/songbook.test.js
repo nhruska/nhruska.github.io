@@ -773,10 +773,13 @@ test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear st
 test('Clear-undo: every A3-listed mutating action invalidates, Clear never regresses to confirm(), slot-x is movement-cancelled', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   // Clear builds a snapshot and shows the banner - never a native confirm().
-  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,900}?\};/.exec(src);
+  // Window widened 900->1100 (F31, UAT): the hideComposeToast() line + its
+  // comment pushed the handler's closing `};` past the old 900-char bound.
+  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,1100}?\};/.exec(src);
   assert.ok(clearBlock, 'cClear.onclick handler not found');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
   assert.ok(/showClearUndoBanner\(\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner');
+  assert.ok(/hideComposeToast\(\)/.test(clearBlock[0]), 'F31 (UAT): Clear must also end a still-showing save-confirmation toast (Clear does not route through invalidateClearUndo)');
   // (matches an actual confirm('...') CALL, not the word appearing in a code comment)
   assert.ok(!/confirm\(['"]/.test(clearBlock[0]), 'Clear must NEVER use a native confirm() dialog (A3)');
   // Each A3-listed mutating action calls invalidateClearUndo() somewhere in its body.
@@ -1149,15 +1152,19 @@ test('H4: toggleSet on a throwing (quota-exceeded) store shows a truthful failur
  * S-TOAST (UAT U9): the exact end-to-end repro - Compose Save with the
  * default-checked "Add to setlist" box fires toggleSet()'s Library toast
  * (showToast, 1600ms auto-hide) THEN, in the same synchronous tick,
- * saveProgression's showComposeToast(..., persist: true). Before the
- * toast.js extraction, showComposeToast's clearTimeout(toastTimer) silently
- * killed the Library toast's pending auto-hide via the shared `var
- * toastTimer` both functions used to declare in Songbook.mount()'s closure -
- * leaving "Added to setlist" stuck on-screen forever (the operator's
- * screenshot). This drives that exact call sequence with a fake clock (no
- * real 1600ms wait) and proves the Library toast's auto-hide still fires.
+ * saveProgression's showComposeToast(...). Before the toast.js extraction,
+ * showComposeToast's clearTimeout(toastTimer) silently killed the Library
+ * toast's pending auto-hide via the shared `var toastTimer` both functions
+ * used to declare in Songbook.mount()'s closure - leaving "Added to setlist"
+ * stuck on-screen forever (the operator's screenshot). This drives that
+ * exact call sequence with a fake clock (no real 1600ms wait) and proves the
+ * Library toast's auto-hide still fires. F31 (UAT) dropped persist:true from
+ * the Save-confirmation call - the Compose toast now schedules its OWN
+ * 3000ms auto-hide timer too (see the two F31 tests right below this one for
+ * that half of the contract); this test's job stays the ORIGINAL U9
+ * regression - the two hosts' timers are fully independent either way.
  * ===================================================================== */
-test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on schedule even though a persist:true Compose toast fires in the same tick', function () {
+test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on schedule even though a Compose toast fires in the same tick', function () {
   var nextId = 1, scheduled = {}, cleared = [];
   var realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
   global.setTimeout = function (cb, ms) { var id = nextId++; scheduled[id] = { cb: cb, ms: ms }; return id; };
@@ -1165,7 +1172,7 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
   var m;
   try {
     m = mountForSaveTests();
-    buildAndSaveAddToSetlist(m); // toggleSet's showToast, THEN showComposeToast(persist:true) - same tick
+    buildAndSaveAddToSetlist(m); // toggleSet's showToast, THEN showComposeToast() - same tick
   } finally {
     global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
   }
@@ -1180,27 +1187,74 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
   // (songbook.js's chord-tile tap animation, nothing to do with toasts) - so
   // total scheduled count is noisy. Isolate by duration instead: the Library
   // toast's own 1600ms auto-hide must be the ONLY 1600ms-duration timer, and
-  // the persist:true Compose toast must have scheduled NO 3000ms timer at all
-  // (that's the bug's exact mechanism - it must neither clobber A's timer
-  // nor schedule one of its own it would never clear).
+  // (F31) the Compose toast must have scheduled EXACTLY ONE 3000ms timer of
+  // its own (no persist:true means it's no longer stranded with none at all).
   var byDuration = {};
   Object.keys(scheduled).forEach(function (id) {
     var ms = scheduled[id].ms;
     byDuration[ms] = (byDuration[ms] || []).concat([Number(id)]);
   });
   assert.strictEqual((byDuration[1600] || []).length, 1, 'exactly one pending 1600ms auto-hide timer (the Library toast\'s)');
-  assert.strictEqual((byDuration[3000] || []).length, 0, 'a persist:true Compose toast must schedule NO 3000ms timer');
+  assert.strictEqual((byDuration[3000] || []).length, 1, 'F31: the Compose Save-confirmation toast must schedule its OWN 3000ms auto-hide timer (no persist:true)');
   assert.strictEqual(libraryToast.classList.contains('on'), true, 'Library toast is visible immediately after showToast()');
-  assert.strictEqual(composeToast.hidden, false, 'Compose toast (persist:true) is visible with no timer of its own');
+  assert.strictEqual(composeToast.hidden, false, 'Compose toast is visible immediately after showComposeToast()');
   // Fire the Library toast's own scheduled auto-hide (simulates the real
   // 1600ms elapsing) - this is the assertion that FAILED before the fix
   // (the timer had already been silently cancelled and would never fire).
   var id = byDuration[1600][0];
   scheduled[id].cb();
   assert.strictEqual(libraryToast.classList.contains('on'), false, 'Library toast must auto-hide once its own timer elapses - the U9 regression');
-  // The persist:true Compose toast must remain completely untouched by the
-  // Library toast's own hide - the two hosts are fully independent.
-  assert.strictEqual(composeToast.hidden, false, 'Compose toast (persist:true) must stay visible - unaffected by the unrelated Library toast auto-hiding');
+  // The Compose toast must remain completely untouched by the Library toast's
+  // own hide - the two hosts are fully independent (toast.js's per-host Map).
+  assert.strictEqual(composeToast.hidden, false, 'Compose toast must stay visible - unaffected by the unrelated Library toast auto-hiding');
+});
+
+/* =====================================================================
+ * F31 (UAT): the save confirmation must be an auto-dismissing toast (no
+ * persist:true) AND must never linger across a new-progression/Clear action -
+ * operator repro: saved, started building a NEW progression, the PREVIOUS
+ * save's confirmation was still on screen. Two halves, two tests: (1) the
+ * toast auto-dismisses on its own after the normal 3000ms window even with
+ * zero further user action; (2) Clear (which does not route through
+ * invalidateClearUndo - it's what CREATES the undo snapshot) explicitly ends
+ * a still-showing confirmation via hideComposeToast().
+ * ===================================================================== */
+test('F31: the Compose save-confirmation toast auto-dismisses on its own scheduled timer (no persist:true stranding it forever)', function () {
+  var nextId = 1, scheduled = {};
+  var realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
+  global.setTimeout = function (cb, ms) { var id = nextId++; scheduled[id] = { cb: cb, ms: ms }; return id; };
+  global.clearTimeout = function (id) { delete scheduled[id]; };
+  var m, composeToast;
+  try {
+    m = mountForSaveTests();
+    buildAndSave(m);
+    composeToast = findComposeToast(m);
+    assert.strictEqual(composeToast.hidden, false, 'toast visible immediately after Save');
+    var timerId = null;
+    Object.keys(scheduled).forEach(function (id) { if (scheduled[id].ms === 3000) timerId = id; });
+    assert.ok(timerId, 'expected a scheduled 3000ms auto-hide timer for the Save confirmation');
+    scheduled[timerId].cb(); // simulate the real 3000ms elapsing
+  } finally {
+    global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
+  }
+  assert.strictEqual(composeToast.hidden, true, 'the Save confirmation must auto-dismiss once its own timer elapses');
+});
+
+test('F31: Clear ends a still-showing save-confirmation toast immediately (hideComposeToast), rather than leaving it stranded over the fresh canvas', function () {
+  // cClear.onclick is wired at mount time against el.cClear - mountForSaveTests'
+  // elMap doesn't include it (a Save-only harness), so mount directly here with
+  // cClear present too.
+  global.localStorage = lsReset.fakeStore();
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = { prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'), cSave: makeStubEl('button'), cClear: makeStubEl('button') };
+  var ctrl = Songbook.mount({ storagePrefix: 'a1clear', el: elMap });
+  var m = { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+  buildAndSave(m);
+  var composeToast = findComposeToast(m);
+  assert.strictEqual(composeToast.hidden, false, 'sanity: the save confirmation is showing before Clear');
+  elMap.cClear.onclick();
+  assert.strictEqual(composeToast.hidden, true, 'F31: Clear must hide a still-showing save-confirmation toast (hideComposeToast, not just invalidateClearUndo)');
 });
 
 /* =====================================================================
@@ -1558,6 +1612,34 @@ test('U6: switching the In-key|All segmented toggle (not a quality-filter tap) n
   var row = findTabRow(m);
   assert.ok(row, 'All view still renders after the segmented toggle');
   assert.ok(!row._scrollCalls || row._scrollCalls.length === 0, 'the In-key|All toggle must never anchor - only a quality-filter tap does');
+});
+
+/* =====================================================================
+ * F30 (UAT): "we need a label directly above the suggested chords" - the old
+ * "the panel's own 'Next chord' summary already says it" rationale left the
+ * suggest row COMPLETELY unlabeled past the 4th chord (no such summary
+ * actually exists anywhere on screen). A label must render at every count.
+ * ===================================================================== */
+function suggLbl(m) {
+  var lbl = null;
+  m.elMap.suggest.children.forEach(function (c) { if (c.className === 'suggLbl') lbl = c; });
+  return lbl;
+}
+test('F30: renderSuggest labels the suggested-chords row at every progression length, including past the 4th chord', function () {
+  var m = mountForGridTests();
+  function tap() { m.elMap.buildGrid.children[0].onclick(); }
+  tap(); // 1 chord
+  assert.strictEqual(suggLbl(m).textContent, 'Add a 2nd chord:');
+  tap(); // 2 chords
+  assert.strictEqual(suggLbl(m).textContent, 'Add a 3rd chord:');
+  tap(); // 3 chords
+  assert.strictEqual(suggLbl(m).textContent, 'Add a 4th chord:');
+  tap(); // 4 chords - F30's exact gap: this used to render NO label at all
+  var lbl = suggLbl(m);
+  assert.ok(lbl, 'F30: a label must render above the suggested chords past the 4th chord too');
+  assert.strictEqual(lbl.textContent, 'Next chord');
+  tap(); // 5 chords - stays labeled, not just a one-time fix at exactly 4
+  assert.strictEqual(suggLbl(m).textContent, 'Next chord');
 });
 
 function mountForSoloChoiceTests(openStudioSpy) {

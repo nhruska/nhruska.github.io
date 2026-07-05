@@ -221,11 +221,16 @@
             <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
             <div class="keyView" id="keyView"></div>
           </div>
-          <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
-          <div class="chips" id="catChips"></div>
-          <!-- Phase 3: bridge a built progression to a matched backing track to solo over.
-               Hidden until a key + progression exist (toggled by songbook's renderKey). -->
-          <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
+          <!-- F28+F29 (UI-std UAT): the In-key|All toggle (#catChips) and the Solo
+               entry point share ONE controls row directly above the chord grid
+               (#chordCtrlRow) - the operator flagged the old standalone full-width
+               "Solo over a backing track" CTA as buried below the toggle instead of
+               living beside it. Solo button still hidden until a key + progression
+               exist (toggled by songbook's renderKey - same gate, unchanged). -->
+          <div class="chordCtrlRow" id="chordCtrlRow">
+            <div class="chips" id="catChips"></div>
+            <button class="btn soloRowBtn" id="soloBackingBtn" type="button" title="Solo over it - open the Practice Studio" hidden>Solo</button>
+          </div>
         </div>
         <!-- The ONLY scroll area: the chord list, led by the suggestion surface
              (#suggest - starter progressions when empty, next-chord chips
