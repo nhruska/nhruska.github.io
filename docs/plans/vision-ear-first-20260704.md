@@ -59,3 +59,8 @@ The ear layer makes STRUM-ENGINE REVIVAL (#88, MID M-3) a FOUNDATION item, not a
 - **Explore surface:** a STATIC browsable panel in the Studio's solo-over-track flow area (genre chips x feel chips under the current scale context; current key + selected scale feed the generator). Tap = external YouTube search (new tab, leave-app glyph per conventions). RESPECT D-HERO-REMOVED: no show/hide-on-filter behavior, no Library hero resurrection - this lives in the Studio where jam context already is.
 - **Ingest loop:** an "add to library" affordance beside the explore results/context that opens the EXISTING track-add/curation flow (per M3-5A: +Add/per-item edit) PREFILLED with key/mode/genre (and feel->bpm hint) from the explore context. No new persistence schema - existing track fields.
 - **Deferred (named):** in-app search-result embedding (YouTube API), auto-import, cross-key query history.
+
+
+## Pipeline pivot (2026-07-05, operator challenge: "do we really need the key?")
+
+NO KEY NEEDED for the operator pipeline. Agent-side reading of the public playlist works keyless (RSS feed + page parse + per-video oEmbed; CORS only binds the in-browser app, not the agent). First live run: docs/plans/playlist-bake-draft-20260705.md (16 entries parsed). W2b in-app playlist-connect (the only key-requiring path) DEMOTED to a later user-facing capability. The operator loop is now: curate on YT from anywhere -> "sync playlist" -> veto table -> bake into shipped catalog.
