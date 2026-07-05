@@ -11,7 +11,7 @@
  * Replaces the per-instrument renderers that used to live in each chord
  * pack. A profile supplies only the fret arrays (data); this draws them.
  *
- *   Diagram.render(frets, { size:'small'|'big', name:'C', patternLabel:'' })
+ *   Diagram.render(frets, { size:'small'|'big', name:'C', patternLabel:'', reserveLabelSlot:false })
  *     -> HTMLElement
  *   opts.patternLabel (optional, S-DIAGRAM-PREF step 2): a pre-computed
  *   string drawn as a small caption below the diagram - e.g. the shape-
@@ -19,6 +19,17 @@
  *   falsy renders byte-identical to the pre-existing output; this module
  *   never reads the dots/patterns preference or calls ShapeClassify itself
  *   (see shared/diagram-pref.js, the caller-side decision layer).
+ *   opts.reserveLabelSlot (M-EAR wave 1.6, U21 - docs/plans/
+ *   uat-walkthrough-20260704.md): when true, the label slot renders even if
+ *   patternLabel is '' (an honest-null classifier result, e.g. shape-
+ *   classify.js's uncurated dim/aug quality) - so a caller that KNOWS it is
+ *   in "patterns" display mode (diagram-pref.js) can keep every card in a
+ *   row the SAME height whatever the classifier returns, without diagram.js
+ *   knowing anything about the dots/patterns preference itself (same
+ *   agnostic-of-the-decision contract as patternLabel). Absent/false (every
+ *   pre-existing caller, and every 'dots'-mode call) is BYTE-IDENTICAL to
+ *   the pre-U21 behavior (SHA-256 locked in diagram.dom.test.js) - the empty
+ *   reserved div only ever appears when a caller explicitly opts in.
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -142,17 +153,33 @@
     svg += '</svg>';
     // S-DIAGRAM-PREF step 2 ('patterns' render): opts.patternLabel is an
     // EXTEND-not-overlay addition - same contract as scale()'s opts.tones
-    // below. Absent/falsy (every existing caller, and every 'dots'-pref or
-    // unclassifiable-voicing call under the new caller) renders BYTE-
-    // IDENTICAL to the pre-existing output (regression-locked in
-    // diagram.dom.test.js). This renderer stays agnostic of the dots/
-    // patterns preference and of ShapeClassify entirely - it just draws
-    // whatever text string it's handed, or nothing; see diagram-pref.js for
-    // who decides WHETHER to pass one and what it says.
-    var labelHtml = opts.patternLabel
+    // below. Absent/falsy WITHOUT opts.reserveLabelSlot (every existing
+    // caller, and every 'dots'-pref call) renders BYTE-IDENTICAL to the
+    // pre-existing output (regression-locked in diagram.dom.test.js). This
+    // renderer stays agnostic of the dots/patterns preference and of
+    // ShapeClassify entirely - it just draws whatever text string it's
+    // handed, or nothing; see diagram-pref.js for who decides WHETHER to
+    // pass one and what it says.
+    //
+    // U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md): a
+    // 'patterns'-mode caller whose voicing shape-classify.js can't classify
+    // (honest null - e.g. an uncurated dim/aug quality) still needs a
+    // reserved vertical slot close to what a REAL label commonly wraps to
+    // in a small-size card row (chords-in-key, the only opts.reserveLabelSlot
+    // consumer today), not just one line. shape-classify.js's label() always
+    // follows the same template shape ("<family> shape[ barre], root on
+    // <string>, <inversion>" - see that file's own label() function), which
+    // measured 3 lines at the 'small' card's ~86px canvas width in the
+    // shipping PR's live-Playwright verification (component-conventions.md/
+    // decisions.md D-EAR-1.6 cite the exact px). min-height is in `em`
+    // (ties to THIS div's own font-size) so the 3-line reservation stays
+    // proportional to whatever font-size the rule above declares, rather
+    // than a separate px figure to keep in sync by hand.
+    var showLabelSlot = !!opts.patternLabel || !!opts.reserveLabelSlot;
+    var labelHtml = showLabelSlot
       ? '<div class="dg-shapeLabel" style="max-width:100%;word-break:break-word;white-space:normal;'
-        + 'font-size:.62rem;line-height:1.25;text-align:center;font-family:monospace;'
-        + 'color:var(--ink-faint,#9aa3b2);margin-top:2px;">' + esc(opts.patternLabel) + '</div>'
+        + 'font-size:.62rem;line-height:1.25;min-height:3.75em;text-align:center;font-family:monospace;'
+        + 'color:var(--ink-faint,#9aa3b2);margin-top:2px;">' + (opts.patternLabel ? esc(opts.patternLabel) : '') + '</div>'
       : '';
     wrap.innerHTML = nameSpan + svg + labelHtml;
     return wrap;

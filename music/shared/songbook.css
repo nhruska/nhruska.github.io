@@ -144,6 +144,35 @@
 }
 :root[data-theme="light"] body{-webkit-font-smoothing:auto;}
 
+/* =====================================================================
+ * U20 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md, decisions.md
+ * D-EAR-1.6): the --sound-bg/--sound-line pair re-derived from the user's
+ * OWN accent hue via CSS Relative Color Syntax, complementary (h + 180) -
+ * the single kx-* class needing MAXIMUM perceptual distance from every
+ * other accent-derived hue (tracks.css's --kx-chord/--kx-blue, h +-30),
+ * since "sounding" marks a transient playing-right-now state, not a
+ * persistent theory class. Feature-detected: the literal hex pair declared
+ * above (both bare :root and this light override) is the fallback for
+ * browsers without support - nothing above this block changes.
+ *
+ * L/C pinned per theme (not derived from --accent's own L/C - see
+ * tracks.css's matching U20 comment for the full rationale), chosen to
+ * land close to this file's PRE-U20 literal figures: dark --sound-bg
+ * #3a2f57/--sound-line #b39ddb were ~L.22/L.72; light --sound-bg #efe7fb/
+ * --sound-line #6a4bc4 were ~L.93/L.42. Spot-verified live at the default
+ * teal accent AND a hue-changed accent (shipping PR's V&V section) - not
+ * exhaustively re-verified against every possible user-chosen hue. */
+@supports (color: oklch(from red l c h)) {
+  :root{
+    --sound-bg:oklch(from var(--accent) 0.22 0.06 calc(h + 180));
+    --sound-line:oklch(from var(--accent) 0.72 0.10 calc(h + 180));
+  }
+  :root[data-theme="light"]{
+    --sound-bg:oklch(from var(--accent) 0.93 0.03 calc(h + 180));
+    --sound-line:oklch(from var(--accent) 0.42 0.18 calc(h + 180));
+  }
+}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
