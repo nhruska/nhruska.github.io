@@ -403,3 +403,27 @@
   .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
     letter-spacing:.02em;margin:0 0 8px;}
   .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+
+/* =====================================================================
+ * M-EAR wave 1.5 (U12) - the sounding-note fretboard dot, key-explorer.js's
+ * boxWrap.setSounding(pc) class-swap target. Reuses the SAME --sound-bg/
+ * --sound-line pair the note/degree token .sounding marker uses
+ * (songbook.css, M-EAR wave 1) - one primitive, two surfaces (text pill AND
+ * fretboard dot), same Element Consistency Law reasoning as kx-chord/kx-blue
+ * above: a THIRD hue for a genuinely distinct surface would just be scatter.
+ * Contrast already verified for this pair (songbook.css's own comment):
+ * dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on #efe7fb = 5.12:1 -
+ * satisfies the >=4.5:1 text-on-fill floor for the note-name text on top of
+ * the dot, same mapping (fill=bg tint, text=line ink) as the existing pill.
+ * kx-sounding is added via JS classList AFTER render (never baked into
+ * diagram.js's own SVG string - see diagram.dom.test.js's own assertion of
+ * that), so it must win over diagram.js's inline fill/stroke style attribute:
+ * !important is the one sanctioned exception here (every other kx-* class is
+ * inline-styled at render time and needs no override rule at all - this is
+ * the only class applied post-render, hence the only one requiring it).
+ * The `+ text` sibling rule recolors the note-name letter drawn immediately
+ * after each dot (diagram.js always emits <circle/><text> as an adjacent
+ * pair, one per note - see scale()'s notesOn loop).
+ * ===================================================================== */
+  .kx-sounding{fill:var(--sound-bg) !important;stroke:var(--sound-line) !important;}
+  .kx-sounding + text{fill:var(--sound-line) !important;}

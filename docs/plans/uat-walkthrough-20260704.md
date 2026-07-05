@@ -65,3 +65,9 @@ Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD t
 **Grounding:** Library view - the guidance notable banner and the in-setlist row highlight both use the same pale accent surface; guidance (educational) wears selection's (state) clothes. Fix at the PRIMITIVE: notables get their OWN surface token, distinct from selection surfaces, app-wide.
 
 **Standing directive encoded:** THE ELEMENT CONSISTENCY LAW - music/CLAUDE.md + wiki ssot-registry.md. Never needs re-typing: consistency findings now route to primitives by law.
+
+## U11-U13 - Audition round 1 (operator, 2026-07-04, minutes after v106 shipped)
+
+- **U11:** "need to switch modes and keep playing without hitting play again" -> Sound.retarget at note boundary; chip switch = live A/B (M-EAR 1.5).
+- **U12:** "light up the notes on the fretboard" -> kx-sounding pc lights, all octaves, position-preserving (M-EAR 1.5).
+- **U13:** "show more fretboard instead of pieces, optionally" -> Window|Full-neck toggle, persisted, full = 0-14 (M-EAR 1.5).

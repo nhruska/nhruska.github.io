@@ -736,6 +736,50 @@
         return (Object.keys(merged).length || rubPc != null || ghostPcs.length)
           ? { byPc: merged, rubPc: rubPc, ghostPcs: ghostPcs } : null;
       }
+      // M-EAR wave 1.5 (U13): Window|Full-neck fretboard view, Studio-scoped
+      // (spans every scale chip, not per-chip state) - persisted across opens
+      // via an additive localStorage key (registered in data-model.md's
+      // inventory). Defensive read/write: private browsing / disabled storage
+      // must never throw; any unrecognized stored value falls back to
+      // 'window' (the pre-U13 default behavior).
+      function readFretView() {
+        try { return localStorage.getItem('music.fretview.v1') === 'full' ? 'full' : 'window'; }
+        catch (e) { return 'window'; }
+      }
+      function writeFretView(v) {
+        try { localStorage.setItem('music.fretview.v1', v === 'full' ? 'full' : 'window'); } catch (e) {}
+      }
+      var fretView = readFretView();
+      // Full mode: one span fret 0-14 (KeyExplorer.POS_CAP - "small necks (12-
+      // fret default) treat full-neck as 0-14 too", so this ignores
+      // defaultFrets(pack) entirely), no pager UI (noPosCtrl) - box-snap is
+      // pager-only, so omitting boxScaleId here is enough to keep it out of
+      // full mode without a separate flag. Window mode is untouched: no frets
+      // override (falls back to defaultFrets(pack) same as pre-U13), boxScaleId
+      // passes through as before.
+      function scaleRenderOpts(names, tones, boxScaleId) {
+        return fretView === 'full'
+          ? { names: names, tones: tones, frets: global.KeyExplorer.POS_CAP, noPosCtrl: true }
+          : { names: names, tones: tones, boxScaleId: boxScaleId };
+      }
+      // M-EAR wave 1.5: the ONE fretboard render choke point - the initial
+      // (mode) render, every scale-chip switch, AND the Window|Full-neck
+      // toggle all call this instead of duplicating the KeyExplorer.renderScale
+      // call, so all three paths stay in sync with whichever bundle/scaleId is
+      // ACTIVE and with the current view mode. Re-derives the [data-scale]
+      // container fresh each call (elPlayer's DOM is rebuilt per Studio open,
+      // never stale across opens/closes).
+      function renderFretboard(bundle, scaleId) {
+        var container = elPlayer.querySelector('[data-scale]');
+        if (!container || !global.KeyExplorer) return;
+        try {
+          container.innerHTML = '';
+          var nameMap = [];
+          bundle.notes.forEach(function (nm, i) { nameMap[bundle.pcs[i]] = nm; });
+          scaleBoxWrap = global.KeyExplorer.renderScale(container, pack, th.rootPc, bundle.pcs,
+            scaleRenderOpts(nameMap, computeTones(bundle, scaleId), boxScaleIdFor(scaleId, th.scaleMode)));
+        } catch (e) {}
+      }
       // Renders the 5 labeled SoloGuide.card lines into the Guide box (guarded -
       // solo-guide.js may not have loaded). Called on Studio open + every chip
       // select (re-derives, per m-guide-ia-20260704.md section 3), regardless of
@@ -933,6 +977,16 @@
         // every chip select.
         + '<button class="bt-st-why-toggle" data-guidetoggle type="button">Guide</button>'
         + '<div class="bt-st-why" data-guide hidden></div>'
+        // M-EAR wave 1.5 (U13): Window|Full-neck view toggle - reuses the
+        // app's existing .viewToggle segmented-control primitive verbatim
+        // (songbook.css; documented but unused until now - ui-primitives.md/
+        // component-conventions.md's reserved segmented-control convention),
+        // so this needed ZERO new CSS. Sits directly above the fretboard it
+        // controls.
+        + '<div class="viewToggle" data-fretview>'
+        + '<button class="' + (fretView === 'window' ? 'on' : '') + '" data-fv="window" type="button">Window</button>'
+        + '<button class="' + (fretView === 'full' ? 'on' : '') + '" data-fv="full" type="button">Full neck</button>'
+        + '</div>'
         + '<div class="bt-st-scale" data-scale></div>'
         // M-GUIDE W3a: chord-tone targeting caption - reuses .bt-st-scaleframe's
         // look; static text, interpolates only already-rendered labels (A9).
@@ -971,17 +1025,25 @@
       var soundToggleEl = elPlayer.querySelector('[data-soundtoggle]');
       var notesLineEl = elPlayer.querySelector('[data-solonotes]');
       var degreesLineEl = elPlayer.querySelector('[data-solodegrees]');
+      // M-EAR wave 1.5 (U12): clearSoundMarks/markSoundingNote now ALSO drive
+      // the fretboard highlight via scaleBoxWrap.setSounding(pc) - a class-swap
+      // over already-rendered dots (key-explorer.js), never a re-render. Reads
+      // scaleBoxWrap LIVE (not captured) so it always targets whichever
+      // fretboard is on-screen right now (a chip switch or the Window|Full-neck
+      // toggle both replace scaleBoxWrap via renderFretboard()).
       function clearSoundMarks() {
         [notesLineEl, degreesLineEl].forEach(function (c) {
           if (!c) return;
           Array.prototype.forEach.call(c.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
         });
+        if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(null);
       }
-      function markSoundingNote(i) {
+      function markSoundingNote(i, pc) {
         [notesLineEl, degreesLineEl].forEach(function (c) {
           var el = c && c.querySelector('[data-i="' + i + '"]');
           if (el) el.classList.add('sounding');
         });
+        if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(pc);
       }
       function setSoundToggle(on) {
         if (!soundToggleEl) return;
@@ -990,9 +1052,11 @@
         soundToggleEl.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
         soundToggleEl.innerHTML = on ? '&#9632;' : '&#9658;';
       }
-      // Chip switch, scale-mode change, and Studio close (closePlayer, above)
-      // all stop playback (implementation note #3, M-EAR wave 1 spec) -
-      // stopStudioSound() is the ONE place that does it, called from each.
+      // Studio close (closePlayer, above) still stops outright (implementation
+      // note #3, M-EAR wave 1 spec). A scale-chip switch WHILE playing no
+      // longer routes through here (M-EAR wave 1.5, U11) - it retargets the
+      // live loop instead; stopStudioSound() remains the ONE place a genuine
+      // stop happens (second tap on the toggle, or Studio close).
       function stopStudioSound() {
         if (studioSound) { studioSound.stop(); studioSound = null; }
         setSoundToggle(false);
@@ -1002,10 +1066,20 @@
         soundToggleEl.onclick = function () {
           if (studioSound) { stopStudioSound(); return; }
           if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
-          var pcsLen = curBundle.pcs.length;
           setSoundToggle(true);
           studioSound = global.Sound.playScale(curBundle.pcs, {
-            onNote: function (i) { clearSoundMarks(); markSoundingNote(i % pcsLen); },
+            // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
+            // a value captured at play-start - after a chip-switch retarget,
+            // curBundle already points at the NEW bundle (select() updates it
+            // before calling retarget()), so the marker + fretboard light
+            // always match whichever scale is actually sounding right now,
+            // even across a differing note count (e.g. 7-note mode -> 5-note
+            // pentatonic).
+            onNote: function (i) {
+              var len = curBundle.pcs.length, idx = i % len;
+              clearSoundMarks();
+              markSoundingNote(idx, curBundle.pcs[idx]);
+            },
             onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); }
           });
         };
@@ -1025,15 +1099,33 @@
       // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
-      try {
-        // Fretboard spelling: map each scale pitch-class to the note name the scale
-        // carries (canonical sharps post-FORK-4: A#, not Bb, in F major) so the dots
-        // match the "Solo over it" list above, whatever names th.notes holds.
-        var nameByPc = [];
-        th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
-        scaleBoxWrap = global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs,
-          { names: nameByPc, tones: computeTones(th, 'mode'), boxScaleId: boxScaleIdFor('mode', th.scaleMode) });
-      } catch (e) {}
+      // Fretboard spelling: renderFretboard() maps each scale pitch-class to the
+      // note name the scale carries (canonical sharps post-FORK-4: A#, not Bb, in
+      // F major) so the dots match the "Solo over it" list above, whatever names
+      // th.notes holds - th itself is the 'mode' bundle (curBundle's initial value).
+      renderFretboard(th, 'mode');
+      // M-EAR wave 1.5 (U13): Window|Full-neck toggle wiring - paints the
+      // active button, persists the choice, and re-renders whichever bundle
+      // is CURRENTLY active (curBundle/curScaleId - a chip switch may have
+      // happened since Studio open) so the toggle always reflects on-screen
+      // state, not just the initial mode scale.
+      var fvToggle = elPlayer.querySelector('[data-fretview]');
+      function paintFvToggle() {
+        if (!fvToggle) return;
+        Array.prototype.forEach.call(fvToggle.querySelectorAll('button'), function (b) {
+          b.classList.toggle('on', b.getAttribute('data-fv') === fretView);
+        });
+      }
+      if (fvToggle) {
+        Array.prototype.forEach.call(fvToggle.querySelectorAll('button'), function (b) {
+          b.onclick = function () {
+            var v = b.getAttribute('data-fv');
+            if (v === fretView) return;
+            fretView = v; writeFretView(fretView); paintFvToggle();
+            renderFretboard(curBundle, curScaleId);
+          };
+        });
+      }
       // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
       renderGuide(th.scaleMode, th.notes);
       // M-TRACKLIB wave 1: default jam-discovery panel is the "mode" bundle too.
@@ -1047,7 +1139,6 @@
       (function wireScaleChips() {
         var chipsEl = elPlayer.querySelector('[data-scalechips]');
         var frameEl = elPlayer.querySelector('[data-scaleframe]');
-        var scaleEl = elPlayer.querySelector('[data-scale]');
         if (!chipsEl) return;
         var C = circleRef();
         var CHIPS = [
@@ -1074,10 +1165,13 @@
         function select(scaleId) {
           var bundle = soloBundle(t.key, t.mode, scaleId);
           if (!bundle) return;
-          // M-EAR wave 1 (implementation note #3): a scale-chip switch always
-          // stops any in-progress audition - the sounding scale is about to
-          // change out from under the marker.
-          stopStudioSound();
+          // M-EAR wave 1.5 (U11): a scale-chip switch WHILE auditioning
+          // retargets the live loop at the next note boundary instead of
+          // stopping - keeps playing, no re-tap, a seamless A/B compare of
+          // scales. When nothing is playing, stopStudioSound() stays a
+          // harmless idempotent reset (same behavior as pre-U11).
+          var wasPlaying = !!studioSound;
+          if (!wasPlaying) stopStudioSound();
           curId = scaleId;
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
@@ -1095,13 +1189,16 @@
           // too - a chip switch re-derives its genre list + query LIVE (the spec's
           // own words), never a show/hide of the panel itself (D-HERO-REMOVED).
           renderJamPanel(scaleId);
-          try {
-            scaleEl.innerHTML = '';
-            var chipNameByPc = [];
-            bundle.notes.forEach(function (nm, i) { chipNameByPc[bundle.pcs[i]] = nm; });
-            scaleBoxWrap = global.KeyExplorer.renderScale(scaleEl, pack, th.rootPc, bundle.pcs,
-              { names: chipNameByPc, tones: computeTones(bundle, scaleId), boxScaleId: boxScaleIdFor(scaleId, th.scaleMode) });
-          } catch (e) {}
+          // M-EAR wave 1.5: renderFretboard() replaces the old inline
+          // KeyExplorer.renderScale try-block (S-BLUES-BOXES boxScaleId
+          // passthrough is unchanged - it's computed inside renderFretboard
+          // itself now, one choke point for the initial render/every chip
+          // switch/the Window|Full-neck toggle).
+          renderFretboard(bundle, scaleId);
+          // Retarget AFTER curBundle/renderFretboard land, so the very next
+          // onNote tick (which reads curBundle + scaleBoxWrap live) already
+          // matches the NEW scale/fretboard the instant it fires.
+          if (wasPlaying && studioSound) studioSound.retarget(bundle.pcs);
         }
         render();
       })();

@@ -8,7 +8,8 @@
  * Public API:
  *   Sound.noteHz(pc, octave)                    - A440 equal-temperament Hz
  *                                                  for a pitch class + octave
- *   Sound.playScale(pcs, opts) -> { stop() }     - loop an octave-folded
+ *   Sound.playScale(pcs, opts) -> { stop(), retarget(newPcs) }
+ *     - loop an octave-folded
  *     opts: rootOctave (default 4), bpm (default 72), loop (default true),
  *           onNote(i)  - fires once per note, i indexes the FULL played
  *                        sequence (length = pcs.length + 1: the ascent plus
@@ -16,9 +17,23 @@
  *                        pcs.length-token notes/degrees line map the marker
  *                        back with `i % pcs.length` - the closing root lands
  *                        the marker back on token 0, no extra DOM node needed.
+ *                        After a retarget(), i resumes counting from 0
+ *                        against the NEW pcs - map against the CURRENTLY
+ *                        active scale's length, not a value captured at
+ *                        playScale() call time (M-EAR wave 1.5).
  *           onStop()   - fires once when playback ends (stop() called, the
  *                        non-looping pass finished, or another playScale()
- *                        call preempted this one).
+ *                        call preempted this one). retarget() never fires
+ *                        onStop - the loop keeps running, just on new pcs.
+ *     handle.retarget(newPcs) (M-EAR wave 1.5, U11) - swaps the sounding
+ *       scale to newPcs at the NEXT note boundary (no click/gap: the note
+ *       already in flight finishes naturally; only the tick AFTER it picks
+ *       up the new sequence, restarting the ascent from newPcs's own root -
+ *       i resets to 0, not wherever the old sequence had reached). Lets a
+ *       scale-chip switch keep the audition PLAYING for a live A/B compare
+ *       instead of stop-then-restart. A no-op (silently ignored, playback
+ *       continues unchanged) if newPcs is empty/unresolvable, or if playback
+ *       has already stopped.
  *   Sound.stopAll()                              - stop whatever is playing,
  *     app-wide, without holding a handle (teardown safety net for a view
  *     that's going away).
@@ -149,7 +164,13 @@
     var a = ctx();
     var stopped = false;
     var timers = [];
-    var handle = { stop: doStop };
+    // M-EAR wave 1.5 (U11): a queued scale swap, applied at the NEXT step()
+    // tick rather than immediately - the note already scheduled via
+    // schedulePass keeps sounding to its natural end (no click/gap); only the
+    // boundary after it picks up the new sequence, restarting at index 0 (the
+    // new scale's own root) per the header's documented contract.
+    var pendingNotes = null;
+    var handle = { stop: doStop, retarget: retarget };
     activePlayback = handle;
 
     function clearTimers() { timers.forEach(clearTimeout); timers.length = 0; }
@@ -163,8 +184,15 @@
       // the device's audio focus shortly after the loop actually stops.
       setTimeout(function () { if (a && a.state === 'running') a.suspend(); }, 500);
     }
+    function retarget(newPcsIn) {
+      if (stopped) return;
+      var newNotes = buildNoteSequence(newPcsIn, opts.rootOctave);
+      if (!newNotes.length) return; // unresolvable target - keep playing the current scale
+      pendingNotes = newNotes;
+    }
     function step(i) {
       if (stopped) return;
+      if (pendingNotes) { notes = pendingNotes; pendingNotes = null; i = 0; }
       if (onNote) onNote(i);
       schedulePass(a, [notes[i]], a.currentTime, noteDur);
       var ni = nextIndex(i, notes.length, loop);

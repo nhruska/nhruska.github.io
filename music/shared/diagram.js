@@ -273,8 +273,25 @@
           if (cls === 'chord') st = ' style="fill:var(--kx-chord);stroke:var(--kx-chord)"';
           else if (cls === 'blue') st = ' style="fill:var(--kx-blue);stroke:var(--kx-blue)"';
           if (isRub) dash = ' stroke-dasharray="3 2"';
+        } else {
+          // M-EAR wave 1.5 (U12): tones-absent dots still need the kxDot class
+          // (below, data-pc is added either way) so key-explorer.js's
+          // boxWrap.setSounding(pc) has a consistent `.kxDot[data-pc]` shape to
+          // query regardless of whether a chord target is active. Deliberate,
+          // reviewed change to the tones-absent baseline - the SHA-256 lock in
+          // diagram.dom.test.js was re-verified and updated for this change
+          // (see that test's own re-verify-deliberately comment).
+          classAttr = ' class="kxDot"';
         }
-        svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + classAttr + dash + '/>';
+        // data-pc (M-EAR wave 1.5, U12): the ONE per-dot marker the sounding-
+        // note fretboard highlight is built on - every octave/string of the
+        // currently-sounding pitch class shares this attribute, so a plain
+        // querySelectorAll('[data-pc="N"]') lights all of them at once. Added
+        // unconditionally (tones present or absent) - the kx-sounding CLASS
+        // itself is never baked in here; it's added later via JS classList
+        // (key-explorer.js), so THAT stays byte-identical either way.
+        var pcAttr = ' data-pc="' + note.pc + '"';
+        svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + classAttr + pcAttr + dash + '/>';
         // Prefer the caller's spelling (opts.names[pc] - canonical sharp post-FORK-4,
         // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
         // fall back to the sharp table.

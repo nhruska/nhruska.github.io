@@ -16,12 +16,35 @@ function makeEl(tag) {
     attrs: {}, parentNode: null, onclick: null,
     appendChild: function (c) { c.parentNode = el; el.children.push(c); return c; },
     setAttribute: function (k, v) { el.attrs[k] = v; },
+    // M-EAR wave 1.5 (U12): minimal attribute-selector-only querySelectorAll,
+    // just enough to drive boxWrap.setSounding()'s [data-pc="N"] lookup below -
+    // recursive DFS over appendChild-tracked children.
+    querySelectorAll: function (sel) { return queryAllByAttr(el, sel); }
+  };
+  el.classList = {
+    _set: {},
+    add: function (c) { el.classList._set[c] = true; },
+    remove: function (c) { delete el.classList._set[c]; },
+    contains: function (c) { return !!el.classList._set[c]; }
   };
   Object.defineProperty(el, 'innerHTML', {
     get: function () { return ''; },
     set: function (v) { if (v === '') el.children = []; }
   });
   return el;
+}
+function queryAllByAttr(root, sel) {
+  var m = /^\[([\w-]+)="([^"]*)"\]$/.exec(sel);
+  var out = [];
+  if (!m) return out;
+  var key = m[1], val = m[2];
+  (function walk(node) {
+    (node.children || []).forEach(function (c) {
+      if (c.attrs && c.attrs[key] === val) out.push(c);
+      walk(c);
+    });
+  })(root);
+  return out;
 }
 global.document = { createElement: makeEl };
 
@@ -215,6 +238,93 @@ test('boxScaleId set on a MODE (non-pentatonic) render is the caller\'s job to o
   var pack = fakeGuitarPack(true), host = makeEl('div');
   var boxWrap = KE.renderScale(host, pack, 9, [9, 0, 2, 4, 7], { frets: 7, boxScaleId: 'pentMinor' });
   assert.strictEqual(pack.calls[0].args, 6, 'the 6-arg supportsStart call shape is unaffected by box mode');
+});
+
+/* ---------- M-EAR wave 1.5 (U13): opts.noPosCtrl - full-neck, no pager UI ---------- */
+test('opts.noPosCtrl: still a full 6-arg supportsStart call (names/tones forward), but NO position-control DOM at all', function () {
+  var pack = fakePack(true), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 2, 4, 5, 7, 9, 11], { frets: 14, noPosCtrl: true, names: ['C'], tones: { byPc: {}, rubPc: null } });
+  assert.strictEqual(pack.calls[0].args, 6, 'full-neck must still use the 6-arg pack contract');
+  assert.strictEqual(pack.calls[0].startFret, 0);
+  assert.strictEqual(pack.calls[0].frets, 14, 'startFret 0 shows the whole requested F with no cap truncation');
+  assert.strictEqual(findByClass(boxWrap, 'scalePosCtrl'), null, 'no back/fwd control in full-neck mode');
+  assert.strictEqual(findByClass(boxWrap, 'scaleBoxChip'), null, 'no box chip either - nothing to snap to without a pager');
+});
+test('opts.noPosCtrl on a pack WITHOUT supportsStart is a no-op either way (already no control)', function () {
+  var pack = fakePack(false), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 2, 4], { frets: 7, noPosCtrl: true });
+  assert.strictEqual(pack.calls[0].args, 3);
+  assert.strictEqual(findByClass(boxWrap, 'scalePosCtrl'), null);
+});
+test('POS_CAP is exported (14) - the full-neck span callers request via frets:KeyExplorer.POS_CAP', function () {
+  assert.strictEqual(KE.POS_CAP, 14);
+});
+
+/* ---------- M-EAR wave 1.5 (U12): boxWrap.setSounding(pc) - class-swap over rendered dots ---------- */
+function fakeDiagramWithDots(pcs) {
+  var svg = makeEl('svg');
+  pcs.forEach(function (pc) {
+    var c = makeEl('circle');
+    c.setAttribute('data-pc', String(pc));
+    svg.appendChild(c);
+  });
+  return svg;
+}
+function fakePackWithDots(pcsPerCall) {
+  var calls = [];
+  function scaleDiagram(rootPc, pcs, frets, startFret, names, tones) {
+    calls.push({ args: arguments.length, frets: frets, startFret: startFret, tones: tones });
+    return fakeDiagramWithDots(pcsPerCall);
+  }
+  scaleDiagram.supportsStart = true;
+  return { scaleDiagram: scaleDiagram, calls: calls };
+}
+function dotsWithClass(boxWrap, cls) {
+  var diag = findByClass(boxWrap, 'scaleDiagBox');
+  return queryAllByAttr(diag, '[data-pc="0"]').concat(queryAllByAttr(diag, '[data-pc="4"]'), queryAllByAttr(diag, '[data-pc="7"]'), queryAllByAttr(diag, '[data-pc="9"]'))
+    .filter(function (el) { return el.classList.contains(cls); });
+}
+
+test('setSounding(pc): lights every dot matching data-pc, and ONLY those', function () {
+  var pack = fakePackWithDots([0, 4, 7, 9]), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 4, 7, 9], { frets: 7 });
+  boxWrap.setSounding(4);
+  var lit = dotsWithClass(boxWrap, 'kx-sounding');
+  assert.strictEqual(lit.length, 1);
+  assert.strictEqual(lit[0].attrs['data-pc'], '4');
+});
+test('setSounding(pc) called again CLEARS the previous mark before lighting the new one (never two lit at once)', function () {
+  var pack = fakePackWithDots([0, 4, 7, 9]), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 4, 7, 9], { frets: 7 });
+  boxWrap.setSounding(4);
+  boxWrap.setSounding(9);
+  var lit = dotsWithClass(boxWrap, 'kx-sounding');
+  assert.strictEqual(lit.length, 1);
+  assert.strictEqual(lit[0].attrs['data-pc'], '9');
+});
+test('setSounding(null) clears with no new highlight', function () {
+  var pack = fakePackWithDots([0, 4, 7, 9]), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 4, 7, 9], { frets: 7 });
+  boxWrap.setSounding(7);
+  boxWrap.setSounding(null);
+  assert.strictEqual(dotsWithClass(boxWrap, 'kx-sounding').length, 0);
+});
+test('a sounding mark SURVIVES a position walk (renderBox re-applies it to the freshly-rendered dots)', function () {
+  var pack = fakePackWithDots([0, 4, 7, 9]), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 4, 7, 9], { frets: 7 });
+  var p = ctrlParts(boxWrap);
+  boxWrap.setSounding(4);
+  p.fwd.onclick(); // walks to startFret 5, re-renders diagBox with brand-new fake dots
+  var lit = dotsWithClass(boxWrap, 'kx-sounding');
+  assert.strictEqual(lit.length, 1, 'sounding mark must re-apply to the new render, not vanish with the old dots');
+  assert.strictEqual(lit[0].attrs['data-pc'], '4');
+});
+test('setSounding never throws when diagBox lacks querySelectorAll (defensive DOM-stub degrade)', function () {
+  var pack = fakePackWithDots([0, 4, 7]), host = makeEl('div');
+  var boxWrap = KE.renderScale(host, pack, 0, [0, 4, 7], { frets: 7 });
+  var diagBox = findByClass(boxWrap, 'scaleDiagBox');
+  delete diagBox.querySelectorAll; // simulate a stub/host that doesn't implement it
+  assert.doesNotThrow(function () { boxWrap.setSounding(0); boxWrap.setSounding(null); });
 });
 
 run();
