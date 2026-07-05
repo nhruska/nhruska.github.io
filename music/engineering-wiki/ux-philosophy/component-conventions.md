@@ -34,6 +34,20 @@ The app's design-system reference: canonical style/convention per element class,
 - Link rows: .lyricsLinks / .bt-st-linkrow - centered flex, gap 6px 22px; labels must not wrap at 412px (U4 precedent: shorten text, never wrap).
 - URLs users must tap are live links; never code-formatted.
 
+## Legend (dot-swatch + label rows)
+
+`shared/legend.js` (`window.Legend.render(classes) -> HTMLElement|null`, M-EAR wave 1.6, U16, decisions.md D-EAR-1.6) is THE primitive for "here's what each colored dot/mark means" - never hand-roll a prose caption sentence for a dot-class legend again (it replaced exactly that: the old M-GUIDE W3a target-caption sentence).
+
+| Convention | Detail |
+|---|---|
+| Fixed vocabulary | `LEGEND_ORDER = ['root','chord','blue','ghost','rub','sounding']` - a caller passes WHICH of these are currently visible on-screen (never a caller-invented class); unknown keys are silently dropped |
+| Swatch = real tokens, never approximated hex | Each swatch is a tiny inline SVG circle using the SAME `kx-*` class + `var(--kx-*/--accent*/--dg-dot*/--sound-*)` styling `diagram.js`'s actual fretboard dots use - a theme/accent change propagates to the legend for free. `test/legend.test.js`'s Tier 2 static lint enforces ZERO literal hex anywhere in `legend.js`'s source |
+| Container surface | `.legend` (tracks.css EOF) is a CARD surface - `--surface-2`/`--line`/`var(--r-card)` (same radius-by-role token every other card consumer uses, per the Spacing/radius section below), NOT a new surface token |
+| Row shape | `.legendRow` (flex, gap 8px) > `.legendSwatch` (the SVG) + `.legendLbl` (`.72rem`, `var(--txt-soft)` - the SAME ink family `.bt-st-guide-txt` already uses for a plain description row, no new text-color token) |
+| Order | Always renders in the FIXED `LEGEND_ORDER`, regardless of the caller's array order - root leads (the one class every scale render always has), then the D-TARGET precedence order (chord > blue > ghost), then the two MODIFIER classes (rub, sounding) last |
+| Null-when-empty | `render()` returns `null` (no DOM, no empty card) when the classes array is empty/falsy - same convention as `KeyExplorer.renderScale`/`Diagram.scale` |
+| Reuse, don't reinvent | Any future dot-class legend (a new theory surface, a Compose-side equivalent) MUST call `Legend.render()`, not hand-roll a second caption/legend component - extend `LEGEND_ORDER`/`DEFS` in `legend.js` if a genuinely new class is needed |
+
 ## Modal / Disclosure / Tabs
 
 - **Modal:** composeModalBackdrop standard (U7): dim backdrop, centered dialog, role=dialog + aria-modal, focus into dialog, Esc/hardware-Back/backdrop-tap all dismiss through NavHistory (no ghost history entries).
@@ -80,4 +94,4 @@ The palette is the :root custom-property block in [songbook.css](../../shared/so
 
 ---
 
-**Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token blocks); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, U3/U4/U7 rows); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards).
+**Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token blocks); tracks.css kx ink vars + studio classes; repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, U3/U4/U7 rows, D-EAR-1.6); ui-primitives.md (taxonomy, PR #145); interaction-safety.md (RAIL); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards); shared/legend.js + [test/legend.test.js](../../../test/legend.test.js) (M-EAR wave 1.6, U16 - the Legend primitive + its no-raw-hex source lint).
