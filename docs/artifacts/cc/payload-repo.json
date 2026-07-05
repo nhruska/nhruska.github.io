@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T13:25:48Z",
+  "generatedAt": "2026-07-05T15:28:07Z",
   "generator": "command-center-gen.py@0.2.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T13:11:33Z",
-    "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
-    "subject": "cc: report executed test cases (2117), not just suite files (40) (#186)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/180e8b7452eab37208b6e4dda9c866941afe810c"
+    "date": "2026-07-05T15:15:30Z",
+    "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
+    "subject": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (#188)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c05bb40ce3b19b81bac0963506bbe9008ec767f3"
   },
   "commits": [
+    {
+      "date": "2026-07-05T15:15:30Z",
+      "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
+      "subject": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (#188)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c05bb40ce3b19b81bac0963506bbe9008ec767f3"
+    },
+    {
+      "date": "2026-07-05T14:02:14Z",
+      "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
+      "subject": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT (#187)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e2dbd55b7838f60b3b13c7146a52e629959b79b5"
+    },
     {
       "date": "2026-07-05T13:11:33Z",
       "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
@@ -78,21 +90,33 @@
       "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
       "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
-    },
-    {
-      "date": "2026-07-05T07:16:49Z",
-      "sha": "c5793d13f9c312619c5985ddbbf4acc0532aa21b",
-      "subject": "S-TOAST-HOST (UAT U24): setlist-remove/library-delete undo banners no longer leave a visible empty pill (#178)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c5793d13f9c312619c5985ddbbf4acc0532aa21b"
-    },
-    {
-      "date": "2026-07-05T06:57:03Z",
-      "sha": "c997564e4818d9acd8a80761b78fee96b91799a0",
-      "subject": "capture: U24 empty toast host on setlist remove (lifecycle seam #170x#175) (#177)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c997564e4818d9acd8a80761b78fee96b91799a0"
     }
   ],
   "openPRs": [
+    {
+      "number": 189,
+      "title": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3)",
+      "branch": "claude/cc-reorder",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/189",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745557497/job/85235723121"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745557512/job/85235723141"
+        }
+      ]
+    },
     {
       "number": 98,
       "title": "music(theory): key-aware conventional note spelling from circle.js SSOT (#85)",
@@ -152,6 +176,18 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T15:15:31Z",
+      "number": 188,
+      "title": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/188"
+    },
+    {
+      "mergedAt": "2026-07-05T14:02:14Z",
+      "number": 187,
+      "title": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/187"
+    },
     {
       "mergedAt": "2026-07-05T13:11:33Z",
       "number": 186,
@@ -229,18 +265,6 @@
       "number": 174,
       "title": "S-REL-NAMES: guidance names the instance (U23) + the concreteness principle",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/174"
-    },
-    {
-      "mergedAt": "2026-07-05T05:33:18Z",
-      "number": 173,
-      "title": "Capture: U23",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/173"
-    },
-    {
-      "mergedAt": "2026-07-05T05:29:56Z",
-      "number": 172,
-      "title": "Capture: U22",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/172"
     }
   ],
   "deploy": {
@@ -250,8 +274,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v116",
-    "localCacheVersion": "music-v116",
+    "liveCacheVersion": "music-v117",
+    "localCacheVersion": "music-v117",
     "cacheMatch": true
   },
   "missions": [
@@ -465,8 +489,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 40,
-    "testCaseCount": 2117,
+    "testFileCount": 42,
+    "testCaseCount": 2138,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

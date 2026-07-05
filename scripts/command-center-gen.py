@@ -61,6 +61,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 import panelkit  # noqa: E402  (vendored SSOT - see scripts/vendor-check.py)
 
+# Vendored VERBATIM from workflows-hub scripts/llms_txt.py (the hub's shared
+# llms.txt writer - "every surface exposes a machine-readable twin next to
+# its own payload.json"). Kept byte-identical so drift-checking is one diff
+# against the hub's origin/main copy; adaptation lives in
+# build_llms_sections() below, never in the vendored module.
+from llms_txt import write_llms_txt  # noqa: E402
+
 REPO_ROOT = SCRIPT_DIR.parent
 
 # Version stamping introduced with the panelkit adoption (2026-07-05).
@@ -68,6 +75,9 @@ GEN_VERSION = "0.2.0"
 PLANS_DIR = REPO_ROOT / "docs" / "plans"
 ARTIFACTS_DIR = REPO_ROOT / "docs" / "artifacts"
 OUTPUT_PATH = ARTIFACTS_DIR / "cc" / "payload-repo.json"
+# Agent-readable twin, sibling of the payload per the hub convention
+# (workflows-hub: command/llms.txt beside command/payload.json).
+LLMS_PATH = ARTIFACTS_DIR / "cc" / "llms.txt"
 TEST_DIR = REPO_ROOT / "test"
 SW_PATH = REPO_ROOT / "music" / "sw.js"
 
@@ -341,6 +351,96 @@ def ops_links():
     }
 
 
+CC_LIVE_URL = "https://nhruska.github.io/docs/artifacts/cc/repo.html"
+
+
+def build_llms_sections(payload):
+    """Agent-readable twin of the payload (hub doctrine: prose is a defect;
+    every surface exposes an llms.txt sibling for an agent's session-start
+    intent inference). Pure function of the payload dict - same input, same
+    bytes out - so the twin can never say something the payload does not.
+
+    SANITIZATION: every line derives from payload-repo.json, which is
+    already public-repo-scoped (see SECURITY SCOPE in the module
+    docstring). No session-file content - the same bar as repo.html's
+    sanitized public block 3.
+    """
+    now_items = []
+    deploy = payload.get("deploy") or {}
+    if deploy.get("cacheMatch") is False:
+        now_items.append(
+            f"Deploy drift: live CACHE {deploy.get('liveCacheVersion')} != "
+            f"local {deploy.get('localCacheVersion')} - a shipped bump has not deployed (or main moved)"
+        )
+    suite = payload.get("suite") or {}
+    if suite.get("testFailedCount"):
+        now_items.append(f"Suite RED: {suite['testFailedCount']} failing test cases - fix before anything else")
+    for m in payload.get("missions") or []:
+        # HiTL state: any pane not in a closed state is live operator surface.
+        if not (m.get("status") or "").upper().startswith("MISSION CLOSED"):
+            now_items.append(f"Mission active: {m['title']} - {m['status']} - {m['liveUrl']}")
+    for row in (payload.get("queue") or {}).get("NOW", []):
+        # The State cell is the operator-gate marker ("AWAITING OPERATOR:
+        # ..."); rows whose State is just a markdown link carry no state.
+        state = (row.get("State") or "").strip()
+        if state and not state.startswith("["):
+            now_items.append(f"Queue NOW: {state}")
+    for pr in payload.get("openPRs") or []:
+        draft = " draft" if pr.get("draft") else ""
+        now_items.append(
+            f"Open{draft} PR #{pr['number']} (CI {pr['ciState']}): {pr['title']} - {pr['url']}"
+        )
+
+    # Visions = captured-but-not-promoted intent: the repo's to-wire layer.
+    gaps = [
+        f"Vision {v['statusGuess']}: {v['title']} - {v['sourceUrl']}"
+        for v in payload.get("visions") or []
+        if v.get("statusGuess") != "SHIPPED"
+    ]
+
+    recent_products = [
+        f"#{m['number']} - {m['title']} ({(m.get('mergedAt') or '')[:10]}) - {m['url']}"
+        for m in (payload.get("recentMerges") or [])[:8]
+    ]
+
+    ops = payload.get("ops") or {}
+    links = [f"Repo Command Center: {CC_LIVE_URL}"]
+    for label, key in (
+        ("Live app", "liveApp"),
+        ("Engineering wiki", "wikiIndex"),
+        ("Decisions log", "decisions"),
+        ("Queue (horizons)", "queueFile"),
+        ("Actions", "actions"),
+    ):
+        if ops.get(key):
+            links.append(f"{label}: {ops[key]}")
+
+    conventions = [
+        "Payload: docs/artifacts/cc/payload-repo.json",
+        "Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)",
+        f"Suite: {suite.get('runner', 'node test/run-all.js')}"
+        + (
+            f" ({suite['testCaseCount']} cases / {suite['testFileCount']} suites)"
+            if suite.get("testCaseCount") is not None
+            else f" ({suite.get('testFileCount', '?')} suites; case count unavailable)"
+        ),
+        "CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh",
+        "Public repo: payload + this brief carry public data only (no session-file content)",
+    ]
+
+    return {
+        "title": f"Repo Command Center - {payload['repo']['slug']}",
+        "generated_at": payload.get("generatedAt"),
+        "status": payload.get("status"),
+        "warnings": payload.get("warnings"),
+        "now_items": now_items,
+        "gaps": gaps,
+        "recent_products": recent_products,
+        "links": links,
+        "conventions": conventions,
+    }
+
+
 def main():
     envelope = panelkit.new_envelope(
         f"command-center-gen.py@{GEN_VERSION} (panelkit {panelkit.PANELKIT_VERSION})",
@@ -406,9 +506,11 @@ def main():
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2) + "\n")
+    write_llms_txt(LLMS_PATH, **build_llms_sections(payload))
 
     status_note = payload["status"] if payload["status"] == "ok" else f"{payload['status']}: {len(payload['warnings'])} warning(s)"
     print(f"wrote {OUTPUT_PATH.relative_to(REPO_ROOT)} (status {status_note})")
+    print(f"wrote {LLMS_PATH.relative_to(REPO_ROOT)} (agent-readable twin)")
     print(
         f"  head: {head['sha'][:7] if head else '?'} - {len(commits)} commits, "
         f"{len(open_prs)} open PRs, {len(recent_merges)} recent merges"

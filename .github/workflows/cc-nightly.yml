@@ -25,11 +25,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/command-center-gen.py
       - name: Commit if changed
+        # llms.txt is the payload's agent-readable twin (written by the same
+        # generator run) - commit them together or the deployed twin drifts.
+        # add-then-diff --cached so a first-ever llms.txt (untracked) counts.
         run: |
           git config user.name "cc-nightly"
           git config user.email "actions@users.noreply.github.com"
-          if ! git diff --quiet docs/artifacts/cc/payload-repo.json; then
-            git add docs/artifacts/cc/payload-repo.json
+          git add docs/artifacts/cc/payload-repo.json docs/artifacts/cc/llms.txt
+          if ! git diff --cached --quiet; then
             git commit -m "cc: nightly snapshot refresh"
             git push
           else
