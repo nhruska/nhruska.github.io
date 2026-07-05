@@ -699,6 +699,12 @@
       // itself, or a soloBundle() chip-swap result) so a chord-target toggle can
       // re-derive tones against the RIGHT scale.
       var scaleBoxWrap = null, activeTargetChord = null, curBundle = th, curScaleId = 'mode';
+      // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
+      // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
+      // to the new scale's first genre whenever the active genre isn't in that
+      // scale's list (renderJamPanel below); jamFeel persists across scale-chip
+      // switches (a "slow" preference likely holds across modes).
+      var jamGenre = null, jamFeel = 'mid';
       // scaleId 'mode' resolves to th.scaleMode (one of the 5 SoloGuide-known
       // modal keys, incl. 'blues'); any other scaleId (pentMajor/pentMinor/blues
       // chip) IS the SoloGuide key directly.
@@ -753,6 +759,72 @@
         // P5 fold: legend gains the hollow/ghost-dot meaning - kept to one line.
         targetCapEl.textContent = 'Showing ' + activeTargetChord + ' inside ' + keyLabelPlain
           + ' - accent = chord root, filled = chord tones, hollow = chord tone outside the scale.';
+      }
+      // M-TRACKLIB wave 1 (docs/plans/vision-ear-first-20260704.md): reverse-map
+      // the Circle-internal scaleMode word back to the raw major/minor/dorian/
+      // mixolydian/blues vocabulary repertoire-form.js's normFormMode() expects -
+      // mirrors how a real track's t.mode already reads elsewhere in this file
+      // (keyLabelFor). 'blues' has no MODES entry there either (same pre-existing
+      // gap the Studio's own "Or edit song details" button already has for a
+      // blues-keyed track) - normFormMode silently defaults it to 'major'.
+      var SCALEMODE_TO_FORMMODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian', blues: 'blues' };
+      // Renders the key-aware jam-discovery explore panel: genre chips x feel
+      // chips (both compose the shared .chip primitive - accent-fill .on, no new
+      // chip variant) under the CURRENT key (th.key - unaffected by scale-chip
+      // switching) + whichever solo-scale chip is active (scaleId, resolved via
+      // scaleKeyFor - same resolution renderGuide uses). Called on Studio open +
+      // every scale-chip select (mirrors renderGuide's own call sites), so the
+      // genre list and generated query are never stale for the on-screen scale.
+      // RESPECTS D-HERO-REMOVED: purely additive/static, no show/hide-on-filter,
+      // lives in the Studio only.
+      function renderJamPanel(scaleId) {
+        if (!jamPanel) return;
+        var JQ = global.JamQueries;
+        if (!JQ) { jamPanel.innerHTML = ''; return; }
+        var scaleKey = scaleKeyFor(scaleId, th.scaleMode);
+        var genres = JQ.genresFor(scaleKey);
+        if (!genres.length) { jamPanel.innerHTML = ''; return; }
+        // A genre carried over from a different scale's list (or the first-ever
+        // render) resets to that scale's own first genre - the list itself is
+        // scale-specific, so a stale selection would silently point at a genre
+        // the current scale never offered.
+        if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
+        var feelBands = JQ.feels();
+        var query = JQ.jamQuery(th.key, scaleKey, jamGenre, jamFeel);
+        jamPanel.innerHTML =
+          '<div class="bt-st-jamchips" data-jamgenres>' + genres.map(function (g) {
+            return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
+          }).join('') + '</div>'
+          + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
+            return '<button class="chip' + (f.id === jamFeel ? ' on' : '') + '" data-jamfeel="' + esc(f.id) + '" type="button">' + esc(f.label) + '</button>';
+          }).join('') + '</div>'
+          + '<div class="bt-st-jamquery">' + esc(query) + '</div>'
+          + '<div class="bt-st-jamresult">'
+          // Leave-app external link (new tab, arrow glyph) - same convention as
+          // the "Watch on YouTube" / "Search YouTube" links above.
+          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(query)) + '" target="_blank" rel="noopener">Search YouTube &#8599;</a>'
+          // "Add to library" - only when the host wired onEditRequest (same guard
+          // the "Or edit song details" affordance uses). Opens the SAME prefilled
+          // create-form seam (songbook.js openEditOrAdd): an object with no .id
+          // always takes the create branch. Key + mode prefill through this seam
+          // today; genre is carried on the object for a future form-side pickup
+          // (repertoire-form.js's create item shape doesn't read it yet) - see
+          // the PR notes for the one-line follow-up.
+          + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
+          + '</div>';
+        Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
+          b.onclick = function () { jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+        });
+        Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
+          b.onclick = function () { jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
+        });
+        var jamAddBtn = jamPanel.querySelector('[data-jamadd]');
+        if (jamAddBtn) jamAddBtn.onclick = function () {
+          opts.onEditRequest({
+            key: th.key, mode: SCALEMODE_TO_FORMMODE[th.scaleMode] || 'major',
+            title: '', artist: '', genre: jamGenre, yt: null
+          });
+        };
       }
       // Chords-in-key tap toggles that chord as the fretboard's target (in addition
       // to the existing play-on-tap behavior) - one target surface, per section 2.
@@ -864,7 +936,14 @@
         + '<div class="bt-st-scale" data-scale></div>'
         // M-GUIDE W3a: chord-tone targeting caption - reuses .bt-st-scaleframe's
         // look; static text, interpolates only already-rendered labels (A9).
-        + '<div class="bt-st-scaleframe" data-targetcap hidden></div></div>'
+        + '<div class="bt-st-scaleframe" data-targetcap hidden></div>'
+        // M-TRACKLIB wave 1: the key-aware jam-discovery explore panel - reuses
+        // the .bt-st-why-toggle/.bt-st-why disclosure pattern verbatim (Guide's
+        // own primitive, composed not re-invented). Collapsed by default;
+        // wireJamPanel() (below) re-derives the genre list + query on every
+        // scale-chip select, same as renderGuide().
+        + '<button class="bt-st-why-toggle" data-jamtoggle type="button">Find a jam</button>'
+        + '<div class="bt-st-why" data-jampanel hidden></div></div>'
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
         // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
@@ -883,6 +962,9 @@
       // in the template string, so they exist as soon as elPlayer.innerHTML lands).
       var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
       var targetCapEl = elPlayer.querySelector('[data-targetcap]');
+      // M-TRACKLIB wave 1: jam-discovery toggle/panel element refs (same
+      // built-in-the-template-string pattern as Guide, above).
+      var jamToggle = elPlayer.querySelector('[data-jamtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
       // M-EAR wave 1: the play/stop scale-audition toggle + the notes/degrees
       // token lines it bounces a marker across (curBundle already tracks
       // whichever scale-chip is active - see the M-GUIDE W3a comment above).
@@ -954,6 +1036,8 @@
       } catch (e) {}
       // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
       renderGuide(th.scaleMode, th.notes);
+      // M-TRACKLIB wave 1: default jam-discovery panel is the "mode" bundle too.
+      renderJamPanel('mode');
       // S-BLUES: the scale-chip row - [Mode label | Pent major | Pent minor |
       // Blues]. Default = 'mode' (th itself; the fretboard/notes already
       // rendered above are its output, so no re-render on open). A tap
@@ -1007,6 +1091,10 @@
           // and re-derive the Guide card for whichever solo scale is now on-screen.
           curBundle = bundle; curScaleId = scaleId;
           renderGuide(scaleKeyFor(scaleId, th.scaleMode), bundle.notes);
+          // M-TRACKLIB wave 1: the jam-discovery panel is scale-context-reactive
+          // too - a chip switch re-derives its genre list + query LIVE (the spec's
+          // own words), never a show/hide of the panel itself (D-HERO-REMOVED).
+          renderJamPanel(scaleId);
           try {
             scaleEl.innerHTML = '';
             var chipNameByPc = [];
@@ -1041,6 +1129,11 @@
       };
       if (guideToggle && guideBox) guideToggle.onclick = function () {
         var show = guideBox.hidden; guideBox.hidden = !show; guideToggle.classList.toggle('on', show);
+      };
+      // M-TRACKLIB wave 1: same disclosure toggle behavior as Guide - collapsed by
+      // default, per-open state only (no persistence).
+      if (jamToggle && jamPanel) jamToggle.onclick = function () {
+        var show = jamPanel.hidden; jamPanel.hidden = !show; jamToggle.classList.toggle('on', show);
       };
       // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
       var urlIn = elPlayer.querySelector('[data-urlin]'),

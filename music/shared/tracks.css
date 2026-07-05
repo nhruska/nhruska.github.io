@@ -390,3 +390,16 @@
    chords-in-key row lacked the SVG max-width guard the Compose grids carry.
    Same defense-in-depth, same reason - see systems/layout-tokens.md. */
 .bt-st-chords .chordCell svg{max-width:100%;height:auto}
+
+/* =====================================================================
+ * M-TRACKLIB wave 1 - "Find a jam" explore panel (docs/plans/
+ * vision-ear-first-20260704.md). Reuses .bt-st-why-toggle/.bt-st-why for the
+ * disclosure (Guide's own primitive), the shared .chip base (songbook.css)
+ * for genre/feel selection (accent-fill .on grammar, no new chip variant),
+ * and .bt-st-ytlink/.bt-st-editlink (already styled) for the two actions -
+ * only the layout wrappers below are new.
+ * ===================================================================== */
+  .bt-st-jamchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
+    letter-spacing:.02em;margin:0 0 8px;}
+  .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}

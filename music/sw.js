@@ -110,7 +110,13 @@
 // all change (the play/stop toggle + bouncing .sounding marker on the Studio
 // scale panel and the Compose key preview). New CORE path added below.
 // check-cache-bump.sh re-verified against origin/main immediately before push.
-var CACHE = 'music-v106';
+// M-TRACKLIB wave 1 (2026-07-04): v106->v107 - new shared/jam-queries.js (the
+// curated genre x feel jam-discovery query data, script-tagged in
+// play/index.html right after sound.js); shared/tracks.js/tracks.css change
+// (the Studio's "Find a jam" explore panel + prefilled add-to-library
+// handoff). New CORE path added below. check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v107';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -156,6 +162,9 @@ var CORE = [
   // sound.js: M-EAR wave 1 - the scale/mode audition provider, script-tagged
   // in play/index.html right after audio.js.
   './shared/sound.js',
+  // jam-queries.js: M-TRACKLIB wave 1 - curated genre x feel jam-discovery
+  // query data, script-tagged in play/index.html right after sound.js.
+  './shared/jam-queries.js',
   './shared/backup.js',
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
