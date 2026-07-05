@@ -90,3 +90,9 @@ Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD t
 **Operator:** "chord Bdim missing" - the Studio chords-in-key Bdim card renders diagram-only: no classifier label (others show "open X shape, root on N..."), card height/alignment visibly off.
 
 **Root cause (by design, now insufficient):** shape-classify.js returns honest null for diminished quality (dim/dim7/aug were explicitly left uncurated in step 0). Fix: (a) curate dim/dim7/aug templates for guitar-standard + ukulele-gcea (S-DIM-SHAPES - the uke movable dim shape is classic and classifiable); (b) null-label cards reserve the label slot so card heights stay equal whatever the classifier returns (folded into M-EAR 1.6's region). Also verify tap-to-hear fires on dim cards (Circle.chordTones handles dim - confirm live).
+
+## U22 - Setlist Prev/Next loses the current song -> library empty-state (operator, 2026-07-05 01:25, screenshots)
+
+**Operator:** "using next/previous through the songs of the set, we're losing something for the current song and getting an unexpected message [Choose a song from the Library to open it]. Could be data specific to me but..."
+
+**Diagnosis (not his data - a bug class):** DANGLING SETLIST REFERENCE - a set member deleted from the library (he deleted a track tonight during U19 testing) leaves its id in the setlist; queue nav resolves it to nothing and the perform pane falls to the empty state; the N/M counter still counts the ghost. Fix at three levels (S-SET-INTEGRITY): (1) DELETE flow heals: deleting a library item that is in setlists says so and removes the refs (toast+action undo restores both); (2) NAV is defensive: unresolvable entries are skipped with a calm inline notice ("1 removed song skipped"), counter reflects live entries, never the library empty-state mid-set; (3) LOAD-time heal: sets prune/mark dangling refs (migration-runner friendly).
