@@ -125,7 +125,13 @@
 // fretboard sounding lights, Window|Full-neck view toggle). No new/removed
 // CORE paths. check-cache-bump.sh re-verified against origin/main
 // immediately before push.
-var CACHE = 'music-v109';
+// M-TRACKLIB wave 2a (2026-07-05, U17): v109->v110 - new shared/yt-info.js
+// (keyless YouTube oEmbed lookup + title-hint parsing, script-tagged in
+// play/index.html right after repertoire-form.js); shared/repertoire-form.js/
+// repertoire-form.css change (the Video URL field's paste/blur YT-prefill
+// suggest row). New CORE path added below. check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v110';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -165,6 +171,9 @@ var CORE = [
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).
   './shared/list-item.js', './shared/repertoire.js', './shared/repertoire-form.js',
+  // yt-info.js: M-TRACKLIB wave 2a (U17) - script-tagged in play/index.html
+  // right after repertoire-form.js (see the CACHE-bump comment above).
+  './shared/yt-info.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/notables.js',
  './shared/theme.js', './shared/audio.js',

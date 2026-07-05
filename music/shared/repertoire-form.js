@@ -64,6 +64,117 @@
     };
   }
 
+  // U17 (M-TRACKLIB w2a) - given parsed YtInfo hints + the form's CURRENT
+  // string values, decide which fields are eligible for the suggestion -
+  // apply-to-empty-only, so a suggestion never overwrites something the
+  // operator already typed. Pure (no DOM) so the "empty only" contract is
+  // directly unit-testable (see test/repertoire-form.test.js). The Mode
+  // field has no true "empty" state (Key does - value ''), so its untouched
+  // sentinel is the rendered default 'major' - a deliberate, named scope
+  // note (see the shipping PR body), not a restructuring of the form.
+  function applicableYtHints(hints, cur) {
+    hints = hints || {}; cur = cur || {};
+    var out = {};
+    if (hints.t && !String(cur.title || '').trim()) out.title = hints.t;
+    if (hints.a && !String(cur.artist || '').trim()) out.artist = hints.a;
+    if (hints.key && !cur.key) out.key = hints.key;
+    if (hints.mode && cur.mode === 'major') out.mode = hints.mode;
+    if (hints.genre && !String(cur.genre || '').trim()) out.genre = hints.genre;
+    return out;
+  }
+
+  // U17 (M-TRACKLIB w2a) - YT-prefill: wires the Video URL field's paste/blur
+  // hook to shared/yt-info.js and renders a one-tap SUGGEST row. Entirely
+  // additive to the existing form: no new persisted fields, applies ONLY to
+  // the 5 fields the form already has (title/artist/key/mode/genre) - the
+  // module's bpm hint has no field to land in yet, so it's surfaced as a
+  // caption-only note. Fails silent (hidden row, zero errors) whenever
+  // YtInfo is missing, the URL doesn't resolve to a video, or the network
+  // lookup comes back empty - never blocks Save.
+  function wireYtSuggest(el) {
+    var urlIn = el.querySelector('[data-url]');
+    var row = el.querySelector('[data-yt-suggest]');
+    if (!urlIn || !row) return; // fork mode / unexpected DOM shape - no-op
+    var lastUrl = null, pendingToken = 0;
+
+    function fieldEls() {
+      return {
+        title: el.querySelector('[data-title]'),
+        artist: el.querySelector('[data-artist]'),
+        key: el.querySelector('[data-key]'),
+        mode: el.querySelector('[data-mode]'),
+        genre: el.querySelector('[data-genre]')
+      };
+    }
+    function hideRow() { row.hidden = true; row.innerHTML = ''; }
+    function showPending() {
+      row.hidden = false;
+      row.innerHTML = '<span class="rf-yt-pending">Looking up video info...</span>';
+    }
+    function applicableHints(hints) {
+      var f = fieldEls();
+      return applicableYtHints(hints, { title: f.title.value, artist: f.artist.value, key: f.key.value, mode: f.mode.value, genre: f.genre.value });
+    }
+    // bpm has no form field to land in (named scope note above) - it's folded
+    // into the summary text as a parenthetical when there's an applicable
+    // field to attach it to, or stands alone when it's the ONLY thing found
+    // (e.g. a title with no key/genre/artist info but a "120 bpm" token).
+    function summaryText(hints, applicable) {
+      var bits = [];
+      if (applicable.title) bits.push('"' + hints.t + '"');
+      if (applicable.artist) bits.push('by ' + hints.a);
+      if (applicable.key || applicable.mode) bits.push([applicable.key, applicable.mode].filter(Boolean).join(' '));
+      if (applicable.genre) bits.push(hints.genre);
+      var main = bits.join(', ');
+      var bpmNote = hints.bpm ? ('~' + hints.bpm + ' bpm') : '';
+      if (main && bpmNote) return main + ' (' + bpmNote + ')';
+      return main || bpmNote;
+    }
+    function applyHints(applicable) {
+      var f = fieldEls();
+      if (applicable.title) f.title.value = applicable.title;
+      if (applicable.artist) f.artist.value = applicable.artist;
+      if (applicable.key) f.key.value = applicable.key;
+      if (applicable.mode) f.mode.value = applicable.mode;
+      if (applicable.genre) f.genre.value = applicable.genre;
+      f.title.classList.remove('bad');
+    }
+    function showReady(hints, applicable) {
+      // A bpm-only find (no field to apply it to) has nothing an Apply button
+      // would do - show it as an info line with only a Dismiss, not a dead
+      // Apply. Every other case has >=1 field an Apply genuinely fills.
+      var hasApplicable = !!Object.keys(applicable).length;
+      row.hidden = false;
+      row.innerHTML = '<span class="rf-yt-txt">' + (hasApplicable ? 'Use: ' : '') + esc(summaryText(hints, applicable)) + '</span>'
+        + '<div class="rf-yt-actions">'
+        + (hasApplicable ? '<button type="button" class="rf-yt-apply" data-yt-apply>Apply</button>' : '')
+        + '<button type="button" class="rf-yt-dismiss" data-yt-dismiss>Dismiss</button>'
+        + '</div>';
+      if (hasApplicable) row.querySelector('[data-yt-apply]').onclick = function () { applyHints(applicable); hideRow(); };
+      row.querySelector('[data-yt-dismiss]').onclick = function () { hideRow(); };
+    }
+    function maybeSuggest(url) {
+      if (!url) { hideRow(); lastUrl = null; return; }
+      if (url === lastUrl) return; // no change since the last check
+      lastUrl = url;
+      if (!global.YtInfo) { hideRow(); return; } // module unavailable - fail soft
+      var id = global.YtInfo.videoId(url);
+      if (!id) { hideRow(); return; }
+      var token = ++pendingToken;
+      showPending();
+      global.YtInfo.fetchInfo(url).then(function (info) {
+        if (token !== pendingToken) return; // stale - the field changed again mid-flight
+        if (!info) { hideRow(); return; }
+        var hints = global.YtInfo.parseHints(info.title, info.author);
+        var applicable = applicableHints(hints);
+        if (!Object.keys(applicable).length && !hints.bpm) { hideRow(); return; }
+        showReady(hints, applicable);
+      }, function () { if (token === pendingToken) hideRow(); });
+    }
+    urlIn.addEventListener('blur', function () { maybeSuggest(urlIn.value.trim()); });
+    urlIn.addEventListener('paste', function () { setTimeout(function () { maybeSuggest(urlIn.value.trim()); }, 0); });
+  }
+
   function mount(opts) {
     opts = opts || {};
     var el = document.createElement('div');
@@ -118,6 +229,9 @@
             + '<textarea data-seq class="bt-in rf-seq" placeholder="e.g. G D Em C" rows="2">' + esc(seqText) + '</textarea>')
         + '<label class="rf-lbl">Video URL <span class="rf-opt">(optional)</span></label>'
         + '<input data-url class="bt-in" value="' + esc(urlText) + '" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+        // U17 (M-TRACKLIB w2a): YT-prefill suggestion row - populated/shown by
+        // wireYtSuggest() below, hidden until a valid video URL resolves info.
+        + '<div class="rf-yt-suggest" data-yt-suggest hidden></div>'
         + '<div class="rf-actions">'
         + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
@@ -161,6 +275,7 @@
           }
         };
       }
+      wireYtSuggest(el);
     }
 
     function open(o) {
@@ -172,7 +287,7 @@
     return { open: open, close: close };
   }
 
-  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES };
+  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES, applicableYtHints: applicableYtHints };
   global.RepertoireForm = RepertoireForm;
   if (typeof module !== 'undefined' && module.exports) module.exports = RepertoireForm;
 

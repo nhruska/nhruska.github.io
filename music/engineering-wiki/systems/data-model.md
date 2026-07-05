@@ -30,6 +30,10 @@ Track records: `{ title, artist, genre, key (canonical sharp), mode, bpm?, capo?
 
 Library = ONE list: songs merged with matching tracks (repertoire.js). Match on normalized title+artist; key as tiebreak among multiple candidates; consumed tracks marked _used; unmatched tracks become standalone items. Merged records keep the song shape + gain track fields (genre/bpm/yt/_track) so the Studio can open them.
 
+## YT-prefill suggestion (U17, M-TRACKLIB w2a) [STABLE, NO NEW STORAGE KEYS]
+
+`shared/yt-info.js` (`window.YtInfo`) reads a pasted/blurred YouTube URL on the Add/Edit form, fetches the video's public title/channel (keyless oEmbed, `noembed.com` CORS-friendly fallback), and best-effort-parses the title into `{ t, a, key, mode, genre, bpm }` hints. This is **session-only UI suggestion state** - nothing here is persisted: no new `localStorage` key, no new field on `songs.json`/`tracks.json`/custom-item records. The suggestion row's Apply button writes straight into the form's EXISTING fields (title/artist/key/mode/genre - all already covered by the localStorage key inventory below via whichever custom-item write path saves the form); `bpm` has no field to land in yet (deferred to whenever the form grows a bpm input) and surfaces as a caption-only note. `repertoire-form.js`'s `applicableYtHints(hints, currentValues)` is the pure apply-to-empty-only decision function (never overwrites an operator-typed value); `wireYtSuggest()` is the DOM glue (paste/blur listeners, pending/ready/hidden row states) - Playwright/live-check territory, not unit-tested directly. See [decisions.md](../decisions.md) D-YT-PREFILL for the network-strategy verdict and scope notes.
+
 ## localStorage key inventory [STABLE] (M-6 STORAGE-MIGRATE, gh #76/#77, D-STORAGE-LS-MIGRATE)
 
 THE canonical registry of every key this app persists. Verified against `music/shared/*.js` + `music/play/*.html` source (grep-swept, not hand-recalled) - if a key exists in the shipped code and isn't in this table, that's a doc bug: fix the table in the same change you find it.
