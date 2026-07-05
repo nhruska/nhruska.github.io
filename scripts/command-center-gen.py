@@ -64,7 +64,10 @@ import panelkit  # noqa: E402  (vendored SSOT - see scripts/vendor-check.py)
 REPO_ROOT = SCRIPT_DIR.parent
 
 # Version stamping introduced with the panelkit adoption (2026-07-05).
-GEN_VERSION = "0.2.0"
+# 0.3.0 = above-the-fold contract pass (additive lastCiRun field; viewer
+# reordered to the contract - see workflows-hub
+# docs/company-control-panel-vision.md "The above-the-fold contract").
+GEN_VERSION = "0.3.0"
 PLANS_DIR = REPO_ROOT / "docs" / "plans"
 ARTIFACTS_DIR = REPO_ROOT / "docs" / "artifacts"
 OUTPUT_PATH = ARTIFACTS_DIR / "cc" / "payload-repo.json"
@@ -142,6 +145,41 @@ def fetch_recent_merges(envelope, limit=15):
         panelkit.mark_partial(envelope, "merged-PR list fetch failed - recentMerges is empty this run")
         return []
     return merges
+
+
+def fetch_latest_ci_run(envelope):
+    """Above-the-fold contract block 4: the single most recent Actions run
+    (any branch, any status) - workflow name, conclusion, duration, log
+    link. None (with a partial warning) when the fetch fails; None without
+    a warning when the repo simply has no runs. Never invents a
+    conclusion - an in-progress run carries conclusion null."""
+    result = panelkit.gh_json("api", f"repos/{REPO_SLUG}/actions/runs?per_page=1")
+    if not isinstance(result, dict):
+        panelkit.mark_partial(envelope, "latest-CI-run fetch failed - lastCiRun is null this run")
+        return None
+    runs = result.get("workflow_runs", [])
+    if not runs:
+        return None
+    r = runs[0]
+    started, updated = r.get("run_started_at"), r.get("updated_at")
+    duration_seconds = None
+    if started and updated:
+        try:
+            fmt = "%Y-%m-%dT%H:%M:%SZ"
+            t0 = datetime.strptime(started, fmt).replace(tzinfo=timezone.utc)
+            t1 = datetime.strptime(updated, fmt).replace(tzinfo=timezone.utc)
+            duration_seconds = max(0, int((t1 - t0).total_seconds()))
+        except (ValueError, TypeError):
+            duration_seconds = None
+    return {
+        "workflowName": r.get("name"),
+        "status": r.get("status"),
+        "conclusion": r.get("conclusion"),
+        "runStartedAt": started,
+        "durationSeconds": duration_seconds,
+        "url": r.get("html_url"),
+        "headBranch": r.get("head_branch"),
+    }
 
 
 def fetch_pages_status(envelope):
@@ -357,6 +395,7 @@ def main():
     head = commits[0] if commits else None
     open_prs = fetch_open_prs(envelope)
     recent_merges = fetch_recent_merges(envelope)
+    last_ci_run = fetch_latest_ci_run(envelope)
     pages = fetch_pages_status(envelope)
     live_cache = fetch_live_cache_version()
     local_cache = local_cache_version()
@@ -388,6 +427,7 @@ def main():
         "commits": commits,
         "openPRs": open_prs,
         "recentMerges": recent_merges,
+        "lastCiRun": last_ci_run,
         "deploy": {
             "pages": pages,
             "liveCacheVersion": live_cache,

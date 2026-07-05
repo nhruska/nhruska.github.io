@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-05T13:25:48Z",
-  "generator": "command-center-gen.py@0.2.0 (panelkit 0.1.0)",
+  "generatedAt": "2026-07-05T14:46:49Z",
+  "generator": "command-center-gen.py@0.3.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
   "status": "ok",
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T13:11:33Z",
-    "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
-    "subject": "cc: report executed test cases (2117), not just suite files (40) (#186)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/180e8b7452eab37208b6e4dda9c866941afe810c"
+    "date": "2026-07-05T14:02:14Z",
+    "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
+    "subject": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT (#187)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/e2dbd55b7838f60b3b13c7146a52e629959b79b5"
   },
   "commits": [
+    {
+      "date": "2026-07-05T14:02:14Z",
+      "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
+      "subject": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT (#187)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e2dbd55b7838f60b3b13c7146a52e629959b79b5"
+    },
     {
       "date": "2026-07-05T13:11:33Z",
       "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
@@ -84,15 +90,33 @@
       "sha": "c5793d13f9c312619c5985ddbbf4acc0532aa21b",
       "subject": "S-TOAST-HOST (UAT U24): setlist-remove/library-delete undo banners no longer leave a visible empty pill (#178)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/c5793d13f9c312619c5985ddbbf4acc0532aa21b"
-    },
-    {
-      "date": "2026-07-05T06:57:03Z",
-      "sha": "c997564e4818d9acd8a80761b78fee96b91799a0",
-      "subject": "capture: U24 empty toast host on setlist remove (lifecycle seam #170x#175) (#177)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c997564e4818d9acd8a80761b78fee96b91799a0"
     }
   ],
   "openPRs": [
+    {
+      "number": 188,
+      "title": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117)",
+      "branch": "claude/settings-labels",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/188",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324312/job/85232518942"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324311/job/85232518941"
+        }
+      ]
+    },
     {
       "number": 98,
       "title": "music(theory): key-aware conventional note spelling from circle.js SSOT (#85)",
@@ -152,6 +176,12 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T14:02:14Z",
+      "number": 187,
+      "title": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/187"
+    },
     {
       "mergedAt": "2026-07-05T13:11:33Z",
       "number": 186,
@@ -235,14 +265,17 @@
       "number": 173,
       "title": "Capture: U23",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/173"
-    },
-    {
-      "mergedAt": "2026-07-05T05:29:56Z",
-      "number": 172,
-      "title": "Capture: U22",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/172"
     }
   ],
+  "lastCiRun": {
+    "workflowName": "PR preview link",
+    "status": "completed",
+    "conclusion": "success",
+    "runStartedAt": "2026-07-05T14:40:11Z",
+    "durationSeconds": 7,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324312",
+    "headBranch": "claude/settings-labels"
+  },
   "deploy": {
     "pages": {
       "status": "built",
