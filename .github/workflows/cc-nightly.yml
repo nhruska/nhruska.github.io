@@ -1,0 +1,32 @@
+# Nightly Command Center snapshot refresh (free: public repo = unmetered minutes).
+# main is NOT branch-protected on GitHub (verified 2026-07-05); the workflow
+# commits the payload directly - a docs-only data refresh, no code paths.
+# Session-start agent refresh remains the correctness guarantee; this keeps
+# the deployed dashboard fresh for morning glances.
+name: cc-nightly
+on:
+  schedule:
+    - cron: '23 9 * * *'   # 09:23 UTC ~ 05:23 ET, off-minute per fleet etiquette
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/command-center-gen.py
+      - name: Commit if changed
+        run: |
+          git config user.name "cc-nightly"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet docs/artifacts/cc/payload-repo.json; then
+            git add docs/artifacts/cc/payload-repo.json
+            git commit -m "cc: nightly snapshot refresh"
+            git push
+          else
+            echo "no material change"
+          fi
