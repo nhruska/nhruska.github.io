@@ -1145,11 +1145,19 @@ footer{display:none;}
    a page style) for the same app-wide-SSOT reason as .helpIcon above. */
 .accSec{border-top:1px solid var(--line-strong);}
 .accSec:first-of-type{border-top:0;}
+/* Header treatment (operator UAT round 2): section titles must READ as
+   tappable headings, not plain text rows - heavier + larger than body text
+   (700/1rem vs the .82rem setHint body) with an EXPLICIT expand affordance:
+   an accent-ink chevron (accent-ink = the readable-on-surface interactive
+   ink in BOTH themes, the iconBtn glyph convention) that rotates open, plus
+   press feedback. Fixed here at the primitive, never per instance. */
 .accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
-  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:600;
-  font-size:.95rem;text-align:left;cursor:pointer;}
-.accBtn::after{content:'\25BE';color:var(--txt-dim);font-size:.85em;transition:transform .15s;}
+  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:700;
+  font-size:1rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+.accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
+  transition:transform .15s;}
 .accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}
+.accBtn:active{transform:scale(.99);} /* the .listItem press language, not the no-scale close family */
 .accBody{padding:2px 0 16px;}
 /* U24 precedent (S-TOAST-HOST): an author display rule on the SAME element
    defeats [hidden] - .accBody carries no display rule today, but this guard

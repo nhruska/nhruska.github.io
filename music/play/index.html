@@ -80,6 +80,12 @@
   .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;}
   .setRow .li-title{display:block;}
   .setRow .li-artist{display:block;}
+  /* About section link rows (round 2): external-link ink (--brass, the Links
+     convention) + inline-SVG icon taking currentColor; 44px touch floor. */
+  .aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
+    text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
+  .aboutLink svg{flex:0 0 auto;}
+  .aboutStamp{margin:10px 0 0;}
   .setLbl{font-weight:600;margin-bottom:11px;}
   .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
   .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
@@ -261,11 +267,14 @@
      offline build is actually running. Opened by the appbar gear (#settingsBtn). -->
 <!-- M-SETTINGS-CLARITY (2026-07-05): sections are a ONE-AT-A-TIME accordion
      (shared/accordion.js + the .accSec/.accBtn/.accBody family, songbook.css).
-     Backup/Restore are DATA rows inside "Your songbook" (the .listItem card
+     Backup/Restore are DATA rows inside "Backup & Restore" (the .listItem card
      family), NOT footer buttons - the old footer pair read as a Save/Cancel
      pair and got tapped to dismiss the panel. The footer's ONE action is Done
      (labeled Done, not Save: every control in this sheet applies on change,
-     so there is nothing staged to save or discard - see the PR). -->
+     so there is nothing staged to save or discard - see the PR).
+     Round 2 (operator UAT): purpose-named sections - Appearance / Preferences /
+     Backup & Restore / About ("&" matches the existing "Triads & Inversions"
+     copy style). -->
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
@@ -282,17 +291,20 @@
       </section>
       <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
            the dots|patterns pref can be changed any time - not just at the
-           one-time Notables prompt (#diagramPrefSlot above). -->
-      <section class="accSec" data-acc="diagrams">
-        <button class="accBtn" id="accBtnDiagrams" type="button" aria-expanded="false" aria-controls="accBodyDiagrams">Fretboard diagrams</button>
-        <div class="accBody" id="accBodyDiagrams" role="region" aria-labelledby="accBtnDiagrams" hidden>
+           one-time Notables prompt (#diagramPrefSlot above). Section renamed
+           "Preferences" (round 2) - it holds preference toggles; the inner
+           .setLbl keeps naming WHICH preference. -->
+      <section class="accSec" data-acc="prefs">
+        <button class="accBtn" id="accBtnPrefs" type="button" aria-expanded="false" aria-controls="accBodyPrefs">Preferences</button>
+        <div class="accBody" id="accBodyPrefs" role="region" aria-labelledby="accBtnPrefs" hidden>
+          <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
         </div>
       </section>
-      <section class="accSec" data-acc="songbook">
-        <button class="accBtn" id="accBtnSongbook" type="button" aria-expanded="false" aria-controls="accBodySongbook">Your songbook</button>
-        <div class="accBody" id="accBodySongbook" role="region" aria-labelledby="accBtnSongbook" hidden>
+      <section class="accSec" data-acc="backup">
+        <button class="accBtn" id="accBtnBackup" type="button" aria-expanded="false" aria-controls="accBodyBackup">Backup &amp; Restore</button>
+        <div class="accBody" id="accBodyBackup" role="region" aria-labelledby="accBtnBackup" hidden>
           <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
           <div class="setSummary" id="dataSummary" aria-live="polite"></div>
           <button class="listItem setRow" id="btnBackup" type="button">
@@ -310,6 +322,32 @@
             </span>
           </button>
           <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+        </div>
+      </section>
+      <!-- About (round 2, operator UAT): attribution + open-source funnel.
+           Icons are INLINE SVGs (GitHub mark + octicons; fill=currentColor so
+           they take the link ink) - this is an offline-capable PWA, no
+           external asset fetches. Links use the external-link ink (--brass,
+           the Links convention). The footer stamp below STAYS (the operator's
+           stale-detection anchor); #aboutStamp is the same text, one more
+           discoverable home. -->
+      <section class="accSec" data-acc="about">
+        <button class="accBtn" id="accBtnAbout" type="button" aria-expanded="false" aria-controls="accBodyAbout">About</button>
+        <div class="accBody" id="accBodyAbout" role="region" aria-labelledby="accBtnAbout" hidden>
+          <p class="setHint">Built by Nikolaus Hruska. Free and open source.</p>
+          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+            <span>View the source on GitHub</span>
+          </a>
+          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
+            <span>Report an issue or suggest an improvement</span>
+          </a>
+          <a class="aboutLink" href="https://nhruska.github.io/docs/artifacts/case-study-music-app.html" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
+            <span>How this app is built</span>
+          </a>
+          <p class="setHint aboutStamp" id="aboutStamp"></p>
         </div>
       </section>
     </div>
@@ -837,13 +875,17 @@
        .accBody visual family lives in songbook.css). Per-open state only -
        every openSettings() starts all-collapsed (the disclosure-family
        contract in component-conventions.md), except a caller that names a
-       section (the backup nudge opens straight to "Your songbook"). */
+       section (the backup nudge opens straight to "Backup & Restore"). */
     var accSections = [], accIndexByKey = {};
     Array.prototype.forEach.call(document.querySelectorAll('#settingsBody .accSec'), function (sec, i) {
       accSections.push({ btn: sec.querySelector('.accBtn'), body: sec.querySelector('.accBody') });
       if (sec.dataset && sec.dataset.acc) accIndexByKey[sec.dataset.acc] = i;
     });
     var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections) : null;
+
+    /* About section (round 2): the same authored stamp as the footer, one
+       more discoverable home. Static content - render once. */
+    if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('aboutStamp'));
 
     /* settings sheet open/close */
     var ov = document.getElementById('setOv'),
@@ -1002,7 +1044,7 @@
         // the x button already handled its own tap (dismiss) via its own onclick -
         // don't ALSO open Settings when that's what the tap was for.
         if (e.target && e.target.closest && e.target.closest('.notableBanner-x')) return;
-        openSettings('songbook'); // a backup nudge lands the user straight on the Backup row
+        openSettings('backup'); // a backup nudge lands the user straight on the Backup & Restore section
       });
       slot.appendChild(banner);
     }
