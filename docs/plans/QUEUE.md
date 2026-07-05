@@ -46,12 +46,21 @@
 | M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
 | M-10 | M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required | [uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding |
 
+## LONG -> promoted by the 2026-07-04 vision capture
+
+| # | Candidate | State |
+|---|---|---|
+| M-EAR | Scale/mode AUDITION - hear it, hum it, A/B modes ("music is heard not seen") | Vision CAPTURED ([vision-ear-first](vision-ear-first-20260704.md)); 5 async interview Qs pending; strum-engine #88 revival becomes its foundation |
+| M-SONG-ANCHORS | Known-songs-per-mode memory anchors + YT links | same vision doc |
+| M-PHRASE | Solo phrasing depth (hang notes, tension/release) | same vision doc; extends shipped mentor layer |
+| (merge) | M-CONSTRUCT folds into/ sharpens Tutor Phase 5 (M-2) | operator Q5 pending |
+
 ## LONG (ideas - need a vision interview before anything)
 
 - Practice-tracking / streaks (accountability loop per tutor north star)
 - Setlist sharing / export for bandmates
 - More instrument profiles + per-instrument voicing depth (operator signal: "huge toolset for guitarists AND OTHERS")
-- Audio-input features beyond tuner (chord recognition?) - speculative, needs operator vision
+- Audio-input features beyond tuner (chord recognition?) - speculative (NOTE: distinct from M-EAR audio-OUTPUT, which is captured)
 - Compose UX redesign: tabs + Related Keys lens (gh #44)
 - Setlist touch drag-to-reorder (gh #92)
 
