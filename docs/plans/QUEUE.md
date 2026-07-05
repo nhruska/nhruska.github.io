@@ -38,6 +38,7 @@
 
 | # | Candidate | Vision source |
 |---|---|---|
+| M-0 | **DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE | [vision-tutor-deterministic](vision-tutor-deterministic-20260705.md) |
 | M-1 | Tutor Phase 4 complete: decoupled solo-scale selector over a FIXED progression (relative/parallel demos in place) | [TUTOR-ROADMAP](../../music/TUTOR-ROADMAP.md) Phase 4 (PARTIAL) |
 | M-2 | Tutor Phase 5: song-form coaching (AABA, sections -> whole songs) | TUTOR-ROADMAP Phase 5 (PLANNED); operator Q5 2026-07-04: M-CONSTRUCT is a SEPARATE mission (with future-features intel) - P5 stays teaching-focused, M-CONSTRUCT is builder-focused |
 | M-11 | M-CONSTRUCT: song construction + section transitions (OWN mission per operator Q5) - kickoff includes an INTEL pass on possible future features | [vision-ear-first](vision-ear-first-20260704.md) |
