@@ -49,3 +49,13 @@ The ear layer makes STRUM-ENGINE REVIVAL (#88, MID M-3) a FOUNDATION item, not a
 - **Compose key preview**: same toggle on the preview block (W3b region); marker on its notes/degrees lines. Decoupled invariant holds (audio never touches progression state).
 - **Verification bar**: pure tests for noteHz (A4=440, C4~261.63, pc wrap) + scheduling math; OfflineAudioContext render test - render a short scale, assert non-silent buffer (RMS > 0) with expected duration (REAL audio evidence, not a mock); live Playwright: toggle -> AudioContext running + marker advances + zero console errors (headless audio = state + marker assertions).
 - CACHE bump; consistency lint untouched surfaces; wave 2 candidates (NOT now): A/B mode compare, degree speech, tempo control.
+
+## M-TRACKLIB (operator, 2026-07-04 - "the appendix is the golden nugget")
+
+**Operator verbatim-essence:** "That's the TRACK LIBRARY I want the app to have and facilitate. A view of curated jam backing tracks across different genres (and tempo - different feels to explore). Enumerate genres per mode linked to corresponding search terms to explore and find my faves to pull back into the library. We're ready to level up when we're jamming across modes on any key."
+
+**Wave 1 spec (BINDING):**
+- **shared/jam-queries.js** (curated static data + a pure generator): per mode/scale a curated GENRE list (musically sensible: dorian -> funk/latin-rock/modal-jazz/blues-rock; mixo -> jam-band/country-rock/blues-rock/celtic; blues-key -> slow blues/shuffle/quick-change/minor-12-bar; etc.) x FEEL bands (slow ~60-80 / mid ~90-110 / up 120+; shuffle vs straight where meaningful). `jamQuery(key, scaleId, genre, feel) -> "A dorian funk backing track slow"` - KEY-AWARE at tap time (the "any key" requirement). ASCII, tells-clean, test-locked (every mode has >=3 genres, every combo generates a non-empty query).
+- **Explore surface:** a STATIC browsable panel in the Studio's solo-over-track flow area (genre chips x feel chips under the current scale context; current key + selected scale feed the generator). Tap = external YouTube search (new tab, leave-app glyph per conventions). RESPECT D-HERO-REMOVED: no show/hide-on-filter behavior, no Library hero resurrection - this lives in the Studio where jam context already is.
+- **Ingest loop:** an "add to library" affordance beside the explore results/context that opens the EXISTING track-add/curation flow (per M3-5A: +Add/per-item edit) PREFILLED with key/mode/genre (and feel->bpm hint) from the explore context. No new persistence schema - existing track fields.
+- **Deferred (named):** in-app search-result embedding (YouTube API), auto-import, cross-key query history.
