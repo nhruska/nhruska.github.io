@@ -1,10 +1,16 @@
 /* =====================================================================
  * songbook-firstrun.test.js  -  unit tests for S-FIRSTRUN (sprint-1 item 4,
  * finding F4): Songbook.firstrunShouldRender(Notables), the pure decision fn
- * behind the Library's fresh-profile guidance banner. Drives the REAL
- * notables.js module (not a stub) via test/helpers/local-storage-reset.js,
- * same pattern as notables.test.js - this is a consumer of that module's
- * public API only, never its internals.
+ * behind the Library's fresh-profile guidance banner, PLUS M-GUIDANCE's
+ * Songbook.savebasicsShouldRender(Notables) (the beginner-tier "save/set
+ * basics" cue). Drives the REAL notables.js module (not a stub) via
+ * test/helpers/local-storage-reset.js, same pattern as notables.test.js -
+ * this is a consumer of that module's public API only, never its internals.
+ *
+ * M-GUIDANCE retro-tagged 'firstrun' as beginner-only in notables.js's
+ * LEVELS table (docs/plans/guidance-levels-spec-20260705.md) - every case
+ * below that expects a GRANT now seeds music.guidanceLevel.v1 = 'beginner'
+ * first (via the real guidance-level.js module, same localStorage fake).
  * Run: node test/songbook-firstrun.test.js   (no deps; pure Node assert)
  * ===================================================================== */
 'use strict';
@@ -17,6 +23,7 @@ function resetLocalStorage(seed) {
 }
 var Songbook = require('../music/shared/songbook.js');
 var Notables = require('../music/shared/notables.js');
+var GuidanceLevel = require('../music/shared/guidance-level.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -29,18 +36,37 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
-/* ---------- fresh profile: claim attempted and granted ---------- */
-test('fresh profile (never dismissed, empty slot) -> claim is attempted and granted', function () {
+/* ---------- fresh profile: claim attempted and granted (level already 'beginner') ---------- */
+test('fresh profile, level already beginner (never dismissed, empty slot) -> claim is attempted and granted', function () {
   resetLocalStorage();
+  GuidanceLevel.set('beginner');
   Notables._resetArbitration();
   assert.strictEqual(Songbook.firstrunShouldRender(Notables), true);
   // the grant is real, not a side-effect-free peek: firstrun now holds the slot
-  assert.strictEqual(Notables.claim('firstrun'), true); // idempotent re-claim of its own slot
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true); // idempotent re-claim of its own slot
+});
+
+/* ---------- M-GUIDANCE: unset level blocks firstrun even though everything
+ * else about the profile is fresh - "unset level: only the ask may show" ---------- */
+test('fresh profile but UNSET guidance level -> firstrun is blocked (the ask has not been answered yet)', function () {
+  resetLocalStorage(); // music.guidanceLevel.v1 never set
+  Notables._resetArbitration();
+  assert.strictEqual(GuidanceLevel.get(), null);
+  assert.strictEqual(Songbook.firstrunShouldRender(Notables), false);
+});
+test('a non-matching level (intermediate/advanced) also blocks firstrun (beginner-only)', function () {
+  ['intermediate', 'advanced'].forEach(function (lvl) {
+    resetLocalStorage();
+    GuidanceLevel.set(lvl);
+    Notables._resetArbitration();
+    assert.strictEqual(Songbook.firstrunShouldRender(Notables), false, lvl + ' must not grant firstrun');
+  });
 });
 
 /* ---------- already dismissed -> no claim attempted, no render ---------- */
 test('dismissed consumer -> isDismissed short-circuits, never calls claim(), no render', function () {
   resetLocalStorage();
+  GuidanceLevel.set('beginner');
   Notables._resetArbitration();
   Notables.dismiss('firstrun');
   assert.strictEqual(Notables.isDismissed('firstrun'), true);
@@ -53,9 +79,10 @@ test('dismissed consumer -> isDismissed short-circuits, never calls claim(), no 
 /* ---------- claim denied (slot held by a stricter priority) -> no render ---------- */
 test('claim-denied (slot already held by a higher-or-equal priority holder) -> no render', function () {
   resetLocalStorage();
+  GuidanceLevel.set('beginner');
   Notables._resetArbitration();
-  // an explicit priority BELOW firstrun's built-in 0 wins the slot first, so
-  // firstrun's later claim() cannot preempt it (myP(0) is not < activeGrant.p(-1)).
+  // an explicit priority BELOW firstrun's built-in index wins the slot first, so
+  // firstrun's later claim() cannot preempt it (myP is not < activeGrant.p(-1)).
   assert.strictEqual(Notables.claim('someone-else', -1), true);
   assert.strictEqual(Songbook.firstrunShouldRender(Notables), false);
 });
@@ -71,9 +98,43 @@ test('no Notables module available -> returns false, never throws', function () 
 /* ---------- once granted, a second call is idempotent (re-render safe) ---------- */
 test('re-render after the slot is already granted to firstrun stays granted (idempotent)', function () {
   resetLocalStorage();
+  GuidanceLevel.set('beginner');
   Notables._resetArbitration();
   assert.strictEqual(Songbook.firstrunShouldRender(Notables), true);
   assert.strictEqual(Songbook.firstrunShouldRender(Notables), true, 're-claiming its own held slot must stay granted');
+});
+
+/* ---------------------------------------------------------------------
+ * M-GUIDANCE: Songbook.savebasicsShouldRender(Notables) - same pure-decision
+ * shape as firstrunShouldRender above, beginner-tier, consumerId 'savebasics'.
+ * ------------------------------------------------------------------- */
+test('savebasicsShouldRender: granted for level beginner on a fresh, empty slot', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('beginner');
+  Notables._resetArbitration();
+  assert.strictEqual(Songbook.savebasicsShouldRender(Notables), true);
+});
+test('savebasicsShouldRender: blocked when the level is unset or non-beginner', function () {
+  [null, 'intermediate', 'advanced'].forEach(function (lvl) {
+    resetLocalStorage();
+    if (lvl) GuidanceLevel.set(lvl);
+    Notables._resetArbitration();
+    assert.strictEqual(Songbook.savebasicsShouldRender(Notables), false, String(lvl) + ' must not grant savebasics');
+  });
+});
+test('savebasicsShouldRender: dismissed consumer never re-claims', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('beginner');
+  Notables._resetArbitration();
+  assert.strictEqual(Songbook.savebasicsShouldRender(Notables), true);
+  Notables.dismiss('savebasics');
+  assert.strictEqual(Songbook.savebasicsShouldRender(Notables), false);
+});
+test('savebasicsShouldRender: no Notables module -> false, never throws', function () {
+  assert.doesNotThrow(function () {
+    assert.strictEqual(Songbook.savebasicsShouldRender(null), false);
+    assert.strictEqual(Songbook.savebasicsShouldRender(undefined), false);
+  });
 });
 
 run();
