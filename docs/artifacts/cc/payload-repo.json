@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T07:31:11Z",
+  "generatedAt": "2026-07-05T07:57:47Z",
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +8,30 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T07:23:35Z",
-    "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
-    "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
+    "date": "2026-07-05T07:57:33Z",
+    "sha": "e641e2574a737d5320f9f57ff54aa08396e53003",
+    "subject": "cc: durable nightly snapshot via Actions (public repo, free minutes; direct commit - main verified unprotected) (#182)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/e641e2574a737d5320f9f57ff54aa08396e53003"
   },
   "commits": [
+    {
+      "date": "2026-07-05T07:57:33Z",
+      "sha": "e641e2574a737d5320f9f57ff54aa08396e53003",
+      "subject": "cc: durable nightly snapshot via Actions (public repo, free minutes; direct commit - main verified unprotected) (#182)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e641e2574a737d5320f9f57ff54aa08396e53003"
+    },
+    {
+      "date": "2026-07-05T07:56:54Z",
+      "sha": "21b44aca01ef597cc77e96f0dc3c18e12e8f7eba",
+      "subject": "Command Center v1 (repo layer): the parent artifact above the panes (#181)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/21b44aca01ef597cc77e96f0dc3c18e12e8f7eba"
+    },
+    {
+      "date": "2026-07-05T07:36:10Z",
+      "sha": "2d917cec2c46999e1799947db7657fe3016f1d7d",
+      "subject": "session-start: command-center generator = the sensing sweep (detect repo -> gather intel -> infer intent) (#180)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2d917cec2c46999e1799947db7657fe3016f1d7d"
+    },
     {
       "date": "2026-07-05T07:23:35Z",
       "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
@@ -67,24 +85,6 @@
       "sha": "7e9efecc4edc66a47b41ce3e54b9c960adcb8942",
       "subject": "queue: ear-first night arc closed (v113); S-ENFORCE-2B debt queued (#171)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/7e9efecc4edc66a47b41ce3e54b9c960adcb8942"
-    },
-    {
-      "date": "2026-07-05T04:55:37Z",
-      "sha": "9ab2d8041d9799a6469fd2a329955a7f0d9b153b",
-      "subject": "M-DESIGN-ENFORCE wave 2: TOAST+ACTION undo primitive + native-dialog-free Settings (U19) (#170)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9ab2d8041d9799a6469fd2a329955a7f0d9b153b"
-    },
-    {
-      "date": "2026-07-05T04:47:13Z",
-      "sha": "a81175e3ce5a551819a47dfbcdd1f618daf137c6",
-      "subject": "M-EAR 1.6: tempo control + unmissable sounding lights + legend primitive (U14-U16) (#169)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/a81175e3ce5a551819a47dfbcdd1f618daf137c6"
-    },
-    {
-      "date": "2026-07-05T04:36:05Z",
-      "sha": "540bd4113871243d5f2a2e5c7ce06fd19e1171b5",
-      "subject": "feat(music): curate dim/dim7/aug shape-classify templates (U21) (#168)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/540bd4113871243d5f2a2e5c7ce06fd19e1171b5"
     }
   ],
   "openPRs": [
@@ -147,6 +147,24 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T07:57:33Z",
+      "number": 182,
+      "title": "cc-nightly: durable snapshot refresh workflow",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/182"
+    },
+    {
+      "mergedAt": "2026-07-05T07:56:54Z",
+      "number": 181,
+      "title": "Command Center v1 (repo layer): the parent artifact above the panes",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/181"
+    },
+    {
+      "mergedAt": "2026-07-05T07:36:11Z",
+      "number": 180,
+      "title": "Session-start: CC generator as the sensing sweep",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/180"
+    },
     {
       "mergedAt": "2026-07-05T07:23:35Z",
       "number": 179,
@@ -218,24 +236,6 @@
       "number": 168,
       "title": "S-DIM-SHAPES: dim/dim7/aug classifier templates (U21)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/168"
-    },
-    {
-      "mergedAt": "2026-07-05T04:28:27Z",
-      "number": 167,
-      "title": "Playlist bake draft: keyless pipeline first run (16 entries)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/167"
-    },
-    {
-      "mergedAt": "2026-07-05T04:15:44Z",
-      "number": 166,
-      "title": "Capture: U21",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/166"
-    },
-    {
-      "mergedAt": "2026-07-05T04:13:44Z",
-      "number": 165,
-      "title": "M-TRACKLIB wave 2a: YouTube link -> suggested fields (U17)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/165"
     }
   ],
   "deploy": {
