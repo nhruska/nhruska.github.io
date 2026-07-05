@@ -116,7 +116,16 @@
 // (the Studio's "Find a jam" explore panel + prefilled add-to-library
 // handoff). New CORE path added below. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v108';
+// M-EAR wave 1.5 (2026-07-04): v108->v109 - shared/sound.js (playScale()
+// gains handle.retarget(), U11), shared/key-explorer.js (boxWrap.setSounding()
+// class-swap + opts.noPosCtrl + exported POS_CAP, U12/U13), shared/diagram.js
+// (every scale-fretboard dot gains a data-pc attribute, U12 - deliberate,
+// reviewed change to the tones-absent SHA-256 lock in diagram.dom.test.js),
+// shared/tracks.js/tracks.css change (seamless chip-switch audition,
+// fretboard sounding lights, Window|Full-neck view toggle). No new/removed
+// CORE paths. check-cache-bump.sh re-verified against origin/main
+// immediately before push.
+var CACHE = 'music-v109';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
