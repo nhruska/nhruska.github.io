@@ -869,8 +869,12 @@
   // null. 'mode' never captions (mirrors the Practice Studio, which never
   // captions its default/mode chip even when that scale happens to be Blues -
   // tracks.js wireScaleChips: `info = scaleId !== 'mode' ? ... : null`).
-  // SoloGuide absence -> null, never throws (guarded contract above).
-  function soloChipCaption(scaleId) {
+  // SoloGuide absence -> null, never throws (guarded contract above). `root`
+  // (S-REL-NAMES, U23, optional 2nd arg) is the key-view's own key root -
+  // names any {relMinor}/{relMajor} token in the framing text (e.g.
+  // pentMajor's "same shape as {relMinor} pent"); absent root degrades to the
+  // pre-S-REL-NAMES relationship-only wording, same as every existing caller.
+  function soloChipCaption(scaleId, root) {
     if (scaleId === 'mode') return null;
     var SG = keyViewSoloGuide();
     if (!SG) return null;
@@ -887,7 +891,7 @@
     var C = keyViewCircle();
     if (!C || typeof SG.framing !== 'function') return null;
     var info = (typeof C.soloScaleInfo === 'function') ? C.soloScaleInfo(scaleId) : null;
-    return SG.framing(scaleId, info && info.family) || null;
+    return SG.framing(scaleId, info && info.family, root) || null;
   }
   function mount(opts) {
     opts = opts || {};
@@ -2525,7 +2529,9 @@
           var degrees = soloChipDegrees(keyMode, scaleId);
           if (degrees && degrees.length) { degreesLine.innerHTML = renderDegreeTokens(degrees); degreesLine.hidden = false; }
           else { degreesLine.textContent = ''; degreesLine.hidden = true; }
-          var caption = soloChipCaption(scaleId);
+          // S-REL-NAMES (U23): keyRoot (this render's own key) names any
+          // {relMinor}/{relMajor} token in the caption text.
+          var caption = soloChipCaption(scaleId, keyRoot);
           if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
           else { frameLine.textContent = ''; frameLine.hidden = true; }
         }

@@ -807,10 +807,14 @@
       // solo-guide.js may not have loaded). Called on Studio open + every chip
       // select (re-derives, per m-guide-ia-20260704.md section 3), regardless of
       // the box's hidden state, so content is never stale when the toggle opens.
+      // S-REL-NAMES (U23): passes th.key (the Studio's own canonical root, same
+      // for every chip - a scale-chip swap changes scaleKey/notes, never the
+      // key) as card()'s optional 3rd arg, so any {relMinor}/{relMajor} token
+      // in the card text (e.g. pentMajor.shapes) names the concrete instance.
       function renderGuide(scaleKey, notes) {
         if (!guideBox) return;
         var SG = soloGuideRef();
-        var card = SG ? SG.card(scaleKey, notes) : null;
+        var card = SG ? SG.card(scaleKey, notes, th.key) : null;
         if (!card) { guideBox.innerHTML = ''; return; }
         var rows = [['When', card.chooseWhen], ['Resolve', card.resolveTo], ['Watch', card.hangOn],
           ['Phrase', card.startEnd], ['Shapes', card.shapes]];
@@ -1281,7 +1285,9 @@
           if (degreesLineEl) degreesLineEl.innerHTML = renderDegreeTokens(bundle.degrees);
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
           var SG = soloGuideRef();
-          var framing = (info && SG) ? SG.framing(scaleId, info.family) : null;
+          // S-REL-NAMES (U23): th.key names any {relMinor}/{relMajor} token in
+          // the framing text (e.g. pentMajor's "same shape as {relMinor} pent").
+          var framing = (info && SG) ? SG.framing(scaleId, info.family, th.key) : null;
           if (framing) { frameEl.textContent = framing; frameEl.hidden = false; }
           else { frameEl.textContent = ''; frameEl.hidden = true; }
           // M-GUIDE W3a: re-apply the active target (if any) against the NEW bundle,

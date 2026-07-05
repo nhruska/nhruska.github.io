@@ -163,7 +163,14 @@
 // from v109) - max+1 discipline, same as every prior sibling collision;
 // check-cache-bump.sh re-verified against origin/main immediately before
 // push.
-var CACHE = 'music-v113';
+// S-REL-NAMES (2026-07-05, U23): v113->v114 - shared/solo-guide.js
+// (framing()/card() gain an optional 3rd `root` arg + the relNames()
+// resolver + {relMinor}/{relMajor} template tokens on pentMajor's framing
+// line and shapes card), shared/tracks.js (renderGuide/select() pass
+// th.key), shared/songbook.js (soloChipCaption gains an optional 2nd `root`
+// arg, selectChip passes keyRoot). No new/removed CORE paths. check-cache-
+// bump.sh re-verified against origin/main immediately before push.
+var CACHE = 'music-v114';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

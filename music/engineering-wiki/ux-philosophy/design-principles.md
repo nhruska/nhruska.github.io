@@ -33,6 +33,16 @@ The app is a theory authority. One wrong chord spelling or scale note and the sk
 
 Evidence: music/CLAUDE.md:29 spelling contract; circle.js MODE_STEPS SSOT + songbook sync; test/theory-canon.test.js (1008 checks).
 
+## Name the instance, not just the relationship
+
+Guidance copy that references a derivable musical object - the relative minor/major, a parallel key, the V chord - must NAME the concrete instance for the CURRENT key, not just describe the relationship in the abstract. "Same shape as its relative minor pent" teaches the concept; "same shape as D minor pent" teaches the concept AND gives the player the one fact they actually need at the moment of use. The concrete name is the point-of-need teaching - it is what turns an insight into something playable right now, without the player having to derive it themselves mid-lesson.
+
+- Compute the instance via the app's existing theory math (Circle.relativeMinor/relativeMajor, etc.) - never hardcode or re-derive it in the copy layer. The template interpolates a computed name the same way it already interpolates a computed note ({i} degree tokens); naming an instance is not a new capability, it's the same static-template + computed-interpolation pattern (A9) applied to a SECOND kind of value.
+- Missing context (no root available) degrades to the relationship-only phrasing - never a blank, never a throw, never a wrong guess.
+- This binds future guidance copy (cards, chip captions, notables) the same way it binds the pentatonic framing/shapes text it originated from: any new line that references a derivable-but-unnamed object should interpolate the concrete name if the caller can supply the context to compute it.
+
+Evidence: operator UAT U23 (docs/plans/uat-walkthrough-20260704.md) - "the guidance says this scale works because F major and its relative minor are the same notes - but doesn't say WHAT the minor key is... a message on the continuum of your journey, available at point of need"; `shared/solo-guide.js`'s `relNames()`/`{relMinor}`/`{relMajor}` tokens (decisions.md D-REL-NAMES).
+
 ## Soul + anti-vision
 
 **The soul:** this is a harmony teacher. The Studio backing-track finder is the daily-habit hook; the teaching is the point. Growth means new chord forms, new keys, the "why" - not genre chasing.
@@ -50,4 +60,4 @@ Every control is named by what it does. The Library row action reads "Video" (cu
 
 ---
 
-**Anchors verified:** music/CLAUDE.md:29,32; list-item.js action ladder + wireTap; key-explorer.js header; backing-tracks-DESIGN soul/anti-vision; ux-findings F1-F2; sprint A3/A7; theory-canon
+**Anchors verified:** music/CLAUDE.md:29,32; list-item.js action ladder + wireTap; key-explorer.js header; backing-tracks-DESIGN soul/anti-vision; ux-findings F1-F2; sprint A3/A7; theory-canon; solo-guide.js relNames()/{relMinor}/{relMajor} (D-REL-NAMES, U23)

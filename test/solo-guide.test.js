@@ -3,9 +3,13 @@
  * (music/shared/solo-guide.js): the locked seam contract (framing/cards/
  * card), the {i}-index interpolation, the P5 seasoned-player adversarial
  * fold (2026-07-05, supersedes the section-8B professor-fold corrections
- * wherever both touched the same block), and the copy budget (block <=90
+ * wherever both touched the same block), the copy budget (block <=90
  * chars, card <=70 words) + tells-clean punctuation lint per
- * m-guide-ia-20260704.md section 3.
+ * m-guide-ia-20260704.md section 3, and S-REL-NAMES (U23, 2026-07-05) - the
+ * optional 3rd `root` arg on framing()/card() that names the concrete
+ * relative-key instance ({relMinor}/{relMajor} tokens), backed by the pure
+ * relNames() resolver (a thin pass-through onto Circle.relativeMinor/
+ * relativeMajor - see decisions.md D-REL-NAMES).
  *
  * Run: node test/solo-guide.test.js   (no deps; pure Node assert)
  * ===================================================================== */
@@ -32,14 +36,35 @@ var BLOCKS = ['chooseWhen', 'resolveTo', 'hangOn', 'startEnd', 'shapes'];
 test('framing: pent scales interpolate family; blues has its own fixed line; mode has none', function () {
   // P5 fold (2026-07-05): "two frets down" was a factual error (relative minor
   // is a minor 3rd = THREE frets below) - fixed here to match the identical
-  // correction in cards.pentMajor.shapes.
+  // correction in cards.pentMajor.shapes. S-REL-NAMES (U23, 2026-07-05): the
+  // no-root (2-arg) call now falls back to "the relative minor pent" - a
+  // one-word tweak from the prior "its relative minor pent" (normalizes to the
+  // SAME fallback wording the shapes card below always used) - the
+  // relationship/claim itself (three frets lower) is unchanged.
   assert.strictEqual(SoloGuide.framing('pentMajor', 'major'),
-    'The inside sound over major and dominant vamps - same shape as its relative minor pent, three frets lower; keep the root as home.');
+    'The inside sound over major and dominant vamps - same shape as the relative minor pent, three frets lower; keep the root as home.');
   assert.strictEqual(SoloGuide.framing('pentMinor', 'minor'),
     'Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck.');
   assert.strictEqual(SoloGuide.framing('blues'),
     'Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub.');
   assert.strictEqual(SoloGuide.framing('mode'), null);
+});
+
+/* ---------- S-REL-NAMES (U23): framing() names the instance when a root is given ---------- */
+test('framing: pentMajor + a root NAMES the relative minor instance ({relMinor} resolves)', function () {
+  assert.strictEqual(SoloGuide.framing('pentMajor', 'major', 'F'),
+    'The inside sound over major and dominant vamps - same shape as D minor pent, three frets lower; keep the root as home.');
+  assert.strictEqual(SoloGuide.framing('pentMajor', 'major', 'A'),
+    'The inside sound over major and dominant vamps - same shape as F# minor pent, three frets lower; keep the root as home.');
+  assert.strictEqual(SoloGuide.framing('pentMajor', 'major', 'C'),
+    'The inside sound over major and dominant vamps - same shape as A minor pent, three frets lower; keep the root as home.');
+});
+test('framing: a root that has no {relMinor}/{relMajor} token in play (pentMinor/blues) is a no-op - same text with or without root', function () {
+  assert.strictEqual(SoloGuide.framing('pentMinor', 'minor', 'F'), SoloGuide.framing('pentMinor', 'minor'));
+  assert.strictEqual(SoloGuide.framing('blues', null, 'F'), SoloGuide.framing('blues'));
+});
+test('framing: an unresolvable root degrades to the same relationship-only fallback as no root at all', function () {
+  assert.strictEqual(SoloGuide.framing('pentMajor', 'major', 'nonsense'), SoloGuide.framing('pentMajor', 'major'));
 });
 
 /* ---------- cards - the raw table, read-only ---------- */
@@ -76,6 +101,51 @@ test('card: out-of-range index interpolates blank, never the literal word "undef
   assert.ok(c.shapes.indexOf('undefined') === -1, c.shapes);
 });
 
+/* ---------- S-REL-NAMES (U23): card() names the instance when a root is given ---------- */
+test('card: pentMajor.shapes + a root NAMES the relative minor instance ({relMinor} resolves)', function () {
+  var notes = Circle.soloScale('F', 'pentMajor');
+  var c = SoloGuide.card('pentMajor', notes, 'F');
+  assert.strictEqual(c.shapes, 'Same notes as D minor pent, THREE frets lower - same box, different home note.');
+});
+test('card: absent root falls back to the pre-S-REL-NAMES relationship-only wording (byte-identical to the 2-arg call)', function () {
+  var notes = Circle.soloScale('F', 'pentMajor');
+  var withRoot = SoloGuide.card('pentMajor', notes, 'F');
+  var noRoot = SoloGuide.card('pentMajor', notes);
+  assert.strictEqual(noRoot.shapes, 'Same notes as the relative minor pent, THREE frets lower - same box, different home note.');
+  assert.notStrictEqual(withRoot.shapes, noRoot.shapes); // the whole point - naming changes the text
+});
+test('card: an unresolvable root degrades to the same fallback as no root at all (never throws)', function () {
+  var notes = Circle.soloScale('F', 'pentMajor');
+  assert.strictEqual(SoloGuide.card('pentMajor', notes, 'nonsense').shapes, SoloGuide.card('pentMajor', notes).shapes);
+});
+test('card: {i} and {relMinor}/{relMajor} interpolation compose - a block with BOTH kinds of token resolves both (pentMajor.resolveTo has {i} tokens; shapes has the named one; same card() call)', function () {
+  var notes = Circle.soloScale('F', 'pentMajor');
+  var c = SoloGuide.card('pentMajor', notes, 'F');
+  // resolveTo's {i} degree tokens still resolve exactly as before, unaffected by the root arg
+  assert.strictEqual(c.resolveTo, "Over I, F, A, or C land. Over IV and V, target that chord's own tones.");
+  assert.strictEqual(c.shapes, 'Same notes as D minor pent, THREE frets lower - same box, different home note.');
+});
+
+/* ---------- S-REL-NAMES (U23): relNames() - the pure resolver, a thin pass-
+ * through onto Circle.relativeMinor/relativeMajor, never a re-derivation. ---------- */
+test('relNames: canon spot-checks named in the U23 spec (F->D minor, A->F# minor, C->A minor)', function () {
+  assert.strictEqual(SoloGuide.relNames('F', 'pentMajor').relMinor, 'D');
+  assert.strictEqual(SoloGuide.relNames('A', 'pentMajor').relMinor, 'F#');
+  assert.strictEqual(SoloGuide.relNames('C', 'pentMajor').relMinor, 'A');
+});
+test('relNames: parity with Circle.relativeMinor/relativeMajor across all 12 roots (thin pass-through, not a re-derivation)', function () {
+  Circle.ORDER.forEach(function (root) {
+    var names = SoloGuide.relNames(root, 'pentMajor');
+    assert.strictEqual(names.relMinor, Circle.relativeMinor(root), root + ' relMinor mismatch');
+    assert.strictEqual(names.relMajor, Circle.relativeMajor(root), root + ' relMajor mismatch');
+  });
+});
+test('relNames: no root, an unresolvable root, or Circle absence all degrade to { relMinor: null, relMajor: null } (never throws)', function () {
+  assert.deepStrictEqual(SoloGuide.relNames(null, 'pentMajor'), { relMinor: null, relMajor: null });
+  assert.deepStrictEqual(SoloGuide.relNames('', 'pentMajor'), { relMinor: null, relMajor: null });
+  assert.deepStrictEqual(SoloGuide.relNames('nonsense', 'pentMajor'), { relMinor: null, relMajor: null });
+});
+
 /* ---------- P5 seasoned-player adversarial fold (2026-07-05) - supersedes
  * section-8B wherever both amended the same block (dorian.hangOn,
  * pentMinor.startEnd, blues.resolveTo). Folded pre-merge into PR #118. ---------- */
@@ -92,8 +162,11 @@ test('professor micro-pass: dorian.hangOn names the natural-6 (supersedes the P5
     "{5} IS the dorian color - the natural-6 over i; over IV it's the 3rd.");
 });
 test('P5 must-fix: pentMajor.shapes says THREE frets lower, not the factually-wrong "two frets down"', function () {
+  // S-REL-NAMES (U23): the raw (pre-interpolation) table now carries the
+  // {relMinor} token in place of the bare "the relative minor" phrase - see
+  // the card()-with-root test below for the resolved/fallback behavior.
   assert.strictEqual(SoloGuide.cards.pentMajor.shapes,
-    'Same notes as the relative minor pent, THREE frets lower - same box, different home note.');
+    'Same notes as {relMinor} pent, THREE frets lower - same box, different home note.');
   assert.ok(!/two frets/i.test(SoloGuide.cards.pentMajor.shapes), 'the old wrong claim must not survive anywhere in the card');
 });
 test('P5 must-fix: no card claims the factually-wrong "zero-risk" framing for pentMajor.chooseWhen', function () {

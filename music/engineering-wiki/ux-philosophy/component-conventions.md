@@ -48,6 +48,10 @@ The app's design-system reference: canonical style/convention per element class,
 | Null-when-empty | `render()` returns `null` (no DOM, no empty card) when the classes array is empty/falsy - same convention as `KeyExplorer.renderScale`/`Diagram.scale` |
 | Reuse, don't reinvent | Any future dot-class legend (a new theory surface, a Compose-side equivalent) MUST call `Legend.render()`, not hand-roll a second caption/legend component - extend `LEGEND_ORDER`/`DEFS` in `legend.js` if a genuinely new class is needed |
 
+## Guidance copy
+
+Any card/caption/notable copy that references a derivable musical object (relative minor/major, parallel key, the V chord, etc.) must NAME the concrete instance for the current key, not just describe the relationship - see [design-principles.md](design-principles.md)'s "Name the instance, not just the relationship" (D-REL-NAMES). `shared/solo-guide.js`'s `{relMinor}`/`{relMajor}` template tokens + `relNames()` resolver are the reference implementation.
+
 ## Modal / Disclosure / Tabs
 
 - **Modal:** composeModalBackdrop standard (U7): dim backdrop, centered dialog, role=dialog + aria-modal, focus into dialog, Esc/hardware-Back/backdrop-tap all dismiss through NavHistory (no ghost history entries). Second consumer SHIPPED M-DESIGN-ENFORCE wave 2 (UAT U19): `openConfirmModal()` in play/index.html, the Settings backup/restore restore-confirm decision (was a native `confirm()`) - confirms the pattern generalizes beyond Compose. Layering a NavHistory-registered modal on top of a NON-NavHistory panel (Settings) needs `e.stopPropagation()` in the modal's own Escape handler so the panel's own document-level Escape listener doesn't ALSO fire.
