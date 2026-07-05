@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| M-EAR wave 1 IN FLIGHT (scale audition: sound.js seam + Studio/Compose hum-loop + bouncing marker) + M-SONG-ANCHORS drafting (operator veto next) | vision Q1-Q5 answered | [vision-ear-first](vision-ear-first-20260704.md) |
+| (idle - M-EAR wave 1 SHIPPED 2026-07-04 v106 PR #157: hear-the-scale on both surfaces; anchors draft AWAITING OPERATOR VETO) | next: anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up named: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
 | (prior state: TIER-0 drained at v105 - refilled same day by the ear-first vision) - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
