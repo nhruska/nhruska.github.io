@@ -67,7 +67,13 @@ REPO_ROOT = SCRIPT_DIR.parent
 # 0.3.0 = above-the-fold contract pass (additive lastCiRun field; viewer
 # reordered to the contract - see workflows-hub
 # docs/company-control-panel-vision.md "The above-the-fold contract").
-GEN_VERSION = "0.3.0"
+# 0.4.0 = position 1b velocity (interview ruling): merged count via one
+# search-API call, LOC from THIS local clone (git log --numstat, shallow-
+# guarded), typical-merge median from recentMerges createdAt (additive).
+GEN_VERSION = "0.4.0"
+
+VELOCITY_WINDOW_DAYS = 7
+VELOCITY_WEEKS = 4
 PLANS_DIR = REPO_ROOT / "docs" / "plans"
 ARTIFACTS_DIR = REPO_ROOT / "docs" / "artifacts"
 OUTPUT_PATH = ARTIFACTS_DIR / "cc" / "payload-repo.json"
@@ -139,7 +145,9 @@ def fetch_recent_merges(envelope, limit=15):
     n/created_at) - see the module docstring."""
     merges = panelkit.gh_json(
         "pr", "list", "-R", REPO_SLUG, "--state", "merged", "--limit", str(limit),
-        "--json", "number,title,mergedAt,url",
+        # createdAt is additive (0.4.0): feeds the velocity block's
+        # typical-merge median; the locked number/mergedAt/url keys stand.
+        "--json", "number,title,mergedAt,url,createdAt",
     )
     if not isinstance(merges, list):
         panelkit.mark_partial(envelope, "merged-PR list fetch failed - recentMerges is empty this run")
@@ -179,6 +187,124 @@ def fetch_latest_ci_run(envelope):
         "durationSeconds": duration_seconds,
         "url": r.get("html_url"),
         "headBranch": r.get("head_branch"),
+    }
+
+
+def _run_git(*args, timeout=60):
+    """Read-only git against THIS repo checkout; None on any failure."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), *args],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return proc.stdout if proc.returncode == 0 else None
+
+
+def _loc_between(since_days, until_days=0):
+    """+added/-deleted on origin/main between since_days and until_days ago
+    via --numstat (binary '-' rows skipped). None on git failure."""
+    args = ["log", "origin/main", f"--since={since_days} days ago", "--numstat", "--format="]
+    if until_days:
+        args.insert(2, f"--until={until_days} days ago")
+    out = _run_git(*args)
+    if out is None:
+        return None
+    added = deleted = 0
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            added += int(parts[0])
+            deleted += int(parts[1])
+    return {"added": added, "deleted": deleted}
+
+
+def fetch_velocity(envelope, recent_merges):
+    """Position 1b (above-the-fold contract, 2026-07-05 interview ruling):
+    merged count via ONE search-API total_count call (accurate at any
+    volume - never the capped recentMerges list); LOC from THIS local
+    clone (`git log origin/main --since --numstat` - free, zero API cost),
+    shallow-guarded so a CI depth-1 checkout omits LOC honestly instead of
+    silently undercounting; typical-merge median from recentMerges'
+    createdAt/mergedAt (plain-language rendered by the viewer). A 4-week
+    LOC series rides along for later charting."""
+    from datetime import timedelta
+
+    since = (datetime.now(timezone.utc) - timedelta(days=VELOCITY_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    result = panelkit.gh_json(
+        "api", f"search/issues?q=repo:{REPO_SLUG}+is:pr+is:merged+merged:>={since}",
+    )
+    merged_count = None
+    if isinstance(result, dict) and "total_count" in result:
+        merged_count = int(result["total_count"])
+    else:
+        panelkit.mark_partial(envelope, "velocity merged-count search failed - count line omitted this run")
+
+    # Shallow guard, boundary-aware: a shallow checkout only invalidates a
+    # window the cut history fails to cover (with a 1-day margin). A CI
+    # depth-1 checkout omits everything honestly; a 28-day shallow local
+    # clone still yields an accurate 7-day LOC.
+    def history_covers(days):
+        if (_run_git("rev-parse", "--is-shallow-repository") or "").strip() != "true":
+            return True
+        out = _run_git("log", "origin/main", "--reverse", "--format=%cI")
+        if not out or not out.splitlines():
+            return False
+        try:
+            oldest = datetime.fromisoformat(out.splitlines()[0])
+        except ValueError:
+            return False
+        return oldest <= datetime.now(timezone.utc) - timedelta(days=days + 1)
+
+    loc = None
+    weekly = None
+    loc_note = None
+    if not history_covers(VELOCITY_WINDOW_DAYS):
+        loc_note = (
+            "checkout history is too shallow to cover the "
+            f"{VELOCITY_WINDOW_DAYS}-day window - LOC omitted, never guessed"
+        )
+    else:
+        loc = _loc_between(VELOCITY_WINDOW_DAYS)
+        if loc is None:
+            loc_note = "git log failed - LOC omitted this run"
+        else:
+            today = datetime.now(timezone.utc).date()
+            weekly = []
+            for w in range(VELOCITY_WEEKS):
+                if not history_covers(7 * (w + 1)):
+                    break  # older weeks would silently undercount - stop honestly
+                span = _loc_between(7 * (w + 1), 7 * w)
+                if span is None:
+                    continue
+                weekly.append({
+                    "week_start": (today - timedelta(days=7 * (w + 1))).isoformat(),
+                    "loc_added": span["added"],
+                    "loc_deleted": span["deleted"],
+                })
+
+    # Typical merge time: median lead-time hours over the recentMerges
+    # sample that carries both timestamps (plain-language at render; the
+    # raw number stays here for agents).
+    hours = sorted(
+        h for h in (
+            panelkit.lead_time_hours(m.get("createdAt"), m.get("mergedAt"))
+            for m in recent_merges
+        ) if h is not None
+    )
+    typical = None
+    if hours:
+        mid = len(hours) // 2
+        typical = round(hours[mid] if len(hours) % 2 else (hours[mid - 1] + hours[mid]) / 2, 2)
+
+    return {
+        "window_days": VELOCITY_WINDOW_DAYS,
+        "merged_count": merged_count,
+        "loc": loc,
+        "loc_note": loc_note,
+        "typical_merge_hours": typical,
+        "weekly": weekly,
     }
 
 
@@ -395,6 +521,7 @@ def main():
     head = commits[0] if commits else None
     open_prs = fetch_open_prs(envelope)
     recent_merges = fetch_recent_merges(envelope)
+    velocity = fetch_velocity(envelope, recent_merges)
     last_ci_run = fetch_latest_ci_run(envelope)
     pages = fetch_pages_status(envelope)
     live_cache = fetch_live_cache_version()
@@ -428,6 +555,7 @@ def main():
         "openPRs": open_prs,
         "recentMerges": recent_merges,
         "lastCiRun": last_ci_run,
+        "velocity": velocity,
         "deploy": {
             "pages": pages,
             "liveCacheVersion": live_cache,

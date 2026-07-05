@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-05T14:46:49Z",
-  "generator": "command-center-gen.py@0.3.0 (panelkit 0.1.0)",
+  "generatedAt": "2026-07-05T15:21:17Z",
+  "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
   "status": "ok",
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T14:02:14Z",
-    "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
-    "subject": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT (#187)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e2dbd55b7838f60b3b13c7146a52e629959b79b5"
+    "date": "2026-07-05T15:15:30Z",
+    "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
+    "subject": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (#188)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c05bb40ce3b19b81bac0963506bbe9008ec767f3"
   },
   "commits": [
+    {
+      "date": "2026-07-05T15:15:30Z",
+      "sha": "c05bb40ce3b19b81bac0963506bbe9008ec767f3",
+      "subject": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (#188)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c05bb40ce3b19b81bac0963506bbe9008ec767f3"
+    },
     {
       "date": "2026-07-05T14:02:14Z",
       "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
@@ -84,20 +90,14 @@
       "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
       "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
-    },
-    {
-      "date": "2026-07-05T07:16:49Z",
-      "sha": "c5793d13f9c312619c5985ddbbf4acc0532aa21b",
-      "subject": "S-TOAST-HOST (UAT U24): setlist-remove/library-delete undo banners no longer leave a visible empty pill (#178)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c5793d13f9c312619c5985ddbbf4acc0532aa21b"
     }
   ],
   "openPRs": [
     {
-      "number": 188,
-      "title": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117)",
-      "branch": "claude/settings-labels",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/188",
+      "number": 189,
+      "title": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3)",
+      "branch": "claude/cc-reorder",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/189",
       "draft": false,
       "ciState": "green",
       "checks": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324312/job/85232518942"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744626744/job/85233312665"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324311/job/85232518941"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744626737/job/85233312669"
         }
       ]
     },
@@ -177,104 +177,146 @@
   ],
   "recentMerges": [
     {
+      "createdAt": "2026-07-05T14:40:08Z",
+      "mergedAt": "2026-07-05T15:15:31Z",
+      "number": 188,
+      "title": "M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/188"
+    },
+    {
+      "createdAt": "2026-07-05T13:28:47Z",
       "mergedAt": "2026-07-05T14:02:14Z",
       "number": 187,
       "title": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/187"
     },
     {
+      "createdAt": "2026-07-05T13:01:07Z",
       "mergedAt": "2026-07-05T13:11:33Z",
       "number": 186,
       "title": "cc: test-depth metric - 2117 executed cases, not 40 files",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/186"
     },
     {
+      "createdAt": "2026-07-05T12:11:21Z",
       "mergedAt": "2026-07-05T12:52:28Z",
       "number": 185,
       "title": "Case study: the music app - the method's origin, evidenced",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/185"
     },
     {
+      "createdAt": "2026-07-05T11:01:53Z",
       "mergedAt": "2026-07-05T11:01:56Z",
       "number": 184,
       "title": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/184"
     },
     {
+      "createdAt": "2026-07-05T10:47:13Z",
       "mergedAt": "2026-07-05T10:49:29Z",
       "number": 183,
       "title": "Retro panes (design-system day + ear-first night) + CC refresh: full mission record",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/183"
     },
     {
+      "createdAt": "2026-07-05T07:57:31Z",
       "mergedAt": "2026-07-05T07:57:33Z",
       "number": 182,
       "title": "cc-nightly: durable snapshot refresh workflow",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/182"
     },
     {
+      "createdAt": "2026-07-05T07:43:26Z",
       "mergedAt": "2026-07-05T07:56:54Z",
       "number": 181,
       "title": "Command Center v1 (repo layer): the parent artifact above the panes",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/181"
     },
     {
+      "createdAt": "2026-07-05T07:36:08Z",
       "mergedAt": "2026-07-05T07:36:11Z",
       "number": 180,
       "title": "Session-start: CC generator as the sensing sweep",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/180"
     },
     {
+      "createdAt": "2026-07-05T07:23:33Z",
       "mergedAt": "2026-07-05T07:23:35Z",
       "number": 179,
       "title": "Vision capture: command center hierarchy",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/179"
     },
     {
+      "createdAt": "2026-07-05T07:14:59Z",
       "mergedAt": "2026-07-05T07:16:50Z",
       "number": 178,
       "title": "S-TOAST-HOST: setlist-remove/library-delete undo banners no longer leave a visible empty pill (U24)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/178"
     },
     {
+      "createdAt": "2026-07-05T06:57:01Z",
       "mergedAt": "2026-07-05T06:57:03Z",
       "number": 177,
       "title": "Capture: U24",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/177"
     },
     {
+      "createdAt": "2026-07-05T06:30:12Z",
       "mergedAt": "2026-07-05T06:30:14Z",
       "number": 176,
       "title": "Vision capture: deterministic tutor",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/176"
     },
     {
+      "createdAt": "2026-07-05T06:10:58Z",
       "mergedAt": "2026-07-05T06:12:29Z",
       "number": 175,
       "title": "S-SET-INTEGRITY: dangling setlist refs - delete-heal + defensive nav + load-heal (U22)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/175"
     },
     {
+      "createdAt": "2026-07-05T05:56:04Z",
       "mergedAt": "2026-07-05T05:57:51Z",
       "number": 174,
       "title": "S-REL-NAMES: guidance names the instance (U23) + the concreteness principle",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/174"
-    },
-    {
-      "mergedAt": "2026-07-05T05:33:18Z",
-      "number": 173,
-      "title": "Capture: U23",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/173"
     }
   ],
   "lastCiRun": {
-    "workflowName": "PR preview link",
+    "workflowName": "Retry failed Pages deploy",
     "status": "completed",
-    "conclusion": "success",
-    "runStartedAt": "2026-07-05T14:40:11Z",
-    "durationSeconds": 7,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28744324312",
-    "headBranch": "claude/settings-labels"
+    "conclusion": "skipped",
+    "runStartedAt": "2026-07-05T15:16:10Z",
+    "durationSeconds": 1,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745333035",
+    "headBranch": "main"
+  },
+  "velocity": {
+    "window_days": 7,
+    "merged_count": 137,
+    "loc": {
+      "added": 35853,
+      "deleted": 5245
+    },
+    "loc_note": null,
+    "typical_merge_hours": 0.03,
+    "weekly": [
+      {
+        "week_start": "2026-06-28",
+        "loc_added": 35853,
+        "loc_deleted": 5245
+      },
+      {
+        "week_start": "2026-06-21",
+        "loc_added": 4590,
+        "loc_deleted": 949
+      },
+      {
+        "week_start": "2026-06-14",
+        "loc_added": 2875,
+        "loc_deleted": 324
+      }
+    ]
   },
   "deploy": {
     "pages": {
@@ -283,8 +325,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v116",
-    "localCacheVersion": "music-v116",
+    "liveCacheVersion": "music-v117",
+    "localCacheVersion": "music-v117",
     "cacheMatch": true
   },
   "missions": [
@@ -498,8 +540,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 40,
-    "testCaseCount": 2117,
+    "testFileCount": 42,
+    "testCaseCount": 2138,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

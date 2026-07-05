@@ -70,6 +70,15 @@ code{background:var(--accg);border-radius:4px;padding:1px 5px;font-size:.9em;fon
 .hitl.hitl-action .hitl-label{color:var(--warn)}
 .hitl.hitl-urgent .hitl-label{color:var(--hot)}
 .hitl ul{list-style:none;margin:0;padding:0;font-size:.9rem;line-height:1.55}
+/* Two-tier ruling (2026-07-05 interview): tier 1 (broken/blocking) loud, tier 2
+   (routine decisions) present but muted - one strip, nothing hidden. */
+.hitl.hitl-routine{border-left-color:var(--line)}
+.hitl.hitl-routine .hitl-label{color:var(--dim)}
+.hitl li.hitl-t2,.hitl li.hitl-t2 a{color:var(--dim);font-weight:500}
+.hitl li.hitl-t2{font-size:.85rem}
+/* Position 1b: velocity - plain-language lines above the fold. */
+.velocity-row{margin:8px 0;padding:0 2px;font-size:.85rem;color:var(--dim);display:flex;flex-wrap:wrap;gap:2px 18px}
+.velocity-row .vel-line strong{color:var(--txt);font-weight:800;font-variant-numeric:tabular-nums}
 .fold-card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 14px;margin:8px 0}
 .fc-label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin-bottom:4px}
 .fold-card ul{list-style:none;margin:0;padding:0;font-size:.9rem;line-height:1.55}
@@ -100,6 +109,9 @@ code{background:var(--accg);border-radius:4px;padding:1px 5px;font-size:.9em;fon
 <div class="hitl-label" id="hitlLabel">Action required</div>
 <div id="hitlBody" class="fc-micro">Loading...</div>
 </div>
+
+<!-- Block 1b: velocity (2026-07-05 interview ruling - plain-language lines) -->
+<div class="velocity-row" id="velocityRow"></div>
 
 <!-- Block 2: latest work products -->
 <div class="fold-card" id="products">
@@ -234,17 +246,53 @@ function renderHitl(d){
     body.textContent = 'All tracked signals green - no open PRs awaiting a decision, deployed cache in sync.';
     return;
   }
-  items.sort(function(a, b){ return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0); });
-  strip.className = 'hitl ' + (items.some(function(i){ return i.urgent; }) ? 'hitl-urgent' : 'hitl-action');
-  label.textContent = 'Action required (' + items.length + ')';
+  // Two-tier ruling ("broken first, merges second"): tier 1 = urgent/
+  // blocking, loud; tier 2 = routine decisions, muted. One strip - at a
+  // heavy merge cadence the strip never screams, nothing hides.
+  var tier1 = items.filter(function(i){ return i.urgent; });
+  var tier2 = items.filter(function(i){ return !i.urgent; });
+  strip.className = 'hitl ' + (tier1.length ? 'hitl-urgent' : 'hitl-routine');
+  label.textContent = tier1.length
+    ? 'Action required (' + items.length + ')'
+    : 'Awaiting decisions (' + items.length + ')';
   body.className = '';
-  body.innerHTML = '<ul>' + items.map(function(i){ return '<li>' + i.html + '</li>'; }).join('') + '</ul>';
+  body.innerHTML = '<ul>' +
+    tier1.map(function(i){ return '<li>' + i.html + '</li>'; }).join('') +
+    tier2.map(function(i){ return '<li class="hitl-t2">' + i.html + '</li>'; }).join('') +
+  '</ul>';
+}
+
+// ---- Block 1b: velocity - plain-language lines (raw numbers stay in payload).
+function humanHours(h){
+  if (h == null) return null;
+  if (h < 1){ var m = Math.max(1, Math.round(h * 60)); return m + ' minute' + (m === 1 ? '' : 's'); }
+  if (h < 48){ var r = Math.round(h * 10) / 10; return r + ' hour' + (r === 1 ? '' : 's'); }
+  var d = Math.round((h / 24) * 10) / 10; return d + ' day' + (d === 1 ? '' : 's');
+}
+
+function renderVelocity(d){
+  var el = document.getElementById('velocityRow');
+  var vel = d.velocity;
+  if (!vel){ el.innerHTML = ''; return; }
+  var lines = [];
+  if (vel.merged_count !== null && vel.merged_count !== undefined){
+    var line = '<strong>' + vel.merged_count + '</strong> PR' + (vel.merged_count === 1 ? '' : 's') +
+      ' merged in the last ' + (vel.window_days || 7) + ' days';
+    var t = humanHours(vel.typical_merge_hours);
+    if (t) line += ' - typical merge lands in <strong>' + esc(t) + '</strong>';
+    lines.push(line);
+  }
+  if (vel.loc){
+    lines.push('<strong>+' + vel.loc.added.toLocaleString() + '</strong> / <strong>-' +
+      vel.loc.deleted.toLocaleString() + '</strong> lines this week');
+  }
+  el.innerHTML = lines.map(function(l){ return '<span class="vel-line">' + l + '</span>'; }).join('');
 }
 
 // ---- Block 2: latest work products - recent merges + shipped mission panes.
 function renderProducts(d){
   var body = document.getElementById('productsBody');
-  var merges = (d.recentMerges || []).slice(0, 3);
+  var merges = (d.recentMerges || []).slice(0, 2);
   var panes = (d.missions || []).slice(0, 3);
   var html = '';
   if (merges.length){
@@ -493,6 +541,7 @@ function renderOps(d){
 
 function render(d){
   renderHitl(d);
+  renderVelocity(d);
   renderProducts(d);
   renderShipped(d);
   renderCockpit(d);
