@@ -115,6 +115,14 @@
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
+    <!-- M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
+         experience-level ask, rendered/managed entirely by the Settings
+         inline script below (renderGuidanceAsk). Sits FIRST, outside every
+         .screen, same rationale as diagramPrefSlot/backupNudgeSlot below -
+         it fires once at boot, on any tab, and 'guidanceask' outranks every
+         other Notables consumer (notables.js PRIORITY) so it wins the slot
+         ahead of firstrun on a truly fresh profile. -->
+    <div class="notableSlot" id="guidanceAskSlot"></div>
     <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time dots|patterns
          fretboard-diagram preference prompt, rendered/managed entirely by
          the Settings inline script below (renderDiagramPrefPrompt). Sits
@@ -167,6 +175,14 @@
            Rationale: the old nested-accordion scroll container trapped vertical swipes on
            the in-key cells (the lingering swipe bug). With a single flat scroll container
            the chord cells scroll cleanly. -->
+      <!-- M-GUIDANCE (intermediate tier): key/mode intro on first Compose visit
+           (renderComposeIntroNotable, listens for music:tab-shown) + the
+           transpose==key tip on the first Compose transpose
+           (renderTransposeTipNotable, listens for music:compose-transposed).
+           Two slots (not one) since each fires on a different event and only
+           one can ever hold the Notables slot at a time anyway. -->
+      <div class="notableSlot" id="composeIntroSlot"></div>
+      <div class="notableSlot" id="transposeTipSlot"></div>
       <div class="composeWrap">
         <div class="composeTop">
           <!-- SINGLE-ROW button bar (375px-safe, no wrap). The key/mode chip
@@ -228,6 +244,9 @@
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
+        <!-- M-GUIDANCE (beginner tier): "tune up first" cue on the Tune tab's
+             first visit (renderTuneFirstNotable, listens for music:tab-shown). -->
+        <div class="notableSlot" id="tuneFirstSlot"></div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub" style="margin:14px 0 8px">Tuning</div>
           <div class="chips" id="tuneTunings"></div>
@@ -300,6 +319,13 @@
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
+          <!-- M-GUIDANCE (2026-07-05): plain body-text row (NOT a heading, NOT
+               bold - operator explicit) that cycles music.guidanceLevel.v1.
+               Deliberately NOT a .setLbl + segmented-control pair like Theme/
+               Fretboard diagrams above it - the operator asked for plain text
+               here specifically, so this is a single tappable .setRow (bare,
+               no .listItem card family - that's where the bold titles live). -->
+          <button type="button" class="setRow" id="guidanceLevelRow"></button>
         </div>
       </section>
       <section class="accSec" data-acc="backup">
@@ -383,6 +409,10 @@
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
 <script src="../shared/notables.js"></script>
+<!-- M-GUIDANCE (2026-07-05): the beginner|intermediate|advanced experience
+     level (music.guidanceLevel.v1) - loaded right after notables.js, which
+     it grades claims against (see notables.js's LEVELS table). -->
+<script src="../shared/guidance-level.js"></script>
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <!-- yt-info.js: U17 (M-TRACKLIB w2a) - keyless YouTube oEmbed lookup + title
@@ -868,6 +898,37 @@
       markDiagramPref(DiagramPref.get());
     }
 
+    /* M-GUIDANCE (2026-07-05): plain-text Settings row that cycles
+       music.guidanceLevel.v1 - beginner -> intermediate -> advanced ->
+       beginner. Deliberately a single tappable row (not a segmented control
+       like Theme/Fretboard diagrams above) - operator explicit: plain body
+       text, not a heading, no bold (see .setRow's own CSS - no .listItem
+       card family, whose .li-title IS bold, applied here). An unset level
+       (the ask not yet answered) displays as "Beginner" - the same safe
+       default the ask's own dismiss-without-choosing path persists - so the
+       row never reads as blank, but nothing is WRITTEN until the user taps. */
+    var GUIDANCE_LEVEL_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+    var glRow = document.getElementById('guidanceLevelRow');
+    function guidanceLevelOrDefault() { return (window.GuidanceLevel && GuidanceLevel.get()) || 'beginner'; }
+    function renderGuidanceLevelRow() {
+      if (!glRow) return;
+      glRow.textContent = 'Guidance level: ' + GUIDANCE_LEVEL_LABEL[guidanceLevelOrDefault()] + ' (tap to change)';
+    }
+    if (glRow && window.GuidanceLevel) {
+      glRow.onclick = function () {
+        var levels = GuidanceLevel.LEVELS;
+        var i = levels.indexOf(guidanceLevelOrDefault());
+        GuidanceLevel.set(levels[(i + 1) % levels.length]);
+        renderGuidanceLevelRow();
+        // Picking here also settles the one-time ask, if it's still open -
+        // the user just answered the same question the ask asks (mirrors the
+        // diagramPref Settings-row precedent right above).
+        if (window.Notables) Notables.dismiss('guidanceask');
+        var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
+      };
+      renderGuidanceLevelRow();
+    }
+
     /* M-SETTINGS-CLARITY: the sections are ONE-AT-A-TIME accordion sections
        (shared/accordion.js owns the exclusivity state; the .accSec/.accBtn/
        .accBody visual family lives in songbook.css). Per-open state only -
@@ -968,6 +1029,54 @@
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
+    /* M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
+       experience-level ask, in the 'guidanceask' Notables slot - the
+       HIGHEST priority (notables.js PRIORITY), so it wins the slot ahead of
+       firstrun on a truly fresh profile (firstrun is itself now level-gated
+       and would otherwise never get a chance to show before a level exists).
+       Rendered once at boot (see the renderGuidanceAsk() call near
+       renderBackupNudge() below) - unlike diagrampref/backupNudge it has NO
+       trigger event of its own, since it must fire on the very first app
+       open regardless of which tab is active. Zero jargon (operator
+       explicit) - three plain-language buttons, same HTML-banner-with-
+       inline-buttons shape as renderDiagramPrefPrompt below (Notables.
+       renderBanner's opts.html + a manual querySelectorAll wiring pass). */
+    function renderGuidanceAsk() {
+      var slot = document.getElementById('guidanceAskSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (slot.childNodes.length) return;              // already showing - one at a time
+      if (Notables.isDismissed('guidanceask')) return;  // answered (or X'd) already - permanent, per notables.js's one-shot contract
+      if (!Notables.claim('guidanceask')) return;       // unrestricted + top priority in practice, but keep the claim() contract explicit
+      function choose(level) {
+        GuidanceLevel.set(level);
+        Notables.dismiss('guidanceask');
+        if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
+        slot.innerHTML = '';
+      }
+      var banner = Notables.renderBanner({
+        consumerId: 'guidanceask',
+        html: '<div style="margin-bottom:8px;font-weight:600;">How far along are you?</div>'
+          + '<button type="button" class="glAskOpt" data-lvl="beginner" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">Just starting out</button>'
+          + '<button type="button" class="glAskOpt" data-lvl="intermediate" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">I know some chords</button>'
+          + '<button type="button" class="glAskOpt" data-lvl="advanced" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">I know my way around the neck</button>',
+        // the banner's own [x]: dismissing WITHOUT choosing stores the
+        // operator's explicit safe default ('beginner') - an EXPLICIT
+        // set() here, never a guessed default inside guidance-level.js's
+        // own get() (see that file's header for why).
+        onDismiss: function () {
+          GuidanceLevel.set('beginner');
+          if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
+          slot.innerHTML = '';
+        }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      var opts = banner.querySelectorAll ? banner.querySelectorAll('.glAskOpt') : [];
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-lvl')); });
+      }
+      slot.appendChild(banner);
+    }
+
     /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time "how do you read a
        fretboard?" prompt, in the 'diagrampref' Notables slot (after roman,
        before backup - notables.js PRIORITY). Trigger: diagram.js's render()
@@ -1012,6 +1121,68 @@
       slot.appendChild(banner);
     }
     window.addEventListener('music:diagram-rendered', renderDiagramPrefPrompt);
+
+    /* M-GUIDANCE (beginner tier): "tune up first" JIT cue on the Tune tab's
+       first visit. Trigger: songbook.js's applyTab() dispatches
+       music:tab-shown on EVERY tab render (including the initial tab
+       restore at boot, not just button-click switches) - see its header.
+       Plain accent-card banner via the shared Notables.renderBanner (same
+       shape as firstrun/whynote's simple-text consumers), never hand-rolled. */
+    function renderTuneFirstNotable(ev) {
+      var slot = document.getElementById('tuneFirstSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || ev.detail.tab !== 'tune') return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('tunefirst')) return;
+      if (!Notables.claim('tunefirst', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'tunefirst',
+        text: 'Tune up first - everything sounds better in tune.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:tab-shown', renderTuneFirstNotable);
+
+    /* M-GUIDANCE (intermediate tier): key/mode intro JIT cue on the Compose
+       tab's first visit. Same trigger + shape as renderTuneFirstNotable above. */
+    function renderComposeIntroNotable(ev) {
+      var slot = document.getElementById('composeIntroSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || ev.detail.tab !== 'compose') return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('composeintro')) return;
+      if (!Notables.claim('composeintro', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'composeintro',
+        text: 'Pick a key and mode below to see which chords fit together.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:tab-shown', renderComposeIntroNotable);
+
+    /* M-GUIDANCE (intermediate tier): "transpose moves the key with it" JIT
+       cue on the first Compose transpose tap. Trigger: songbook.js's
+       composeTpose() dispatches music:compose-transposed on every transpose -
+       see its header. */
+    function renderTransposeTipNotable() {
+      var slot = document.getElementById('transposeTipSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('transposetip')) return;
+      if (!Notables.claim('transposetip', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'transposetip',
+        text: 'Transposing moves the key with it, so the chord palette below always matches what you hear.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:compose-transposed', renderTransposeTipNotable);
 
     /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
        backup-staleness nudge in the free LOWEST Notables priority slot
@@ -1122,6 +1293,7 @@
     }
 
     renderBackupNudge();
+    renderGuidanceAsk(); // M-GUIDANCE: fires once at boot, on any tab - see its header above
   });
 })();
 </script>

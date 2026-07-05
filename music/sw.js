@@ -215,7 +215,21 @@
 // token block), shared/songbook.css (comment-only cross-ref update),
 // play/index.html (Settings: the case-study write-up link removed, F22).
 // check-cache-bump.sh re-verified against origin/main immediately before push.
-var CACHE = 'music-v118';
+// M-GUIDANCE (2026-07-05, docs/plans/guidance-levels-spec-20260705.md):
+// v118->v119 - ONE new CORE path: shared/guidance-level.js (the beginner|
+// intermediate|advanced experience-level preference, music.guidanceLevel.v1 -
+// script-tagged in play/index.html right after notables.js, which it grades
+// claims against). Also changed: shared/notables.js (LEVELS gate on claim();
+// 'guidanceask' + 6 new graded-tip consumerIds added to PRIORITY, relative
+// order of the pre-existing 5 unchanged), shared/songbook.js
+// (firstrunShouldRender level-threaded; new savebasicsShouldRender +
+// renderSaveBasicsNotable; composeTpose/applyTab dispatch music:compose-
+// transposed/music:tab-shown), shared/tracks.js (whynoteBanner level-
+// threaded; new scaletipText/scaletipBanner), play/index.html (guidanceask
+// ask card + Settings "Guidance level" plain-text row + tunefirst/
+// composeintro/transposetip JIT banners). check-cache-bump.sh re-verified
+// against origin/main immediately before push.
+var CACHE = 'music-v119';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -270,6 +284,9 @@ var CORE = [
   // primitive, script-tagged in play/index.html right after diagram.js.
   './shared/legend.js',
   './shared/notables.js',
+  // guidance-level.js: M-GUIDANCE (2026-07-05) - script-tagged in
+  // play/index.html right after notables.js, which it grades claims against.
+  './shared/guidance-level.js',
  './shared/theme.js', './shared/audio.js',
   // sound.js: M-EAR wave 1 - the scale/mode audition provider, script-tagged
   // in play/index.html right after audio.js.

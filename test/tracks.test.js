@@ -7,6 +7,7 @@ var assert = require('assert');
 var T = require('../music/shared/tracks.js');
 var Circle = require('../music/shared/circle.js');
 var Notables = require('../music/shared/notables.js');
+var GuidanceLevel = require('../music/shared/guidance-level.js');
 var lsReset = require('./helpers/local-storage-reset.js');
 // compat shim over the shared helper's {clear, fakeStore} API (same as notables.test.js)
 function resetLocalStorage(seed) {
@@ -577,9 +578,14 @@ test('whynoteText: only two templates exist - the switch is on scaleMode, nothin
   assert.ok(/parallel major/.test(aeolian));
 });
 
-/* ---------- S-WHYNOTE: claim/dismiss consumer logic (via Notables) ---------- */
+/* ---------- S-WHYNOTE: claim/dismiss consumer logic (via Notables) ----------
+ * M-GUIDANCE retro-tagged 'whynote' as intermediate+advanced in notables.js's
+ * LEVELS table (docs/plans/guidance-levels-spec-20260705.md) - every case
+ * below that expects a GRANT now seeds music.guidanceLevel.v1 first (via the
+ * real guidance-level.js module, same localStorage fake). */
 test('whynoteBanner: a fresh, un-dismissed slot grants renderBanner-ready opts', function () {
   resetLocalStorage();
+  GuidanceLevel.set('intermediate');
   Notables._resetArbitration();
   var th = T.studioTheory('C', 'major');
   var opts = T.whynoteBanner(th);
@@ -590,6 +596,7 @@ test('whynoteBanner: a fresh, un-dismissed slot grants renderBanner-ready opts',
 });
 test('whynoteBanner: a repeat call while still un-dismissed keeps granting (idempotent re-claim)', function () {
   resetLocalStorage();
+  GuidanceLevel.set('advanced');
   Notables._resetArbitration();
   var th = T.studioTheory('C', 'major');
   assert.ok(T.whynoteBanner(th), 'first open of the Studio grants the slot');
@@ -597,6 +604,7 @@ test('whynoteBanner: a repeat call while still un-dismissed keeps granting (idem
 });
 test('whynoteBanner: dismiss() persists forever - a later call skips silently (returns null)', function () {
   resetLocalStorage();
+  GuidanceLevel.set('intermediate');
   Notables._resetArbitration();
   var th = T.studioTheory('A', 'minor');
   assert.ok(T.whynoteBanner(th));
@@ -605,10 +613,75 @@ test('whynoteBanner: dismiss() persists forever - a later call skips silently (r
 });
 test('whynoteBanner: a higher-priority notable (firstrun) already holding the slot preempts it', function () {
   resetLocalStorage();
+  GuidanceLevel.set('intermediate');
   Notables._resetArbitration();
-  assert.strictEqual(Notables.claim('firstrun'), true); // firstrun outranks whynote in PRIORITY
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true); // firstrun outranks whynote in PRIORITY
   var th = T.studioTheory('G', 'major');
   assert.strictEqual(T.whynoteBanner(th), null, 'whynote must skip silently while firstrun holds the slot');
+});
+/* ---------- M-GUIDANCE: whynote's level gate specifically ---------- */
+test('whynoteBanner: blocked for beginner or an unset level (intermediate+advanced only)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  assert.strictEqual(T.whynoteBanner(th), null, 'unset level must not grant whynote');
+  GuidanceLevel.set('beginner');
+  Notables._resetArbitration();
+  assert.strictEqual(T.whynoteBanner(th), null, 'beginner level must not grant whynote');
+});
+
+/* ---------------------------------------------------------------------
+ * M-GUIDANCE (advanced tier): T.scaletipText/T.scaletipBanner - the Studio
+ * "scale chips work over any chord in the key" JIT cue. Same shape as
+ * whynoteText/whynoteBanner above.
+ * ------------------------------------------------------------------- */
+test('scaletipText interpolates the key', function () {
+  assert.strictEqual(
+    T.scaletipText('C'),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over C too. The fretboard pattern is the guide.'
+  );
+});
+test('scaletipBanner: granted for level advanced on a fresh, empty slot', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced');
+  Notables._resetArbitration();
+  var th = T.studioTheory('D', 'major');
+  var opts = T.scaletipBanner(th);
+  assert.ok(opts, 'expected a granted banner on a fresh claim');
+  assert.strictEqual(opts.consumerId, 'scaletip');
+  assert.strictEqual(opts.className, 'bt-st-notable');
+  assert.strictEqual(opts.text, T.scaletipText('D'));
+});
+test('scaletipBanner: blocked for beginner/intermediate/unset (advanced only)', function () {
+  var th = T.studioTheory('D', 'major');
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(T.scaletipBanner(th), null, 'unset level must not grant scaletip');
+  ['beginner', 'intermediate'].forEach(function (lvl) {
+    resetLocalStorage();
+    GuidanceLevel.set(lvl);
+    Notables._resetArbitration();
+    assert.strictEqual(T.scaletipBanner(th), null, lvl + ' must not grant scaletip');
+  });
+});
+test('scaletipBanner: a higher-priority notable (whynote) already holding the slot preempts it, even when both are level-eligible', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced'); // eligible for BOTH whynote and scaletip
+  Notables._resetArbitration();
+  var th = T.studioTheory('E', 'major');
+  assert.ok(T.whynoteBanner(th), 'whynote claims the slot first');
+  assert.strictEqual(T.scaletipBanner(th), null, 'scaletip must skip silently while whynote holds the slot');
+  Notables.dismiss('whynote');
+  assert.ok(T.scaletipBanner(th), 'once whynote is dismissed, scaletip can claim on the next Studio open');
+});
+test('scaletipBanner: dismissed forever - a later call skips silently (returns null)', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced');
+  Notables._resetArbitration();
+  var th = T.studioTheory('F', 'major');
+  assert.ok(T.scaletipBanner(th));
+  Notables.dismiss('scaletip');
+  assert.strictEqual(T.scaletipBanner(th), null, 'a dismissed scaletip must never render again');
 });
 
 run();

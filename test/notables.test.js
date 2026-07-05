@@ -49,11 +49,12 @@ test('claim() grants an empty slot; dismiss() persists it as shown, forever', fu
   resetLocalStorage();
   Notables._resetArbitration();
   assert.strictEqual(Notables.isDismissed('firstrun'), false);
-  assert.strictEqual(Notables.claim('firstrun'), true);
+  // firstrun is M-GUIDANCE level-gated to 'beginner' - pass a matching level.
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);
   Notables.dismiss('firstrun');
   assert.strictEqual(Notables.isDismissed('firstrun'), true);
   // a dismissed consumer can never claim again, even into an empty slot
-  assert.strictEqual(Notables.claim('firstrun'), false);
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), false);
 });
 
 /* ---------- double-fire prevention: only ONE grant per slot, ever ---------- */
@@ -74,10 +75,10 @@ test('priority arbitration: a higher-priority claim preempts a lower one, regard
   resetLocalStorage();
   Notables._resetArbitration();
   assert.strictEqual(Notables.claim('roman'), true);       // fills the empty slot
-  assert.strictEqual(Notables.claim('whynote'), true);     // whynote outranks roman -> preempts
+  assert.strictEqual(Notables.claim('whynote', undefined, 'intermediate'), true);     // whynote outranks roman -> preempts
   assert.strictEqual(Notables.claim('roman'), false);      // roman still loses; whynote holds
-  assert.strictEqual(Notables.claim('firstrun'), true);    // firstrun outranks whynote -> preempts
-  assert.strictEqual(Notables.claim('whynote'), false);    // whynote now loses to firstrun
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);    // firstrun outranks whynote -> preempts
+  assert.strictEqual(Notables.claim('whynote', undefined, 'intermediate'), false);    // whynote now loses to firstrun
   assert.strictEqual(Notables.claim('roman'), false);      // roman never gets a look-in this round
 });
 
@@ -85,7 +86,7 @@ test('release() frees a held slot so a previous loser can win on its next claim 
   resetLocalStorage();
   Notables._resetArbitration();
   assert.strictEqual(Notables.claim('roman'), true);
-  assert.strictEqual(Notables.claim('firstrun'), true);   // preempts roman
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);   // preempts roman
   assert.strictEqual(Notables.claim('roman'), false);     // still loses while firstrun holds
   Notables.release('firstrun');
   assert.strictEqual(Notables.claim('roman'), true);      // slot freed -> roman's next claim wins
@@ -94,7 +95,7 @@ test('release() frees a held slot so a previous loser can win on its next claim 
 test('dismiss() also releases the slot if the dismissed consumer currently holds it', function () {
   resetLocalStorage();
   Notables._resetArbitration();
-  assert.strictEqual(Notables.claim('firstrun'), true);
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);
   assert.strictEqual(Notables.claim('roman'), false);   // blocked while firstrun holds
   Notables.dismiss('firstrun');
   assert.strictEqual(Notables.claim('roman'), true);    // freed by the dismiss, roman now wins
@@ -107,7 +108,7 @@ test('corrupt/foreign-shaped music.notables.v1 is tolerated, never thrown', func
     resetLocalStorage({ 'music.notables.v1': bad });
     assert.doesNotThrow(function () {
       assert.strictEqual(Notables.isDismissed('firstrun'), false, 'corrupt shape ' + bad + ' must not read as dismissed');
-      assert.strictEqual(Notables.claim('firstrun'), true, 'corrupt shape ' + bad + ' must not block claiming');
+      assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true, 'corrupt shape ' + bad + ' must not block claiming');
     });
     Notables._resetArbitration();
   });
@@ -122,7 +123,7 @@ test('a missing music.notables.v1 key (fresh device) reads as nothing dismissed'
 test('show-once persists across a fresh require() of the module (simulated reload)', function () {
   resetLocalStorage();
   Notables._resetArbitration();
-  Notables.claim('firstrun');
+  Notables.claim('firstrun', undefined, 'beginner');
   Notables.dismiss('firstrun');
   assert.strictEqual(Notables.isDismissed('firstrun'), true);
 
@@ -132,7 +133,7 @@ test('show-once persists across a fresh require() of the module (simulated reloa
   delete require.cache[require.resolve('../music/shared/notables.js')];
   var ReloadedNotables = require('../music/shared/notables.js');
   assert.strictEqual(ReloadedNotables.isDismissed('firstrun'), true, 'dismissal survives reload via storage');
-  assert.strictEqual(ReloadedNotables.claim('firstrun'), false, 'dismissed consumer never re-claims after reload');
+  assert.strictEqual(ReloadedNotables.claim('firstrun', undefined, 'beginner'), false, 'dismissed consumer never re-claims after reload');
   // a DIFFERENT, never-dismissed consumer can still claim on the fresh instance
   assert.strictEqual(ReloadedNotables.claim('roman'), true);
 });
@@ -178,8 +179,13 @@ test('renderBanner() applies an extra className when given', function () {
 });
 
 /* ---------- PRIORITY table is exposed and in the expected order ---------- */
-test('PRIORITY exposes the sprint order: firstrun > whynote > roman > diagrampref > backup', function () {
-  assert.deepStrictEqual(Notables.PRIORITY, ['firstrun', 'whynote', 'roman', 'diagrampref', 'backup']);
+test('PRIORITY exposes the M-GUIDANCE order: guidanceask first, then the graded journey, pre-existing 5 unchanged relative order', function () {
+  assert.deepStrictEqual(Notables.PRIORITY, [
+    'guidanceask',
+    'firstrun', 'tunefirst', 'savebasics',
+    'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'roman', 'diagrampref', 'backup'
+  ]);
 });
 
 /* ---------- S-BACKUP-NUDGE: 'backup' is the lowest priority, never preempts ---------- */
@@ -190,7 +196,7 @@ test('backup notable never preempts roman/whynote/firstrun/diagrampref, but wins
   assert.strictEqual(Notables.claim('backup'), false);   // roman still outranks backup
   Notables.release('roman');
   assert.strictEqual(Notables.claim('backup'), true);    // empty slot -> backup wins
-  assert.strictEqual(Notables.claim('whynote'), true);   // whynote preempts backup
+  assert.strictEqual(Notables.claim('whynote', undefined, 'advanced'), true);   // whynote preempts backup
   assert.strictEqual(Notables.claim('backup'), false);
 });
 
@@ -212,6 +218,89 @@ test('diagrampref, once dismissed, never claims again (one-shot, matches every o
   Notables.dismiss('diagrampref');
   assert.strictEqual(Notables.isDismissed('diagrampref'), true);
   assert.strictEqual(Notables.claim('diagrampref'), false);
+});
+
+/* ---------------------------------------------------------------------
+ * M-GUIDANCE (docs/plans/guidance-levels-spec-20260705.md): the LEVELS
+ * gate on claim(consumerId, priority, level).
+ * ------------------------------------------------------------------- */
+
+test('LEVELS exposes the graded registry: firstrun/tunefirst/savebasics -> beginner; whynote -> intermediate+advanced; composeintro/transposetip -> intermediate; scaletip -> advanced', function () {
+  assert.deepStrictEqual(Notables.LEVELS, {
+    firstrun: ['beginner'],
+    tunefirst: ['beginner'],
+    savebasics: ['beginner'],
+    whynote: ['intermediate', 'advanced'],
+    composeintro: ['intermediate'],
+    transposetip: ['intermediate'],
+    scaletip: ['advanced']
+  });
+});
+
+test('a level-gated consumer only grants when the passed level is a declared member', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('tunefirst', undefined, 'intermediate'), false, 'tunefirst is beginner-only');
+  assert.strictEqual(Notables.claim('tunefirst', undefined, 'advanced'), false, 'tunefirst is beginner-only');
+  assert.strictEqual(Notables.claim('tunefirst', undefined, 'beginner'), true, 'tunefirst grants for its declared level');
+});
+
+test('an omitted/null/undefined level never matches a declared array - "unset level: only the ask may show"', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun'), false, 'no 3rd arg at all -> level is undefined -> blocked');
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun', undefined, null), false, 'explicit null level -> blocked');
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun', undefined, undefined), false, 'explicit undefined level -> blocked');
+  // an UNRESTRICTED consumer (not in LEVELS) is unaffected by an unset level -
+  // this is exactly what lets 'guidanceask' show while nothing else can.
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('guidanceask'), true, 'guidanceask has no declared levels - always eligible on priority alone');
+});
+
+test('whynote (intermediate+advanced) is blocked for beginner and unset, granted for either declared level', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('whynote', undefined, 'beginner'), false);
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('whynote'), false); // unset
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('whynote', undefined, 'intermediate'), true);
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('whynote', undefined, 'advanced'), true);
+});
+
+test('dismissed-stays-dismissed holds regardless of a later level change (level gate is checked AFTER the dismissed short-circuit)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('scaletip', undefined, 'advanced'), true);
+  Notables.dismiss('scaletip');
+  assert.strictEqual(Notables.isDismissed('scaletip'), true);
+  // even the correct declared level can never re-claim once dismissed
+  assert.strictEqual(Notables.claim('scaletip', undefined, 'advanced'), false);
+});
+
+test('guidanceask outranks firstrun - wins the empty slot on a truly fresh profile even though firstrun would also be eligible', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('guidanceask'), true, 'guidanceask claims the empty slot first');
+  // firstrun (even with its matching level) cannot preempt - guidanceask outranks it
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), false);
+  Notables.dismiss('guidanceask');
+  // slot freed by the dismiss -> firstrun can now claim it
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);
+});
+
+test('the new journey tips (tunefirst/savebasics/composeintro/transposetip/scaletip) preserve the pre-existing relative order of firstrun/whynote/roman/diagrampref/backup', function () {
+  var p = Notables.PRIORITY;
+  var idx = {};
+  p.forEach(function (id, i) { idx[id] = i; });
+  assert.ok(idx.firstrun < idx.whynote, 'firstrun still outranks whynote');
+  assert.ok(idx.whynote < idx.roman, 'whynote still outranks roman');
+  assert.ok(idx.roman < idx.diagrampref, 'roman still outranks diagrampref');
+  assert.ok(idx.diagrampref < idx.backup, 'diagrampref still outranks backup');
+  assert.ok(idx.guidanceask < idx.firstrun, 'guidanceask outranks everything else');
 });
 
 run();

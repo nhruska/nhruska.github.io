@@ -20,7 +20,7 @@
  * (try/catch -> safe default), matching every other reader in this app.
  *
  * ---- API (siblings build directly on this - keep it stable) ----
- *   Notables.claim(consumerId, priority) -> boolean granted
+ *   Notables.claim(consumerId, priority, level) -> boolean granted
  *       Requests the single active slot for THIS consumerId. A dismissed
  *       consumer can never claim again (already shown, once, forever).
  *       Otherwise: the first claimant into an EMPTY slot wins. A later
@@ -33,6 +33,17 @@
  *       priority does NOT preempt - first-come keeps the slot, so two
  *       simultaneous same-priority claims never both grant true (the
  *       "double-fire" case). At most one consumerId ever holds the slot.
+ *       `level` (M-GUIDANCE, optional 3rd arg) is the CALLER's current
+ *       music.guidanceLevel.v1 value ('beginner'|'intermediate'|'advanced'
+ *       |null/undefined - this module stays agnostic of what those strings
+ *       MEAN, exactly like `priority` is just an opaque number). A
+ *       consumerId registered in the LEVELS table below only grants when
+ *       `level` is a member of its declared array - an omitted/unset level
+ *       never matches, so a level-gated consumer is blocked until the
+ *       caller has a real answer (see LEVELS below). A consumerId NOT in
+ *       LEVELS is unrestricted, exactly like today (guidanceask itself,
+ *       roman, diagrampref, backup) - this is purely additive, so every
+ *       pre-existing 2-arg claim() call keeps working unchanged.
  *   Notables.release(consumerId)
  *       Frees the slot WITHOUT dismissing, if `consumerId` currently holds
  *       it (e.g. its screen was left before the user acted on it) - so a
@@ -68,7 +79,41 @@
   // backup-staleness nudge. 'backup' stays deliberately last: it never
   // preempts anything, it only shows when nothing higher-priority claims
   // the slot.
-  var PRIORITY = ['firstrun', 'whynote', 'roman', 'diagrampref', 'backup'];
+  //
+  // M-GUIDANCE (docs/plans/guidance-levels-spec-20260705.md): 'guidanceask'
+  // (the one-time "how far along are you?" level prompt, play/index.html
+  // renderGuidanceAsk) is inserted FIRST - it must win the slot ahead of
+  // even 'firstrun' on a truly fresh profile, since firstrun is now itself
+  // level-gated (see LEVELS below) and would otherwise never get a chance
+  // to show before the level exists. The 6 new graded JIT tips are inserted
+  // at their journey point WITHOUT disturbing the pre-existing relative
+  // order of firstrun/whynote/roman/diagrampref/backup (every pairwise
+  // comparison notables.test.js already locked in for those 5 still holds -
+  // only their absolute indices shifted).
+  var PRIORITY = [
+    'guidanceask',
+    'firstrun', 'tunefirst', 'savebasics',
+    'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'roman', 'diagrampref', 'backup'
+  ];
+
+  // M-GUIDANCE: which music.guidanceLevel.v1 values a consumerId is graded
+  // for. A consumerId here ONLY grants claim() when the level passed to
+  // claim() is a member of its array - an omitted/null/unset level never
+  // matches any array (Array.indexOf(undefined) is always -1), which is
+  // exactly the spec's "unset level: only the ask may show" rule: every
+  // OTHER consumerId listed here stays blocked until a real level exists.
+  // A consumerId NOT in this table (guidanceask, roman, diagrampref,
+  // backup) is unrestricted, unchanged from pre-M-GUIDANCE behavior.
+  var LEVELS = {
+    firstrun: ['beginner'],
+    tunefirst: ['beginner'],
+    savebasics: ['beginner'],
+    whynote: ['intermediate', 'advanced'],
+    composeintro: ['intermediate'],
+    transposetip: ['intermediate'],
+    scaletip: ['advanced']
+  };
 
   function priorityOf(consumerId, explicitPriority) {
     if (typeof explicitPriority === 'number' && !isNaN(explicitPriority)) return explicitPriority;
@@ -128,8 +173,12 @@
   /* ---------- single-slot arbitration ("one notable per render pass") ---------- */
   var activeGrant = null; // { id: consumerId, p: priority } | null while a slot is held
 
-  function claim(consumerId, priority) {
+  function claim(consumerId, priority, level) {
     if (!consumerId || isDismissed(consumerId)) return false;
+    // M-GUIDANCE level gate: a consumerId registered in LEVELS only grants
+    // when `level` is one of its declared values - see LEVELS' header above.
+    var declaredLevels = LEVELS[consumerId];
+    if (declaredLevels && declaredLevels.indexOf(level) < 0) return false;
     var myP = priorityOf(consumerId, priority);
     if (!activeGrant) { activeGrant = { id: consumerId, p: myP }; return true; }
     if (activeGrant.id === consumerId) return true; // idempotent re-claim of the slot it already holds
@@ -179,6 +228,7 @@
 
   var API = {
     PRIORITY: PRIORITY,
+    LEVELS: LEVELS,
     claim: claim,
     release: release,
     dismiss: dismiss,

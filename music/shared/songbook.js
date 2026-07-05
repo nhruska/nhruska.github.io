@@ -676,6 +676,31 @@
     };
   }
 
+  // M-GUIDANCE: guarded-reference to guidance-level.js (music.guidanceLevel.v1),
+  // same pattern as tracks.js's circleRef()/soloGuideRef()/notablesRef() - a
+  // browser global first, a Node require() fallback so songbook-firstrun.test.js
+  // and any new guidance-consumer test share the SAME require-cache module
+  // instance test/guidance-level.test.js exercises directly (not a duplicate).
+  function guidanceLevelRef() {
+    if (global.GuidanceLevel) return global.GuidanceLevel;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./guidance-level.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+
+  // M-GUIDANCE trigger hook: same guarded-dispatch shape as diagram.js's
+  // notifyRendered() (S-DIAGRAM-PREF step 1) - fires a lightweight, generic
+  // signal so play/index.html can mount its own one-time JIT prompts
+  // (tunefirst/composeintro/transposetip) without this generic engine
+  // knowing anything about Notables, localStorage, or guidance levels.
+  // Guarded: the Node test harness never stubs `window.dispatchEvent`/
+  // `CustomEvent`, so this is a safe no-op there.
+  function notifyGuidanceEvent(name, detail) {
+    if (typeof global.dispatchEvent !== 'function' || typeof global.CustomEvent !== 'function') return;
+    try { global.dispatchEvent(new global.CustomEvent(name, detail ? { detail: detail } : undefined)); } catch (e) { /* ignore */ }
+  }
+
   // S-FIRSTRUN (sprint-1 item 4, F4): the fresh-profile Library guidance cue,
   // built on the one-shot Notables infra (music/shared/notables.js). Pure
   // decision fn, Node-testable without a DOM: given a Notables module (real or
@@ -684,10 +709,28 @@
   // injected Rep, so tests drive a real Notables instance directly. Returns
   // false without claiming if already dismissed (show-once); otherwise
   // attempts Notables.claim('firstrun') and returns whatever it grants.
+  // M-GUIDANCE (retro-tagged 'beginner' in notables.js's LEVELS table): the
+  // current guidance level is read internally via guidanceLevelRef() - never
+  // added as a new argument here, so this stays a drop-in signature for the
+  // one existing call site (renderFirstrunNotable, below).
   function firstrunShouldRender(Notables) {
     if (!Notables) return false;
     if (Notables.isDismissed('firstrun')) return false;
-    return Notables.claim('firstrun');
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    return Notables.claim('firstrun', undefined, level);
+  }
+
+  // M-GUIDANCE (beginner tier): "save/set basics after first song open" - a
+  // one-shot JIT cue in the practice/song screen, teaching the setlist +
+  // save mechanic. Pure decision fn, same dependency-injected shape as
+  // firstrunShouldRender above (tests drive a real Notables instance).
+  function savebasicsShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('savebasics')) return false;
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    return Notables.claim('savebasics', undefined, level);
   }
 
   // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
@@ -1365,6 +1408,29 @@
       }
     }
 
+    // M-GUIDANCE (beginner tier): one-shot "save/set basics" cue, prepended
+    // above the song detail card - built via the shared Notables banner (same
+    // accent-card + dismiss wiring firstrun/whynote reuse). Called at the end
+    // of every renderPractice() (below): el.practiceBody's innerHTML is fully
+    // rebuilt on every call (no incremental DOM patch to defend), so this just
+    // re-attempts the claim each time - a no-op once dismissed, per the
+    // notables.js contract. `bannerEl` is captured by the onDismiss closure so
+    // the tap can remove the exact element it built, without a module-level
+    // tracking variable (unlike firstrunBannerEl - practiceBody's whole
+    // subtree is disposable on the next render anyway).
+    function renderSaveBasicsNotable() {
+      if (!el.practiceBody || !global.Notables) return;
+      if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
+      var bannerEl = global.Notables.renderBanner({
+        consumerId: 'savebasics',
+        text: 'Tap the + up top to save this song to your setlist, so it is easy to find again.',
+        onDismiss: function () { if (bannerEl && bannerEl.parentNode) bannerEl.parentNode.removeChild(bannerEl); }
+      });
+      if (!bannerEl) return; // no `document` available (Node without a DOM stub)
+      var detail = el.practiceBody.querySelector('.detail');
+      if (detail) detail.insertBefore(bannerEl, detail.firstChild);
+    }
+
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -1463,6 +1529,7 @@
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
+      renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
@@ -2141,6 +2208,9 @@
       }
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
+      // M-GUIDANCE (intermediate tier): "transpose moves the key with it" JIT
+      // cue - play/index.html's renderTransposeTipNotable() listens for this.
+      notifyGuidanceEvent('music:compose-transposed');
     }
     // MODAL INTERCHANGE (Phase 2). Re-harmonize the whole built progression to a
     // PARALLEL mode: same tonic, same chord ROOTS, but each chord re-QUALIFIED to the
@@ -3531,6 +3601,11 @@
       if (viewEl) viewEl.scrollTop = 0;
       if (el.ctxLine && CONTEXTS[name] != null) el.ctxLine.textContent = CONTEXTS[name];
       if (pack && typeof pack.onSwitchTab === 'function') pack.onSwitchTab(name);
+      // M-GUIDANCE: fires on EVERY tab render, including the initial tab
+      // restore at boot (not just button-click switches) - play/index.html's
+      // renderTuneFirstNotable()/renderComposeIntroNotable() listen for this
+      // to mount their one-time JIT cues at "the tab's first visit."
+      notifyGuidanceEvent('music:tab-shown', { tab: name });
     }
     // USER-facing tab/screen switch (tab-bar taps, opening Practice, etc).
     // Pushes ONE back-history layer per actual screen change so hardware/gesture
@@ -3681,6 +3756,7 @@
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
     firstrunShouldRender: firstrunShouldRender,
+    savebasicsShouldRender: savebasicsShouldRender,
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,

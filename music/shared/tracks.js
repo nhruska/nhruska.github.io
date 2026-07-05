@@ -257,6 +257,17 @@
     }
     return null;
   }
+  // M-GUIDANCE: same guarded-reference pattern, for guidance-level.js's
+  // music.guidanceLevel.v1 singleton (window.GuidanceLevel in the browser,
+  // a require() fallback in Node so test/tracks.test.js drives the SAME
+  // module instance test/guidance-level.test.js exercises directly).
+  function guidanceLevelRef() {
+    if (global.GuidanceLevel) return global.GuidanceLevel;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./guidance-level.js'); } catch (e) {}
+    }
+    return null;
+  }
   // The Practice Studio's theory bundle for a key+mode: scale notes, pitch
   // classes, degrees, diatonic chords, display label. Module-scope + exported
   // so tests can drive the SAME function the Studio wiring calls (a direct
@@ -414,10 +425,30 @@
   // is denied (already dismissed forever, OR a higher-priority notable - firstrun
   // outranks whynote - currently holds it) or Notables isn't loaded. Callers skip
   // silently on null, matching the notables.js consumer contract.
+  // M-GUIDANCE (retro-tagged 'intermediate'+'advanced' in notables.js's LEVELS
+  // table): reads the current level via guidanceLevelRef() and threads it as
+  // claim()'s 3rd arg - a beginner or unset level now blocks whynote entirely.
   function whynoteBanner(th) {
     var N = notablesRef();
-    if (!N || typeof N.claim !== 'function' || !N.claim('whynote')) return null;
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('whynote', undefined, level)) return null;
     return { consumerId: 'whynote', text: whynoteText(th.key, th.scaleMode, th.label), className: 'bt-st-notable' };
+  }
+  // M-GUIDANCE (advanced tier): "scale chips work over any chord in the key"
+  // JIT cue on first Studio open - mirrors whynoteBanner's exact shape
+  // (consumer-side claim + template, priority/show-once left to notables.js).
+  // Pure text fn kept separate (like whynoteText) so tests can assert the
+  // copy independent of the claim/level plumbing.
+  function scaletipText(key) {
+    return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
+  }
+  function scaletipBanner(th) {
+    var N = notablesRef();
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('scaletip', undefined, level)) return null;
+    return { consumerId: 'scaletip', text: scaletipText(th.key), className: 'bt-st-notable' };
   }
 
   var STORE = 'bt.custom.v1';
@@ -1191,11 +1222,39 @@
       // whynoteBanner(th) already folds in the claim() check + show-once/priority
       // arbitration; a null return (dismissed forever, or preempted by a
       // higher-priority notable) skips silently, per the notables.js contract.
+      //
+      // M-GUIDANCE UAT fix (2026-07-05, operator: "I couldn't dismiss the
+      // guidance on Solo studio... went back, chose solo over -> skip and
+      // it's gone"): whynote's x correctly called Notables.dismiss('whynote')
+      // (persisted - a fresh Studio open never re-shows it), but this call
+      // site never wired opts.onDismiss, so the tap looked broken - the
+      // banner element stayed on screen until the NEXT Studio open, which
+      // read as "can't dismiss it" even though the dismissal WAS permanent.
+      // Both wnOpts and stOpts now get an onDismiss that removes their own
+      // element immediately, same as every other auto-appearing Notables
+      // consumer in this app (firstrun/diagrampref/backup all already do
+      // this - whynote/scaletip are auto-appearing guidance exactly like
+      // them, so they get the same one-tap-gone-for-good affordance). The
+      // on-demand '?' SoloGuide card (data-guide, above) is deliberately
+      // UNCHANGED by this fix - it is a manual collapse/expand toggle the
+      // user opens themselves, never auto-shown, so it is not "unbidden"
+      // guidance and does not need a dismiss-forever affordance (see its own
+      // comment above, "not a one-shot Notable dismiss").
       try {
         var wnOpts = whynoteBanner(th);
+        if (wnOpts) wnOpts.onDismiss = function () { if (wnEl && wnEl.parentNode) wnEl.parentNode.removeChild(wnEl); };
         var wnEl = wnOpts ? notablesRef().renderBanner(wnOpts) : null;
         var wnBody = wnEl && elPlayer.querySelector('.bt-st-body');
         if (wnBody) wnBody.insertBefore(wnEl, wnBody.firstChild);
+        // M-GUIDANCE (advanced tier): same insertion shape as whynote above -
+        // only one of the two can ever actually render (they compete for the
+        // SAME Notables slot; scaletip is lower priority, so it only wins once
+        // whynote has been dismissed or is level-ineligible for this profile).
+        var stOpts = scaletipBanner(th);
+        if (stOpts) stOpts.onDismiss = function () { if (stEl && stEl.parentNode) stEl.parentNode.removeChild(stEl); };
+        var stEl = stOpts ? notablesRef().renderBanner(stOpts) : null;
+        var stBody = stEl && elPlayer.querySelector('.bt-st-body');
+        if (stBody) stBody.insertBefore(stEl, stBody.firstChild);
       } catch (e) {}
       // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
@@ -1701,6 +1760,9 @@
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     whynoteText: whynoteText, whynoteBanner: whynoteBanner,
+    // M-GUIDANCE (advanced tier): scaletipText/scaletipBanner mirror
+    // whynoteText/whynoteBanner's export shape exactly.
+    scaletipText: scaletipText, scaletipBanner: scaletipBanner,
     // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
     soloBundle: soloBundle,
     // S-BLUES-BOXES: which scale-chip selections are box-eligible (pentMajor/
