@@ -15,6 +15,10 @@
  * returns null / [] - honest "not classified" beats a wrong label; the
  * render layer simply shows no shape text for those.
  *
+ * S-DIM-SHAPES (U21): dim/dim7/aug quality buckets, curated per profile -
+ * see the GUITAR/UKULELE table comments below for the voicings and the
+ * symmetric-chord (dim7/aug) inversion-labeling convention.
+ *
  * Dependency-free by design (like esc.js): does NOT require circle.js (the
  * theory engine) to avoid coupling this module to the app's spelling
  * regime. The tiny root-letter -> pitch-class table below is a deliberate,
@@ -79,12 +83,29 @@
   // [rootPc, thirdPc, fifthPc, (seventhPc)] in that fixed order, which
   // inversionFor() below relies on (index 0 = root position, 1 = 1st
   // inversion, ...).
+  //
+  // S-DIM-SHAPES addition: a q==='dim' suffix always gets a 4th tone at
+  // root+9 (the DIMINISHED 7th), regardless of whether the literal suffix
+  // string ends in "7". Both GUITAR/UKULELE 'dim' AND 'dim7' bucket entries
+  // above are curated from the SAME 4-note fully-diminished-seventh
+  // voicing (see those tables' comments and each profile's own "Dim7
+  // voicings - functionally substitute for dim triads" header) - the
+  // physical chord always has 4 notes even when the chord NAME reads as a
+  // plain triad suffix ("Xdim"). Without this, a bass note landing on the
+  // (untracked) diminished 7th relative to the asked-about root honestly
+  // nulls - which for a fully-symmetric chord happens to exactly half of
+  // the enharmonic root names sharing one physical fret group (verified:
+  // D#dim/Ebdim on guitar, F#dim/Gbdim on ukulele - see test/
+  // shape-classify.test.js). Adding the diminished-7th tone classifies
+  // every enharmonic name of a curated dim/dim7 voicing, not only the
+  // subset whose root/b3/b5 happens to include the physical bass note.
   function chordTonePcs(rootPc, suffix) {
     var q = suffixQuality(suffix);
     var third = (q === 'min' || q === 'dim') ? 3 : 4;
     var fifth = (q === 'dim') ? 6 : (q === 'aug') ? 8 : 7;
     var pcs = [rootPc, (rootPc + third) % 12, (rootPc + fifth) % 12];
-    if (/maj7$/i.test(suffix)) pcs.push((rootPc + 11) % 12);
+    if (q === 'dim') pcs.push((rootPc + 9) % 12);
+    else if (/maj7$/i.test(suffix)) pcs.push((rootPc + 11) % 12);
     else if (/7$/.test(suffix)) pcs.push((rootPc + 10) % 12);
     return pcs;
   }
@@ -192,6 +213,56 @@
       { family: 'E', pattern: [0, 2, 0, 0, 0, 0] },
       { family: 'A', pattern: [-1, 0, 2, 0, 1, 0] },
       { family: 'D', pattern: [-1, -1, 0, 2, 1, 1] }
+    ],
+    // dim (U21, S-DIM-SHAPES): guitar-standard.js's own header explains every
+    // "Xdim" entry is actually a 4-note fully-diminished-seventh voicing
+    // (functionally substituting for the 3-note dim triad) - verified above
+    // in this module's header math: all three fret groups (F1 [-1,3,4,2,4,2],
+    // F2 [-1,4,5,3,5,3], F3 [-1,5,6,4,6,4]) normalize to the IDENTICAL
+    // pattern [-1,1,2,0,2,0], differing only in barreFret (2/3/4) - one
+    // movable shape, no open (fret-0) home position anywhere in the table,
+    // so it's named a synthetic "*-shape" family like the ukulele C-shape/
+    // F-shape templates below, not a bare CAGED letter.
+    //
+    // Symmetric-chord inversion convention: a fully-diminished-seventh chord
+    // has NO single objective root - all four notes (e.g. C/Eb/Gb/A) are
+    // functionally equivalent tonic candidates, which is exactly why the
+    // profile table repeats the SAME literal fret array under six different
+    // chord names per fret group (Cdim/D#dim/Ebdim/F#dim/Gbdim/Adim all
+    // point at F1). This classifier does not (and cannot) decide which note
+    // "the" root is - it defers entirely to the chord NAME the caller
+    // passed in and reports the inversion RELATIVE TO THAT NAME's root
+    // (chordTonePcs(rootPc, 'dim') against the actual sounding bass note).
+    // That is a defensible, honest convention - inversion-relative-to-the-
+    // asked-about-root - not a claim about which note is objectively "the"
+    // root of a symmetric chord. Two different chord names sharing the
+    // identical physical voicing will therefore (correctly) report two
+    // different inversions; see test/shape-classify.test.js.
+    dim: [
+      { family: 'dim7-shape', pattern: [-1, 1, 2, 0, 2, 0] }
+    ],
+    // dim7 (S-DIM-SHAPES, defensive): no profile chord is named "Xdim7"
+    // today (the table's own "dim" entries already ARE dim7 voicings - see
+    // above), so this bucket has no live anchor via families() or the app's
+    // chords-in-key surface. Curated anyway per the same physical shape, in
+    // case a future caller (e.g. Compose free-text chord entry) ever spells
+    // the suffix "dim7" explicitly for the identical sounding chord.
+    dim7: [
+      { family: 'dim7-shape', pattern: [-1, 1, 2, 0, 2, 0] }
+    ],
+    // aug (S-DIM-SHAPES, defensive - Circle.diatonic() never emits an
+    // augmented triad for any of the app's 7 supported modes, so this has
+    // no live chords-in-key anchor either; curated for Compose free-text
+    // entry / future modes). Standard open Caug: take the profile's own
+    // open C-major shape ('' bucket, pattern [-1,3,2,0,1,0]) and raise the
+    // 3rd-string (G) note one fret, sharping the 5th (G->G#) - the classic
+    // "C-shape, sharp-5" fingering. Genuinely open (barreFret 0 when it's
+    // the literal Caug voicing), so it keeps the bare 'C' family letter
+    // (not a synthetic "*-shape") and reads as "open C shape" like the
+    // major/7th/maj7 C-shape entries above - honest, since it really is
+    // that shape with one note altered.
+    aug: [
+      { family: 'C', pattern: [-1, 3, 2, 1, 1, 0] }
     ]
   };
 
@@ -258,6 +329,32 @@
       { family: 'E', pattern: [0, 2, 0, 2] },        // Em7 open; Fm7 = barre-E+1
       { family: 'D', pattern: [1, 1, 0, 2] },        // Dm7, unique (closed - no true open form)
       { family: 'G', pattern: [0, 2, 1, 1] }         // Gm7 open, unique
+    ],
+    // dim (U21, S-DIM-SHAPES): same rationale as GUITAR's dim bucket above -
+    // ukulele-gcea.js's three fret groups (F1 [2,3,2,3], F2 [3,4,3,4], F3
+    // [4,5,4,5]) all normalize to the identical pattern [0,1,0,1], one
+    // movable dim7 shape with no fret-0 home position, named "dim7-shape".
+    // Same symmetric-chord inversion convention applies (see GUITAR's dim
+    // comment): inversion is reported relative to the chord NAME's root,
+    // not an objectively-chosen "the" root of the symmetric chord.
+    dim: [
+      { family: 'dim7-shape', pattern: [0, 1, 0, 1] }
+    ],
+    // dim7 (S-DIM-SHAPES, defensive) - see GUITAR's dim7 comment; no
+    // profile chord is named "Xdim7" today, curated for a future/Compose
+    // caller using that exact suffix on the identical sounding chord.
+    dim7: [
+      { family: 'dim7-shape', pattern: [0, 1, 0, 1] }
+    ],
+    // aug (S-DIM-SHAPES, defensive - see GUITAR's aug comment; no live
+    // chords-in-key anchor). Standard open Caug: the profile's own open
+    // C-major shape ('' bucket, pattern [0,0,0,3]) with the G string (4th
+    // string) raised one fret, sharping the open 5th (G->G#) - same "C-
+    // shape, sharp-5" fingering as guitar's. Genuinely open (G/C strings
+    // both fretted low, barreFret 0), so it keeps the bare 'C' family
+    // letter, not a synthetic "*-shape".
+    aug: [
+      { family: 'C', pattern: [1, 0, 0, 3] }
     ]
   };
 
