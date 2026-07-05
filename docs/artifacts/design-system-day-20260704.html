@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HiTL Mission Control - Design-System Day (Retrospective)</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-agent{background:#22845C}.pl-adv{background:#8A3FBF}.pl-ship{background:var(--brand-secondary)}.pl-next{background:#5A6B7E}
+.pos{color:var(--ok);font-weight:700}.run{color:var(--warn);font-weight:700}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>HiTL Mission Control - Design-System Day (retrospective): Storage Guardrail -> Consistency Law</h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions.md</a> - 2026-07-04 (v88 -> v105) - <a href="https://nhruska.github.io/docs/artifacts/m-guide-mission-20260704.html">M-GUIDE pane</a> - <a href="https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html">M2 pane</a></div>
+
+<div class="cockpit">
+<div class="state"><span class="pos">MISSION CLOSED - SHIPPED (v88 -> v105)</span> - 27 PRs quietly professionalized the whole app: a real storage-migration guardrail, a shared toast primitive, a written ELEMENT CONSISTENCY LAW, and a 53-assert lint that makes it self-enforcing - then the day closed by turning a five-day-old undocumented removal into a registered decision.</div>
+<div class="statesub">Picks up right after M-GUIDE (v85) and the S-STUDIO-POLISH/S-HARDEN waves (v86-v87, already recorded elsewhere) closed the morning. From v88 the day ran almost entirely in trust mode - no operator gate inside this arc, the Tier-1 picks and the Tier-0 relay-launch rule from the atomic queue plan carried it. Two catches worth naming: an identical-CACHE silent-merge collision (PR #117) recurred a SECOND time at v100, this time through the parent repo's own resolver, before the guard fully closed; and M-7 (a planned "jam picker" mission) turned out to be archaeology - the feature it would have restored had already been ruled out on 2026-07-01, just never written down.</div>
+<div class="lights">
+<span class="lt"><span class="lamp l-ok"></span>Storage guardrail MERGED (M-6, v97)</span>
+<span class="lt"><span class="lamp l-ok"></span>Toast primitive MERGED, 2nd collision caught (v100)</span>
+<span class="lt"><span class="lamp l-ok"></span>Layout SSOT + prog-wrap ladder MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>CONSISTENCY LAW encoded (v103)</span>
+<span class="lt"><span class="lamp l-ok"></span>ENFORCE-1 lint MERGED (53 asserts)</span>
+<span class="lt"><span class="lamp l-ok"></span>M-7 archaeology closed + NAVHIST fixed -> TIER-0 DRAINED (v105)</span>
+</div>
+<div class="fchead">What carried forward (retrospective - these were the open items at close)</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">CARRIED</span><span class="fw">named in the -06 session's operator-opens line</span></div>
+<div class="fd">Pixel verify at v104 (likely stale precache), the Tier-2 sitting batch (M-PERFORM, tutor P4/P5, strum revival, CI shape, hub pilot), PR #98 merge, and a ccp #593 review. None of these blocked the day itself - they carried into the evening, where the ear-first vision (next pane) refilled the queue same-day.</div></div>
+</div>
+
+<div class="chips">
+<div class="chip"><div class="n">27</div><div class="l">PRs merged (v88->v105)</div></div>
+<div class="chip"><div class="n">32</div><div class="l">test files (was 25 at v87)</div></div>
+<div class="chip"><div class="n">53</div><div class="l">consistency-lint asserts</div></div>
+<div class="chip"><div class="n">2</div><div class="l">silent-collision recurrences caught</div></div>
+</div>
+
+<h2>Timeline</h2>
+<div class="wrapx"><table>
+<tr><th>Step</th><th>Who</th><th>What + why it was the right call</th></tr>
+<tr><td><span class="pill pl-you">YOU</span></td><td>Upstream authorization</td><td>Tier-1 picks locked earlier that day (accent-fill selection grammar, localStorage+migration over IndexedDB, Compose chord cap confirmed at 12) plus the atomic queue plan's Tier-0 relay-launch trust rule - this is what let the whole v88-v105 run happen with zero in-arc operator gates.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>Feature polish batch</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/129">#129</a> backup-staleness Notable, <a href="https://github.com/nhruska/nhruska.github.io/pull/130">#130</a> Mixolydian chip + degrees line (P5 W3 asks), <a href="https://github.com/nhruska/nhruska.github.io/pull/133">#133</a> named Box 1-5 fretboard positions (S-BLUES-BOXES), <a href="https://github.com/nhruska/nhruska.github.io/pull/134">#134</a> curated shape classifier step 0, <a href="https://github.com/nhruska/nhruska.github.io/pull/136">#136</a> Compose tile/scroll/modal polish (UAT U5-U7).</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>Storage guardrail</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/135">#135</a> M-6: localStorage schema inventory (23-key audit, 2 gap finds) + versioned migration runner (D-STORAGE-LS-MIGRATE, closes gh #77), <a href="https://github.com/nhruska/nhruska.github.io/pull/137">#137</a> S-EXTRACT pulls buildAdapter/SUGG out of inline HTML into tested shared modules, <a href="https://github.com/nhruska/nhruska.github.io/pull/138">#138</a> backup-integrate: restore replays migrations, version lives in the envelope. Docs caught up at <a href="https://github.com/nhruska/nhruska.github.io/pull/139">#139</a> (v97).</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>Toast primitive (2 collisions)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/140">#140</a> traced a stuck setlist toast to a shadowed timer variable -> shared toast.js primitive (<a href="https://github.com/nhruska/nhruska.github.io/pull/145">#145</a>). The SAME identical-CACHE silent-merge class from PR #117 recurred a second time at <a href="https://github.com/nhruska/nhruska.github.io/pull/146">#146</a> (v100) - this time through the parent repo's own resolver, not a sibling agent - confirming the guard needed to be resolver-aware, not just agent-aware.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>Layout SSOT + progression polish</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/128">#128</a> captured S-LAYOUT-SSOT as an operator directive, <a href="https://github.com/nhruska/nhruska.github.io/pull/144">#144</a> shipped the chord-tile/diagram geometry token block + a layout regression suite (2 new findings folded), <a href="https://github.com/nhruska/nhruska.github.io/pull/141">#141</a>/<a href="https://github.com/nhruska/nhruska.github.io/pull/147">#147</a> the progression-strip degrade-and-wrap ladder (UAT U8, then U8b's staged density tiers), <a href="https://github.com/nhruska/nhruska.github.io/pull/143">#143</a> diagram-pref steps 1-2 (dots/patterns notable + render).</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Design-system encode</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/148">#148</a> (v103): component-conventions.md + ssot-registry.md wiki pages, the ELEMENT CONSISTENCY LAW written into music/CLAUDE.md as a standing operator directive. <a href="https://github.com/nhruska/nhruska.github.io/pull/149">#149</a> M-DESIGN-ENFORCE wave 1: a dedicated GUIDANCE surface token pair (split from SELECTION), ONE accent-fill selected-state grammar app-wide, 5 radius-by-role tokens, and a 53-assert static lint that makes all three self-enforcing going forward.</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Close</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/150">#150</a> M-7 closed as won't-do archaeology: the "jam picker" mission turned out to restore a hero element removed 2026-07-01 by a real operator interview - never registered as a decision until now (D-HERO-REMOVED, retroactive; "removals are decisions too"). <a href="https://github.com/nhruska/nhruska.github.io/pull/151">#151</a> fixed a real S-NAVHIST double-pop bug (Compose solo-modal Save/Skip now routes through settleAfter). <a href="https://github.com/nhruska/nhruska.github.io/pull/152">#152</a>: TIER-0 DRAINED at v105 - every autonomous item shipped or dispositioned.</td></tr>
+</table></div>
+
+<h2>Decisions registered this mission</h2>
+<div class="wrapx"><table>
+<tr><th>ID</th><th>Call</th><th>Why</th></tr>
+<tr><td>D-TEMPO-REMOVED</td><td>tempo.js + its test deleted as dead code</td><td>Zero consumers since inception; operator: never used it. History preserves it if the tutor roadmap earns a beat clock later.</td></tr>
+<tr><td>D-STORAGE-LS-MIGRATE</td><td>Client storage stays localStorage + a versioned schema inventory + migration runner</td><td>Closes gh #77; IndexedDB explicitly rejected at current scale (operator Tier-1 pick)</td></tr>
+<tr><td>D-SELECTED-ACCENT</td><td>ONE selected-state grammar app-wide: accent-fill (chips' own language)</td><td>.modeSwitch and .viewToggle converge onto .chip.on instead of a second surface-2/box-shadow ring pattern</td></tr>
+<tr><td>D-ENFORCE-1</td><td>First enforcement pass of the CONSISTENCY LAW: guidance-vs-selection token split, one selection grammar, 5 radius tokens, a self-enforcing lint</td><td>~30 consumers tokenized, ~18 genuine oddballs migrated; deliberately left chord-diagram tiles and modal boxes to their own documented ranges</td></tr>
+<tr><td>D-HERO-REMOVED (retroactive)</td><td>The Library Jam-now/quick-pick hero stays removed; the jam:true field is RESERVED, not wired</td><td>It was a real 2026-07-01 operator-interview decision that was never written down - M-7 would have silently "restored" a ruled-out feature</td></tr>
+</table></div>
+
+<h2>Verify today (post-hoc, not a live forecast)</h2>
+<div class="card">
+<strong>V1 - the law itself:</strong> <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/ux-philosophy/component-conventions.md">component-conventions.md</a> and <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/systems/ssot-registry.md">ssot-registry.md</a> carry the token tables; music/CLAUDE.md carries the standing directive.<br>
+<strong>V2 - the lint:</strong> <code>test/consistency-lint.test.js</code> is in the suite and runs on every PR - it fails loud if a future rule reintroduces a hardcoded radius or a stray selection token.<br>
+<strong>V3 - the archaeology:</strong> <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions.md</a> carries the D-HERO-REMOVED (retroactive) row - the Library still has no jam-now hero, and that is now a registered call, not a silent gap.<br>
+<strong>V4 - the feature polish:</strong> live app -> Practice Studio -> a pentatonic scale shows named Box 1-5 positions on the fretboard pager; a chords-in-key card in "patterns" mode shows a classified shape label.
+</div>
+
+<div class="foot">RETROSPECTIVE - authored 2026-07-05 from <code>.claude/sessions/session-2026-07-04-05-polish-harden-shipped.md</code> and <code>session-2026-07-04-06-design-system-day-completed.md</code> (no live pane was written the day this shipped). Full queue: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md">QUEUE.md</a>. Next in sequence same evening: <a href="https://nhruska.github.io/docs/artifacts/ear-first-night-20260705.html">Ear-First Night pane</a>. Problem Solutions - compound engineering.</div>
+</div>
+</body></html>
