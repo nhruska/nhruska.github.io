@@ -1038,7 +1038,7 @@
     // since a throwing setItem never overwrote it). Returns true on a real write,
     // false if storage threw (quota exceeded, blocked/private-mode storage, etc.).
     // Callers decide whether a false return needs USER-visible feedback: saveProgression
-    // (Compose "Save to Repertoire") does; the passive prefs/last-opened/song-view
+    // (Compose "Saved to your Library", F23) does; the passive prefs/last-opened/song-view
     // writes fail soft (console signal only) per the app's #1 fatal-dismissal trigger
     // being an unconditional SUCCESS message on a save that silently didn't happen -
     // not the passive writes, which never claimed success to begin with.
@@ -1582,7 +1582,10 @@
         // Catalog song: fork it into an editable, user-owned copy that SHADOWS
         // the original (add a video, rename, re-key). Chords + lyrics preserved.
         var mb = document.createElement('button');
-        mb.className = 'btn'; mb.textContent = 'Make it mine';
+        // F24 (operator UAT 2026-07-05): "make it mine" -> "Edit" - the user
+        // doesn't need to know a fork/copy happens under the hood; behavior
+        // (openForkForm below) is unchanged.
+        mb.className = 'btn'; mb.textContent = 'Edit';
         // Fork from the MERGED record so a matched backing track's authoritative
         // video/key/mode carry onto the fork (mirrors soloKeyFor/ytSearchURL above);
         // the raw s (from ALLSONGS) lacks those merged fields. mergeRec never copies
@@ -3259,7 +3262,7 @@
         // than creating a duplicate. It will NOT survive a reload if storage stays
         // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast(ok ? 'Saved to your Repertoire' : SAVE_FAIL_MSG, !ok, true);
+        showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok, true);
         done(cs);
       });
     }

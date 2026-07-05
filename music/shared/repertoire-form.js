@@ -13,7 +13,8 @@
  *       mode: 'create' | 'edit',
  *       fork: boolean (optional; forking a catalog song - hides the Chords field
  *             since chords+lyrics are preserved from the original, and relabels
- *             the dialog "Make it mine" / delete -> "Revert to original"),
+ *             the dialog "Edit" (F24, was "Make it mine") / delete -> "Revert
+ *             to original"),
  *       item: {...} (edit mode: the existing custom song/track to prefill; also
  *             the fork seed in fork+create mode),
  *       onSave: function(fields) (host persists; may navigate). A VALID save always
@@ -209,8 +210,11 @@
       var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
       var rootOpts = ROOTS.map(function (r) { return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
       el.innerHTML =
-        '<div class="rf-box" role="dialog" aria-label="' + (fork ? 'Make it mine' : editing ? 'Edit repertoire item' : 'Add a song or track') + '">'
-        + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Make it mine' : editing ? 'Edit' : 'Add a song or track') + '</span>'
+        // F24 (operator UAT 2026-07-05): fork's dialog title/aria-label read
+        // "Edit" (was "Make it mine") - the user doesn't need to know a
+        // fork/copy happens under the hood. F23: "repertoire" -> "Library".
+        '<div class="rf-box" role="dialog" aria-label="' + (fork ? 'Edit' : editing ? 'Edit library item' : 'Add a song or track') + '">'
+        + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Edit' : editing ? 'Edit' : 'Add a song or track') + '</span>'
         + '<button class="rf-x" type="button" data-close>close</button></div>'
         + '<div class="rf-body">'
         + '<label class="rf-lbl">Title</label><input data-title class="bt-in" value="' + esc(title) + '" placeholder="Song or track title" autocomplete="off">'
@@ -233,7 +237,7 @@
         // wireYtSuggest() below, hidden until a valid video URL resolves info.
         + '<div class="rf-yt-suggest" data-yt-suggest hidden></div>'
         + '<div class="rf-actions">'
-        + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
+        + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Library' : editing ? 'Save changes' : 'Create') + '</button>'
         + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '</div></div></div>';
       el.classList.add('on');
