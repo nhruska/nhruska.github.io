@@ -945,15 +945,14 @@
       // Whether this session's video is attachable determines the no-video hint
       // wording below, so compute the seed-track check up front.
       var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
-      // Iframe when a curated yt id is present; otherwise a tap-to-search card.
-      // The HUD (scale + chords + circle) stays in both cases - the harmony
-      // teacher is the point; the embedded player is convenience. The hint's
-      // attach instruction matches what's actually rendered: seed tracks have
-      // the paste editor below, custom items attach via Edit, and an ephemeral
-      // session (no editor at all) gets no attach instruction.
-      var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
-        : isSeedTrack ? ' Paste the one you like below.'
-        : '';
+      // F27 (operator UAT 2026-07-05): "paste yt url and add a video are
+      // redundant - use single button where yt button is now." canAttach is
+      // true whenever a direct-attach mechanism applies to this track (custom
+      // song wired for onSetVideo/onEditRequest, or a seed track) - the
+      // trigger's label/hint read "Add a video" in that case, state-aware
+      // like the has-video "Edit" precedent below. An ephemeral session with
+      // nothing to attach keeps the plain "Find a jam" discovery wording.
+      var canAttach = t.custom ? !!((opts.onSetVideo && t.id) || opts.onEditRequest) : isSeedTrack;
       // F21 (operator UAT 2026-07-05): "the find a jam link can be moved -
       // it's redundant with existing yt button - but with more user
       // options." Consolidates the OLD standalone "Find a jam" solo-section
@@ -968,15 +967,26 @@
       // iframe - discovery is still one tap away without a second big
       // control competing with the video. Both wire to the SAME jamPanel
       // (below); only the trigger's label/prominence differs by video state.
+      //
+      // F27: the no-video paste box (urlEditor, below) used to render
+      // permanently visible right under this trigger - two competing entry
+      // points for the same "get a video" goal. It now shares THIS toggle
+      // (wired via data-urled-gated further down) instead of standing apart,
+      // so there is one button, one disclosure, for both the direct-paste
+      // and the genre/feel-search paths.
       var jamPanelHtml = '<div class="bt-st-why" data-jampanel hidden></div>';
+      var noVideoLabel = canAttach ? 'Add a video &#8599;' : 'Find a jam &#8599;';
+      var noVideoHint = canAttach
+        ? 'No curated video yet - tap Add a video to paste a link or find one by genre and feel.'
+        : 'No curated video yet - pick a genre and feel below to find a backing track. The HUD below works either way.';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
           + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
           + jamPanelHtml
         : '<div class="bt-st-search">'
-          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">Find a jam &#8599;</button>'
-          + '<div class="bt-st-search-hint">No curated video yet - pick a genre and feel below to find a backing track.' + attachHint + ' The HUD below works either way.</div>'
+          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
+          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
           + '</div>'
           + jamPanelHtml;
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
@@ -990,13 +1000,20 @@
       // callback is wired (graceful degrade). A seed track keeps the trackUrl-overlay
       // editor; an ephemeral session (no id/onSetVideo) gets nothing (a pasted url
       // would have nothing to attach to).
+      //
+      // F27 (operator UAT 2026-07-05): the NO-video variants below are marked
+      // data-urled-gated + hidden (instead of the always-visible data-urled
+      // the HAS-video variants keep) - they're wired to open/close together
+      // with jamFindToggle/jamPanel above, not shown unconditionally. Managing
+      // an EXISTING curated video (Edit / Curated video URL) is a different
+      // job from finding one, so those stay always-visible, untouched.
       var urlEditor = t.custom
         ? (t.yt
           ? (opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit</button></div>'
             : '')
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
-            ? '<div class="bt-st-urled" data-urled>'
+            ? '<div class="bt-st-urled" data-urled-gated hidden>'
               + ((opts.onSetVideo && t.id)
                 ? '<div class="bt-st-urled-lbl">Add the video you found</div>'
                   + '<div class="bt-st-urled-row">'
@@ -1008,7 +1025,7 @@
               + '</div>'
             : ''))
         : (isSeedTrack
-          ? '<div class="bt-st-urled" data-urled>'
+          ? '<div class="bt-st-urled"' + (t.yt ? ' data-urled' : ' data-urled-gated hidden') + '>'
             + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
             + '<div class="bt-st-urled-row">'
             + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
@@ -1343,8 +1360,16 @@
       // F21: same disclosure toggle behavior the old solo-section "Find a
       // jam" button used - collapsed by default, per-open state only (no
       // persistence) - just relocated to the stage (see jamPanelHtml, above).
+      // F27 (operator UAT 2026-07-05): the same tap now ALSO reveals the
+      // direct-paste box (data-urled-gated) when one applies to this track -
+      // one button, one disclosure, instead of a permanently-visible paste
+      // box competing with this trigger for the same "get a video" goal.
+      var gatedUrled = elPlayer.querySelector('[data-urled-gated]');
       if (jamFindToggle && jamPanel) jamFindToggle.onclick = function () {
-        var show = jamPanel.hidden; jamPanel.hidden = !show; jamFindToggle.classList.toggle('on', show);
+        var show = jamPanel.hidden;
+        jamPanel.hidden = !show;
+        jamFindToggle.classList.toggle('on', show);
+        if (gatedUrled) gatedUrled.hidden = !show;
       };
       // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
       var urlIn = elPlayer.querySelector('[data-urlin]'),

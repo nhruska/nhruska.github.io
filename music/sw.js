@@ -215,7 +215,23 @@
 // token block), shared/songbook.css (comment-only cross-ref update),
 // play/index.html (Settings: the case-study write-up link removed, F22).
 // check-cache-bump.sh re-verified against origin/main immediately before push.
-var CACHE = 'music-v118';
+// M-LIB-UX (2026-07-05, operator UAT F23-F27): v118->v119 - no new CORE paths.
+// Five Library/song-view/studio fixes: shared/repertoire-form.js + shared/
+// songbook.js (F23, user-facing "Repertoire" -> "Library" - the Repertoire
+// object/repertoire*.js filenames/localStorage keys are UNCHANGED, only the
+// strings a user reads moved; F24, the song-view fork button + its dialog
+// title/aria-label read "Edit" instead of "Make it mine" - fork/copy behavior
+// unchanged), shared/list-item.js (F25, the no-in-app-video row action is
+// REMOVED outright - a row with no curated video now shows no action at all,
+// no external YouTube-search leave-the-app link), shared/songbook.css (F26,
+// .li-title gains min-width:0 + overflow-wrap:break-word so a long/unspaced
+// title wraps inside the card instead of overflowing behind the + button),
+// shared/tracks.js (F27, the Studio's no-video paste-URL box is no longer
+// permanently visible next to the "Find a jam" trigger - it now shares that
+// SAME toggle, one button opens both the direct-paste and genre/feel-search
+// paths). check-cache-bump.sh re-verified against origin/main immediately
+// before push.
+var CACHE = 'music-v119';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

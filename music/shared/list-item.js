@@ -52,14 +52,21 @@
   }
 
   // The action ladder, labelled by CONSEQUENCE (not brand): a curated video plays
-  // IN-APP ("Video", ▶); otherwise it leaves the app to a YouTube SEARCH ("Search",
-  // ↗). Distinct glyph + (in CSS) weight/colour so it doesn't rely on colour alone.
-  // The tap is routed through opts.onAction; rendering is movement-cancelled so a
-  // scroll-grab on the right rail can't fire it.
+  // IN-APP ("Video", ▶) - the only action a row ever advertises. Distinct glyph +
+  // (in CSS) weight/colour so it doesn't rely on colour alone. The tap is routed
+  // through opts.onAction; rendering is movement-cancelled so a scroll-grab on the
+  // right rail can't fire it.
+  //
+  // F25 (operator UAT 2026-07-05): "search link in library rows - remove. it's too
+  // quick on first screen users see to leave the app." The old no-video fallback
+  // ({kind:'search', external:true}) opened a YouTube search in a new tab - a leave-
+  // the-app link on the very first screen a user sees. Removed outright: a row with
+  // no in-app video now advertises no action at all (render() below skips the
+  // .li-act element entirely when this returns null).
   function action(item) {
     return item.video
       ? { kind: 'play', label: 'Video', glyph: '▶', external: false }     // ▶ in-app
-      : { kind: 'search', label: 'Search', glyph: '↗', external: true };  // ↗ leaves app
+      : null;                                                             // no video -> no action shown
   }
 
   // The short key label: "Am" for A minor, "C" for C major, null if no key.
@@ -169,9 +176,13 @@
     });
     // Action: a real tappable target (CSS gives it >=44px + a box), glyph + label so
     // it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
-    metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
-      + (act.external ? ' title="Opens YouTube"' : '') + '>'
-      + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
+    // F25: act is null for a no-video row (no external-search fallback anymore) -
+    // skip the element entirely rather than render an empty/dangling action span.
+    if (act) {
+      metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
+        + (act.external ? ' title="Opens YouTube"' : '') + '>'
+        + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
+    }
 
     // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode (codex:
     // a destructive x next to reorder on the scroll rail is a one-thumb minefield;
