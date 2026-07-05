@@ -1,0 +1,466 @@
+{
+  "generatedAt": "2026-07-05T07:31:11Z",
+  "repo": {
+    "owner": "nhruska",
+    "name": "nhruska.github.io",
+    "slug": "nhruska/nhruska.github.io",
+    "url": "https://github.com/nhruska/nhruska.github.io",
+    "defaultBranch": "main"
+  },
+  "head": {
+    "date": "2026-07-05T07:23:35Z",
+    "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
+    "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
+  },
+  "commits": [
+    {
+      "date": "2026-07-05T07:23:35Z",
+      "sha": "14caf2031205ed6d7c0e086c262fd7b52f02e45e",
+      "subject": "vision capture: command-center hierarchy (repo parent + portfolio meta) + interim PIN-encrypted deploy ruling (#179)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/14caf2031205ed6d7c0e086c262fd7b52f02e45e"
+    },
+    {
+      "date": "2026-07-05T07:16:49Z",
+      "sha": "c5793d13f9c312619c5985ddbbf4acc0532aa21b",
+      "subject": "S-TOAST-HOST (UAT U24): setlist-remove/library-delete undo banners no longer leave a visible empty pill (#178)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c5793d13f9c312619c5985ddbbf4acc0532aa21b"
+    },
+    {
+      "date": "2026-07-05T06:57:03Z",
+      "sha": "c997564e4818d9acd8a80761b78fee96b91799a0",
+      "subject": "capture: U24 empty toast host on setlist remove (lifecycle seam #170x#175) (#177)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c997564e4818d9acd8a80761b78fee96b91799a0"
+    },
+    {
+      "date": "2026-07-05T06:30:14Z",
+      "sha": "4684bed862ea358217a058c66b5ce598ca78fc19",
+      "subject": "vision capture: deterministic adaptive tutor (no-LLM inventory on shipped machinery) - Tier-2 centerpiece (#176)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4684bed862ea358217a058c66b5ce598ca78fc19"
+    },
+    {
+      "date": "2026-07-05T06:12:29Z",
+      "sha": "f5e768dc317e9705fb634fc9d9a7eea7e90a3dd4",
+      "subject": "S-SET-INTEGRITY (UAT U22): dangling setlist refs - delete-heal + defensive nav + load-heal (#175)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f5e768dc317e9705fb634fc9d9a7eea7e90a3dd4"
+    },
+    {
+      "date": "2026-07-05T05:57:51Z",
+      "sha": "d67d9aca002cbb6badd3ddab23b78e56a5efcb3a",
+      "subject": "S-REL-NAMES (U23): guidance names the instance, not just the relationship (#174)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d67d9aca002cbb6badd3ddab23b78e56a5efcb3a"
+    },
+    {
+      "date": "2026-07-05T05:33:17Z",
+      "sha": "4af76c8c43b0a3d94154d566a6affb7b2afb0cab",
+      "subject": "capture: U23 name-the-instance guidance principle (relative-key interpolation) (#173)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4af76c8c43b0a3d94154d566a6affb7b2afb0cab"
+    },
+    {
+      "date": "2026-07-05T05:29:56Z",
+      "sha": "571d2e8fc5a87da289691e2bd5d3a1a1919dc799",
+      "subject": "capture: U22 dangling setlist refs (delete-heal + defensive nav + load-heal) (#172)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/571d2e8fc5a87da289691e2bd5d3a1a1919dc799"
+    },
+    {
+      "date": "2026-07-05T04:56:39Z",
+      "sha": "7e9efecc4edc66a47b41ce3e54b9c960adcb8942",
+      "subject": "queue: ear-first night arc closed (v113); S-ENFORCE-2B debt queued (#171)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7e9efecc4edc66a47b41ce3e54b9c960adcb8942"
+    },
+    {
+      "date": "2026-07-05T04:55:37Z",
+      "sha": "9ab2d8041d9799a6469fd2a329955a7f0d9b153b",
+      "subject": "M-DESIGN-ENFORCE wave 2: TOAST+ACTION undo primitive + native-dialog-free Settings (U19) (#170)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9ab2d8041d9799a6469fd2a329955a7f0d9b153b"
+    },
+    {
+      "date": "2026-07-05T04:47:13Z",
+      "sha": "a81175e3ce5a551819a47dfbcdd1f618daf137c6",
+      "subject": "M-EAR 1.6: tempo control + unmissable sounding lights + legend primitive (U14-U16) (#169)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a81175e3ce5a551819a47dfbcdd1f618daf137c6"
+    },
+    {
+      "date": "2026-07-05T04:36:05Z",
+      "sha": "540bd4113871243d5f2a2e5c7ce06fd19e1171b5",
+      "subject": "feat(music): curate dim/dim7/aug shape-classify templates (U21) (#168)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/540bd4113871243d5f2a2e5c7ce06fd19e1171b5"
+    }
+  ],
+  "openPRs": [
+    {
+      "number": 98,
+      "title": "music(theory): key-aware conventional note spelling from circle.js SSOT (#85)",
+      "branch": "claude/music-85-keyaware-spelling",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/98",
+      "draft": false,
+      "ciState": "NONE",
+      "checks": []
+    },
+    {
+      "number": 88,
+      "title": "music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room",
+      "branch": "claude/music-chord-strumming-audio-ux-qqvg9e",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/88",
+      "draft": true,
+      "ciState": "SUCCESS",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28651417136/job/84970109385"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28651417128/job/84970109375"
+        }
+      ]
+    },
+    {
+      "number": 70,
+      "title": "Music: AI tutor prototype - goal spec + checklist",
+      "branch": "claude/ai-tutor-prototype-kz5ix1",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/70",
+      "draft": true,
+      "ciState": "SUCCESS",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28620635212/job/84875175249"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28620635167/job/84875175107"
+        }
+      ]
+    }
+  ],
+  "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T07:23:35Z",
+      "number": 179,
+      "title": "Vision capture: command center hierarchy",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/179"
+    },
+    {
+      "mergedAt": "2026-07-05T07:16:50Z",
+      "number": 178,
+      "title": "S-TOAST-HOST: setlist-remove/library-delete undo banners no longer leave a visible empty pill (U24)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/178"
+    },
+    {
+      "mergedAt": "2026-07-05T06:57:03Z",
+      "number": 177,
+      "title": "Capture: U24",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/177"
+    },
+    {
+      "mergedAt": "2026-07-05T06:30:14Z",
+      "number": 176,
+      "title": "Vision capture: deterministic tutor",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/176"
+    },
+    {
+      "mergedAt": "2026-07-05T06:12:29Z",
+      "number": 175,
+      "title": "S-SET-INTEGRITY: dangling setlist refs - delete-heal + defensive nav + load-heal (U22)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/175"
+    },
+    {
+      "mergedAt": "2026-07-05T05:57:51Z",
+      "number": 174,
+      "title": "S-REL-NAMES: guidance names the instance (U23) + the concreteness principle",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/174"
+    },
+    {
+      "mergedAt": "2026-07-05T05:33:18Z",
+      "number": 173,
+      "title": "Capture: U23",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/173"
+    },
+    {
+      "mergedAt": "2026-07-05T05:29:56Z",
+      "number": 172,
+      "title": "Capture: U22",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/172"
+    },
+    {
+      "mergedAt": "2026-07-05T04:56:39Z",
+      "number": 171,
+      "title": "QUEUE: night close (v113)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/171"
+    },
+    {
+      "mergedAt": "2026-07-05T04:55:37Z",
+      "number": 170,
+      "title": "M-DESIGN-ENFORCE 2: feedback-surface reconcile (U19) - one taxonomy, no native dialogs, toast+action undo",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/170"
+    },
+    {
+      "mergedAt": "2026-07-05T04:47:14Z",
+      "number": 169,
+      "title": "M-EAR 1.6: tempo control + unmissable sounding lights + legend primitive (U14-U16)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/169"
+    },
+    {
+      "mergedAt": "2026-07-05T04:36:05Z",
+      "number": 168,
+      "title": "S-DIM-SHAPES: dim/dim7/aug classifier templates (U21)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/168"
+    },
+    {
+      "mergedAt": "2026-07-05T04:28:27Z",
+      "number": 167,
+      "title": "Playlist bake draft: keyless pipeline first run (16 entries)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/167"
+    },
+    {
+      "mergedAt": "2026-07-05T04:15:44Z",
+      "number": 166,
+      "title": "Capture: U21",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/166"
+    },
+    {
+      "mergedAt": "2026-07-05T04:13:44Z",
+      "number": 165,
+      "title": "M-TRACKLIB wave 2a: YouTube link -> suggested fields (U17)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/165"
+    }
+  ],
+  "deploy": {
+    "pages": {
+      "status": "built",
+      "htmlUrl": "https://nhruska.github.io/",
+      "sourceBranch": "main",
+      "buildType": "legacy"
+    },
+    "liveCacheVersion": "music-v116",
+    "localCacheVersion": "music-v116",
+    "cacheMatch": true
+  },
+  "missions": [
+    {
+      "title": "HiTL Mission Control - M-GUIDE: Blues Key + Scale Mentor Layer",
+      "status": "MISSION CLOSED - SHIPPED (v85) - Blues is a real key, the fretboard targets chord tones (with ghost dots), the mentor cards are player-true, Compose previews your solo scale, small necks got 12 frets",
+      "file": "docs/artifacts/m-guide-mission-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/m-guide-mission-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/m-guide-mission-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - M2: Wiki + Guitarist Toolset",
+      "status": "MISSION CLOSED - SHIPPED - wiki live on the site, pentatonic/blues chips live in the Studio (v80, PR #108)",
+      "file": "docs/artifacts/music-wiki-mission-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/music-wiki-mission-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - Music app UX persona mission",
+      "status": "MISSION CLOSED - sprint 1 live (v78); wave 2 parked on #98",
+      "file": "docs/artifacts/ux-personas-20260703.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/ux-personas-20260703.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html"
+    }
+  ],
+  "visions": [
+    {
+      "title": "Vision Capture: Command Center Hierarchy (operator, 2026-07-05)",
+      "file": "docs/plans/vision-command-center-20260705.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md",
+      "statusGuess": "CAPTURED"
+    },
+    {
+      "title": "Vision Capture: Ear-First Player Growth (operator /goal-interview seed, 2026-07-04)",
+      "file": "docs/plans/vision-ear-first-20260704.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-ear-first-20260704.md",
+      "statusGuess": "INTERVIEW PENDING"
+    },
+    {
+      "title": "Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05)",
+      "file": "docs/plans/vision-tutor-deterministic-20260705.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md",
+      "statusGuess": "CAPTURED"
+    }
+  ],
+  "queue": {
+    "NOW": [
+      {
+        "Mission": "(idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline)",
+        "State": "AWAITING OPERATOR: bake veto + anchors veto",
+        "Spec": "next: anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up named: tab-switch icon reset"
+      },
+      {
+        "Mission": "(prior state: TIER-0 drained at v105 - refilled same day by the ear-first vision) - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate)",
+        "State": "[atomic plan](atomic-queue-plan-20260704.md)",
+        "Spec": "[fold record](m-guide-adversarial-fold-20260704.md)"
+      }
+    ],
+    "SHORT": [
+      {
+        "#": "S1",
+        "Mission": "Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B",
+        "Trigger / launch condition": "PR #98 merges (event-triggered)",
+        "Spec state": "Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED"
+      },
+      {
+        "#": "S2",
+        "Mission": "Sprint 2: M3 songs/tracks full merge",
+        "Trigger / launch condition": "**5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: #98 merged + 30-min spec-formalize interview",
+        "Spec state": "Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready"
+      },
+      {
+        "#": "S3",
+        "Mission": "S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view",
+        "Trigger / launch condition": "Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow)",
+        "Spec state": "Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch"
+      },
+      {
+        "#": "S4",
+        "Mission": "S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + shape-classifier step 0)",
+        "Trigger / launch condition": "**REVIEW-READY: spec already drafted + P5-folded** - 5-min read, then one keyword (go S-DIAGRAM-PREF)",
+        "Spec state": "[short-specs-20260704.md](short-specs-20260704.md) + canonical detail in the wiki expertise-adaptive-display page"
+      },
+      {
+        "#": "S5",
+        "Mission": "S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern)",
+        "Trigger / launch condition": "**go save-truth**",
+        "Spec state": "Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger)"
+      },
+      {
+        "#": "S6",
+        "Mission": "~~S-HARDEN~~ FIRED -> NOW (2026-07-04): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests",
+        "Trigger / launch condition": "**go harden**",
+        "Spec state": "Spec = analysis A4+A5+A6 + toggleSet 'Added to setlist' unconditional-toast fix (same A1 bug shape, flagged in #116) + SW verify script asserts CACHE differs from origin/main when shared/ files changed (identical-string v83 collision, PR #117)"
+      },
+      {
+        "#": "S8",
+        "Mission": "S-BACKUP-NUDGE: one-shot Notable \"back up your library\" via free priority slot + backup.describe()",
+        "Trigger / launch condition": "**go backup-nudge**",
+        "Spec state": "Spec = analysis B2 (pairs with S5)"
+      },
+      {
+        "#": "S9",
+        "Mission": "S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots",
+        "Trigger / launch condition": "**go chips-plus**",
+        "Spec state": "Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission"
+      },
+      {
+        "#": "S-NAVHIST",
+        "Item": "NavHistory double-pop on Solo->Skip path (real bug, live-reproduced)",
+        "Source": "PR #144 finding"
+      }
+    ],
+    "MID": [
+      {
+        "#": "M-0",
+        "Candidate": "**DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE",
+        "Vision source": "[vision-tutor-deterministic](vision-tutor-deterministic-20260705.md)"
+      },
+      {
+        "#": "M-1",
+        "Candidate": "Tutor Phase 4 complete: decoupled solo-scale selector over a FIXED progression (relative/parallel demos in place)",
+        "Vision source": "[TUTOR-ROADMAP](../../music/TUTOR-ROADMAP.md) Phase 4 (PARTIAL)"
+      },
+      {
+        "#": "M-2",
+        "Candidate": "Tutor Phase 5: song-form coaching (AABA, sections -> whole songs)",
+        "Vision source": "TUTOR-ROADMAP Phase 5 (PLANNED); operator Q5 2026-07-04: M-CONSTRUCT is a SEPARATE mission (with future-features intel) - P5 stays teaching-focused, M-CONSTRUCT is builder-focused"
+      },
+      {
+        "#": "M-11",
+        "Candidate": "M-CONSTRUCT: song construction + section transitions (OWN mission per operator Q5) - kickoff includes an INTEL pass on possible future features",
+        "Vision source": "[vision-ear-first](vision-ear-first-20260704.md)"
+      },
+      {
+        "#": "M-3",
+        "Candidate": "Strum-engine revival (draft PR #88: Karplus-Strong + humanized hand)",
+        "Vision source": "Existing draft PR - needs vision refresh + quality gate"
+      },
+      {
+        "#": "M-4",
+        "Candidate": "Music-app regression suite in CI (Playwright journeys J1-J4 + T-plans as automation)",
+        "Vision source": "Sprint-1 harness + test plan exist; needs CI-shape decision (box OOM rule -> CI-dispatched)"
+      },
+      {
+        "#": "M-5",
+        "Candidate": "buildAdapter extraction (inline HTML -> shared/chord-pack-adapter.js + real tests) - before next instrument profile or HSR Lens",
+        "Vision source": "[analysis A3](analysis-refactor-enhance-20260704.md)"
+      },
+      {
+        "#": "M-6",
+        "Candidate": "Client-storage strategy + schema inventory (issues #76 + #77) - the strategic layer above S-SAVE-TRUTH",
+        "Vision source": "gh #76/#77 + analysis A1 context"
+      },
+      {
+        "#": "M-7",
+        "Candidate": "~~Jam picker~~ CLOSED WON'T-DO (2026-07-04): the entry point was DELIBERATELY removed by operator interview 3 days earlier (commit 8cf0647, never registered - now D-HERO-REMOVED); re-adding = re-litigation. OPEN FORK for Tier-2 sitting: a lightweight STATIC jam-now affordance (no show/hide-on-filter) - operator call",
+        "Vision source": "agent stop + git archaeology"
+      },
+      {
+        "#": "M-8",
+        "Candidate": "SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview)",
+        "Vision source": "analysis A7 + B5"
+      },
+      {
+        "#": "M-9",
+        "Candidate": "mount() god-function incremental extraction - FOLD INTO M3, never big-bang",
+        "Vision source": "analysis A2"
+      },
+      {
+        "#": "M-10",
+        "Candidate": "M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required",
+        "Vision source": "[uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding"
+      }
+    ],
+    "LONG": [
+      {
+        "#": "M-EAR",
+        "Candidate": "Scale/mode AUDITION - hear it, hum it, A/B modes (\"music is heard not seen\")",
+        "State": "Vision CAPTURED ([vision-ear-first](vision-ear-first-20260704.md)); 5 async interview Qs pending; strum-engine #88 revival becomes its foundation"
+      },
+      {
+        "#": "M-SONG-ANCHORS",
+        "Candidate": "Known-songs-per-mode memory anchors + YT links",
+        "State": "same vision doc"
+      },
+      {
+        "#": "M-PHRASE",
+        "Candidate": "Solo phrasing depth (hang notes, tension/release)",
+        "State": "same vision doc; extends shipped mentor layer"
+      },
+      {
+        "#": "(merge)",
+        "Candidate": "M-CONSTRUCT folds into/ sharpens Tutor Phase 5 (M-2)",
+        "State": "operator Q5 pending"
+      }
+    ]
+  },
+  "suite": {
+    "testFileCount": 40,
+    "workflow": ".github/workflows/tests.yml",
+    "runner": "node test/run-all.js"
+  },
+  "ops": {
+    "actions": "https://github.com/nhruska/nhruska.github.io/actions",
+    "pagesSettings": "https://github.com/nhruska/nhruska.github.io/settings/pages",
+    "wikiIndex": "https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/index.md",
+    "decisions": "https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md",
+    "uatLog": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md",
+    "queueFile": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+    "liveApp": "https://nhruska.github.io/music/play/",
+    "portfolioRoot": "https://nhruska.github.io/"
+  },
+  "infra": {
+    "note": "Static GitHub Pages site - no Azure CD envs; Pages + Actions are the whole deploy surface for this repo."
+  }
+}
