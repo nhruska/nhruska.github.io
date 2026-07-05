@@ -603,6 +603,34 @@
     }
     return changed;
   }
+  // S-SET-INTEGRITY (UAT U22, load-heal): drop any setlist entry that no
+  // longer resolves to a real song - e.g. a setlist persisted before the
+  // delete-heal existed, or restored from an older backup taken pre-fix.
+  // `resolves(id)` is the caller's lookup (mount()'s songById); kept
+  // dependency-injected so this stays Node-testable without a real ALLSONGS.
+  // Mutates `setlist` in place (same contract as remapSetlist above - keeps
+  // the array reference the queue/STATE hold) and returns the number of
+  // entries removed (0 = nothing to heal). This is a defensive READ-TIME
+  // pass, not a StorageMigrate registration: a dangling ref is a data-
+  // integrity gap that can in principle appear from ANY future bug or an
+  // old restored backup, not a one-time shape change gated by a version
+  // number - see decisions.md D-SET-INTEGRITY for the "why not a migration"
+  // ruling. Pure + Node-testable.
+  function pruneDanglingSetlist(setlist, resolves) {
+    if (!Array.isArray(setlist) || typeof resolves !== 'function') return 0;
+    var removed = 0;
+    for (var i = setlist.length - 1; i >= 0; i--) {
+      if (!resolves(setlist[i])) { setlist.splice(i, 1); removed++; }
+    }
+    return removed;
+  }
+  // A calm, static inline notice for the queue-nav position readout (Practice
+  // AND Stage) when defensive nav (S-SET-INTEGRITY, UAT U22) had to step past
+  // one or more dangling setlist entries via QUEUE.stepResolvable(). Pure +
+  // Node-testable.
+  function skipNoticeText(n) {
+    return n + ' removed song' + (n === 1 ? '' : 's') + ' skipped';
+  }
   // Which record the Studio (video + solo HUD) should open for a Repertoire row.
   // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
   // never as a merged backing SEED track (rec._track), which would drop the user's
@@ -1049,7 +1077,12 @@
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontMode: 'auto', // Stage always opens auto-fit (size not persisted; see savePerfPrefs)
       fontScale: 1, ctrlsOpen: false,
-      scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
+      scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null,
+      // S-SET-INTEGRITY (UAT U22): one-shot "N removed song(s) skipped" line,
+      // set by navQueue()/pPrev/pNext right before a re-render whenever
+      // QUEUE.stepResolvable() had to step past a dangling setlist ref; a nav
+      // with nothing to skip clears it back to null. Never persisted.
+      queueSkipNotice: null
     };
     STATE.setlist = loadSet();
     stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
@@ -1278,6 +1311,7 @@
     function openPractice(id, queueIds) {
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
+      STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
       openCurrent();
     }
     // render whatever the queue cursor points at
@@ -1289,6 +1323,18 @@
       saveLast(STATE.current.id);
       switchTab('practice');
       renderPractice();
+    }
+    // S-SET-INTEGRITY (UAT U22): queue-nav step that defends against a
+    // dangling setlist ref (a set member deleted elsewhere) - steps past any
+    // unresolvable entry via QUEUE.stepResolvable(songById) instead of
+    // landing on it (which used to null out STATE.current and fall to the
+    // "Choose a song from the Library" empty state - the U22 repro). Sets a
+    // one-shot notice for renderPractice's queue-nav counter when anything
+    // was actually skipped; clears it on a normal skip-free move.
+    function navQueue(dir) {
+      var r = QUEUE.stepResolvable(dir, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      openCurrent();
     }
     // After the setlist is edited (reorder/remove) keep the live queue tracking it,
     // so the queue is the running order rather than a snapshot taken at open time.
@@ -1371,10 +1417,15 @@
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
         + '</div>';
-      // queue nav — only when a real running order (the setlist) is loaded
+      // queue nav — only when a real running order (the setlist) is loaded.
+      // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
+      // skip notice (see navQueue()) so a defended-against dangling ref is
+      // visible, not silent - "N / M" always reflects LIVE (resolvable)
+      // entries because load-heal + delete-heal keep QUEUE's own list clean.
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
-        + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
+        + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size()
+        + (STATE.queueSkipNotice ? ' - ' + escHTML(STATE.queueSkipNotice) : '') + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
       var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
       // "Solo over it" used to require s.custom (only progressions built in Compose
@@ -1412,8 +1463,8 @@
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
-      var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
-      var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
+      var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
+      var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
         b.onclick = function () { if (b.disabled) return; STATE.songView = b.dataset.v; saveSongView(STATE.songView); renderPractice(); };
       });
@@ -1672,6 +1723,7 @@
     function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
+      STATE.queueSkipNotice = null; // fresh launch - any stale notice from a prior Stage session doesn't carry over
       // Seed the CURRENT view for this launch only - never persisted here (that
       // would leak a custom song's forced 'chords' into later performances). The
       // setlist Perform button seeds stageDefaultView so it always opens in the
@@ -1695,10 +1747,22 @@
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
     if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
-    if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
+    // S-SET-INTEGRITY (UAT U22): same defensive-nav step as the Practice
+    // screen's navQueue() - stepResolvable(songById) walks past a dangling
+    // setlist ref instead of landing on it (showPerform's own `if (!s)
+    // return` guard would otherwise leave the stage frozen on the prior song
+    // with no way forward). See navQueue() above for the full contract.
+    if (el.pPrev) el.pPrev.onclick = function () {
+      if (QUEUE.atStart()) return;
+      var r = QUEUE.stepResolvable(-1, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      STATE.performTpose = 0; showPerform();
+    };
     if (el.pNext) el.pNext.onclick = function () {
-      if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); }
+      if (QUEUE.atEnd()) { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return; }
+      var r = QUEUE.stepResolvable(1, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      STATE.performTpose = 0; showPerform();
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -1763,7 +1827,10 @@
     function showPerform() {
       var s = songById(QUEUE.current());
       if (!s) return;
-      if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
+      // S-SET-INTEGRITY (UAT U22): same one-shot skip notice as the Practice
+      // queue-nav counter (see navQueue()) - appended to the position readout,
+      // not a separate toast (a "calm inline notice", per the spec).
+      if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size() + (STATE.queueSkipNotice ? ' - ' + STATE.queueSkipNotice : '');
       if (el.pTitle) el.pTitle.textContent = s.t;
       // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
       if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
@@ -3165,14 +3232,103 @@
       }
       return cs;
     }
+    // S-SET-INTEGRITY (UAT U22, delete-heal): TOAST+ACTION undo for a custom
+    // item delete/fork-revert - the interaction-safety.md guard #3 primitive
+    // the setlist's own item-remove already has (showSetUndoBanner below),
+    // now on the ONE other place a library item can vanish out from under a
+    // setlist. Lives in the Library screen (delete/revert always
+    // switchTab('library') right after deleteCustomItem returns - see the
+    // D3s note there), mirroring showSetUndoBanner's stable-sibling-element
+    // pattern (never rebuilt inside renderSongs()'s innerHTML wipe).
+    var delUndoBanner = null, delUndoHandle = null, delUndoTeardown = null;
+    function ensureDelUndoBanner() {
+      if (!el.libSongs || !el.songsList) return false;
+      if (!delUndoBanner) {
+        delUndoBanner = document.createElement('div');
+        delUndoBanner.className = 'setUndo toastAction'; // same primitive skin as the setlist remove-undo
+        delUndoBanner.hidden = true;
+        el.libSongs.insertBefore(delUndoBanner, el.songsList);
+      }
+      return true;
+    }
+    function paintDelUndoHidden() {
+      if (delUndoTeardown) { delUndoTeardown(); delUndoTeardown = null; }
+      delUndoHandle = null;
+      if (delUndoBanner) { delUndoBanner.hidden = true; delUndoBanner.innerHTML = ''; }
+    }
+    // Only one pending delete-undo at a time - mirrors dismissSetUndo()'s
+    // "tear down a stale prior instance first" discipline below.
+    function dismissDelUndo() { if (delUndoHandle) delUndoHandle.finish(); }
+    // victim: the removed customSongs record (still a live object reference -
+    // deleteCustomItem only spliced it OUT of the array, never destroyed it).
+    // customIdx/setlistIdx: captured BEFORE the mutation, so Undo can restore
+    // both original positions - a plain delete removed a setlist slot
+    // outright (setlistIdx>=0, revertToId==null); a fork-revert REPLACED the
+    // slot in place with the catalog original (setlistIdx>=0, revertToId is
+    // that catalog id) rather than removing it, so the outcome message and
+    // the undo restore path both branch on isFork.
+    function showDeleteUndoBanner(victim, customIdx, setlistIdx, revertToId) {
+      if (!ensureDelUndoBanner()) return;
+      dismissDelUndo();
+      delUndoBanner.hidden = false;
+      delUndoBanner.innerHTML = '';
+      var isFork = !!(victim && victim.forkOf);
+      var title = (victim && victim.t) || 'song';
+      // Singular "your setlist" (this app has exactly ONE Jam setlist per
+      // profile, per data-model.md - never plural "N setlists").
+      var msg = isFork ? ('Reverted ' + title + ' to the original') : ('Deleted ' + title);
+      if (!isFork && setlistIdx >= 0) msg += ' - also removed from your setlist';
+      var msgEl = document.createElement('span'); msgEl.textContent = msg;
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        if (delUndoHandle) delUndoHandle.finish();
+        var atC = Math.min(customIdx < 0 ? customSongs.length : customIdx, customSongs.length);
+        customSongs.splice(atC, 0, victim);
+        var custOk = saveCustom();
+        var setOk = true;
+        if (setlistIdx >= 0) {
+          if (revertToId != null) {
+            // fork-revert: put the fork id back wherever the catalog id (that
+            // remapSetlist substituted in) now sits - re-resolved at undo
+            // time in case another setlist edit happened during the window.
+            var at = STATE.setlist.indexOf(revertToId);
+            if (at >= 0) STATE.setlist[at] = victim.id;
+          } else {
+            var atS = Math.min(setlistIdx, STATE.setlist.length); // clamp - a mutation mid-window may have shifted this
+            STATE.setlist.splice(atS, 0, victim.id);
+          }
+          setOk = saveSet();
+        }
+        rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); syncQueueToSetlist();
+        // D-SAVE-TRUTH: a restore that silently failed to persist is worse
+        // than one that says so - same truthful-on-failure discipline as
+        // saveProgression/toggleSet (SAVE_FAIL_MSG), on the Library toast host
+        // (a different host than delUndoBanner, so no collision with its
+        // own just-finished toast).
+        if (!custOk || !setOk) showToast(SAVE_FAIL_MSG, true);
+      };
+      delUndoBanner.appendChild(msgEl); delUndoBanner.appendChild(undoBtn);
+      delUndoHandle = global.Toast.showAction(msg, {
+        host: delUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { paintDelUndoHidden(); }
+      });
+      delUndoTeardown = global.Toast.wirePauseOnTouch(delUndoBanner, delUndoHandle);
+    }
     function deleteCustomItem(id) {
       var victim = customById(id);
+      var customIdx = customSongs.indexOf(victim); // -1 if already gone (defensive; capture BEFORE the filter below)
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
       saveCustom();
+      // Capture setlist membership BEFORE remapSetlist mutates it (S-SET-INTEGRITY,
+      // UAT U22 delete-heal) - undo needs the ORIGINAL slot to restore into.
+      var setlistIdx = STATE.setlist.indexOf(id);
+      var revertToId = (victim && victim.forkOf) ? victim.forkOf : null;
       // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore the
       // catalog id into every slot that held the fork (keep the song setlisted). A
       // plain custom delete has no original to fall back to, so drop those slots (null).
-      if (remapSetlist(STATE.setlist, id, (victim && victim.forkOf) ? victim.forkOf : null)) saveSet();
+      if (remapSetlist(STATE.setlist, id, revertToId)) saveSet();
       // D3s (pilot UAT): a deleted song must not stay reachable via the active
       // running-order queue or a stale STATE.current. Both delete call sites
       // already switchTab('library') right after this returns, but switchTab
@@ -3185,6 +3341,7 @@
       QUEUE.remove(id);
       if (STATE.current && STATE.current.id === id) STATE.current = null;
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
+      if (victim) showDeleteUndoBanner(victim, customIdx, setlistIdx, revertToId);
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
     // ---- M2 Add/Edit form entry points ----
@@ -3399,6 +3556,14 @@
 
     /* ===================== INIT ===================== */
     rebuildAll();
+    // S-SET-INTEGRITY (UAT U22, load-heal): right after ALLSONGS exists,
+    // silently prune any setlist entry that no longer resolves to a real
+    // song - defensive like every other reader in this app (no toast; this
+    // is housekeeping, not a user action - see safeSet's header comment on
+    // passive vs user-initiated feedback). Must run before the first
+    // renderSongs()/renderSetlist() so the very first paint never has to
+    // defend against a dangling ref either.
+    if (pruneDanglingSetlist(STATE.setlist, function (id) { return !!songById(id); })) saveSet();
     renderFilterChips();
     renderSongs();
     renderSetlist();
@@ -3480,7 +3645,13 @@
       // Tracks.mount's onEditRequest) can reach it without a circular require.
       openEditForm: openEditForm,
       openEditOrAdd: openEditOrAdd,
-      setCustomVideo: setCustomVideo
+      setCustomVideo: setCustomVideo,
+      // S-SET-INTEGRITY (UAT U22): exposed so callers reachable without a real
+      // repertoire-form.js (its own Delete/Revert button is the normal UI
+      // entry point, already confirm()-gated upstream of this call) can drive
+      // the delete-heal + toast+action undo directly - same pattern as
+      // openEditForm/setCustomVideo above.
+      deleteCustomItem: deleteCustomItem
     };
   }
 
@@ -3503,6 +3674,9 @@
     buildSheetFromSeq: buildSheetFromSeq,
     shadowedTrackKeys: shadowedTrackKeys,
     remapSetlist: remapSetlist,
+    // S-SET-INTEGRITY (UAT U22): load-heal + defensive-nav pure helpers
+    pruneDanglingSetlist: pruneDanglingSetlist,
+    skipNoticeText: skipNoticeText,
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,

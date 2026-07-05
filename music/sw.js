@@ -170,7 +170,17 @@
 // th.key), shared/songbook.js (soloChipCaption gains an optional 2nd `root`
 // arg, selectChip passes keyRoot). No new/removed CORE paths. check-cache-
 // bump.sh re-verified against origin/main immediately before push.
-var CACHE = 'music-v114';
+// S-SET-INTEGRITY (2026-07-05, UAT U22): v114->v115 (max+1 over main's v114 -
+// rebased past #174's S-REL-NAMES v114 bump, which landed while this branch
+// was in flight) - shared/queue.js gains stepResolvable() (defensive
+// queue-nav past a dangling setlist ref); shared/songbook.js gains
+// pruneDanglingSetlist() (load-heal, runs at mount right after
+// rebuildAll()), skipNoticeText(), the delete-heal TOAST+ACTION undo banner
+// on deleteCustomItem (custom-song delete/fork-revert), and the queue-nav
+// counter's "N removed song(s) skipped" notice (Practice + Stage). No
+// new/removed CORE paths. check-cache-bump.sh re-verified against
+// origin/main immediately before push.
+var CACHE = 'music-v115';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
