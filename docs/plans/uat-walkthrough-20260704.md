@@ -102,3 +102,9 @@ Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD t
 **Operator:** "The guidance says this scale works because F major and its relative minor are the same notes - but doesn't say WHAT the minor key is. Valuable insight... a message on the continuum of your journey, available at point of need."
 
 **Fix (S-REL-NAMES) + PRINCIPLE (codify):** guidance/framing copy must INTERPOLATE the concrete name of any derivable musical object it references - relative minor/major, parallel key, the V chord, etc. - computed for the CURRENT key via Circle's existing relationship math (A9-clean: static template + computed note-name interpolation, same class as {i}). Example: F + pent major -> "...same shape as D minor pent - same notes, F stays home." Principle lands in ux-philosophy (design-principles/component-conventions): "Name the instance, not just the relationship - the concrete name is the point-of-need teaching."
+
+## U24 - Setlist remove leaves an EMPTY confirmation container (operator, 2026-07-05 morning, screenshot)
+
+**Operator:** "delete song from setlist leaves confirmation container empty. was saved quickly."
+
+**Reading:** the Setlist tab's remove path shows its confirmation too briefly (the 6s toast+action window from #170 not honored on this path?) AND the host container remains rendered EMPTY after content clears - a lifecycle seam between #170 (toast host semantics) and #175 (setlist undo banner), which merged hours apart. Fix (S-TOAST-HOST): repro the exact path (Setlist tab -> remove), root-cause the host visibility lifecycle, unify this path onto the toast+action primitive (6s countdown + pause-on-touch like every undoable outcome), host hides WITH content - and a regression test asserting no visible-empty-host state exists after any toast lifecycle completes (all hosts, all paths).
