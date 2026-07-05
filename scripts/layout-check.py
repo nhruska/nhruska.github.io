@@ -43,9 +43,10 @@
 #   python3 scripts/layout-check.py [--profile guitar-standard] [--port 8134]
 #
 # See music/engineering-wiki/systems/layout-tokens.md for the full geometry
-# contract this suite guards, including the ONE known gap it deliberately
-# does NOT check (tracks.css .bt-st-chords / Practice Studio chords-in-key
-# row - out of this suite's required scope, documented as a follow-up).
+# contract this suite guards. The ONE known gap it used to deliberately not
+# check (tracks.css .bt-st-chords / Practice Studio chords-in-key row) is
+# MOOT as of F19 (operator UAT 2026-07-05): that row no longer renders chord
+# diagrams at all, only name-only chips - there is no SVG canvas left to spill.
 # =====================================================================
 import argparse
 import functools

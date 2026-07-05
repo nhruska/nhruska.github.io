@@ -591,4 +591,85 @@ test('_schedulePass + a real (hand-rolled) OfflineAudioContext renderer: a FASTE
   });
 });
 
+/* ---------------------------------------------------------------------
+ * 8. octaves + rootDwell (M-EAR wave 2, F17 - operator UAT 2026-07-05):
+ *    "instead of stopping the animated sequence of notes, just continue it
+ *    through two octaves with a pause on the root notes". `octaves` extends
+ *    _buildNoteSequence's ascent; `rootDwell` extends the SCHEDULED duration
+ *    of any note sharing the sequence's root pitch class (never a silent
+ *    gap). Both are additive opts - every case above (which omits them)
+ *    already proves the 1-octave/no-dwell default is unaffected.
+ * ------------------------------------------------------------------- */
+test('_buildNoteSequence: octaves=2 repeats the ascent twice before the closing root - note count is pcs.length*2 + 1', function () {
+  var C_MAJOR = [0, 2, 4, 5, 7, 9, 11];
+  var notes = Sound._buildNoteSequence(C_MAJOR, 4, 2);
+  assert.strictEqual(notes.length, C_MAJOR.length * 2 + 1);
+  // root pc (0) recurs at the start, the 2nd-octave start, and the closing root.
+  assert.strictEqual(notes[0].pc, 0);
+  assert.strictEqual(notes[C_MAJOR.length].pc, 0);
+  assert.strictEqual(notes[notes.length - 1].pc, 0);
+  // strictly ascending pitch (pc + 12*octave) across the WHOLE 2-octave span.
+  var pitches = notes.map(function (n) { return n.pc + 12 * n.octave; });
+  for (var i = 1; i < pitches.length; i++) assert.ok(pitches[i] > pitches[i - 1], 'not ascending at ' + i);
+  // exactly 2 octaves (24 semitones) from the first note to the closing root.
+  assert.strictEqual(pitches[pitches.length - 1] - pitches[0], 24);
+});
+test('_buildNoteSequence: octaves omitted/1/0/negative all behave exactly like the pre-F17 single-pass contract', function () {
+  var pcs = [0, 4, 7];
+  var base = Sound._buildNoteSequence(pcs, 4);
+  [undefined, 1, 0, -3, 'two'].forEach(function (v) {
+    assert.deepStrictEqual(Sound._buildNoteSequence(pcs, 4, v), base, 'octaves=' + JSON.stringify(v) + ' should fall back to a single pass');
+  });
+});
+test('_buildNoteSequence: F# major (non-monotonic pcs) folds correctly across octaves=2 too', function () {
+  var FSHARP_MAJOR = [6, 8, 10, 11, 1, 3, 5];
+  var notes = Sound._buildNoteSequence(FSHARP_MAJOR, 4, 2);
+  assert.strictEqual(notes.length, 15);
+  assert.deepStrictEqual(notes.map(function (n) { return n.pc; }),
+    [6, 8, 10, 11, 1, 3, 5, 6, 8, 10, 11, 1, 3, 5, 6]);
+  var pitches = notes.map(function (n) { return n.pc + 12 * n.octave; });
+  for (var i = 1; i < pitches.length; i++) assert.ok(pitches[i] > pitches[i - 1], 'not ascending at ' + i);
+});
+
+test('playScale + rootDwell: a root-pc note is scheduled for LONGER (rootDwell x noteDur); a non-root note keeps the base noteDur', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var bpm = 6000, noteDur = 60 / bpm; // fast base tempo - irrelevant to the multiplier math
+    var handle = Sound.playScale([0, 4, 7], { bpm: bpm, rootDwell: 2.2, onNote: function () {} });
+    // step(0) is the root (pc 0) - its OWN next-tick timer must reflect the dwelt duration.
+    assert.ok(Math.abs(clock.pendingMs() - noteDur * 2.2 * 1000) < 1e-6, 'expected the root hit\'s scheduled interval to be noteDur*rootDwell, got ' + clock.pendingMs());
+    clock.fireNext(); // now sounding index 1 (pc 4, NOT the root)
+    assert.ok(Math.abs(clock.pendingMs() - noteDur * 1000) < 1e-6, 'expected a non-root note to keep the plain noteDur interval, got ' + clock.pendingMs());
+    handle.stop();
+  });
+});
+test('playScale + rootDwell omitted (default): every note (including the root) keeps the SAME plain noteDur interval - no behavior change for existing callers', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var bpm = 6000, noteDur = 60 / bpm;
+    var handle = Sound.playScale([0, 4, 7], { bpm: bpm, onNote: function () {} });
+    assert.ok(Math.abs(clock.pendingMs() - noteDur * 1000) < 1e-6, 'expected the plain interval on the root hit when rootDwell is omitted');
+    clock.fireNext();
+    assert.ok(Math.abs(clock.pendingMs() - noteDur * 1000) < 1e-6, 'expected the plain interval on the following note too');
+    handle.stop();
+  });
+});
+test('playScale + octaves + retarget(): a mid-flight scale swap still resolves the NEW sequence at the requested octave count', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var onNoteLog = [];
+    var handle = Sound.playScale([0, 4, 7], { bpm: 6000, octaves: 2, onNote: function (i) { onNoteLog.push(i); } });
+    handle.retarget([2, 5, 9]); // 3 pcs -> a 2-octave sequence is 3*2+1 = 7 notes long
+    assert.ok(clock.fireNext()); // boundary tick - new sequence, index 0
+    // walk the whole new (2-octave) sequence: boundary tick fired index 0,
+    // then 6 more ticks cover indices 1..6 (7-note sequence), and a 7th tick
+    // is required to see it wrap back to 0 - if the retarget had silently
+    // dropped back to a 1-octave (4-note) sequence, it would have wrapped
+    // to 0 after only 3 more ticks instead.
+    for (var k = 0; k < 7; k++) clock.fireNext();
+    assert.strictEqual(onNoteLog[onNoteLog.length - 1], 0, 'expected the 7-note (2-octave) sequence to wrap back to 0 only after 7 steps, got trailing log ' + JSON.stringify(onNoteLog.slice(-3)));
+    handle.stop();
+  });
+});
+
 run();

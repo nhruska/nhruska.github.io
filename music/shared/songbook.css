@@ -647,7 +647,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * music/engineering-wiki/systems/layout-tokens.md for the full contract,
  * the independent-by-design constants this deliberately does NOT fold in
  * (diagram.js's per-string-count SIZES, .prog's scroll-strip floor), and
- * the ONE known gap it surfaces but doesn't fix (tracks.css .bt-st-chords).
+ * the ONE known gap it surfaced (tracks.css .bt-st-chords) - RESOLVED-BY-
+ * REMOVAL, not by adopting this token block: F19 (operator UAT 2026-07-05)
+ * dropped the Studio's chords-in-key SVG diagrams entirely (name-only chips
+ * now), so there is no diagram canvas left in that row to squeeze.
  * --dg-canvas-w is a documentation-anchor, not a live coupling: diagram.js
  * emits a plain SVG string and cannot read a CSS var, so this promotes what
  * used to be a prose-only "86px" comment into a real value --tile-min
