@@ -188,7 +188,20 @@
 // lifecycle completed). No JS logic changes, no new/removed CORE paths.
 // check-cache-bump.sh re-verified against origin/main immediately before
 // push.
-var CACHE = 'music-v116';
+// M-SETTINGS-CLARITY (2026-07-05, operator UAT): v116->v117 - TWO new CORE
+// paths: shared/build-stamp.js (the authored version+freshness stamp - its
+// VERSION mirrors THIS CACHE string, guard-locked by scripts/
+// check-cache-bump.sh + test/build-stamp.test.js: bump one, bump both) and
+// shared/accordion.js (the exclusive disclosure-group primitive). Also
+// changed: play/index.html (Settings sheet: accordion sections, Done footer
+// button, Backup/Restore as data rows with last-run meta, stamped meta
+// line), play/triad-inversions.html (footer build stamp), shared/
+// songbook.css (.accSec/.accBtn/.accBody family), shared/
+// chord-pack-adapter.js (U25: shape labels big-render-only), shared/
+// diagram.js (comment truth only), shared/backup.js (music.lastRestore.
+// joins EXCLUDE). check-cache-bump.sh re-verified against origin/main
+// immediately before push.
+var CACHE = 'music-v117';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -205,6 +218,13 @@ var CORE = [
   // toast.js: S-TOAST (UAT U9) - shared per-host toast timer primitive,
   // script-tagged in play/index.html right after esc.js.
   './shared/toast.js',
+  // build-stamp.js: M-SETTINGS-CLARITY - the authored version + freshness
+  // stamp; script-tagged in play/index.html (after toast.js) AND in
+  // play/triad-inversions.html. Its VERSION mirrors CACHE above.
+  './shared/build-stamp.js',
+  // accordion.js: M-SETTINGS-CLARITY - the exclusive disclosure-group
+  // primitive; script-tagged in play/index.html right after build-stamp.js.
+  './shared/accordion.js',
   // storage-migrate.js: versioned localStorage boot migration runner (M-6),
   // loaded first in play/index.html (before every other shared/*.js consumer).
   './shared/storage-migrate.js',

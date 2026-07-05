@@ -29,6 +29,10 @@
  * window.DiagramPref.labelFor(profile.id, name, frets) and pass it through
  * to Diagram.render() - '' whenever the pref is 'dots' or the voicing isn't
  * classifiable. See shared/diagram-pref.js and shared/diagram.js.
+ * U25 (M-SETTINGS-CLARITY, 2026-07-05): the label is additionally keyed on
+ * render SIZE - only 'big' (detail/maximize) renders label; 'small' card
+ * rows never do, in either pref mode. See labelFor()/reserveLabelSlot()
+ * below for the full rationale.
  *
  * window.Diagram / window.ChordAudio / window.Tuner / window.Songbook /
  * window.DiagramPref stay lazy global lookups (unchanged) - callers keep
@@ -283,28 +287,43 @@
     // diagram-pref.js for the decision; window.DiagramPref is an optional
     // lookup (undefined in a test/DOM stub that doesn't load it) so this
     // degrades to no label rather than throwing.
-    function labelFor(name, frets) {
+    //
+    // U25 (M-SETTINGS-CLARITY, operator UAT 2026-07-05): shape labels are
+    // DETAIL-view content, keyed on render size at this one choke point -
+    // only 'big' renders (the maximize/inversions overlay, where one glance
+    // studies one voicing) ever label. 'small' card rows - the Compose
+    // picker grids (In key + All), the progression filmstrip, the Studio
+    // chord row - NEVER label, in either pref mode: at card size the
+    // 3-line classification text ("D-shape barre, root on 3, root
+    // position") is noise the eye has to skate around while picking, not
+    // information (the operator's finding). This supersedes the U21
+    // small-card reservation below for small sizes; a size the app doesn't
+    // use defaults to unlabeled (only an explicit 'big' opts in).
+    function labelFor(name, frets, size) {
+      if (size !== 'big') return '';
       return window.DiagramPref ? window.DiagramPref.labelFor(profile.id, name, frets) : '';
     }
-    // U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md): a
-    // 'patterns'-mode caller reserves the label slot on EVERY card in a row
-    // (Diagram.render's opts.reserveLabelSlot), even one shape-classify.js
-    // can't classify (an honest-null dim/aug quality) - so unclassified
-    // cards keep the SAME height as their classified siblings instead of
-    // rendering visibly shorter. 'dots' mode (the default) never reserves,
-    // same as before this wave - zero visual change there. Reads the SAME
-    // pref labelFor() already reads, one place, no new storage key.
-    function reserveLabelSlot() {
+    // U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md), narrowed
+    // by U25 above: a 'patterns'-mode BIG-size caller reserves the label
+    // slot on EVERY card in a row (Diagram.render's opts.reserveLabelSlot),
+    // even one shape-classify.js can't classify (an honest-null quality) -
+    // so unclassified cards keep the SAME height as their classified
+    // row-mates instead of rendering visibly shorter. 'dots' mode and ALL
+    // small-card rows never reserve (small cards never label, per U25).
+    // Reads the SAME pref labelFor() already reads, one place, no new
+    // storage key.
+    function reserveLabelSlot(size) {
+      if (size !== 'big') return false;
       return !!(window.DiagramPref && typeof window.DiagramPref.get === 'function' && window.DiagramPref.get() === 'patterns');
     }
     var adapter = {
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
-      diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets), reserveLabelSlot: reserveLabelSlot() }); },
-      diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets), reserveLabelSlot: reserveLabelSlot() }); },
+      diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets, size), reserveLabelSlot: reserveLabelSlot(size) }); },
+      diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets, size), reserveLabelSlot: reserveLabelSlot(size) }); },
       diagramChain: function (names, size) {
         var voicings = chainVoicings(names);
-        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i], patternLabel: labelFor(names[i], frets), reserveLabelSlot: reserveLabelSlot() }); });
+        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i], patternLabel: labelFor(names[i], frets, size), reserveLabelSlot: reserveLabelSlot(size) }); });
       },
       // scale map for the active instrument: open-string pitch classes + the scale's
       // pitch classes -> a low-position neck diagram (root tones in the accent colour).

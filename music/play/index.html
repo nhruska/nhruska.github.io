@@ -71,9 +71,17 @@
   .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
     display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
   .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
-  .setSec{padding:16px 0;border-top:1px solid var(--line-strong);}
-  .setSec:first-of-type{border-top:0;padding-top:16px;}
+  /* M-SETTINGS-CLARITY: sections are .accSec/.accBtn/.accBody (the shared
+     accordion primitive, songbook.css). The old .setSec rules retired with
+     the markup. .setRow composes the shared .listItem card family as a
+     <button> data row (Backup/Restore): explicit color because button text
+     does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
+     it reads as a list row, not an action button. */
+  .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;}
+  .setRow .li-title{display:block;}
+  .setRow .li-artist{display:block;}
   .setLbl{font-weight:600;margin-bottom:11px;}
+  .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
   .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
   .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
   .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
@@ -251,40 +259,65 @@
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
 <!-- Settings sheet: accent colour + whole-songbook backup/restore + which
      offline build is actually running. Opened by the appbar gear (#settingsBtn). -->
+<!-- M-SETTINGS-CLARITY (2026-07-05): sections are a ONE-AT-A-TIME accordion
+     (shared/accordion.js + the .accSec/.accBtn/.accBody family, songbook.css).
+     Backup/Restore are DATA rows inside "Your songbook" (the .listItem card
+     family), NOT footer buttons - the old footer pair read as a Save/Cancel
+     pair and got tapped to dismiss the panel. The footer's ONE action is Done
+     (labeled Done, not Save: every control in this sheet applies on change,
+     so there is nothing staged to save or discard - see the PR). -->
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
     <div class="setPanelBody" id="settingsBody">
-      <div class="setSec">
-        <div class="setLbl">Theme</div>
-        <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
-        <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
-      </div>
-      <div class="setSec">
-        <div class="setLbl">Accent color</div>
-        <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
-      </div>
+      <section class="accSec" data-acc="appearance">
+        <button class="accBtn" id="accBtnAppearance" type="button" aria-expanded="false" aria-controls="accBodyAppearance">Appearance</button>
+        <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
+          <div class="setLbl">Theme</div>
+          <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
+          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+          <div class="setLbl">Accent color</div>
+          <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
+        </div>
+      </section>
       <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
            the dots|patterns pref can be changed any time - not just at the
            one-time Notables prompt (#diagramPrefSlot above). -->
-      <div class="setSec">
-        <div class="setLbl">Fretboard diagrams</div>
-        <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
-        <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns with hand position and shape names once you're moving by feel.</p>
-      </div>
-      <div class="setSec">
-        <div class="setLbl">Your songbook</div>
-        <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
-        <div class="setSummary" id="dataSummary" aria-live="polite"></div>
-      </div>
+      <section class="accSec" data-acc="diagrams">
+        <button class="accBtn" id="accBtnDiagrams" type="button" aria-expanded="false" aria-controls="accBodyDiagrams">Fretboard diagrams</button>
+        <div class="accBody" id="accBodyDiagrams" role="region" aria-labelledby="accBtnDiagrams" hidden>
+          <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
+          <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
+        </div>
+      </section>
+      <section class="accSec" data-acc="songbook">
+        <button class="accBtn" id="accBtnSongbook" type="button" aria-expanded="false" aria-controls="accBodySongbook">Your songbook</button>
+        <div class="accBody" id="accBodySongbook" role="region" aria-labelledby="accBtnSongbook" hidden>
+          <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+          <div class="setSummary" id="dataSummary" aria-live="polite"></div>
+          <button class="listItem setRow" id="btnBackup" type="button">
+            <span class="li-body">
+              <span class="li-title">Back up</span>
+              <span class="li-artist">Save everything on this device to a file.</span>
+              <span class="li-meta" id="lastBackupMeta">Last backup: never</span>
+            </span>
+          </button>
+          <button class="listItem setRow" id="btnRestore" type="button">
+            <span class="li-body">
+              <span class="li-title">Restore</span>
+              <span class="li-artist">Read a backup file and bring everything across.</span>
+              <span class="li-meta" id="lastRestoreMeta">Last restore: never</span>
+            </span>
+          </button>
+          <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+        </div>
+      </section>
     </div>
     <div class="setFoot">
       <div class="setBtns">
-        <button class="btn" id="btnBackup" type="button">Back up</button>
-        <button class="btn ghost" id="btnRestore" type="button">Restore</button>
-        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+        <button class="btn red" id="setDone" type="button">Done</button>
       </div>
-      <div class="setMeta" id="setMetaLine"><span id="appVer">Music</span><span class="metaSep"> - </span><span id="lastBackup">Last backed up: never</span></div>
+      <div class="setMeta" id="setMetaLine"><span id="appVer">Music</span></div>
     </div>
   </div>
 </div>
@@ -299,6 +332,15 @@
      delegate to. Loads early, alongside esc.js, since any consumer could
      show a toast. -->
 <script src="../shared/toast.js"></script>
+<!-- build-stamp.js: M-SETTINGS-CLARITY (2026-07-05) - the authored-at-change-
+     time version + freshness stamp the Settings meta line renders (VERSION
+     mirrors sw.js CACHE, guard-locked by scripts/check-cache-bump.sh).
+     Dependency-free; also loaded by play/triad-inversions.html. -->
+<script src="../shared/build-stamp.js"></script>
+<!-- accordion.js: M-SETTINGS-CLARITY (2026-07-05) - the exclusive disclosure
+     group primitive (one open section at a time), consumed by the Settings
+     sheet sections below. Dependency-free. -->
+<script src="../shared/accordion.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
 <script src="../shared/circle.js"></script>
@@ -379,8 +421,8 @@
   // Profile selection priority:
   //   1. ?p= query param (explicit)
   //   2. #hash (legacy)
-  //   3. localStorage (last selected — survives revisits without ?p=)
-  //   4. manifest order (the first id in the manifest array — deterministic)
+  //   3. localStorage (last selected - survives revisits without ?p=)
+  //   4. manifest order (the first id in the manifest array - deterministic)
   //   5. whatever Object.keys returns (last-resort; non-deterministic because
   //      profile scripts settle in load-completion order, not append order)
   var PROFILE_KEY = 'music.activeProfile.v1';
@@ -569,6 +611,11 @@
   var ACCENT_KEY = 'music.accent.v1';
   var THEME_KEY = 'music.theme.v1';   // 'auto' | 'light' | 'dark'
   var LAST_BACKUP_KEY = 'music.lastBackup.v1';
+  // M-SETTINGS-CLARITY: the Restore row's own last-run stamp - same shape and
+  // same backup.js EXCLUDE treatment as LAST_BACKUP_KEY (device-local; a
+  // restored envelope must not overwrite THIS device's restore time). Both
+  // are registered in engineering-wiki/systems/data-model.md.
+  var LAST_RESTORE_KEY = 'music.lastRestore.v1';
   var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
 
   function storedTheme() {
@@ -615,15 +662,14 @@
   // bring THIS device's stored data up to the current schema before the app reads it
   try { if (window.Backup) Backup.runMigrations(localStorage); } catch (e) {}
 
-  function relWhen(iso) {
-    if (!iso) return 'never';
-    var then = new Date(iso); if (isNaN(then.getTime())) return 'unknown';
-    var s = Math.max(0, (Date.now() - then.getTime()) / 1000);
-    if (s < 90) return 'just now';
-    var m = s / 60; if (m < 90) return Math.round(m) + ' min ago';
-    var h = m / 60; if (h < 36) return Math.round(h) + ' hr ago';
-    var d = h / 24; if (d < 14) return Math.round(d) + ' days ago';
-    return then.toISOString().slice(0, 10);
+  // M-SETTINGS-CLARITY: the old relative-time relWhen() retired with the
+  // footer's "Last backed up" line - the Backup/Restore rows show a full
+  // locale date+time via BuildStamp.fmt() (the ONE datetime formatter, so
+  // the rows and the footer stamp always read the same way).
+  function lastRunText(prefix, iso) {
+    if (!iso) return prefix + ': never';
+    var when = window.BuildStamp ? BuildStamp.fmt(iso) : '';
+    return prefix + ': ' + (when || String(iso).slice(0, 10)); // date-only fallback beats lying 'never'
   }
   function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -786,14 +832,33 @@
       markDiagramPref(DiagramPref.get());
     }
 
+    /* M-SETTINGS-CLARITY: the sections are ONE-AT-A-TIME accordion sections
+       (shared/accordion.js owns the exclusivity state; the .accSec/.accBtn/
+       .accBody visual family lives in songbook.css). Per-open state only -
+       every openSettings() starts all-collapsed (the disclosure-family
+       contract in component-conventions.md), except a caller that names a
+       section (the backup nudge opens straight to "Your songbook"). */
+    var accSections = [], accIndexByKey = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#settingsBody .accSec'), function (sec, i) {
+      accSections.push({ btn: sec.querySelector('.accBtn'), body: sec.querySelector('.accBody') });
+      if (sec.dataset && sec.dataset.acc) accIndexByKey[sec.dataset.acc] = i;
+    });
+    var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections) : null;
+
     /* settings sheet open/close */
     var ov = document.getElementById('setOv'),
         openBtn = document.getElementById('settingsBtn'),
-        closeBtn = document.getElementById('setClose');
+        closeBtn = document.getElementById('setClose'),
+        doneBtn = document.getElementById('setDone');
     function renderLastBackup() {
-      var el = document.getElementById('lastBackup'); if (!el) return;
+      var el = document.getElementById('lastBackupMeta'); if (!el) return;
       var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
-      el.textContent = 'Last backed up: ' + relWhen(iso);
+      el.textContent = lastRunText('Last backup', iso);
+    }
+    function renderLastRestore() {
+      var el = document.getElementById('lastRestoreMeta'); if (!el) return;
+      var iso = null; try { iso = localStorage.getItem(LAST_RESTORE_KEY); } catch (e) {}
+      el.textContent = lastRunText('Last restore', iso);
     }
     // Live "what's on THIS device" summary, so the counts are visible before a
     // backup (and the origin/empty-storage case is obvious at a glance).
@@ -827,19 +892,39 @@
         }
       });
     }
+    /* M-SETTINGS-CLARITY: the meta line leads with the authored build stamp
+       ("v117 - updated <local date+time>", shared/build-stamp.js) so "is what
+       I'm looking at fresh?" is answered at a glance, online or offline. The
+       SW round-trip then flags the one state the stamp alone can't see: page
+       assets from one build while an OLDER worker is still active (its CACHE
+       tag differs from the stamp's guard-locked VERSION mirror). */
     function showVersion() {
       var el = document.getElementById('appVer'); if (!el) return;
-      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = 'Running online. Not yet installed offline.'; return; }
+      var base = window.BuildStamp ? BuildStamp.text() : 'Music';
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = base + ' - not installed offline'; return; }
+      el.textContent = base;
       try {
         var mc = new MessageChannel();
-        mc.port1.onmessage = function (ev) { if (ev.data && ev.data.version) el.textContent = 'Offline build ' + ev.data.version; };
+        mc.port1.onmessage = function (ev) {
+          if (!(ev.data && ev.data.version)) return;
+          if (window.BuildStamp && ev.data.version === BuildStamp.VERSION) return; // page and worker agree - nothing to flag
+          el.textContent = base + ' - offline build ' + String(ev.data.version).replace(/^music-/, 'v') + ' active';
+        };
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
       } catch (e) {}
     }
-    function openSettings() { if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true'); renderSummary(); renderLastBackup(); showVersion(); }
+    function openSettings(sectionKey) {
+      if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+      if (settingsAcc) {
+        settingsAcc.closeAll(); // per-open state only, never persisted
+        if (sectionKey && accIndexByKey[sectionKey] != null) settingsAcc.open(accIndexByKey[sectionKey]);
+      }
+      renderSummary(); renderLastBackup(); renderLastRestore(); showVersion();
+    }
     function closeSettings() { if (!ov) return; ov.hidden = true; if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
-    if (openBtn) openBtn.onclick = openSettings;
+    if (openBtn) openBtn.onclick = function () { openSettings(); };
     if (closeBtn) closeBtn.onclick = closeSettings;
+    if (doneBtn) doneBtn.onclick = closeSettings; // Done = close; every setting already applied on change
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
@@ -917,7 +1002,7 @@
         // the x button already handled its own tap (dismiss) via its own onclick -
         // don't ALSO open Settings when that's what the tap was for.
         if (e.target && e.target.closest && e.target.closest('.notableBanner-x')) return;
-        openSettings();
+        openSettings('songbook'); // a backup nudge lands the user straight on the Backup row
       });
       slot.appendChild(banner);
     }
@@ -975,6 +1060,13 @@
             'Restore',
             function () {
               try { Backup.restore(localStorage, payload); } catch (e) { showSettingsToast('Restore failed: ' + e.message, true); return; }
+              // M-SETTINGS-CLARITY: stamp THIS device's restore time (the
+              // Restore row's meta). Written after the restore so a restore
+              // that throws never records a run; survives the reload below
+              // because it's already in localStorage (and backup.js EXCLUDEs
+              // it, so a future backup file never carries it).
+              try { localStorage.setItem(LAST_RESTORE_KEY, new Date().toISOString()); } catch (e) {}
+              renderLastRestore();
               // Non-blocking outcome toast, then a short beat so it's actually
               // seen before the reload (a native alert() blocked until
               // dismissed; a toast doesn't - so a location.reload() right

@@ -215,12 +215,16 @@ test('scaleDiagram passes through openPcs/rootPc/scalePcs and sets supportsStart
 });
 
 /* ---------- S-DIAGRAM-PREF steps 1-2 (post-S-EXTRACT rebase): diagram/
- * diagramClosed/diagramChain now compute an optional patternLabel via
+ * diagramClosed/diagramChain compute an optional patternLabel via
  * window.DiagramPref.labelFor(profile.id, name, frets) and hand it to
- * Diagram.render(). The pass-through Diagram.render stub above discards
- * opts entirely (every OTHER test in this file relies on that), so these
- * tests swap in a capturing stub just for this block and restore the
- * pass-through stub afterward - no other assertion in this file is affected. ---------- */
+ * Diagram.render(). U25 (M-SETTINGS-CLARITY, operator UAT 2026-07-05)
+ * narrowed WHERE: shape labels are DETAIL-view content - only 'big'
+ * renders (the maximize overlay) ever label or reserve; 'small' card rows
+ * (picker grids, strips) never do, in either pref mode. The pass-through
+ * Diagram.render stub above discards opts entirely (every OTHER test in
+ * this file relies on that), so these tests swap in a capturing stub just
+ * for this block and restore the pass-through stub afterward - no other
+ * assertion in this file is affected. ---------- */
 (function () {
   var origRender = global.window.Diagram.render;
   var origDiagramPref = global.window.DiagramPref;
@@ -231,13 +235,13 @@ test('scaleDiagram passes through openPcs/rootPc/scalePcs and sets supportsStart
     return captured;
   }
 
-  test('diagram()/diagramClosed()/diagramChain() pass profile.id + name + frets to DiagramPref.labelFor()', function () {
+  test('diagram()/diagramClosed()/diagramChain() at size "big" pass profile.id + name + frets to DiagramPref.labelFor()', function () {
     var seen = [];
     global.window.DiagramPref = { labelFor: function (profileId, name, frets) { seen.push([profileId, name, frets]); return 'stub-label'; } };
     try {
-      withCapture(function () { gPack.diagram('E', 'small'); });
-      withCapture(function () { gPack.diagramClosed('E', 'small'); });
-      withCapture(function () { gPack.diagramChain(['C', 'F', 'G']); });
+      withCapture(function () { gPack.diagram('E', 'big'); });
+      withCapture(function () { gPack.diagramClosed('E', 'big'); });
+      withCapture(function () { gPack.diagramChain(['C', 'F', 'G'], 'big'); });
     } finally { global.window.DiagramPref = origDiagramPref; }
     assert.strictEqual(seen[0][0], 'guitar-standard', 'expected profile.id, not the instrument name');
     assert.strictEqual(seen[0][1], 'E');
@@ -246,55 +250,86 @@ test('scaleDiagram passes through openPcs/rootPc/scalePcs and sets supportsStart
     assert.strictEqual(seen[2].length, 3); // diagramChain called labelFor once per chord in the chain
   });
 
-  test('diagram()/diagramClosed()/diagramChain() forward DiagramPref.labelFor()\'s return value as opts.patternLabel', function () {
+  test('diagram()/diagramClosed() at size "big" forward DiagramPref.labelFor()\'s return value as opts.patternLabel', function () {
     global.window.DiagramPref = { labelFor: function () { return 'E-shape barre, root on 6, root position'; } };
     var optsD, optsC;
     try {
-      optsD = withCapture(function () { gPack.diagram('E', 'small'); });
-      optsC = withCapture(function () { gPack.diagramClosed('E', 'small'); });
+      optsD = withCapture(function () { gPack.diagram('E', 'big'); });
+      optsC = withCapture(function () { gPack.diagramClosed('E', 'big'); });
     } finally { global.window.DiagramPref = origDiagramPref; }
     assert.strictEqual(optsD.patternLabel, 'E-shape barre, root on 6, root position');
     assert.strictEqual(optsC.patternLabel, 'E-shape barre, root on 6, root position');
   });
 
-  test('patternLabel is "" (falsy) when window.DiagramPref is absent - degrades cleanly, never throws', function () {
-    global.window.DiagramPref = undefined;
-    var opts = withCapture(function () { gPack.diagram('E', 'small'); });
-    assert.strictEqual(opts.patternLabel, '');
-  });
-
-  /* ---------- U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md):
-   * opts.reserveLabelSlot - only true when DiagramPref.get() reports
-   * 'patterns' mode; 'dots' mode and an absent DiagramPref both stay false,
-   * matching the pre-U21 no-reservation behavior exactly. ---------- */
-  test('opts.reserveLabelSlot is true when DiagramPref.get() reports "patterns" mode', function () {
-    global.window.DiagramPref = { labelFor: function () { return ''; }, get: function () { return 'patterns'; } };
+  test('U25: size "small" NEVER labels - patternLabel is "" and DiagramPref.labelFor() is not even consulted', function () {
+    var called = 0;
+    global.window.DiagramPref = { labelFor: function () { called++; return 'stub-label'; }, get: function () { return 'patterns'; } };
     var optsD, optsC, optsChain;
     try {
       optsD = withCapture(function () { gPack.diagram('E', 'small'); });
       optsC = withCapture(function () { gPack.diagramClosed('E', 'small'); });
-      optsChain = withCapture(function () { gPack.diagramChain(['C', 'F', 'G']); });
+      optsChain = withCapture(function () { gPack.diagramChain(['C', 'F', 'G'], 'small'); });
+    } finally { global.window.DiagramPref = origDiagramPref; }
+    assert.strictEqual(optsD.patternLabel, '');
+    assert.strictEqual(optsC.patternLabel, '');
+    assert.strictEqual(optsChain.patternLabel, '');
+    assert.strictEqual(called, 0, 'small renders must not consult the classifier at all');
+  });
+
+  test('U25: an OMITTED size (no explicit "big") never labels - unlabeled is the default', function () {
+    global.window.DiagramPref = { labelFor: function () { return 'stub-label'; }, get: function () { return 'patterns'; } };
+    var opts;
+    try { opts = withCapture(function () { gPack.diagramChain(['C', 'F', 'G']); }); }
+    finally { global.window.DiagramPref = origDiagramPref; }
+    assert.strictEqual(opts.patternLabel, '');
+    assert.strictEqual(opts.reserveLabelSlot, false);
+  });
+
+  test('patternLabel is "" (falsy) at size "big" when window.DiagramPref is absent - degrades cleanly, never throws', function () {
+    global.window.DiagramPref = undefined;
+    var opts = withCapture(function () { gPack.diagram('E', 'big'); });
+    assert.strictEqual(opts.patternLabel, '');
+  });
+
+  /* ---------- U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md),
+   * narrowed by U25: opts.reserveLabelSlot - only true when DiagramPref.get()
+   * reports 'patterns' mode AND the render size is 'big'; 'dots' mode, small
+   * sizes, and an absent DiagramPref all stay false. ---------- */
+  test('opts.reserveLabelSlot is true at size "big" when DiagramPref.get() reports "patterns" mode', function () {
+    global.window.DiagramPref = { labelFor: function () { return ''; }, get: function () { return 'patterns'; } };
+    var optsD, optsC, optsChain;
+    try {
+      optsD = withCapture(function () { gPack.diagram('E', 'big'); });
+      optsC = withCapture(function () { gPack.diagramClosed('E', 'big'); });
+      optsChain = withCapture(function () { gPack.diagramChain(['C', 'F', 'G'], 'big'); });
     } finally { global.window.DiagramPref = origDiagramPref; }
     assert.strictEqual(optsD.reserveLabelSlot, true);
     assert.strictEqual(optsC.reserveLabelSlot, true);
     assert.strictEqual(optsChain.reserveLabelSlot, true, 'expected diagramChain to also reserve (the last captured call in the chain)');
   });
-  test('opts.reserveLabelSlot is false when DiagramPref.get() reports "dots" mode (the default)', function () {
-    global.window.DiagramPref = { labelFor: function () { return ''; }, get: function () { return 'dots'; } };
+  test('opts.reserveLabelSlot is false at size "small" even in "patterns" mode (U25 - small cards never reserve)', function () {
+    global.window.DiagramPref = { labelFor: function () { return ''; }, get: function () { return 'patterns'; } };
     var opts;
     try { opts = withCapture(function () { gPack.diagram('E', 'small'); }); }
     finally { global.window.DiagramPref = origDiagramPref; }
     assert.strictEqual(opts.reserveLabelSlot, false);
   });
+  test('opts.reserveLabelSlot is false at size "big" when DiagramPref.get() reports "dots" mode (the default)', function () {
+    global.window.DiagramPref = { labelFor: function () { return ''; }, get: function () { return 'dots'; } };
+    var opts;
+    try { opts = withCapture(function () { gPack.diagram('E', 'big'); }); }
+    finally { global.window.DiagramPref = origDiagramPref; }
+    assert.strictEqual(opts.reserveLabelSlot, false);
+  });
   test('opts.reserveLabelSlot is false when window.DiagramPref is absent entirely - degrades cleanly, never throws', function () {
     global.window.DiagramPref = undefined;
-    var opts = withCapture(function () { gPack.diagram('E', 'small'); });
+    var opts = withCapture(function () { gPack.diagram('E', 'big'); });
     assert.strictEqual(opts.reserveLabelSlot, false);
   });
   test('opts.reserveLabelSlot is false when DiagramPref exists but has no get() (defensive - a stub/older shape must never throw)', function () {
     global.window.DiagramPref = { labelFor: function () { return ''; } };
     var opts;
-    try { opts = withCapture(function () { gPack.diagram('E', 'small'); }); }
+    try { opts = withCapture(function () { gPack.diagram('E', 'big'); }); }
     finally { global.window.DiagramPref = origDiagramPref; }
     assert.strictEqual(opts.reserveLabelSlot, false);
   });

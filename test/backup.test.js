@@ -40,8 +40,23 @@ test('owned() accepts app namespaces, rejects foreign + excluded keys', function
   assert.strictEqual(Backup.owned('someothersite.token'), false);
   assert.strictEqual(Backup.owned('music.devlog.v1'), false);      // dev-only excluded
   assert.strictEqual(Backup.owned('music.lastBackup.v1'), false);  // device-local stamp excluded
+  assert.strictEqual(Backup.owned('music.lastRestore.v1'), false); // device-local stamp excluded (M-SETTINGS-CLARITY - same rationale as lastBackup)
   assert.strictEqual(Backup.owned(Backup.SCHEMA_KEY), false);      // the marker itself excluded
   assert.strictEqual(Backup.owned(null), false);
+});
+
+/* ---------- M-SETTINGS-CLARITY: a restored envelope must never carry/overwrite
+ * the DESTINATION device's own last-run stamps ---------- */
+test('snapshot() excludes both last-run stamps, so a restore can never overwrite the destination\'s own times', function () {
+  var s = fakeStore({
+    'songbook.setlist.v1': '["a"]',
+    'music.lastBackup.v1': '2026-07-01T00:00:00.000Z',
+    'music.lastRestore.v1': '2026-07-02T00:00:00.000Z'
+  });
+  var snap = Backup.snapshot(s, null);
+  assert.strictEqual(snap.data['music.lastBackup.v1'], undefined);
+  assert.strictEqual(snap.data['music.lastRestore.v1'], undefined);
+  assert.strictEqual(snap.data['songbook.setlist.v1'], '["a"]');
 });
 
 /* ---------- REGRESSION: the per-instrument roadcase namespace must be captured ---------- */
