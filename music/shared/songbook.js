@@ -1245,7 +1245,7 @@
       if (!firstrunShouldRender(global.Notables)) return; // dismissed, or slot held elsewhere - skip silently
       var banner = global.Notables.renderBanner({
         consumerId: 'firstrun',
-        text: 'Tap any song to open its chords. Songs marked with a low chord count (like 3 chords) are the easiest place to start.',
+        text: 'Your Library - pick songs here to build your setlist. A song with just a few chords (like 3) is the easiest place to start.',
         onDismiss: function () {
           if (firstrunBannerEl && firstrunBannerEl.parentNode) firstrunBannerEl.parentNode.removeChild(firstrunBannerEl);
           firstrunBannerEl = null;
