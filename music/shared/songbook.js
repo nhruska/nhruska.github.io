@@ -2194,10 +2194,12 @@
       if (el.soloBackingBtn) {
         var showSolo = !!(songKey.root && progression.length);
         el.soloBackingBtn.hidden = !showSolo;
-        // C1 (pilot UAT): songbook.css sets `.soloBackingBtn{display:block}`
-        // unconditionally - unlike every other hide-via-[hidden] element in this
-        // file (.chips, .keyFlyout, .composeRow, ...), it has no paired
-        // `.soloBackingBtn[hidden]{display:none}` rule, so the author stylesheet's
+        // C1 (pilot UAT) - HISTORICAL, kept as defense: songbook.css used to set
+        // `.soloBackingBtn{display:block}` unconditionally, with no paired
+        // `[hidden]{display:none}` rule (unlike .chips/.keyFlyout/.composeRow). F28/F29
+        // renamed the class to `.soloRowBtn` (no display rule), so [hidden] alone now
+        // suffices and the inline style.display below is belt-and-suspenders. Back then
+        // the author stylesheet's
         // display:block cascades over the UA [hidden] rule and the button stayed
         // visible (and tappable) even with 0 or 1 chords and no key. That falsely
         // "live" button is what read as a one-chord "dead tap" (C3): nothing

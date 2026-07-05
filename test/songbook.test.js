@@ -708,17 +708,42 @@ test('renderSheet lyrics/both views escape section labels and injected tags', fu
 
 /* ---------- Solo-button visibility pin (codex #90 V1 medium) ----------
  * renderKey() is closure-bound, so pin the SOURCE contract: the gate must set
- * BOTH the hidden attribute AND inline style.display (songbook.css's
- * .soloBackingBtn{display:block} defeats the UA [hidden] rule - the C1/C3
- * root cause), and renderKey() must run at INIT for the first paint. */
+ * BOTH the hidden attribute AND inline style.display. (Historical C1/C3 root
+ * cause: songbook.css's old `.soloBackingBtn{display:block}` defeated the UA
+ * [hidden] rule; F28/F29 renamed the class to `.soloRowBtn` with no display
+ * rule, so the dual-set is now defensive.) renderKey() must run at INIT for
+ * the first paint. */
 test('solo-button gate pins hidden + inline display, and renderKey runs at init', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/el\.soloBackingBtn\.hidden = !showSolo/.test(src), 'hidden-attribute half of the gate missing');
-  assert.ok(/el\.soloBackingBtn\.style\.display = showSolo \? '' : 'none'/.test(src), 'inline-display half of the gate missing (CSS display:block would defeat [hidden] again)');
+  assert.ok(/el\.soloBackingBtn\.style\.display = showSolo \? '' : 'none'/.test(src), 'inline-display half of the gate missing (defensive: guards a future display rule re-defeating [hidden])');
   var initM = /\/\/ first paint[\s\S]{0,200}renderKey\(\);/.test(src) || /renderKey\(\);\s*\/\/ init/.test(src) || /init[\s\S]{0,400}renderKey\(\)/i.test(src);
   assert.ok(initM, 'renderKey() init call not found');
   assert.ok(!/forceStarters/.test(src), 'forceStarters must stay removed');
   assert.ok(!/cHelp/.test(src), 'cHelp references must stay removed');
+});
+
+/* F28/F29 (UI-std): the Solo entry + the In-key|All toggle share ONE controls
+ * row. Structural assertion (stronger than "the id exists somewhere"): both
+ * #catChips and #soloBackingBtn must sit INSIDE the #chordCtrlRow div in the
+ * real play/index.html, so a regression that moves the Solo button back out of
+ * the row fails here. (codex PR #195 V1 Medium: prior pins were source-regex only.) */
+test('F28/F29: #catChips and #soloBackingBtn are nested inside #chordCtrlRow (play/index.html)', function () {
+  var fs = require('fs'), path = require('path');
+  var html = fs.readFileSync(path.join(__dirname, '..', 'music', 'play', 'index.html'), 'utf8');
+  var idAt = html.indexOf('id="chordCtrlRow"');
+  assert.ok(idAt !== -1, '#chordCtrlRow container missing from play/index.html');
+  var openTag = html.lastIndexOf('<div', idAt); // start of the container's own <div ...>
+  // Walk div depth from the container open to find its matching </div>.
+  var re = /<div\b|<\/div>/g; re.lastIndex = openTag;
+  var depth = 0, end = -1, m;
+  while ((m = re.exec(html))) {
+    if (m[0] === '</div>') { if (--depth === 0) { end = m.index; break; } } else depth++;
+  }
+  assert.ok(end !== -1, 'could not find the closing </div> of #chordCtrlRow');
+  var block = html.slice(openTag, end);
+  assert.ok(/id="catChips"/.test(block), '#catChips (In-key|All toggle) must live inside #chordCtrlRow');
+  assert.ok(/id="soloBackingBtn"/.test(block), '#soloBackingBtn (Solo entry) must live inside #chordCtrlRow');
 });
 
 /* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------

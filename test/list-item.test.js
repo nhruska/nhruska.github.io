@@ -54,10 +54,12 @@ test('hazards: accidental-root -> sharps/flats; extended -> 7ths; plain -> none'
   assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['Am', 'C', 'G7'] })), ['7ths']);
   assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['C', 'G', 'Am'] })), []);
 });
-test('keyLabel: spells the mode out -> "A minor" / "C major", no key -> null (F34)', function () {
+test('keyLabel: spells major/minor out, mode-honest for church modes, no key -> null (F34)', function () {
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'A', mode: 'minor' })), 'A minor');
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'C', mode: 'major' })), 'C major');
-  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'D minor'); // minor-family
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'E', mode: 'aeolian' })), 'E minor'); // aeolian == natural minor
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'G', mode: 'mixolydian' })), 'G mixolydian'); // NOT "G major"
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'D dorian'); // NOT "D minor"
   assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null);
 });
 test('metaCells: SONG -> count only at rest (chords/capo/mine are badges/markers, not meta)', function () {

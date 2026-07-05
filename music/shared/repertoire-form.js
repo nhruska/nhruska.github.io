@@ -241,9 +241,13 @@
         // operator flagged the old order ("delete seems to be in a risky place...
         // bottom right should be save") plus the wrong color ("delete buttons
         // should be red" - .btn.red is actually the accent fill, a misnomer; see
-        // .btn.danger in songbook.css). The REAL Delete is genuinely destructive
-        // (.btn.danger); the fork "Revert to original" is NOT a delete (no data
-        // is destroyed, a slot is replaced in place) so it stays .btn.ghost.
+        // .btn.danger in songbook.css). Both are destructive and confirm-gated:
+        // real Delete removes a custom item; fork "Revert to original" discards
+        // the fork's edits (onDelete -> deleteCustomItem; the confirm at ~278 says
+        // "Your edits and video will be removed" verbatim). Ghost (vs danger) for
+        // Revert is a deliberate SOFTER signal - discard-my-tweaks reads less
+        // alarming than delete-forever - NOT a claim it is non-destructive.
+        // (codex PR #195 V1 High: comment previously mis-stated "no data destroyed")
         + '<div class="rf-actions">'
         + (editing && current.onDelete ? '<button class="btn ' + (fork ? 'ghost' : 'danger') + '" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
         + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Library' : editing ? 'Save changes' : 'Create') + '</button>'
