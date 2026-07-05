@@ -10,7 +10,8 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| **TIER-0 DRAINED (2026-07-04, v105)** - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
+| M-EAR wave 1 IN FLIGHT (scale audition: sound.js seam + Studio/Compose hum-loop + bouncing marker) + M-SONG-ANCHORS drafting (operator veto next) | vision Q1-Q5 answered | [vision-ear-first](vision-ear-first-20260704.md) |
+| (prior state: TIER-0 drained at v105 - refilled same day by the ear-first vision) - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
@@ -36,7 +37,8 @@
 | # | Candidate | Vision source |
 |---|---|---|
 | M-1 | Tutor Phase 4 complete: decoupled solo-scale selector over a FIXED progression (relative/parallel demos in place) | [TUTOR-ROADMAP](../../music/TUTOR-ROADMAP.md) Phase 4 (PARTIAL) |
-| M-2 | Tutor Phase 5: song-form coaching (AABA, sections -> whole songs) | TUTOR-ROADMAP Phase 5 (PLANNED) |
+| M-2 | Tutor Phase 5: song-form coaching (AABA, sections -> whole songs) | TUTOR-ROADMAP Phase 5 (PLANNED); operator Q5 2026-07-04: M-CONSTRUCT is a SEPARATE mission (with future-features intel) - P5 stays teaching-focused, M-CONSTRUCT is builder-focused |
+| M-11 | M-CONSTRUCT: song construction + section transitions (OWN mission per operator Q5) - kickoff includes an INTEL pass on possible future features | [vision-ear-first](vision-ear-first-20260704.md) |
 | M-3 | Strum-engine revival (draft PR #88: Karplus-Strong + humanized hand) | Existing draft PR - needs vision refresh + quality gate |
 | M-4 | Music-app regression suite in CI (Playwright journeys J1-J4 + T-plans as automation) | Sprint-1 harness + test plan exist; needs CI-shape decision (box OOM rule -> CI-dispatched) |
 | M-5 | buildAdapter extraction (inline HTML -> shared/chord-pack-adapter.js + real tests) - before next instrument profile or HSR Lens | [analysis A3](analysis-refactor-enhance-20260704.md) |

@@ -40,7 +40,7 @@ The ear layer makes STRUM-ENGINE REVIVAL (#88, MID M-3) a FOUNDATION item, not a
 | 2 Hum-along | **Slow loop + bouncing degree marker** (visual marker tracks the sounding note on the existing notes/degrees line) |
 | 3 Song anchors | **Agents draft, operator vetoes** (drafter launched; disputed modal attributions flagged, never asserted) |
 | 4 Where | **BOTH Studio and Compose preview** - "we need to hear along with the visuals for cognitive capture" |
-| 5 M-CONSTRUCT merge | PENDING |
+| 5 M-CONSTRUCT merge | **OWN MISSION** (not folded into Tutor P5) **with an INTEL component**: research possible future song-construction features (pedagogy scan, comparable-tool scan) feeding its kickoff interview |
 
 ## M-EAR wave 1 spec (BINDING)
 
