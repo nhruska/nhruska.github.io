@@ -426,6 +426,37 @@ test('remapSetlist: a non-array is safe (returns false)', function () {
   assert.strictEqual(Songbook.remapSetlist(null, 'k1', 'm9'), false);
 });
 
+/* ---- S-SET-INTEGRITY (UAT U22): load-heal + defensive-nav pure helpers ---- */
+test('pruneDanglingSetlist: drops entries the resolver reports missing, keeps the rest, returns the count removed', function () {
+  var sl = ['k1', 'ghost1', 'k2', 'ghost2'];
+  var real = { k1: true, k2: true };
+  var removed = Songbook.pruneDanglingSetlist(sl, function (id) { return !!real[id]; });
+  assert.strictEqual(removed, 2);
+  assert.deepStrictEqual(sl, ['k1', 'k2']);
+});
+test('pruneDanglingSetlist: nothing dangling -> 0 removed, array unchanged', function () {
+  var sl = ['k1', 'k2'];
+  var removed = Songbook.pruneDanglingSetlist(sl, function () { return true; });
+  assert.strictEqual(removed, 0);
+  assert.deepStrictEqual(sl, ['k1', 'k2']);
+});
+test('pruneDanglingSetlist: mutates in place (keeps the array reference the queue/STATE hold)', function () {
+  var sl = ['k1', 'ghost'];
+  var ref = sl;
+  Songbook.pruneDanglingSetlist(sl, function (id) { return id === 'k1'; });
+  assert.strictEqual(sl, ref);
+  assert.deepStrictEqual(sl, ['k1']);
+});
+test('pruneDanglingSetlist: non-array or non-function resolver is safe (returns 0, no throw)', function () {
+  assert.strictEqual(Songbook.pruneDanglingSetlist(null, function () { return true; }), 0);
+  assert.strictEqual(Songbook.pruneDanglingSetlist(['a'], null), 0);
+});
+test('skipNoticeText: singular for 1, plural for 2+', function () {
+  assert.strictEqual(Songbook.skipNoticeText(1), '1 removed song skipped');
+  assert.strictEqual(Songbook.skipNoticeText(2), '2 removed songs skipped');
+  assert.strictEqual(Songbook.skipNoticeText(5), '5 removed songs skipped');
+});
+
 /* ---- shadowedTrackKeys: a fork suppresses its shadowed catalog song's backing
  * track (so a renamed fork doesn't orphan the original track as a standalone row). ---- */
 // Use the REAL Repertoire.matchKey (not a mock) so the test catches normalization /
@@ -878,6 +909,13 @@ function makeStubEl(tag) {
     // is purely additive capability, not a behavior change for any passing test.
     _listeners: {},
     addEventListener: function (type, fn) { (e._listeners[type] = e._listeners[type] || []).push(fn); },
+    // S-SET-INTEGRITY (UAT U22): Toast.wirePauseOnTouch's teardown() calls
+    // el.removeEventListener on its own host el (not just document - see the
+    // document-level stub above for the touchend/pointerup listeners it also
+    // removes). A no-op is correct here: this stub's addEventListener never
+    // actually needs cleanup for these tests (no test simulates the
+    // touchstart/pointerdown pause gesture), so nothing needs untracking.
+    removeEventListener: function () {},
     // UAT U6/U7 (2026-07-04): both spy-recording, purely additive - no
     // existing test reads _focusCalls/_scrollCalls, so this can't regress
     // anything already passing. focus() records a call count (U7: "focus
@@ -886,7 +924,20 @@ function makeStubEl(tag) {
     // element by default here, so callers must guard-check before use.
     focus: function () { e._focusCalls = (e._focusCalls || 0) + 1; },
     scrollIntoView: function (opts) { e._scrollCalls = (e._scrollCalls || []); e._scrollCalls.push(opts); },
-    click: function () { if (e.onclick) e.onclick(); }
+    click: function () { if (e.onclick) e.onclick(); },
+    // S-SET-INTEGRITY (UAT U22): safe no-ops, not real HTML parsing. This
+    // stub's innerHTML setter never actually parses markup into children (see
+    // below), so a real querySelector/querySelectorAll can't resolve anything
+    // meaningful here anyway. list-item.js's ListItem.render() (called by
+    // renderSongs()/renderSetlist(), which S-SET-INTEGRITY's tests are the
+    // first in this file to actually exercise) already guards every
+    // querySelector/querySelectorAll result defensively (`if (body && ...)`,
+    // `.forEach` on the returned array) - so null/[] here is a correct,
+    // crash-free stand-in, not a semantic claim about what would match on a
+    // real DOM. Purely additive: no existing test calls these on a stub el.
+    getAttribute: function (k) { return Object.prototype.hasOwnProperty.call(e.attrs, k) ? e.attrs[k] : null; },
+    querySelector: function () { return null; },
+    querySelectorAll: function () { return []; }
   };
   e.classList = {
     _set: {},
@@ -908,7 +959,13 @@ if (typeof global.document === 'undefined') {
     body: makeStubEl('body'),
     getElementById: function () { return null; },
     querySelector: function () { return null; },
-    querySelectorAll: function () { return []; }
+    querySelectorAll: function () { return []; },
+    // S-SET-INTEGRITY (UAT U22): Toast.wirePauseOnTouch (toast.js) listens at
+    // the document level for touchend/pointerup ("releasing outside resumes"
+    // - see toast.js's header comment). Safe no-ops - no test drives the
+    // pause/resume touch gesture itself, only the Undo button's onclick.
+    addEventListener: function () {},
+    removeEventListener: function () {}
   };
 }
 // A fresh Songbook.mount() with just enough `el` for the Compose save UI
@@ -1777,6 +1834,159 @@ test('S-PROG-WRAP-2: a too-narrow strip demotes the full stage early (width guar
   m.elMap.prog.children.forEach(function (slot) {
     assert.ok(slot.children.some(function (c) { return c.className === 'suggChip'; }));
   });
+});
+
+/* =====================================================================
+ * S-SET-INTEGRITY (UAT U22) - delete-heal TOAST+ACTION undo.
+ * ---------------------------------------------------------------------
+ * deleteCustomItem/showDeleteUndoBanner are private closures - reachable
+ * only through a real Songbook.mount(). Library/Setlist rendering
+ * (renderSongs/renderSetlist/renderFilterChips) never calls querySelector
+ * (only insertBefore/appendChild/textContent - see makeStubEl), so the
+ * existing minimal stub-document harness (mountForSaveTests's approach)
+ * covers this without needing the fuller DOM a Practice/Stage queue-nav
+ * test would require - that surface is covered live (Playwright) + at the
+ * algorithm level (test/queue.test.js's stepResolvable suite) instead.
+ * ===================================================================== */
+function mountForSetIntegrityTests(opts) {
+  opts = opts || {};
+  var seed = {};
+  if (opts.customSongs) seed['settest.custom.v1'] = JSON.stringify(opts.customSongs);
+  if (opts.setlist) seed['settest.setlist.v1'] = JSON.stringify(opts.setlist);
+  global.localStorage = lsReset.fakeStore(seed);
+  var songsList = makeStubEl('div'), libSongs = makeStubEl('div');
+  libSongs.appendChild(songsList); // songsList must be libSongs' CHILD (delete-undo banner's insertBefore target)
+  var setBody = makeStubEl('div'), setWrapper = makeStubEl('div');
+  setWrapper.appendChild(setBody); // setBody.parentNode must exist (ensureSetUndoBanner + ensureDelUndoBanner mirror this contract)
+  var elMap = {
+    libSongs: libSongs, songsList: songsList, libCount: makeStubEl('div'),
+    setBody: setBody, setBar: makeStubEl('div'), setCount: makeStubEl('div'),
+    setClear: makeStubEl('button'), setEdit: makeStubEl('button'), performBtn: makeStubEl('button')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'settest', el: elMap, songs: opts.catalog || [] });
+  return { ctrl: ctrl, elMap: elMap };
+}
+function findDelUndoBanner(m) {
+  var found = null;
+  m.elMap.libSongs.children.forEach(function (c) { if (c.className === 'setUndo toastAction') found = c; });
+  return found;
+}
+
+test('S-SET-INTEGRITY: deleting a SETLISTED custom song says so, prunes the setlist, and heals the active queue/current', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [
+      { id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C', 'G'] },
+      { id: 'm2', t: 'Song B', a: '', y: 2026, d: 'Mine', custom: true, seq: ['D', 'A'] },
+      { id: 'm3', t: 'Song C', a: '', y: 2026, d: 'Mine', custom: true, seq: ['E', 'B'] }
+    ],
+    setlist: ['m1', 'm2', 'm3']
+  });
+  m.ctrl.openSong('m2', ['m1', 'm2', 'm3']); // open the middle song into the setlist's queue (STATE.current = m2)
+  m.ctrl.deleteCustomItem('m2');
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1', 'm3'], 'the deleted id must be pruned from the setlist immediately');
+  assert.ok(!m.ctrl.getSongs().some(function (s) { return s.id === 'm2'; }), 'the deleted song must no longer resolve via ALLSONGS');
+  assert.strictEqual(m.ctrl.getState().current, null, 'STATE.current must clear when the song it pointed at was deleted (D3s)');
+  var banner = findDelUndoBanner(m);
+  assert.ok(banner, 'a delete-undo banner must be inserted into the Library screen');
+  assert.strictEqual(banner.hidden, false);
+  assert.strictEqual(banner.children[0].textContent, 'Deleted Song B - also removed from your setlist',
+    'the outcome message must truthfully say the song was setlisted (singular "your setlist" - this app has exactly one Jam setlist per profile)');
+});
+
+test('S-SET-INTEGRITY: Undo restores BOTH the item and its exact setlist position', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [
+      { id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C', 'G'] },
+      { id: 'm2', t: 'Song B', a: '', y: 2026, d: 'Mine', custom: true, seq: ['D', 'A'] },
+      { id: 'm3', t: 'Song C', a: '', y: 2026, d: 'Mine', custom: true, seq: ['E', 'B'] }
+    ],
+    setlist: ['m1', 'm2', 'm3']
+  });
+  m.ctrl.deleteCustomItem('m2');
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1', 'm3']);
+  var banner = findDelUndoBanner(m);
+  var undoBtn = banner.children[1];
+  assert.strictEqual(undoBtn.textContent, 'Undo');
+  undoBtn.onclick();
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1', 'm2', 'm3'], 'Undo must reinsert m2 at its ORIGINAL index (1), not append it at the end');
+  assert.ok(m.ctrl.getSongs().some(function (s) { return s.id === 'm2'; }), 'Undo must restore the custom song record itself');
+  // Persisted, not just in-memory - a page reload must see the restored state too.
+  assert.deepStrictEqual(JSON.parse(global.localStorage.getItem('settest.setlist.v1')), ['m1', 'm2', 'm3']);
+  assert.ok(JSON.parse(global.localStorage.getItem('settest.custom.v1')).some(function (cs) { return cs.id === 'm2'; }));
+});
+
+test('S-SET-INTEGRITY: deleting a NON-setlisted custom song omits the "also removed" clause, and Undo never touches the setlist', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [{ id: 'm1', t: 'Lonely Song', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }],
+    setlist: []
+  });
+  m.ctrl.deleteCustomItem('m1');
+  var banner = findDelUndoBanner(m);
+  assert.strictEqual(banner.children[0].textContent, 'Deleted Lonely Song', 'no setlist clause when the song was never setlisted');
+  banner.children[1].onclick(); // Undo
+  assert.deepStrictEqual(m.ctrl.getState().setlist, [], 'Undo on a never-setlisted item must leave an empty setlist empty, not fabricate an entry');
+  assert.ok(m.ctrl.getSongs().some(function (s) { return s.id === 'm1'; }));
+});
+
+test('S-SET-INTEGRITY: fork-revert ("Delete" on a fork) messages "Reverted", and Undo puts the fork id back where the catalog id now sits', function () {
+  var m = mountForSetIntegrityTests({
+    catalog: [{ t: 'Original Song', a: 'Some Artist', y: 2020, d: '20s', seq: ['C', 'G'] }], // -> k0
+    customSongs: [{ id: 'm1', t: 'Original Song', a: 'Some Artist', y: 2020, d: 'Mine', custom: true, forkOf: 'k0', seq: ['C', 'G', 'Am'] }],
+    setlist: ['m1'] // the fork already shadows k0's setlist slot (as if createCustomItem's own remapSetlist had run earlier)
+  });
+  m.ctrl.deleteCustomItem('m1');
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['k0'], 'reverting a fork REPLACES the slot with the catalog id - never removes it');
+  var banner = findDelUndoBanner(m);
+  assert.strictEqual(banner.children[0].textContent, 'Reverted Original Song to the original',
+    'a fork revert is not a deletion - the message must say so, with no "also removed" clause (the set did not shrink)');
+  banner.children[1].onclick(); // Undo
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1'], 'Undo must put the fork id back where the catalog id now sits');
+  assert.ok(m.ctrl.getSongs().some(function (s) { return s.id === 'm1' && s.forkOf === 'k0'; }), 'the fork record itself must be restored');
+});
+
+test('S-SET-INTEGRITY: Undo on a throwing (quota-exceeded) store shows the truthful SAVE_FAIL_MSG, never a silent success', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }],
+    setlist: ['m1']
+  });
+  m.ctrl.deleteCustomItem('m1');
+  var banner = findDelUndoBanner(m);
+  var warned = 0;
+  var origWarn = console.warn;
+  console.warn = function () { warned++; };
+  global.localStorage.setItem = function () {
+    var e = new Error('The quota has been exceeded.');
+    e.name = 'QuotaExceededError';
+    throw e;
+  };
+  try {
+    banner.children[1].onclick(); // Undo - both saveCustom() and saveSet() now throw
+  } finally {
+    console.warn = origWarn;
+  }
+  // The in-memory restore still happens (matches saveProgression/D-SAVE-TRUTH: the
+  // attempt is truthful about PERSISTENCE, not about whether the UI state changed).
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1']);
+  // showToast (the Library "Added to setlist"/failure toast host, S-TOAST)
+  // lazily appends its ONE shared toast element to document.body - a
+  // different host than delUndoBanner (el.libSongs), so no timer/host
+  // collision between the two (toast.js's per-host Map, see its header).
+  var libToast = null;
+  global.document.body.children.forEach(function (c) { if (c.className && c.className.indexOf('toast') === 0) libToast = c; });
+  assert.ok(libToast, 'a failure must surface via the Library toast host (a different host than the delete-undo banner)');
+  assert.strictEqual(libToast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
+  assert.ok(warned >= 1, 'safeSet must console.warn on the failed write');
+});
+
+test('S-SET-INTEGRITY (load-heal): a setlist persisted with a dangling ref (pre-fix data, or a restored old backup) is pruned on mount, silently and before the first render', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }],
+    // 'ghost' was never a real custom/catalog id - simulates a dangling ref that
+    // slipped past delete-heal (e.g. from before this fix existed, or a restore).
+    setlist: ['m1', 'ghost']
+  });
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1'], 'the dangling ref must be pruned by mount time, before any render');
+  assert.deepStrictEqual(JSON.parse(global.localStorage.getItem('settest.setlist.v1')), ['m1'], 'the heal must persist, not just live in memory');
 });
 
 run();

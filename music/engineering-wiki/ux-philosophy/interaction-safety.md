@@ -10,9 +10,9 @@ Guard every destructive control. The app already ships the patterns; this page n
 
 Every element that deletes, mutates, or loses user work lives behind at least one guard. Absent a guard, the grip-model mis-tap becomes permanent loss.
 
-1. **Confirm (modal):** high-stakes whole-collection acts. Native confirm() is jarring inside a PWA - app-styled preferred. Live uses: the Settings backup/restore flow's restore-confirm (SHIPPED app-styled MODAL, M-DESIGN-ENFORCE wave 2 - see ui-primitives.md MODAL). Setlist clear ✕ (songbook.js setClear) and a couple of other confirm() call sites remain native - registered pre-existing debt, unchanged by wave 2 (out of its grant; see component-conventions.md Findings register), pinned by test/no-native-dialog-lint.test.js so the count can't silently grow.
+1. **Confirm (modal):** high-stakes whole-collection acts. Native confirm() is jarring inside a PWA - app-styled preferred. Live uses: the Settings backup/restore flow's restore-confirm (SHIPPED app-styled MODAL, M-DESIGN-ENFORCE wave 2 - see ui-primitives.md MODAL). Setlist clear ✕ (songbook.js setClear) and a couple of other confirm() call sites remain native - registered pre-existing debt, unchanged by wave 2 (out of its grant; see component-conventions.md Findings register), pinned by test/no-native-dialog-lint.test.js so the count can't silently grow. **Amended (S-SET-INTEGRITY, UAT U22):** `deleteCustomItem`'s two native confirm() call sites (custom-song delete / fork revert) stay native confirm()s (still registered debt, still pinned by the lint) but are no longer the ONLY guard - a TOAST+ACTION undo (guard #3) now layers on top, so a mis-confirmed delete is still recoverable for the 6s window.
 2. **Edit mode:** destructive controls hidden at rest, revealed behind an explicit Edit toggle. Live use: Set reorder/remove.
-3. **TOAST+ACTION undo (amended M-DESIGN-ENFORCE wave 2, UAT U19 - supersedes the untimed "persistent undo banner" this guard used to describe):** prior state held in memory; the toast.js `Toast.showAction()` primitive now times the window (default 6s, visible countdown bar, pause-on-touch - see ui-primitives.md TOAST+ACTION and decisions.md D-ENFORCE-2) IN ADDITION TO the pre-existing mutation-invalidation contract below - whichever fires first ends the pending undo. Live use: Set item remove; Compose Clear (sprint item 1, contract A3, amended).
+3. **TOAST+ACTION undo (amended M-DESIGN-ENFORCE wave 2, UAT U19 - supersedes the untimed "persistent undo banner" this guard used to describe):** prior state held in memory; the toast.js `Toast.showAction()` primitive now times the window (default 6s, visible countdown bar, pause-on-touch - see ui-primitives.md TOAST+ACTION and decisions.md D-ENFORCE-2) IN ADDITION TO the pre-existing mutation-invalidation contract below - whichever fires first ends the pending undo. Live use: Set item remove; Compose Clear (sprint item 1, contract A3, amended); custom-song delete / fork-revert (`showDeleteUndoBanner`, S-SET-INTEGRITY, UAT U22 - see the delete-heal amendment below).
 4. **Movement-cancel (wireTap):** the tap fires only if the touch did not move past threshold - kills scroll-grab accidents. Live use: list-item body + actions, setlist ✕, Compose slot removers.
 5. **Sizing (44px floor):** larger hit areas compound with movement-cancel; not a guard alone.
 
@@ -31,6 +31,30 @@ Movement-cancelled tap helper: record touchstart, mark moved if >10px drift, sup
 - **Lifetime:** route-local, in-memory, session-only - dies on tab-switch/reload. Matches the Set-remove undo precedent; zero backup.js surface.
 - **Visibility (amended):** the banner used to persist until invalidation only - "never a timed toast." It is now ALSO time-bound via toast.js `Toast.showAction()` (default 6s, visible countdown bar, pause-on-touch) - see ui-primitives.md TOAST+ACTION and decisions.md D-ENFORCE-2. Mutation-invalidation and the timer both end the pending undo; whichever fires first wins.
 
+## Delete-heal amendment: guarding an INDIRECT consequence, not just the direct action (S-SET-INTEGRITY, UAT U22) [STABLE]
+
+Every guard above protects the element you tapped. This one protects a DIFFERENT
+surface a delete can silently damage: deleting a custom song (or reverting a
+fork) that happens to be setlisted used to shrink the Jam setlist with zero
+signal - the confirm() only asked about the song itself, never mentioned the
+set. UAT U22 traced a real bug to exactly this gap (a dangling setlist
+reference falling through to the library empty state on Prev/Next - see
+[decisions.md](../decisions.md) D-SET-INTEGRITY for the full three-level fix).
+
+The guard: `deleteCustomItem`'s outcome message is now TRUTHFUL about the
+indirect consequence, not just the direct one -
+`"Deleted <title>"` plain, or `"Deleted <title> - also removed from your
+setlist"` when it was setlisted (singular - this app has exactly ONE Jam
+setlist per profile), or `"Reverted <title> to the original"` for a fork
+revert (the set does not shrink there - the slot is replaced in place, so no
+"also removed" clause). Undo (guard #3 above) restores BOTH the deleted
+record and its exact setlist position, not just the record.
+
+**Generalization for future guards:** when a destructive action can ripple
+into a SECOND surface the user isn't directly looking at, the outcome
+message must name that ripple, and the undo must restore across BOTH
+surfaces atomically - not just the one the user tapped.
+
 ## Notables: one-shot dismissible guidance [STABLE]
 
 Infrastructure for once-ever hints ([notables.js](../../shared/notables.js)):
@@ -47,4 +71,4 @@ Enumerate every element that deletes/mutates work; classify guard status; map th
 
 ---
 
-**Anchors verified:** list-item.js (wireTap), notables.js (API + arbitration), songbook.js (setClear confirm, showSetUndoBanner, showClearUndoBanner, wireTapCancel), toast.js (showAction/wirePauseOnTouch), play/index.html (openConfirmModal), docs/plans/ux-findings-20260703.md (F1-F3, F7, geometry), docs/plans/ux-sprint-1-20260703.md (A3-A5, A11), decisions.md (D-ENFORCE-2), [test/toast-action.test.js](../../../test/toast-action.test.js), [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js)
+**Anchors verified:** list-item.js (wireTap), notables.js (API + arbitration), songbook.js (setClear confirm, showSetUndoBanner, showClearUndoBanner, deleteCustomItem, showDeleteUndoBanner, wireTapCancel), toast.js (showAction/wirePauseOnTouch), play/index.html (openConfirmModal), docs/plans/ux-findings-20260703.md (F1-F3, F7, geometry), docs/plans/ux-sprint-1-20260703.md (A3-A5, A11), docs/plans/uat-walkthrough-20260704.md (U22), decisions.md (D-ENFORCE-2, D-SET-INTEGRITY), [test/toast-action.test.js](../../../test/toast-action.test.js), [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js), [test/songbook.test.js](../../../test/songbook.test.js) S-SET-INTEGRITY suite

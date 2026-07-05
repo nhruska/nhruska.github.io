@@ -43,7 +43,7 @@ THE canonical registry of every key this app persists. Verified against `music/s
 | Key | Owner (file:line) | Shape | User data? | Backed up? | Notes |
 |---|---|---|---|---|---|
 | `roadcase-<profileId>.custom.v1` | songbook.js:945 | array of composed/custom song records | **Yes - highest value** | Yes | Per-instrument namespace (`storagePrefix: 'roadcase-' + profile.id`, wired in play/index.html:698); `songbook.` is the engine's own default prefix, never used at runtime |
-| `roadcase-<profileId>.setlist.v1` | songbook.js:956 | array of song ids | Yes | Yes | The Jam set list |
+| `roadcase-<profileId>.setlist.v1` | songbook.js:956 | array of song ids | Yes | Yes | The Jam set list. Referential integrity (no dangling ids) is enforced at BOTH mutation time and load time - see [Setlist referential integrity](#setlist-referential-integrity-d-set-integrity-stable) below |
 | `roadcase-<profileId>.last.v1` | songbook.js:960-965 | string (song id) | No - pref | Yes | Last-opened song; passive write (`safeSet`, D-SAVE-TRUTH) |
 | `roadcase-<profileId>.perfprefs.v2` | songbook.js:970-980 | `{speed, view}` | No - pref | Yes | `view` is tri-state `'lyrics'\|'chords'\|'both'` |
 | `roadcase-<profileId>.perfprefs.v1` | songbook.js:971 (read-only) | `{speed, view}`, `view` 2-state | No - pref | Yes (if still present) | **Migration SOURCE only** - `loadPerfPrefs()` falls back v2->v1 with a value transform (`view:'lyrics'`->`'both'`); ad-hoc, hand-rolled, the pattern `StorageMigrate` generalizes |
@@ -162,6 +162,40 @@ Known gap: `toggleSet`'s "Added to setlist" toast (songbook.js ~1248, outside th
 line-region grant) has the SAME unconditional-success shape as saveProgression did -
 queued as a follow-up, same fix pattern.
 
+## Setlist referential integrity [D-SET-INTEGRITY, STABLE]
+
+`roadcase-<profileId>.setlist.v1` is an array of song ids with NO foreign-key
+constraint of its own (plain localStorage, no DB) - a dangling entry (an id
+that no longer resolves via `songById`/ALLSONGS) is possible any time a
+library item is removed without every reference to it being cleaned up in
+the same atomic step. Three independent layers close this, all three kept
+(belt-and-suspenders, not "pick one" - see D-SET-INTEGRITY in
+[decisions.md](../decisions.md) for the full UAT U22 trace):
+
+1. **Delete-heal (mutation time).** `deleteCustomItem` is the ONE call site
+   that can remove a library item (a custom song delete, or a fork revert).
+   It already pruned/remapped the setlist atomically via `remapSetlist`
+   (D-HARDEN era) before this fix; it now ALSO surfaces a TOAST+ACTION undo
+   (`showDeleteUndoBanner`) naming whether the setlist shrank ("also removed
+   from your setlist" - singular, this app has exactly ONE setlist per
+   profile) and restores both the item and its exact setlist position on
+   Undo.
+2. **Defensive nav (read time, in-session).** `Queue.stepResolvable(dir,
+   resolves)` ([shared/queue.js](../../shared/queue.js)) steps past any
+   unresolvable id instead of landing on it, so Practice/Stage Prev/Next can
+   never fall to the "Choose a song from the Library" empty state mid-set -
+   the U22 symptom. A one-shot "N removed song(s) skipped" notice appends to
+   the existing position counter when this actually fires.
+3. **Load-heal (mount time).** `pruneDanglingSetlist(setlist, resolves)`
+   silently drops any surviving dangling id right after `rebuildAll()` in
+   mount-init, before the first render - covers a setlist that predates this
+   fix, or one restored from an older backup. A defensive READ-TIME pass
+   (matches "every reader in this app is defensive" above), deliberately NOT
+   a `StorageMigrate` registration - a data-integrity invariant that must
+   hold on every load, not a one-time shape migration gated by a version
+   number. No `SCHEMA_VERSION`/`music.schema.version` change (purely
+   additive; the array's own SHAPE never changes, only its membership).
+
 ---
 
-**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission), songbook.js:945-3016 (every roadcase- key), tracks.js:423-449 (bt./trackUrls + migrateUrls/LEGACY_TRACKKEYS), play/index.html:15-20,601,784-786 (pre-paint reads + PROFILE_KEY/ACCENT_KEY/THEME_KEY/LAST_BACKUP_KEY), play/triad-inversions.html:564-572 (tri.* keys), storage-migrate.js (whole file, M-6 STORAGE-MIGRATE), backup.js OWNED_PREFIXES/EXCLUDE/restore() (S-BACKUP-INTEGRATE, this mission - tri. prefix add, music.schema.version deliberately-not-excluded comment, post-restore StorageMigrate.run() replay), test/backup.test.js + test/storage-migrate.test.js (tri.* + version-in-envelope + migration-replay cases, this mission), diagram-pref.js (whole file, S-DIAGRAM-PREF steps 1-2, KEY/get/set)
+**Anchors verified:** backup.js:20-45 + snapshot/validate/restore, music/CLAUDE.md:24,30, tracks.js ~150 (trackKey) + ~305 (LEGACY_TRACKKEYS), repertoire.js (matchKey, mergeRec, build), notables.js storage key, songbook.js safeSet + saveCustom/saveSet/saveLast/savePerfPrefs/saveSongView + saveProgression (S-SAVE-TRUTH, this mission), backup.js songCount/backupNudgeState + notables.js PRIORITY + play/index.html renderBackupNudge (S-BACKUP-NUDGE, this mission), songbook.js:945-3016 (every roadcase- key), tracks.js:423-449 (bt./trackUrls + migrateUrls/LEGACY_TRACKKEYS), play/index.html:15-20,601,784-786 (pre-paint reads + PROFILE_KEY/ACCENT_KEY/THEME_KEY/LAST_BACKUP_KEY), play/triad-inversions.html:564-572 (tri.* keys), storage-migrate.js (whole file, M-6 STORAGE-MIGRATE), backup.js OWNED_PREFIXES/EXCLUDE/restore() (S-BACKUP-INTEGRATE, this mission - tri. prefix add, music.schema.version deliberately-not-excluded comment, post-restore StorageMigrate.run() replay), test/backup.test.js + test/storage-migrate.test.js (tri.* + version-in-envelope + migration-replay cases, this mission), diagram-pref.js (whole file, S-DIAGRAM-PREF steps 1-2, KEY/get/set), queue.js stepResolvable (S-SET-INTEGRITY, UAT U22), songbook.js deleteCustomItem/showDeleteUndoBanner/pruneDanglingSetlist/navQueue/skipNoticeText (S-SET-INTEGRITY, UAT U22), test/queue.test.js + test/songbook.test.js S-SET-INTEGRITY suites (this mission)
