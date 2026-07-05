@@ -93,8 +93,57 @@ test('opts.tones ABSENT -> byte-identical render (SHA-256 lock against the pre-t
   // Locked at the moment opts.tones was introduced (music/shared/diagram.js,
   // M-GUIDE W3a). A hash mismatch means the tones-absent render path changed -
   // re-verify deliberately before updating this literal.
-  assert.strictEqual(hash, 'b4d62a3cde7c61effb9b551755e40ab58bcda42ba0142c8feaf5d8b4cb915004');
+  //
+  // RE-VERIFIED + UPDATED (M-EAR wave 1.5, U12): every dot now carries a
+  // `class="kxDot"` + `data-pc="<pc>"` regardless of opts.tones - the
+  // fretboard sounding-highlight lookup key key-explorer.js's
+  // boxWrap.setSounding(pc) queries. This IS an intentional, reviewed change
+  // to the tones-absent baseline (not a regression) - the kx-sounding CLASS
+  // itself is still never baked into this render (added later via JS
+  // classList, see key-explorer.js), so that half of the contract holds.
+  assert.strictEqual(hash, 'fee1611e28fe2679e66a9c2bac65aa599ab01ee28e21318bd7eaf1932f56b524');
 });
+
+/* ---------- M-EAR wave 1.5 (U12): data-pc marker + kx-sounding never baked in ---------- */
+test('opts.tones absent: every dot still carries data-pc (the sounding-highlight lookup key), one per in-scale note', function () {
+  var el = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 7 });
+  var svg = el.innerHTML;
+  var matches = svg.match(/data-pc="\d+"/g) || [];
+  assert.ok(matches.length > 0, 'expected data-pc attributes on the tones-absent render');
+  matches.forEach(function (m) {
+    var pc = parseInt(m.match(/\d+/)[0], 10);
+    assert.ok(C_MAJOR.indexOf(pc) !== -1, 'data-pc ' + pc + ' must be one of the rendered scale pcs');
+  });
+});
+test('opts.tones present: dots ALSO carry data-pc alongside their kx-* class (both markers coexist)', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var el = D.scale({
+    openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7,
+    tones: { byPc: { 0: 'root', 7: 'chord' }, rubPc: null }
+  });
+  var svg = el.innerHTML;
+  var rootIdx = svg.indexOf('kx-root');
+  var circleStart = svg.lastIndexOf('<circle', rootIdx);
+  var circleTag = svg.slice(circleStart, svg.indexOf('/>', circleStart) + 2);
+  assert.ok(/data-pc="0"/.test(circleTag), 'expected data-pc="0" on the kx-root dot, got: ' + circleTag);
+});
+test('kx-sounding is NEVER present in the static render (tones absent or present) - it is added later via JS classList, not baked in here', function () {
+  var C_BLUES = [0, 3, 5, 6, 7, 10];
+  var withoutTones = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 7 });
+  var withTones = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_BLUES, rootPc: 0, frets: 7, tones: { byPc: { 0: 'root' }, rubPc: null } });
+  assert.strictEqual(withoutTones.innerHTML.indexOf('kx-sounding'), -1);
+  assert.strictEqual(withTones.innerHTML.indexOf('kx-sounding'), -1);
+});
+
+/* ---------- M-EAR wave 1.5 (U13): F=POS_CAP(14) full-neck window geometry ----------
+ * Same W = padX+openColW+F*fretW+padX formula defaultFrets' F=12 comment
+ * documents (349px) - F=14 (the "0-14" full-neck span key-explorer.js
+ * requests) computes 15+19+14*25+15 = 399px. */
+test('F=14 open window (full-neck span, key-explorer.js POS_CAP): computes 399px wide', function () {
+  var el = D.scale({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 14 });
+  assert.ok(el.innerHTML.indexOf('width="399"') >= 0, 'expected width 399, got: ' + (el.innerHTML.match(/width="\d+"/) || [])[0]);
+});
+
 test('opts.tones present: root/chord/rub classes + CSS-var styles + dashed rub ring render', function () {
   var C_BLUES = [0, 3, 5, 6, 7, 10]; // C blues solo scale pcs (C D# F F# G A#)
   var el = D.scale({

@@ -287,7 +287,26 @@
    * The returned boxWrap ALSO carries setTones(tones) (M-GUIDE W3a): re-renders
    * ONLY diagBox with new opts.tones, preserving startFret - use this instead of
    * a full renderScale() re-call when just toggling a chord target on/off, so
-   * the player's position-walk isn't reset by the re-mark. */
+   * the player's position-walk isn't reset by the re-mark.
+   *
+   * M-EAR wave 1.5 additions:
+   *   opts.noPosCtrl (U13, full-neck view) - suppresses the back/forward
+   *     position-control UI (and any box-chip) even when the pack
+   *     supportsStart - the pack's full 6-arg scaleDiagram call still fires
+   *     (names/tones still forward), there's just nothing to walk when the
+   *     caller already requested the whole mapped range in one span. Callers
+   *     pair this with frets:POS_CAP (see the exported POS_CAP below) for the
+   *     "0-14, no pager" full-neck window; posWindow(0, POS_CAP, ...) then
+   *     shows the whole thing at startFret 0 with no need for the buttons.
+   *   boxWrap.setSounding(pc) (U12) - a class-swap pass over ALREADY-RENDERED
+   *     dots (never a re-render, mirroring setTones' position-preserving
+   *     precedent): lights every dot whose data-pc (diagram.js, unconditional
+   *     now) matches pc with kx-sounding, clearing whichever dots were lit
+   *     before. Re-applies itself automatically after every renderBox() (a
+   *     position walk or setTones call) so the sounding mark survives a fret
+   *     window change instead of silently vanishing. setSounding(null) clears
+   *     with no new highlight - the Studio's stop/chip-switch/view-toggle
+   *     paths all route through this for the "nothing sounding" state. */
   function renderScale(container, pack, rootPc, pcs, opts) {
     opts = opts || {};
     if (!(pack && typeof pack.scaleDiagram === 'function' && pcs && pcs.length)) return null;
@@ -297,6 +316,11 @@
     }
     var F = opts.frets || defaultFrets(pack);
     var supportsStart = !!pack.scaleDiagram.supportsStart;
+    // U13: the pack-contract call shape (names/tones passthrough) stays keyed
+    // to supportsStart alone; ONLY the position-control UI is additionally
+    // gated on !opts.noPosCtrl, so full-neck mode still gets a proper 6-arg
+    // render, just without walk buttons that would have nothing useful to do.
+    var showPosCtrl = supportsStart && !opts.noPosCtrl;
     var startFret = 0;
     var curTones = opts.tones || null;
     // boxWrap is a COLUMN holding the diagram + (optionally) the position control,
@@ -311,6 +335,20 @@
     // min(F, POS_CAP - startFret + 1) frets, so the last position renders 10-14
     // and never draws frets past the top-of-neck cap the comments promise.
     function shownFrets() { return posWindow(startFret, F, POS_STEP, POS_CAP).shown; }
+    // U12: sounding-note highlight state, applied/re-applied by renderBox() so
+    // it survives every re-render path (position walk, setTones, and its own
+    // setSounding() calls) without ever forcing an EXTRA re-render itself.
+    var curSoundingPc = null, soundingEls = [];
+    function clearSounding() {
+      soundingEls.forEach(function (el) { el.classList.remove('kx-sounding'); });
+      soundingEls = [];
+    }
+    function applySounding() {
+      clearSounding();
+      if (curSoundingPc == null || !diagBox.querySelectorAll) return; // never throws on a DOM stub without the method
+      var matches = diagBox.querySelectorAll('[data-pc="' + curSoundingPc + '"]');
+      Array.prototype.forEach.call(matches, function (el) { el.classList.add('kx-sounding'); soundingEls.push(el); });
+    }
     function renderBox() {
       diagBox.innerHTML = '';
       // Packs without the supportsStart flag get the classic 3-arg call - no
@@ -318,9 +356,11 @@
       diagBox.appendChild(supportsStart
         ? pack.scaleDiagram(rootPc, pcs, shownFrets(), startFret, opts.names, curTones)
         : pack.scaleDiagram(rootPc, pcs, F));
+      soundingEls = []; // the old dots are gone with the innerHTML wipe above
+      applySounding();
     }
     renderBox();
-    if (supportsStart) {
+    if (showPosCtrl) {
       // S-BLUES-BOXES: box() list for the active scale-chip, in NECK order
       // (ascending startFret) - empty unless opts.boxScaleId is one of the 3
       // box-eligible ids AND the pack can supply openPcsFromPack(). Kept
@@ -408,6 +448,10 @@
     // M-GUIDE W3a: re-render just diagBox with new tones - startFret (closure
     // var above) is untouched, so a target toggle never resets the position walk.
     boxWrap.setTones = function (tones) { curTones = tones || null; renderBox(); };
+    // U12: pc==null (or omitted) clears with no new highlight - callers use
+    // this for "nothing sounding" (stop / chip-switch-while-stopped / Studio
+    // close). A class-swap only - never triggers renderBox() itself.
+    boxWrap.setSounding = function (pc) { curSoundingPc = (pc == null ? null : pc); applySounding(); };
     return boxWrap;
   }
 
@@ -415,7 +459,12 @@
     renderChords: renderChords, renderScale: renderScale, posWindow: posWindow, defaultFrets: defaultFrets,
     // S-BLUES-BOXES: pure box-position math + its pack-metadata helper,
     // exported for direct Node tests independent of the renderScale DOM wiring.
-    boxes: boxes, openPcsFromPack: openPcsFromPack
+    boxes: boxes, openPcsFromPack: openPcsFromPack,
+    // M-EAR wave 1.5 (U13): the same top-of-neck fret cap the position-pager
+    // already enforces internally - exported so callers (tracks.js) can
+    // request the full-neck span (frets: POS_CAP) without duplicating the
+    // constant.
+    POS_CAP: POS_CAP
   };
   global.KeyExplorer = KeyExplorer;
   if (typeof module !== 'undefined' && module.exports) module.exports = KeyExplorer;
