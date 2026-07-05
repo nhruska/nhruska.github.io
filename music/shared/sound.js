@@ -11,16 +11,34 @@
  *   Sound.playScale(pcs, opts) -> { stop(), retarget(newPcs), setTempo(bpm) }
  *     - loop an octave-folded
  *     opts: rootOctave (default 4), bpm (default 72), loop (default true),
+ *           octaves (default 1, F17/operator UAT 2026-07-05) - how many
+ *                        octaves the ascent climbs before the closing root.
+ *                        Studio's Solo view passes 2 for a continuous
+ *                        two-octave run instead of the shorter single-octave
+ *                        hum; every other caller (Compose's key preview)
+ *                        omits it and keeps the original 1-octave behavior
+ *                        byte-identical.
+ *           rootDwell (default 1, F17) - a duration MULTIPLIER applied only
+ *                        to notes that share the scale's root pitch class
+ *                        (the start, and, at octaves>1, every subsequent
+ *                        octave-up root along the ascent) - a musical
+ *                        "landing" pause on the root instead of a silent gap
+ *                        (per the operator's own "pause on the root notes"
+ *                        wording; a longer note, not a rest, keeps the run
+ *                        from feeling like it stutters/glitches). Ignored
+ *                        (behaves as 1) when <= 1.
  *           onNote(i)  - fires once per note, i indexes the FULL played
- *                        sequence (length = pcs.length + 1: the ascent plus
- *                        the closing root an octave up). Consumers with a
- *                        pcs.length-token notes/degrees line map the marker
- *                        back with `i % pcs.length` - the closing root lands
- *                        the marker back on token 0, no extra DOM node needed.
- *                        After a retarget(), i resumes counting from 0
- *                        against the NEW pcs - map against the CURRENTLY
- *                        active scale's length, not a value captured at
- *                        playScale() call time (M-EAR wave 1.5).
+ *                        sequence (length = pcs.length*octaves + 1: the
+ *                        ascent plus the closing root an octave up).
+ *                        Consumers with a pcs.length-token notes/degrees
+ *                        line map the marker back with `i % pcs.length` -
+ *                        every root hit (start of each octave pass, and the
+ *                        closing root) lands the marker back on token 0, no
+ *                        extra DOM node needed. After a retarget(), i
+ *                        resumes counting from 0 against the NEW pcs - map
+ *                        against the CURRENTLY active scale's length, not a
+ *                        value captured at playScale() call time (M-EAR wave
+ *                        1.5).
  *           onStop()   - fires once when playback ends (stop() called, the
  *                        non-looping pass finished, or another playScale()
  *                        call preempted this one). retarget() never fires
@@ -95,16 +113,26 @@
   // the closing root one octave above wherever the ascent left off. Every
   // entry is { pc, octave }. Length is always pcs.length + 1 for a non-empty
   // input, [] for an empty one.
-  function buildNoteSequence(pcsIn, rootOctave) {
+  //
+  // F17 (operator UAT 2026-07-05): `octaves` (default 1, backward-compatible)
+  // repeats the ascent that many times before the closing root - each pass
+  // continues climbing from wherever the previous pass left off (the SAME
+  // prev/oct carry-forward the single-pass version already used for its own
+  // closing root, just generalized across N passes instead of 1). A caller
+  // that omits `octaves` gets the exact pre-F17 1-octave-then-close shape.
+  function buildNoteSequence(pcsIn, rootOctave, octaves) {
     var rootOct = typeof rootOctave === 'number' ? rootOctave : 4;
+    var passes = (typeof octaves === 'number' && octaves > 0) ? Math.floor(octaves) : 1;
     var pcs = (pcsIn || []).map(function (p) { return ((p % 12) + 12) % 12; });
     if (!pcs.length) return [];
     var notes = [], oct = rootOct, prev = null;
-    pcs.forEach(function (pc) {
-      if (prev !== null && pc <= prev) oct++;
-      notes.push({ pc: pc, octave: oct });
-      prev = pc;
-    });
+    for (var pass = 0; pass < passes; pass++) {
+      pcs.forEach(function (pc) {
+        if (prev !== null && pc <= prev) oct++;
+        notes.push({ pc: pc, octave: oct });
+        prev = pc;
+      });
+    }
     var rootPc = notes[0].pc;
     if (rootPc <= prev) oct++;
     notes.push({ pc: rootPc, octave: oct });
@@ -158,13 +186,18 @@
 
   function playScale(pcsIn, opts) {
     opts = opts || {};
-    var notes = buildNoteSequence(pcsIn, opts.rootOctave);
+    var notes = buildNoteSequence(pcsIn, opts.rootOctave, opts.octaves);
     var onNote = typeof opts.onNote === 'function' ? opts.onNote : null;
     var onStop = typeof opts.onStop === 'function' ? opts.onStop : null;
     if (!notes.length) { if (onStop) onStop(); return { stop: function () {} }; }
     var bpm = opts.bpm || 72;
     var noteDur = 60 / bpm; // quarter-note pulse at a hummable (slow) tempo
     var loop = opts.loop !== false;
+    // F17: a duration multiplier for root-pitch-class hits only (see header).
+    // <= 1 (including the default/omitted case) is treated as "no dwell" -
+    // every existing caller that doesn't pass rootDwell gets byte-identical
+    // per-note timing to before this option existed.
+    var rootDwell = (typeof opts.rootDwell === 'number' && opts.rootDwell > 1) ? opts.rootDwell : 1;
 
     stopAll(); // starting a new audition always silences whatever else was sounding
 
@@ -198,7 +231,7 @@
     }
     function retarget(newPcsIn) {
       if (stopped) return;
-      var newNotes = buildNoteSequence(newPcsIn, opts.rootOctave);
+      var newNotes = buildNoteSequence(newPcsIn, opts.rootOctave, opts.octaves);
       if (!newNotes.length) return; // unresolvable target - keep playing the current scale
       pendingNotes = newNotes;
     }
@@ -215,10 +248,16 @@
       if (pendingNotes) { notes = pendingNotes; pendingNotes = null; i = 0; }
       if (pendingBpm) { bpm = pendingBpm; noteDur = 60 / bpm; pendingBpm = null; }
       if (onNote) onNote(i);
-      schedulePass(a, [notes[i]], a.currentTime, noteDur);
+      // F17: any note sharing the ACTIVE sequence's root pitch class (index 0
+      // of whichever `notes` is current - the retarget swap above already
+      // landed by this point) gets the dwell multiplier: the ascent's start,
+      // every subsequent octave-up root (octaves>1), and the closing root.
+      var isRootHit = rootDwell > 1 && notes[i] && notes[i].pc === notes[0].pc;
+      var thisDur = isRootHit ? noteDur * rootDwell : noteDur;
+      schedulePass(a, [notes[i]], a.currentTime, thisDur);
       var ni = nextIndex(i, notes.length, loop);
-      if (ni === -1) { timers.push(setTimeout(doStop, noteDur * 1000)); return; }
-      timers.push(setTimeout(function () { step(ni); }, noteDur * 1000));
+      if (ni === -1) { timers.push(setTimeout(doStop, thisDur * 1000)); return; }
+      timers.push(setTimeout(function () { step(ni); }, thisDur * 1000));
     }
     whenRunning(a, function () { step(0); });
     return handle;

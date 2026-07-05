@@ -616,6 +616,23 @@
     // alongside the control, not just the control alone.
     var TEMPO_BPM = { slow: 72, med: 104, fast: 140 };
     var TEMPO_DEFAULT = 'med';
+    // F13 (operator UAT 2026-07-05): the 3-button Slow/Med/Fast segmented
+    // control reclaimed into ONE compact cycling "Speed" button (lives in
+    // the new controls row alongside Play/Guide, F12/F15) - tap advances
+    // slow -> med -> fast -> slow (wrap). Same 3-value TEMPO_BPM model,
+    // just a different control shape.
+    var TEMPO_ORDER = ['slow', 'med', 'fast'];
+    var TEMPO_LABEL = { slow: 'Slow', med: 'Med', fast: 'Fast' };
+    // F17 (operator UAT 2026-07-05): "instead of stopping the animated
+    // sequence of notes, just continue it through two octaves with a pause
+    // on the root notes." SOLO_OCTAVES/ROOT_DWELL are Studio-only opts passed
+    // to Sound.playScale (sound.js) - Compose's OWN key-preview toggle
+    // (songbook.js) omits both and keeps its original 1-octave/no-dwell
+    // behavior untouched. ROOT_DWELL 2.2x is a "landing" pause distinctly
+    // longer than a normal note without reading as a stutter/glitch at any
+    // of the 3 tempo settings.
+    var SOLO_OCTAVES = 2;
+    var ROOT_DWELL = 2.2;
     // Deep-link to the same "Walk the full cycle up the neck" inversions page the
     // Compose tab links (songbook.js), now surfaced from the Practice Studio too -
     // carries the active instrument profile (so the page opens on the same fretboard)
@@ -665,19 +682,18 @@
     // M-EAR wave 1: per-note tokens (instead of one plain joined string) so
     // the scale-audition marker can highlight the currently-sounding note.
     // Each token carries data-i so onNote(i) (i % notes.length, see sound.js's
-    // header) can find and mark exactly one note + one degree per tick. The
-    // CONTAINER (.bt-st-notes/.bt-st-degrees, held via data-solonotes/
-    // data-solodegrees) keeps its own class for its own text treatment -
-    // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be,
-    // or a flat "Bb" renders as "BB" (.bt-st-notes opts the whole run out).
+    // header) can find and mark exactly one note per tick. The CONTAINER
+    // (.bt-st-notes, held via data-solonotes) keeps its own class for its own
+    // text treatment - "Solo over it" is uppercased by .bt-st-lbl; the NOTE
+    // NAMES must NOT be, or a flat "Bb" renders as "BB" (.bt-st-notes opts
+    // the whole run out).
+    // F14 (operator UAT 2026-07-05): the separate scale-degrees line
+    // (renderDegreeTokens, e.g. "1 2 b3 4 5 b6 b7" under the note names) read
+    // as a redundant second notes rendering - removed. This is the ONE notes
+    // rendering left in the Solo section.
     function renderNoteTokens(notes) {
       return notes.map(function (n, i) {
         return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
-      }).join(' ');
-    }
-    function renderDegreeTokens(degrees) {
-      return (degrees || []).map(function (d, i) {
-        return '<span class="soundNote" data-i="' + i + '">' + esc(d) + '</span>';
       }).join(' ');
     }
     function openStudio(t) {
@@ -747,24 +763,11 @@
         return (Object.keys(merged).length || rubPc != null || ghostPcs.length)
           ? { byPc: merged, rubPc: rubPc, ghostPcs: ghostPcs } : null;
       }
-      // M-EAR wave 1.5 (U13): Window|Full-neck fretboard view, Studio-scoped
-      // (spans every scale chip, not per-chip state) - persisted across opens
-      // via an additive localStorage key (registered in data-model.md's
-      // inventory). Defensive read/write: private browsing / disabled storage
-      // must never throw; any unrecognized stored value falls back to
-      // 'window' (the pre-U13 default behavior).
-      function readFretView() {
-        try { return localStorage.getItem('music.fretview.v1') === 'full' ? 'full' : 'window'; }
-        catch (e) { return 'window'; }
-      }
-      function writeFretView(v) {
-        try { localStorage.setItem('music.fretview.v1', v === 'full' ? 'full' : 'window'); } catch (e) {}
-      }
-      var fretView = readFretView();
-      // M-EAR wave 1.6 (U14): the tempo control's persisted choice - same
-      // defensive read/write + additive-key discipline as fretView above
-      // (registered in data-model.md's inventory). Studio-scoped (spans every
-      // scale chip, like fretView), not per-track.
+      // M-EAR wave 1.6 (U14): the tempo control's persisted choice - defensive
+      // read/write (registered in data-model.md's inventory): private
+      // browsing / disabled storage must never throw; any unrecognized
+      // stored value falls back to TEMPO_DEFAULT. Studio-scoped (spans every
+      // scale chip), not per-track.
       function readTempo() {
         try { var v = localStorage.getItem('music.tempo.v1'); return TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT; }
         catch (e) { return TEMPO_DEFAULT; }
@@ -773,23 +776,23 @@
         try { localStorage.setItem('music.tempo.v1', TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT); } catch (e) {}
       }
       var tempo = readTempo();
-      // Full mode: one span fret 0-14 (KeyExplorer.POS_CAP - "small necks (12-
-      // fret default) treat full-neck as 0-14 too", so this ignores
-      // defaultFrets(pack) entirely), no pager UI (noPosCtrl) - box-snap is
-      // pager-only, so omitting boxScaleId here is enough to keep it out of
-      // full mode without a separate flag. Window mode is untouched: no frets
-      // override (falls back to defaultFrets(pack) same as pre-U13), boxScaleId
-      // passes through as before.
-      function scaleRenderOpts(names, tones, boxScaleId) {
-        return fretView === 'full'
-          ? { names: names, tones: tones, frets: global.KeyExplorer.POS_CAP, noPosCtrl: true }
-          : { names: names, tones: tones, boxScaleId: boxScaleId };
+      // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
+      // retired - the fretboard always renders frets 0-12 now (noPosCtrl, no
+      // pager), regardless of instrument. This drops the pager UI and, with
+      // it, the S-BLUES-BOXES box-position label (KeyExplorer.renderScale
+      // only ever allocates the box chip when its OWN position-pager is
+      // active - see its showPosCtrl gate) - a documented removal, not an
+      // oversight: with the whole 0-12 span always on screen there is
+      // nothing left to "walk to" a box position for. boxScaleIdFor (below)
+      // stays defined/exported/tested as pure pitch-class math - only this
+      // render call site stopped wiring it in.
+      function scaleRenderOpts(names, tones) {
+        return { names: names, tones: tones, frets: 12, noPosCtrl: true };
       }
-      // M-EAR wave 1.5: the ONE fretboard render choke point - the initial
-      // (mode) render, every scale-chip switch, AND the Window|Full-neck
-      // toggle all call this instead of duplicating the KeyExplorer.renderScale
-      // call, so all three paths stay in sync with whichever bundle/scaleId is
-      // ACTIVE and with the current view mode. Re-derives the [data-scale]
+      // The ONE fretboard render choke point - the initial (mode) render and
+      // every scale-chip switch call this instead of duplicating the
+      // KeyExplorer.renderScale call, so both paths stay in sync with
+      // whichever bundle/scaleId is ACTIVE. Re-derives the [data-scale]
       // container fresh each call (elPlayer's DOM is rebuilt per Studio open,
       // never stale across opens/closes).
       function renderFretboard(bundle, scaleId) {
@@ -800,7 +803,7 @@
           var nameMap = [];
           bundle.notes.forEach(function (nm, i) { nameMap[bundle.pcs[i]] = nm; });
           scaleBoxWrap = global.KeyExplorer.renderScale(container, pack, th.rootPc, bundle.pcs,
-            scaleRenderOpts(nameMap, computeTones(bundle, scaleId), boxScaleIdFor(scaleId, th.scaleMode)));
+            scaleRenderOpts(nameMap, computeTones(bundle, scaleId)));
         } catch (e) {}
       }
       // Renders the 5 labeled SoloGuide.card lines into the Guide box (guarded -
@@ -931,7 +934,9 @@
       // Re-tapping the active target clears it; tapping a different chord switches.
       function toggleTarget(chordName, tileEl) {
         activeTargetChord = (activeTargetChord === chordName) ? null : chordName;
-        var cells = elPlayer.querySelectorAll('.bt-st-chordcell .chord');
+        // F19 (operator UAT 2026-07-05): chord tiles are now flat name-only
+        // chips (.bt-st-chordchip), not the old diagram-cell structure.
+        var cells = elPlayer.querySelectorAll('.bt-st-chordchip');
         Array.prototype.forEach.call(cells, function (el) { el.classList.remove('targeted'); });
         if (activeTargetChord) tileEl.classList.add('targeted');
         renderLegend();
@@ -949,18 +954,31 @@
       var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
         : isSeedTrack ? ' Paste the one you like below.'
         : '';
-      // S5: a custom song built from a chord progression (t.seq) has no real
-      // artist/title to search by - enrich the query with its genre + chords
-      // instead of the bare (unhelpful) "My progression backing track" search.
-      var ytQuery = (t.custom && Array.isArray(t.seq) && t.seq.length) ? customSearchQuery(t) : searchQuery(t);
+      // F21 (operator UAT 2026-07-05): "the find a jam link can be moved -
+      // it's redundant with existing yt button - but with more user
+      // options." Consolidates the OLD standalone "Find a jam" solo-section
+      // disclosure (genre/feel-aware discovery, renderJamPanel below) with
+      // the stage's own video/search affordance - ONE entry point instead of
+      // two. No curated video yet: the old blind "Watch on YouTube" link
+      // (single fixed query from the track's own title/artist) becomes THIS
+      // toggle, same stage position/prominence (.bt-st-ytlink), now opening
+      // the richer genre+feel panel instead. A video is already curated: a
+      // smaller secondary "Find another jam" trigger (.bt-st-editlink, same
+      // convention as "Edit"/"Or edit song details") sits right under the
+      // iframe - discovery is still one tap away without a second big
+      // control competing with the video. Both wire to the SAME jamPanel
+      // (below); only the trigger's label/prominence differs by video state.
+      var jamPanelHtml = '<div class="bt-st-why" data-jampanel hidden></div>';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+          + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
+          + jamPanelHtml
         : '<div class="bt-st-search">'
-          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(ytQuery)) + '" target="_blank" rel="noopener">'
-          + 'Watch on YouTube &#8599;</a>'
-          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
-          + '</div>';
+          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">Find a jam &#8599;</button>'
+          + '<div class="bt-st-search-hint">No curated video yet - pick a genre and feel below to find a backing track.' + attachHint + ' The HUD below works either way.</div>'
+          + '</div>'
+          + jamPanelHtml;
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -1015,61 +1033,57 @@
         + urlEditor
         + '</div>'
         + '<div class="bt-st-body">'
+        // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
+        // (primary, 44px, was a 32px .soundToggle lost among the label text),
+        // Speed (one compact cycling button, replaces the 3-button Slow/Med/
+        // Fast segmented control), and Guide (a `?` icon, replaces the
+        // "Guide" text toggle - its content moves below the fretboard, see
+        // data-guide further down, F18). Sits at the TOP of the solo
+        // section, ahead of the notes line, so it reads as the section's
+        // primary controls rather than one more inline label decoration.
+        + '<div class="bt-st-sec"><div class="bt-st-ctrlrow" data-ctrlrow>'
+        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
+        + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
+        + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        + '</div>'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
-        // M-EAR wave 1: the play/stop audition toggle sits on the label row;
-        // the notes + degrees lines are now per-note token spans (not one
-        // plain string) so onNote(i) can bounce a .sounding marker across them.
-        + '<div class="bt-st-sec"><div class="bt-st-solorow"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + renderNoteTokens(th.notes) + '</span></div>'
-        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button></div>'
-        + '<div class="bt-st-degrees" data-solodegrees>' + renderDegreeTokens(th.degrees) + '</div>'
-        // M-EAR wave 1.6 (U14): the 3-stop tempo control - reuses the app's
-        // existing .viewToggle segmented-control primitive verbatim (same
-        // primitive the U13 Window|Full-neck toggle below already reuses),
-        // so this ships with ZERO new CSS for the control itself. Sits right
-        // under the notes/degrees lines it paces, above the scale chips.
-        + '<div class="viewToggle" data-tempo>'
-        + '<button class="' + (tempo === 'slow' ? 'on' : '') + '" data-tp="slow" type="button">Slow</button>'
-        + '<button class="' + (tempo === 'med' ? 'on' : '') + '" data-tp="med" type="button">Med</button>'
-        + '<button class="' + (tempo === 'fast' ? 'on' : '') + '" data-tp="fast" type="button">Fast</button>'
-        + '</div>'
+        // F14 (operator UAT 2026-07-05): this is the ONE notes rendering in
+        // the section now - the separate scale-degrees line underneath it
+        // (redundant second notes-shaped row) was removed.
+        + '<div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + renderNoteTokens(th.notes) + '</span></div>'
         // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
         + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
-        // M-GUIDE W3a: per-scale mentor card (SoloGuide) - reuses the
-        // .bt-st-why-toggle/.bt-st-why visual pattern verbatim (composed, not a
-        // new chip variant). Collapsed by default; renderGuide() re-derives on
-        // every chip select.
-        + '<button class="bt-st-why-toggle" data-guidetoggle type="button">Guide</button>'
-        + '<div class="bt-st-why" data-guide hidden></div>'
-        // M-EAR wave 1.5 (U13): Window|Full-neck view toggle - reuses the
-        // app's existing .viewToggle segmented-control primitive verbatim
-        // (songbook.css; documented but unused until now - ui-primitives.md/
-        // component-conventions.md's reserved segmented-control convention),
-        // so this needed ZERO new CSS. Sits directly above the fretboard it
-        // controls.
-        + '<div class="viewToggle" data-fretview>'
-        + '<button class="' + (fretView === 'window' ? 'on' : '') + '" data-fv="window" type="button">Window</button>'
-        + '<button class="' + (fretView === 'full' ? 'on' : '') + '" data-fv="full" type="button">Full neck</button>'
-        + '</div>'
+        // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
+        // retired - the fretboard always spans frets 0-12 now (see
+        // scaleRenderOpts above), so there is nothing left to toggle.
         + '<div class="bt-st-scale" data-scale></div>'
-        // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js)
-        // replaces the old M-GUIDE W3a prose caption ("Showing X inside Y -
-        // accent = chord root, filled = chord tones, hollow = chord tone
-        // outside the scale.") - dot-swatch + label rows instead of a
-        // hand-rolled sentence. No wrapping class/hidden attr needed: an
-        // empty container (Legend.render() returned null) is already
-        // invisible, and Legend.render()'s own returned element carries its
-        // own `.legend` styling.
+        // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js) - dot-
+        // swatch + label rows. No wrapping class/hidden attr needed: an empty
+        // container (Legend.render() returned null) is already invisible,
+        // and Legend.render()'s own returned element carries its own
+        // `.legend` styling.
         + '<div data-legend></div>'
-        // M-TRACKLIB wave 1: the key-aware jam-discovery explore panel - reuses
-        // the .bt-st-why-toggle/.bt-st-why disclosure pattern verbatim (Guide's
-        // own primitive, composed not re-invented). Collapsed by default;
-        // wireJamPanel() (below) re-derives the genre list + query on every
-        // scale-chip select, same as renderGuide().
-        + '<button class="bt-st-why-toggle" data-jamtoggle type="button">Find a jam</button>'
-        + '<div class="bt-st-why" data-jampanel hidden></div></div>'
+        // M-GUIDE W3a, relocated (F18, operator UAT 2026-07-05): the per-
+        // scale mentor card (SoloGuide) used to sit ABOVE the fretboard,
+        // right after the scale chips, competing with the primary practice
+        // flow for attention. It now renders BELOW the fretboard + legend,
+        // collapsed by default, opened via the `?` icon in the controls row
+        // above (not a one-shot Notable dismiss - the card content is scale-
+        // dependent and re-derives on every chip switch, so a permanent
+        // dismiss would hide a genuinely reusable re-orientation aid; the `?`
+        // itself is the cheap re-open affordance).
+        + '<div class="bt-st-why" data-guide hidden></div>'
+        + '</div>'
+        // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
+        // + roman numeral - name-only chips (like the scale-chip row above),
+        // all 7 fit ONE row at 412px. Tap still plays + targets the fretboard
+        // (toggleTarget, unchanged) - only the visual weight changed, not the
+        // interaction. Rendered by renderChordChips() (below), not
+        // KeyExplorer.renderChords (that helper's cell+diagram+roman shape
+        // no longer fits; Compose's own use of renderChords is untouched).
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
         // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
@@ -1084,39 +1098,41 @@
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
-      // M-GUIDE W3a: Guide toggle/box element refs (built above in the
-      // template string, so they exist as soon as elPlayer.innerHTML lands).
+      // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
+      // above in the template string, so they exist as soon as
+      // elPlayer.innerHTML lands) - guideToggle now lives in the controls
+      // row, guideBox now renders below the fretboard/legend.
       var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
       // M-EAR wave 1.6 (U16): the Legend container ref (replaces the old
       // target-caption ref).
       var legendEl = elPlayer.querySelector('[data-legend]');
-      // M-TRACKLIB wave 1: jam-discovery toggle/panel element refs (same
-      // built-in-the-template-string pattern as Guide, above).
-      var jamToggle = elPlayer.querySelector('[data-jamtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
-      // M-EAR wave 1: the play/stop scale-audition toggle + the notes/degrees
-      // token lines it bounces a marker across (curBundle already tracks
-      // whichever scale-chip is active - see the M-GUIDE W3a comment above).
+      // F21: the jam-discovery trigger + panel, now consolidated with the
+      // stage's video/search affordance (see jamPanelHtml, above) - jamPanel
+      // itself is unchanged (still driven by renderJamPanel()), only its
+      // trigger's location/label moved.
+      var jamFindToggle = elPlayer.querySelector('[data-jamfindtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
+      // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
+      // line it bounces a marker across (curBundle already tracks whichever
+      // scale-chip is active - see the M-GUIDE W3a comment above).
       var soundToggleEl = elPlayer.querySelector('[data-soundtoggle]');
       var notesLineEl = elPlayer.querySelector('[data-solonotes]');
-      var degreesLineEl = elPlayer.querySelector('[data-solodegrees]');
       // M-EAR wave 1.5 (U12): clearSoundMarks/markSoundingNote now ALSO drive
       // the fretboard highlight via scaleBoxWrap.setSounding(pc) - a class-swap
       // over already-rendered dots (key-explorer.js), never a re-render. Reads
       // scaleBoxWrap LIVE (not captured) so it always targets whichever
       // fretboard is on-screen right now (a chip switch or the Window|Full-neck
       // toggle both replace scaleBoxWrap via renderFretboard()).
+      // F14: only the notes line remains (the degrees line it used to share
+      // this marker-bounce with was removed) - a single element, not an array.
       function clearSoundMarks() {
-        [notesLineEl, degreesLineEl].forEach(function (c) {
-          if (!c) return;
-          Array.prototype.forEach.call(c.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
-        });
+        if (notesLineEl) {
+          Array.prototype.forEach.call(notesLineEl.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
+        }
         if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(null);
       }
       function markSoundingNote(i, pc) {
-        [notesLineEl, degreesLineEl].forEach(function (c) {
-          var el = c && c.querySelector('[data-i="' + i + '"]');
-          if (el) el.classList.add('sounding');
-        });
+        var el = notesLineEl && notesLineEl.querySelector('[data-i="' + i + '"]');
+        if (el) el.classList.add('sounding');
         if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(pc);
       }
       function setSoundToggle(on) {
@@ -1146,6 +1162,10 @@
             // value - live tempo changes route through studioSound.setTempo()
             // (the tempo toggle's own onclick, below), not a re-call here.
             bpm: TEMPO_BPM[tempo],
+            // F17: continuous two-octave run with a dwell on every root hit,
+            // instead of stopping/restarting each single-octave pass.
+            octaves: SOLO_OCTAVES,
+            rootDwell: ROOT_DWELL,
             // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
             // a value captured at play-start - after a chip-switch retarget,
             // curBundle already points at the NEW bundle (select() updates it
@@ -1189,49 +1209,21 @@
       // sounding yet (matches the fresh-open state renderFretboard(th,'mode')
       // just produced above).
       renderLegend();
-      // M-EAR wave 1.5 (U13): Window|Full-neck toggle wiring - paints the
-      // active button, persists the choice, and re-renders whichever bundle
-      // is CURRENTLY active (curBundle/curScaleId - a chip switch may have
-      // happened since Studio open) so the toggle always reflects on-screen
-      // state, not just the initial mode scale.
-      var fvToggle = elPlayer.querySelector('[data-fretview]');
-      function paintFvToggle() {
-        if (!fvToggle) return;
-        Array.prototype.forEach.call(fvToggle.querySelectorAll('button'), function (b) {
-          b.classList.toggle('on', b.getAttribute('data-fv') === fretView);
-        });
-      }
-      if (fvToggle) {
-        Array.prototype.forEach.call(fvToggle.querySelectorAll('button'), function (b) {
-          b.onclick = function () {
-            var v = b.getAttribute('data-fv');
-            if (v === fretView) return;
-            fretView = v; writeFretView(fretView); paintFvToggle();
-            renderFretboard(curBundle, curScaleId);
-          };
-        });
-      }
-      // M-EAR wave 1.6 (U14): tempo control wiring - same paint/persist
-      // pattern as the Window|Full-neck toggle above. A tap while playing
-      // calls studioSound.setTempo() (live boundary application, no
-      // re-tap/click/gap); a tap while stopped just persists the choice for
-      // the NEXT play tap to pick up (playScale's opts.bpm, above).
-      var tempoToggle = elPlayer.querySelector('[data-tempo]');
-      function paintTempoToggle() {
-        if (!tempoToggle) return;
-        Array.prototype.forEach.call(tempoToggle.querySelectorAll('button'), function (b) {
-          b.classList.toggle('on', b.getAttribute('data-tp') === tempo);
-        });
-      }
-      if (tempoToggle) {
-        Array.prototype.forEach.call(tempoToggle.querySelectorAll('button'), function (b) {
-          b.onclick = function () {
-            var v = b.getAttribute('data-tp');
-            if (v === tempo || !TEMPO_BPM.hasOwnProperty(v)) return;
-            tempo = v; writeTempo(tempo); paintTempoToggle();
-            if (studioSound && typeof studioSound.setTempo === 'function') studioSound.setTempo(TEMPO_BPM[tempo]);
-          };
-        });
+      // F13 (operator UAT 2026-07-05): the Speed control wiring - one
+      // cycling button (slow -> med -> fast -> slow) replacing the old
+      // 3-button Slow/Med/Fast segmented control. A tap while playing calls
+      // studioSound.setTempo() (live boundary application, no re-tap/click/
+      // gap, same as before); a tap while stopped just persists the choice
+      // for the NEXT play tap to pick up (playScale's opts.bpm, above).
+      var speedBtn = elPlayer.querySelector('[data-speedtoggle]');
+      if (speedBtn) {
+        speedBtn.onclick = function () {
+          var i = TEMPO_ORDER.indexOf(tempo);
+          tempo = TEMPO_ORDER[(i + 1) % TEMPO_ORDER.length];
+          writeTempo(tempo);
+          speedBtn.textContent = TEMPO_LABEL[tempo];
+          if (studioSound && typeof studioSound.setTempo === 'function') studioSound.setTempo(TEMPO_BPM[tempo]);
+        };
       }
       // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
       renderGuide(th.scaleMode, th.notes);
@@ -1282,7 +1274,6 @@
           curId = scaleId;
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
-          if (degreesLineEl) degreesLineEl.innerHTML = renderDegreeTokens(bundle.degrees);
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
           var SG = soloGuideRef();
           // S-REL-NAMES (U23): th.key names any {relMinor}/{relMajor} token in
@@ -1298,11 +1289,8 @@
           // too - a chip switch re-derives its genre list + query LIVE (the spec's
           // own words), never a show/hide of the panel itself (D-HERO-REMOVED).
           renderJamPanel(scaleId);
-          // M-EAR wave 1.5: renderFretboard() replaces the old inline
-          // KeyExplorer.renderScale try-block (S-BLUES-BOXES boxScaleId
-          // passthrough is unchanged - it's computed inside renderFretboard
-          // itself now, one choke point for the initial render/every chip
-          // switch/the Window|Full-neck toggle).
+          // renderFretboard() is the ONE fretboard render choke point - the
+          // initial render and every chip switch both call it.
           renderFretboard(bundle, scaleId);
           // M-EAR wave 1.6 (U16): re-derive the legend for the NEW bundle -
           // unlike the old target caption (whose text never varied by scale,
@@ -1318,35 +1306,45 @@
         }
         render();
       })();
-      global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
-        wrap: false,
-        cellClass: 'bt-st-chordcell',
-        diagram: function (name, size) {
-          var d;
-          try { d = pack.diagram(name, size); } catch (e) { return null; } // skip a chord the pack can't draw
-          d.className += ' bt-st-chip';
-          return d;
-        },
-        onTap: function (c, d) {
-          try { pack.playChord(c); } catch (e) {}
-          d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
-          // M-GUIDE W3a (section 2): one target surface - tap toggles the fretboard
-          // chord-tone target in addition to the existing play behavior.
-          toggleTarget(c, d);
-        }
-      });
+      // F19 (operator UAT 2026-07-05): name-only chip row - no chord
+      // diagrams, no roman numerals ("like others", e.g. the scale-chip row
+      // above). Hand-rolled instead of KeyExplorer.renderChords: that
+      // helper's cell+diagram+roman shape doesn't fit a flat chip; Compose's
+      // OWN use of renderChords (songbook.js) is untouched. Tap still plays
+      // the chord (pack.playChord) AND toggles the fretboard chord-tone
+      // target (toggleTarget) - only the visual weight changed.
+      (function renderChordChips() {
+        var chordsEl = elPlayer.querySelector('[data-chords]');
+        if (!chordsEl || !th.chords) return;
+        chordsEl.innerHTML = th.chords.map(function (it) {
+          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(it.chord) + '</button>';
+        }).join('');
+        Array.prototype.forEach.call(chordsEl.querySelectorAll('.bt-st-chordchip'), function (d, idx) {
+          var c = th.chords[idx].chord;
+          d.onclick = function () {
+            try { pack.playChord(c); } catch (e) {}
+            d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
+            // M-GUIDE W3a (section 2): one target surface - tap toggles the fretboard
+            // chord-tone target in addition to the existing play behavior.
+            toggleTarget(c, d);
+          };
+        });
+      })();
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {
         var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
         if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
       };
       if (guideToggle && guideBox) guideToggle.onclick = function () {
-        var show = guideBox.hidden; guideBox.hidden = !show; guideToggle.classList.toggle('on', show);
+        var show = guideBox.hidden; guideBox.hidden = !show;
+        guideToggle.classList.toggle('on', show);
+        guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
       };
-      // M-TRACKLIB wave 1: same disclosure toggle behavior as Guide - collapsed by
-      // default, per-open state only (no persistence).
-      if (jamToggle && jamPanel) jamToggle.onclick = function () {
-        var show = jamPanel.hidden; jamPanel.hidden = !show; jamToggle.classList.toggle('on', show);
+      // F21: same disclosure toggle behavior the old solo-section "Find a
+      // jam" button used - collapsed by default, per-open state only (no
+      // persistence) - just relocated to the stage (see jamPanelHtml, above).
+      if (jamFindToggle && jamPanel) jamFindToggle.onclick = function () {
+        var show = jamPanel.hidden; jamPanel.hidden = !show; jamFindToggle.classList.toggle('on', show);
       };
       // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
       var urlIn = elPlayer.querySelector('[data-urlin]'),

@@ -201,7 +201,21 @@
 // diagram.js (comment truth only), shared/backup.js (music.lastRestore.
 // joins EXCLUDE). check-cache-bump.sh re-verified against origin/main
 // immediately before push.
-var CACHE = 'music-v117';
+// M-SOLO-VIEW-UX (2026-07-05, operator UAT F12-F22): v117->v118 - no new
+// CORE paths. Studio Solo view rework: shared/sound.js (playScale gains
+// octaves/rootDwell opts, F17 - two-octave continuous run with a dwell on
+// root hits; every existing caller that omits them is unaffected), shared/
+// tracks.js (controls row - Play 44px/Speed cycling button/Guide `?`, F12/
+// F13/F15; ONE notes rendering, F14; Guide card relocated below the
+// fretboard, F18; fretboard always 0-12 frets, no Window|Full-neck toggle,
+// F16; chords-in-key are name-only chips, one row, F19; the Find-a-jam
+// panel consolidated into the stage's video/search affordance, F21), shared/
+// tracks.css (controls-row/speed-button/chord-chip CSS; the S-LAYOUT-SSOT
+// known-gap note on .bt-st-chords is RESOLVED-BY-REMOVAL, not fixed by the
+// token block), shared/songbook.css (comment-only cross-ref update),
+// play/index.html (Settings: the case-study write-up link removed, F22).
+// check-cache-bump.sh re-verified against origin/main immediately before push.
+var CACHE = 'music-v118';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

@@ -154,17 +154,25 @@
     margin-bottom:6px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
-  /* M-EAR wave 1: the "how do these notes function" degrees line under the
-     notes line - mirrors Compose's .keySoloDegrees (songbook.css, S-CHIPS-PLUS)
-     verbatim so the Studio and Compose scale-audition surfaces read as ONE
-     composed primitive, not two divergent instances (Element Consistency Law). */
-  .bt-st-degrees{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);
-    letter-spacing:.03em;margin:2px 0 4px;}
-  /* M-EAR wave 1: the play/stop scale-audition toggle sits on the SAME row as
-     the "Solo over it" label, right-aligned, so it costs no extra vertical
-     space (one-screen-above-the-fold, music/CLAUDE.md). */
-  .bt-st-solorow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
-  .bt-st-solorow .bt-st-lbl{margin-bottom:0;}
+  /* F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play (primary,
+     44px override below - the shared .soundToggle is 32px, fine for
+     Compose's compact inline preview, wrong for the Studio's now-PRIMARY
+     control), Speed (one compact cycling button, replaces the old 3-button
+     Slow/Med/Fast segmented control), and Guide (a `?` icon, replaces the
+     "Guide" text toggle - its content now renders below the fretboard, see
+     the .bt-st-guidebtn wiring). Sits ahead of the notes line so it reads as
+     the section's primary controls. Replaces the old .bt-st-solorow (the
+     play toggle used to share a row with the "Solo over it" label) and the
+     old .bt-st-degrees line (F14 - removed as a redundant second notes
+     rendering). */
+  .bt-st-ctrlrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.1rem;}
+  .bt-st-speedbtn{flex:0 0 auto;min-height:44px;min-width:64px;padding:0 14px;
+    border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);
+    font-family:inherit;font-weight:700;font-size:.78rem;border-radius:var(--r-btn-sm);cursor:pointer;
+    transition:transform .08s,background .15s,color .15s,border-color .15s;}
+  .bt-st-speedbtn:active{transform:scale(.96);}
+  .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
      blues), solo layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below)
      so the chip visual language reads consistently app-wide - but wraps instead
@@ -180,36 +188,30 @@
   .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
   .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
-  /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
-     taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width
-     columns + bottom-aligned cells line every roman up regardless of diagram height.
-     S-LAYOUT-SSOT KNOWN GAP (music/engineering-wiki/systems/layout-tokens.md, not fixed by
-     that pass - out of its required scope): unlike songbook.css's .chordGrid, this grid has
-     no minmax(var(--tile-min),...) floor and .bt-st-chordcell has no equivalent of
-     .chordGrid .chord svg{max-width:100%} - at a 360px viewport this grid's 4 columns
-     compute to ~79.5px each, narrower than --dg-canvas-w (86px, the 6-string-guitar
-     reference canvas), the same squeeze the U5/#96 bug class names elsewhere. Candidate
-     fix, when picked up: mirror .chordGrid .chord svg's clamp onto
-     .bt-st-chordcell .chord svg. */
-  .bt-st-chords{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px;align-items:end;}
-  .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
-  .bt-st-chordcell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
-    color:var(--txt-dim);letter-spacing:.04em;transition:color .12s;}
-  /* Stack the chord NAME above its diagram + center both - songbook.css scopes
-     this layout to specific parents (.prog, .suggRow, .chordGrid, .hsrChain),
-     none of which the Practice Studio is under. Without this rule the inline
-     <span class="chord-name"> floats to the left of the SVG (the misalignment
-     reported on the Tracks tab). */
-  .bt-st-chordcell .chord{display:flex;flex-direction:column;align-items:center;gap:4px;
-    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:12px;
-    padding:7px 5px 5px;box-sizing:border-box;}
-  .bt-st-chordcell .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;
-    font-size:.82rem;color:var(--txt);}
-  .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s,background .15s,border-color .15s;
+  /* F19 (operator UAT 2026-07-05): chords-in-key drops the SVG chord diagram
+     + roman numeral entirely - name-only chips (like the scale-chip row
+     above), all 7 fit ONE row at 412px (flex:1 1 0 divides the row evenly,
+     unlike .bt-st-scalechip's flex:0 0 auto+wrap, whose count varies 3-4).
+     S-LAYOUT-SSOT KNOWN GAP (music/engineering-wiki/systems/layout-tokens.md)
+     is now RESOLVED-BY-REMOVAL, not by adopting the --dg-canvas-w/--tile-min
+     clamp the gap note used to point at: there is no SVG canvas left in this
+     row to squeeze (the 4-column-diagram-width problem the gap described
+     cannot recur once the row renders text-only chips). Tap still plays the
+     chord + toggles the fretboard target (toggleTarget, tracks.js) - only
+     the visual weight changed. */
+  .bt-st-chords{display:flex;flex-wrap:nowrap;gap:4px;}
+  .bt-st-chordchip{flex:1 1 0;min-width:0;min-height:40px;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--txt);font-family:'Space Mono',monospace;font-weight:700;
+    font-size:.72rem;padding:0 2px;border-radius:var(--r-btn-sm);cursor:pointer;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    transition:transform .08s,background .15s,color .15s,border-color .15s,outline-color .12s;
     outline:2px solid transparent;outline-offset:2px;}
-  .bt-st-chip:active{transform:scale(.96);}
-  .bt-st-chip.sel{outline-color:var(--accent-ink);}
-  .bt-st-chip.sel + .rn{color:var(--accent-ink);}
+  .bt-st-chordchip:active{transform:scale(.96);}
+  .bt-st-chordchip.sel{outline-color:var(--accent-ink);}
+  /* Active chord-tone target: persistent outline on the tapped chords-in-key
+     chip (composes the .sel accent-outline language above, just not
+     auto-clearing after 220ms). */
+  .bt-st-chordchip.targeted{outline:2px solid var(--accent-ink);outline-offset:2px;}
   /* S1 (operator UAT): "Walk the full cycle up the neck" (.hsrMore, styled globally
      in songbook.css for the Compose tab) and this "Why these notes" toggle used to
      read like plain headings - no shared visual language marking either as
@@ -396,10 +398,8 @@
     --kx-blue:oklch(from var(--accent) 0.48 0.18 calc(h - 30));
   }
 }
-  /* Active chord-tone target: persistent outline on the tapped chords-in-key tile
-   * (composes the existing .bt-st-chip.sel accent-outline language, just not
-   * auto-clearing after 220ms). */
-  .bt-st-chordcell .chord.targeted{outline:2px solid var(--accent-ink);outline-offset:2px;}
+  /* (the F19 chip-targeting rule now lives with .bt-st-chordchip, above -
+   * the old .bt-st-chordcell .chord.targeted diagram-cell selector is gone.) */
   /* Per-scale mentor card (Guide): reuses .bt-st-why-toggle/.bt-st-why verbatim
    * for the toggle + collapse behavior (composed, not a new chip variant) - only
    * the 5 labeled rows inside are new. */
@@ -436,10 +436,8 @@
     background:var(--accent);border-radius:12px;padding:4px 10px;display:inline-block;}
   .scaleBoxChip[hidden]{display:none;}
 
-/* U5-class clamp parity (finding from PR #144's layout audit): the Studio
-   chords-in-key row lacked the SVG max-width guard the Compose grids carry.
-   Same defense-in-depth, same reason - see systems/layout-tokens.md. */
-.bt-st-chords .chordCell svg{max-width:100%;height:auto}
+/* (the U5-class SVG clamp parity rule for .bt-st-chords is gone - F19,
+   2026-07-05, removed the chord diagrams that rule was clamping.) */
 
 /* =====================================================================
  * M-TRACKLIB wave 1 - "Find a jam" explore panel (docs/plans/
@@ -448,11 +446,19 @@
  * for genre/feel selection (accent-fill .on grammar, no new chip variant),
  * and .bt-st-ytlink/.bt-st-editlink (already styled) for the two actions -
  * only the layout wrappers below are new.
+ *
+ * F21 (operator UAT 2026-07-05): the trigger (data-jamfindtoggle) moved from
+ * its own solo-section toggle into the stage's video/search affordance (see
+ * tracks.js openStudio's jamPanelHtml) - the .on state below is new (neither
+ * .bt-st-ytlink nor .bt-st-editlink had one; the old .bt-st-why-toggle it
+ * replaced got its "expanded" look from underline-color alone, which reads
+ * fine for a plain text link but not for these button-shaped primitives).
  * ===================================================================== */
   .bt-st-jamchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
   .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
     letter-spacing:.02em;margin:0 0 8px;}
   .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .bt-st-ytlink.on,.bt-st-editlink.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 
 /* =====================================================================
  * M-EAR wave 1.5 (U12) - the sounding-note fretboard dot, key-explorer.js's
