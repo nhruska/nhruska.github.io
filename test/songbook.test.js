@@ -746,6 +746,18 @@ test('F28/F29: #catChips and #soloBackingBtn are nested inside #chordCtrlRow (pl
   assert.ok(/id="soloBackingBtn"/.test(block), '#soloBackingBtn (Solo entry) must live inside #chordCtrlRow');
 });
 
+/* F28 (UI-std) song-view half: the Solo entry (#soloOverBtn) is built dynamically
+ * into the .practiceRow controls-row template (songbook.js), closure-bound so it's
+ * source-pinned per the repo pattern (see the songbook.js DOM-render note ~767).
+ * Asserts the button carries #soloOverBtn AND is concatenated into .practiceRow
+ * before the row closes - a regression moving it out fails. (codex PR #195 V2 Medium) */
+test('F28: song-view Solo (#soloOverBtn) is appended inside the .practiceRow row (songbook.js)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/soloRowBtn = canSolo \? '<button[^']*id="soloOverBtn"/.test(src), '#soloOverBtn definition (in soloRowBtn) missing');
+  assert.ok(/'<div class="practiceRow">'[\s\S]{0,600}\+ soloRowBtn[\s\S]{0,40}\+ '<\/div>'/.test(src),
+    'soloRowBtn (Solo) not appended inside the .practiceRow row before its close - F28 song-view move regressed');
+});
+
 /* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------
  * The binding correctness property: buildClearSnapshot/applyClearSnapshot must
  * be a fully INDEPENDENT copy - later progression/songKey mutations (add/remove

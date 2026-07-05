@@ -414,8 +414,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
 /* F33 (UAT): genuinely destructive actions (repertoire-form.js's real Delete -
-   NOT the fork "Revert to original", which stays .btn.ghost since nothing is
-   destroyed there). ".btn.red" is a MISNOMER (it's the accent-fill primary,
+   the fork "Revert to original" is ALSO destructive (discards the fork's edits,
+   confirm-gated) but stays .btn.ghost as a deliberate softer signal; see
+   repertoire-form.js). ".btn.red" is a MISNOMER (it's the accent-fill primary,
    not danger) - this is the actual red. Rest state mirrors the app's existing
    destructive-at-rest convention (#setBody .li-rm: transparent bg + --bad
    border/text); :active mirrors .prog .slot .rm's tap-flash (--bad fill +
