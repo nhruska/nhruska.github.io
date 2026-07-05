@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T10:43:33Z",
+  "generatedAt": "2026-07-05T11:01:49Z",
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +8,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T07:57:47Z",
-    "sha": "d42e022b029789666adf563b440eb85239d6254f",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/d42e022b029789666adf563b440eb85239d6254f"
+    "date": "2026-07-05T10:49:29Z",
+    "sha": "1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b",
+    "subject": "Retro panes (design-system day + ear-first night) + CC refresh (#183)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b"
   },
   "commits": [
+    {
+      "date": "2026-07-05T10:49:29Z",
+      "sha": "1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b",
+      "subject": "Retro panes (design-system day + ear-first night) + CC refresh (#183)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b"
+    },
     {
       "date": "2026-07-05T07:57:47Z",
       "sha": "d42e022b029789666adf563b440eb85239d6254f",
@@ -79,12 +85,6 @@
       "sha": "4af76c8c43b0a3d94154d566a6affb7b2afb0cab",
       "subject": "capture: U23 name-the-instance guidance principle (relative-key interpolation) (#173)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/4af76c8c43b0a3d94154d566a6affb7b2afb0cab"
-    },
-    {
-      "date": "2026-07-05T05:29:56Z",
-      "sha": "571d2e8fc5a87da289691e2bd5d3a1a1919dc799",
-      "subject": "capture: U22 dangling setlist refs (delete-heal + defensive nav + load-heal) (#172)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/571d2e8fc5a87da289691e2bd5d3a1a1919dc799"
     }
   ],
   "openPRs": [
@@ -147,6 +147,12 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T10:49:29Z",
+      "number": 183,
+      "title": "Retro panes (design-system day + ear-first night) + CC refresh: full mission record",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/183"
+    },
     {
       "mergedAt": "2026-07-05T07:57:33Z",
       "number": 182,
@@ -230,12 +236,6 @@
       "number": 169,
       "title": "M-EAR 1.6: tempo control + unmissable sounding lights + legend primitive (U14-U16)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/169"
-    },
-    {
-      "mergedAt": "2026-07-05T04:36:05Z",
-      "number": 168,
-      "title": "S-DIM-SHAPES: dim/dim7/aug classifier templates (U21)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/168"
     }
   ],
   "deploy": {
