@@ -10,7 +10,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| M-TRACKLIB wave 1 IN FLIGHT (key-aware jam-discovery matrix: mode x genre x feel -> generated searches -> prefilled library ingest) - operator: 'the appendix is the golden nugget' | (M-EAR w1 SHIPPED v106; anchors AWAITING VETO) | next: anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up named: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
+| (idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline) | AWAITING OPERATOR: bake veto + anchors veto | next: anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up named: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
 | (prior state: TIER-0 drained at v105 - refilled same day by the ear-first vision) - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
@@ -27,6 +27,8 @@
 | S9 | S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots | **go chips-plus** | Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission |
 
 ### Newly queued (findings)
+
+| S-ENFORCE-2B | Registered feedback debt: 3 remaining confirm() calls (songbook delete-item + clear-setlist, repertoire-form) -> modal standard; apply .helpIcon convention to tracks.js help toggles (grants now free) | PR #170 inventory |
 
 | # | Item | Source |
 |---|---|---|
