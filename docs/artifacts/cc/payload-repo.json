@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T07:57:47Z",
+  "generatedAt": "2026-07-05T10:43:33Z",
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +8,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T07:57:33Z",
-    "sha": "e641e2574a737d5320f9f57ff54aa08396e53003",
-    "subject": "cc: durable nightly snapshot via Actions (public repo, free minutes; direct commit - main verified unprotected) (#182)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e641e2574a737d5320f9f57ff54aa08396e53003"
+    "date": "2026-07-05T07:57:47Z",
+    "sha": "d42e022b029789666adf563b440eb85239d6254f",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/d42e022b029789666adf563b440eb85239d6254f"
   },
   "commits": [
+    {
+      "date": "2026-07-05T07:57:47Z",
+      "sha": "d42e022b029789666adf563b440eb85239d6254f",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d42e022b029789666adf563b440eb85239d6254f"
+    },
     {
       "date": "2026-07-05T07:57:33Z",
       "sha": "e641e2574a737d5320f9f57ff54aa08396e53003",
@@ -79,12 +85,6 @@
       "sha": "571d2e8fc5a87da289691e2bd5d3a1a1919dc799",
       "subject": "capture: U22 dangling setlist refs (delete-heal + defensive nav + load-heal) (#172)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/571d2e8fc5a87da289691e2bd5d3a1a1919dc799"
-    },
-    {
-      "date": "2026-07-05T04:56:39Z",
-      "sha": "7e9efecc4edc66a47b41ce3e54b9c960adcb8942",
-      "subject": "queue: ear-first night arc closed (v113); S-ENFORCE-2B debt queued (#171)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/7e9efecc4edc66a47b41ce3e54b9c960adcb8942"
     }
   ],
   "openPRs": [
@@ -250,6 +250,20 @@
     "cacheMatch": true
   },
   "missions": [
+    {
+      "title": "HiTL Mission Control - Design-System Day (retrospective): Storage Guardrail -> Consistency Law",
+      "status": "MISSION CLOSED - SHIPPED (v88 -> v105) - 27 PRs quietly professionalized the whole app: a real storage-migration guardrail, a shared toast primitive, a written ELEMENT CONSISTENCY LAW, and a 53-assert lint that makes it self-enforcing - then the day closed by turning a five-day-old undocumented removal into a registered decision.",
+      "file": "docs/artifacts/design-system-day-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/design-system-day-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - Ear-First Night (retrospective): Hear It, Play It, Trust It",
+      "status": "MISSION CLOSED - SHIPPED (v105 -> v116) - \"Hear the scale\" landed on both surfaces the same night; jam-discovery, YouTube prefill, and dim-chord classification joined it; then two UAT marathons (fourteen findings, U11 through U24, every one turned around same-session) hardened the whole audio-and-feedback surface before the operator stopped testing at 01:30.",
+      "file": "docs/artifacts/ear-first-night-20260705.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/ear-first-night-20260705.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/ear-first-night-20260705.html"
+    },
     {
       "title": "HiTL Mission Control - M-GUIDE: Blues Key + Scale Mentor Layer",
       "status": "MISSION CLOSED - SHIPPED (v85) - Blues is a real key, the fretboard targets chord tones (with ghost dots), the mentor cards are player-true, Compose previews your solo scale, small necks got 12 frets",
