@@ -116,7 +116,7 @@
 // (the Studio's "Find a jam" explore panel + prefilled add-to-library
 // handoff). New CORE path added below. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v107';
+var CACHE = 'music-v108';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

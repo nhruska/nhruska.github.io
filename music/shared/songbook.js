@@ -3169,7 +3169,10 @@
         mode: 'create',
         item: {
           t: (t && (t.title || t.t)) || '', a: (t && (t.artist || t.a)) || '',
-          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null
+          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null,
+          // D-TRACKLIB-1 seam completion: the jam-discovery panel passes genre;
+          // forward it so the create form (and saved item) carry it.
+          genre: (t && t.genre) || ''
         },
         onSave: function (f) { createCustomItem(f); }
       });
