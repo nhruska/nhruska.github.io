@@ -6,7 +6,7 @@
 
 Name the app's small set of interaction primitives so a new feature reaches for the RIGHT one instead of inventing a new shape. Seeded by S-TOAST (UAT U9, 2026-07-05): fixing the stuck "Added to setlist" toast required extracting toast.js, and the operator asked for the taxonomy to be written down while the code was fresh.
 
-## The six primitives
+## The seven primitives
 
 ### TOAST - transient outcome feedback
 
@@ -83,6 +83,18 @@ A disclosure the user can open ANY time (not one-shot like NOTABLE, not blocking
 - **Code home:** the disclosure MECHANISM itself is unchanged - `.bt-st-why-toggle`/`.bt-st-why` (tracks.js, collapsed by default, text toggle, per-open state only, never persisted - see component-conventions.md "Modal / Disclosure / Tabs"). Only the icon-marker CSS class is new (songbook.css `.helpIcon`).
 - **ARIA:** unchanged from the existing disclosure pattern (out of this mission's grant to alter).
 
+### ACCORDION - exclusive disclosure group
+
+A set of titled sections where opening one collapses the others; at most one section is open at a time, and zero-open is a valid state.
+
+- **When to use:** a PANEL surface (bottom sheet, dialog) holding several independent groups of controls where seeing two groups at once has no value - the header row doubles as a table of contents and the sheet stays short (the Settings sheet is the seeded case, operator ask 2026-07-05).
+- **When NOT to use:** a SCREEN scroller - decision D6 flattened Compose specifically to kill the nested-scroll swipe trap, and this primitive does not reopen that ruling; a lone explainer (use HELP or NOTABLE - one section is a disclosure, not a group); anything whose open state should persist (the accordion is per-open only, reset to all-collapsed at every sheet open).
+- **Code home:** [accordion.js](../../shared/accordion.js) - `Accordion.init(sections, opts) -> handle` (`sections: [{btn, body}]`; `handle.open(i)` / `.closeAll()` / `.openIndex()`). Same "module owns state, caller owns DOM shape" split as TOAST: the module toggles `body.hidden` + `btn` `aria-expanded` and nothing else, so Node tests drive it with plain-object stubs ([test/accordion.test.js](../../../test/accordion.test.js)). The visual is the `.accSec`/`.accBtn`/`.accBody` family in [songbook.css](../../shared/songbook.css) - the ONE accordion look (THE ELEMENT CONSISTENCY LAW; never hand-roll a second). Note the `.accBody[hidden]{display:none}` guard (the U24 lesson: an author display rule on the same element defeats `[hidden]`).
+- **Programmatic jump:** a caller can land the user on a named section (`handle.open(i)` - e.g. the backup-staleness nudge opens Settings straight to "Backup & Restore").
+- **ARIA:** header is a real `<button>` (44px floor) with `aria-expanded` + `aria-controls`; the body is `role="region"` + `aria-labelledby`.
+- **First consumer (SHIPPED, M-SETTINGS-CLARITY 2026-07-05):** the play/index.html Settings sheet sections - purpose-named per operator UAT round 2: Appearance / Preferences / Backup & Restore / About.
+- **Header treatment (operator UAT round 2):** section titles read as tappable headings, fixed at the primitive - 700 weight / 1rem (vs the .82rem body ink) with an explicit accent-ink chevron affordance that rotates open, and the .listItem press language (`scale(.99)`).
+
 ## Quick lookup
 
 | Need | Primitive |
@@ -93,7 +105,8 @@ A disclosure the user can open ANY time (not one-shot like NOTABLE, not blocking
 | User must choose Save vs Cancel, or confirm something destructive BEFORE it happens | MODAL |
 | Pick one of a small set of options, or a compact tappable fact | CHIP/TOKEN |
 | An always-available explainer (Guide, "Why these notes?") | HELP |
+| Several control groups in one panel, one visible at a time (Settings sections) | ACCORDION |
 
 ---
 
-**Anchors verified:** [toast.js](../../shared/toast.js) (full module, incl. `showAction`/`wirePauseOnTouch`), [songbook.js](../../shared/songbook.js) (`showToast`, `showComposeToast`, `ensureComposeUI`, `openSaveNameRow`, `openSoloChoiceRow`, `showSetUndoBanner`, `showClearUndoBanner`), [songbook.css](../../shared/songbook.css) (`.toast`, `.composeToast`, `.composeModalBackdrop`, `.chip`, `.modeSwitch`, `.toastAction`, `.toastBar`, `.helpIcon`), [play/index.html](../../play/index.html) (`showSettingsToast`, `openConfirmModal`), [notables.js](../../shared/notables.js), [interaction-safety.md](interaction-safety.md), [decisions.md](../decisions.md) (D-SELECTED-ACCENT, D-TOAST-PRIMITIVE, D-ENFORCE-2), [test/toast-action.test.js](../../../test/toast-action.test.js), [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js), [atomic-queue-plan-20260704.md](../../../docs/plans/atomic-queue-plan-20260704.md) (S-LAYOUT-SSOT, in flight).
+**Anchors verified:** [toast.js](../../shared/toast.js) (full module, incl. `showAction`/`wirePauseOnTouch`), [songbook.js](../../shared/songbook.js) (`showToast`, `showComposeToast`, `ensureComposeUI`, `openSaveNameRow`, `openSoloChoiceRow`, `showSetUndoBanner`, `showClearUndoBanner`), [songbook.css](../../shared/songbook.css) (`.toast`, `.composeToast`, `.composeModalBackdrop`, `.chip`, `.modeSwitch`, `.toastAction`, `.toastBar`, `.helpIcon`, `.accSec`/`.accBtn`/`.accBody`), [play/index.html](../../play/index.html) (`showSettingsToast`, `openConfirmModal`, the Settings accordion sections), [accordion.js](../../shared/accordion.js) (full module, M-SETTINGS-CLARITY), [notables.js](../../shared/notables.js), [interaction-safety.md](interaction-safety.md), [decisions.md](../decisions.md) (D-SELECTED-ACCENT, D-TOAST-PRIMITIVE, D-ENFORCE-2, D-ACCORDION), [test/toast-action.test.js](../../../test/toast-action.test.js), [test/accordion.test.js](../../../test/accordion.test.js), [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js), [atomic-queue-plan-20260704.md](../../../docs/plans/atomic-queue-plan-20260704.md) (S-LAYOUT-SSOT, in flight).

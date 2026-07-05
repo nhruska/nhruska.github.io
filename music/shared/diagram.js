@@ -30,6 +30,10 @@
  *   pre-existing caller, and every 'dots'-mode call) is BYTE-IDENTICAL to
  *   the pre-U21 behavior (SHA-256 locked in diagram.dom.test.js) - the empty
  *   reserved div only ever appears when a caller explicitly opts in.
+ *   U25 (M-SETTINGS-CLARITY, 2026-07-05): chord-pack-adapter.js - the one
+ *   caller that computes these opts - now passes both ONLY for 'big'
+ *   renders (small picker/strip cards never label). This module stays
+ *   agnostic either way: it draws whatever it is handed, or nothing.
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -165,8 +169,12 @@
     // 'patterns'-mode caller whose voicing shape-classify.js can't classify
     // (honest null - e.g. an uncurated dim/aug quality) still needs a
     // reserved vertical slot close to what a REAL label commonly wraps to
-    // in a small-size card row (chords-in-key, the only opts.reserveLabelSlot
-    // consumer today), not just one line. shape-classify.js's label() always
+    // in a card row, not just one line. (U25 narrowed WHO reserves: chord-
+    // pack-adapter.js now opts in for 'big' renders only - the maximize
+    // overlay - since small cards never label. The em-based sizing below,
+    // measured on the original small-card consumer, still holds: it ties to
+    // this div's own font-size, which is size-independent.)
+    // shape-classify.js's label() always
     // follows the same template shape ("<family> shape[ barre], root on
     // <string>, <inversion>" - see that file's own label() function), which
     // measured 3 lines at the 'small' card's ~86px canvas width in the

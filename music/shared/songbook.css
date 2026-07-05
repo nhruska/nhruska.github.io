@@ -181,7 +181,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
 /* Slim header (one screen, above the fold): compact padding + smaller brand, the
    instrument picker the only control here. ♪ quick-tune lives in the Tune tab and
-   the accent picker moved there too — both were redundant in the always-on bar. */
+   the accent picker moved there too - both were redundant in the always-on bar. */
 .appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
@@ -346,7 +346,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    watchlist; component-conventions.md's Segmented controls row). No
    border-color override needed: the base rule has border:none. */
 .viewToggle button.on{background:var(--accent);color:var(--on-accent);}
-/* queue nav: prev / position / next — shown in Practice when a setlist is loaded */
+/* queue nav: prev / position / next - shown in Practice when a setlist is loaded */
 .queueNav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;}
 .queueNav button{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,opacity .15s;}
 .queueNav button:active{transform:scale(.94);background:var(--accent);color:var(--on-accent);}
@@ -470,7 +470,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 #micToggle{min-height:56px;font-size:1rem;}
 .micMeter{position:relative;height:54px;margin:8px 2px 2px;}
 .micMeter .scale{position:absolute;top:28px;left:0;right:0;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--bad) 0%,var(--warn) 32%,var(--good) 50%,var(--warn) 68%,var(--bad) 100%);opacity:.55;}
-/* in-tune target zone (±3¢ in the zoomed needle map) — a band to park the needle
+/* in-tune target zone (±3¢ in the zoomed needle map) - a band to park the needle
    in; lights up + glows green when the reading LOCKS, so "in tune" reads at a
    glance without watching the number. */
 .micMeter .tgt{position:absolute;top:8px;left:46%;width:8%;height:38px;border-radius:6px;background:var(--good);opacity:.12;transition:opacity .2s,box-shadow .2s;pointer-events:none;}
@@ -1134,6 +1134,35 @@ footer{display:none;}
    not built in this mission - see component-conventions.md Findings
    register. */
 .helpIcon::before{content:'\24D8';margin-right:.35em;opacity:.75;font-weight:400;}
+
+/* ACCORDION (M-SETTINGS-CLARITY, 2026-07-05): the EXCLUSIVE disclosure-group
+   primitive - shared/accordion.js owns the one-open-at-a-time state machine;
+   this .accSec/.accBtn/.accBody family is its ONE visual (THE ELEMENT
+   CONSISTENCY LAW - never hand-roll a second accordion look). For PANEL
+   surfaces (sheets/dialogs) with a single scroller; decision D6 (Compose =
+   flattened, no accordions) still stands for screen scrollers. First
+   consumer: the play/index.html Settings sheet sections. Declared here (not
+   a page style) for the same app-wide-SSOT reason as .helpIcon above. */
+.accSec{border-top:1px solid var(--line-strong);}
+.accSec:first-of-type{border-top:0;}
+/* Header treatment (operator UAT round 2): section titles must READ as
+   tappable headings, not plain text rows - heavier + larger than body text
+   (700/1rem vs the .82rem setHint body) with an EXPLICIT expand affordance:
+   an accent-ink chevron (accent-ink = the readable-on-surface interactive
+   ink in BOTH themes, the iconBtn glyph convention) that rotates open, plus
+   press feedback. Fixed here at the primitive, never per instance. */
+.accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
+  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:700;
+  font-size:1rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+.accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
+  transition:transform .15s;}
+.accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}
+.accBtn:active{transform:scale(.99);} /* the .listItem press language, not the no-scale close family */
+.accBody{padding:2px 0 16px;}
+/* U24 precedent (S-TOAST-HOST): an author display rule on the SAME element
+   defeats [hidden] - .accBody carries no display rule today, but this guard
+   keeps the collapse honest if one is ever added. */
+.accBody[hidden]{display:none;}
 
 /* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
  * produced by Notables.renderBanner() in shared/notables.js.

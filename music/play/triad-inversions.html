@@ -106,6 +106,10 @@ h1 .em{color:var(--accent-ink)}
 #resetIntros{border:1px solid var(--line);background:transparent;color:var(--txt-faint);font-family:inherit;font-weight:600;font-size:.72rem;padding:7px 14px;border-radius:9px;cursor:pointer}
 #resetIntros:hover{color:var(--txt-soft)}
 #resetIntros[hidden]{display:none}
+/* M-SETTINGS-CLARITY: the authored build stamp (shared/build-stamp.js) - the
+   page-footer twin of play/index.html's .setMeta line (this page deliberately
+   loads no songbook.css, so the small-print rule is local). */
+.buildStamp{margin:26px 0 8px;text-align:center;font-size:.72rem;color:var(--txt-faint);}
 /* Incompatible-instrument fallback */
 .fallback{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:16px;margin:14px 0;font-size:.84rem;line-height:1.5;color:var(--txt-soft)}
 .fallback strong{color:var(--txt)}
@@ -118,6 +122,10 @@ h1 .em{color:var(--accent-ink)}
 <!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - this page's own esc()
      below delegates to it. -->
 <script src="../shared/esc.js"></script>
+<!-- build-stamp.js: M-SETTINGS-CLARITY (2026-07-05) - the authored version +
+     freshness stamp rendered in the page footer (#buildStamp below); same
+     guard-locked pair as the main app's Settings meta line. -->
+<script src="../shared/build-stamp.js"></script>
 </head>
 <body>
 <script>
@@ -232,6 +240,12 @@ h1 .em{color:var(--accent-ink)}
 <div class="explainerFooter">
   <button id="resetIntros" type="button" hidden>Show dismissed explainers</button>
 </div>
+
+<!-- M-SETTINGS-CLARITY: "v117 - updated <local date+time>" (shared/build-stamp.js) -->
+<div class="buildStamp" id="buildStamp"></div>
+<script>
+  if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('buildStamp'));
+</script>
 
 <script>
 'use strict';

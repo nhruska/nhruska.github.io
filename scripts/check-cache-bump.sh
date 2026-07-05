@@ -11,9 +11,16 @@
 # music/sw.js's CACHE string is IDENTICAL between the two, that is exactly
 # this collision shape - fail loudly instead of letting it merge silently.
 #
+# Also guards the freshness-stamp pair (M-SETTINGS-CLARITY, 2026-07-05):
+# music/shared/build-stamp.js VERSION must mirror sw.js CACHE exactly, and
+# its UPDATED_ISO must change whenever CACHE bumps - see the stamp section
+# at the bottom of this script.
+#
 # Usage: scripts/check-cache-bump.sh [base-ref]   (default: origin/main)
-# Exit 0: no music/shared|play diff vs base, OR CACHE was bumped alongside it.
-# Exit 1: music/shared|play diff vs base with an UNCHANGED CACHE string.
+# Exit 0: no music/shared|play diff vs base, OR CACHE was bumped alongside it
+#         AND the build-stamp pair moved with it.
+# Exit 1: music/shared|play diff vs base with an UNCHANGED CACHE string, a
+#         stamp VERSION that drifted from CACHE, or a stale UPDATED_ISO.
 #
 # Run manually before opening/updating a PR that touches music/shared or
 # music/play (the "the law" CACHE-bump discipline - see
@@ -69,5 +76,48 @@ if [ "$BASE_CACHE" = "$HEAD_CACHE" ]; then
   exit 1
 fi
 
-echo "check-cache-bump: OK - CACHE bumped ($BASE_CACHE -> $HEAD_CACHE) alongside the music/shared|play diff vs $BASE."
+# ---------------------------------------------------------------------
+# Freshness-stamp pair (M-SETTINGS-CLARITY, 2026-07-05): music/shared/
+# build-stamp.js carries a deliberate, guard-locked mirror of the CACHE
+# version (VERSION) plus the authoring time (UPDATED_ISO) that the app
+# footer renders. THIS check is what makes the pair trustworthy:
+#   (a) HEAD's build-stamp VERSION must equal HEAD's sw.js CACHE exactly -
+#       a CACHE bump that forgets the stamp fails here, and so does a
+#       stamp edit that forgets the CACHE.
+#   (b) when the base ref already has the stamp file, UPDATED_ISO must
+#       CHANGE alongside a CACHE bump - a bump with a stale date would
+#       ship a footer that lies about freshness.
+# ---------------------------------------------------------------------
+STAMP_PATH='music/shared/build-stamp.js'
+
+extract_stamp_field() {
+  # $1 = git ref, $2 = field name (VERSION | UPDATED_ISO); prints the bare value.
+  # `|| true` so a missing file / no match yields '' instead of tripping
+  # set -e via pipefail - the callers' -z / -n guards do the deciding.
+  git show "$1:$STAMP_PATH" 2>/dev/null | grep -oE "var $2 = '[^']+'" | head -1 | sed "s/var $2 = '//; s/'\$//" || true
+}
+
+HEAD_CACHE_VAL="$(printf '%s' "$HEAD_CACHE" | sed "s/CACHE = '//; s/'\$//")"
+HEAD_STAMP_VER="$(extract_stamp_field HEAD VERSION)"
+HEAD_STAMP_ISO="$(extract_stamp_field HEAD UPDATED_ISO)"
+
+if [ -z "$HEAD_STAMP_VER" ] || [ -z "$HEAD_STAMP_ISO" ]; then
+  echo "check-cache-bump: FAIL - could not extract VERSION/UPDATED_ISO from $STAMP_PATH at HEAD - has the declaration shape changed (or the file gone missing)?" >&2
+  exit 1
+fi
+
+if [ "$HEAD_STAMP_VER" != "$HEAD_CACHE_VAL" ]; then
+  echo "check-cache-bump: FAIL - $STAMP_PATH VERSION ($HEAD_STAMP_VER) does not mirror music/sw.js CACHE ($HEAD_CACHE_VAL)." >&2
+  echo "Update VERSION and UPDATED_ISO in $STAMP_PATH in the same commit as the CACHE bump." >&2
+  exit 1
+fi
+
+BASE_STAMP_ISO="$(extract_stamp_field "$BASE" UPDATED_ISO)"
+if [ -n "$BASE_STAMP_ISO" ] && [ "$BASE_STAMP_ISO" = "$HEAD_STAMP_ISO" ]; then
+  echo "check-cache-bump: FAIL - CACHE bumped ($BASE_CACHE -> $HEAD_CACHE) but $STAMP_PATH UPDATED_ISO is unchanged ($HEAD_STAMP_ISO)." >&2
+  echo "Refresh UPDATED_ISO (and VERSION) in $STAMP_PATH in the same commit - the footer stamp must move with every shipped build." >&2
+  exit 1
+fi
+
+echo "check-cache-bump: OK - CACHE bumped ($BASE_CACHE -> $HEAD_CACHE) alongside the music/shared|play diff vs $BASE; build-stamp pair verified (VERSION $HEAD_STAMP_VER, UPDATED_ISO $HEAD_STAMP_ISO)."
 exit 0

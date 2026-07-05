@@ -54,7 +54,12 @@
   // any migration that data still needs would be silently skipped. Keeping the two
   // keys in lockstep, then replaying the runner immediately after write, is what
   // makes an old backup restore cleanly into a build with newer migrations.
-  var EXCLUDE = ['music.devlog.', 'music.lastBackup.', SCHEMA_KEY];
+  //
+  // music.lastRestore. (M-SETTINGS-CLARITY, 2026-07-05) mirrors the
+  // music.lastBackup. reasoning exactly: it is THIS device's own restore
+  // time (the Settings Restore row's meta) - restoring a backup must not
+  // overwrite when the DESTINATION device last ran a restore.
+  var EXCLUDE = ['music.devlog.', 'music.lastBackup.', 'music.lastRestore.', SCHEMA_KEY];
 
   // Ordered migrations. MIGRATIONS[n] upgrades the {key:value} map FROM (n-1)
   // TO n, returning the new map. Empty today - the seam for future changes.
