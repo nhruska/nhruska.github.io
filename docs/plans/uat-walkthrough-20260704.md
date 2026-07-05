@@ -71,3 +71,11 @@ Width is still measured (`progStripMode`), but only as a narrow-viewport GUARD t
 - **U11:** "need to switch modes and keep playing without hitting play again" -> Sound.retarget at note boundary; chip switch = live A/B (M-EAR 1.5).
 - **U12:** "light up the notes on the fretboard" -> kx-sounding pc lights, all octaves, position-preserving (M-EAR 1.5).
 - **U13:** "show more fretboard instead of pieces, optionally" -> Window|Full-neck toggle, persisted, full = 0-14 (M-EAR 1.5).
+
+## U14-U18 - Audition round 2 + library strategy (operator, 2026-07-04 evening)
+
+- **U14:** "needs faster tempo. add a slider for slow/med/fast control." -> tempo control on the audition player (M-EAR 1.6).
+- **U15:** "I don't see the frets lighting up." -> all v109 bits verified deployed (kx-sounding css + setSounding wiring); primary suspect device SW cache; wave 1.6 re-repros across states AND hardens visibility (if it can be missed, it is too subtle).
+- **U16:** "the legend below needs specific color dots listed with description." -> a LEGEND PRIMITIVE (dot swatch + label per visible class: root / chord tone / blue note / ghost / rub / sounding), one component per the Consistency Law, replacing the prose caption (M-EAR 1.6).
+- **U17:** "read the info on YouTube given a link to suggest fields when adding tracks - less friction." -> YT-prefill on the add form (oEmbed keyless if CORS permits, feature-detected; title-parse heuristics for key/mode/genre/bpm hints; graceful manual fallback) (M-TRACKLIB w2a - buildable now, no API key needed).
+- **U18 (strategy - the north star):** operator curates his own YT playlist across the mode/scale matrix; the app SHIPS with that library baked in ("I put that bonus on all our users so they can compound the time it took us... skip the empty-library phase and move immediately on their journey"). Pipeline: his playlist -> sync (w2b, needs his API key) -> tag/confirm -> BAKE into tracks.json (the shipped catalog) -> all users start with a ready jam library. User-own-playlist connection = later capability; operator judgment curates v1.
