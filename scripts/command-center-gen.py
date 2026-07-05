@@ -300,11 +300,34 @@ def suite_shape():
     test_files = (
         sorted(p.name for p in TEST_DIR.glob("*.test.js")) if TEST_DIR.exists() else []
     )
-    return {
+    shape = {
         "testFileCount": len(test_files),
+        "testCaseCount": None,
+        "testFailedCount": None,
         "workflow": ".github/workflows/tests.yml",
         "runner": "node test/run-all.js",
     }
+    # File count alone undersells the suite (U-CC finding 2026-07-05: "40 test
+    # files" vs 2117 executed cases). The runner's per-file "N passed, M failed"
+    # lines are the authoritative case count - parse them; degrade to file
+    # count with a warning if node/runner is unavailable.
+    try:
+        run = subprocess.run(
+            ["node", "test/run-all.js"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        counts = re.findall(r"(\d+) passed, (\d+) failed", run.stdout)
+        if counts:
+            shape["testCaseCount"] = sum(int(p) + int(f) for p, f in counts)
+            shape["testFailedCount"] = sum(int(f) for _, f in counts)
+        else:
+            shape["warning"] = "runner output had no per-file counts"
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        shape["warning"] = f"case count unavailable: {exc}"
+    return shape
 
 
 def ops_links():
@@ -379,7 +402,12 @@ def main():
     )
     print(f"  missions: {len(missions)} panes, {len(visions)} visions")
     print(f"  queue horizons: {list(queue.keys())}")
-    print(f"  suite: {suite['testFileCount']} test files")
+    cases = suite.get("testCaseCount")
+    print(
+        f"  suite: {cases} test cases / {suite['testFileCount']} suites"
+        if cases is not None
+        else f"  suite: {suite['testFileCount']} test files (case count unavailable)"
+    )
 
 
 if __name__ == "__main__":
