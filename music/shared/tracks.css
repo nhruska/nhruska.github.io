@@ -424,6 +424,43 @@
  * The `+ text` sibling rule recolors the note-name letter drawn immediately
  * after each dot (diagram.js always emits <circle/><text> as an adjacent
  * pair, one per note - see scale()'s notesOn loop).
+ *
+ * U15 HARDEN (2026-07-05, docs/plans/uat-walkthrough-20260704.md, decisions.md
+ * D-EAR-1.6): re-repro this wave found the mechanism above fires correctly in
+ * EVERY tested state combo (window/full-neck x mode/pentMinor x target
+ * on/off - live Playwright evidence in the shipping PR) - no logic bug. The
+ * color-only delta was just too subtle to notice at a glance, especially
+ * light theme (--sound-bg #efe7fb sits close in luminance to the default
+ * --dg-dot #dfe6ee fill - a colour-only cue two adjacent pastels apart is
+ * easy to miss on a quickly-bouncing marker). Adds a SIZE + STROKE + GLOW
+ * signal that reads regardless of hue perception, on top of the unchanged
+ * fill/stroke colors (already reviewed/contrast-verified above - changing
+ * them risked re-litigating that pairing for a problem size/weight/glow
+ * already fixes): transform:scale (CSS animates SVG geometry attributes
+ * like `r` inconsistently across engines; transform-box:fill-box +
+ * transform-origin:center scales around the DOT'S OWN center instead of the
+ * SVG viewport's default 0,0 origin, so the enlarged circle stays centered
+ * on its unscaled sibling <text> - no visual drift), a heavier ring, and a
+ * soft matching-hue glow so the sounding note visually "pops" off a busy
+ * fretboard instead of being just another same-size circle.
  * ===================================================================== */
-  .kx-sounding{fill:var(--sound-bg) !important;stroke:var(--sound-line) !important;}
+  .kx-sounding{fill:var(--sound-bg) !important;stroke:var(--sound-line) !important;stroke-width:2.6 !important;
+    transform:scale(1.35);transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 2px var(--sound-line));}
   .kx-sounding + text{fill:var(--sound-line) !important;}
+
+/* =====================================================================
+ * M-EAR wave 1.6 (U16) - the Legend primitive (shared/legend.js): dot-swatch
+ * + label rows, replacing the old M-GUIDE W3a chord-target caption's prose
+ * sentence. ONE card-shaped surface (Element Consistency Law) - reuses
+ * --surface-2/--line/--r-card (the SAME card tokens .listItem/.bt-add-panel/
+ * .bt-qcard already consume, per component-conventions.md's radius-by-role
+ * table) rather than inventing a new surface. Label text reuses --txt-soft,
+ * the SAME ink family .bt-st-guide-txt (the Guide card's own row text)
+ * already uses - no new text-color token needed for a plain description row.
+ * ===================================================================== */
+  .legend{display:flex;flex-direction:column;gap:5px;margin:6px 0 10px;padding:8px 10px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);}
+  .legendRow{display:flex;align-items:center;gap:8px;}
+  .legendSwatch{flex:0 0 auto;display:flex;}
+  .legendDot{display:block;}
+  .legendLbl{font-size:.72rem;color:var(--txt-soft);line-height:1.3;}

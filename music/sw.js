@@ -134,7 +134,23 @@
 // S-DIM-SHAPES (2026-07-05, U21): v110->v111 - shared/shape-classify.js
 // curated dim/dim7/aug templates (no new/removed CORE paths). check-cache-
 // bump.sh re-verified against origin/main immediately before push.
-var CACHE = 'music-v111';
+// M-EAR wave 1.6 (2026-07-05, docs/plans/uat-walkthrough-20260704.md U14-U16,
+// U20-U21 folded in): v111->v112 (rebased past #165's v110 AND #168's v111
+// above - two sibling missions landed while this branch was in flight, max+1
+// discipline both times) - new shared/legend.js (the fretboard dot-class
+// Legend primitive, script-tagged in play/index.html right after diagram.js);
+// new CORE path added below. shared/sound.js (playScale() gains
+// handle.setTempo(), U14), shared/tracks.js/tracks.css/songbook.css change
+// (the 3-stop tempo control, the Legend replacing the old target-caption
+// prose, the U15 kx-sounding visibility harden - size/stroke/glow, the U20
+// accent-derived kx/sound palette via CSS Relative Color Syntax), and
+// shared/diagram.js/chord-pack-adapter.js change (the U21 chord-card
+// label-slot height reserve - complements #168's shape-classify.js template
+// curation above; a card can still be honest-null after #168 for a quality
+// that isn't curated, and this keeps that card's height in sync with its
+// row-mates regardless). check-cache-bump.sh re-verified against
+// origin/main immediately before this push.
+var CACHE = 'music-v112';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -178,6 +194,9 @@ var CORE = [
   // right after repertoire-form.js (see the CACHE-bump comment above).
   './shared/yt-info.js',
   './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
+  // legend.js: M-EAR wave 1.6 (U16) - the fretboard dot-class Legend
+  // primitive, script-tagged in play/index.html right after diagram.js.
+  './shared/legend.js',
   './shared/notables.js',
  './shared/theme.js', './shared/audio.js',
   // sound.js: M-EAR wave 1 - the scale/mode audition provider, script-tagged

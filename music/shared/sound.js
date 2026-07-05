@@ -8,7 +8,7 @@
  * Public API:
  *   Sound.noteHz(pc, octave)                    - A440 equal-temperament Hz
  *                                                  for a pitch class + octave
- *   Sound.playScale(pcs, opts) -> { stop(), retarget(newPcs) }
+ *   Sound.playScale(pcs, opts) -> { stop(), retarget(newPcs), setTempo(bpm) }
  *     - loop an octave-folded
  *     opts: rootOctave (default 4), bpm (default 72), loop (default true),
  *           onNote(i)  - fires once per note, i indexes the FULL played
@@ -34,6 +34,13 @@
  *       instead of stop-then-restart. A no-op (silently ignored, playback
  *       continues unchanged) if newPcs is empty/unresolvable, or if playback
  *       has already stopped.
+ *     handle.setTempo(bpm) (M-EAR wave 1.6, U14) - queues a new tempo,
+ *       applied at the SAME next-tick boundary retarget() uses (the note
+ *       already in flight keeps its already-scheduled duration; only the
+ *       FOLLOWING tick's own scheduling interval changes) - a tempo-control
+ *       tap never clicks/gaps the currently-sounding note. A no-op (ignored,
+ *       current tempo continues) if bpm isn't a finite number > 0, or after
+ *       stop().
  *   Sound.stopAll()                              - stop whatever is playing,
  *     app-wide, without holding a handle (teardown safety net for a view
  *     that's going away).
@@ -170,7 +177,12 @@
     // boundary after it picks up the new sequence, restarting at index 0 (the
     // new scale's own root) per the header's documented contract.
     var pendingNotes = null;
-    var handle = { stop: doStop, retarget: retarget };
+    // M-EAR wave 1.6 (U14): a queued tempo swap - SAME next-tick-boundary
+    // mechanics as pendingNotes above (reused, not reinvented): the in-flight
+    // note keeps the noteDur it was already scheduled with; only step()'s
+    // OWN next setTimeout (below) picks up the new interval.
+    var pendingBpm = null;
+    var handle = { stop: doStop, retarget: retarget, setTempo: setTempo };
     activePlayback = handle;
 
     function clearTimers() { timers.forEach(clearTimeout); timers.length = 0; }
@@ -190,9 +202,18 @@
       if (!newNotes.length) return; // unresolvable target - keep playing the current scale
       pendingNotes = newNotes;
     }
+    // M-EAR wave 1.6 (U14): queues a tempo change - applied at the next tick,
+    // same boundary as retarget() above. Invalid (non-finite / <= 0) bpm is
+    // silently ignored, mirroring retarget()'s "unresolvable target" no-op.
+    function setTempo(newBpm) {
+      if (stopped) return;
+      if (typeof newBpm !== 'number' || !isFinite(newBpm) || newBpm <= 0) return;
+      pendingBpm = newBpm;
+    }
     function step(i) {
       if (stopped) return;
       if (pendingNotes) { notes = pendingNotes; pendingNotes = null; i = 0; }
+      if (pendingBpm) { bpm = pendingBpm; noteDur = 60 / bpm; pendingBpm = null; }
       if (onNote) onNote(i);
       schedulePass(a, [notes[i]], a.currentTime, noteDur);
       var ni = nextIndex(i, notes.length, loop);

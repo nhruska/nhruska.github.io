@@ -255,6 +255,8 @@ var RADIUS_CONSUMERS = [
   ['.bt-add-panel', tracksStripped, '--r-card'],
   ['.bt-qcard', tracksStripped, '--r-card'],
   ['.cofPanelInner', tracksStripped, '--r-card'],
+  // M-EAR wave 1.6 (U16): the Legend primitive's own card surface.
+  ['.legend', tracksStripped, '--r-card'],
   // --r-input (10px): text-input controls (narrow application - see the
   // :root token block's scope note; .search/.bt-in deliberately NOT migrated)
   ['.composeRowInput', songbookStripped, '--r-input']

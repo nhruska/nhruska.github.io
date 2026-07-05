@@ -474,4 +474,121 @@ test('playScale + retarget(): a no-op after stop() - never revives a stopped loo
   });
 });
 
+/* ---------------------------------------------------------------------
+ * 7. setTempo() (M-EAR wave 1.6, U14) - the SAME next-tick-boundary
+ *    mechanics as retarget() above, applied to the tempo/noteDur instead of
+ *    the pcs sequence. Mirrors the retarget test shapes 1:1 (a live tempo
+ *    switch mid-audition must never click/gap the in-flight note).
+ * ------------------------------------------------------------------- */
+// withFakeClock only exposes fireNext()/pendingCount() (deliberately - see
+// its own header). setTempo()'s effect lands in the MS argument of the timer
+// step() schedules for its OWN next tick, which those two helpers don't
+// expose - so this local variant also records the last-scheduled `ms` per
+// pending id, read-only bookkeeping alongside the shared fake-clock pattern.
+function withFakeClockMs(fn) {
+  var nextId = 1;
+  var scheduled = {};
+  var realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
+  global.setTimeout = function (cb, ms) { var id = nextId++; scheduled[id] = { cb: cb, ms: ms }; return id; };
+  global.clearTimeout = function (id) { delete scheduled[id]; };
+  try {
+    return fn({
+      fireNext: function () {
+        var ids = Object.keys(scheduled);
+        if (!ids.length) return false;
+        var id = ids[0], s = scheduled[id];
+        delete scheduled[id];
+        s.cb();
+        return true;
+      },
+      pendingCount: function () { return Object.keys(scheduled).length; },
+      // the ms argument of whichever timer is CURRENTLY pending (there is
+      // only ever one live at a time in this ticker - see withFakeClock's
+      // own header) - null when nothing is pending.
+      pendingMs: function () {
+        var ids = Object.keys(scheduled);
+        return ids.length ? scheduled[ids[0]].ms : null;
+      }
+    });
+  } finally {
+    global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
+  }
+}
+
+test('setTempo(): the currently-scheduled tick keeps its ORIGINAL interval - a tempo tap never touches the note already in flight', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var slowBpm = 72, slowNoteDur = 60 / slowBpm;
+    var handle = Sound.playScale([0, 4, 7], { bpm: slowBpm, onNote: function () {} });
+    // step(0) already scheduled its OWN next tick at slowNoteDur*1000 ms before setTempo() is even called.
+    assert.ok(Math.abs(clock.pendingMs() - slowNoteDur * 1000) < 1e-9, 'expected the ORIGINAL (slow) interval already queued');
+    handle.setTempo(140); // queued while the slow note is still sounding
+    assert.ok(Math.abs(clock.pendingMs() - slowNoteDur * 1000) < 1e-9, 'setTempo() itself must not reschedule/touch the timer already in flight');
+    handle.stop();
+  });
+});
+
+test('setTempo(): the VERY NEXT tick schedules its OWN following tick at the NEW (faster) interval', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var slowBpm = 72, slowNoteDur = 60 / slowBpm;
+    var fastBpm = 140, fastNoteDur = 60 / fastBpm;
+    var onNoteLog = [];
+    var handle = Sound.playScale([0, 4, 7], { bpm: slowBpm, onNote: function (i) { onNoteLog.push(i); } });
+    handle.setTempo(fastBpm);
+    assert.ok(clock.fireNext(), 'expected the tick following the note already in flight');
+    assert.deepStrictEqual(onNoteLog, [0, 1], 'the swap is a tempo change only - the pcs sequence/index progression is untouched');
+    // THIS tick (index 1, now sounding at the new tempo) schedules ITS OWN
+    // next tick at the new, faster interval.
+    assert.ok(Math.abs(clock.pendingMs() - fastNoteDur * 1000) < 1e-9, 'expected the NEW (fast) interval scheduled from this tick forward, got ' + clock.pendingMs());
+    handle.stop();
+  });
+});
+
+test('setTempo(): an invalid tempo (non-finite / <= 0) is silently ignored - playback continues at the CURRENT tempo', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var bpm = 90, noteDur = 60 / bpm;
+    var handle = Sound.playScale([0, 4, 7], { bpm: bpm, onNote: function () {} });
+    [0, -5, NaN, Infinity, 'fast', null, undefined].forEach(function (bad) {
+      assert.doesNotThrow(function () { handle.setTempo(bad); });
+    });
+    assert.ok(clock.fireNext());
+    assert.ok(Math.abs(clock.pendingMs() - noteDur * 1000) < 1e-9, 'expected the ORIGINAL tempo unaffected by any invalid setTempo() call');
+    handle.stop();
+  });
+});
+
+test('setTempo(): a no-op after stop() - never revives a stopped loop or schedules a new timer', function () {
+  resetLiveCtx();
+  return withFakeClockMs(function (clock) {
+    var handle = Sound.playScale([0, 4, 7], { bpm: 6000 });
+    handle.stop();
+    var afterStopCount = clock.pendingCount();
+    assert.doesNotThrow(function () { handle.setTempo(140); });
+    assert.strictEqual(clock.pendingCount(), afterStopCount, 'setTempo() after stop() must not add or remove any timers');
+  });
+});
+
+test('_schedulePass + a real (hand-rolled) OfflineAudioContext renderer: a FASTER tempo (higher bpm) renders a SHORTER total duration for the SAME pcs (U14 tempo-control evidence)', function () {
+  var pcs = [0, 4, 7]; // C major triad -> notes.length 4 (3 pcs + closing root), held constant across both renders
+  var notes = Sound._buildNoteSequence(pcs, 4);
+  var slowBpm = 72, slowNoteDur = 60 / slowBpm;
+  var fastBpm = 140, fastNoteDur = 60 / fastBpm;
+  var sampleRate = 8000;
+  function renderAt(noteDur) {
+    var totalDur = notes.length * noteDur;
+    var length = Math.ceil((totalDur + 0.05) * sampleRate);
+    var ctx = makeFakeOfflineCtx(sampleRate, length);
+    var scheduled = Sound._schedulePass(ctx, notes, 0, noteDur);
+    return ctx.startRendering().then(function (buffer) { return { scheduled: scheduled, duration: buffer.duration }; });
+  }
+  return renderAt(slowNoteDur).then(function (slow) {
+    return renderAt(fastNoteDur).then(function (fast) {
+      assert.ok(fast.scheduled < slow.scheduled, 'expected the fast-tempo scheduled duration to be shorter for the same note count: fast=' + fast.scheduled + ' slow=' + slow.scheduled);
+      assert.ok(fast.duration < slow.duration, 'expected the fast-tempo RENDERED buffer to be shorter for the same pcs: fast=' + fast.duration + ' slow=' + slow.duration);
+    });
+  });
+});
+
 run();

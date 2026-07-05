@@ -329,6 +329,10 @@
      (diagram.js itself stays agnostic of both - see its own header). -->
 <script src="../shared/diagram-pref.js"></script>
 <script src="../shared/diagram.js"></script>
+<!-- M-EAR wave 1.6 (U16): the Legend primitive (dot-swatch + label rows) -
+     loads after diagram.js (the fretboard-dot renderer whose kx-* classes it
+     mirrors), before tracks.js's openStudio calls Legend.render(). -->
+<script src="../shared/legend.js"></script>
 <script src="../shared/audio.js"></script>
 <!-- M-EAR wave 1: zero-dependency scale/mode audition (Sound.playScale) -
      loads after audio.js (thematically the other shared audio primitive),

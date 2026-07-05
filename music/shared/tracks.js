@@ -605,6 +605,17 @@
     // triad-inversions.html doesn't read ?mode= yet, but the vocabulary stays
     // consistent for whenever it does).
     var SCALE_MODE_TO_RECORD_MODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian' };
+    // M-EAR wave 1.6 (U14): the 3-stop tempo control's bpm values, chosen by
+    // ear feel against the wave-1 default (72bpm, D-EAR-1) - Slow keeps that
+    // exact hum-along pace unchanged; Med and Fast are roughly +45%/+95%
+    // faster, matching the operator's "needs faster tempo" complaint
+    // (docs/plans/uat-walkthrough-20260704.md U14) without abandoning the
+    // slow option a first-time learner still wants. Default is 'med' (was
+    // implicitly 'slow' pre-U14) - the operator's own complaint was that the
+    // ONLY speed available was too slow, so the fix ships a faster default
+    // alongside the control, not just the control alone.
+    var TEMPO_BPM = { slow: 72, med: 104, fast: 140 };
+    var TEMPO_DEFAULT = 'med';
     // Deep-link to the same "Walk the full cycle up the neck" inversions page the
     // Compose tab links (songbook.js), now surfaced from the Practice Studio too -
     // carries the active instrument profile (so the page opens on the same fretboard)
@@ -750,6 +761,18 @@
         try { localStorage.setItem('music.fretview.v1', v === 'full' ? 'full' : 'window'); } catch (e) {}
       }
       var fretView = readFretView();
+      // M-EAR wave 1.6 (U14): the tempo control's persisted choice - same
+      // defensive read/write + additive-key discipline as fretView above
+      // (registered in data-model.md's inventory). Studio-scoped (spans every
+      // scale chip, like fretView), not per-track.
+      function readTempo() {
+        try { var v = localStorage.getItem('music.tempo.v1'); return TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT; }
+        catch (e) { return TEMPO_DEFAULT; }
+      }
+      function writeTempo(v) {
+        try { localStorage.setItem('music.tempo.v1', TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT); } catch (e) {}
+      }
+      var tempo = readTempo();
       // Full mode: one span fret 0-14 (KeyExplorer.POS_CAP - "small necks (12-
       // fret default) treat full-neck as 0-14 too", so this ignores
       // defaultFrets(pack) entirely), no pager UI (noPosCtrl) - box-snap is
@@ -796,13 +819,42 @@
             + '<span class="bt-st-guide-txt">' + esc(r[1]) + '</span></div>';
         }).join('');
       }
-      function renderTargetCaption() {
-        if (!targetCapEl) return;
-        if (!activeTargetChord) { targetCapEl.hidden = true; targetCapEl.textContent = ''; return; }
-        targetCapEl.hidden = false;
-        // P5 fold: legend gains the hollow/ghost-dot meaning - kept to one line.
-        targetCapEl.textContent = 'Showing ' + activeTargetChord + ' inside ' + keyLabelPlain
-          + ' - accent = chord root, filled = chord tones, hollow = chord tone outside the scale.';
+      // M-EAR wave 1.6 (U16): replaces the old renderTargetCaption() prose
+      // sentence ("Showing X inside Y - accent = chord root, filled = chord
+      // tones, hollow = chord tone outside the scale.") with the Legend
+      // primitive (shared/legend.js) - real dot-swatch + label rows instead
+      // of a hand-rolled caption string. Derives which classes are
+      // CURRENTLY VISIBLE from the SAME computeTones()/defaultTones() the
+      // fretboard render itself consumes (never a second, divergent notion
+      // of "what's on screen") plus the live sounding state:
+      //   - 'root' is ALWAYS included - a solo scale always has a root note,
+      //     sounding or not, the one class every fretboard render carries.
+      //   - 'chord'/'ghost'/'rub' only when computeTones() actually produced
+      //     that piece (an inert tap - e.g. a chord whose tones are already
+      //     ALL in-scale with no rub candidate - must not show a dead row).
+      //   - 'blue' only for the Blues scale (defaultTones()'s always-on b5).
+      //   - 'sounding' only while studioSound is actually playing right now.
+      function legendClassesFor(bundle, scaleId, isSounding) {
+        var classes = ['root'];
+        var tones = computeTones(bundle, scaleId);
+        if (tones) {
+          var hasChord = false;
+          for (var pc in tones.byPc) {
+            if (Object.prototype.hasOwnProperty.call(tones.byPc, pc) && tones.byPc[pc] === 'chord') { hasChord = true; break; }
+          }
+          if (hasChord) classes.push('chord');
+          if (tones.ghostPcs && tones.ghostPcs.length) classes.push('ghost');
+          if (tones.rubPc != null) classes.push('rub');
+        }
+        if (defaultTones(bundle)) classes.push('blue');
+        if (isSounding) classes.push('sounding');
+        return classes;
+      }
+      function renderLegend() {
+        if (!legendEl || !global.Legend) return;
+        var el = global.Legend.render(legendClassesFor(curBundle, curScaleId, !!studioSound));
+        legendEl.innerHTML = '';
+        if (el) legendEl.appendChild(el);
       }
       // M-TRACKLIB wave 1 (docs/plans/vision-ear-first-20260704.md): reverse-map
       // the Circle-internal scaleMode word back to the raw major/minor/dorian/
@@ -878,7 +930,7 @@
         var cells = elPlayer.querySelectorAll('.bt-st-chordcell .chord');
         Array.prototype.forEach.call(cells, function (el) { el.classList.remove('targeted'); });
         if (activeTargetChord) tileEl.classList.add('targeted');
-        renderTargetCaption();
+        renderLegend();
         if (scaleBoxWrap && typeof scaleBoxWrap.setTones === 'function') scaleBoxWrap.setTones(computeTones(curBundle, curScaleId));
       }
       // Whether this session's video is attachable determines the no-video hint
@@ -967,6 +1019,16 @@
         + '<div class="bt-st-sec"><div class="bt-st-solorow"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + renderNoteTokens(th.notes) + '</span></div>'
         + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button></div>'
         + '<div class="bt-st-degrees" data-solodegrees>' + renderDegreeTokens(th.degrees) + '</div>'
+        // M-EAR wave 1.6 (U14): the 3-stop tempo control - reuses the app's
+        // existing .viewToggle segmented-control primitive verbatim (same
+        // primitive the U13 Window|Full-neck toggle below already reuses),
+        // so this ships with ZERO new CSS for the control itself. Sits right
+        // under the notes/degrees lines it paces, above the scale chips.
+        + '<div class="viewToggle" data-tempo>'
+        + '<button class="' + (tempo === 'slow' ? 'on' : '') + '" data-tp="slow" type="button">Slow</button>'
+        + '<button class="' + (tempo === 'med' ? 'on' : '') + '" data-tp="med" type="button">Med</button>'
+        + '<button class="' + (tempo === 'fast' ? 'on' : '') + '" data-tp="fast" type="button">Fast</button>'
+        + '</div>'
         // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
@@ -988,9 +1050,15 @@
         + '<button class="' + (fretView === 'full' ? 'on' : '') + '" data-fv="full" type="button">Full neck</button>'
         + '</div>'
         + '<div class="bt-st-scale" data-scale></div>'
-        // M-GUIDE W3a: chord-tone targeting caption - reuses .bt-st-scaleframe's
-        // look; static text, interpolates only already-rendered labels (A9).
-        + '<div class="bt-st-scaleframe" data-targetcap hidden></div>'
+        // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js)
+        // replaces the old M-GUIDE W3a prose caption ("Showing X inside Y -
+        // accent = chord root, filled = chord tones, hollow = chord tone
+        // outside the scale.") - dot-swatch + label rows instead of a
+        // hand-rolled sentence. No wrapping class/hidden attr needed: an
+        // empty container (Legend.render() returned null) is already
+        // invisible, and Legend.render()'s own returned element carries its
+        // own `.legend` styling.
+        + '<div data-legend></div>'
         // M-TRACKLIB wave 1: the key-aware jam-discovery explore panel - reuses
         // the .bt-st-why-toggle/.bt-st-why disclosure pattern verbatim (Guide's
         // own primitive, composed not re-invented). Collapsed by default;
@@ -1012,10 +1080,12 @@
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
-      // M-GUIDE W3a: Guide toggle/box + target caption element refs (built above
-      // in the template string, so they exist as soon as elPlayer.innerHTML lands).
+      // M-GUIDE W3a: Guide toggle/box element refs (built above in the
+      // template string, so they exist as soon as elPlayer.innerHTML lands).
       var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
-      var targetCapEl = elPlayer.querySelector('[data-targetcap]');
+      // M-EAR wave 1.6 (U16): the Legend container ref (replaces the old
+      // target-caption ref).
+      var legendEl = elPlayer.querySelector('[data-legend]');
       // M-TRACKLIB wave 1: jam-discovery toggle/panel element refs (same
       // built-in-the-template-string pattern as Guide, above).
       var jamToggle = elPlayer.querySelector('[data-jamtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
@@ -1068,6 +1138,10 @@
           if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
           setSoundToggle(true);
           studioSound = global.Sound.playScale(curBundle.pcs, {
+            // M-EAR wave 1.6 (U14): the currently-selected tempo control
+            // value - live tempo changes route through studioSound.setTempo()
+            // (the tempo toggle's own onclick, below), not a re-call here.
+            bpm: TEMPO_BPM[tempo],
             // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
             // a value captured at play-start - after a chip-switch retarget,
             // curBundle already points at the NEW bundle (select() updates it
@@ -1080,8 +1154,11 @@
               clearSoundMarks();
               markSoundingNote(idx, curBundle.pcs[idx]);
             },
-            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); }
+            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
           });
+          // U16: the 'sounding' legend row joins/leaves as playback starts/stops
+          // (onStop above handles the leaving half).
+          renderLegend();
         };
       }
       // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
@@ -1104,6 +1181,10 @@
       // F major) so the dots match the "Solo over it" list above, whatever names
       // th.notes holds - th itself is the 'mode' bundle (curBundle's initial value).
       renderFretboard(th, 'mode');
+      // M-EAR wave 1.6 (U16): initial legend render - 'mode' bundle, nothing
+      // sounding yet (matches the fresh-open state renderFretboard(th,'mode')
+      // just produced above).
+      renderLegend();
       // M-EAR wave 1.5 (U13): Window|Full-neck toggle wiring - paints the
       // active button, persists the choice, and re-renders whichever bundle
       // is CURRENTLY active (curBundle/curScaleId - a chip switch may have
@@ -1123,6 +1204,28 @@
             if (v === fretView) return;
             fretView = v; writeFretView(fretView); paintFvToggle();
             renderFretboard(curBundle, curScaleId);
+          };
+        });
+      }
+      // M-EAR wave 1.6 (U14): tempo control wiring - same paint/persist
+      // pattern as the Window|Full-neck toggle above. A tap while playing
+      // calls studioSound.setTempo() (live boundary application, no
+      // re-tap/click/gap); a tap while stopped just persists the choice for
+      // the NEXT play tap to pick up (playScale's opts.bpm, above).
+      var tempoToggle = elPlayer.querySelector('[data-tempo]');
+      function paintTempoToggle() {
+        if (!tempoToggle) return;
+        Array.prototype.forEach.call(tempoToggle.querySelectorAll('button'), function (b) {
+          b.classList.toggle('on', b.getAttribute('data-tp') === tempo);
+        });
+      }
+      if (tempoToggle) {
+        Array.prototype.forEach.call(tempoToggle.querySelectorAll('button'), function (b) {
+          b.onclick = function () {
+            var v = b.getAttribute('data-tp');
+            if (v === tempo || !TEMPO_BPM.hasOwnProperty(v)) return;
+            tempo = v; writeTempo(tempo); paintTempoToggle();
+            if (studioSound && typeof studioSound.setTempo === 'function') studioSound.setTempo(TEMPO_BPM[tempo]);
           };
         });
       }
@@ -1195,6 +1298,13 @@
           // itself now, one choke point for the initial render/every chip
           // switch/the Window|Full-neck toggle).
           renderFretboard(bundle, scaleId);
+          // M-EAR wave 1.6 (U16): re-derive the legend for the NEW bundle -
+          // unlike the old target caption (whose text never varied by scale,
+          // only by activeTargetChord + the invariant keyLabelPlain), the
+          // legend's chord/ghost/rub rows DO vary per bundle (a target
+          // chord's tones can be in-scale for one scale-chip and a ghost for
+          // another), so this call is required here, not just at open/toggle.
+          renderLegend();
           // Retarget AFTER curBundle/renderFretboard land, so the very next
           // onNote tick (which reads curBundle + scaleBoxWrap live) already
           // matches the NEW scale/fretboard the instant it fires.
