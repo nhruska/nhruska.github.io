@@ -631,6 +631,89 @@
     document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
   }
 
+  /* ---- M-DESIGN-ENFORCE wave 2 (UAT U19): app-styled TOAST + MODAL for the
+   * Settings backup/restore flow - replaces every native alert()/confirm()
+   * there (the U19 directive's named KNOWN offender). Reuses the SAME
+   * shared primitives/classes songbook.js's Compose surface already ships
+   * (toast.js Toast.show; the composeModalBackdrop/composeRow.asModal
+   * pattern; NavHistory) rather than inventing a second visual language -
+   * see ui-primitives.md/component-conventions.md for the taxonomy this
+   * implements (TOAST = outcome, MODAL = decision, never a native dialog). */
+  var setToastEl = null;
+  // TOAST: every backup/restore OUTCOME (success or error) that used to be
+  // a blocking alert(). Errors get a longer 3000ms window (same convention
+  // showComposeToast already uses) since they carry more to read.
+  function showSettingsToast(msg, isErr) {
+    if (!window.Toast) return; // defensive - toast.js always loads earlier in this file's script order
+    if (!setToastEl) { setToastEl = document.createElement('div'); setToastEl.className = 'toast'; document.body.appendChild(setToastEl); }
+    Toast.show(msg, {
+      host: setToastEl, error: isErr, duration: isErr ? 3000 : 1600,
+      onShow: function (host, m, isErrFlag) { host.textContent = m; host.classList.toggle('err', !!isErrFlag); host.classList.add('on'); },
+      onHide: function (host) { host.classList.remove('on'); }
+    });
+  }
+  var settingsModalBackdrop = null, settingsModalCard = null;
+  function ensureSettingsModal() {
+    if (settingsModalBackdrop && settingsModalCard) return true;
+    if (!document.body) return false;
+    settingsModalBackdrop = document.createElement('div');
+    settingsModalBackdrop.className = 'composeModalBackdrop';
+    settingsModalBackdrop.hidden = true;
+    document.body.appendChild(settingsModalBackdrop);
+    settingsModalCard = document.createElement('div');
+    settingsModalCard.className = 'composeRow asModal';
+    settingsModalCard.hidden = true;
+    settingsModalCard.setAttribute('role', 'dialog');
+    settingsModalCard.setAttribute('aria-modal', 'true');
+    settingsModalCard.tabIndex = -1;
+    document.body.appendChild(settingsModalCard);
+    return true;
+  }
+  // MODAL: openConfirmModal(message, confirmLabel, onConfirm) - the
+  // app-styled decision surface (replaces the restore-confirm confirm()).
+  // Backdrop tap / Escape / hardware Back all resolve to the SAME
+  // conservative choice (Cancel - never confirm), routed through
+  // NavHistory exactly like songbook.js's openSaveNameRow/openSoloChoiceRow.
+  // This layers a NavHistory-registered dialog ON TOP of the Settings sheet
+  // (which itself has no NavHistory layer of its own) - e.stopPropagation()
+  // on Escape keeps the outer Settings-sheet Escape listener (below, in the
+  // DOMContentLoaded block) from ALSO closing the whole sheet in one keypress.
+  function openConfirmModal(message, confirmLabel, onConfirm) {
+    if (!ensureSettingsModal()) return;
+    settingsModalCard.innerHTML = '';
+    settingsModalCard.hidden = false;
+    settingsModalBackdrop.hidden = false;
+    var msg = document.createElement('p');
+    msg.className = 'composeRowMsg'; msg.style.whiteSpace = 'pre-line'; // the restore manifest is multi-line
+    msg.textContent = message;
+    var btnRow = document.createElement('div'); btnRow.className = 'composeRowBtns';
+    var okBtn = document.createElement('button');
+    okBtn.type = 'button'; okBtn.className = 'btn red ctrlBtn'; okBtn.textContent = confirmLabel || 'Confirm';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
+    var delivered = false;
+    function rawClose() { settingsModalCard.hidden = true; settingsModalBackdrop.hidden = true; settingsModalCard.innerHTML = ''; }
+    function deliver(confirmed) { if (delivered) return; delivered = true; if (confirmed && typeof onConfirm === 'function') onConfirm(); }
+    function confirmChoice() {
+      if (window.NavHistory) window.NavHistory.settleAfter(rawClose, function () { deliver(true); });
+      else { rawClose(); deliver(true); }
+    }
+    function cancelChoice() {
+      if (window.NavHistory) window.NavHistory.dismiss(); else { rawClose(); deliver(false); }
+    }
+    okBtn.onclick = confirmChoice;
+    cancelBtn.onclick = cancelChoice;
+    settingsModalBackdrop.onclick = cancelChoice;
+    settingsModalCard.onkeydown = function (e) { if (e.key === 'Escape') { e.stopPropagation(); cancelChoice(); } };
+    if (window.NavHistory) window.NavHistory.open('settingsConfirm', function () {
+      rawClose();
+      setTimeout(function () { deliver(false); }, 0);
+    });
+    btnRow.appendChild(okBtn); btnRow.appendChild(cancelBtn);
+    settingsModalCard.appendChild(msg); settingsModalCard.appendChild(btnRow);
+    settingsModalCard.focus();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     /* accent swatches - rendered inline in the Settings sheet */
     var swWrap = document.getElementById('accentSwatches');
@@ -845,7 +928,7 @@
         btnRestore = document.getElementById('btnRestore'),
         fileIn = document.getElementById('restoreFile');
     if (btnBackup) btnBackup.onclick = function () {
-      if (!window.Backup) { alert('Backup is unavailable right now.'); return; }
+      if (!window.Backup) { showSettingsToast('Backup is unavailable right now.', true); return; }
       // Snapshot + serialize can throw (storage blocked, or a songbook large enough
       // to trip a stringify/Blob limit); fail loud instead of silently doing nothing.
       var payload, json, name, blob, file = null;
@@ -854,7 +937,7 @@
         json = JSON.stringify(payload, null, 2);
         name = 'music-songbook-' + payload.exportedAt.slice(0, 10) + '.json';
         blob = new Blob([json], { type: 'application/json' });
-      } catch (e) { alert('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); return; }
+      } catch (e) { showSettingsToast('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.', true); return; }
       try { file = new File([blob], name, { type: 'application/json' }); } catch (e) {}
       // Prefer the OS share sheet on mobile (save to Drive / Files / send to self);
       // fall back to a plain download everywhere else. The whole branch is guarded:
@@ -866,30 +949,42 @@
         if (canShareFiles) {
           navigator.share({ files: [file], title: 'Music songbook backup' })
             .then(markBackedUp)
-            .catch(function (err) { if (err && err.name === 'AbortError') return; try { downloadBlob(blob, name); markBackedUp(); } catch (e2) { alert('Could not save the backup file.'); } });
+            .catch(function (err) { if (err && err.name === 'AbortError') return; try { downloadBlob(blob, name); markBackedUp(); } catch (e2) { showSettingsToast('Could not save the backup file.', true); } });
         } else { downloadBlob(blob, name); markBackedUp(); }
-      } catch (e) { alert('Could not save the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.'); }
+      } catch (e) { showSettingsToast('Could not save the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.', true); }
     };
     if (btnRestore && fileIn) {
       btnRestore.onclick = function () { fileIn.click(); };
       fileIn.onchange = function () {
-        if (!window.Backup) { alert('Restore is unavailable right now.'); return; }
+        if (!window.Backup) { showSettingsToast('Restore is unavailable right now.', true); return; }
         var f = this.files && this.files[0]; this.value = ''; if (!f) return;
         var rd = new FileReader();
         rd.onload = function () {
-          var payload; try { payload = JSON.parse(rd.result); } catch (e) { alert('That file is not a valid backup (not JSON).'); return; }
+          var payload; try { payload = JSON.parse(rd.result); } catch (e) { showSettingsToast('That file is not a valid backup (not JSON).', true); return; }
           var v = Backup.validate(payload);
-          if (!v.ok) { alert('Could not restore: ' + v.error + '.'); return; }
+          if (!v.ok) { showSettingsToast('Could not restore: ' + v.error + '.', true); return; }
           var lines = Backup.describe(payload.data, instrumentNames());
           var manifest = lines.length ? lines.map(function (l) { return '• ' + l.label + ': ' + l.detail; }).join('\n') : '• Nothing recognizable in this file.';
           // Only slice a STRING exportedAt - a malformed-but-valid payload could carry
           // a number/object here, which would throw on .slice().
           var when = (typeof payload.exportedAt === 'string') ? ' from ' + payload.exportedAt.slice(0, 10) : '';
-          if (!confirm('This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.')) return;
-          try { Backup.restore(localStorage, payload); } catch (e) { alert('Restore failed: ' + e.message); return; }
-          alert('Restored your songbook. Reloading the app.'); location.reload();
+          // MODAL (replaces native confirm() - U19): a decision the user must
+          // resolve, app-styled, dim backdrop, never a native dialog.
+          openConfirmModal(
+            'This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.',
+            'Restore',
+            function () {
+              try { Backup.restore(localStorage, payload); } catch (e) { showSettingsToast('Restore failed: ' + e.message, true); return; }
+              // Non-blocking outcome toast, then a short beat so it's actually
+              // seen before the reload (a native alert() blocked until
+              // dismissed; a toast doesn't - so a location.reload() right
+              // behind it would otherwise cut it off mid-fade).
+              showSettingsToast('Restored your songbook. Reloading the app.', false);
+              setTimeout(function () { location.reload(); }, 900);
+            }
+          );
         };
-        rd.onerror = function () { alert('Could not read that file. Try selecting the backup again.'); };
+        rd.onerror = function () { showSettingsToast('Could not read that file. Try selecting the backup again.', true); };
         rd.readAsText(f);
       };
     }

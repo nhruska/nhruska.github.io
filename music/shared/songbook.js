@@ -1532,6 +1532,59 @@
       if (STATE.current && STATE.current.id === id) renderPractice();
       if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
     }
+    // ---- S-TOAST+ACTION (M-DESIGN-ENFORCE wave 2, UAT U19): the setlist
+    // item-remove undo panel, migrated off the old untimed "persistent undo
+    // banner" (interaction-safety.md guard #3 as it read before this wave)
+    // onto the shared toast.js Toast.showAction() primitive - see
+    // decisions.md D-ENFORCE-2. A STABLE sibling element (inserted once,
+    // before #setBody), NOT rebuilt inside renderSetlist()'s body.innerHTML
+    // wipe-and-repaint - the whole point of the migration is a live 6s
+    // countdown + pause-on-touch, which a full DOM rebuild on every
+    // unrelated re-render (reorder, add) would silently restart or leak.
+    var setUndoBanner = null, setUndoHandle = null, setUndoTeardown = null;
+    function ensureSetUndoBanner() {
+      if (!el.setBody || !el.setBody.parentNode) return false;
+      if (!setUndoBanner) {
+        setUndoBanner = document.createElement('div');
+        setUndoBanner.className = 'setUndo toastAction';
+        setUndoBanner.hidden = true;
+        el.setBody.parentNode.insertBefore(setUndoBanner, el.setBody);
+      }
+      return true;
+    }
+    function paintSetUndoHidden() {
+      if (setUndoTeardown) { setUndoTeardown(); setUndoTeardown = null; }
+      setUndoHandle = null;
+      if (setUndoBanner) { setUndoBanner.hidden = true; setUndoBanner.innerHTML = ''; }
+    }
+    // Cancel any pending remove-undo - leaving edit mode, clearing the whole
+    // setlist, or a second removal while one is already showing all call this.
+    // Safe to call even when nothing is pending (finish() is itself a no-op
+    // once resolved).
+    function dismissSetUndo() { if (setUndoHandle) setUndoHandle.finish(); }
+    function showSetUndoBanner(sid, index) {
+      if (!ensureSetUndoBanner()) return;
+      dismissSetUndo(); // tear down a stale prior instance first (re-removal mid-window)
+      setUndoBanner.hidden = false;
+      setUndoBanner.innerHTML = '';
+      var rs = songById(sid);
+      var msg = document.createElement('span'); msg.textContent = 'Removed ' + (rs ? rs.t : 'song');
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var at = Math.min(index, STATE.setlist.length);
+        STATE.setlist.splice(at, 0, sid); STATE.lastRemoved = null;
+        if (setUndoHandle) setUndoHandle.finish();
+        saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
+      };
+      setUndoBanner.appendChild(msg); setUndoBanner.appendChild(undoBtn);
+      setUndoHandle = global.Toast.showAction('Removed ' + (rs ? rs.t : 'song'), {
+        host: setUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { STATE.lastRemoved = null; paintSetUndoHidden(); }
+      });
+      setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
+    }
     function renderSetlist() {
       if (!el.setBody) return;
       var body = el.setBody, bar = el.setBar, count = el.setCount;
@@ -1549,25 +1602,12 @@
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
-        STATE.setEditMode = false; STATE.lastRemoved = null;
+        STATE.setEditMode = false; dismissSetUndo(); STATE.lastRemoved = null;
         return;
       }
       if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '')
         + (STATE.setEditMode ? ' · editing' : ' · ready to play');
       body.innerHTML = '';
-      // Persistent undo for the last removal (codex: not a short toast). Stays until used or Done.
-      if (STATE.lastRemoved) {
-        var u = document.createElement('div'); u.className = 'setUndo';
-        var rs = songById(STATE.lastRemoved.sid);
-        u.innerHTML = '<span>Removed ' + escHTML(rs ? rs.t : 'song') + '</span><button class="btn ghost" type="button">Undo</button>';
-        u.querySelector('button').onclick = function () {
-          var lr = STATE.lastRemoved; if (!lr) return;
-          var at = Math.min(lr.index, STATE.setlist.length);
-          STATE.setlist.splice(at, 0, lr.sid); STATE.lastRemoved = null;
-          saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
-        };
-        body.appendChild(u);
-      }
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
@@ -1588,6 +1628,7 @@
             if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
             else syncQueueToSetlist();
             renderSetlist(); renderSongs();
+            showSetUndoBanner(sid, i); // S-TOAST+ACTION: after the repaint, so the stable banner sits above the fresh list
           },
           onAction: function () { ytSearch(s); }
         }));
@@ -1598,15 +1639,19 @@
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
-      if (!STATE.setEditMode) STATE.lastRemoved = null; // leaving edit mode dismisses the undo affordance
+      if (!STATE.setEditMode) { dismissSetUndo(); STATE.lastRemoved = null; } // leaving edit mode dismisses the undo affordance
       renderSetlist();
     };
     // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
     // header rail must not fire the destructive Clear confirm(). Behavior is
-    // otherwise unchanged - same native confirm(), same effect.
+    // otherwise unchanged - same native confirm(), same effect. (Native
+    // confirm() itself is PRE-EXISTING debt, unchanged by M-DESIGN-ENFORCE
+    // wave 2 - see component-conventions.md Findings register: this wave's
+    // MODAL-standard grant covers the backup/restore flow only, not every
+    // confirm() call app-wide.)
     if (el.setClear) wireTapCancel(el.setClear, function () {
       if (STATE.setlist.length === 0) return;
-      if (confirm('Clear your setlist?')) { STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
+      if (confirm('Clear your setlist?')) { dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
     });
 
     /* ===================== PERFORM ===================== */
@@ -2708,40 +2753,52 @@
       if (composeModalBackdrop) composeModalBackdrop.hidden = true;
     }
 
-    // ---- S-CLEARGUARD (sprint-1 #1): Compose Clear undo banner ----
+    // ---- S-CLEARGUARD (sprint-1 #1), migrated to S-TOAST+ACTION (M-DESIGN-
+    // ENFORCE wave 2, UAT U19): Compose Clear undo banner ----
     // F1: Clear used to wipe the built progression with NO guard (native
     // confirm() elsewhere in this file, nothing here). A3 (binding): the
-    // fix is a PERSISTENT undo banner, not a confirm() dialog - snapshot the
-    // full pre-Clear state (progression + cTpose + songKey + the linked
+    // fix is an undo banner, not a confirm() dialog - snapshot the full
+    // pre-Clear state (progression + cTpose + songKey + the linked
     // saved-song id), and let ANY subsequent mutating action (add/remove
     // chord, transpose, mode change, key change, Save) invalidate it. It is
     // route-local, in-memory, session-only - no backup.js surface, dies on
-    // tab-switch/reload, same shape as the setlist's STATE.lastRemoved/
-    // .setUndo persistent-undo precedent F1 points to. It is a SEPARATE
-    // element/variable from composeRow/composeToast above (deliberately -
-    // so an unrelated save/solo-choice flow that calls hideComposeRow()
-    // can never silently clobber this banner's own DOM out from under its
-    // tracked snapshot), but reuses the .composeRow/.composeRowMsg/
-    // .composeRowBtns classes for the visual look (F7: "reuse this pattern
-    // for Clear-undo messaging" - the same interstitial styling as the
-    // Solo -> Studio "Save & open Studio / Skip" row below).
-    var clearUndoBanner = null, clearUndoSnapshot = null;
+    // tab-switch/reload. It is a SEPARATE element/variable from composeRow/
+    // composeToast above (deliberately - so an unrelated save/solo-choice
+    // flow that calls hideComposeRow() can never silently clobber this
+    // banner's own DOM out from under its tracked snapshot), but reuses the
+    // .composeRow/.composeRowMsg/.composeRowBtns classes for the visual
+    // look (F7: "reuse this pattern for Clear-undo messaging").
+    //
+    // U19 amendment (decisions.md D-ENFORCE-2): the banner used to be
+    // untimed (interaction-safety.md guard #3 as it read before this wave) -
+    // ANY mutation was the only thing that ever invalidated it. It now ALSO
+    // times out via the shared toast.js Toast.showAction() primitive (6s
+    // window, visible countdown bar, pause-on-touch) - mutation-invalidation
+    // (invalidateClearUndo(), unchanged below) and the timer both end the
+    // pending undo; whichever fires first wins.
+    var clearUndoBanner = null, clearUndoSnapshot = null, clearUndoHandle = null, clearUndoTeardown = null;
     function ensureClearUndoBanner() {
       if (!el.prog || !el.prog.parentNode) return false;
       if (!clearUndoBanner) {
         clearUndoBanner = document.createElement('div');
-        clearUndoBanner.className = 'composeRow';
+        clearUndoBanner.className = 'composeRow toastAction';
         clearUndoBanner.hidden = true;
         el.prog.parentNode.insertBefore(clearUndoBanner, el.prog);
       }
       return true;
     }
+    function paintClearUndoHidden() {
+      if (clearUndoTeardown) { clearUndoTeardown(); clearUndoTeardown = null; }
+      clearUndoHandle = null;
+      if (clearUndoBanner) { clearUndoBanner.hidden = true; clearUndoBanner.innerHTML = ''; }
+    }
     // Dismiss the banner AND drop the pending snapshot together - the two
     // must never go out of sync (a visible banner with no snapshot, or a
-    // snapshot with no way to reach it, are both bugs).
+    // snapshot with no way to reach it, are both bugs). Safe to call even
+    // when nothing is pending.
     function hideClearUndoBanner() {
       clearUndoSnapshot = null;
-      if (clearUndoBanner) { clearUndoBanner.hidden = true; clearUndoBanner.innerHTML = ''; }
+      if (clearUndoHandle) clearUndoHandle.finish(); else paintClearUndoHidden();
     }
     // Call at the top of every progression/songKey mutator (add/remove
     // chord, transpose, mode change, key change, Save) - the A3 invalidation
@@ -2771,6 +2828,12 @@
       };
       btnRow.appendChild(undoBtn);
       clearUndoBanner.appendChild(msg); clearUndoBanner.appendChild(btnRow);
+      clearUndoHandle = global.Toast.showAction('Progression cleared.', {
+        host: clearUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { clearUndoSnapshot = null; paintClearUndoHidden(); }
+      });
+      clearUndoTeardown = global.Toast.wirePauseOnTouch(clearUndoBanner, clearUndoHandle);
     }
 
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
