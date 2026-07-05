@@ -131,7 +131,10 @@
 // repertoire-form.css change (the Video URL field's paste/blur YT-prefill
 // suggest row). New CORE path added below. check-cache-bump.sh re-verified
 // against origin/main immediately before push.
-var CACHE = 'music-v110';
+// S-DIM-SHAPES (2026-07-05, U21): v110->v111 - shared/shape-classify.js
+// curated dim/dim7/aug templates (no new/removed CORE paths). check-cache-
+// bump.sh re-verified against origin/main immediately before push.
+var CACHE = 'music-v111';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
