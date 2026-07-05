@@ -1,5 +1,10 @@
 {
-  "generatedAt": "2026-07-05T13:00:30Z",
+  "generatedAt": "2026-07-05T13:25:48Z",
+  "generator": "command-center-gen.py@0.2.0 (panelkit 0.1.0)",
+  "source_repo": "nhruska/nhruska.github.io",
+  "freshness_seconds_at_render": null,
+  "status": "ok",
+  "warnings": [],
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T12:52:28Z",
-    "sha": "2ba65ef72cd828e9fbc89f8d335a0809b42ce92c",
-    "subject": "docs: case study - the music app, origin of the method (#185)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/2ba65ef72cd828e9fbc89f8d335a0809b42ce92c"
+    "date": "2026-07-05T13:11:33Z",
+    "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
+    "subject": "cc: report executed test cases (2117), not just suite files (40) (#186)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/180e8b7452eab37208b6e4dda9c866941afe810c"
   },
   "commits": [
+    {
+      "date": "2026-07-05T13:11:33Z",
+      "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
+      "subject": "cc: report executed test cases (2117), not just suite files (40) (#186)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/180e8b7452eab37208b6e4dda9c866941afe810c"
+    },
     {
       "date": "2026-07-05T12:52:28Z",
       "sha": "2ba65ef72cd828e9fbc89f8d335a0809b42ce92c",
@@ -79,12 +90,6 @@
       "sha": "c997564e4818d9acd8a80761b78fee96b91799a0",
       "subject": "capture: U24 empty toast host on setlist remove (lifecycle seam #170x#175) (#177)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/c997564e4818d9acd8a80761b78fee96b91799a0"
-    },
-    {
-      "date": "2026-07-05T06:30:14Z",
-      "sha": "4684bed862ea358217a058c66b5ce598ca78fc19",
-      "subject": "vision capture: deterministic adaptive tutor (no-LLM inventory on shipped machinery) - Tier-2 centerpiece (#176)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4684bed862ea358217a058c66b5ce598ca78fc19"
     }
   ],
   "openPRs": [
@@ -94,7 +99,7 @@
       "branch": "claude/music-85-keyaware-spelling",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/98",
       "draft": false,
-      "ciState": "NONE",
+      "ciState": "unknown",
       "checks": []
     },
     {
@@ -103,7 +108,7 @@
       "branch": "claude/music-chord-strumming-audio-ux-qqvg9e",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/88",
       "draft": true,
-      "ciState": "SUCCESS",
+      "ciState": "green",
       "checks": [
         {
           "name": "preview",
@@ -127,7 +132,7 @@
       "branch": "claude/ai-tutor-prototype-kz5ix1",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/70",
       "draft": true,
-      "ciState": "SUCCESS",
+      "ciState": "green",
       "checks": [
         {
           "name": "preview",
@@ -147,6 +152,12 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T13:11:33Z",
+      "number": 186,
+      "title": "cc: test-depth metric - 2117 executed cases, not 40 files",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/186"
+    },
     {
       "mergedAt": "2026-07-05T12:52:28Z",
       "number": 185,
@@ -230,12 +241,6 @@
       "number": 172,
       "title": "Capture: U22",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/172"
-    },
-    {
-      "mergedAt": "2026-07-05T04:56:39Z",
-      "number": 171,
-      "title": "QUEUE: night close (v113)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/171"
     }
   ],
   "deploy": {
