@@ -162,7 +162,9 @@ function renderCockpit(d){
   document.getElementById('cockpitState').innerHTML =
     'LIVE at <strong>' + esc(deploy.liveCacheVersion || 'unknown') + '</strong> - Pages: ' +
     esc(pages.status || 'unknown') + ' - ' + openCount + ' open PR' + (openCount === 1 ? '' : 's') +
-    ' - ' + suite.testFileCount + ' test files';
+    ' - ' + (suite.testCaseCount != null
+        ? suite.testCaseCount + ' test cases / ' + suite.testFileCount + ' suites'
+        : suite.testFileCount + ' test files');
 
   document.getElementById('cockpitSub').textContent =
     'HEAD ' + (d.head ? d.head.sha.slice(0,7) : '?') + ' - deployed cache ' + cacheNote + '.';
@@ -183,7 +185,8 @@ function renderChips(d){
     {n: (d.commits || []).length, l: 'commits tracked'},
     {n: (d.openPRs || []).length, l: 'open PRs'},
     {n: (d.recentMerges || []).length, l: 'recent merges'},
-    {n: (d.suite || {}).testFileCount || 0, l: 'test files'}
+    {n: (d.suite || {}).testCaseCount || (d.suite || {}).testFileCount || 0,
+     l: (d.suite || {}).testCaseCount != null ? 'test cases / ' + (d.suite || {}).testFileCount + ' suites' : 'test files'}
   ];
   document.getElementById('chips').innerHTML = chips.map(function(c){
     return '<div class="chip"><div class="n">' + c.n + '</div><div class="l">' + esc(c.l) + '</div></div>';

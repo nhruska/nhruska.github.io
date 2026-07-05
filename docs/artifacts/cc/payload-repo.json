@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T11:15:36Z",
+  "generatedAt": "2026-07-05T13:00:30Z",
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -8,12 +8,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T11:01:55Z",
-    "sha": "0a7fd6527979deacc5188464f752f6e19af8284c",
-    "subject": "cc: nightly snapshot refresh (#184)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/0a7fd6527979deacc5188464f752f6e19af8284c"
+    "date": "2026-07-05T12:52:28Z",
+    "sha": "2ba65ef72cd828e9fbc89f8d335a0809b42ce92c",
+    "subject": "docs: case study - the music app, origin of the method (#185)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/2ba65ef72cd828e9fbc89f8d335a0809b42ce92c"
   },
   "commits": [
+    {
+      "date": "2026-07-05T12:52:28Z",
+      "sha": "2ba65ef72cd828e9fbc89f8d335a0809b42ce92c",
+      "subject": "docs: case study - the music app, origin of the method (#185)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2ba65ef72cd828e9fbc89f8d335a0809b42ce92c"
+    },
+    {
+      "date": "2026-07-05T11:15:36Z",
+      "sha": "aaf520ca2828dc8ba8289f8c8e1d9224c1ec726f",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/aaf520ca2828dc8ba8289f8c8e1d9224c1ec726f"
+    },
     {
       "date": "2026-07-05T11:01:55Z",
       "sha": "0a7fd6527979deacc5188464f752f6e19af8284c",
@@ -73,18 +85,6 @@
       "sha": "4684bed862ea358217a058c66b5ce598ca78fc19",
       "subject": "vision capture: deterministic adaptive tutor (no-LLM inventory on shipped machinery) - Tier-2 centerpiece (#176)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/4684bed862ea358217a058c66b5ce598ca78fc19"
-    },
-    {
-      "date": "2026-07-05T06:12:29Z",
-      "sha": "f5e768dc317e9705fb634fc9d9a7eea7e90a3dd4",
-      "subject": "S-SET-INTEGRITY (UAT U22): dangling setlist refs - delete-heal + defensive nav + load-heal (#175)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f5e768dc317e9705fb634fc9d9a7eea7e90a3dd4"
-    },
-    {
-      "date": "2026-07-05T05:57:51Z",
-      "sha": "d67d9aca002cbb6badd3ddab23b78e56a5efcb3a",
-      "subject": "S-REL-NAMES (U23): guidance names the instance, not just the relationship (#174)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d67d9aca002cbb6badd3ddab23b78e56a5efcb3a"
     }
   ],
   "openPRs": [
@@ -147,6 +147,12 @@
     }
   ],
   "recentMerges": [
+    {
+      "mergedAt": "2026-07-05T12:52:28Z",
+      "number": 185,
+      "title": "Case study: the music app - the method's origin, evidenced",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/185"
+    },
     {
       "mergedAt": "2026-07-05T11:01:56Z",
       "number": 184,
@@ -230,12 +236,6 @@
       "number": 171,
       "title": "QUEUE: night close (v113)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/171"
-    },
-    {
-      "mergedAt": "2026-07-05T04:55:37Z",
-      "number": 170,
-      "title": "M-DESIGN-ENFORCE 2: feedback-surface reconcile (U19) - one taxonomy, no native dialogs, toast+action undo",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/170"
     }
   ],
   "deploy": {
@@ -461,6 +461,8 @@
   },
   "suite": {
     "testFileCount": 40,
+    "testCaseCount": 2117,
+    "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
   },
