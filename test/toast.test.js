@@ -135,7 +135,7 @@ test('S-TOAST/U9: a persist:true show() on host B does NOT cancel host A\'s alre
 
     // Reproduces saveProgression's showComposeToast(..., persist: true) firing
     // in the SAME synchronous tick, on a totally different host.
-    Toast.show('Saved to your Repertoire', {
+    Toast.show('Saved to your Library', {
       host: hostB, persist: true,
       onShow: function () {}, onHide: function () { hiddenB = true; }
     });
@@ -159,7 +159,7 @@ test('S-TOAST/U9 (reverse order): showing host B (non-persist) after host A does
   withFakeClock(function (clock) {
     Toast.show('Added to setlist', { host: hostA, duration: 1600, onShow: function () {}, onHide: function () { hiddenA = true; } });
     var idA = Number(clock.pendingIds()[0]);
-    Toast.show('Saved to your Repertoire', { host: hostB, duration: 3000, onShow: function () {}, onHide: function () { hiddenB = true; } });
+    Toast.show('Saved to your Library', { host: hostB, duration: 3000, onShow: function () {}, onHide: function () { hiddenB = true; } });
     assert.strictEqual(clock.pendingIds().length, 2, 'two independent hosts must each keep their own pending timer');
     assert.strictEqual(clock.wasCleared(idA), false);
     clock.fire(idA);

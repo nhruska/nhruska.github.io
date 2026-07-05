@@ -6,7 +6,7 @@
  * confirmed on device, operator Pixel walkthrough): songbook.js declared
  * `var toastTimer` TWICE inside the SAME Songbook.mount() closure - once
  * for the Library's plain "Added to setlist"/err toast (~old L1454), once
- * for the Compose "Saved to your Repertoire"/"Updated .../err toast
+ * for the Compose "Saved to your Library"/"Updated .../err toast
  * (~old L2441). `var` hoists to FUNCTION scope, so both declarations were
  * literally the SAME variable.
  *

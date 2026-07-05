@@ -43,11 +43,11 @@ test('normalize derives key from the first chord when none is given (fixes "Key?
   // an explicit key always wins over derivation
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'minor', seq: ['G', 'C'] })), 'Dm');
 });
-test('action ladder: curated video -> Video (in-app); no video -> Search (external)', function () {
+test('action ladder: curated video -> Video (in-app); no video -> no action (F25: external Search removed)', function () {
   var play = LI.action(LI.normalize({ yt: 'abcdefghijk' }));
   assert.strictEqual(play.kind, 'play'); assert.strictEqual(play.label, 'Video'); assert.strictEqual(play.external, false);
-  var search = LI.action(LI.normalize({ t: 'x' }));
-  assert.strictEqual(search.kind, 'search'); assert.strictEqual(search.label, 'Search'); assert.strictEqual(search.external, true);
+  var none = LI.action(LI.normalize({ t: 'x' }));
+  assert.strictEqual(none, null, 'a row with no in-app video must advertise no action - no leave-the-app link');
 });
 test('hazards: accidental-root -> sharps/flats; extended -> 7ths; plain -> none', function () {
   assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['A', 'F#m', 'D'] })), ['sharps/flats']);

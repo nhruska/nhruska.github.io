@@ -245,7 +245,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
 /* Title bumped for the arm's-length <1s glance; meta + artist raised off --txt-dim
  * to --txt-soft and up in size (legibility-at-distance, council accessibility lens). */
-.listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;}
+/* F26 (operator UAT 2026-07-05): min-width:0 + overflow-wrap:break-word - .li-title
+ * is a flex item of .li-row1, and its default automatic-minimum-size (min-content,
+ * i.e. the width of its longest unbroken word/run) can exceed the row's available
+ * space for a long/unspaced title, overflowing past the card and behind the +
+ * button instead of wrapping. .li-body already carries flex:1 1 auto;min-width:0
+ * (the row-level containment) - this is the same fix one level deeper, on the
+ * title span itself, confirmed with Playwright against an all-one-word title. */
+.listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;min-width:0;overflow-wrap:break-word;}
 /* Setup pair (capo + key) live together, right of the title. Key is KEY-FIRST; an
  * unknown key shows a quiet "Key?" rather than a year (which read as the key). */
 .listItem .li-tags{display:flex;align-items:baseline;gap:6px;flex:0 0 auto;}

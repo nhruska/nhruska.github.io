@@ -1008,7 +1008,7 @@ test('A1: saveProgression on a healthy store shows the real success toast (not a
   var m = mountForSaveTests();
   buildAndSave(m);
   var toast = findComposeToast(m);
-  assert.strictEqual(toast.textContent, 'Saved to your Repertoire');
+  assert.strictEqual(toast.textContent, 'Saved to your Library');
   assert.strictEqual(hasClass(toast, 'err'), false, 'a successful save must not carry the err class');
 });
 
@@ -1032,7 +1032,7 @@ test('A1: saveProgression on a throwing (quota-exceeded) store shows a truthful 
   var toast = findComposeToast(m);
   assert.strictEqual(toast.textContent, "Couldn't save - storage is full or blocked. Export a backup from Settings.");
   assert.strictEqual(hasClass(toast, 'err'), true, 'a failed save must carry the err class');
-  assert.notStrictEqual(toast.textContent, 'Saved to your Repertoire', 'must never claim success on a write that threw');
+  assert.notStrictEqual(toast.textContent, 'Saved to your Library', 'must never claim success on a write that threw');
   assert.strictEqual(warned, 1, 'safeSet must console.warn exactly once for this key, not spam per attempt');
 });
 
@@ -1041,7 +1041,7 @@ test('A1: the update-in-place branch ("Updated ...") is equally truthful on a th
   // First save succeeds (healthy store) - links savedComposeId so a second Save
   // on the same buffer takes the update-in-place branch (not a fresh create).
   buildAndSave(m);
-  assert.strictEqual(findComposeToast(m).textContent, 'Saved to your Repertoire');
+  assert.strictEqual(findComposeToast(m).textContent, 'Saved to your Library');
   // Add one more chord, then start failing storage, then Save again -> the
   // "Updated ..." branch, not the create branch.
   var tile = m.elMap.buildGrid.children[0];
@@ -1174,7 +1174,7 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
   assert.ok(libraryToast, 'expected the Library .toast element in document.body');
   assert.strictEqual(libraryToast.textContent, 'Added to setlist');
   assert.ok(composeToast, 'expected the Compose .composeToast element');
-  assert.strictEqual(composeToast.textContent, 'Saved to your Repertoire');
+  assert.strictEqual(composeToast.textContent, 'Saved to your Library');
   // buildAndSaveAddToSetlist also taps a chord tile twice on the way in, and
   // each tap schedules its OWN unrelated 220ms "sel" class-removal timer
   // (songbook.js's chord-tile tap animation, nothing to do with toasts) - so
