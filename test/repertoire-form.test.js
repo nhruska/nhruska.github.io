@@ -148,9 +148,10 @@ test('applicableYtHints: whitespace-only existing value counts as empty', functi
  * F33 (UAT): "delete seems to be in a risky place... bottom right should be
  * save. delete buttons should be red." Delete/Revert now renders BEFORE Save
  * in .rf-actions (left, away from the one-hand thumb zone; Save takes the
- * thumb-easy right slot), and the REAL Delete (not the fork "Revert to
- * original", which stays non-destructive) is genuinely red (.btn.danger -
- * .btn.red is a misnomer, it's the accent fill). render()'s DOM-building is
+ * thumb-easy right slot). The REAL Delete is genuinely red (.btn.danger); the
+ * fork "Revert to original" is ALSO destructive (discards edits, confirm-gated)
+ * but stays .btn.ghost as a deliberate softer signal (.btn.red is a misnomer,
+ * it's the accent fill). render()'s DOM-building is
  * Playwright/live-check territory per this file's own header note - this
  * pins the SOURCE contract instead (same convention as tracks.test.js's F32
  * test and songbook.test.js's solo-button-gate source-regex test).
@@ -162,7 +163,7 @@ test('F33: .rf-actions renders Delete/Revert BEFORE Save (thumb-zone reorder), a
   var saveIdx = actionsBlock.indexOf('data-save');
   assert.ok(deleteIdx >= 0 && saveIdx >= 0, 'expected both data-delete and data-save markup in the rf-actions block');
   assert.ok(deleteIdx < saveIdx, 'F33: Delete/Revert must render BEFORE Save in the template (left/away-from-thumb, not bottom-right)');
-  assert.ok(/class="btn ' \+ \(fork \? 'ghost' : 'danger'\)/.test(src), 'the real Delete must use .btn.danger (genuinely destructive); the fork "Revert to original" stays .btn.ghost (non-destructive)');
+  assert.ok(/class="btn ' \+ \(fork \? 'ghost' : 'danger'\)/.test(src), 'the real Delete must use .btn.danger; the fork "Revert to original" stays .btn.ghost - a deliberate softer signal, though it too is destructive (discards edits, confirm-gated)');
   assert.ok(/class="btn red" data-save/.test(src), 'Save keeps its existing .btn.red (primary accent) styling, unchanged by this fix');
 });
 
