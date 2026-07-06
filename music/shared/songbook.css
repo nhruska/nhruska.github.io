@@ -268,7 +268,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;}
 .listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
 .listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
-.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* Add-to-setlist affordance reads accent-inviting (operator UAT): the "+" is an
+   accent OUTLINE (like .soloRowBtn), the added "✓" is accent FILL (.inSet below)
+   - a clear add -> added progression, both in the accent family. */
+.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
