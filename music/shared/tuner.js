@@ -308,7 +308,10 @@
     box.innerHTML = '<div class="micNote" id="micNote">·</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
       + '<div class="micMeter"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
       + '<div class="strobe" id="micStrobe"><div class="strobeInner" id="micStrobeInner"></div><div class="strobeLbl">stands still = in tune · drifts ◀ flat · sharp ▶</div></div>'
-      + '<div class="actions"><button class="btn" id="micToggle">Start mic</button></div>';
+      // Primary CTA on the Tune tab: .btn.red (the app's canonical accent-fill
+      // primary, same as Setlist "Start performance" + the form Save) so the
+      // one action a user is here to take reads consistently across tabs.
+      + '<div class="actions"><button class="btn red" id="micToggle">Start mic</button></div>';
     document.getElementById('micToggle').onclick = micToggle;
   }
 
