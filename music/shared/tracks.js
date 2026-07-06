@@ -1068,12 +1068,18 @@
       // the left pane in the landscape two-pane split (CSS). Practice content
       // (scale, chords) leads the scrollable body; the url-curation editor sits
       // last, just above the "why" toggle - plumbing after the practice.
+      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (matches
+      // the song view's #backLib "iconBtn ←", leading the header, not a trailing
+      // "close" text pill) - "the Solo Studio close beats against brand standards
+      // - we have a back button and we're looking at the song view." Same
+      // NavHistory.dismiss()/closePlayer() wiring as before, just retargeted to
+      // the new .bt-st-back selector below (bt-st-x removed - see tracks.css).
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div>'
-        + '<button class="bt-st-x" type="button">close</button></div>'
+        + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
+        + '<span class="bt-st-meta">' + meta + '</span></div></div>'
         + playerBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
         // return to a videoless track the "add a video" control is immediately at
@@ -1469,7 +1475,7 @@
         var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
-      elPlayer.querySelector('.bt-st-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
+      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
       if (window.NavHistory) window.NavHistory.open('studio', closePlayer);
     }
 

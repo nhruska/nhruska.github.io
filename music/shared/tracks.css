@@ -127,10 +127,12 @@
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
-  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact close-button oddball. */
-  .bt-st-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:var(--r-btn-sm);cursor:pointer;flex:0 0 auto;}
-  .bt-st-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
+  /* F32 (UI-std UAT): the dismiss control is now the SAME standard back affordance
+     the rest of the app uses (song view's #backLib "iconBtn ←") - .bt-st-back
+     composes the shared .iconBtn base (songbook.css: 44x44, --r-btn-sm radius,
+     accent-ink glyph) with zero Studio-specific overrides needed. The old
+     bordered "close"-text pill (.bt-st-x, trailing on the right) is retired -
+     removed here, not left dormant. */
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   /* No-yt fallback: the Practice Studio still loads (HUD intact), the iframe slot

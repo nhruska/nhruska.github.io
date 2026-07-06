@@ -35,13 +35,13 @@ test('normalize a TRACK record (title/artist/key/mode/genre/bpm/yt)', function (
   assert.strictEqual(it.chords, null);
 });
 test('normalize derives key from the first chord when none is given (fixes "Key?")', function () {
-  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'Let It Be', seq: ['C', 'G', 'Am', 'F'] })), 'C');
-  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Am', 'F', 'C', 'G'] })), 'Am'); // minor first chord
-  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['F#m', 'D'] })), 'F#m');
-  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Cmaj7', 'G'] })), 'C'); // maj7 is NOT minor
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'Let It Be', seq: ['C', 'G', 'Am', 'F'] })), 'C major');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Am', 'F', 'C', 'G'] })), 'A minor'); // minor first chord
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['F#m', 'D'] })), 'F# minor');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x', seq: ['Cmaj7', 'G'] })), 'C major'); // maj7 is NOT minor
   assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null); // no chords, no key -> still null ("Key?")
   // an explicit key always wins over derivation
-  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'minor', seq: ['G', 'C'] })), 'Dm');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'minor', seq: ['G', 'C'] })), 'D minor');
 });
 test('action ladder: curated video -> Video (in-app); no video -> no action (F25: external Search removed)', function () {
   var play = LI.action(LI.normalize({ yt: 'abcdefghijk' }));
@@ -54,10 +54,12 @@ test('hazards: accidental-root -> sharps/flats; extended -> 7ths; plain -> none'
   assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['Am', 'C', 'G7'] })), ['7ths']);
   assert.deepStrictEqual(LI.hazards(LI.normalize({ seq: ['C', 'G', 'Am'] })), []);
 });
-test('keyLabel: A minor -> Am, C major -> C, no key -> null', function () {
-  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'A', mode: 'minor' })), 'Am');
-  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'C', mode: 'major' })), 'C');
-  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'Dm'); // minor-family
+test('keyLabel: spells major/minor out, mode-honest for church modes, no key -> null (F34)', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'A', mode: 'minor' })), 'A minor');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'C', mode: 'major' })), 'C major');
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'E', mode: 'aeolian' })), 'E minor'); // aeolian == natural minor
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'G', mode: 'mixolydian' })), 'G mixolydian'); // NOT "G major"
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'D dorian'); // NOT "D minor"
   assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null);
 });
 test('metaCells: SONG -> count only at rest (chords/capo/mine are badges/markers, not meta)', function () {

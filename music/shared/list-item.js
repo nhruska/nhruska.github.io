@@ -69,12 +69,19 @@
       : null;                                                             // no video -> no action shown
   }
 
-  // The short key label: "Am" for A minor, "C" for C major, null if no key.
+  // The key label, mode spelled out: "A minor" / "C major", and mode-honest for
+  // named church modes ("G mixolydian") rather than force-collapsing them to
+  // major/minor. F34 (operator UAT): the old compact form showed "Am" for minor
+  // but a bare "C" for major - a bare letter read as incomplete. Real modal
+  // tracks exist (tracks.json has mixolydian), so asserting "G major" for a
+  // mixolydian key would be worse than the bare key (codex PR #195 V1 Medium).
+  // Display-only (the badge); no logic consumer keys off this string.
   function keyLabel(item) {
     if (!item.key) return null;
-    var minor = String(item.mode || '').toLowerCase().indexOf('min') === 0
-      || /aeolian|dorian|phrygian|locrian/.test(String(item.mode || '').toLowerCase());
-    return item.key + (minor ? 'm' : '');
+    var mode = String(item.mode || '').toLowerCase();
+    if (mode.indexOf('min') === 0 || mode === 'aeolian') return item.key + ' minor';
+    if (mode === '' || mode.indexOf('maj') === 0 || mode === 'ionian') return item.key + ' major';
+    return item.key + ' ' + mode; // dorian/phrygian/lydian/mixolydian/locrian - mode-honest
   }
 
   // Pre-commit difficulty signal (codex: a bare count loses the risk a player needs
