@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T15:57:06Z",
+  "generatedAt": "2026-07-06T13:01:20Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,48 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-05T15:54:48Z",
-    "sha": "2f6b38b0010c450258eb6e7aea5e3a00b2a87c54",
-    "subject": "cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3) (#189)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/2f6b38b0010c450258eb6e7aea5e3a00b2a87c54"
+    "date": "2026-07-06T00:37:59Z",
+    "sha": "e864b753c8c8d48e02cccb5655aca4a3b2fd280c",
+    "subject": "M-UI-STD: v121 UI standardization - controls row, firstrun copy, F34 mode-honest, accent consistency (#195)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/e864b753c8c8d48e02cccb5655aca4a3b2fd280c"
   },
   "commits": [
+    {
+      "date": "2026-07-06T00:37:59Z",
+      "sha": "e864b753c8c8d48e02cccb5655aca4a3b2fd280c",
+      "subject": "M-UI-STD: v121 UI standardization - controls row, firstrun copy, F34 mode-honest, accent consistency (#195)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e864b753c8c8d48e02cccb5655aca4a3b2fd280c"
+    },
+    {
+      "date": "2026-07-05T20:13:11Z",
+      "sha": "3ff40230b293171f5e545a4758cdc7db077d43cd",
+      "subject": "M-LIB-UX: five operator UAT fixes on Library/song-view/studio (F23-F27) (#194)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/3ff40230b293171f5e545a4758cdc7db077d43cd"
+    },
+    {
+      "date": "2026-07-05T19:59:16Z",
+      "sha": "15c7cd03dab52b081de2f361fdf821caa4005237",
+      "subject": "M-GUIDANCE: graded first-time guidance + studio-dismiss fix (#193)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/15c7cd03dab52b081de2f361fdf821caa4005237"
+    },
+    {
+      "date": "2026-07-05T19:01:22Z",
+      "sha": "500114d8ddf5c5de8561af9a07dde4b448831a87",
+      "subject": "Studio Solo view UX rework - operator UAT F12-F22 (2026-07-05) (#192)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/500114d8ddf5c5de8561af9a07dde4b448831a87"
+    },
+    {
+      "date": "2026-07-05T18:53:12Z",
+      "sha": "bd35dc42eb296b45e8e51c36dc953aa32f522853",
+      "subject": "spec(M-GUIDANCE): graded first-time guidance - level ask on first open, level-tagged notables, Settings row (plain text, no bold); QUEUE: NOW = M-SOLO-UX + M-GUIDANCE queued (#191)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/bd35dc42eb296b45e8e51c36dc953aa32f522853"
+    },
+    {
+      "date": "2026-07-05T15:57:43Z",
+      "sha": "fa9ebb666368310771c2bacecd3e1bc0af859373",
+      "subject": "cc: llms.txt agent layer - machine-readable twin beside payload-repo.json (#190)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fa9ebb666368310771c2bacecd3e1bc0af859373"
+    },
     {
       "date": "2026-07-05T15:54:48Z",
       "sha": "2f6b38b0010c450258eb6e7aea5e3a00b2a87c54",
@@ -54,69 +90,9 @@
       "sha": "aaf520ca2828dc8ba8289f8c8e1d9224c1ec726f",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/aaf520ca2828dc8ba8289f8c8e1d9224c1ec726f"
-    },
-    {
-      "date": "2026-07-05T11:01:55Z",
-      "sha": "0a7fd6527979deacc5188464f752f6e19af8284c",
-      "subject": "cc: nightly snapshot refresh (#184)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0a7fd6527979deacc5188464f752f6e19af8284c"
-    },
-    {
-      "date": "2026-07-05T10:49:29Z",
-      "sha": "1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b",
-      "subject": "Retro panes (design-system day + ear-first night) + CC refresh (#183)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/1d00a541aec4fbd7179ac9a8e9ee2e7ca522ac6b"
-    },
-    {
-      "date": "2026-07-05T07:57:47Z",
-      "sha": "d42e022b029789666adf563b440eb85239d6254f",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d42e022b029789666adf563b440eb85239d6254f"
-    },
-    {
-      "date": "2026-07-05T07:57:33Z",
-      "sha": "e641e2574a737d5320f9f57ff54aa08396e53003",
-      "subject": "cc: durable nightly snapshot via Actions (public repo, free minutes; direct commit - main verified unprotected) (#182)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e641e2574a737d5320f9f57ff54aa08396e53003"
-    },
-    {
-      "date": "2026-07-05T07:56:54Z",
-      "sha": "21b44aca01ef597cc77e96f0dc3c18e12e8f7eba",
-      "subject": "Command Center v1 (repo layer): the parent artifact above the panes (#181)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/21b44aca01ef597cc77e96f0dc3c18e12e8f7eba"
-    },
-    {
-      "date": "2026-07-05T07:36:10Z",
-      "sha": "2d917cec2c46999e1799947db7657fe3016f1d7d",
-      "subject": "session-start: command-center generator = the sensing sweep (detect repo -> gather intel -> infer intent) (#180)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/2d917cec2c46999e1799947db7657fe3016f1d7d"
     }
   ],
   "openPRs": [
-    {
-      "number": 190,
-      "title": "cc: llms.txt agent layer - machine-readable twin beside payload-repo.json",
-      "branch": "claude/llms-txt",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/190",
-      "draft": false,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745713945/job/85236142428"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28745713934/job/85236142468"
-        }
-      ]
-    },
     {
       "number": 98,
       "title": "music(theory): key-aware conventional note spelling from circle.js SSOT (#85)",
@@ -176,6 +152,48 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-05T22:50:44Z",
+      "mergedAt": "2026-07-06T00:37:59Z",
+      "number": 195,
+      "title": "M-UI-STD: standardized chord-view controls + firstrun copy (cache v121)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/195"
+    },
+    {
+      "createdAt": "2026-07-05T20:09:40Z",
+      "mergedAt": "2026-07-05T20:13:11Z",
+      "number": 194,
+      "title": "M-LIB-UX: Repertoire->Library, Edit label, no leave-app search, title wrap, unified video button (F23-F27)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/194"
+    },
+    {
+      "createdAt": "2026-07-05T19:58:24Z",
+      "mergedAt": "2026-07-05T19:59:16Z",
+      "number": 193,
+      "title": "M-GUIDANCE: graded first-time guidance + studio-dismiss fix",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/193"
+    },
+    {
+      "createdAt": "2026-07-05T19:01:19Z",
+      "mergedAt": "2026-07-05T19:01:22Z",
+      "number": 192,
+      "title": "music(studio): solo-view UX rework - operator UAT F12-F22 (no-scroll mobile, primary Play, two-octave root-dwell loop, lean controls)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/192"
+    },
+    {
+      "createdAt": "2026-07-05T18:53:10Z",
+      "mergedAt": "2026-07-05T18:53:12Z",
+      "number": 191,
+      "title": "spec(M-GUIDANCE): graded guidance + QUEUE update",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/191"
+    },
+    {
+      "createdAt": "2026-07-05T15:30:05Z",
+      "mergedAt": "2026-07-05T15:57:44Z",
+      "number": 190,
+      "title": "cc: llms.txt agent layer - machine-readable twin beside payload-repo.json",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/190"
+    },
     {
       "createdAt": "2026-07-05T14:51:06Z",
       "mergedAt": "2026-07-05T15:54:48Z",
@@ -238,95 +256,34 @@
       "number": 181,
       "title": "Command Center v1 (repo layer): the parent artifact above the panes",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/181"
-    },
-    {
-      "createdAt": "2026-07-05T07:36:08Z",
-      "mergedAt": "2026-07-05T07:36:11Z",
-      "number": 180,
-      "title": "Session-start: CC generator as the sensing sweep",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/180"
-    },
-    {
-      "createdAt": "2026-07-05T07:23:33Z",
-      "mergedAt": "2026-07-05T07:23:35Z",
-      "number": 179,
-      "title": "Vision capture: command center hierarchy",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/179"
-    },
-    {
-      "createdAt": "2026-07-05T07:14:59Z",
-      "mergedAt": "2026-07-05T07:16:50Z",
-      "number": 178,
-      "title": "S-TOAST-HOST: setlist-remove/library-delete undo banners no longer leave a visible empty pill (U24)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/178"
-    },
-    {
-      "createdAt": "2026-07-05T06:57:01Z",
-      "mergedAt": "2026-07-05T06:57:03Z",
-      "number": 177,
-      "title": "Capture: U24",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/177"
-    },
-    {
-      "createdAt": "2026-07-05T06:30:12Z",
-      "mergedAt": "2026-07-05T06:30:14Z",
-      "number": 176,
-      "title": "Vision capture: deterministic tutor",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/176"
-    },
-    {
-      "createdAt": "2026-07-05T06:10:58Z",
-      "mergedAt": "2026-07-05T06:12:29Z",
-      "number": 175,
-      "title": "S-SET-INTEGRITY: dangling setlist refs - delete-heal + defensive nav + load-heal (U22)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/175"
     }
   ],
   "lastCiRun": {
-    "workflowName": "Retry failed Pages deploy",
-    "status": "completed",
-    "conclusion": "skipped",
-    "runStartedAt": "2026-07-05T15:55:57Z",
-    "durationSeconds": 11,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28746447955",
+    "workflowName": "cc-nightly",
+    "status": "in_progress",
+    "conclusion": null,
+    "runStartedAt": "2026-07-06T13:01:16Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28793420912",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 138,
-    "loc": {
-      "added": 36402,
-      "deleted": 5294
-    },
-    "loc_note": null,
-    "typical_merge_hours": 0.03,
-    "weekly": [
-      {
-        "week_start": "2026-06-28",
-        "loc_added": 36402,
-        "loc_deleted": 5294
-      },
-      {
-        "week_start": "2026-06-21",
-        "loc_added": 4411,
-        "loc_deleted": 908
-      },
-      {
-        "week_start": "2026-06-14",
-        "loc_added": 3054,
-        "loc_deleted": 365
-      }
-    ]
+    "merged_count": 137,
+    "loc": null,
+    "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
+    "typical_merge_hours": 0.17,
+    "weekly": null
   },
   "deploy": {
     "pages": {
-      "status": "building",
+      "status": "built",
       "htmlUrl": "https://nhruska.github.io/",
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v117",
-    "localCacheVersion": "music-v117",
+    "liveCacheVersion": "music-v121",
+    "localCacheVersion": "music-v121",
     "cacheMatch": true
   },
   "missions": [
@@ -540,8 +497,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 42,
-    "testCaseCount": 2138,
+    "testFileCount": 43,
+    "testCaseCount": 2181,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

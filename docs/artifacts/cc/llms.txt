@@ -1,10 +1,9 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-05T15:57:06Z
+Generated: 2026-07-06T13:01:20Z
 Status: ok
 
 ## NOW
 - Queue NOW: AWAITING OPERATOR: bake veto + anchors veto
-- Open PR #190 (CI green): cc: llms.txt agent layer - machine-readable twin beside payload-repo.json - https://github.com/nhruska/nhruska.github.io/pull/190
 - Open PR #98 (CI unknown): music(theory): key-aware conventional note spelling from circle.js SSOT (#85) - https://github.com/nhruska/nhruska.github.io/pull/98
 - Open draft PR #88 (CI green): music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room - https://github.com/nhruska/nhruska.github.io/pull/88
 - Open draft PR #70 (CI green): Music: AI tutor prototype - goal spec + checklist - https://github.com/nhruska/nhruska.github.io/pull/70
@@ -15,14 +14,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #195 - M-UI-STD: standardized chord-view controls + firstrun copy (cache v121) (2026-07-06) - https://github.com/nhruska/nhruska.github.io/pull/195
+- #194 - M-LIB-UX: Repertoire->Library, Edit label, no leave-app search, title wrap, unified video button (F23-F27) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/194
+- #193 - M-GUIDANCE: graded first-time guidance + studio-dismiss fix (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/193
+- #192 - music(studio): solo-view UX rework - operator UAT F12-F22 (no-scroll mobile, primary Play, two-octave root-dwell loop, lean controls) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/192
+- #191 - spec(M-GUIDANCE): graded guidance + QUEUE update (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/191
+- #190 - cc: llms.txt agent layer - machine-readable twin beside payload-repo.json (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/190
 - #189 - cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/189
 - #188 - M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/188
-- #187 - cc: migrate command-center-gen.py onto the vendored panelkit SSOT (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/187
-- #186 - cc: test-depth metric - 2117 executed cases, not 40 files (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/186
-- #185 - Case study: the music app - the method's origin, evidenced (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/185
-- #184 - cc: nightly snapshot refresh (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/184
-- #183 - Retro panes (design-system day + ear-first night) + CC refresh: full mission record (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/183
-- #182 - cc-nightly: durable snapshot refresh workflow (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/182
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -35,6 +34,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (2138 cases / 42 suites)
+- Suite: node test/run-all.js (2181 cases / 43 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
