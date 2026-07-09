@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T11:20:09Z",
+  "generatedAt": "2026-07-09T12:17:47Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-07T12:12:23Z",
-    "sha": "6fedb40796537b7b83591c855255d41cacab876d",
+    "date": "2026-07-08T11:20:18Z",
+    "sha": "93cd30e1cd52c69df40f066cbae638762b12d9da",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/6fedb40796537b7b83591c855255d41cacab876d"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/93cd30e1cd52c69df40f066cbae638762b12d9da"
   },
   "commits": [
+    {
+      "date": "2026-07-08T11:20:18Z",
+      "sha": "93cd30e1cd52c69df40f066cbae638762b12d9da",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/93cd30e1cd52c69df40f066cbae638762b12d9da"
+    },
     {
       "date": "2026-07-07T12:12:23Z",
       "sha": "6fedb40796537b7b83591c855255d41cacab876d",
@@ -84,12 +90,6 @@
       "sha": "e2dbd55b7838f60b3b13c7146a52e629959b79b5",
       "subject": "cc: migrate command-center-gen.py onto the vendored panelkit SSOT (#187)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e2dbd55b7838f60b3b13c7146a52e629959b79b5"
-    },
-    {
-      "date": "2026-07-05T13:11:33Z",
-      "sha": "180e8b7452eab37208b6e4dda9c866941afe810c",
-      "subject": "cc: report executed test cases (2117), not just suite files (40) (#186)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/180e8b7452eab37208b6e4dda9c866941afe810c"
     }
   ],
   "openPRs": [
@@ -262,14 +262,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-08T11:20:03Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28938640247",
+    "runStartedAt": "2026-07-09T12:17:39Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29017661936",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 127,
+    "merged_count": 122,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 0.17,
