@@ -1,6 +1,6 @@
 {
   "name": "persona-beginner-studio",
-  "description": "USDD persona goalpost G1 (S-PERSONA-COPY) - BEGINNER: the Solo modal speaks the beginner vocabulary budget (outcome-named buttons: Keep + practice / Just practice / Keep building) and the Studio opens with ONE beginner orientation tip (studiofirst notable); theory prose (whynote) still absent. Persona journey state: the first-open welcome (firstrun) is already dismissed - the graded one-tip-at-a-time slot is free for studiofirst.",
+  "description": "USDD persona goalpost G1 (S-PERSONA-COPY) - BEGINNER: the Solo modal speaks the beginner vocabulary budget (outcome-named buttons: Keep + practice / Just practice / Keep building) and the Studio opens with ONE beginner orientation tip (studiofirst notable); theory prose (whynote) still absent. Persona journey state: the first-open welcome (firstrun) is already dismissed - the graded one-tip-at-a-time slot is free for studiofirst. G2 (S-POSTPROG-CUE): once the chords + key make Solo live, the beginner sees ONE next-move cue (postprog notable); tapping Solo dismisses it for good, freeing the one-tip journey slot so the Studio tip can still claim.",
   "persona": "beginner",
   "url": "/music/play/",
   "steps": [
@@ -24,6 +24,15 @@
     {
       "action": "tapChord",
       "name": "G"
+    },
+    {
+      "action": "assertText",
+      "selector": "#postProgSlot",
+      "contains": "tap Solo"
+    },
+    {
+      "action": "screenshot",
+      "name": "postprog-cue"
     },
     {
       "action": "waitFor",

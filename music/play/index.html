@@ -205,6 +205,9 @@
                top region stays as short as possible. -->
           <div class="progBox">
             <div class="prog" id="prog"></div>
+            <!-- G2 S-POSTPROG-CUE: beginner next-move cue slot; rendered by
+                 renderPostProgNotable below when the progression goes Solo-ready -->
+            <div class="notableSlot" id="postProgSlot"></div>
           </div>
           <div class="maxNote" id="maxNote" hidden>Max 12 chords - remove one to add another.</div>
           <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
@@ -1188,6 +1191,37 @@
       slot.appendChild(banner);
     }
     window.addEventListener('music:compose-transposed', renderTransposeTipNotable);
+
+    /* G2 S-POSTPROG-CUE (beginner tier): the after-you-build next move. Fires
+       when the progression first goes Solo-ready (key + chords - songbook.js
+       dispatches music:compose-progression from its solo-visibility seam).
+       Copy-coach: beginner vocabulary budget, action-first, names the on-screen
+       button. Pedagogy: one thing, moment of relevance, show-once. Tapping
+       Solo IS the goal - songbook dispatches music:compose-solo and the cue
+       dismisses itself for good, releasing the one-tip journey slot (so the
+       Studio orientation tip can claim next). */
+    function renderPostProgNotable(ev) {
+      var slot = document.getElementById('postProgSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || !ev.detail.soloReady) { if (slot) slot.innerHTML = ''; return; }
+      if (slot.childNodes.length) return; // already showing
+      if (Notables.isDismissed('postprog')) return;
+      if (!Notables.claim('postprog', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'postprog',
+        text: 'Your chords are ready - tap Solo to practice over them.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:compose-progression', renderPostProgNotable);
+    window.addEventListener('music:compose-solo', function () {
+      // goal reached: retire the cue forever + free the slot for the next tip
+      if (window.Notables) { Notables.dismiss('postprog'); }
+      var slot = document.getElementById('postProgSlot');
+      if (slot) slot.innerHTML = '';
+    });
 
     /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
        backup-staleness nudge in the free LOWEST Notables priority slot

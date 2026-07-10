@@ -2241,6 +2241,10 @@
         // establish a key). Pin display inline (wins over any external
         // stylesheet rule short of !important) so hidden actually hides it.
         el.soloBackingBtn.style.display = showSolo ? '' : 'none';
+        // G2 S-POSTPROG-CUE: tell the guidance layer whether the progression is
+        // Solo-ready - the postprog notable renders/clears off this event (same
+        // notifyGuidanceEvent seam as music:compose-transposed).
+        notifyGuidanceEvent('music:compose-progression', { soloReady: showSolo, length: progression.length });
       }
     }
     function composeTpose(st) {
@@ -3654,6 +3658,9 @@
     // song, matching the locked-interface shape exactly (id/title/artist/key/
     // mode/custom); "Skip" opens the ephemeral Studio unchanged.
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
+      // G2 S-POSTPROG-CUE: tapping Solo is the cue's goal - retire it (listener
+      // in play/index.html dismisses 'postprog' + clears the slot).
+      notifyGuidanceEvent('music:compose-solo');
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
         // Already saved this session: no re-prompt. Save-in-place (updates the linked

@@ -185,7 +185,7 @@ test('PRIORITY exposes the M-GUIDANCE order: guidanceask first, then the graded 
     'firstrun', 'tunefirst', 'savebasics',
     // S-PERSONA-COPY: studiofirst (beginner Studio orientation) sits beside its
     // studio siblings; disjoint LEVELS gate means it never actually contests them.
-    'studiofirst', 'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'postprog', 'studiofirst', 'whynote', 'composeintro', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ]);
 });
@@ -230,6 +230,7 @@ test('diagrampref, once dismissed, never claims again (one-shot, matches every o
 test('LEVELS exposes the graded registry: firstrun/tunefirst/savebasics -> beginner; whynote -> intermediate+advanced; composeintro/transposetip -> intermediate; scaletip -> advanced', function () {
   assert.deepStrictEqual(Notables.LEVELS, {
     firstrun: ['beginner'],
+    postprog: ['beginner'],
     studiofirst: ['beginner'],
     tunefirst: ['beginner'],
     savebasics: ['beginner'],

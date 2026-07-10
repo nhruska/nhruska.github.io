@@ -26,6 +26,11 @@
       "name": "G"
     },
     {
+      "action": "evalAssert",
+      "label": "postprog cue ABSENT for advanced (level-gated)",
+      "js": "((document.getElementById('postProgSlot')||{}).textContent||'') === ''"
+    },
+    {
       "action": "waitFor",
       "selector": "#soloBackingBtn"
     },
