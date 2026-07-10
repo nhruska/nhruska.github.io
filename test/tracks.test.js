@@ -749,4 +749,54 @@ test('inferSoloDefault: a Blues key keeps its own scale (mode chip IS blues)', f
   assert.strictEqual(T.inferSoloDefault('E', 'blues', ['E7', 'A7', 'B7']), 'mode');
 });
 
+/* ---------------------------------------------------------------------
+ * G6 S-SCALE-MEMORY (2026-07-10): T.readSoloScaleFor / T.writeSoloScaleFor -
+ * per-track solo-scale chip persistence (bt.soloScale.v1).
+ * ------------------------------------------------------------------- */
+test('readSoloScaleFor: a fresh/empty store returns null (no memory yet)', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('writeSoloScaleFor + readSoloScaleFor: round-trips the chosen scaleId for that track', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  T.writeSoloScaleFor(t, 'pentMinor');
+  assert.strictEqual(T.readSoloScaleFor(t), 'pentMinor');
+});
+test('writeSoloScaleFor: is keyed per-track (trackKey) - a different track is unaffected', function () {
+  resetLocalStorage();
+  var t1 = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  var t2 = { title: 'Wonderwall', artist: 'Oasis', key: 'F#', mode: 'minor' };
+  T.writeSoloScaleFor(t1, 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t1), 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t2), null, 'a different track must not inherit t1\'s stored scale');
+});
+test('writeSoloScaleFor: overwrites a previous choice for the same track', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  T.writeSoloScaleFor(t, 'pentMajor');
+  T.writeSoloScaleFor(t, 'dorian');
+  assert.strictEqual(T.readSoloScaleFor(t), 'dorian');
+});
+test('readSoloScaleFor: tolerates invalid JSON in the store (defensive read -> null)', function () {
+  resetLocalStorage();
+  global.localStorage.setItem('bt.soloScale.v1', '{not valid json');
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('readSoloScaleFor: tolerates a non-object JSON value in the store (e.g. an array) -> null', function () {
+  resetLocalStorage();
+  global.localStorage.setItem('bt.soloScale.v1', '[1,2,3]');
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('readSoloScaleFor: an unknown track (never written) among other stored tracks -> null', function () {
+  resetLocalStorage();
+  var t1 = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  var t2 = { title: 'Wonderwall', artist: 'Oasis', key: 'F#', mode: 'minor' };
+  T.writeSoloScaleFor(t1, 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t2), null);
+});
+
 run();

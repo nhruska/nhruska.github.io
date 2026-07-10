@@ -552,6 +552,37 @@
     });
     return changed;
   }
+  // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
+  // TAPPED for a given track, so the next Studio open pre-selects it instead
+  // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
+  // localStorage key, defensive try/catch on both read and write (private-
+  // mode safety, matching writeTempo's style below in mount()) - so per
+  // music/CLAUDE.md's storage-changes convention this needs no backup.js
+  // SCHEMA_VERSION bump. Keyed by trackKey(t), the same stable per-track
+  // identity music.trackUrls.v1 already uses, so the map survives catalog
+  // reordering. Module-scope + exported so the round-trip is unit-testable
+  // in Node without the Studio DOM (mirrors readTempo/writeTempo's shape,
+  // but those two stay mount()-local since they hold no per-track key).
+  var SOLOSCALE_STORE = 'bt.soloScale.v1'; // { [trackKey]: scaleId }
+  function readSoloScales() {
+    try {
+      var s = localStorage.getItem(SOLOSCALE_STORE);
+      var o = s ? JSON.parse(s) : {};
+      return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+    } catch (e) { return {}; }
+  }
+  function readSoloScaleFor(t) {
+    var o = readSoloScales();
+    var k = trackKey(t);
+    return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null;
+  }
+  function writeSoloScaleFor(t, scaleId) {
+    try {
+      var o = readSoloScales();
+      o[trackKey(t)] = scaleId;
+      localStorage.setItem(SOLOSCALE_STORE, JSON.stringify(o));
+    } catch (e) {}
+  }
   var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
   var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 
@@ -1431,8 +1462,16 @@
         // inferSoloDefault). Guard the result to a chip actually offered for this key, so a
         // deduped mode (e.g. inference returns 'mixolydian' on an already-mixolydian key)
         // falls back to a real chip rather than highlighting nothing.
-        var curId = inferSoloDefault(t.key, t.mode, t.seq);
+        // G6 S-SCALE-MEMORY (2026-07-10): chipIds now computed BEFORE curId so a
+        // remembered choice can be validated against the actually-offered chips for
+        // THIS key before falling back to inferSoloDefault - a remembered scaleId
+        // that's no longer offered (e.g. the key's own mode changed) still falls
+        // through to inference exactly like an inference-produced mismatch does below.
         var chipIds = CHIPS.map(function (c) { return c.id; });
+        var storedScaleId = readSoloScaleFor(t);
+        var curId = (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
+          ? storedScaleId
+          : inferSoloDefault(t.key, t.mode, t.seq);
         if (chipIds.indexOf(curId) < 0) {
           curId = chipIds.indexOf('pentMajor') >= 0 ? 'pentMajor'
             : chipIds.indexOf('pentMinor') >= 0 ? 'pentMinor' : 'mode';
@@ -1443,10 +1482,14 @@
               + esc(c.label) + '</button>';
           }).join('');
           Array.prototype.forEach.call(chipsEl.querySelectorAll('.bt-st-scalechip'), function (b) {
-            b.onclick = function () { select(b.getAttribute('data-scaleid')); };
+            // G6: a chip TAP persists the choice (persist=true); the synthetic
+            // select() call below (the initial default landing) passes no 2nd
+            // arg, so opening the Studio never writes an inferred default as if
+            // it were a deliberate pick.
+            b.onclick = function () { select(b.getAttribute('data-scaleid'), true); };
           });
         }
-        function select(scaleId) {
+        function select(scaleId, persist) {
           var bundle = soloBundle(t.key, t.mode, scaleId);
           if (!bundle) return;
           // M-EAR wave 1.5 (U11): a scale-chip switch WHILE auditioning
@@ -1457,6 +1500,7 @@
           var wasPlaying = !!studioSound;
           if (!wasPlaying) stopStudioSound();
           curId = scaleId;
+          if (persist) writeSoloScaleFor(t, scaleId);
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
@@ -1910,6 +1954,8 @@
     // S-SOLO-SCALE-DEFAULT: progression-aware theory-best default scale (key+mode+seq ->
     // scaleId). Exported for direct unit tests independent of the Studio DOM.
     inferSoloDefault: inferSoloDefault,
+    // G6 S-SCALE-MEMORY: per-track solo-scale chip persistence (trackKey -> scaleId).
+    readSoloScaleFor: readSoloScaleFor, writeSoloScaleFor: writeSoloScaleFor,
     // S-BLUES-BOXES: which scale-chip selections are box-eligible (pentMajor/
     // pentMinor/blues) - exported for direct unit tests independent of the
     // Studio DOM wiring (mirrors the soloBundle export above it).
