@@ -33,7 +33,7 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | compose-default-c | D-DEFAULT-C: keyed to C, In-key view, palette populated |
 | compose-clear-inkey | S-CLEAR-INKEY: Clear resets a pinned All view to In-key |
 | solo-cancel | S-POSTPROG-FLOW: Solo modal cancellable, progression kept |
-| solo-skip-mixolydian | progression-aware picker: C-F-A# (bVII) -> Mixolydian default + mode chips + A# in notes |
+| solo-skip-mixolydian | progression-aware picker: C-F-A# (bVII) -> Mixolydian default + mode chips + key-aware Bb in notes |
 | studio-scale-tap-dorian | Studio chip switch re-renders scale (Dorian b3 = D#) |
 | prog-fit-6 | S-PROG-FIT-6: 6 chords keep the toggle row above the fold at 412x915 |
 | prog-delete-handles | S-DELHANDLE-OVERFLOW: delete badges sit on their cards |
