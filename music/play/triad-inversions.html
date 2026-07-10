@@ -44,6 +44,10 @@ body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 1
 h1{font-size:1.18rem;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
 h1 .em{color:var(--accent-ink)}
 .lede{color:var(--txt-soft);font-size:.84rem;line-height:1.5;margin:6px 0 14px}
+/* S-RN-STYLE (operator UAT 2026-07-10): standalone I/IV/V tokens in prose read
+   as CHORD FUNCTIONS, not sentence words - same mono+accent family as the
+   step cards' .roman so one meaning keeps one look (consistency law). */
+.rn{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;color:var(--accent-ink);letter-spacing:.04em}
 /* Key picker */
 .keyChips{display:flex;gap:5px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
 .keyChips::-webkit-scrollbar{display:none}
@@ -131,6 +135,11 @@ h1 .em{color:var(--accent-ink)}
      stated key (the IV of F reads Bb, never A#); the local NAMES table below
      stays canonical-sharp for identity only. -->
 <script src="../shared/circle.js"></script>
+<!-- audio.js: the app's ONE strum engine (S-TRIADS-AUDIBLE, 2026-07-10) -
+     tapping a chord card strums its exact voicing. Pitches derive from the
+     active profile's own open-string frequencies + the card's fret array,
+     so tones are accurate on every supported instrument by construction. -->
+<script src="../shared/audio.js"></script>
 </head>
 <body>
 <script>
@@ -189,7 +198,7 @@ h1 .em{color:var(--accent-ink)}
   <select class="instPicker" id="instPicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
 </div>
 <h1>Triad <span class="em">Inversions</span></h1>
-<p class="lede">Walk I-IV-V up the neck with three shape pivots. The chord names stay - only the inversion and fret position climb.</p>
+<p class="lede">Walk <span class="rn">I</span>-<span class="rn">IV</span>-<span class="rn">V</span> up the neck with three shape pivots. The chord names stay - only the inversion and fret position climb. Tap any chord card to hear it.</p>
 
 <div class="keyChips" id="keyChips"></div>
 <div id="cycle"></div>
@@ -199,9 +208,9 @@ h1 .em{color:var(--accent-ink)}
 <details class="explainer" data-explainer="how">
   <summary>How this works</summary>
   <div class="explainerBody">
-    <p>Think in chord intervals (<strong>I, IV, V</strong>), not note letters. The same shape sequence works in any key - you just start the cycle at a different fret.</p>
+    <p>Think in chord intervals (<span class="rn">I</span>, <span class="rn">IV</span>, <span class="rn">V</span>), not note letters. The same shape sequence works in any key - you just start the cycle at a different fret.</p>
     <p>String 1 stays muted throughout. The strings used (4, 3, 2) preserve a perfect-fourth + major-third interval pattern - same geometry on ukulele G-C-E and guitar D-G-B, so the shapes transfer directly.</p>
-    <p>Within one position, the cycle is: I in a shape, hammer fingers into IV's shape, slide up two frets to V. A small fret bump (and sometimes a flip of the bar finger) lands the next inversion of I one position higher on the neck. After three positions you're one octave up and the cycle repeats.</p>
+    <p>Within one position, the cycle is: <span class="rn">I</span> in a shape, hammer fingers into <span class="rn">IV</span>'s shape, slide up two frets to <span class="rn">V</span>. A small fret bump (and sometimes a flip of the bar finger) lands the next inversion of <span class="rn">I</span> one position higher on the neck. After three positions you're one octave up and the cycle repeats.</p>
     <p><strong>Only 3 shapes to learn.</strong> C-shape, A-shape, and F-shape are each a different inversion of the same triad, and they repeat in that order up the neck - one octave per cycle. Recognize the shape under your fingers and you know every position on the fretboard: it's the same three shapes, just higher.</p>
     <button class="dismiss" type="button">Got it - don't show again</button>
   </div>
@@ -212,7 +221,7 @@ h1 .em{color:var(--accent-ink)}
   <div class="explainerBody">
     <ul>
       <li><strong>C-shape</strong> - one finger bars across strings 4, 3, 2 (index OR ring depending on stage of the cycle). Same fret on all three strings.</li>
-      <li><strong>F-shape</strong> - bar at the root area + two fingers reach to higher frets on strings 4 and 2. Used for IV when hammering from the C-shape I.</li>
+      <li><strong>F-shape</strong> - bar at the root area + two fingers reach to higher frets on strings 4 and 2. Used for <span class="rn">IV</span> when hammering from the C-shape <span class="rn">I</span>.</li>
       <li><strong>A-shape</strong> - three fingers on strings 4, 3, 2 stepping down (ring high, middle middle, index low). Used for the rotated I.</li>
     </ul>
     <p>Finger numbers on the diagrams:</p>
@@ -237,7 +246,7 @@ h1 .em{color:var(--accent-ink)}
   <summary>The big picture</summary>
   <div class="explainerBody">
     <p>The same shape pattern repeats up the neck while you stay in one key. Chord names don't change - each cycle just puts them in different inversions higher and higher on the fretboard.</p>
-    <p>Once the shape pattern is in muscle memory, you've removed the abstraction of note letters entirely. You think in <strong>I, IV, V</strong> and let the fretboard hand you whichever inversion is closest at hand.</p>
+    <p>Once the shape pattern is in muscle memory, you've removed the abstraction of note letters entirely. You think in <span class="rn">I</span>, <span class="rn">IV</span>, <span class="rn">V</span> and let the fretboard hand you whichever inversion is closest at hand.</p>
     <button class="dismiss" type="button">Got it - don't show again</button>
   </div>
 </details>
@@ -306,6 +315,24 @@ const PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8
 // so the page still renders.
 function inKeyName(keyTok, n) {
   return (window.Circle && Circle.noteInKey) ? Circle.noteInKey(keyTok, 'major', n) : n;
+}
+// S-RN-STYLE (operator UAT 2026-07-10): escape prose, then wrap standalone
+// I/IV/V roman-numeral tokens in a styled span so they don't blend into the
+// surrounding sentence. In this page's prose those single letters ALWAYS mean
+// the chord function (there is no first-person "I" anywhere in the copy), so
+// the word-boundary match is safe; IV before V before I keeps IV whole.
+function rnProse(text) {
+  return esc(text).replace(/\b(IV|V|I)\b/g, '<span class="rn">$1</span>');
+}
+// S-TRIADS-AUDIBLE (operator UAT 2026-07-10): strum a card's exact voicing.
+// fullFrets is in DISPLAY order (same order as activeProfile.strings), and
+// each pitch derives from that profile's own open-string frequency + fret -
+// accurate on every supported instrument by construction. ChordAudio is the
+// app's ONE strum engine (shared/audio.js); muted strings (-1) stay silent
+// inside strum(). Guarded no-op if audio failed to load.
+function strumCard(fullFrets) {
+  if (!window.ChordAudio || !activeProfile) return;
+  ChordAudio.strum(fullFrets, activeProfile.strings.map(s => s.f));
 }
 function freqPc(f) {
   if (!f || !isFinite(f) || f <= 0) return 0;
@@ -751,14 +778,25 @@ function renderCycle() {
           <div class="role"><span class="roman">${step.role}</span><span class="chord">${step.chord}</span></div>
           <div class="shape">${step.shape}</div>
           <div class="frets">[${fullFrets.join(', ')}]</div>
-          <div class="notes">${step.notes}</div>
+          <div class="notes">${rnProse(step.notes)}</div>
         </div>`;
+      // S-TRIADS-AUDIBLE: the card is a tap-to-hear button for its own
+      // voicing (the Studio's "tap to hear" convention). Keyboard-reachable
+      // (a11y: role/tabindex/Enter+Space); fullFrets is captured per card.
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', 'Play the ' + step.chord + ' triad, ' + step.shape);
+      const cardFrets = fullFrets.slice();
+      card.addEventListener('click', () => strumCard(cardFrets));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); strumCard(cardFrets); }
+      });
       block.appendChild(card);
       if (si < pos.transitions.length) {
         const t = pos.transitions[si];
         const tr = document.createElement('div');
         tr.className = 'transition';
-        tr.textContent = t.text;
+        tr.innerHTML = '<div>' + rnProse(t.text) + '</div>'; // S-RN-STYLE; single child (transition is flex)
         block.appendChild(tr);
       }
     });
@@ -766,13 +804,13 @@ function renderCycle() {
       if (pos.next.type === 'flip') {
         const fl = document.createElement('div');
         fl.className = 'flipBox';
-        fl.innerHTML = `<div class="head">V becomes the next I</div><div></div>`;
-        fl.lastElementChild.textContent = pos.next.text;
+        fl.innerHTML = `<div class="head">${rnProse('V becomes the next I')}</div><div></div>`;
+        fl.lastElementChild.innerHTML = rnProse(pos.next.text);
         block.appendChild(fl);
       } else {
         const tr = document.createElement('div');
         tr.className = 'transition';
-        tr.textContent = pos.next.text;
+        tr.innerHTML = '<div>' + rnProse(pos.next.text) + '</div>';
         block.appendChild(tr);
       }
     }
@@ -788,7 +826,7 @@ function renderIncompatibleFallback(root) {
   fallback.className = 'fallback';
   fallback.innerHTML = `
     <p><strong>${esc(profile.label)}'s tuning</strong> uses a different interval pattern (${esc(profile.tuning)}). The artifact's C-shape, F-shape and A-shape geometry is built for the perfect-fourth + major-third interval pattern on strings 4-3-2 - ukulele G-C-E and guitar D-G-B drop straight in, but tunings like mandolin / mandola fifths need a different shape vocabulary.</p>
-    <p>You can still walk I-IV-V in the Compose tab - the chord chain there picks the lowest-fret voicing for any tuning.</p>
+    <p>You can still walk <span class="rn">I</span>-<span class="rn">IV</span>-<span class="rn">V</span> in the Compose tab - the chord chain there picks the lowest-fret voicing for any tuning.</p>
     <div class="actions">
       <a href="../play/?p=${encodeURIComponent(profile.id)}">Compose tab in ${esc(profile.label)}</a>
       <a class="alt" href="?p=ukulele-gcea">Switch to ukulele</a>
