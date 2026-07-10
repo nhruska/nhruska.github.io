@@ -73,6 +73,8 @@
 | M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
 | M-10 | M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required | [uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding |
 | M-12 | S-SDD-TEMPLATES: mine songs.json (`seq` + `sheet` sections via `Circle.romanFor`) -> proven progression-template library (genre x section, ranked, song-cited) + canonical families; deterministic extraction tests. Feeds M-11 M-CONSTRUCT as its template INPUT; interview set IV-3 on the Deck | [sdd-vision](sdd-vision-20260710.md) - the operator's original song-builder prompt, full circle |
+| M-13 | **M-SONG-WIZARD: deterministic guided song-build flow (genre -> proven section templates -> key -> assemble), NO LLM at runtime** - the RAILS-WITH-EXITS law: every wizard step is a pre-filled freeform Compose state, so guided never fences free (operator UAT 2026-07-10: went to create a song, expected a wizard). Converges M-11 + M-2 + M-12; interview set IV-5 on the Deck | [guided-and-free-vision](guided-and-free-vision-20260710.md) |
+| M-14 | M-SKILL-PROFILE: deterministic learner model (skill graph from observable events: chords played, keys used, forms completed) + pedagogy-coach next-best-step + **mastery path as a sequence of USDD persona states** (growth = assertable scenario transitions); reverse-CE variant: target profile - current profile = the practice queue | [guided-and-free-vision](guided-and-free-vision-20260710.md) sections 3-4 |
 
 ## LONG -> promoted by the 2026-07-04 vision capture
 
