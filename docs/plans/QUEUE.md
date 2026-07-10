@@ -71,6 +71,7 @@
 | M-8 | SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview) | analysis A7 + B5 |
 | M-9 | mount() god-function incremental extraction - FOLD INTO M3, never big-bang | analysis A2 |
 | M-10 | M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required | [uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding |
+| M-12 | S-SDD-TEMPLATES: mine songs.json (`seq` + `sheet` sections via `Circle.romanFor`) -> proven progression-template library (genre x section, ranked, song-cited) + canonical families; deterministic extraction tests. Feeds M-11 M-CONSTRUCT as its template INPUT; interview set IV-3 on the Deck | [sdd-vision](sdd-vision-20260710.md) - the operator's original song-builder prompt, full circle |
 
 ## LONG -> promoted by the 2026-07-04 vision capture
 
@@ -89,6 +90,8 @@
 - Audio-input features beyond tuner (chord recognition?) - speculative (NOTE: distinct from M-EAR audio-OUTPUT, which is captured)
 - Compose UX redesign: tabs + Related Keys lens (gh #44)
 - Setlist touch drag-to-reorder (gh #92)
+- SDD recursion: album composition (sequencing, key/tempo/energy arcs across a set) - parked until song-level SDD proves out ([sdd-vision](sdd-vision-20260710.md))
+- SDD recursion: release cadence / streaming-strategy optimization loops - external-data spike + vision interview first (same doc)
 
 ## Operating rules
 
