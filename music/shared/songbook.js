@@ -2495,10 +2495,14 @@
       // Root grid is always visible INSIDE the fly-out now (no separate popover).
       el.keyRoots.hidden = false;
       el.keyRoots.innerHTML = '';
+      // MOCK ONLY (IV-2 decision aid, 2026-07-10 - NEVER MERGE THIS BRANCH):
+      // the three common flat keys display their flat names in the root grid.
+      // Display seam only - r stays the canonical token everywhere else.
+      var MOCK_FLAT_NAMES = { 'A#': 'Bb', 'D#': 'Eb', 'G#': 'Ab' };
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
-        b.textContent = r;
+        b.textContent = MOCK_FLAT_NAMES[r] || r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
           invalidateClearUndo(); // A3: a key (root) change invalidates any pending Clear-undo
