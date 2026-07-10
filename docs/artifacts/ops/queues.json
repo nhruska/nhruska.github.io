@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T12:55:00Z",
+  "updated": "2026-07-10T13:40:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -9,10 +9,10 @@
       "items": [
         {
           "id": "TR-3",
-          "priority": 92,
+          "priority": 90,
           "form": "burst",
-          "ask": "React to the song draft in bursts: 'chorus B', 'kill verse line 3', 'more water less stone' - anything",
-          "title": "Friction song draft v0.1 - 'Worn Smooth' (F Mixo, Dm verse)",
+          "ask": "v0.2 is up: calluses spine, piano->uke->kalimba verse 2, 'proof of every fight I lost' chorus. Burst again - or say 'store it' to put it in songs.json",
+          "title": "Song draft v0.2 - 'Calluses' (reframed per your burst: playing-centered, interfaces verse)",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
           "added": "2026-07-10"
         },
@@ -42,15 +42,6 @@
       "label": "Planning approval",
       "desc": "Go/no-go and re-rank decisions. One digit or one word each.",
       "items": [
-        {
-          "id": "PA-2",
-          "priority": 78,
-          "form": "digit",
-          "ask": "Say 'merge 650' - lands the 'any domain is a loop' principle + the multi-repo git rule team-wide (audit APPROVE already posted)",
-          "title": "Merge claude-config #650",
-          "url": "https://github.com/nhruska/claude-config/pull/650",
-          "added": "2026-07-10"
-        },
         {
           "id": "PA-1",
           "priority": 58,
@@ -83,9 +74,9 @@
       "items": [
         {
           "id": "IV-5",
-          "priority": 85,
+          "priority": 82,
           "form": "interview",
-          "ask": "Song-wizard scope, 5 Qs (any subset): entry placement (own flow vs Compose toggle) is the one only you can call - rails-with-exits law already locked",
+          "ask": "Your burst answered the profile framing (gap vs expert model, point of need - locked). Still open: wizard ENTRY - own 'New song' flow or a 'Guide me' toggle inside Compose?",
           "title": "Song wizard + skill profile question set",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/guided-and-free-vision-20260710.md",
           "added": "2026-07-10"

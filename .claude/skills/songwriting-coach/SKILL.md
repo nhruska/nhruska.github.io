@@ -61,6 +61,14 @@ S-SDD-TEMPLATES mission. Until it ships, the families table above is the proven 
 - App stays static/no-LLM: lyric GENERATION happens in session with this skill; the app
   stores results (`sheet` lines) and never calls a model.
 
+## Operator taste (learned from burst verdicts - grows per draft)
+
+| Verdict (date) | Encoded preference |
+|---|---|
+| v0.1 -> v0.2 reframe (2026-07-10) | **Playing-centered PHYSICAL imagery beats conceptual metaphor** - calluses (skin, strings, hands) chosen over stones/stairs. Ground every image in the body making the music |
+| same burst | **Instruments-as-interfaces motif is sanctioned personal canon**: piano at 7, guitar/bass, uke at 48, kalimba (3 adjacent tines = a triad) - "different doors, same house". Pattern-transfer across instruments is HIS story; use it |
+| same burst | Paradox lines that state compounding in skin, never jargon ("proof of every fight I lost") - CE concepts stay allusive, the body carries the meaning |
+
 ## Self-check before recommending
 
 - Did I name the proven family (not invent a progression) and cite why it fits the
