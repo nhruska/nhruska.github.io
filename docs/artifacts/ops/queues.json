@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T18:05:00Z",
+  "updated": "2026-07-10T18:30:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -74,11 +74,12 @@
         },
         {
           "id": "IV-2",
-          "priority": 44,
-          "form": "digit",
-          "ask": "Should the key picker offer Bb/Eb/Ab as first-class FLAT keys? yes / no / show me a mock",
-          "title": "Key picker flat names (FORK-4 wave 2 residue)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+          "priority": 52,
+          "form": "tap",
+          "ask": "The MOCK IS LIVE - open the Compose key picker on the preview: Eb/Ab/Bb sit where D#/G#/A# were. Then one word: yes / no",
+          "title": "Key picker flat names - mock ready (display-only branch, never merges)",
+          "url": "https://raw.githack.com/nhruska/nhruska.github.io/claude/flat-keys-mock/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/tree/claude/flat-keys-mock",
           "added": "2026-07-10"
         }
       ]
