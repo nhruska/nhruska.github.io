@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T15:15:00Z",
+  "updated": "2026-07-10T17:52:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -42,17 +42,7 @@
     "planning_approval": {
       "label": "Planning approval",
       "desc": "Go/no-go and re-rank decisions. One digit or one word each.",
-      "items": [
-        {
-          "id": "PA-1",
-          "priority": 55,
-          "form": "digit",
-          "ask": "Say 'resume board' - G3 SHIPPED in the swarm (#214); next up G5 S-WHYNOTE-SCALE (48) + S-SCALE-MEMORY (24)",
-          "title": "Resume the goalpost board (G5+)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-friction-profiles-20260710.md",
-          "added": "2026-07-10"
-        }
-      ]
+      "items": []
     },
     "design_review": {
       "label": "Design review",
@@ -63,15 +53,6 @@
       "label": "Interview",
       "desc": "Open question sets. Answering ANY subset unblocks - the rest become cited assumed answers.",
       "items": [
-        {
-          "id": "IV-4",
-          "priority": 70,
-          "form": "interview",
-          "ask": "Q1 is the one that matters: which department gets cockpit-ified first (proposals/BD, patents, delivery, marketing)? Any of the 5 Qs helps",
-          "title": "Org-cockpit question set (5 Qs)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
-          "added": "2026-07-10"
-        },
         {
           "id": "IV-1",
           "priority": 48,
@@ -92,5 +73,18 @@
         }
       ]
     }
-  }
+  },
+  "retired": [
+    {
+      "id": "IV-4",
+      "resolution": "Q1 ANSWERED 'delivery' (operator digit, 2026-07-10) - delivery/PM is the first cockpit department. Q2-Q5 folded as cited assumed answers per the any-subset interview contract.",
+      "evidence": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
+      "retired": "2026-07-10"
+    },
+    {
+      "id": "PA-1",
+      "resolution": "ANSWERED 'y' (operator, 2026-07-10) - goalpost board resumed. G5 S-WHYNOTE-SCALE + G6 S-SCALE-MEMORY dispatched to a worktree agent same turn.",
+      "retired": "2026-07-10"
+    }
+  ]
 }
