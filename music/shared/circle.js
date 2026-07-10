@@ -273,6 +273,16 @@
     return 'M' + o1[0] + ' ' + o1[1] + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + o2[0] + ' ' + o2[1] +
       ' L' + i2[0] + ' ' + i2[1] + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + i1[0] + ' ' + i1[1] + ' Z';
   }
+  // S-COF-SPELLING (regime B, 2026-07-10): a wheel wedge names a KEY, so its
+  // label is that key's PREFERRED tonic name (Bb, not A#; Eb, not D#) - the
+  // same accidental-count rule every other keyed surface uses. ONE provider
+  // for the label so renderWheel and every post-processor (tracks.js
+  // tintWheel) can never disagree on the text again. Root tokens stay
+  // canonical-sharp for identity (onPick, selected-match, data-pc).
+  function wheelLabel(root, ringMode) {
+    var m = ringMode === 'minor' ? 'minor' : 'major';
+    return preferredTonicName(root, m) + (ringMode === 'minor' ? 'm' : '');
+  }
   function renderWheel(opts) {
     opts = opts || {};
     var sel = opts.selected || {}, onPick = opts.onPick || function () {};
@@ -290,6 +300,11 @@
         var path = document.createElementNS(NS, 'path');
         path.setAttribute('d', sector(c, ring.r1, ring.r2, a1, a2));
         path.setAttribute('class', 'cofWedge' + (on ? ' on' : ''));
+        // S-COF-ANIMATE: pc + ring identity on every wedge so consumers (the
+        // Studio's sounding-note pulse) address wedges structurally, never by
+        // label text - the brittleness the old tintWheel label-match had.
+        path.setAttribute('data-pc', String(pcOf(root)));
+        path.setAttribute('data-ring', ring.mode);
         path.addEventListener('click', function () { onPick(root, ring.mode); });
         svg.appendChild(path);
         lp = polar(c, ring.lr, i * 30);
@@ -298,7 +313,7 @@
         t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
         t.setAttribute('class', 'cofLabel' + (on ? ' on' : ''));
         t.style.pointerEvents = 'none';
-        t.textContent = spellRoot(root, ring.mode) + ring.suffix; // canonical sharp name on both rings
+        t.textContent = wheelLabel(root, ring.mode); // S-COF-SPELLING: preferred key name (Bb, not A#)
         svg.appendChild(t);
       });
     });
@@ -444,6 +459,8 @@
     modeInfo: function (mode) { return MODE_INFO[modeKey(mode)]; },
     MODE_INFO: MODE_INFO,
     renderWheel: renderWheel,
+    // S-COF-SPELLING: the ONE wheel-label provider (preferred key name + m suffix).
+    wheelLabel: wheelLabel,
     // S-BLUES: solo-layer-only pentatonic/blues scales - see the block above.
     SOLO_SCALES: SOLO_SCALES,
     soloScale: soloScale,

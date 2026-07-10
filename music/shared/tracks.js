@@ -108,7 +108,13 @@
     if (!nb || nb.length < 3) return;
     function mark(entry, cls) {
     if (!entry || !entry.root) return;
-    var label = C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
+    // S-COF-SPELLING: the label text comes from the SAME provider renderWheel
+    // uses (Circle.wheelLabel - preferred key name, Bb never A#), so the match
+    // can't drift when spelling policy changes. spellRoot fallback keeps the
+    // old contract for a stale cached circle.js.
+    var label = (typeof C.wheelLabel === 'function')
+      ? C.wheelLabel(entry.root, entry.mode)
+      : C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
     var texts = wheelEl.querySelectorAll('.cofLabel');
     for (var i = 0; i < texts.length; i++) {
       if (texts[i].textContent !== label) continue;
@@ -1322,11 +1328,30 @@
           Array.prototype.forEach.call(notesLineEl.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
         }
         if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(null);
+        markWheelPc(null);
       }
       function markSoundingNote(i, pc) {
         var el = notesLineEl && notesLineEl.querySelector('[data-i="' + i + '"]');
         if (el) el.classList.add('sounding');
         if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(pc);
+        markWheelPc(pc);
+      }
+      // S-COF-ANIMATE (operator UAT 2026-07-10): the "why these notes" COF
+      // pulses the OUTER wedge at the sounding note's pc while the scale
+      // audition plays - a major scale is 7 ADJACENT fifths-wedges, so the
+      // audition visibly walks the key's neighborhood on the wheel (the
+      // teaching moment the static tint can't show). Structural addressing
+      // via renderWheel's data-pc/data-ring (never label text); guarded null
+      // if the Why panel was never opened (wheel lazily built) or a cached
+      // circle.js predates data-pc. Class-swap only, no re-render - same
+      // discipline as setSounding on the fretboard.
+      function markWheelPc(pc) {
+        var wheelEl = elPlayer.querySelector('.bt-st-wheel');
+        if (!wheelEl) return;
+        Array.prototype.forEach.call(wheelEl.querySelectorAll('.cofWedge-sound'), function (w) { w.classList.remove('cofWedge-sound'); });
+        if (pc == null) return;
+        var wedge = wheelEl.querySelector('.cofWedge[data-pc="' + (((pc % 12) + 12) % 12) + '"][data-ring="major"]');
+        if (wedge) wedge.classList.add('cofWedge-sound');
       }
       function setSoundToggle(on) {
         if (!soundToggleEl) return;
