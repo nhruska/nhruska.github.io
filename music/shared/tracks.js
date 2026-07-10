@@ -1333,7 +1333,15 @@
         // bundle under a redundant second button - drop it -> [Blues | Pent major
         // | Pent minor].
         if (th.scaleMode === 'blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
-        var curId = 'mode';
+        // S-SOLO-SCALE-DEFAULT (music-theory-coach, 2026-07-10): default to the theory-BEST
+        // solo scale for the incoming key - the PENTATONIC of the tonic's quality (major-family
+        // -> Pent major, minor-family -> Pent minor), the home a player of ANY level cannot
+        // sound wrong over. The full mode + Blues stay compatible color, one tap away. A Blues
+        // key keeps its own scale (its mode chip IS the blues scale). This replaces the old
+        // fixed 'mode' default, which put a beginner on Pent minor over a major key.
+        var famInfo = (C && C.modeInfo) ? C.modeInfo(th.scaleMode) : null;
+        var curId = (th.scaleMode === 'blues') ? 'mode'
+          : (famInfo && famInfo.family === 'minor') ? 'pentMinor' : 'pentMajor';
         function render() {
           chipsEl.innerHTML = CHIPS.map(function (c) {
             return '<button class="bt-st-scalechip' + (curId === c.id ? ' on' : '') + '" data-scaleid="' + esc(c.id) + '" type="button">'
@@ -1386,7 +1394,11 @@
           // matches the NEW scale/fretboard the instant it fires.
           if (wasPlaying && studioSound) studioSound.retarget(bundle.pcs);
         }
-        render();
+        // S-SOLO-SCALE-DEFAULT: when the theory-best default is a pentatonic (not
+        // 'mode'), do a full select() so the fretboard/notes/guide render that scale
+        // too - not just the chip highlight. 'mode'/blues keep the already-rendered
+        // fretboard (line ~1289 renderFretboard(th,'mode')), so a bare render() there.
+        if (curId !== 'mode') select(curId); else render();
       })();
       // F19 (operator UAT 2026-07-05): name-only chip row - no chord
       // diagrams, no roman numerals ("like others", e.g. the scale-chip row
