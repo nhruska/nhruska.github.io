@@ -692,7 +692,12 @@ function buildKeyChips() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'keyChip' + (k === activeKey ? ' on' : '');
-    btn.textContent = k;
+    // S-TRIADS-SPELLING follow-up (operator UAT: "c# selected, Db displays"):
+    // a key CHIP names a KEY, so it shows the preferred key name too -
+    // otherwise the tapped chip reads C# while everything it opens reads Db
+    // (two names for one key on one screen). k stays the canonical token
+    // (identity, storage, ?key= deep-links).
+    btn.textContent = (window.Circle && Circle.preferredTonicName) ? Circle.preferredTonicName(k, 'major') : k;
     btn.onclick = function () {
       if (k === activeKey) return;
       activeKey = k;
