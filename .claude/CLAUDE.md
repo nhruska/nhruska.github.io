@@ -25,6 +25,7 @@ this rule makes the bench self-growing.
 | User-visible strings (labels, modals, empty states) | copy-coach |
 | Accessibility (targets, contrast, SR, motion) | a11y-coach |
 | Agent next-steps / operator attention | mobile-dev-coach |
+| Songwriting (proven progressions per genre/section, song form, lyric craft) | songwriting-coach |
 | Flow verification (persona scenarios, red-first) | usdd |
 | PWA/offline + storage schema | no coach - music/CLAUDE.md conventions + backup.js rules suffice |
 

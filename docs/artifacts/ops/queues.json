@@ -61,6 +61,12 @@
           "title": "Key picker flat names (Bb/Eb/Ab as first-class keys) - scope/UX call from FORK-4 wave 2",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
           "added": "2026-07-10"
+        },
+        {
+          "id": "IV-3",
+          "title": "SDD (song-driven development) question set - 6 Qs, any subset unblocks: whose 'proven', first genres, surface (Compose vs M-CONSTRUCT), lyrics v1 scope, recursion parking, YOUR first song target",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-vision-20260710.md",
+          "added": "2026-07-10"
         }
       ]
     }
