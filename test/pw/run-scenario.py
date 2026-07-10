@@ -104,6 +104,19 @@ def run(scenario_path, base_url=None):
             browser = p.chromium.launch(executable_path=exe) if exe else p.chromium.launch()
             vp = sc.get('viewport') or {'width': 412, 'height': 915}
             ctx = browser.new_context(viewport=vp)
+            # USDD: `persona` simulates a user skill level deterministically by
+            # seeding the app's stores BEFORE any page script runs (beginner |
+            # intermediate | advanced). A persona is a user who ANSWERED the
+            # one-time ask, so seed BOTH halves of that state: the level value
+            # AND the 'guidanceask' dismissal (choosing a level dismisses the
+            # ask - see play/index.html renderGuidanceAsk). Level-gated UI (the
+            # notables LEVELS table) then diverges per persona and is assertable.
+            if sc.get('persona'):
+                ctx.add_init_script(
+                    "try{localStorage.setItem('music.guidanceLevel.v1',%s);"
+                    "localStorage.setItem('music.notables.v1',"
+                    "JSON.stringify({guidanceask:1}))}catch(e){}"
+                    % json.dumps(sc['persona']))
             page = ctx.new_page()
             page.on('pageerror', lambda e: page_errors.append(str(e)))
             page.on('console', lambda m: console_errors.append(m.text)
