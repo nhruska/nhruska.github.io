@@ -85,10 +85,10 @@ def main():
 
     if a.push:
         rel = os.path.relpath(LOG, REPO)
-        subprocess.check_call(['git', 'add', rel], cwd=REPO)
+        # pathspec-scoped commit: never sweep in other staged work
         subprocess.check_call(
             ['git', 'commit', '-m', 'ops: %s - %s' % (a.type, a.title[:60]),
-             '--no-verify', '-q'], cwd=REPO)
+             '--no-verify', '-q', '--', rel], cwd=REPO)
         subprocess.check_call(['git', 'push', '-q'], cwd=REPO)
         print('pushed (broadcast live on next panel poll)')
 

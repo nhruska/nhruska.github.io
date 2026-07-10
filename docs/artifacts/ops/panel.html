@@ -313,7 +313,7 @@ function prCard(p) {
     '</span><span class="pill">' + pill + '</span></div>' +
     '<div class="title"><a href="' + esc(p.html_url) + '">' + esc(p.title) + '</a></div>' +
     '<div class="meta">' + esc(p.head && p.head.ref || '') + ' &middot; ' +
-    ago(p.merged_at || p.updated_at) + ' &middot; <a href="' + esc(p.html_url) + '#issuecomment-new">comments / evidence</a></div></div>';
+    ago(p.merged_at || p.updated_at) + ' &middot; <a href="' + esc(p.html_url) + '">evidence thread</a></div></div>';
 }
 function renderPRs(open, merged) {
   $('nPr').textContent = open.length;
