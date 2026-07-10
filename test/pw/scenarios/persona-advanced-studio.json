@@ -64,7 +64,7 @@
     {
       "action": "evalAssert",
       "label": "whynote theory banner PRESENT for advanced",
-      "js": "Array.from(document.querySelectorAll('.bt-st-notable')).some(function(e){return /Why this scale works/.test(e.textContent)})"
+      "js": "Array.from(document.querySelectorAll('.bt-st-notable')).some(function(e){return /Why .+ works:/.test(e.textContent)})"
     },
     {
       "action": "screenshot",
