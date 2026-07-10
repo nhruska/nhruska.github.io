@@ -3648,7 +3648,11 @@
           if (choice === 'cancel') return; // dismiss - stay on Compose, keep the progression
           // Skip: open the ephemeral Studio without saving (locked vocabulary is
           // lowercase - songKey.mode is one of the capitalized Compose names).
-          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
+          // S-SOLO-SCALE-DEFAULT (2026-07-10): carry the live progression as `seq` so the
+          // Studio's progression-aware default (inferSoloDefault) can read the ACTUAL
+          // chords - the Save path already passes saved.seq; Skip dropped it, so a bVII-
+          // laden progression could never infer Mixolydian on the (default) Skip path.
+          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase(), seq: progression.slice() });
         });
       } else {
         switchTab('library');
