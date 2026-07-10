@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T14:05:00Z",
+  "updated": "2026-07-10T15:15:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -45,10 +45,10 @@
       "items": [
         {
           "id": "PA-1",
-          "priority": 58,
+          "priority": 55,
           "form": "digit",
-          "ask": "Say 'resume board' (or pick a goalpost) - G3 S-TYPEFILTER-QUIET (60) fires first; paused only because your UAT was expected",
-          "title": "Resume the goalpost board (G3+)",
+          "ask": "Say 'resume board' - G3 SHIPPED in the swarm (#214); next up G5 S-WHYNOTE-SCALE (48) + S-SCALE-MEMORY (24)",
+          "title": "Resume the goalpost board (G5+)",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-friction-profiles-20260710.md",
           "added": "2026-07-10"
         }
@@ -57,17 +57,7 @@
     "design_review": {
       "label": "Design review",
       "desc": "Design calls parked for operator eyes when the SME bench + recorded taste could not resolve alone.",
-      "items": [
-        {
-          "id": "DR-1",
-          "priority": 35,
-          "form": "digit",
-          "ask": "Teardown-on-preempt vs stack-both: say 'teardown' or 'stack' (bench leans teardown - one tip at a time is the journey's law)",
-          "title": "Notable preempt teardown (two cards visible) - S-NOTABLE-PREEMPT-TEARDOWN",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
-          "added": "2026-07-10"
-        }
-      ]
+      "items": []
     },
     "interview": {
       "label": "Interview",
