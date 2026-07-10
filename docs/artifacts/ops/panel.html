@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operator's Deck - live mission glass</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+/* Ops Deck glass - HiTL Mission Control visual system (docs/artifacts/cc/repo.html),
+   dark tuned first (phone surface). NO build step, NO external deps beyond the
+   GitHub REST API for PR cards; all data fetches live in the `transport` object
+   below (acceptance A6: swap transport, never rewrite the glass). */
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E;--merge:#6B4FBB}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80;--merge:#B9A6F5}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0 auto;padding:0 0 34px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.hdr{position:sticky;top:0;z-index:5;border-bottom:2px solid var(--brand-primary);padding:10px 14px;display:flex;align-items:center;gap:10px;background:var(--bg)}
+.hdr h1{font-size:1.02rem;margin:0;line-height:1.25;flex:1}
+.hdr h1 span{display:block;font-size:.72rem;color:var(--dim);font-weight:500}
+.lamp{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+.lamp.live{background:var(--ok);box-shadow:0 0 9px var(--ok);animation:pulse 1.6s infinite}
+.lamp.warm{background:var(--warn);box-shadow:0 0 7px var(--warn)}
+.lamp.idle{background:var(--line)}
+@keyframes pulse{50%{opacity:.45}}
+.poll{font-size:.72rem;color:var(--dim);text-align:right;line-height:1.35;min-width:64px}
+.poll b{color:var(--txt)}
+button.rf{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:7px 12px;font-size:.8rem;font-weight:700;cursor:pointer}
+.wrap{padding:0 12px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:12px 0 10px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:9px 15px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+.tab .n{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:999px;background:var(--accg);color:var(--acc);font-size:.72rem;line-height:1.5}
+.tab.on .n{background:rgba(255,255,255,.25);color:#fff}
+.pane{display:none}.pane.on{display:block}
+.mstrip,.fstrip{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:2px}
+.mchip,.fchip{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:999px;padding:5px 11px;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.mchip.on,.fchip.on{border-color:var(--brand-primary);color:var(--acc);background:var(--accg)}
+.ev{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--brand-radius);padding:10px 12px;margin:8px 0}
+.ev .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:2px 7px;color:#fff;background:var(--dim)}
+.t-green .badge,.t-merge .badge{background:var(--ok)} .t-merge .badge{background:var(--merge)}
+.t-red .badge,.t-friction .badge{background:var(--hot)} .t-friction .badge{background:var(--warn);color:#1d1500}
+.t-pr .badge,.t-start .badge{background:var(--brand-secondary)}
+.t-review .badge{background:var(--merge)} .t-report .badge{background:var(--ok)}
+.t-build .badge,.t-test .badge,.t-phase .badge{background:#5A6B7E} .t-queue .badge{background:var(--warn);color:#1d1500}
+.t-idle .badge{background:#5A6B7E}
+.ev.t-green,.ev.t-report{border-left-color:var(--ok)} .ev.t-red{border-left-color:var(--hot)}
+.ev.t-merge,.ev.t-review{border-left-color:var(--merge)} .ev.t-pr,.ev.t-start{border-left-color:var(--brand-primary)}
+.ev.t-friction,.ev.t-queue{border-left-color:var(--warn)}
+.ev .when{font-size:.72rem;color:var(--dim);margin-left:auto;white-space:nowrap}
+.ev .agent{font-size:.68rem;font-weight:700;color:var(--acc);background:var(--accg);border-radius:999px;padding:1px 8px}
+.ev .title{font-size:.94rem;font-weight:600;margin-top:5px;line-height:1.4}
+.ev .detail{font-size:.83rem;color:var(--dim);margin-top:3px;line-height:1.45}
+.ev .mis{font-size:.68rem;color:var(--dim)}
+.lane{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:12px 12px 6px;margin:10px 0}
+.lane h3{margin:0 0 4px;font-size:.95rem;display:flex;align-items:center;gap:8px}
+.lane h3 .lamp{width:10px;height:10px}
+.lane .sub{font-size:.76rem;color:var(--dim);margin-bottom:6px}
+.lane .ev{margin:6px 0}
+.qsec{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:12px 14px;margin:10px 0}
+.qsec h3{margin:0;font-size:1rem}
+.qsec .desc{font-size:.78rem;color:var(--dim);margin:3px 0 8px;line-height:1.45}
+.qitem{border-top:1px solid var(--line);padding:9px 0;font-size:.9rem;line-height:1.45}
+.qitem .id{font-size:.68rem;font-weight:800;color:var(--acc);background:var(--accg);border-radius:5px;padding:1px 6px;margin-right:7px}
+.qitem .links{font-size:.78rem;margin-top:3px}
+.board{margin:14px 0}
+h2{font-size:1.02rem;font-weight:800;margin:18px 0 8px;border-left:4px solid var(--brand-primary);padding-left:9px}
+table{border-collapse:collapse;width:100%;font-size:.84rem;margin:8px 0;line-height:1.45}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-weight:700;background:var(--bg2)}
+.wrapx{overflow-x:auto}
+.pr{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand-primary);border-radius:var(--brand-radius);padding:11px 13px;margin:8px 0}
+.pr.merged{border-left-color:var(--merge)} .pr.draft{border-left-color:var(--line)}
+.pr .top{display:flex;align-items:center;gap:8px}
+.pr .num{font-weight:800;color:var(--acc)}
+.pr .pill{margin-left:auto;font-size:.66rem;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:2px 9px;color:#fff;background:var(--brand-secondary)}
+.pr.merged .pill{background:var(--merge)} .pr.draft .pill{background:#5A6B7E}
+.pr .title{font-size:.93rem;font-weight:600;margin-top:4px;line-height:1.4}
+.pr .meta{font-size:.76rem;color:var(--dim);margin-top:3px}
+.empty{color:var(--dim);font-size:.86rem;padding:14px 4px;text-align:center}
+.err{color:var(--warn);font-size:.8rem;padding:8px 4px}
+.foot{margin:22px 12px 0;color:var(--dim);font-size:.76rem;border-top:1px solid var(--line);padding-top:12px;line-height:1.6}
+</style></head><body>
+
+<div class="hdr">
+  <div class="lamp idle" id="lamp"></div>
+  <h1>Operator's Deck<span id="misNow">loading&hellip;</span></h1>
+  <div class="poll">next poll<br><b id="cd">-</b></div>
+  <button class="rf" id="rf">Refresh</button>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab on" data-pane="live">Live<span class="n" id="nLive">0</span></button>
+    <button class="tab" data-pane="swarm">Swarm<span class="n" id="nSwarm">0</span></button>
+    <button class="tab" data-pane="queues">Queues<span class="n" id="nQ">0</span></button>
+    <button class="tab" data-pane="prs">PRs<span class="n" id="nPr">0</span></button>
+  </div>
+
+  <div class="pane on" id="p-live">
+    <div class="mstrip" id="mstrip"></div>
+    <div class="fstrip" id="fstrip"></div>
+    <div id="feed"><div class="empty">Waiting for the event log&hellip;</div></div>
+  </div>
+
+  <div class="pane" id="p-swarm">
+    <div id="lanes"><div class="empty">No agent lanes yet.</div></div>
+  </div>
+
+  <div class="pane" id="p-queues">
+    <div id="opq"></div>
+    <div class="board">
+      <h2>Mission queue board (QUEUE.md, live)</h2>
+      <div id="qmd" class="wrapx"><div class="empty">Loading QUEUE.md&hellip;</div></div>
+    </div>
+  </div>
+
+  <div class="pane" id="p-prs">
+    <h2>Open</h2><div id="prOpen"><div class="empty">Loading&hellip;</div></div>
+    <h2>Recently merged</h2><div id="prMerged"><div class="empty">Loading&hellip;</div></div>
+  </div>
+</div>
+
+<div class="foot">
+  Event contract: <code>docs/artifacts/ops/mission-events.jsonl</code> (append-only; emit via
+  <code>scripts/ops-emit.py</code>). v1 transport = same-origin polling on GitHub Pages - a
+  pushed commit IS the broadcast. v2 swaps the transport object to SSE on PS Azure without
+  touching this glass. Spec: <a href="../../plans/ops-deck-vision-20260710.md">ops-deck-vision-20260710</a>.
+  <div id="stamp"></div>
+</div>
+
+<script>
+'use strict';
+/* ============================ transport =====================================
+   ALL data access lives here (acceptance A6). The glass below only calls
+   transport.* and renders. v2 (Azure/Postgres/SSE) replaces this object -
+   same shapes out, zero render changes. Same-origin relative paths work on
+   GitHub Pages AND githack branch previews. */
+var GH = 'https://api.github.com/repos/nhruska/nhruska.github.io';
+var transport = {
+  pollMs: 15000,          // events/queues/QUEUE.md cadence
+  prPollMs: 5 * 60000,    // GitHub REST is unauth (60 req/hr) - poll PRs gently
+  bust: function (u) { return u + (u.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(); },
+  events: function () {   // -> [{ts,mission,type,title,detail?,agent,url?}] oldest->newest
+    return fetch(this.bust('./mission-events.jsonl'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('events ' + r.status); return r.text(); })
+      .then(function (t) {
+        var out = [];
+        t.split('\n').forEach(function (ln) {
+          ln = ln.trim(); if (!ln) return;
+          try { out.push(JSON.parse(ln)); } catch (e) { /* skip torn line */ }
+        });
+        return out;
+      });
+  },
+  queues: function () {   // -> queues.json object
+    return fetch(this.bust('./queues.json'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('queues ' + r.status); return r.json(); });
+  },
+  queueMd: function () {  // -> raw QUEUE.md text (panel parses the tables)
+    return fetch(this.bust('../../plans/QUEUE.md'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('QUEUE.md ' + r.status); return r.text(); });
+  },
+  openPRs: function () {
+    return fetch(GH + '/pulls?state=open&per_page=15')
+      .then(function (r) { if (!r.ok) throw new Error('gh ' + r.status); return r.json(); });
+  },
+  mergedPRs: function () {
+    return fetch(GH + '/pulls?state=closed&sort=updated&direction=desc&per_page=20')
+      .then(function (r) { if (!r.ok) throw new Error('gh ' + r.status); return r.json(); })
+      .then(function (list) { return list.filter(function (p) { return p.merged_at; }).slice(0, 10); });
+  }
+};
+
+/* ============================ glass ======================================= */
+var S = {events: [], mission: null, typeOff: {}, tab: 'live', nextAt: 0};
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+  });
+}
+function ago(ts) {
+  var s = Math.max(0, (Date.now() - Date.parse(ts)) / 1000);
+  if (s < 90) return Math.round(s) + 's ago';
+  if (s < 5400) return Math.round(s / 60) + 'm ago';
+  if (s < 129600) return (s / 3600).toFixed(1) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+function evCard(e, showMission) {
+  return '<div class="ev t-' + esc(e.type) + '">' +
+    '<div class="top"><span class="badge">' + esc(e.type) + '</span>' +
+    (e.agent && e.agent !== 'main' ? '<span class="agent">' + esc(e.agent) + '</span>' : '') +
+    (showMission ? '<span class="mis">' + esc(e.mission) + '</span>' : '') +
+    '<span class="when">' + ago(e.ts) + '</span></div>' +
+    '<div class="title">' + esc(e.title) + '</div>' +
+    (e.detail ? '<div class="detail">' + esc(e.detail) + '</div>' : '') +
+    (e.url ? '<div class="qitem links"><a href="' + esc(e.url) + '">evidence / link</a></div>' : '') +
+    '</div>';
+}
+
+function renderFeed() {
+  var evs = S.events.slice().reverse();
+  var missions = [];
+  evs.forEach(function (e) { if (missions.indexOf(e.mission) < 0) missions.push(e.mission); });
+  $('mstrip').innerHTML = '<button class="mchip' + (S.mission === null ? ' on' : '') +
+    '" data-m="">all missions</button>' + missions.map(function (m) {
+      return '<button class="mchip' + (S.mission === m ? ' on' : '') + '" data-m="' + esc(m) + '">' + esc(m) + '</button>';
+    }).join('');
+  var types = [];
+  evs.forEach(function (e) { if (types.indexOf(e.type) < 0) types.push(e.type); });
+  $('fstrip').innerHTML = types.map(function (t) {
+    return '<button class="fchip' + (S.typeOff[t] ? '' : ' on') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>';
+  }).join('');
+  var rows = evs.filter(function (e) {
+    return (S.mission === null || e.mission === S.mission) && !S.typeOff[e.type];
+  });
+  $('nLive').textContent = rows.length;
+  $('feed').innerHTML = rows.length
+    ? rows.map(function (e) { return evCard(e, S.mission === null); }).join('')
+    : '<div class="empty">No events match the filters.</div>';
+
+  // header: newest event's mission + liveness lamp
+  var newest = evs[0];
+  if (newest) {
+    $('misNow').textContent = newest.mission + ' - ' + newest.title.slice(0, 60);
+    var age = (Date.now() - Date.parse(newest.ts)) / 60000;
+    $('lamp').className = 'lamp ' + (age < 5 ? 'live' : age < 30 ? 'warm' : 'idle');
+  }
+}
+
+function renderLanes() {
+  var byAgent = {};
+  S.events.slice(-200).forEach(function (e) {
+    (byAgent[e.agent || 'main'] = byAgent[e.agent || 'main'] || []).push(e);
+  });
+  var agents = Object.keys(byAgent);
+  $('nSwarm').textContent = agents.length;
+  $('lanes').innerHTML = agents.map(function (a) {
+    var evs = byAgent[a].slice(-6).reverse();
+    var age = (Date.now() - Date.parse(evs[0].ts)) / 60000;
+    return '<div class="lane"><h3><span class="lamp ' +
+      (age < 5 ? 'live' : age < 30 ? 'warm' : 'idle') + '"></span>' + esc(a) +
+      '</h3><div class="sub">' + evs.length + ' recent - last ' + ago(evs[0].ts) + '</div>' +
+      evs.map(function (e) { return evCard(e, true); }).join('') + '</div>';
+  }).join('') || '<div class="empty">No agent lanes yet.</div>';
+}
+
+function renderQueues(q) {
+  var keys = Object.keys(q.queues || {});
+  var total = 0;
+  $('opq').innerHTML = keys.map(function (k) {
+    var Q = q.queues[k];
+    total += (Q.items || []).length;
+    return '<div class="qsec"><h3>' + esc(Q.label) + ' <span class="n" style="font-weight:600;color:var(--dim);font-size:.76rem">(' +
+      (Q.items || []).length + ')</span></h3><div class="desc">' + esc(Q.desc) + '</div>' +
+      ((Q.items || []).map(function (it) {
+        return '<div class="qitem"><span class="id">' + esc(it.id) + '</span>' + esc(it.title) +
+          '<div class="links">' +
+          (it.url ? '<a href="' + esc(it.url) + '">open</a>' : '') +
+          (it.evidence ? ' &middot; <a href="' + esc(it.evidence) + '">evidence</a>' : '') +
+          ' <span style="color:var(--dim)">added ' + esc(it.added || '') + '</span></div></div>';
+      }).join('') || '<div class="empty">empty - nothing needs you here</div>') + '</div>';
+  }).join('');
+  $('nQ').textContent = total;
+}
+
+function renderQueueMd(md) {
+  // Parse the NOW + SHORT + "Newly queued" markdown tables into compact HTML.
+  function section(name) {
+    var re = new RegExp('^##+\\s+' + name + '[^\\n]*$', 'm');
+    var m = md.match(re);
+    if (!m) return '';
+    var rest = md.slice(m.index + m[0].length);
+    var next = rest.search(/^##+\s/m);  // stop at the NEXT heading of any level
+    return next < 0 ? rest : rest.slice(0, next);
+  }
+  function tables(txt, max) {
+    var rows = [], count = 0;
+    txt.split('\n').forEach(function (ln) {
+      ln = ln.trim();
+      if (!/^\|/.test(ln) || /^\|[\s:-]+\|/.test(ln)) return;
+      var cells = ln.split('|').slice(1, -1).map(function (c) { return c.trim(); });
+      if (!cells.length || count >= max) return;
+      // skip header rows
+      if (/^(#|Mission|Item)$/i.test(cells[0])) return;
+      count++;
+      var head = cells[0], body = cells[1] || '';
+      body = body.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+      head = head.replace(/\*\*/g, '');
+      if (body.length > 180) body = body.slice(0, 177) + '...';
+      rows.push('<tr><td style="white-space:nowrap;font-weight:700">' + esc(head) + '</td><td>' + esc(body) + '</td></tr>');
+    });
+    return rows.join('');
+  }
+  var html = '';
+  [['NOW', 'NOW (in flight)'], ['SHORT', 'SHORT (launch-ready)'], ['Newly queued', 'Newly queued (findings)']].forEach(function (p) {
+    var body = tables(section(p[0]), 12);
+    if (body) html += '<h2 style="font-size:.9rem;margin:12px 0 4px">' + esc(p[1]) + '</h2><table>' + body + '</table>';
+  });
+  $('qmd').innerHTML = html ||
+    '<div class="err">QUEUE.md tables not parseable - <a href="../../plans/QUEUE.md">open raw</a></div>';
+}
+
+function prCard(p) {
+  var cls = p.merged_at ? 'merged' : (p.draft ? 'draft' : '');
+  var pill = p.merged_at ? 'MERGED' : (p.draft ? 'DRAFT' : 'OPEN');
+  return '<div class="pr ' + cls + '"><div class="top"><span class="num">#' + p.number +
+    '</span><span class="pill">' + pill + '</span></div>' +
+    '<div class="title"><a href="' + esc(p.html_url) + '">' + esc(p.title) + '</a></div>' +
+    '<div class="meta">' + esc(p.head && p.head.ref || '') + ' &middot; ' +
+    ago(p.merged_at || p.updated_at) + ' &middot; <a href="' + esc(p.html_url) + '">evidence thread</a></div></div>';
+}
+function renderPRs(open, merged) {
+  $('nPr').textContent = open.length;
+  $('prOpen').innerHTML = open.map(prCard).join('') || '<div class="empty">No open PRs - board is clear.</div>';
+  $('prMerged').innerHTML = merged.map(prCard).join('') || '<div class="empty">None fetched.</div>';
+}
+
+/* ============================ poll loop =================================== */
+function pollFast() {
+  transport.events().then(function (evs) {
+    S.events = evs; renderFeed(); renderLanes();
+    $('stamp').textContent = 'last poll ' + new Date().toLocaleTimeString() +
+      ' - ' + evs.length + ' events on the log';
+  }).catch(function (e) {
+    $('feed').innerHTML = '<div class="err">Event log unreachable (' + esc(e.message) + ')</div>';
+  });
+  transport.queues().then(renderQueues).catch(function (e) {
+    $('opq').innerHTML = '<div class="err">queues.json unreachable (' + esc(e.message) + ')</div>';
+  });
+  transport.queueMd().then(renderQueueMd).catch(function (e) {
+    $('qmd').innerHTML = '<div class="err">QUEUE.md unreachable (' + esc(e.message) + ') - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md">view on GitHub</a></div>';
+  });
+  S.nextAt = Date.now() + transport.pollMs;
+}
+function pollPRs() {
+  Promise.all([transport.openPRs(), transport.mergedPRs()])
+    .then(function (r) { renderPRs(r[0], r[1]); })
+    .catch(function (e) {
+      $('prOpen').innerHTML = '<div class="err">GitHub API unreachable here (' + esc(e.message) +
+        ') - <a href="https://github.com/nhruska/nhruska.github.io/pulls">open PRs on GitHub</a></div>';
+      $('prMerged').innerHTML = '';
+    });
+}
+
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('.tab');
+  if (t) {
+    document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on'); });
+    document.querySelectorAll('.pane').forEach(function (x) { x.classList.remove('on'); });
+    t.classList.add('on');
+    $('p-' + t.getAttribute('data-pane')).classList.add('on');
+    return;
+  }
+  var m = ev.target.closest('.mchip');
+  if (m) { S.mission = m.getAttribute('data-m') || null; renderFeed(); return; }
+  var f = ev.target.closest('.fchip');
+  if (f) {
+    var ty = f.getAttribute('data-t');
+    S.typeOff[ty] = !S.typeOff[ty]; renderFeed(); return;
+  }
+});
+$('rf').addEventListener('click', function () { pollFast(); pollPRs(); });
+
+setInterval(function () {  // countdown + relative-time refresh
+  var s = Math.max(0, Math.round((S.nextAt - Date.now()) / 1000));
+  $('cd').textContent = s + 's';
+}, 1000);
+setInterval(pollFast, transport.pollMs);
+setInterval(pollPRs, transport.prPollMs);
+pollFast(); pollPRs();
+</script>
+</body></html>

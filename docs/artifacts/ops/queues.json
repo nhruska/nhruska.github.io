@@ -1,0 +1,68 @@
+{
+  "updated": "2026-07-10T11:48:00Z",
+  "note": "The four operator decision surfaces (Ops Deck acceptance A7). Items are addressable by id; the panel renders each queue as a section. v1 is read-only glass - resolving an item happens in session (v2 adds tap-to-approve via ops/commands.jsonl).",
+  "queues": {
+    "taste_review": {
+      "label": "Taste review",
+      "desc": "Shipped + preview-ready work awaiting the operator's feel pass. Minimum friction: tap the link, react in short bursts (uat: ...).",
+      "items": [
+        {
+          "id": "TR-1",
+          "title": "G1+G2 beginner journey feel pass (cue -> Solo -> modal copy -> Studio tip)",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/204",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-2",
+          "title": "Key-aware spelling on your real progressions (C-F-Bb reads Bb everywhere)",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/199",
+          "added": "2026-07-10"
+        }
+      ]
+    },
+    "planning_approval": {
+      "label": "Planning approval",
+      "desc": "Scored goalposts waiting for a go/no-go or re-rank. One digit resumes the board.",
+      "items": [
+        {
+          "id": "PA-1",
+          "title": "Resume goalpost board: G3 S-TYPEFILTER-QUIET (60) next, then G4 S-JAM-STARTER (48)",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-friction-profiles-20260710.md",
+          "added": "2026-07-10"
+        }
+      ]
+    },
+    "design_review": {
+      "label": "Design review",
+      "desc": "Design calls parked for operator eyes when SME bench + taste could not resolve alone.",
+      "items": [
+        {
+          "id": "DR-1",
+          "title": "Notable preempt teardown: preempted banner not torn down (two cards visible) - S-NOTABLE-PREEMPT-TEARDOWN",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+          "added": "2026-07-10"
+        }
+      ]
+    },
+    "interview": {
+      "label": "Interview",
+      "desc": "Open question sets. Contract: N questions queued, answering ANY subset unblocks - the rest become assumed answers in the goal spec.",
+      "items": [
+        {
+          "id": "IV-1",
+          "title": "S2 (M3 songs/tracks full merge) spec-formalize - 30-min question set ready",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "IV-2",
+          "title": "Key picker flat names (Bb/Eb/Ab as first-class keys) - scope/UX call from FORK-4 wave 2",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+          "added": "2026-07-10"
+        }
+      ]
+    }
+  }
+}

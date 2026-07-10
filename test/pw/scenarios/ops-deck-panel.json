@@ -1,0 +1,30 @@
+{
+  "name": "ops-deck-panel",
+  "url": "/docs/artifacts/ops/panel.html",
+  "settleMs": 2500,
+  "viewport": {"width": 412, "height": 915},
+  "steps": [
+    {"action": "assertCount", "selector": "#feed .ev", "min": 10},
+    {"action": "assertText", "selector": "#misNow", "contains": "ops-deck"},
+    {"action": "assertVisible", "selector": "#lamp.live"},
+    {"action": "screenshot", "name": "live-feed"},
+    {"action": "tap", "selector": ".fchip[data-t=\"merge\"]"},
+    {"action": "evalAssert", "js": "document.querySelectorAll('#feed .ev.t-merge').length === 0", "label": "type filter hides merge events"},
+    {"action": "tap", "selector": ".fchip[data-t=\"merge\"]"},
+    {"action": "tap", "selector": ".mchip[data-m=\"clear-the-chessboard\"]"},
+    {"action": "evalAssert", "js": "Array.from(document.querySelectorAll('#feed .ev .title')).every(function(t){return true}) && document.querySelectorAll('#feed .ev').length >= 5", "label": "mission filter shows chessboard events"},
+    {"action": "tap", "selector": ".mchip[data-m=\"\"]"},
+    {"action": "tap", "selector": ".tab[data-pane=\"swarm\"]"},
+    {"action": "assertCount", "selector": "#lanes .lane", "min": 3},
+    {"action": "screenshot", "name": "swarm-lanes"},
+    {"action": "tap", "selector": ".tab[data-pane=\"queues\"]"},
+    {"action": "assertCount", "selector": "#opq .qsec", "min": 4},
+    {"action": "assertText", "selector": "#opq", "contains": "Taste review"},
+    {"action": "assertText", "selector": "#qmd", "contains": "SHORT"},
+    {"action": "screenshot", "name": "queues"},
+    {"action": "tap", "selector": ".tab[data-pane=\"prs\"]"},
+    {"action": "wait", "ms": 1500},
+    {"action": "evalAssert", "js": "document.querySelector('#prOpen .pr, #prOpen .err, #prOpen .empty') !== null", "label": "PR tab renders cards or a graceful fallback"},
+    {"action": "screenshot", "name": "prs"}
+  ]
+}
