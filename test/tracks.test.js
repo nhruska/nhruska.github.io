@@ -750,6 +750,57 @@ test('inferSoloDefault: a Blues key keeps its own scale (mode chip IS blues)', f
 });
 
 /* ---------------------------------------------------------------------
+ * G5 S-WHYNOTE-SCALE (2026-07-10): T.whynoteScaleText - the whynote banner
+ * re-derives its copy for the ACTUALLY-selected scale chip, not just the
+ * key's own mode scale.
+ * ------------------------------------------------------------------- */
+test('whynoteScaleText: scaleId "mode" (or falsy) passes straight through to whynoteText', function () {
+  assert.strictEqual(
+    T.whynoteScaleText('C', 'mode', 'ionian', 'Major'),
+    T.whynoteText('C', 'ionian', 'Major')
+  );
+  assert.strictEqual(
+    T.whynoteScaleText('A', undefined, 'aeolian', 'Minor'),
+    T.whynoteText('A', 'aeolian', 'Minor')
+  );
+});
+test('whynoteScaleText: pentMajor names itself and the key', function () {
+  var txt = T.whynoteScaleText('C', 'pentMajor', 'ionian', 'Major');
+  assert.ok(/Pent major/.test(txt), 'names the chip label');
+  assert.ok(/\bC\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: pentMinor names itself and the key', function () {
+  var txt = T.whynoteScaleText('A', 'pentMinor', 'aeolian', 'Minor');
+  assert.ok(/Pent minor/.test(txt), 'names the chip label');
+  assert.ok(/\bA\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: blues names itself and the key', function () {
+  var txt = T.whynoteScaleText('E', 'blues', 'ionian', 'Major');
+  assert.ok(/Blues/.test(txt), 'names the chip label');
+  assert.ok(/\bE\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: mixolydian names itself and the key', function () {
+  var txt = T.whynoteScaleText('G', 'mixolydian', 'ionian', 'Major');
+  assert.ok(/Mixolydian/.test(txt), 'names the chip label');
+  assert.ok(/\bG\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: dorian names itself and the key', function () {
+  var txt = T.whynoteScaleText('D', 'dorian', 'ionian', 'Major');
+  assert.ok(/Dorian/.test(txt), 'names the chip label');
+  assert.ok(/\bD\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: flat-key display goes through dispKeyRoot (Bb, never A#)', function () {
+  var txt = T.whynoteScaleText('A#', 'pentMinor', 'aeolian', 'Minor');
+  assert.ok(/\bBb\b/.test(txt), 'expected the preferred flat spelling Bb');
+  assert.ok(!/A#/.test(txt), 'must never show the canonical-sharp A# in prose');
+});
+test('whynoteScaleText: each non-mode scaleId produces a distinct template', function () {
+  var ids = ['pentMajor', 'pentMinor', 'blues', 'mixolydian', 'dorian'];
+  var texts = ids.map(function (id) { return T.whynoteScaleText('C', id, 'ionian', 'Major'); });
+  assert.strictEqual(new Set(texts).size, ids.length, 'every scaleId gets its own copy, no accidental collisions');
+});
+
+/* ---------------------------------------------------------------------
  * G6 S-SCALE-MEMORY (2026-07-10): T.readSoloScaleFor / T.writeSoloScaleFor -
  * per-track solo-scale chip persistence (bt.soloScale.v1).
  * ------------------------------------------------------------------- */

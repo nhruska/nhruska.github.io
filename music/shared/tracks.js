@@ -475,6 +475,39 @@
     // degree), so one template covers the whole non-ionian family.
     return 'Why this scale works: ' + key + ' ' + modeName + ' and its parallel major share the same home note, not the same notes - stick with ' + key + ' ' + modeName + ' here.';
   }
+  // G5 S-WHYNOTE-SCALE (2026-07-10): the whynote banner used to explain ONLY
+  // the key's own mode scale (whynoteText above) and never updated when a
+  // scale chip was tapped (wireScaleChips deliberately left it "keyed to
+  // th"). This re-derives the banner copy for the ACTUAL selected scale chip.
+  // scaleId 'mode' (or falsy) passes straight through to whynoteText - zero
+  // behavior change for the default/unswapped case. Every other scaleId gets
+  // its own STATIC one-line template (music-theory-coach + copy-coach,
+  // 2026-07-10) - no new theory derivation, same shape as whynoteText: only
+  // the key name is interpolated, via the same dispKeyRoot(key, keyScaleMode)
+  // call whynoteText makes (so a flat key still reads "Bb", never "A#").
+  // Scale identity is named by its own CHIP LABEL (Pent major/Pent minor/
+  // Blues/Mixolydian/Dorian), same vocabulary choice scaletipText already
+  // uses, rather than introducing the jargon noun "pentatonic" (whynote can
+  // show at the 'intermediate' guidance level, whose copy-coach vocabulary
+  // budget doesn't yet include that word).
+  function whynoteScaleText(key, scaleId, keyScaleMode, keyLabel) {
+    if (!scaleId || scaleId === 'mode') return whynoteText(key, keyScaleMode, keyLabel);
+    var dispKey = dispKeyRoot(key, keyScaleMode); // FORK-4 removal: prose shows the preferred name
+    switch (scaleId) {
+      case 'pentMajor':
+        return 'Why Pent major works: it drops the two notes that ever clash, so nothing you play over ' + dispKey + ' sounds wrong.';
+      case 'pentMinor':
+        return 'Why Pent minor works: it drops the two notes that ever clash, so nothing you play over ' + dispKey + ' sounds wrong.';
+      case 'blues':
+        return 'Why Blues works: Pent minor plus one extra in-between note - the classic blue note - for grit over ' + dispKey + '.';
+      case 'mixolydian':
+        return 'Why Mixolydian works: ' + dispKey + ' major with the 7th flatted - the bluesy, backdoor color for this progression.';
+      case 'dorian':
+        return 'Why Dorian works: a minor scale with the 6th raised, for a brighter, hopeful color over ' + dispKey + '.';
+      default:
+        return whynoteText(key, keyScaleMode, keyLabel);
+    }
+  }
   // Consumer-side claim + template pick for the 'whynote' notable slot (priority
   // order + show-once persistence are notables.js's job, not re-implemented here).
   // Returns Notables.renderBanner()-ready opts when the slot is won (first ever
@@ -1503,6 +1536,17 @@
           if (persist) writeSoloScaleFor(t, scaleId);
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
+          // G5 S-WHYNOTE-SCALE: the whynote banner (if it won its slot and is
+          // still on-screen) re-derives its TEXT for the now-selected scale -
+          // same element, same dismiss wiring, just a textContent swap on the
+          // existing .notableBanner-body node (never a re-render/re-claim).
+          // wnEl closes over openStudio's scope (var-hoisted); it is null when
+          // the banner never rendered (dismissed forever, level-ineligible, or
+          // preempted by a higher-priority notable) - guarded below.
+          if (wnEl) {
+            var wnBodyEl = wnEl.querySelector('.notableBanner-body');
+            if (wnBodyEl) wnBodyEl.textContent = whynoteScaleText(th.key, scaleId, th.scaleMode, th.label);
+          }
           var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
           var SG = soloGuideRef();
           // S-REL-NAMES (U23): th.key names any {relMinor}/{relMajor} token in
@@ -1944,6 +1988,8 @@
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
     whynoteText: whynoteText, whynoteBanner: whynoteBanner,
+    // G5 S-WHYNOTE-SCALE: re-derives the whynote copy for a tapped scale chip.
+    whynoteScaleText: whynoteScaleText,
     // M-GUIDANCE (advanced tier): scaletipText/scaletipBanner mirror
     // whynoteText/whynoteBanner's export shape exactly.
     scaletipText: scaletipText, scaletipBanner: scaletipBanner,
