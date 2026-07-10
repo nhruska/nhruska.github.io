@@ -40,4 +40,5 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | persona-beginner-studio | USDD: beginner sees NO theory prose in the Studio (whynote level-gate) |
 | persona-advanced-studio | USDD: advanced DOES see the whynote banner - same taps, opposite assert |
 | library-calluses | stored operator-authored song renders in the Library (catalog integrity after a songs.json append) |
+| filter-chips-quiet | G3 S-TYPEFILTER-QUIET: selected library FILTER chips are outline-quiet, accent fill reserved for primary/mode (computed-style + pixels) |
 | ops-deck-panel | Ops Deck glass: live feed + filters, swarm lanes, merged Your-turn stream, 4 operator queues, QUEUE.md board, PR-tab fallback, public Wins timeline (412x915, zero JS errors) |

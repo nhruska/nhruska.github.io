@@ -897,6 +897,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    Lint-safe: outline is neither the surface-2 + box-shadow ring the consistency lint forbids
    nor a new hue. */
 .catTabRow .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
+/* G3 S-TYPEFILTER-QUIET completion (2026-07-10): the SAME quiet grammar for the
+   Library facet bars (#genreChips/#keyChips live in .chips containers). FILTER
+   chips select with an outline; the accent FILL stays reserved for primary
+   actions and true mode selections (.keyModes, segmented views) - that is the
+   filter-vs-selection line the G3 decision drew. */
+.chips .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
 .chordsHint{margin:0 2px 4px;}
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
    reads as THE next step (the old prose hint buried it). */
