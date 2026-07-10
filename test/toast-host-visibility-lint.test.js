@@ -82,7 +82,7 @@ function run() {
 
 test('every toast.js host in songbook.js is accounted for (known set, not silently grown/shrunk)', function () {
   var hostVars = findHostVars(js);
-  var expected = ['toastEl', 'setUndoBanner', 'clearUndoBanner', 'composeToast', 'delUndoBanner'];
+  var expected = ['toastEl', 'setUndoBanner', 'clearUndoBanner', 'removeUndoBanner', 'composeToast', 'delUndoBanner'];
   assert.deepStrictEqual(hostVars.slice().sort(), expected.slice().sort(),
     'toast host set changed - update this lint\'s expectations (and check the new host\'s hidden-CSS invariant): found ' + JSON.stringify(hostVars));
 });

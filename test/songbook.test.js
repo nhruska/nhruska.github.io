@@ -1930,11 +1930,15 @@ test('S-PROG-WRAP-2: removing a chord from a compact slot (the x button) still w
   tapChords(m, 7); // grid6
   var rm7 = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
   assert.ok(rm7, 'expected the remove (x) button on a grid6 slot');
+  // S-DELETE-UNDO: the first tap only ARMS the remover (protection); the
+  // progression must be UNCHANGED until the second tap confirms.
+  tapWired(rm7);
+  assert.strictEqual(m.elMap.prog.children.length, 7, 'first tap arms - it must NOT delete');
   tapWired(rm7);
   assert.strictEqual(m.elMap.prog.children.length, 6, 'removing from a grid6 slot must shrink the progression by one');
   var rm6 = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
   assert.ok(rm6, 'expected the remove (x) button on a fill-row slot');
-  tapWired(rm6);
+  tapWired(rm6); tapWired(rm6); // arm + confirm
   assert.strictEqual(m.elMap.prog.children.length, 5, 'removing from a fill-row slot must shrink the progression by one');
 });
 
@@ -1945,7 +1949,7 @@ test('S-PROG-WRAP-2: removing chords crosses stage boundaries downward - grid6 -
   assert.deepStrictEqual(stageClasses(m.elMap.prog), ['grid6']);
   function removeFirst() {
     var rm = m.elMap.prog.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
-    tapWired(rm);
+    tapWired(rm); tapWired(rm); // S-DELETE-UNDO: arm, then confirm
   }
   removeFirst(); // 6 left
   assert.strictEqual(m.elMap.prog.children.length, 6);

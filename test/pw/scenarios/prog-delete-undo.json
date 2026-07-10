@@ -1,0 +1,29 @@
+{
+  "name": "prog-delete-undo",
+  "note": "S-DELETE-UNDO (operator UAT 2026-07-10: 'too easy to delete a chord. protect from simple delete. and offer 1 (or 2?) levels of undo'): the progression remover ARMS on the first tap (red, no delete) and deletes on the second; the delete surfaces the remove-undo toast whose Undo restores the chord. Unit suite locks the arm behavior; this proves the full loop on pixels.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tapChord", "name": "C" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tapChord", "name": "F" },
+    { "action": "wait", "ms": 250 },
+    { "action": "evalAssert", "label": "two chords in the progression", "js": "document.querySelectorAll('#prog .slot').length === 2" },
+    { "action": "tap", "selector": "#prog .slot .rm" },
+    { "action": "wait", "ms": 200 },
+    { "action": "evalAssert", "label": "first tap ARMS (red x), nothing deleted", "js": "document.querySelectorAll('#prog .slot').length === 2 && !!document.querySelector('#prog .slot .rm.armed')" },
+    { "action": "screenshot", "name": "armed-x" },
+    { "action": "tap", "selector": "#prog .slot .rm.armed" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "second tap deletes", "js": "document.querySelectorAll('#prog .slot').length === 1" },
+    { "action": "evalAssert", "label": "remove-undo toast visible with an Undo action", "js": "(function(){var b=Array.from(document.querySelectorAll('.composeRow.toastAction')).filter(function(e){return !e.hidden && /Removed/.test(e.textContent)});return b.length===1 && !!b[0].querySelector('button')})()" },
+    { "action": "screenshot", "name": "undo-toast" },
+    { "action": "evalAssert", "label": "tap Undo restores the chord", "js": "(function(){var b=Array.from(document.querySelectorAll('.composeRow.toastAction')).filter(function(e){return !e.hidden && /Removed/.test(e.textContent)})[0];b.querySelector('button').click();return true})()" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "chord restored - two slots again", "js": "document.querySelectorAll('#prog .slot').length === 2" },
+    { "action": "screenshot", "name": "restored" }
+  ]
+}

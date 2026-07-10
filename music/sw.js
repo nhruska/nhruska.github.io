@@ -246,7 +246,7 @@
 // SAME toggle, one button opens both the direct-paste and genre/feel-search
 // paths). check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-var CACHE = 'music-v143';
+var CACHE = 'music-v144';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
