@@ -141,6 +141,17 @@ against them).
   paradox stated in skin, never in jargon.
 - v0.1's stones-into-stairs imagery retired to the seed bank (available for another song).
 
+## STORED (2026-07-10, operator: "store it")
+
+Calluses v0.2 is in `songs.json` (t: Calluses, a: Nik Hruska, y: 2026, d: 20s) - the
+first OPERATOR-AUTHORED song in the catalog, playable in the app over the progressions
+it was written on. Tokens follow catalog precedent (flats stored as flats: Bb/Eb, like
+the existing Ab/Db entries). SW v135 -> v136 + build-stamp pair. Regression:
+`test/pw/scenarios/library-calluses.json` (library renders the stored song + author).
+The full SDD loop closed: spark -> skeleton -> draft -> taste bursts -> encoded
+preferences -> STORED DELIVERABLE. Next round is feel: play it, burst on what the
+fingers say.
+
 ## The loop from here (burst-driven)
 
 1. Operator reacts in bursts (uat:-style: "chorus B", "kill verse line 3", "more water

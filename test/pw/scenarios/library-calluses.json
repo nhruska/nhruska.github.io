@@ -1,0 +1,33 @@
+{
+  "name": "library-calluses",
+  "url": "/music/play/",
+  "settleMs": 1200,
+  "steps": [
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList"
+    },
+    {
+      "action": "assertText",
+      "selector": "#songsList",
+      "contains": "Calluses"
+    },
+    {
+      "action": "evalAssert",
+      "js": "(function(){var t=document.getElementById('songsList').textContent;return t.indexOf('Nik Hruska')>=0})()",
+      "label": "stored song shows its author"
+    },
+    {
+      "action": "screenshot",
+      "name": "library-calluses"
+    }
+  ]
+}
