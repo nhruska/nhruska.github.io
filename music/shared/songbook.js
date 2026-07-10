@@ -2133,7 +2133,16 @@
           // Unchanged by S-PROG-WRAP - the remover works identically in both
           // full and compact mode.
           composeWireTap(rm, function () {
-            invalidateClearUndo(); // A3: removing a chord invalidates any pending Clear-undo
+            // S-DELETE-UNDO (operator UAT 2026-07-10): the first tap ARMS the
+            // remover (red, 1.6s auto-disarm) - protection against accidental
+            // deletes while tapping through chords to hear them; the second
+            // tap deletes and pushes onto the bounded remove-undo stack.
+            if (armedRm !== rm) { armRm(rm); return; }
+            disarmRm();
+            // A3: Clear-undo + stale toast invalidate as before; the remove-undo
+            // stack deliberately SURVIVES a remove - it IS the remove trail.
+            invalidateClearUndo(true);
+            pushRemoveUndo(progression[i], i);
             progression.splice(i, 1);
             var kc = reinferKey();
             renderProg(); renderSuggest(); renderKey();
@@ -3040,7 +3049,15 @@
     // must not survive any of them, the identical "ANY mutating action
     // invalidates prior transient state" contract A3 already applies to the
     // Clear-undo banner below.
-    function invalidateClearUndo() { if (clearUndoSnapshot) hideClearUndoBanner(); hideComposeToast(); }
+    // S-DELETE-UNDO: keepRemoveUndo=true is passed ONLY by the chord-remove
+    // path (a remove must not wipe its own undo trail); every other mutating
+    // call site passes nothing, so add/transpose/mode/key/starter/Save all
+    // invalidate the remove-undo stack too - the same A3 contract.
+    function invalidateClearUndo(keepRemoveUndo) {
+      if (clearUndoSnapshot) hideClearUndoBanner();
+      hideComposeToast();
+      if (!keepRemoveUndo) invalidateRemoveUndo();
+    }
     function showClearUndoBanner() {
       if (!ensureClearUndoBanner() || !clearUndoSnapshot) return;
       clearUndoBanner.hidden = false;
@@ -3070,6 +3087,93 @@
         onHide: function () { clearUndoSnapshot = null; paintClearUndoHidden(); }
       });
       clearUndoTeardown = global.Toast.wirePauseOnTouch(clearUndoBanner, clearUndoHandle);
+    }
+
+    // S-DELETE-UNDO (operator UAT 2026-07-10: "too easy to delete a chord.
+    // protect from simple delete. and offer 1 (or 2?) levels of undo using
+    // simple mechanism tracking previous actions"). Two halves:
+    //   ARM - the slot remover x never deletes on a single tap: the first tap
+    //   arms it (red, 1.6s auto-disarm; arming one x disarms any other), the
+    //   second tap deletes. Protection WITHOUT a confirm() dialog (the
+    //   feedback-debt direction is removing those).
+    //   UNDO - deletes push onto a bounded TWO-level stack surfaced through
+    //   the same composeRow + Toast.showAction pattern as the Clear-undo
+    //   banner above. Subsequent deletes KEEP the stack (that is the two
+    //   levels); every other mutation invalidates it via the A3 choke point
+    //   (invalidateClearUndo above). A re-render orphans any armed x - the
+    //   arm state simply resets, never deletes.
+    var removeUndoStack = [], removeUndoBanner = null, removeUndoHandle = null, removeUndoTeardown = null;
+    var armedRm = null, armedRmTimer = null;
+    function disarmRm() {
+      if (armedRmTimer) { clearTimeout(armedRmTimer); armedRmTimer = null; }
+      if (armedRm) { armedRm.classList.remove('armed'); armedRm = null; }
+    }
+    function armRm(btn) {
+      disarmRm();
+      armedRm = btn; btn.classList.add('armed');
+      armedRmTimer = setTimeout(disarmRm, 1600);
+    }
+    function ensureRemoveUndoBanner() {
+      if (!el.prog || !el.prog.parentNode) return false;
+      if (!removeUndoBanner) {
+        removeUndoBanner = document.createElement('div');
+        removeUndoBanner.className = 'composeRow toastAction';
+        removeUndoBanner.hidden = true;
+        el.prog.parentNode.insertBefore(removeUndoBanner, el.prog);
+      }
+      return true;
+    }
+    function paintRemoveUndoHidden() {
+      if (removeUndoTeardown) { removeUndoTeardown(); removeUndoTeardown = null; }
+      removeUndoHandle = null;
+      if (removeUndoBanner) { removeUndoBanner.hidden = true; removeUndoBanner.innerHTML = ''; }
+    }
+    function dismissRemoveUndo() { if (removeUndoHandle) removeUndoHandle.finish(); else paintRemoveUndoHidden(); }
+    function invalidateRemoveUndo() {
+      if (!removeUndoStack.length && !armedRm && !removeUndoHandle) return; // cheap no-op on the common path
+      removeUndoStack.length = 0;
+      disarmRm();
+      dismissRemoveUndo();
+    }
+    function pushRemoveUndo(chord, index) {
+      removeUndoStack.push({ chord: chord, index: index });
+      if (removeUndoStack.length > 2) removeUndoStack.shift(); // bounded: 2 levels (operator: "1 (or 2?)")
+      showRemoveUndoBanner();
+    }
+    function showRemoveUndoBanner() {
+      if (!ensureRemoveUndoBanner() || !removeUndoStack.length) return;
+      // Retime for the newest removal: tear down the prior toast instance but
+      // keep the stack (its onHide wipes the stack, so snapshot around it).
+      var keep = removeUndoStack.slice();
+      dismissRemoveUndo();
+      removeUndoStack = keep;
+      removeUndoBanner.hidden = false;
+      removeUndoBanner.innerHTML = '';
+      var last = removeUndoStack[removeUndoStack.length - 1];
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Removed ' + dispChordName(last.chord) + (removeUndoStack.length > 1 ? ' - 2 undos available' : '');
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost ctrlBtn'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var entry = removeUndoStack.pop();
+        if (!entry) { dismissRemoveUndo(); return; }
+        progression.splice(Math.min(entry.index, progression.length), 0, entry.chord);
+        var kc = reinferKey();
+        renderProg(); renderSuggest(); renderKey();
+        if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+        if (removeUndoStack.length) showRemoveUndoBanner(); else dismissRemoveUndo();
+      };
+      btnRow.appendChild(undoBtn);
+      removeUndoBanner.appendChild(msg); removeUndoBanner.appendChild(btnRow);
+      removeUndoHandle = global.Toast.showAction('Removed ' + dispChordName(last.chord), {
+        host: removeUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { removeUndoStack.length = 0; paintRemoveUndoHidden(); }
+      });
+      removeUndoTeardown = global.Toast.wirePauseOnTouch(removeUndoBanner, removeUndoHandle);
     }
 
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
