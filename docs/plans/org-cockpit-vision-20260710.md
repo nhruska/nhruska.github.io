@@ -40,7 +40,7 @@ is the productized proof that one operator + the loop runs a firm's departments.
 and recursive CE: each department's workflow gets the same treatment songwriting got today
 (corpus of proven examples -> verifier -> coach skill -> loop), then the loops compound.
 
-## Interview set (IV-4 on the Deck - answer ANY subset)
+## Interview set (was IV-4 on the Deck - RESOLVED 2026-07-10, any-subset contract)
 
 1. First department to cockpit-ify? (Engineering is basically done - candidates:
    proposals/BD, patents/IP, delivery/PM, marketing content.)
@@ -50,14 +50,20 @@ and recursive CE: each department's workflow gets the same treatment songwriting
    polling (a Pages/private-repo instance) the way music did?
 5. Who besides you reads the org glass - Mike? (Changes auth + surface choices.)
 
-## Assumed answers (until any interview answer arrives)
+## Answers (Q1 operator-answered 2026-07-10; rest assumed per the interview contract)
 
-| Q | Assumed | Basis |
+| Q | Answer | Basis |
 |---|---|---|
-| 1 | Unanswered - genuinely operator's (priorities seat) | |
+| 1 | **ANSWERED: delivery/PM** - operator digit "delivery" (2026-07-10) | his keystroke - the priorities seat spoke. Fits the smallest-translation-gap read: delivery is the department closest to the dev cockpit already running |
+| 2 | Assumed for delivery: the deliverable is the delivery/status report + milestone artifact, its V&V is the evidence trail (CI/e2e state, deploy cascade result, ticket dispositions) attached the way PR bodies carry V&V tables today | the deck-concept mapping row "Deliverables with V&V attached"; sprint-report skill is the existing seed primitive |
 | 3 | Skills inventory splits by audience: shared team capability -> claude-config; PS-business-specific -> a PS repo | existing routing discipline (memory-discipline / ccp scope) |
 | 4 | Start as v1 polling on a private repo, swap transport later | the Deck proved v1 in one arc; "transport is swappable" is the whole design |
 | 5 | Operator-only first | slack-bridge exists for team-visible status; the cockpit's write-side gates on ONE operator today |
+
+Next concrete step when the operator green-lights build: spike a delivery-department
+lane spec (pipelines = active engagements, deliverables = reports-with-V&V, queue rows
+= milestone gates) on a private PS repo Deck instance, reusing the music Deck's panel +
+emitter verbatim (transport object swap only).
 
 ## v2 design seed: xAPI-shaped events (added 2026-07-10, fractal-method capture)
 
