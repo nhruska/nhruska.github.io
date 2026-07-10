@@ -42,3 +42,4 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | library-calluses | stored operator-authored song renders in the Library (catalog integrity after a songs.json append) |
 | filter-chips-quiet | G3 S-TYPEFILTER-QUIET: selected library FILTER chips are outline-quiet, accent fill reserved for primary/mode (computed-style + pixels) |
 | ops-deck-panel | Cockpit (formerly Ops Deck) glass: live feed + filters, swarm lanes, merged Your-turn stream, 4 operator queues, QUEUE.md board, PR-tab fallback, public Wins timeline (412x915, zero JS errors) |
+| triads-key-spelling | S-TRIADS-SPELLING: Triads & Inversions spells by function in the stated key - F major's IV reads Bb, never A# (shape assert: no A# anywhere in an F-major cycle) |
