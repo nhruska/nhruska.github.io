@@ -1,12 +1,11 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-09T12:17:47Z
+Generated: 2026-07-10T12:10:37Z
 Status: ok
 
 ## NOW
-- Queue NOW: AWAITING OPERATOR: bake veto + anchors veto
-- Open PR #98 (CI unknown): music(theory): key-aware conventional note spelling from circle.js SSOT (#85) - https://github.com/nhruska/nhruska.github.io/pull/98
+- Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
+- Queue NOW: CLOSED 2026-07-10
 - Open draft PR #88 (CI green): music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room - https://github.com/nhruska/nhruska.github.io/pull/88
-- Open draft PR #70 (CI green): Music: AI tutor prototype - goal spec + checklist - https://github.com/nhruska/nhruska.github.io/pull/70
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -14,14 +13,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
-- #195 - M-UI-STD: standardized chord-view controls + firstrun copy (cache v121) (2026-07-06) - https://github.com/nhruska/nhruska.github.io/pull/195
-- #194 - M-LIB-UX: Repertoire->Library, Edit label, no leave-app search, title wrap, unified video button (F23-F27) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/194
-- #193 - M-GUIDANCE: graded first-time guidance + studio-dismiss fix (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/193
-- #192 - music(studio): solo-view UX rework - operator UAT F12-F22 (no-scroll mobile, primary Play, two-octave root-dwell loop, lean controls) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/192
-- #191 - spec(M-GUIDANCE): graded guidance + QUEUE update (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/191
-- #190 - cc: llms.txt agent layer - machine-readable twin beside payload-repo.json (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/190
-- #189 - cc: reorder Repo Command Center to the above-the-fold contract (sanitized public block 3) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/189
-- #188 - M-SETTINGS-CLARITY: Settings Done + data rows + accordion, picker labels big-only, footer freshness stamp (CACHE v117) (2026-07-05) - https://github.com/nhruska/nhruska.github.io/pull/188
+- #206 - SDD: song-driven development vision capture + songwriting-coach + Deck interview set (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/206
+- #205 - Ops Deck v1: live operator glass (mission feed, swarm lanes, operator queues, PR cards) (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/205
+- #204 - feat(guidance): G2 S-POSTPROG-CUE - beginner next-move cue, self-retiring on Solo (USDD arc 2) (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/204
+- #203 - feat(copy): S-PERSONA-COPY - outcome-named Solo modal + beginner Studio orientation tip (first full USDD arc) (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/203
+- #202 - feat(sme): coaching-suite gap map - audio-dsp, pedagogy, copy, a11y coaches + dynamic summoning rule (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/202
+- #201 - feat(usdd): user-simulation-driven development + UX friction profiles -> scored goalposts (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/201
+- #200 - docs(queue): mission-close reconcile - FORK-4 shipped, S1/S2 unblocked (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/200
+- #199 - feat(theory): FORK-4 removal - key-aware note/chord spelling everywhere a key is stated (2026-07-10) - https://github.com/nhruska/nhruska.github.io/pull/199
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -34,6 +33,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (2181 cases / 43 suites)
+- Suite: node test/run-all.js (2214 cases / 44 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
