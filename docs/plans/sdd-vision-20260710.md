@@ -68,6 +68,13 @@ Queued as IV-3 on the Ops Deck (ops/queues.json). The set:
 6. **Your first SDD target:** an actual song you want to write (key/genre/topic) - the
    pilot that makes the loop real?
 
+### Interview state update (2026-07-10, same day)
+
+Operator answered Q6 (+ Q1/Q2 partially): **F and/or Dm, Mixolydian; topic = friction /
+CE allusions / surrender-to-flow in fresh imagery.** The pilot is LIVE:
+[sdd-pilot-friction-20260710](sdd-pilot-friction-20260710.md) (skeleton + draft v0.1
+awaiting taste bursts). Q3/Q4/Q5 remain assumed per the table below.
+
 ### Assumed answers (until any interview answer arrives - basis cited)
 
 | Q | Assumed | Basis |

@@ -12,6 +12,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
+| **S-SDD-PILOT: "the friction song" (Worn Smooth, F Mixo/Dm)** | **IN FLIGHT 2026-07-10**: IV-3 Q6 answered (key + topic) -> skeleton + draft v0.1 delivered, awaiting operator taste bursts (TR-3); each burst-verdict encodes into songwriting-coach; settled draft stores to songs.json | [sdd-pilot-friction](sdd-pilot-friction-20260710.md) |
 | **FORK-4 removal - key-aware render wiring** | **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES). | [PR #199](https://github.com/nhruska/nhruska.github.io/pull/199) |
 | (v121 snapshot - superseded, kept for trace) #98 key-aware spelling was the stalled linchpin gating S1+S2; resolved by re-implementing its core fresh in #198 and closing #98 | CLOSED 2026-07-10 | [PR #98](https://github.com/nhruska/nhruska.github.io/pull/98) |
 | (v113 snapshot - superseded, kept for trace) idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline. AWAITING OPERATOR: bake veto + anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
@@ -92,6 +93,7 @@
 - Setlist touch drag-to-reorder (gh #92)
 - SDD recursion: album composition (sequencing, key/tempo/energy arcs across a set) - parked until song-level SDD proves out ([sdd-vision](sdd-vision-20260710.md))
 - SDD recursion: release cadence / streaming-strategy optimization loops - external-data spike + vision interview first (same doc)
+- ORG COCKPIT: single-operator organization glass (departments as lanes, skills inventory as bench, deliverables-with-evidence) - vision CAPTURED ([org-cockpit-vision](org-cockpit-vision-20260710.md)), IV-4 interview set on the Deck; cockpit boundary = actuators (verticals/industries out of scope)
 
 ## Operating rules
 

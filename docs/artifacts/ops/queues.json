@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T12:12:00Z",
+  "updated": "2026-07-10T12:30:00Z",
   "note": "The four operator decision surfaces (Ops Deck acceptance A7). Items are addressable by id; the panel renders each queue as a section. v1 is read-only glass - resolving an item happens in session (v2 adds tap-to-approve via ops/commands.jsonl).",
   "queues": {
     "taste_review": {
@@ -18,6 +18,12 @@
           "title": "Key-aware spelling on your real progressions (C-F-Bb reads Bb everywhere)",
           "url": "https://nhruska.github.io/music/play/",
           "evidence": "https://github.com/nhruska/nhruska.github.io/pull/199",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-3",
+          "title": "Friction song draft v0.1 - 'Worn Smooth' (F Mixo, Dm verse): react in bursts (chorus A/B, kill lines, image swaps)",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
           "added": "2026-07-10"
         }
       ]
@@ -69,9 +75,9 @@
           "added": "2026-07-10"
         },
         {
-          "id": "IV-3",
-          "title": "SDD (song-driven development) question set - 6 Qs, any subset unblocks: whose 'proven', first genres, surface (Compose vs M-CONSTRUCT), lyrics v1 scope, recursion parking, YOUR first song target",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-vision-20260710.md",
+          "id": "IV-4",
+          "title": "Org-cockpit question set - 5 Qs, any subset unblocks: first department, its evidence-deliverable, skills-inventory home, v1-polling vs wait-for-Azure, Mike visibility",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
           "added": "2026-07-10"
         }
       ]
