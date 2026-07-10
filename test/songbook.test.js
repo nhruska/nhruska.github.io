@@ -1731,24 +1731,36 @@ test('U7: openSoloChoiceRow presents as a modal (asModal + backdrop dim + dialog
   assert.ok(row._focusCalls >= 1, 'the dialog itself must receive focus (no input to focus, unlike the save-name row)');
 });
 
-test('U7: backdrop tap dismisses the solo-choice modal as Skip (no NavHistory loaded in this harness -> falls back to the direct close)', function () {
+// S-POSTPROG-FLOW (operator UAT 2026-07-10): a dismiss gesture must CANCEL (stay on
+// Compose), never navigate into the Studio. The old "backdrop/Escape = Skip = open
+// Studio" behavior was the "can't cancel out of Solo" trap - these now assert the fix.
+test('U7: backdrop tap CANCELS the solo-choice modal (a dismiss must not navigate to the Studio)', function () {
   var picks = [];
   var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
   startSoloChoice(m);
   findComposeBackdrop(m).onclick();
-  assert.strictEqual(picks.length, 1, 'expected the ephemeral-Studio open to fire exactly once (Skip semantics)');
-  assert.strictEqual(picks[0].title, 'Solo practice', 'backdrop dismiss must resolve to Skip, not Save');
-  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after dismiss');
-  assert.strictEqual(findComposeBackdrop(m).hidden, true, 'the backdrop must be re-hidden after dismiss');
+  assert.strictEqual(picks.length, 0, 'a dismiss must NOT open the Studio - it cancels, keeping the progression (S-POSTPROG-FLOW fix)');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after cancel');
+  assert.strictEqual(findComposeBackdrop(m).hidden, true, 'the backdrop must be re-hidden after cancel');
 });
 
-test('U7: Escape dismisses the solo-choice modal as Skip', function () {
+test('U7: Escape CANCELS the solo-choice modal (no Studio navigation)', function () {
   var picks = [];
   var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
   startSoloChoice(m);
   findComposeRow(m).onkeydown({ key: 'Escape' });
-  assert.strictEqual(picks.length, 1);
-  assert.strictEqual(picks[0].title, 'Solo practice');
+  assert.strictEqual(picks.length, 0, 'Escape cancels - it must not open the Studio');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after cancel');
+});
+
+test('U7: the visible Cancel button dismisses without navigating (discoverable escape hatch)', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  var btnRow = findComposeRow(m).children[1]; // [msg, btnRow]
+  btnRow.children[2].onclick(); // [Save & open Studio, Skip, Cancel] - Cancel
+  assert.strictEqual(picks.length, 0, 'Cancel must not open the Studio');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after Cancel');
 });
 
 test('U7: "Save & open Studio" resolves to save (not skip) and chains into the save-name modal before opening the Studio', function () {

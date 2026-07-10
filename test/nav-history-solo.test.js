@@ -206,42 +206,45 @@ test('S-NAVHIST: one NavHistory.dismiss() after Skip closes the Studio and lands
   assert.strictEqual(global.NavHistory.depth(), depth0, 'one back-press must land exactly where the user expects - the depth before the solo-choice flow ever started');
 });
 
-test('S-NAVHIST: backdrop tap resolves to Skip via the same non-buggy settleAfter path', function () {
+// S-POSTPROG-FLOW (operator UAT 2026-07-10): a dismiss gesture now CANCELS (stays on
+// Compose, opens nothing) instead of resolving to Skip-into-the-Studio. Cancel opens no
+// NavHistory layer, so the double-pop this suite guards is structurally impossible on a
+// dismiss - the Skip BUTTON path above still exercises the settleAfter no-double-pop guard.
+test('S-NAVHIST: backdrop tap resolves to Cancel - dismiss stays on Compose, opens nothing', function () {
   var picks = [], studio = {};
   var m = mountForSoloChoiceTests(makeOpenStudioSpy(picks, studio));
   startSoloChoice(m);
   findComposeBackdrop(m).onclick();
-  assert.strictEqual(picks.length, 1);
-  assert.strictEqual(picks[0].title, 'Solo practice');
-  assert.strictEqual(studio.open, true, 'backdrop-dismiss must not double-pop the Studio shut either');
+  assert.strictEqual(picks.length, 0, 'a dismiss must not open the Studio - it cancels');
+  assert.ok(!studio.open, 'no Studio opens on a backdrop-cancel');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal is torn down on cancel');
 });
 
-test('S-NAVHIST: Escape resolves to Skip via the same non-buggy settleAfter path', function () {
+test('S-NAVHIST: Escape resolves to Cancel - opens nothing', function () {
   var picks = [], studio = {};
   var m = mountForSoloChoiceTests(makeOpenStudioSpy(picks, studio));
   startSoloChoice(m);
   findComposeRow(m).onkeydown({ key: 'Escape' });
-  assert.strictEqual(picks.length, 1);
-  assert.strictEqual(studio.open, true);
+  assert.strictEqual(picks.length, 0, 'Escape cancels - it must not open the Studio');
+  assert.ok(!studio.open, 'no Studio opens on an Escape-cancel');
 });
 
-test('S-NAVHIST: a genuine hardware/gesture Back (bypassing every button/backdrop/Escape handler) still resolves to Skip without a double-pop', function () {
+test('S-NAVHIST: a genuine hardware/gesture Back cancels (deferred, opens nothing, no double-pop residue)', function () {
   withFakeClock(function (clock) {
     var picks = [], studio = {};
     var m = mountForSoloChoiceTests(makeOpenStudioSpy(picks, studio));
     startSoloChoice(m);
-    var depthAtChoice = global.NavHistory.depth();
     // Simulate a REAL hardware/gesture Back: fire history.back() directly - no
     // songbook.js handler runs first. Only the closeFn registered via
     // NavHistory.open() can react, and it runs from INSIDE nav-history.js's
-    // popstate `while` loop.
+    // popstate `while` loop. The deferred-deliver machinery still runs; it now
+    // resolves to Cancel (opens nothing) instead of Skip.
     global.history.back();
     assert.strictEqual(picks.length, 0, 'onPick must be deferred, never fired synchronously from inside the popstate loop');
     assert.strictEqual(clock.pendingIds().length, 1, 'expected exactly one deferred (setTimeout) callback');
     clock.fire(clock.pendingIds()[0]);
-    assert.strictEqual(picks.length, 1, 'the deferred callback must fire exactly once, after the popstate handler fully unwound');
-    assert.strictEqual(studio.open, true, 'the Studio must be open, not double-popped shut');
-    assert.strictEqual(global.NavHistory.depth(), depthAtChoice, 'must land at the same depth the choice row occupied (in-place replace)');
+    assert.strictEqual(picks.length, 0, 'a Back-cancel must not open the Studio');
+    assert.ok(!studio.open, 'no Studio opens on a Back-cancel');
   });
 });
 

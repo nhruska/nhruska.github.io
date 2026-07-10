@@ -33,7 +33,7 @@
 | # | Item | Source |
 |---|---|---|
 | S-NAVHIST | NavHistory double-pop on Solo->Skip path (real bug, live-reproduced) | PR #144 finding |
-| S-POSTPROG-FLOW | **Post-progression workflow unclear (any experience level).** After adding a suggested progression, the "Save to add a video backing track or skip to practice" prompt (Save & open Studio / Skip) AND a new "Solo" button in the In-key\|All row both appear at once - a new user is curious about Solo, feels they "can't cancel", and has no clear read on the expected next step. Amplified by D-DEFAULT-C (PR #197): with a key always set, Solo (gated on key+progression) now surfaces the moment chords are added, so the fork hits sooner. Needs a vision call on the intended after-you-build flow + a dismiss/keep-composing affordance. | operator UAT 2026-07-10 (PR #197 preview) |
+| S-POSTPROG-FLOW | **Post-progression workflow unclear (any experience level).** After adding a suggested progression, the Solo choice prompt (Save & open Studio / Skip) + the "Solo" button both appear - a new user is curious about Solo, felt they "can't cancel", and had no clear read on the next step. **"Can't cancel" FIXED in PR #197**: the Solo modal gained a visible **Cancel** and dismiss gestures (backdrop/Escape/Back) now stay on Compose instead of navigating into the Studio. REMAINING (needs a vision call): the broader intended after-you-build flow - should Solo/Save auto-surface at all, what is the ideal next-step guidance for a new user. | operator UAT 2026-07-10 (PR #197 preview) |
 
 ## MID (vision known - needs a spec interview, ~15-30 min each; batchable in one sitting)
 
