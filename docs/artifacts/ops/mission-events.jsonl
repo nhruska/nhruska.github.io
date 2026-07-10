@@ -21,3 +21,4 @@
 {"ts": "2026-07-10T12:07:04Z", "mission": "sdd", "type": "start", "title": "Mission: SDD - song-driven development vision capture (the original song-builder prompt, full circle)", "agent": "main", "url": "https://github.com/nhruska/nhruska.github.io/blob/claude/sdd-vision/docs/plans/sdd-vision-20260710.md"}
 {"ts": "2026-07-10T12:07:04Z", "mission": "sdd", "type": "queue", "title": "M-12 S-SDD-TEMPLATES queued (MID) + 2 recursion rows (LONG: albums, streaming loops) + IV-3 interview set on the Deck", "agent": "main"}
 {"ts": "2026-07-10T12:07:04Z", "mission": "sdd", "type": "build", "title": "songwriting-coach scaffolded - the bench grows (progression families, section conventions, lyric craft)", "agent": "main"}
+{"ts": "2026-07-10T12:08:38Z", "mission": "sdd", "type": "merge", "title": "PR #206 merged - SDD vision + songwriting-coach live; IV-3 awaits any single answer", "agent": "main", "url": "https://github.com/nhruska/nhruska.github.io/pull/206"}
