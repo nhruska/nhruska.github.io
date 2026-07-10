@@ -324,7 +324,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
-.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* Visual-language emphasis ladder (ux-philosophy/visual-language.md): an icon button is a
+   SECONDARY affordance, not a primary action - so its glyph is neutral (--txt-soft), not the
+   bright --accent-ink that competes with the one primary per screen. Accent still flashes on
+   :active (feedback) and on the .setBtn.on selected state below (D-SELECTED-ACCENT). */
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* M-EAR wave 1: the scale-audition play/stop toggle - ONE primitive, composed

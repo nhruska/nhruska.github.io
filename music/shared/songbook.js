@@ -2390,7 +2390,11 @@
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
      * and closed on selection; tapping the already-selected mode re-confirms and
      * closes it (a no-op re-harmonize guard, not a toggle). */
-    var songKey = { root: null, mode: "Major", explicit: false };
+    // Default to C major so Compose opens in the In-key view with real, tappable
+    // chords - "get to work immediately" (operator override of D-KEYLESS, 2026-07-10,
+    // made knowingly: the key stays fully changeable / clearable / transposable, so the
+    // keyless capability is preserved - only the DEFAULT changed). compose-key-system.md D-DEFAULT-C.
+    var songKey = { root: "C", mode: "Major", explicit: true };
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
