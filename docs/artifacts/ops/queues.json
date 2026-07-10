@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T17:52:00Z",
+  "updated": "2026-07-10T18:05:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -15,6 +15,16 @@
           "title": "Play 'Calluses' - first operator-authored catalog song",
           "url": "https://nhruska.github.io/music/play/",
           "evidence": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-5",
+          "priority": 70,
+          "form": "tap",
+          "ask": "G5+G6 live (v139): open a Studio, tap scale chips - the 'Why ... works' banner follows your chip; reopen the track and your choice is remembered. Burst on the per-scale copy",
+          "title": "Whynote-per-scale copy + scale memory feel pass",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/220",
           "added": "2026-07-10"
         },
         {
