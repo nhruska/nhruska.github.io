@@ -533,6 +533,60 @@ test('tintWheel marks the relative key strong + V/IV dim on the REAL renderWheel
   assert.ok(wedgeClasses('D').indexOf('cofWedge-nb') >= 0, 'IV (D): ' + wedgeClasses('D'));
   assert.ok(wedgeClasses('A').indexOf('cofWedge-rel') < 0, 'tonic untinted');
 });
+/* ---------- S-COF-SPELLING: wheel labels are preferred KEY names ---------- */
+test('wheelLabel: printed-COF truth table (flat-preferred majors, conventional minors)', function () {
+  var C = require('../music/shared/circle.js');
+  assert.strictEqual(C.wheelLabel('A#', 'major'), 'Bb');
+  assert.strictEqual(C.wheelLabel('D#', 'major'), 'Eb');
+  assert.strictEqual(C.wheelLabel('G#', 'major'), 'Ab');
+  assert.strictEqual(C.wheelLabel('C#', 'major'), 'Db');
+  assert.strictEqual(C.wheelLabel('F#', 'major'), 'F#');
+  assert.strictEqual(C.wheelLabel('A#', 'minor'), 'Bbm');
+  assert.strictEqual(C.wheelLabel('D#', 'minor'), 'D#m');
+  assert.strictEqual(C.wheelLabel('G#', 'minor'), 'G#m');
+  assert.strictEqual(C.wheelLabel('C#', 'minor'), 'C#m');
+});
+test('renderWheel: labels carry preferred key names + wedges carry data-pc/data-ring identity', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = realWheel(C, 'C', 'major');
+  var texts = [];
+  var nodes = wheel.querySelectorAll('.cofLabel');
+  for (var i = 0; i < nodes.length; i++) texts.push(nodes[i].textContent);
+  ['Bb', 'Eb', 'Ab', 'Db', 'Bbm', 'D#m', 'G#m'].forEach(function (want) {
+    assert.ok(texts.indexOf(want) >= 0, 'label present: ' + want);
+  });
+  ['A#', 'D#', 'G#', 'C#', 'A#m'].forEach(function (bad) {
+    assert.ok(texts.indexOf(bad) < 0, 'sharp-only label absent: ' + bad);
+  });
+  // structural identity for consumers (markWheelPc): Bb major wedge = pc 10, major ring
+  for (var j = 0; j < nodes.length; j++) {
+    if (nodes[j].textContent === 'Bb') {
+      var w = nodes[j].previousElementSibling;
+      assert.strictEqual(w.getAttribute('data-pc'), '10', 'Bb wedge data-pc');
+      assert.strictEqual(w.getAttribute('data-ring'), 'major', 'Bb wedge data-ring');
+      return;
+    }
+  }
+  assert.fail('Bb label not found for identity check');
+});
+test('tintWheel matches the NEW preferred labels (A# major: rel Gm strong, F + Eb dim)', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = realWheel(C, 'A#', 'major');
+  T.tintWheel(wheel, C, 'A#', 'major');
+  function cls(labelText) {
+    var labels = wheel.querySelectorAll('.cofLabel');
+    for (var i = 0; i < labels.length; i++) {
+      if (labels[i].textContent === labelText) {
+        var w = labels[i].previousElementSibling;
+        return (w && w.classList.contains('cofWedge')) ? w.className : '(no wedge sibling)';
+      }
+    }
+    return '(label missing)';
+  }
+  assert.ok(cls('Gm').indexOf('cofWedge-rel') >= 0, 'relative minor Gm: ' + cls('Gm'));
+  assert.ok(cls('F').indexOf('cofWedge-nb') >= 0, 'V (F): ' + cls('F'));
+  assert.ok(cls('Eb').indexOf('cofWedge-nb') >= 0, 'IV (Eb): ' + cls('Eb'));
+});
 /* keep a tiny hand stub only for the graceful-degradation case */
 function stubWheel(labels) {
   var nodes = labels.map(function (txt) {
