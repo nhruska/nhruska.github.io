@@ -2041,7 +2041,13 @@
       // scrolling chord list (in-key cells + all-chords tiles).
       var maxed = progression.length >= COMPOSE_MAX;
       var wrap = document.querySelector('.composeWrap');
-      if (wrap) wrap.classList.toggle('maxed', maxed);
+      if (wrap) {
+        wrap.classList.toggle('maxed', maxed);
+        // Save is the compose PRIMARY only once there is something to save. On an empty
+        // canvas it demotes to an outline so it does not out-shout the chord cards - the
+        // real "obvious next move" (visual-language.md emphasis ladder).
+        wrap.classList.toggle('progEmpty', progression.length === 0);
+      }
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // S-PROG-WRAP-2 (UAT U8b): count-driven staged density ladder - full
@@ -2349,6 +2355,14 @@
           global.KeyExplorer.renderChords(leadWrap, keItems, {
             diagram: packDiagram,
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+          });
+        } else {
+          // Fallback when KeyExplorer isn't loaded: render the diatonic palette as plain
+          // chord tiles into #buildGrid (mirrors the All view's tile render) so In-key is
+          // never blank and degrades gracefully. wireTap is movement-cancelled like every
+          // other chord tile.
+          diatonicChords(keyRoot, keyMode).forEach(function (c) {
+            grid.appendChild(wireTap(packDiagram(c, 'small'), c));
           });
         }
         if (scroller) scroller.insertBefore(leadWrap, grid);

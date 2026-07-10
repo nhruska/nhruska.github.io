@@ -420,6 +420,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
+/* Emphasis ladder (visual-language.md): Save is the compose PRIMARY (accent fill) only
+   once there is a progression to save. On an empty canvas (.composeWrap.progEmpty) it
+   demotes to an OUTLINE so it never out-shouts the chord cards - the real "obvious next
+   move". #id specificity beats .btn.red; it returns to fill the moment a chord lands. */
+.composeWrap.progEmpty #cSave{background:transparent;color:var(--accent-ink);border-color:var(--accent-dim);}
 /* F33 (UAT): genuinely destructive actions (repertoire-form.js's real Delete -
    the fork "Revert to original" is ALSO destructive (discards the fork's edits,
    confirm-gated) but stays .btn.ghost as a deliberate softer signal; see
