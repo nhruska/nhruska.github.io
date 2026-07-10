@@ -59,6 +59,14 @@ and recursive CE: each department's workflow gets the same treatment songwriting
 | 4 | Start as v1 polling on a private repo, swap transport later | the Deck proved v1 in one arc; "transport is swappable" is the whole design |
 | 5 | Operator-only first | slack-bridge exists for team-visible status; the cockpit's write-side gates on ONE operator today |
 
+## v2 design seed: xAPI-shaped events (added 2026-07-10, fractal-method capture)
+
+The Deck's event contract is, point for point, an xAPI statement stream (actor-verb-object
+-timestamp; append-only; consumer-preference serialization) - the operator's own first-LRS
+architecture, rebuilt unknowingly. v2 should make the org event store xAPI-compatible (or
+give it an xAPI export surface): every existing LRS/analytics consumer becomes a free
+consumer of agent-work telemetry. Detail: [fractal-method-20260710](fractal-method-20260710.md).
+
 ## Not in scope (deliberately)
 
 - Vertical / industry / market / economy panels - no actuators, so no cockpit. If wanted
