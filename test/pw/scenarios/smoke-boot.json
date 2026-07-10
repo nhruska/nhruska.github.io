@@ -1,0 +1,10 @@
+{
+  "name": "smoke-boot",
+  "description": "App boots at phone viewport: tab bar renders, no JS errors.",
+  "url": "/music/play/",
+  "steps": [
+    { "action": "waitFor", "selector": ".tabbar" },
+    { "action": "assertCount", "selector": ".tabbar button", "min": 4 },
+    { "action": "screenshot", "name": "boot" }
+  ]
+}

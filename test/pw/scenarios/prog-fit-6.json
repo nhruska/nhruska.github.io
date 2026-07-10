@@ -1,0 +1,70 @@
+{
+  "name": "prog-fit-6",
+  "description": "S-PROG-FIT-6: six chords fit the fixed compose region at 412x915 - the In-key/All toggle row stays fully in-viewport (nothing pushed below the fold).",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "D"
+    },
+    {
+      "action": "tapChord",
+      "name": "E"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tapChord",
+      "name": "A"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "assertCount",
+      "selector": "#prog .slot",
+      "min": 6
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#catChips"
+    },
+    {
+      "action": "screenshot",
+      "name": "six-chords-above-fold"
+    }
+  ]
+}

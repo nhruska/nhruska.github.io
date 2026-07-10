@@ -1,0 +1,50 @@
+{
+  "name": "compose-clear-inkey",
+  "description": "S-CLEAR-INKEY: after pinning the All view and clearing, the palette returns to In-key on the default key (no stale All pin).",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tap",
+      "selector": "#cClear"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "assertChipOn",
+      "selector": "#catChips .chordSegBtn",
+      "text": "In key"
+    },
+    {
+      "action": "screenshot",
+      "name": "cleared-back-to-inkey"
+    }
+  ]
+}
