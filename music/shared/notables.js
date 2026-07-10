@@ -175,6 +175,21 @@
   /* ---------- single-slot arbitration ("one notable per render pass") ---------- */
   var activeGrant = null; // { id: consumerId, p: priority } | null while a slot is held
 
+  // S-NOTABLE-PREEMPT-TEARDOWN: live banner elements by consumerId. The slot
+  // arbitration knew who LOST a preemption, but nothing removed the loser's
+  // already-rendered card - so a preempting claim left TWO banners on screen
+  // (operator-observed on pixels, 2026-07-10). renderBanner() registers here;
+  // a preempting claim() tears the ousted holder's element down.
+  var liveEls = {};
+
+  function teardownEl(consumerId) {
+    var e = liveEls[consumerId];
+    delete liveEls[consumerId];
+    if (e && e.parentNode && typeof e.parentNode.removeChild === 'function') {
+      e.parentNode.removeChild(e);
+    }
+  }
+
   function claim(consumerId, priority, level) {
     if (!consumerId || isDismissed(consumerId)) return false;
     // M-GUIDANCE level gate: a consumerId registered in LEVELS only grants
@@ -184,7 +199,12 @@
     var myP = priorityOf(consumerId, priority);
     if (!activeGrant) { activeGrant = { id: consumerId, p: myP }; return true; }
     if (activeGrant.id === consumerId) return true; // idempotent re-claim of the slot it already holds
-    if (myP < activeGrant.p) { activeGrant = { id: consumerId, p: myP }; return true; } // strictly higher priority preempts
+    if (myP < activeGrant.p) { // strictly higher priority preempts - AND tears the loser down
+      var ousted = activeGrant.id;
+      activeGrant = { id: consumerId, p: myP };
+      teardownEl(ousted); // one tip at a time is the journey's law - visually too
+      return true;
+    }
     return false; // ties and lower priority lose to the current holder
   }
 
@@ -221,9 +241,14 @@
     x.textContent = '×'; // ×
     x.onclick = function () {
       dismiss(opts.consumerId);
+      if (liveEls[opts.consumerId] === el) delete liveEls[opts.consumerId];
       if (typeof opts.onDismiss === 'function') opts.onDismiss(opts.consumerId);
     };
     el.appendChild(x);
+
+    // Preempt-teardown registry: the newest rendered element for a consumer is
+    // the one a preemption must remove (see claim()).
+    if (opts.consumerId) liveEls[opts.consumerId] = el;
 
     return el;
   }
@@ -238,7 +263,7 @@
     renderBanner: renderBanner,
     // Test-only: clears in-memory arbitration state (NOT persisted dismissals)
     // between cases that share one required module instance.
-    _resetArbitration: function () { activeGrant = null; }
+    _resetArbitration: function () { activeGrant = null; liveEls = {}; }
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
