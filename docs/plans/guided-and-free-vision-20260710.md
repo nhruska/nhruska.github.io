@@ -86,6 +86,31 @@ with the highest compounding is **the wizard + skill-profile arc**: it is the fi
 feature where the APP becomes a CE loop for its USER - the product teaching its human,
 one zoom in from the system teaching itself.
 
+## Product thesis + deliverable ladder (operator, 2026-07-10 - the refining burst)
+
+Verbatim core: "the next compounding move is enabling the human in the loop to do things
+they never thought possible. and it's not some AI trick. It's meeting someone at the
+point of need regardless of their expertise... I would be most interested in the
+deliverables, which are learning notes, then chords and building progressions, then
+composing to coherent songs using guidance from music theory and proven hits from the
+library... I like SONG as an entity and a deliverable. I like my skill profile being
+grown between the gap of an expert model and where I am currently."
+
+Locked into M-13/M-14:
+
+- **The deliverable ladder IS the wizard's curriculum**: notes -> chords -> progressions
+  -> coherent songs (theory-guided + proven-hit-guided). Each rung is a deliverable the
+  user OWNS, not a lesson completed. Song = the terminal entity (already integrates with
+  setlist + YouTube jams - the existing surfaces are the ladder's top rung).
+- **Skill profile = the GAP against an expert model.** Not a score - a diff. The expert
+  model (target profile per objective) minus the current skill graph = the practice
+  queue; "meet me at the point of need" means next-best-step always selects FROM THE GAP
+  at the user's current rung. (This answers IV-5 Q3's framing half: the profile's job is
+  gap-selection; visibility remains open.)
+- **Not an AI trick**: the ladder, the gap, and the guidance are deterministic (templates,
+  theory engine, skill graph) - the LLM only ever coaches at the edges (lyric craft, taste
+  encoding), never gates the runtime.
+
 ## Interview set (IV-5 on the Deck - answer ANY subset)
 
 1. Wizard entry: its own "New song" flow from the launcher, or a "Guide me" toggle inside

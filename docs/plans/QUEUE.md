@@ -96,6 +96,7 @@
 - SDD recursion: album composition (sequencing, key/tempo/energy arcs across a set) - parked until song-level SDD proves out ([sdd-vision](sdd-vision-20260710.md))
 - SDD recursion: release cadence / streaming-strategy optimization loops - external-data spike + vision interview first (same doc)
 - ORG COCKPIT: single-operator organization glass (departments as lanes, skills inventory as bench, deliverables-with-evidence) - vision CAPTURED ([org-cockpit-vision](org-cockpit-vision-20260710.md)), IV-4 interview set on the Deck; cockpit boundary = actuators (verticals/industries out of scope)
+- Kalimba instrument profile: operator plays one, and its geometry is a teaching gift - alternating tine layout means THREE ADJACENT TINES ARE ALWAYS A TRIAD (operator, 2026-07-10). A profile + triad-adjacency guidance would make it the easiest chord-theory instrument in the app
 
 ## Operating rules
 

@@ -82,6 +82,65 @@ The central image candidates (pick ONE, per craft rule 1):
 - The "ledger only morning understands" = the friction log; "wheel turns smoother every
   time it comes around" = the compounding loop; deliberately allusive, never named.
 
+## Draft v0.2 - "Calluses" (operator burst 2026-07-10: "reframe around playing and the
+## calluses... any new interface like moving from guitar and bass to ukulele when I'm 48,
+## it's just a user interface... same patterns... piano, guitar, kalimba")
+
+Central image LOCKED by the operator: **calluses** - friction that becomes capability,
+playing-centered, physical. New motif (verse 2): **instruments are interfaces; the
+patterns live in the player** (piano at seven -> uke at 48 -> kalimba, where three
+adjacent tines are always a triad). Same skeleton (progressions unchanged - no burst
+against them).
+
+    VERSE 1 (Dm - Bb - F - C)
+    Kitchen light, a borrowed uke,
+    strings that bite where skin is new.
+    Every chord's a small defeat
+    till one night it isn't - true.
+    I used to quit when it stung.
+    Now I know what stinging's for:
+    every evening hurts a little less
+    and rings a little more.
+
+    PRE-CHORUS (Bb - Eb)
+    every ache is information,
+    every callus is a map
+
+    CHORUS (F - Eb - Bb - F)
+    It's not the hurt, it's what it leaves -
+    hard places where I bled.
+    The strings stopped cutting long ago;
+    they sing for me instead.
+    Nobody gets the music
+    without wearing what it cost.
+    Calluses, calluses -
+    proof of every fight I lost.
+
+    VERSE 2 (Dm - Bb - F - C)
+    I was seven at a piano,
+    forty-eight with four strings in hand.
+    Different doors, same house behind them -
+    shapes my fingers understand.
+    Three tines make a triad,
+    same three notes I've always known.
+    The instrument keeps changing.
+    The pattern's in the bone.
+
+    BRIDGE (Dm - Eb x2, then Bb - C)
+    And when the shape won't come -
+    when the stretch is just too far -
+    I don't blame the instrument.
+    I practice where the blisters are.
+
+- Title: **Calluses** (v0.1's "Worn Smooth" retired - river-stone imagery doesn't fit
+  skin that wears HARD, not smooth; the operator's reframe settles it).
+- Craft check: one central image (calluses carry every section), verse 1 = scene,
+  chorus = meaning + title lands, verse 2 = new angle on the SAME image (the hands that
+  hold the calluses transfer across interfaces), bridge = one departure (the b2 lean
+  under "when the shape won't come"). "Proof of every fight I lost" is the compounding
+  paradox stated in skin, never in jargon.
+- v0.1's stones-into-stairs imagery retired to the seed bank (available for another song).
+
 ## The loop from here (burst-driven)
 
 1. Operator reacts in bursts (uat:-style: "chorus B", "kill verse line 3", "more water
