@@ -6,19 +6,21 @@
 > at session start; when capacity frees and SHORT has items, the top one launches (trust
 > rules per quality profile) with an INFO ping. Operator batches interviews to refill SHORT.
 
+> **RECONCILED 2026-07-10 (git+PR validation):** live version is **music-v121** (PR #195). Since the v113 snapshot below, main shipped v114->v121 across PRs #185-#195 (case study, command-center/panelkit migration, M-SETTINGS-CLARITY, M-SOLO-UX #192, M-GUIDANCE #193, M-LIB-UX #194, M-UI-STD #195) - none dispositioned back into SHORT/MID yet. Only **3 PRs open**: #98 (linchpin, stalled - see NOW), #88 (M-3 strum, draft), #70 (old LLM-tutor goal spec, likely superseded by M-0 - close candidate). Main tree clean.
+
 ## NOW (in flight)
 
 | Mission | State | Spec |
 |---|---|---|
-| (idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline) | AWAITING OPERATOR: bake veto + anchors veto | next: anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up named: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
-| (prior state: TIER-0 drained at v105 - refilled same day by the ear-first vision) - every autonomous item shipped or dispositioned. Remaining work is EVENT-GATED (#98: wave-2 trio, S-BLUES-B, M3) or OPERATOR-GATED (Tier-2 sitting: M-PERFORM, tutor P4/P5, strum, CI shape, M3 formalize, hub pilot, jam-affordance fork). Cross-repo NOW candidate: claude-config rules-diet (operator gate) | [atomic plan](atomic-queue-plan-20260704.md) | [fold record](m-guide-adversarial-fold-20260704.md) |
+| **#98 key-aware note spelling** (reverses FORK-4) - the linchpin gating S1 + S2 | STALLED since 2026-07-05, base 8 versions stale (branch sw.js v64->v66 vs main v121). NOT obsolete: `circle.js:214` on main anticipates it ("soloScale() once #98 lands"); main CLAUDE.md still declares canonical-sharp. Overlaps tracks.js (#192 Solo rework) + sw.js (guaranteed CACHE conflict) -> needs rebase/merge-from-main + re-test, then OPERATOR merge gate. **Decision: rebase-and-merge, or close?** | [PR #98](https://github.com/nhruska/nhruska.github.io/pull/98) |
+| (v113 snapshot - superseded, kept for trace) idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline. AWAITING OPERATOR: bake veto + anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up: tab-switch icon reset | [vision-ear-first](vision-ear-first-20260704.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 
 | # | Mission | Trigger / launch condition | Spec state |
 |---|---|---|---|
-| S1 | Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B | PR #98 merges (event-triggered) | Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED |
-| S2 | Sprint 2: M3 songs/tracks full merge | **5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: #98 merged + 30-min spec-formalize interview | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
+| S1 | Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B | PR #98 merges (event-triggered) - **BLOCKED: #98 stalled, needs rebase-or-close decision (see NOW)** | Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED |
+| S2 | Sprint 2: M3 songs/tracks full merge | **5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: #98 merged (**stalled - see NOW**) + 30-min spec-formalize interview | Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready |
 | S3 | S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view | Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow) | Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch |
 | S4 | S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + shape-classifier step 0) | **REVIEW-READY: spec already drafted + P5-folded** - 5-min read, then one keyword (go S-DIAGRAM-PREF) | [short-specs-20260704.md](short-specs-20260704.md) + canonical detail in the wiki expertise-adaptive-display page |
 | S5 | S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern) | **go save-truth** | Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger) |
