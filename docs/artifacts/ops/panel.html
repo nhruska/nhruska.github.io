@@ -90,6 +90,17 @@ th{font-weight:700;background:var(--bg2)}
 .pr .title{font-size:.93rem;font-weight:600;margin-top:4px;line-height:1.4}
 .pr .meta{font-size:.76rem;color:var(--dim);margin-top:3px}
 .empty{color:var(--dim);font-size:.86rem;padding:14px 4px;text-align:center}
+.intro{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:12px 14px;margin:10px 0;font-size:.9rem;line-height:1.55;color:var(--txt)}
+.tl{position:relative;margin:14px 0 0 10px;padding-left:18px;border-left:2px solid var(--line)}
+.twin{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:12px 14px;margin:0 0 14px}
+.twin:before{content:'';position:absolute;left:-25px;top:16px;width:12px;height:12px;border-radius:50%;background:var(--brand-primary);box-shadow:0 0 7px var(--glow, rgba(41,170,225,.3))}
+.twin .thead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.twin .pr{border:none;padding:0;margin:0;font-weight:800;color:var(--acc);font-size:.95rem}
+.twin .ttl2{font-size:1rem;font-weight:700;line-height:1.35;margin-top:4px}
+.twin .lbl{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--acc);margin-top:8px}
+.twin .txt{font-size:.88rem;line-height:1.55;color:var(--txt);margin-top:2px}
+.twin .txt.dim{color:var(--dim)}
+.ttag{font-size:.66rem;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--accg);color:var(--acc);white-space:nowrap}
 .err{color:var(--warn);font-size:.8rem;padding:8px 4px}
 .foot{margin:22px 12px 0;color:var(--dim);font-size:.76rem;border-top:1px solid var(--line);padding-top:12px;line-height:1.6}
 </style></head><body>
@@ -107,6 +118,7 @@ th{font-weight:700;background:var(--bg2)}
     <button class="tab" data-pane="swarm">Swarm<span class="n" id="nSwarm">0</span></button>
     <button class="tab" data-pane="queues">Queues<span class="n" id="nQ">0</span></button>
     <button class="tab" data-pane="prs">PRs<span class="n" id="nPr">0</span></button>
+    <button class="tab" data-pane="wins">Wins<span class="n" id="nWins">0</span></button>
   </div>
 
   <div class="pane on" id="p-live">
@@ -133,6 +145,11 @@ th{font-weight:700;background:var(--bg2)}
   <div class="pane" id="p-prs">
     <h2>Open</h2><div id="prOpen"><div class="empty">Loading&hellip;</div></div>
     <h2>Recently merged</h2><div id="prMerged"><div class="empty">Loading&hellip;</div></div>
+  </div>
+
+  <div class="pane" id="p-wins">
+    <div class="intro" id="winsIntro"></div>
+    <div class="tl" id="winsTl"><div class="empty">Loading the wins timeline&hellip;</div></div>
   </div>
 </div>
 
@@ -179,6 +196,10 @@ var transport = {
   openPRs: function () {
     return fetch(GH + '/pulls?state=open&per_page=15')
       .then(function (r) { if (!r.ok) throw new Error('gh ' + r.status); return r.json(); });
+  },
+  wins: function () {    // -> ce-wins.json (curated public timeline; changes rarely)
+    return fetch(this.bust('./ce-wins.json'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('wins ' + r.status); return r.json(); });
   },
   mergedPRs: function () {
     return fetch(GH + '/pulls?state=closed&sort=updated&direction=desc&per_page=20')
@@ -339,6 +360,21 @@ function renderQueueMd(md) {
     '<div class="err">QUEUE.md tables not parseable - <a href="../../plans/QUEUE.md">open raw</a></div>';
 }
 
+function renderWins(w) {
+  $('winsIntro').textContent = w.intro || '';
+  var wins = (w.wins || []).slice().reverse();  // newest first
+  $('nWins').textContent = wins.length;
+  $('winsTl').innerHTML = wins.map(function (x) {
+    return '<div class="twin"><div class="thead">' +
+      '<a class="pr" href="' + esc(x.url) + '">#' + esc(x.pr) + '</a>' +
+      '<span class="when" style="font-size:.72rem;color:var(--dim)">' + esc(x.date) + '</span>' +
+      (x.tags || []).map(function (t) { return '<span class="ttag">' + esc(t) + '</span>'; }).join('') +
+      '</div><div class="ttl2">' + esc(x.title) + '</div>' +
+      '<div class="lbl">The mechanic</div><div class="txt dim">' + esc(x.mechanic) + '</div>' +
+      '<div class="lbl">The win</div><div class="txt">' + esc(x.win) + '</div></div>';
+  }).join('') || '<div class="empty">No wins recorded yet.</div>';
+}
+
 function prCard(p) {
   var cls = p.merged_at ? 'merged' : (p.draft ? 'draft' : '');
   var pill = p.merged_at ? 'MERGED' : (p.draft ? 'DRAFT' : 'OPEN');
@@ -372,6 +408,9 @@ function pollFast() {
   S.nextAt = Date.now() + transport.pollMs;
 }
 function pollPRs() {
+  transport.wins().then(renderWins).catch(function (e) {
+    $('winsTl').innerHTML = '<div class="err">ce-wins.json unreachable (' + esc(e.message) + ')</div>';
+  });
   Promise.all([transport.openPRs(), transport.mergedPRs()])
     .then(function (r) { renderPRs(r[0], r[1]); })
     .catch(function (e) {

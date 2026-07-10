@@ -20,7 +20,7 @@
     {"action": "tap", "selector": ".tab[data-pane=\"queues\"]"},
     {"action": "assertCount", "selector": "#yourTurn .yt", "min": 5},
     {"action": "evalAssert", "js": "(function(){var p=Array.from(document.querySelectorAll('#yourTurn .yt .ttl')).map(function(t){var m=t.textContent.match(/p(\\d+)$/);return m?+m[1]:30});for(var i=1;i<p.length;i++){if(p[i]>p[i-1])return false}return p.length>=5})()", "label": "Your-turn stream is priority-ordered descending"},
-    {"action": "assertVisible", "selector": "#yourTurn .yt .form.f-burst"},
+    {"action": "evalAssert", "js": "(function(){var f=document.querySelectorAll('#yourTurn .yt .form'); if(!f.length) return false; for(var i=0;i<f.length;i++){if(!/\\bf-(burst|digit|tap|interview)\\b/.test(f[i].className)) return false} return true})()", "label": "every merged-stream item renders a known form-factor chip (not pinned to any specific queue content)"},
     {"action": "assertCount", "selector": "#opq .qsec", "min": 4},
     {"action": "assertText", "selector": "#opq", "contains": "Taste review"},
     {"action": "assertText", "selector": "#qmd", "contains": "SHORT"},
@@ -28,6 +28,12 @@
     {"action": "tap", "selector": ".tab[data-pane=\"prs\"]"},
     {"action": "wait", "ms": 1500},
     {"action": "evalAssert", "js": "document.querySelector('#prOpen .pr, #prOpen .err, #prOpen .empty') !== null", "label": "PR tab renders cards or a graceful fallback"},
-    {"action": "screenshot", "name": "prs"}
+    {"action": "screenshot", "name": "prs"},
+    {"action": "tap", "selector": ".tab[data-pane=\"wins\"]"},
+    {"action": "assertCount", "selector": "#winsTl .twin", "min": 12},
+    {"action": "assertText", "selector": "#winsTl", "contains": "#199"},
+    {"action": "assertText", "selector": "#winsIntro", "contains": "human-in-the-loop"},
+    {"action": "evalAssert", "js": "(function(){var f=document.querySelector('#winsTl .twin'); return f && f.textContent.indexOf('#212')>=0})()", "label": "wins timeline is newest-first"},
+    {"action": "screenshot", "name": "wins"}
   ]
 }
