@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-ops-emit.py - ONE command per mission milestone (Ops Deck acceptance A5).
+ops-emit.py - ONE command per mission milestone (Cockpit - formerly Ops Deck - acceptance A5).
 
-Appends a single event to the Deck's append-only log
+Appends a single event to the Cockpit's append-only log
 (docs/artifacts/ops/mission-events.jsonl). Commits/pushes are the v1
 broadcast transport on GitHub Pages: the panel polls the same-origin file,
 so `--push` makes the event visible on the glass within one poll (~15s
