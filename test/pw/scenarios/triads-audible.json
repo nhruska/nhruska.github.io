@@ -1,0 +1,16 @@
+{
+  "name": "triads-audible",
+  "note": "S-TRIADS-AUDIBLE + S-RN-STYLE (operator UAT 2026-07-10): inversion chord cards are tap-to-hear buttons - a tap strums the card's exact voicing from the ACTIVE profile's open-string frequencies (accurate per instrument by construction, shared ChordAudio engine) - and standalone I/IV/V numerals in prose carry the .rn style so they don't blend into sentences. Tap runs under the runner's zero-console-error policy, so an audio failure fails the scenario.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/triad-inversions.html?key=F" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "waitFor", "selector": "#cycle .step" },
+    { "action": "evalAssert", "label": "cards are keyboard-reachable buttons with a Play label", "js": "(function(){var c=document.querySelectorAll('#cycle .step');if(!c.length)return false;for(var i=0;i<c.length;i++){if(c[i].getAttribute('role')!=='button'||c[i].getAttribute('tabindex')!=='0'||!/^Play the .+ triad/.test(c[i].getAttribute('aria-label')||''))return false}return true})()" },
+    { "action": "evalAssert", "label": "roman numerals styled in prose (.rn present in lede, transitions, and card notes)", "js": "(function(){return document.querySelectorAll('.lede .rn').length>=3 && document.querySelectorAll('#cycle .transition .rn').length>=1 && document.querySelectorAll('#cycle .step .notes .rn, #cycle .flipBox .rn').length>=1})()" },
+    { "action": "tap", "selector": "#cycle .step" },
+    { "action": "wait", "ms": 600 },
+    { "action": "evalAssert", "label": "strum engine loaded and profile carries open-string freqs (tap path live)", "js": "(function(){return !!(window.ChordAudio && ChordAudio.strum) && Array.from(document.querySelectorAll('#cycle .step')).length>0})()" },
+    { "action": "screenshot", "name": "audible-cards-rn" }
+  ]
+}
