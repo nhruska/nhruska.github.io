@@ -93,7 +93,7 @@
   var PRIORITY = [
     'guidanceask',
     'firstrun', 'tunefirst', 'savebasics',
-    'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'studiofirst', 'whynote', 'composeintro', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ];
 
@@ -107,6 +107,7 @@
   // backup) is unrestricted, unchanged from pre-M-GUIDANCE behavior.
   var LEVELS = {
     firstrun: ['beginner'],
+    studiofirst: ['beginner'],
     tunefirst: ['beginner'],
     savebasics: ['beginner'],
     whynote: ['intermediate', 'advanced'],
