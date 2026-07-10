@@ -296,6 +296,48 @@ test('guidanceask outranks firstrun - wins the empty slot on a truly fresh profi
   assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true);
 });
 
+/* ---------- S-NOTABLE-PREEMPT-TEARDOWN: a preempting claim removes the
+ * ousted holder's rendered banner (the two-cards-on-screen bug, operator
+ * pixels 2026-07-10). ---------- */
+test('preempting claim() tears down the ousted holder\'s rendered banner', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  // low-priority holder claims the slot and renders (roman is lower than firstrun)
+  assert.strictEqual(Notables.claim('roman'), true, 'roman claims the empty slot');
+  var slot = makeEl('div');
+  slot.removeChild = function (c) {
+    var i = slot.children.indexOf(c);
+    if (i >= 0) slot.children.splice(i, 1);
+  };
+  var banner = Notables.renderBanner({ consumerId: 'roman', text: 'why this chord' });
+  slot.appendChild(banner);
+  banner.parentNode = slot;
+  assert.strictEqual(slot.children.length, 1, 'ousted-to-be banner is on screen');
+  // higher-priority consumer preempts (guidanceask outranks roman)
+  assert.strictEqual(Notables.claim('guidanceask'), true, 'higher priority preempts');
+  assert.strictEqual(slot.children.length, 0,
+    'preempted banner must be TORN DOWN - one tip at a time, visually too');
+});
+
+test('dismiss via the x unregisters the live element (no stale teardown target)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('roman'), true);
+  var slot = makeEl('div');
+  slot.removeChild = function (c) {
+    var i = slot.children.indexOf(c);
+    if (i >= 0) slot.children.splice(i, 1);
+  };
+  var banner = Notables.renderBanner({ consumerId: 'roman', text: 'x' });
+  slot.appendChild(banner);
+  banner.parentNode = slot;
+  var xBtn = banner.children[banner.children.length - 1];
+  xBtn.onclick(); // user dismisses; caller normally removes the element itself
+  slot.children.length = 0; // simulate the caller's removal
+  // a later preemption cycle must not throw or double-remove
+  assert.strictEqual(Notables.claim('guidanceask'), true);
+});
+
 test('the new journey tips (tunefirst/savebasics/composeintro/transposetip/scaletip) preserve the pre-existing relative order of firstrun/whynote/roman/diagrampref/backup', function () {
   var p = Notables.PRIORITY;
   var idx = {};
