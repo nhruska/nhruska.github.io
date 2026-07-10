@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T12:45:00Z",
+  "updated": "2026-07-10T12:55:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -81,6 +81,15 @@
       "label": "Interview",
       "desc": "Open question sets. Answering ANY subset unblocks - the rest become cited assumed answers.",
       "items": [
+        {
+          "id": "IV-5",
+          "priority": 85,
+          "form": "interview",
+          "ask": "Song-wizard scope, 5 Qs (any subset): entry placement (own flow vs Compose toggle) is the one only you can call - rails-with-exits law already locked",
+          "title": "Song wizard + skill profile question set",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/guided-and-free-vision-20260710.md",
+          "added": "2026-07-10"
+        },
         {
           "id": "IV-4",
           "priority": 70,
