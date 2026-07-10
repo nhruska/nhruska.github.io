@@ -1,0 +1,41 @@
+{
+  "name": "prog-delete-handles",
+  "description": "S-DELHANDLE-OVERFLOW: at low chord counts (full diagram-card stage) every delete badge visually sits on its own card, not floating in empty slot space.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "each .rm badge overlaps its card's box (right edge within card+10px)",
+      "js": "Array.from(document.querySelectorAll('#prog .slot')).every(function(s){var rm=s.querySelector('.rm'),ch=s.querySelector('.chord');if(!rm||!ch)return false;var r=rm.getBoundingClientRect(),c=ch.getBoundingClientRect();return r.right<=c.right+10&&r.left>=c.left-10;})"
+    },
+    {
+      "action": "screenshot",
+      "name": "delete-handles-contained"
+    }
+  ]
+}

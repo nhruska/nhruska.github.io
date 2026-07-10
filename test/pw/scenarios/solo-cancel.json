@@ -1,0 +1,62 @@
+{
+  "name": "solo-cancel",
+  "description": "S-POSTPROG-FLOW: the Solo modal is cancellable - Cancel stays on Compose, keeps the progression, opens no Studio.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal"
+    },
+    {
+      "action": "tapText",
+      "text": "Cancel",
+      "scope": ".composeRow"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "assertHidden",
+      "selector": ".bt-player.on"
+    },
+    {
+      "action": "assertCount",
+      "selector": "#prog .slot",
+      "min": 2
+    },
+    {
+      "action": "screenshot",
+      "name": "back-on-compose"
+    }
+  ]
+}

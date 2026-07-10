@@ -150,6 +150,53 @@
     return rn;
   }
 
+  // ---- KEY-AWARE (letter-per-degree) spelling -------------------------------
+  // S-KEY-SPELLING (2026-07-10): the deterministic, theory-correct speller that
+  // supersedes canonical-sharp (FORK-4). Given a key, each of the seven letters
+  // A-G is used EXACTLY ONCE, in order from the root's letter, with the accidental
+  // chosen to hit each scale pitch. This is what makes F major spell Bb (not A#)
+  // and a bVII chord read Bb (a lowered 7th), never A# (a raised 6th) - the note
+  // name then AGREES with the degree label the UI shows. Fully deterministic +
+  // Node-tested (test/key-spelling.test.js); pure, no DOM.
+  var LETTERS7 = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  var NAT_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  // accidental string for a signed semitone offset from a natural letter, choosing
+  // the nearer side (so +1 -> '#', -1 -> 'b', +2 -> '##', -2 -> 'bb').
+  function accidentalFor(semis) {
+    var d = ((semis % 12) + 12) % 12; if (d > 6) d -= 12;
+    if (d === 0) return '';
+    return d > 0 ? new Array(d + 1).join('#') : new Array(-d + 1).join('b');
+  }
+  // Key-aware scale spelling: F major -> [F,G,A,Bb,C,D,E], D major -> [D,E,F#,G,A,B,C#].
+  // The root's OWN letter is authoritative (call with 'Bb' for a flat key, 'F#' for a
+  // sharp key) - the picker names the key, this spells from that name. Unknown root or
+  // non-letter first char -> falls back to the canonical-sharp spellScale (never throws).
+  function spellScaleKeyAware(root, mode) {
+    var pc0 = pcOf(root); if (pc0 < 0) return [];
+    var li = LETTERS7.indexOf(String(root).charAt(0).toUpperCase());
+    if (li < 0) return spellScale(root, mode);
+    return MODES[modeKey(mode)].map(function (s, i) {
+      var L = LETTERS7[(li + i) % 7];
+      return L + accidentalFor(((pc0 + s) % 12) - NAT_PC[L]);
+    });
+  }
+  // Key-aware spelling of a single chord/note ROOT by its FUNCTION in the key: the
+  // letter is the key's diatonic letter at that scale-degree number (from the roman
+  // numeral), the accidental hits the actual pitch. So the bVII of C spells Bb (7th
+  // letter B, lowered), never A#. Falls back to canonical-sharp on unknown input.
+  function spellRootInKey(keyRoot, keyMode, noteRoot) {
+    var kp = pcOf(keyRoot), cp = pcOf(noteRoot);
+    if (kp < 0 || cp < 0) return spell(cp < 0 ? 0 : cp);
+    var kli = LETTERS7.indexOf(String(keyRoot).charAt(0).toUpperCase());
+    if (kli < 0) return spell(cp);
+    var iv = ((cp - kp) % 12 + 12) % 12;
+    var NUM = { I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6 };
+    var deg = NUM[RN_CHROM[iv].replace(/^b/, '')];
+    if (deg == null) return spell(cp);
+    var L = LETTERS7[(kli + deg) % 7];
+    return L + accidentalFor(cp - NAT_PC[L]);
+  }
+
   /* ---- SVG wheel renderer (browser only; node -c'd, eyeballed) ---- */
   var NS = 'http://www.w3.org/2000/svg';
   function polar(c, r, deg) { var a = (deg - 90) * Math.PI / 180; return [c + r * Math.cos(a), c + r * Math.sin(a)]; }
@@ -220,7 +267,15 @@
   var SOLO_SCALES = {
     pentMajor: { label: 'Pent major', kind: 'pent', family: 'major', formula: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'] },
     pentMinor: { label: 'Pent minor', kind: 'pent', family: 'minor', formula: [0, 3, 5, 7, 10], degrees: ['1', '♭3', '4', '5', '♭7'] },
-    blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] }
+    blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] },
+    // S-SOLO-MODES (music-theory-coach, 2026-07-10): the two common non-diatonic MODE
+    // colors surfaced as selectable solo scales (their SoloGuide.card + framing already
+    // ship - see solo-guide.js). Mixolydian = the b7 bluesy/dominant color over a major
+    // key; Dorian = the natural-6 hopeful-minor color. Formulas are the full 7-note modes
+    // (a superset of pentMajor / pentMinor respectively - the pentatonic subset proofs in
+    // solo-scales.test.js already assert pentMajor c mixolydian, pentMinor c dorian).
+    mixolydian: { label: 'Mixolydian', kind: 'mode', family: 'major', formula: [0, 2, 4, 5, 7, 9, 10], degrees: ['1', '2', '3', '4', '5', '6', '♭7'] },
+    dorian: { label: 'Dorian', kind: 'mode', family: 'minor', formula: [0, 2, 3, 5, 7, 9, 10], degrees: ['1', '2', '♭3', '4', '5', '6', '♭7'] }
   };
   // Names via spell() - see the regime comment above. Unknown root or unknown
   // scaleId -> [] (safe; never throws, matching pcOf/spellScale's own contract).
@@ -304,6 +359,11 @@
     keyName: keyName,
     spellRoot: spellRoot,
     spellScale: spellScale,
+    // S-KEY-SPELLING: deterministic key-aware (letter-per-degree) spelling - the
+    // theory-correct successor to canonical-sharp. Wiring into the render paths is
+    // the staged FORK-4 removal; these are the vetted, unit-tested core.
+    spellScaleKeyAware: spellScaleKeyAware,
+    spellRootInKey: spellRootInKey,
     scale: scale,
     scaleDegrees: scaleDegrees,
     modeChange: modeChange,

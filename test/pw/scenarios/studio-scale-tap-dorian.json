@@ -1,0 +1,81 @@
+{
+  "name": "studio-scale-tap-dorian",
+  "description": "Studio chip-switch usage: from the Mixolydian-defaulted Studio, tapping the Dorian chip re-renders scale notes (b3 appears: D#) and moves the selection.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "A#"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal"
+    },
+    {
+      "action": "tapText",
+      "text": "Skip",
+      "scope": ".composeRow"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-scalechips]"
+    },
+    {
+      "action": "tapText",
+      "text": "Dorian",
+      "scope": "[data-scalechips]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "assertChipOn",
+      "selector": "[data-scalechips] .bt-st-scalechip",
+      "text": "Dorian"
+    },
+    {
+      "action": "assertText",
+      "selector": ".bt-st-notes",
+      "contains": "D#"
+    },
+    {
+      "action": "screenshot",
+      "name": "studio-dorian-selected"
+    }
+  ]
+}

@@ -3588,9 +3588,15 @@
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
+      // S-CLEAR-INKEY (UAT 2026-07-10): a fresh canvas returns to the follow-the-key
+      // view (In-key on the default key), not a stale 'All' pin from before the Clear -
+      // matching the initial default (D-DEFAULT-C). Reset the pin, then always rebuild
+      // the palette so the view reflects it even when the key itself didn't change.
+      chordView = null;
       var kc = reinferKey();
       renderProg(); renderKey();
-      if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+      if (el.keyRoots) renderKeyView();
+      buildGrid();
       showClearUndoBanner();
     };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
@@ -3642,7 +3648,11 @@
           if (choice === 'cancel') return; // dismiss - stay on Compose, keep the progression
           // Skip: open the ephemeral Studio without saving (locked vocabulary is
           // lowercase - songKey.mode is one of the capitalized Compose names).
-          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
+          // S-SOLO-SCALE-DEFAULT (2026-07-10): carry the live progression as `seq` so the
+          // Studio's progression-aware default (inferSoloDefault) can read the ACTUAL
+          // chords - the Save path already passes saved.seq; Skip dropped it, so a bVII-
+          // laden progression could never infer Mixolydian on the (default) Skip path.
+          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase(), seq: progression.slice() });
         });
       } else {
         switchTab('library');

@@ -564,7 +564,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    songbook.js renderProg) picks the stage class + (for fill-row) the inline
    grid-template-columns per render; a resize re-check can flip stages live
    (Songbook's resize listener). */
-.prog{display:flex;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
+/* S-PROG-FIT-6 (UAT 2026-07-10): 4-6 chords were "so close to fitting" the fixed
+   (non-scrolling) composeTop region at 412x915 - a small vertical trim (min-height
+   88->78, padding 12->9, full-stage gap 10->8 below) reclaims ~16px WITHOUT shrinking
+   the diagram cards (the phone-DPI text floor forbids that). Enough to tip the common
+   4-6 chord case above the fold. */
+.prog{display:flex;gap:8px;min-height:78px;margin-bottom:0;padding:9px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
 .prog::-webkit-scrollbar{display:none;}
 /* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
    + wraps"): the unconditional flex-wrap the comment above warns against was a
@@ -588,8 +593,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    progStripMode's width guard demotes to fill-row a stage early instead, for
    a viewport too narrow to fit even that natural size (see the JS-side
    comment on progStripMode). */
-.prog.full{flex-wrap:nowrap;justify-content:center;}
-.prog.full .slot{flex:1 1 0;max-width:150px;min-width:0;}
+.prog.full{flex-wrap:nowrap;justify-content:center;gap:8px;}
+/* S-DELHANDLE-OVERFLOW v2 (UAT 2026-07-10): the slot must SHRINK-WRAP the card, not
+   flex-GROW wider than it - a grown slot left the absolutely-positioned delete badge
+   (anchored to the slot's right edge) floating in the empty slot space, worse with
+   fewer chords (wider slots). flex:0 1 auto sizes the slot to the card so the badge
+   lands on the card's own corner at every count; justify-content:center + gap still
+   space the cards across the row. */
+.prog.full .slot{flex:0 1 auto;max-width:150px;min-width:0;}
 /* Stage 2 (5-6 chords, or an early width-guard demotion from stage 1): the
    existing compact chord token (suggChip - see the compact-token rules
    below), ONE row, equal-width columns that fill the strip. The column COUNT
@@ -647,6 +658,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .prog .slot .rm:active::before{background:var(--bad);}
 .prog .slot .rm:active{color:var(--on-danger);}
+/* S-DELHANDLE-OVERFLOW (UAT 2026-07-10): in the full diagram-card stage (1-4 chords)
+   the default -7px overhang floats the delete badge OFF the card, reading as
+   disconnected. Pull it just inside the card's top-right corner so it reads as
+   attached to the chord it removes. Compact stages keep the corner-overhang (tiny
+   tokens have no interior room for the badge). */
+.prog.full .slot .rm{top:2px;right:2px;}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
@@ -658,7 +675,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
    A chord that COMPLETES a famous progression gets an accent glow (no name caption -
    the caption blew the chip width and wrapped the row). */
-.suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
+/* S-SUGG-DIFFERENTIATE (UAT 2026-07-10): the suggested next-chords are the app's
+   RECOMMENDED picks (music-theory-coach ranks them, strongest first), so they read a
+   step warmer than the neutral browse palette below - a subtle accent-deep tint + an
+   accent-ink border, WITHOUT the full accent-fill that would read as "selected". The
+   .complete glow (a chord that finishes a famous progression) stays the strongest cue. */
+.suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-ink);background:var(--accent-deep);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
 .suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent-ink);}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
@@ -866,6 +888,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    child of the scroll area, not .adaptiveChips). */
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .catTabRow::-webkit-scrollbar{display:none;}
+/* S-TYPEFILTER-ACCENT (UAT 2026-07-10): the All-view quality filter (Maj/Min/7th/...) is a
+   SECONDARY narrowing control, not a primary action - its selected chip in full accent fill
+   read as a competing CTA (emphasis-by-scarcity friction). Demote the selected type filter
+   to an accent OUTLINE (accent-ink text + border, transparent bg) so accent-fill stays
+   reserved for the one primary/recommended thing. Scoped to this filter row: the app-wide
+   selected-grammar reversal (all .chip.on / toggles) is a separate, fully-verified pass.
+   Lint-safe: outline is neither the surface-2 + box-shadow ring the consistency lint forbids
+   nor a new hue. */
+.catTabRow .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
 .chordsHint{margin:0 2px 4px;}
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
    reads as THE next step (the old prose hint buried it). */

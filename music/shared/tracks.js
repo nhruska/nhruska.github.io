@@ -318,6 +318,36 @@
     var info = C.soloScaleInfo(scaleId);
     return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
   }
+  // S-SOLO-SCALE-DEFAULT + progression-aware (music-theory-coach, 2026-07-10): the
+  // theory-best solo scale to PRE-SELECT when the Studio opens, from the incoming key
+  // + mode AND the actual progression shape (t.seq, which studioTarget() preserves from
+  // the Compose hand-off). Reads Circle.romanFor (the SSOT for degree analysis) - never
+  // guesses. The two common modal signals:
+  //   - a bVII MAJOR in a major-key progression  -> Mixolydian (the b7 rock/backdoor color)
+  //   - a major IV in a minor-key progression      -> Dorian (the raised-6 color)
+  // Otherwise the safe pentatonic of the key's quality (the home a player of any level
+  // cannot sound wrong over). A Blues key keeps its own scale (its mode chip IS blues).
+  // The result maps 1:1 onto a chip wireScaleChips offers for that key (guarded there).
+  // Pure + module-scope + exported so tests drive the SAME function the Studio wiring calls.
+  function inferSoloDefault(key, mode, seq) {
+    var scaleMode = resolveScaleMode(mode);
+    if (scaleMode === 'blues') return 'mode';
+    var C = circleRef();
+    var fam = (C && C.modeInfo) ? ((C.modeInfo(scaleMode) || {}).family) : null;
+    var base = fam === 'minor' ? 'pentMinor' : 'pentMajor';
+    if (!C || typeof C.romanFor !== 'function' || !Array.isArray(seq) || !seq.length) return base;
+    var tonicChord = normRoot(key) + (fam === 'minor' ? 'm' : '');
+    var romans = seq.map(function (ch) { return C.romanFor(ch, tonicChord); }).filter(Boolean);
+    if (fam === 'major') {
+      // a bVII MAJOR (uppercase = major quality) is the Mixolydian tell; only offer it
+      // when the key is not ALREADY mixolydian (its own mode chip covers that).
+      if (scaleMode !== 'mixolydian' && romans.indexOf('bVII') >= 0) return 'mixolydian';
+    } else {
+      // a MAJOR IV (uppercase) over a minor tonic is the Dorian tell (raised 6th).
+      if (scaleMode !== 'dorian' && romans.indexOf('IV') >= 0) return 'dorian';
+    }
+    return base;
+  }
   // S-BLUES-BOXES: which of the 3 box-eligible scale ids (pentMajor/
   // pentMinor/blues) applies to the CURRENTLY selected chip - so the
   // Studio's named-box chip + pager-snap (KeyExplorer.renderScale's
@@ -1322,18 +1352,39 @@
         var frameEl = elPlayer.querySelector('[data-scaleframe]');
         if (!chipsEl) return;
         var C = circleRef();
+        var isBluesKey = (th.scaleMode === 'blues');
+        var famInfo = (C && C.modeInfo) ? C.modeInfo(th.scaleMode) : null;
+        var keyFam = famInfo ? famInfo.family : null;
         var CHIPS = [
           { id: 'mode', label: th.label },
           { id: 'pentMajor', label: 'Pent major' },
-          { id: 'pentMinor', label: 'Pent minor' },
-          { id: 'blues', label: 'Blues' }
+          { id: 'pentMinor', label: 'Pent minor' }
         ];
+        // S-SOLO-MODES (music-theory-coach, 2026-07-10): surface the two common non-diatonic
+        // MODE colors as context chips, deduped against the key's own mode (if the key IS
+        // mixolydian/dorian its 'mode' chip already IS that scale). Mixolydian only over a
+        // MAJOR-family key (its major 3rd clashes a minor tonic); Dorian over either family
+        // (the raised-6 brightening). Neither on a Blues key (its own scale is blues).
+        if (!isBluesKey) {
+          if (keyFam === 'major' && th.scaleMode !== 'mixolydian') CHIPS.push({ id: 'mixolydian', label: 'Mixolydian' });
+          if (th.scaleMode !== 'dorian') CHIPS.push({ id: 'dorian', label: 'Dorian' });
+        }
+        CHIPS.push({ id: 'blues', label: 'Blues' });
         // M-GUIDE W2: when the mode chip ITSELF is already Blues (th.scaleMode ===
         // 'blues'), the standalone 'blues' chip would just re-select the same
-        // bundle under a redundant second button - drop it -> [Blues | Pent major
-        // | Pent minor].
-        if (th.scaleMode === 'blues') CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
-        var curId = 'mode';
+        // bundle under a redundant second button - drop it.
+        if (isBluesKey) CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+        // S-SOLO-SCALE-DEFAULT (music-theory-coach, 2026-07-10): pre-select the theory-best
+        // solo scale for the incoming key AND the actual progression shape (see
+        // inferSoloDefault). Guard the result to a chip actually offered for this key, so a
+        // deduped mode (e.g. inference returns 'mixolydian' on an already-mixolydian key)
+        // falls back to a real chip rather than highlighting nothing.
+        var curId = inferSoloDefault(t.key, t.mode, t.seq);
+        var chipIds = CHIPS.map(function (c) { return c.id; });
+        if (chipIds.indexOf(curId) < 0) {
+          curId = chipIds.indexOf('pentMajor') >= 0 ? 'pentMajor'
+            : chipIds.indexOf('pentMinor') >= 0 ? 'pentMinor' : 'mode';
+        }
         function render() {
           chipsEl.innerHTML = CHIPS.map(function (c) {
             return '<button class="bt-st-scalechip' + (curId === c.id ? ' on' : '') + '" data-scaleid="' + esc(c.id) + '" type="button">'
@@ -1386,7 +1437,11 @@
           // matches the NEW scale/fretboard the instant it fires.
           if (wasPlaying && studioSound) studioSound.retarget(bundle.pcs);
         }
-        render();
+        // S-SOLO-SCALE-DEFAULT: when the theory-best default is a pentatonic (not
+        // 'mode'), do a full select() so the fretboard/notes/guide render that scale
+        // too - not just the chip highlight. 'mode'/blues keep the already-rendered
+        // fretboard (line ~1289 renderFretboard(th,'mode')), so a bare render() there.
+        if (curId !== 'mode') select(curId); else render();
       })();
       // F19 (operator UAT 2026-07-05): name-only chip row - no chord
       // diagrams, no roman numerals ("like others", e.g. the scale-chip row
@@ -1796,6 +1851,9 @@
     scaletipText: scaletipText, scaletipBanner: scaletipBanner,
     // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
     soloBundle: soloBundle,
+    // S-SOLO-SCALE-DEFAULT: progression-aware theory-best default scale (key+mode+seq ->
+    // scaleId). Exported for direct unit tests independent of the Studio DOM.
+    inferSoloDefault: inferSoloDefault,
     // S-BLUES-BOXES: which scale-chip selections are box-eligible (pentMajor/
     // pentMinor/blues) - exported for direct unit tests independent of the
     // Studio DOM wiring (mirrors the soloBundle export above it).
