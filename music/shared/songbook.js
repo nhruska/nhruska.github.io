@@ -2498,7 +2498,15 @@
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
-        b.textContent = r;
+        // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10: "key selector drift -
+        // shows sharps only. SSOT"): a root chip in the KEY picker names a KEY,
+        // so it displays the preferred tonic name from the ONE provider
+        // (Circle.preferredTonicName - the same call the compact chip below
+        // already makes). Mode-aware: the current mode picks the name (A# major
+        // -> Bb, but D# minor stays D#m-territory). r stays the canonical token
+        // for identity/storage/transpose. Resolves IV-2 (the flat-keys mock).
+        b.textContent = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(r, songKey.mode || 'Major') : r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
           invalidateClearUndo(); // A3: a key (root) change invalidates any pending Clear-undo
@@ -2621,7 +2629,12 @@
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      // S-KEYPICKER-PREFERRED: the key readout displays the preferred key name
+      // (the same provider the compact chip + root grid use) - picking Bb must
+      // never read back as "A# Major" one line below.
+      var dispKeyRootName = (global.Circle && global.Circle.preferredTonicName)
+        ? global.Circle.preferredTonicName(keyRoot, keyMode) : keyRoot;
+      title.innerHTML = '<strong>' + dispKeyRootName + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
       // M-GUIDE W3b: solo-scale PREVIEW row - DECOUPLED (isolation-tested below).
       // A chip tap here re-renders ONLY this block; it never touches songKey,

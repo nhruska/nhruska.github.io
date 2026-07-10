@@ -1,0 +1,21 @@
+{
+  "name": "keypicker-preferred-names",
+  "note": "S-KEYPICKER-PREFERRED (operator UAT 2026-07-10: 'key selector drift - shows sharps only. SSOT'): every key selector displays preferred key names from the ONE provider (Circle.preferredTonicName) - the Compose root grid reads Db/Eb/Ab/Bb, and picking one shows the SAME name on the compact chip (no more 'C# selected, Db displays'). Tokens stay canonical underneath. Resolves IV-2.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 500 },
+    { "action": "waitFor", "selector": "#keyPickerCompact" },
+    { "action": "tap", "selector": "#keyPickerCompact" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "root grid shows preferred key names (Db/Eb/Ab/Bb/F#), no sharp-only C#/D#/G#/A#", "js": "(function(){var t=Array.from(document.querySelectorAll('.rootChip')).map(function(b){return b.textContent.trim()});return ['Db','Eb','Ab','Bb','F#'].every(function(n){return t.indexOf(n)>=0}) && ['C#','D#','G#','A#'].every(function(n){return t.indexOf(n)<0})})()" },
+    { "action": "screenshot", "name": "picker-preferred-names" },
+    { "action": "tapText", "text": "Bb", "scope": "#keyRoots" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "picking Bb shows Bb on the compact chip (picker and chip agree)", "js": "/^Bb/.test((document.getElementById('keyPickerCompact')||{}).textContent||'')" },
+    { "action": "evalAssert", "label": "key readout heading reads Bb Major, never A# (every layer agrees)", "js": "(function(){var t=(document.querySelector('#keyView .keyTitle')||{}).textContent||'';return /Bb/.test(t) && !/A#/.test(t)})()" },
+    { "action": "screenshot", "name": "bb-picked-chip-agrees" }
+  ]
+}

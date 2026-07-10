@@ -654,7 +654,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    so a tap near the (now much bigger) 44px edge can miss the shrunken
    hit-box entirely and silently produce no click. Reliability of the full
    44px area wins over the press-animation flourish. */
-.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:5px 5px 0 0;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
+/* S-DELHANDLE-CENTER (operator UAT 2026-07-10): the old padding:5px 5px 0 0 nudged
+   the x glyph toward the circle's top-right instead of its center. border-box +
+   bottom/left padding of 20px (44-24) carves the CONTENT box down to the exact
+   top-right 24x24 the ::before circle occupies, and flex centering centers the
+   glyph in it - true centering by construction, no hand-tuned offsets, identical
+   at every prog stage. The 44x44 hit area is unchanged. */
+.prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0 0 20px 20px;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
 .prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .prog .slot .rm:active::before{background:var(--bad);}
 .prog .slot .rm:active{color:var(--on-danger);}

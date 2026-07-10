@@ -208,7 +208,16 @@
       var genre = it.genre || '';
       var seqText = seqToText(it.seq);
       var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
-      var rootOpts = ROOTS.map(function (r) { return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
+      // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10, SSOT directive): the Key
+      // dropdown displays preferred key names via the ONE provider
+      // (Circle.preferredTonicName) - option VALUES stay canonical tokens so
+      // saves/edits round-trip unchanged. Guarded: without Circle (Node tests,
+      // stale cache) options fall back to the raw token.
+      var Cir = (global && global.Circle) ? global.Circle : null;
+      var rootOpts = ROOTS.map(function (r) {
+        var disp = (Cir && Cir.preferredTonicName) ? Cir.preferredTonicName(r, 'major') : r;
+        return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(disp) + '</option>';
+      }).join('');
       el.innerHTML =
         // F24 (operator UAT 2026-07-05): fork's dialog title/aria-label read
         // "Edit" (was "Make it mine") - the user doesn't need to know a
