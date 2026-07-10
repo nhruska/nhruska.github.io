@@ -2041,7 +2041,13 @@
       // scrolling chord list (in-key cells + all-chords tiles).
       var maxed = progression.length >= COMPOSE_MAX;
       var wrap = document.querySelector('.composeWrap');
-      if (wrap) wrap.classList.toggle('maxed', maxed);
+      if (wrap) {
+        wrap.classList.toggle('maxed', maxed);
+        // Save is the compose PRIMARY only once there is something to save. On an empty
+        // canvas it demotes to an outline so it does not out-shout the chord cards - the
+        // real "obvious next move" (visual-language.md emphasis ladder).
+        wrap.classList.toggle('progEmpty', progression.length === 0);
+      }
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // S-PROG-WRAP-2 (UAT U8b): count-driven staged density ladder - full
@@ -2350,6 +2356,14 @@
             diagram: packDiagram,
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
           });
+        } else {
+          // Fallback when KeyExplorer isn't loaded: render the diatonic palette as plain
+          // chord tiles into #buildGrid (mirrors the All view's tile render) so In-key is
+          // never blank and degrades gracefully. wireTap is movement-cancelled like every
+          // other chord tile.
+          diatonicChords(keyRoot, keyMode).forEach(function (c) {
+            grid.appendChild(wireTap(packDiagram(c, 'small'), c));
+          });
         }
         if (scroller) scroller.insertBefore(leadWrap, grid);
         return;
@@ -2390,7 +2404,11 @@
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
      * and closed on selection; tapping the already-selected mode re-confirms and
      * closes it (a no-op re-harmonize guard, not a toggle). */
-    var songKey = { root: null, mode: "Major", explicit: false };
+    // Default to C major so Compose opens in the In-key view with real, tappable
+    // chords - "get to work immediately" (operator override of D-KEYLESS, 2026-07-10,
+    // made knowingly: the key stays fully changeable / clearable / transposable, so the
+    // keyless capability is preserved - only the DEFAULT changed). compose-key-system.md D-DEFAULT-C.
+    var songKey = { root: "C", mode: "Major", explicit: true };
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
@@ -3183,10 +3201,12 @@
       // so THIS row's own DOM genuinely needs clearing.
       function rawClose(choice) { if (choice !== 'save') hideComposeRow(); }
       function deliver(choice) { if (delivered) return; delivered = true; onPick(choice); }
-      // pendingDismiss defaults to 'skip' so a hardware Back press (which
-      // bypasses the settleAfter path below entirely - see below) resolves to
-      // the conservative choice, matching backdrop/Escape.
-      var pendingDismiss = 'skip';
+      // pendingDismiss defaults to 'cancel' so a hardware Back press (which
+      // bypasses the settleAfter path below entirely - see below) DISMISSES the
+      // modal and stays on Compose, matching backdrop/Escape. A dismiss gesture must
+      // never navigate: only an explicit Save/Skip button press opens the Studio.
+      // (S-POSTPROG-FLOW "can't cancel out of Solo" fix, 2026-07-10.)
+      var pendingDismiss = 'cancel';
       // Both outcomes MAY open a new NavHistory layer (Save -> the name-entry
       // row, reusing this modal slot; Skip -> the Studio) - route directly
       // through settleAfter, NOT NavHistory.dismiss(). dismiss() closes via
@@ -3203,8 +3223,8 @@
       }
       saveBtn.onclick = function () { choose('save'); };
       skipBtn.onclick = function () { choose('skip'); };
-      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('skip'); };
-      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('skip'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
       // Hardware/gesture Back bypasses all of the above (a real popstate fires
       // directly - no JS interposition point exists before it). This registered
       // closeFn is the only thing that then runs, from INSIDE nav-history.js's
@@ -3216,9 +3236,14 @@
         rawClose(pendingDismiss);
         setTimeout(function () { deliver(pendingDismiss); }, 0);
       });
+      // Cancel: a VISIBLE dismiss so "take me back to my progression" is discoverable,
+      // not just a backdrop tap (the operator UAT gap - a new user saw no way out).
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
+      cancelBtn.onclick = function () { choose('cancel'); };
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
-      btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
+      btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn); btnRow.appendChild(cancelBtn);
       composeRow.appendChild(msg); composeRow.appendChild(btnRow);
       composeRow.focus();
     }
@@ -3614,6 +3639,7 @@
             });
             return;
           }
+          if (choice === 'cancel') return; // dismiss - stay on Compose, keep the progression
           // Skip: open the ephemeral Studio without saving (locked vocabulary is
           // lowercase - songKey.mode is one of the capitalized Compose names).
           openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });

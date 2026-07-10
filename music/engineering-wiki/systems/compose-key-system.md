@@ -20,6 +20,12 @@ The one key/mode filter drives the chords: root change transposes; mode change r
 
 The mapping itself - re-qualify each chord's root against the target mode's degree quality, re-basing any 7th-type extension, leaving a chromatic/borrowed root unchanged - is a pure extracted function, `convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode)` (songbook.js, exported on `Songbook`). `convertToMode` (root-set path) is now: call the pure fn + set songKey.root/mode/explicit + close the panel + full re-render - unchanged behavior. `sourceMode` now also drives the W2 Blues-aware directions - see [harmonization.md](../theory-engine/harmonization.md) for the full 4-direction table (Major/Minor/Mixo/Dorian <-> Blues) and the professor-fold amendment (D-BLUES-KEY).
 
+## Default key is C major [STABLE]
+
+Decision D-DEFAULT-C (operator override of the keyless *default*, 2026-07-10, made knowingly): Compose boots with `songKey = { root: "C", mode: "Major", explicit: true }` so it opens in the In-key view with the six diatonic chords ready to tap - "get to work immediately" instead of staring at the chromatic All grid. This reverses the earlier keyless-*landing* choice (the empty 12-root grid as the CTA), which the operator found non-obvious.
+
+This overrides only the DEFAULT, not the keyless CAPABILITY: the key stays fully changeable (root pick), clearable (re-tap the selected root -> `songKey.root = null`), and transposable, and the keyless-until-pick behavior below is preserved verbatim once the user clears it. `buildGrid`'s In-key branch also gained a KeyExplorer-absent fallback (renders the diatonic palette as plain tiles into `#buildGrid`) so In-key is never blank if KeyExplorer fails to load. Part of the visual-language mission ([ux-philosophy/visual-language.md](../ux-philosophy/visual-language.md), "default INTO the work").
+
 ## Keyless-until-pick: chord-list actions never auto-establish a key [STABLE]
 
 Decision D-KEYLESS: once the key has been cleared (or never set), further chord-list actions on the progression - mode-chip taps and transpose - do NOT resurrect a root. Only an explicit ROOT pick (or the pre-existing 2+-chord auto-infer at add-time, unrelated to this decision) sets `songKey.root`.

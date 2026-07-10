@@ -1625,13 +1625,18 @@ function findTabRow(m) {
 
 test('U6: the initial (unflagged) buildGrid render never scroll-anchors the filter row', function () {
   var m = mountForGridTests();
+  // Compose now defaults to C major -> In-key view (D-DEFAULT-C, 2026-07-10), so the
+  // All-view catTabRow is reached by one segment tap. That tap is an UNFLAGGED render
+  // (no anchorFilterRow) - it must still not scroll-anchor.
+  m.elMap.catChips.children[0].children[1].onclick(); // In-key|All seg -> 'All'
   var row = findTabRow(m);
-  assert.ok(row, 'expected the All-view catTabRow to render by default (no key set)');
-  assert.ok(!row._scrollCalls || row._scrollCalls.length === 0, 'initial render must not scroll-anchor');
+  assert.ok(row, 'expected the All-view catTabRow to render');
+  assert.ok(!row._scrollCalls || row._scrollCalls.length === 0, 'an unflagged All render must not scroll-anchor');
 });
 
 test('U6: tapping a quality-filter chip re-renders catTabRow AND scroll-anchors it to the top of the visible area', function () {
   var m = mountForGridTests();
+  m.elMap.catChips.children[0].children[1].onclick(); // In-key|All seg -> 'All' (default is now In-key, D-DEFAULT-C)
   var firstRow = findTabRow(m);
   var minorChip = firstRow.children[1]; // ['Major'(on), 'Minor', '7th', 'Maj7', 'Min7'] - tap 'Minor'
   minorChip.onclick();
@@ -1726,24 +1731,36 @@ test('U7: openSoloChoiceRow presents as a modal (asModal + backdrop dim + dialog
   assert.ok(row._focusCalls >= 1, 'the dialog itself must receive focus (no input to focus, unlike the save-name row)');
 });
 
-test('U7: backdrop tap dismisses the solo-choice modal as Skip (no NavHistory loaded in this harness -> falls back to the direct close)', function () {
+// S-POSTPROG-FLOW (operator UAT 2026-07-10): a dismiss gesture must CANCEL (stay on
+// Compose), never navigate into the Studio. The old "backdrop/Escape = Skip = open
+// Studio" behavior was the "can't cancel out of Solo" trap - these now assert the fix.
+test('U7: backdrop tap CANCELS the solo-choice modal (a dismiss must not navigate to the Studio)', function () {
   var picks = [];
   var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
   startSoloChoice(m);
   findComposeBackdrop(m).onclick();
-  assert.strictEqual(picks.length, 1, 'expected the ephemeral-Studio open to fire exactly once (Skip semantics)');
-  assert.strictEqual(picks[0].title, 'Solo practice', 'backdrop dismiss must resolve to Skip, not Save');
-  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after dismiss');
-  assert.strictEqual(findComposeBackdrop(m).hidden, true, 'the backdrop must be re-hidden after dismiss');
+  assert.strictEqual(picks.length, 0, 'a dismiss must NOT open the Studio - it cancels, keeping the progression (S-POSTPROG-FLOW fix)');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after cancel');
+  assert.strictEqual(findComposeBackdrop(m).hidden, true, 'the backdrop must be re-hidden after cancel');
 });
 
-test('U7: Escape dismisses the solo-choice modal as Skip', function () {
+test('U7: Escape CANCELS the solo-choice modal (no Studio navigation)', function () {
   var picks = [];
   var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
   startSoloChoice(m);
   findComposeRow(m).onkeydown({ key: 'Escape' });
-  assert.strictEqual(picks.length, 1);
-  assert.strictEqual(picks[0].title, 'Solo practice');
+  assert.strictEqual(picks.length, 0, 'Escape cancels - it must not open the Studio');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after cancel');
+});
+
+test('U7: the visible Cancel button dismisses without navigating (discoverable escape hatch)', function () {
+  var picks = [];
+  var m = mountForSoloChoiceTests(function (target) { picks.push(target); });
+  startSoloChoice(m);
+  var btnRow = findComposeRow(m).children[1]; // [msg, btnRow]
+  btnRow.children[2].onclick(); // [Save & open Studio, Skip, Cancel] - Cancel
+  assert.strictEqual(picks.length, 0, 'Cancel must not open the Studio');
+  assert.strictEqual(findComposeRow(m).hidden, true, 'the modal must be torn down after Cancel');
 });
 
 test('U7: "Save & open Studio" resolves to save (not skip) and chains into the save-name modal before opening the Studio', function () {
