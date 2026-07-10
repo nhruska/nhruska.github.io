@@ -588,8 +588,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    progStripMode's width guard demotes to fill-row a stage early instead, for
    a viewport too narrow to fit even that natural size (see the JS-side
    comment on progStripMode). */
-.prog.full{flex-wrap:nowrap;justify-content:center;}
-.prog.full .slot{flex:1 1 0;max-width:150px;min-width:0;}
+.prog.full{flex-wrap:nowrap;justify-content:center;gap:10px;}
+/* S-DELHANDLE-OVERFLOW v2 (UAT 2026-07-10): the slot must SHRINK-WRAP the card, not
+   flex-GROW wider than it - a grown slot left the absolutely-positioned delete badge
+   (anchored to the slot's right edge) floating in the empty slot space, worse with
+   fewer chords (wider slots). flex:0 1 auto sizes the slot to the card so the badge
+   lands on the card's own corner at every count; justify-content:center + gap still
+   space the cards across the row. */
+.prog.full .slot{flex:0 1 auto;max-width:150px;min-width:0;}
 /* Stage 2 (5-6 chords, or an early width-guard demotion from stage 1): the
    existing compact chord token (suggChip - see the compact-token rules
    below), ONE row, equal-width columns that fill the strip. The column COUNT
