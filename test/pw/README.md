@@ -21,6 +21,11 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
   are copied to `docs/artifacts/` when they back a PR claim.
 - Step vocabulary lives in the `run-scenario.py` docstring. Add verbs to the
   runner, never imperative code to scenarios - scenarios stay declarative data.
+- **USDD personas**: a scenario's `"persona"` field ("beginner" | "intermediate"
+  | "advanced") seeds the guidance-level state pre-load, so level-gated UI is
+  assertable per simulated user - the red-first loop is the
+  [usdd skill](../../.claude/skills/usdd/SKILL.md). Persona coverage: 2 of 8
+  flows have persona variants (grow this - CE2).
 
 | Scenario | Proves |
 |---|---|
@@ -32,3 +37,5 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | studio-scale-tap-dorian | Studio chip switch re-renders scale (Dorian b3 = D#) |
 | prog-fit-6 | S-PROG-FIT-6: 6 chords keep the toggle row above the fold at 412x915 |
 | prog-delete-handles | S-DELHANDLE-OVERFLOW: delete badges sit on their cards |
+| persona-beginner-studio | USDD: beginner sees NO theory prose in the Studio (whynote level-gate) |
+| persona-advanced-studio | USDD: advanced DOES see the whynote banner - same taps, opposite assert |
