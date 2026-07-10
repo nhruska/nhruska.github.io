@@ -45,3 +45,4 @@
 {"ts": "2026-07-10T14:01:18Z", "mission": "sdd-pilot", "type": "merge", "title": "PR #212 merged - Calluses live in the catalog (v136). The operator's first song ships to his own app", "agent": "main", "url": "https://github.com/nhruska/nhruska.github.io/pull/212"}
 {"ts": "2026-07-10T14:07:30Z", "mission": "deck-wins", "type": "start", "title": "Mission: DECK WINS TIMELINE - public CE-wins story back to PR #197, mechanics + wins, no internal data", "agent": "main"}
 {"ts": "2026-07-10T14:07:31Z", "mission": "deck-wins", "type": "green", "title": "Wins tab live: 13 curated entries (#197-#212), newest-first, scenario 31 steps green", "agent": "verifier"}
+{"ts": "2026-07-10T14:10:16Z", "mission": "swarm-queue", "type": "start", "title": "Mission: SDLC SWARM - clear the chessboard while the operator is at the hockey game. Lanes: M-12 templates (agent) + UI ladder G3/teardown/navhist/jam-starter/flat-keys (main)", "agent": "main"}
