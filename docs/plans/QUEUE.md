@@ -33,6 +33,7 @@
 | # | Item | Source |
 |---|---|---|
 | S-NAVHIST | NavHistory double-pop on Solo->Skip path (real bug, live-reproduced) | PR #144 finding |
+| S-POSTPROG-FLOW | **Post-progression workflow unclear (any experience level).** After adding a suggested progression, the "Save to add a video backing track or skip to practice" prompt (Save & open Studio / Skip) AND a new "Solo" button in the In-key\|All row both appear at once - a new user is curious about Solo, feels they "can't cancel", and has no clear read on the expected next step. Amplified by D-DEFAULT-C (PR #197): with a key always set, Solo (gated on key+progression) now surfaces the moment chords are added, so the fork hits sooner. Needs a vision call on the intended after-you-build flow + a dismiss/keep-composing affordance. | operator UAT 2026-07-10 (PR #197 preview) |
 
 ## MID (vision known - needs a spec interview, ~15-30 min each; batchable in one sitting)
 
