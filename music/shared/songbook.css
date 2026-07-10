@@ -647,6 +647,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .prog .slot .rm:active::before{background:var(--bad);}
 .prog .slot .rm:active{color:var(--on-danger);}
+/* S-DELHANDLE-OVERFLOW (UAT 2026-07-10): in the full diagram-card stage (1-4 chords)
+   the default -7px overhang floats the delete badge OFF the card, reading as
+   disconnected. Pull it just inside the card's top-right corner so it reads as
+   attached to the chord it removes. Compact stages keep the corner-overhang (tiny
+   tokens have no interior room for the badge). */
+.prog.full .slot .rm{top:2px;right:2px;}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
@@ -866,6 +872,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    child of the scroll area, not .adaptiveChips). */
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .catTabRow::-webkit-scrollbar{display:none;}
+/* S-TYPEFILTER-ACCENT (UAT 2026-07-10): the All-view quality filter (Maj/Min/7th/...) is a
+   SECONDARY narrowing control, not a primary action - its selected chip in full accent fill
+   read as a competing CTA (emphasis-by-scarcity friction). Demote the selected type filter
+   to an accent OUTLINE (accent-ink text + border, transparent bg) so accent-fill stays
+   reserved for the one primary/recommended thing. Scoped to this filter row: the app-wide
+   selected-grammar reversal (all .chip.on / toggles) is a separate, fully-verified pass.
+   Lint-safe: outline is neither the surface-2 + box-shadow ring the consistency lint forbids
+   nor a new hue. */
+.catTabRow .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
 .chordsHint{margin:0 2px 4px;}
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
    reads as THE next step (the old prose hint buried it). */
