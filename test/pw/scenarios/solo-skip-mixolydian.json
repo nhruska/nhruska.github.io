@@ -1,6 +1,6 @@
 {
   "name": "solo-skip-mixolydian",
-  "description": "MERGE GATE for the progression-aware picker: build C-F-A# (I-IV-bVII) in C major, Solo -> Skip; the Studio must default to Mixolydian with Mixolydian+Dorian chips present and the b7 (A#) in the notes line.",
+  "description": "MERGE GATE for the progression-aware picker + FORK-4 removal: build C-F-A# (I-IV-bVII) in C major, Solo -> Skip; the Studio must default to Mixolydian with Mixolydian+Dorian chips present and the b7 spelled KEY-AWARE as Bb (never A#) in the notes line.",
   "url": "/music/play/",
   "steps": [
     {
@@ -75,7 +75,7 @@
     {
       "action": "assertText",
       "selector": ".bt-st-notes",
-      "contains": "A#"
+      "contains": "Bb"
     },
     {
       "action": "screenshot",

@@ -230,6 +230,9 @@
   // coarsen modal modes - unifying them is queued in the UI-polish arc.
   function keyLabelFor(key, mode) {
     var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    // FORK-4 removal: the DISPLAYED key root is the preferred enharmonic name
+    // (A# minor -> Bbm); the key TOKEN callers store/compare stays canonical.
+    key = dispKeyRoot(key, m || 'major');
     if (m === 'minor' || m === 'aeolian') return key + 'm';
     if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
     if (m === 'blues') return key + ' blues'; // M-GUIDE W2
@@ -282,18 +285,39 @@
     // 'blues' scale plus the separate BLUES_KEY I7/IV7/V7 palette, not a circle-
     // of-fifths mode) - branch before the generic diatonic path below.
     if (scaleMode === 'blues') {
-      var bnotes = C.soloScale(k, 'blues');
+      // FORK-4 removal: display notes are KEY-AWARE (C blues -> C Eb F Gb G Bb, the
+      // standard spelling) - tokens/pcs stay canonical; only note NAMES changed.
+      var bnotes = C.soloScaleInKey ? C.soloScaleInKey(k, 'blues', mode) : C.soloScale(k, 'blues');
       return {
         key: k, scaleMode: scaleMode, rootPc: rp, notes: bnotes, pcs: notesToPcs(bnotes),
         degrees: C.soloScaleDegrees('blues'), chords: C.bluesKey(k), label: 'Blues'
       };
     }
-    var notes = C.scale(k, scaleMode);
+    // FORK-4 removal: scale note names spell letter-per-degree from the preferred
+    // tonic name (C mixolydian shows Bb, never A#; A#-major contexts render as Bb
+    // major). CHORD tokens below stay canonical-sharp - they key voicing/audio/
+    // theory lookups; their DISPLAY is remapped at the render seams (dispChord).
+    var notes = C.scaleInKey ? C.scaleInKey(k, scaleMode) : C.scale(k, scaleMode);
     return {
       key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
       degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
       label: shortMode(C.modeInfo(scaleMode).label)
     };
+  }
+  // FORK-4 removal display helpers: a chord/note NAME rendered inside a stated
+  // key respells by function (bVII of C = Bb); the underlying token is untouched
+  // (packs, audio, targeting, storage all stay canonical-sharp). Pure; exported
+  // for tests. Falls back to the token when Circle lacks the kernel.
+  function dispKeyRoot(key, mode) {
+    var C = circleRef();
+    return (C && C.preferredTonicName) ? C.preferredTonicName(key, mode) : key;
+  }
+  function dispChord(chord, keyRoot, keyMode) {
+    var C = circleRef();
+    if (!C || !C.noteInKey) return chord;
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(chord || '').trim());
+    if (!m) return chord;
+    return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
   }
   // S-BLUES: the Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
   // scaleId 'mode' (or falsy) delegates straight to studioTheory() so the
@@ -313,7 +337,9 @@
     }
     var C = circleRef(), k = normRoot(key);
     if (!C || rootIndex(k) < 0 || typeof C.soloScale !== 'function') return null;
-    var notes = C.soloScale(k, scaleId);
+    // FORK-4 removal: key-aware note names (letter-per-degree from the mode-aware
+    // preferred tonic); pcs derive from the same names so dots + names agree.
+    var notes = C.soloScaleInKey ? C.soloScaleInKey(k, scaleId, mode) : C.soloScale(k, scaleId);
     if (!notes.length) return null;
     var info = C.soloScaleInfo(scaleId);
     return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
@@ -439,6 +465,7 @@
   // Interpolates only th.key + that mode name - both are labels the Studio
   // already renders elsewhere on the same screen.
   function whynoteText(key, scaleMode, label) {
+    key = dispKeyRoot(key, scaleMode); // FORK-4 removal: prose shows the preferred name
     var modeName = scaleMode === 'aeolian' ? 'minor' : scaleMode === 'ionian' ? 'major' : label.toLowerCase();
     if (scaleMode === 'ionian') {
       return 'Why this scale works: ' + key + ' major and its relative minor share the same notes - solo either over this progression.';
@@ -471,6 +498,7 @@
   // Pure text fn kept separate (like whynoteText) so tests can assert the
   // copy independent of the claim/level plumbing.
   function scaletipText(key) {
+    key = dispKeyRoot(key, 'major'); // FORK-4 removal: prose shows the preferred name
     return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
   }
   function scaletipBanner(th) {
@@ -772,9 +800,10 @@
       // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
       // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
       // textContent - keyLabel (escaped) still feeds the innerHTML meta line.
-      var keyLabelPlain = th.scaleMode === 'ionian' ? th.key
-        : th.scaleMode === 'aeolian' ? th.key + 'm'
-        : (th.key + ' ' + th.label.toLowerCase());
+      var dispKey = dispKeyRoot(th.key, th.scaleMode); // FORK-4 removal: display name
+      var keyLabelPlain = th.scaleMode === 'ionian' ? dispKey
+        : th.scaleMode === 'aeolian' ? dispKey + 'm'
+        : (dispKey + ' ' + th.label.toLowerCase());
       var keyLabel = esc(keyLabelPlain);
       var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
@@ -1454,7 +1483,7 @@
         var chordsEl = elPlayer.querySelector('[data-chords]');
         if (!chordsEl || !th.chords) return;
         chordsEl.innerHTML = th.chords.map(function (it) {
-          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(it.chord) + '</button>';
+          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
         }).join('');
         Array.prototype.forEach.call(chordsEl.querySelectorAll('.bt-st-chordchip'), function (d, idx) {
           var c = th.chords[idx].chord;
@@ -1674,7 +1703,9 @@
       if (!state.key) { elPanel.innerHTML = ''; return; }
       var C = global.Circle, label = C.modeInfo(state.scaleMode).label;
       var dia = C.diatonic(state.key, state.scaleMode), nb = C.neighbors(state.key, state.mode);
-      var notes = C.scale(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      // FORK-4 removal: panel note strip + chord labels render key-aware names
+      var notes = (C.scaleInKey ? C.scaleInKey : C.scale)(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      dia = dia.map(function (d) { return { roman: d.roman, chord: dispChord(d.chord, state.key, state.scaleMode), root: d.root, quality: d.quality }; });
       var changed = {}; C.modeChange(state.key, state.scaleMode).forEach(function (c) { changed[c.degree] = true; });
       var modeChips = MODE_ORDER.map(function (m) {
         return '<button class="cofModeChip' + (state.scaleMode === m ? ' on' : '') + '" data-mode="' + esc(m) + '">'

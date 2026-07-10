@@ -1,6 +1,6 @@
 {
   "name": "studio-scale-tap-dorian",
-  "description": "Studio chip-switch usage: from the Mixolydian-defaulted Studio, tapping the Dorian chip re-renders scale notes (b3 appears: D#) and moves the selection.",
+  "description": "Studio chip-switch usage: from the Mixolydian-defaulted Studio, tapping the Dorian chip re-renders scale notes (key-aware b3 appears: Eb, never D# - FORK-4 removal) and moves the selection.",
   "url": "/music/play/",
   "steps": [
     {
@@ -71,7 +71,7 @@
     {
       "action": "assertText",
       "selector": ".bt-st-notes",
-      "contains": "D#"
+      "contains": "Eb"
     },
     {
       "action": "screenshot",
