@@ -501,6 +501,22 @@
     key = dispKeyRoot(key, 'major'); // FORK-4 removal: prose shows the preferred name
     return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
   }
+  // S-PERSONA-COPY (pedagogy-coach + copy-coach, 2026-07-10): the BEGINNER
+  // Studio orientation tip - whynote/scaletip gate to intermediate/advanced,
+  // which correctly hid theory prose from beginners but left them with a bare
+  // fretboard and jargon chips. ONE action-first line in the beginner
+  // vocabulary budget, at the moment of relevance, show-once + dismissible
+  // (the notables contract). Mirrors scaletipBanner's exact shape.
+  function studioFirstText() {
+    return 'Tap a chord below to hear it - the dots show where to play along on the neck.';
+  }
+  function studioFirstBanner() {
+    var N = notablesRef();
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('studiofirst', undefined, level)) return null;
+    return { consumerId: 'studiofirst', text: studioFirstText(), className: 'bt-st-notable' };
+  }
   function scaletipBanner(th) {
     var N = notablesRef();
     var GL = guidanceLevelRef();
@@ -1337,6 +1353,13 @@
         var stEl = stOpts ? notablesRef().renderBanner(stOpts) : null;
         var stBody = stEl && elPlayer.querySelector('.bt-st-body');
         if (stBody) stBody.insertBefore(stEl, stBody.firstChild);
+        // S-PERSONA-COPY: the beginner orientation tip - same slot, same shape;
+        // it can never contest whynote/scaletip (disjoint LEVELS gates).
+        var sfOpts = studioFirstBanner();
+        if (sfOpts) sfOpts.onDismiss = function () { if (sfEl && sfEl.parentNode) sfEl.parentNode.removeChild(sfEl); };
+        var sfEl = sfOpts ? notablesRef().renderBanner(sfOpts) : null;
+        var sfBody = sfEl && elPlayer.querySelector('.bt-st-body');
+        if (sfBody) sfBody.insertBefore(sfEl, sfBody.firstChild);
       } catch (e) {}
       // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
@@ -1880,6 +1903,8 @@
     // M-GUIDANCE (advanced tier): scaletipText/scaletipBanner mirror
     // whynoteText/whynoteBanner's export shape exactly.
     scaletipText: scaletipText, scaletipBanner: scaletipBanner,
+    // S-PERSONA-COPY: beginner Studio orientation tip - same export shape.
+    studioFirstText: studioFirstText, studioFirstBanner: studioFirstBanner,
     // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
     soloBundle: soloBundle,
     // S-SOLO-SCALE-DEFAULT: progression-aware theory-best default scale (key+mode+seq ->

@@ -3217,11 +3217,15 @@
       if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Save to add a video backing track or skip to practice';
+      // S-PERSONA-COPY (copy-coach, 2026-07-10): outcome-named buttons inside the
+      // BEGINNER vocabulary budget - no internal jargon ("Studio"), no mechanism
+      // names ("Save", "Skip"). Universal copy (better for every level), choice
+      // semantics unchanged ('save'/'skip'/'cancel' below).
+      msg.textContent = 'Keep this progression, or just practice over it?';
       var saveBtn = document.createElement('button');
-      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
+      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Keep + practice';
       var skipBtn = document.createElement('button');
-      skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Skip';
+      skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Just practice';
       var delivered = false;
       // S-NAVHIST (2026-07-04, PR #144 finding): 'save' hands this SAME
       // composeRow container off to openSaveNameRow (it re-renders in place -
@@ -3269,7 +3273,8 @@
       // Cancel: a VISIBLE dismiss so "take me back to my progression" is discoverable,
       // not just a backdrop tap (the operator UAT gap - a new user saw no way out).
       var cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
+      // S-PERSONA-COPY: outcome-named dismiss - closing the modal = back to composing.
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
       cancelBtn.onclick = function () { choose('cancel'); };
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';

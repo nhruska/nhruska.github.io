@@ -38,7 +38,7 @@
     },
     {
       "action": "tapText",
-      "text": "Cancel",
+      "text": "Keep building",
       "scope": ".composeRow"
     },
     {

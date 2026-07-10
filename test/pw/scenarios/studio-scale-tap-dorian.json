@@ -47,7 +47,7 @@
     },
     {
       "action": "tapText",
-      "text": "Skip",
+      "text": "Just practice",
       "scope": ".composeRow"
     },
     {

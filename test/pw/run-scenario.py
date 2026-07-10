@@ -112,11 +112,18 @@ def run(scenario_path, base_url=None):
             # ask - see play/index.html renderGuidanceAsk). Level-gated UI (the
             # notables LEVELS table) then diverges per persona and is assertable.
             if sc.get('persona'):
+                # Optional journey state: notables the persona has ALREADY
+                # dismissed (the graded journey shows one tip at a time app-wide,
+                # so e.g. the beginner Studio tip only surfaces after the welcome
+                # card is closed - "dismissNotables": ["firstrun"] models a
+                # beginner minutes into their first session).
+                dismissed = {'guidanceask': 1}
+                for cid in sc.get('dismissNotables', []):
+                    dismissed[cid] = 1
                 ctx.add_init_script(
                     "try{localStorage.setItem('music.guidanceLevel.v1',%s);"
-                    "localStorage.setItem('music.notables.v1',"
-                    "JSON.stringify({guidanceask:1}))}catch(e){}"
-                    % json.dumps(sc['persona']))
+                    "localStorage.setItem('music.notables.v1',%s)}catch(e){}"
+                    % (json.dumps(sc['persona']), json.dumps(json.dumps(dismissed))))
             page = ctx.new_page()
             page.on('pageerror', lambda e: page_errors.append(str(e)))
             page.on('console', lambda m: console_errors.append(m.text)
