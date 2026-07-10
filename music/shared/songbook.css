@@ -670,7 +670,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
    A chord that COMPLETES a famous progression gets an accent glow (no name caption -
    the caption blew the chip width and wrapped the row). */
-.suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-dim);background:var(--surface-2);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
+/* S-SUGG-DIFFERENTIATE (UAT 2026-07-10): the suggested next-chords are the app's
+   RECOMMENDED picks (music-theory-coach ranks them, strongest first), so they read a
+   step warmer than the neutral browse palette below - a subtle accent-deep tint + an
+   accent-ink border, WITHOUT the full accent-fill that would read as "selected". The
+   .complete glow (a chord that finishes a famous progression) stays the strongest cue. */
+.suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-ink);background:var(--accent-deep);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
 .suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent-ink);}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
