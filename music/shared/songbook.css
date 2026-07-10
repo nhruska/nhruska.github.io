@@ -271,7 +271,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Add-to-setlist affordance reads accent-inviting (operator UAT): the "+" is an
    accent OUTLINE (like .soloRowBtn), the added "✓" is accent FILL (.inSet below)
    - a clear add -> added progression, both in the accent family. */
-.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* Emphasis ladder (visual-language.md): the resting + is a per-row SECONDARY affordance
+   repeated down the whole list, so its glyph is neutral (--txt-soft) - it stops the list
+   reading as a column of accent circles competing with the song titles. Accent is reserved
+   for the .inSet state below (a real selection: "this song is in your set"). */
+.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
