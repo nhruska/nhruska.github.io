@@ -564,7 +564,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    songbook.js renderProg) picks the stage class + (for fill-row) the inline
    grid-template-columns per render; a resize re-check can flip stages live
    (Songbook's resize listener). */
-.prog{display:flex;gap:8px;min-height:88px;margin-bottom:0;padding:12px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
+/* S-PROG-FIT-6 (UAT 2026-07-10): 4-6 chords were "so close to fitting" the fixed
+   (non-scrolling) composeTop region at 412x915 - a small vertical trim (min-height
+   88->78, padding 12->9, full-stage gap 10->8 below) reclaims ~16px WITHOUT shrinking
+   the diagram cards (the phone-DPI text floor forbids that). Enough to tip the common
+   4-6 chord case above the fold. */
+.prog{display:flex;gap:8px;min-height:78px;margin-bottom:0;padding:9px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
 .prog::-webkit-scrollbar{display:none;}
 /* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
    + wraps"): the unconditional flex-wrap the comment above warns against was a
@@ -588,7 +593,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    progStripMode's width guard demotes to fill-row a stage early instead, for
    a viewport too narrow to fit even that natural size (see the JS-side
    comment on progStripMode). */
-.prog.full{flex-wrap:nowrap;justify-content:center;gap:10px;}
+.prog.full{flex-wrap:nowrap;justify-content:center;gap:8px;}
 /* S-DELHANDLE-OVERFLOW v2 (UAT 2026-07-10): the slot must SHRINK-WRAP the card, not
    flex-GROW wider than it - a grown slot left the absolutely-positioned delete badge
    (anchored to the slot's right edge) floating in the empty slot space, worse with

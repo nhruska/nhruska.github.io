@@ -706,4 +706,47 @@ test('F32: Studio dismiss is .bt-st-back (iconBtn, "<-" glyph, title=Back) - the
   assert.ok(/elPlayer\.querySelector\('\.bt-st-back'\)\.onclick/.test(src), 'the NavHistory.dismiss()/closePlayer() wiring must target the new .bt-st-back selector');
 });
 
+// ---- S-SOLO-MODES: Mixolydian + Dorian as selectable solo scales ----
+test('soloScale mixolydian is the full 7-note mode (C -> C D E F G A A#)', function () {
+  var notes = Circle.soloScale('C', 'mixolydian');
+  assert.strictEqual(notes.length, 7, 'mixolydian has 7 notes');
+  // canonical-sharp spelling (FORK-4): b7 renders as A#, never Bb
+  assert.deepStrictEqual(notes, ['C', 'D', 'E', 'F', 'G', 'A', 'A#'], 'C mixolydian notes');
+  assert.deepStrictEqual(Circle.soloScaleDegrees('mixolydian'), ['1', '2', '3', '4', '5', '6', '♭7'], 'mixolydian degrees');
+});
+test('soloScale dorian is the full 7-note mode (C -> C D D# F G A A#)', function () {
+  var notes = Circle.soloScale('C', 'dorian');
+  assert.strictEqual(notes.length, 7, 'dorian has 7 notes');
+  assert.deepStrictEqual(notes, ['C', 'D', 'D#', 'F', 'G', 'A', 'A#'], 'C dorian notes (b3=D#, b7=A#, canonical-sharp)');
+  assert.deepStrictEqual(Circle.soloScaleDegrees('dorian'), ['1', '2', '♭3', '4', '5', '6', '♭7'], 'dorian degrees');
+});
+test('SoloGuide already ships cards for the two new modes (no blank Guide box)', function () {
+  var SG = require('../music/shared/solo-guide.js');
+  assert.ok(SG.card('mixolydian', Circle.soloScale('C', 'mixolydian'), 'C'), 'mixolydian Guide card exists');
+  assert.ok(SG.card('dorian', Circle.soloScale('C', 'dorian'), 'C'), 'dorian Guide card exists');
+});
+
+// ---- S-SOLO-SCALE-DEFAULT: progression-aware theory-best default ----
+test('inferSoloDefault: plain diatonic major progression -> pentMajor (safe home)', function () {
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', ['C', 'F', 'G', 'Am']), 'pentMajor');
+});
+test('inferSoloDefault: major progression with a bVII major -> mixolydian', function () {
+  // C major with a Bb (bVII) is the Mixolydian tell (b7 rock/backdoor color)
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', ['C', 'Bb', 'F', 'C']), 'mixolydian');
+});
+test('inferSoloDefault: plain diatonic minor progression -> pentMinor', function () {
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', ['Am', 'Dm', 'Em', 'Am']), 'pentMinor');
+});
+test('inferSoloDefault: minor progression with a MAJOR IV -> dorian', function () {
+  // A minor with a D major (major IV, the raised-6) is the Dorian tell
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', ['Am', 'D', 'Am', 'Em']), 'dorian');
+});
+test('inferSoloDefault: no seq falls back to the key-quality pentatonic', function () {
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', null), 'pentMajor');
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', []), 'pentMinor');
+});
+test('inferSoloDefault: a Blues key keeps its own scale (mode chip IS blues)', function () {
+  assert.strictEqual(T.inferSoloDefault('E', 'blues', ['E7', 'A7', 'B7']), 'mode');
+});
+
 run();

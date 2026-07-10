@@ -220,7 +220,15 @@
   var SOLO_SCALES = {
     pentMajor: { label: 'Pent major', kind: 'pent', family: 'major', formula: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'] },
     pentMinor: { label: 'Pent minor', kind: 'pent', family: 'minor', formula: [0, 3, 5, 7, 10], degrees: ['1', '♭3', '4', '5', '♭7'] },
-    blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] }
+    blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] },
+    // S-SOLO-MODES (music-theory-coach, 2026-07-10): the two common non-diatonic MODE
+    // colors surfaced as selectable solo scales (their SoloGuide.card + framing already
+    // ship - see solo-guide.js). Mixolydian = the b7 bluesy/dominant color over a major
+    // key; Dorian = the natural-6 hopeful-minor color. Formulas are the full 7-note modes
+    // (a superset of pentMajor / pentMinor respectively - the pentatonic subset proofs in
+    // solo-scales.test.js already assert pentMajor c mixolydian, pentMinor c dorian).
+    mixolydian: { label: 'Mixolydian', kind: 'mode', family: 'major', formula: [0, 2, 4, 5, 7, 9, 10], degrees: ['1', '2', '3', '4', '5', '6', '♭7'] },
+    dorian: { label: 'Dorian', kind: 'mode', family: 'minor', formula: [0, 2, 3, 5, 7, 9, 10], degrees: ['1', '2', '♭3', '4', '5', '6', '♭7'] }
   };
   // Names via spell() - see the regime comment above. Unknown root or unknown
   // scaleId -> [] (safe; never throws, matching pcOf/spellScale's own contract).

@@ -38,6 +38,19 @@ The default is the **safest home base a player of ANY level can't sound wrong ov
 
 **Rule of thumb:** pentatonic of the tonic's quality (major-key -> major pent, minor-key -> minor pent) is the default every time - it is the choice that is never wrong. The full mode and the blues/rub scales are compatible color, ranked after. An option whose characteristic tone clashes with the key's tonic triad (major pent over minor, and vice-versa) is incompatible - disable it rather than let a beginner pick a clash.
 
+## Progression-aware default: read the actual chords, not just the key
+
+The key + mode is the floor; the **progression's chords** are the better signal. A default that reads the incoming `seq` and matches the mode the progression IMPLIES beats a blanket key-quality pentatonic. Read the degrees with `Circle.romanFor(chord, tonicChord)` (the SSOT for degree analysis - never eyeball intervals) and key off the characteristic borrowed chord:
+
+| Signal in the progression | Over key | Best default becomes | Why |
+|---|---|---|---|
+| A **bVII major** (uppercase, e.g. Bb in C) | major | **Mixolydian** | The bVII is Mixolydian's tell - the b7 rock/backdoor color the major pentatonic can't voice. |
+| A **major IV** (uppercase, e.g. D over Am) | minor | **Dorian** | The raised-6 major IV is Dorian's tell - the "hopeful minor" brightening. |
+| All-diatonic (no borrowed tell) | either | pentatonic of the key quality | Nothing implies a mode; the safe home wins (the base rule below). |
+| Blues key (I7/IV7/V7) | - | keep the key's own blues scale | Its mode chip IS the blues scale. |
+
+The safe pentatonic remains the FALLBACK when no modal tell is present - progression-awareness only UPGRADES the default when the chords earn it, it never picks something a beginner can sound wrong over. Reference implementation: `Tracks.inferSoloDefault(key, mode, seq)` (unit-tested in `test/tracks.test.js`). Only surface a mode as a selectable chip when its `SoloGuide.card` already exists (mixolydian/dorian do) - a chip with a blank Guide box is a half-ship.
+
 ## Ordering the alternatives (when several are compatible)
 
 Rank by **safety-then-color**: fewest avoid-notes first (pentatonic), then the full diatonic mode, then the color/rub scales (Blues, borrowed). This is also the teaching order - a beginner starts on the pentatonic and adds color as they grow (design-principles.md "soul: growth means the why").
