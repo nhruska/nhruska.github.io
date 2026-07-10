@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-10T13:40:00Z",
+  "updated": "2026-07-10T14:05:00Z",
   "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
   "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
@@ -8,12 +8,13 @@
       "desc": "Shipped + preview-ready work awaiting the operator's feel pass.",
       "items": [
         {
-          "id": "TR-3",
-          "priority": 90,
-          "form": "burst",
-          "ask": "v0.2 is up: calluses spine, piano->uke->kalimba verse 2, 'proof of every fight I lost' chorus. Burst again - or say 'store it' to put it in songs.json",
-          "title": "Song draft v0.2 - 'Calluses' (reframed per your burst: playing-centered, interfaces verse)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
+          "id": "TR-4",
+          "priority": 88,
+          "form": "tap",
+          "ask": "Calluses is IN THE APP (v136) - open the Library, play YOUR song over its own progressions, burst on what the fingers say",
+          "title": "Play 'Calluses' - first operator-authored catalog song",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
           "added": "2026-07-10"
         },
         {
@@ -72,15 +73,6 @@
       "label": "Interview",
       "desc": "Open question sets. Answering ANY subset unblocks - the rest become cited assumed answers.",
       "items": [
-        {
-          "id": "IV-5",
-          "priority": 82,
-          "form": "interview",
-          "ask": "Your burst answered the profile framing (gap vs expert model, point of need - locked). Still open: wizard ENTRY - own 'New song' flow or a 'Guide me' toggle inside Compose?",
-          "title": "Song wizard + skill profile question set",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/guided-and-free-vision-20260710.md",
-          "added": "2026-07-10"
-        },
         {
           "id": "IV-4",
           "priority": 70,

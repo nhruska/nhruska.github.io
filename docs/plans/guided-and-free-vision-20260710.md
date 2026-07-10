@@ -124,6 +124,16 @@ Locked into M-13/M-14:
 5. Scope check: wizard v1 ships without lyrics (progressions + form only), lyrics stay in
    the SDD session loop?
 
+## Interview state update (2026-07-10, operator peel)
+
+**Q1 ANSWERED**: wizard enters through the SAME flow as adding a song today (the +Add /
+new-song affordance) - not a separate app - with a **dismissible guide** (tutor/coach/
+mentor voice, rails-with-exits) **plus nudges from Compose** (notables-machinery cues
+pointing into the guided path). Operator: "we're composers now... a way to grow our own
+collection of songs. we could take the bubble of experience and facilitate songwriting."
+With Q1 answered and Q2-Q5 assumed (cited below), **M-13 is spec-complete** - remaining
+gate is M-12 (the template data), which is itself launch-ready.
+
 ## Assumed answers (until any arrives)
 
 | Q | Assumed | Basis |
