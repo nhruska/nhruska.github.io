@@ -61,6 +61,14 @@ button.rf{border:1px solid var(--line);background:var(--card);color:var(--txt);b
 .lane h3 .lamp{width:10px;height:10px}
 .lane .sub{font-size:.76rem;color:var(--dim);margin-bottom:6px}
 .lane .ev{margin:6px 0}
+.yt{background:var(--card);border:1px solid var(--brand-primary);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:11px 13px;margin:8px 0;box-shadow:0 2px 10px rgba(41,170,225,.12)}
+.yt .top{display:flex;align-items:center;gap:8px}
+.yt .rank{font-size:1.05rem;font-weight:800;color:var(--brand-primary);min-width:22px}
+.yt .form{font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2px 9px;color:#fff}
+.f-burst{background:var(--hot)} .f-digit{background:var(--brand-secondary)} .f-tap{background:var(--ok)} .f-interview{background:var(--merge)}
+.yt .src{font-size:.68rem;color:var(--dim);margin-left:auto;white-space:nowrap}
+.yt .ask{font-size:.94rem;font-weight:600;margin-top:5px;line-height:1.45}
+.yt .ttl{font-size:.78rem;color:var(--dim);margin-top:3px}
 .qsec{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:12px 14px;margin:10px 0}
 .qsec h3{margin:0;font-size:1rem}
 .qsec .desc{font-size:.78rem;color:var(--dim);margin:3px 0 8px;line-height:1.45}
@@ -112,6 +120,9 @@ th{font-weight:700;background:var(--bg2)}
   </div>
 
   <div class="pane" id="p-queues">
+    <h2 style="margin-top:4px">Your turn - one stream, peel from the top</h2>
+    <div id="yourTurn"></div>
+    <h2>The four queues (the system's taxonomy)</h2>
     <div id="opq"></div>
     <div class="board">
       <h2>Mission queue board (QUEUE.md, live)</h2>
@@ -253,6 +264,28 @@ function renderLanes() {
 function renderQueues(q) {
   var keys = Object.keys(q.queues || {});
   var total = 0;
+  // "Your turn": the MERGED stream - every item from every queue, one list,
+  // priority-ordered, each carrying its form factor + the exact ask. The four
+  // queues are the system's taxonomy; the operator peels from ONE top.
+  var merged = [];
+  keys.forEach(function (k) {
+    (q.queues[k].items || []).forEach(function (it) {
+      merged.push({q: q.queues[k].label, it: it});
+    });
+  });
+  merged.sort(function (a, b) { return (b.it.priority || 30) - (a.it.priority || 30); });
+  $('yourTurn').innerHTML = merged.map(function (m, i) {
+    var it = m.it, form = (it.form || 'tap');
+    return '<div class="yt"><div class="top"><span class="rank">' + (i + 1) + '</span>' +
+      '<span class="form f-' + esc(form) + '">' + esc(form) + '</span>' +
+      '<span class="src">' + esc(it.id) + ' &middot; ' + esc(m.q) + '</span></div>' +
+      '<div class="ask">' + esc(it.ask || it.title) + '</div>' +
+      '<div class="ttl">' + esc(it.title) + (it.priority ? ' &middot; p' + it.priority : '') + '</div>' +
+      '<div class="qitem links">' +
+      (it.url ? '<a href="' + esc(it.url) + '">open</a>' : '') +
+      (it.evidence ? ' &middot; <a href="' + esc(it.evidence) + '">evidence</a>' : '') +
+      '</div></div>';
+  }).join('') || '<div class="empty">Queue is empty - the system owes you a refill.</div>';
   $('opq').innerHTML = keys.map(function (k) {
     var Q = q.queues[k];
     total += (Q.items || []).length;
