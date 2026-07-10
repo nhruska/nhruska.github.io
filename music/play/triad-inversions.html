@@ -126,6 +126,11 @@ h1 .em{color:var(--accent-ink)}
      freshness stamp rendered in the page footer (#buildStamp below); same
      guard-locked pair as the main app's Settings meta line. -->
 <script src="../shared/build-stamp.js"></script>
+<!-- circle.js: the theory SSOT - regime B key-aware spelling (S-TRIADS-SPELLING,
+     2026-07-10). This page's chord/note NAMES spell by function inside the
+     stated key (the IV of F reads Bb, never A#); the local NAMES table below
+     stays canonical-sharp for identity only. -->
+<script src="../shared/circle.js"></script>
 </head>
 <body>
 <script>
@@ -292,6 +297,16 @@ function esc(s) { return Esc.esc(s); }
 // ---- pitch + interval helpers ---------------------------------------------
 const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
+// S-TRIADS-SPELLING (regime B, 2026-07-10): every DISPLAYED note/chord name on
+// this page spells by function inside the stated key via the shared Circle
+// speller - the IV of F reads Bb, never A# (this page predated the FORK-4
+// retirement and kept sharp-only labels). Tokens (key chips, ?key= deep-links,
+// tri.activeKey.v1 storage) stay canonical-sharp for identity; only display
+// respells. Guarded: if circle.js failed to load, fall back to the raw name
+// so the page still renders.
+function inKeyName(keyTok, n) {
+  return (window.Circle && Circle.noteInKey) ? Circle.noteInKey(keyTok, 'major', n) : n;
+}
 function freqPc(f) {
   if (!f || !isFinite(f) || f <= 0) return 0;
   return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12;
@@ -391,7 +406,13 @@ function pickStartShape(stringPcs, keyRootPc) {
 // We iterate up to 4 positions, stopping when the next would run off the neck.
 function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
   const positions = [];
-  function noteAt(stringIdx, fret) { return fret < 0 ? null : NAMES[(stringPcs[stringIdx] + fret) % 12]; }
+  // S-TRIADS-SPELLING: keyRoot arrives as the canonical token; inside this
+  // function it is DISPLAY-only (chord labels + prose - all pitch math uses
+  // stringPcs/frets), so keep the token for spelling context and respell the
+  // label once (A# -> Bb).
+  const keyTok = keyRoot;
+  keyRoot = inKeyName(keyTok, keyTok);
+  function noteAt(stringIdx, fret) { return fret < 0 ? null : inKeyName(keyTok, NAMES[(stringPcs[stringIdx] + fret) % 12]); }
   function notesString(frets) {
     return frets.map((f, i) => noteAt(i, f)).filter(n => n).join(' ');
   }
@@ -692,15 +713,18 @@ function renderCycle() {
   if (keyRootPc == null) return;
   const ivPc = (keyRootPc + 5) % 12;
   const vPc = (keyRootPc + 7) % 12;
-  const ivName = NAMES[ivPc];
-  const vName = NAMES[vPc];
+  // S-TRIADS-SPELLING: spell the IV/V (and the key's own display name) by
+  // function in the active key - F major's IV is Bb, never A#.
+  const ivName = inKeyName(activeKey, NAMES[ivPc]);
+  const vName = inKeyName(activeKey, NAMES[vPc]);
+  const dispKey = inKeyName(activeKey, activeKey);
 
   const start = pickStartShape(activeStringPcs, keyRootPc);
   const positions = buildCycle(start.shape, start.startFret, activeKey, activeStringPcs, ivName, vName);
 
   const block = document.createElement('div');
   block.className = 'keyBlock';
-  block.innerHTML = `<div class="keyHead"><h2>${activeKey} major <span class="deg">I = ${activeKey} · IV = ${ivName} · V = ${vName}</span></h2></div>`;
+  block.innerHTML = `<div class="keyHead"><h2>${dispKey} major <span class="deg">I = ${dispKey} · IV = ${ivName} · V = ${vName}</span></h2></div>`;
 
   positions.forEach((pos) => {
     const posLbl = document.createElement('div');

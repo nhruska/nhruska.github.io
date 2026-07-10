@@ -1,0 +1,14 @@
+{
+  "name": "triads-key-spelling",
+  "note": "S-TRIADS-SPELLING (operator UAT 2026-07-10): the Triads & Inversions page spells chord/note names by FUNCTION inside the stated key (regime B) - F major's IV reads Bb, never A#. Asserts by shape (any displayed A# in an F-major cycle is a failure), so it survives copy changes.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/triad-inversions.html?key=F" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "waitFor", "selector": "#cycle .keyBlock" },
+    { "action": "evalAssert", "label": "F major heading names IV as Bb", "js": "/IV = Bb/.test((document.querySelector('#cycle .keyHead')||{}).textContent||'')" },
+    { "action": "evalAssert", "label": "no A# anywhere in the rendered F-major cycle", "js": "!/A#/.test((document.getElementById('cycle')||{}).textContent||'')" },
+    { "action": "evalAssert", "label": "triad note prose spells Bb (fretboard names in key)", "js": "/Bb/.test((document.getElementById('cycle')||{}).textContent||'')" },
+    { "action": "screenshot", "name": "f-major-cycle" }
+  ]
+}
