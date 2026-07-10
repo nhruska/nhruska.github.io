@@ -810,9 +810,10 @@ test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear st
 test('Clear-undo: every A3-listed mutating action invalidates, Clear never regresses to confirm(), slot-x is movement-cancelled', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   // Clear builds a snapshot and shows the banner - never a native confirm().
-  // Window widened 900->1100 (F31, UAT): the hideComposeToast() line + its
-  // comment pushed the handler's closing `};` past the old 900-char bound.
-  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,1100}?\};/.exec(src);
+  // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10): the
+  // chordView-reset + always-rebuild lines + their comment pushed the handler's
+  // closing `};` past the old 1100-char bound.
+  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,1400}?\};/.exec(src);
   assert.ok(clearBlock, 'cClear.onclick handler not found');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
   assert.ok(/showClearUndoBanner\(\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner');

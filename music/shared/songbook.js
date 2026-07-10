@@ -3588,9 +3588,15 @@
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
+      // S-CLEAR-INKEY (UAT 2026-07-10): a fresh canvas returns to the follow-the-key
+      // view (In-key on the default key), not a stale 'All' pin from before the Clear -
+      // matching the initial default (D-DEFAULT-C). Reset the pin, then always rebuild
+      // the palette so the view reflects it even when the key itself didn't change.
+      chordView = null;
       var kc = reinferKey();
       renderProg(); renderKey();
-      if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+      if (el.keyRoots) renderKeyView();
+      buildGrid();
       showClearUndoBanner();
     };
     if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
