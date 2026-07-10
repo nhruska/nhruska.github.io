@@ -1,58 +1,77 @@
 {
-  "updated": "2026-07-10T12:30:00Z",
-  "note": "The four operator decision surfaces (Ops Deck acceptance A7). Items are addressable by id; the panel renders each queue as a section. v1 is read-only glass - resolving an item happens in session (v2 adds tap-to-approve via ops/commands.jsonl).",
+  "updated": "2026-07-10T12:45:00Z",
+  "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
+  "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
   "queues": {
     "taste_review": {
       "label": "Taste review",
-      "desc": "Shipped + preview-ready work awaiting the operator's feel pass. Minimum friction: tap the link, react in short bursts (uat: ...).",
+      "desc": "Shipped + preview-ready work awaiting the operator's feel pass.",
       "items": [
         {
+          "id": "TR-3",
+          "priority": 92,
+          "form": "burst",
+          "ask": "React to the song draft in bursts: 'chorus B', 'kill verse line 3', 'more water less stone' - anything",
+          "title": "Friction song draft v0.1 - 'Worn Smooth' (F Mixo, Dm verse)",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
+          "added": "2026-07-10"
+        },
+        {
           "id": "TR-1",
-          "title": "G1+G2 beginner journey feel pass (cue -> Solo -> modal copy -> Studio tip)",
+          "priority": 62,
+          "form": "tap",
+          "ask": "Play the beginner journey once (cue -> Solo -> modal -> Studio tip) and the C-F-Bb spelling - one open of the live app covers both",
+          "title": "G1+G2 beginner journey + key-aware spelling feel pass",
           "url": "https://nhruska.github.io/music/play/",
           "evidence": "https://github.com/nhruska/nhruska.github.io/pull/204",
           "added": "2026-07-10"
         },
         {
           "id": "TR-2",
-          "title": "Key-aware spelling on your real progressions (C-F-Bb reads Bb everywhere)",
+          "priority": 45,
+          "form": "tap",
+          "ask": "Folds into TR-1's app open - only stays listed until you confirm Bb/Eb read right on YOUR progressions",
+          "title": "Key-aware spelling on your real progressions",
           "url": "https://nhruska.github.io/music/play/",
           "evidence": "https://github.com/nhruska/nhruska.github.io/pull/199",
-          "added": "2026-07-10"
-        },
-        {
-          "id": "TR-3",
-          "title": "Friction song draft v0.1 - 'Worn Smooth' (F Mixo, Dm verse): react in bursts (chorus A/B, kill lines, image swaps)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
           "added": "2026-07-10"
         }
       ]
     },
     "planning_approval": {
       "label": "Planning approval",
-      "desc": "Scored goalposts waiting for a go/no-go or re-rank. One digit resumes the board.",
+      "desc": "Go/no-go and re-rank decisions. One digit or one word each.",
       "items": [
         {
-          "id": "PA-1",
-          "title": "Resume goalpost board: G3 S-TYPEFILTER-QUIET (60) next, then G4 S-JAM-STARTER (48)",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-friction-profiles-20260710.md",
+          "id": "PA-2",
+          "priority": 78,
+          "form": "digit",
+          "ask": "Say 'merge 650' - lands the 'any domain is a loop' principle + the multi-repo git rule team-wide (audit APPROVE already posted)",
+          "title": "Merge claude-config #650",
+          "url": "https://github.com/nhruska/claude-config/pull/650",
           "added": "2026-07-10"
         },
         {
-          "id": "PA-2",
-          "title": "Merge claude-config #650 - 'any domain is a loop' philosophy addendum (audit APPROVE posted; shared repo = your keystroke)",
-          "url": "https://github.com/nhruska/claude-config/pull/650",
+          "id": "PA-1",
+          "priority": 58,
+          "form": "digit",
+          "ask": "Say 'resume board' (or pick a goalpost) - G3 S-TYPEFILTER-QUIET (60) fires first; paused only because your UAT was expected",
+          "title": "Resume the goalpost board (G3+)",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-friction-profiles-20260710.md",
           "added": "2026-07-10"
         }
       ]
     },
     "design_review": {
       "label": "Design review",
-      "desc": "Design calls parked for operator eyes when SME bench + taste could not resolve alone.",
+      "desc": "Design calls parked for operator eyes when the SME bench + recorded taste could not resolve alone.",
       "items": [
         {
           "id": "DR-1",
-          "title": "Notable preempt teardown: preempted banner not torn down (two cards visible) - S-NOTABLE-PREEMPT-TEARDOWN",
+          "priority": 35,
+          "form": "digit",
+          "ask": "Teardown-on-preempt vs stack-both: say 'teardown' or 'stack' (bench leans teardown - one tip at a time is the journey's law)",
+          "title": "Notable preempt teardown (two cards visible) - S-NOTABLE-PREEMPT-TEARDOWN",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
           "added": "2026-07-10"
         }
@@ -60,24 +79,33 @@
     },
     "interview": {
       "label": "Interview",
-      "desc": "Open question sets. Contract: N questions queued, answering ANY subset unblocks - the rest become assumed answers in the goal spec.",
+      "desc": "Open question sets. Answering ANY subset unblocks - the rest become cited assumed answers.",
       "items": [
         {
+          "id": "IV-4",
+          "priority": 70,
+          "form": "interview",
+          "ask": "Q1 is the one that matters: which department gets cockpit-ified first (proposals/BD, patents, delivery, marketing)? Any of the 5 Qs helps",
+          "title": "Org-cockpit question set (5 Qs)",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
+          "added": "2026-07-10"
+        },
+        {
           "id": "IV-1",
-          "title": "S2 (M3 songs/tracks full merge) spec-formalize - 30-min question set ready",
+          "priority": 48,
+          "form": "interview",
+          "ask": "30-min sitting when you want the M3 songs/tracks merge to go launch-ready - batchable with IV-2",
+          "title": "S2 (M3 songs/tracks full merge) spec-formalize",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
           "added": "2026-07-10"
         },
         {
           "id": "IV-2",
-          "title": "Key picker flat names (Bb/Eb/Ab as first-class keys) - scope/UX call from FORK-4 wave 2",
+          "priority": 44,
+          "form": "digit",
+          "ask": "Should the key picker offer Bb/Eb/Ab as first-class FLAT keys? yes / no / show me a mock",
+          "title": "Key picker flat names (FORK-4 wave 2 residue)",
           "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
-          "added": "2026-07-10"
-        },
-        {
-          "id": "IV-4",
-          "title": "Org-cockpit question set - 5 Qs, any subset unblocks: first department, its evidence-deliverable, skills-inventory home, v1-polling vs wait-for-Azure, Mike visibility",
-          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
           "added": "2026-07-10"
         }
       ]
