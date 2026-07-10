@@ -37,6 +37,22 @@ Default to **doing the next reversible step autonomously** and reporting, rather
 
 If it's in the left column, doing-and-reporting beats asking-and-waiting - that IS "continue without me." If it's in the right column, a mis-fire is expensive, so present it (with a named recommendation so he answers in one digit).
 
+### 3. Compose the menu - single-best, parallel-multi-select, or gated
+
+`1 1 1 1` is the north star for a LINEAR path. But Nik often replies `1 2 3 4` - he batch-selects the max set when the options are INDEPENDENT and he wants them all. So the next-steps list is not always "one best + filler." Pick the menu shape to the situation:
+
+| Shape | When | Form |
+|---|---|---|
+| **Single-best** | One linear next move; everything else is filler | `1` = the named keystroke + a `**Recommended:**`; 2-3 tight alternatives |
+| **Parallel-multi-select** | Several INDEPENDENT things are all wanted (reversible builds, captures, answers) | List them as co-equal actionable items engineered so `1 2 3 4` runs them ALL - each self-contained, no ordering dependency, no overlap. State "pick any set (e.g. `1 2 3`)" so multi-select is obvious. |
+| **Gated / dependency-chain** | A later task DEPENDS on how he answers an earlier one (a fork whose pick changes the downstream work) | Put the SELECTION first as its own numbered choice; make the dependent tasks explicitly "unlocked by your pick above." One decision unblocks the chain - don't bury a fork inside a flat list where a multi-select would run contradictory items. |
+
+Rules of thumb for max momentum:
+- **Prefer a rich parallel menu over a thin single-best when the reversible work genuinely branches into several independent wins** - Nik will select the set he wants in one reply. Under-offering costs him a "what else could we do?" round-trip.
+- **But never let multi-select run contradictory items.** If picking A means B is moot (merge-now vs keep-building-on-the-PR), those are a GATE, not two menu rows - or the `1 2` selects two things that fight. Model the dependency explicitly.
+- **Batch the reversible work into the menu, gate only the true forks.** Do the independent reversible items yourself where you can; reserve the numbered menu for the choices that are his (taste/scope/merge) OR the parallel set he likes to pick from.
+- **When a task can't be verified on this surface** (a phone-only visual, a fit-at-412x915 check), that is itself a reason to GATE it on his confirmation or hand a preview - not to build it blind and claim done.
+
 ## Reduce the response burden
 
 - **Batch the reversible work**, then surface ONE decision - don't ask three times what you could do twice and ask once.
