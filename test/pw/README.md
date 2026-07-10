@@ -39,3 +39,4 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | prog-delete-handles | S-DELHANDLE-OVERFLOW: delete badges sit on their cards |
 | persona-beginner-studio | USDD: beginner sees NO theory prose in the Studio (whynote level-gate) |
 | persona-advanced-studio | USDD: advanced DOES see the whynote banner - same taps, opposite assert |
+| ops-deck-panel | Ops Deck glass: live feed + filters, swarm lanes, 4 operator queues, QUEUE.md board parse, PR-tab graceful fallback (412x915, zero JS errors) |
