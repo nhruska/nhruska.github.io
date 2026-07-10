@@ -1485,17 +1485,17 @@ test('soloChipScale: the mode chip returns the KEY scale via Circle.spellScale (
   assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'mode'), Circle.spellScale('A', 'ionian'));
 });
 test('soloChipScale: Minor/Mixolydian/Dorian mode chips map through CIRCLE_MODE (aeolian/mixolydian/dorian)', function () {
-  assert.deepStrictEqual(Songbook.soloChipScale('D', 'Minor', 'mode'), Circle.spellScale('D', 'aeolian'));
-  assert.deepStrictEqual(Songbook.soloChipScale('G', 'Mixolydian', 'mode'), Circle.spellScale('G', 'mixolydian'));
-  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Dorian', 'mode'), Circle.spellScale('E', 'dorian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('D', 'Minor', 'mode'), Circle.scaleInKey('D', 'aeolian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('G', 'Mixolydian', 'mode'), Circle.scaleInKey('G', 'mixolydian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Dorian', 'mode'), Circle.scaleInKey('E', 'dorian'));
 });
 test('soloChipScale: pentMajor/pentMinor/blues chips read Circle.soloScale directly, independent of the key mode', function () {
-  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMajor'), Circle.soloScale('A', 'pentMajor'));
-  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMinor'), Circle.soloScale('A', 'pentMinor'));
-  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'blues'), Circle.soloScale('A', 'blues'));
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMajor'), Circle.soloScaleInKey('A', 'pentMajor', 'major'));
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'pentMinor'), Circle.soloScaleInKey('A', 'pentMinor', 'major'));
+  assert.deepStrictEqual(Songbook.soloChipScale('A', 'Major', 'blues'), Circle.soloScaleInKey('A', 'blues', 'major'));
 });
 test('soloChipScale: the mode chip on a BLUES key IS the 6-note blues scale (why the Blues-key row dedupes the standalone Blues chip)', function () {
-  assert.deepStrictEqual(Songbook.soloChipScale('C', 'Blues', 'mode'), Circle.soloScale('C', 'blues'));
+  assert.deepStrictEqual(Songbook.soloChipScale('C', 'Blues', 'mode'), Circle.soloScaleInKey('C', 'blues', 'major'));
 });
 test('soloChipScale: unresolvable root -> null (never throws)', function () {
   assert.strictEqual(Songbook.soloChipScale('H', 'Major', 'mode'), null);
@@ -1507,11 +1507,11 @@ test('soloChipScale: unresolvable root -> null (never throws)', function () {
 // across 3 roots per the mission's V&V bar.
 test('soloChipScale: the mixolydian chip resolves via Circle.spellScale for 3 roots (Blues-key row 4th chip)', function () {
   ['A', 'C', 'G'].forEach(function (root) {
-    assert.deepStrictEqual(Songbook.soloChipScale(root, 'Blues', 'mixolydian'), Circle.spellScale(root, 'mixolydian'));
+    assert.deepStrictEqual(Songbook.soloChipScale(root, 'Blues', 'mixolydian'), Circle.scaleInKey(root, 'mixolydian'));
   });
 });
 test('soloChipScale: mixolydian chip is independent of keyMode, like the other non-mode chips', function () {
-  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Major', 'mixolydian'), Circle.spellScale('E', 'mixolydian'));
+  assert.deepStrictEqual(Songbook.soloChipScale('E', 'Major', 'mixolydian'), Circle.scaleInKey('E', 'mixolydian'));
 });
 test('soloChipScale: mixolydian chip on an unresolvable root -> null (never throws)', function () {
   assert.strictEqual(Songbook.soloChipScale('H', 'Blues', 'mixolydian'), null);

@@ -197,6 +197,73 @@
     return L + accidentalFor(cp - NAT_PC[L]);
   }
 
+  // ---- FORK-4 REMOVAL: the key-aware render kernel (2026-07-10) --------------
+  // Everything below is what the app's render paths call instead of the legacy
+  // sharp-only spell()/spellScale()/diatonic()/soloScale(). The legacy functions
+  // stay for KEYLESS/chromatic contexts (tuner, All-browse palette, pack seams,
+  // storage tokens) where the music-theory-coach verdict says sharp-canonical is
+  // acceptable because no key function is asserted.
+  //
+  // preferredTonicName: the enharmonic NAME a key is conventionally written in -
+  // chosen deterministically as the spelling with the FEWEST total accidentals in
+  // its own key-aware scale (tie -> sharp). This is why A#-major renders as
+  // Bb-major (2 flats beats 10 sharp-marks incl. double-sharps) while G#-minor
+  // stays G#-minor (5 sharps beats Ab-minor's 7 flats). The picker/storage can
+  // keep sharp-canonical tokens; DISPLAY goes through this name.
+  var SHARP_TO_FLAT_NAME = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
+  function accidentalCount(names) {
+    return names.join('').replace(/[A-G]/g, '').length;
+  }
+  function preferredTonicName(root, mode) {
+    var sharpName = norm(root);                       // canonical-sharp identity
+    if (pcOf(sharpName) < 0) return root;
+    var flatName = SHARP_TO_FLAT_NAME[sharpName];
+    if (!flatName) return sharpName;                  // natural tonic - one spelling
+    var s = accidentalCount(spellScaleKeyAware(sharpName, mode));
+    var f = accidentalCount(spellScaleKeyAware(flatName, mode));
+    return f < s ? flatName : sharpName;              // tie -> sharp
+  }
+  // scaleInKey / diatonicInKey: the key-aware twins of scale()/diatonic() -
+  // same shapes, letters chosen per degree from the PREFERRED tonic name.
+  function scaleInKey(root, mode) {
+    return spellScaleKeyAware(preferredTonicName(root, mode), mode);
+  }
+  function diatonicInKey(root, mode) {
+    var pc = pcOf(root); if (pc < 0) return [];
+    var sc = scaleInKey(root, mode);
+    var pcs = MODES[modeKey(mode)].map(function (s) { return (pc + s) % 12; });
+    return sc.map(function (r, i) {
+      var third = (((pcs[(i + 2) % 7] - pcs[i]) % 12) + 12) % 12;
+      var fifth = (((pcs[(i + 4) % 7] - pcs[i]) % 12) + 12) % 12;
+      var qq = triadQuality(third, fifth);
+      var rn = (qq.t === 'min' || qq.t === 'dim') ? RN[i].toLowerCase() : RN[i];
+      if (qq.t === 'dim') rn += '°'; else if (qq.t === 'aug') rn += '+';
+      return { roman: rn, chord: r + qq.q, root: r, quality: qq.q };
+    });
+  }
+  // soloScaleInKey: SOLO_SCALES (pents/blues/modes) spelled letter-per-DEGREE from
+  // the preferred tonic name - each entry's degrees array names which letter each
+  // note takes ('♭3' -> the 3rd letter, lowered), so C-mixolydian's b7 reads Bb and
+  // A-minor-pent reads A C D E G (no mis-lettered accidentals).
+  function soloScaleInKey(root, scaleId, keyMode) {
+    var s = SOLO_SCALES[scaleId];
+    if (!s) return [];
+    var tonic = preferredTonicName(root, keyMode || (s.family === 'minor' ? 'minor' : 'major'));
+    var pc0 = pcOf(tonic);
+    var li = LETTERS7.indexOf(String(tonic).charAt(0).toUpperCase());
+    if (pc0 < 0 || li < 0) return soloScale(root, scaleId);
+    return s.formula.map(function (iv, i) {
+      var degNum = parseInt(String(s.degrees[i]).replace(/[^0-9]/g, ''), 10);
+      var L = LETTERS7[(li + degNum - 1) % 7];
+      return L + accidentalFor(((pc0 + iv) % 12) - NAT_PC[L]);
+    });
+  }
+  // noteInKey: display name for a chord ROOT inside a stated key - spellRootInKey
+  // routed through the preferred tonic name, so it composes with the naming policy.
+  function noteInKey(keyRoot, keyMode, noteRoot) {
+    return spellRootInKey(preferredTonicName(keyRoot, keyMode), keyMode, noteRoot);
+  }
+
   /* ---- SVG wheel renderer (browser only; node -c'd, eyeballed) ---- */
   var NS = 'http://www.w3.org/2000/svg';
   function polar(c, r, deg) { var a = (deg - 90) * Math.PI / 180; return [c + r * Math.cos(a), c + r * Math.sin(a)]; }
@@ -364,6 +431,13 @@
     // the staged FORK-4 removal; these are the vetted, unit-tested core.
     spellScaleKeyAware: spellScaleKeyAware,
     spellRootInKey: spellRootInKey,
+    // FORK-4 removal render kernel: preferred enharmonic key names + key-aware
+    // twins of scale/diatonic/soloScale + single-note display naming.
+    preferredTonicName: preferredTonicName,
+    scaleInKey: scaleInKey,
+    diatonicInKey: diatonicInKey,
+    soloScaleInKey: soloScaleInKey,
+    noteInKey: noteInKey,
     scale: scale,
     scaleDegrees: scaleDegrees,
     modeChange: modeChange,

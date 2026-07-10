@@ -887,23 +887,27 @@
   function soloChipScale(root, keyMode, scaleId) {
     var C = keyViewCircle();
     if (!C) return null;
+    // FORK-4 removal: every note list is KEY-AWARE (letter-per-degree from the
+    // preferred tonic name) with the legacy sharp fns as fallback - display
+    // strings only; no token changes.
+    var kmArg = canonMode(keyMode) === 'Minor' ? 'minor' : 'major';
     if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
-      var notes = C.soloScale(root, scaleId);
+      var notes = C.soloScaleInKey ? C.soloScaleInKey(root, scaleId, kmArg) : C.soloScale(root, scaleId);
       return notes.length ? notes : null;
     }
     if (scaleId === 'mixolydian') {
-      if (typeof C.spellScale !== 'function') return null;
-      var mixNotes = C.spellScale(root, 'mixolydian');
+      if (typeof C.spellScale !== 'function' && typeof C.scaleInKey !== 'function') return null;
+      var mixNotes = C.scaleInKey ? C.scaleInKey(root, 'mixolydian') : C.spellScale(root, 'mixolydian');
       return mixNotes.length ? mixNotes : null;
     }
     var mk = canonMode(keyMode);
     if (mk === 'Blues') {
-      var bluesNotes = C.soloScale(root, 'blues');
+      var bluesNotes = C.soloScaleInKey ? C.soloScaleInKey(root, 'blues', 'major') : C.soloScale(root, 'blues');
       return bluesNotes.length ? bluesNotes : null;
     }
     var circleMode = CIRCLE_MODE[mk];
-    if (!circleMode || typeof C.spellScale !== 'function') return null;
-    var scaleNotes = C.spellScale(root, circleMode);
+    if (!circleMode || (typeof C.spellScale !== 'function' && typeof C.scaleInKey !== 'function')) return null;
+    var scaleNotes = C.scaleInKey ? C.scaleInKey(root, circleMode) : C.spellScale(root, circleMode);
     return scaleNotes.length ? scaleNotes : null;
   }
   // Pure + exported for tests (S-CHIPS-PLUS): the scale-degree glyphs for a
@@ -1959,14 +1963,36 @@
     // move). Name kept - test/songbook.test.js asserts this call site is wired
     // through composeWireTap by name, not a raw onclick.
     function composeWireTap(el, fn) { return global.ListItem.wireTap(el, fn); }
-    function packDiagram(name, size) {
-      if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
+    function packDiagram(name, size, displayName) {
+      // FORK-4 removal: `name` is ALWAYS the canonical-sharp TOKEN (keys the
+      // voicing pack, audio, storage); `displayName` is the key-aware label to
+      // SHOW (Bb for the bVII of C). Relabel after the pack renders - packs
+      // stay untouched and keep resolving by token.
+      if (pack && typeof pack.diagram === 'function') {
+        var el = pack.diagram(name, size);
+        if (el && displayName && displayName !== name) {
+          var lbl = el.querySelector && el.querySelector('.chord-name, .nm');
+          if (lbl) lbl.textContent = displayName;
+        }
+        return el;
+      }
       var wrap = document.createElement('div');
       wrap.className = (size === 'big') ? 'bigC' : 'chord';
       // name is a freeform custom-song token here (no real pack to resolve it),
       // so escape before innerHTML - same XSS class as the sheet renderer.
-      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(name) + '</span>';
+      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(displayName || name) + '</span>';
       return wrap;
+    }
+    // FORK-4 removal: the key-aware DISPLAY name for a chord token inside the
+    // current songKey (bVII of C shows Bb) - tokens stay canonical-sharp for
+    // packs/audio/storage/suggestions; keyless contexts (no songKey.root, the
+    // All browse) return the token unchanged per the music-theory-coach verdict.
+    function dispChordName(c) {
+      var C = global.Circle;
+      if (!songKey.root || !C || !C.noteInKey) return c;
+      var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(c == null ? '' : c).trim());
+      if (!m) return c;
+      return C.noteInKey(songKey.root, songKey.mode, m[1]) + m[2];
     }
     // S-PROG-WRAP (UAT U8): real measurements feeding progStripMode's decision -
     // the DOM-caller half of the fitScale-style contract (pure fn takes plain
@@ -2090,13 +2116,13 @@
             // OWN slots must stay interactive at cap (remove one to add
             // another) - the `.prog .suggChip` CSS carve-out exempts them.
             var tok = document.createElement('button'); tok.type = 'button'; tok.className = 'suggChip';
-            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = c;
+            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = dispChordName(c);
             tok.appendChild(nameSpan);
             if (rn) { var rnSpan = document.createElement('span'); rnSpan.className = 'scRn'; rnSpan.textContent = rn; tok.appendChild(rnSpan); }
             tok.onclick = function () { packPlayChord(c); };
             slot.appendChild(tok);
           } else {
-            var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
+            var d = packDiagram(c, 'small', dispChordName(c)); d.onclick = function () { packPlayChord(c); };
             slot.appendChild(d);
             // interval relative to the key — think I IV V, not shapes
             if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
@@ -2353,7 +2379,7 @@
           });
           // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
-            diagram: packDiagram,
+            diagram: function (cc, sz) { return packDiagram(cc, sz, dispChordName(cc)); },
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
           });
         } else {
@@ -2362,7 +2388,7 @@
           // never blank and degrades gracefully. wireTap is movement-cancelled like every
           // other chord tile.
           diatonicChords(keyRoot, keyMode).forEach(function (c) {
-            grid.appendChild(wireTap(packDiagram(c, 'small'), c));
+            grid.appendChild(wireTap(packDiagram(c, 'small', dispChordName(c)), c));
           });
         }
         if (scroller) scroller.insertBefore(leadWrap, grid);
@@ -2445,8 +2471,12 @@
         var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
+        // FORK-4 removal: the chip shows the preferred enharmonic key name
+        // (A# major displays as Bb); songKey.root stays the canonical token.
+        var chipRoot = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(songKey.root, songKey.mode) : songKey.root;
         chip.innerHTML = songKey.root
-          ? (songKey.root + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          ? (chipRoot + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
@@ -2810,7 +2840,7 @@
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
-      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      var html = '<span class="scName">' + escHTML(dispChordName(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };

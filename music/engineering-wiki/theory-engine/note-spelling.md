@@ -4,66 +4,45 @@
 
 ## Purpose
 
-Canonical-sharp spelling policy (FORK-4), the sharp-tie deterministic rule, and the #98 key-aware regime seam that will flip all statements marked `[TRACKS-#98]`.
+The KEY-AWARE spelling regime (regime B, ACTIVE since 2026-07-10 - the FORK-4 removal), the token-vs-display split that made it safe, and the retired canonical-sharp policy kept for the keyless contexts where it still governs.
 
-## Canonical sharps (FORK-4) [STABLE]
+## Regime B - key-aware spelling (ACTIVE) [STABLE]
 
-The app uses ONE spelling per pitch class, everywhere: C C# D D# E F F# G G# A A# B. What you pick is what every surface shows - choose D#, and the key label, scale, chords-in-key, circle of fifths, and fret notes all say D# (never Eb). [STABLE]
+Inside a stated key, note and chord NAMES spell by FUNCTION - conservatory letter-per-degree (seven letters, each used once, accidentals chosen to hit each pitch), from the key's PREFERRED enharmonic tonic name. The bVII of C reads Bb (never A#); C blues is C Eb F Gb G Bb; A#-major contexts render as Bb major. The name always AGREES with the roman-numeral/degree label beside it. [STABLE]
 
-Flat input is accepted (typing or importing Bb), but flats never appear in output (norm() lookup, circle.js:21-25). [STABLE]
+Kernel (circle.js, unit-tested in test/key-spelling.test.js incl. the 12 professor traps):
 
-| Cost | Accepted |
+| Function | Role |
 |---|---|
-| Scale listings do not follow letter-per-degree notation | D# mixolydian = D# F G G# A# C C# (letters repeat; no E or B) |
-| Some names diverge from common usage | The app says A# where charts say Bb; Studio hints "often written Bb" in prose |
-| Instrument chord voicings found enharmonically | A request for A# finds a hand-curated Bb fingering; display name stays canonical |
+| `preferredTonicName(root, mode)` | The enharmonic NAME a key is written in - fewest total accidentals in its own key-aware scale, tie -> sharp. A# major -> Bb; G# minor stays G#; F# major stays F# (6/6 tie). |
+| `scaleInKey(root, mode)` | Key-aware scale note names (letter-per-degree from the preferred tonic) |
+| `diatonicInKey(root, mode)` | Diatonic triads with key-aware letters (F major IV = Bb) |
+| `soloScaleInKey(root, scaleId, keyMode)` | SOLO_SCALES (pents/blues/modes) spelled by DEGREE number |
+| `noteInKey(keyRoot, keyMode, noteRoot)` | Single chord-root display name by chromatic-degree function |
 
-## Sharp-tie deterministic policy [STABLE]
+## The token-vs-display split (what made the flip safe) [STABLE]
 
-When a pitch class has two enharmonic spellings with equal accidentals (F#/Gb, C#/Db, A#/Bb, D#/Eb), ties render SHARP (circle.js:20, ROOTS row). This is a PRODUCT POLICY, not standard conservatory practice. [STABLE]
+**Chord TOKENS stay canonical-sharp everywhere data flows**: storage (`seq`), voicing-pack lookup, audio, suggestion/degree engines, targeting - all unchanged. Only DISPLAY surfaces respell, at the render seams:
 
-Basis: conservatory practice treats F#/Gb and D#/Eb as legitimate equal-accidental spellings; guitar pedagogy leans sharp. For a fretboard-oriented surface, ties render sharp consistently. [STABLE]
+| Seam | Where |
+|---|---|
+| Scale note lists + fretboard names | `studioTheory`/`soloBundle` (tracks.js), `soloChipScale` (songbook.js) - the `notes` arrays are display strings; pcs derive from the same names (`noteToPc` reads flats natively) |
+| Chords-in-key chips (Studio) | `dispChord()` label; `data-chord` keeps the token |
+| Compose In-key tiles / progression slots / suggestion chips | `dispChordName()` + `packDiagram(token, size, displayName)` - the pack resolves by token, the label is relabeled after render |
+| Key chip + key prose (whynote/scaletip/keyLabel) | `dispKeyRoot()` / `preferredTonicName` |
 
-Ground truth: tested against conservatory letter-sequential + stacked-thirds rules (test/theory-canon.test.js). Professor verdict: tie policy documented, not a bug (theory-professor-review-20260703.md, disposition). [STABLE]
+**Keyless/chromatic contexts stay canonical-sharp** (music-theory-coach verdict: sharp is acceptable where no key function is asserted): the tuner, the All-browse palette (its A# tile stays A# until it lands in a keyed progression), pack data, and every stored token. Flat INPUT still normalizes for identity (norm(), circle.js F2S). [STABLE]
 
-| Pitch Class | Sharp | Flat | Rendered |
-|---|---|---|---|
-| 1 | C# | Db | C# |
-| 3 | D# | Eb | D# |
-| 6 | F# | Gb | F# |
-| 8 | G# | Ab | G# |
-| 10 | A# | Bb | A# |
+## Retired: canonical-sharp-everywhere (FORK-4, regime A) [STABLE]
 
-## The #98 key-aware spelling seam [TRACKS-#98]
+Until 2026-07-10 ONE sharp spelling per pitch class rendered everywhere (the FORK-4 pilot decision). Its costs (letters repeating in scale listings, A# where charts say Bb, numeral/name self-contradiction - "bVII" labeled over "A#") were accepted to avoid the old two-spellings-on-one-screen bug. Regime B removes those costs while KEEPING the single-identity guarantee via the token/display split. The legacy `spell()`/`spellScale()`/`soloScale()` remain in circle.js for the keyless contexts and identity math. [STABLE]
 
-PR #98 (key-aware spelling) introduces regime B: scale names follow conservatory letter-sequential rules (seven letters, each used once, fewest accidentals). Until #98 merges, regime A (current) uses canonical sharps everywhere. [TRACKS-#98]
+Sharp-tie policy survives inside `preferredTonicName`: equal-accidental keys (F#/Gb) render SHARP - same deterministic tie rule as before, now scoped to key NAMING. [STABLE]
 
-| Regime | Active | Policy | Example: Ab-major pitch set |
-|---|---|---|---|
-| A (CURRENT) | main | Canonical-sharp always; mode does not affect spelling | G# A# C C# D# F G |
-| B (POST-#98) | PR #98 in flight | Letter-sequential per key+mode; conventional key naming | Ab Bb C Db Eb F G |
+## The 12 golden trap cases (professor adversarial - regime-B acceptance, NOW ENFORCED) [STABLE]
 
-Under regime B, scale names come from `spellScaleKeyAware(root, mode)` + `keyLabel` (seam functions on the #98 branch, circle.js ~105-131). Regime A uses `spellScale(root, mode)` (circle.js:69-72). [TRACKS-#98]
-
-## The 12 golden trap cases (professor adversarial, regime-B acceptance) [TRACKS-#98]
-
-When #98 ships and regime B is live, these must hold:
-
-1. F Major -> scale F G A Bb C D E; chords F Gm Am Bb C Dm Edim
-2. C# Major -> render as Db Major; scale Db Eb F Gb Ab Bb C; chords Db Ebm Fm Gb Ab Bbm Cdim
-3. F# Major -> scale F# G# A# B C# D# E#; chords F# G#m A#m B C# D#m E#dim
-4. C# Mixolydian -> scale C# D# E# F# G# A# B; chords C# D#m E#dim F# G#m A#m B
-5. D# Minor -> scale D# E# F# G# A# B C#; chords D#m E#dim F# G#m A#m B C#
-6. A# Minor -> render as Bb Minor; scale Bb C Db Eb F Gb Ab; chords Bbm Cdim Db Ebm Fm Gb Ab
-7. G# Minor -> KEEP G# Minor (not Ab Minor); scale G# A# B C# D# E F#
-8. Eb Dorian -> scale Eb F Gb Ab Bb C Db; chords Ebm Fm Gb Ab Bbm Cdim Db
-9. Bb Major shape lookup -> display Bb, Eb; no leaked A#, D#
-10. Theoretical D# Major if allowed -> D# E# F## G# A# B# C##; otherwise auto-render Eb Major
-11. Theoretical Cb Major if allowed -> Cb Db Eb Fb Gb Ab Bb; otherwise auto-render B Major
-12. F# Major vii -> symbol E#dim, tones E# G# B; shape may reuse Fdim internally, display must not leak it
-
-Source: theory-professor-review-20260703.md (adversarial verdicts + trap cases, also posted to PR #98's review thread). [TRACKS-#98]
+All encoded as permanent regression tests in test/key-spelling.test.js ("professor traps" block): F major/Bb, C#-major-as-Db, F# major with E#dim vii (display never leaks the internal Fdim token), C# mixolydian, D# minor kept sharp, A#-minor-as-Bbm, G# minor kept, Eb dorian, no leaked sharps in flat contexts, D#-major-auto-Eb. Trap 11 (Cb major) is N/A by design: Cb is not an accepted input; unknown roots fail safe to []. Source: theory-professor-review-20260703.md. [STABLE]
 
 ---
 
-**Anchors verified:** circle.js:20-28 (ROOTS, norm, F2S), circle.js:69-87 (spellScale, modeChange), songbook.js:69 (ROOTS), test/theory-canon.test.js (tie policy), theory-professor-review-20260703.md (12 traps, verdicts), #98 branch circle.js ~105-131 (seam fns)
+**Anchors verified:** circle.js (ROOTS/norm/F2S; spellScaleKeyAware/spellRootInKey; preferredTonicName/scaleInKey/diatonicInKey/soloScaleInKey/noteInKey), tracks.js (studioTheory/soloBundle notes, dispChord/dispKeyRoot, chip + panel seams), songbook.js (dispChordName, packDiagram displayName, soloChipScale, key chip), test/key-spelling.test.js (kernel + professor traps), test/pw/scenarios/solo-skip-mixolydian.json (pixel gate: Bb in the Studio notes line)

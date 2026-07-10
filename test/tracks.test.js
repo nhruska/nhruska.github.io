@@ -214,7 +214,7 @@ test('studioTheory: blues branches to the solo blues scale + BLUES_KEY palette, 
   var th = T.studioTheory('A', 'blues');
   assert.strictEqual(th.scaleMode, 'blues');
   assert.strictEqual(th.label, 'Blues');
-  assert.deepStrictEqual(th.notes, Circle.soloScale('A', 'blues'));
+  assert.deepStrictEqual(th.notes, Circle.soloScaleInKey('A', 'blues', 'blues'));
   assert.deepStrictEqual(th.degrees, Circle.soloScaleDegrees('blues'));
   assert.strictEqual(th.pcs.length, 6);
   // chords come from Circle.bluesKey (I7/IV7/V7), never Circle.diatonic
@@ -241,18 +241,18 @@ test('soloBundle: a falsy scaleId also delegates to studioTheory (default chip)'
 });
 test('soloBundle: pentMajor/pentMinor/blues route through Circle.soloScale, not studioTheory', function () {
   var pm = T.soloBundle('A', 'major', 'pentMajor');
-  assert.deepStrictEqual(pm.notes, Circle.soloScale('A', 'pentMajor'));
+  assert.deepStrictEqual(pm.notes, Circle.soloScaleInKey('A', 'pentMajor', 'major'));
   assert.deepStrictEqual(pm.degrees, Circle.soloScaleDegrees('pentMajor'));
   assert.strictEqual(pm.label, 'Pent major');
   assert.strictEqual(pm.pcs.length, 5);
 
   var mn = T.soloBundle('A', 'minor', 'pentMinor');
-  assert.deepStrictEqual(mn.notes, Circle.soloScale('A', 'pentMinor'));
+  assert.deepStrictEqual(mn.notes, Circle.soloScaleInKey('A', 'pentMinor', 'minor'));
   assert.strictEqual(mn.label, 'Pent minor');
   assert.strictEqual(mn.pcs.length, 5);
 
   var bl = T.soloBundle('A', 'minor', 'blues');
-  assert.deepStrictEqual(bl.notes, ['A', 'C', 'D', 'D#', 'E', 'G']); // regime-A: sharp-spelled blue note
+  assert.deepStrictEqual(bl.notes, ['A', 'C', 'D', 'Eb', 'E', 'G']); // FORK-4 removal: key-aware blue note (b5 = Eb, never D#)
   assert.strictEqual(bl.label, 'Blues');
   assert.strictEqual(bl.pcs.length, 6);
 });

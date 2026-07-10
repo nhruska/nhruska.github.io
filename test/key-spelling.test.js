@@ -77,4 +77,72 @@ test('spellRootInKey: the degree label and the note name now AGREE', function ()
   assert.strictEqual(name.charAt(0), 'B', 'note is a B-letter (agrees with the VII label)');
 });
 
+// ---- FORK-4 removal kernel: preferred tonic names + key-aware twins ----
+test('preferredTonicName: A#/D#/C# majors prefer their flat names; F# ties to sharp; naturals unchanged', function () {
+  assert.strictEqual(Circle.preferredTonicName('A#', 'major'), 'Bb');
+  assert.strictEqual(Circle.preferredTonicName('D#', 'major'), 'Eb');
+  assert.strictEqual(Circle.preferredTonicName('C#', 'major'), 'Db');
+  assert.strictEqual(Circle.preferredTonicName('F#', 'major'), 'F#');
+  assert.strictEqual(Circle.preferredTonicName('C', 'major'), 'C');
+});
+test('preferredTonicName: G# minor stays sharp (5# beats Ab minor 7b); A# minor prefers Bb minor', function () {
+  assert.strictEqual(Circle.preferredTonicName('G#', 'minor'), 'G#');
+  assert.strictEqual(Circle.preferredTonicName('A#', 'minor'), 'Bb');
+});
+test('scaleInKey: A#-major context renders as Bb major (no double-sharps ever shown)', function () {
+  assert.deepStrictEqual(Circle.scaleInKey('A#', 'major'), ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']);
+});
+test('scaleInKey: C mixolydian shows Bb (the b7 the operator kept hitting as A#)', function () {
+  assert.deepStrictEqual(Circle.scaleInKey('C', 'mixolydian'), ['C', 'D', 'E', 'F', 'G', 'A', 'Bb']);
+});
+test('diatonicInKey: F major chords spell Bb (IV), matching their roman labels', function () {
+  var chords = Circle.diatonicInKey('F', 'major').map(function (d) { return d.chord; });
+  assert.deepStrictEqual(chords, ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'Edim']);
+});
+test('soloScaleInKey: C blues is the standard C Eb F Gb G Bb; A pent-minor stays natural', function () {
+  assert.deepStrictEqual(Circle.soloScaleInKey('C', 'blues', 'major'), ['C', 'Eb', 'F', 'Gb', 'G', 'Bb']);
+  assert.deepStrictEqual(Circle.soloScaleInKey('A', 'pentMinor', 'minor'), ['A', 'C', 'D', 'E', 'G']);
+});
+test('soloScaleInKey: pc identity holds - key-aware names hit the same pitch classes as legacy', function () {
+  var SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  function pc(n){var m=/^([A-G])([#b]*)$/.exec(n);var p={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]];for(var i=0;i<m[2].length;i++)p+=m[2][i]==='#'?1:-1;return((p%12)+12)%12;}
+  SHARP.forEach(function (root) {
+    ['pentMajor','pentMinor','blues','mixolydian','dorian'].forEach(function (id) {
+      var a = Circle.soloScale(root, id).map(pc);
+      var b = Circle.soloScaleInKey(root, id).map(pc);
+      assert.deepStrictEqual(b, a, root + ' ' + id + ' pcs must match legacy');
+    });
+  });
+});
+test('noteInKey composes with preferred naming (bVII of Bb-major-as-A# reads Ab)', function () {
+  assert.strictEqual(Circle.noteInKey('A#', 'major', 'G#'), 'Ab');
+});
+
+// ---- The 12 professor trap cases (theory-professor-review-20260703, the
+// regime-B acceptance bar from engineering-wiki/theory-engine/note-spelling.md)
+// - now permanent regression guards. Trap 11 (Cb major) is N/A by design:
+// Cb is not an accepted input (norm()'s flat table covers the five common
+// flats); unknown roots fail safe to [].
+test('professor traps 1-10 + 12: the regime-B acceptance table holds', function () {
+  function scale(r, m) { return Circle.scaleInKey(r, m).join(' '); }
+  function chords(r, m) { return Circle.diatonicInKey(r, m).map(function (d) { return d.chord; }).join(' '); }
+  assert.strictEqual(scale('F', 'major'), 'F G A Bb C D E');                       // 1
+  assert.strictEqual(chords('F', 'major'), 'F Gm Am Bb C Dm Edim');
+  assert.strictEqual(Circle.preferredTonicName('C#', 'major'), 'Db');              // 2
+  assert.strictEqual(scale('C#', 'major'), 'Db Eb F Gb Ab Bb C');
+  assert.strictEqual(chords('C#', 'major'), 'Db Ebm Fm Gb Ab Bbm Cdim');
+  assert.strictEqual(scale('F#', 'major'), 'F# G# A# B C# D# E#');                 // 3
+  assert.strictEqual(chords('F#', 'major'), 'F# G#m A#m B C# D#m E#dim');
+  assert.strictEqual(scale('C#', 'mixolydian'), 'C# D# E# F# G# A# B');            // 4
+  assert.strictEqual(scale('D#', 'minor'), 'D# E# F# G# A# B C#');                 // 5
+  assert.strictEqual(Circle.preferredTonicName('A#', 'minor'), 'Bb');              // 6
+  assert.strictEqual(scale('A#', 'minor'), 'Bb C Db Eb F Gb Ab');
+  assert.strictEqual(Circle.preferredTonicName('G#', 'minor'), 'G#');              // 7
+  assert.strictEqual(scale('G#', 'minor'), 'G# A# B C# D# E F#');
+  assert.strictEqual(scale('Eb', 'dorian'), 'Eb F Gb Ab Bb C Db');                 // 8
+  assert.strictEqual(scale('A#', 'major').indexOf('A#'), -1);                      // 9 (no leaked sharps in Bb ctx)
+  assert.strictEqual(Circle.preferredTonicName('D#', 'major'), 'Eb');              // 10 (auto-render Eb major)
+  assert.strictEqual(Circle.noteInKey('F#', 'major', 'F') + 'dim', 'E#dim');       // 12 (display never leaks Fdim)
+});
+
 run();
