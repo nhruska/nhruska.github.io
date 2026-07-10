@@ -277,6 +277,11 @@
   .cofWedge.on{fill:var(--accent);}
   .cofWedge-rel{fill:var(--accent-dim);}
   .cofWedge-nb{fill:var(--accent-deep);}
+  /* S-COF-ANIMATE: the sounding scale note's wedge during the scale audition
+     (tracks.js markWheelPc) - a fill swap riding the existing .12s transition.
+     Color change only, no motion (reduced-motion safe); declared AFTER
+     on/rel/nb so the pulse wins while the note sounds, then the tint returns. */
+  .cofWedge-sound{fill:var(--accent);}
   .cofLabel{fill:var(--txt-soft);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
   .cofLabel.on{fill:var(--on-accent);}
   .cofLabel-rel{fill:var(--accent);}
