@@ -1105,6 +1105,30 @@
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
     var PROFILE_ID = opts.profileId || null; // instrument profile id, carried onto the inversions deep-link
+    // ---- M-COMPETENCY LZ (2026-07-11): evidence hooks. GUARDED - a no-op
+    // until competency.js is wired into play/index.html + sw.js CORE (the
+    // coupled parent merge step). The engine records what the musician DOES
+    // (assembling a song, saving a progression, adding a section) against the
+    // per-skill competency profile; nothing personal is stored in this repo -
+    // the levels live only in the user's localStorage (music.competency.v1).
+    function competencyRef() {
+      if (global.Competency) return global.Competency;
+      if (typeof module !== 'undefined' && module.exports) { try { return require('./competency.js'); } catch (e) {} }
+      return null;
+    }
+    function recordComp(compId) {
+      var C = competencyRef(); if (!C || !C.recordEvidence) return;
+      try { C.recordEvidence('music-composition', compId); } catch (e) {}
+    }
+    // Map the ACTIVE instrument profile to its repertoire competency; degrade
+    // to the shared stringed-instrument chord-shapes when it isn't uke/guitar.
+    function recordRepertoire() {
+      var C = competencyRef(); if (!C || !C.recordEvidence) return;
+      var p = String(PROFILE_ID || '').toLowerCase(), skill = 'stringed-instrument', comp = 'chord-shapes';
+      if (p.indexOf('ukulele') === 0) { skill = 'ukulele'; comp = 'uke-repertoire'; }
+      else if (p.indexOf('guitar') === 0) { skill = 'guitar'; comp = 'gtr-repertoire'; }
+      try { C.recordEvidence(skill, comp); } catch (e) {}
+    }
     // P3: seed the backing-track finder with the built key+mode (no-op if not wired).
     var seedBackingKey = opts.seedBackingKey || function () {};
     // M3: the repertoire merges songs.json with the backing-track catalog. getTracks()
@@ -2534,6 +2558,7 @@
       songSections.push({ label: label, seq: progression.slice() });
       disarmRm(); // a fresh add clears any armed chip remover
       renderSongTray();
+      recordComp('comp-song-form'); // M-COMPETENCY: shaping a section = song-form practice (small)
       showComposeToast('Added ' + label + ' to the song.');
     }
     // Assemble the buffer into ONE custom song via the existing createCustomItem
@@ -2549,6 +2574,10 @@
       songSections = [];
       disarmRm();
       renderSongTray();
+      // M-COMPETENCY: assembling a whole song is the strongest observable
+      // composition evidence - song-form + progressions, plus repertoire on
+      // the active instrument (a playable song was produced).
+      recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
       showComposeToast('Assembled ' + cs.t + ' – opening it now.');
       openPractice(cs.id);
     }
@@ -3961,6 +3990,7 @@
           var updOk = saveCustom();
           // F31 (UAT): no persist - the confirmation always auto-dismisses now (see
           // showComposeToast's header comment + hideComposeToast() below).
+          if (updOk) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
           showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk);
           done(upd); return;
         }
@@ -3992,6 +4022,7 @@
         // than creating a duplicate. It will NOT survive a reload if storage stays
         // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
+        if (ok) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
         // F31 (UAT): no persist - see showComposeToast's header comment.
         showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok);
         done(cs);
@@ -4456,6 +4487,172 @@
     // what's on screen. Seed currentTab to match so the FIRST real user
     // navigation correctly pushes a back-history layer.
     if (!currentTab) currentTab = 'library';
+
+    /* ---- M-COMPETENCY LZ: the Skills panel, self-injected into the Settings
+     * sheet body (#settingsBody). The Settings sheet markup lives in
+     * play/index.html (a coupled parent merge surface this engine does not
+     * edit), so - matching the songTray / composeToast self-injection pattern -
+     * the panel APPENDS itself into the existing #settingsBody DOM node rather
+     * than editing that file. It uses the shared .accSec/.accBtn/.accBody look
+     * (Element Consistency Law) and drives its own single-section Accordion so
+     * its open/close feel matches the other Settings sections. Guarded: if
+     * competency.js is not wired (no window.Competency), nothing injects. */
+    function mountSkillsPanel() {
+      var C = competencyRef();
+      if (!C || !C.FRAMEWORKS) return;                 // not wired yet -> no panel
+      var body = document.getElementById('settingsBody');
+      if (!body || document.getElementById('accSecSkills')) return; // no host, or already mounted
+
+      var sec = document.createElement('section');
+      sec.className = 'accSec'; sec.id = 'accSecSkills'; sec.setAttribute('data-acc', 'skills');
+      var btn = document.createElement('button');
+      btn.className = 'accBtn'; btn.id = 'accBtnSkills'; btn.type = 'button';
+      btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'accBodySkills');
+      btn.textContent = 'Skills';
+      var pane = document.createElement('div');
+      pane.className = 'accBody skillsPanel'; pane.id = 'accBodySkills';
+      pane.setAttribute('role', 'region'); pane.setAttribute('aria-labelledby', 'accBtnSkills');
+      pane.hidden = true;
+      sec.appendChild(btn); sec.appendChild(pane); body.appendChild(sec);
+
+      // Hidden file input for import (shared by the first-start lead + the row).
+      var fileInput = document.createElement('input');
+      fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
+      fileInput.accept = 'application/json,.json'; fileInput.hidden = true;
+      sec.appendChild(fileInput);
+      fileInput.onchange = function () {
+        var f = fileInput.files && fileInput.files[0];
+        if (!f) return;
+        var rdr = new FileReader();
+        rdr.onload = function () {
+          var res;
+          try { res = C.importProfile(String(rdr.result)); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+          if (res && res.ok) { showToast('Imported your ' + skillName(res.skill) + ' profile'); }
+          else { showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true); }
+          fileInput.value = ''; // allow re-picking the same file
+          renderSkillsPanel();
+        };
+        rdr.onerror = function () { showToast("Couldn't read that file", true); fileInput.value = ''; };
+        rdr.readAsText(f);
+      };
+
+      function skillName(id) {
+        for (var i = 0; i < C.FRAMEWORKS.length; i++) if (C.FRAMEWORKS[i].id === id) return C.FRAMEWORKS[i].name;
+        return id;
+      }
+      function fmtDate(iso) {
+        if (!iso) return '';
+        try { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; }
+      }
+      function downloadProfile(skillId) {
+        var json = C.exportProfile(skillId);
+        if (!json) { showToast("Nothing to export yet", true); return; }
+        try {
+          var blob = new Blob([json], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = skillId + '.json';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+          showToast('Exported ' + skillName(skillId));
+        } catch (e) { showToast("Couldn't export on this device", true); }
+      }
+
+      // Rebuild the panel body from the current working copy every open, so it
+      // reflects evidence recorded since it was last viewed.
+      function renderSkillsPanel() {
+        pane.textContent = '';
+        var hint = document.createElement('p'); hint.className = 'setHint';
+        hint.textContent = 'Your skills grow as you use the app. Everything here stays on this device - export a profile to carry it to another, or import one to personalize.';
+        pane.appendChild(hint);
+
+        var has = C.hasData();
+        // First-start lead: no data yet -> import affordance first (never a modal).
+        var importRow = document.createElement('button');
+        importRow.className = 'listItem setRow skillsImportRow'; importRow.type = 'button';
+        var ib = document.createElement('span'); ib.className = 'li-body';
+        var it = document.createElement('span'); it.className = 'li-title'; it.textContent = 'Import a profile';
+        var ia = document.createElement('span'); ia.className = 'li-artist';
+        ia.textContent = has ? 'Merge a profile file from another device.' : 'Have a profile? Import it to personalize.';
+        ib.appendChild(it); ib.appendChild(ia); importRow.appendChild(ib);
+        importRow.onclick = function () { fileInput.click(); };
+        if (!has) pane.appendChild(importRow); // lead with import when empty
+
+        // One expandable row per skill.
+        C.FRAMEWORKS.forEach(function (fw) {
+          var prof = C.getProfile(fw.id);
+          var row = document.createElement('div'); row.className = 'skillRow';
+          var head = document.createElement('button'); head.className = 'skillHead'; head.type = 'button';
+          head.setAttribute('aria-expanded', 'false');
+          var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = fw.name;
+          var ev = (prof.competencies || []).reduce(function (n, c) { return n + (c.evidence_count || 0); }, 0);
+          var meta = document.createElement('span'); meta.className = 'skillMeta';
+          meta.textContent = ev > 0 ? (ev + ' session' + (ev === 1 ? '' : 's')) : 'no evidence yet';
+          head.appendChild(nm); head.appendChild(meta);
+          var detail = document.createElement('div'); detail.className = 'skillDetail'; detail.hidden = true;
+          head.onclick = function () {
+            var open = detail.hidden;
+            detail.hidden = !open;
+            head.setAttribute('aria-expanded', open ? 'true' : 'false');
+          };
+
+          (prof.competencies || []).forEach(function (c) {
+            var cr = document.createElement('div'); cr.className = 'compRow';
+            var cn = document.createElement('span'); cn.className = 'compName'; cn.textContent = c.name;
+            var bar = document.createElement('div'); bar.className = 'compBar';
+            bar.setAttribute('role', 'img');
+            bar.setAttribute('aria-label', c.name + ': level ' + (c.level || 0) + ' of a ' + c.target + ' target');
+            var fill = document.createElement('div'); fill.className = 'compBarFill';
+            fill.style.width = Math.max(0, Math.min(100, c.level || 0)) + '%';
+            bar.appendChild(fill);
+            var cm = document.createElement('span'); cm.className = 'compMeta';
+            var when = fmtDate(c.last_evidence);
+            cm.textContent = (c.level || 0) + ' / ' + c.target + (c.evidence_count ? ' · ' + c.evidence_count + '×' : '') + (when ? ' · ' + when : '');
+            cr.appendChild(cn); cr.appendChild(bar); cr.appendChild(cm);
+            detail.appendChild(cr);
+          });
+
+          // Preferences (operator addendum): quiet read-only lines when present.
+          if (Array.isArray(prof.preferences) && prof.preferences.length) {
+            prof.preferences.forEach(function (p) {
+              var pr = document.createElement('p'); pr.className = 'skillPref';
+              var n = p.evidence_count || 0;
+              pr.textContent = 'Style: ' + (p.statement || '') + (n ? ' - ' + n + ' session' + (n === 1 ? '' : 's') : '');
+              detail.appendChild(pr);
+            });
+          }
+
+          var actRow = document.createElement('div'); actRow.className = 'skillActs';
+          var exp = document.createElement('button'); exp.className = 'btn ghost skillExport'; exp.type = 'button';
+          exp.textContent = 'Export ' + fw.name;
+          exp.onclick = function () { downloadProfile(fw.id); };
+          actRow.appendChild(exp); detail.appendChild(actRow);
+
+          row.appendChild(head); row.appendChild(detail); pane.appendChild(row);
+        });
+
+        if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
+      }
+
+      // Single-section accordion so the open/close feel matches the others; the
+      // body renders lazily the first time it opens and refreshes on each open.
+      var acc = (global.Accordion && global.Accordion.init) ? global.Accordion.init([{ btn: btn, body: pane }]) : null;
+      var origOnclick = btn.onclick;
+      btn.onclick = function (e) {
+        if (origOnclick) origOnclick.call(btn, e);      // let the accordion toggle first
+        if (!pane.hidden) renderSkillsPanel();          // now-open -> (re)render fresh
+        else if (!acc) pane.hidden = false;             // no accordion primitive -> fallback toggle
+      };
+      // Fallback wiring when Accordion is unavailable (keeps the panel usable).
+      if (!acc) {
+        btn.onclick = function () {
+          var open = pane.hidden; pane.hidden = !open;
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) renderSkillsPanel();
+        };
+      }
+    }
+    try { mountSkillsPanel(); } catch (e) { /* the Settings Skills panel is non-critical - never block mount */ }
 
     /* ---- controller ---- */
     return {
