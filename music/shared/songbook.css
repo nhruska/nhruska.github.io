@@ -429,7 +429,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 /* S-UI-RECONCILE locked interface (Lane A <-> Lane D seam): a full-width action
-   button in the song-view .actions row (e.g. repertoire-form.js's "Delete
+   button in the song-view .actions row (e.g. songbook.js song view's "Delete
    progression") composes .btn with .full instead of an inline flexBasis hack. */
 .actions .btn.full{flex-basis:100%;}
 .btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
@@ -441,7 +441,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    demotes to an OUTLINE so it never out-shouts the chord cards - the real "obvious next
    move". #id specificity beats .btn.red; it returns to fill the moment a chord lands. */
 .composeWrap.progEmpty #cSave{background:transparent;color:var(--accent-ink);border-color:var(--accent-dim);}
-/* F33 (UAT): genuinely destructive actions (repertoire-form.js's real Delete -
+/* F33 (UAT): genuinely destructive actions (songbook.js song view's real Delete -
    the fork "Revert to original" is ALSO destructive (discards the fork's edits,
    confirm-gated) but stays .btn.ghost as a deliberate softer signal; see
    repertoire-form.js). ".btn.red" is a MISNOMER (it's the accent-fill primary,
