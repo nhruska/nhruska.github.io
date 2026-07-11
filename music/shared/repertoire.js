@@ -16,11 +16,26 @@
 (function (global) {
   'use strict';
 
-  // Canonical-sharp respelling (matches circle.js / songbook.js / tracks.js) -
-  // a record's raw key/chord root may be spelled with a flat (Bb, Eb, ...);
-  // every derived label (facet chip, filter compare) goes through this so the
-  // Key facet always speaks the same sharp names as the rest of the app.
+  // Canonical-sharp identity map - a record's raw key/chord root may be spelled
+  // with a flat (Bb, Eb, ...); every key-aware lookup (Circle.preferredTonicName,
+  // the keyRank ordering below) needs the canonical-sharp form first. Reused in
+  // both directions: normalizing a stored key INTO canonical-sharp (keyLabel),
+  // and canonicalizing a DISPLAYED flat label back to sharp for chip ordering
+  // (keyRank) - same 5-entry map, sharp keys/flat values either way.
   var F2S = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
+
+  // Circle source: window.Circle in the browser (classic scripts). Under Node
+  // the IIFE's `global` is this module's own exports object, so a test can
+  // never inject Circle there - fall back to a guarded require so the REAL
+  // preferredTonicName kernel is what test/repertoire.test.js exercises (same
+  // guarded-reference pattern as tracks.js's circleRef()).
+  function circleRef() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./circle.js'); } catch (e) {}
+    }
+    return null;
+  }
 
   // Match on a normalized title+artist. Lowercase, strip punctuation, drop a
   // leading article ("the "), collapse spaces - so "Three Little Birds" /
@@ -50,15 +65,24 @@
     }
     return { key: null, mode: null };
   }
-  // Short key label for the Key filter facet + chip: "Am", "C", or null.
-  // Root is respelled canonical-sharp (F2S) so a record whose data says 'Bb'
-  // labels and matches as 'A#', same as the rest of the app (FORK-4).
+  // Short key label for the Key filter facet + chip: "Am", "Bb", or null.
+  // Regime B (2026-07-10, FORK-4 retired): the root displays via
+  // Circle.preferredTonicName - key-aware, so A# major reads "Bb" (never A#)
+  // while G# minor stays "G#" (per note-spelling.md). Falls back to the
+  // canonical-sharp identity (F2S) when Circle is unavailable. CRITICAL: both
+  // the facet SET (keys(), below) and each item's facet TAG (filter(), below)
+  // call this SAME function, so a respelled label still matches its own facet
+  // chip - see test/repertoire.test.js's filter-self-consistency case.
   function keyLabel(rec) {
     var k = deriveKey(rec);
     if (!k.key) return null;
-    var root = F2S[k.key] || k.key;
+    var sharpRoot = F2S[k.key] || k.key; // canonical-sharp identity: lookup key + fallback
     var minor = String(k.mode || '').toLowerCase().indexOf('min') === 0
       || /aeolian|dorian|phrygian|locrian/.test(String(k.mode || '').toLowerCase());
+    var C = circleRef();
+    var root = (C && C.preferredTonicName)
+      ? C.preferredTonicName(sharpRoot, k.mode || (minor ? 'minor' : 'major'))
+      : sharpRoot;
     return root + (minor ? 'm' : '');
   }
 
@@ -163,6 +187,10 @@
   function keyRank(label) {
     var minor = /m$/.test(label);
     var root = minor ? label.slice(0, -1) : label;
+    // keyLabel() may now display either enharmonic spelling (regime B); canonicalize
+    // a flat root back to its sharp identity (F2S) so the circle-of-fifths chip
+    // order is unaffected by which name is shown ("Bb" ranks where "A#" would).
+    root = F2S[root] || root;
     var i = KEY_ORDER.indexOf(root);
     return (minor ? 100 : 0) + (i < 0 ? 50 : i);
   }

@@ -62,6 +62,25 @@ test('keyLabel: spells major/minor out, mode-honest for church modes, no key -> 
   assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D', mode: 'dorian' })), 'D dorian'); // NOT "D minor"
   assert.strictEqual(LI.keyLabel(LI.normalize({ t: 'x' })), null);
 });
+
+/* ---- Regime-B key-aware root respelling (2026-07-11 fix - FORK-4 leftover) --
+ * The Library row badge (.li-tag.isKey) used to badge the raw stored root
+ * verbatim ("A# major" on every row), even though note-spelling.md's regime B
+ * (2026-07-10) says a key's root respells key-aware via
+ * Circle.preferredTonicName. Node's require-fallback (circleRef()) gives these
+ * tests the REAL kernel, so they lock actual respelling, not just a stub. */
+test('keyLabel respells the root key-aware (A# major badges as "Bb major", never the canonical-sharp token)', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'A#', mode: 'major' })), 'Bb major');
+});
+test('keyLabel keeps a tie/keep-sharp root unrespelled (G# minor stays "G# minor", not "Ab minor")', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'G#', mode: 'minor' })), 'G# minor');
+});
+test('keyLabel is mode-aware for respelling, not hardcoded to major (D# minor stays "D# minor", not the major-mode "Eb minor")', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D#', mode: 'minor' })), 'D# minor');
+});
+test('keyLabel respelling composes with the mode-honest church-mode suffix (D# dorian -> "Eb dorian")', function () {
+  assert.strictEqual(LI.keyLabel(LI.normalize({ key: 'D#', mode: 'dorian' })), 'Eb dorian');
+});
 test('metaCells: SONG -> count only at rest (chords/capo/mine are badges/markers, not meta)', function () {
   // plain open chords -> no hazard; custom + capo do NOT appear in the meta row
   var cells = LI.metaCells(LI.normalize({ seq: ['A', 'D', 'E'], custom: true, capo: 2 }));

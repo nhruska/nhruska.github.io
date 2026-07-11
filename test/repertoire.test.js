@@ -103,7 +103,10 @@ test('filter narrows by q, genre and key independently', function () {
   assert.strictEqual(R.filter(list, { genre: 'all', key: 'all', q: '' }).length, 2);
 });
 
-test('KEY_ORDER speaks canonical sharps only (FORK-4 extended to Library facet)', function () {
+test('KEY_ORDER is an internal canonical-sharp RANKING table (not the display spelling) - keyRank canonicalizes before lookup', function () {
+  // KEY_ORDER itself is unchanged by the regime-B display fix below: it is only
+  // ever consulted after keyRank() canonicalizes a displayed label back to its
+  // sharp identity (see the "flat labels rank correctly" case further down).
   var flats = ['Db', 'Ab', 'Eb', 'Bb', 'Gb'];
   R.KEY_ORDER.forEach(function (k) {
     assert.strictEqual(flats.indexOf(k), -1, 'KEY_ORDER should not contain flat name: ' + k);
@@ -111,30 +114,39 @@ test('KEY_ORDER speaks canonical sharps only (FORK-4 extended to Library facet)'
   assert.deepStrictEqual(R.KEY_ORDER, ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']);
 });
 
-test('a record whose data says a flat key groups + labels under the canonical sharp facet', function () {
+/* ---- Regime-B key-aware facet display (2026-07-11 fix - FORK-4 leftover) ----
+ * The Library Key facet chips + zero-results message used to force every root
+ * to its canonical-sharp spelling (FORK-4). That regime was retired 2026-07-10
+ * (note-spelling.md regime B): a key respells via Circle.preferredTonicName,
+ * key-aware, so "A# major" reads "Bb major" like the rest of the app. These
+ * three cases replace the old FORK-4-pinned assertions below (deliberately
+ * updated, not merely relaxed - the old expectations are now WRONG). */
+test('a record whose data says a flat key groups + labels under its regime-B preferred name (Bb major, not A#)', function () {
   var list = R.build([], [{ title: 'Flat Key Track', artist: 'X', key: 'Bb', mode: 'major', genre: 'soul' }]);
-  assert.strictEqual(R.keyLabel(list[0]), 'A#', 'Bb-keyed record labels as A#');
+  assert.strictEqual(R.keyLabel(list[0]), 'Bb', 'Bb-major record labels as Bb (preferredTonicName), not the canonical-sharp A#');
   var ks = R.keys(list);
-  assert.deepStrictEqual(ks, ['A#'], 'facet list holds the sharp name, not Bb');
-  assert.strictEqual(R.filter(list, { key: 'A#' }).length, 1, 'picking the A# chip matches the Bb-keyed record');
-  assert.strictEqual(R.filter(list, { key: 'Bb' }).length, 0, 'the raw flat spelling is not a valid facet selector');
+  assert.deepStrictEqual(ks, ['Bb'], 'facet list holds the preferred display name');
+  assert.strictEqual(R.filter(list, { key: 'Bb' }).length, 1, 'picking the Bb chip matches the Bb-keyed record - facet SET and filter() derive from the SAME keyLabel()');
+  assert.strictEqual(R.filter(list, { key: 'A#' }).length, 0, 'the canonical-sharp spelling is no longer a valid facet selector once the display respelled to Bb');
 });
 
-test('keys() facet never contains a flat name across a mixed sharp/flat dataset', function () {
+test('keyLabel respells key-aware per mode (G# minor stays G#, not Ab) - the tie/keep-sharp cases from note-spelling.md', function () {
+  assert.strictEqual(R.keyLabel({ key: 'G#', mode: 'minor' }), 'G#m', 'G# minor keeps its sharp spelling (5 sharps beats Ab minor 7 flats)');
+  assert.strictEqual(R.keyLabel({ key: 'D#', mode: 'minor' }), 'D#m', 'D# minor stays sharp');
+  assert.strictEqual(R.keyLabel({ key: 'F#', mode: 'major' }), 'F#', 'F# major stays sharp on the accidental-count tie');
+});
+
+test('keys() facet shows each root under its own regime-B preferred name across a mixed dataset, and keyRank still orders them correctly', function () {
   var list = R.build([], [
-    { title: 'A', artist: 'A', key: 'Db', mode: 'major', genre: 'x' },
-    { title: 'B', artist: 'B', key: 'G#', mode: 'minor', genre: 'x' },
-    { title: 'C', artist: 'C', key: 'Eb', mode: 'major', genre: 'x' }
+    { title: 'A', artist: 'A', key: 'Db', mode: 'major', genre: 'x' },   // C# major -> Db (2 flats beats 7 sharps)
+    { title: 'B', artist: 'B', key: 'G#', mode: 'minor', genre: 'x' },   // G# minor stays G#
+    { title: 'C', artist: 'C', key: 'Eb', mode: 'major', genre: 'x' }    // D# major -> Eb
   ]);
   var ks = R.keys(list);
-  var flats = ['Db', 'Ab', 'Eb', 'Bb', 'Gb'];
-  ks.forEach(function (kl) {
-    var root = /m$/.test(kl) ? kl.slice(0, -1) : kl;
-    assert.strictEqual(flats.indexOf(root), -1, 'facet label should not be flat-spelled: ' + kl);
-  });
-  assert.ok(ks.indexOf('C#') >= 0, 'Db normalized to C#: ' + ks.join(','));
-  assert.ok(ks.indexOf('G#m') >= 0, 'G#-minor label retained: ' + ks.join(','));
-  assert.ok(ks.indexOf('D#') >= 0, 'Eb normalized to D#: ' + ks.join(','));
+  assert.deepStrictEqual(ks, ['Db', 'Eb', 'G#m'], 'ranked by canonical position (C#=7, D#=9, then minors last), displayed under their preferred flat/sharp spelling: ' + ks.join(','));
+  assert.strictEqual(R.filter(list, { key: 'Db' }).length, 1);
+  assert.strictEqual(R.filter(list, { key: 'Eb' }).length, 1);
+  assert.strictEqual(R.filter(list, { key: 'G#m' }).length, 1);
 });
 
 run();
