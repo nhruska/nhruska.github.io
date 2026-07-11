@@ -2366,4 +2366,96 @@ test('M-13: a buffered-section chip uses the ONE arm-to-remove grammar - first t
   assert.strictEqual(t.tray.hidden, false, 'the tray stays visible while a progression remains');
 });
 
+// --- M-13 g2: buffer persistence across a reload + reorder ---
+// A minimal fresh mount that does NOT reset global.localStorage - the caller
+// controls the store, so two mounts against the SAME store simulate a reload.
+function freshMountSharedStore() {
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'progwraptest', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+
+test('M-13 g2: the section buffer persists across a reload (fresh mount, same localStorage)', function () {
+  var store = lsReset.fakeStore();
+  global.localStorage = store;
+  var m1 = freshMountSharedStore();
+  tapChords(m1, 2);
+  var t1 = songTrayNodes(m1);
+  t1.sel.value = 'Verse';
+  t1.addBtn.click();
+  tapChords(m1, 1);
+  t1.sel.value = 'Chorus';
+  t1.addBtn.click();
+  assert.strictEqual(t1.sections.children.length, 2, 'two sections buffered before the reload');
+  var stored = JSON.parse(store.getItem('progwraptest.builderBuffer.v1'));
+  assert.strictEqual(stored.length, 2, 'the additive builderBuffer key holds both sections');
+  assert.deepStrictEqual(stored.map(function (s) { return s.label; }), ['Verse', 'Chorus'], 'stored labels match add order');
+
+  // Reload: a brand-new mount, same localStorage object, no re-add.
+  var m2 = freshMountSharedStore();
+  var t2 = songTrayNodes(m2);
+  assert.strictEqual(t2.tray.hidden, false, 'the tray shows on mount because the restored buffer is non-empty');
+  assert.strictEqual(t2.sections.children.length, 2, 'both buffered sections survive the reload');
+  assert.strictEqual(t2.assemble.hidden, false, 'Assemble stays available after a reload with a restored buffer');
+});
+
+test('M-13 g2: a defensively-malformed buffer key drops only the bad rows, never crashes the mount', function () {
+  var store = lsReset.fakeStore();
+  store.setItem('progwraptest.builderBuffer.v1', JSON.stringify([
+    { label: 'Verse', seq: ['C', 'G'] },
+    { label: 'Chorus' },              // missing seq -> dropped
+    'not-an-object',                  // wrong shape -> dropped
+    { seq: ['A'] }                    // missing label -> dropped
+  ]));
+  global.localStorage = store;
+  var m = freshMountSharedStore();
+  var t = songTrayNodes(m);
+  assert.strictEqual(t.sections.children.length, 1, 'only the one well-shaped section survives the defensive filter');
+});
+
+test('M-13 g2: reorder handles swap adjacent sections, persist the new order, and disable at the ends', function () {
+  var m = mountForProgWrapTests();
+  tapChords(m, 2);
+  var t = songTrayNodes(m);
+  t.sel.value = 'Verse'; t.addBtn.click();
+  t.sel.value = 'Chorus'; t.addBtn.click();
+  t.sel.value = 'Bridge'; t.addBtn.click();
+  assert.strictEqual(t.sections.children.length, 3, 'three sections buffered');
+
+  function labelOf(chip) {
+    var name = chip.children.filter(function (c) { return c.className === 'songSectName'; })[0];
+    return name.textContent.split(' ').slice(0, -2).join(' '); // strip " · N" count suffix
+  }
+  function moveBtn(chip, dir) {
+    return chip.children.filter(function (c) { return c.className === 'songSectMove ' + dir; })[0];
+  }
+  assert.deepStrictEqual(t.sections.children.map(labelOf), ['Verse', 'Chorus', 'Bridge'], 'initial buffer order');
+
+  // Move the middle section (Chorus) up -> Chorus, Verse, Bridge.
+  var chorusUp = moveBtn(t.sections.children[1], 'up');
+  assert.ok(chorusUp, 'a non-first chip carries an up handle');
+  assert.strictEqual(chorusUp.disabled, false, 'a middle chip up handle is enabled');
+  tapWired(chorusUp);
+  var t2 = songTrayNodes(m); // renderSongTray rebuilt songSectionsEl - re-locate nodes
+  assert.deepStrictEqual(t2.sections.children.map(labelOf), ['Chorus', 'Verse', 'Bridge'], 'up swaps with the previous section');
+  var storedOrder = JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).map(function (s) { return s.label; });
+  assert.deepStrictEqual(storedOrder, ['Chorus', 'Verse', 'Bridge'], 'the reorder persists to storage immediately');
+
+  // Boundaries: first chip's up and last chip's down are disabled.
+  var firstUp = moveBtn(t2.sections.children[0], 'up');
+  var lastDn = moveBtn(t2.sections.children[2], 'dn');
+  assert.strictEqual(firstUp.disabled, true, 'the first section cannot move up');
+  assert.strictEqual(lastDn.disabled, true, 'the last section cannot move down');
+
+  // Move the last section (Bridge) down: a no-op past the end, order unchanged.
+  tapWired(lastDn); // stub does not model native disabled-suppresses-click; assert handler is defensive
+  var t3 = songTrayNodes(m);
+  assert.deepStrictEqual(t3.sections.children.map(labelOf), ['Chorus', 'Verse', 'Bridge'], 'moving past the end is a no-op');
+});
+
 run();

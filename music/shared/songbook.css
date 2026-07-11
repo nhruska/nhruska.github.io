@@ -714,6 +714,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
 .songSect{position:relative;display:flex;align-items:center;gap:6px;min-height:36px;padding:5px 30px 5px 11px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songSect .songSectName{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:var(--accent-ink);white-space:nowrap;}
+/* M-13 g2 reorder handles: real 44x44 hit target (a11y-coach floor) in normal
+   flex flow (unlike the corner-absolute .rm), small decorative circle behind
+   the glyph via ::before - the same "invisible halo over a small visual"
+   convention as .rm, just not corner-pinned since two sit side by side. */
+.songSect .songSectMove{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.62rem;line-height:1;cursor:pointer;}
+.songSect .songSectMove::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.songSect .songSectMove:disabled{opacity:.3;cursor:default;}
+.songSect .songSectMove:disabled::before{display:none;}
+.songSect .songSectMove:active:not(:disabled){color:var(--on-accent);}
+.songSect .songSectMove:active:not(:disabled)::before{background:var(--accent);border-color:var(--accent);}
 .songSect .rm{position:absolute;top:50%;right:-2px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.9rem;line-height:1;cursor:pointer;}
 .songSect .rm::before{content:'';position:absolute;top:50%;right:9px;transform:translateY(-50%);width:22px;height:22px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .songSect .rm.armed{color:var(--on-danger);}

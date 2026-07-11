@@ -2335,11 +2335,30 @@
     }
 
     // ---- M-13 SONG BUILDER: assemble progressions into a multi-section song ----
-    // In-memory (session-scoped) buffer of {label, seq:[...]} snapshots. Additive,
-    // no backup.js schema bump (persisting it is a named next goalpost). The tray
+    // M-13 g2: the section buffer now SURVIVES a reload. Additive namespaced key
+    // (songbook.builderBuffer.v1) - already covered by backup.js's OWNED_PREFIXES
+    // ('songbook.' prefix), so no SCHEMA_VERSION bump. Defensive load (bad/foreign
+    // JSON -> empty buffer, never a boot crash); buildSongFromSections already
+    // tolerates a malformed {label, seq} shape per-section, so a half-corrupt
+    // buffer degrades gracefully instead of losing the whole thing. The tray
     // (renderSongTray) shows only when a progression exists OR the buffer is
     // non-empty - never dead chrome on an empty canvas.
-    var songSections = [];
+    var BUILDER_BUFFER_KEY = prefix + ".builderBuffer.v1";
+    function loadSongSections() {
+      try {
+        var r = localStorage.getItem(BUILDER_BUFFER_KEY);
+        if (!r) return [];
+        var arr = JSON.parse(r);
+        if (!Array.isArray(arr)) return [];
+        // Keep only well-shaped entries - a hand-edited or partially-corrupt
+        // key degrades to dropping the bad rows, not the whole buffer.
+        return arr.filter(function (s) {
+          return s && typeof s.label === 'string' && Array.isArray(s.seq);
+        });
+      } catch (e) { return []; }
+    }
+    function saveSongSections() { return safeSet(BUILDER_BUFFER_KEY, JSON.stringify(songSections)); }
+    var songSections = loadSongSections();
     // The tray is SELF-INJECTED into the progression box (like composeToast /
     // composeRow / the clear-undo banner) - not authored in play/index.html - so
     // the whole feature lives in this file. Built once, into el.prog.parentNode,
@@ -2542,11 +2561,36 @@
           if (armedRm !== rm) { armRm(rm); return; }
           disarmRm();
           songSections.splice(i, 1);
+          saveSongSections();
           renderSongTray();
         });
+        // M-13 g2: reorder handles - real 44px hit targets (a11y-coach floor),
+        // small decorative glyph via ::before, matching the .rm halo convention.
+        // Disabled (native `disabled`, not just a CSS class) at the buffer's
+        // ends so composeWireTap's click listener never fires there.
+        var up = document.createElement('button'); up.type = 'button'; up.className = 'songSectMove up';
+        up.innerHTML = '&#9650;'; up.setAttribute('aria-label', 'Move ' + sec.label + ' up');
+        up.disabled = (i === 0);
+        composeWireTap(up, function () { moveSongSection(i, -1); });
+        var dn = document.createElement('button'); dn.type = 'button'; dn.className = 'songSectMove dn';
+        dn.innerHTML = '&#9660;'; dn.setAttribute('aria-label', 'Move ' + sec.label + ' down');
+        dn.disabled = (i === songSections.length - 1);
+        composeWireTap(dn, function () { moveSongSection(i, 1); });
+        chip.appendChild(up); chip.appendChild(dn);
         chip.appendChild(rm);
         songSectionsEl.appendChild(chip);
       });
+    }
+    // M-13 g2: swap section i with its neighbor at i+dir (-1 up, +1 down). No-op
+    // past either end (the disabled buttons already guard this, but a defensive
+    // bounds check keeps the function safe if ever called directly).
+    function moveSongSection(i, dir) {
+      var j = i + dir;
+      if (j < 0 || j >= songSections.length) return;
+      var tmp = songSections[i]; songSections[i] = songSections[j]; songSections[j] = tmp;
+      disarmRm(); // reordering changes chip identity under any armed remove handle
+      saveSongSections();
+      renderSongTray();
     }
     // Snapshot the CURRENT progression (canonical-sharp tokens) as a labeled
     // section. A3: additive - does NOT mutate the progression, so it does NOT
@@ -2557,6 +2601,7 @@
       var label = (songSectSelEl && songSectSelEl.value) || 'Verse';
       songSections.push({ label: label, seq: progression.slice() });
       disarmRm(); // a fresh add clears any armed chip remover
+      saveSongSections();
       renderSongTray();
       recordComp('comp-song-form'); // M-COMPETENCY: shaping a section = song-form practice (small)
       showComposeToast('Added ' + label + ' to the song.');
@@ -2573,6 +2618,7 @@
       });
       songSections = [];
       disarmRm();
+      saveSongSections();
       renderSongTray();
       // M-COMPETENCY: assembling a whole song is the strongest observable
       // composition evidence - song-form + progressions, plus repertoire on
