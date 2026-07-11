@@ -243,10 +243,21 @@ var RADIUS_CONSUMERS = [
   ['.bt-st-ytlink', tracksStripped, '--r-btn-sm'],
   ['.rf-x', rfStripped, '--r-btn-sm'],
   ['.bt-st-editlink', rfStripped, '--r-btn-sm'],
+  // S-UI-RECONCILE Lane D (2026-07-11): compact bordered chord chips/tiles,
+  // same bucket as the .bt-curate-btn/.iconBtn family above.
+  ['.chordChips .c', songbookStripped, '--r-btn-sm'],
+  ['.chordOnly .bar', songbookStripped, '--r-btn-sm'],
+  ['.bt-qcand', tracksStripped, '--r-btn-sm'],
+  ['.cofChord', tracksStripped, '--r-btn-sm'],
+  ['.cofNbChip', tracksStripped, '--r-btn-sm'],
+  ['.cofDeg', tracksStripped, '--r-btn-sm'],
   // --r-chip-pill (18px): pill-shaped chip/token primitive
   ['.chip', songbookStripped, '--r-chip-pill'],
   ['.bt-st-scalechip', tracksStripped, '--r-chip-pill'],
   ['.cofModeChip', tracksStripped, '--r-chip-pill'],
+  // S-UI-RECONCILE Lane D (2026-07-11): explicitly composes the .bt-st-scalechip.on
+  // accent-filled-pill language per its own doc comment.
+  ['.scaleBoxChip', tracksStripped, '--r-chip-pill'],
   // --r-card (13px): card/panel surfaces
   ['.listItem', songbookStripped, '--r-card'],
   ['.detail', songbookStripped, '--r-card'],
@@ -258,6 +269,10 @@ var RADIUS_CONSUMERS = [
   ['.cofPanelInner', tracksStripped, '--r-card'],
   // M-EAR wave 1.6 (U16): the Legend primitive's own card surface.
   ['.legend', tracksStripped, '--r-card'],
+  // S-UI-RECONCILE Lane D (2026-07-11): practice-sheet card surface + the
+  // in-studio add/edit-video-URL editor (card-shaped: background+border+padding).
+  ['.sheet', songbookStripped, '--r-card'],
+  ['.bt-st-urled', tracksStripped, '--r-card'],
   // --r-input (10px): text-input controls (narrow application - see the
   // :root token block's scope note; .search/.bt-in deliberately NOT migrated)
   ['.composeRowInput', songbookStripped, '--r-input']
