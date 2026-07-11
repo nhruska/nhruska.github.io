@@ -47,6 +47,26 @@
     var m = String(v == null ? '' : v).trim().toLowerCase();
     return MODES.indexOf(m) >= 0 ? m : 'major';
   }
+  // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10) + its FORK-4-leftover fix
+  // (2026-07-11): the Key dropdown's option LABELS respell via the ONE provider
+  // (Circle.preferredTonicName), re-derived from the CURRENTLY SELECTED mode -
+  // option VALUES stay canonical-sharp tokens (round-trip unchanged). The old
+  // call hardcoded 'major', so an editing session on a minor/dorian/mixolydian
+  // item showed the wrong enharmonic (D# minor's preferred name is D#, not the
+  // major-mode Eb the hardcoded call produced). Cir is dependency-injected
+  // (same pattern as songbook.js's libraryFilter(Rep, ...)) - defaults to
+  // global.Circle (browser; absent under Node, per the file's existing "Node
+  // tests, stale cache" fallback convention) but a test can pass the real
+  // circle.js module directly to exercise the actual respelling. Exported so
+  // both render() (initial paint) and the Mode-select change handler (live
+  // re-render) call the SAME function - no drift between the two call sites.
+  function rootOptionsHtml(selMode, selKey, Cir) {
+    if (Cir === undefined) Cir = (global && global.Circle) ? global.Circle : null;
+    return ROOTS.map(function (r) {
+      var disp = (Cir && Cir.preferredTonicName) ? Cir.preferredTonicName(r, selMode) : r;
+      return '<option value="' + esc(r) + '"' + (r === selKey ? ' selected' : '') + '>' + esc(disp) + '</option>';
+    }).join('');
+  }
   // Read the form's current field state into the { title, artist, key, mode,
   // genre, seq, yt } shape songbook.js's create/updateCustomItem expect.
   function readFields(form, parseYouTubeId) {
@@ -212,12 +232,11 @@
       // dropdown displays preferred key names via the ONE provider
       // (Circle.preferredTonicName) - option VALUES stay canonical tokens so
       // saves/edits round-trip unchanged. Guarded: without Circle (Node tests,
-      // stale cache) options fall back to the raw token.
-      var Cir = (global && global.Circle) ? global.Circle : null;
-      var rootOpts = ROOTS.map(function (r) {
-        var disp = (Cir && Cir.preferredTonicName) ? Cir.preferredTonicName(r, 'major') : r;
-        return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(disp) + '</option>';
-      }).join('');
+      // stale cache) options fall back to the raw token. Labels are re-derived
+      // from the item's CURRENT mode (not hardcoded 'major') - see
+      // rootOptionsHtml() above; the Mode-select change handler wired below
+      // keeps them live when the operator changes Mode mid-edit.
+      var rootOpts = rootOptionsHtml(mode, key);
       el.innerHTML =
         // F24 (operator UAT 2026-07-05): fork's dialog title/aria-label read
         // "Edit" (was "Make it mine") - the user doesn't need to know a
@@ -268,6 +287,21 @@
       urlIn.oninput = function () { urlIn.classList.remove('bad'); };
       var titleIn = el.querySelector('[data-title]');
       titleIn.oninput = function () { titleIn.classList.remove('bad'); };
+      // Fix for the FORK-4 leftover: the Key select's option LABELS were built
+      // once at render() time against a hardcoded 'major', so switching Mode
+      // mid-edit (e.g. a D# minor track) left the labels wrong (showing the
+      // major-mode spelling) until the form was closed and reopened. Re-derive
+      // the labels from the newly-selected mode on every Mode change, via the
+      // SAME rootOptionsHtml() the initial paint used - option VALUES (and the
+      // currently-selected key) are preserved, only the display text changes.
+      var keySel = el.querySelector('[data-key]');
+      var modeSel = el.querySelector('[data-mode]');
+      if (keySel && modeSel) {
+        modeSel.addEventListener('change', function () {
+          var curKey = keySel.value;
+          keySel.innerHTML = '<option value="">-</option>' + rootOptionsHtml(modeSel.value, curKey);
+        });
+      }
       el.querySelector('[data-save]').onclick = function () {
         var f = readFields(el, (global.Tracks && global.Tracks.parseYouTubeId) || null);
         if (!f.title) { titleIn.classList.add('bad'); try { titleIn.focus({ preventScroll: true }); } catch (e2) { titleIn.focus(); } return; }
@@ -312,7 +346,7 @@
     return { open: open, close: close };
   }
 
-  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES, applicableYtHints: applicableYtHints };
+  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES, applicableYtHints: applicableYtHints, rootOptionsHtml: rootOptionsHtml };
   global.RepertoireForm = RepertoireForm;
   if (typeof module !== 'undefined' && module.exports) module.exports = RepertoireForm;
 

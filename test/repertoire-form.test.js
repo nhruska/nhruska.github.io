@@ -6,7 +6,15 @@
  * ===================================================================== */
 'use strict';
 var assert = require('assert');
+// repertoire-form.js's esc() delegates to esc.js's Esc.esc via the shared
+// window/global object (classic-<script>-tag pattern) - alias window to the
+// real Node global BEFORE requiring esc.js, same pattern as
+// test/diagram.dom.test.js / test/songbook.test.js, so RF.rootOptionsHtml()
+// (which calls esc()) doesn't throw when exercised outside a real DOM.
+if (typeof global.window === 'undefined') global.window = global;
+require('../music/shared/esc.js');
 var RF = require('../music/shared/repertoire-form.js');
+var Circle = require('../music/shared/circle.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -165,6 +173,45 @@ test('F33: .rf-actions renders Delete/Revert BEFORE Save (thumb-zone reorder), a
   assert.ok(deleteIdx < saveIdx, 'F33: Delete/Revert must render BEFORE Save in the template (left/away-from-thumb, not bottom-right)');
   assert.ok(/class="btn ' \+ \(fork \? 'ghost' : 'danger'\)/.test(src), 'the real Delete must use .btn.danger; the fork "Revert to original" stays .btn.ghost - a deliberate softer signal, though it too is destructive (discards edits, confirm-gated)');
   assert.ok(/class="btn red" data-save/.test(src), 'Save keeps its existing .btn.red (primary accent) styling, unchanged by this fix');
+});
+
+/* =====================================================================
+ * S-UI-RECONCILE Lane B fix (2026-07-11): the Key dropdown's option LABELS
+ * were built once at render() time against a HARDCODED 'major', so editing a
+ * minor/dorian/mixolydian item showed the wrong enharmonic name and never
+ * re-derived when the operator changed the Mode select mid-edit. Fixed by
+ * extracting rootOptionsHtml(mode, key, Cir) - called by BOTH the initial
+ * paint and the Mode-select change handler - with Cir dependency-injected
+ * (same pattern as songbook.js's libraryFilter(Rep, ...)) so these tests can
+ * pass the REAL circle.js kernel and lock actual key-aware respelling.
+ * render()'s DOM-building stays Playwright/live-check territory (this file's
+ * header note); rootOptionsHtml is the pure logic seam that IS unit-testable,
+ * plus a source-regex case (same convention as the F33 test above) locking
+ * that the Mode select is wired to re-render it live.
+ * ===================================================================== */
+test('rootOptionsHtml: mode is a real parameter, not hardcoded major - a minor-mode root keeps its minor-preferred spelling', function () {
+  var html = RF.rootOptionsHtml('minor', 'D#', Circle);
+  assert.ok(/>D#<\/option>/.test(html), 'D# minor should stay D# (not respelled to the major-mode Eb): ' + html);
+});
+test('rootOptionsHtml: a major-mode root respells to its preferred flat name when Circle is injected (A# major -> Bb)', function () {
+  var html = RF.rootOptionsHtml('major', 'A#', Circle);
+  assert.ok(/>Bb<\/option>/.test(html), 'A# major should display as Bb: ' + html);
+});
+test('rootOptionsHtml: without Circle injected, falls back to the raw canonical-sharp token (Node/stale-cache safety net, existing S-KEYPICKER-PREFERRED contract)', function () {
+  var html = RF.rootOptionsHtml('major', 'A#', null);
+  assert.ok(/>A#<\/option>/.test(html), 'no Circle -> raw token, unchanged behavior: ' + html);
+});
+test('rootOptionsHtml: the currently-selected key VALUE is preserved regardless of which mode/spelling is displayed', function () {
+  var html = RF.rootOptionsHtml('minor', 'G', Circle);
+  assert.ok(/value="G" selected/.test(html), 'the selected root token must stay canonical (G), independent of display label: ' + html);
+});
+test('render() re-derives Key option labels on every Mode-select change (live re-render, not a one-time major-hardcoded paint)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  assert.ok(!/preferredTonicName\(r, 'major'\)/.test(src), 'the old hardcoded-major call must be gone');
+  assert.ok(/rootOptionsHtml\(mode, key\)/.test(src), 'initial paint must call rootOptionsHtml with the item\'s actual mode');
+  var modeChangeBlock = /modeSel\.addEventListener\('change'[\s\S]{0,300}/.exec(src);
+  assert.ok(modeChangeBlock, 'expected a change listener wired on the Mode select');
+  assert.ok(/rootOptionsHtml\(modeSel\.value, curKey\)/.test(modeChangeBlock[0]), 'the Mode-change handler must re-render Key labels via rootOptionsHtml against the NEW mode value: ' + modeChangeBlock[0]);
 });
 
 run();

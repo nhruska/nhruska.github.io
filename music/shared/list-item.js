@@ -18,6 +18,19 @@
   // ~8 divergent local copies.
   function esc(s) { return global.Esc.esc(s); }
 
+  // Circle source: window.Circle in the browser (classic scripts). Under Node
+  // the IIFE's `global` is this module's own exports object, so a test can
+  // never inject Circle there - fall back to a guarded require so the REAL
+  // preferredTonicName kernel is what test/list-item.test.js exercises (same
+  // guarded-reference pattern as tracks.js's circleRef() / repertoire.js's).
+  function circleRef() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./circle.js'); } catch (e) {}
+    }
+    return null;
+  }
+
   // Normalize a song OR track record to ONE item shape. Songs use t/a/y/seq;
   // tracks use title/artist/key/mode/genre/bpm/capo/yt. Either is accepted, and
   // missing fields are null so the renderer can omit them.
@@ -69,19 +82,25 @@
       : null;                                                             // no video -> no action shown
   }
 
-  // The key label, mode spelled out: "A minor" / "C major", and mode-honest for
+  // The key label, mode spelled out: "Bb major" / "A minor", and mode-honest for
   // named church modes ("G mixolydian") rather than force-collapsing them to
   // major/minor. F34 (operator UAT): the old compact form showed "Am" for minor
   // but a bare "C" for major - a bare letter read as incomplete. Real modal
   // tracks exist (tracks.json has mixolydian), so asserting "G major" for a
   // mixolydian key would be worse than the bare key (codex PR #195 V1 Medium).
+  // Regime B (2026-07-10, FORK-4 retired): the root respells key-aware via
+  // Circle.preferredTonicName - a raw stored "A#" root badges as "Bb major",
+  // never the canonical-sharp token. Falls back to the raw item.key (same
+  // guard pattern as tracks.js's dispKeyRoot) when Circle is unavailable.
   // Display-only (the badge); no logic consumer keys off this string.
   function keyLabel(item) {
     if (!item.key) return null;
     var mode = String(item.mode || '').toLowerCase();
-    if (mode.indexOf('min') === 0 || mode === 'aeolian') return item.key + ' minor';
-    if (mode === '' || mode.indexOf('maj') === 0 || mode === 'ionian') return item.key + ' major';
-    return item.key + ' ' + mode; // dorian/phrygian/lydian/mixolydian/locrian - mode-honest
+    var C = circleRef();
+    var root = (C && C.preferredTonicName) ? C.preferredTonicName(item.key, item.mode || 'major') : item.key;
+    if (mode.indexOf('min') === 0 || mode === 'aeolian') return root + ' minor';
+    if (mode === '' || mode.indexOf('maj') === 0 || mode === 'ionian') return root + ' major';
+    return root + ' ' + mode; // dorian/phrygian/lydian/mixolydian/locrian - mode-honest
   }
 
   // Pre-commit difficulty signal (codex: a bare count loses the risk a player needs
