@@ -698,6 +698,30 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    attached to the chord it removes. Compact stages keep the corner-overhang (tiny
    tokens have no interior room for the badge). */
 .prog.full .slot .rm{top:2px;right:2px;}
+/* M-13 SONG BUILDER: the section buffer tray. Sits in the FIXED composeTop after
+   the #prog strip; compact by design so it never pushes the chord palette below
+   the fold at 412x915. [hidden] takes no space (the empty-canvas state). */
+.songTray[hidden]{display:none;}
+.songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.songAdd{display:flex;gap:8px;align-items:center;}
+.songAdd[hidden]{display:none;}
+.songSectSel{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.86rem;}
+.songSectSel:focus{outline:none;border-color:var(--accent-ink);}
+.songAdd .songAddBtn{flex:1 1 auto;min-height:44px;}
+.songSections{display:flex;flex-wrap:wrap;gap:8px;}
+.songSections:empty{display:none;}
+/* A buffered-section chip: label + chord count, with the ONE inline-remove
+   grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
+.songSect{position:relative;display:flex;align-items:center;gap:6px;min-height:36px;padding:5px 30px 5px 11px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
+.songSect .songSectName{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:var(--accent-ink);white-space:nowrap;}
+.songSect .rm{position:absolute;top:50%;right:-2px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.9rem;line-height:1;cursor:pointer;}
+.songSect .rm::before{content:'';position:absolute;top:50%;right:9px;transform:translateY(-50%);width:22px;height:22px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.songSect .rm.armed{color:var(--on-danger);}
+.songSect .rm.armed::before{background:var(--bad);border-color:var(--bad);}
+.songSect .rm:active{color:var(--on-danger);}
+.songSect .rm:active::before{background:var(--bad);}
+.songAssembleBtn[hidden]{display:none;}
+.songAssembleBtn{min-height:44px;}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}

@@ -1896,6 +1896,8 @@ function mountForProgWrapTests() {
     cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
   };
   var ctrl = Songbook.mount({ storagePrefix: 'progwraptest', el: elMap });
+  // M-13 SONG BUILDER self-injects its tray into el.prog.parentNode (wrapper) -
+  // find the injected nodes by class (the same DOM-stub-walk the compose tests use).
   return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
 }
 // Loads a named PROGRESSIONS starter via the empty-state suggestion row (the
@@ -2200,6 +2202,105 @@ test('S-SET-INTEGRITY (load-heal): a setlist persisted with a dangling ref (pre-
   });
   assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1'], 'the dangling ref must be pruned by mount time, before any render');
   assert.deepStrictEqual(JSON.parse(global.localStorage.getItem('settest.setlist.v1')), ['m1'], 'the heal must persist, not just live in memory');
+});
+
+// ===================================================================
+// M-13 SONG BUILDER - the section buffer -> multi-section song.
+// ===================================================================
+
+// --- Pure assemble mapping (buildSongFromSections) ---
+test('M-13: assemble maps sections -> first-appearance-unique seq + one bracket sheet line per section', function () {
+  var r = Songbook.buildSongFromSections([
+    { label: 'Verse', seq: ['C', 'F', 'G'] },
+    { label: 'Chorus', seq: ['Am', 'F', 'C', 'G'] }
+  ]);
+  assert.deepStrictEqual(r.seq, ['C', 'F', 'G', 'Am'], 'seq is the first-appearance unique chords across ALL sections');
+  assert.deepStrictEqual(r.sheet, [
+    ['Verse', '[C] [F] [G]'],
+    ['Chorus', '[Am] [F] [C] [G]']
+  ], 'sheet is one [label, bracket-tag line] pair per section');
+});
+
+test('M-13: duplicate section labels are preserved (Verse x2) and each keeps its own line', function () {
+  var r = Songbook.buildSongFromSections([
+    { label: 'Verse', seq: ['C', 'G'] },
+    { label: 'Verse', seq: ['C', 'G', 'Am', 'F'] }
+  ]);
+  assert.deepStrictEqual(r.seq, ['C', 'G', 'Am', 'F'], 'dedupe spans both Verses, first-appearance order');
+  assert.strictEqual(r.sheet.length, 2, 'two Verse rows, not merged');
+  assert.deepStrictEqual(r.sheet[0], ['Verse', '[C] [G]']);
+  assert.deepStrictEqual(r.sheet[1], ['Verse', '[C] [G] [Am] [F]']);
+});
+
+test('M-13: assemble is pure/defensive - no sections, empty section, and missing seq all degrade cleanly', function () {
+  assert.deepStrictEqual(Songbook.buildSongFromSections([]), { seq: [], sheet: [] }, 'no sections -> empty song');
+  assert.deepStrictEqual(Songbook.buildSongFromSections(null), { seq: [], sheet: [] }, 'non-array -> empty song');
+  var r = Songbook.buildSongFromSections([{ label: 'Intro', seq: [] }, { label: 'Bridge' }]);
+  assert.deepStrictEqual(r.seq, [], 'empty/absent section seqs contribute no chords');
+  assert.deepStrictEqual(r.sheet, [['Intro', ''], ['Bridge', '']], 'a labelless-chord section still yields its header row');
+});
+
+test('M-13: the assembled sheet is parseable by the render-half (renderChordOnly emits the section headers + chord bars)', function () {
+  var r = Songbook.buildSongFromSections([
+    { label: 'Verse', seq: ['C', 'F'] },
+    { label: 'Chorus', seq: ['G', 'Am'] }
+  ]);
+  var html = Songbook.renderChordOnly(r.sheet, 0, null);
+  assert.ok(/<div class="sect">Verse<\/div>/.test(html), 'Verse header renders');
+  assert.ok(/<div class="sect">Chorus<\/div>/.test(html), 'Chorus header renders');
+  ['C', 'F', 'G', 'Am'].forEach(function (c) {
+    assert.ok(html.indexOf('>' + c + '<') >= 0, 'chord bar ' + c + ' renders');
+  });
+});
+
+// --- Buffer behavior in the live compose engine (add / arm-remove / A3) ---
+// The tray self-injects into el.prog.parentNode; locate the injected nodes by class.
+function songTrayNodes(m) {
+  var out = {};
+  (function walk(n) {
+    (n.children || []).forEach(function (c) {
+      var cls = (c.className || '').split(' ');
+      if (cls.indexOf('songTray') >= 0) out.tray = c;
+      if (cls.indexOf('songSections') >= 0) out.sections = c;
+      if (cls.indexOf('songSectSel') >= 0) out.sel = c;
+      if (cls.indexOf('songAddBtn') >= 0) out.addBtn = c;
+      if (cls.indexOf('songAssembleBtn') >= 0) out.assemble = c;
+      walk(c);
+    });
+  })(m.wrapper);
+  return out;
+}
+
+test('M-13: Add section snapshots the CURRENT progression as a buffer chip WITHOUT clearing the progression (A3: additive)', function () {
+  var m = mountForProgWrapTests();
+  tapChords(m, 3); // C F G (default C-major palette)
+  assert.strictEqual(m.elMap.prog.children.length, 3, 'three chords built');
+  var t = songTrayNodes(m);
+  assert.ok(t.tray, 'the tray self-injected into the progression box');
+  assert.strictEqual(t.tray.hidden, false, 'the tray shows once a progression exists');
+  t.sel.value = 'Verse';
+  t.addBtn.click();
+  assert.strictEqual(t.sections.children.length, 1, 'one buffered section chip');
+  assert.strictEqual(m.elMap.prog.children.length, 3, 'A3: the progression is NOT cleared by a buffer add');
+  assert.strictEqual(t.assemble.hidden, false, 'Assemble appears once a section is buffered');
+});
+
+test('M-13: a buffered-section chip uses the ONE arm-to-remove grammar - first tap arms (no removal), second removes', function () {
+  var m = mountForProgWrapTests();
+  tapChords(m, 2);
+  var t = songTrayNodes(m);
+  t.sel.value = 'Chorus';
+  t.addBtn.click();
+  assert.strictEqual(t.sections.children.length, 1, 'one section buffered');
+  var rm = t.sections.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
+  assert.ok(rm, 'the chip carries a remove (x) button');
+  tapWired(rm);
+  assert.strictEqual(t.sections.children.length, 1, 'first tap ARMS - it must NOT remove');
+  assert.ok(rm.classList.contains('armed'), 'first tap arms the remover (red)');
+  tapWired(rm);
+  assert.strictEqual(t.sections.children.length, 0, 'second tap removes the buffered section');
+  assert.strictEqual(t.assemble.hidden, true, 'Assemble hides once the buffer is empty');
+  assert.strictEqual(t.tray.hidden, false, 'the tray stays visible while a progression remains');
 });
 
 run();
