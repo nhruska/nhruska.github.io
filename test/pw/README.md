@@ -46,6 +46,7 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | keypicker-preferred-names | S-KEYPICKER-PREFERRED: every key selector shows preferred key names from ONE provider (root grid Db/Eb/Ab/Bb, picked Bb reads Bb on the chip AND the key readout - no more "C# selected, Db displays") |
 | prog-reorder | S-PROG-REORDER prototype: drag a progression chord to reorder (mouse lift-on-move path; touch long-press is the operator feel pass), order changes, nothing deleted/strummed |
 | prog-delete-undo | S-DELETE-UNDO: progression remover arms on first tap (no delete), deletes on second, remove-undo toast restores the chord |
+| cockpit-remix | THE PICK: composite cockpit.html - C queue-first actionable surface + B tempo rail, contract held at 412x915 |
 | cockpit-instruments | Cockpit v2 Angle A: signal bar above the fold, needs-me count real, project tile -> mission drill within the tap budget (friction-profile contract C1-C5,C7) |
 | cockpit-tempo | Cockpit v2 Angle B: mobile vertical time rail replaces the desktop board, rail entry drills to mission detail |
 | cockpit-signal | Cockpit v2 Angle C: queue cards carry inline actions (same-environment tenet), dept -> project -> mission descends one altitude per tap |
