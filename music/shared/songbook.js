@@ -216,6 +216,80 @@
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
     });
   }
+  // ---- M-13 g1 TEMPLATE-SUGGESTED SECTIONS: roman -> chord realization --------
+  // Realize a roman-numeral token (SongTemplates.forSection's chromatic-roman
+  // shape, e.g. 'I','vi','IV','bVII','i') into a canonical-sharp chord TOKEN in a
+  // key, using the app's ONE degree-analysis path (Circle.romanFor) INVERTED by
+  // search over the 12 roots - never a second speller (the ONE-path rule). The
+  // roman's own casing/markers carry the quality (UPPER = major, lower = minor,
+  // '°' = dim, '+' = aug); a leading flat ('bVII') is degree-lowering only, not a
+  // quality. Returns null when NO root reproduces the roman under that quality (a
+  // borrowed/secondary degree Circle can't place from a bare triad) so the caller
+  // SKIPS the suggestion rather than approximating.
+  function romanChordSuffix(roman) {
+    var r = String(roman == null ? '' : roman).trim();
+    if (!r) return null;
+    if (/°|dim/i.test(r)) return 'dim';
+    if (/\+|aug/i.test(r)) return 'aug';
+    var base = r.replace(/^b+/i, '');   // strip the degree-lowering accidental
+    if (/^[iv]/.test(base)) return 'm'; // lowercase numeral -> minor triad
+    if (/^[IV]/.test(base)) return '';  // uppercase numeral -> major triad
+    return null;                        // not a roman numeral we can quality-read
+  }
+  function realizeRoman(roman, keyRoot) {
+    var C = global.Circle;
+    if (!C || typeof C.romanFor !== 'function' || !keyRoot) return null;
+    var target = String(roman == null ? '' : roman).trim();
+    var suffix = romanChordSuffix(target);
+    if (suffix == null) return null;
+    for (var pc = 0; pc < 12; pc++) {
+      var cand = ROOTS[pc] + suffix;
+      if (C.romanFor(cand, keyRoot) === target) return cand; // TOKEN stays canonical-sharp
+    }
+    return null; // no root reproduces this roman under this quality -> skip
+  }
+  // Realize a whole roman pattern into chord tokens in a key. ALL-or-NOTHING: one
+  // unrealizable roman skips the ENTIRE suggestion (never a half-approximated
+  // progression). Returns null when any token fails or the input is empty.
+  function realizeSection(romanArr, keyRoot) {
+    if (!Array.isArray(romanArr) || !romanArr.length) return null;
+    var out = [];
+    for (var i = 0; i < romanArr.length; i++) {
+      var tok = realizeRoman(romanArr[i], keyRoot);
+      if (tok == null) return null;
+      out.push(tok);
+    }
+    return out;
+  }
+  // Key-aware DISPLAY name for a canonical-sharp chord token inside a stated key
+  // (the IV of F reads Bb, never A#) - the pure, key-parameterized twin of mount()'s
+  // dispChordName, routed through Circle.noteInKey (the ONE display-naming path).
+  // Keyless (no keyRoot) -> the token unchanged (canonical sharp), matching the
+  // note-spelling regime-B contract for keyless contexts.
+  function dispChordNameInKey(c, keyRoot, keyMode) {
+    var C = global.Circle;
+    if (!keyRoot || !C || !C.noteInKey) return c;
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(c == null ? '' : c).trim());
+    if (!m) return c;
+    return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
+  }
+  // ADJACENT-SECTION FIT (UAT 2026-07-11): score how strongly a suggestion (its
+  // FIRST roman) ARRIVES from the previous buffered section (its LAST roman), both
+  // as romans in the SAME song key. The songwriting-coach cadence ladder: V->I
+  // authentic (strongest arrival into the next section), IV->I plagal, vi->IV the
+  // common step, a shared chord = smooth overlap. Degree-only (quality/accidental
+  // stripped) - the connection is about scale-position motion, not chord colour.
+  // Higher = better fit; 0 = no recognized connection. Pure + deterministic.
+  var SECTION_CONNECT = { 'V>I': 4, 'IV>I': 3, 'VI>IV': 2 };
+  function sectionConnectScore(prevLastRoman, firstRoman) {
+    if (!prevLastRoman || !firstRoman) return 0;
+    var p = String(prevLastRoman).replace(/[^IVXivx]/g, '').toUpperCase();
+    var f = String(firstRoman).replace(/[^IVXivx]/g, '').toUpperCase();
+    if (!p || !f) return 0;
+    var s = SECTION_CONNECT[p + '>' + f];
+    if (s != null) return s;
+    return p === f ? 1 : 0; // shared chord across the seam = smooth overlap
+  }
   // MODAL INTERCHANGE core (Phase 2), extracted per m-guide-ia-20260704.md section 4.5 so
   // BOTH the explicit-key path (mount()'s convertToMode) and the keyless mode-change
   // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
@@ -2067,13 +2141,10 @@
     // current songKey (bVII of C shows Bb) - tokens stay canonical-sharp for
     // packs/audio/storage/suggestions; keyless contexts (no songKey.root, the
     // All browse) return the token unchanged per the music-theory-coach verdict.
-    function dispChordName(c) {
-      var C = global.Circle;
-      if (!songKey.root || !C || !C.noteInKey) return c;
-      var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(c == null ? '' : c).trim());
-      if (!m) return c;
-      return C.noteInKey(songKey.root, songKey.mode, m[1]) + m[2];
-    }
+    // Delegates to the pure, key-parameterized dispChordNameInKey (module scope)
+    // bound to the live songKey - ONE display-naming path shared with the M-13
+    // template-suggestion chips (which pass their own realization key).
+    function dispChordName(c) { return dispChordNameInKey(c, songKey.root, songKey.mode); }
     // S-PROG-WRAP (UAT U8): real measurements feeding progStripMode's decision -
     // the DOM-caller half of the fitScale-style contract (pure fn takes plain
     // numbers; the caller measures the real page and passes them in).
@@ -2249,16 +2320,26 @@
     // composeRow / the clear-undo banner) - not authored in play/index.html - so
     // the whole feature lives in this file. Built once, into el.prog.parentNode,
     // after the strip. Standard song-form vocabulary (matches catalog `sect`).
-    var songTrayEl = null, songSectSelEl = null, songAddRowEl = null,
-        songSectionsEl = null, songAssembleBtnEl = null;
+    // M-13 g1 section labels - the ONE vocabulary shared by the add-row <select>
+    // and the template-suggestion label switcher below.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'];
+    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
+        songSectionsEl = null, songAssembleBtnEl = null,
+        songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null;
+    // Which section the template chips seed (tappable switcher). Defaults to Verse
+    // (the add-row default) - the musician switches to the section they need next.
+    var suggestLabel = 'Verse';
     function ensureSongTray() {
       if (songTrayEl) return true;
       if (!el.prog || !el.prog.parentNode) return false;
       songTrayEl = document.createElement('div'); songTrayEl.id = 'songTray'; songTrayEl.className = 'songTray'; songTrayEl.hidden = true;
+      // UAT: ONE chrome-tier cue line (the quiet S-POSTPROG-CUE grammar, never a
+      // modal) that names the next move contextually - drives assembly confidence.
+      songTrayCueEl = document.createElement('p'); songTrayCueEl.id = 'songTrayCue'; songTrayCueEl.className = 'songTrayCue'; songTrayCueEl.hidden = true;
       songAddRowEl = document.createElement('div'); songAddRowEl.id = 'songAdd'; songAddRowEl.className = 'songAdd';
       songSectSelEl = document.createElement('select'); songSectSelEl.id = 'songSectSel'; songSectSelEl.className = 'songSectSel';
       songSectSelEl.setAttribute('aria-label', 'Section label');
-      ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'].forEach(function (lbl) {
+      SONG_SECTIONS.forEach(function (lbl) {
         var o = document.createElement('option'); o.value = lbl; o.textContent = lbl;
         if (lbl === 'Verse') o.selected = true; // the most common opening section
         songSectSelEl.appendChild(o);
@@ -2267,14 +2348,143 @@
       addBtn.type = 'button'; addBtn.id = 'songAddBtn'; addBtn.className = 'btn ghost songAddBtn'; addBtn.textContent = 'Add section';
       addBtn.onclick = function () { addSongSection(); };
       songAddRowEl.appendChild(songSectSelEl); songAddRowEl.appendChild(addBtn);
+      // M-13 g1: template-suggestion panel (shells built once, filled per render by
+      // renderSongSuggest). Sits between the add-row and the buffer chips - shown
+      // ONLY when the buffer awaits its next (empty) progression.
+      songSuggestEl = document.createElement('div'); songSuggestEl.id = 'songSuggest'; songSuggestEl.className = 'songSuggest'; songSuggestEl.hidden = true;
+      songSuggestLabelsEl = document.createElement('div'); songSuggestLabelsEl.className = 'chordSeg songSuggestLabels';
+      songSuggestChipsEl = document.createElement('div'); songSuggestChipsEl.className = 'songSuggestChips';
+      songSuggestEl.appendChild(songSuggestLabelsEl); songSuggestEl.appendChild(songSuggestChipsEl); // the tray cue (above) names this state
       songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
       songAssembleBtnEl = document.createElement('button');
       songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
       songAssembleBtnEl.textContent = 'Assemble song'; songAssembleBtnEl.hidden = true;
       songAssembleBtnEl.onclick = function () { assembleSong(); };
-      songTrayEl.appendChild(songAddRowEl); songTrayEl.appendChild(songSectionsEl); songTrayEl.appendChild(songAssembleBtnEl);
+      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songAddRowEl); songTrayEl.appendChild(songSuggestEl); songTrayEl.appendChild(songSectionsEl); songTrayEl.appendChild(songAssembleBtnEl);
       el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
       return true;
+    }
+    // The realization key for template chips: the live Compose songKey when one is
+    // set, else the key the buffered sections establish (deriveProgressionKey does
+    // exactly this fallback). Post-Clear the inferred key is nulled, so the SONG's
+    // own key (the verse the musician already wrote) is what the chips realize in.
+    function suggestKey() {
+      var km = deriveProgressionKey(buildSongFromSections(songSections).seq);
+      return { root: km.key, mode: km.mode };
+    }
+    // Provenance line for a chip: a mined pattern cites its first real song; a
+    // canonical family names itself (minus the roman parenthetical the chip's own
+    // roman line already shows).
+    function suggestProv(s) {
+      if (s.source === 'mined') {
+        var c = (s.citations && s.citations[0]) || null;
+        return c ? ('from ' + c) : 'from the catalog';
+      }
+      return s.name ? s.name.replace(/\s*\(.*\)\s*$/, '') : 'proven';
+    }
+    // The previous buffered section's LAST chord as a roman in the song key -
+    // the seam a new section arrives from (feeds the adjacent-section ranking).
+    function prevSectionLastRoman(keyRoot) {
+      var C = global.Circle;
+      if (!songSections.length || !C || typeof C.romanFor !== 'function' || !keyRoot) return null;
+      var prev = songSections[songSections.length - 1];
+      var seq = prev && prev.seq;
+      if (!seq || !seq.length) return null;
+      return C.romanFor(seq[seq.length - 1], keyRoot) || null;
+    }
+    // Realized template suggestions for a section, in the current song key. Reads
+    // SongTemplates.forSection (the M-12 SSOT - CATALOG-mined patterns first by
+    // count, then proven families; CATALOG is songs.json, the proven library, NOT
+    // the user's own customs, per the UAT "proven songs, not mine" ask), realizes
+    // each roman pattern into canonical-sharp tokens, SKIPS any with an unrealizable
+    // roman (no approximation), then RE-RANKS by adjacent-section fit (a suggestion
+    // that arrives from the previous section's last chord ranks up), keeping
+    // forSection's proven order as the stable tiebreak. Caps at 4.
+    function templateSuggestions(label, km) {
+      var ST = global.SongTemplates;
+      if (!ST || typeof ST.forSection !== 'function' || !km || !km.root) return [];
+      var raw = ST.forSection(label, CATALOG) || [];
+      var prevRoman = prevSectionLastRoman(km.root);
+      var out = [];
+      raw.forEach(function (s, i) {
+        var tokens = realizeSection(s.roman, km.root);
+        if (!tokens) return; // unrealizable roman -> skip, never approximate
+        out.push({
+          tokens: tokens,
+          romanText: s.roman.join('-'),
+          chordText: tokens.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join(' '),
+          prov: suggestProv(s),
+          _order: i,                                                  // forSection's proven rank (mined-first) - stable tiebreak
+          _connect: sectionConnectScore(prevRoman, s.roman[0])        // arrival from the previous section
+        });
+      });
+      out.sort(function (a, b) { return (b._connect - a._connect) || (a._order - b._order); });
+      return out.slice(0, 4);
+    }
+    // UAT assembly cue: ONE contextual line naming the next move (quiet chrome, not
+    // a modal). copy-coach: short, sentence case, jargon-honest.
+    function songTrayCue(hasProg, hasSections, hasSuggestions) {
+      if (hasProg && !hasSections) return 'Add this as a section to start a song.';
+      if (!hasProg && hasSections) {
+        return hasSuggestions
+          ? ('Pick a label - proven ' + suggestLabel.toLowerCase() + ' options below.')
+          : 'Pick a section label to see proven options.';
+      }
+      if (hasProg && hasSections) return 'Add another section, or assemble when ready.';
+      return '';
+    }
+    // Fill the empty progression from a tapped template chip, THROUGH addChord -
+    // the SAME path chord taps use, so packs/voicings resolve and A3 clear-undo
+    // invalidates exactly as a manual build would. Carries the seeded section
+    // forward by pre-setting the add-row label, so the next "Add section" tags it
+    // as the section the musician was building.
+    function fillFromTemplate(tokens, label) {
+      if (!tokens || !tokens.length) return;
+      tokens.forEach(function (t) { addChord(t); });
+      if (songSectSelEl) songSectSelEl.value = label;
+      packPlayChord(tokens[tokens.length - 1]); // audible confirmation of the fill
+      showComposeToast('Filled a ' + label.toLowerCase() + ' - tweak it, then Add as ' + label + '.');
+    }
+    // Returns the number of chips rendered so the tray cue (below) knows whether
+    // proven options actually surfaced - avoids a querySelector the lightweight
+    // test DOM does not implement.
+    function renderSongSuggest(show) {
+      if (!songSuggestEl) return 0;
+      songSuggestEl.hidden = !show;
+      if (!show) { songSuggestChipsEl.innerHTML = ''; return 0; }
+      // Tappable section-label switcher (reuses the .chordSeg segmented primitive).
+      songSuggestLabelsEl.innerHTML = '';
+      SONG_SECTIONS.forEach(function (lbl) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chordSegBtn' + (lbl === suggestLabel ? ' on' : '');
+        b.textContent = lbl;
+        b.setAttribute('data-label', lbl);
+        b.setAttribute('aria-pressed', lbl === suggestLabel ? 'true' : 'false');
+        composeWireTap(b, function () { if (suggestLabel !== lbl) { suggestLabel = lbl; renderSongTray(); } });
+        songSuggestLabelsEl.appendChild(b);
+      });
+      // Realized chips for the selected label.
+      songSuggestChipsEl.innerHTML = '';
+      var km = suggestKey();
+      var suggestions = templateSuggestions(suggestLabel, km);
+      if (!suggestions.length) {
+        var none = document.createElement('p'); none.className = 'songSuggestNone';
+        none.textContent = 'No proven ' + suggestLabel.toLowerCase() + ' template in this key yet.';
+        songSuggestChipsEl.appendChild(none);
+        return 0;
+      }
+      suggestions.forEach(function (s) {
+        var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'songSuggestChip';
+        chip.setAttribute('aria-label', 'Fill ' + suggestLabel + ' with ' + s.chordText);
+        var rn = document.createElement('span'); rn.className = 'ssRoman'; rn.textContent = s.romanText;
+        var ch = document.createElement('span'); ch.className = 'ssChords'; ch.textContent = s.chordText;
+        var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = s.prov;
+        chip.appendChild(rn); chip.appendChild(ch); chip.appendChild(pv);
+        composeWireTap(chip, function () { fillFromTemplate(s.tokens, suggestLabel); });
+        songSuggestChipsEl.appendChild(chip);
+      });
+      return suggestions.length;
     }
     function renderSongTray() {
       if (!ensureSongTray()) return;
@@ -2284,6 +2494,14 @@
       // The add-control needs a live progression to snapshot; hide it with no chords.
       songAddRowEl.hidden = !hasProg;
       songAssembleBtnEl.hidden = !hasSections;
+      // M-13 g1: proven-section chips fill the "wrote a section, cleared, need the
+      // next" gap - shown ONLY when the buffer awaits its next (empty) progression,
+      // never over authored chords.
+      var suggestCount = renderSongSuggest(hasSections && !hasProg);
+      // UAT: the contextual assembly cue (read after renderSongSuggest so it knows
+      // whether chips actually rendered for this key/label).
+      songTrayCueEl.textContent = songTrayCue(hasProg, hasSections, suggestCount > 0);
+      songTrayCueEl.hidden = !songTrayCueEl.textContent;
       songSectionsEl.innerHTML = '';
       songSections.forEach(function (sec, i) {
         var chip = document.createElement('div'); chip.className = 'songSect';
@@ -4297,6 +4515,14 @@
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    // M-13 g1: roman -> canonical-sharp token realization (via Circle.romanFor,
+    // inverted) + key-aware display naming, exposed for unit tests.
+    romanChordSuffix: romanChordSuffix,
+    realizeRoman: realizeRoman,
+    realizeSection: realizeSection,
+    dispChordNameInKey: dispChordNameInKey,
+    sectionConnectScore: sectionConnectScore, // UAT: adjacent-section fit ranking
+
     convertProgressionQualities: convertProgressionQualities,
     chordInKey: chordInKey,
     romanInKey: romanInKey,

@@ -2253,6 +2253,69 @@ test('M-13: the assembled sheet is parseable by the render-half (renderChordOnly
   });
 });
 
+// --- M-13 g1: TEMPLATE-SUGGESTED SECTIONS (roman -> chord realization) ---
+// realizeRoman/realizeSection invert the app's ONE degree path (Circle.romanFor)
+// - no second speller - and dispChordNameInKey respells canonical-sharp tokens
+// key-aware for display. These are the pure core the SONG-tray suggestion chips use.
+test('M-13 g1: realizeRoman - diatonic major degrees in C map to the right roots', function () {
+  assert.strictEqual(Songbook.realizeRoman('I', 'C'), 'C');
+  assert.strictEqual(Songbook.realizeRoman('IV', 'C'), 'F');
+  assert.strictEqual(Songbook.realizeRoman('V', 'C'), 'G');
+  assert.strictEqual(Songbook.realizeRoman('vi', 'C'), 'Am', 'lowercase numeral -> minor triad');
+});
+
+test('M-13 g1: TOKEN stays canonical-sharp, DISPLAY respells key-aware (the IV of F is A# / Bb)', function () {
+  // The whole point of regime-B: storage/voicing tokens are canonical-sharp, only
+  // the DISPLAY name respells by key. IV of F: token A#, shown Bb (never A#).
+  assert.strictEqual(Songbook.realizeRoman('IV', 'F'), 'A#', 'IV of F TOKEN is canonical-sharp A#');
+  assert.strictEqual(Songbook.dispChordNameInKey('A#', 'F', 'Major'), 'Bb', 'IV of F DISPLAYS Bb, never A#');
+  assert.strictEqual(Songbook.realizeRoman('bVII', 'F'), 'D#', 'bVII of F TOKEN is D#');
+  assert.strictEqual(Songbook.dispChordNameInKey('D#', 'F', 'Major'), 'Eb', 'bVII of F DISPLAYS Eb');
+});
+
+test('M-13 g1: flat/borrowed + minor-tonic romans realize; bVII of C displays Bb not A#', function () {
+  assert.strictEqual(Songbook.realizeRoman('bVII', 'C'), 'A#', 'bVII of C token is A#');
+  assert.strictEqual(Songbook.dispChordNameInKey('A#', 'C', 'Major'), 'Bb', 'bVII of C displays Bb, not A#');
+  assert.strictEqual(Songbook.realizeRoman('i', 'A'), 'Am', 'minor tonic');
+  assert.strictEqual(Songbook.realizeRoman('bVI', 'A'), 'F');
+  assert.strictEqual(Songbook.realizeRoman('bIII', 'A'), 'C');
+});
+
+test('M-13 g1: realizeSection - whole family realizes; any unrealizable roman skips the WHOLE suggestion', function () {
+  assert.deepStrictEqual(Songbook.realizeSection(['I', 'V', 'vi', 'IV'], 'C'), ['C', 'G', 'Am', 'F'], 'Axis in C');
+  assert.deepStrictEqual(Songbook.realizeSection(['I', 'bVII', 'IV'], 'F'), ['F', 'D#', 'A#'], 'Mixolydian in F (canonical-sharp tokens)');
+  assert.deepStrictEqual(Songbook.realizeSection(['i', 'bVI', 'bIII', 'bVII'], 'A'), ['Am', 'F', 'C', 'G'], 'Minor pop in A');
+  assert.strictEqual(Songbook.realizeSection(['I', null, 'IV'], 'C'), null, 'a null roman (unresolvable mined chord) skips the whole suggestion');
+  assert.strictEqual(Songbook.realizeSection(['I', '??', 'IV'], 'C'), null, 'a non-roman token skips the whole suggestion');
+  assert.strictEqual(Songbook.realizeSection([], 'C'), null, 'empty pattern -> null');
+});
+
+test('M-13 g1: dispChordNameInKey is keyless-safe and matches the note-spelling regime-B contract', function () {
+  assert.strictEqual(Songbook.dispChordNameInKey('A#', null, 'Major'), 'A#', 'no key -> canonical-sharp token unchanged');
+  assert.strictEqual(Songbook.dispChordNameInKey('C', 'C', 'Major'), 'C', 'natural in-key note unchanged');
+  assert.strictEqual(Songbook.dispChordNameInKey('Am', 'C', 'Major'), 'Am', 'quality suffix preserved');
+});
+
+test('M-13 g1: SongTemplates.forSection integration - a real chorus family realizes to concrete chords', function () {
+  var ST = require('../music/shared/song-templates.js');
+  var raw = ST.forSection('chorus', []); // no catalog -> proven families only; Axis leads chorus
+  var axis = raw.filter(function (s) { return s.roman.join(',') === 'I,V,vi,IV'; })[0];
+  assert.ok(axis, 'the Axis family is offered for a chorus');
+  assert.deepStrictEqual(Songbook.realizeSection(axis.roman, 'C'), ['C', 'G', 'Am', 'F'], 'Axis realizes to C G Am F in C');
+  assert.deepStrictEqual(Songbook.realizeSection(axis.roman, 'G'), ['G', 'D', 'Em', 'C'], 'Axis realizes to G D Em C in G');
+});
+
+test('M-13 g1 (UAT): sectionConnectScore ranks adjacent-section arrival - V->I strongest, degree-only', function () {
+  // The verse ends on V; a chorus that STARTS on I arrives strongest (authentic cadence).
+  assert.strictEqual(Songbook.sectionConnectScore('V', 'I'), 4, 'V->I authentic = strongest');
+  assert.strictEqual(Songbook.sectionConnectScore('IV', 'I'), 3, 'IV->I plagal');
+  assert.strictEqual(Songbook.sectionConnectScore('vi', 'IV'), 2, 'vi->IV common step (case-insensitive)');
+  assert.strictEqual(Songbook.sectionConnectScore('I', 'I'), 1, 'shared chord across the seam = smooth overlap');
+  assert.strictEqual(Songbook.sectionConnectScore('bVII', 'IV'), 0, 'no recognized connection -> 0');
+  assert.strictEqual(Songbook.sectionConnectScore(null, 'I'), 0, 'no previous section -> neutral 0');
+  assert.strictEqual(Songbook.sectionConnectScore('V', 'i'), 4, 'quality is ignored - the arrival is degree motion (V->i still resolves)');
+});
+
 // --- Buffer behavior in the live compose engine (add / arm-remove / A3) ---
 // The tray self-injects into el.prog.parentNode; locate the injected nodes by class.
 function songTrayNodes(m) {
