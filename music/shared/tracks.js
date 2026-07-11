@@ -536,8 +536,8 @@
   // (consumer-side claim + template, priority/show-once left to notables.js).
   // Pure text fn kept separate (like whynoteText) so tests can assert the
   // copy independent of the claim/level plumbing.
-  function scaletipText(key) {
-    key = dispKeyRoot(key, 'major'); // FORK-4 removal: prose shows the preferred name
+  function scaletipText(key, mode) {
+    key = dispKeyRoot(key, mode); // FORK-4 removal: prose shows the preferred name, real mode
     return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
   }
   // S-PERSONA-COPY (pedagogy-coach + copy-coach, 2026-07-10): the BEGINNER
@@ -561,7 +561,7 @@
     var GL = guidanceLevelRef();
     var level = GL ? GL.get() : null;
     if (!N || typeof N.claim !== 'function' || !N.claim('scaletip', undefined, level)) return null;
-    return { consumerId: 'scaletip', text: scaletipText(th.key), className: 'bt-st-notable' };
+    return { consumerId: 'scaletip', text: scaletipText(th.key, th.scaleMode), className: 'bt-st-notable' };
   }
 
   var STORE = 'bt.custom.v1';
@@ -846,7 +846,7 @@
       var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
-        + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
+        + esc(dispKeyRoot(th.key, th.scaleMode)) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         var mode = normMode(th.scaleMode);
         var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
@@ -1069,7 +1069,7 @@
         // the current scale never offered.
         if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
         var feelBands = JQ.feels();
-        var query = JQ.jamQuery(th.key, scaleKey, jamGenre, jamFeel);
+        var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
         jamPanel.innerHTML =
           '<div class="bt-st-jamchips" data-jamgenres>' + genres.map(function (g) {
             return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
