@@ -46,7 +46,9 @@
   .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
     font-size:.82rem;cursor:pointer;padding:8px;}
   /* in-studio add/edit-video-URL editor */
-  .bt-st-urled{margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:11px 12px;}
+  /* S-UI-RECONCILE Lane D: 11px -> var(--r-card) (13px) - card-shaped surface
+     (background+border+padding), same bucket as .bt-add-panel/.cofPanelInner. */
+  .bt-st-urled{margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px 12px;}
   .bt-st-urled-lbl{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
     color:var(--txt-dim);margin-bottom:8px;}
   .bt-st-urled-row{display:flex;gap:8px;align-items:center;}
@@ -77,8 +79,10 @@
   .bt-qmeta{color:var(--txt-dim);font-size:.78rem;}
   .bt-qcands:empty{display:none;}
   .bt-qcand-lbl{font-family:'Space Mono',monospace;font-size:.66rem;letter-spacing:.05em;color:var(--txt-dim);margin-bottom:6px;}
+  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - full-width text-left
+     button, same bucket as .bt-curate-btn (its own already-tokenized sibling). */
   .bt-qcand{display:block;width:100%;text-align:left;background:var(--bg-2);border:1px solid var(--line-strong);
-    color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:6px;}
+    color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:var(--r-btn-sm);cursor:pointer;margin-bottom:6px;}
   .bt-qcand:hover{border-color:var(--accent-ink);}
   .bt-qcand-note{color:var(--txt-dim);font-size:.72rem;margin-left:6px;}
   /* visible curate entry point under the Library list (curateBarEl host) - quiet,
@@ -292,12 +296,16 @@
   .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
   .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
   /* uniform 44px tiles so longer names (C#dim, F#m) don't squash + every tile is a thumb target */
-  .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:46px;min-height:44px;}
+  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - compact bordered
+     tile, same bucket as .cofDeg below. */
+  .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 9px;min-width:46px;min-height:44px;}
   .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
   .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
   .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
   .cofNb{display:flex;flex-wrap:wrap;gap:6px;}
-  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
+  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
+     chip, same bucket as .chordChips .c (songbook.css). */
+  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s;}
   .cofNbChip:active{transform:scale(.94);}
   .cofNbChip b{font-weight:700;}
   /* modes layer + interval degrees (Phase 2.x) */
@@ -309,8 +317,10 @@
     transition:background .12s,color .12s,border-color .12s;}
   .cofModeChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .cofScale{display:flex;gap:4px;margin:0 0 9px;}
+  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
+     tile, same bucket as .cofChord above. */
   .cofDeg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);
-    border:1px solid var(--line);border-radius:8px;padding:6px 2px;min-width:0;}
+    border:1px solid var(--line);border-radius:var(--r-btn-sm);padding:6px 2px;min-width:0;}
   .cofDeg.char{background:var(--accent-deep);border-color:var(--accent-dim);}
   .cofDeg .nt{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:var(--txt);}
   .cofDeg.char .nt{color:var(--accent-ink);}
@@ -438,9 +448,14 @@
  * active chip) - centered, monospace fret/string text to match .scalePosLbl.
  * Not a button (informational only; the pager buttons already drive it).
  * ===================================================================== */
+  /* S-UI-RECONCILE Lane D: 12px -> var(--r-chip-pill) (18px) - this block's own
+     comment above states it composes the SAME accent-filled-pill language as
+     .bt-st-scalechip.on, which is already tokenized to --r-chip-pill; the
+     6px jump is the intended snap onto that shared pill language, not a
+     regression. */
   .scaleBoxChip{text-align:center;margin:-4px 0 8px;font-family:'Space Mono',monospace;
     font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--on-accent);
-    background:var(--accent);border-radius:12px;padding:4px 10px;display:inline-block;}
+    background:var(--accent);border-radius:var(--r-chip-pill);padding:4px 10px;display:inline-block;}
   .scaleBoxChip[hidden]{display:none;}
 
 /* (the U5-class SVG clamp parity rule for .bt-st-chords is gone - F19,

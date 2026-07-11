@@ -409,17 +409,29 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
 .chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+/* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered chord
+   chip, same bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact
+   control, not the pill-shaped .chip family). */
+.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
-.sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
+/* S-UI-RECONCILE Lane D: 11px -> var(--r-card) (13px) - the practice-sheet
+   card surface hosting the chord/lyric grid. */
+.sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}
 .sect:first-child{margin-top:0;}
 /* practice sheet sized for arm's-length reading (phone on a strap / music stand) */
 .lyrLine{font-size:.98rem;line-height:1.32;white-space:pre;margin-bottom:11px;color:var(--txt);}
 .lyrLine .crd{color:var(--accent-ink);font-weight:700;}
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
-.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:7px;padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
+/* S-UI-RECONCILE Lane D: 7px -> var(--r-btn-sm) (10px) - compact bordered chord
+   tile, same bucket as .chordChips .c; .campfireSheet .chordOnly .bar inherits
+   this radius (no override of its own). */
+.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+/* S-UI-RECONCILE locked interface (Lane A <-> Lane D seam): a full-width action
+   button in the song-view .actions row (e.g. repertoire-form.js's "Delete
+   progression") composes .btn with .full instead of an inline flexBasis hack. */
+.actions .btn.full{flex-basis:100%;}
 .btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
