@@ -129,6 +129,33 @@ Standing up a new department from current state:
 A department tile in the Cockpit is born the moment its entity row exists; its
 posture rolls up from day one because the algebra is level-agnostic.
 
+## 5.5 The capability inventory IS the ingest map (operator burst, folded in live)
+
+The signal the operator called out: the primitives already in service define what
+the Cockpit consumes, renders, and dispatches. No new report formats - the glass
+composes what the compound-engineering repo already produces. The claude-config
+repo is the PRIMARY EXECUTION SERVICE: the Cockpit environment loads that same
+stack, so capability on the glass equals capability in a Claude Code / Codex
+terminal.
+
+| Existing primitive / artifact | Cockpit role |
+|---|---|
+| Session summaries + conversation history (conversation-browser, conversation-search, session:save) | ENTITY: sessions are first-class ladder nodes under a project; the operator's own history browses as a drill-down leaf and feeds "what was decided" recall |
+| Sprint reports (sprint-report skill) | ROLL-UP RENDERER: a sprint report is a mission-level roll-up snapshot; the Cockpit generates it FROM the store instead of re-mining GitHub |
+| HITL PR reports (pr-volley hitl-report), adversarial audit comments | DRILL LEAF at PR altitude: the evidence trail behind every merged strip |
+| Playwright QA reports (ui-qa), pw-replay scenario evidence | DETERMINISTIC GOALPOSTS: green/red events per entity; the render-proof images are the leaf artifacts |
+| Jira (atlassian-cli), GitHub issues | INGEST ADAPTERS: external work items map onto mission/task nodes |
+| Engineering/product wikis (wiki-source-of-truth) | KNOWLEDGE LAYER: the SSOT project documentation, MANAGED BY THE SYSTEM ITSELF - agents co-evolve wiki pages in the same PRs (already the rule); the Cockpit links every entity to its wiki page and flags drift |
+| ce-wins, learnings log, CONTINUOUS-IMPROVEMENT entries | WINS + COMPOUND FEED: the shipped/learned tickers and the CE-loop instrument |
+| Competency evidence (music app, coach assessments) | LEARNER-PROFILE ENTITIES (section 4) |
+| Notifications: telegram, email-me, gws, Slack bridge | OUTPUT ADAPTERS: the queue's REQUIRED/SOON/INFO pings fan out per the existing surface conventions; the Cockpit is the durable surface the pings deep-link back into |
+| Skills/commands/rules/protocols (the primitive stack) | THE EXECUTION BACKPLANE (section 1.5): dispatch from the glass runs the same primitives with the same delegations |
+
+Corollary: v2's ingest adapters are thin because every source above already has
+a machine shape (JSON payloads, JSONL events, markdown with frontmatter, gh/jira
+APIs). The store normalizes them into the ONE event shape; the ladder gives them
+a home; the roll-up algebra does the rest.
+
 ## 6. The three angles (what each explores)
 
 The map's replacement is THE design question: what does the operator navigate by?
