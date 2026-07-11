@@ -91,12 +91,57 @@
   /* ---- shared chrome ---- */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
+  /* Hub header grammar (operator taste pick 2026-07-11, from the workflows-hub
+     Org OS panel he liked - label reads COCKPIT here per his direction):
+     hamburger menu, round PS mark, "Problem Solutions" wordmark, LED + COCKPIT,
+     Light/Dark toggle (persisted, data-theme beats the OS hint). Posture + sync
+     move to a breadcrumb line under it - same signals, calmer bar. */
+  var THEME_KEY = 'cockpit.theme.v1';
+  function applyTheme(t) {
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  function currentTheme() {
+    try { return localStorage.getItem(THEME_KEY) || ''; } catch (e) { return ''; }
+  }
+  function themeLabel() {
+    var t = currentTheme();
+    if (t === 'light') return 'Dark';
+    if (t === 'dark') return 'Light';
+    var prefersLight = false;
+    try { prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches; } catch (e) { }
+    return prefersLight ? 'Dark' : 'Light';
+  }
   function header(angle) {
-    return '<div class="hdr"><img class="logo" src="https://problemsolutions.github.io/logo-badge.svg" alt="" onerror="this.style.visibility=\'hidden\'">'
-      + '<div class="word">COCKPIT<small>' + esc(angle) + ' - PORTFOLIO</small></div>'
+    return '<div class="hdr">'
+      + '<button class="hmenu" type="button" id="hMenu" aria-label="Menu">&#9776;</button>'
+      + '<img class="logo" src="https://problemsolutions.github.io/logo-badge.svg" alt="" onerror="this.style.visibility=\'hidden\'">'
+      + '<span class="word">Problem <b>Solutions</b></span>'
+      + '<span class="cockpitTag"><span class="led ok"></span>COCKPIT</span>'
       + '<div class="spacer"></div>'
+      + '<button class="themeBtn" type="button" id="hTheme">' + themeLabel() + '</button>'
+      + '</div>'
+      + '<div class="crumb"><span class="cA">Problem Solutions</span><span class="cB">/</span>'
+      + '<span class="cB">' + esc(angle) + '</span><div class="spacer"></div>'
       + '<span class="badge op"><span class="led ok"></span>' + esc(SNAP.posture) + '</span>'
       + '<span class="sync">SYNC ' + esc(SNAP.updated.slice(11)) + '</span></div>';
+  }
+  function wireHeader() {
+    applyTheme(currentTheme());
+    var tb = document.getElementById('hTheme');
+    if (tb) tb.onclick = function () {
+      var next = themeLabel().toLowerCase();
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { }
+      applyTheme(next); tb.textContent = themeLabel();
+    };
+    var hm = document.getElementById('hMenu');
+    if (hm) hm.onclick = function () {
+      drill('Problem Solutions / Cockpit', 'Angles',
+        '<a class="strip run" href="angle-instruments.html" style="display:flex;text-decoration:none;color:inherit"><div class="sbody"><div class="sname">A - Instruments</div><div class="smeta">navigate by derived state</div></div></a>'
+        + '<a class="strip run" href="angle-tempo.html" style="display:flex;text-decoration:none;color:inherit"><div class="sbody"><div class="sname">B - Tempo</div><div class="smeta">navigate by when</div></div></a>'
+        + '<a class="strip run" href="angle-signal.html" style="display:flex;text-decoration:none;color:inherit"><div class="sbody"><div class="sname">C - Signal</div><div class="smeta">navigate by what needs you</div></div></a>'
+        + '<a class="strip hold" href="index.html" style="display:flex;text-decoration:none;color:inherit"><div class="sbody"><div class="sname">Chooser + rationale</div></div></a>');
+    };
   }
 
   function sigbar() {
@@ -190,5 +235,5 @@
     });
   }
 
-  global.Cockpit = { SNAP: SNAP, overlay: overlay, esc: esc, header: header, sigbar: sigbar, ticker: ticker, queueCards: queueCards, drill: drill, missionStrip: missionStrip, wire: wireDrillContent };
+  global.Cockpit = { SNAP: SNAP, overlay: overlay, esc: esc, header: header, wireHeader: wireHeader, sigbar: sigbar, ticker: ticker, queueCards: queueCards, drill: drill, missionStrip: missionStrip, wire: wireDrillContent };
 })(window);
