@@ -41,6 +41,78 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
+/* ---------- S-UI-RECONCILE (Lane A): key-aware song-view / Stage spelling ----------
+ * The operator screenshot bug: a saved F-major song rendered "A#" on the song
+ * screen (chip row / sheet / transpose readout) instead of "Bb". The song-view
+ * and Stage surfaces now route every chord NAME through a view-local key-aware
+ * speller (chordSpeller), while chord TOKENS (data-c, audio, storage) stay
+ * canonical-sharp. These lock: the respelling, the transpose interplay (the key
+ * moves with the transpose, no double-transpose), the keyless fallback, the
+ * mapper threading through renderSheet/renderChordOnly, and the delete-button
+ * class contract shared with Lane D (songbook.css). */
+test('chordSpeller: inside F major, chord ROOTS respell by function (A# -> Bb, D# -> Eb); quality suffix preserved', function () {
+  var disp = Songbook.chordSpeller('F', 'major');
+  assert.strictEqual(disp('A#'), 'Bb');           // IV of F reads Bb, never A#
+  assert.strictEqual(disp('D#'), 'Eb');           // bVII reads Eb
+  assert.strictEqual(disp('A#m7'), 'Bbm7');        // root respells, m7 kept verbatim
+  assert.strictEqual(disp('A#m7b5'), 'Bbm7b5');
+  assert.strictEqual(disp('F'), 'F');              // naturals unchanged
+  assert.strictEqual(disp('C'), 'C');
+});
+test('chordSpeller: keyless (no key / Circle absent) falls back to the raw canonical-sharp token', function () {
+  assert.strictEqual(Songbook.chordSpeller(null, 'major')('A#'), 'A#');
+  assert.strictEqual(Songbook.chordSpeller('', 'major')('D#'), 'D#');
+  // junk / empty tokens pass through untouched, never throw
+  assert.strictEqual(Songbook.chordSpeller('F', 'major')(''), '');
+});
+test('chordSpeller: transpose interplay - the key moves WITH the transpose (F song at +2 spells in G, at +1 in F#)', function () {
+  // soloKeyFor already transpose-adjusts the key; chordSpeller must NOT transpose
+  // again - both key and tokens live in the one transposed domain.
+  var song = { seq: ['F', 'A#', 'C'], key: 'F', mode: 'major' };
+  [2, 1].forEach(function (st) {
+    var seqT = song.seq.map(function (c) { return Songbook.tpose(c, st); });
+    var sk = Songbook.soloKeyFor(song, seqT, st);
+    var disp = Songbook.chordSpeller(sk.key, sk.mode);
+    // the tonic chip agrees with the transposed key's preferred spelling
+    assert.strictEqual(disp(seqT[0]), Circle.preferredTonicName(sk.key, sk.mode));
+  });
+  // +2 -> G major: the IV token (A# -> C) reads C, agreeing with G
+  var seq2 = song.seq.map(function (c) { return Songbook.tpose(c, 2); });
+  var sk2 = Songbook.soloKeyFor(song, seq2, 2);
+  assert.deepStrictEqual(seq2.map(Songbook.chordSpeller(sk2.key, sk2.mode)), ['G', 'C', 'D']);
+});
+test('chordSpeller: NO double-transpose - F major at +4 spells the bVII as G, not the Abb a re-transposed key would emit', function () {
+  // Regression guard for the exact trap: if the key were transposed a SECOND
+  // time (F +4 -> A, then +4 -> C#), the bVII token (D# -> G) would misspell as
+  // Abb. The correct single-domain key (A) spells it G.
+  var song = { seq: ['F', 'D#'], key: 'F', mode: 'major' };
+  var st = 4;
+  var seqT = song.seq.map(function (c) { return Songbook.tpose(c, st); }); // ['A','G']
+  var sk = Songbook.soloKeyFor(song, seqT, st);                            // {key:'A',mode:'major'}
+  assert.strictEqual(sk.key, 'A');
+  var disp = Songbook.chordSpeller(sk.key, sk.mode);
+  assert.strictEqual(disp('G'), 'G');                                      // correct
+  assert.notStrictEqual(disp('G'), Circle.noteInKey(Songbook.tpose(sk.key, st), 'major', 'G')); // != double-transpose result
+});
+test('renderChordOnly / renderSheet: an optional display map threads through; without it the raw token renders (back-compat)', function () {
+  var song = { seq: ['F', 'A#', 'C'], sheet: [['Verse', '[F] [A#] [C]']], key: 'F', mode: 'major' };
+  var disp = Songbook.chordSpeller('F', 'major');
+  // WITH the map: A# -> Bb in the campfire (chords-only) sheet - the operator bug
+  var mapped = Songbook.renderChordOnly(song.sheet, 0, disp);
+  assert.ok(mapped.indexOf('>Bb<') >= 0, 'chords-only sheet must show Bb');
+  assert.ok(mapped.indexOf('>A#<') < 0, 'chords-only sheet must NOT show A#');
+  // WITHOUT the map: unchanged canonical-sharp behavior (every keyless caller)
+  var raw = Songbook.renderChordOnly(song.sheet, 0);
+  assert.ok(raw.indexOf('>A#<') >= 0, 'no map -> raw token unchanged');
+  // both-view (renderSheet default) threads the map too
+  var both = Songbook.renderSheet(song, 0, 'both', disp);
+  assert.ok(both.indexOf('Bb') >= 0 && both.indexOf('A#') < 0, 'both-view respells via the map');
+});
+test('deleteBtnClass: a real delete wears the danger primitive, a fork revert stays ghost; both span the row via .full (no inline style)', function () {
+  assert.strictEqual(Songbook.deleteBtnClass(false), 'btn danger full'); // Delete progression
+  assert.strictEqual(Songbook.deleteBtnClass(true), 'btn ghost full');   // Revert to original (non-destructive)
+});
+
 /* ---------- common-progression filling (the canon, transposable) ---------- */
 test('chordsFromDegrees fills the 4-chord song (I V vi IV) in C', function () {
   assert.deepStrictEqual(Songbook.chordsFromDegrees('C', 'Major', [0, 4, 5, 3]), ['C', 'G', 'Am', 'F']);

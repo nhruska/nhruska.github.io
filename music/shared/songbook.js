@@ -450,28 +450,63 @@
   // call sites are unchanged.
   function escHTML(s) { return global.Esc.esc(s); }
 
-  function renderLyricLine(raw) {
+  // S-UI-RECONCILE (Lane A, 2026-07-10): a view-local key-aware DISPLAY speller.
+  // Given a stated key (canonical-sharp token) + mode it returns token->display,
+  // routing chord ROOTS through Circle.noteInKey so the bVII of F reads Bb, never
+  // A# - the same regime-B contract the Studio/Compose surfaces already honor.
+  // The KEY it is given is already in the transposed domain (soloKeyFor moves the
+  // key with STATE.transpose) and so are the TOKENS fed in (renderSheet tposes
+  // before calling), so no second transpose happens here - both live in one
+  // domain. Keyless progressions (no key, or Circle absent) fall back to the raw
+  // token unchanged, matching the "keyless contexts stay canonical-sharp" rule.
+  // The quality suffix (m7, dim, ...) is preserved verbatim; only the root respells.
+  function chordSpeller(key, mode) {
+    var C = global.Circle;
+    if (!key || !C || !C.noteInKey) return function (tok) { return tok; };
+    return function (tok) {
+      var t = String(tok == null ? '' : tok);
+      var m = /^([A-Ga-g][#b]?)(.*)$/.exec(t.trim());
+      if (!m) return tok;
+      try { return C.noteInKey(key, mode, m[1]) + m[2]; }
+      catch (e) { return tok; }
+    };
+  }
+  // `map` (optional) is a token->display speller from chordSpeller. When absent,
+  // the raw (canonical-sharp) token renders - preserving every keyless caller's
+  // behavior. Column alignment keys off the DISPLAYED label's length so a
+  // respelled name (A# -> Bb, same width; and any exotic double-accidental) never
+  // shifts the chord row off its lyric.
+  function renderLyricLine(raw, map) {
     var chordRow = "", lyricRow = "", last = 0, m;
     var re = /\[([^\]]+)\]/g;
     while ((m = re.exec(raw))) {
       var before = raw.slice(last, m.index);
+      var label = map ? map(m[1]) : m[1];
       lyricRow += before;
       chordRow += " ".repeat(before.length);
-      chordRow += m[1];
-      lyricRow += " ".repeat(m[1].length);
+      chordRow += label;
+      lyricRow += " ".repeat(label.length);
       last = re.lastIndex;
     }
     lyricRow += raw.slice(last);
     return '<div class="lyrLine"><span class="crd">' + escHTML(chordRow) + '</span>\n' + escHTML(lyricRow) + '</div>';
   }
-  function renderChordOnly(sheet, st) {
+  // S-UI-RECONCILE (Lane A): the action-ladder class for the song-view
+  // remove/revert button. A real destructive delete is the `danger` primitive
+  // (was mislabeled `.ghost`, the low-emphasis look); a fork's "Revert to
+  // original" is NOT destructive of a user creation (it restores the catalog
+  // song), so it keeps `ghost`. Both span the row via the `.full` class (Lane D:
+  // `.actions .btn.full{flex-basis:100%}`) rather than an inline flexBasis style.
+  // Pure + exported so the class contract has a real regression test.
+  function deleteBtnClass(isFork) { return isFork ? 'btn ghost full' : 'btn danger full'; }
+  function renderChordOnly(sheet, st, map) {
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var re = /\[([^\]]+)\]/g, m, cs = [];
       while ((m = re.exec(line))) cs.push(tpose(m[1], st));
-      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(c) + '</span>'; }).join(' ') + '</div>');
+      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(map ? map(c) : c) + '</span>'; }).join(' ') + '</div>');
     });
     return out.join('');
   }
@@ -490,14 +525,14 @@
   }
   // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
   // 'both' (default) = chords positioned over lyrics.
-  function renderSheet(song, st, view) {
-    if (view === 'chords') return renderChordOnly(song.sheet, st);
+  function renderSheet(song, st, view, map) {
+    if (view === 'chords') return renderChordOnly(song.sheet, st, map);
     if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { html += '<div class="sect">' + escHTML(sect) + '</div>'; last = sect; }
-      html += renderLyricLine(tposeLine(line, st));
+      html += renderLyricLine(tposeLine(line, st), map);
     });
     return html;
   }
@@ -759,7 +794,14 @@
     // it for rendering while the action ladder still passed the raw record).
     var artist = s.a || s.artist;
     if (artist === 'search') artist = '';
-    var parts = [s.t || s.title, artist, s.key ? s.key + ' key' : ''];
+    // S-UI-RECONCILE (Lane A): the key part of the query reads the PREFERRED tonic
+    // name (Bb key, not A# key) so the search matches how charts name the key.
+    // The seq tokens further down stay canonical-sharp (identity for the search).
+    var keyName = s.key;
+    if (keyName && global.Circle && global.Circle.preferredTonicName) {
+      keyName = global.Circle.preferredTonicName(s.key, s.mode || 'major');
+    }
+    var parts = [s.t || s.title, artist, keyName ? keyName + ' key' : ''];
     // custom songs (Compose saves) have no recording to find - fold genre +
     // chords so the search lands on something playable instead of title-only.
     if (s.custom && Array.isArray(s.seq)) {
@@ -1490,6 +1532,13 @@
       for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
       var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
       var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
+      // S-UI-RECONCILE (Lane A): key-aware display speller for every chord NAME on
+      // this song screen (chip row, transpose readout, campfire sheet). soloKey is
+      // already transpose-adjusted and `seq` is already transposed, so this maps
+      // transposed-token -> transposed-key display name (F song at +2 spells in G).
+      // Falls back to the raw token when the progression is keyless. Chord TOKENS
+      // (data-c, play/audio, storage) stay canonical-sharp - only labels respell.
+      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
       // Compact label ("Solo"; the title attr carries the full phrase) so it fits
       // the SAME row as modeSwitch/transposeChip/stageGo at 375-412px - mirrors
       // Compose's #chordCtrlRow treatment on the other surface (songbook.css
@@ -1507,7 +1556,7 @@
       }
       var switcher = '<div class="practiceRow">'
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
-        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(dispMap(seq[0])) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
         + soloRowBtn
         + '</div>';
@@ -1521,7 +1570,7 @@
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size()
         + (STATE.queueSkipNotice ? ' - ' + escHTML(STATE.queueSkipNotice) : '') + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
+      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(dispMap(c)) + '</span>'; }).join('') + '</div>';
       // F28: the Solo button now lives in the practiceRow controls row above (the
       // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
       // action-ladder host appended further down for custom/catalog songs.
@@ -1534,14 +1583,14 @@
       var body;
       if (view === 'chords') {
         body = chips
-          + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
+          + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords', dispMap) + '</div>'
           + actions
           + '<div class="lyricsLinks">' + ytLink + '</div>';
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
           + actions
           // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
           + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
@@ -1588,10 +1637,13 @@
         eb.onclick = function () { openEditForm(s.id); };
         act.appendChild(eb);
         var db = document.createElement('button');
-        db.className = 'btn ghost';
+        // S-UI-RECONCILE (Lane A): danger primitive for a real delete, ghost for a
+        // non-destructive fork revert; full-width via CSS `.full` (Lane D), not an
+        // inline style. See deleteBtnClass for the full rationale.
+        db.className = deleteBtnClass(isFork);
         // A fork shadows a catalog song, so removing it REVERTS to the original
         // rather than deleting a user creation - label + confirm say so.
-        db.textContent = isFork ? 'Revert to original' : 'Delete progression'; db.style.flexBasis = '100%';
+        db.textContent = isFork ? 'Revert to original' : 'Delete progression';
         db.onclick = function () {
           var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
           if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
@@ -1626,7 +1678,12 @@
       if (!el.maxOv || !el.maxGrid || !pack) return;
       el.maxGrid.innerHTML = '';
       chords.forEach(function (c) {
-        var bd = pack.diagram ? pack.diagram(c, 'big') : (function () { var d = document.createElement('div'); d.className = 'bigC'; d.textContent = c; return d; })();
+        // S-UI-RECONCILE (Lane A): the big overlay diagrams are Compose-scoped
+        // (opened from the current progression), so relabel via the Compose
+        // dispChordName through packDiagram - which resolves the voicing by the
+        // canonical token and shows the key-aware name (Bb, not A#), fallback
+        // branch included. Was `pack.diagram(c,'big')` with a raw `c` label.
+        var bd = packDiagram(c, 'big', dispChordName(c));
         bd.onclick = function () { packPlayChord(c); };
         el.maxGrid.appendChild(bd);
       });
@@ -1934,10 +1991,18 @@
         return;
       }
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
-      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
+      // S-UI-RECONCILE (Lane A): key-aware display speller for the Stage surface,
+      // built the SAME way as the song screen - prefer the merged record's key,
+      // else derive from the transposed seq (soloKeyFor is transpose-aware). Names
+      // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
+      var mrStage = null;
+      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
+      var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
+      var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
+      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + stageDisp(seq[0]) + '  ·  ' : '') + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
-        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view) + '</div>';
+        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
         pSheet.scrollTop = 0;
         applyPerfFont();
       }
@@ -4094,6 +4159,11 @@
     noteToPc: noteToPc,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
+    renderChordOnly: renderChordOnly,
+    // S-UI-RECONCILE (Lane A): key-aware song-view/Stage display speller + the
+    // action-ladder delete-button class contract - exposed for regression tests.
+    chordSpeller: chordSpeller,
+    deleteBtnClass: deleteBtnClass,
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
     isMine: isMine,
