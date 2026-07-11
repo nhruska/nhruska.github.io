@@ -1349,3 +1349,31 @@ footer{display:none;}
 .notableBanner-body{flex:1;min-width:0;line-height:1.4;}
 .notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--guide-line);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .notableBanner-x:active{transform:scale(.9);color:var(--txt);}
+
+/* =====================================================================
+ * M-COMPETENCY LZ (2026-07-11): the Settings "Skills" panel - the
+ * per-skill competency profile viewer (self-injected into #settingsBody
+ * by songbook.js mountSkillsPanel()). Uses the shared .accSec/.accBtn/
+ * .accBody look for the section shell; the pieces below are the panel's
+ * own primitives. .compBar is a NEW element (competency-level meter) -
+ * deliberately NOT reusing .prog (the chord-progression strip) per the
+ * Element Consistency Law: two different meanings never share one look.
+ * ===================================================================== */
+.skillsPanel .skillsImportRow{margin-top:10px;}
+.skillRow{border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);margin-top:10px;overflow:hidden;}
+.skillHead{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
+.skillHead:active{background:var(--surface-2);}
+.skillHead[aria-expanded="true"]{border-bottom:1px solid var(--line);}
+.skillName{flex:1;min-width:0;overflow-wrap:break-word;}
+.skillMeta{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
+.skillDetail{padding:6px 13px 12px;}
+.skillDetail[hidden]{display:none;}
+.compRow{display:grid;grid-template-columns:1fr;gap:3px;padding:8px 0;border-top:1px solid var(--line);}
+.compRow:first-child{border-top:0;}
+.compName{font-size:.86rem;color:var(--txt-soft);}
+.compBar{height:8px;border-radius:6px;background:var(--bg-2);border:1px solid var(--line);overflow:hidden;}
+.compBarFill{height:100%;background:var(--accent);border-radius:6px 0 0 6px;transition:width .3s ease;}
+.compMeta{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
+.skillPref{margin-top:8px;font-size:.8rem;color:var(--txt-soft);line-height:1.4;}
+.skillActs{margin-top:12px;display:flex;}
+.skillExport{flex:0 0 auto;min-height:44px;}
