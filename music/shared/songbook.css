@@ -722,6 +722,24 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSect .rm:active::before{background:var(--bad);}
 .songAssembleBtn[hidden]{display:none;}
 .songAssembleBtn{min-height:44px;}
+/* M-13 g1 TEMPLATE-SUGGESTED SECTIONS: proven-progression chips shown inside the
+   SONG tray when the buffer awaits its next (empty) progression. Suggestion-tier
+   grammar - dashed outline + surface fill, NOT the accent-fill of a selected
+   state (these are offers, not the current pick). The label switcher reuses the
+   .chordSeg segmented primitive (its own rules above). */
+/* UAT assembly cue: ONE quiet chrome-tier line (S-POSTPROG-CUE grammar) that
+   names the next move - never a fill/accent, it is guidance, not an action. */
+.songTrayCue[hidden]{display:none;}
+.songTrayCue{margin:0;font-size:.74rem;color:var(--txt-dim);}
+.songSuggest[hidden]{display:none;}
+.songSuggest{display:flex;flex-direction:column;gap:8px;padding:9px 10px;border-radius:11px;border:1px dashed var(--accent-dim);background:var(--accent-deep);}
+.songSuggestChips{display:flex;flex-direction:column;gap:6px;}
+.songSuggestChip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:44px;padding:7px 11px;border-radius:10px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--txt);cursor:pointer;text-align:left;font-family:inherit;transition:transform .08s,border-color .15s,background .15s;}
+.songSuggestChip:active{transform:scale(.98);background:var(--accent-deep);border-color:var(--accent-ink);}
+.songSuggestChip .ssRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
+.songSuggestChip .ssChords{font-size:.8rem;color:var(--txt);}
+.songSuggestChip .ssProv{font-size:.68rem;color:var(--txt-dim);}
+.songSuggestNone{margin:0;font-size:.74rem;color:var(--txt-dim);}
 /* #suggest leads the scrolling chord list (folded into the In key / All surface):
    starters when the progression is empty, next-chord chips otherwise. */
 .suggest:not(:empty){margin:2px 0 12px;}
