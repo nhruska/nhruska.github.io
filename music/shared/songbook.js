@@ -2127,6 +2127,9 @@
             // interval relative to the key — think I IV V, not shapes
             if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
           }
+          // S-PROG-REORDER (prototype, operator directive 2026-07-10): the slot
+          // is draggable to reorder - see wireSlotDrag below the render loop.
+          wireSlotDrag(slot, i);
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
           // S-SLOTX: movement-cancelled (composeWireTap, not a raw onclick) so a
           // scroll-grab on this horizontal filmstrip can't remove a chord.
@@ -3087,6 +3090,108 @@
         onHide: function () { clearUndoSnapshot = null; paintClearUndoHidden(); }
       });
       clearUndoTeardown = global.Toast.wirePauseOnTouch(clearUndoBanner, clearUndoHandle);
+    }
+
+    // S-PROG-REORDER (PROTOTYPE, operator directive 2026-07-10: "prototype drag
+    // and drop to reorder chosen chords in my progression"). Pointer-events
+    // drag on every progression slot, all three strip stages (full cards,
+    // fill-row, grid6 - nearest-center targeting is 2D so the grid6 second
+    // row just works):
+    //   touch: LONG-PRESS (300ms still) lifts - early movement is a scroll
+    //     and cancels the hold, so the filmstrip's pan gesture is untouched;
+    //     once lifted, a non-passive touchmove blocker owns the gesture.
+    //   mouse/pen: movement past a small slop lifts immediately.
+    // While lifted: source slot dims (.dragging), the nearest slot carries an
+    // accent insertion edge (.dropBefore/.dropAfter by pointer side). Release
+    // splices the progression (a mutation - full A3 invalidation) and
+    // re-renders; the click that trails pointerup is swallowed once so a drop
+    // never also strums the chord it landed on.
+    var dragSwallowClick = false;
+    function wireSlotDrag(slot, index) {
+      slot.addEventListener('pointerdown', function (e) {
+        if (progression.length < 2) return;
+        // NOTE: drags may START on the rm button - its 44px hit area covers a
+        // compact chip's center (probed live: elementFromPoint at slot center
+        // hits .rm), so excluding it made compact chips undraggable. The two
+        // gestures stay separable: the rm tap is movement-cancelled
+        // (composeWireTap), and this drag only commits after movement.
+        var id = e.pointerId, startX = e.clientX, startY = e.clientY;
+        var isTouch = e.pointerType === 'touch';
+        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        function slotsNow() { return Array.prototype.slice.call(el.prog.children); }
+        function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
+        function blockScroll(ev) { ev.preventDefault(); }
+        function lift() {
+          holdTimer = null;
+          lifted = true;
+          slot.classList.add('dragging');
+          try { slot.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        function onMove(ev) {
+          if (ev.pointerId !== id) return;
+          if (!lifted) {
+            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
+            // touch: early movement = the user is scrolling the strip - stand down.
+            if (isTouch) { if (moved > 8) cleanup(); }
+            else if (moved > 6) lift();
+            return;
+          }
+          if (ev.cancelable) ev.preventDefault();
+          clearMark();
+          var list = slotsNow(), best = -1, bestD = Infinity, bestCx = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            var d = Math.abs(ev.clientX - cx) + Math.abs(ev.clientY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCx = cx; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = ev.clientX > bestCx;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function onUp(ev) {
+          if (ev.pointerId !== id) return;
+          var commit = lifted && dropAt != null;
+          var to = dropAt;
+          cleanup();
+          if (!commit) return;
+          // swallow the click that trails this pointerup so the drop never
+          // ALSO plays/strums the chord it landed on (capture listener below).
+          dragSwallowClick = true;
+          setTimeout(function () { dragSwallowClick = false; }, 150);
+          var insert = to > index ? to - 1 : to;
+          if (insert === index) return;
+          invalidateClearUndo(); // A3: a reorder is a mutation like any other
+          var movedChord = progression.splice(index, 1)[0];
+          progression.splice(insert, 0, movedChord);
+          reinferKey();
+          renderProg(); renderSuggest(); renderKey();
+        }
+        function cleanup() {
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          clearMark();
+          slot.classList.remove('dragging');
+          try { slot.releasePointerCapture(id); } catch (err) {}
+          document.removeEventListener('touchmove', blockScroll);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+        }
+        if (isTouch) holdTimer = setTimeout(lift, 300);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      });
+    }
+    // The one-shot click swallow for drops (capture phase so it beats the
+    // token/diagram onclick that would otherwise strum the landing chord).
+    if (el.prog && el.prog.addEventListener) {
+      el.prog.addEventListener('click', function (e) {
+        if (dragSwallowClick) { e.stopPropagation(); e.preventDefault(); }
+      }, true);
     }
 
     // S-DELETE-UNDO (operator UAT 2026-07-10: "too easy to delete a chord.
