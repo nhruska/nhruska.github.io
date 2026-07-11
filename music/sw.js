@@ -246,7 +246,7 @@
 // SAME toggle, one button opens both the direct-paste and genre/feel-search
 // paths). check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-var CACHE = 'music-v152';
+var CACHE = 'music-v153';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -292,7 +292,7 @@ var CORE = [
   // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).
-  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/repertoire-form.js',
+  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js', './shared/repertoire-form.js',
   // yt-info.js: M-TRACKLIB wave 2a (U17) - script-tagged in play/index.html
   // right after repertoire-form.js (see the CACHE-bump comment above).
   './shared/yt-info.js',
