@@ -290,6 +290,78 @@
     if (s != null) return s;
     return p === f ? 1 : 0; // shared chord across the seam = smooth overlap
   }
+  // ---- M-13 g3 PERSONALIZED RANKING: nudge template suggestions by the
+  // musician's OWN competency profile (music.competency.v1, competency.js) -
+  // never a filter (pedagogy-coach: levels gate DEPTH, not access), only a
+  // re-rank plus a one-line why-cue. A cheap deterministic complexity proxy:
+  // distinct romans + altered/borrowed degrees (a leading 'b', a dim/aug
+  // marker) - more distinct/altered chords reads as more "varied". Below the
+  // SIMPLE threshold favors a comp-progressions level under 40 (early
+  // players); at/above the VARIED threshold favors a level at/above it
+  // (ready for more color). A matching PREFERENCE (keyword overlap between a
+  // recorded preference statement and the suggestion's own family/citation
+  // text) always wins the tag slot - an explicit personal signal outranks an
+  // inferred skill nudge. No profile, or no signal either way, leaves every
+  // suggestion untagged with zero boost - the ranking degrades byte-for-byte
+  // to forSection/sectionConnectScore's own order (graceful absence).
+  var COMPLEXITY_SIMPLE_MAX = 4, COMPLEXITY_VARIED_MIN = 6;
+  var PREF_STOPWORDS = { the: 1, and: 1, uses: 1, use: 1, using: 1, with: 1, your: 1, for: 1, that: 1, this: 1, from: 1, into: 1, over: 1, when: 1 };
+  function suggestionComplexity(romanArr) {
+    var seen = {}, distinct = 0, altered = 0;
+    (romanArr || []).forEach(function (r) {
+      var key = String(r == null ? '' : r);
+      if (!key) return;
+      if (!seen[key]) { seen[key] = true; distinct++; }
+      if (/^b/i.test(key) || /°|\+/.test(key)) altered++;
+    });
+    return distinct + altered;
+  }
+  function prefWords(statement) {
+    return String(statement == null ? '' : statement).toLowerCase().split(/[^a-z]+/).filter(function (w) {
+      return w.length >= 4 && !PREF_STOPWORDS[w];
+    });
+  }
+  // First preference (in profile order) whose statement shares a significant
+  // word with `text` (case-insensitive substring match) - null if none/absent.
+  function matchedPreference(preferences, text) {
+    if (!Array.isArray(preferences) || !preferences.length || !text) return null;
+    var hay = String(text).toLowerCase();
+    for (var i = 0; i < preferences.length; i++) {
+      var words = prefWords(preferences[i] && preferences[i].statement);
+      for (var j = 0; j < words.length; j++) {
+        if (hay.indexOf(words[j]) >= 0) return preferences[i];
+      }
+    }
+    return null;
+  }
+  // Mutates each suggestion with `_boost` (sort nudge, 0/1/2) + `_tag` (the
+  // why-cue string, or null). `suggestions` entries carry `_complexity`
+  // (from suggestionComplexity) and `_matchText` (the family/citation text a
+  // preference can match against) already set by the caller. `profile` is a
+  // competency.js profile object ({competencies, preferences}) or null/absent
+  // (no stored data yet) - either way, a missing/incomplete profile is a
+  // silent no-op, never a throw. Returns `suggestions` (mutated in place) for
+  // convenient chaining/testing.
+  function personalizeSuggestions(suggestions, profile) {
+    var level = null;
+    if (profile && Array.isArray(profile.competencies)) {
+      for (var i = 0; i < profile.competencies.length; i++) {
+        if (profile.competencies[i] && profile.competencies[i].id === 'comp-progressions') {
+          level = profile.competencies[i].level; break;
+        }
+      }
+    }
+    var preferences = profile && profile.preferences;
+    (suggestions || []).forEach(function (s) {
+      s._boost = 0; s._tag = null;
+      var pref = matchedPreference(preferences, s._matchText);
+      if (pref) { s._boost = 2; s._tag = 'your style'; return; }
+      if (typeof level !== 'number') return; // no usable level signal -> no nudge
+      if (level < 40 && s._complexity <= COMPLEXITY_SIMPLE_MAX) { s._boost = 1; s._tag = 'easy fit'; }
+      else if (level >= 40 && s._complexity >= COMPLEXITY_VARIED_MIN) { s._boost = 1; s._tag = 'adds variety'; }
+    });
+    return suggestions;
+  }
   // MODAL INTERCHANGE core (Phase 2), extracted per m-guide-ia-20260704.md section 4.5 so
   // BOTH the explicit-key path (mount()'s convertToMode) and the keyless mode-change
   // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
@@ -1119,6 +1191,16 @@
     function recordComp(compId) {
       var C = competencyRef(); if (!C || !C.recordEvidence) return;
       try { C.recordEvidence('music-composition', compId); } catch (e) {}
+    }
+    // M-13 g3: the REAL stored profile for a skill, or null - never a
+    // fabricated blank. getProfile() would hand back blankProfile (level 0
+    // everywhere) even when the user has never touched competency at all, and
+    // that would fabricate a "beginner" signal out of true absence. Reading
+    // the raw stored map keeps "no profile" and "profile at level 0" distinct,
+    // which is exactly what personalizeSuggestions' graceful-absence contract needs.
+    function competencyProfile(skillId) {
+      var C = competencyRef(); if (!C || typeof C.load !== 'function') return null;
+      try { var map = C.load(); return (map && map[skillId]) || null; } catch (e) { return null; }
     }
     // Map the ACTIVE instrument profile to its repertoire competency; degrade
     // to the shared stringed-instrument chord-shapes when it isn't uke/guitar.
@@ -2425,6 +2507,13 @@
       }
       return s.name ? s.name.replace(/\s*\(.*\)\s*$/, '') : 'proven';
     }
+    // M-13 g3: the text a recorded PREFERENCE can match against - a mined
+    // suggestion's real-song citations (the musician's own catalog), a
+    // family's own name (minus the roman parenthetical, matching suggestProv).
+    function suggestMatchText(s) {
+      if (s.source === 'mined') return (s.citations || []).join(' ');
+      return s.name ? s.name.replace(/\s*\(.*\)\s*$/, '') : '';
+    }
     // The previous buffered section's LAST chord as a roman in the song key -
     // the seam a new section arrives from (feeds the adjacent-section ranking).
     function prevSectionLastRoman(keyRoot) {
@@ -2441,8 +2530,10 @@
     // the user's own customs, per the UAT "proven songs, not mine" ask), realizes
     // each roman pattern into canonical-sharp tokens, SKIPS any with an unrealizable
     // roman (no approximation), then RE-RANKS by adjacent-section fit (a suggestion
-    // that arrives from the previous section's last chord ranks up), keeping
-    // forSection's proven order as the stable tiebreak. Caps at 4.
+    // that arrives from the previous section's last chord ranks up) FIRST, then by
+    // the musician's OWN competency profile (M-13 g3: personalizeSuggestions - a
+    // re-rank + a one-line why-cue on `_tag`, never a filter), keeping forSection's
+    // proven order as the final stable tiebreak. Caps at 4.
     function templateSuggestions(label, km) {
       var ST = global.SongTemplates;
       if (!ST || typeof ST.forSection !== 'function' || !km || !km.root) return [];
@@ -2458,10 +2549,13 @@
           chordText: tokens.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join(' '),
           prov: suggestProv(s),
           _order: i,                                                  // forSection's proven rank (mined-first) - stable tiebreak
-          _connect: sectionConnectScore(prevRoman, s.roman[0])        // arrival from the previous section
+          _connect: sectionConnectScore(prevRoman, s.roman[0]),       // arrival from the previous section
+          _complexity: suggestionComplexity(s.roman),                 // M-13 g3: skill-nudge input
+          _matchText: suggestMatchText(s)                             // M-13 g3: preference-match input
         });
       });
-      out.sort(function (a, b) { return (b._connect - a._connect) || (a._order - b._order); });
+      personalizeSuggestions(out, competencyProfile('music-composition'));
+      out.sort(function (a, b) { return (b._connect - a._connect) || (b._boost - a._boost) || (a._order - b._order); });
       return out.slice(0, 4);
     }
     // UAT assembly cue: ONE contextual line naming the next move (quiet chrome, not
@@ -2487,6 +2581,7 @@
       if (songSectSelEl) songSectSelEl.value = label;
       packPlayChord(tokens[tokens.length - 1]); // audible confirmation of the fill
       showComposeToast('Filled a ' + label.toLowerCase() + ' - tweak it, then Add as ' + label + '.');
+      recordComp('comp-progressions'); // M-13 g3: accepting a proven suggestion IS progression evidence
     }
     // Returns the number of chips rendered so the tray cue (below) knows whether
     // proven options actually surfaced - avoids a querySelector the lightweight
@@ -2519,10 +2614,14 @@
       }
       suggestions.forEach(function (s) {
         var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'songSuggestChip';
-        chip.setAttribute('aria-label', 'Fill ' + suggestLabel + ' with ' + s.chordText);
+        // M-13 g3: the why-cue rides the SAME provenance line (one visible line,
+        // no new element/style - Element Consistency Law) - '<prov> · <tag>' when
+        // the profile produced a tag, else the provenance line unchanged.
+        var provText = s.prov + (s._tag ? ' · ' + s._tag : '');
+        chip.setAttribute('aria-label', 'Fill ' + suggestLabel + ' with ' + s.chordText + (s._tag ? ', ' + s._tag : ''));
         var rn = document.createElement('span'); rn.className = 'ssRoman'; rn.textContent = s.romanText;
         var ch = document.createElement('span'); ch.className = 'ssChords'; ch.textContent = s.chordText;
-        var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = s.prov;
+        var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = provText;
         chip.appendChild(rn); chip.appendChild(ch); chip.appendChild(pv);
         composeWireTap(chip, function () { fillFromTemplate(s.tokens, suggestLabel); });
         songSuggestChipsEl.appendChild(chip);
@@ -4765,6 +4864,11 @@
     realizeSection: realizeSection,
     dispChordNameInKey: dispChordNameInKey,
     sectionConnectScore: sectionConnectScore, // UAT: adjacent-section fit ranking
+    // M-13 g3: competency-profile-driven suggestion re-rank + why-cue, exposed
+    // for unit tests (pure - no DOM, no localStorage).
+    suggestionComplexity: suggestionComplexity,
+    matchedPreference: matchedPreference,
+    personalizeSuggestions: personalizeSuggestions,
 
     convertProgressionQualities: convertProgressionQualities,
     chordInKey: chordInKey,

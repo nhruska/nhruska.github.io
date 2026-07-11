@@ -2316,6 +2316,81 @@ test('M-13 g1 (UAT): sectionConnectScore ranks adjacent-section arrival - V->I s
   assert.strictEqual(Songbook.sectionConnectScore('V', 'i'), 4, 'quality is ignored - the arrival is degree motion (V->i still resolves)');
 });
 
+// --- M-13 g3: competency-profile-driven suggestion re-rank + why-cue ---
+test('M-13 g3: suggestionComplexity - distinct romans + altered/borrowed degrees, higher = more varied', function () {
+  assert.strictEqual(Songbook.suggestionComplexity(['I', 'IV', 'V']), 3, 'folk cadence: 3 distinct, none altered');
+  assert.strictEqual(Songbook.suggestionComplexity(['I', 'V', 'vi', 'IV']), 4, 'Axis: 4 distinct, none altered');
+  assert.strictEqual(Songbook.suggestionComplexity(['i', 'bVI', 'bIII', 'bVII']), 7, 'minor pop: 4 distinct + 3 borrowed = 7');
+  assert.strictEqual(Songbook.suggestionComplexity(['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'I']), 3, '12-bar blues: repeats collapse to 3 distinct');
+  assert.strictEqual(Songbook.suggestionComplexity([]), 0, 'empty roman -> 0');
+  assert.strictEqual(Songbook.suggestionComplexity(null), 0, 'missing roman -> 0, never throws');
+});
+test('M-13 g3: matchedPreference - keyword overlap against a suggestion\'s own text, stopwords ignored', function () {
+  var prefs = [{ id: 'p1', statement: 'Prefers jazz turnarounds' }];
+  assert.strictEqual(Songbook.matchedPreference(prefs, 'Jazz turnaround'), prefs[0], 'case-insensitive word overlap matches');
+  assert.strictEqual(Songbook.matchedPreference(prefs, 'Axis (I-V-vi-IV)'), null, 'no shared word -> no match');
+  assert.strictEqual(Songbook.matchedPreference(prefs, ''), null, 'empty match text -> null, never throws');
+  assert.strictEqual(Songbook.matchedPreference([], 'Jazz turnaround'), null, 'no preferences -> null');
+  assert.strictEqual(Songbook.matchedPreference(null, 'Jazz turnaround'), null, 'absent preferences -> null');
+  // a preference built entirely of short/stopwords never coincidentally matches
+  assert.strictEqual(Songbook.matchedPreference([{ id: 'p2', statement: 'Uses the and for' }], 'Uses the and for real'), null, 'stopwords/short words never drive a match');
+});
+test('M-13 g3: personalizeSuggestions - NO profile leaves every suggestion untagged with zero boost (graceful absence)', function () {
+  var suggestions = [
+    { _order: 0, _complexity: 3, _matchText: 'Folk cadence' },
+    { _order: 1, _complexity: 7, _matchText: 'Minor pop' }
+  ];
+  Songbook.personalizeSuggestions(suggestions, null);
+  assert.deepStrictEqual(suggestions.map(function (s) { return [s._boost, s._tag]; }), [[0, null], [0, null]], 'no profile -> no nudge, no tag - byte-for-byte todays order stands');
+});
+test('M-13 g3: personalizeSuggestions - low comp-progressions level boosts the SIMPLE suggestion, tags it "easy fit"', function () {
+  var profile = { competencies: [{ id: 'comp-progressions', level: 20 }], preferences: [] };
+  var suggestions = [
+    { _order: 0, _complexity: 7, _matchText: 'Minor pop' },   // complex, listed first by proven order
+    { _order: 1, _complexity: 3, _matchText: 'Folk cadence' } // simple, listed second
+  ];
+  Songbook.personalizeSuggestions(suggestions, profile);
+  assert.deepStrictEqual(suggestions.map(function (s) { return s._boost; }), [0, 1], 'only the simple one is nudged');
+  assert.strictEqual(suggestions[1]._tag, 'easy fit');
+  assert.strictEqual(suggestions[0]._tag, null);
+  // the ranking function's own tiebreak (mirrors templateSuggestions' sort: connect, then boost, then proven order)
+  var ranked = suggestions.slice().sort(function (a, b) { return (b._boost - a._boost) || (a._order - b._order); });
+  assert.strictEqual(ranked[0]._order, 1, 'a low-level player sees the simple option surface ABOVE its proven-order rank - order genuinely changed');
+});
+test('M-13 g3: personalizeSuggestions - a level at/above 40 boosts the VARIED suggestion instead, tags it "adds variety"', function () {
+  var profile = { competencies: [{ id: 'comp-progressions', level: 65 }], preferences: [] };
+  var suggestions = [
+    { _order: 0, _complexity: 3, _matchText: 'Folk cadence' },
+    { _order: 1, _complexity: 7, _matchText: 'Minor pop' }
+  ];
+  Songbook.personalizeSuggestions(suggestions, profile);
+  assert.strictEqual(suggestions[0]._tag, null, 'simple stays untagged at this level');
+  assert.strictEqual(suggestions[1]._tag, 'adds variety');
+  var ranked = suggestions.slice().sort(function (a, b) { return (b._boost - a._boost) || (a._order - b._order); });
+  assert.strictEqual(ranked[0]._order, 1, 'the varied option now ranks first, above its proven-order position');
+});
+test('M-13 g3: personalizeSuggestions - a matched PREFERENCE always wins the tag + outranks a mere skill nudge', function () {
+  var profile = {
+    competencies: [{ id: 'comp-progressions', level: 20 }], // would otherwise favor the SIMPLE suggestion
+    preferences: [{ id: 'p1', statement: 'Prefers minor pop progressions' }]
+  };
+  var suggestions = [
+    { _order: 0, _complexity: 3, _matchText: 'Folk cadence' },
+    { _order: 1, _complexity: 7, _matchText: 'Minor pop (i-bVI-bIII-bVII)' } // matches the preference, despite being complex
+  ];
+  Songbook.personalizeSuggestions(suggestions, profile);
+  assert.strictEqual(suggestions[0]._tag, 'easy fit', 'the simple one still earns its OWN skill nudge independently');
+  assert.strictEqual(suggestions[1]._tag, 'your style', 'the complex one gets the preference tag instead of no tag at all');
+  assert.ok(suggestions[1]._boost > suggestions[0]._boost, 'a preference match always out-boosts a mere skill nudge');
+});
+test('M-13 g3: personalizeSuggestions - a profile with no comp-progressions entry never fabricates a level (graceful)', function () {
+  var profile = { competencies: [{ id: 'comp-song-form', level: 10 }], preferences: [] };
+  var suggestions = [{ _order: 0, _complexity: 3, _matchText: 'Folk cadence' }];
+  Songbook.personalizeSuggestions(suggestions, profile);
+  assert.strictEqual(suggestions[0]._boost, 0);
+  assert.strictEqual(suggestions[0]._tag, null);
+});
+
 // --- Buffer behavior in the live compose engine (add / arm-remove / A3) ---
 // The tray self-injects into el.prog.parentNode; locate the injected nodes by class.
 function songTrayNodes(m) {
