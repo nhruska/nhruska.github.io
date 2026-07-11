@@ -51,4 +51,5 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | cockpit-tempo | Cockpit v2 Angle B: mobile vertical time rail replaces the desktop board, rail entry drills to mission detail |
 | cockpit-signal | Cockpit v2 Angle C: queue cards carry inline actions (same-environment tenet), dept -> project -> mission descends one altitude per tap |
 | setlist-remove-arm | S-SETRM-ARM: setlist edit-mode remove handle rests QUIET (computed-color probe vs --bad), first tap ARMS red (1.6s auto-disarm proven), second tap removes + undo banner - the ONE inline-remove grammar |
+| song-builder | M-13 SONG BUILDER LZ: Compose section buffer -> multi-section custom song - add a progression as Verse, add another as Chorus (progression NOT cleared = A3), arm-guard a buffer-chip remove, Assemble opens the song view with BOTH section headers + chord bars |
 | triads-audible | S-TRIADS-AUDIBLE + S-RN-STYLE: inversion cards are tap-to-hear buttons (exact voicing from the active profile's open-string freqs, shared ChordAudio engine, keyboard-reachable) and I/IV/V numerals carry .rn styling in prose |

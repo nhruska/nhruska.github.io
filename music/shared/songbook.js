@@ -587,6 +587,21 @@
   function buildSheetFromSeq(seq) {
     return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
   }
+  // M-13 SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
+  // the { seq, sheet } shape a custom SONG stores. seq = first-appearance unique
+  // chords across ALL sections (the song's chord set - what the Studio/solo reads);
+  // sheet = one [label, "[C] [F] ..."] pair per section (the existing chord-only
+  // renderer parses these bracket tags). Pure + Node-testable; mirrors
+  // buildSheetFromSeq's single-line shape, one line per section.
+  function buildSongFromSections(sections) {
+    var seq = [], seen = {};
+    var sheet = (Array.isArray(sections) ? sections : []).map(function (s) {
+      var chords = (s && Array.isArray(s.seq)) ? s.seq : [];
+      chords.forEach(function (c) { if (!seen[c]) { seen[c] = true; seq.push(c); } });
+      return [String((s && s.label) || 'Section'), chords.map(function (c) { return "[" + c + "]"; }).join(" ")];
+    });
+    return { seq: seq, sheet: sheet };
+  }
   // PURE core of rebuildAll: fold the catalog + customs into the merged ALLSONGS list.
   // Catalog songs get kN ids; a fork (forkOf=kN) SHADOWS its catalog original (omit it);
   // customs append with their sheet resolved (own sheet preferred -> a fork keeps the
@@ -2221,6 +2236,103 @@
         });
       }
       renderSuggest();
+      renderSongTray(); // M-13: the tray's visibility + add-control track the progression
+    }
+
+    // ---- M-13 SONG BUILDER: assemble progressions into a multi-section song ----
+    // In-memory (session-scoped) buffer of {label, seq:[...]} snapshots. Additive,
+    // no backup.js schema bump (persisting it is a named next goalpost). The tray
+    // (renderSongTray) shows only when a progression exists OR the buffer is
+    // non-empty - never dead chrome on an empty canvas.
+    var songSections = [];
+    // The tray is SELF-INJECTED into the progression box (like composeToast /
+    // composeRow / the clear-undo banner) - not authored in play/index.html - so
+    // the whole feature lives in this file. Built once, into el.prog.parentNode,
+    // after the strip. Standard song-form vocabulary (matches catalog `sect`).
+    var songTrayEl = null, songSectSelEl = null, songAddRowEl = null,
+        songSectionsEl = null, songAssembleBtnEl = null;
+    function ensureSongTray() {
+      if (songTrayEl) return true;
+      if (!el.prog || !el.prog.parentNode) return false;
+      songTrayEl = document.createElement('div'); songTrayEl.id = 'songTray'; songTrayEl.className = 'songTray'; songTrayEl.hidden = true;
+      songAddRowEl = document.createElement('div'); songAddRowEl.id = 'songAdd'; songAddRowEl.className = 'songAdd';
+      songSectSelEl = document.createElement('select'); songSectSelEl.id = 'songSectSel'; songSectSelEl.className = 'songSectSel';
+      songSectSelEl.setAttribute('aria-label', 'Section label');
+      ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'].forEach(function (lbl) {
+        var o = document.createElement('option'); o.value = lbl; o.textContent = lbl;
+        if (lbl === 'Verse') o.selected = true; // the most common opening section
+        songSectSelEl.appendChild(o);
+      });
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button'; addBtn.id = 'songAddBtn'; addBtn.className = 'btn ghost songAddBtn'; addBtn.textContent = 'Add section';
+      addBtn.onclick = function () { addSongSection(); };
+      songAddRowEl.appendChild(songSectSelEl); songAddRowEl.appendChild(addBtn);
+      songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
+      songAssembleBtnEl = document.createElement('button');
+      songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
+      songAssembleBtnEl.textContent = 'Assemble song'; songAssembleBtnEl.hidden = true;
+      songAssembleBtnEl.onclick = function () { assembleSong(); };
+      songTrayEl.appendChild(songAddRowEl); songTrayEl.appendChild(songSectionsEl); songTrayEl.appendChild(songAssembleBtnEl);
+      el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
+      return true;
+    }
+    function renderSongTray() {
+      if (!ensureSongTray()) return;
+      var hasProg = progression.length >= 1;
+      var hasSections = songSections.length >= 1;
+      songTrayEl.hidden = !(hasProg || hasSections);
+      // The add-control needs a live progression to snapshot; hide it with no chords.
+      songAddRowEl.hidden = !hasProg;
+      songAssembleBtnEl.hidden = !hasSections;
+      songSectionsEl.innerHTML = '';
+      songSections.forEach(function (sec, i) {
+        var chip = document.createElement('div'); chip.className = 'songSect';
+        var name = document.createElement('span'); name.className = 'songSectName';
+        // Show the label + chord count so a Verse x2 and a 3-vs-5-chord section
+        // are distinguishable at a glance (recognition over recall).
+        name.textContent = sec.label + ' · ' + sec.seq.length;
+        chip.appendChild(name);
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+        rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
+        // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
+        // first tap arms red (1600ms auto-disarm), second tap removes.
+        composeWireTap(rm, function () {
+          if (armedRm !== rm) { armRm(rm); return; }
+          disarmRm();
+          songSections.splice(i, 1);
+          renderSongTray();
+        });
+        chip.appendChild(rm);
+        songSectionsEl.appendChild(chip);
+      });
+    }
+    // Snapshot the CURRENT progression (canonical-sharp tokens) as a labeled
+    // section. A3: additive - does NOT mutate the progression, so it does NOT
+    // invalidate the Clear-undo snapshot. Does NOT clear the progression (the
+    // musician often builds the chorus by editing the verse).
+    function addSongSection() {
+      if (!progression.length) { showComposeToast('Build a progression first.', true); return; }
+      var label = (songSectSelEl && songSectSelEl.value) || 'Verse';
+      songSections.push({ label: label, seq: progression.slice() });
+      disarmRm(); // a fresh add clears any armed chip remover
+      renderSongTray();
+      showComposeToast('Added ' + label + ' to the song.');
+    }
+    // Assemble the buffer into ONE custom song via the existing createCustomItem
+    // save path, then open it in the song view. A3: buffer-only op - leaves the
+    // progression (and its Clear-undo) intact.
+    function assembleSong() {
+      if (!songSections.length) { showComposeToast('Add a section first.', true); return; }
+      var built = buildSongFromSections(songSections);
+      var km = deriveProgressionKey(built.seq);
+      var cs = createCustomItem({
+        title: 'My song', seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode
+      });
+      songSections = [];
+      disarmRm();
+      renderSongTray();
+      showComposeToast('Assembled ' + cs.t + ' – opening it now.');
+      openPractice(cs.id);
     }
     function addChord(c) {
       if (progression.length >= COMPOSE_MAX) return; // D-CAP12
@@ -4171,6 +4283,7 @@
     shadowedCatalogIds: shadowedCatalogIds,
     buildAllSongs: buildAllSongs,
     buildSheetFromSeq: buildSheetFromSeq,
+    buildSongFromSections: buildSongFromSections, // M-13 SONG BUILDER: section buffer -> {seq, sheet}
     shadowedTrackKeys: shadowedTrackKeys,
     remapSetlist: remapSetlist,
     // S-SET-INTEGRITY (UAT U22): load-heal + defensive-nav pure helpers
