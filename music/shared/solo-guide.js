@@ -57,12 +57,22 @@
   // token it needs. No root, an unresolvable root, or Circle absent -> both
   // null (matches every safe-empty contract in this file/circle.js - callers
   // degrade to the relationship-only wording, never throw).
+  // S-UI-RECONCILE Lane C (C4): the shifted root comes back canonical-sharp
+  // from Circle.relativeMinor/relativeMajor (shift() -> spell(), the legacy
+  // sharp-only speller) - that's an identity name, not a key-aware NAME. Route
+  // it through Circle.preferredTonicName(shiftedRoot, 'minor'|'major') so a
+  // C#-major Studio (displayed Db) names its relative minor "Bb minor", never
+  // "A# minor". Falls back to the raw shifted name if preferredTonicName is
+  // unavailable (matches every other safe-empty fallback in this file).
   function relNames(root, scaleId) {
     var C = circleRef();
     if (!C || !root) return { relMinor: null, relMajor: null };
+    var rawMinor = (typeof C.relativeMinor === 'function') ? C.relativeMinor(root) : null;
+    var rawMajor = (typeof C.relativeMajor === 'function') ? C.relativeMajor(root) : null;
+    var hasPreferred = typeof C.preferredTonicName === 'function';
     return {
-      relMinor: (typeof C.relativeMinor === 'function') ? (C.relativeMinor(root) || null) : null,
-      relMajor: (typeof C.relativeMajor === 'function') ? (C.relativeMajor(root) || null) : null
+      relMinor: rawMinor ? (hasPreferred ? C.preferredTonicName(rawMinor, 'minor') : rawMinor) : null,
+      relMajor: rawMajor ? (hasPreferred ? C.preferredTonicName(rawMajor, 'major') : rawMajor) : null
     };
   }
 

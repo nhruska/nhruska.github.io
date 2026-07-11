@@ -695,6 +695,33 @@ test('scaletipText interpolates the key', function () {
     'Try the scale chips below - Pent major, Pent minor, and Blues all fit over C too. The fretboard pattern is the guide.'
   );
 });
+/* ---------------------------------------------------------------------
+ * S-UI-RECONCILE Lane C (C3): scaletipText hardcoded 'major' when respelling
+ * the key, so a minor-key Studio's tip named the MAJOR-preferred spelling
+ * even when it differs from the minor-preferred one (G# minor -> "fit over
+ * Ab too", wrong; every other Studio surface says G#m). Threading the real
+ * scaleMode fixes it; the no-mode 1-arg call above must stay byte-identical
+ * (modeKey(undefined) already falls back to ionian, same as the old
+ * hardcoded 'major').
+ * ------------------------------------------------------------------- */
+test('scaletipText: S-UI-RECONCILE C3 - threading the real scaleMode fixes a minor key whose major- and minor-preferred spellings diverge (G# minor)', function () {
+  var th = T.studioTheory('G#', 'minor');
+  assert.strictEqual(th.scaleMode, 'aeolian');
+  assert.strictEqual(
+    T.scaletipText(th.key, th.scaleMode),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over G# too. The fretboard pattern is the guide.'
+  );
+  // the pre-fix bug, pinned so it never comes back: hardcoding 'major' would
+  // have produced the WRONG spelling (Ab) for this minor key.
+  assert.notStrictEqual(T.scaletipText(th.key, th.scaleMode), T.scaletipText(th.key));
+  assert.ok(!/Ab/.test(T.scaletipText(th.key, th.scaleMode)), 'must not leak the major-preferred spelling into a minor-key tip');
+});
+test('scaletipText: omitting mode (1-arg call) stays byte-identical to before the fix (modeKey(undefined) falls back to ionian, same as the old hardcoded "major")', function () {
+  assert.strictEqual(
+    T.scaletipText('C'),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over C too. The fretboard pattern is the guide.'
+  );
+});
 test('scaletipBanner: granted for level advanced on a fresh, empty slot', function () {
   resetLocalStorage();
   GuidanceLevel.set('advanced');
@@ -902,6 +929,50 @@ test('readSoloScaleFor: an unknown track (never written) among other stored trac
   var t2 = { title: 'Wonderwall', artist: 'Oasis', key: 'F#', mode: 'minor' };
   T.writeSoloScaleFor(t1, 'blues');
   assert.strictEqual(T.readSoloScaleFor(t2), null);
+});
+
+/* =======================================================================
+ * S-UI-RECONCILE Lane C (C1/C2): buildWhy's "why these notes" hint and the
+ * jam-discovery query/URL both live INSIDE openStudio()'s per-track closure -
+ * not exported, and openStudio's DOM surface is too large (~800 lines) to
+ * stub for a direct call. Same static source-scan discipline this repo
+ * already uses for seam regressions (consistency-lint.test.js,
+ * no-native-dialog-lint.test.js): pin the exact call-site pattern so a
+ * future edit that reintroduces the raw-th.key bug fails loud.
+ * ===================================================================== */
+var fs = require('fs');
+var path = require('path');
+function readSrc(rel) { return fs.readFileSync(path.join(__dirname, '..', rel), 'utf8'); }
+// Extract a named function's full body (brace-matched) from source, so the
+// lint below scopes its assertion to the RIGHT function, not a coincidental
+// match anywhere else in the file.
+function extractFunctionBody(src, signatureRe) {
+  var m = signatureRe.exec(src);
+  if (!m) return null;
+  var braceStart = src.indexOf('{', m.index);
+  var depth = 0;
+  for (var i = braceStart; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') { depth--; if (depth === 0) return src.slice(braceStart, i + 1); }
+  }
+  return null;
+}
+test('buildWhy (C1): the "why these notes" hint respells th.key via dispKeyRoot, never the raw canonical-sharp th.key', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th\) \{/);
+  assert.ok(body, 'buildWhy(box, th) not found in tracks.js');
+  assert.ok(/cofHint/.test(body), 'expected the cofHint prose block inside buildWhy');
+  assert.ok(/dispKeyRoot\(th\.key, th\.scaleMode\)/.test(body),
+    'buildWhy must call dispKeyRoot(th.key, th.scaleMode) to respell the key in the hint prose');
+  assert.ok(!/esc\(th\.key\)/.test(body),
+    'buildWhy must not emit the raw canonical-sharp th.key (e.g. "A#") beside the key-aware note names');
+});
+test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th.scaleMode) into JamQueries.jamQuery, never the raw th.key', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
+    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
 });
 
 run();

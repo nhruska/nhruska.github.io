@@ -107,6 +107,12 @@ test('card: pentMajor.shapes + a root NAMES the relative minor instance ({relMin
   var c = SoloGuide.card('pentMajor', notes, 'F');
   assert.strictEqual(c.shapes, 'Same notes as D minor pent, THREE frets lower - same box, different home note.');
 });
+test('card: S-UI-RECONCILE C4 - a C#-major (displayed Db) root NAMES its relative minor pent "Bb minor", never the raw canonical-sharp "A# minor"', function () {
+  var notes = Circle.soloScale('C#', 'pentMajor');
+  var c = SoloGuide.card('pentMajor', notes, 'C#');
+  assert.strictEqual(c.shapes, 'Same notes as Bb minor pent, THREE frets lower - same box, different home note.');
+  assert.ok(c.shapes.indexOf('A#') === -1, c.shapes);
+});
 test('card: absent root falls back to the pre-S-REL-NAMES relationship-only wording (byte-identical to the 2-arg call)', function () {
   var notes = Circle.soloScale('F', 'pentMajor');
   var withRoot = SoloGuide.card('pentMajor', notes, 'F');
@@ -133,12 +139,18 @@ test('relNames: canon spot-checks named in the U23 spec (F->D minor, A->F# minor
   assert.strictEqual(SoloGuide.relNames('A', 'pentMajor').relMinor, 'F#');
   assert.strictEqual(SoloGuide.relNames('C', 'pentMajor').relMinor, 'A');
 });
-test('relNames: parity with Circle.relativeMinor/relativeMajor across all 12 roots (thin pass-through, not a re-derivation)', function () {
+test('relNames: parity with Circle.preferredTonicName(relativeMinor/relativeMajor(root)) across all 12 roots (S-UI-RECONCILE C4: the shifted root is respelled key-aware, not the raw canonical-sharp shift)', function () {
   Circle.ORDER.forEach(function (root) {
     var names = SoloGuide.relNames(root, 'pentMajor');
-    assert.strictEqual(names.relMinor, Circle.relativeMinor(root), root + ' relMinor mismatch');
-    assert.strictEqual(names.relMajor, Circle.relativeMajor(root), root + ' relMajor mismatch');
+    assert.strictEqual(names.relMinor, Circle.preferredTonicName(Circle.relativeMinor(root), 'minor'), root + ' relMinor mismatch');
+    assert.strictEqual(names.relMajor, Circle.preferredTonicName(Circle.relativeMajor(root), 'major'), root + ' relMajor mismatch');
   });
+});
+test('relNames: C4 fix in effect - a canonical-sharp relative root respells to its key-aware name (C major -> Eb major, not D#; G# minor -> B major, not raw sharp shift where it differs)', function () {
+  assert.strictEqual(SoloGuide.relNames('C', 'pentMajor').relMajor, 'Eb');
+  assert.strictEqual(SoloGuide.relNames('G', 'pentMajor').relMajor, 'Bb');
+  assert.strictEqual(SoloGuide.relNames('C#', 'pentMajor').relMinor, 'Bb');
+  assert.strictEqual(SoloGuide.relNames('A#', 'pentMajor').relMajor, 'Db');
 });
 test('relNames: no root, an unresolvable root, or Circle absence all degrade to { relMinor: null, relMajor: null } (never throws)', function () {
   assert.deepStrictEqual(SoloGuide.relNames(null, 'pentMajor'), { relMinor: null, relMajor: null });
