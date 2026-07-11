@@ -342,4 +342,15 @@ test('U20: the complementary (sounding, h+180) and adjacent (chord/blue, h+-30) 
   assert.strictEqual(complementary180, 4, 'expected the complementary h+180 offset on both --sound-bg and --sound-line, both themes (4 total), got ' + complementary180);
 });
 
+test('S-SETRM-ARM: inline remove handles rest QUIET - no rest-red li-rm override; the armed state exists (red = ARMED, per the S-DELETE-UNDO grammar)', function () {
+  // The retired J2 rule (#setBody .li-rm at rest in --bad) must never come back:
+  // after S-DELETE-UNDO, red on an inline remove handle means ARMED, so a
+  // rest-red handle is a state-grammar fork (operator UAT 2026-07-11).
+  var restRed = /#setBody\s+\.li-rm\s*\{[^}]*var\(--bad\)/.test(songbookStripped);
+  assert.strictEqual(restRed, false, 'found a rest-red #setBody .li-rm rule - inline remove handles must rest quiet (red is the ARMED state)');
+  // And the armed state must exist with the danger fill + on-danger ink.
+  var armed = /\.li-rm\.armed\s*\{[^}]*background:\s*var\(--bad\)[^}]*color:\s*var\(--on-danger\)/.test(songbookStripped);
+  assert.ok(armed, 'expected .li-rm.armed with var(--bad) fill + var(--on-danger) ink in songbook.css');
+});
+
 run();

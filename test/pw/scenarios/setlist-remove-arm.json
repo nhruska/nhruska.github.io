@@ -1,0 +1,32 @@
+{
+  "name": "setlist-remove-arm",
+  "note": "S-SETRM-ARM (operator UAT 2026-07-11: 'delete state style misalignment'): the setlist edit-mode remove handle follows the ONE inline-remove grammar (S-DELETE-UNDO) - QUIET at rest (no red until armed), first tap ARMS red (1.6s auto-disarm), second tap removes, undo banner offered. Red-at-rest now belongs only to labeled .btn.danger buttons.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(1) .li-add" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(2) .li-add" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": "#setEdit" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "edit mode shows 2 rows with remove handles", "js": "document.querySelectorAll('#setBody .listItem').length === 2 && document.querySelectorAll('#setBody .li-rm').length === 2" },
+    { "action": "evalAssert", "label": "resting handle is QUIET - no armed class, computed color is not the danger red", "js": "(function(){var b=document.querySelector('#setBody .li-rm');if(!b||b.classList.contains('armed'))return false;var bad=getComputedStyle(document.documentElement).getPropertyValue('--bad').trim();var probe=document.createElement('span');probe.style.color=bad;document.body.appendChild(probe);var badRgb=getComputedStyle(probe).color;probe.remove();return getComputedStyle(b).color!==badRgb})()" },
+    { "action": "tap", "selector": "#setBody .li-rm" },
+    { "action": "wait", "ms": 200 },
+    { "action": "evalAssert", "label": "first tap ARMS - it must NOT remove", "js": "document.querySelectorAll('#setBody .listItem').length === 2 && !!document.querySelector('#setBody .li-rm.armed')" },
+    { "action": "screenshot", "name": "armed" },
+    { "action": "wait", "ms": 1900 },
+    { "action": "evalAssert", "label": "1.6s auto-disarm: armed class gone, nothing removed", "js": "document.querySelectorAll('#setBody .listItem').length === 2 && !document.querySelector('#setBody .li-rm.armed')" },
+    { "action": "tap", "selector": "#setBody .li-rm" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tap", "selector": "#setBody .li-rm.armed" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "second tap on the armed handle removes the row", "js": "document.querySelectorAll('#setBody .listItem').length === 1" },
+    { "action": "evalAssert", "label": "undo banner offered after the remove", "js": "(function(){var u=document.querySelector('.setUndo');return !!u && !u.hidden})()" },
+    { "action": "screenshot", "name": "removed-with-undo" }
+  ]
+}
