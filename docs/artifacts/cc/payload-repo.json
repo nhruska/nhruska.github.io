@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-10T12:10:37Z",
+  "generatedAt": "2026-07-11T10:36:59Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,83 +13,83 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-10T12:08:38Z",
-    "sha": "8edf834297e951a524c9a6a3a3cbf0a9f299d61e",
-    "subject": "ops: merge - PR #206 merged - SDD vision + songwriting-coach live; IV-3 a",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/8edf834297e951a524c9a6a3a3cbf0a9f299d61e"
+    "date": "2026-07-11T10:21:53Z",
+    "sha": "9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9",
+    "subject": "ops: report - OVERNIGHT ARC CLOSED: M-13 song builder shipped end to end (",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9"
   },
   "commits": [
     {
-      "date": "2026-07-10T12:08:38Z",
-      "sha": "8edf834297e951a524c9a6a3a3cbf0a9f299d61e",
-      "subject": "ops: merge - PR #206 merged - SDD vision + songwriting-coach live; IV-3 a",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/8edf834297e951a524c9a6a3a3cbf0a9f299d61e"
+      "date": "2026-07-11T10:21:53Z",
+      "sha": "9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9",
+      "subject": "ops: report - OVERNIGHT ARC CLOSED: M-13 song builder shipped end to end (",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9"
     },
     {
-      "date": "2026-07-10T12:08:23Z",
-      "sha": "442de1ba2a540922bb62be3a6333e858adbe4586",
-      "subject": "SDD: song-driven development vision + songwriting-coach + Deck interview set (#206)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/442de1ba2a540922bb62be3a6333e858adbe4586"
+      "date": "2026-07-11T10:21:36Z",
+      "sha": "8ce029452d8ff37e0128989ae53b818a3c5ded38",
+      "subject": "QUEUE reconcile: overnight arc close - M-13 shipped, M-COMPETENCY, Cockpit pick, CE frictions (#246)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/8ce029452d8ff37e0128989ae53b818a3c5ded38"
     },
     {
-      "date": "2026-07-10T12:02:08Z",
-      "sha": "93687b3290d62f7bf8f7b94d9b2ef46e66ad25fc",
-      "subject": "ops: idle - Mission ops-deck CLOSED - deck live, board still paused for",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/93687b3290d62f7bf8f7b94d9b2ef46e66ad25fc"
+      "date": "2026-07-11T10:18:31Z",
+      "sha": "0dfc053d29a875bafef531e65f84d16ac55be51b",
+      "subject": "ops: merge - M-13 g3 merged (#245, v155): personalized suggestion ranking",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/0dfc053d29a875bafef531e65f84d16ac55be51b"
     },
     {
-      "date": "2026-07-10T11:56:49Z",
-      "sha": "c0f34aa434aa6413e43212e9ccd401460a58e388",
-      "subject": "ops: report - Deck v1 acceptance: A1 16s emit-to-glass, A2 QUEUE.md live b",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c0f34aa434aa6413e43212e9ccd401460a58e388"
+      "date": "2026-07-11T10:18:07Z",
+      "sha": "f1e5ca6411564b0c0b347567038fce70cb6280b5",
+      "subject": "M-13 g3: song builder consumes the competency profile - personalized ranking + why-cue + evidence loop (v155) (#245)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f1e5ca6411564b0c0b347567038fce70cb6280b5"
     },
     {
-      "date": "2026-07-10T11:56:20Z",
-      "sha": "9eb2fa3045e119f61d0f3ee81e9a0dfd08b3b275",
-      "subject": "Ops Deck v1: live operator glass on GitHub Pages (#205)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9eb2fa3045e119f61d0f3ee81e9a0dfd08b3b275"
+      "date": "2026-07-11T09:58:25Z",
+      "sha": "2e94ed2951db825504f8cf450de07afb2763eccd",
+      "subject": "ops: merge - M-13 g2 merged (#244, v154): builder buffer persists across",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2e94ed2951db825504f8cf450de07afb2763eccd"
     },
     {
-      "date": "2026-07-10T11:28:05Z",
-      "sha": "30460960e9d1b335ff14205a35a7ad3a9a0fa3ab",
-      "subject": "feat(guidance): G2 S-POSTPROG-CUE - beginner next-move cue, self-retiring on Solo (#204)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/30460960e9d1b335ff14205a35a7ad3a9a0fa3ab"
+      "date": "2026-07-11T09:58:12Z",
+      "sha": "494017c27e359b50ffb1acd88ca3cf87f616bd9a",
+      "subject": "M-13 g2: song-builder buffer persists across reloads + section reorder (v154) (#244)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/494017c27e359b50ffb1acd88ca3cf87f616bd9a"
     },
     {
-      "date": "2026-07-10T11:08:52Z",
-      "sha": "7755c49ab46cb982a4964e09815d2ef4d6d2cb12",
-      "subject": "feat(copy): S-PERSONA-COPY - outcome-named Solo modal + beginner Studio orientation tip (#203)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/7755c49ab46cb982a4964e09815d2ef4d6d2cb12"
+      "date": "2026-07-11T09:40:55Z",
+      "sha": "3e4b9d4c69d8816814e269f74c8453aaffca7705",
+      "subject": "ops: merge - M-COMPETENCY LZ merged (#243, v153): competency profiles liv",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/3e4b9d4c69d8816814e269f74c8453aaffca7705"
     },
     {
-      "date": "2026-07-10T10:33:10Z",
-      "sha": "f38897fa1f47822e61d4459c94ef9ed2009da75e",
-      "subject": "feat(sme): coaching-suite gap map - audio-dsp/pedagogy/copy/a11y coaches + dynamic summoning rule (#202)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f38897fa1f47822e61d4459c94ef9ed2009da75e"
+      "date": "2026-07-11T09:40:31Z",
+      "sha": "ea2a45aad758ddd9f9983aa61c2ad913568ffe01",
+      "subject": "M-COMPETENCY LZ: per-skill competency profile (local, export/import) + wiring (v153) (#243)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/ea2a45aad758ddd9f9983aa61c2ad913568ffe01"
     },
     {
-      "date": "2026-07-10T10:18:59Z",
-      "sha": "abfd0e977c19b19490416eac710eefb51c959f6d",
-      "subject": "feat(usdd): user-simulation-driven development + UX friction profiles -> scored goalposts (#201)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/abfd0e977c19b19490416eac710eefb51c959f6d"
+      "date": "2026-07-11T09:16:24Z",
+      "sha": "e93a2a9a4a6f3e28ed17a55b4c2e4661a786cf25",
+      "subject": "ops: merge - M-13 g1 merged (#242, v152): template-suggested sections liv",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e93a2a9a4a6f3e28ed17a55b4c2e4661a786cf25"
     },
     {
-      "date": "2026-07-10T09:56:18Z",
-      "sha": "8691c130f5c6c79568396484b3b88e2131518dd0",
-      "subject": "docs(queue): mission-close reconcile - FORK-4 shipped (#199, v133), S1/S2 unblocked (#200)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/8691c130f5c6c79568396484b3b88e2131518dd0"
+      "date": "2026-07-11T09:15:49Z",
+      "sha": "c0fb0d15fee144c51c9ce508fbd23307ad2d4936",
+      "subject": "M-13 g1: template-suggested sections - M-12 payoff + operator UAT fold-ins (v152) (#242)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c0fb0d15fee144c51c9ce508fbd23307ad2d4936"
     },
     {
-      "date": "2026-07-10T09:55:00Z",
-      "sha": "ba69c63fa2e451f5f6205bc2e4d83e6bf9264b59",
-      "subject": "feat(theory): FORK-4 removal - key-aware note/chord spelling everywhere a key is stated (#199)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ba69c63fa2e451f5f6205bc2e4d83e6bf9264b59"
+      "date": "2026-07-11T08:36:48Z",
+      "sha": "a3eb4d4825b97095ae0cccb7bf1feece129c1176",
+      "subject": "ops: merge - M-13 Song Builder LZ merged (#241, v151) - overnight goalpos",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a3eb4d4825b97095ae0cccb7bf1feece129c1176"
     },
     {
-      "date": "2026-07-10T09:35:03Z",
-      "sha": "fe6b20d1f6114b7058d43757c8cce2bb7168fadb",
-      "subject": "docs(queue): reconcile mission board - clear-the-chessboard second pass (#196)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/fe6b20d1f6114b7058d43757c8cce2bb7168fadb"
+      "date": "2026-07-11T08:36:15Z",
+      "sha": "64ba5a96440921f559572c3169f9761ce4a5661e",
+      "subject": "M-13 Song Builder LZ: section buffer in Compose assembles multi-section songs (v151) (#241)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/64ba5a96440921f559572c3169f9761ce4a5661e"
     }
   ],
   "openPRs": [
@@ -120,123 +120,123 @@
   ],
   "recentMerges": [
     {
-      "createdAt": "2026-07-10T12:07:44Z",
-      "mergedAt": "2026-07-10T12:08:23Z",
-      "number": 206,
-      "title": "SDD: song-driven development vision capture + songwriting-coach + Deck interview set",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/206"
+      "createdAt": "2026-07-11T10:20:42Z",
+      "mergedAt": "2026-07-11T10:21:36Z",
+      "number": 246,
+      "title": "QUEUE reconcile: overnight arc close - M-13 shipped, M-COMPETENCY, Cockpit pick, CE frictions",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/246"
     },
     {
-      "createdAt": "2026-07-10T11:54:19Z",
-      "mergedAt": "2026-07-10T11:56:21Z",
-      "number": 205,
-      "title": "Ops Deck v1: live operator glass (mission feed, swarm lanes, operator queues, PR cards)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/205"
+      "createdAt": "2026-07-11T10:15:04Z",
+      "mergedAt": "2026-07-11T10:18:07Z",
+      "number": 245,
+      "title": "M-13 g3: song builder consumes the competency profile - personalized ranking + why-cue + evidence loop (v155)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/245"
     },
     {
-      "createdAt": "2026-07-10T11:27:15Z",
-      "mergedAt": "2026-07-10T11:28:05Z",
-      "number": 204,
-      "title": "feat(guidance): G2 S-POSTPROG-CUE - beginner next-move cue, self-retiring on Solo (USDD arc 2)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/204"
+      "createdAt": "2026-07-11T09:57:08Z",
+      "mergedAt": "2026-07-11T09:58:13Z",
+      "number": 244,
+      "title": "M-13 g2: song-builder buffer persists across reloads + section reorder (v154)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/244"
     },
     {
-      "createdAt": "2026-07-10T11:08:02Z",
-      "mergedAt": "2026-07-10T11:08:52Z",
-      "number": 203,
-      "title": "feat(copy): S-PERSONA-COPY - outcome-named Solo modal + beginner Studio orientation tip (first full USDD arc)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/203"
+      "createdAt": "2026-07-11T09:39:35Z",
+      "mergedAt": "2026-07-11T09:40:31Z",
+      "number": 243,
+      "title": "M-COMPETENCY LZ: per-skill competency profile (local, export/import) + shell wiring (v153)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/243"
     },
     {
-      "createdAt": "2026-07-10T10:32:18Z",
-      "mergedAt": "2026-07-10T10:33:10Z",
-      "number": 202,
-      "title": "feat(sme): coaching-suite gap map - audio-dsp, pedagogy, copy, a11y coaches + dynamic summoning rule",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/202"
+      "createdAt": "2026-07-11T09:15:00Z",
+      "mergedAt": "2026-07-11T09:15:49Z",
+      "number": 242,
+      "title": "M-13 g1: template-suggested sections - the M-12 payoff, with the operator's UAT fold-ins (v152)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/242"
     },
     {
-      "createdAt": "2026-07-10T10:18:09Z",
-      "mergedAt": "2026-07-10T10:18:59Z",
-      "number": 201,
-      "title": "feat(usdd): user-simulation-driven development + UX friction profiles -> scored goalposts",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/201"
+      "createdAt": "2026-07-11T08:35:26Z",
+      "mergedAt": "2026-07-11T08:36:15Z",
+      "number": 241,
+      "title": "M-13 Song Builder LZ: section buffer in Compose assembles multi-section songs (v151)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/241"
     },
     {
-      "createdAt": "2026-07-10T09:56:08Z",
-      "mergedAt": "2026-07-10T09:56:18Z",
-      "number": 200,
-      "title": "docs(queue): mission-close reconcile - FORK-4 shipped, S1/S2 unblocked",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/200"
+      "createdAt": "2026-07-11T08:10:42Z",
+      "mergedAt": "2026-07-11T08:11:22Z",
+      "number": 240,
+      "title": "THE PICK: Cockpit remix - C base (actionable surface) + B timeline",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/240"
     },
     {
-      "createdAt": "2026-07-10T09:53:55Z",
-      "mergedAt": "2026-07-10T09:55:00Z",
-      "number": 199,
-      "title": "feat(theory): FORK-4 removal - key-aware note/chord spelling everywhere a key is stated",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/199"
+      "createdAt": "2026-07-11T07:31:49Z",
+      "mergedAt": "2026-07-11T07:32:36Z",
+      "number": 239,
+      "title": "Cockpit v2: adopt the hub header grammar, label reads COCKPIT (operator taste pick)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/239"
     },
     {
-      "createdAt": "2026-07-10T06:23:15Z",
-      "mergedAt": "2026-07-10T09:32:14Z",
-      "number": 198,
-      "title": "feat(studio): progression-aware solo-scale picker + Mixolydian/Dorian modes + coaching skills + key-aware speller core",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/198"
+      "createdAt": "2026-07-11T03:51:02Z",
+      "mergedAt": "2026-07-11T03:51:34Z",
+      "number": 238,
+      "title": "Cockpit vision 1.1: the capability inventory IS the ingest map (docs-only)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/238"
     },
     {
-      "createdAt": "2026-07-10T05:57:51Z",
-      "mergedAt": "2026-07-10T06:18:52Z",
-      "number": 197,
-      "title": "feat(compose): visual-language Wave 0 - default C major + emphasis-by-scarcity",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/197"
+      "createdAt": "2026-07-11T03:47:11Z",
+      "mergedAt": "2026-07-11T03:47:42Z",
+      "number": 237,
+      "title": "QUEUE reconcile: S-SETRM-ARM shipped + M-COCKPIT-V2 vision/mockups shipped (docs-only)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/237"
     },
     {
-      "createdAt": "2026-07-10T02:30:32Z",
-      "mergedAt": "2026-07-10T09:35:04Z",
-      "number": 196,
-      "title": "docs(queue): reconcile mission board against v121 + open-PR state",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/196"
+      "createdAt": "2026-07-11T03:44:45Z",
+      "mergedAt": "2026-07-11T03:45:36Z",
+      "number": 236,
+      "title": "Cockpit v2 Tactical UI: vision synthesis + operator friction profile + 3 rendered angles",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/236"
     },
     {
-      "createdAt": "2026-07-05T22:50:44Z",
-      "mergedAt": "2026-07-06T00:37:59Z",
-      "number": 195,
-      "title": "M-UI-STD: standardized chord-view controls + firstrun copy (cache v121)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/195"
+      "createdAt": "2026-07-11T02:32:17Z",
+      "mergedAt": "2026-07-11T02:32:54Z",
+      "number": 235,
+      "title": "S-SETRM-ARM: setlist remove handle joins the arm-to-delete grammar (v150)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/235"
     },
     {
-      "createdAt": "2026-07-05T20:09:40Z",
-      "mergedAt": "2026-07-05T20:13:11Z",
-      "number": 194,
-      "title": "M-LIB-UX: Repertoire->Library, Edit label, no leave-app search, title wrap, unified video button (F23-F27)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/194"
+      "createdAt": "2026-07-11T00:53:39Z",
+      "mergedAt": "2026-07-11T00:54:16Z",
+      "number": 234,
+      "title": "S-UI-RECONCILE close-out: QUEUE row SHIPPED + audit report onto main (docs-only)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/234"
     },
     {
-      "createdAt": "2026-07-05T19:58:24Z",
-      "mergedAt": "2026-07-05T19:59:16Z",
-      "number": 193,
-      "title": "M-GUIDANCE: graded first-time guidance + studio-dismiss fix",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/193"
+      "createdAt": "2026-07-11T00:51:26Z",
+      "mergedAt": "2026-07-11T00:52:16Z",
+      "number": 233,
+      "title": "S-UI-RECONCILE Lane A: song view + Stage spell by key; delete button gets the danger primitive (v149)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/233"
     },
     {
-      "createdAt": "2026-07-05T19:01:19Z",
-      "mergedAt": "2026-07-05T19:01:22Z",
-      "number": 192,
-      "title": "music(studio): solo-view UX rework - operator UAT F12-F22 (no-scroll mobile, primary Play, two-octave root-dwell loop, lean controls)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/192"
+      "createdAt": "2026-07-11T00:45:09Z",
+      "mergedAt": "2026-07-11T00:45:52Z",
+      "number": 232,
+      "title": "S-UI-RECONCILE Lane B: Library key labels + form Key dropdown respell by key (v148)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/232"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-10T12:10:33Z",
+    "runStartedAt": "2026-07-11T10:36:56Z",
     "durationSeconds": 2,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29091717995",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29149628160",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 124,
+    "merged_count": 147,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 0.01,
@@ -249,8 +249,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v135",
-    "localCacheVersion": "music-v135",
+    "liveCacheVersion": "music-v155",
+    "localCacheVersion": "music-v155",
     "cacheMatch": true
   },
   "missions": [
@@ -312,6 +312,11 @@
   ],
   "queue": {
     "NOW": [
+      {
+        "Mission": "**S-SDD-PILOT: \"Calluses\" (F Mixo/Dm)**",
+        "State": "**STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> \"store it\" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel",
+        "Spec": "[sdd-pilot-friction](sdd-pilot-friction-20260710.md)"
+      },
       {
         "Mission": "**FORK-4 removal - key-aware render wiring**",
         "State": "**SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).",
@@ -379,8 +384,8 @@
       },
       {
         "#": "S-NAVHIST",
-        "Item": "NavHistory double-pop on Solo->Skip path (real bug, live-reproduced)",
-        "Source": "PR #144 finding"
+        "Item": "**CLEARED-STALE 2026-07-10 (swarm, zero code)**: the double-pop fix already shipped inside #197's settleAfter + deferred-deliver machinery; solo-skip + solo-cancel scenarios both green",
+        "Source": "PR #144 finding, evidence in swarm audit"
       },
       {
         "#": "S-POSTPROG-FLOW",
@@ -389,7 +394,7 @@
       },
       {
         "#": "S-DELHANDLE-OVERFLOW",
-        "Item": "**Compose delete-handle overflows the chord card (1-3 chords).** In the `full` diagram-card stage, the per-slot `x` remover floats above/outside the card bounds (disconnected from the chord it deletes). Contain it to the card.",
+        "Item": "**Compose delete-handle overflows the chord card (1-3 chords).** In the `full` diagram-card stage, the per-slot `x` remover floats above/outside the card bounds (disconnected from the chord it deletes). Contain it to the card. **FOLLOW-UP FIXED 2026-07-10 (S-DELHANDLE-CENTER, keypicker branch, v142)**: the x glyph was padding-nudged off the circle's center - content box now carved to the exact 24x24 circle + flex-centered, true by construction at every stage; prog-delete-handles scenario green.",
         "Source": "operator UAT 2026-07-10"
       },
       {
@@ -434,17 +439,17 @@
       },
       {
         "#": "S-TYPEFILTER-QUIET",
-        "Item": "**G3 (60) DECIDED: filter-specific quieter selected state** (outline-on for filter chips); D-SELECTED-ACCENT stays app-wide (operator deferred the app-wide reversal - honored). Kills the shouting CTA read.",
-        "Source": "ux-friction-profiles G3, resolves S-TYPEFILTER-ACCENT"
+        "Item": "**G3 SHIPPED 2026-07-10 (swarm, PR #214, v137)**: library facet chips outline-on (red-first scenario kept); accent fill reserved for primary/mode - D-SELECTED-ACCENT intact app-wide",
+        "Source": "ux-friction-profiles G3"
       },
       {
         "#": "S-JAM-STARTER",
-        "Item": "**G4 (48): \"Find a jam\" empty state -> one-tap curated starter chip** for the current key, replacing the prose dead end.",
+        "Item": "**G4 (48) - agent build CANCELLED by operator mid-swarm 2026-07-10** (no commit landed); goalpost stays open, spec unchanged: one-tap curated starter chip for the current key in the no-video Studio state",
         "Source": "ux-friction-profiles G4"
       },
       {
         "#": "S-SCALE-MEMORY",
-        "Item": "**G6 (24): remember the solo-scale choice per track** (additive localStorage).",
+        "Item": "**G6 (24) SHIPPED 2026-07-10 (board resume, PR #220, v139)**: tapped scale chip persists per track (bt.soloScale.v1, additive, tap-only - the synthetic default select never pins an inference); remembered choice wins only while still an offered chip.",
         "Source": "ux-friction-profiles G6"
       },
       {
@@ -454,18 +459,63 @@
       },
       {
         "#": "S-NOTABLE-PREEMPT-TEARDOWN",
-        "Item": "**Pre-existing (seen in G2 pixels): a PREEMPTED notable's banner stays on screen** - activeGrant preemption governs claims, not teardown, so a higher-priority tip can render while a lower one (e.g. diagrampref's ask) is still visible = two cards at once, against the one-tip spirit. Fix at the primitive: renderBanner registry + teardown-on-preempt in notables.js.",
-        "Source": "G2 pixel evidence, 2026-07-10"
+        "Item": "**SHIPPED 2026-07-10 (swarm, PR #215, v138)**: renderBanner registry + teardown-on-preempt at the primitive; teardown chosen over stack per the one-tip law (justified + reversible in the PR); 24 notables tests green",
+        "Source": "PR #215"
       },
       {
         "#": "S-KEYPICKER-FLATNAMES",
-        "Item": "**FORK-4 wave-2 residue:** the key-PICKER's option list still offers sharp-only names (A#, D#, G#); the chip + every derived surface already display preferred names (Bb, Eb, Ab). Also `soloChipCaption` prose root naming. Cosmetic - the render surfaces are correct.",
-        "Source": "PR #199 deferrals"
+        "Item": "**RESOLVED as S-KEYPICKER-PREFERRED 2026-07-10 (branch claude/keypicker-preferred-names, v142 - PR pending connector re-auth)**: operator answered IV-2 by directive (\"key selector drift - shows sharps only. SSOT\") - every key selector now displays preferred key names from the ONE provider (Circle.preferredTonicName): Compose root grid, compact chip, key readout heading, repertoire-form Key dropdown, triads-page chips (on its own branch). Tokens stay canonical (storage/deep-links/transpose). Built FRESH - the cancelled ec74a46 stays untouched; the flat-keys mock branch is superseded and can be deleted. Scenario keypicker-preferred-names.json.",
+        "Source": "operator UAT 2026-07-10"
       },
       {
         "#": "S-WHYNOTE-SCALE",
-        "Item": "**Studio \"Why this scale works\" banner keys to the KEY, not the selected scale** - after the Mixolydian default lands, the banner still reads \"C major and its relative minor share the same notes.\" Correct but stale-feeling next to a Mixolydian selection; re-derive (or hide) the banner on scale-chip change, same reactive seam as renderJamPanel. Found in the #198 merge review (non-blocking).",
+        "Item": "**G5 (48) SHIPPED 2026-07-10 (board resume, PR #220, v139)**: whynote banner re-derives its copy per selected scale chip (static templates named by chip label, theory-coach-checked, textContent swap on the live element - no re-claim); personas re-proven on pixels with shape-based asserts (/Why .+ works:/ - content-pinned rot fixed a 4th time, now in the persona pair).",
         "Source": "in-Claude review of PR #198, 2026-07-10"
+      },
+      {
+        "#": "S-TRIADS-SPELLING",
+        "Item": "**FIXED 2026-07-10 (branch claude/triads-key-spelling, v140 - PR pending GitHub connector re-auth)**: Triads & Inversions kept its own sharp-only NAMES table from before the FORK-4 retirement, so F major showed \"IV = A#\" instead of Bb (operator UAT). All displayed chord/note names now route through Circle.noteInKey (theory SSOT, no duplicate speller); tokens (key chips, deep-links, storage) stay canonical-sharp. Regression scenario triads-key-spelling.json (shape assert: no A# anywhere in an F-major cycle).",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-TRIADS-AUDIBLE",
+        "Item": "**SHIPPED 2026-07-10 (branch claude/triads-audible, v143)**: inversion chord cards are tap-to-hear buttons - a tap strums the card's exact fullFrets voicing from the ACTIVE profile's open-string frequencies (accurate on every supported instrument by construction; shared ChordAudio engine, keyboard-reachable role=button). S-RN-STYLE folded in: standalone I/IV/V numerals in prose carry the .roman mono+accent family so they never blend into sentences (operator UAT).",
+        "Source": "operator directive 2026-07-10"
+      },
+      {
+        "#": "S-DELETE-UNDO",
+        "Item": "**Compose progression delete needs protection + undo (operator UAT 2026-07-10: \"too easy to delete a chord... offer 1 (or 2?) levels of undo using simple mechanism tracking previous actions\").** Design intent: no confirm() (feedback-debt direction is REMOVING those) - reuse the app's existing undo-toast pattern (Toast.showAction, the setlist item-remove undo) + a small bounded action stack (1-2 levels) for progression deletes. SHIPPED 2026-07-10 (branch claude/delete-undo, v144): first x tap ARMS (red, 1.6s auto-disarm, movement-cancelled taps intact), second deletes; bounded 2-level remove-undo stack on the Clear-undo toast pattern; deletes keep the stack, every other mutation invalidates it via the A3 choke point (keepRemoveUndo param). Unit suite locks \"first tap must NOT delete\"; prog-delete-undo scenario proves arm -> delete -> toast -> Undo -> restore on pixels.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-PROG-REORDER",
+        "Item": "**PROTOTYPE SHIPPED 2026-07-10 (branch claude/prog-reorder, v145)**: drag-and-drop chord reorder across all 3 strip stages (2D nearest-center targeting so grid6's second row works). Touch = 300ms long-press lifts (early movement = scroll, untouched); mouse = lift on movement. Accent insertion edge marks the drop side; commit splices + full A3 invalidation; trailing click swallowed so a drop never strums. Live-probe finding: the delete-x 44px hit area covers a compact chip's center - drags may START on it (gestures separable: rm tap is movement-cancelled). Touch FEEL is the operator's pass.",
+        "Source": "operator directive 2026-07-10"
+      },
+      {
+        "#": "S-SETRM-ARM",
+        "Item": "**SHIPPED 2026-07-11 (#235, v150)**: setlist edit-mode remove handle joins the ONE inline-remove grammar (S-DELETE-UNDO) - quiet at rest, first tap ARMS red (1.6s auto-disarm, gate at the list-item PRIMITIVE), second tap removes, undo banner kept; J2 rest-red retired (red-at-rest reserved for labeled .btn.danger). Red-first scenario setlist-remove-arm + consistency-lint rule + source lock.",
+        "Source": "operator UAT 2026-07-11 (screenshot)"
+      },
+      {
+        "#": "M-COCKPIT-V2",
+        "Item": "**VISION + MOCKUPS SHIPPED 2026-07-11 (#236)**: fractal portfolio Cockpit - vision doc (granularity ladder, Postgres 4-table spine, FastAPI+SSE, agent execution backplane / zero-context-switch tenet, competency profiles, dept onboarding) + operator friction profile (USDD persona, signal contract C1-C7) + 3 tactical angles under docs/artifacts/cockpit-v2/ (instruments / tempo / signal), each scenario-verified at 412x915. **PICKED 2026-07-11: remix \"C mostly + B timeline\" (operator digits) - built as cockpit.html (#240); hub header grammar adopted, label = COCKPIT (#239 + workflows-hub #46 deployed). LZ HANDED OFF: ps-internal packet (ccp handoffs/cockpit-lz-packet-20260711.md) -> spawned autonomous session building FastAPI + schema spine behind AAD (notifies operator directly).**",
+        "Source": "operator mission 2026-07-11"
+      },
+      {
+        "#": "S-UI-RECONCILE",
+        "Item": "**SHIPPED 2026-07-11 (audit + 4-lane fix swarm, PRs #230-#233, v146-v149).** Read-only audit ([ui-reconcile-audit-20260710.md](ui-reconcile-audit-20260710.md)): 14 keyed-surface spelling misses + 8 primitive divergences, with a correctly-keyless guard list. Fixes at PRIMITIVES: Lane A song-view/Stage view-local speller (the screenshot bug - chip row/sheet/Stage/transpose/Maximize respell, no-double-transpose guarded) + delete button = danger primitive + .full class seam; Lane B Library facet chips/row badges/form Key dropdown (keyRank order preserved, values stay tokens); Lane C Studio prose/jam query/scale-tip mode/relative-key names (circle.js kept pure); Lane D 9 radii snapped to role tokens + 10 lint rows + the .actions .btn.full seam rule. DEFERRED (registered): chord-chip primitive unification (.chordChips .c vs .bt-st-chordchip - markup change, follow-up), native confirm() dialogs (SETX phase 2), .li-up/.li-dn setlist keys (findings-register rider).",
+        "Source": "operator UAT 2026-07-10 (2 screenshots)"
+      },
+      {
+        "#": "CE-WORKTREE-PREFLIGHT",
+        "Item": "**Friction (agent-side, self-caught 2026-07-11 overnight): the parent's coupled-step commit landed on the LOCAL main checkout** because `git worktree add` for a branch already checked out in the agent's worktree fails silently under `",
+        "Source": ""
+      },
+      {
+        "#": "CE-APP-DROPPED-INPUT",
+        "Item": "**Friction (surface-side, operator-flagged 2026-07-11): the Claude Android app DROPPED a typed operator message** - his preferences burst (\"using metaphors in lyrics... compounded from previous sessions\") never arrived and had to be re-sent via screenshot. Cost: one operator round-trip at ~1AM. Not fixable app-side from here; mitigation encoded: treat screenshots-of-typed-text as first-class burst input (already practiced), and the queues.json interview surface remains the durable channel for anything long.",
+        "Source": "operator burst 2026-07-11 (re-sent)"
       },
       {
         "#": "S-TESTSTEPS-EXECUTABLE",
@@ -536,8 +586,18 @@
       },
       {
         "#": "M-12",
-        "Candidate": "S-SDD-TEMPLATES: mine songs.json (`seq` + `sheet` sections via `Circle.romanFor`) -> proven progression-template library (genre x section, ranked, song-cited) + canonical families; deterministic extraction tests. Feeds M-11 M-CONSTRUCT as its template INPUT; interview set IV-3 on the Deck",
-        "Vision source": "[sdd-vision](sdd-vision-20260710.md) - the operator's original song-builder prompt, full circle"
+        "Candidate": "**S-SDD-TEMPLATES SHIPPED 2026-07-10 (swarm worktree agent, PR #216)**: SongTemplates runtime mining (sections -> roman patterns, ranked + song-cited) + canonical families, 16 tests; reuses Repertoire.deriveKey + Circle.romanFor. M-13's template input is LIVE",
+        "Vision source": "[sdd-vision](sdd-vision-20260710.md) + PR #216"
+      },
+      {
+        "#": "M-13",
+        "Candidate": "**M-SONG-WIZARD SHIPPED 2026-07-11 (overnight /goal arc, 4 PRs)**: LZ #241 (v151, section buffer in Compose assembles multi-section songs) -> g1 #242 (v152, template-suggested sections per label - M-12 payoff - + suggested/adjacent-section compatibility cues + catalog-cited recommendations, folding the operator's UAT burst) -> g2 #244 (v154, buffer persists across reloads via additive songbook.builderBuffer.v1 + up/dn section reorder) -> g3 #245 (v155, suggestions re-rank by the competency profile + preferences with a \"your style\"/\"easy fit\"/\"adds variety\" why-cue, accepts record evidence back - the compounding personalization loop closed). Every PR: red-first scenario + full ship chain under the overnight delegation. REMAINING (new goalposts, operator-taste-gated): drag-to-reorder in the buffer (S-PROG-REORDER pattern), tutor-style guided entry polish.",
+        "Vision source": "operator UAT bursts 2026-07-11 + [guided-and-free-vision](guided-and-free-vision-20260710.md)"
+      },
+      {
+        "#": "M-14",
+        "Candidate": "M-SKILL-PROFILE: **CORE SHIPPED as M-COMPETENCY 2026-07-11 (#243, v153)** - per-skill competency profiles (5 frameworks: fretboard/uke/guitar/composition/lyrics), evidence-driven leveling with diminishing returns, portable skill-competency-profile/v1 export/import (higher-wins merge, preferences union), Skills panel in Settings, evidence hooks from song building; g3 #245 wired the consume side (personalized suggestions). PRIVACY INVARIANT: public repo ships generic frameworks only - personal levels/preferences live in localStorage + ccp (profiles/skills/, seeds in ccp #20/#21). REMAINING: pedagogy-coach next-best-step surfacing + mastery path as USDD persona-state transitions (target profile - current profile = the practice queue).",
+        "Vision source": "[guided-and-free-vision](guided-and-free-vision-20260710.md) sections 3-4 + #243/#245"
       }
     ],
     "LONG": [
@@ -564,8 +624,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 44,
-    "testCaseCount": 2214,
+    "testFileCount": 46,
+    "testCaseCount": 2330,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
