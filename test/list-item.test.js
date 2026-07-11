@@ -160,4 +160,15 @@ test('wireTap: fn receives the triggering click event (composeWireTap\'s prior c
   assert.strictEqual(receivedArg, evt, 'fn must receive the click event, not be called with zero args');
 });
 
+test('S-SETRM-ARM source lock: the rm dispatch is arm-gated (first tap can never call onRemove) with the same 1.6s window as the progression .rm', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  // The grammar constant matches S-DELETE-UNDO's 1600ms window.
+  assert.ok(/RM_ARM_MS\s*=\s*1600/.test(src), 'RM_ARM_MS must stay 1600 (the S-DELETE-UNDO arm window)');
+  // The rm branch must arm-and-return before onRemove can fire.
+  var rmBranch = src.match(/a === 'rm' && opts\.onRemove\) \{([\s\S]*?)\}/);
+  assert.ok(rmBranch, 'expected an rm dispatch block in list-item.js');
+  assert.ok(/armRmBtn\(b\); return;/.test(rmBranch[1]), 'first tap must ARM and return - never fall through to onRemove');
+});
+
 run();

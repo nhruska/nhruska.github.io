@@ -295,8 +295,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * padding keeps the glyph from crowding the now-larger border box. */
 .listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
-/* J2: setlist edit-mode remove reads as destructive (li-rm only renders in edit mode). */
-#setBody .li-rm{border-color:var(--bad);color:var(--bad);}
+/* S-SETRM-ARM (operator UAT 2026-07-11, "delete state style misalignment"):
+ * the setlist remove handle follows the app's ONE inline-remove grammar
+ * (S-DELETE-UNDO): QUIET at rest, red only when ARMED by a first tap (1.6s
+ * auto-disarm, gate lives in list-item.js), second tap removes. The old J2
+ * "destructive-at-rest" red is retired - after S-DELETE-UNDO, red on an inline
+ * handle reads as already-armed; red-at-rest belongs only to labeled
+ * destructive BUTTONS (.btn.danger). */
+.listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
 /* Timed toast+action undo banner (S-TOAST+ACTION, UAT U19/U22) - shared skin for
  * the setlist item-remove undo (showSetUndoBanner) and the Library delete-undo
@@ -445,11 +451,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    the fork "Revert to original" is ALSO destructive (discards the fork's edits,
    confirm-gated) but stays .btn.ghost as a deliberate softer signal; see
    repertoire-form.js). ".btn.red" is a MISNOMER (it's the accent-fill primary,
-   not danger) - this is the actual red. Rest state mirrors the app's existing
-   destructive-at-rest convention (#setBody .li-rm: transparent bg + --bad
-   border/text); :active mirrors .prog .slot .rm's tap-flash (--bad fill +
-   --on-danger ink) - both precedents already shipped, just composed here as
-   a persistent .btn variant instead of an icon-only glyph. */
+   not danger) - this is the actual red. Rest state = transparent bg + --bad
+   border/text; :active mirrors .prog .slot .rm's tap-flash (--bad fill +
+   --on-danger ink). Red-at-rest is reserved for LABELED destructive buttons
+   like this one - inline remove handles (.rm, .li-rm) rest QUIET and wear red
+   only when ARMED (S-SETRM-ARM retired the old li-rm rest-red precedent). */
 .btn.danger{background:transparent;border-color:var(--bad);color:var(--bad);}
 .btn.danger:active{background:var(--bad);color:var(--on-danger);border-color:var(--bad);}
 /* both secondary links on one centered row (t3) */

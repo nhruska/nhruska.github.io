@@ -31,6 +31,24 @@
     return null;
   }
 
+  // S-SETRM-ARM: module-scope arm state for the inline remove handle (one armed
+  // handle at a time, RM_ARM_MS auto-disarm) - the same 1.6s window as
+  // songbook.js's progression .rm (S-DELETE-UNDO grammar). Re-renders rebuild
+  // the nodes, so a stale armed ref simply fails the identity check and the
+  // next tap arms fresh; the pending timer no-ops on the detached node.
+  var RM_ARM_MS = 1600;
+  var armedRmBtn = null, armedRmTimer = null;
+  function disarmRmBtn() {
+    if (armedRmTimer) { clearTimeout(armedRmTimer); armedRmTimer = null; }
+    if (armedRmBtn) { try { armedRmBtn.classList.remove('armed'); } catch (e) { } armedRmBtn = null; }
+  }
+  function armRmBtn(btn) {
+    disarmRmBtn();
+    armedRmBtn = btn;
+    try { btn.classList.add('armed'); } catch (e) { }
+    armedRmTimer = setTimeout(disarmRmBtn, RM_ARM_MS);
+  }
+
   // Normalize a song OR track record to ONE item shape. Songs use t/a/y/seq;
   // tracks use title/artist/key/mode/genre/bpm/capo/yt. Either is accepted, and
   // missing fields are null so the renderer can omit them.
@@ -245,7 +263,16 @@
         if (a === 'add' && opts.onAdd) opts.onAdd(rec);
         else if (a === 'up' && opts.onUp) opts.onUp(rec);
         else if (a === 'dn' && opts.onDn) opts.onDn(rec);
-        else if (a === 'rm' && opts.onRemove) opts.onRemove(rec);
+        else if (a === 'rm' && opts.onRemove) {
+          // S-SETRM-ARM (operator UAT 2026-07-11): the inline remove handle is
+          // arm-to-delete, the same grammar as songbook.js's progression .rm
+          // (S-DELETE-UNDO) - first tap ARMS (red, RM_ARM_MS auto-disarm),
+          // second tap on the SAME armed handle removes. Gate lives here at the
+          // PRIMITIVE so every li-rm consumer inherits it.
+          if (armedRmBtn !== b) { armRmBtn(b); return; }
+          disarmRmBtn();
+          opts.onRemove(rec);
+        }
         else if (a === 'edit' && opts.onEdit) opts.onEdit(rec);
       });
     });
