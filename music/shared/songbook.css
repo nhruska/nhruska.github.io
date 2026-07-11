@@ -662,6 +662,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    at every prog stage. The 44x44 hit area is unchanged. */
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0 0 20px 20px;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
 .prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+/* S-PROG-REORDER (prototype): the lifted slot dims; the nearest slot carries
+   an accent insertion edge on the side the chord will land. box-shadow edges
+   work identically across all three strip stages (flex cards + both grids). */
+.prog .slot.dragging{opacity:.45;}
+.prog .slot.dropBefore{box-shadow:-3px 0 0 0 var(--accent-ink);border-radius:4px;}
+.prog .slot.dropAfter{box-shadow:3px 0 0 0 var(--accent-ink);border-radius:4px;}
 /* S-DELETE-UNDO: armed = "tap again to delete" - the danger palette the
    :active state already uses, held for the 1.6s arm window. */
 .prog .slot .rm.armed{color:var(--on-danger);}

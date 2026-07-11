@@ -34,6 +34,8 @@ in scenarios):
   assertInViewport {selector}          - element's box fully inside the viewport (no
                                          scroll needed to see it)
   evalAssert {js, label}               - escape hatch: JS expression must be truthy
+  dragReorder {from, to, side?}        - pointer-drag from one element onto the
+                                         before/after side of another (S-PROG-REORDER)
   screenshot {name}                    - PNG to test/pw/evidence/<scenario>/<name>.png
 """
 import glob
@@ -142,6 +144,21 @@ def run(scenario_path, base_url=None):
                         page.wait_for_timeout(step['ms'])
                     elif act == 'tap':
                         page.locator(step['selector']).first.click(timeout=4000)
+                    elif act == 'dragReorder':
+                        # S-PROG-REORDER: pointer-drag `from` onto the far side
+                        # of `to` (mouse pointerType -> movement-threshold lift,
+                        # no long-press wait). Staged moves so pointermove fires.
+                        src = page.locator(step['from']).first.bounding_box()
+                        dst = page.locator(step['to']).first.bounding_box()
+                        sx, sy = src['x'] + src['width'] / 2, src['y'] + src['height'] / 2
+                        dx = dst['x'] + dst['width'] * (0.85 if step.get('side', 'after') == 'after' else 0.15)
+                        dy = dst['y'] + dst['height'] / 2
+                        page.mouse.move(sx, sy)
+                        page.mouse.down()
+                        for k in range(1, 7):
+                            page.mouse.move(sx + (dx - sx) * k / 6, sy + (dy - sy) * k / 6)
+                            page.wait_for_timeout(40)
+                        page.mouse.up()
                     elif act == 'tapText':
                         scope = step.get('scope', 'body')
                         page.locator(scope).locator(

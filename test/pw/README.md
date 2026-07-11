@@ -44,5 +44,6 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 | ops-deck-panel | Cockpit (formerly Ops Deck) glass: live feed + filters, swarm lanes, merged Your-turn stream, 4 operator queues, QUEUE.md board, PR-tab fallback, public Wins timeline (412x915, zero JS errors) |
 | triads-key-spelling | S-TRIADS-SPELLING: Triads & Inversions spells by function in the stated key - F major's IV reads Bb, never A# (shape assert: no A# anywhere in an F-major cycle) |
 | keypicker-preferred-names | S-KEYPICKER-PREFERRED: every key selector shows preferred key names from ONE provider (root grid Db/Eb/Ab/Bb, picked Bb reads Bb on the chip AND the key readout - no more "C# selected, Db displays") |
+| prog-reorder | S-PROG-REORDER prototype: drag a progression chord to reorder (mouse lift-on-move path; touch long-press is the operator feel pass), order changes, nothing deleted/strummed |
 | prog-delete-undo | S-DELETE-UNDO: progression remover arms on first tap (no delete), deletes on second, remove-undo toast restores the chord |
 | triads-audible | S-TRIADS-AUDIBLE + S-RN-STYLE: inversion cards are tap-to-hear buttons (exact voicing from the active profile's open-string freqs, shared ChordAudio engine, keyboard-reachable) and I/IV/V numerals carry .rn styling in prose |
