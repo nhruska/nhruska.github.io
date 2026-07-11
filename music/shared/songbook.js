@@ -2454,6 +2454,10 @@
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
     var suggestLabel = 'Verse';
+    // M-13 g4: drag-swallow flag for the buffer chips, mirroring S-PROG-REORDER's
+    // dragSwallowClick (own flag/listener - the progression drag code is untouched
+    // per the goalpost's boundary; the grammar is reused, not shared, on purpose).
+    var sectionDragSwallowClick = false;
     function ensureSongTray() {
       if (songTrayEl) return true;
       if (!el.prog || !el.prog.parentNode) return false;
@@ -2481,6 +2485,12 @@
       songSuggestChipsEl = document.createElement('div'); songSuggestChipsEl.className = 'songSuggestChips';
       songSuggestEl.appendChild(songSuggestLabelsEl); songSuggestEl.appendChild(songSuggestChipsEl); // the tray cue (above) names this state
       songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
+      // The one-shot click swallow for section-chip drops (capture phase, mirrors
+      // el.prog's listener below wireSlotDrag): beats the rm/up/dn wireTap click
+      // that would otherwise fire on the chip the drop landed on.
+      songSectionsEl.addEventListener('click', function (e) {
+        if (sectionDragSwallowClick) { e.stopPropagation(); e.preventDefault(); }
+      }, true);
       songAssembleBtnEl = document.createElement('button');
       songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
       songAssembleBtnEl.textContent = 'Assemble song'; songAssembleBtnEl.hidden = true;
@@ -2652,6 +2662,9 @@
         // are distinguishable at a glance (recognition over recall).
         name.textContent = sec.label + ' · ' + sec.seq.length;
         chip.appendChild(name);
+        // M-13 g4: the chip is draggable to reorder - see wireSectionDrag below
+        // moveSongSection. The up/dn handles (below) stay as the keyboard/SR path.
+        wireSectionDrag(chip, i);
         var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
@@ -2690,6 +2703,89 @@
       disarmRm(); // reordering changes chip identity under any armed remove handle
       saveSongSections();
       renderSongTray();
+    }
+    // M-13 g4 (operator directive 2026-07-11): DRAG-to-reorder the buffer chips,
+    // reusing the S-PROG-REORDER interaction grammar (pointer-events, long-press
+    // lift on touch, movement-slop lift on mouse, 2D nearest-center targeting so
+    // the chip strip's flex-wrap second row just works, accent insertion-edge
+    // marker, trailing-click swallow). The up/dn handles from g2 STAY as the
+    // a11y/keyboard-and-SR-safe fallback - drag is additive, not a replacement.
+    // Mirrored (not shared) deliberately: the goalpost's boundary keeps the
+    // progression chord-drag code path untouched, so this is its own small
+    // copy against the songSections array + its own save/render path instead
+    // of `progression` + renderProg/renderSuggest/renderKey.
+    function wireSectionDrag(chip, index) {
+      chip.addEventListener('pointerdown', function (e) {
+        if (songSections.length < 2) return;
+        var id = e.pointerId, startX = e.clientX, startY = e.clientY;
+        var isTouch = e.pointerType === 'touch';
+        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        function chipsNow() { return Array.prototype.slice.call(songSectionsEl.children); }
+        function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
+        function blockScroll(ev) { ev.preventDefault(); }
+        function lift() {
+          holdTimer = null;
+          lifted = true;
+          chip.classList.add('dragging');
+          try { chip.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        function onMove(ev) {
+          if (ev.pointerId !== id) return;
+          if (!lifted) {
+            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
+            if (isTouch) { if (moved > 8) cleanup(); }
+            else if (moved > 6) lift();
+            return;
+          }
+          if (ev.cancelable) ev.preventDefault();
+          clearMark();
+          var list = chipsNow(), best = -1, bestD = Infinity, bestCx = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            var d = Math.abs(ev.clientX - cx) + Math.abs(ev.clientY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCx = cx; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = ev.clientX > bestCx;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function onUp(ev) {
+          if (ev.pointerId !== id) return;
+          var commit = lifted && dropAt != null;
+          var to = dropAt;
+          cleanup();
+          if (!commit) return;
+          // swallow the click that trails this pointerup so the drop never
+          // ALSO fires the rm/up/dn wireTap of the chip it landed on.
+          sectionDragSwallowClick = true;
+          setTimeout(function () { sectionDragSwallowClick = false; }, 150);
+          var insert = to > index ? to - 1 : to;
+          if (insert === index) return;
+          disarmRm(); // reordering changes chip identity under any armed remove handle
+          var movedSec = songSections.splice(index, 1)[0];
+          songSections.splice(insert, 0, movedSec);
+          saveSongSections();
+          renderSongTray();
+        }
+        function cleanup() {
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          clearMark();
+          chip.classList.remove('dragging');
+          try { chip.releasePointerCapture(id); } catch (err) {}
+          document.removeEventListener('touchmove', blockScroll);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+        }
+        if (isTouch) holdTimer = setTimeout(lift, 300);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      });
     }
     // Snapshot the CURRENT progression (canonical-sharp tokens) as a labeled
     // section. A3: additive - does NOT mutate the progression, so it does NOT

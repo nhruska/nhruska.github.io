@@ -1,0 +1,51 @@
+{
+  "name": "song-builder-drag-reorder",
+  "note": "M-13 g4 (operator directive 2026-07-11): DRAG a buffer section chip to reorder, reusing the S-PROG-REORDER grammar (mouse lift-on-move path here; touch long-press is the operator feel pass, same as prog-reorder.json). Build three buffered sections (Verse, Chorus, Bridge), drag the first chip to the end, assert the on-screen AND persisted *.builderBuffer.v1 order both moved, assert nothing was removed (still 3 chips) and the up/dn handles still work afterward (drag is additive, not a replacement for the a11y/keyboard path). Drag back to the front and confirm restoration.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 500 },
+
+    { "action": "tapChord", "name": "C" },
+    { "action": "wait", "ms": 150 },
+    { "action": "tapChord", "name": "F" },
+    { "action": "wait", "ms": 150 },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 250 },
+
+    { "action": "tapChord", "name": "G" },
+    { "action": "wait", "ms": 150 },
+    { "action": "evalAssert", "label": "set the second section label to Chorus", "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus'})()" },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 250 },
+
+    { "action": "tapChord", "name": "Am" },
+    { "action": "wait", "ms": 150 },
+    { "action": "evalAssert", "label": "set the third section label to Bridge", "js": "(function(){var s=document.getElementById('songSectSel');s.value='Bridge';return s.value==='Bridge'})()" },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 250 },
+
+    { "action": "evalAssert", "label": "three buffered sections, starting order Verse Chorus Bridge", "js": "(function(){var n=Array.from(document.querySelectorAll('#songSections .songSectName')).map(function(e){return e.textContent.split(' ')[0]});return n.join(' ')==='Verse Chorus Bridge'})()" },
+    { "action": "screenshot", "name": "before-drag" },
+
+    { "action": "dragReorder", "from": "#songSections .songSect:nth-child(1)", "to": "#songSections .songSect:nth-child(3)", "side": "after" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "Verse dragged to the end - on-screen order Chorus Bridge Verse", "js": "(function(){var n=Array.from(document.querySelectorAll('#songSections .songSectName')).map(function(e){return e.textContent.split(' ')[0]});return n.join(' ')==='Chorus Bridge Verse'})()" },
+    { "action": "evalAssert", "label": "the drag persisted to the builderBuffer key immediately", "js": "(function(){var bufKey=Object.keys(localStorage).filter(function(k){return /\\.builderBuffer\\.v1$/.test(k)})[0];if(!bufKey)throw new Error('buffer key missing after drag');var a=JSON.parse(localStorage.getItem(bufKey));return a.length===3 && a[0].label==='Chorus' && a[1].label==='Bridge' && a[2].label==='Verse'})()" },
+    { "action": "evalAssert", "label": "nothing deleted - still three chips", "js": "document.querySelectorAll('#songSections .songSect').length === 3" },
+    { "action": "evalAssert", "label": "the drop did not fire a remove (no chip armed red)", "js": "document.querySelectorAll('#songSections .songSect .rm.armed').length === 0" },
+    { "action": "screenshot", "name": "after-drag" },
+
+    { "action": "evalAssert", "label": "the up handle is disabled at the new buffer start (native disabled, not just CSS) - drag correctly re-derived the ends, the a11y fallback still in sync", "js": "document.querySelector('#songSections .songSect:nth-child(1) .songSectMove.up').disabled === true" },
+    { "action": "tap", "selector": "#songSections .songSect:nth-child(1) .songSectMove.dn" },
+    { "action": "wait", "ms": 250 },
+    { "action": "evalAssert", "label": "the up/dn handles still work after a drag - down-moving the first chip gives Bridge Chorus Verse", "js": "(function(){var n=Array.from(document.querySelectorAll('#songSections .songSectName')).map(function(e){return e.textContent.split(' ')[0]});return n.join(' ')==='Bridge Chorus Verse'})()" },
+
+    { "action": "dragReorder", "from": "#songSections .songSect:nth-child(1)", "to": "#songSections .songSect:nth-child(2)", "side": "after" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "dragging the first chip past the second restores Chorus Bridge Verse", "js": "(function(){var n=Array.from(document.querySelectorAll('#songSections .songSectName')).map(function(e){return e.textContent.split(' ')[0]});return n.join(' ')==='Chorus Bridge Verse'})()" },
+    { "action": "screenshot", "name": "restored-order" }
+  ]
+}
