@@ -1,0 +1,16 @@
+{
+  "name": "cockpit-remix",
+  "note": "THE PICK (operator digits 2026-07-11: 'C mostly, actionable surface, not just reporting. B also for timeline'): the composite cockpit.html - C's queue-first surface with inline actions + B's tempo rail one glance below, signal contract held at the true-test viewport.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/docs/artifacts/cockpit-v2/cockpit.html" },
+    { "action": "wait", "ms": 700 },
+    { "action": "evalAssert", "label": "C2-C4: signal bar above the fold", "js": "(function(){var b=document.getElementById('sigbar');if(!b)return false;var r=b.getBoundingClientRect();return r.top>=0&&r.bottom<915&&b.children.length===3})()" },
+    { "action": "evalAssert", "label": "actionable surface: queue cards carry inline action controls", "js": "document.querySelectorAll('#stream .qgo').length>=3" },
+    { "action": "evalAssert", "label": "B folded in: the tempo rail exists on mobile", "js": "(function(){var r=document.querySelector('.rail');return r&&getComputedStyle(r).display!=='none'&&r.querySelectorAll('[data-mission]').length>=3})()" },
+    { "action": "tap", "selector": "[data-dept=\"eng\"]" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "ladder intact: dept drill opens project altitude", "js": "(function(){var d=document.getElementById('drill');return d&&d.classList.contains('open')&&d.querySelectorAll('[data-project]').length>0})()" },
+    { "action": "screenshot", "name": "remix-landing-drill" }
+  ]
+}
