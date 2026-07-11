@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cockpit - Angle C: Signal</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<link rel="stylesheet" href="cockpit.css">
+<style>
+/* Angle C local: the QUEUE is the centerpiece - queue-first CIC. Roll-up
+   tiles ride a snap strip on mobile, a grid on desktop. Dispatch dock at the
+   bottom = the same-environment execution tenet made visible. */
+.deptstrip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:2px 2px 8px;-webkit-overflow-scrolling:touch}
+.deptstrip .tile{min-width:168px;scroll-snap-align:start;flex:0 0 auto}
+@media (min-width:900px){.deptstrip{flex-wrap:wrap;overflow:visible}.deptstrip .tile{flex:1 1 180px}}
+.qhead{display:flex;align-items:baseline;gap:10px}
+.qhead .big{font:800 1.5rem/1.1 var(--mono);color:var(--warn)}
+.calm{background:var(--okg);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;
+  font:600 .8rem/1.4 var(--sans);color:var(--ok);display:none}
+.dock{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.dock .dk{min-height:52px;border:1px solid var(--line2);border-radius:12px;background:var(--card);
+  color:var(--txt);font:700 .72rem var(--mono);letter-spacing:.06em;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.dock .dk small{font:600 .54rem var(--mono);color:var(--faint);letter-spacing:.1em}
+.dock .dk:active{border-color:var(--acc);background:var(--accg)}
+</style>
+</head>
+<body>
+<div class="deck" id="app"></div>
+<script src="cockpit-data.js"></script>
+<script>
+(function(){
+'use strict';
+var C = window.Cockpit, S = C.SNAP, esc = C.esc;
+
+var depts = S.departments.map(function(d){
+  return '<div class="tile" data-dept="' + d.id + '"><div class="trow"><span class="led ' + (d.status === 'ok' ? 'ok' : d.status === 'warn' ? 'warn' : 'idle') + '"></span><span class="tname">' + esc(d.name) + '</span></div>'
+    + '<div class="tstats"><span class="tstat">' + d.attention + '<small>NEEDS</small></span><span class="tstat">' + d.running + '<small>RUN</small></span><span class="tstat">' + d.wins + '<small>WINS</small></span></div></div>';
+}).join('');
+
+document.getElementById('app').innerHTML =
+  C.header('ANGLE C - SIGNAL')
+  + C.sigbar()
+  + '<div class="panel"><div class="lbl">Departments - tap to descend the ladder</div><div class="deptstrip">' + depts + '</div></div>'
+  + '<div class="cols"><div>'
+  + '<div class="panel"><div class="lbl"><span class="led warn"></span>Your turn - the stream IS the surface'
+  + '<span class="spacer"></span></div>'
+  + '<div class="qhead"><span class="big">' + S.needsMe + '</span><span class="lbl">items - peel from the top</span></div>'
+  + '<div class="calm" id="calm">Nothing needs you. Swarms hold the line - go play the ukulele.</div>'
+  + '<div id="stream">' + C.queueCards() + '</div>'
+  + '</div></div><div>'
+  + '<div class="panel"><div class="lbl"><span class="led run"></span>Dispatch - same environment, zero switch</div>'
+  + '<div class="dock">'
+  + '<button class="dk" type="button">SWARM<small>ATOMIC FAN-OUT</small></button>'
+  + '<button class="dk" type="button">MISSION<small>GOAL + LEDGER</small></button>'
+  + '<button class="dk" type="button">INTERVIEW<small>QUEUE A SET</small></button>'
+  + '<button class="dk" type="button">CE LOOP<small>ENCODE FRICTION</small></button>'
+  + '<button class="dk" type="button">REPORT<small>ARC ROLL-UP</small></button>'
+  + '<button class="dk" type="button">AAR<small>AFTER ACTION</small></button>'
+  + '</div>'
+  + '<div class="qmeta" style="margin-top:8px;color:var(--faint)">Every button fronts the agent backplane with your full primitive stack loaded - a dispatch here is the same execution a terminal session runs.</div>'
+  + '</div></div></div>'
+  + C.ticker();
+
+/* dept -> projects drill (one altitude per screen) */
+document.querySelectorAll('[data-dept]').forEach(function(el){
+  el.onclick = function(){
+    var d = S.departments.filter(function(x){ return x.id === el.getAttribute('data-dept'); })[0];
+    if (!d) return;
+    var html = '<div class="lbl" style="margin:4px 0 8px">Projects - tap for missions</div><div class="tilegrid">'
+      + d.projects.map(function(p){
+        return '<div class="tile" data-project="' + p.id + '"><div class="trow"><span class="led ' + (p.status === 'ok' ? 'ok' : p.status === 'warn' ? 'warn' : 'idle') + '"></span><span class="tname">' + esc(p.name) + '</span></div>'
+          + '<div class="tstats"><span class="tstat">' + p.attention + '<small>NEEDS</small></span><span class="tstat">' + p.running + '<small>RUN</small></span><span class="tstat">' + p.wins + '<small>WINS</small></span></div></div>';
+      }).join('') + '</div>';
+    C.drill('org / department', d.name, html);
+  };
+});
+C.wire(document.getElementById('app'));
+C.overlay();
+})();
+</script>
+</body>
+</html>

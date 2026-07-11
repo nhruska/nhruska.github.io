@@ -1,0 +1,54 @@
+{
+  "name": "cockpit-tempo",
+  "note": "Cockpit v2 Angle mockup - operator signal contract (friction profile C1-C5,C7) at the true-test viewport: boots clean, needs-me/running/shipped above the fold, drill-down descends the fractal ladder one altitude per screen within the tap budget.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/docs/artifacts/cockpit-v2/angle-tempo.html"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "C2-C4: the three-question signal bar is above the fold",
+      "js": "(function(){var b=document.getElementById('sigbar');if(!b)return false;var r=b.getBoundingClientRect();return r.top>=0&&r.bottom<915&&b.children.length===3})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "needs-me count is a real number",
+      "js": "parseInt(document.getElementById('sigNeeds').textContent,10)>0"
+    },
+    {
+      "action": "screenshot",
+      "name": "mobile-landing"
+    },
+    {
+      "action": "evalAssert",
+      "label": "mobile shows the vertical time rail (board is desktop-only)",
+      "js": "(function(){var r=document.querySelector('.rail');return r&&getComputedStyle(r).display!=='none'})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".rail [data-mission=\"ui-reconcile\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap 1: rail entry drills to mission detail",
+      "js": "document.getElementById('drill').classList.contains('open')"
+    },
+    {
+      "action": "screenshot",
+      "name": "mobile-drill-mission"
+    }
+  ]
+}
