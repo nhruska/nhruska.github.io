@@ -185,6 +185,10 @@
    *   onActivate(rec)  tap the body       (open studio / details)
    *   onAction(rec)    tap Play/Search
    *   onAdd(rec)       + add to set       (library)
+   *   addBlockedReason string             (library, no onAdd -> renders a GHOST +
+   *                                        so the missing affordance reads as a
+   *                                        stated limitation, never a broken row)
+   *   onAddBlocked(rec) tap the ghost +   (explain why - e.g. a toast)
    *   onUp/onDn/onRemove(rec)             (set controls)
    *   onEdit(rec)      edit details       (optional; renders a pencil if provided)
    */
@@ -239,6 +243,13 @@
         + '</div>' + btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
     } else if (seg !== 'set' && opts.onAdd) {
       ctrl = btn('li-add', opts.inSet ? '&#10003;' : '+', 'add', opts.inSet ? ' title="In set"' : ' title="Add to set"');
+    } else if (seg !== 'set' && opts.addBlockedReason) {
+      // Operator UAT 2026-07-12: rows that CAN'T join the set used to render
+      // nothing in the add slot - "feels like something is broken". The ghost +
+      // states the limitation and teaches on tap (Element Consistency: the add
+      // slot always communicates, at the primitive).
+      ctrl = btn('li-add ghost', '+', 'addblocked',
+        ' title="' + esc(opts.addBlockedReason) + '" aria-label="' + esc(opts.addBlockedReason) + '"');
     }
     var editBtn = opts.onEdit ? btn('li-edit', '&#9998;', 'edit', ' title="Edit details"') : '';
 
@@ -261,6 +272,7 @@
       var a = b.getAttribute('data-act');
       wireTap(b, function () {
         if (a === 'add' && opts.onAdd) opts.onAdd(rec);
+        else if (a === 'addblocked' && opts.onAddBlocked) opts.onAddBlocked(rec);
         else if (a === 'up' && opts.onUp) opts.onUp(rec);
         else if (a === 'dn' && opts.onDn) opts.onDn(rec);
         else if (a === 'rm' && opts.onRemove) {

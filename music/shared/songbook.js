@@ -1544,6 +1544,13 @@
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
           onAdd: canAdd ? function () { toggleSet(sid); } : null,
+          // Operator UAT 2026-07-12: a silently missing + reads as broken ("feels
+          // like something is broken"). The ghost + names the limitation at the
+          // primitive; tapping teaches the fix path (add chords via edit).
+          addBlockedReason: canAdd ? null : 'No chords yet - can\'t join a setlist',
+          onAddBlocked: canAdd ? null : function () {
+            showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
+          },
           onAction: function () { repertoireAction(rec); }
         });
         el.songsList.appendChild(node);

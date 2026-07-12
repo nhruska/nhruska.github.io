@@ -1,0 +1,55 @@
+{
+ "name": "setadd-evident",
+ "note": "S-SETADD-EVIDENT (operator UAT 2026-07-12: 'some rows not showing the plus... feels like something is broken'): library rows WITHOUT a chord sheet (seq-less jam/video tracks) render a GHOST + in the add slot - dashed, faint, aria-labeled with the reason - and tapping it shows an explaining toast with the fix path (edit + add a progression). Rows WITH chords keep the live +. The add slot always communicates; an empty slot never ships.",
+ "viewport": {
+  "width": 412,
+  "height": 915
+ },
+ "steps": [
+  {
+   "action": "goto",
+   "path": "/music/play/"
+  },
+  {
+   "action": "wait",
+   "ms": 900
+  },
+  {
+   "action": "evalAssert",
+   "label": "library renders both live + and ghost + rows (catalog has songs AND seq-less jam tracks)",
+   "js": "document.querySelectorAll('#songsList .li-add:not(.ghost)').length > 0 && document.querySelectorAll('#songsList .li-add.ghost').length > 0"
+  },
+  {
+   "action": "evalAssert",
+   "label": "every ghost + carries the stated reason as aria-label",
+   "js": "Array.prototype.every.call(document.querySelectorAll('#songsList .li-add.ghost'), function(b){ return /no chords/i.test(b.getAttribute('aria-label')||''); })"
+  },
+  {
+   "action": "evalAssert",
+   "label": "ghost is visually distinct: dashed border + reduced opacity vs the live +",
+   "js": "(function(){var g=document.querySelector('#songsList .li-add.ghost');if(!g)return false;var cs=getComputedStyle(g);return cs.borderTopStyle==='dashed' && parseFloat(cs.opacity)<0.9;})()"
+  },
+  {
+   "action": "tap",
+   "selector": "#songsList .li-add.ghost"
+  },
+  {
+   "action": "wait",
+   "ms": 400
+  },
+  {
+   "action": "evalAssert",
+   "label": "tapping the ghost explains itself: toast names the missing chords + the fix path",
+   "js": "(function(){var t=document.querySelector('.toast.on');return !!t && /no chords/i.test(t.textContent) && /progression/i.test(t.textContent);})()"
+  },
+  {
+   "action": "evalAssert",
+   "label": "the ghost tap did NOT add anything to the setlist",
+   "js": "document.querySelectorAll('#songsList .listItem.inSet').length === 0"
+  },
+  {
+   "action": "screenshot",
+   "name": "library-ghost-add"
+  }
+ ]
+}
