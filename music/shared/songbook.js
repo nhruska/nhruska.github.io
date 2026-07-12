@@ -718,6 +718,36 @@
   // chord-sheet items can open the Practice screen or join a setlist/Stage - a
   // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
   function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
+  // S-SETADD-KEYSEED (operator burst 2026-07-12): the seed-chord TOKEN for a row
+  // with a known key but no chord sheet - the key's tonic, canonical-sharp. `key`
+  // normalizes through this module's own F2S map (same one-liner idiom rootPc()
+  // uses below: "Eb" -> "D#"); 'm' is appended for every minor-family mode,
+  // mirroring Repertoire.keyLabel's own minor test (min*/aeolian/dorian/phrygian/
+  // locrian) WITHOUT its DISPLAY respell - tokens stay canonical-sharp per
+  // music/CLAUDE.md note-spelling.md; only rendering (Repertoire.keyLabel, used
+  // for the toast) respells. Pure + Node-testable.
+  function keySeedToken(key, mode) {
+    var root = F2S[key] || key;
+    var m = String(mode || '').toLowerCase();
+    var minor = m.indexOf('min') === 0 || /aeolian|dorian|phrygian|locrian/.test(m);
+    return root + (minor ? 'm' : '');
+  }
+  // S-SETADD-KEYSEED: Library "+" affordance state for a repertoire row -
+  // 'add' (chord sheet -> live +, joins the setlist as-is - S-SETADD unchanged),
+  // 'seed' (no sheet but Repertoire.deriveKey resolves a key -> live + that
+  // SEEDS one chord instead of a ghost), or 'blocked' (neither -> ghost +,
+  // S-SETADD-EVIDENT's #249 reason/toast, unchanged). `hasSheet` is supplied by
+  // the caller's own hasChordSheet(songById(sid)) check just above - a seq-less
+  // CUSTOM track has an id too, so sid!=null alone can't decide (see
+  // hasChordSheet's comment); this function only decides the fallback. Repertoire
+  // is DI'd (soloKeyFor's own pattern above) so this stays Node-testable without
+  // a browser global. Pure.
+  function addAffordance(rec, hasSheet, Repertoire) {
+    if (hasSheet) return 'add';
+    var R = Repertoire || global.Repertoire;
+    var k = (R && typeof R.deriveKey === 'function') ? R.deriveKey(rec || {}) : { key: null };
+    return k.key ? 'seed' : 'blocked';
+  }
   // Set of catalog ids shadowed by a fork: a custom item with forkOf="<catalogId>"
   // hides that catalog song (its edited copy takes its place). Pure + testable.
   function shadowedCatalogIds(customs) {
@@ -1536,17 +1566,25 @@
         // only chord-sheet items can join a setlist; a pure/video-only track (no
         // seq) can't - it would later crash s.seq.map in Perform. songById alone
         // is insufficient: a seq-less custom track has an id too.
-        var canAdd = sid != null && hasChordSheet(songById(sid));
-        var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
+        var hasSheet = sid != null && hasChordSheet(songById(sid));
+        // S-SETADD-KEYSEED: a row with no sheet but a known key gets a LIVE + that
+        // seeds one chord (below) instead of the S-SETADD-EVIDENT ghost - the
+        // ghost is reserved for rows with NEITHER (addAffordance decides).
+        var state = sid == null ? 'blocked' : addAffordance(rec, hasSheet);
+        var canAdd = state !== 'blocked';
+        var inSet = state === 'add' && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
         var node = global.ListItem.render(displayRecFor(rec), {
           segment: 'library',
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
-          onAdd: canAdd ? function () { toggleSet(sid); } : null,
+          onAdd: state === 'add' ? function () { toggleSet(sid); }
+            : state === 'seed' ? function () { seedKeyChordAndAdd(rec); }
+            : null,
           // Operator UAT 2026-07-12: a silently missing + reads as broken ("feels
           // like something is broken"). The ghost + names the limitation at the
-          // primitive; tapping teaches the fix path (add chords via edit).
+          // primitive; tapping teaches the fix path (add chords via edit). Only
+          // rows with neither a sheet nor a key still get it (S-SETADD-EVIDENT #249).
           addBlockedReason: canAdd ? null : 'No chords yet - can\'t join a setlist',
           onAddBlocked: canAdd ? null : function () {
             showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
@@ -1934,6 +1972,45 @@
       renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
       if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
+    }
+    // S-SETADD-KEYSEED: the 'seed' Library "+" action (addAffordance()==='seed') -
+    // a row with a known key but no chords. Persists through the SAME two paths
+    // every other library edit uses, so the row updates consistently instead of
+    // duplicating: a CUSTOM track-only item (already in customSongs, e.g. a saved
+    // backing track) gets its seq updated in place via updateCustomItem; a
+    // STANDALONE catalog track (tracks.json, no customSongs entry) is promoted
+    // via createCustomItem with no forkOf - the same shape openEditOrAdd already
+    // saves for track edits - and Repertoire.build's title+artist matchKey then
+    // merges the new custom SONG over the standalone track on the next
+    // rebuildAll, so the row updates in place rather than duplicating.
+    function seedKeyChordAndAdd(rec) {
+      if (!rec || rec.id == null) return;
+      var k = (global.Repertoire && typeof global.Repertoire.deriveKey === 'function')
+        ? global.Repertoire.deriveKey(rec) : { key: null, mode: null };
+      if (!k.key) return; // defensive - addAffordance() already gated this row into 'seed'
+      var token = keySeedToken(k.key, k.mode);
+      var cs = customById(rec.id);
+      var saved = cs
+        ? updateCustomItem(rec.id, { seq: [token] })
+        : createCustomItem({
+          title: rec.title != null ? rec.title : rec.t,
+          artist: rec.artist != null ? rec.artist : rec.a,
+          genre: rec.genre || '', yt: rec.yt || null,
+          key: k.key, mode: k.mode || 'major', seq: [token]
+        });
+      if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
+      if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
+      var ok = saveSet();
+      renderSongs(); renderSetlist();
+      // Display spelling via the SAME facet label the Key filter chip shows
+      // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
+      // + minor suffix) - the seeded chord IS the row's key tonic, so its display
+      // name and the key label are the same value. Falls back to the raw token
+      // if Repertoire is somehow unavailable (defensive, matches other call sites).
+      var disp = (global.Repertoire && global.Repertoire.keyLabel && global.Repertoire.keyLabel(rec)) || token;
+      showToast(ok
+        ? ('Added - seeded with its key chord (' + disp + '). Edit it to add more.')
+        : SAVE_FAIL_MSG, !ok);
     }
     // ---- S-TOAST+ACTION (M-DESIGN-ENFORCE wave 2, UAT U19): the setlist
     // item-remove undo panel, migrated off the old untimed "persistent undo
@@ -4943,6 +5020,8 @@
     soloKeyFor: soloKeyFor,
     isMine: isMine,
     hasChordSheet: hasChordSheet,
+    keySeedToken: keySeedToken,
+    addAffordance: addAffordance,
     shadowedCatalogIds: shadowedCatalogIds,
     buildAllSongs: buildAllSongs,
     buildSheetFromSeq: buildSheetFromSeq,

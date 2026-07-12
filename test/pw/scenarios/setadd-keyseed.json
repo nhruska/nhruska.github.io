@@ -1,0 +1,67 @@
+{
+ "name": "setadd-keyseed",
+ "note": "S-SETADD-KEYSEED (operator burst 2026-07-12: 'if there is no chords but we have a key for the song, then add one chord at whatever point in the workflow is necessary to prevent the friction and be consistent'): a library row with NO chord sheet but a KNOWN key gets a LIVE + (not the S-SETADD-EVIDENT #249 ghost) - tapping it seeds ONE chord (the key's tonic) through the app's existing record machinery, adds the item to the setlist, and toasts what happened. 'Reggae Backing Track in A Major' (Petti Music Studios, key A major) is a real STANDALONE backing track in tracks.json - no matching songs.json entry, so it never merges a chord sheet in (unlike a title like 'Three Little Birds', which merges with its songs.json entry and already has chords) - a live catalog example of a keyed/chordless row, no seeding needed. Verifies: the seed persists via createCustomItem (the standalone-track promotion path, no forkOf), the toast names the seeded chord's display spelling (Repertoire.keyLabel), the row shows checkmarked/inSet after, and a second tap behaves like any other in-set row (idempotent-safe removal, S-SETADD-KEYSEED contract point 4).",
+ "viewport": {
+  "width": 412,
+  "height": 915
+ },
+ "steps": [
+  {
+   "action": "goto",
+   "path": "/music/play/"
+  },
+  {
+   "action": "wait",
+   "ms": 900
+  },
+  {
+   "action": "evalAssert",
+   "label": "pre-condition: 'Reggae Backing Track in A Major' (keyed, chordless) shows a LIVE (non-ghost) + and is not yet in the setlist",
+   "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');for(var i=0;i<items.length;i++){var t=items[i].querySelector('.li-title');if(t && t.textContent.trim()==='Reggae Backing Track in A Major'){var b=items[i].querySelector('.li-add');return !!b && !b.classList.contains('ghost') && !items[i].classList.contains('inSet');}}return false;})()"
+  },
+  {
+   "action": "tap",
+   "selector": "#songsList .listItem:has-text(\"Reggae Backing Track in A Major\") .li-add"
+  },
+  {
+   "action": "wait",
+   "ms": 400
+  },
+  {
+   "action": "evalAssert",
+   "label": "toast names the seeded chord by its display spelling (A major's tonic, via Repertoire.keyLabel)",
+   "js": "(function(){var t=document.querySelector('.toast.on');return !!t && /seeded with its key chord/i.test(t.textContent) && /\\(A\\)/.test(t.textContent);})()"
+  },
+  {
+   "action": "evalAssert",
+   "label": "the row is now checkmarked/inSet",
+   "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');for(var i=0;i<items.length;i++){var t=items[i].querySelector('.li-title');if(t && t.textContent.trim()==='Reggae Backing Track in A Major'){return items[i].classList.contains('inSet');}}return false;})()"
+  },
+  {
+   "action": "evalAssert",
+   "label": "persisted: a NEW custom item ('Reggae Backing Track in A Major', no forkOf - the standalone-track promotion path) carries exactly one seeded chord (A), and its id is in the persisted setlist",
+   "js": "(function(){var custKey=Object.keys(localStorage).filter(function(k){return /\\.custom\\.v1$/.test(k)})[0];if(!custKey)throw new Error('no *.custom.v1 key - seed did not persist');var customs=JSON.parse(localStorage.getItem(custKey));var cs=customs.filter(function(c){return c.t==='Reggae Backing Track in A Major';})[0];if(!cs)throw new Error('no persisted custom item for Reggae Backing Track in A Major');if(cs.forkOf)throw new Error('unexpected forkOf - this is a standalone track, not a catalog-song fork');if(!(Array.isArray(cs.seq) && cs.seq.length===1 && cs.seq[0]==='A'))throw new Error('seq was '+JSON.stringify(cs.seq)+', expected [\"A\"]');if(cs.key!=='A'||cs.mode!=='major')throw new Error('key/mode drifted: '+cs.key+'/'+cs.mode);var setKey=Object.keys(localStorage).filter(function(k){return /\\.setlist\\.v1$/.test(k)})[0];if(!setKey)throw new Error('no *.setlist.v1 key');var setlist=JSON.parse(localStorage.getItem(setKey));return setlist.indexOf(cs.id)>=0;})()"
+  },
+  {
+   "action": "screenshot",
+   "name": "keyseed-added"
+  },
+  {
+   "action": "tap",
+   "selector": "#songsList .listItem:has-text(\"Reggae Backing Track in A Major\") .li-add"
+  },
+  {
+   "action": "wait",
+   "ms": 300
+  },
+  {
+   "action": "evalAssert",
+   "label": "idempotent-safe: a second tap on the now-in-set row behaves like any other in-set row - checkmark clears, removed from the persisted setlist",
+   "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');var found=false,inSet=true;for(var i=0;i<items.length;i++){var t=items[i].querySelector('.li-title');if(t && t.textContent.trim()==='Reggae Backing Track in A Major'){found=true;inSet=items[i].classList.contains('inSet');}}if(!found)throw new Error('row vanished after removal');if(inSet)return false;var setKey=Object.keys(localStorage).filter(function(k){return /\\.setlist\\.v1$/.test(k)})[0];var setlist=setKey?JSON.parse(localStorage.getItem(setKey)):[];var custKey=Object.keys(localStorage).filter(function(k){return /\\.custom\\.v1$/.test(k)})[0];var customs=custKey?JSON.parse(localStorage.getItem(custKey)):[];var cs=customs.filter(function(c){return c.t==='Reggae Backing Track in A Major';})[0];return !!cs && setlist.indexOf(cs.id)<0;})()"
+  },
+  {
+   "action": "screenshot",
+   "name": "keyseed-removed"
+  }
+ ]
+}
