@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T10:36:59Z",
+  "generatedAt": "2026-07-12T10:46:58Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,36 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-11T10:21:53Z",
-    "sha": "9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9",
-    "subject": "ops: report - OVERNIGHT ARC CLOSED: M-13 song builder shipped end to end (",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9"
+    "date": "2026-07-11T12:11:38Z",
+    "sha": "26102d830826cba3444fb9620e56e1a3df09f1ac",
+    "subject": "ops: merge - M-13 g4 merged (#247, v156): drag-to-reorder buffer sections",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/26102d830826cba3444fb9620e56e1a3df09f1ac"
   },
   "commits": [
+    {
+      "date": "2026-07-11T12:11:38Z",
+      "sha": "26102d830826cba3444fb9620e56e1a3df09f1ac",
+      "subject": "ops: merge - M-13 g4 merged (#247, v156): drag-to-reorder buffer sections",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/26102d830826cba3444fb9620e56e1a3df09f1ac"
+    },
+    {
+      "date": "2026-07-11T12:11:26Z",
+      "sha": "0071c2b07c15411f6a17d264d200ada8c36ab0a2",
+      "subject": "M-13 g4: drag-to-reorder buffer sections in the song builder (v156) (#247)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/0071c2b07c15411f6a17d264d200ada8c36ab0a2"
+    },
+    {
+      "date": "2026-07-11T11:50:44Z",
+      "sha": "9bd5ba39d7d268a63b50070f79209387c27393e3",
+      "subject": "ops: start - M-13 g4 mission launched (operator keystroke): drag-to-reord",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9bd5ba39d7d268a63b50070f79209387c27393e3"
+    },
+    {
+      "date": "2026-07-11T10:37:04Z",
+      "sha": "4299f91189476b96af095650b69988749b1b432f",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4299f91189476b96af095650b69988749b1b432f"
+    },
     {
       "date": "2026-07-11T10:21:53Z",
       "sha": "9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9",
@@ -66,30 +90,6 @@
       "sha": "ea2a45aad758ddd9f9983aa61c2ad913568ffe01",
       "subject": "M-COMPETENCY LZ: per-skill competency profile (local, export/import) + wiring (v153) (#243)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/ea2a45aad758ddd9f9983aa61c2ad913568ffe01"
-    },
-    {
-      "date": "2026-07-11T09:16:24Z",
-      "sha": "e93a2a9a4a6f3e28ed17a55b4c2e4661a786cf25",
-      "subject": "ops: merge - M-13 g1 merged (#242, v152): template-suggested sections liv",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e93a2a9a4a6f3e28ed17a55b4c2e4661a786cf25"
-    },
-    {
-      "date": "2026-07-11T09:15:49Z",
-      "sha": "c0fb0d15fee144c51c9ce508fbd23307ad2d4936",
-      "subject": "M-13 g1: template-suggested sections - M-12 payoff + operator UAT fold-ins (v152) (#242)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c0fb0d15fee144c51c9ce508fbd23307ad2d4936"
-    },
-    {
-      "date": "2026-07-11T08:36:48Z",
-      "sha": "a3eb4d4825b97095ae0cccb7bf1feece129c1176",
-      "subject": "ops: merge - M-13 Song Builder LZ merged (#241, v151) - overnight goalpos",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/a3eb4d4825b97095ae0cccb7bf1feece129c1176"
-    },
-    {
-      "date": "2026-07-11T08:36:15Z",
-      "sha": "64ba5a96440921f559572c3169f9761ce4a5661e",
-      "subject": "M-13 Song Builder LZ: section buffer in Compose assembles multi-section songs (v151) (#241)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/64ba5a96440921f559572c3169f9761ce4a5661e"
     }
   ],
   "openPRs": [
@@ -119,6 +119,13 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-11T12:04:14Z",
+      "mergedAt": "2026-07-11T12:11:27Z",
+      "number": 247,
+      "title": "M-13 g4: drag-to-reorder buffer sections in the song builder (v156)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/247"
+    },
     {
       "createdAt": "2026-07-11T10:20:42Z",
       "mergedAt": "2026-07-11T10:21:36Z",
@@ -216,27 +223,20 @@
       "number": 233,
       "title": "S-UI-RECONCILE Lane A: song view + Stage spell by key; delete button gets the danger primitive (v149)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/233"
-    },
-    {
-      "createdAt": "2026-07-11T00:45:09Z",
-      "mergedAt": "2026-07-11T00:45:52Z",
-      "number": 232,
-      "title": "S-UI-RECONCILE Lane B: Library key labels + form Key dropdown respell by key (v148)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/232"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-11T10:36:56Z",
-    "durationSeconds": 2,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29149628160",
+    "runStartedAt": "2026-07-12T10:46:53Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29189698890",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 147,
+    "merged_count": 95,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 0.01,
@@ -249,8 +249,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v155",
-    "localCacheVersion": "music-v155",
+    "liveCacheVersion": "music-v156",
+    "localCacheVersion": "music-v156",
     "cacheMatch": true
   },
   "missions": [

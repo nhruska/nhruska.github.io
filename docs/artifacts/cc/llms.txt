@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-11T10:36:59Z
+Generated: 2026-07-12T10:46:58Z
 Status: ok
 
 ## NOW
@@ -14,6 +14,7 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #247 - M-13 g4: drag-to-reorder buffer sections in the song builder (v156) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/247
 - #246 - QUEUE reconcile: overnight arc close - M-13 shipped, M-COMPETENCY, Cockpit pick, CE frictions (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/246
 - #245 - M-13 g3: song builder consumes the competency profile - personalized ranking + why-cue + evidence loop (v155) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/245
 - #244 - M-13 g2: song-builder buffer persists across reloads + section reorder (v154) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/244
@@ -21,7 +22,6 @@ Status: ok
 - #242 - M-13 g1: template-suggested sections - the M-12 payoff, with the operator's UAT fold-ins (v152) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/242
 - #241 - M-13 Song Builder LZ: section buffer in Compose assembles multi-section songs (v151) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/241
 - #240 - THE PICK: Cockpit remix - C base (actionable surface) + B timeline (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/240
-- #239 - Cockpit v2: adopt the hub header grammar, label reads COCKPIT (operator taste pick) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/239
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
