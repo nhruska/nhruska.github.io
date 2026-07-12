@@ -171,4 +171,17 @@ test('S-SETRM-ARM source lock: the rm dispatch is arm-gated (first tap can never
   assert.ok(/armRmBtn\(b\); return;/.test(rmBranch[1]), 'first tap must ARM and return - never fall through to onRemove');
 });
 
+test('S-SETADD-EVIDENT source lock: blocked rows render a GHOST + with the stated reason (never an empty add slot), and its tap dispatches onAddBlocked - not onAdd', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  // The ghost branch exists for library-segment rows without onAdd but with a reason.
+  assert.ok(/addBlockedReason/.test(src), 'renderer must accept addBlockedReason');
+  var ghost = src.match(/opts\.addBlockedReason\) \{([\s\S]*?)\}/);
+  assert.ok(ghost, 'expected the addBlockedReason ctrl branch');
+  assert.ok(/li-add ghost/.test(ghost[1]), 'blocked rows must render the li-add ghost button');
+  assert.ok(/aria-label/.test(ghost[1]), 'the ghost + must carry the reason as aria-label');
+  // Dispatch: addblocked routes to onAddBlocked, never onAdd.
+  assert.ok(/a === 'addblocked' && opts\.onAddBlocked\) opts\.onAddBlocked\(rec\)/.test(src), 'addblocked tap must dispatch onAddBlocked');
+});
+
 run();
