@@ -1,6 +1,6 @@
 {
  "name": "setadd-evident",
- "note": "S-SETADD-EVIDENT (operator UAT 2026-07-12: 'some rows not showing the plus... feels like something is broken'): library rows WITHOUT a chord sheet (seq-less jam/video tracks) render a GHOST + in the add slot - dashed, faint, aria-labeled with the reason - and tapping it shows an explaining toast with the fix path (edit + add a progression). Rows WITH chords keep the live +. The add slot always communicates; an empty slot never ships.",
+ "note": "S-SETADD-EVIDENT (operator UAT 2026-07-12: 'some rows not showing the plus... feels like something is broken'): library rows WITHOUT a chord sheet (seq-less jam/video tracks) render a GHOST + in the add slot - dashed, faint, aria-labeled with the reason - and tapping it shows an explaining toast with the fix path (edit + add a progression). Rows WITH chords keep the live +. The add slot always communicates; an empty slot never ships. UPDATED for S-SETADD-KEYSEED (2026-07-12): the ghost is now scoped to rows with NEITHER a sheet NOR a derivable key - every real tracks.json entry carries a key, so the ghost no longer has a live example in the catalog; seed one keyless+chordless custom track into localStorage (roadcase-ukulele-gcea.custom.v1 - the app's default profile prefix per manifest.json's first entry) before the FIRST goto that boots the app, matching song-builder-personalize.json's seed-then-open pattern.",
  "viewport": {
   "width": 412,
   "height": 915
@@ -16,8 +16,26 @@
   },
   {
    "action": "evalAssert",
-   "label": "library renders both live + and ghost + rows (catalog has songs AND seq-less jam tracks)",
+   "label": "seed ONE keyless, chordless custom track (no key, no seq) so the ghost path still has a live example - the real catalog no longer has one now every seq-less row with a key gets the S-SETADD-KEYSEED live + instead",
+   "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'mSeedBlocked1', t:'Seeded Blocked Track', a:'Seed Artist Blocked', y:2026, d:'Mine', genre:'test', custom:true, yt:'seedBlockedYT'}]));return true}catch(e){return false}})()"
+  },
+  {
+   "action": "goto",
+   "path": "/music/play/"
+  },
+  {
+   "action": "wait",
+   "ms": 900
+  },
+  {
+   "action": "evalAssert",
+   "label": "library renders both live + and ghost + rows (catalog has chord-sheet songs AND the seeded keyless/chordless track)",
    "js": "document.querySelectorAll('#songsList .li-add:not(.ghost)').length > 0 && document.querySelectorAll('#songsList .li-add.ghost').length > 0"
+  },
+  {
+   "action": "evalAssert",
+   "label": "exactly one ghost + renders - only the seeded keyless/chordless row, not every seq-less track",
+   "js": "document.querySelectorAll('#songsList .li-add.ghost').length === 1"
   },
   {
    "action": "evalAssert",
@@ -28,6 +46,11 @@
    "action": "evalAssert",
    "label": "ghost is visually distinct: dashed border + reduced opacity vs the live +",
    "js": "(function(){var g=document.querySelector('#songsList .li-add.ghost');if(!g)return false;var cs=getComputedStyle(g);return cs.borderTopStyle==='dashed' && parseFloat(cs.opacity)<0.9;})()"
+  },
+  {
+   "action": "evalAssert",
+   "label": "S-SETADD-KEYSEED: a real seq-less backing track that HAS a key (Reggae Backing Track in A Major, key A) now shows a LIVE (non-ghost) + - it used to be ghosted pre-#249-refinement",
+   "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');for(var i=0;i<items.length;i++){var t=items[i].querySelector('.li-title');if(t && t.textContent.trim()==='Reggae Backing Track in A Major'){var b=items[i].querySelector('.li-add');return !!b && !b.classList.contains('ghost');}}return false;})()"
   },
   {
    "action": "tap",

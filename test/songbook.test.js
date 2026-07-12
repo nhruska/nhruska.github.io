@@ -602,6 +602,31 @@ test('hasChordSheet: only items with a real chord sequence can join Practice/Set
   assert.strictEqual(Songbook.hasChordSheet({ seq: 'C G' }), false); // non-array guard
   assert.strictEqual(Songbook.hasChordSheet(null), false);
 });
+test('keySeedToken: canonical-sharp tonic, "m" for every minor-family mode, flat keys normalize', function () {
+  assert.strictEqual(Songbook.keySeedToken('C', 'major'), 'C');
+  assert.strictEqual(Songbook.keySeedToken('G', 'Major'), 'G');       // case-insensitive mode
+  assert.strictEqual(Songbook.keySeedToken('A', 'minor'), 'Am');
+  assert.strictEqual(Songbook.keySeedToken('D', 'dorian'), 'Dm');
+  assert.strictEqual(Songbook.keySeedToken('E', 'phrygian'), 'Em');
+  assert.strictEqual(Songbook.keySeedToken('F#', 'locrian'), 'F#m');
+  assert.strictEqual(Songbook.keySeedToken('G', 'aeolian'), 'Gm');
+  assert.strictEqual(Songbook.keySeedToken('G', 'mixolydian'), 'G');  // major-family, no suffix
+  assert.strictEqual(Songbook.keySeedToken('Eb', 'major'), 'D#');     // flat root normalizes to sharp
+  assert.strictEqual(Songbook.keySeedToken('Bb', 'minor'), 'A#m');
+  assert.strictEqual(Songbook.keySeedToken('C', null), 'C');          // no mode -> treated as major
+});
+test('addAffordance: three-way Library "+" state - add / seed / blocked', function () {
+  // hasSheet true short-circuits regardless of key - unchanged S-SETADD path.
+  assert.strictEqual(Songbook.addAffordance({ key: 'C' }, true), 'add');
+  assert.strictEqual(Songbook.addAffordance({}, true), 'add');
+  // no sheet, but a key derivable -> S-SETADD-KEYSEED live +.
+  assert.strictEqual(Songbook.addAffordance({ key: 'G', mode: 'major' }, false, Repertoire), 'seed');
+  assert.strictEqual(Songbook.addAffordance({ key: 'A', mode: 'minor' }, false, Repertoire), 'seed');
+  // no sheet, no key -> S-SETADD-EVIDENT ghost (#249), unchanged.
+  assert.strictEqual(Songbook.addAffordance({}, false, Repertoire), 'blocked');
+  assert.strictEqual(Songbook.addAffordance({ genre: 'rock' }, false, Repertoire), 'blocked');
+  assert.strictEqual(Songbook.addAffordance(null, false, Repertoire), 'blocked');
+});
 test('isMine flags custom items and the legacy d:Mine marker, nothing else', function () {
   assert.strictEqual(Songbook.isMine({ custom: true }), true);
   assert.strictEqual(Songbook.isMine({ d: 'Mine' }), true);          // pre-flag persisted records
