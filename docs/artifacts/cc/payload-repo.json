@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T10:46:58Z",
+  "generatedAt": "2026-07-13T12:18:25Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,54 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-11T12:11:38Z",
-    "sha": "26102d830826cba3444fb9620e56e1a3df09f1ac",
-    "subject": "ops: merge - M-13 g4 merged (#247, v156): drag-to-reorder buffer sections",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/26102d830826cba3444fb9620e56e1a3df09f1ac"
+    "date": "2026-07-12T21:37:57Z",
+    "sha": "44a2c7e5c67dd656f4e71683bc21e7c01319008d",
+    "subject": "QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH (#251)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/44a2c7e5c67dd656f4e71683bc21e7c01319008d"
   },
   "commits": [
+    {
+      "date": "2026-07-12T21:37:57Z",
+      "sha": "44a2c7e5c67dd656f4e71683bc21e7c01319008d",
+      "subject": "QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH (#251)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/44a2c7e5c67dd656f4e71683bc21e7c01319008d"
+    },
+    {
+      "date": "2026-07-12T20:52:29Z",
+      "sha": "b9533c86ea7c8294ef93a94b2a6bb35493c41aee",
+      "subject": "ops: merge - S-SETADD-KEYSEED merged (#250, v158): key-carrying chordless",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b9533c86ea7c8294ef93a94b2a6bb35493c41aee"
+    },
+    {
+      "date": "2026-07-12T20:52:16Z",
+      "sha": "abf7674b7b416b02c1f983859348d109a9efa477",
+      "subject": "S-SETADD-KEYSEED: seed the key's tonic chord on + for chordless-but-keyed rows (v158) (#250)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/abf7674b7b416b02c1f983859348d109a9efa477"
+    },
+    {
+      "date": "2026-07-12T15:48:11Z",
+      "sha": "b3bf6ea4aadca45d4ffc158353755f0d5654a5df",
+      "subject": "ops: merge - S-SETADD-EVIDENT merged (#249, v157): ghost + on setlist-ine",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b3bf6ea4aadca45d4ffc158353755f0d5654a5df"
+    },
+    {
+      "date": "2026-07-12T15:48:00Z",
+      "sha": "e80cc8b2554c10891c470b714b7c08a91d146041",
+      "subject": "S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157) (#249)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e80cc8b2554c10891c470b714b7c08a91d146041"
+    },
+    {
+      "date": "2026-07-12T13:43:03Z",
+      "sha": "bfc7d847b54c8e9c619bf9d3a1368da4c6dc337a",
+      "subject": "QUEUE: capture CE-SPAWN-ENV-REPOLOCK (ps-internal spawn root cause) (#248)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/bfc7d847b54c8e9c619bf9d3a1368da4c6dc337a"
+    },
+    {
+      "date": "2026-07-12T10:47:05Z",
+      "sha": "d0dbdc7c8b999e136903ba79801fb05a06b11196",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d0dbdc7c8b999e136903ba79801fb05a06b11196"
+    },
     {
       "date": "2026-07-11T12:11:38Z",
       "sha": "26102d830826cba3444fb9620e56e1a3df09f1ac",
@@ -48,48 +90,6 @@
       "sha": "9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9",
       "subject": "ops: report - OVERNIGHT ARC CLOSED: M-13 song builder shipped end to end (",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/9044e1fa70f76cb12b377ddcd09eb2093fd0f4f9"
-    },
-    {
-      "date": "2026-07-11T10:21:36Z",
-      "sha": "8ce029452d8ff37e0128989ae53b818a3c5ded38",
-      "subject": "QUEUE reconcile: overnight arc close - M-13 shipped, M-COMPETENCY, Cockpit pick, CE frictions (#246)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/8ce029452d8ff37e0128989ae53b818a3c5ded38"
-    },
-    {
-      "date": "2026-07-11T10:18:31Z",
-      "sha": "0dfc053d29a875bafef531e65f84d16ac55be51b",
-      "subject": "ops: merge - M-13 g3 merged (#245, v155): personalized suggestion ranking",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0dfc053d29a875bafef531e65f84d16ac55be51b"
-    },
-    {
-      "date": "2026-07-11T10:18:07Z",
-      "sha": "f1e5ca6411564b0c0b347567038fce70cb6280b5",
-      "subject": "M-13 g3: song builder consumes the competency profile - personalized ranking + why-cue + evidence loop (v155) (#245)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f1e5ca6411564b0c0b347567038fce70cb6280b5"
-    },
-    {
-      "date": "2026-07-11T09:58:25Z",
-      "sha": "2e94ed2951db825504f8cf450de07afb2763eccd",
-      "subject": "ops: merge - M-13 g2 merged (#244, v154): builder buffer persists across",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/2e94ed2951db825504f8cf450de07afb2763eccd"
-    },
-    {
-      "date": "2026-07-11T09:58:12Z",
-      "sha": "494017c27e359b50ffb1acd88ca3cf87f616bd9a",
-      "subject": "M-13 g2: song-builder buffer persists across reloads + section reorder (v154) (#244)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/494017c27e359b50ffb1acd88ca3cf87f616bd9a"
-    },
-    {
-      "date": "2026-07-11T09:40:55Z",
-      "sha": "3e4b9d4c69d8816814e269f74c8453aaffca7705",
-      "subject": "ops: merge - M-COMPETENCY LZ merged (#243, v153): competency profiles liv",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/3e4b9d4c69d8816814e269f74c8453aaffca7705"
-    },
-    {
-      "date": "2026-07-11T09:40:31Z",
-      "sha": "ea2a45aad758ddd9f9983aa61c2ad913568ffe01",
-      "subject": "M-COMPETENCY LZ: per-skill competency profile (local, export/import) + wiring (v153) (#243)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ea2a45aad758ddd9f9983aa61c2ad913568ffe01"
     }
   ],
   "openPRs": [
@@ -119,6 +119,34 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-12T21:35:04Z",
+      "mergedAt": "2026-07-12T21:37:58Z",
+      "number": 251,
+      "title": "QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/251"
+    },
+    {
+      "createdAt": "2026-07-12T20:51:10Z",
+      "mergedAt": "2026-07-12T20:52:16Z",
+      "number": 250,
+      "title": "S-SETADD-KEYSEED: seed the key's tonic chord on + for chordless-but-keyed rows (v158)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/250"
+    },
+    {
+      "createdAt": "2026-07-12T15:44:58Z",
+      "mergedAt": "2026-07-12T15:48:00Z",
+      "number": 249,
+      "title": "S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/249"
+    },
+    {
+      "createdAt": "2026-07-12T13:41:52Z",
+      "mergedAt": "2026-07-12T13:43:04Z",
+      "number": 248,
+      "title": "QUEUE: capture CE-SPAWN-ENV-REPOLOCK (ps-internal spawn root cause)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/248"
+    },
     {
       "createdAt": "2026-07-11T12:04:14Z",
       "mergedAt": "2026-07-11T12:11:27Z",
@@ -195,51 +223,23 @@
       "number": 237,
       "title": "QUEUE reconcile: S-SETRM-ARM shipped + M-COCKPIT-V2 vision/mockups shipped (docs-only)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/237"
-    },
-    {
-      "createdAt": "2026-07-11T03:44:45Z",
-      "mergedAt": "2026-07-11T03:45:36Z",
-      "number": 236,
-      "title": "Cockpit v2 Tactical UI: vision synthesis + operator friction profile + 3 rendered angles",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/236"
-    },
-    {
-      "createdAt": "2026-07-11T02:32:17Z",
-      "mergedAt": "2026-07-11T02:32:54Z",
-      "number": 235,
-      "title": "S-SETRM-ARM: setlist remove handle joins the arm-to-delete grammar (v150)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/235"
-    },
-    {
-      "createdAt": "2026-07-11T00:53:39Z",
-      "mergedAt": "2026-07-11T00:54:16Z",
-      "number": 234,
-      "title": "S-UI-RECONCILE close-out: QUEUE row SHIPPED + audit report onto main (docs-only)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/234"
-    },
-    {
-      "createdAt": "2026-07-11T00:51:26Z",
-      "mergedAt": "2026-07-11T00:52:16Z",
-      "number": 233,
-      "title": "S-UI-RECONCILE Lane A: song view + Stage spell by key; delete button gets the danger primitive (v149)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/233"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-12T10:46:53Z",
+    "runStartedAt": "2026-07-13T12:18:21Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29189698890",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29249359110",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 95,
+    "merged_count": 57,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 0.01,
+    "typical_merge_hours": 0.02,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +249,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v156",
-    "localCacheVersion": "music-v156",
+    "liveCacheVersion": "music-v158",
+    "localCacheVersion": "music-v158",
     "cacheMatch": true
   },
   "missions": [
@@ -508,6 +508,21 @@
         "Source": "operator UAT 2026-07-10 (2 screenshots)"
       },
       {
+        "#": "CE-SPAWN-ENV-REPOLOCK",
+        "Item": "**Friction (infra, diagnosed 2026-07-11): BOTH overnight ps-internal spawn sessions died at repo-attach with zero pushes.** Root cause: fresh-session triggers fired into the Cloud-With-Config environment (env_018ePk6pcuQ3xVYDS2dKausA), whose pre-attached nhruska sources lock the session's owner tier BEFORE its first add_repo - so `add_repo problemsolutions/ps-internal` dies on the cross-owner v1 limit at STEP 0 (triggers trig_014Ey2aRwZ2JzncgUnVkKu9S 09:05Z + trig_01RpyWGkzriwEhDvLyPLcge8 11:42Z, both `run_once_fired`, pushed_at never moved off 2026-07-07). The corrected path (spawn into the Default env, env_011CUMCmi2MSZxFpRc21acMx, no pre-attached repos) needs a permission approval the autonomous surface could not deliver (\"permission stream closed\" x4, including an AskUserQuestion). Encoded lesson: **cross-owner missions must spawn into an environment with NO pre-attached sources for the other owner tier** - the Default env, or a purpose-made problemsolutions env. Operator surfaced via \ud83d\udd34 telegram (msg 10); mission packet stays live in ccp handoffs/cockpit-lz-packet-20260711.md.",
+        "Source": "overnight /goal arc 2026-07-11"
+      },
+      {
+        "#": "S-SETADD-EVIDENT + S-SETADD-KEYSEED",
+        "Item": "**SHIPPED 2026-07-12 (UAT burst pair, #249 v157 + #250 v158)**: the Library + is a true 3-way setlist picker per the operator's bursts. #249: chordless rows get a GHOST + at the list-item primitive (dashed/faint, reason as aria-label, explaining toast) - an empty add slot never ships. #250: a row with a KNOWN key but no chords gets a LIVE + that seeds the key's tonic chord through the existing record machinery (updateCustomItem / the openEditOrAdd promotion shape - matchKey merge, no duplicate rows) and adds to the set; ghost narrows to keyless+chordless only. Scenarios setadd-keyseed + setadd-evident (fixture-seeded) + regressions green. DEFERRED (vision candidate, operator-gated): setlist-jam-items - chord-less tracks addable AS jam items (Perform learns to play tracks, not just sheets).",
+        "Source": "operator UAT bursts 2026-07-12 (2 screenshots + \"add one chord... be consistent\")"
+      },
+      {
+        "#": "CE-SPAWN-MIDRUN-DEATH",
+        "Item": "**Friction (infra, 2026-07-12): fresh-session spawns in the Default env die MID-RUN.** Attempts 3 (trig_013hDfzZgXTWZRfFwhQvUnpy, 13:50Z) and 4 (trig_01RiqP8WimPtyE8WSiaiuZwb, 20:18Z, adopt-mode) both attached ps-internal, pushed a branch + draft PR within ~7 min, then went permanently silent (attempt 4 despite an explicit 15-min push-cadence order; last pushes 13:57Z / 20:34Z). Signature: repo-attach + early pushes succeed, session dies ~10-15 min in - cause not diagnosable from the orchestrating session (no transcript access). 4-attempt cap enforced; operator holds the recovery (own session adopting the claude/cockpit-lz branch - \ud83d\udd34 telegram msg 12). Encoded lesson: **long autonomous cross-owner missions need a HUMAN-attached session or a purpose-built env until spawned-session stability is proven; the adopt-the-branch guard made attempts cheap and work cumulative.**",
+        "Source": "ps-internal arc 2026-07-12"
+      },
+      {
         "#": "CE-WORKTREE-PREFLIGHT",
         "Item": "**Friction (agent-side, self-caught 2026-07-11 overnight): the parent's coupled-step commit landed on the LOCAL main checkout** because `git worktree add` for a branch already checked out in the agent's worktree fails silently under `",
         "Source": ""
@@ -625,7 +640,7 @@
   },
   "suite": {
     "testFileCount": 46,
-    "testCaseCount": 2330,
+    "testCaseCount": 2333,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
