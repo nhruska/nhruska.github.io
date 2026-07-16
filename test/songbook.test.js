@@ -2862,6 +2862,32 @@ test('Phase B: emptying a continued draft drops the source link - the next draft
   assert.strictEqual(after[0].t, 'Keeper', 'the original record is intact');
 });
 
+test('UAT r3: a just-saved song lands at setlist #1 (recency = about to play), above existing entries', function () {
+  var store = lsReset.fakeStore();
+  // A REAL custom song already in the setlist (a bare id would be pruned at mount
+  // by the dangling-setlist heal - S-SET-INTEGRITY).
+  store.setItem('progwraptest.custom.v1', JSON.stringify([{ id: 'keep', t: 'Old set song', seq: ['C', 'G'], custom: true }]));
+  store.setItem('progwraptest.setlist.v1', JSON.stringify(['keep']));
+  global.localStorage = store;
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.ctrl.setComposeMode('song');
+  n.assemble.onclick();
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  row.children[0].value = 'Fresh song';
+  row.children[1].children[0].checked = true; // add to setlist
+  m.ctrl.getState().current = null;
+  try { row.children[2].onclick(); } catch (e) { /* openPractice nav tail */ }
+  var setlist = JSON.parse(global.localStorage.getItem('progwraptest.setlist.v1'));
+  var fresh = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1')).filter(function (c) { return c.t === 'Fresh song'; })[0];
+  assert.ok(fresh, 'the fresh song saved');
+  assert.strictEqual(setlist[0], fresh.id, 'the just-saved song is at the TOP of the setlist');
+  assert.deepStrictEqual(setlist.slice(1), ['keep'], 'the existing set entry stays below it');
+});
+
 test('UAT r2: teaching cues are dismissible one-shot tips - a dismissal persists per lesson and survives a reload', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();

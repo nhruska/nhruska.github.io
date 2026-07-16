@@ -1969,10 +1969,18 @@
         onHide: function (host) { host.classList.remove('on'); }
       });
     }
-    function toggleSet(id) {
+    // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
+    // #1 slot in setlist?"): a JUST-CREATED song from Compose goes to the TOP -
+    // recency is intent, the thing you just wrote is the thing you're about to
+    // play. A Library "add to setlist" tap keeps appending (browsing the library
+    // IS set-building, in the order you want to play). Same two moments, two
+    // rules. Only the create paths pass toTop; every existing caller is unchanged.
+    function toggleSet(id, toTop) {
       var pos = STATE.setlist.indexOf(id);
       var adding = pos < 0;
-      if (pos >= 0) STATE.setlist.splice(pos, 1); else STATE.setlist.push(id);
+      if (pos >= 0) STATE.setlist.splice(pos, 1);
+      else if (toTop) STATE.setlist.unshift(id);
+      else STATE.setlist.push(id);
       // S-HARDEN H4 (analysis-refactor-enhance-20260704 A1 bug shape): saveSet()
       // can silently fail (quota/blocked storage) - branch the toast on its real
       // result instead of claiming success unconditionally, same pattern as
@@ -3126,7 +3134,7 @@
         disarmRm();
         saveSongSections();
         builderSourceId = null; saveBuilderSource(); // Phase B: a fresh save ends any (already-dead) source link
-        if (addToSetlist) toggleSet(cs.id); // G4/FORK-1: one tap from performance-ready
+        if (addToSetlist) toggleSet(cs.id, true); // G4/FORK-1: one tap from performance-ready; toTop - a song you just wrote is next up
         // The draft is done - the next Compose visit starts back at the editor.
         composeMode = 'chords';
         saveComposeMode();
@@ -4658,7 +4666,7 @@
         // scroll-to + highlight - whichever call actually paints it (below, or
         // toggleSet's own renderSongs() when the checkbox added it to the set).
         pendingHighlightId = cs.id;
-        if (addToSetlist) toggleSet(cs.id); else renderSongs();
+        if (addToSetlist) toggleSet(cs.id, true); else renderSongs(); // toTop - a just-saved progression is next up
         // Linked regardless of write success: the record lives in customSongs for
         // this session either way (Studio/Setlist keep working until reload), so a
         // second Save click correctly takes the update-in-place branch above rather
