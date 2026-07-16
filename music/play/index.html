@@ -167,10 +167,15 @@
     <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
+        <!-- UAT 2026-07-16 (operator): Start moves up into the header where Edit
+             was (compact, not a full-width bar); Edit sits to its LEFT; the
+             destructive Clear (✕) is hidden until edit mode and wears red. Order
+             is [✕][Edit][Start] - normal mode hides ✕ -> [Edit][Start]; edit mode
+             hides Start + shows the red ✕ -> [✕][Done]. -->
         <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
-          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button>
-          <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button></div>
-        <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
+          <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
+          <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
+          <button class="btn red" id="performBtn" title="Start performance">Start</button></div>
         <div id="setBody"></div>
       </div>
     </section>

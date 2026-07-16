@@ -255,11 +255,13 @@
 // section cards, Save-song naming, the guided template loop, 3 UAT rounds
 // (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
 // No new/removed CORE paths.
-// S-SETLIST-THUMB (2026-07-16): v162->v163 - shared/list-item.js + songbook.css:
-// the setlist play/video action moves from the wide meta-row box to a compact
-// 44px icon in the trailing thumb cluster (shown in normal mode; edit mode keeps
-// reorder/remove there), reclaiming a vertical row. Library rows unchanged.
-// No new/removed CORE paths.
+// S-SETLIST-HEADER (2026-07-16): v162->v163 - play/index.html + shared/
+// songbook.js + songbook.css: the setlist header restructures per operator UAT -
+// Start moves compact into the header (rightmost) where Edit was, Edit sits to
+// its left, and the destructive Clear (✕) is hidden until edit mode and wears
+// red; the old full-width Start-performance bar is retired. ALSO: the practice-
+// view "save this to your setlist" nudge no longer shows for a song already in
+// the setlist. No new/removed CORE paths.
 var CACHE = 'music-v163';
 var CORE = [
   './', './index.html',
