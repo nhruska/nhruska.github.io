@@ -182,14 +182,21 @@ def run(scenario_path, base_url=None):
                     elif act == 'tapChord':
                         # exact chord-name match anywhere in the compose palette (the
                         # In-key tiles live in .inKeyLead via KeyExplorer; the All view
-                        # fills #buildGrid - search the compose screen, visible tiles only)
+                        # fills #buildGrid - search the compose screen, visible tiles only).
+                        # S-CHORD-COLLAPSE: at the advanced persona the palettes render
+                        # compact chips (.suggChip > .scName) instead of diagram tiles
+                        # (.chord > .chord-name) - same one-tap add semantics, so this
+                        # verb matches either token. The .prog filmstrip's own chips are
+                        # excluded (a progression slot is not a palette tile).
                         ok = page.evaluate(
                             """(name) => {
                                  var grid = document.getElementById('s-compose') || document.body;
-                                 var tiles = grid.querySelectorAll('.chord-name');
+                                 var tiles = grid.querySelectorAll('.chord-name, .scName');
                                  for (var i = 0; i < tiles.length; i++) {
+                                   if (tiles[i].closest('.prog')) continue;
+                                   if (tiles[i].closest('#suggest')) continue;
                                    if (tiles[i].textContent.trim() === name) {
-                                     var t = tiles[i].closest('.chord') || tiles[i].parentElement;
+                                     var t = tiles[i].closest('.chord, .suggChip') || tiles[i].parentElement;
                                      t.click();
                                      return true;
                                    }

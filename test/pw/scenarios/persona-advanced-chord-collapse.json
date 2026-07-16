@@ -1,0 +1,92 @@
+{
+  "name": "persona-advanced-chord-collapse",
+  "description": "S-CHORD-COLLAPSE goalpost (operator friction 2026-07-16: chord charts too big at advanced, scroll off page): ADVANCED renders the Compose palettes as compact letter+roman chips (suggChip token), tap still adds+plays in ONE tap, the Shapes toggle flips the grid to full diagrams and back, and the whole in-key palette fits the viewport without scrolling.",
+  "persona": "advanced",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "in-key palette renders compact chips, not diagram tiles, at advanced",
+      "js": "document.querySelectorAll('.inKeyLead .ccChips .suggChip').length >= 6 && document.querySelectorAll('.inKeyLead .chord').length === 0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "chips carry roman numerals (key context exists: default C)",
+      "js": "Array.from(document.querySelectorAll('.inKeyLead .suggChip .scRn')).some(function(e){return e.textContent.trim()==='I'||e.textContent.trim()==='IV'})"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": ".inKeyLead .ccChips .suggChip:last-child"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "evalAssert",
+      "label": "one-tap add preserved: both chords landed in the progression",
+      "js": "document.querySelectorAll('#prog .slot').length === 2"
+    },
+    {
+      "action": "evalAssert",
+      "label": "progression filmstrip is compact tokens (no diagram cards) at advanced",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 2 && document.querySelectorAll('#prog .slot .chord').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-chips"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes toggle ON: full diagram tiles are back, one tap away",
+      "js": "document.querySelectorAll('.inKeyLead .chord').length >= 6 && document.querySelectorAll('.inKeyLead .ccChips .suggChip').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-shapes-on"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes toggle OFF: back to chips",
+      "js": "document.querySelectorAll('.inKeyLead .ccChips .suggChip').length >= 6"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "evalAssert",
+      "label": "All view renders chips too at advanced",
+      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .chord').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-all-chips"
+    }
+  ]
+}
