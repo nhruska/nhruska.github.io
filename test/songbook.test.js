@@ -2747,4 +2747,102 @@ test('S-SONG-MODE UAT-2: Build the chords clears the strip (reversibly) while th
   assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the captured Verse is safe in the draft');
 });
 
+/* ---------- S-SONG-MODE Phase B: Continue building (saved song -> canvas ->
+ * update in place). Locks the sheet parser (the buildSongFromSections inverse),
+ * the reopen flow, the no-clobber guard for a foreign draft, and the
+ * emptied-draft-drops-the-link guard (a stale link must never make a NEW draft
+ * overwrite an old song). ---------- */
+test('Phase B: sectionsFromSheet round-trips buildSongFromSections, mines lyric-mixed rows, skips chordless rows, never throws on junk', function () {
+  var secs = [{ label: 'Verse', seq: ['C', 'G', 'Am'] }, { label: 'Chorus', seq: ['F', 'C'] }];
+  var built = Songbook.buildSongFromSections(secs);
+  assert.deepStrictEqual(Songbook.sectionsFromSheet(built.sheet), secs, 'a builder-made song round-trips exactly');
+  assert.deepStrictEqual(Songbook.sectionsFromSheet([['Verse', 'Well I [C]woke up this [G7]morning']]),
+    [{ label: 'Verse', seq: ['C', 'G7'] }], 'chords mined out of a lyric line');
+  assert.deepStrictEqual(Songbook.sectionsFromSheet([['Note', 'no chords here'], ['Verse', '[D]']]),
+    [{ label: 'Verse', seq: ['D'] }], 'chordless rows are skipped');
+  assert.deepStrictEqual(Songbook.sectionsFromSheet(null), [], 'junk in, empty out - never a throw');
+  assert.deepStrictEqual(Songbook.sectionsFromSheet([null, 'x', ['only-label']]), [], 'malformed rows dropped');
+});
+
+// Save a fresh 2-section song through the canvas and return its stored record.
+function saveSongViaCanvas(m, n, name) {
+  m.ctrl.setComposeMode('song');
+  n.assemble.onclick();
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  row.children[0].value = name;
+  row.children[1].children[0].checked = false;
+  m.ctrl.getState().current = null; // detach the stub's practice view before the nav tail
+  try { row.children[2].onclick(); } catch (e) { /* openPractice nav tail - practice els absent */ }
+  return JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
+}
+
+test('Phase B: Continue building reopens the saved song on the canvas; Save UPDATES it in place - same record, same name, new sheet', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  var customs = saveSongViaCanvas(m, n, 'First song');
+  assert.strictEqual(customs.length, 1, 'the song saved');
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'post-save lands on the editor');
+  // Reopen it on the canvas.
+  m.ctrl.continueBuilding(customs[0].id);
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'Continue building lands on the canvas');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the saved section is back in the draft');
+  assert.strictEqual(global.localStorage.getItem('progwraptest.builderSource.v1'), customs[0].id, 'the draft carries its source link');
+  // Add a Chorus and save again - update in place, no name row, no copy.
+  tapChords(m, 2);
+  n.sel.value = 'Chorus'; n.addBtn.click();
+  m.ctrl.setComposeMode('song');
+  m.ctrl.getState().current = null;
+  try { n.assemble.onclick(); } catch (e) { /* nav tail */ }
+  var after = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1'));
+  assert.strictEqual(after.length, 1, 'STILL one record - updated, not copied');
+  assert.strictEqual(after[0].t, 'First song', 'the name survives an update (no re-prompt)');
+  assert.strictEqual(after[0].sheet.length, 2, 'the rebuilt sheet carries both sections');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 0, 'the draft cleared after the update');
+  assert.ok(!global.localStorage.getItem('progwraptest.builderSource.v1'), 'the source link ended with the save');
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'back on the editor');
+});
+
+test('Phase B: a DIFFERENT unsaved draft blocks Continue building - never clobber unsaved work', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  var customs = saveSongViaCanvas(m, n, 'Finished song');
+  // A brand-new foreign draft...
+  tapChords(m, 1);
+  n.sel.value = 'Bridge'; n.addBtn.click();
+  var before = global.localStorage.getItem('progwraptest.builderBuffer.v1');
+  // ...must survive a Continue building attempt untouched.
+  m.ctrl.continueBuilding(customs[0].id);
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'refused - no canvas switch over unsaved work');
+  assert.strictEqual(global.localStorage.getItem('progwraptest.builderBuffer.v1'), before, 'the foreign draft is byte-identical');
+  assert.ok(!global.localStorage.getItem('progwraptest.builderSource.v1'), 'no source link was planted');
+});
+
+test('Phase B: emptying a continued draft drops the source link - the next draft saves FRESH, never overwriting the old song', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  var customs = saveSongViaCanvas(m, n, 'Keeper');
+  m.ctrl.continueBuilding(customs[0].id);
+  // Remove the one section (arm + confirm) - the link must die with the draft.
+  n = songModeNodes(m); // cards rebuilt on render
+  var rm = n.sections.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
+  tapWired(rm); tapWired(rm);
+  assert.ok(!global.localStorage.getItem('progwraptest.builderSource.v1'), 'the emptied draft dropped its source link');
+  // A new draft saved now must be a SECOND record.
+  tapChords(m, 1);
+  n.sel.value = 'Intro'; n.addBtn.click();
+  var after = saveSongViaCanvas(m, n, 'Brand new');
+  assert.strictEqual(after.length, 2, 'a fresh draft saved as a NEW song - Keeper was not overwritten');
+  assert.strictEqual(after[0].t, 'Keeper', 'the original record is intact');
+});
+
 run();

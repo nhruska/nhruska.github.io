@@ -77,9 +77,14 @@ pilot feedback.
 - **A (this PR):** the toggle + full-screen canvas (cards with visible chords,
   play, reorder, remove), capture row, guided template loop, Save song with
   naming, empty-state starters, mode persistence + badge.
-- **B:** round-trip section editing (card "Edit" -> Chords mode loaded with that
-  section -> Done writes BACK to the section, with the unsaved-progression
-  guard); full-song play-through (sections in sequence, tempo-aware).
+- **B (partially SHIPPED in this PR):** "Continue building" - a saved custom
+  song reopens on the canvas (`sectionsFromSheet`, the buildSongFromSections
+  inverse) and Save UPDATES it in place (builderSourceId link; no name
+  re-prompt; the link dies with an emptied draft so a new draft never
+  overwrites an old song; a foreign unsaved draft blocks the reopen rather
+  than being clobbered - a merge/replace choice is future polish). Remaining
+  B: per-CARD section editing (card "Edit" -> Chords mode -> writes back to
+  that one section) and tempo-aware full-song play-through.
 - **C - the "elaborate" rung:** per-section lyric lines (the saved sheet format
   already supports lines per section), hook/riff notes on cards, "jam a melody
   over the draft" via the existing Solo path. Cards are built as vertical

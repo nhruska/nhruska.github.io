@@ -1872,6 +1872,16 @@
       var act = el.practiceBody.querySelector('.actions');
       if (act && s.custom) {
         var isFork = !!s.forkOf;
+        // S-SONG-MODE Phase B: back into the builder - the sheet parses to
+        // sections, the Song canvas reopens, and Save updates THIS song in
+        // place. Only offered when the sheet actually yields sections (a
+        // track-only custom has nothing to build from).
+        if (sectionsFromSheet(s.sheet).length) {
+          var cb = document.createElement('button');
+          cb.className = 'btn'; cb.textContent = 'Continue building';
+          cb.onclick = function () { continueBuilding(s); };
+          act.appendChild(cb);
+        }
         var eb = document.createElement('button');
         eb.className = 'btn'; eb.textContent = 'Edit';
         eb.onclick = function () { openEditForm(s.id); };
@@ -2541,6 +2551,19 @@
     // into Chords mode to edit; the next "Add to song" returns to the canvas.
     // Manual toggle taps clear the flag - the user taking the wheel wins.
     var returnToSong = false;
+    // S-SONG-MODE Phase B: when a draft was loaded FROM a saved song
+    // ("Continue building"), Save song UPDATES that song in place instead of
+    // creating a copy (the saveProgression update-in-place precedent: no new
+    // record, no name prompt). Persisted alongside the buffer so a reload
+    // keeps the link; ignored (nulled) when the buffer itself is empty - a
+    // stale link must never make a brand-new draft overwrite an old song.
+    var BUILDER_SOURCE_KEY = prefix + ".builderSource.v1";
+    var builderSourceId = null;
+    try { builderSourceId = songSections.length ? (localStorage.getItem(BUILDER_SOURCE_KEY) || null) : null; } catch (e) { /* fresh */ }
+    function saveBuilderSource() {
+      return builderSourceId ? safeSet(BUILDER_SOURCE_KEY, builderSourceId)
+        : (function () { try { localStorage.removeItem(BUILDER_SOURCE_KEY); } catch (e) {} return true; })();
+    }
     function setComposeMode(m) {
       if (m !== 'chords' && m !== 'song') return; // unknown values never wedge the screen
       if (m === composeMode) return;
@@ -2890,6 +2913,9 @@
           stopSectPlay();
           songSections.splice(i, 1);
           saveSongSections();
+          // Phase B: an emptied draft drops its saved-song link - a brand-new
+          // draft built afterwards must save fresh, never overwrite the old song.
+          if (!songSections.length && builderSourceId) { builderSourceId = null; saveBuilderSource(); }
           renderSongTray();
         });
         // M-13 g2: reorder handles - real 44px hit targets (a11y-coach floor),
@@ -3042,6 +3068,25 @@
       // live behind it (same discipline as saveProgression's snapSeq).
       var built = buildSongFromSections(songSections);
       var km = deriveProgressionKey(built.seq);
+      // Phase B: a draft loaded from a saved song ("Continue building") UPDATES
+      // that song in place - no new copy, no name prompt (the saveProgression
+      // update-in-place precedent). The truthful-signal saveCustom() repeat
+      // mirrors that branch exactly (see its comment).
+      if (builderSourceId && customById(builderSourceId)) {
+        var upd = updateCustomItem(builderSourceId, { seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode });
+        if (upd) {
+          var updOk = saveCustom();
+          songSections = []; disarmRm(); saveSongSections();
+          builderSourceId = null; saveBuilderSource();
+          composeMode = 'chords'; saveComposeMode();
+          renderSongTray();
+          recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
+          showComposeToast(updOk ? ('Updated ' + upd.t + ' – opening it now.') : SAVE_FAIL_MSG, !updOk);
+          if (updOk) openPractice(upd.id);
+          return;
+        }
+        builderSourceId = null; saveBuilderSource(); // the source vanished - fall through to a fresh save
+      }
       // S-SONG-MODE: the naming moment. A song the user wrote deserves a name -
       // the old flow shipped every song as "My song" (placeholder text left
       // behind, the S6 finding all over again). Same inline name row + setlist
@@ -3055,6 +3100,7 @@
         songSections = [];
         disarmRm();
         saveSongSections();
+        builderSourceId = null; saveBuilderSource(); // Phase B: a fresh save ends any (already-dead) source link
         if (addToSetlist) toggleSet(cs.id); // G4/FORK-1: one tap from performance-ready
         // The draft is done - the next Compose visit starts back at the editor.
         composeMode = 'chords';
@@ -3067,6 +3113,32 @@
         showComposeToast('Saved ' + cs.t + ' – opening it now.');
         openPractice(cs.id);
       });
+    }
+    // S-SONG-MODE Phase B ("open songs back up to continue building, not just
+    // edit metadata" - operator UAT 2026-07-16): parse a saved song's sheet back
+    // into sections, seed the builder, and reopen the Song canvas. Save then
+    // updates THIS song in place (builderSourceId above). Guards:
+    //   - same song already loaded -> just switch to the canvas (tap-twice safe)
+    //   - a DIFFERENT unsaved draft exists -> refuse with an honest toast, never
+    //     clobber unsaved work (a merge/replace choice is future polish)
+    function continueBuilding(s) {
+      if (!s) return;
+      var secs = sectionsFromSheet(s.sheet);
+      if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
+      if (songSections.length && builderSourceId !== s.id) {
+        showToast('You have a song draft (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + ') in Compose - save or clear it first.', true);
+        return;
+      }
+      if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft
+        songSections = secs;
+        saveSongSections();
+        builderSourceId = s.id;
+        saveBuilderSource();
+      }
+      composeMode = 'song';
+      saveComposeMode();
+      renderSongTray();
+      switchTab('compose');
     }
     function addChord(c) {
       if (progression.length >= COMPOSE_MAX) return; // D-CAP12
@@ -4605,6 +4677,9 @@
       cs.t = f.title || cs.t; cs.a = f.artist != null ? f.artist : cs.a; cs.genre = f.genre != null ? f.genre : cs.genre;
       cs.key = f.key != null ? f.key : cs.key; cs.mode = f.mode || cs.mode; cs.yt = f.yt != null ? f.yt : cs.yt;
       if (f.seq && f.seq.length) cs.seq = f.seq.slice(); else if (f.seq) delete cs.seq;
+      // Phase B (additive - no pre-existing caller passes sheet): Continue
+      // building's update-in-place save carries the rebuilt section sheet.
+      if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
       saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       if (STATE.current && STATE.current.id === id) {
         if (!cs.seq || !cs.seq.length) switchTab('library'); else renderPractice();
@@ -5235,7 +5310,10 @@
       // (e.g. a deep link straight to the Song canvas). setComposeMode ignores
       // unknown values, so this can never wedge the screen.
       composeMode: function () { return composeMode; },
-      setComposeMode: setComposeMode
+      setComposeMode: setComposeMode,
+      // Phase B: reopen a saved song on the Song canvas by id (the song view's
+      // "Continue building" button routes here; exposed for tests + deep links).
+      continueBuilding: function (id) { continueBuilding(songById(id)); }
     };
   }
 
@@ -5245,10 +5323,29 @@
   // for tests; the '·' matches the section chips' existing label convention.
   function songBadgeText(n) { return n > 0 ? 'Song · ' + n : 'Song'; }
 
+  // S-SONG-MODE Phase B: the INVERSE of buildSongFromSections - parse a saved
+  // song's sheet back into builder sections so "Continue building" can reopen
+  // it on the Song canvas. One section per sheet row that carries at least one
+  // [chord] token (a builder-made song round-trips exactly; a lyric-rich or
+  // hand-edited sheet still yields its chords - the lyrics stay safe on the
+  // saved record, which update-in-place only overwrites with a NEW sheet on
+  // save). Chordless rows are skipped, junk shapes never throw. Pure, exported.
+  function sectionsFromSheet(sheet) {
+    var out = [];
+    (Array.isArray(sheet) ? sheet : []).forEach(function (row) {
+      if (!Array.isArray(row) || row.length < 2) return;
+      var toks = [];
+      String(row[1]).replace(/\[([^\]]+)\]/g, function (m, c) { toks.push(c.trim()); return m; });
+      if (toks.length) out.push({ label: String(row[0] || 'Section'), seq: toks });
+    });
+    return out;
+  }
+
   /* ---------- public surface ---------- */
   global.Songbook = {
     mount: mount,
     songBadgeText: songBadgeText,
+    sectionsFromSheet: sectionsFromSheet,
     // pure helpers exposed for chord packs / tests
     tpose: tpose,
     tposeLine: tposeLine,
