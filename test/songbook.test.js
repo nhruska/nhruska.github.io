@@ -911,11 +911,11 @@ test('Clear-undo: every A3-listed mutating action invalidates, Clear never regre
   // UAT-2 extracted the handler body into clearProgression() (so the Song
   // canvas's "Build the chords" shares the exact guarded path) - the contract
   // now pins THAT function, plus the button's delegation to it.
-  var clearBlock = /function clearProgression\(\) \{[\s\S]{0,1400}?\n    \}/.exec(src);
+  var clearBlock = /function clearProgression\(bannerMsg\) \{[\s\S]{0,1400}?\n    \}/.exec(src);
   assert.ok(clearBlock, 'clearProgression() not found');
   assert.ok(/el\.cClear\.onclick = function \(\) \{ clearProgression\(\); \}/.test(src), 'the Clear button must delegate to clearProgression()');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
-  assert.ok(/showClearUndoBanner\(\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner');
+  assert.ok(/showClearUndoBanner\(bannerMsg\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner (with the optional caller message - UAT r2)');
   assert.ok(/hideComposeToast\(\)/.test(clearBlock[0]), 'F31 (UAT): Clear must also end a still-showing save-confirmation toast (Clear does not route through invalidateClearUndo)');
   // (matches an actual confirm('...') CALL, not the word appearing in a code comment)
   assert.ok(!/confirm\(['"]/.test(clearBlock[0]), 'Clear must NEVER use a native confirm() dialog (A3)');
@@ -2436,7 +2436,7 @@ function songTrayNodes(m) {
   return out;
 }
 
-test('M-13: Add to song snapshots the CURRENT progression as a section WITHOUT clearing the progression (A3: additive)', function () {
+test('M-13/UAT-r2: Add to song captures the progression, then CLEARS the strip so the next section starts fresh (reversibly)', function () {
   var m = mountForProgWrapTests();
   tapChords(m, 3); // C F G (default C-major palette)
   assert.strictEqual(m.elMap.prog.children.length, 3, 'three chords built');
@@ -2445,13 +2445,16 @@ test('M-13: Add to song snapshots the CURRENT progression as a section WITHOUT c
   assert.strictEqual(t.tray.hidden, false, 'the tray shows once a progression exists');
   t.sel.value = 'Verse';
   t.addBtn.click();
-  assert.strictEqual(m.elMap.prog.children.length, 3, 'A3: the progression is NOT cleared by a buffer add');
+  // UAT r2: the strip clears so the NEXT section is not built on top of this one
+  // (the twice-reported append bug). The captured chords are safe - both in the
+  // section AND restorable via the Clear-undo banner (asserted in the r2 test below).
+  assert.strictEqual(m.elMap.prog.children.length, 0, 'the strip cleared for the next section');
   // S-SONG-MODE: a plain Chords-mode capture STAYS in Chords mode (no context
   // yank mid-noodle) - the cards render on the Song canvas.
   assert.strictEqual(m.ctrl.composeMode(), 'chords', 'a plain capture never yanks the editor away');
   assert.strictEqual(t.sections.children.length, 0, 'cards are canvas furniture - not built while the canvas is hidden');
   m.ctrl.setComposeMode('song');
-  assert.strictEqual(t.sections.children.length, 1, 'one section card on the canvas');
+  assert.strictEqual(t.sections.children.length, 1, 'one section card on the canvas (the capture is intact)');
   assert.strictEqual(t.assemble.hidden, false, 'Save song appears once a section is buffered');
 });
 
@@ -2472,7 +2475,11 @@ test('M-13: a section card uses the ONE arm-to-remove grammar - first tap arms (
   assert.strictEqual(t.sections.children.length, 0, 'second tap removes the buffered section');
   assert.strictEqual(t.assemble.hidden, true, 'Save song hides once the buffer is empty');
   m.ctrl.setComposeMode('chords');
-  assert.strictEqual(t.tray.hidden, false, 'back in Chords mode the tray stays visible while a progression remains');
+  // UAT r2: the capture cleared the strip, so with the section also removed there
+  // is nothing to capture - the tray correctly hides. Re-tap a chord and it returns.
+  assert.strictEqual(t.tray.hidden, true, 'empty strip + empty draft -> nothing to add, tray hidden');
+  tapChords(m, 1);
+  assert.strictEqual(songTrayNodes(m).tray.hidden, false, 'a fresh chord re-shows the capture row');
 });
 
 // --- M-13 g2: buffer persistence across a reload + reorder ---
@@ -2533,11 +2540,12 @@ test('M-13 g2: a defensively-malformed buffer key drops only the bad rows, never
 
 test('M-13 g2: reorder handles swap adjacent sections, persist the new order, and disable at the ends', function () {
   var m = mountForProgWrapTests();
-  tapChords(m, 2);
   var t = songTrayNodes(m);
-  t.sel.value = 'Verse'; t.addBtn.click();
-  t.sel.value = 'Chorus'; t.addBtn.click();
-  t.sel.value = 'Bridge'; t.addBtn.click();
+  // UAT r2: each capture clears the strip, so a fresh progression is tapped per
+  // section (which is the real user flow - build a part, add it, build the next).
+  tapChords(m, 2); t.sel.value = 'Verse'; t.addBtn.click();
+  tapChords(m, 2); t.sel.value = 'Chorus'; t.addBtn.click();
+  tapChords(m, 2); t.sel.value = 'Bridge'; t.addBtn.click();
   m.ctrl.setComposeMode('song'); // cards live on the canvas
   assert.strictEqual(t.sections.children.length, 3, 'three sections buffered');
 
@@ -2683,7 +2691,8 @@ test('S-SONG-MODE UAT-1: with a song draft, Save ASKS - the song branch saves al
   var m = freshMountSharedStore();
   tapChords(m, 2);
   var n = songModeNodes(m);
-  n.sel.value = 'Verse'; n.addBtn.click();
+  n.sel.value = 'Verse'; n.addBtn.click(); // captures + clears the strip (UAT r2)
+  tapChords(m, 2);                          // a NEW progression alongside the draft -> Save is ambiguous
   m.elMap.cSave.onclick(); // the ambiguous tap from the operator report
   var row = null;
   m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
@@ -2704,7 +2713,8 @@ test('S-SONG-MODE UAT-1: the "Just this progression" branch runs the original sa
   var m = freshMountSharedStore();
   tapChords(m, 2);
   var n = songModeNodes(m);
-  n.sel.value = 'Verse'; n.addBtn.click();
+  n.sel.value = 'Verse'; n.addBtn.click(); // captures + clears the strip (UAT r2)
+  tapChords(m, 2);                          // a new progression alongside the draft -> the choice row
   m.elMap.cSave.onclick();
   var row = null;
   m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
@@ -2733,18 +2743,25 @@ test('S-SONG-MODE UAT-1: draft + EMPTY progression - Save goes straight to the s
   assert.strictEqual(m.ctrl.composeMode(), 'song', 'and the canvas context came up behind it');
 });
 
-test('S-SONG-MODE UAT-2: Build the chords clears the strip (reversibly) while the draft and A3 captures stay intact', function () {
+test('S-SONG-MODE UAT-2/r2: a Chords-mode capture clears the strip; Undo restores the exact chords to edit into the next section', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   tapChords(m, 3);
   var n = songModeNodes(m);
   n.sel.value = 'Verse'; n.addBtn.click();
-  assert.strictEqual(m.elMap.prog.children.length, 3, 'A3 unchanged: a capture never clears the strip');
-  m.ctrl.setComposeMode('song');
-  tapWired(n.buildBtn);
-  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'lands in the editor');
-  assert.strictEqual(m.elMap.prog.children.length, 0, 'a NEW section starts from a clean strip - no more appending onto the old chords');
+  // UAT r2: the strip clears on capture - the next section is not built on top.
+  assert.strictEqual(m.elMap.prog.children.length, 0, 'the strip cleared for the next section');
   assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the captured Verse is safe in the draft');
+  // ...and the edit-the-verse-into-the-chorus workflow is preserved: Undo the
+  // clear restores the exact chords (find the clear-undo banner's Undo button).
+  var undo = null;
+  (function walk(x) { (x.children || []).forEach(function (c) {
+    if (c.className && c.className.indexOf('btn ghost') === 0 && c.textContent === 'Undo') undo = c;
+    walk(c);
+  }); })(m.wrapper);
+  assert.ok(undo, 'the capture shows a clear-undo banner (persistent + actionable, not a fast toast)');
+  undo.onclick();
+  assert.strictEqual(m.elMap.prog.children.length, 3, 'Undo brings the captured chords back to edit');
 });
 
 /* ---------- S-SONG-MODE Phase B: Continue building (saved song -> canvas ->

@@ -3072,11 +3072,15 @@
         showComposeToast('Added ' + label + ' to the song.');
         returnToSong = false; setComposeMode('song'); return; // setComposeMode re-renders
       }
-      // UAT-2 (2026-07-16): staying in the editor, the kept chords surprised the
-      // operator ("new section chords appended to the old"). The keep is
-      // deliberate (A3: the chorus is usually the verse, edited) - so the toast
-      // names BOTH forks, including the visible Clear button for a fresh start.
-      showComposeToast('Added ' + label + '. Tweak these chords for your next section, or Clear to start fresh.');
+      // UAT r2 (2026-07-16): a captured section now CLEARS the strip so the next
+      // section starts FRESH. The operator hit "new-section chords append to the
+      // old" twice - the A3 keep-the-progression default (2026-07: "the chorus
+      // is usually the verse, edited") lost to lived evidence. The edit-the-verse
+      // workflow is fully preserved: the Clear-undo banner's Undo restores these
+      // exact chords to edit. And the persistent, pausable banner replaces the
+      // too-fast "Added X" toast the operator couldn't read (finding 2). The
+      // clear snapshots for undo, so nothing is ever lost.
+      clearProgression('Added ' + label + ' to your song. Strip cleared for your next section - Undo to edit these chords.');
       renderSongTray();
     }
     // Assemble the buffer into ONE custom song via the existing createCustomItem
@@ -4065,13 +4069,15 @@
       hideComposeToast();
       if (!keepRemoveUndo) invalidateRemoveUndo();
     }
-    function showClearUndoBanner() {
+    function showClearUndoBanner(bannerMsg) {
       if (!ensureClearUndoBanner() || !clearUndoSnapshot) return;
       clearUndoBanner.hidden = false;
       clearUndoBanner.innerHTML = '';
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Progression cleared.';
+      // UAT r2: the capture path passes its own message (the too-fast "Added X"
+      // toast is replaced by this persistent, pausable, actionable banner).
+      msg.textContent = bannerMsg || 'Progression cleared.';
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
       var undoBtn = document.createElement('button');
@@ -4088,7 +4094,7 @@
       };
       btnRow.appendChild(undoBtn);
       clearUndoBanner.appendChild(msg); clearUndoBanner.appendChild(btnRow);
-      clearUndoHandle = global.Toast.showAction('Progression cleared.', {
+      clearUndoHandle = global.Toast.showAction(bannerMsg || 'Progression cleared.', {
         host: clearUndoBanner,
         onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
         onHide: function () { clearUndoSnapshot = null; paintClearUndoHidden(); }
@@ -4909,7 +4915,7 @@
     // canvas's "Build the chords" can start a genuinely FRESH section through
     // the exact same guarded path (snapshot -> clear -> re-render -> Undo
     // banner). Behavior of the Clear button itself is unchanged.
-    function clearProgression() {
+    function clearProgression(bannerMsg) {
       if (!progression.length) return; // button is hidden then too - defensive no-op
       // S-CLEARGUARD (F1/A3): snapshot the full pre-Clear state BEFORE wiping
       // it, so the persistent Undo banner (shown below) can restore it
@@ -4928,7 +4934,7 @@
       renderProg(); renderKey();
       if (el.keyRoots) renderKeyView();
       buildGrid();
-      showClearUndoBanner();
+      showClearUndoBanner(bannerMsg);
     }
     if (el.cClear) el.cClear.onclick = function () { clearProgression(); };
     // S-SONG-MODE UAT-1: with a song draft buffered, "Save" must ASK, not guess
