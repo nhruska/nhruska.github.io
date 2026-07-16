@@ -2652,6 +2652,13 @@
       songBuildBtnEl.type = 'button'; songBuildBtnEl.id = 'songBuildBtn'; songBuildBtnEl.className = 'btn ghost songBuildBtn'; songBuildBtnEl.textContent = 'Build the chords';
       composeWireTap(songBuildBtnEl, function () {
         setComposeMode('chords');
+        // UAT-2 (2026-07-16): this path's intent is unambiguous - a NEW section -
+        // so it starts from a clean strip instead of appending onto the last
+        // section's leftover chords. Routed through clearProgression (the same
+        // guarded snapshot -> Undo-banner path as the Clear button), so it is
+        // reversible; a Chords-mode capture still keeps the progression (A3 -
+        // the chorus is usually the verse, edited).
+        clearProgression();
         returnToSong = true; // programmatic switch keeps the loop; toggle taps clear it
       });
       songAssembleBtnEl = document.createElement('button');
@@ -3011,11 +3018,18 @@
       disarmRm(); // a fresh add clears any armed chip remover
       saveSongSections();
       recordComp('comp-song-form'); // M-COMPETENCY: shaping a section = song-form practice (small)
-      showComposeToast('Added ' + label + ' to the song.');
       // S-SONG-MODE guided loop: a capture that started from the Song canvas (a
       // template fill or "Build the chords") returns there; a plain Chords-mode
       // capture stays put so a musician mid-noodle never loses their editor.
-      if (returnToSong) { returnToSong = false; setComposeMode('song'); return; } // setComposeMode re-renders
+      if (returnToSong) {
+        showComposeToast('Added ' + label + ' to the song.');
+        returnToSong = false; setComposeMode('song'); return; // setComposeMode re-renders
+      }
+      // UAT-2 (2026-07-16): staying in the editor, the kept chords surprised the
+      // operator ("new section chords appended to the old"). The keep is
+      // deliberate (A3: the chorus is usually the verse, edited) - so the toast
+      // names BOTH forks, including the visible Clear button for a fresh start.
+      showComposeToast('Added ' + label + '. Tweak these chords for your next section, or Clear to start fresh.');
       renderSongTray();
     }
     // Assemble the buffer into ONE custom song via the existing createCustomItem
@@ -4332,6 +4346,63 @@
     // Back) all resolve to 'skip' - the same "did nothing destructive, just
     // didn't confirm" semantics Cancel has on the save-name modal, and the
     // conservative choice here too (Skip never persists anything; Save does).
+    // S-SONG-MODE UAT-1 (2026-07-16): with a song draft in the buffer, the
+    // Chords-mode "Save" button is genuinely ambiguous - the operator tapped it
+    // expecting his SONG and got a progression-only save ("was in wrong toggle
+    // but wasn't clear... felt like right thing"). When both things exist, ask
+    // - the ONE sanctioned ask-shape (copy-coach): outcome-named options, never
+    // a silent guess. Mirrors openSoloChoiceRow's modal + NavHistory wiring
+    // (see its comments for the settleAfter/double-pop rationale). Wired at the
+    // cSave BUTTON only - the solo flow's internal saveProgression() calls must
+    // never grow a nested second modal.
+    function openSaveChoiceRow() {
+      if (!ensureComposeUI()) { saveProgression(); return; } // no modal surface - old behavior
+      hideComposeRow();
+      composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
+      var n = songSections.length;
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Save your song, or just this progression?';
+      var songBtn = document.createElement('button');
+      songBtn.type = 'button'; songBtn.className = 'btn red ctrlBtn';
+      songBtn.textContent = 'Save song (' + n + (n === 1 ? ' section)' : ' sections)');
+      var progBtn = document.createElement('button');
+      progBtn.type = 'button'; progBtn.className = 'btn ghost ctrlBtn'; progBtn.textContent = 'Just this progression';
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
+      var delivered = false;
+      // Both real outcomes re-render this SAME composeRow into the name row
+      // (openSaveNameRow clears + repopulates it as its own first step), so
+      // only 'cancel' needs this row's DOM cleared here.
+      function rawClose(choice) { if (choice === 'cancel') hideComposeRow(); }
+      function deliver(choice) {
+        if (delivered) return; delivered = true;
+        if (choice === 'song') { setComposeMode('song'); assembleSong(); } // canvas behind the name row = what you're saving
+        else if (choice === 'prog') saveProgression();
+      }
+      var pendingDismiss = 'cancel'; // hardware Back = dismiss, never a save
+      function choose(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(choice); }, function () { deliver(choice); });
+        else { rawClose(choice); deliver(choice); }
+      }
+      songBtn.onclick = function () { choose('song'); };
+      progBtn.onclick = function () { choose('prog'); };
+      cancelBtn.onclick = function () { choose('cancel'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose(pendingDismiss);
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      btnRow.appendChild(songBtn); btnRow.appendChild(progBtn); btnRow.appendChild(cancelBtn);
+      composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
+    }
     function openSoloChoiceRow(onPick) {
       if (!ensureComposeUI()) { onPick('skip'); return; }
       hideComposeRow();
@@ -4738,7 +4809,11 @@
       });
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
-    if (el.cClear) el.cClear.onclick = function () {
+    // S-SONG-MODE UAT-2: extracted from the cClear handler verbatim so the Song
+    // canvas's "Build the chords" can start a genuinely FRESH section through
+    // the exact same guarded path (snapshot -> clear -> re-render -> Undo
+    // banner). Behavior of the Clear button itself is unchanged.
+    function clearProgression() {
       if (!progression.length) return; // button is hidden then too - defensive no-op
       // S-CLEARGUARD (F1/A3): snapshot the full pre-Clear state BEFORE wiping
       // it, so the persistent Undo banner (shown below) can restore it
@@ -4758,8 +4833,18 @@
       if (el.keyRoots) renderKeyView();
       buildGrid();
       showClearUndoBanner();
+    }
+    if (el.cClear) el.cClear.onclick = function () { clearProgression(); };
+    // S-SONG-MODE UAT-1: with a song draft buffered, "Save" must ASK, not guess
+    // (see openSaveChoiceRow). Draft + no progression -> the song is the only
+    // thing to save, go straight there. No draft -> the original flow untouched
+    // (and the solo flow's internal saveProgression() calls never see any of
+    // this - the gate lives only on the button).
+    if (el.cSave) el.cSave.onclick = function () {
+      if (songSections.length && !progression.length) { setComposeMode('song'); assembleSong(); return; }
+      if (songSections.length && progression.length) { openSaveChoiceRow(); return; }
+      saveProgression(); // no callback needed - the inline toast is the feedback
     };
-    if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };

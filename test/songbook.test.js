@@ -907,11 +907,13 @@ test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear st
 test('Clear-undo: every A3-listed mutating action invalidates, Clear never regresses to confirm(), slot-x is movement-cancelled', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   // Clear builds a snapshot and shows the banner - never a native confirm().
-  // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10): the
-  // chordView-reset + always-rebuild lines + their comment pushed the handler's
-  // closing `};` past the old 1100-char bound.
-  var clearBlock = /el\.cClear\.onclick = function \(\) \{[\s\S]{0,1400}?\};/.exec(src);
-  assert.ok(clearBlock, 'cClear.onclick handler not found');
+  // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10). S-SONG-MODE
+  // UAT-2 extracted the handler body into clearProgression() (so the Song
+  // canvas's "Build the chords" shares the exact guarded path) - the contract
+  // now pins THAT function, plus the button's delegation to it.
+  var clearBlock = /function clearProgression\(\) \{[\s\S]{0,1400}?\n    \}/.exec(src);
+  assert.ok(clearBlock, 'clearProgression() not found');
+  assert.ok(/el\.cClear\.onclick = function \(\) \{ clearProgression\(\); \}/.test(src), 'the Clear button must delegate to clearProgression()');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
   assert.ok(/showClearUndoBanner\(\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner');
   assert.ok(/hideComposeToast\(\)/.test(clearBlock[0]), 'F31 (UAT): Clear must also end a still-showing save-confirmation toast (Clear does not route through invalidateClearUndo)');
@@ -2674,6 +2676,75 @@ test('S-SONG-MODE: Save song opens the name row; saving names the song, clears t
   assert.ok(customs[0].sheet && customs[0].sheet.length === 1, 'the sheet holds the one section line');
   assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 0, 'the draft cleared after save');
   assert.strictEqual(m.ctrl.composeMode(), 'chords', 'a finished song lands the next visit back on the editor');
+});
+
+test('S-SONG-MODE UAT-1: with a song draft, Save ASKS - the song branch saves all sections, never a silent progression-only save', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.elMap.cSave.onclick(); // the ambiguous tap from the operator report
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  assert.ok(row, 'a choice row opened instead of a silent progression save');
+  var btnRow = row.children[1];
+  assert.strictEqual(btnRow.children[0].textContent, 'Save song (1 section)', 'the song outcome is named, with the count');
+  btnRow.children[0].onclick(); // choose the song -> assembleSong -> the name row re-renders in place
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'the canvas comes up behind the name row - you see what you are saving');
+  row.children[1].children[0].checked = false; // skip the setlist path
+  try { row.children[2].onclick(); } catch (e) { /* openPractice nav tail - practice els absent from this stub mount */ }
+  var customs = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
+  assert.strictEqual(customs.length, 1, 'one custom song created');
+  assert.ok(customs[0].sheet && customs[0].sheet.length === 1, 'the saved record is the SONG (carries the section sheet), not a bare progression');
+});
+
+test('S-SONG-MODE UAT-1: the "Just this progression" branch runs the original save; the draft stays buffered', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.elMap.cSave.onclick();
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  row.children[1].children[1].onclick(); // 'Just this progression' -> the classic name row
+  row.children[1].children[0].checked = false; // its setlist toggle
+  row.children[2].onclick(); // accept the default name
+  var customs = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
+  assert.strictEqual(customs.length, 1, 'the progression saved');
+  assert.ok(!customs[0].sheet, 'a progression-only save carries no section sheet');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the song draft is untouched');
+});
+
+test('S-SONG-MODE UAT-1: draft + EMPTY progression - Save goes straight to the song (the only thing to save)', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.ctrl.setComposeMode('song');
+  tapWired(n.buildBtn);                 // UAT-2 path clears the strip...
+  assert.strictEqual(m.elMap.prog.children.length, 0, 'Build the chords starts fresh');
+  m.elMap.cSave.onclick();              // ...so Save has exactly one meaning now
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  assert.ok(row, 'the name row opened directly - no choice needed with one thing to save');
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'and the canvas context came up behind it');
+});
+
+test('S-SONG-MODE UAT-2: Build the chords clears the strip (reversibly) while the draft and A3 captures stay intact', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 3);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  assert.strictEqual(m.elMap.prog.children.length, 3, 'A3 unchanged: a capture never clears the strip');
+  m.ctrl.setComposeMode('song');
+  tapWired(n.buildBtn);
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'lands in the editor');
+  assert.strictEqual(m.elMap.prog.children.length, 0, 'a NEW section starts from a clean strip - no more appending onto the old chords');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the captured Verse is safe in the draft');
 });
 
 run();
