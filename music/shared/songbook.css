@@ -712,7 +712,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSectSel{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.86rem;}
 .songSectSel:focus{outline:none;border-color:var(--accent-ink);}
 .songAdd .songAddBtn{flex:1 1 auto;min-height:44px;}
-.songSections{display:flex;flex-wrap:wrap;gap:8px;}
+/* S-SONGTRAY-BOUND (2026-07-15): the section list lives in the FIXED
+   (non-scrolling) composeTop, so with no height cap each added section grew the
+   fixed region and squeezed .composeChords (the only scroll area) until the
+   chord picker fell below the fold - "two sections and I can't pick chords for
+   the next one". Cap the buffer to a viewport-relative height and let it scroll
+   INTERNALLY, so composeTop stays bounded no matter how many sections and the
+   picker always keeps room. overscroll-behavior:contain stops the inner scroll
+   from chaining to the page. (The eventual Song mode gives the builder the whole
+   screen; this keeps it usable until then.) */
+.songSections{display:flex;flex-wrap:wrap;gap:8px;max-height:22vh;overflow-y:auto;overscroll-behavior:contain;}
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove
    grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
