@@ -2845,4 +2845,33 @@ test('Phase B: emptying a continued draft drops the source link - the next draft
   assert.strictEqual(after[0].t, 'Keeper', 'the original record is intact');
 });
 
+test('UAT r2: teaching cues are dismissible one-shot tips - a dismissal persists per lesson and survives a reload', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2); // progression + no sections -> the capture cue is live
+  var n = songModeNodes(m);
+  function cueParts(host) {
+    var out = { text: null, x: null };
+    (host.children || []).forEach(function (c) {
+      if (c.className === 'cueText') out.text = c;
+      if (c.className === 'cueDismiss') out.x = c;
+    });
+    return out;
+  }
+  var tray = songTrayNodes(m).tray;
+  var cueHost = tray.children[0]; // [cue, addRow]
+  var parts = cueParts(cueHost);
+  assert.ok(parts.text && parts.x, 'the live cue carries its text and a dismiss button');
+  assert.strictEqual(cueHost.hidden, false, 'cue visible before dismissal');
+  tapWired(parts.x);
+  assert.strictEqual(cueHost.hidden, true, 'dismissed - the row is reclaimed');
+  var stored = JSON.parse(global.localStorage.getItem('progwraptest.cueDismissed.v1'));
+  assert.strictEqual(stored.capture, true, 'the dismissal persisted per lesson key');
+  // Reload: same store, fresh mount - the lesson stays learned.
+  var m2 = freshMountSharedStore();
+  var t2 = songTrayNodes(m2);
+  var tile2 = m2.elMap.buildGrid.children[0]; tile2.onclick(); // progression exists again
+  assert.strictEqual(t2.tray.children[0].hidden, true, 'a dismissed cue never returns after reload');
+});
+
 run();

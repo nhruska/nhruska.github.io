@@ -747,12 +747,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    capture row (cue + label + "Add to song"); the sections/templates/save all
    live on the Song canvas. [hidden] takes no space (the empty-canvas state). */
 .songTray[hidden]{display:none;}
-.songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+/* UAT r2 (2026-07-16): the capture zone reads as ONE bounded group in the song
+   accent family - visually split from the chord picker below (was floating
+   chrome with no container). Same card grammar as .songSuggest, solid not
+   dashed (this is a standing control, not a suggestion). */
+.songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:9px 10px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songAdd{display:flex;gap:8px;align-items:center;}
 .songAdd[hidden]{display:none;}
 .songSectSel{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.86rem;}
 .songSectSel:focus{outline:none;border-color:var(--accent-ink);}
-.songAdd .songAddBtn{flex:1 1 auto;min-height:44px;}
+/* UAT r2: "Add to song" climbs the CTA ladder - accent outline + ink, above a
+   ghost button, below the ONE filled primary (Save). It is the bridge into the
+   song feature and was reading as an afterthought. */
+.songAdd .songAddBtn{flex:1 1 auto;min-height:44px;border-color:var(--accent-ink);color:var(--accent-ink);font-weight:700;}
+/* UAT r2: teaching cues are dismissible one-shot tips - small × glyph on a
+   full 44px hit target (the .rm halo convention), quiet until pressed. */
+.songTrayCue{position:relative;display:flex;align-items:center;gap:6px;padding-right:30px;}
+.songTrayCue .cueText{flex:1 1 auto;}
+.cueDismiss{position:absolute;top:50%;right:-8px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.8rem;line-height:1;cursor:pointer;}
+.cueDismiss::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.cueDismiss:active{color:var(--txt);}
 .songSections{display:flex;flex-wrap:wrap;gap:8px;}
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove

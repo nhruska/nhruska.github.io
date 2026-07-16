@@ -2784,6 +2784,30 @@
         ? 'Tap play to hear a section. Add more, or save when it feels done.'
         : 'A song is chords arranged in sections - verse, chorus, bridge. Start with a proven one, or build your own.';
     }
+    // UAT r2 (2026-07-16): "the text guidance should be dismissal messages" -
+    // teaching lines are one-shot DISMISSIBLE tips (the notables grammar:
+    // teach at the moment of relevance, once; a dismissed lesson never burns
+    // the row again - pedagogy earned-silence). Dismissals persist per lesson
+    // key (additive storage), so each cue teaches exactly once per device.
+    var CUE_DISMISS_KEY = prefix + ".cueDismissed.v1";
+    var cueDismissed = {};
+    try { cueDismissed = JSON.parse(localStorage.getItem(CUE_DISMISS_KEY) || '{}') || {}; } catch (e) { cueDismissed = {}; }
+    function renderCue(host, key, text) {
+      if (!host) return;
+      host.innerHTML = '';
+      if (!text || cueDismissed[key]) { host.hidden = true; return; }
+      host.hidden = false;
+      var t = document.createElement('span'); t.className = 'cueText'; t.textContent = text;
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'cueDismiss'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Dismiss this tip');
+      composeWireTap(x, function () {
+        cueDismissed[key] = true;
+        safeSet(CUE_DISMISS_KEY, JSON.stringify(cueDismissed));
+        renderSongTray();
+      });
+      host.appendChild(t); host.appendChild(x);
+    }
     // Fill the empty progression from a tapped template chip, THROUGH addChord -
     // the SAME path chord taps use, so packs/voicings resolve and A3 clear-undo
     // invalidates exactly as a manual build would. Carries the seeded section
@@ -2870,16 +2894,13 @@
       // The add-control needs a live progression to snapshot; hide it with no chords.
       songTrayEl.hidden = inSong || !hasProg;
       songAddRowEl.hidden = !hasProg;
-      songTrayCueEl.textContent = inSong ? '' : songTrayCue(hasProg, hasSections);
-      songTrayCueEl.hidden = !songTrayCueEl.textContent;
+      // UAT r2: cues render as dismissible one-shot tips (see renderCue).
+      renderCue(songTrayCueEl, 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
       // --- Song-mode canvas: cue + cards + templates + actions.
       // Templates render whenever the canvas does - in Song mode they ARE the
       // "add the next section" surface (and the empty state's proven starters).
       renderSongSuggest(inSong);
-      if (songCueEl) {
-        songCueEl.textContent = songCanvasCue(hasSections);
-        songCueEl.hidden = !inSong;
-      }
+      renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
       if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;
       songSectionsEl.innerHTML = '';
       if (!inSong) return; // cards are canvas furniture; skip the build when hidden

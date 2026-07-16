@@ -96,7 +96,9 @@
    * (e.g. invalidateClearUndo() finishing an active toast early because a
    * DIFFERENT mutation just invalidated the pending undo).
    * ------------------------------------------------------------------- */
-  var DEFAULT_ACTION_DURATION_MS = 6000;
+  // 6000 -> 4000 (operator UAT 2026-07-16: "undo delete timer is about 1.5x
+  // too long"). Callers that pass an explicit duration are untouched.
+  var DEFAULT_ACTION_DURATION_MS = 4000;
   var actionStates = new Map(); // host -> in-flight state (mirrors `timers` above, kept separate so a plain show() on the same host can never cross-talk with an active showAction())
 
   function prefersReducedMotion() {
