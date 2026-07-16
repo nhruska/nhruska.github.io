@@ -246,7 +246,12 @@
 // SAME toggle, one button opens both the direct-paste and genre/feel-search
 // paths). check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-var CACHE = 'music-v158';
+// S-SETROW-CONTRAST (2026-07-16): v158->v161 (max+1 over the in-flight #252
+// v159 and #253 v160, sibling-collision discipline) - play/index.html only:
+// .setRow gains an explicit dark surface/border/padding so the standalone
+// Guidance-level settings row stops rendering as a washed-out UA-default light
+// button with invisible text. No new/removed CORE paths.
+var CACHE = 'music-v161';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
