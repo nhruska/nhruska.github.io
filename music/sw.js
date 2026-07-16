@@ -255,7 +255,12 @@
 // section cards, Save-song naming, the guided template loop, 3 UAT rounds
 // (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
 // No new/removed CORE paths.
-var CACHE = 'music-v162';
+// S-SETLIST-THUMB (2026-07-16): v162->v163 - shared/list-item.js + songbook.css:
+// the setlist play/video action moves from the wide meta-row box to a compact
+// 44px icon in the trailing thumb cluster (shown in normal mode; edit mode keeps
+// reorder/remove there), reclaiming a vertical row. Library rows unchanged.
+// No new/removed CORE paths.
+var CACHE = 'music-v163';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

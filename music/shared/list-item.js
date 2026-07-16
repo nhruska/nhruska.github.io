@@ -226,10 +226,22 @@
     // it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
     // F25: act is null for a no-video row (no external-search fallback anymore) -
     // skip the element entirely rather than render an empty/dangling action span.
+    // UAT 2026-07-16 (operator): in the SETLIST (the perform surface) the play/
+    // video action leaves the meta row and becomes a compact icon in the top-
+    // right thumb cluster - narrower than the labelled box, one vertical row
+    // reclaimed, and the tap lands under the thumb. It shows only in NORMAL mode;
+    // edit mode gives that same cluster to reorder/remove, so the two never
+    // crowd. Library rows keep the inline labelled action (browse, not perform).
+    var setPlay = '';
     if (act) {
-      metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
-        + (act.external ? ' title="Opens YouTube"' : '') + '>'
-        + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
+      if (seg === 'set') {
+        if (!opts.setEdit) setPlay = btn('li-play li-play-' + act.kind, esc(act.glyph), 'play',
+          ' title="' + esc(act.label) + '" aria-label="Play ' + esc(item.title) + ' ' + esc(act.label) + '"');
+      } else {
+        metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
+          + (act.external ? ' title="Opens YouTube"' : '') + '>'
+          + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
+      }
     }
 
     // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode (codex:
@@ -262,7 +274,7 @@
       + (opts.note ? '<div class="li-note">' + esc(opts.note) + '</div>' : '')
       + '<div class="li-meta">' + metaHtml + '</div>'
       + '</div>'
-      + editBtn + ctrl;
+      + setPlay + editBtn + ctrl;
 
     // Movement-cancelled taps everywhere (scroll-grab safety). Buttons live outside
     // .li-body so they don't bubble to the body activate.
@@ -286,6 +298,7 @@
           opts.onRemove(rec);
         }
         else if (a === 'edit' && opts.onEdit) opts.onEdit(rec);
+        else if (a === 'play' && opts.onAction) opts.onAction(rec); // UAT: setlist thumb-zone play
       });
     });
     var actEl = root.querySelector('.li-act');

@@ -262,6 +262,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-artist{font-size:.79rem;color:var(--txt-soft);margin-top:2px;}
 .listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent-ink);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
 .listItem .li-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--txt-soft);align-items:center;}
+/* UAT 2026-07-16: once the setlist play action moves to the thumb cluster, a
+   meta row with nothing left in it must not reserve its margin-top gap - reclaim
+   the whole vertical row (the operator's "we'll get a row back"). */
+.listItem .li-meta:empty{display:none;margin-top:0;}
+/* Setlist thumb-zone play: a compact 44px icon in the trailing cluster (matches
+   the .li-edit/.li-rm sizing), accent-filled for the perform tap. Replaces the
+   wide labelled .li-act box in the meta row - setlist only. */
+.listItem .li-play{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);border-radius:8px;cursor:pointer;font-size:1rem;line-height:1;align-self:center;transition:transform .08s,background .15s,color .15s;}
+.listItem .li-play:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-meta .dot{width:4px;height:4px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
 /* Action is a real padded target + box/underline so Video vs Search isn't colour-only.
  * Movement-cancel (in JS) is the scroll-grab guard; the padded box is the hit area. */
