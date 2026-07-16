@@ -81,12 +81,12 @@ test('showAction() paints immediately via onShow, forwarding msg + a bar element
   delete global.document;
 });
 
-test('showAction() schedules exactly one timer at DEFAULT_ACTION_DURATION_MS (6000ms) when opts.duration is omitted', function () {
+test('showAction() schedules exactly one timer at DEFAULT_ACTION_DURATION_MS (4000ms - operator UAT 2026-07-16 shortened 6000) when opts.duration is omitted', function () {
   var host = { name: 'undo-b' };
   withFakeClock(function (clock) {
     Toast.showAction('msg', { host: host, onShow: function () {}, onHide: function () {} });
     assert.strictEqual(clock.pendingIds().length, 1);
-    assert.strictEqual(clock.msFor(clock.pendingIds()[0]), 6000);
+    assert.strictEqual(clock.msFor(clock.pendingIds()[0]), 4000);
   });
 });
 

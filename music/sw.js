@@ -246,16 +246,16 @@
 // SAME toggle, one button opens both the direct-paste and genre/feel-search
 // paths). check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-// S-SONGTRAY-BOUND (2026-07-15): v158->v159 - shared/songbook.css only (the
-// song-builder section list gains a max-height + internal scroll so it can no
-// longer grow the FIXED composeTop and bury the chord picker below the fold).
-// No new/removed CORE paths. [merged to main via #252]
-// S-SETROW-CONTRAST (2026-07-16): v159->v161 (max+1 over the in-flight #253
-// v160, sibling-collision discipline) - play/index.html only: .setRow gains an
-// explicit dark surface/border/padding so the standalone Guidance-level settings
-// row stops rendering as a washed-out UA-default light button with invisible
-// text. No new/removed CORE paths.
-var CACHE = 'music-v161';
+// S-SONGTRAY-BOUND (2026-07-15): v158->v159 - shared/songbook.css only. [main #252]
+// S-SETROW-CONTRAST (2026-07-16): v159->v161 - play/index.html .setRow. [main #254]
+// S-SONG-MODE (2026-07-16): v161->v162 (max+1 over main's v161 after #252/#254
+// landed) - shared/songbook.js + shared/songbook.css: Compose splits into two
+// full-screen views behind a top-level Chords|Song toggle (docs/
+// SONG-MODE-DESIGN.md); the M-13 builder moves onto a Song canvas with playable
+// section cards, Save-song naming, the guided template loop, 3 UAT rounds
+// (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
+// No new/removed CORE paths.
+var CACHE = 'music-v162';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

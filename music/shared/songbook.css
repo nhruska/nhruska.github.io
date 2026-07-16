@@ -702,25 +702,75 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    attached to the chord it removes. Compact stages keep the corner-overhang (tiny
    tokens have no interior room for the badge). */
 .prog.full .slot .rm{top:2px;right:2px;}
-/* M-13 SONG BUILDER: the section buffer tray. Sits in the FIXED composeTop after
-   the #prog strip; compact by design so it never pushes the chord palette below
-   the fold at 412x915. [hidden] takes no space (the empty-canvas state). */
+/* S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
+   behind one top-level toggle - Chords (the progression editor) and Song (the
+   arrangement canvas). One altitude on screen at a time: the M-13 tray used to
+   grow inside the FIXED composeTop and starve the chord picker's scroll area.
+   The toggle is deliberately BIGGER than the chord list's .chordSeg and sits at
+   the very top - scale + position differentiate the two segmented controls
+   (they are never on screen together anyway; Song mode hides the chord list). */
+.composeModeSeg{display:flex;gap:0;flex:0 0 auto;margin-bottom:8px;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
+.composeModeBtn{flex:1 1 0;min-height:46px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;padding:10px;transition:background .15s,color .15s;}
+.composeModeBtn + .composeModeBtn{border-left:1px solid var(--line-strong);}
+.composeModeBtn.on{background:var(--accent-deep);color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent);}
+/* Song mode hides the editor + picker but must keep .progBox itself DISPLAYED:
+   the save-name modal (.composeRow.asModal), its backdrop and the compose toast
+   are inserted INSIDE .progBox (siblings of #prog), and position:fixed cannot
+   rescue an element under a display:none ancestor. Hence the two-level :not()
+   instead of hiding .composeTop wholesale. */
+.composeWrap.songMode .composeTop > *:not(.progBox){display:none;}
+.composeWrap.songMode .progBox > *:not(.composeRow):not(.composeToast):not(.composeModalBackdrop){display:none;}
+.composeWrap.songMode .composeTop{padding-bottom:0;margin-bottom:0;border-bottom:0;}
+.composeWrap.songMode .progBox{margin-bottom:0;}
+.composeWrap.songMode .composeChords{display:none;}
+/* The Song canvas: the ONLY scroll area in Song mode - sections can grow
+   without ever burying an action (the bug that motivated all of this). */
+.composeSong{display:none;}
+.composeWrap.songMode .composeSong{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;}
+.songCue{margin:0;}
+.songCue[hidden]{display:none;}
+/* Cards stack vertically on the canvas; neutralize both the tray-era wrap AND
+   the tray-scroll hotfix's 22vh cap (the canvas scrolls as a whole, so an
+   inner cap would just re-create a nested scroll trap). */
+.composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
+/* A section CARD: label row (name + play + reorder + remove) over a chords row.
+   Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
+.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 34px 9px 12px;}
+.songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
+.songSect.card .songSectName{margin-right:auto;}
+.songSectPlay{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:.72rem;line-height:1;cursor:pointer;}
+.songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--surface-2);}
+.songSectPlay:active{color:var(--on-accent);}
+.songSectPlay:active::before{background:var(--accent);border-color:var(--accent);}
+.songBuildBtn{min-height:44px;}
+/* M-13 SONG BUILDER: the section buffer tray. In Chords mode it is now ONLY the
+   capture row (cue + label + "Add to song"); the sections/templates/save all
+   live on the Song canvas. [hidden] takes no space (the empty-canvas state). */
 .songTray[hidden]{display:none;}
-.songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+/* UAT r2 (2026-07-16): the capture zone reads as ONE bounded group in the song
+   accent family - visually split from the chord picker below (was floating
+   chrome with no container). Same card grammar as .songSuggest, solid not
+   dashed (this is a standing control, not a suggestion). */
+.songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:9px 10px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songAdd{display:flex;gap:8px;align-items:center;}
 .songAdd[hidden]{display:none;}
 .songSectSel{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.86rem;}
 .songSectSel:focus{outline:none;border-color:var(--accent-ink);}
-.songAdd .songAddBtn{flex:1 1 auto;min-height:44px;}
-/* S-SONGTRAY-BOUND (2026-07-15): the section list lives in the FIXED
-   (non-scrolling) composeTop, so with no height cap each added section grew the
-   fixed region and squeezed .composeChords (the only scroll area) until the
-   chord picker fell below the fold - "two sections and I can't pick chords for
-   the next one". Cap the buffer to a viewport-relative height and let it scroll
-   INTERNALLY, so composeTop stays bounded no matter how many sections and the
-   picker always keeps room. overscroll-behavior:contain stops the inner scroll
-   from chaining to the page. (The eventual Song mode gives the builder the whole
-   screen; this keeps it usable until then.) */
+/* UAT r2: "Add to song" climbs the CTA ladder - accent outline + ink, above a
+   ghost button, below the ONE filled primary (Save). It is the bridge into the
+   song feature and was reading as an afterthought. */
+.songAdd .songAddBtn{flex:1 1 auto;min-height:44px;border-color:var(--accent-ink);color:var(--accent-ink);font-weight:700;}
+/* UAT r2: teaching cues are dismissible one-shot tips - small × glyph on a
+   full 44px hit target (the .rm halo convention), quiet until pressed. */
+.songTrayCue{position:relative;display:flex;align-items:center;gap:6px;padding-right:30px;}
+.songTrayCue .cueText{flex:1 1 auto;}
+.cueDismiss{position:absolute;top:50%;right:-8px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.8rem;line-height:1;cursor:pointer;}
+.cueDismiss::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.cueDismiss:active{color:var(--txt);}
+/* S-SONGTRAY-BOUND (#252, merged): the base bounded-scroll cap kept for any
+   .songSections OUTSIDE the canvas. In Song mode the `.composeSong .songSections`
+   rule below overrides it (max-height:none) so the full-screen canvas scrolls as
+   a whole - the two coexist cleanly (Song mode supersedes the stopgap). */
 .songSections{display:flex;flex-wrap:wrap;gap:8px;max-height:22vh;overflow-y:auto;overscroll-behavior:contain;}
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove
