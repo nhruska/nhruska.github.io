@@ -249,8 +249,13 @@
 // S-SONGTRAY-BOUND (2026-07-15): v158->v159 - shared/songbook.css only (the
 // song-builder section list gains a max-height + internal scroll so it can no
 // longer grow the FIXED composeTop and bury the chord picker below the fold).
-// No new/removed CORE paths.
-var CACHE = 'music-v159';
+// No new/removed CORE paths. [merged to main via #252]
+// S-SETROW-CONTRAST (2026-07-16): v159->v161 (max+1 over the in-flight #253
+// v160, sibling-collision discipline) - play/index.html only: .setRow gains an
+// explicit dark surface/border/padding so the standalone Guidance-level settings
+// row stops rendering as a washed-out UA-default light button with invisible
+// text. No new/removed CORE paths.
+var CACHE = 'music-v161';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

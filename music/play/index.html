@@ -76,8 +76,15 @@
      the markup. .setRow composes the shared .listItem card family as a
      <button> data row (Backup/Restore): explicit color because button text
      does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
-     it reads as a list row, not an action button. */
-  .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;}
+     it reads as a list row, not an action button.
+     UAT 2026-07-16: also give it an explicit dark surface + border + padding.
+     A <button> with no background falls back to the UA default (light grey),
+     so on the dark theme the standalone Guidance-level .setRow rendered as a
+     washed-out white bar with near-invisible --txt text (operator screenshot).
+     The Backup/Restore .setRows live inside a collapsed accordion so the bug
+     only showed on the bare Guidance row - the fix reads correctly for all. */
+  .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
+  .setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
   .setRow .li-title{display:block;}
   .setRow .li-artist{display:block;}
   /* About section link rows (round 2): external-link ink (--brass, the Links
