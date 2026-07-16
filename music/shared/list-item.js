@@ -226,23 +226,22 @@
     // it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
     // F25: act is null for a no-video row (no external-search fallback anymore) -
     // skip the element entirely rather than render an empty/dangling action span.
-    // UAT 2026-07-16 (operator): in the SETLIST (the perform surface) the play/
-    // video action leaves the meta row and becomes a compact icon in the top-
-    // right thumb cluster - narrower than the labelled box, one vertical row
-    // reclaimed, and the tap lands under the thumb. It shows only in NORMAL mode;
-    // edit mode gives that same cluster to reorder/remove, so the two never
-    // crowd. Library rows keep the inline labelled action (browse, not perform).
-    var setPlay = '';
+    // This inline labelled action is the LIBRARY (browse) affordance.
     if (act) {
-      if (seg === 'set') {
-        if (!opts.setEdit) setPlay = btn('li-play li-play-' + act.kind, esc(act.glyph), 'play',
-          ' title="' + esc(act.label) + '" aria-label="Play ' + esc(item.title) + ' ' + esc(act.label) + '"');
-      } else {
-        metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
-          + (act.external ? ' title="Opens YouTube"' : '') + '>'
-          + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
-      }
+      metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
+        + (act.external ? ' title="Opens YouTube"' : '') + '>'
+        + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
     }
+    // UAT 2026-07-16 (operator): the SETLIST (the perform surface) gets an
+    // ALWAYS-present per-row ▶ PLAY in the top-right thumb cluster - it performs
+    // THIS song (onPlay -> openPractice), the perform-tap under the thumb. Not
+    // tied to a curated video (most songs have none - the original mistake was
+    // gating it on `act`). Normal mode only; edit mode gives that cluster to
+    // reorder/remove, so play and the destructive controls never crowd. It
+    // duplicates the row-body tap on purpose - an explicit, discoverable control.
+    var setPlay = (seg === 'set' && !opts.setEdit && opts.onPlay)
+      ? btn('li-play', '&#9654;', 'play', ' title="Play ' + esc(item.title) + '" aria-label="Play ' + esc(item.title) + '"')
+      : '';
 
     // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode (codex:
     // a destructive x next to reorder on the scroll rail is a one-thumb minefield;
@@ -298,7 +297,7 @@
           opts.onRemove(rec);
         }
         else if (a === 'edit' && opts.onEdit) opts.onEdit(rec);
-        else if (a === 'play' && opts.onAction) opts.onAction(rec); // UAT: setlist thumb-zone play
+        else if (a === 'play' && opts.onPlay) opts.onPlay(rec); // UAT: setlist thumb-zone play (performs THIS song)
       });
     });
     var actEl = root.querySelector('.li-act');

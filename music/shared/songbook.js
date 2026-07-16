@@ -2116,6 +2116,8 @@
           last: i === STATE.setlist.length - 1,
           setEdit: STATE.setEditMode,
           onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          onPlay: function () { openPractice(sid, STATE.setlist); },     // UAT: explicit thumb-zone ▶ - performs THIS song
+          onEdit: null, // no per-row edit in the setlist; the trailing cluster is play (normal) / reorder+remove (edit)
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {

@@ -187,16 +187,16 @@ test('S-SETADD-EVIDENT source lock: blocked rows render a GHOST + with the state
 test('UAT 2026-07-16 setlist thumb-zone play: the set play action renders as a trailing li-play icon in NORMAL mode only, and its tap dispatches onAction', function () {
   var fs = require('fs'), path = require('path');
   var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
-  // set segment + not editing -> a li-play button (the compact thumb-zone icon).
-  var setBranch = src.match(/if \(seg === 'set'\) \{([\s\S]*?)\} else \{/);
-  assert.ok(setBranch, 'expected a seg===set branch for the play action');
-  assert.ok(/!opts\.setEdit/.test(setBranch[1]), 'the thumb-zone play shows only in NORMAL mode (edit mode gives the cluster to reorder/remove)');
-  assert.ok(/li-play/.test(setBranch[1]), 'set-mode play renders the li-play icon');
+  // set segment + not editing + onPlay -> an ALWAYS-present li-play icon (NOT
+  // gated on a curated video; the perform ▶ plays the song regardless).
+  assert.ok(/seg === 'set' && !opts\.setEdit && opts\.onPlay/.test(src),
+    'the thumb-zone play shows in NORMAL setlist mode whenever onPlay is wired - never gated on a video');
+  assert.ok(/setPlay = \(seg === 'set'[\s\S]*?li-play/.test(src), 'set-mode play renders the li-play icon');
   // It is placed in the trailing cluster (with editBtn/ctrl), not inside li-body.
   assert.ok(/setPlay \+ editBtn \+ ctrl/.test(src), 'the play icon sits in the trailing thumb cluster, not the meta row');
-  // Dispatch routes to onAction (the same handler the old inline li-act used).
-  assert.ok(/a === 'play' && opts\.onAction\) opts\.onAction\(rec\)/.test(src), 'the thumb-zone play tap dispatches onAction');
-  // Library rows keep the inline labelled action (the else branch).
+  // Dispatch routes to onPlay (performs THIS song - openPractice), not onAction/ytSearch.
+  assert.ok(/a === 'play' && opts\.onPlay\) opts\.onPlay\(rec\)/.test(src), 'the thumb-zone play tap dispatches onPlay');
+  // Library rows keep the inline labelled action (unconditional for act).
   assert.ok(/li-act li-act-/.test(src), 'library rows keep the inline labelled action');
 });
 
