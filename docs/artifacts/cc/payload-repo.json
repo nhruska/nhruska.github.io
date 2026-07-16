@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T11:04:06Z",
+  "generatedAt": "2026-07-16T11:14:18Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-14T10:58:33Z",
-    "sha": "6bda3523bdb5f974044aa60b940ab2109acfc29c",
+    "date": "2026-07-15T11:04:11Z",
+    "sha": "9402392870322be1c8921349da9e9beea866ce36",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/6bda3523bdb5f974044aa60b940ab2109acfc29c"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/9402392870322be1c8921349da9e9beea866ce36"
   },
   "commits": [
+    {
+      "date": "2026-07-15T11:04:11Z",
+      "sha": "9402392870322be1c8921349da9e9beea866ce36",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9402392870322be1c8921349da9e9beea866ce36"
+    },
     {
       "date": "2026-07-14T10:58:33Z",
       "sha": "6bda3523bdb5f974044aa60b940ab2109acfc29c",
@@ -84,15 +90,57 @@
       "sha": "0071c2b07c15411f6a17d264d200ada8c36ab0a2",
       "subject": "M-13 g4: drag-to-reorder buffer sections in the song builder (v156) (#247)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/0071c2b07c15411f6a17d264d200ada8c36ab0a2"
-    },
-    {
-      "date": "2026-07-11T11:50:44Z",
-      "sha": "9bd5ba39d7d268a63b50070f79209387c27393e3",
-      "subject": "ops: start - M-13 g4 mission launched (operator keystroke): drag-to-reord",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9bd5ba39d7d268a63b50070f79209387c27393e3"
     }
   ],
   "openPRs": [
+    {
+      "number": 253,
+      "title": "music(compose): Song mode - the composition ladder gets a full-screen home",
+      "branch": "claude/music-compose-song-mode",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/253",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29492374563/job/87601321615"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29492374570/job/87601321650"
+        }
+      ]
+    },
+    {
+      "number": 252,
+      "title": "music(compose): bound the song-builder section tray so it stops burying the chord picker",
+      "branch": "claude/music-compose-song-tray-scroll",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/252",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29412407799/job/87342359755"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29412407761/job/87342359712"
+        }
+      ]
+    },
     {
       "number": 88,
       "title": "music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room",
@@ -229,9 +277,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-15T11:03:59Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29410323892",
+    "runStartedAt": "2026-07-16T11:14:12Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29493689777",
     "headBranch": "main"
   },
   "velocity": {

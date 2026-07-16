@@ -1,11 +1,13 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-15T11:04:06Z
+Generated: 2026-07-16T11:14:18Z
 Status: ok
 
 ## NOW
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
+- Open draft PR #253 (CI green): music(compose): Song mode - the composition ladder gets a full-screen home - https://github.com/nhruska/nhruska.github.io/pull/253
+- Open draft PR #252 (CI green): music(compose): bound the song-builder section tray so it stops burying the chord picker - https://github.com/nhruska/nhruska.github.io/pull/252
 - Open draft PR #88 (CI green): music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room - https://github.com/nhruska/nhruska.github.io/pull/88
 
 ## Open gaps / to-wire
