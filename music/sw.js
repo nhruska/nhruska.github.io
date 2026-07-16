@@ -246,7 +246,14 @@
 // SAME toggle, one button opens both the direct-paste and genre/feel-search
 // paths). check-cache-bump.sh re-verified against origin/main immediately
 // before push.
-var CACHE = 'music-v158';
+// S-SONG-MODE (2026-07-15): v158->v160 (max+1 OVER the in-flight tray-scroll
+// hotfix branch's v159, per the A10/#117 sibling-collision discipline) -
+// shared/songbook.js + shared/songbook.css change: Compose splits into two
+// full-screen views behind a top-level Chords|Song toggle (docs/
+// SONG-MODE-DESIGN.md); the M-13 builder moves onto a Song canvas with
+// playable section cards, Save-song naming, and the guided template loop.
+// No new/removed CORE paths.
+var CACHE = 'music-v160';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

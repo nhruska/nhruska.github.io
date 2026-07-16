@@ -2434,7 +2434,7 @@ function songTrayNodes(m) {
   return out;
 }
 
-test('M-13: Add section snapshots the CURRENT progression as a buffer chip WITHOUT clearing the progression (A3: additive)', function () {
+test('M-13: Add to song snapshots the CURRENT progression as a section WITHOUT clearing the progression (A3: additive)', function () {
   var m = mountForProgWrapTests();
   tapChords(m, 3); // C F G (default C-major palette)
   assert.strictEqual(m.elMap.prog.children.length, 3, 'three chords built');
@@ -2443,27 +2443,34 @@ test('M-13: Add section snapshots the CURRENT progression as a buffer chip WITHO
   assert.strictEqual(t.tray.hidden, false, 'the tray shows once a progression exists');
   t.sel.value = 'Verse';
   t.addBtn.click();
-  assert.strictEqual(t.sections.children.length, 1, 'one buffered section chip');
   assert.strictEqual(m.elMap.prog.children.length, 3, 'A3: the progression is NOT cleared by a buffer add');
-  assert.strictEqual(t.assemble.hidden, false, 'Assemble appears once a section is buffered');
+  // S-SONG-MODE: a plain Chords-mode capture STAYS in Chords mode (no context
+  // yank mid-noodle) - the cards render on the Song canvas.
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'a plain capture never yanks the editor away');
+  assert.strictEqual(t.sections.children.length, 0, 'cards are canvas furniture - not built while the canvas is hidden');
+  m.ctrl.setComposeMode('song');
+  assert.strictEqual(t.sections.children.length, 1, 'one section card on the canvas');
+  assert.strictEqual(t.assemble.hidden, false, 'Save song appears once a section is buffered');
 });
 
-test('M-13: a buffered-section chip uses the ONE arm-to-remove grammar - first tap arms (no removal), second removes', function () {
+test('M-13: a section card uses the ONE arm-to-remove grammar - first tap arms (no removal), second removes', function () {
   var m = mountForProgWrapTests();
   tapChords(m, 2);
   var t = songTrayNodes(m);
   t.sel.value = 'Chorus';
   t.addBtn.click();
+  m.ctrl.setComposeMode('song'); // cards live on the canvas
   assert.strictEqual(t.sections.children.length, 1, 'one section buffered');
   var rm = t.sections.children[0].children.filter(function (c) { return c.className === 'rm'; })[0];
-  assert.ok(rm, 'the chip carries a remove (x) button');
+  assert.ok(rm, 'the card carries a remove (x) button');
   tapWired(rm);
   assert.strictEqual(t.sections.children.length, 1, 'first tap ARMS - it must NOT remove');
   assert.ok(rm.classList.contains('armed'), 'first tap arms the remover (red)');
   tapWired(rm);
   assert.strictEqual(t.sections.children.length, 0, 'second tap removes the buffered section');
-  assert.strictEqual(t.assemble.hidden, true, 'Assemble hides once the buffer is empty');
-  assert.strictEqual(t.tray.hidden, false, 'the tray stays visible while a progression remains');
+  assert.strictEqual(t.assemble.hidden, true, 'Save song hides once the buffer is empty');
+  m.ctrl.setComposeMode('chords');
+  assert.strictEqual(t.tray.hidden, false, 'back in Chords mode the tray stays visible while a progression remains');
 });
 
 // --- M-13 g2: buffer persistence across a reload + reorder ---
@@ -2491,17 +2498,20 @@ test('M-13 g2: the section buffer persists across a reload (fresh mount, same lo
   tapChords(m1, 1);
   t1.sel.value = 'Chorus';
   t1.addBtn.click();
+  m1.ctrl.setComposeMode('song'); // cards live on the canvas
   assert.strictEqual(t1.sections.children.length, 2, 'two sections buffered before the reload');
   var stored = JSON.parse(store.getItem('progwraptest.builderBuffer.v1'));
   assert.strictEqual(stored.length, 2, 'the additive builderBuffer key holds both sections');
   assert.deepStrictEqual(stored.map(function (s) { return s.label; }), ['Verse', 'Chorus'], 'stored labels match add order');
 
-  // Reload: a brand-new mount, same localStorage object, no re-add.
+  // Reload: a brand-new mount, same localStorage object, no re-add. S-SONG-MODE:
+  // the VIEW persists too (music.composeMode.v1) - the musician left on the
+  // canvas, the reload lands back on the canvas with their draft.
   var m2 = freshMountSharedStore();
   var t2 = songTrayNodes(m2);
-  assert.strictEqual(t2.tray.hidden, false, 'the tray shows on mount because the restored buffer is non-empty');
+  assert.strictEqual(m2.ctrl.composeMode(), 'song', 'the Song view survives the reload alongside its draft');
   assert.strictEqual(t2.sections.children.length, 2, 'both buffered sections survive the reload');
-  assert.strictEqual(t2.assemble.hidden, false, 'Assemble stays available after a reload with a restored buffer');
+  assert.strictEqual(t2.assemble.hidden, false, 'Save song stays available after a reload with a restored buffer');
 });
 
 test('M-13 g2: a defensively-malformed buffer key drops only the bad rows, never crashes the mount', function () {
@@ -2514,6 +2524,7 @@ test('M-13 g2: a defensively-malformed buffer key drops only the bad rows, never
   ]));
   global.localStorage = store;
   var m = freshMountSharedStore();
+  m.ctrl.setComposeMode('song'); // cards live on the canvas
   var t = songTrayNodes(m);
   assert.strictEqual(t.sections.children.length, 1, 'only the one well-shaped section survives the defensive filter');
 });
@@ -2525,6 +2536,7 @@ test('M-13 g2: reorder handles swap adjacent sections, persist the new order, an
   t.sel.value = 'Verse'; t.addBtn.click();
   t.sel.value = 'Chorus'; t.addBtn.click();
   t.sel.value = 'Bridge'; t.addBtn.click();
+  m.ctrl.setComposeMode('song'); // cards live on the canvas
   assert.strictEqual(t.sections.children.length, 3, 'three sections buffered');
 
   function labelOf(chip) {
@@ -2556,6 +2568,112 @@ test('M-13 g2: reorder handles swap adjacent sections, persist the new order, an
   tapWired(lastDn); // stub does not model native disabled-suppresses-click; assert handler is defensive
   var t3 = songTrayNodes(m);
   assert.deepStrictEqual(t3.sections.children.map(labelOf), ['Chorus', 'Verse', 'Bridge'], 'moving past the end is a no-op');
+});
+
+/* ---------- S-SONG-MODE (docs/SONG-MODE-DESIGN.md): the Chords|Song toggle,
+ * the guided capture loop, and the Save-song naming moment. These lock the
+ * view-state machine (default, persistence, invalid-value hardening), the
+ * canvas furniture (chord line on cards, badge), the returnToSong round trip,
+ * and that saving names the song + clears the draft + lands back on the
+ * editor. ---------- */
+function songModeNodes(m) {
+  var out = songTrayNodes(m);
+  (function walk(n) {
+    (n.children || []).forEach(function (c) {
+      var cls = (c.className || '').split(' ');
+      if (cls.indexOf('composeModeBtn') >= 0) (out.modeBtns = out.modeBtns || []).push(c);
+      if (cls.indexOf('songBuildBtn') >= 0) out.buildBtn = c;
+      if (cls.indexOf('composeSong') >= 0) out.canvas = c;
+      if (cls.indexOf('songSectChords') >= 0) out.cardChords = c;
+      walk(c);
+    });
+  })(m.wrapper);
+  return out;
+}
+
+test('S-SONG-MODE: songBadgeText is pure - bare label at zero, a count badge past it', function () {
+  assert.strictEqual(Songbook.songBadgeText(0), 'Song');
+  assert.strictEqual(Songbook.songBadgeText(2), 'Song · 2');
+});
+
+test('S-SONG-MODE: defaults to chords; setComposeMode flips + persists; unknown values are ignored', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'muscle-memory default');
+  m.ctrl.setComposeMode('song');
+  assert.strictEqual(m.ctrl.composeMode(), 'song');
+  assert.strictEqual(global.localStorage.getItem('progwraptest.composeMode.v1'), 'song', 'additive key persists the view');
+  m.ctrl.setComposeMode('bogus');
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'an unknown mode can never wedge the screen');
+  m.ctrl.setComposeMode('chords');
+  assert.strictEqual(m.ctrl.composeMode(), 'chords');
+});
+
+test('S-SONG-MODE: the Song toggle carries the section-count badge and tracks adds live', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  var n = songModeNodes(m);
+  assert.ok(n.modeBtns && n.modeBtns.length === 2, 'the two-segment toggle self-injected');
+  assert.strictEqual(n.modeBtns[1].textContent, 'Song', 'no badge with an empty draft');
+  tapChords(m, 2);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  assert.strictEqual(n.modeBtns[1].textContent, 'Song · 1', 'a capture updates the badge from Chords mode - parked work stays visible');
+});
+
+test('S-SONG-MODE: a section card shows its chords (canvas furniture, recognition over recall)', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2); // C F off the default C-major palette
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.ctrl.setComposeMode('song');
+  n = songModeNodes(m); // cards rebuilt on render - re-locate
+  assert.ok(n.cardChords, 'the card carries a chords line');
+  assert.ok(n.cardChords.textContent.length >= 3, 'the chords line names the section chords: ' + n.cardChords.textContent);
+});
+
+test('S-SONG-MODE guided loop: Build-the-chords drops to Chords mode; the next Add to song returns to the canvas; a manual toggle tap breaks the loop', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  var n = songModeNodes(m);
+  m.ctrl.setComposeMode('song');
+  tapWired(n.buildBtn);
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'Build the chords lands in the editor');
+  tapChords(m, 2);
+  n.sel.value = 'Chorus'; n.addBtn.click();
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'the capture returns to the canvas (guided loop)');
+  // Loop-break: leave via the toggle (the user taking the wheel), then capture again.
+  tapWired(n.buildBtn);                        // canvas -> editor, loop armed
+  tapWired(n.modeBtns[1]);                     // manual hop to Song...
+  tapWired(n.modeBtns[0]);                     // ...and back to Chords - loop must now be broken
+  tapChords(m, 1);
+  n.sel.value = 'Bridge'; n.addBtn.click();
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'after a manual toggle tap a capture stays put');
+});
+
+test('S-SONG-MODE: Save song opens the name row; saving names the song, clears the draft, returns to the editor', function () {
+  global.localStorage = lsReset.fakeStore();
+  var m = freshMountSharedStore();
+  tapChords(m, 2);
+  var n = songModeNodes(m);
+  n.sel.value = 'Verse'; n.addBtn.click();
+  m.ctrl.setComposeMode('song');
+  n.assemble.onclick(); // Save song -> the inline name row (same grammar as the progression save)
+  var row = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
+  assert.ok(row, 'the name row opened from the Song canvas');
+  row.children[0].value = 'Campfire anthem';       // the name input
+  row.children[1].children[0].checked = false;     // skip the setlist toggle path
+  // The save chain ends in openPractice (navigate to the new song) - practice-view
+  // els are absent from this stub mount, so tolerate a throw from the nav tail;
+  // everything asserted below is committed BEFORE the navigation.
+  try { row.children[2].onclick(); } catch (e) { /* nav tail only */ }
+  var customs = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
+  assert.strictEqual(customs.length, 1, 'one custom song created');
+  assert.strictEqual(customs[0].t, 'Campfire anthem', 'the song carries the typed name - never "My song"');
+  assert.ok(customs[0].sheet && customs[0].sheet.length === 1, 'the sheet holds the one section line');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 0, 'the draft cleared after save');
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'a finished song lands the next visit back on the editor');
 });
 
 run();

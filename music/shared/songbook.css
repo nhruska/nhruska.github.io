@@ -702,9 +702,50 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    attached to the chord it removes. Compact stages keep the corner-overhang (tiny
    tokens have no interior room for the badge). */
 .prog.full .slot .rm{top:2px;right:2px;}
-/* M-13 SONG BUILDER: the section buffer tray. Sits in the FIXED composeTop after
-   the #prog strip; compact by design so it never pushes the chord palette below
-   the fold at 412x915. [hidden] takes no space (the empty-canvas state). */
+/* S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
+   behind one top-level toggle - Chords (the progression editor) and Song (the
+   arrangement canvas). One altitude on screen at a time: the M-13 tray used to
+   grow inside the FIXED composeTop and starve the chord picker's scroll area.
+   The toggle is deliberately BIGGER than the chord list's .chordSeg and sits at
+   the very top - scale + position differentiate the two segmented controls
+   (they are never on screen together anyway; Song mode hides the chord list). */
+.composeModeSeg{display:flex;gap:0;flex:0 0 auto;margin-bottom:8px;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
+.composeModeBtn{flex:1 1 0;min-height:46px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;padding:10px;transition:background .15s,color .15s;}
+.composeModeBtn + .composeModeBtn{border-left:1px solid var(--line-strong);}
+.composeModeBtn.on{background:var(--accent-deep);color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent);}
+/* Song mode hides the editor + picker but must keep .progBox itself DISPLAYED:
+   the save-name modal (.composeRow.asModal), its backdrop and the compose toast
+   are inserted INSIDE .progBox (siblings of #prog), and position:fixed cannot
+   rescue an element under a display:none ancestor. Hence the two-level :not()
+   instead of hiding .composeTop wholesale. */
+.composeWrap.songMode .composeTop > *:not(.progBox){display:none;}
+.composeWrap.songMode .progBox > *:not(.composeRow):not(.composeToast):not(.composeModalBackdrop){display:none;}
+.composeWrap.songMode .composeTop{padding-bottom:0;margin-bottom:0;border-bottom:0;}
+.composeWrap.songMode .progBox{margin-bottom:0;}
+.composeWrap.songMode .composeChords{display:none;}
+/* The Song canvas: the ONLY scroll area in Song mode - sections can grow
+   without ever burying an action (the bug that motivated all of this). */
+.composeSong{display:none;}
+.composeWrap.songMode .composeSong{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;}
+.songCue{margin:0;}
+.songCue[hidden]{display:none;}
+/* Cards stack vertically on the canvas; neutralize both the tray-era wrap AND
+   the tray-scroll hotfix's 22vh cap (the canvas scrolls as a whole, so an
+   inner cap would just re-create a nested scroll trap). */
+.composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
+/* A section CARD: label row (name + play + reorder + remove) over a chords row.
+   Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
+.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 34px 9px 12px;}
+.songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
+.songSect.card .songSectName{margin-right:auto;}
+.songSectPlay{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:.72rem;line-height:1;cursor:pointer;}
+.songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--surface-2);}
+.songSectPlay:active{color:var(--on-accent);}
+.songSectPlay:active::before{background:var(--accent);border-color:var(--accent);}
+.songBuildBtn{min-height:44px;}
+/* M-13 SONG BUILDER: the section buffer tray. In Chords mode it is now ONLY the
+   capture row (cue + label + "Add to song"); the sections/templates/save all
+   live on the Song canvas. [hidden] takes no space (the empty-canvas state). */
 .songTray[hidden]{display:none;}
 .songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
 .songAdd{display:flex;gap:8px;align-items:center;}
