@@ -767,7 +767,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .cueDismiss{position:absolute;top:50%;right:-8px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.8rem;line-height:1;cursor:pointer;}
 .cueDismiss::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .cueDismiss:active{color:var(--txt);}
-.songSections{display:flex;flex-wrap:wrap;gap:8px;}
+/* S-SONGTRAY-BOUND (#252, merged): the base bounded-scroll cap kept for any
+   .songSections OUTSIDE the canvas. In Song mode the `.composeSong .songSections`
+   rule below overrides it (max-height:none) so the full-screen canvas scrolls as
+   a whole - the two coexist cleanly (Song mode supersedes the stopgap). */
+.songSections{display:flex;flex-wrap:wrap;gap:8px;max-height:22vh;overflow-y:auto;overscroll-behavior:contain;}
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove
    grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
