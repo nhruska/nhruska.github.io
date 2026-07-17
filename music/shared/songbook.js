@@ -1714,6 +1714,10 @@
     // subtree is disposable on the next render anyway).
     function renderSaveBasicsNotable() {
       if (!el.practiceBody || !global.Notables) return;
+      // UAT 2026-07-16 (operator: "guidance is misleading - I already have it
+      // added to setlist"): don't nudge "save this to your setlist" for a song
+      // that IS already in the setlist. The nudge teaches an action already taken.
+      if (STATE.current && STATE.setlist.indexOf(STATE.current.id) >= 0) return;
       if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
       var bannerEl = global.Notables.renderBanner({
         consumerId: 'savebasics',
@@ -1963,18 +1967,33 @@
     // (both used to share ONE `var toastTimer` in this closure - see toast.js
     // header comment for the full root-cause trace).
     var toastEl;
-    function showToast(msg, isErr) {
+    // kind (2nd arg):
+    //   falsy        -> neutral confirmation (e.g. "Added to setlist"), quick 1600ms.
+    //   true / 'err' -> ERROR (red): something failed. Back-compat: every legacy
+    //                   caller passing a boolean still lands here.
+    //   'warn'       -> CAUTION (amber): a heads-up, not a failure (e.g. "you've
+    //                   already got a song in progress"). Distinct colour so a
+    //                   caution never reads as an error.
+    // Error AND caution toasts carry REAL text a user must actually read, so
+    // their auto-hide scales with message length (min 3.2s, cap 6s) instead of
+    // the quick 1.6s confirm floor - operator UAT: the "save or clear it first"
+    // caution vanished before it could be read. Neutral confirms stay quick.
+    function showToast(msg, kind) {
       if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      var isErr = (kind === true || kind === 'err');
+      var isWarn = (kind === 'warn');
+      var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : 1600;
       global.Toast.show(msg, {
         host: toastEl,
         error: isErr,
-        duration: 1600,
-        onShow: function (host, m, isErrFlag) {
+        duration: dur,
+        onShow: function (host, m) {
           host.textContent = m;
-          host.classList.toggle('err', !!isErrFlag);
+          host.classList.toggle('err', isErr);
+          host.classList.toggle('warn', isWarn);
           host.classList.add('on');
         },
-        onHide: function (host) { host.classList.remove('on'); }
+        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); }
       });
     }
     // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
@@ -2101,9 +2120,14 @@
         el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
         el.setEdit.classList.toggle('on', STATE.setEditMode);
       }
-      // Clear (✕) hides on an empty setlist too - a destructive control with
-      // nothing to destroy is dead weight in the header (pilot polish audit).
-      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
+      // Clear (✕) is a destructive control: UAT 2026-07-16 hides it until EDIT
+      // mode (and it wears red - .setDelete) so a resting setlist never shows a
+      // one-tap wipe. (Also hidden on an empty setlist - nothing to destroy.)
+      if (el.setClear) el.setClear.style.display = (STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
+      // Start (perform) lives in the header now (UAT: not a full-width bar). It
+      // shows only in NORMAL mode with a non-empty set - performing isn't a thing
+      // you do mid-edit, and it sits rightmost (thumb) with Edit to its left.
+      if (el.performBtn) el.performBtn.style.display = (!STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
@@ -2139,9 +2163,8 @@
           onAction: function () { ytSearch(s); }
         }));
       });
-      // Hide the Start-performance bar while editing - reordering/removing isn't
-      // "ready to play", and it keeps the edit surface focused (UAT: Nik).
-      if (bar) bar.style.display = STATE.setEditMode ? 'none' : 'flex';
+      // (The old full-width Start-performance bar was retired 2026-07-16 - Start
+      // now lives compact in the header, toggled above.)
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
@@ -3225,7 +3248,7 @@
       var secs = sectionsFromSheet(s.sheet);
       if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
       if (songSections.length && builderSourceId !== s.id) {
-        showToast('You have a song draft (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + ') in Compose - save or clear it first.', true);
+        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn');
         return;
       }
       if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft

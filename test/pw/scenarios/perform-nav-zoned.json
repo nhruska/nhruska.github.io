@@ -1,0 +1,36 @@
+{
+  "name": "perform-nav-zoned",
+  "note": "S-PERFORM-ZONE (operator UAT 2026-07-17: 'make it easy for single hand usage while performing without having to pick a button in the middle'). In the fullscreen perform view the ADVANCE control (Next / finish) is the one button tapped constantly mid-song, so it must be the DOMINANT bottom-right thumb target, not an equal half. Assert #pNext is >= 2x the width of #pPrev. Setup: seed a saved custom song with a sheet, open it, tap the Stage button (#stageBtn) to enter the perform view. Red-first: pre-fix the two nav buttons were equal (flex:1 each) so the ratio assert FAILS.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "seed a saved custom song with a two-section sheet so the perform view has content",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'perfZoneSong', t:'Perform Zone Song', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G','Am','F'], sheet:[['Verse','[C] a [G] b [Am] c [F] d'],['Chorus','[C] e [G] f [Am] g [F] h']]}]));return true}catch(e){return false}})()"
+    },
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Perform Zone Song\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": "#stageBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the perform (stage) view is open",
+      "js": "(function(){var p=document.querySelector('.perform');return !!p && p.classList.contains('on');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Next is the dominant bottom-right target: at least 2x the width of Prev (FAILS on the pre-fix equal-halves layout)",
+      "js": "(function(){var prev=document.getElementById('pPrev'),next=document.getElementById('pNext');if(!prev||!next)return false;var pw=prev.getBoundingClientRect().width,nw=next.getBoundingClientRect().width;return nw >= pw*2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Next sits on the right of Prev (bottom-right thumb arc)",
+      "js": "document.getElementById('pNext').getBoundingClientRect().left > document.getElementById('pPrev').getBoundingClientRect().left"
+    },
+    { "action": "screenshot", "name": "perform-nav-zoned" }
+  ]
+}
