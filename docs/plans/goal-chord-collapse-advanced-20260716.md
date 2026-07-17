@@ -46,14 +46,14 @@
 > (chord letter + roman numeral where key context exists) with the grid-level
 > Shapes toggle restoring full diagrams on demand (per the Amendment below);
 > beginner/intermediate/unset render byte-identical to today;
-> `node --test test/` exits 0 with new unit tests covering the collapse decision
+> `node test/run-all.js` exits 0 with new unit tests covering the collapse decision
 > layer; `scripts/check-cache-bump.sh` passes; and a headless Playwright run at
 > 412x915 shows the play-page chord area causing no vertical page scroll at
 > advanced level, with zero console errors, screenshots saved as evidence.
 
 ## Verification
 
-- `node --test test/` exits 0 (existing suite + new tests).
+- `node test/run-all.js` exits 0 (existing suite + new tests).
 - `bash scripts/check-cache-bump.sh` exits 0 (SW CACHE + build-stamp bumped -
   music/shared and music/play WILL change).
 - Playwright (shared venv `~/.claude/.venv`, browsers `~/.cache/ms-playwright`),
@@ -65,8 +65,9 @@
 - Inverse checks: 'beginner', 'intermediate', and UNSET levels render the
   chord surfaces byte-identical to origin/main (extend the SHA-256-lock
   pattern in test/diagram.dom.test.js or DOM-compare at the adapter layer).
-- Tap-to-expand live-verified: tap a chip -> full diagram for that chord only;
-  tap again -> re-collapse. Zero console errors.
+- Shapes toggle live-verified (per the Amendment): one tap restores full
+  diagram grids everywhere on the screen (palettes AND the progression
+  filmstrip); a second tap returns to chips. Zero console errors.
 
 ## Design constraints (detected, binding)
 

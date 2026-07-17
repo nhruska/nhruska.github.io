@@ -2449,8 +2449,13 @@
       // candidate stage.
       var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW(),
         // S-CHORD-COLLAPSE: lazy optional lookup (same pattern as window.DiagramPref
-        // in chord-pack-adapter.js) - a page/test without the module reads false.
-        !!(global.ChordCollapse && global.ChordCollapse.active()));
+        // in chord-pack-adapter.js) - a page/test without the module reads false;
+        // method-level typeof guard per the buildGrid call site (Volley 2 Medium #1).
+        // composeShapesOn (Volley 2 High #2 review, High #1 finding): Shapes ON
+        // restores the filmstrip's diagram cards too, not just the palettes -
+        // one toggle answers "show me shapes" everywhere on the screen.
+        !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+          && global.ChordCollapse.active() && !composeShapesOn));
       el.prog.classList.toggle('full', mode === 'full');
       el.prog.classList.toggle('fill-row', mode === 'fill-row');
       el.prog.classList.toggle('grid6', mode === 'grid6');
@@ -3410,7 +3415,11 @@
       // (one tap = add + play, the G1 persona goalpost encodes it); the
       // Shapes toggle below flips the whole grid back to diagram tiles on
       // demand, so a shape is one tap away, never a scroll away.
-      var collapse = !!(global.ChordCollapse && global.ChordCollapse.active());
+      // Method-level guard (Volley 2 Medium #1): mirror reserveLabelSlot's
+      // `typeof === 'function'` discipline so a partially-stubbed
+      // window.ChordCollapse degrades to full diagrams instead of throwing.
+      var collapse = !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+        && global.ChordCollapse.active());
       var useChips = collapse && !composeShapesOn;
       if (collapse) {
         var shBtn = document.createElement('button');
@@ -3418,17 +3427,27 @@
         shBtn.className = 'chip ccShapes' + (composeShapesOn ? ' on' : '');
         shBtn.textContent = 'Shapes';
         shBtn.setAttribute('aria-pressed', composeShapesOn ? 'true' : 'false');
-        shBtn.onclick = function () { composeShapesOn = !composeShapesOn; buildGrid(); };
+        // renderProg() too (Volley 2 High #1): the filmstrip's collapse also
+        // keys on composeShapesOn, and renderProg is not otherwise called on
+        // a toggle tap - without this the palettes flip but the strip stays
+        // collapsed, an inconsistent "Shapes" answer.
+        shBtn.onclick = function () { composeShapesOn = !composeShapesOn; buildGrid(); renderProg(); };
         chips.appendChild(shBtn);
       }
       // Always toggled (not only when useChips) so a level change or a Shapes
       // flip can never leave a stale chip-sizing class on the persistent grid.
       grid.classList.toggle('ccMode', useChips);
       // Compact chip for one palette chord: the shared ChordCollapse primitive
-      // + the SAME wireTap add/play/flash every diagram tile gets.
+      // + the SAME wireTap add/play/flash every diagram tile gets. Roman is
+      // gated on an ACTUAL key (explicit or inferred - the key chip displays
+      // it either way): labelRoman's own no-key fallback labels vs
+      // progression[0] (labelTonic), which on a cleared-key All view would be
+      // a GUESSED roman - the goal spec's honest-omission rule forbids that
+      // (Volley 2 High #2; the suggest row / progression slots keep their
+      // pre-existing fallback semantics - out of this feature's scope).
       function chipTile(c) {
         return wireTap(global.ChordCollapse.chip({
-          chord: c, roman: labelRoman(c), display: dispChordName(c)
+          chord: c, roman: songKey.root ? labelRoman(c) : '', display: dispChordName(c)
         }), c);
       }
 
@@ -3497,9 +3516,10 @@
       if (scroller) scroller.insertBefore(tabRow, grid);
       (CATS[allChordsActiveCat] || []).forEach(function (c) {
         // S-CHORD-COLLAPSE: same chip-vs-tile fork as the in-key palette;
-        // labelRoman inside chipTile returns '' with no key set, so an
-        // un-keyed All view honestly shows letter-only chips (never a
-        // guessed roman - the goal spec's honest-omission rule).
+        // chipTile itself gates the roman on songKey.root, so an un-keyed
+        // All view honestly shows letter-only chips - never a roman guessed
+        // vs progression[0] via labelRoman's labelTonic fallback (Volley 2
+        // High #2; the goal spec's honest-omission rule).
         grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small'), c));
       });
       // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter

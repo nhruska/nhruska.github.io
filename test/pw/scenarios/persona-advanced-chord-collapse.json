@@ -72,6 +72,11 @@
       "js": "document.querySelectorAll('.inKeyLead .chord').length >= 6 && document.querySelectorAll('.inKeyLead .ccChips .suggChip').length === 0"
     },
     {
+      "action": "evalAssert",
+      "label": "Shapes ON restores the progression filmstrip's diagram cards too (Volley 2 High #1)",
+      "js": "document.querySelectorAll('#prog .slot .chord').length === 2 && document.querySelectorAll('#prog .slot .suggChip').length === 0"
+    },
+    {
       "action": "screenshot",
       "name": "advanced-shapes-on"
     },
@@ -83,6 +88,11 @@
       "action": "evalAssert",
       "label": "Shapes toggle OFF: back to chips",
       "js": "document.querySelectorAll('.inKeyLead .ccChips .suggChip').length >= 6"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes OFF returns the filmstrip to compact tokens",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 2 && document.querySelectorAll('#prog .slot .chord').length === 0"
     },
     {
       "action": "tapText",
@@ -97,6 +107,28 @@
     {
       "action": "screenshot",
       "name": "advanced-all-chips"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keyRoots"
+    },
+    {
+      "action": "tapText",
+      "text": "C",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "evalAssert",
+      "label": "keyless All view: chips are letter-only, no roman guessed vs progression[0] (Volley 2 High #2)",
+      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .suggChip .scRn').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-keyless-letter-only"
     }
   ]
 }
