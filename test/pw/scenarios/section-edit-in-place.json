@@ -1,0 +1,51 @@
+{
+  "name": "section-edit-in-place",
+  "note": "S-SECTION-EDIT (operator UAT 2026-07-17: 'add an edit button next to each song section - tapping it instantly loads that section's chords into the builder, making it quicker to refine each part'). Each buffered section card carries a ✎ edit button; tapping it loads THAT section's chords into the builder (Chords mode), and a subsequent 'Add to song' UPDATES that section in place instead of appending a duplicate. Setup: build two sections, switch to Song mode, edit the first, add a chord, re-add. Red-first: pre-fix there is NO .songSectEdit button (step fails) and Add would APPEND (section count would be 3, not 2).",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tapChord", "name": "C" },
+    { "action": "tapChord", "name": "F" },
+    { "action": "tapChord", "name": "G" },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tapChord", "name": "Am" },
+    { "action": "tapChord", "name": "F" },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Song\")" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "each of the two section cards has a ✎ edit button (the feature - absent pre-fix)",
+      "js": "document.querySelectorAll('#songSections .songSect .songSectEdit').length === 2"
+    },
+    { "action": "tap", "selector": "#songSections .songSect:nth-child(1) .songSectEdit" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "editing loads that section's 3 chords into the builder AND drops into Chords mode",
+      "js": "document.querySelectorAll('#prog .slot').length === 3 && document.querySelector('.composeModeBtn').classList.contains('on')"
+    },
+    { "action": "tapChord", "name": "Am" },
+    { "action": "wait", "ms": 200 },
+    {
+      "action": "evalAssert",
+      "label": "refining adds a 4th chord to the builder",
+      "js": "document.querySelectorAll('#prog .slot').length === 4"
+    },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Song\")" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "Add-to-song UPDATED the edited section in place: STILL two sections (not three), and the first now has 4 chords",
+      "js": "(function(){var cards=document.querySelectorAll('#songSections .songSect');if(cards.length!==2)return false;var n=cards[0].querySelector('.songSectName');return !!n && /\\b4\\b/.test(n.textContent);})()"
+    },
+    { "action": "screenshot", "name": "section-edit-in-place" }
+  ]
+}

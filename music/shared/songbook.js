@@ -2543,6 +2543,14 @@
     }
     function saveSongSections() { return safeSet(BUILDER_BUFFER_KEY, JSON.stringify(songSections)); }
     var songSections = loadSongSections();
+    // S-SECTION-EDIT (operator UAT 2026-07-17): which buffered section is being
+    // refined in the builder right now (index into songSections), or null. Set
+    // by editSection() when its ✎ is tapped; consumed by addSongSection() to
+    // UPDATE that section in place instead of appending a duplicate; cleared on
+    // any Clear (clearProgression) so an abandoned edit never silently
+    // overwrites a section later. Session-local (not persisted) - a refine is a
+    // live intent, not saved state.
+    var editingSectionIdx = null;
     // S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
     // behind one top-level toggle - 'chords' (the progression editor: strip +
     // picker) and 'song' (the arrangement canvas: section cards + proven
@@ -2932,6 +2940,13 @@
         play.innerHTML = '&#9654;'; play.setAttribute('aria-label', 'Play ' + sec.label);
         composeWireTap(play, function () { playSection(sec.seq); });
         chip.appendChild(play);
+        // S-SECTION-EDIT: ✎ loads THIS section's chords straight into the builder
+        // so the operator can refine one part without rebuilding it - "Add to
+        // song" then updates this section in place (see editSection/addSongSection).
+        var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'songSectEdit';
+        edit.innerHTML = '&#9998;'; edit.setAttribute('aria-label', 'Edit ' + sec.label + ' chords in the builder');
+        composeWireTap(edit, (function (idx) { return function () { editSection(idx); }; })(i));
+        chip.appendChild(edit);
         var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
@@ -3066,9 +3081,41 @@
     // section. A3: additive - does NOT mutate the progression, so it does NOT
     // invalidate the Clear-undo snapshot. Does NOT clear the progression (the
     // musician often builds the chorus by editing the verse).
+    // S-SECTION-EDIT: pull a buffered section's chords back INTO the builder to
+    // refine it. Loads its seq into the progression, marks it as the section
+    // being edited, points the label selector at it, and drops into the Chords
+    // builder so the chords are right there to tweak. "Add to song" then routes
+    // through the editingSectionIdx update path below (replace, not append).
+    function editSection(i) {
+      if (i < 0 || i >= songSections.length) return;
+      var sec = songSections[i];
+      stopSectPlay(); disarmRm();
+      progression = sec.seq.slice(); cTpose = 0;
+      editingSectionIdx = i;
+      if (songSectSelEl) songSectSelEl.value = sec.label;
+      chordView = null;
+      reinferKey();
+      renderProg(); renderSuggest(); renderKey();
+      if (el.keyRoots) { renderKeyView(); buildGrid(); }
+      setComposeMode('chords');
+      showComposeToast('Editing ' + sec.label + ' - tweak it, then Add to song to update.');
+    }
     function addSongSection() {
       if (!progression.length) { showComposeToast('Build a progression first.', true); return; }
       var label = (songSectSelEl && songSectSelEl.value) || 'Verse';
+      // S-SECTION-EDIT: refining an existing section UPDATES it in place (same
+      // slot, new label + chords) instead of appending a duplicate. Read the
+      // index first - clearProgression() below nulls editingSectionIdx.
+      var editing = editingSectionIdx;
+      if (editing != null && editing >= 0 && editing < songSections.length) {
+        songSections[editing] = { label: label, seq: progression.slice() };
+        disarmRm();
+        saveSongSections();
+        recordComp('comp-song-form');
+        clearProgression('Updated ' + label + ' in your song. Strip cleared - Undo to keep editing.');
+        renderSongTray();
+        return;
+      }
       songSections.push({ label: label, seq: progression.slice() });
       disarmRm(); // a fresh add clears any armed chip remover
       saveSongSections();
@@ -4930,6 +4977,7 @@
       // exactly. Never a native confirm() - see the banner functions above.
       clearUndoSnapshot = buildClearSnapshot(progression, cTpose, songKey, savedComposeId);
       progression = []; cTpose = 0;
+      editingSectionIdx = null; // S-SECTION-EDIT: a Clear cancels an in-flight section edit
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
