@@ -55,6 +55,20 @@ by surface — detect which one you're on before claiming what you did/didn't te
 - **Detect the surface:** if `python -c "import playwright"` succeeds in the
   shared venv AND `~/.cache/ms-playwright/chromium-*` exists, you're on the laptop
   — render-verify. Otherwise treat it as the no-browser surface.
+- **Outbound-blocked is NOT no-render (the trap).** A remote container can have
+  egress blocked — `curl` to a githack preview or the deployed URL returns `000`
+  — yet still render the app perfectly, because the repo is on disk and a local
+  serve needs ZERO outbound network: `python3 -m http.server <port> --bind
+  127.0.0.1` then load `http://127.0.0.1:<port>/music/play/` in headless
+  Chromium. Before ever writing "couldn't verify — no browser/network," try
+  this: if `playwright` imports (or `pip install playwright` succeeds with a
+  chromium already present — check `/opt/pw-browsers/chromium-*` as well as
+  `~/.cache/ms-playwright/`), SERVE LOCALLY AND RENDER-VERIFY. A failed curl to
+  an *external* host proves nothing about local rendering. Only the
+  genuinely no-local-project surfaces (A4/A5 phone remote) are truly
+  render-less. External resource fetches (YouTube thumbnails, etc.) will error
+  in the console under a blocked-egress container — those are expected network
+  errors, not app regressions; judge "zero console errors" on APP errors only.
 - **Durable config lives in the repo** (this file, `.claude/`), version
   controlled — not in `~/.claude`, which isn't reliably persistent on web
   sessions.
