@@ -186,15 +186,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 .appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.05rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
+.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.25rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
 .ab-btn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
-.tabbar{flex:0 0 auto;display:flex;gap:2px;padding:6px 6px calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);background:var(--bg-2);border-top:1px solid var(--line);}
+.tabbar{--tabbar-pb:calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);flex:0 0 auto;display:flex;gap:2px;padding:6px 6px var(--tabbar-pb);background:var(--bg-2);border-top:1px solid var(--line);}
 .tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:var(--r-btn-sm);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
-.tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);}
-.tabbar button .icn{font-size:1.05rem;line-height:1;}
+/* Active tab extends its highlight DOWN through the tabbar's safe-area padding
+   so it meets the bottom border with no dead gap under the "you are here"
+   column (operator UAT: "extend further toward the bottom to match the other
+   borders"). Content stays put (padding-bottom absorbs the reclaimed space);
+   only the background grows. Top corners rounded, bottom squares to the edge
+   like a real tab. */
+.tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * var(--tabbar-pb));padding-bottom:calc(6px + var(--tabbar-pb));border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.tabbar button .icn{font-size:1.28rem;line-height:1;}
 .tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;}
 .screen{display:none;}
 .screen.on{display:block;animation:fadeUp .26s cubic-bezier(.2,.7,.3,1);}
@@ -275,7 +281,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    repeated down the whole list, so its glyph is neutral (--txt-soft) - it stops the list
    reading as a column of accent circles competing with the song titles. Accent is reserved
    for the .inSet state below (a real selection: "this song is in your set"). */
-.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.35rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 /* Ghost add (S-SETADD-EVIDENT, operator UAT 2026-07-12): the row CAN'T join the
    set (no chord sheet) - state it quietly instead of an empty slot that reads
@@ -297,7 +303,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* S-SETX rider b: 40x40 -> >=44x44 via padding (NOT a bigger glyph - the "x"
  * stays font-size:1.2rem). min-width/min-height set the deterministic floor;
  * padding keeps the glyph from crowding the now-larger border box. */
-.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.2rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
+.listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.35rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
 /* S-SETRM-ARM (operator UAT 2026-07-11, "delete state style misalignment"):
  * the setlist remove handle follows the app's ONE inline-remove grammar
@@ -342,7 +348,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    SECONDARY affordance, not a primary action - so its glyph is neutral (--txt-soft), not the
    bright --accent-ink that competes with the one primary per screen. Accent still flashes on
    :active (feedback) and on the .setBtn.on selected state below (D-SELECTED-ACCENT). */
-.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+.iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.25rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* M-EAR wave 1: the scale-audition play/stop toggle - ONE primitive, composed
