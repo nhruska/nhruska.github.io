@@ -254,7 +254,7 @@
 // SONG-MODE-DESIGN.md); the M-13 builder moves onto a Song canvas with playable
 // section cards, Save-song naming, the guided template loop, 3 UAT rounds
 // (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
-// No new/removed CORE paths.
+// No new/removed CORE paths. [that entry only - #253]
 // S-CHORD-COLLAPSE (2026-07-16): v162->v163 - ONE new CORE path: shared/
 // chord-collapse.js (advanced-level compact chord chips for the Compose
 // palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip

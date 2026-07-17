@@ -195,6 +195,11 @@ def run(scenario_path, base_url=None):
                                  for (var i = 0; i < tiles.length; i++) {
                                    if (tiles[i].closest('.prog')) continue;
                                    if (tiles[i].closest('#suggest')) continue;
+                                   // Visible tiles only, as the verb's contract says: a
+                                   // display:none ancestor (e.g. .keyOpen hiding the chord
+                                   // list) zeroes offsetParent - skip, never DOM-click
+                                   // through hidden/overlayed UI (V4 Medium finding).
+                                   if (!tiles[i].offsetParent) continue;
                                    if (tiles[i].textContent.trim() === name) {
                                      var t = tiles[i].closest('.chord, .suggChip') || tiles[i].parentElement;
                                      t.click();

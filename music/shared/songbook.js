@@ -501,7 +501,9 @@
     // A 5th positional param (not an opts object) keeps every existing
     // caller/test byte-compatible: undefined is falsy = the old ladder.
     if (collapse && stage === 'full') stage = 'fill-row';
-    if (cardW <= 0 || availW <= 0) return stage; // unmeasured -> never demote
+    // unmeasured -> the WIDTH guards below never demote (the count/level-
+    // driven candidate above, including the collapse demotion, still stands)
+    if (cardW <= 0 || availW <= 0) return stage;
     if (stage === 'full') {
       var fullNeed = count * cardW + Math.max(0, count - 1) * gapW;
       if (fullNeed > availW) stage = 'fill-row';

@@ -27,9 +27,12 @@
 2. **Scope, verified surface map:** every chord-GRID surface in the app
    lives in music/play/index.html's Compose screen (In-key palette, All
    grid, progression filmstrip) - so loading chord-collapse.js on the play
-   page IS full coverage. music/play/triad-inversions.html contains zero
-   chord grids (verified: no diagram/chordGrid/songbook.js references) and
-   is a shapes-teaching artifact page, out of scope by nature. The Studio
+   page IS full coverage. music/play/triad-inversions.html carries its OWN
+   inline triad-diagram renderer (`renderDiagram`, line ~575 - a
+   standalone teaching artifact that never loads songbook.js or the
+   chord-pack adapter) but contains zero chord GRIDS; showing shapes is
+   that page's entire purpose, so it is out of scope by design, not
+   because it is diagram-free. The Studio
    chords-in-key row was ALREADY name-only chips for every level before
    this feature (F19, operator UAT 2026-07-05) - it stays as-is; "only
    advanced collapses" governs the surfaces THIS feature changes, and F19's
@@ -63,8 +66,14 @@
   bottom edge is inside the viewport, per mobile-ui-lessons: geometry vs
   viewport, not a class check), screenshot both themes.
 - Inverse checks: 'beginner', 'intermediate', and UNSET levels render the
-  chord surfaces byte-identical to origin/main (extend the SHA-256-lock
-  pattern in test/diagram.dom.test.js or DOM-compare at the adapter layer).
+  chord surfaces byte-identical to origin/main. Evidence AS SHIPPED: the
+  non-advanced branch takes the pre-existing code paths verbatim (the fork
+  is a guarded early condition), those paths' output is already SHA-256-
+  locked (test/diagram.dom.test.js), progStripMode's falsy-collapse ladder
+  is unit-locked byte-for-byte, and persona-beginner-studio +
+  compose-default-c scenarios re-run green. A DEDICATED new DOM-hash test
+  for the fork itself was considered and skipped: it would re-lock the
+  same pre-existing paths the existing SHA locks already pin.
 - Shapes toggle live-verified (per the Amendment): one tap restores the
   NON-ADVANCED rendering everywhere on the screen - full diagram tiles on
   the palettes, and on the filmstrip full cards at 1-4 chords. At 5+ chords

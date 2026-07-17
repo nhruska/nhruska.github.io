@@ -19,8 +19,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "chips carry roman numerals (key context exists: default C)",
-      "js": "Array.from(document.querySelectorAll('.inKeyLead .suggChip .scRn')).some(function(e){return e.textContent.trim()==='I'||e.textContent.trim()==='IV'})"
+      "label": "EVERY in-key chip carries its roman (key context = default C; count-strict, not some())",
+      "js": "document.querySelectorAll('.inKeyLead .suggChip .scRn').length >= 6 && Array.from(document.querySelectorAll('.inKeyLead .suggChip .scRn')).some(function(e){return e.textContent.trim()==='I'})"
     },
     {
       "action": "assertVisible",
@@ -147,9 +147,18 @@
       "scope": "#keyRoots"
     },
     {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeWrap.keyOpen",
+      "state": "hidden"
+    },
+    {
       "action": "evalAssert",
-      "label": "keyless All view: chips are letter-only, no roman guessed vs progression[0] (Volley 2 High #2)",
-      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .suggChip .scRn').length === 0"
+      "label": "keyless All view VISIBLE (flyout closed - .keyOpen hides .composeChords, so assert against shown DOM): chips are letter-only, no roman guessed vs progression[0]",
+      "js": "!document.querySelector('.composeWrap.keyOpen') && document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .suggChip .scRn').length === 0"
     },
     {
       "action": "screenshot",
