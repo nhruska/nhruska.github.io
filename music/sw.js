@@ -254,7 +254,12 @@
 // SONG-MODE-DESIGN.md); the M-13 builder moves onto a Song canvas with playable
 // section cards, Save-song naming, the guided template loop, 3 UAT rounds
 // (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
-// No new/removed CORE paths.
+// No new/removed CORE paths. [that entry only - #253]
+// S-CHORD-COLLAPSE (2026-07-16): v162->v163 - ONE new CORE path: shared/
+// chord-collapse.js (advanced-level compact chord chips for the Compose
+// palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip
+// demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
+// play/index.html (script tag).
 var CACHE = 'music-v167';
 var CORE = [
   './', './index.html',
@@ -313,6 +318,9 @@ var CORE = [
   // guidance-level.js: M-GUIDANCE (2026-07-05) - script-tagged in
   // play/index.html right after notables.js, which it grades claims against.
   './shared/guidance-level.js',
+  // chord-collapse.js: S-CHORD-COLLAPSE (2026-07-16) - script-tagged in
+  // play/index.html right after guidance-level.js (its input).
+  './shared/chord-collapse.js',
  './shared/theme.js', './shared/audio.js',
   // sound.js: M-EAR wave 1 - the scale/mode audition provider, script-tagged
   // in play/index.html right after audio.js.
