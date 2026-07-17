@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Repo Command Center - nhruska.github.io</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+/* HiTL Mission Control visual system, reused verbatim (docs/artifacts/ux-personas-20260703.html /
+   m-guide-mission-20260704.html) - brand lives in the header + accents only, body optimizes
+   contrast/size/spacing. Dark tuned first (phone surface), light kept print-safe. */
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.3rem;margin:10px 0 2px;line-height:1.3}
+h1 span{display:block;font-size:.85rem;color:var(--dim);font-weight:500}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 8px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+#cideploy .state{font-size:.98rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.l-fail{background:var(--hot);box-shadow:0 0 8px var(--hot)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0 12px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:9px 16px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+.pane{display:none}
+.pane.on{display:block}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+tr:nth-child(even) td{background:color-mix(in srgb, var(--bg2) 55%, var(--card))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+code{background:var(--accg);border-radius:4px;padding:1px 5px;font-size:.9em;font-weight:600}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;letter-spacing:.03em;color:#fff;white-space:nowrap}
+.pl-ok{background:#22845C}.pl-fail{background:#B3261E}.pl-run{background:#8A5A00}.pl-off{background:#5A6B7E}
+.errbox{border:1px solid var(--hot);color:var(--hot);border-radius:var(--brand-radius);padding:12px 14px;margin:12px 0;font-size:.9rem}
+.horizon{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+/* Above-the-fold contract blocks (workflows-hub docs/company-control-panel-vision.md,
+   "The above-the-fold contract"): 1 HiTL, 2 work products, 3 sanitized latest-shipped
+   (PUBLIC surface - no session-file content ever), 4 CI + deploy, 5 next steps. */
+.hitl{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:var(--brand-radius);padding:10px 14px;margin:8px 0}
+.hitl.hitl-action{border-left-color:var(--warn)}
+.hitl.hitl-urgent{border-left-color:var(--hot)}
+.hitl-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--ok);margin-bottom:3px}
+.hitl.hitl-action .hitl-label{color:var(--warn)}
+.hitl.hitl-urgent .hitl-label{color:var(--hot)}
+.hitl ul{list-style:none;margin:0;padding:0;font-size:.9rem;line-height:1.55}
+/* Two-tier ruling (2026-07-05 interview): tier 1 (broken/blocking) loud, tier 2
+   (routine decisions) present but muted - one strip, nothing hidden. */
+.hitl.hitl-routine{border-left-color:var(--line)}
+.hitl.hitl-routine .hitl-label{color:var(--dim)}
+.hitl li.hitl-t2,.hitl li.hitl-t2 a{color:var(--dim);font-weight:500}
+.hitl li.hitl-t2{font-size:.85rem}
+/* Position 1b: velocity - plain-language lines above the fold. */
+.velocity-row{margin:8px 0;padding:0 2px;font-size:.85rem;color:var(--dim);display:flex;flex-wrap:wrap;gap:2px 18px}
+.velocity-row .vel-line strong{color:var(--txt);font-weight:800;font-variant-numeric:tabular-nums}
+.fold-card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 14px;margin:8px 0}
+.fc-label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin-bottom:4px}
+.fold-card ul{list-style:none;margin:0;padding:0;font-size:.9rem;line-height:1.55}
+.fold-card ol{margin:0 0 0 22px;padding:0;font-size:.9rem;line-height:1.55}
+.fc-meta{color:var(--dim);font-size:.8rem}
+.fc-micro{color:var(--dim);font-size:.85rem;font-style:italic}
+.drawer{margin:16px 0 0}
+.drawer summary{cursor:pointer;color:var(--dim);font-size:.85rem;padding:6px 0}
+.drawer .drawer-body{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:12px 14px;margin-top:4px;color:var(--dim);font-size:.85rem;line-height:1.6}
+.agentline{color:var(--dim);font-size:.8rem;margin:14px 0 0}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>Repo Command Center<span>nhruska/nhruska.github.io - the parent artifact above every mission pane</span></h1>
+<div class="sub" id="subline">Loading live data...</div>
+
+<!-- Block 1: HiTL - action required, or an explicit all-clear -->
+<div class="hitl" id="hitl">
+<div class="hitl-label" id="hitlLabel">Action required</div>
+<div id="hitlBody" class="fc-micro">Loading...</div>
+</div>
+
+<!-- Block 1b: velocity (2026-07-05 interview ruling - plain-language lines) -->
+<div class="velocity-row" id="velocityRow"></div>
+
+<!-- Block 2: latest work products -->
+<div class="fold-card" id="products">
+<div class="fc-label">Latest work products</div>
+<div id="productsBody" class="fc-micro">Loading...</div>
+</div>
+
+<!-- Block 3: sanitized latest-shipped line (PUBLIC surface - merged PRs +
+     panes only; session-file content is never published here) -->
+<div class="fold-card" id="shipped">
+<div class="fc-label">Latest shipped</div>
+<div id="shippedBody" class="fc-micro">Loading...</div>
+</div>
+
+<!-- Block 4: last CI run + deploy state (cockpit lamps live here now) -->
+<div class="fold-card" id="cideploy">
+<div class="fc-label">Last CI run &amp; deploy</div>
+<div class="state" id="cockpitState">Fetching payload-repo.json...</div>
+<div class="statesub" id="cockpitSub"></div>
+<div id="lastCiBody"></div>
+<div class="lights" id="cockpitLights"></div>
+</div>
+
+<!-- Block 5: next steps (numbered, from the queue's NOW horizon) -->
+<div class="fold-card" id="nextsteps">
+<div class="fc-label">Next steps</div>
+<div id="nextStepsBody" class="fc-micro">Loading...</div>
+</div>
+
+<!-- Below fold: metrics (counts, plain labels), detail tabs, provenance drawer -->
+<div class="chips" id="chips"></div>
+
+<div class="tabs" id="tabs">
+<div class="tab on" data-pane="missions">Missions</div>
+<div class="tab" data-pane="prs">Open PRs</div>
+<div class="tab" data-pane="merges">Merges</div>
+<div class="tab" data-pane="commits">Commits</div>
+<div class="tab" data-pane="queue">Queue</div>
+<div class="tab" data-pane="ops">Ops</div>
+</div>
+
+<div class="pane on" id="pane-missions"></div>
+<div class="pane" id="pane-prs"></div>
+<div class="pane" id="pane-merges"></div>
+<div class="pane" id="pane-commits"></div>
+<div class="pane" id="pane-queue"></div>
+<div class="pane" id="pane-ops"></div>
+
+<div class="agentline" id="agentline">Agent layer: <a href="./payload-repo.json">payload-repo.json</a> - agents read this surface at session start; findings and closures regenerate it.</div>
+
+<details class="drawer" id="provenanceDrawer">
+<summary>How this data was gathered</summary>
+<div class="drawer-body">
+Generated by <code>scripts/command-center-gen.py</code> from live <code>gh</code> data - public repo metadata only, no org/private data (session-file content is never published on this public surface). Regenerate any time by re-running the script and committing the refreshed payload.
+<div id="provenanceLine" style="margin-top:8px"></div>
+</div>
+</details>
+</div>
+
+<script>
+(function(){
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+// Minimal inline-markdown renderer for QUEUE.md cell text: [label](url), **bold**, `code`.
+// Escapes first, then re-inflates the three patterns - safe because escaping runs before
+// any markup is (re)introduced, so no payload text can inject raw HTML.
+function mdInline(raw){
+  var s = esc(raw);
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, label, url){
+    var safeUrl = /^https?:\/\//.test(url) ? url : '#';
+    return '<a href="' + esc(safeUrl) + '" target="_blank" rel="noopener">' + label + '</a>';
+  });
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  return s;
+}
+
+function fmtDate(iso){
+  if (!iso) return 'unknown';
+  try {
+    var d = new Date(iso);
+    return d.toISOString().replace('T',' ').replace(/\.\d+Z$/, ' UTC');
+  } catch(e){ return iso; }
+}
+
+// Single state->suffix mapping shared by the cockpit lamps (l-*) and the
+// per-PR CI pills (pl-*). ciState carries panelkit's canonical vocabulary
+// (green/red/pending/unknown - the vendored SSOT's CI unification, see
+// scripts/command-center-gen.py); the legacy UPPERCASE values are still
+// accepted so an older committed payload renders correctly until the
+// next nightly regen.
+function ciSuffix(state){
+  if (state === 'green' || state === 'SUCCESS') return 'ok';
+  if (state === 'red' || state === 'FAILURE') return 'fail';
+  if (state === 'pending' || state === 'PENDING' || state === 'MIXED') return 'run';
+  return 'off';
+}
+function ciLampClass(state){ return 'l-' + ciSuffix(state); }
+function ciPillClass(state){ return 'pl-' + ciSuffix(state); }
+
+// ---- Block 1: HiTL - derived ONLY from payload data, never fabricated.
+// Open PRs (CI green = a pending operator merge decision; red = fix first)
+// and a behind-HEAD deployed cache are the red-capable signals this public
+// payload carries.
+function renderHitl(d){
+  var strip = document.getElementById('hitl');
+  var label = document.getElementById('hitlLabel');
+  var body = document.getElementById('hitlBody');
+  var items = [];
+  (d.openPRs || []).forEach(function(pr){
+    var what = '#' + pr.number + ' ' + pr.title;
+    if (pr.ciState === 'red' || pr.ciState === 'FAILURE'){
+      items.push({urgent: true, html: '<a href="' + esc(pr.url) + '" target="_blank" rel="noopener">Fix failing CI: ' + esc(what) + '</a>'});
+    } else if (pr.ciState === 'green' || pr.ciState === 'SUCCESS'){
+      items.push({urgent: false, html: '<a href="' + esc(pr.url) + '" target="_blank" rel="noopener">Merge decision (CI green): ' + esc(what) + '</a>'});
+    } else {
+      items.push({urgent: false, html: '<a href="' + esc(pr.url) + '" target="_blank" rel="noopener">Review open PR (CI ' + esc(pr.ciState || 'unknown') + '): ' + esc(what) + '</a>'});
+    }
+  });
+  if ((d.deploy || {}).cacheMatch === false){
+    items.push({urgent: false, html: '<a href="' + esc((d.ops || {}).actions || '#') + '" target="_blank" rel="noopener">Verify deploy: live cache is behind local sw.js (deploy pending)</a>'});
+  }
+  if (!items.length){
+    strip.className = 'hitl';
+    label.textContent = 'No action needed';
+    body.className = '';
+    body.textContent = 'All tracked signals green - no open PRs awaiting a decision, deployed cache in sync.';
+    return;
+  }
+  // Two-tier ruling ("broken first, merges second"): tier 1 = urgent/
+  // blocking, loud; tier 2 = routine decisions, muted. One strip - at a
+  // heavy merge cadence the strip never screams, nothing hides.
+  var tier1 = items.filter(function(i){ return i.urgent; });
+  var tier2 = items.filter(function(i){ return !i.urgent; });
+  strip.className = 'hitl ' + (tier1.length ? 'hitl-urgent' : 'hitl-routine');
+  label.textContent = tier1.length
+    ? 'Action required (' + items.length + ')'
+    : 'Awaiting decisions (' + items.length + ')';
+  body.className = '';
+  body.innerHTML = '<ul>' +
+    tier1.map(function(i){ return '<li>' + i.html + '</li>'; }).join('') +
+    tier2.map(function(i){ return '<li class="hitl-t2">' + i.html + '</li>'; }).join('') +
+  '</ul>';
+}
+
+// ---- Block 1b: velocity - plain-language lines (raw numbers stay in payload).
+function humanHours(h){
+  if (h == null) return null;
+  if (h < 1){ var m = Math.max(1, Math.round(h * 60)); return m + ' minute' + (m === 1 ? '' : 's'); }
+  if (h < 48){ var r = Math.round(h * 10) / 10; return r + ' hour' + (r === 1 ? '' : 's'); }
+  var d = Math.round((h / 24) * 10) / 10; return d + ' day' + (d === 1 ? '' : 's');
+}
+
+function renderVelocity(d){
+  var el = document.getElementById('velocityRow');
+  var vel = d.velocity;
+  if (!vel){ el.innerHTML = ''; return; }
+  var lines = [];
+  if (vel.merged_count !== null && vel.merged_count !== undefined){
+    var line = '<strong>' + vel.merged_count + '</strong> PR' + (vel.merged_count === 1 ? '' : 's') +
+      ' merged in the last ' + (vel.window_days || 7) + ' days';
+    var t = humanHours(vel.typical_merge_hours);
+    if (t) line += ' - typical merge lands in <strong>' + esc(t) + '</strong>';
+    lines.push(line);
+  }
+  if (vel.loc){
+    lines.push('<strong>+' + vel.loc.added.toLocaleString() + '</strong> / <strong>-' +
+      vel.loc.deleted.toLocaleString() + '</strong> lines this week');
+  }
+  el.innerHTML = lines.map(function(l){ return '<span class="vel-line">' + l + '</span>'; }).join('');
+}
+
+// ---- Block 2: latest work products - recent merges + shipped mission panes.
+function renderProducts(d){
+  var body = document.getElementById('productsBody');
+  var merges = (d.recentMerges || []).slice(0, 2);
+  var panes = (d.missions || []).slice(0, 3);
+  var html = '';
+  if (merges.length){
+    html += '<ul>' + merges.map(function(pr){
+      return '<li><a href="' + esc(pr.url) + '" target="_blank" rel="noopener">#' + pr.number + ' ' + esc(pr.title) + '</a> <span class="fc-meta">merged ' + esc(fmtDate(pr.mergedAt)) + '</span></li>';
+    }).join('') + '</ul>';
+  } else {
+    html += '<div class="fc-micro">No recent merges recorded.</div>';
+  }
+  if (panes.length){
+    html += '<div class="fc-meta" style="margin-top:6px">Mission panes: ' + panes.map(function(m){
+      return '<a href="' + esc(m.liveUrl) + '" target="_blank" rel="noopener">' + esc(m.title) + '</a>';
+    }).join(' - ') + ((d.missions || []).length > panes.length ? ' - <a href="#" data-tabjump="missions">all ' + d.missions.length + ' panes</a>' : ' - <a href="#" data-tabjump="missions">Missions tab</a>') + '</div>';
+  }
+  body.className = '';
+  body.innerHTML = html;
+}
+
+// ---- Block 3: sanitized latest-shipped line. PUBLIC surface: recent
+// merged PRs + panes ONLY - session-file content is never published here
+// (the AAD-gated hub carries the session distiller).
+function renderShipped(d){
+  var body = document.getElementById('shippedBody');
+  var top = (d.recentMerges || [])[0];
+  if (!top){
+    body.innerHTML = '<span class="fc-micro">Nothing merged yet in this window.</span>';
+    return;
+  }
+  var paneCount = (d.missions || []).length;
+  body.className = '';
+  body.innerHTML = 'Latest shipped: <a href="' + esc(top.url) + '" target="_blank" rel="noopener">#' + top.number + ' ' + esc(top.title) + '</a>' +
+    ' <span class="fc-meta">merged ' + esc(fmtDate(top.mergedAt)) + '</span>' +
+    (paneCount ? ' - ' + paneCount + ' mission pane' + (paneCount === 1 ? '' : 's') + ' live (<a href="#" data-tabjump="missions">Missions</a>)' : '');
+}
+
+// ---- Block 5: next steps - numbered, from the queue's NOW horizon (the
+// plan surface this public repo already tracks; QUEUE.md is public).
+function renderNextSteps(d){
+  var body = document.getElementById('nextStepsBody');
+  var rows = (d.queue || {}).NOW || [];
+  if (!rows.length){
+    body.innerHTML = '<span class="fc-micro">Queue NOW horizon is empty - nothing in flight. See the <a href="#" data-tabjump="queue">Queue tab</a> for SHORT/MID/LONG.</span>';
+    return;
+  }
+  body.className = '';
+  body.innerHTML = '<ol>' + rows.slice(0, 5).map(function(row){
+    var cols = Object.keys(row);
+    // Prefer the column that names the work (QUEUE.md tables vary in
+    // shape); fall back to the first column verbatim.
+    var named = cols.filter(function(c){ return /^(mission|item|task|what)$/i.test(c.trim()); });
+    var cell = named.length ? row[named[0]] : (cols.length ? row[cols[0]] : '');
+    return '<li>' + mdInline(cell) + '</li>';
+  }).join('') + '</ol>' +
+  '<div class="fc-meta" style="margin-top:4px">From <a href="' + esc((d.ops || {}).queueFile || '#') + '" target="_blank" rel="noopener">QUEUE.md</a> NOW - full detail in the <a href="#" data-tabjump="queue">Queue tab</a>.</div>';
+}
+
+function humanSeconds(s){
+  if (s == null) return '';
+  s = Math.round(s);
+  if (s < 60) return s + 's';
+  var m = Math.floor(s / 60);
+  if (m < 60) return m + 'm ' + (s % 60) + 's';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+}
+
+function renderCockpit(d){
+  var openCount = (d.openPRs || []).length;
+  var suite = d.suite || {};
+  var deploy = d.deploy || {};
+  var pages = deploy.pages || {};
+
+  document.getElementById('subline').innerHTML =
+    '<a href="' + esc(d.repo.url) + '" target="_blank" rel="noopener">' + esc(d.repo.slug) + '</a>' +
+    ' - <a href="' + esc(d.ops.liveApp) + '" target="_blank" rel="noopener">live app</a>' +
+    ' - <a href="' + esc(d.ops.portfolioRoot) + '" target="_blank" rel="noopener">portfolio root</a>';
+
+  var cacheNote = deploy.cacheMatch === true ? 'in sync with HEAD'
+    : deploy.cacheMatch === false ? 'BEHIND local sw.js - a deploy is pending'
+    : 'unknown (live fetch failed)';
+
+  document.getElementById('cockpitState').innerHTML =
+    'LIVE at <strong>' + esc(deploy.liveCacheVersion || 'unknown') + '</strong> - Pages: ' +
+    esc(pages.status || 'unknown') + ' - ' + openCount + ' open PR' + (openCount === 1 ? '' : 's');
+
+  document.getElementById('cockpitSub').textContent =
+    'HEAD ' + (d.head ? d.head.sha.slice(0,7) : '?') + ' - deployed cache ' + cacheNote + '.';
+
+  // Block 4's CI-run line: workflow name, conclusion, duration, log link.
+  var run = d.lastCiRun;
+  document.getElementById('lastCiBody').innerHTML = run
+    ? '<div style="margin:8px 0 2px;font-size:.92rem">' +
+        '<span class="pill ' + (run.conclusion === 'success' ? 'pl-ok' : run.conclusion === 'failure' ? 'pl-fail' : 'pl-run') + '">' +
+          esc(run.conclusion || run.status || 'unknown') + '</span> ' +
+        esc(run.workflowName || 'workflow') +
+        (run.durationSeconds != null ? ' <span class="fc-meta">in ' + esc(humanSeconds(run.durationSeconds)) + '</span>' : '') +
+        ' - <a href="' + esc(run.url) + '" target="_blank" rel="noopener">log</a>' +
+      '</div>'
+    : '<div class="fc-micro" style="margin:8px 0 2px">' +
+        (run === undefined ? 'Last-CI-run not in this payload yet - regenerate to add it.' : 'No Actions runs recorded.') +
+      '</div>';
+
+  var lights = [];
+  lights.push({cls: deploy.cacheMatch === false ? 'l-run' : (deploy.cacheMatch === true ? 'l-ok' : 'l-off'), label: 'Deploy cache sync'});
+  lights.push({cls: pages.status === 'built' ? 'l-ok' : 'l-run', label: 'GitHub Pages: ' + esc(pages.status || 'unknown')});
+  (d.openPRs || []).forEach(function(pr){
+    lights.push({cls: ciLampClass(pr.ciState), label: 'PR #' + pr.number + ' CI: ' + pr.ciState});
+  });
+  lights.push({cls: 'l-ok', label: '<a href="' + esc(d.ops.liveApp) + '" target="_blank" rel="noopener">LIVE SITE</a>'});
+  document.getElementById('cockpitLights').innerHTML = lights.map(function(l){
+    return '<span class="lt"><span class="lamp ' + l.cls + '"></span>' + l.label + '</span>';
+  }).join('');
+}
+
+// Provenance (collapsed drawer): generated-when + generator + envelope status.
+function renderProvenance(d){
+  var el = document.getElementById('provenanceLine');
+  if (!el) return;
+  var bits = ['Generated ' + esc(fmtDate(d.generatedAt))];
+  if (d.generator) bits.push('by <code>' + esc(d.generator) + '</code>');
+  if (d.status) bits.push('status: ' + esc(d.status));
+  el.innerHTML = bits.join(' ');
+  var warnings = d.warnings || [];
+  if (warnings.length){
+    el.innerHTML += '<br>' + warnings.map(function(w){ return 'warning: ' + esc(w); }).join('<br>');
+  }
+}
+
+function renderChips(d){
+  var chips = [
+    {n: (d.commits || []).length, l: 'commits tracked'},
+    {n: (d.openPRs || []).length, l: 'open PRs'},
+    {n: (d.recentMerges || []).length, l: 'recent merges'},
+    {n: (d.suite || {}).testCaseCount || (d.suite || {}).testFileCount || 0,
+     l: (d.suite || {}).testCaseCount != null ? 'test cases / ' + (d.suite || {}).testFileCount + ' suites' : 'test files'}
+  ];
+  document.getElementById('chips').innerHTML = chips.map(function(c){
+    return '<div class="chip"><div class="n">' + c.n + '</div><div class="l">' + esc(c.l) + '</div></div>';
+  }).join('');
+}
+
+function renderMissions(d){
+  var html = '<h2>Missions - shipped panes</h2>';
+  if (!d.missions.length){
+    html += '<div class="card">No HiTL mission panes discovered under docs/artifacts/.</div>';
+  } else {
+    html += '<div class="wrapx"><table><tr><th>Mission</th><th>Status</th><th>Pane</th></tr>';
+    d.missions.forEach(function(m){
+      html += '<tr><td>' + esc(m.title) + '</td><td>' + esc(m.status) + '</td><td>' +
+        '<a href="' + esc(m.liveUrl) + '" target="_blank" rel="noopener">live</a> - ' +
+        '<a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">source</a></td></tr>';
+    });
+    html += '</table></div>';
+  }
+  html += '<h2>Arcs - visions captured (not yet a mission)</h2>';
+  if (!d.visions.length){
+    html += '<div class="card">No open vision docs.</div>';
+  } else {
+    html += '<div class="wrapx"><table><tr><th>Vision</th><th>Status</th><th>Doc</th></tr>';
+    d.visions.forEach(function(v){
+      html += '<tr><td>' + esc(v.title) + '</td><td>' + esc(v.statusGuess) + '</td><td>' +
+        '<a href="' + esc(v.sourceUrl) + '" target="_blank" rel="noopener">source</a></td></tr>';
+    });
+    html += '</table></div>';
+  }
+  document.getElementById('pane-missions').innerHTML = html;
+}
+
+function renderPRs(d){
+  var html = '<h2>Open PRs + CI</h2>';
+  if (!d.openPRs.length){
+    html += '<div class="card">No open PRs right now.</div>';
+  } else {
+    html += '<div class="wrapx"><table><tr><th>PR</th><th>Branch</th><th>CI</th></tr>';
+    d.openPRs.forEach(function(pr){
+      html += '<tr><td><a href="' + esc(pr.url) + '" target="_blank" rel="noopener">#' + pr.number + '</a> ' +
+        esc(pr.title) + (pr.draft ? ' <span class="pill pl-off">DRAFT</span>' : '') + '</td>' +
+        '<td><code>' + esc(pr.branch) + '</code></td>' +
+        '<td><span class="pill ' + ciPillClass(pr.ciState) + '">' + esc(pr.ciState) + '</span></td></tr>';
+    });
+    html += '</table></div>';
+  }
+  document.getElementById('pane-prs').innerHTML = html;
+}
+
+function renderMerges(d){
+  var html = '<h2>Recently merged</h2><div class="wrapx"><table><tr><th>PR</th><th>Merged</th></tr>';
+  d.recentMerges.forEach(function(pr){
+    html += '<tr><td><a href="' + esc(pr.url) + '" target="_blank" rel="noopener">#' + pr.number + '</a> ' +
+      esc(pr.title) + '</td><td>' + esc(fmtDate(pr.mergedAt)) + '</td></tr>';
+  });
+  html += '</table></div>';
+  document.getElementById('pane-merges').innerHTML = html;
+}
+
+function renderCommits(d){
+  var html = '<h2>Recent commits (HEAD + last ' + d.commits.length + ')</h2><div class="wrapx"><table><tr><th>SHA</th><th>Subject</th><th>Date</th></tr>';
+  d.commits.forEach(function(c){
+    html += '<tr><td><a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.sha.slice(0,7)) + '</a></td>' +
+      '<td>' + esc(c.subject) + '</td><td>' + esc(fmtDate(c.date)) + '</td></tr>';
+  });
+  html += '</table></div>';
+  document.getElementById('pane-commits').innerHTML = html;
+}
+
+function renderQueue(d){
+  var horizons = ['NOW', 'SHORT', 'MID', 'LONG'];
+  var html = '<h2>Mission queue</h2><div class="card">4 horizons - NOW (in flight), SHORT (launch-ready), MID (vision known), LONG (idea). ' +
+    'Source: <a href="' + esc(d.ops.queueFile) + '" target="_blank" rel="noopener">QUEUE.md</a>.</div>';
+  horizons.forEach(function(h){
+    var rows = d.queue[h] || [];
+    html += '<div class="horizon">' + h + ' (' + rows.length + ')</div>';
+    if (!rows.length){
+      html += '<div class="card">Empty.</div>';
+      return;
+    }
+    var cols = Object.keys(rows[0]);
+    html += '<div class="wrapx"><table><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
+    rows.forEach(function(row){
+      html += '<tr>' + cols.map(function(c){ return '<td>' + mdInline(row[c] || '') + '</td>'; }).join('') + '</tr>';
+    });
+    html += '</table></div>';
+  });
+  document.getElementById('pane-queue').innerHTML = html;
+}
+
+function renderOps(d){
+  var ops = d.ops;
+  var links = [
+    ['Actions', ops.actions],
+    ['Pages settings', ops.pagesSettings],
+    ['Wiki index', ops.wikiIndex],
+    ['Decisions registry', ops.decisions],
+    ['UAT walkthrough log', ops.uatLog],
+    ['QUEUE.md', ops.queueFile],
+    ['Live app', ops.liveApp],
+    ['Portfolio root', ops.portfolioRoot]
+  ];
+  var html = '<h2>Ops links</h2><table><tr><th>Link</th><th></th></tr>';
+  links.forEach(function(l){
+    html += '<tr><td>' + esc(l[0]) + '</td><td><a href="' + esc(l[1]) + '" target="_blank" rel="noopener">open &rarr;</a></td></tr>';
+  });
+  html += '</table>';
+  html += '<h2>Infra</h2><div class="card">' + esc(d.infra.note) + '</div>';
+  document.getElementById('pane-ops').innerHTML = html;
+}
+
+function render(d){
+  renderHitl(d);
+  renderVelocity(d);
+  renderProducts(d);
+  renderShipped(d);
+  renderCockpit(d);
+  renderNextSteps(d);
+  renderProvenance(d);
+  renderChips(d);
+  renderMissions(d);
+  renderPRs(d);
+  renderMerges(d);
+  renderCommits(d);
+  renderQueue(d);
+  renderOps(d);
+}
+
+function showError(err){
+  document.getElementById('cockpitState').textContent = 'Could not load payload-repo.json';
+  document.getElementById('cockpitSub').innerHTML =
+    '<div class="errbox">' + esc(String(err)) + '<br>Regenerate via <code>python3 scripts/command-center-gen.py</code> and reload.</div>';
+}
+
+function activateTab(name){
+  var tab = document.querySelector('.tab[data-pane="' + name + '"]');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('on'); });
+  tab.classList.add('on');
+  document.getElementById('pane-' + name).classList.add('on');
+}
+
+document.getElementById('tabs').addEventListener('click', function(e){
+  var tab = e.target.closest('.tab');
+  if (!tab) return;
+  activateTab(tab.dataset.pane);
+});
+
+// Fold-block links that jump into a detail tab (e.g. "Missions tab").
+document.addEventListener('click', function(e){
+  var jump = e.target.closest('[data-tabjump]');
+  if (!jump) return;
+  e.preventDefault();
+  activateTab(jump.getAttribute('data-tabjump'));
+  document.getElementById('tabs').scrollIntoView({behavior: 'smooth', block: 'start'});
+});
+
+fetch('./payload-repo.json').then(function(r){
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}).then(render).catch(showError);
+
+})();
+</script>
+</body></html>

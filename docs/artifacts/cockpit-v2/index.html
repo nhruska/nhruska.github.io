@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cockpit v2 - Tactical UI Angles</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<link rel="stylesheet" href="cockpit.css">
+<style>
+.pick{display:grid;gap:10px;margin-top:12px}
+@media (min-width:900px){.pick{grid-template-columns:repeat(3,1fr)}}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px;color:var(--txt);min-height:44px}
+.card:active{border-color:var(--acc)}
+.card .an{font:700 .62rem var(--mono);letter-spacing:.12em;color:var(--acc)}
+.card h2{margin:4px 0 6px;font:800 1.1rem/1.2 var(--sans)}
+.card p{margin:0;font:400 .82rem/1.5 var(--sans);color:var(--dim)}
+.card .bet{margin-top:10px;font:600 .68rem/1.5 var(--mono);color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="hdr"><img class="logo" src="https://problemsolutions.github.io/logo-badge.svg" alt="" onerror="this.style.visibility='hidden'">
+    <div class="word">COCKPIT v2<small>TACTICAL UI - THREE ANGLES</small></div>
+    <div class="spacer"></div><span class="badge op"><span class="led ok"></span>MOCKUPS</span></div>
+  <p style="font:400 .88rem/1.55 var(--sans);color:var(--dim);margin:12px 2px 0">
+    Three answers to one question: with the map gone, what does the operator
+    navigate by? Same brand, same fractal ladder, same signal contract -
+    different centerpiece. Phone-first: judge each at 412px before desktop.
+    Full rationale: docs/plans/cockpit-tactical-vision-20260711.md</p>
+  <a class="card" href="cockpit.html" style="border-color:var(--ok)"><span class="an" style="color:var(--ok)">THE PICK - OPERATOR REMIX (2026-07-11)</span><h2>Signal + Tempo</h2><p>C is the base - an actionable surface, not just reporting - with B folded in for the timeline. This composite is the shell the ps-internal build wears.</p><div class="bet">DECIDED: navigate by WHAT NEEDS YOU, with WHEN one glance below</div></a><div class="pick">
+    <a class="card" href="angle-instruments.html"><span class="an">ANGLE A</span>
+      <h2>Instruments</h2>
+      <p>A flight-deck gauge cluster: ops tempo, attention load, autonomy ratio,
+      blocker level, fleet CI, your competency radar.</p>
+      <div class="bet">BET: you navigate by DERIVED STATE</div></a>
+    <a class="card" href="angle-tempo.html"><span class="an">ANGLE B</span>
+      <h2>Tempo</h2>
+      <p>Flight-strip swimlanes across the last 24h with a NOW line and the
+      gates ahead of it. Vertical time rail on the phone.</p>
+      <div class="bet">BET: you navigate by WHEN</div></a>
+    <a class="card" href="angle-signal.html"><span class="an">ANGLE C</span>
+      <h2>Signal</h2>
+      <p>Queue-first CIC: your merged stream is the surface, departments ride a
+      snap strip, a dispatch dock fronts the agent backplane.</p>
+      <div class="bet">BET: you navigate by WHAT NEEDS YOU</div></a>
+  </div>
+</div>
+</body>
+</html>

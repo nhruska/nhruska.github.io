@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HiTL Mission Control - Ear-First Night (Retrospective)</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.12rem;font-weight:800;line-height:1.35}
+.cockpit .statesub{font-size:.95rem;color:var(--dim);margin:6px 0 2px;line-height:1.5}
+.lights{display:flex;gap:8px 18px;flex-wrap:wrap;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--txt)}
+.lt{display:inline-flex;align-items:center;gap:7px}
+.lamp{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.l-ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.l-run{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.l-off{background:var(--line)}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-agent{background:#22845C}.pl-adv{background:#8A3FBF}.pl-ship{background:var(--brand-secondary)}.pl-next{background:#5A6B7E}
+.pos{color:var(--ok);font-weight:700}.run{color:var(--warn);font-weight:700}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>HiTL Mission Control - Ear-First Night (retrospective): Hear It, Play It, Trust It</h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-ear-first-20260704.md">vision doc</a> - 2026-07-04 evening -> 2026-07-05 (v105 -> v116) - <a href="https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html">Design-System Day pane</a></div>
+
+<div class="cockpit">
+<div class="state"><span class="pos">MISSION CLOSED - SHIPPED (v105 -> v116)</span> - "Hear the scale" landed on both surfaces the same night; jam-discovery, YouTube prefill, and dim-chord classification joined it; then two UAT marathons (fourteen findings, U11 through U24, every one turned around same-session) hardened the whole audio-and-feedback surface before the operator stopped testing at 01:30.</div>
+<div class="statesub">Started from one verbatim operator line: "It's nice to be able to see a scale but we are working with music which is HEARD not seen." Five async interview answers decomposed it into M-EAR (audition), M-SONG-ANCHORS (known-song memory anchors), M-CONSTRUCT, M-PHRASE, and library growth. What actually shipped that night: M-EAR waves 1 / 1.5 / 1.6 (zero-dependency Web Audio, no-gap chip-switch retarget, fretboard sounding lights, tempo control, an accent-derived note palette via CSS Relative Color), TRACKLIB waves 1 / 2a (a key-aware jam-discovery matrix and a keyless YouTube-oEmbed prefill), a live keyless playlist-read pipeline, a dim/dim7/aug shape-classification gap closed, an ENFORCE-2 feedback audit that shipped a countdown-undo toast primitive, and a post-close hardening trio (set-integrity, relative-key naming, a toast-host CSS fix). Two items were drafted and are still awaiting an operator veto, not yet baked in.</div>
+<div class="lights">
+<span class="lt"><span class="lamp l-ok"></span>M-EAR wave 1 MERGED (v106)</span>
+<span class="lt"><span class="lamp l-ok"></span>TRACKLIB wave 1 MERGED (v108)</span>
+<span class="lt"><span class="lamp l-ok"></span>M-EAR 1.5 retarget+lights MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>TRACKLIB 2a yt-prefill + playlist pipeline MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>M-EAR 1.6 tempo+legend+palette MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>dim-shapes classifier MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>ENFORCE-2 countdown-undo MERGED</span>
+<span class="lt"><span class="lamp l-ok"></span>set-integrity + rel-names + toast-host MERGED (v116)</span>
+</div>
+<div class="fchead">What carried forward (still open as of this pane)</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">2 - VETO WINDOWS OPEN</span><span class="fw">both drafted, neither baked in yet</span></div>
+<div class="fd"><strong>Bake veto:</strong> the keyless playlist pipeline read 16 real entries agent-side and staged them into a candidate tracks.json bake list - it ships only after the operator vetoes/swaps entries. <strong>Anchors veto:</strong> the song-anchors draft (8 scales, 3-5 songs each, CANONICAL/STRONG/DISPUTED tagged, 11 web-verified attribution checks) is a candidate list only - the operator vetoes/swaps before it becomes the app's curated anchor data.</div></div>
+</div>
+
+<div class="chips">
+<div class="chip"><div class="n">26</div><div class="l">PRs merged (#153-#178)</div></div>
+<div class="chip"><div class="n">14</div><div class="l">UAT findings, U11-U24, same-session</div></div>
+<div class="chip"><div class="n">39</div><div class="l">test files at close</div></div>
+<div class="chip"><div class="n">11</div><div class="l">versions in one night (v105->v116)</div></div>
+</div>
+
+<h2>Timeline</h2>
+<div class="wrapx"><table>
+<tr><th>Step</th><th>Who</th><th>What + why it was the right call</th></tr>
+<tr><td><span class="pill pl-you">YOU</span></td><td>Vision capture</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/153">#153</a>: the "heard not seen" line, decomposed into 5 candidate missions; 5 async interview answers locked synth audio (not samples, for now), a slow hum-loop with a bouncing degree marker, agent-drafted anchor candidates for operator veto, audition on BOTH the Studio and the Compose preview, and M-CONSTRUCT folded into the existing tutor Phase 5 item.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>M-EAR wave 1</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/154">#154</a> spec, <a href="https://github.com/nhruska/nhruska.github.io/pull/157">#157</a> ship, <a href="https://github.com/nhruska/nhruska.github.io/pull/158">#158</a> close (v106): zero-dependency Web Audio (no Tone.js), a hum-loop + bouncing marker, live on both the Studio and the Compose key preview - with an OfflineAudioContext PCM check as the live-integration evidence, not just a green assert.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>Anchors draft (awaiting veto)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/156">#156</a>: an 8-scale x 3-5-song veto table, 11 targeted web checks run by the drafter itself, which self-corrected 3 of its own first-draft attributions before handing it over. Marked UNVERIFIED-BY-OPERATOR by design.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>TRACKLIB wave 1</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/159">#159</a> spec, <a href="https://github.com/nhruska/nhruska.github.io/pull/160">#160</a>/<a href="https://github.com/nhruska/nhruska.github.io/pull/161">#161</a> ship (v108): a key-aware "Find a jam" panel (mode x genre x feel), re-derived live on every scale-chip switch, plus a prefilled add-to-library seam.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>M-EAR wave 1.5</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/162">#162</a> (UAT U11-U13, same-hour turnaround): a scale-chip switch now RETARGETS the playing loop instead of stopping it, the fretboard joins the sounding marker across all octaves, and an optional full-neck (0-14 fret) view supplements the windowed pager.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>TRACKLIB 2a + the real playlist run</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/165">#165</a>: YouTube-link paste auto-fills title/artist/key/mode/genre hints via YouTube's OWN oEmbed endpoint - live-Playwright-verified keyless (no API key, no fallback needed in practice). <a href="https://github.com/nhruska/nhruska.github.io/pull/167">#167</a>: the first live run against the operator's real playlist - 16 entries read keyless, agent-side - staged the bake-veto candidate list; the key-requiring wave-2b path was demoted since 2a covered the need without one.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>M-EAR 1.6 + dim-shapes</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/169">#169</a> (UAT U14-U16, U20-U21): a slow/med/fast tempo control; U15's live re-repro found NO logic bug in the sounding-lights mechanism - it was just too subtle, fixed with scale + stroke + glow, not a rewrite; a new Legend primitive replaces old caption prose; note colors are now derived from the user's own accent hue via CSS Relative Color Syntax, not fixed hex. <a href="https://github.com/nhruska/nhruska.github.io/pull/168">#168</a>: curated dim/dim7/aug shape-classify buckets close the Bdim-card height/label gap.</td></tr>
+<tr><td><span class="pill pl-agent">AGENT</span></td><td>ENFORCE-2</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/170">#170</a> (UAT U19, operator screenshot of two inconsistent feedback surfaces stacked on one action): a 14-surface feedback audit, a new TOAST+ACTION countdown-undo primitive (6s window, visible countdown bar, pause-on-touch), and the Settings backup/restore flow's native confirm()/alert() replaced with the existing toast/modal primitives - the SECOND independent modal consumer, confirming the primitive generalizes.</td></tr>
+<tr><td><span class="pill pl-ship">SHIPPED</span></td><td>Post-close hardening (operator kept testing to 01:30)</td><td><a href="https://github.com/nhruska/nhruska.github.io/pull/175">#175</a> S-SET-INTEGRITY (UAT U22): a dangling setlist reference bug closed at three levels at once (delete-heal, defensive nav, load-heal) - the agent corrected its OWN first diagnosis mid-fix once the real root cause (cursor validity, not the delete path) surfaced. <a href="https://github.com/nhruska/nhruska.github.io/pull/174">#174</a> S-REL-NAMES (UAT U23): guidance copy now names the concrete relative key ("F major's relative minor is D minor"), not just the relationship. <a href="https://github.com/nhruska/nhruska.github.io/pull/178">#178</a> S-TOAST-HOST (UAT U24, v116): a one-line CSS fix for an empty-but-visible undo pill - author-origin CSS was silently outranking the hidden attribute the whole time.</td></tr>
+<tr><td><span class="pill pl-next">PROCESS</span></td><td>Disclosed mid-mission</td><td>An agent flagged its own coordinator-channel message pattern as injection-shaped, authenticated against the committed capture PRs before proceeding, and disclosed the reasoning rather than silently pressing on - captured as a channel-auth pattern (commit-before-message = auth) for future multi-agent coordination.</td></tr>
+</table></div>
+
+<h2>Decisions registered this mission</h2>
+<div class="wrapx"><table>
+<tr><th>ID</th><th>Call</th><th>Why</th></tr>
+<tr><td>D-EAR-1</td><td>Scale audition ships on BOTH the Studio and the Compose key preview</td><td>Operator interview answer: "we need to hear along with the visuals for cognitive capture" - not one canonical surface</td></tr>
+<tr><td>D-EAR-1.5</td><td>A chip switch mid-audition RETARGETS the loop instead of stopping it; fretboard joins the sounding marker; optional full-neck view added</td><td>Same-hour UAT (U11-U13): "need to switch modes and keep playing without hitting play again"</td></tr>
+<tr><td>D-EAR-1.6</td><td>Slow/med/fast tempo control; sounding-lights mechanism re-confirmed correct then HARDENED (not rewritten); colors derive from the accent hue via CSS Relative Color</td><td>U15's live re-repro ruled out a logic bug before touching any code; U20 wanted user-chosen color harmony, not a fixed palette</td></tr>
+<tr><td>D-TRACKLIB-1</td><td>The jam-discovery panel lives in the Practice Studio only - not the Library, not a filter-driven show/hide surface</td><td>Operator directive: "the appendix is the golden nugget"; explicitly not a D-HERO-REMOVED-style restoration</td></tr>
+<tr><td>D-YT-PREFILL</td><td>YouTube's own oEmbed endpoint is the PRIMARY prefill strategy, not a fallback-first design</td><td>Live Playwright CORS check confirmed a keyless cross-origin GET just works; noembed.com kept as tested defense-in-depth, never actually needed</td></tr>
+<tr><td>D-ENFORCE-2</td><td>TOAST+ACTION (undoable, timed, countdown, pause-on-touch) and HELP join the feedback-surface taxonomy; native confirm()/alert() start getting replaced</td><td>Operator screenshot of two inconsistent feedback surfaces stacked on one action (U19)</td></tr>
+<tr><td>D-DIM-SHAPES</td><td>dim gets a real curated shape bucket; dim7/aug are curated defensively even with no live UI anchor yet</td><td>A Bdim chords-in-key card rendered diagram-only with a broken card height - an honest null the classifier had left uncurated</td></tr>
+<tr><td>D-SET-INTEGRITY</td><td>Dangling setlist references are closed at three levels (delete-heal, defensive nav, load-heal) - belt-and-suspenders, not "pick one"</td><td>A read-time invariant (a bug or a restore can reintroduce a dangling ref anytime) is wrong to fix with a one-time migration</td></tr>
+<tr><td>D-REL-NAMES</td><td>Guidance copy names the concrete derivable object, not just the relationship</td><td>Operator: "doesn't say WHAT the minor key is... a message on the continuum of your journey, available at point of need"</td></tr>
+<tr><td>D-TOAST-HOST</td><td>Fix the missing CSS companion rule, not the hide mechanism itself</td><td>Author-origin CSS always outranks the user-agent's [hidden]{display:none} regardless of specificity - the JS lifecycle was never broken</td></tr>
+</table></div>
+
+<h2>Verify today (post-hoc, not a live forecast)</h2>
+<div class="card">
+<strong>V1 - hear it:</strong> live app -> Practice Studio -> tap a scale chip -> it hums; switch chips mid-loop -> it retargets without stopping; the fretboard dots light up on the sounding note.<br>
+<strong>V2 - find a jam:</strong> Studio -> open "Find a jam" -> genre/feel chips + a live YouTube search link, key-aware and re-derived on every scale switch.<br>
+<strong>V3 - dim chords:</strong> a key whose diatonic vii is diminished (e.g. C major) -> the Bdim chords-in-key card now shows a real shape label at the same card height as its neighbors.<br>
+<strong>V4 - the undo toast:</strong> delete a song from the setlist -> a 6-second countdown-bar undo banner appears, then fully disappears (not an empty pill) when it expires.<br>
+<strong>V5 - still gated:</strong> the two veto windows above are genuinely still open - no anchors UI and no baked playlist tracks exist yet without the operator's explicit veto pass.
+</div>
+
+<div class="foot">RETROSPECTIVE - authored 2026-07-05 from <code>.claude/sessions/session-2026-07-05-01-ear-first-night-completed.md</code> (no live pane was written during the night this shipped). Drafts awaiting veto: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/song-anchors-draft-20260704.md">song-anchors-draft-20260704.md</a>. Full record: <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-ear-first-20260704.md">vision-ear-first-20260704.md</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md">QUEUE.md</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions.md</a>. Problem Solutions - compound engineering.</div>
+</div>
+</body></html>

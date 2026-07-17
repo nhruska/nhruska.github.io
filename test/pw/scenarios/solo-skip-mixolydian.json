@@ -1,0 +1,85 @@
+{
+  "name": "solo-skip-mixolydian",
+  "description": "MERGE GATE for the progression-aware picker + FORK-4 removal: build C-F-A# (I-IV-bVII) in C major, Solo -> Skip; the Studio must default to Mixolydian with Mixolydian+Dorian chips present and the b7 spelled KEY-AWARE as Bb (never A#) in the notes line.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "A#"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "screenshot",
+      "name": "progression-built"
+    },
+    {
+      "action": "tap",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal"
+    },
+    {
+      "action": "tapText",
+      "text": "Just practice",
+      "scope": ".composeRow"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-scalechips]"
+    },
+    {
+      "action": "assertChipOn",
+      "selector": "[data-scalechips] .bt-st-scalechip",
+      "text": "Mixolydian"
+    },
+    {
+      "action": "assertCount",
+      "selector": "[data-scalechips] .bt-st-scalechip",
+      "min": 5
+    },
+    {
+      "action": "assertText",
+      "selector": ".bt-st-notes",
+      "contains": "Bb"
+    },
+    {
+      "action": "screenshot",
+      "name": "studio-mixolydian-default"
+    }
+  ]
+}

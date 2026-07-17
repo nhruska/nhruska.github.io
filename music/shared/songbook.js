@@ -73,11 +73,17 @@
    * diminished degree dropped from the strummable palette (kept in the solo scale).
    * If circle is somehow absent, the inline steps are an identical fallback. */
   var CIRCLE_MODE = { Major: "ionian", Minor: "aeolian", Mixolydian: "mixolydian", Dorian: "dorian" };
+  // Blues is a PALETTE-KIND key model (I7/IV7/V7, m-guide-ia-20260704.md section 1),
+  // not a 7-note circle-of-fifths mode - it stays OUT of CIRCLE_MODE on purpose
+  // (syncStepsFromCircle below only iterates CIRCLE_MODE's keys, so Blues.steps is
+  // never overwritten by a nonexistent Circle.MODE_STEPS.blues). `romans` is a
+  // Blues-only field (diatonic modes fall back to RN_UP in romanInKey below).
   var MODES = {
     Major:      { label: "Major",      steps: [0, 2, 4, 5, 7, 9, 11], quals: ["", "m", "m", "", "", "m", "dim"] },
     Minor:      { label: "Minor",      steps: [0, 2, 3, 5, 7, 8, 10], quals: ["m", "dim", "", "m", "m", "", ""] },
     Mixolydian: { label: "Mixolydian", steps: [0, 2, 4, 5, 7, 9, 10], quals: ["", "m", "dim", "", "m", "m", ""] },
-    Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] }
+    Dorian:     { label: "Dorian",     steps: [0, 2, 3, 5, 7, 9, 10], quals: ["m", "m", "", "", "m", "dim", ""] },
+    Blues:      { label: "Blues",      steps: [0, 5, 7],             quals: ["7", "7", "7"], romans: ["I", "IV", "V"] }
   };
   (function syncStepsFromCircle() {
     var C = global.Circle;
@@ -89,7 +95,8 @@
   })();
   var MODE_HINT = {
     Major: "bright, resolved", Minor: "dark, moody",
-    Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful"
+    Mixolydian: "bluesy jam (Dead/Phish)", Dorian: "minor jam, hopeful",
+    Blues: "12-bar swagger - three 7th chords"
   };
   function rootPc(root) { var i = ROOTS.indexOf(F2S[root] || root); return i < 0 ? null : i; }
   // diatonic chords in scale-degree order, diminished degrees dropped (rarely strummed
@@ -118,7 +125,7 @@
   // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
   // capitalized keys - both must hit the same table (codex V2 medium; same trap
   // class Circle.modeKey already guards).
-  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian' };
+  var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian', blues: 'Blues' };
   function canonMode(modeKey) {
     return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
   }
@@ -134,6 +141,10 @@
     var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
       : /^(aug|\+)/.test(suf) ? 'aug'
       : /^m(?!aj)/.test(suf) ? 'm' : '';
+    // BLUES palette degree (I7/IV7/V7, m.quals[deg] === '7'): in-key is the root as
+    // a plain major triad OR its dominant 7th - deliberately no ii/dim/maj7/subs
+    // (D-BLUES-KEY minimalism; the "All" chord view is the escape hatch).
+    if (m.quals[deg] === '7') return q === '' && (suf === '' || suf === '7');
     if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
     return q === m.quals[deg];
   }
@@ -157,8 +168,15 @@
       var suf = cm[2].toLowerCase();
       var q = (/^(dim|°|o)/.test(suf) || /m7?b5|m7-5|ø/.test(suf)) ? 'dim'
         : /^m(?!aj)/.test(suf) ? 'm' : '';
-      var rn = (q === 'm' || q === 'dim') ? RN_UP[deg].toLowerCase() : RN_UP[deg];
-      return q === 'dim' ? rn + '°' : rn;
+      // m.romans (Blues only) overrides the generic 7-degree RN_UP table; every
+      // other mode falls back to RN_UP unchanged.
+      var romans = m.romans || RN_UP;
+      var rn = (q === 'm' || q === 'dim') ? romans[deg].toLowerCase() : romans[deg];
+      if (q === 'dim') return rn + '°';
+      // BLUES palette degree: the dominant 7th IS the diagnostic label (I7/IV7/V7);
+      // a plain triad on the same root reads the bare numeral (I/IV/V).
+      if (m.quals[deg] === '7' && suf === '7') return rn + '7';
+      return rn;
     }
     // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
     // `global` is this module's exports, so fall back to require.
@@ -189,22 +207,313 @@
   // named progression maps degree->chord exactly: I-V-vi-IV in G -> G D Em C.
   function chordsFromDegrees(root, modeKey, degrees) {
     var rp = rootPc(root), m = MODES[canonMode(modeKey)]; if (rp == null || !m) return [];
+    // Generalized over the mode's OWN degree count (7 for diatonic modes, 3 for
+    // Blues' I7/IV7/V7 palette) instead of a hardcoded 7, so a 12-bar blues
+    // starter's degrees [0,0,0,0,1,1,...] wrap mod 3, not mod 7.
+    var len = m.steps.length;
     return degrees.map(function (deg) {
-      var i = ((deg % 7) + 7) % 7;
+      var i = ((deg % len) + len) % len;
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
+    });
+  }
+  // ---- M-13 g1 TEMPLATE-SUGGESTED SECTIONS: roman -> chord realization --------
+  // Realize a roman-numeral token (SongTemplates.forSection's chromatic-roman
+  // shape, e.g. 'I','vi','IV','bVII','i') into a canonical-sharp chord TOKEN in a
+  // key, using the app's ONE degree-analysis path (Circle.romanFor) INVERTED by
+  // search over the 12 roots - never a second speller (the ONE-path rule). The
+  // roman's own casing/markers carry the quality (UPPER = major, lower = minor,
+  // '°' = dim, '+' = aug); a leading flat ('bVII') is degree-lowering only, not a
+  // quality. Returns null when NO root reproduces the roman under that quality (a
+  // borrowed/secondary degree Circle can't place from a bare triad) so the caller
+  // SKIPS the suggestion rather than approximating.
+  function romanChordSuffix(roman) {
+    var r = String(roman == null ? '' : roman).trim();
+    if (!r) return null;
+    if (/°|dim/i.test(r)) return 'dim';
+    if (/\+|aug/i.test(r)) return 'aug';
+    var base = r.replace(/^b+/i, '');   // strip the degree-lowering accidental
+    if (/^[iv]/.test(base)) return 'm'; // lowercase numeral -> minor triad
+    if (/^[IV]/.test(base)) return '';  // uppercase numeral -> major triad
+    return null;                        // not a roman numeral we can quality-read
+  }
+  function realizeRoman(roman, keyRoot) {
+    var C = global.Circle;
+    if (!C || typeof C.romanFor !== 'function' || !keyRoot) return null;
+    var target = String(roman == null ? '' : roman).trim();
+    var suffix = romanChordSuffix(target);
+    if (suffix == null) return null;
+    for (var pc = 0; pc < 12; pc++) {
+      var cand = ROOTS[pc] + suffix;
+      if (C.romanFor(cand, keyRoot) === target) return cand; // TOKEN stays canonical-sharp
+    }
+    return null; // no root reproduces this roman under this quality -> skip
+  }
+  // Realize a whole roman pattern into chord tokens in a key. ALL-or-NOTHING: one
+  // unrealizable roman skips the ENTIRE suggestion (never a half-approximated
+  // progression). Returns null when any token fails or the input is empty.
+  function realizeSection(romanArr, keyRoot) {
+    if (!Array.isArray(romanArr) || !romanArr.length) return null;
+    var out = [];
+    for (var i = 0; i < romanArr.length; i++) {
+      var tok = realizeRoman(romanArr[i], keyRoot);
+      if (tok == null) return null;
+      out.push(tok);
+    }
+    return out;
+  }
+  // Key-aware DISPLAY name for a canonical-sharp chord token inside a stated key
+  // (the IV of F reads Bb, never A#) - the pure, key-parameterized twin of mount()'s
+  // dispChordName, routed through Circle.noteInKey (the ONE display-naming path).
+  // Keyless (no keyRoot) -> the token unchanged (canonical sharp), matching the
+  // note-spelling regime-B contract for keyless contexts.
+  function dispChordNameInKey(c, keyRoot, keyMode) {
+    var C = global.Circle;
+    if (!keyRoot || !C || !C.noteInKey) return c;
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(c == null ? '' : c).trim());
+    if (!m) return c;
+    return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
+  }
+  // ADJACENT-SECTION FIT (UAT 2026-07-11): score how strongly a suggestion (its
+  // FIRST roman) ARRIVES from the previous buffered section (its LAST roman), both
+  // as romans in the SAME song key. The songwriting-coach cadence ladder: V->I
+  // authentic (strongest arrival into the next section), IV->I plagal, vi->IV the
+  // common step, a shared chord = smooth overlap. Degree-only (quality/accidental
+  // stripped) - the connection is about scale-position motion, not chord colour.
+  // Higher = better fit; 0 = no recognized connection. Pure + deterministic.
+  var SECTION_CONNECT = { 'V>I': 4, 'IV>I': 3, 'VI>IV': 2 };
+  function sectionConnectScore(prevLastRoman, firstRoman) {
+    if (!prevLastRoman || !firstRoman) return 0;
+    var p = String(prevLastRoman).replace(/[^IVXivx]/g, '').toUpperCase();
+    var f = String(firstRoman).replace(/[^IVXivx]/g, '').toUpperCase();
+    if (!p || !f) return 0;
+    var s = SECTION_CONNECT[p + '>' + f];
+    if (s != null) return s;
+    return p === f ? 1 : 0; // shared chord across the seam = smooth overlap
+  }
+  // ---- M-13 g3 PERSONALIZED RANKING: nudge template suggestions by the
+  // musician's OWN competency profile (music.competency.v1, competency.js) -
+  // never a filter (pedagogy-coach: levels gate DEPTH, not access), only a
+  // re-rank plus a one-line why-cue. A cheap deterministic complexity proxy:
+  // distinct romans + altered/borrowed degrees (a leading 'b', a dim/aug
+  // marker) - more distinct/altered chords reads as more "varied". Below the
+  // SIMPLE threshold favors a comp-progressions level under 40 (early
+  // players); at/above the VARIED threshold favors a level at/above it
+  // (ready for more color). A matching PREFERENCE (keyword overlap between a
+  // recorded preference statement and the suggestion's own family/citation
+  // text) always wins the tag slot - an explicit personal signal outranks an
+  // inferred skill nudge. No profile, or no signal either way, leaves every
+  // suggestion untagged with zero boost - the ranking degrades byte-for-byte
+  // to forSection/sectionConnectScore's own order (graceful absence).
+  var COMPLEXITY_SIMPLE_MAX = 4, COMPLEXITY_VARIED_MIN = 6;
+  var PREF_STOPWORDS = { the: 1, and: 1, uses: 1, use: 1, using: 1, with: 1, your: 1, for: 1, that: 1, this: 1, from: 1, into: 1, over: 1, when: 1 };
+  function suggestionComplexity(romanArr) {
+    var seen = {}, distinct = 0, altered = 0;
+    (romanArr || []).forEach(function (r) {
+      var key = String(r == null ? '' : r);
+      if (!key) return;
+      if (!seen[key]) { seen[key] = true; distinct++; }
+      if (/^b/i.test(key) || /°|\+/.test(key)) altered++;
+    });
+    return distinct + altered;
+  }
+  function prefWords(statement) {
+    return String(statement == null ? '' : statement).toLowerCase().split(/[^a-z]+/).filter(function (w) {
+      return w.length >= 4 && !PREF_STOPWORDS[w];
+    });
+  }
+  // First preference (in profile order) whose statement shares a significant
+  // word with `text` (case-insensitive substring match) - null if none/absent.
+  function matchedPreference(preferences, text) {
+    if (!Array.isArray(preferences) || !preferences.length || !text) return null;
+    var hay = String(text).toLowerCase();
+    for (var i = 0; i < preferences.length; i++) {
+      var words = prefWords(preferences[i] && preferences[i].statement);
+      for (var j = 0; j < words.length; j++) {
+        if (hay.indexOf(words[j]) >= 0) return preferences[i];
+      }
+    }
+    return null;
+  }
+  // Mutates each suggestion with `_boost` (sort nudge, 0/1/2) + `_tag` (the
+  // why-cue string, or null). `suggestions` entries carry `_complexity`
+  // (from suggestionComplexity) and `_matchText` (the family/citation text a
+  // preference can match against) already set by the caller. `profile` is a
+  // competency.js profile object ({competencies, preferences}) or null/absent
+  // (no stored data yet) - either way, a missing/incomplete profile is a
+  // silent no-op, never a throw. Returns `suggestions` (mutated in place) for
+  // convenient chaining/testing.
+  function personalizeSuggestions(suggestions, profile) {
+    var level = null;
+    if (profile && Array.isArray(profile.competencies)) {
+      for (var i = 0; i < profile.competencies.length; i++) {
+        if (profile.competencies[i] && profile.competencies[i].id === 'comp-progressions') {
+          level = profile.competencies[i].level; break;
+        }
+      }
+    }
+    var preferences = profile && profile.preferences;
+    (suggestions || []).forEach(function (s) {
+      s._boost = 0; s._tag = null;
+      var pref = matchedPreference(preferences, s._matchText);
+      if (pref) { s._boost = 2; s._tag = 'your style'; return; }
+      if (typeof level !== 'number') return; // no usable level signal -> no nudge
+      if (level < 40 && s._complexity <= COMPLEXITY_SIMPLE_MAX) { s._boost = 1; s._tag = 'easy fit'; }
+      else if (level >= 40 && s._complexity >= COMPLEXITY_VARIED_MIN) { s._boost = 1; s._tag = 'adds variety'; }
+    });
+    return suggestions;
+  }
+  // MODAL INTERCHANGE core (Phase 2), extracted per m-guide-ia-20260704.md section 4.5 so
+  // BOTH the explicit-key path (mount()'s convertToMode) and the keyless mode-change
+  // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
+  // ROOT against `targetMode`'s steps (offset from tonicRoot) to find its scale degree,
+  // then re-qualifies to that degree's quality, re-basing any 7th-type extension that
+  // survives the quality flip (major degree keeps maj7-ness, else collapses to a
+  // dominant/minor 7; a dim degree keeps the bare dim triad). A chord whose root is NOT
+  // a degree of the target mode (chromatic/borrowed) is left UNCHANGED (best-effort
+  // rule, decision D3) - round-trip is not perfect for those chords (accepted).
+  // `sourceMode` feeds the W2 blues-aware rules below (Major/Minor/Mixo/Dorian <->
+  // Blues): converting INTO Blues collapses any palette-degree root to a dominant
+  // 7th (baseQual === '7', regardless of the original extension); converting OUT
+  // OF Blues (fromBlues guard) only re-qualifies a chord whose root sits on the
+  // BLUES PALETTE (offsets 0/5/7 from tonicRoot, the professor-fold amendment
+  // 8A - NOT "any target-mode degree") - anything else (a user-added secondary
+  // like A7 over a C blues) is left byte-for-byte unchanged, and a bare dominant
+  // 7th surviving from a palette root is treated as a plain triad before target
+  // re-qualification (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7
+  // keeps its own extension-class survival (not stripped).
+  function convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode) {
+    // Canonicalize targetMode the SAME way sourceMode already is below (canonMode) -
+    // callers outside the in-app UI (saved/custom items, the bridge payload) carry
+    // the lowercase MODE_CANON vocabulary ('blues', 'major', ...); a bare MODES[targetMode]
+    // lookup silently no-ops on those (codex finding, PR #115).
+    var tm = canonMode(targetMode);
+    var m = MODES[tm];
+    if (!chords || !chords.length || !m) return chords ? chords.slice() : [];
+    var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
+    if (tonicPc == null) return chords.slice();
+    var steps = m.steps, quals = m.quals;
+    var fromBlues = canonMode(sourceMode) === 'Blues';
+    return chords.map(function (c) {
+      var p = splitChord(c);
+      if (!p) return c;
+      var rpc = rootPc(p.root);
+      if (rpc == null) return c;
+      var offset = ((rpc - tonicPc) % 12 + 12) % 12;
+      // BLUES-SOURCE GUARD (professor fold 8A, supersedes the section-1 dom-7-strip
+      // scope): a chord surviving FROM Blues only re-qualifies when its root sits on
+      // the BLUES PALETTE (I7/IV7/V7 -> offsets 0,5,7 from the blues tonic) - not on
+      // any degree the TARGET mode happens to have there. A user-added secondary
+      // (A7 over a C blues) is not palette material; leave it fully unchanged.
+      if (fromBlues && offset !== 0 && offset !== 5 && offset !== 7) return c;
+      var i = steps.indexOf(offset);
+      if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
+      var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished, "7" blues dominant
+      // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
+      var ext = "";
+      if (/maj7$/.test(p.qual)) ext = "maj7-like";
+      else if (/m7$/.test(p.qual)) ext = "min7-like";
+      else if (/7$/.test(p.qual)) ext = "dom7-like";
+      // dom-7-strip (fold 8A): a plain dominant 7th surviving from a Blues palette
+      // root is treated as a bare triad before re-qualification; m7/maj7 keep their
+      // own extension-class survival (handled by the branches below, untouched here).
+      if (fromBlues && ext === "dom7-like") ext = "";
+      var suffix;
+      if (baseQual === "7") {
+        // target degree IS a Blues palette root (I7/IV7/V7): the extension class
+        // always collapses to the dominant 7th, regardless of what it was.
+        suffix = "7";
+      } else if (ext === "") {
+        suffix = baseQual; // plain triad -> target triad quality
+      } else if (baseQual === "dim") {
+        suffix = "dim"; // keep the bare diminished triad on a dim degree
+      } else if (baseQual === "m") {
+        // minor degree: a 7th becomes a minor 7th (m7); a maj7 over a minor degree is
+        // uncommon - normalize to m7 to keep the chord diatonic-feeling.
+        suffix = "m7";
+      } else { // baseQual === "" -> major degree
+        // major degree: a maj7 stays maj7; a dominant/minor 7 becomes a dominant 7
+        // (the usual major-degree 7th in these jam styles).
+        suffix = (ext === "maj7-like") ? "maj7" : "7";
+      }
+      return p.root + suffix;
     });
   }
   // The canon — famous progressions, by 0-indexed major-scale degree. All diatonic
   // to MAJOR so they fill cleanly from any major key; modal/borrowed ones (Andalusian,
-  // i-bVII-bVI) need a different derivation and are a deliberate follow-up.
+  // i-bVII-bVI) need a different derivation and are a deliberate follow-up. W2 adds
+  // two mode-carrying Blues starters (degrees are 0-indexed into MODES.Blues' own
+  // 3-entry palette: 0=I7, 1=IV7, 2=V7 - chordsFromDegrees' mod-3 generalization
+  // above resolves them) - `mode` + `preview` are OPTIONAL fields the diatonic
+  // entries above simply omit (loadProgression/renderSuggest default them).
   var PROGRESSIONS = [
     { name: "4-chord song",     degrees: [0, 4, 5, 3] }, // I  V  vi IV
     { name: "50s / doo-wop",    degrees: [0, 5, 3, 4] }, // I  vi IV V
     { name: "Pop / Axis",       degrees: [5, 3, 0, 4] }, // vi IV I  V
     { name: "Three-chord rock", degrees: [0, 3, 4] },    // I  IV V
     { name: "Jazz turnaround",  degrees: [1, 4, 0] },    // ii V  I
-    { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] } // I V vi iii IV I IV V
+    { name: "Pachelbel",        degrees: [0, 4, 5, 2, 3, 0, 3, 4] }, // I V vi iii IV I IV V
+    { name: "12-bar blues",       mode: "Blues", degrees: [0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" },
+    { name: "Quick-change blues", mode: "Blues", degrees: [0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" }
   ];
+  // D-CAP12 (m-guide-ia-20260704.md section 1): the Compose progression cap, raised
+  // from 8 to fit the 12-bar starters above. ONE shared const replaces both the
+  // addChord and renderProg `>= 8` gates so it can never drift between the two.
+  var COMPOSE_MAX = 12;
+  // S-PROG-WRAP-2 (UAT U8b, docs/plans/uat-walkthrough-20260704.md section U8b;
+  // supersedes S-PROG-WRAP's pure width-driven binary full/compact split - see
+  // D-PROG-WRAP, amended): a COUNT-driven staged density ladder, so a short
+  // progression keeps generous full diagram cards instead of shrinking to
+  // match however crowded a 12-chord strip would be. Three stages:
+  //   'full'      1-4 chords  - diagram cards, one row, flex-grown to fill it
+  //               (capped - "sane bounds" - never shrunk below their natural
+  //               size; see the width guard below for what happens instead).
+  //   'fill-row'  5-6 chords  - the existing compact chord token (suggChip:
+  //               name + roman, no diagram), one row, equal columns sized to
+  //               fill the strip.
+  //   'grid6'     7-12 chords - the same compact token, but a FIXED 6-column
+  //               grid, so 12 chords (the COMPOSE_MAX cap) is exactly two
+  //               clean rows of 6 - never a 3rd orphan row, never horizontal
+  //               scroll (the binary mode's failure shape: 11 chords used to
+  //               flex-wrap as 5+5+1).
+  // Measured width is still consulted, but ONLY as a GUARD for pathological
+  // narrow viewports: if a stage's row would overflow the strip at its
+  // chords' NATURAL minimum size (cardW for full, the compact token's own
+  // CSS min-width for fill-row - TOKEN_MIN_W below, matching .suggChip's
+  // min-width in songbook.css), demote ONE stage early (full -> fill-row ->
+  // grid6) rather than let cards/tokens shrink below their floor - the guard
+  // can cascade both demotions in a single call if the viewport is narrow
+  // enough to overflow both. grid6 is the floor stage: no further demotion,
+  // since there is nowhere lower to fall back to (accepted: at an extreme
+  // viewport its columns may render under their comfortable minimum). Pure +
+  // Node-testable, same contract shape as fitScale above: the DOM caller
+  // (renderProg) measures cardW/gapW/availW for real and passes them in.
+  // Every width-guard boundary is exclusive (an exact fit never demotes early)
+  // and an unmeasured input (cardW/availW <= 0, e.g. before first layout)
+  // never demotes - the count-driven candidate stands, matching the original
+  // "missing measurement defaults safe" invariant.
+  var TOKEN_MIN_W = 58; // .suggChip{min-width:58px} in songbook.css
+  function progStripMode(count, cardW, gapW, availW, collapse) {
+    if (count <= 0) return 'full';
+    var stage = count <= 4 ? 'full' : count <= 6 ? 'fill-row' : 'grid6';
+    // S-CHORD-COLLAPSE: at the ADVANCED guidance level the filmstrip never
+    // shows full diagram cards - 1-4 chords take the SAME compact-token
+    // stage 5-6 already use (the maximize overlay stays the shapes view).
+    // A 5th positional param (not an opts object) keeps every existing
+    // caller/test byte-compatible: undefined is falsy = the old ladder.
+    if (collapse && stage === 'full') stage = 'fill-row';
+    // unmeasured -> the WIDTH guards below never demote (the count/level-
+    // driven candidate above, including the collapse demotion, still stands)
+    if (cardW <= 0 || availW <= 0) return stage;
+    if (stage === 'full') {
+      var fullNeed = count * cardW + Math.max(0, count - 1) * gapW;
+      if (fullNeed > availW) stage = 'fill-row';
+    }
+    if (stage === 'fill-row') {
+      var tokenNeed = count * TOKEN_MIN_W + Math.max(0, count - 1) * gapW;
+      if (tokenNeed > availW) stage = 'grid6';
+    }
+    return stage;
+  }
   // 0-indexed MAJOR-scale degree of a chord in a key (-1 if its root isn't a scale
   // tone). Used to recognize a progression-in-progress against the canon.
   var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
@@ -220,11 +529,21 @@
   // Returns [{ name, chord, degree }], the canon entries this progression is a strict
   // diatonic prefix of (longest-context first). Empty if no canon matches.
   function completions(progression, tonic, keyMode) {
+    // Blues never auto-completes: degreeOf measures against the MAJOR-scale
+    // canon (7 degrees), which is a category mismatch for the 3-degree Blues
+    // palette - explicit pick or a Blues starter carries this key, never inference.
+    if (canonMode(keyMode) === 'Blues') return [];
     if (!progression.length || !tonic) return [];
     var degs = progression.map(function (c) { return degreeOf(c, tonic); });
     if (degs.indexOf(-1) >= 0) return []; // a borrowed chord -> not a clean canon match
     var out = [];
     PROGRESSIONS.forEach(function (p) {
+      // Mode-carrying starters (the W2 Blues entries) are explicit-only - their
+      // degrees index into a 3-entry palette, not the 7-degree MAJOR_STEPS canon
+      // this loop matches against, so a coincidental degree-index prefix match
+      // (e.g. both starting on degree 0) would leak a Blues-derived "completion"
+      // into a plain Major/Minor/Mixolydian/Dorian session (codex finding, PR #115).
+      if (p.mode) return;
       if (p.degrees.length <= degs.length) return;        // nothing left to add
       var isPrefix = degs.every(function (d, i) { return d === p.degrees[i]; });
       if (!isPrefix) return;
@@ -279,30 +598,69 @@
   // the localStorage import path accept freeform tokens, so chord names and
   // section labels are user-controlled strings, not trusted vocabulary. The
   // quote entity makes the same helper safe inside attribute values.
-  function escHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of ~8
+  // divergent local copies. Name kept (escHTML, not esc) - this file's ~19
+  // call sites are unchanged.
+  function escHTML(s) { return global.Esc.esc(s); }
 
-  function renderLyricLine(raw) {
+  // S-UI-RECONCILE (Lane A, 2026-07-10): a view-local key-aware DISPLAY speller.
+  // Given a stated key (canonical-sharp token) + mode it returns token->display,
+  // routing chord ROOTS through Circle.noteInKey so the bVII of F reads Bb, never
+  // A# - the same regime-B contract the Studio/Compose surfaces already honor.
+  // The KEY it is given is already in the transposed domain (soloKeyFor moves the
+  // key with STATE.transpose) and so are the TOKENS fed in (renderSheet tposes
+  // before calling), so no second transpose happens here - both live in one
+  // domain. Keyless progressions (no key, or Circle absent) fall back to the raw
+  // token unchanged, matching the "keyless contexts stay canonical-sharp" rule.
+  // The quality suffix (m7, dim, ...) is preserved verbatim; only the root respells.
+  function chordSpeller(key, mode) {
+    var C = global.Circle;
+    if (!key || !C || !C.noteInKey) return function (tok) { return tok; };
+    return function (tok) {
+      var t = String(tok == null ? '' : tok);
+      var m = /^([A-Ga-g][#b]?)(.*)$/.exec(t.trim());
+      if (!m) return tok;
+      try { return C.noteInKey(key, mode, m[1]) + m[2]; }
+      catch (e) { return tok; }
+    };
+  }
+  // `map` (optional) is a token->display speller from chordSpeller. When absent,
+  // the raw (canonical-sharp) token renders - preserving every keyless caller's
+  // behavior. Column alignment keys off the DISPLAYED label's length so a
+  // respelled name (A# -> Bb, same width; and any exotic double-accidental) never
+  // shifts the chord row off its lyric.
+  function renderLyricLine(raw, map) {
     var chordRow = "", lyricRow = "", last = 0, m;
     var re = /\[([^\]]+)\]/g;
     while ((m = re.exec(raw))) {
       var before = raw.slice(last, m.index);
+      var label = map ? map(m[1]) : m[1];
       lyricRow += before;
       chordRow += " ".repeat(before.length);
-      chordRow += m[1];
-      lyricRow += " ".repeat(m[1].length);
+      chordRow += label;
+      lyricRow += " ".repeat(label.length);
       last = re.lastIndex;
     }
     lyricRow += raw.slice(last);
     return '<div class="lyrLine"><span class="crd">' + escHTML(chordRow) + '</span>\n' + escHTML(lyricRow) + '</div>';
   }
-  function renderChordOnly(sheet, st) {
+  // S-UI-RECONCILE (Lane A): the action-ladder class for the song-view
+  // remove/revert button. A real destructive delete is the `danger` primitive
+  // (was mislabeled `.ghost`, the low-emphasis look); a fork's "Revert to
+  // original" is NOT destructive of a user creation (it restores the catalog
+  // song), so it keeps `ghost`. Both span the row via the `.full` class (Lane D:
+  // `.actions .btn.full{flex-basis:100%}`) rather than an inline flexBasis style.
+  // Pure + exported so the class contract has a real regression test.
+  function deleteBtnClass(isFork) { return isFork ? 'btn ghost full' : 'btn danger full'; }
+  function renderChordOnly(sheet, st, map) {
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var re = /\[([^\]]+)\]/g, m, cs = [];
       while ((m = re.exec(line))) cs.push(tpose(m[1], st));
-      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(c) + '</span>'; }).join(' ') + '</div>');
+      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(map ? map(c) : c) + '</span>'; }).join(' ') + '</div>');
     });
     return out.join('');
   }
@@ -321,14 +679,14 @@
   }
   // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
   // 'both' (default) = chords positioned over lyrics.
-  function renderSheet(song, st, view) {
-    if (view === 'chords') return renderChordOnly(song.sheet, st);
+  function renderSheet(song, st, view, map) {
+    if (view === 'chords') return renderChordOnly(song.sheet, st, map);
     if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { html += '<div class="sect">' + escHTML(sect) + '</div>'; last = sect; }
-      html += renderLyricLine(tposeLine(line, st));
+      html += renderLyricLine(tposeLine(line, st), map);
     });
     return html;
   }
@@ -368,6 +726,36 @@
   // chord-sheet items can open the Practice screen or join a setlist/Stage - a
   // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
   function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
+  // S-SETADD-KEYSEED (operator burst 2026-07-12): the seed-chord TOKEN for a row
+  // with a known key but no chord sheet - the key's tonic, canonical-sharp. `key`
+  // normalizes through this module's own F2S map (same one-liner idiom rootPc()
+  // uses below: "Eb" -> "D#"); 'm' is appended for every minor-family mode,
+  // mirroring Repertoire.keyLabel's own minor test (min*/aeolian/dorian/phrygian/
+  // locrian) WITHOUT its DISPLAY respell - tokens stay canonical-sharp per
+  // music/CLAUDE.md note-spelling.md; only rendering (Repertoire.keyLabel, used
+  // for the toast) respells. Pure + Node-testable.
+  function keySeedToken(key, mode) {
+    var root = F2S[key] || key;
+    var m = String(mode || '').toLowerCase();
+    var minor = m.indexOf('min') === 0 || /aeolian|dorian|phrygian|locrian/.test(m);
+    return root + (minor ? 'm' : '');
+  }
+  // S-SETADD-KEYSEED: Library "+" affordance state for a repertoire row -
+  // 'add' (chord sheet -> live +, joins the setlist as-is - S-SETADD unchanged),
+  // 'seed' (no sheet but Repertoire.deriveKey resolves a key -> live + that
+  // SEEDS one chord instead of a ghost), or 'blocked' (neither -> ghost +,
+  // S-SETADD-EVIDENT's #249 reason/toast, unchanged). `hasSheet` is supplied by
+  // the caller's own hasChordSheet(songById(sid)) check just above - a seq-less
+  // CUSTOM track has an id too, so sid!=null alone can't decide (see
+  // hasChordSheet's comment); this function only decides the fallback. Repertoire
+  // is DI'd (soloKeyFor's own pattern above) so this stays Node-testable without
+  // a browser global. Pure.
+  function addAffordance(rec, hasSheet, Repertoire) {
+    if (hasSheet) return 'add';
+    var R = Repertoire || global.Repertoire;
+    var k = (R && typeof R.deriveKey === 'function') ? R.deriveKey(rec || {}) : { key: null };
+    return k.key ? 'seed' : 'blocked';
+  }
   // Set of catalog ids shadowed by a fork: a custom item with forkOf="<catalogId>"
   // hides that catalog song (its edited copy takes its place). Pure + testable.
   function shadowedCatalogIds(customs) {
@@ -380,8 +768,30 @@
     return out;
   }
   // A composed custom's chord-only sheet (one "[C] [G] ..." progression line). Pure.
+  // Label is "Verse", not "Progression" (operator UAT 2026-07-17): a saved
+  // progression re-entered via Continue building must read as a STANDARD song
+  // section - "Progression" isn't in the section set, so it rendered a blank
+  // section dropdown and an off-vocabulary card label. A plain progression IS
+  // the seed of a verse (the add-row's own default), so name it that from the
+  // start. Legacy "Progression"-labeled sheets are mapped at parse time
+  // (sectionsFromSheet) and self-heal on their next save.
   function buildSheetFromSeq(seq) {
-    return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
+    return [["Verse", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
+  }
+  // M-13 SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
+  // the { seq, sheet } shape a custom SONG stores. seq = first-appearance unique
+  // chords across ALL sections (the song's chord set - what the Studio/solo reads);
+  // sheet = one [label, "[C] [F] ..."] pair per section (the existing chord-only
+  // renderer parses these bracket tags). Pure + Node-testable; mirrors
+  // buildSheetFromSeq's single-line shape, one line per section.
+  function buildSongFromSections(sections) {
+    var seq = [], seen = {};
+    var sheet = (Array.isArray(sections) ? sections : []).map(function (s) {
+      var chords = (s && Array.isArray(s.seq)) ? s.seq : [];
+      chords.forEach(function (c) { if (!seen[c]) { seen[c] = true; seq.push(c); } });
+      return [String((s && s.label) || 'Section'), chords.map(function (c) { return "[" + c + "]"; }).join(" ")];
+    });
+    return { seq: seq, sheet: sheet };
   }
   // PURE core of rebuildAll: fold the catalog + customs into the merged ALLSONGS list.
   // Catalog songs get kN ids; a fork (forkOf=kN) SHADOWS its catalog original (omit it);
@@ -434,6 +844,34 @@
     }
     return changed;
   }
+  // S-SET-INTEGRITY (UAT U22, load-heal): drop any setlist entry that no
+  // longer resolves to a real song - e.g. a setlist persisted before the
+  // delete-heal existed, or restored from an older backup taken pre-fix.
+  // `resolves(id)` is the caller's lookup (mount()'s songById); kept
+  // dependency-injected so this stays Node-testable without a real ALLSONGS.
+  // Mutates `setlist` in place (same contract as remapSetlist above - keeps
+  // the array reference the queue/STATE hold) and returns the number of
+  // entries removed (0 = nothing to heal). This is a defensive READ-TIME
+  // pass, not a StorageMigrate registration: a dangling ref is a data-
+  // integrity gap that can in principle appear from ANY future bug or an
+  // old restored backup, not a one-time shape change gated by a version
+  // number - see decisions.md D-SET-INTEGRITY for the "why not a migration"
+  // ruling. Pure + Node-testable.
+  function pruneDanglingSetlist(setlist, resolves) {
+    if (!Array.isArray(setlist) || typeof resolves !== 'function') return 0;
+    var removed = 0;
+    for (var i = setlist.length - 1; i >= 0; i--) {
+      if (!resolves(setlist[i])) { setlist.splice(i, 1); removed++; }
+    }
+    return removed;
+  }
+  // A calm, static inline notice for the queue-nav position readout (Practice
+  // AND Stage) when defensive nav (S-SET-INTEGRITY, UAT U22) had to step past
+  // one or more dangling setlist entries via QUEUE.stepResolvable(). Pure +
+  // Node-testable.
+  function skipNoticeText(n) {
+    return n + ' removed song' + (n === 1 ? '' : 's') + ' skipped';
+  }
   // Which record the Studio (video + solo HUD) should open for a Repertoire row.
   // A custom item (incl. a FORK) owns its OWN video + id, so it opens as ITSELF -
   // never as a merged backing SEED track (rec._track), which would drop the user's
@@ -479,6 +917,63 @@
     };
   }
 
+  // M-GUIDANCE: guarded-reference to guidance-level.js (music.guidanceLevel.v1),
+  // same pattern as tracks.js's circleRef()/soloGuideRef()/notablesRef() - a
+  // browser global first, a Node require() fallback so songbook-firstrun.test.js
+  // and any new guidance-consumer test share the SAME require-cache module
+  // instance test/guidance-level.test.js exercises directly (not a duplicate).
+  function guidanceLevelRef() {
+    if (global.GuidanceLevel) return global.GuidanceLevel;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./guidance-level.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+
+  // M-GUIDANCE trigger hook: same guarded-dispatch shape as diagram.js's
+  // notifyRendered() (S-DIAGRAM-PREF step 1) - fires a lightweight, generic
+  // signal so play/index.html can mount its own one-time JIT prompts
+  // (tunefirst/composeintro/transposetip) without this generic engine
+  // knowing anything about Notables, localStorage, or guidance levels.
+  // Guarded: the Node test harness never stubs `window.dispatchEvent`/
+  // `CustomEvent`, so this is a safe no-op there.
+  function notifyGuidanceEvent(name, detail) {
+    if (typeof global.dispatchEvent !== 'function' || typeof global.CustomEvent !== 'function') return;
+    try { global.dispatchEvent(new global.CustomEvent(name, detail ? { detail: detail } : undefined)); } catch (e) { /* ignore */ }
+  }
+
+  // S-FIRSTRUN (sprint-1 item 4, F4): the fresh-profile Library guidance cue,
+  // built on the one-shot Notables infra (music/shared/notables.js). Pure
+  // decision fn, Node-testable without a DOM: given a Notables module (real or
+  // stub), decide whether the 'firstrun' consumer should render on THIS call -
+  // dependency-injected (Notables param) same pattern as libraryFilter's
+  // injected Rep, so tests drive a real Notables instance directly. Returns
+  // false without claiming if already dismissed (show-once); otherwise
+  // attempts Notables.claim('firstrun') and returns whatever it grants.
+  // M-GUIDANCE (retro-tagged 'beginner' in notables.js's LEVELS table): the
+  // current guidance level is read internally via guidanceLevelRef() - never
+  // added as a new argument here, so this stays a drop-in signature for the
+  // one existing call site (renderFirstrunNotable, below).
+  function firstrunShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('firstrun')) return false;
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    return Notables.claim('firstrun', undefined, level);
+  }
+
+  // M-GUIDANCE (beginner tier): "save/set basics after first song open" - a
+  // one-shot JIT cue in the practice/song screen, teaching the setlist +
+  // save mechanic. Pure decision fn, same dependency-injected shape as
+  // firstrunShouldRender above (tests drive a real Notables instance).
+  function savebasicsShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('savebasics')) return false;
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    return Notables.claim('savebasics', undefined, level);
+  }
+
   // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
   // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
   // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
@@ -500,9 +995,67 @@
   // action opens. Pure + Node-testable; shared by the list-item action ladder
   // and the song-view "Hear it on YouTube" link.
   function ytSearchURL(s) {
-    var q = [s.t || s.title, s.a || s.artist, s.key ? s.key + ' key' : '']
-      .filter(Boolean).join(' ');
+    // the 'search' placeholder is a data sentinel, never a real artist - keep it
+    // out of the QUERY too, not just the display (codex #91: displayRec masked
+    // it for rendering while the action ladder still passed the raw record).
+    var artist = s.a || s.artist;
+    if (artist === 'search') artist = '';
+    // S-UI-RECONCILE (Lane A): the key part of the query reads the PREFERRED tonic
+    // name (Bb key, not A# key) so the search matches how charts name the key.
+    // The seq tokens further down stay canonical-sharp (identity for the search).
+    var keyName = s.key;
+    if (keyName && global.Circle && global.Circle.preferredTonicName) {
+      keyName = global.Circle.preferredTonicName(s.key, s.mode || 'major');
+    }
+    var parts = [s.t || s.title, artist, keyName ? keyName + ' key' : ''];
+    // custom songs (Compose saves) have no recording to find - fold genre +
+    // chords so the search lands on something playable instead of title-only.
+    if (s.custom && Array.isArray(s.seq)) {
+      var toks = s.seq.map(function (c) { return String(c == null ? '' : c).trim(); }).filter(Boolean);
+      if (s.genre) parts.push(s.genre);
+      if (toks.length) parts.push(toks.join(' '));
+    }
+    var q = parts.filter(Boolean).join(' ');
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  }
+
+  // Movement-cancelled tap guard: fires fn only if a touch on `el` did NOT move
+  // past the threshold (a tap, not a scroll-grab dragging over this button while
+  // the thumb scrolls the setlist rail). Mouse clicks (no touch events) are
+  // unaffected.
+  // S-HARDEN (analysis-refactor-enhance-20260704 A4): this used to be a LOCAL
+  // COPY of music/shared/list-item.js's wireTap() (the "future pass" this
+  // comment used to defer). Now a thin delegate - the ONE implementation lives
+  // in list-item.js, loaded before this file everywhere it's consumed
+  // (play/index.html script order; test/songbook.test.js requires it first).
+  // Name + export kept (wireTapCancel) so callers and the existing regression
+  // suite (test/songbook.test.js) are untouched. Pure + Node-testable
+  // (exported below).
+  function wireTapCancel(el, fn) { return global.ListItem.wireTap(el, fn); }
+  // S-CLEARGUARD (sprint-1 #1, A3 binding contract): pure snapshot build/apply
+  // for the Compose Clear undo banner - extracted so the undo correctness
+  // property (a snapshot is a fully INDEPENDENT copy, never aliased to the
+  // live progression/songKey) is Node-testable without touching the DOM.
+  // buildClearSnapshot captures progression + cTpose + songKey + the linked
+  // saved-song id at the moment Clear is tapped; applyClearSnapshot hands
+  // back an equally independent copy so a restore can never leak a live
+  // reference back into the stored snapshot (which would let a later
+  // mutation corrupt an already-consumed undo).
+  function buildClearSnapshot(progression, cTpose, songKey, savedComposeId) {
+    return {
+      progression: progression.slice(),
+      cTpose: cTpose,
+      songKey: { root: songKey.root, mode: songKey.mode, explicit: songKey.explicit },
+      savedComposeId: savedComposeId
+    };
+  }
+  function applyClearSnapshot(snapshot) {
+    return {
+      progression: snapshot.progression.slice(),
+      cTpose: snapshot.cTpose,
+      songKey: { root: snapshot.songKey.root, mode: snapshot.songKey.mode, explicit: snapshot.songKey.explicit },
+      savedComposeId: snapshot.savedComposeId
+    };
   }
 
   /* =====================================================================
@@ -540,12 +1093,169 @@
    *
    * Returns a controller: { switchTab, openSong, getState, getSongs, rebuild }
    * ===================================================================== */
+  // M-GUIDE W3b (m-guide-ia-20260704.md section 3, "Compose solo chips"): the
+  // Compose key-view solo-scale PREVIEW (wired inside mount()'s renderKeyView,
+  // below) is a decoupled, non-persisted layer - chip taps re-derive ONLY that
+  // block, never songKey/progression/palette/grid. Circle-only derivation
+  // (Songbook stays Tracks-agnostic), so it works whether or not tracks.js/
+  // solo-guide.js are loaded at all. Hoisted to module scope (rather than
+  // nested inside mount()) so these pure helpers are directly Node-testable
+  // and exportable on the public surface below, matching every other pure
+  // helper in this file (chordInKey, romanInKey, convertProgressionQualities, ...).
+  function keyViewCircle() {
+    if (global.Circle) return global.Circle;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./circle.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // SoloGuide (W3a, shared/solo-guide.js) is optional - it ships in a sibling
+  // wave whose merge order is free relative to this one. Absent module (not
+  // yet merged, or the browser didn't load the script) -> no caption, chips
+  // still work fully (locked seam guard, m-guide-ia-20260704.md section 3).
+  function keyViewSoloGuide() {
+    if (global.SoloGuide) return global.SoloGuide;
+    if (typeof module !== 'undefined' && typeof require === 'function') {
+      try { return require('./solo-guide.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+  // Pure + exported for tests: the note names for one chip. scaleId is one of
+  // 'mode' | 'pentMajor' | 'pentMinor' | 'blues' | 'mixolydian'. 'mode' resolves
+  // to the KEY's own scale - the 6-note blues scale when keyMode is Blues
+  // (which is exactly why the Blues-key row dedupes the standalone Blues chip:
+  // it would show the same notes under a second button), else the mode's
+  // 7-note Circle scale via CIRCLE_MODE. 'mixolydian' (S-CHIPS-PLUS, P5 W3
+  // verdict) is the chip that fills the freed 4th slot on a Blues key - the
+  // dominant-scale option a player actually reaches for over I7-IV7-V7 - and
+  // resolves via Circle.spellScale directly, independent of keyMode, so it's
+  // callable the same way regardless of which key row a caller is testing.
+  // Unresolvable root/Circle/mode -> null (caller keeps whatever was on-screen
+  // rather than clearing it, matching soloScale's own contract).
+  function soloChipScale(root, keyMode, scaleId) {
+    var C = keyViewCircle();
+    if (!C) return null;
+    // FORK-4 removal: every note list is KEY-AWARE (letter-per-degree from the
+    // preferred tonic name) with the legacy sharp fns as fallback - display
+    // strings only; no token changes.
+    var kmArg = canonMode(keyMode) === 'Minor' ? 'minor' : 'major';
+    if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
+      var notes = C.soloScaleInKey ? C.soloScaleInKey(root, scaleId, kmArg) : C.soloScale(root, scaleId);
+      return notes.length ? notes : null;
+    }
+    if (scaleId === 'mixolydian') {
+      if (typeof C.spellScale !== 'function' && typeof C.scaleInKey !== 'function') return null;
+      var mixNotes = C.scaleInKey ? C.scaleInKey(root, 'mixolydian') : C.spellScale(root, 'mixolydian');
+      return mixNotes.length ? mixNotes : null;
+    }
+    var mk = canonMode(keyMode);
+    if (mk === 'Blues') {
+      var bluesNotes = C.soloScaleInKey ? C.soloScaleInKey(root, 'blues', 'major') : C.soloScale(root, 'blues');
+      return bluesNotes.length ? bluesNotes : null;
+    }
+    var circleMode = CIRCLE_MODE[mk];
+    if (!circleMode || (typeof C.spellScale !== 'function' && typeof C.scaleInKey !== 'function')) return null;
+    var scaleNotes = C.scaleInKey ? C.scaleInKey(root, circleMode) : C.spellScale(root, circleMode);
+    return scaleNotes.length ? scaleNotes : null;
+  }
+  // Pure + exported for tests (S-CHIPS-PLUS): the scale-degree glyphs for a
+  // chip (e.g. ['1','2','3','4','5','6','♭7']), root-independent (degree
+  // formulas don't depend on a root) - mirrors soloChipScale's own scaleId
+  // routing exactly so a chip's notes and its degrees always describe the
+  // SAME scale. Renders as the muted degrees line under the notes line (P5 W3
+  // verdict: "how do these notes function", not just their names). Circle
+  // absence, or an id neither this fn nor Circle recognizes -> null (caller
+  // hides the degrees line rather than showing a stale one).
+  function soloChipDegrees(keyMode, scaleId) {
+    var C = keyViewCircle();
+    if (!C) return null;
+    if (scaleId === 'pentMajor' || scaleId === 'pentMinor' || scaleId === 'blues') {
+      var d = (typeof C.soloScaleDegrees === 'function') ? C.soloScaleDegrees(scaleId) : [];
+      return d.length ? d : null;
+    }
+    if (scaleId === 'mixolydian') {
+      if (typeof C.scaleDegrees !== 'function') return null;
+      var mixDeg = C.scaleDegrees('mixolydian');
+      return mixDeg.length ? mixDeg : null;
+    }
+    var mk = canonMode(keyMode);
+    if (mk === 'Blues') {
+      var bluesDeg = (typeof C.soloScaleDegrees === 'function') ? C.soloScaleDegrees('blues') : [];
+      return bluesDeg.length ? bluesDeg : null;
+    }
+    var circleMode = CIRCLE_MODE[mk];
+    if (!circleMode || typeof C.scaleDegrees !== 'function') return null;
+    var modeDeg = C.scaleDegrees(circleMode);
+    return modeDeg.length ? modeDeg : null;
+  }
+  // Pure + exported for tests: the one-line teaching caption for a chip, or
+  // null. 'mode' never captions (mirrors the Practice Studio, which never
+  // captions its default/mode chip even when that scale happens to be Blues -
+  // tracks.js wireScaleChips: `info = scaleId !== 'mode' ? ... : null`).
+  // SoloGuide absence -> null, never throws (guarded contract above). `root`
+  // (S-REL-NAMES, U23, optional 2nd arg) is the key-view's own key root -
+  // names any {relMinor}/{relMajor} token in the framing text (e.g.
+  // pentMajor's "same shape as {relMinor} pent"); absent root degrades to the
+  // pre-S-REL-NAMES relationship-only wording, same as every existing caller.
+  function soloChipCaption(scaleId, root) {
+    if (scaleId === 'mode') return null;
+    var SG = keyViewSoloGuide();
+    if (!SG) return null;
+    // S-CHIPS-PLUS: SoloGuide.framing() has no mixolydian branch (that table
+    // is curated per-scaleId prose from the S-BLUES era) - its card()'s
+    // chooseWhen already covers mixolydian and needs no {i} note
+    // interpolation for that block, so it's "trivially reachable" per the P5
+    // W3 verdict; guarded the same never-throws way as the framing() path.
+    if (scaleId === 'mixolydian') {
+      if (typeof SG.card !== 'function') return null;
+      var mixCard = SG.card('mixolydian');
+      return (mixCard && mixCard.chooseWhen) || null;
+    }
+    var C = keyViewCircle();
+    if (!C || typeof SG.framing !== 'function') return null;
+    var info = (typeof C.soloScaleInfo === 'function') ? C.soloScaleInfo(scaleId) : null;
+    return SG.framing(scaleId, info && info.family, root) || null;
+  }
   function mount(opts) {
     opts = opts || {};
     var el = opts.el || {};
     var pack = opts.chordPack || null;
     var prefix = opts.storagePrefix || "songbook";
     var PROFILE_ID = opts.profileId || null; // instrument profile id, carried onto the inversions deep-link
+    // ---- M-COMPETENCY LZ (2026-07-11): evidence hooks. GUARDED - a no-op
+    // until competency.js is wired into play/index.html + sw.js CORE (the
+    // coupled parent merge step). The engine records what the musician DOES
+    // (assembling a song, saving a progression, adding a section) against the
+    // per-skill competency profile; nothing personal is stored in this repo -
+    // the levels live only in the user's localStorage (music.competency.v1).
+    function competencyRef() {
+      if (global.Competency) return global.Competency;
+      if (typeof module !== 'undefined' && module.exports) { try { return require('./competency.js'); } catch (e) {} }
+      return null;
+    }
+    function recordComp(compId) {
+      var C = competencyRef(); if (!C || !C.recordEvidence) return;
+      try { C.recordEvidence('music-composition', compId); } catch (e) {}
+    }
+    // M-13 g3: the REAL stored profile for a skill, or null - never a
+    // fabricated blank. getProfile() would hand back blankProfile (level 0
+    // everywhere) even when the user has never touched competency at all, and
+    // that would fabricate a "beginner" signal out of true absence. Reading
+    // the raw stored map keeps "no profile" and "profile at level 0" distinct,
+    // which is exactly what personalizeSuggestions' graceful-absence contract needs.
+    function competencyProfile(skillId) {
+      var C = competencyRef(); if (!C || typeof C.load !== 'function') return null;
+      try { var map = C.load(); return (map && map[skillId]) || null; } catch (e) { return null; }
+    }
+    // Map the ACTIVE instrument profile to its repertoire competency; degrade
+    // to the shared stringed-instrument chord-shapes when it isn't uke/guitar.
+    function recordRepertoire() {
+      var C = competencyRef(); if (!C || !C.recordEvidence) return;
+      var p = String(PROFILE_ID || '').toLowerCase(), skill = 'stringed-instrument', comp = 'chord-shapes';
+      if (p.indexOf('ukulele') === 0) { skill = 'ukulele'; comp = 'uke-repertoire'; }
+      else if (p.indexOf('guitar') === 0) { skill = 'guitar'; comp = 'gtr-repertoire'; }
+      try { C.recordEvidence(skill, comp); } catch (e) {}
+    }
     // P3: seed the backing-track finder with the built key+mode (no-op if not wired).
     var seedBackingKey = opts.seedBackingKey || function () {};
     // M3: the repertoire merges songs.json with the backing-track catalog. getTracks()
@@ -606,10 +1316,43 @@
       return (seq || []).every(function (c) { return packHasChord(tpose(c, st)); });
     }
 
+    // A1 (analysis-refactor-enhance-20260704): the single write seam every save*
+    // function below routes through. Mirrors backup.js's applyAtomic quota-detect
+    // (same /quota|exceed/i test against e.name+e.message) but WITHOUT its multi-key
+    // atomic-rollback machinery - a routine save is one key, so there is nothing to
+    // roll back on failure (the prior value for that key is simply left in place,
+    // since a throwing setItem never overwrote it). Returns true on a real write,
+    // false if storage threw (quota exceeded, blocked/private-mode storage, etc.).
+    // Callers decide whether a false return needs USER-visible feedback: saveProgression
+    // (Compose "Saved to your Library", F23) does; the passive prefs/last-opened/song-view
+    // writes fail soft (console signal only) per the app's #1 fatal-dismissal trigger
+    // being an unconditional SUCCESS message on a save that silently didn't happen -
+    // not the passive writes, which never claimed success to begin with.
+    var _safeSetWarned = {}; // one console.warn per key for the life of this mount - a
+    // blocked-storage device would otherwise spam the console on every keystroke-driven
+    // passive save (e.g. the perform-speed slider firing savePerfPrefs repeatedly).
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, value); return true; }
+      catch (e) {
+        if (!_safeSetWarned[key]) {
+          _safeSetWarned[key] = true;
+          var quota = e && /quota|exceed/i.test(String(e.name) + String(e.message));
+          console.warn('[songbook] storage write failed for ' + key + (quota ? ' (quota exceeded)' : '') + ' - further failures for this key are suppressed this session:', e);
+        }
+        return false;
+      }
+    }
+    // A1/H4 shared failure message (analysis-refactor-enhance-20260704): the one
+    // truthful "didn't actually save" message for any USER-INITIATED save whose
+    // underlying safeSet() write failed. Shared by saveProgression's create/
+    // update branches (D-SAVE-TRUTH) and toggleSet's setlist-add branch
+    // (S-HARDEN H4) so the wording can't drift between the two.
+    var SAVE_FAIL_MSG = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
+
     /* ---------- custom (composed) progressions ---------- */
     var CUSTOM_KEY = prefix + ".custom.v1";
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customSongs)); } catch (e) { } }
+    function saveCustom() { return safeSet(CUSTOM_KEY, JSON.stringify(customSongs)); }
     var customSongs = loadCustom();
     // Fork-to-custom SHADOW + composed-custom append: the pure fold lives in the
     // module-scope buildAllSongs(catalog, customs) (exported + unit-tested). Deleting
@@ -620,11 +1363,14 @@
     /* ---------- state + persistence ---------- */
     var STORE_KEY = prefix + ".setlist.v1";
     function loadSet() { try { var r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveSet() { try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE.setlist)); } catch (e) { } }
+    function saveSet() { return safeSet(STORE_KEY, JSON.stringify(STATE.setlist)); }
     // last-opened song, so the app can greet you already holding a song to play.
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
-    function saveLast(id) { try { localStorage.setItem(LAST_KEY, id); } catch (e) { } }
+    // Passive (no user-visible confirmation anywhere it's called) - fails soft via
+    // safeSet's console signal. See safeSet's header comment for the user-initiated
+    // vs passive split this mission drew.
+    function saveLast(id) { return safeSet(LAST_KEY, id); }
     // perform-screen prefs (scroll speed + view), remembered per device. Font
     // size is NOT persisted - Stage force-opens auto every time (UAT r3).
     // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
@@ -650,7 +1396,8 @@
     // NOTE: font size is intentionally NOT persisted - Stage force-defaults to
     // auto on every open (UAT r3), so a cross-reload size would be dead. Manual
     // A-/A+ still holds in STATE within a Stage session (across prev/next).
-    function savePerfPrefs() { try { localStorage.setItem(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); } catch (e) { } }
+    // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -659,7 +1406,12 @@
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontMode: 'auto', // Stage always opens auto-fit (size not persisted; see savePerfPrefs)
       fontScale: 1, ctrlsOpen: false,
-      scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null
+      scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null,
+      // S-SET-INTEGRITY (UAT U22): one-shot "N removed song(s) skipped" line,
+      // set by navQueue()/pPrev/pNext right before a re-render whenever
+      // QUEUE.stepResolvable() had to step past a dangling setlist ref; a nav
+      // with nothing to skip clears it back to null. Never persisted.
+      queueSkipNotice: null
     };
     STATE.setlist = loadSet();
     stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
@@ -752,8 +1504,54 @@
       if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
+    // Display-only record override shared by EVERY ListItem render site (library
+    // + setlist - codex #91 caught the setlist rendering raw records):
+    // - artist sentinel 'search' (tracks.json placeholder = "resolve via search")
+    //   reads as a band literally named "search" -> show 'Unknown'.
+    // - an artist-less Compose save would pair a blank artist with the year,
+    //   printing a bare "· 2026" -> drop the year so no meta line renders.
+    // The real record (navigation/actions/queries) is never mutated.
+    function displayRecFor(rec) {
+      var artistVal = rec.artist != null ? rec.artist : rec.a;
+      if (artistVal === 'search') return Object.assign({}, rec, { artist: 'Unknown', a: 'Unknown' });
+      if (!artistVal) return Object.assign({}, rec, { y: null, year: null });
+      return rec;
+    }
+    // S-FIRSTRUN (F4): the fresh-profile Library cue - teaches BOTH "tap a song
+    // to open it" and "the chord-count badge tells you the easy ones" in one
+    // compact banner, above the song list (never on the search/chip filter
+    // chrome renderFilterChips owns, so it survives the future M3 filter-bar
+    // rework). renderSongs() calls this on every render; firstrunBannerEl
+    // guards against re-inserting a duplicate node on re-renders (search
+    // typing, chip taps, tab switches) once it's already showing. Once the x
+    // dismisses it, Notables persists that forever and this stays a no-op.
+    var firstrunBannerEl = null;
+    function renderFirstrunNotable() {
+      if (firstrunBannerEl || !el.libSongs || !el.songsList || !global.Notables) return;
+      if (!firstrunShouldRender(global.Notables)) return; // dismissed, or slot held elsewhere - skip silently
+      var banner = global.Notables.renderBanner({
+        consumerId: 'firstrun',
+        text: 'Your Library - pick songs here to build your setlist. A song with just a few chords (like 3) is the easiest place to start.',
+        onDismiss: function () {
+          if (firstrunBannerEl && firstrunBannerEl.parentNode) firstrunBannerEl.parentNode.removeChild(firstrunBannerEl);
+          firstrunBannerEl = null;
+        }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      firstrunBannerEl = banner;
+      el.libSongs.insertBefore(banner, el.songsList);
+    }
     function renderSongs() {
       if (!el.songsList) return;
+      // Compose calling this right after a save happens while the Library
+      // SCREEN is still hidden (display:none - the Compose tab is the one on
+      // screen) - offsetParent goes null under a hidden ancestor (the same
+      // visibility heuristic self-serve-execution's render-verify rule uses).
+      // Only consume pendingHighlightId once the Library is ACTUALLY the
+      // screen the user is looking at, or the highlight would fire-and-fade
+      // invisibly and never be seen. Until then it just keeps waiting.
+      var visible = !!el.songsList.offsetParent;
+      renderFirstrunNotable();
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
       if (filtered.length === 0) {
@@ -772,26 +1570,57 @@
         el.songsList.innerHTML = '';
         el.songsList.appendChild(box);
         if (el.libCount) el.libCount.textContent = '';
+        // do NOT consume here: a filtered/empty render never showed the row -
+        // the highlight stays pending until the row actually appears (codex #91).
         return;
       }
       el.songsList.innerHTML = '';
+      var justSavedEl = null;
       filtered.forEach(function (rec) {
         var sid = rec.id;
         // only chord-sheet items can join a setlist; a pure/video-only track (no
         // seq) can't - it would later crash s.seq.map in Perform. songById alone
         // is insufficient: a seq-less custom track has an id too.
-        var canAdd = sid != null && hasChordSheet(songById(sid));
-        var inSet = canAdd && STATE.setlist.indexOf(sid) >= 0;
+        var hasSheet = sid != null && hasChordSheet(songById(sid));
+        // S-SETADD-KEYSEED: a row with no sheet but a known key gets a LIVE + that
+        // seeds one chord (below) instead of the S-SETADD-EVIDENT ghost - the
+        // ghost is reserved for rows with NEITHER (addAffordance decides).
+        var state = sid == null ? 'blocked' : addAffordance(rec, hasSheet);
+        var canAdd = state !== 'blocked';
+        var inSet = state === 'add' && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
-        el.songsList.appendChild(global.ListItem.render(rec, {
+        var node = global.ListItem.render(displayRecFor(rec), {
           segment: 'library',
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
-          onAdd: canAdd ? function () { toggleSet(sid); } : null,
+          onAdd: state === 'add' ? function () { toggleSet(sid); }
+            : state === 'seed' ? function () { seedKeyChordAndAdd(rec); }
+            : null,
+          // Operator UAT 2026-07-12: a silently missing + reads as broken ("feels
+          // like something is broken"). The ghost + names the limitation at the
+          // primitive; tapping teaches the fix path (add chords via edit). Only
+          // rows with neither a sheet nor a key still get it (S-SETADD-EVIDENT #249).
+          addBlockedReason: canAdd ? null : 'No chords yet - can\'t join a setlist',
+          onAddBlocked: canAdd ? null : function () {
+            showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
+          },
           onAction: function () { repertoireAction(rec); }
-        }));
+        });
+        el.songsList.appendChild(node);
+        if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
       });
       if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length;
+      // Post-save discoverability (B3 pilot UAT: "after saving, it's hidden near
+      // the bottom of the library's song list") - scroll the new row into view
+      // and give it a brief accent pulse (CSS handles the ~2s fade) so it's
+      // findable without hunting a long list. Consumed ONLY when the row was
+      // actually found and highlighted - a filtered/empty visible render keeps
+      // the highlight pending for the render that really shows it (codex #91).
+      if (visible && pendingHighlightId != null && justSavedEl) {
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        justSavedEl.classList.add('justSaved');
+        pendingHighlightId = null;
+      }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
     if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
@@ -816,7 +1645,8 @@
         return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
       } catch (e) { return 'both'; }
     }
-    function saveSongView(v) { try { localStorage.setItem(SONGVIEW_KEY, v); } catch (e) { } }
+    // Passive - see safeSet's header comment (a view-toggle tap doesn't need a toast).
+    function saveSongView(v) { return safeSet(SONGVIEW_KEY, v); }
     STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
@@ -825,6 +1655,7 @@
     function openPractice(id, queueIds) {
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
+      STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
       openCurrent();
     }
     // render whatever the queue cursor points at
@@ -836,6 +1667,18 @@
       saveLast(STATE.current.id);
       switchTab('practice');
       renderPractice();
+    }
+    // S-SET-INTEGRITY (UAT U22): queue-nav step that defends against a
+    // dangling setlist ref (a set member deleted elsewhere) - steps past any
+    // unresolvable entry via QUEUE.stepResolvable(songById) instead of
+    // landing on it (which used to null out STATE.current and fall to the
+    // "Choose a song from the Library" empty state - the U22 repro). Sets a
+    // one-shot notice for renderPractice's queue-nav counter when anything
+    // was actually skipped; clears it on a normal skip-free move.
+    function navQueue(dir) {
+      var r = QUEUE.stepResolvable(dir, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      openCurrent();
     }
     // After the setlist is edited (reorder/remove) keep the live queue tracking it,
     // so the queue is the running order rather than a snapshot taken at open time.
@@ -864,6 +1707,33 @@
         startPerform(QUEUE.isActive() ? QUEUE.ids() : [STATE.current.id], QUEUE.isActive() ? QUEUE.index() : 0, STATE.transpose, seedView);
         return;
       }
+    }
+
+    // M-GUIDANCE (beginner tier): one-shot "save/set basics" cue, prepended
+    // above the song detail card - built via the shared Notables banner (same
+    // accent-card + dismiss wiring firstrun/whynote reuse). Called at the end
+    // of every renderPractice() (below): el.practiceBody's innerHTML is fully
+    // rebuilt on every call (no incremental DOM patch to defend), so this just
+    // re-attempts the claim each time - a no-op once dismissed, per the
+    // notables.js contract. `bannerEl` is captured by the onDismiss closure so
+    // the tap can remove the exact element it built, without a module-level
+    // tracking variable (unlike firstrunBannerEl - practiceBody's whole
+    // subtree is disposable on the next render anyway).
+    function renderSaveBasicsNotable() {
+      if (!el.practiceBody || !global.Notables) return;
+      // UAT 2026-07-16 (operator: "guidance is misleading - I already have it
+      // added to setlist"): don't nudge "save this to your setlist" for a song
+      // that IS already in the setlist. The nudge teaches an action already taken.
+      if (STATE.current && STATE.setlist.indexOf(STATE.current.id) >= 0) return;
+      if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
+      var bannerEl = global.Notables.renderBanner({
+        consumerId: 'savebasics',
+        text: 'Tap the + up top to save this song to your setlist, so it is easy to find again.',
+        onDismiss: function () { if (bannerEl && bannerEl.parentNode) bannerEl.parentNode.removeChild(bannerEl); }
+      });
+      if (!bannerEl) return; // no `document` available (Node without a DOM stub)
+      var detail = el.practiceBody.querySelector('.detail');
+      if (detail) detail.insertBefore(bannerEl, detail.firstChild);
     }
 
     function renderPractice() {
@@ -898,13 +1768,46 @@
       // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
         + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
-        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + escHTML(s.a) + ' · ' + escHTML(s.y) + '</p></div>'
+        // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
+        // artist (no hardcoded placeholder to duplicate the title) - omit the
+        // ' · ' separator entirely rather than showing a leading, artist-less dot.
+        + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + '</div></div>';
+      // F28 (UI-std UAT): resolve the Solo entry point BEFORE the controls row is
+      // built, so the button lives IN that row (beside modeSwitch/transpose/stage) -
+      // directly above the chord content, not bolted on below the sheet where the
+      // operator flagged it as "in the way when you don't need it, and not in the
+      // right place when you do." "Solo over it" used to require s.custom (only
+      // progressions built in Compose carried a key/mode). Any song can bridge to
+      // the Studio if we can determine a key. Prefer the MERGED repertoire record:
+      // Repertoire.build copies a matched backing track's authoritative key/mode
+      // onto it, which beats re-deriving from the first chord (a non-tonic opener
+      // would mislabel). Fall back to the raw record; soloKeyFor still derives from
+      // the TRANSPOSED seq when neither has an explicit key, so soloing always
+      // matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
+      // S-UI-RECONCILE (Lane A): key-aware display speller for every chord NAME on
+      // this song screen (chip row, transpose readout, campfire sheet). soloKey is
+      // already transpose-adjusted and `seq` is already transposed, so this maps
+      // transposed-token -> transposed-key display name (F song at +2 spells in G).
+      // Falls back to the raw token when the progression is keyless. Chord TOKENS
+      // (data-c, play/audio, storage) stay canonical-sharp - only labels respell.
+      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
+      // Compact label ("Solo"; the title attr carries the full phrase) so it fits
+      // the SAME row as modeSwitch/transposeChip/stageGo at 375-412px - mirrors
+      // Compose's #chordCtrlRow treatment on the other surface (songbook.css
+      // .soloRowBtn). Entirely absent (not just disabled) when canSolo is false -
+      // no dead tap, no row filler.
+      var soloRowBtn = canSolo ? '<button class="btn soloRowBtn" id="soloOverBtn" title="Solo over it - open the Practice Studio">Solo</button>' : '';
       // view row: Lyrics / Chords / Both segmented + compact transpose chip +
-      // a compact Stage (fullscreen) icon button, all on ONE row (UAT round 2
-      // locked decision - replaces the full-width Stage CTA).
+      // a compact Stage (fullscreen) icon button + (F28) the Solo entry point, all
+      // on ONE row (UAT round 2 locked decision - replaces the full-width Stage
+      // CTA; F28 UAT folds Solo into the same row instead of a separate CTA below).
       function segBtn(v, lbl) {
         var dis = forcedChords && v !== 'chords';
         return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
@@ -912,28 +1815,25 @@
       }
       var switcher = '<div class="practiceRow">'
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
-        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(seq[0]) + '</span><button id="tUp" title="Transpose up">+</button></div>'
+        + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(dispMap(seq[0])) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
+        + soloRowBtn
         + '</div>';
-      // queue nav — only when a real running order (the setlist) is loaded
+      // queue nav — only when a real running order (the setlist) is loaded.
+      // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
+      // skip notice (see navQueue()) so a defended-against dangling ref is
+      // visible, not silent - "N / M" always reflects LIVE (resolvable)
+      // entries because load-heal + delete-heal keep QUEUE's own list clean.
       var queueNav = QUEUE.isActive() ? '<div class="queueNav">'
         + '<button id="qPrev" ' + (QUEUE.atStart() ? 'disabled' : '') + '>‹ Prev</button>'
-        + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size() + '</span>'
+        + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size()
+        + (STATE.queueSkipNotice ? ' - ' + escHTML(STATE.queueSkipNotice) : '') + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(c) + '</span>'; }).join('') + '</div>';
-      // "Solo over it" used to require s.custom (only progressions built in Compose
-      // carried a key/mode). Any song can bridge to the Studio if we can determine a
-      // key. Prefer the MERGED repertoire record: Repertoire.build copies a matched
-      // backing track's authoritative key/mode onto it, which beats re-deriving from
-      // the first chord (a non-tonic opener would mislabel). Fall back to the raw
-      // record; soloKeyFor still derives from the TRANSPOSED seq when neither has
-      // an explicit key, so soloing always matches what's on screen.
-      var mergedRec = null;
-      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
-      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
-      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
-      var soloBtn = canSolo ? '<button class="btn" id="soloOverBtn">Solo over it</button>' : '';
-      var actions = '<div class="actions">' + soloBtn + '</div>';
+      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(dispMap(c)) + '</span>'; }).join('') + '</div>';
+      // F28: the Solo button now lives in the practiceRow controls row above (the
+      // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
+      // action-ladder host appended further down for custom/catalog songs.
+      var actions = '<div class="actions"></div>';
       // Hear the real recording: same YouTube search the list-item action ladder
       // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
       // not the sheet). The MERGED record feeds the query so track-derived
@@ -942,22 +1842,23 @@
       var body;
       if (view === 'chords') {
         body = chips
-          + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords') + '</div>'
+          + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords', dispMap) + '</div>'
           + actions
           + '<div class="lyricsLinks">' + ytLink + '</div>';
       } else {
         var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
         var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view) + '</div>'
+          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
           + actions
           // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
           + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
-      var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { QUEUE.prev(); openCurrent(); };
-      var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { QUEUE.next(); openCurrent(); };
+      renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
+      var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
+      var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
         b.onclick = function () { if (b.disabled) return; STATE.songView = b.dataset.v; saveSongView(STATE.songView); renderPractice(); };
       });
@@ -990,15 +1891,28 @@
       var act = el.practiceBody.querySelector('.actions');
       if (act && s.custom) {
         var isFork = !!s.forkOf;
+        // S-SONG-MODE Phase B: back into the builder - the sheet parses to
+        // sections, the Song canvas reopens, and Save updates THIS song in
+        // place. Only offered when the sheet actually yields sections (a
+        // track-only custom has nothing to build from).
+        if (sectionsFromSheet(s.sheet).length) {
+          var cb = document.createElement('button');
+          cb.className = 'btn'; cb.textContent = 'Continue building';
+          cb.onclick = function () { continueBuilding(s); };
+          act.appendChild(cb);
+        }
         var eb = document.createElement('button');
         eb.className = 'btn'; eb.textContent = 'Edit';
         eb.onclick = function () { openEditForm(s.id); };
         act.appendChild(eb);
         var db = document.createElement('button');
-        db.className = 'btn ghost';
+        // S-UI-RECONCILE (Lane A): danger primitive for a real delete, ghost for a
+        // non-destructive fork revert; full-width via CSS `.full` (Lane D), not an
+        // inline style. See deleteBtnClass for the full rationale.
+        db.className = deleteBtnClass(isFork);
         // A fork shadows a catalog song, so removing it REVERTS to the original
         // rather than deleting a user creation - label + confirm say so.
-        db.textContent = isFork ? 'Revert to original' : 'Delete progression'; db.style.flexBasis = '100%';
+        db.textContent = isFork ? 'Revert to original' : 'Delete progression';
         db.onclick = function () {
           var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
           if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
@@ -1008,7 +1922,10 @@
         // Catalog song: fork it into an editable, user-owned copy that SHADOWS
         // the original (add a video, rename, re-key). Chords + lyrics preserved.
         var mb = document.createElement('button');
-        mb.className = 'btn'; mb.textContent = 'Make it mine';
+        // F24 (operator UAT 2026-07-05): "make it mine" -> "Edit" - the user
+        // doesn't need to know a fork/copy happens under the hood; behavior
+        // (openForkForm below) is unchanged.
+        mb.className = 'btn'; mb.textContent = 'Edit';
         // Fork from the MERGED record so a matched backing track's authoritative
         // video/key/mode carry onto the fork (mirrors soloKeyFor/ytSearchURL above);
         // the raw s (from ALLSONGS) lacks those merged fields. mergeRec never copies
@@ -1030,7 +1947,12 @@
       if (!el.maxOv || !el.maxGrid || !pack) return;
       el.maxGrid.innerHTML = '';
       chords.forEach(function (c) {
-        var bd = pack.diagram ? pack.diagram(c, 'big') : (function () { var d = document.createElement('div'); d.className = 'bigC'; d.textContent = c; return d; })();
+        // S-UI-RECONCILE (Lane A): the big overlay diagrams are Compose-scoped
+        // (opened from the current progression), so relabel via the Compose
+        // dispChordName through packDiagram - which resolves the voicing by the
+        // canonical token and shows the key-aware name (Bb, not A#), fallback
+        // branch included. Was `pack.diagram(c,'big')` with a raw `c` label.
+        var bd = packDiagram(c, 'big', dispChordName(c));
         bd.onclick = function () { packPlayChord(c); };
         el.maxGrid.appendChild(bd);
       });
@@ -1040,11 +1962,160 @@
     if (el.maxClose) el.maxClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseMax(); };
 
     /* ===================== SETLIST ===================== */
-    function toggleSet(id) {
+    // Subtle transient toast - a lightweight "it happened" cue (UAT: Nik).
+    // Adds get a toast (removes already have the persistent Undo affordance).
+    // isErr (S-HARDEN H4) mirrors showComposeToast's err flag: toggles the same
+    // 'err' class name for forward-compat with a future .toast.err rule -
+    // songbook.css is out of this mission's grant, so there is no red styling
+    // yet, but the message itself is always truthful (see toggleSet below).
+    // S-TOAST (UAT U9): delegates to the shared toast.js primitive, which owns
+    // ITS OWN per-host timer - the fix for the "Added to setlist" toast that
+    // used to get its auto-hide silently cancelled by showComposeToast below
+    // (both used to share ONE `var toastTimer` in this closure - see toast.js
+    // header comment for the full root-cause trace).
+    var toastEl;
+    // kind (2nd arg):
+    //   falsy        -> neutral confirmation (e.g. "Added to setlist"), quick 1600ms.
+    //   true / 'err' -> ERROR (red): something failed. Back-compat: every legacy
+    //                   caller passing a boolean still lands here.
+    //   'warn'       -> CAUTION (amber): a heads-up, not a failure (e.g. "you've
+    //                   already got a song in progress"). Distinct colour so a
+    //                   caution never reads as an error.
+    // Error AND caution toasts carry REAL text a user must actually read, so
+    // their auto-hide scales with message length (min 3.2s, cap 6s) instead of
+    // the quick 1.6s confirm floor - operator UAT: the "save or clear it first"
+    // caution vanished before it could be read. Neutral confirms stay quick.
+    function showToast(msg, kind) {
+      if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      var isErr = (kind === true || kind === 'err');
+      var isWarn = (kind === 'warn');
+      var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : 1600;
+      global.Toast.show(msg, {
+        host: toastEl,
+        error: isErr,
+        duration: dur,
+        onShow: function (host, m) {
+          host.textContent = m;
+          host.classList.toggle('err', isErr);
+          host.classList.toggle('warn', isWarn);
+          host.classList.add('on');
+        },
+        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); }
+      });
+    }
+    // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
+    // #1 slot in setlist?"): a JUST-CREATED song from Compose goes to the TOP -
+    // recency is intent, the thing you just wrote is the thing you're about to
+    // play. A Library "add to setlist" tap keeps appending (browsing the library
+    // IS set-building, in the order you want to play). Same two moments, two
+    // rules. Only the create paths pass toTop; every existing caller is unchanged.
+    function toggleSet(id, toTop) {
       var pos = STATE.setlist.indexOf(id);
-      if (pos >= 0) STATE.setlist.splice(pos, 1); else STATE.setlist.push(id);
-      saveSet(); renderSongs(); renderSetlist();
+      var adding = pos < 0;
+      if (pos >= 0) STATE.setlist.splice(pos, 1);
+      else if (toTop) STATE.setlist.unshift(id);
+      else STATE.setlist.push(id);
+      // S-HARDEN H4 (analysis-refactor-enhance-20260704 A1 bug shape): saveSet()
+      // can silently fail (quota/blocked storage) - branch the toast on its real
+      // result instead of claiming success unconditionally, same pattern as
+      // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
+      // way - they rely on the persistent Undo affordance, out of this fix's scope).
+      var ok = saveSet();
+      renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
+      if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
+    }
+    // S-SETADD-KEYSEED: the 'seed' Library "+" action (addAffordance()==='seed') -
+    // a row with a known key but no chords. Persists through the SAME two paths
+    // every other library edit uses, so the row updates consistently instead of
+    // duplicating: a CUSTOM track-only item (already in customSongs, e.g. a saved
+    // backing track) gets its seq updated in place via updateCustomItem; a
+    // STANDALONE catalog track (tracks.json, no customSongs entry) is promoted
+    // via createCustomItem with no forkOf - the same shape openEditOrAdd already
+    // saves for track edits - and Repertoire.build's title+artist matchKey then
+    // merges the new custom SONG over the standalone track on the next
+    // rebuildAll, so the row updates in place rather than duplicating.
+    function seedKeyChordAndAdd(rec) {
+      if (!rec || rec.id == null) return;
+      var k = (global.Repertoire && typeof global.Repertoire.deriveKey === 'function')
+        ? global.Repertoire.deriveKey(rec) : { key: null, mode: null };
+      if (!k.key) return; // defensive - addAffordance() already gated this row into 'seed'
+      var token = keySeedToken(k.key, k.mode);
+      var cs = customById(rec.id);
+      var saved = cs
+        ? updateCustomItem(rec.id, { seq: [token] })
+        : createCustomItem({
+          title: rec.title != null ? rec.title : rec.t,
+          artist: rec.artist != null ? rec.artist : rec.a,
+          genre: rec.genre || '', yt: rec.yt || null,
+          key: k.key, mode: k.mode || 'major', seq: [token]
+        });
+      if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
+      if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
+      var ok = saveSet();
+      renderSongs(); renderSetlist();
+      // Display spelling via the SAME facet label the Key filter chip shows
+      // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
+      // + minor suffix) - the seeded chord IS the row's key tonic, so its display
+      // name and the key label are the same value. Falls back to the raw token
+      // if Repertoire is somehow unavailable (defensive, matches other call sites).
+      var disp = (global.Repertoire && global.Repertoire.keyLabel && global.Repertoire.keyLabel(rec)) || token;
+      showToast(ok
+        ? ('Added - seeded with its key chord (' + disp + '). Edit it to add more.')
+        : SAVE_FAIL_MSG, !ok);
+    }
+    // ---- S-TOAST+ACTION (M-DESIGN-ENFORCE wave 2, UAT U19): the setlist
+    // item-remove undo panel, migrated off the old untimed "persistent undo
+    // banner" (interaction-safety.md guard #3 as it read before this wave)
+    // onto the shared toast.js Toast.showAction() primitive - see
+    // decisions.md D-ENFORCE-2. A STABLE sibling element (inserted once,
+    // before #setBody), NOT rebuilt inside renderSetlist()'s body.innerHTML
+    // wipe-and-repaint - the whole point of the migration is a live 6s
+    // countdown + pause-on-touch, which a full DOM rebuild on every
+    // unrelated re-render (reorder, add) would silently restart or leak.
+    var setUndoBanner = null, setUndoHandle = null, setUndoTeardown = null;
+    function ensureSetUndoBanner() {
+      if (!el.setBody || !el.setBody.parentNode) return false;
+      if (!setUndoBanner) {
+        setUndoBanner = document.createElement('div');
+        setUndoBanner.className = 'setUndo toastAction';
+        setUndoBanner.hidden = true;
+        el.setBody.parentNode.insertBefore(setUndoBanner, el.setBody);
+      }
+      return true;
+    }
+    function paintSetUndoHidden() {
+      if (setUndoTeardown) { setUndoTeardown(); setUndoTeardown = null; }
+      setUndoHandle = null;
+      if (setUndoBanner) { setUndoBanner.hidden = true; setUndoBanner.innerHTML = ''; }
+    }
+    // Cancel any pending remove-undo - leaving edit mode, clearing the whole
+    // setlist, or a second removal while one is already showing all call this.
+    // Safe to call even when nothing is pending (finish() is itself a no-op
+    // once resolved).
+    function dismissSetUndo() { if (setUndoHandle) setUndoHandle.finish(); }
+    function showSetUndoBanner(sid, index) {
+      if (!ensureSetUndoBanner()) return;
+      dismissSetUndo(); // tear down a stale prior instance first (re-removal mid-window)
+      setUndoBanner.hidden = false;
+      setUndoBanner.innerHTML = '';
+      var rs = songById(sid);
+      var msg = document.createElement('span'); msg.textContent = 'Removed ' + (rs ? rs.t : 'song');
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var at = Math.min(index, STATE.setlist.length);
+        STATE.setlist.splice(at, 0, sid); STATE.lastRemoved = null;
+        if (setUndoHandle) setUndoHandle.finish();
+        saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
+      };
+      setUndoBanner.appendChild(msg); setUndoBanner.appendChild(undoBtn);
+      setUndoHandle = global.Toast.showAction('Removed ' + (rs ? rs.t : 'song'), {
+        host: setUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { STATE.lastRemoved = null; paintSetUndoHidden(); }
+      });
+      setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
     function renderSetlist() {
       if (!el.setBody) return;
@@ -1056,36 +2127,28 @@
         el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
         el.setEdit.classList.toggle('on', STATE.setEditMode);
       }
-      // Clear (✕) hides on an empty setlist too - a destructive control with
-      // nothing to destroy is dead weight in the header (pilot polish audit).
-      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
+      // Clear (✕) is a destructive control: UAT 2026-07-16 hides it until EDIT
+      // mode (and it wears red - .setDelete) so a resting setlist never shows a
+      // one-tap wipe. (Also hidden on an empty setlist - nothing to destroy.)
+      if (el.setClear) el.setClear.style.display = (STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
+      // Start (perform) lives in the header now (UAT: not a full-width bar). It
+      // shows only in NORMAL mode with a non-empty set - performing isn't a thing
+      // you do mid-edit, and it sits rightmost (thumb) with Edit to its left.
+      if (el.performBtn) el.performBtn.style.display = (!STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
-        STATE.setEditMode = false; STATE.lastRemoved = null;
+        STATE.setEditMode = false; dismissSetUndo(); STATE.lastRemoved = null;
         return;
       }
       if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '')
         + (STATE.setEditMode ? ' · editing' : ' · ready to play');
       body.innerHTML = '';
-      // Persistent undo for the last removal (codex: not a short toast). Stays until used or Done.
-      if (STATE.lastRemoved) {
-        var u = document.createElement('div'); u.className = 'setUndo';
-        var rs = songById(STATE.lastRemoved.sid);
-        u.innerHTML = '<span>Removed ' + escHTML(rs ? rs.t : 'song') + '</span><button class="btn ghost" type="button">Undo</button>';
-        u.querySelector('button').onclick = function () {
-          var lr = STATE.lastRemoved; if (!lr) return;
-          var at = Math.min(lr.index, STATE.setlist.length);
-          STATE.setlist.splice(at, 0, lr.sid); STATE.lastRemoved = null;
-          saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
-        };
-        body.appendChild(u);
-      }
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
-        body.appendChild(global.ListItem.render(s, {
+        body.appendChild(global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
@@ -1102,21 +2165,30 @@
             if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
             else syncQueueToSetlist();
             renderSetlist(); renderSongs();
+            showSetUndoBanner(sid, i); // S-TOAST+ACTION: after the repaint, so the stable banner sits above the fresh list
           },
           onAction: function () { ytSearch(s); }
         }));
       });
-      if (bar) bar.style.display = 'flex';
+      // (The old full-width Start-performance bar was retired 2026-07-16 - Start
+      // now lives compact in the header, toggled above.)
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
-      if (!STATE.setEditMode) STATE.lastRemoved = null; // leaving edit mode dismisses the undo affordance
+      if (!STATE.setEditMode) { dismissSetUndo(); STATE.lastRemoved = null; } // leaving edit mode dismisses the undo affordance
       renderSetlist();
     };
-    if (el.setClear) el.setClear.onclick = function () {
+    // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
+    // header rail must not fire the destructive Clear confirm(). Behavior is
+    // otherwise unchanged - same native confirm(), same effect. (Native
+    // confirm() itself is PRE-EXISTING debt, unchanged by M-DESIGN-ENFORCE
+    // wave 2 - see component-conventions.md Findings register: this wave's
+    // MODAL-standard grant covers the backup/restore flow only, not every
+    // confirm() call app-wide.)
+    if (el.setClear) wireTapCancel(el.setClear, function () {
       if (STATE.setlist.length === 0) return;
-      if (confirm('Clear your setlist?')) { STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
-    };
+      if (confirm('Clear your setlist?')) { dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
+    });
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
@@ -1132,6 +2204,7 @@
     function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
       QUEUE.set(ids, startIdx || 0);
+      STATE.queueSkipNotice = null; // fresh launch - any stale notice from a prior Stage session doesn't carry over
       // Seed the CURRENT view for this launch only - never persisted here (that
       // would leak a custom song's forced 'chords' into later performances). The
       // setlist Perform button seeds stageDefaultView so it always opens in the
@@ -1155,10 +2228,22 @@
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
     if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
-    if (el.pPrev) el.pPrev.onclick = function () { if (!QUEUE.atStart()) { QUEUE.prev(); STATE.performTpose = 0; showPerform(); } };
+    // S-SET-INTEGRITY (UAT U22): same defensive-nav step as the Practice
+    // screen's navQueue() - stepResolvable(songById) walks past a dangling
+    // setlist ref instead of landing on it (showPerform's own `if (!s)
+    // return` guard would otherwise leave the stage frozen on the prior song
+    // with no way forward). See navQueue() above for the full contract.
+    if (el.pPrev) el.pPrev.onclick = function () {
+      if (QUEUE.atStart()) return;
+      var r = QUEUE.stepResolvable(-1, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      STATE.performTpose = 0; showPerform();
+    };
     if (el.pNext) el.pNext.onclick = function () {
-      if (!QUEUE.atEnd()) { QUEUE.next(); STATE.performTpose = 0; showPerform(); }
-      else { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); }
+      if (QUEUE.atEnd()) { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return; }
+      var r = QUEUE.stepResolvable(1, songById);
+      STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
+      STATE.performTpose = 0; showPerform();
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -1223,9 +2308,13 @@
     function showPerform() {
       var s = songById(QUEUE.current());
       if (!s) return;
-      if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size();
+      // S-SET-INTEGRITY (UAT U22): same one-shot skip notice as the Practice
+      // queue-nav counter (see navQueue()) - appended to the position readout,
+      // not a separate toast (a "calm inline notice", per the spec).
+      if (el.pPos) el.pPos.textContent = (QUEUE.index() + 1) + ' / ' + QUEUE.size() + (STATE.queueSkipNotice ? ' - ' + STATE.queueSkipNotice : '');
       if (el.pTitle) el.pTitle.textContent = s.t;
-      if (el.pArtist) el.pArtist.textContent = s.a + ' · ' + s.y;
+      // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
+      if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
       // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
       // persisted before that guard could still hold one - render a gentle
       // placeholder instead of crashing on s.seq.map.
@@ -1237,10 +2326,18 @@
         return;
       }
       var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
-      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + seq[0] + '  ·  ' : '') + seq.join('  ');
+      // S-UI-RECONCILE (Lane A): key-aware display speller for the Stage surface,
+      // built the SAME way as the song screen - prefer the merged record's key,
+      // else derive from the transposed seq (soloKeyFor is transpose-aware). Names
+      // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
+      var mrStage = null;
+      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
+      var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
+      var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
+      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + stageDisp(seq[0]) + '  ·  ' : '') + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
-        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view) + '</div>';
+        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
         pSheet.scrollTop = 0;
         applyPerfFont();
       }
@@ -1257,14 +2354,85 @@
     // (no duplicate); "Solo over" opens its Studio directly (no re-prompt). Detached
     // on Clear or when a starter pattern replaces the buffer wholesale.
     var savedComposeId = null;
-    function packDiagram(name, size) {
-      if (pack && typeof pack.diagram === 'function') return pack.diagram(name, size);
+    // S-SLOTX (sprint-1 #1, F2): movement-cancelled tap for the progression
+    // slot remover - fires fn only if the touch did NOT move (a tap, not a
+    // scroll-grab on the horizontal .prog filmstrip). Mouse clicks (no touch
+    // events) are unaffected.
+    // S-HARDEN (analysis-refactor-enhance-20260704 A4): thin delegate to
+    // list-item.js's wireTap (the SSOT - see wireTapCancel above for the same
+    // move). Name kept - test/songbook.test.js asserts this call site is wired
+    // through composeWireTap by name, not a raw onclick.
+    function composeWireTap(el, fn) { return global.ListItem.wireTap(el, fn); }
+    function packDiagram(name, size, displayName) {
+      // FORK-4 removal: `name` is ALWAYS the canonical-sharp TOKEN (keys the
+      // voicing pack, audio, storage); `displayName` is the key-aware label to
+      // SHOW (Bb for the bVII of C). Relabel after the pack renders - packs
+      // stay untouched and keep resolving by token.
+      if (pack && typeof pack.diagram === 'function') {
+        var el = pack.diagram(name, size);
+        if (el && displayName && displayName !== name) {
+          var lbl = el.querySelector && el.querySelector('.chord-name, .nm');
+          if (lbl) lbl.textContent = displayName;
+        }
+        return el;
+      }
       var wrap = document.createElement('div');
       wrap.className = (size === 'big') ? 'bigC' : 'chord';
       // name is a freeform custom-song token here (no real pack to resolve it),
       // so escape before innerHTML - same XSS class as the sheet renderer.
-      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(name) + '</span>';
+      wrap.innerHTML = '<span class="' + (size === 'big' ? 'nm' : 'chord-name') + '">' + escHTML(displayName || name) + '</span>';
       return wrap;
+    }
+    // FORK-4 removal: the key-aware DISPLAY name for a chord token inside the
+    // current songKey (bVII of C shows Bb) - tokens stay canonical-sharp for
+    // packs/audio/storage/suggestions; keyless contexts (no songKey.root, the
+    // All browse) return the token unchanged per the music-theory-coach verdict.
+    // Delegates to the pure, key-parameterized dispChordNameInKey (module scope)
+    // bound to the live songKey - ONE display-naming path shared with the M-13
+    // template-suggestion chips (which pass their own realization key).
+    function dispChordName(c) { return dispChordNameInKey(c, songKey.root, songKey.mode); }
+    // S-PROG-WRAP (UAT U8): real measurements feeding progStripMode's decision -
+    // the DOM-caller half of the fitScale-style contract (pure fn takes plain
+    // numbers; the caller measures the real page and passes them in).
+    //
+    // Card width: a diagram's SVG size is fixed per chord PACK + size, content-
+    // independent (drawDiagram's W/H opts never vary by chord - chords-guitar.js/
+    // chords-ukulele.js), so ONE off-screen probe per pack gives an accurate width
+    // for every future check - including the very first render of a 12-chord
+    // starter loaded straight into an EMPTY progression, where no prior full-mode
+    // slot exists yet to measure from. Probes the actual first chord in the
+    // progression (guaranteed renderable by this pack) rather than a guessed name
+    // like "C" (which may not exist in every custom/exotic pack).
+    var _progCardW = null, _progCardWPack = null;
+    function progCardW() {
+      if (!progression.length) return 0; // nothing to measure/degrade yet
+      if (_progCardW != null && _progCardWPack === pack) return _progCardW;
+      var probe = packDiagram(progression[0], 'small');
+      if (probe.style) { probe.style.position = 'absolute'; probe.style.visibility = 'hidden'; probe.style.left = '-9999px'; probe.style.top = '-9999px'; }
+      document.body.appendChild(probe);
+      var w = probe.offsetWidth;
+      document.body.removeChild(probe);
+      // 84 ~= the guitar small-diagram box (70px SVG + 6px x2 padding + 1px x2
+      // border - chords-guitar.js smallDiagram + songbook.css .chord) - only hit
+      // when offsetWidth is unavailable (a headless/no-layout DOM, e.g. tests).
+      _progCardW = (w > 0) ? w : 84;
+      _progCardWPack = pack;
+      return _progCardW;
+    }
+    function progGapW() {
+      if (!el.prog || typeof global.getComputedStyle !== 'function') return 8; // matches .prog{gap:8px} in songbook.css
+      var cs = global.getComputedStyle(el.prog);
+      var g = parseFloat(cs.columnGap || cs.gap);
+      return (g > 0) ? g : 8;
+    }
+    function progAvailW() {
+      if (!el.prog) return 0;
+      var w = el.prog.clientWidth || 0;
+      if (typeof global.getComputedStyle === 'function') {
+        var cs = global.getComputedStyle(el.prog);
+        w -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      }
+      return w;
     }
     // What tonic do we measure intervals against? The chosen key when one is set
     // (so an Axis progression starting on vi still reads vi-IV-I-V, not I-…), else
@@ -1288,45 +2456,886 @@
     var lastProgSig = null;
     function renderProg() {
       if (!el.prog) return;
-      // Gray out the choosers once the 8-chord cap (addChord) is reached. The .maxed class
-      // sits on .composeWrap so it covers BOTH regions: the fixed top (controls + key
-      // chip; starters render in the scrolling #suggest now) AND the scrolling chord list (in-key cells + all-chords tiles).
-      var maxed = progression.length >= 8;
+      // Only offer Clear when there's a progression to clear (UAT: Nik).
+      if (el.cClear) el.cClear.hidden = progression.length === 0;
+      // Gray out the choosers once the COMPOSE_MAX cap (addChord, D-CAP12) is reached.
+      // The .maxed class sits on .composeWrap so it covers BOTH regions: the fixed top
+      // (controls + key chip; starters render in the scrolling #suggest now) AND the
+      // scrolling chord list (in-key cells + all-chords tiles).
+      var maxed = progression.length >= COMPOSE_MAX;
       var wrap = document.querySelector('.composeWrap');
-      if (wrap) wrap.classList.toggle('maxed', maxed);
+      if (wrap) {
+        wrap.classList.toggle('maxed', maxed);
+        // Save is the compose PRIMARY only once there is something to save. On an empty
+        // canvas it demotes to an outline so it does not out-shout the chord cards - the
+        // real "obvious next move" (visual-language.md emphasis ladder).
+        wrap.classList.toggle('progEmpty', progression.length === 0);
+      }
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
+      // S-PROG-WRAP-2 (UAT U8b): count-driven staged density ladder - full
+      // diagram cards (1-4) -> one-row compact tokens (5-6) -> a fixed
+      // 6-column compact grid (7-12, so 12 = two clean rows of 6).
+      // progStripMode measures real widths only as a narrow-viewport GUARD
+      // (early demotion); it never promotes back up past the count-driven
+      // candidate stage.
+      var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW(),
+        // S-CHORD-COLLAPSE: lazy optional lookup (same pattern as window.DiagramPref
+        // in chord-pack-adapter.js) - a page/test without the module reads false;
+        // method-level typeof guard per the buildGrid call site (Volley 2 Medium #1).
+        // composeShapesOn (Volley 2 High #1): Shapes ON restores the
+        // NON-ADVANCED rendering on the filmstrip too, not just the palettes.
+        // Deliberately that and no more (Volley 3 High #2): at 5+ chords the
+        // pre-existing S-PROG-WRAP-2 count ladder renders compact tokens for
+        // EVERY level - Shapes must not override the density ladder that
+        // exists for fit reasons; it only removes the advanced-level collapse.
+        !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+          && global.ChordCollapse.active() && !composeShapesOn));
+      el.prog.classList.toggle('full', mode === 'full');
+      el.prog.classList.toggle('fill-row', mode === 'fill-row');
+      el.prog.classList.toggle('grid6', mode === 'grid6');
+      // 'fill-row' is the only stage whose column count varies with the
+      // progression length - grid6 is a FIXED 6 columns (CSS-only) and full
+      // is a flexbox row (no column count needed), so only fill-row needs an
+      // inline grid-template-columns per render.
+      el.prog.style.gridTemplateColumns = (mode === 'fill-row') ? 'repeat(' + progression.length + ', 1fr)' : '';
       // Only repaint the strip when something VISIBLE changed - the chords, their
-      // key-relative romans, or the maxed cap. labelRoman is MODE-aware (a mode
-      // toggle flips bVII <-> VII on the same chord), so the mode is part of the
-      // visible signature - omitting it left stale romans after a mode change
-      // (codex V2 high).
-      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed;
+      // key-relative romans, the maxed cap, or the stage. labelRoman is
+      // MODE-aware (a mode toggle flips bVII <-> VII on the same chord), so the
+      // mode is part of the visible signature - omitting it left stale romans
+      // after a mode change (codex V2 high). Same reasoning for the strip stage:
+      // a resize that flips between stages must force a repaint even though the
+      // chords/tonic/songKey.mode/maxed didn't change.
+      var sig = progression.join(',') + '|' + tonic + '|' + songKey.mode + '|' + maxed + '|' + mode;
       if (sig !== lastProgSig) {
         lastProgSig = sig;
         el.prog.innerHTML = '';
         progression.forEach(function (c, i) {
           var slot = document.createElement('div'); slot.className = 'slot';
-          var d = packDiagram(c, 'small'); d.onclick = function () { packPlayChord(c); };
-          slot.appendChild(d);
-          // interval relative to the key — think I IV V, not shapes
           var rn = labelRoman(c);
-          if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+          if (mode !== 'full') {
+            // S-PROG-WRAP: the SAME compact token the "Next chord" suggestion
+            // row already uses (suggChip/scName/scRn classes) - reused
+            // verbatim, not a 4th chip variant. Built via createElement +
+            // textContent (not innerHTML, unlike suggChip() itself) so the
+            // remove button below stays a plain sibling and content is
+            // trivially inspectable. .composeWrap.maxed dims THIS class's
+            // chooser role at the cap (see songbook.css); the progression's
+            // OWN slots must stay interactive at cap (remove one to add
+            // another) - the `.prog .suggChip` CSS carve-out exempts them.
+            var tok = document.createElement('button'); tok.type = 'button'; tok.className = 'suggChip';
+            var nameSpan = document.createElement('span'); nameSpan.className = 'scName'; nameSpan.textContent = dispChordName(c);
+            tok.appendChild(nameSpan);
+            if (rn) { var rnSpan = document.createElement('span'); rnSpan.className = 'scRn'; rnSpan.textContent = rn; tok.appendChild(rnSpan); }
+            tok.onclick = function () { packPlayChord(c); };
+            slot.appendChild(tok);
+          } else {
+            var d = packDiagram(c, 'small', dispChordName(c)); d.onclick = function () { packPlayChord(c); };
+            slot.appendChild(d);
+            // interval relative to the key — think I IV V, not shapes
+            if (rn) { var lbl = document.createElement('span'); lbl.className = 'rn'; lbl.textContent = rn; slot.appendChild(lbl); }
+          }
+          // S-PROG-REORDER (prototype, operator directive 2026-07-10): the slot
+          // is draggable to reorder - see wireSlotDrag below the render loop.
+          wireSlotDrag(slot, i);
           var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-          rm.onclick = function (e) {
-            e.stopPropagation(); progression.splice(i, 1);
+          // S-SLOTX: movement-cancelled (composeWireTap, not a raw onclick) so a
+          // scroll-grab on this horizontal filmstrip can't remove a chord.
+          // Unchanged by S-PROG-WRAP - the remover works identically in both
+          // full and compact mode.
+          composeWireTap(rm, function () {
+            // S-DELETE-UNDO (operator UAT 2026-07-10): the first tap ARMS the
+            // remover (red, 1.6s auto-disarm) - protection against accidental
+            // deletes while tapping through chords to hear them; the second
+            // tap deletes and pushes onto the bounded remove-undo stack.
+            if (armedRm !== rm) { armRm(rm); return; }
+            disarmRm();
+            // A3: Clear-undo + stale toast invalidate as before; the remove-undo
+            // stack deliberately SURVIVES a remove - it IS the remove trail.
+            invalidateClearUndo(true);
+            pushRemoveUndo(progression[i], i);
+            progression.splice(i, 1);
             var kc = reinferKey();
             renderProg(); renderSuggest(); renderKey();
             if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
-          };
+          });
           slot.appendChild(rm);
           el.prog.appendChild(slot);
         });
       }
       renderSuggest();
+      renderSongTray(); // M-13: the tray's visibility + add-control track the progression
+    }
+
+    // ---- M-13 SONG BUILDER: assemble progressions into a multi-section song ----
+    // M-13 g2: the section buffer now SURVIVES a reload. Additive namespaced key
+    // (songbook.builderBuffer.v1) - already covered by backup.js's OWNED_PREFIXES
+    // ('songbook.' prefix), so no SCHEMA_VERSION bump. Defensive load (bad/foreign
+    // JSON -> empty buffer, never a boot crash); buildSongFromSections already
+    // tolerates a malformed {label, seq} shape per-section, so a half-corrupt
+    // buffer degrades gracefully instead of losing the whole thing. The tray
+    // (renderSongTray) shows only when a progression exists OR the buffer is
+    // non-empty - never dead chrome on an empty canvas.
+    var BUILDER_BUFFER_KEY = prefix + ".builderBuffer.v1";
+    function loadSongSections() {
+      try {
+        var r = localStorage.getItem(BUILDER_BUFFER_KEY);
+        if (!r) return [];
+        var arr = JSON.parse(r);
+        if (!Array.isArray(arr)) return [];
+        // Keep only well-shaped entries - a hand-edited or partially-corrupt
+        // key degrades to dropping the bad rows, not the whole buffer.
+        return arr.filter(function (s) {
+          return s && typeof s.label === 'string' && Array.isArray(s.seq);
+        });
+      } catch (e) { return []; }
+    }
+    function saveSongSections() { return safeSet(BUILDER_BUFFER_KEY, JSON.stringify(songSections)); }
+    var songSections = loadSongSections();
+    // S-SECTION-EDIT (operator UAT 2026-07-17): which buffered section is being
+    // refined in the builder right now (index into songSections), or null. Set
+    // by editSection() when its ✎ is tapped; consumed by addSongSection() to
+    // UPDATE that section in place instead of appending a duplicate; cleared on
+    // any Clear (clearProgression) so an abandoned edit never silently
+    // overwrites a section later. Session-local (not persisted) - a refine is a
+    // live intent, not saved state.
+    var editingSectionIdx = null;
+    // S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
+    // behind one top-level toggle - 'chords' (the progression editor: strip +
+    // picker) and 'song' (the arrangement canvas: section cards + proven
+    // templates + Save song). The M-13 tray used to squeeze the whole builder
+    // into the FIXED composeTop; every added section starved the chord picker's
+    // scroll area (the "two sections and I'm stuck" operator report). One
+    // altitude on screen at a time. Additive key; invalid stored values fall
+    // back to 'chords' (the muscle-memory default).
+    var COMPOSE_MODE_KEY = prefix + ".composeMode.v1";
+    var composeMode = 'chords';
+    try { if (localStorage.getItem(COMPOSE_MODE_KEY) === 'song') composeMode = 'song'; } catch (e) { /* default stands */ }
+    function saveComposeMode() { return safeSet(COMPOSE_MODE_KEY, composeMode); }
+    // The guided loop: a Song-mode template fill (or "Build the chords") drops
+    // into Chords mode to edit; the next "Add to song" returns to the canvas.
+    // Manual toggle taps clear the flag - the user taking the wheel wins.
+    var returnToSong = false;
+    // S-SONG-MODE Phase B: when a draft was loaded FROM a saved song
+    // ("Continue building"), Save song UPDATES that song in place instead of
+    // creating a copy (the saveProgression update-in-place precedent: no new
+    // record, no name prompt). Persisted alongside the buffer so a reload
+    // keeps the link; ignored (nulled) when the buffer itself is empty - a
+    // stale link must never make a brand-new draft overwrite an old song.
+    var BUILDER_SOURCE_KEY = prefix + ".builderSource.v1";
+    var builderSourceId = null;
+    try { builderSourceId = songSections.length ? (localStorage.getItem(BUILDER_SOURCE_KEY) || null) : null; } catch (e) { /* fresh */ }
+    function saveBuilderSource() {
+      return builderSourceId ? safeSet(BUILDER_SOURCE_KEY, builderSourceId)
+        : (function () { try { localStorage.removeItem(BUILDER_SOURCE_KEY); } catch (e) {} return true; })();
+    }
+    function setComposeMode(m) {
+      if (m !== 'chords' && m !== 'song') return; // unknown values never wedge the screen
+      if (m === composeMode) return;
+      composeMode = m;
+      stopSectPlay(); // a section preview must not keep sounding under the other view
+      saveComposeMode();
+      renderSongTray();
+    }
+    // Section preview: strum the section's chords in sequence through the SAME
+    // pack path a chord tap uses (packs/voicings resolve identically). A fixed
+    // comfortable gap beats silence; the tempo-aware full-song play-through is
+    // Phase B (SONG-MODE-DESIGN.md).
+    var sectPlayTimers = [];
+    function stopSectPlay() { sectPlayTimers.forEach(clearTimeout); sectPlayTimers = []; }
+    function playSection(seq) {
+      stopSectPlay();
+      (seq || []).forEach(function (c, i) {
+        sectPlayTimers.push(setTimeout(function () { packPlayChord(c); }, i * 650));
+      });
+    }
+    // The tray is SELF-INJECTED into the progression box (like composeToast /
+    // composeRow / the clear-undo banner) - not authored in play/index.html - so
+    // the whole feature lives in this file. Built once, into el.prog.parentNode,
+    // after the strip. Standard song-form vocabulary (matches catalog `sect`).
+    // M-13 g1 section labels - the ONE vocabulary shared by the add-row <select>
+    // and the template-suggestion label switcher below.
+    // S-PROG-GUIDANCE: Pre-Chorus joins the section set - it's a first-class
+    // section in the songwriting canon (the departure+build before the chorus),
+    // and it gives the Pre-chorus lift (IV-V) template family a home surface.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
+        songSectionsEl = null, songAssembleBtnEl = null,
+        songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
+        // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
+        // and the full-screen Song canvas the tray's builder pieces moved into.
+        composeWrapEl = null, modeSegEl = null, modeChordsBtnEl = null, modeSongBtnEl = null,
+        composeSongEl = null, songCueEl = null, songBuildBtnEl = null;
+    // Which section the template chips seed (tappable switcher). Defaults to Verse
+    // (the add-row default) - the musician switches to the section they need next.
+    var suggestLabel = 'Verse';
+    // S-PROG-GUIDANCE: romanText of the suggestion whose FEEL/WHEN/PROVEN
+    // guidance panel is open (one at a time; null = all closed). Session-local
+    // UI state - a reveal is a moment, not a preference.
+    var suggestWhyOpen = null;
+    // M-13 g4: drag-swallow flag for the buffer chips, mirroring S-PROG-REORDER's
+    // dragSwallowClick (own flag/listener - the progression drag code is untouched
+    // per the goalpost's boundary; the grammar is reused, not shared, on purpose).
+    var sectionDragSwallowClick = false;
+    function ensureSongTray() {
+      if (songTrayEl) return true;
+      if (!el.prog || !el.prog.parentNode) return false;
+      // S-SONG-MODE: three pieces of chrome, built once.
+      //   1. The mode toggle (Chords | Song) at the very top of .composeWrap.
+      //   2. The slim Chords-mode tray (cue + capture row) inside the progBox.
+      //   3. The full-screen Song canvas (cards + templates + Save song),
+      //      appended to .composeWrap so it can own the whole viewport.
+      // closest() is browser-only (the Node test stub has no traversal) - fall
+      // back to el.prog.parentNode there; every piece still builds + wires, the
+      // stub just hosts them flat.
+      composeWrapEl = (el.prog.closest ? el.prog.closest('.composeWrap') : null) || el.prog.parentNode;
+      songTrayEl = document.createElement('div'); songTrayEl.id = 'songTray'; songTrayEl.className = 'songTray'; songTrayEl.hidden = true;
+      // UAT: ONE chrome-tier cue line (the quiet S-POSTPROG-CUE grammar, never a
+      // modal) that names the next move contextually - drives assembly confidence.
+      songTrayCueEl = document.createElement('p'); songTrayCueEl.id = 'songTrayCue'; songTrayCueEl.className = 'songTrayCue'; songTrayCueEl.hidden = true;
+      songAddRowEl = document.createElement('div'); songAddRowEl.id = 'songAdd'; songAddRowEl.className = 'songAdd';
+      songSectSelEl = document.createElement('select'); songSectSelEl.id = 'songSectSel'; songSectSelEl.className = 'songSectSel';
+      songSectSelEl.setAttribute('aria-label', 'Section label');
+      SONG_SECTIONS.forEach(function (lbl) {
+        var o = document.createElement('option'); o.value = lbl; o.textContent = lbl;
+        if (lbl === 'Verse') o.selected = true; // the most common opening section
+        songSectSelEl.appendChild(o);
+      });
+      var addBtn = document.createElement('button');
+      // copy-coach: the button names the OUTCOME (it goes into your song), not
+      // the mechanism ("Add section" said what the code does).
+      addBtn.type = 'button'; addBtn.id = 'songAddBtn'; addBtn.className = 'btn ghost songAddBtn'; addBtn.textContent = 'Add to song';
+      addBtn.onclick = function () { addSongSection(); };
+      songAddRowEl.appendChild(songSectSelEl); songAddRowEl.appendChild(addBtn);
+      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songAddRowEl);
+      el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
+      // --- the mode toggle: screen-level chrome, always visible, top of the wrap.
+      // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
+      // full-width, above everything) - and the two are never on screen together
+      // anyway (Song mode hides the chord list wholesale).
+      modeSegEl = document.createElement('div'); modeSegEl.id = 'composeModeSeg'; modeSegEl.className = 'composeModeSeg';
+      modeSegEl.setAttribute('role', 'group'); modeSegEl.setAttribute('aria-label', 'Compose view');
+      modeChordsBtnEl = document.createElement('button');
+      modeChordsBtnEl.type = 'button'; modeChordsBtnEl.className = 'composeModeBtn on'; modeChordsBtnEl.textContent = 'Chords';
+      composeWireTap(modeChordsBtnEl, function () { returnToSong = false; setComposeMode('chords'); });
+      modeSongBtnEl = document.createElement('button');
+      modeSongBtnEl.type = 'button'; modeSongBtnEl.className = 'composeModeBtn'; modeSongBtnEl.textContent = songBadgeText(songSections.length);
+      composeWireTap(modeSongBtnEl, function () { returnToSong = false; setComposeMode('song'); });
+      modeSegEl.appendChild(modeChordsBtnEl); modeSegEl.appendChild(modeSongBtnEl);
+      composeWrapEl.insertBefore(modeSegEl, (composeWrapEl.children && composeWrapEl.children.length) ? composeWrapEl.children[0] : null);
+      // --- the Song canvas: the arrangement altitude, full screen when active.
+      composeSongEl = document.createElement('div'); composeSongEl.id = 'composeSong'; composeSongEl.className = 'composeSong';
+      songCueEl = document.createElement('p'); songCueEl.className = 'songTrayCue songCue';
+      songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
+      // The one-shot click swallow for section-card drops (capture phase, mirrors
+      // el.prog's listener below wireSlotDrag): beats the rm/up/dn wireTap click
+      // that would otherwise fire on the card the drop landed on.
+      songSectionsEl.addEventListener('click', function (e) {
+        if (sectionDragSwallowClick) { e.stopPropagation(); e.preventDefault(); }
+      }, true);
+      // M-13 g1: template-suggestion panel (shells built once, filled per render
+      // by renderSongSuggest). In Song mode it is the "add the next section"
+      // surface, so it renders whenever the canvas does - proven options with
+      // room to breathe instead of squeezing above the chord picker.
+      songSuggestEl = document.createElement('div'); songSuggestEl.id = 'songSuggest'; songSuggestEl.className = 'songSuggest'; songSuggestEl.hidden = true;
+      songSuggestLabelsEl = document.createElement('div'); songSuggestLabelsEl.className = 'chordSeg songSuggestLabels';
+      songSuggestChipsEl = document.createElement('div'); songSuggestChipsEl.className = 'songSuggestChips';
+      songSuggestEl.appendChild(songSuggestLabelsEl); songSuggestEl.appendChild(songSuggestChipsEl);
+      // The guided loop's empty-handed entry: build the next section's chords
+      // yourself. Same round trip as a template fill, minus the fill.
+      songBuildBtnEl = document.createElement('button');
+      songBuildBtnEl.type = 'button'; songBuildBtnEl.id = 'songBuildBtn'; songBuildBtnEl.className = 'btn ghost songBuildBtn'; songBuildBtnEl.textContent = 'Build the chords';
+      composeWireTap(songBuildBtnEl, function () {
+        setComposeMode('chords');
+        // UAT-2 (2026-07-16): this path's intent is unambiguous - a NEW section -
+        // so it starts from a clean strip instead of appending onto the last
+        // section's leftover chords. Routed through clearProgression (the same
+        // guarded snapshot -> Undo-banner path as the Clear button), so it is
+        // reversible; a Chords-mode capture still keeps the progression (A3 -
+        // the chorus is usually the verse, edited).
+        clearProgression();
+        returnToSong = true; // programmatic switch keeps the loop; toggle taps clear it
+      });
+      songAssembleBtnEl = document.createElement('button');
+      // copy-coach: "Assemble" was builder jargon; the outcome is a saved song.
+      songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
+      songAssembleBtnEl.textContent = 'Save song'; songAssembleBtnEl.hidden = true;
+      songAssembleBtnEl.onclick = function () { assembleSong(); };
+      composeSongEl.appendChild(songCueEl);
+      composeSongEl.appendChild(songSectionsEl);
+      composeSongEl.appendChild(songSuggestEl);
+      composeSongEl.appendChild(songBuildBtnEl);
+      composeSongEl.appendChild(songAssembleBtnEl);
+      composeWrapEl.appendChild(composeSongEl);
+      return true;
+    }
+    // The realization key for template chips: the live Compose songKey when one is
+    // set, else the key the buffered sections establish (deriveProgressionKey does
+    // exactly this fallback). Post-Clear the inferred key is nulled, so the SONG's
+    // own key (the verse the musician already wrote) is what the chips realize in.
+    function suggestKey() {
+      var km = deriveProgressionKey(buildSongFromSections(songSections).seq);
+      // S-SONG-MODE: an EMPTY canvas still shows proven starters (the pedagogy
+      // first-minute rule: sound within one tap) - fall back to C major so the
+      // template chips realize instead of rendering "no template in this key".
+      // deriveProgressionKey already preferred the live Compose songKey when set.
+      if (!km.key) return { root: 'C', mode: 'major' };
+      return { root: km.key, mode: km.mode };
+    }
+    // Provenance line for a chip: a mined pattern cites its first real song; a
+    // canonical family names itself (minus the roman parenthetical the chip's own
+    // roman line already shows).
+    function suggestProv(s) {
+      if (s.source === 'mined') {
+        var c = (s.citations && s.citations[0]) || null;
+        return c ? ('from ' + c) : 'from the catalog';
+      }
+      return s.name ? s.name.replace(/\s*\(.*\)\s*$/, '') : 'proven';
+    }
+    // M-13 g3: the text a recorded PREFERENCE can match against - a mined
+    // suggestion's real-song citations (the musician's own catalog), a
+    // family's own name (minus the roman parenthetical, matching suggestProv).
+    function suggestMatchText(s) {
+      if (s.source === 'mined') return (s.citations || []).join(' ');
+      return s.name ? s.name.replace(/\s*\(.*\)\s*$/, '') : '';
+    }
+    // The previous buffered section's LAST chord as a roman in the song key -
+    // the seam a new section arrives from (feeds the adjacent-section ranking).
+    function prevSectionLastRoman(keyRoot) {
+      var C = global.Circle;
+      if (!songSections.length || !C || typeof C.romanFor !== 'function' || !keyRoot) return null;
+      var prev = songSections[songSections.length - 1];
+      var seq = prev && prev.seq;
+      if (!seq || !seq.length) return null;
+      return C.romanFor(seq[seq.length - 1], keyRoot) || null;
+    }
+    // Realized template suggestions for a section, in the current song key. Reads
+    // SongTemplates.forSection (the M-12 SSOT - CATALOG-mined patterns first by
+    // count, then proven families; CATALOG is songs.json, the proven library, NOT
+    // the user's own customs, per the UAT "proven songs, not mine" ask), realizes
+    // each roman pattern into canonical-sharp tokens, SKIPS any with an unrealizable
+    // roman (no approximation), then RE-RANKS by adjacent-section fit (a suggestion
+    // that arrives from the previous section's last chord ranks up) FIRST, then by
+    // the musician's OWN competency profile (M-13 g3: personalizeSuggestions - a
+    // re-rank + a one-line why-cue on `_tag`, never a filter), keeping forSection's
+    // proven order as the final stable tiebreak. Caps at 4.
+    function templateSuggestions(label, km) {
+      var ST = global.SongTemplates;
+      if (!ST || typeof ST.forSection !== 'function' || !km || !km.root) return [];
+      var raw = ST.forSection(label, CATALOG) || [];
+      var prevRoman = prevSectionLastRoman(km.root);
+      var out = [];
+      raw.forEach(function (s, i) {
+        var tokens = realizeSection(s.roman, km.root);
+        if (!tokens) return; // unrealizable roman -> skip, never approximate
+        out.push({
+          tokens: tokens,
+          romanText: s.roman.join('-'),
+          chordText: tokens.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join(' '),
+          prov: suggestProv(s),
+          // S-PROG-GUIDANCE: the chooser's revealable guidance (feel/when from
+          // the family - present on mined entries too when the pattern IS a
+          // known family, via forSection's sig->family attach). provenText is
+          // the PROVEN row: real-song citations for mined, the canon note for
+          // pure families.
+          feel: s.feel || null,
+          when: s.when || null,
+          provenText: (s.source === 'mined' && s.citations && s.citations.length)
+            ? s.citations.slice(0, 3).join(', ')
+            : (s.note || null),
+          _order: i,                                                  // forSection's proven rank (mined-first) - stable tiebreak
+          _connect: sectionConnectScore(prevRoman, s.roman[0]),       // arrival from the previous section
+          _complexity: suggestionComplexity(s.roman),                 // M-13 g3: skill-nudge input
+          _matchText: suggestMatchText(s)                             // M-13 g3: preference-match input
+        });
+      });
+      personalizeSuggestions(out, competencyProfile('music-composition'));
+      out.sort(function (a, b) { return (b._connect - a._connect) || (b._boost - a._boost) || (a._order - b._order); });
+      return out.slice(0, 4);
+    }
+    // UAT assembly cue: ONE contextual line naming the next move (quiet chrome, not
+    // a modal). copy-coach: short, sentence case, jargon-honest. S-SONG-MODE split
+    // the cue per view: the tray line teaches capture, the canvas line teaches
+    // arrangement (empty state doubles as the one-line "what is a song" lesson,
+    // in the beginner vocabulary budget).
+    function songTrayCue(hasProg, hasSections) {
+      return (hasProg && !hasSections) ? 'Add this as a section to start a song.' : '';
+    }
+    function songCanvasCue(hasSections) {
+      return hasSections
+        ? 'Tap play to hear a section. Add more, or save when it feels done.'
+        : 'A song is chords arranged in sections - verse, chorus, bridge. Start with a proven one, or build your own.';
+    }
+    // UAT r2 (2026-07-16): "the text guidance should be dismissal messages" -
+    // teaching lines are one-shot DISMISSIBLE tips (the notables grammar:
+    // teach at the moment of relevance, once; a dismissed lesson never burns
+    // the row again - pedagogy earned-silence). Dismissals persist per lesson
+    // key (additive storage), so each cue teaches exactly once per device.
+    var CUE_DISMISS_KEY = prefix + ".cueDismissed.v1";
+    var cueDismissed = {};
+    try { cueDismissed = JSON.parse(localStorage.getItem(CUE_DISMISS_KEY) || '{}') || {}; } catch (e) { cueDismissed = {}; }
+    function renderCue(host, key, text) {
+      if (!host) return;
+      host.innerHTML = '';
+      if (!text || cueDismissed[key]) { host.hidden = true; return; }
+      host.hidden = false;
+      var t = document.createElement('span'); t.className = 'cueText'; t.textContent = text;
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'cueDismiss'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Dismiss this tip');
+      composeWireTap(x, function () {
+        cueDismissed[key] = true;
+        safeSet(CUE_DISMISS_KEY, JSON.stringify(cueDismissed));
+        renderSongTray();
+      });
+      host.appendChild(t); host.appendChild(x);
+    }
+    // Fill the empty progression from a tapped template chip, THROUGH addChord -
+    // the SAME path chord taps use, so packs/voicings resolve and A3 clear-undo
+    // invalidates exactly as a manual build would. Carries the seeded section
+    // forward by pre-setting the add-row label, so the next "Add section" tags it
+    // as the section the musician was building.
+    function fillFromTemplate(tokens, label) {
+      if (!tokens || !tokens.length) return;
+      // S-SONG-MODE guided loop: templates are tapped on the Song canvas but
+      // chords are edited in ONE place - drop into Chords mode with the fill
+      // loaded, and let the next "Add to song" return to the canvas.
+      setComposeMode('chords');
+      returnToSong = true; // set AFTER the switch: toggle taps clear it, this programmatic hop must not
+      tokens.forEach(function (t) { addChord(t); });
+      if (songSectSelEl) songSectSelEl.value = label;
+      packPlayChord(tokens[tokens.length - 1]); // audible confirmation of the fill
+      showComposeToast('Filled a ' + label.toLowerCase() + ' - tweak it, then Add to song.');
+      recordComp('comp-progressions'); // M-13 g3: accepting a proven suggestion IS progression evidence
+    }
+    // Returns the number of chips rendered so the tray cue (below) knows whether
+    // proven options actually surfaced - avoids a querySelector the lightweight
+    // test DOM does not implement.
+    function renderSongSuggest(show) {
+      if (!songSuggestEl) return 0;
+      songSuggestEl.hidden = !show;
+      if (!show) { songSuggestChipsEl.innerHTML = ''; return 0; }
+      // Tappable section-label switcher (reuses the .chordSeg segmented primitive).
+      songSuggestLabelsEl.innerHTML = '';
+      SONG_SECTIONS.forEach(function (lbl) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chordSegBtn' + (lbl === suggestLabel ? ' on' : '');
+        b.textContent = lbl;
+        b.setAttribute('data-label', lbl);
+        b.setAttribute('aria-pressed', lbl === suggestLabel ? 'true' : 'false');
+        composeWireTap(b, function () { if (suggestLabel !== lbl) { suggestLabel = lbl; renderSongTray(); } });
+        songSuggestLabelsEl.appendChild(b);
+      });
+      // Realized chips for the selected label.
+      songSuggestChipsEl.innerHTML = '';
+      var km = suggestKey();
+      var suggestions = templateSuggestions(suggestLabel, km);
+      if (!suggestions.length) {
+        var none = document.createElement('p'); none.className = 'songSuggestNone';
+        none.textContent = 'No proven ' + suggestLabel.toLowerCase() + ' template in this key yet.';
+        songSuggestChipsEl.appendChild(none);
+        return 0;
+      }
+      suggestions.forEach(function (s) {
+        // S-PROG-GUIDANCE (operator UAT 2026-07-17): each suggestion is now a
+        // ROW - the fill chip plus a "?" reveal (the Studio solo view's "?"
+        // convention) that opens a FEEL / WHEN / PROVEN guidance ladder. The
+        // "?" is a SIBLING, never nested (a button can't contain a button);
+        // one panel open at a time so the list stays scannable (pedagogy:
+        // reveal on demand, never push prose).
+        var item = document.createElement('div'); item.className = 'songSuggestItem';
+        var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'songSuggestChip';
+        // M-13 g3: the why-cue rides the SAME provenance line (one visible line,
+        // no new element/style - Element Consistency Law) - '<prov> · <tag>' when
+        // the profile produced a tag, else the provenance line unchanged.
+        var provText = s.prov + (s._tag ? ' · ' + s._tag : '');
+        chip.setAttribute('aria-label', 'Fill ' + suggestLabel + ' with ' + s.chordText + (s._tag ? ', ' + s._tag : ''));
+        var rn = document.createElement('span'); rn.className = 'ssRoman'; rn.textContent = s.romanText;
+        var ch = document.createElement('span'); ch.className = 'ssChords'; ch.textContent = s.chordText;
+        var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = provText;
+        chip.appendChild(rn); chip.appendChild(ch); chip.appendChild(pv);
+        composeWireTap(chip, function () { fillFromTemplate(s.tokens, suggestLabel); });
+        item.appendChild(chip);
+        var hasGuidance = !!(s.feel || s.when || s.provenText);
+        if (hasGuidance) {
+          var open = (suggestWhyOpen === s.romanText);
+          var why = document.createElement('button'); why.type = 'button';
+          why.className = 'ssWhy' + (open ? ' on' : '');
+          why.textContent = '?';
+          why.setAttribute('aria-expanded', open ? 'true' : 'false');
+          why.setAttribute('aria-label', (open ? 'Hide' : 'Show') + ' guidance for ' + s.romanText);
+          composeWireTap(why, function () {
+            suggestWhyOpen = open ? null : s.romanText;
+            renderSongTray();
+          });
+          item.appendChild(why);
+          if (open) {
+            var panel = document.createElement('div'); panel.className = 'ssWhyPanel';
+            var addRow = function (label, text) {
+              if (!text) return;
+              var r = document.createElement('div'); r.className = 'ssWhyRow';
+              var l = document.createElement('span'); l.className = 'ssWhyLbl'; l.textContent = label;
+              var t = document.createElement('span'); t.className = 'ssWhyTxt'; t.textContent = text;
+              r.appendChild(l); r.appendChild(t); panel.appendChild(r);
+            };
+            addRow('Feel', s.feel);
+            addRow('When', s.when);
+            addRow('Proven', s.provenText);
+            item.appendChild(panel);
+          }
+        }
+        songSuggestChipsEl.appendChild(item);
+      });
+      return suggestions.length;
+    }
+    function renderSongTray() {
+      if (!ensureSongTray()) return;
+      var hasProg = progression.length >= 1;
+      var hasSections = songSections.length >= 1;
+      var inSong = composeMode === 'song';
+      // Screen chrome: the wrap class is what actually swaps the two full-screen
+      // views (CSS: .composeWrap.songMode hides the editor + picker, shows the
+      // canvas); the toggle's active state + the Song count badge track every
+      // render so parked work stays visible from Chords mode.
+      if (composeWrapEl && composeWrapEl.classList) composeWrapEl.classList.toggle('songMode', inSong);
+      if (modeChordsBtnEl) {
+        modeChordsBtnEl.className = 'composeModeBtn' + (inSong ? '' : ' on');
+        modeChordsBtnEl.setAttribute('aria-pressed', inSong ? 'false' : 'true');
+      }
+      if (modeSongBtnEl) {
+        modeSongBtnEl.className = 'composeModeBtn' + (inSong ? ' on' : '');
+        modeSongBtnEl.setAttribute('aria-pressed', inSong ? 'true' : 'false');
+        modeSongBtnEl.textContent = songBadgeText(songSections.length);
+      }
+      // --- Chords-mode tray: the capture row only (the canvas owns the rest).
+      // The add-control needs a live progression to snapshot; hide it with no chords.
+      songTrayEl.hidden = inSong || !hasProg;
+      songAddRowEl.hidden = !hasProg;
+      // UAT r2: cues render as dismissible one-shot tips (see renderCue).
+      renderCue(songTrayCueEl, 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
+      // --- Song-mode canvas: cue + cards + templates + actions.
+      // Templates render whenever the canvas does - in Song mode they ARE the
+      // "add the next section" surface (and the empty state's proven starters).
+      renderSongSuggest(inSong);
+      renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
+      if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;
+      songSectionsEl.innerHTML = '';
+      if (!inSong) return; // cards are canvas furniture; skip the build when hidden
+      // Respell card chord names in the song's own key (same speller path the
+      // template chips use) - the card must read like the sheet will.
+      var km = suggestKey();
+      songSections.forEach(function (sec, i) {
+        // S-SONG-MODE: a full CARD, not a label chip - the section's chords are
+        // visible and playable right on the canvas (recognition over recall: you
+        // can see and HEAR what's in a section before you arrange or save it).
+        var chip = document.createElement('div'); chip.className = 'songSect card';
+        var name = document.createElement('span'); name.className = 'songSectName';
+        // Label + chord count so a Verse x2 and a 3-vs-5-chord section stay
+        // distinguishable at a glance.
+        name.textContent = sec.label + ' · ' + sec.seq.length;
+        chip.appendChild(name);
+        // M-13 g4: the card is draggable to reorder - see wireSectionDrag below
+        // moveSongSection. The up/dn handles (below) stay as the keyboard/SR path.
+        wireSectionDrag(chip, i);
+        var play = document.createElement('button'); play.type = 'button'; play.className = 'songSectPlay';
+        play.innerHTML = '&#9654;'; play.setAttribute('aria-label', 'Play ' + sec.label);
+        composeWireTap(play, function () { playSection(sec.seq); });
+        chip.appendChild(play);
+        // S-SECTION-EDIT: ✎ loads THIS section's chords straight into the builder
+        // so the operator can refine one part without rebuilding it - "Add to
+        // song" then updates this section in place (see editSection/addSongSection).
+        var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'songSectEdit';
+        edit.innerHTML = '&#9998;'; edit.setAttribute('aria-label', 'Edit ' + sec.label + ' chords in the builder');
+        composeWireTap(edit, (function (idx) { return function () { editSection(idx); }; })(i));
+        chip.appendChild(edit);
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+        rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
+        // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
+        // first tap arms red (1600ms auto-disarm), second tap removes.
+        composeWireTap(rm, function () {
+          if (armedRm !== rm) { armRm(rm); return; }
+          disarmRm();
+          stopSectPlay();
+          songSections.splice(i, 1);
+          saveSongSections();
+          // Phase B: an emptied draft drops its saved-song link - a brand-new
+          // draft built afterwards must save fresh, never overwrite the old song.
+          if (!songSections.length && builderSourceId) { builderSourceId = null; saveBuilderSource(); }
+          renderSongTray();
+        });
+        // M-13 g2: reorder handles - real 44px hit targets (a11y-coach floor),
+        // small decorative glyph via ::before, matching the .rm halo convention.
+        // Disabled (native `disabled`, not just a CSS class) at the buffer's
+        // ends so composeWireTap's click listener never fires there.
+        var up = document.createElement('button'); up.type = 'button'; up.className = 'songSectMove up';
+        up.innerHTML = '&#9650;'; up.setAttribute('aria-label', 'Move ' + sec.label + ' up');
+        up.disabled = (i === 0);
+        composeWireTap(up, function () { moveSongSection(i, -1); });
+        var dn = document.createElement('button'); dn.type = 'button'; dn.className = 'songSectMove dn';
+        dn.innerHTML = '&#9660;'; dn.setAttribute('aria-label', 'Move ' + sec.label + ' down');
+        dn.disabled = (i === songSections.length - 1);
+        composeWireTap(dn, function () { moveSongSection(i, 1); });
+        chip.appendChild(up); chip.appendChild(dn);
+        chip.appendChild(rm);
+        // Row 2: the chords themselves, respelled in the song key.
+        var line = document.createElement('span'); line.className = 'songSectChords';
+        line.textContent = sec.seq.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join('  ');
+        chip.appendChild(line);
+        songSectionsEl.appendChild(chip);
+      });
+    }
+    // M-13 g2: swap section i with its neighbor at i+dir (-1 up, +1 down). No-op
+    // past either end (the disabled buttons already guard this, but a defensive
+    // bounds check keeps the function safe if ever called directly).
+    function moveSongSection(i, dir) {
+      var j = i + dir;
+      if (j < 0 || j >= songSections.length) return;
+      var tmp = songSections[i]; songSections[i] = songSections[j]; songSections[j] = tmp;
+      disarmRm(); // reordering changes chip identity under any armed remove handle
+      saveSongSections();
+      renderSongTray();
+    }
+    // M-13 g4 (operator directive 2026-07-11): DRAG-to-reorder the buffer chips,
+    // reusing the S-PROG-REORDER interaction grammar (pointer-events, long-press
+    // lift on touch, movement-slop lift on mouse, 2D nearest-center targeting so
+    // the chip strip's flex-wrap second row just works, accent insertion-edge
+    // marker, trailing-click swallow). The up/dn handles from g2 STAY as the
+    // a11y/keyboard-and-SR-safe fallback - drag is additive, not a replacement.
+    // Mirrored (not shared) deliberately: the goalpost's boundary keeps the
+    // progression chord-drag code path untouched, so this is its own small
+    // copy against the songSections array + its own save/render path instead
+    // of `progression` + renderProg/renderSuggest/renderKey.
+    function wireSectionDrag(chip, index) {
+      chip.addEventListener('pointerdown', function (e) {
+        if (songSections.length < 2) return;
+        var id = e.pointerId, startX = e.clientX, startY = e.clientY;
+        var isTouch = e.pointerType === 'touch';
+        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        function chipsNow() { return Array.prototype.slice.call(songSectionsEl.children); }
+        function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
+        function blockScroll(ev) { ev.preventDefault(); }
+        function lift() {
+          holdTimer = null;
+          lifted = true;
+          chip.classList.add('dragging');
+          try { chip.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        function onMove(ev) {
+          if (ev.pointerId !== id) return;
+          if (!lifted) {
+            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
+            if (isTouch) { if (moved > 8) cleanup(); }
+            else if (moved > 6) lift();
+            return;
+          }
+          if (ev.cancelable) ev.preventDefault();
+          clearMark();
+          var list = chipsNow(), best = -1, bestD = Infinity, bestCx = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            var d = Math.abs(ev.clientX - cx) + Math.abs(ev.clientY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCx = cx; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = ev.clientX > bestCx;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function onUp(ev) {
+          if (ev.pointerId !== id) return;
+          var commit = lifted && dropAt != null;
+          var to = dropAt;
+          cleanup();
+          if (!commit) return;
+          // swallow the click that trails this pointerup so the drop never
+          // ALSO fires the rm/up/dn wireTap of the chip it landed on.
+          sectionDragSwallowClick = true;
+          setTimeout(function () { sectionDragSwallowClick = false; }, 150);
+          var insert = to > index ? to - 1 : to;
+          if (insert === index) return;
+          disarmRm(); // reordering changes chip identity under any armed remove handle
+          var movedSec = songSections.splice(index, 1)[0];
+          songSections.splice(insert, 0, movedSec);
+          saveSongSections();
+          renderSongTray();
+        }
+        function cleanup() {
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          clearMark();
+          chip.classList.remove('dragging');
+          try { chip.releasePointerCapture(id); } catch (err) {}
+          document.removeEventListener('touchmove', blockScroll);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+        }
+        if (isTouch) holdTimer = setTimeout(lift, 300);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      });
+    }
+    // Snapshot the CURRENT progression (canonical-sharp tokens) as a labeled
+    // section. A3: additive - does NOT mutate the progression, so it does NOT
+    // invalidate the Clear-undo snapshot. Does NOT clear the progression (the
+    // musician often builds the chorus by editing the verse).
+    // S-SECTION-EDIT: pull a buffered section's chords back INTO the builder to
+    // refine it. Loads its seq into the progression, marks it as the section
+    // being edited, points the label selector at it, and drops into the Chords
+    // builder so the chords are right there to tweak. "Add to song" then routes
+    // through the editingSectionIdx update path below (replace, not append).
+    function editSection(i) {
+      if (i < 0 || i >= songSections.length) return;
+      var sec = songSections[i];
+      stopSectPlay(); disarmRm();
+      progression = sec.seq.slice(); cTpose = 0;
+      editingSectionIdx = i;
+      // Operator UAT 2026-07-17: a section label outside SONG_SECTIONS (an old
+      // save, a future custom label) must never render a BLANK select - append
+      // it as an option before selecting so the control always shows the truth.
+      if (songSectSelEl) {
+        var has = Array.prototype.some.call(songSectSelEl.options || [], function (o) { return o.value === sec.label; });
+        if (!has) {
+          var opt = document.createElement('option');
+          opt.value = sec.label; opt.textContent = sec.label;
+          songSectSelEl.appendChild(opt);
+        }
+        songSectSelEl.value = sec.label;
+      }
+      chordView = null;
+      reinferKey();
+      renderProg(); renderSuggest(); renderKey();
+      if (el.keyRoots) { renderKeyView(); buildGrid(); }
+      setComposeMode('chords');
+      showComposeToast('Editing ' + sec.label + ' - tweak it, then Add to song to update.');
+    }
+    function addSongSection() {
+      if (!progression.length) { showComposeToast('Build a progression first.', true); return; }
+      var label = (songSectSelEl && songSectSelEl.value) || 'Verse';
+      // S-SECTION-EDIT: refining an existing section UPDATES it in place (same
+      // slot, new label + chords) instead of appending a duplicate. Read the
+      // index first - clearProgression() below nulls editingSectionIdx.
+      var editing = editingSectionIdx;
+      if (editing != null && editing >= 0 && editing < songSections.length) {
+        songSections[editing] = { label: label, seq: progression.slice() };
+        disarmRm();
+        saveSongSections();
+        recordComp('comp-song-form');
+        clearProgression('Updated ' + label + ' in your song. Strip cleared - Undo to keep editing.');
+        renderSongTray();
+        return;
+      }
+      songSections.push({ label: label, seq: progression.slice() });
+      disarmRm(); // a fresh add clears any armed chip remover
+      saveSongSections();
+      recordComp('comp-song-form'); // M-COMPETENCY: shaping a section = song-form practice (small)
+      // S-SONG-MODE guided loop: a capture that started from the Song canvas (a
+      // template fill or "Build the chords") returns there; a plain Chords-mode
+      // capture stays put so a musician mid-noodle never loses their editor.
+      if (returnToSong) {
+        showComposeToast('Added ' + label + ' to the song.');
+        returnToSong = false; setComposeMode('song'); return; // setComposeMode re-renders
+      }
+      // UAT r2 (2026-07-16): a captured section now CLEARS the strip so the next
+      // section starts FRESH. The operator hit "new-section chords append to the
+      // old" twice - the A3 keep-the-progression default (2026-07: "the chorus
+      // is usually the verse, edited") lost to lived evidence. The edit-the-verse
+      // workflow is fully preserved: the Clear-undo banner's Undo restores these
+      // exact chords to edit. And the persistent, pausable banner replaces the
+      // too-fast "Added X" toast the operator couldn't read (finding 2). The
+      // clear snapshots for undo, so nothing is ever lost.
+      clearProgression('Added ' + label + ' to your song. Strip cleared for your next section - Undo to edit these chords.');
+      renderSongTray();
+    }
+    // Assemble the buffer into ONE custom song via the existing createCustomItem
+    // save path, then open it in the song view. A3: buffer-only op - leaves the
+    // progression (and its Clear-undo) intact.
+    function assembleSong() {
+      if (!songSections.length) { showComposeToast('Add a section first.', true); return; }
+      stopSectPlay();
+      // Snapshot NOW: the name row waits on a user tap while the canvas stays
+      // live behind it (same discipline as saveProgression's snapSeq).
+      var built = buildSongFromSections(songSections);
+      var km = deriveProgressionKey(built.seq);
+      // Phase B: a draft loaded from a saved song ("Continue building") UPDATES
+      // that song in place - no new copy, no name prompt (the saveProgression
+      // update-in-place precedent). The truthful-signal saveCustom() repeat
+      // mirrors that branch exactly (see its comment).
+      if (builderSourceId && customById(builderSourceId)) {
+        var upd = updateCustomItem(builderSourceId, { seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode });
+        if (upd) {
+          var updOk = saveCustom();
+          songSections = []; disarmRm(); saveSongSections();
+          builderSourceId = null; saveBuilderSource();
+          composeMode = 'chords'; saveComposeMode();
+          renderSongTray();
+          recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
+          showComposeToast(updOk ? ('Updated ' + upd.t + ' – opening it now.') : SAVE_FAIL_MSG, !updOk);
+          if (updOk) openPractice(upd.id);
+          return;
+        }
+        builderSourceId = null; saveBuilderSource(); // the source vanished - fall through to a fresh save
+      }
+      // S-SONG-MODE: the naming moment. A song the user wrote deserves a name -
+      // the old flow shipped every song as "My song" (placeholder text left
+      // behind, the S6 finding all over again). Same inline name row + setlist
+      // opt-in the progression save uses; cancel keeps the draft intact.
+      var defName = km.key ? 'Song in ' + km.key : 'My song';
+      openSaveNameRow(defName, function (name, addToSetlist) {
+        if (name === null) return; // cancelled - the draft stays on the canvas
+        var cs = createCustomItem({
+          title: name || defName, seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode
+        });
+        songSections = [];
+        disarmRm();
+        saveSongSections();
+        builderSourceId = null; saveBuilderSource(); // Phase B: a fresh save ends any (already-dead) source link
+        if (addToSetlist) toggleSet(cs.id, true); // G4/FORK-1: one tap from performance-ready; toTop - a song you just wrote is next up
+        // The draft is done - the next Compose visit starts back at the editor.
+        composeMode = 'chords';
+        saveComposeMode();
+        renderSongTray();
+        // M-COMPETENCY: assembling a whole song is the strongest observable
+        // composition evidence - song-form + progressions, plus repertoire on
+        // the active instrument (a playable song was produced).
+        recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
+        showComposeToast('Saved ' + cs.t + ' – opening it now.');
+        openPractice(cs.id);
+      });
+    }
+    // S-SONG-MODE Phase B ("open songs back up to continue building, not just
+    // edit metadata" - operator UAT 2026-07-16): parse a saved song's sheet back
+    // into sections, seed the builder, and reopen the Song canvas. Save then
+    // updates THIS song in place (builderSourceId above). Guards:
+    //   - same song already loaded -> just switch to the canvas (tap-twice safe)
+    //   - a DIFFERENT unsaved draft exists -> refuse with an honest toast, never
+    //     clobber unsaved work (a merge/replace choice is future polish)
+    function continueBuilding(s) {
+      if (!s) return;
+      var secs = sectionsFromSheet(s.sheet);
+      if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
+      if (songSections.length && builderSourceId !== s.id) {
+        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn');
+        return;
+      }
+      if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft
+        songSections = secs;
+        saveSongSections();
+        builderSourceId = s.id;
+        saveBuilderSource();
+      }
+      composeMode = 'song';
+      saveComposeMode();
+      renderSongTray();
+      switchTab('compose');
     }
     function addChord(c) {
-      if (progression.length >= 8) return;
+      if (progression.length >= COMPOSE_MAX) return; // D-CAP12
+      invalidateClearUndo(); // A3: adding a chord invalidates any pending Clear-undo
       progression.push(c);
       // AUTO-INFER the key once 2+ chords exist and the user never explicitly picked
       // one, so the key chip + in-key palette light up without a key-panel trip. The
@@ -1364,16 +3373,18 @@
       }
       return songKey.root !== prevRoot || songKey.mode !== prevMode;
     }
-    // Fill the progression from a named pattern, in the user's key (default C Major).
-    // These patterns are major-diatonic, so we anchor to a Major key: keep the picked
-    // root if there is one, force the mode to Major, and sync the key picker so the
+    // Fill the progression from a named pattern entry, in the user's key (default C
+    // Major). Most patterns are major-diatonic, so we anchor to a Major key by
+    // default; a W2 Blues starter carries its own `p.mode` (Blues), overriding that
+    // default - keep the picked root if there is one, and sync the key picker so the
     // chord palette + solo scale below match what just got filled in.
-    function loadProgression(degrees) {
+    function loadProgression(p) {
+      invalidateClearUndo(); // A3: a starter pattern replaces the buffer wholesale
       var root = songKey.root || "C";
-      // a named pattern sets an explicit Major key (patterns are major-diatonic)
-      songKey.root = root; songKey.mode = "Major"; songKey.explicit = true;
+      // a named pattern sets an explicit key; mode follows the entry (Major default)
+      songKey.root = root; songKey.mode = p.mode || "Major"; songKey.explicit = true;
       keyPopoverOpen = false; // a key is set now - the root popover stays closed
-      progression = chordsFromDegrees(root, songKey.mode, degrees);
+      progression = chordsFromDegrees(root, songKey.mode, p.degrees);
       cTpose = 0;
       savedComposeId = null; // a starter is a NEW progression - detach from any saved song
       renderProg(); renderKey();
@@ -1388,7 +3399,7 @@
     }
     // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
     // Full labels are used everywhere else (key picker chip, key-view title).
-    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor' };
+    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       // The song key/mode is now shown by the button-bar chip (#keyPickerCompact), which
@@ -1403,10 +3414,12 @@
       if (el.soloBackingBtn) {
         var showSolo = !!(songKey.root && progression.length);
         el.soloBackingBtn.hidden = !showSolo;
-        // C1 (pilot UAT): songbook.css sets `.soloBackingBtn{display:block}`
-        // unconditionally - unlike every other hide-via-[hidden] element in this
-        // file (.chips, .keyFlyout, .composeRow, ...), it has no paired
-        // `.soloBackingBtn[hidden]{display:none}` rule, so the author stylesheet's
+        // C1 (pilot UAT) - HISTORICAL, kept as defense: songbook.css used to set
+        // `.soloBackingBtn{display:block}` unconditionally, with no paired
+        // `[hidden]{display:none}` rule (unlike .chips/.keyFlyout/.composeRow). F28/F29
+        // renamed the class to `.soloRowBtn` (no display rule), so [hidden] alone now
+        // suffices and the inline style.display below is belt-and-suspenders. Back then
+        // the author stylesheet's
         // display:block cascades over the UA [hidden] rule and the button stayed
         // visible (and tappable) even with 0 or 1 chords and no key. That falsely
         // "live" button is what read as a one-chord "dead tap" (C3): nothing
@@ -1416,85 +3429,52 @@
         // establish a key). Pin display inline (wins over any external
         // stylesheet rule short of !important) so hidden actually hides it.
         el.soloBackingBtn.style.display = showSolo ? '' : 'none';
+        // G2 S-POSTPROG-CUE: tell the guidance layer whether the progression is
+        // Solo-ready - the postprog notable renders/clears off this event (same
+        // notifyGuidanceEvent seam as music:compose-transposed).
+        notifyGuidanceEvent('music:compose-progression', { soloReady: showSolo, length: progression.length });
       }
     }
     function composeTpose(st) {
       if (!progression.length) return;
+      invalidateClearUndo(); // A3: a transpose invalidates any pending Clear-undo
       progression = progression.map(function (c) { return tpose(c, st); });
       cTpose += st;
       // Move the song key with the chords so the readout, diatonic palette and solo
       // scale never drift from what's actually sounding. If a key center exists
-      // (explicit pick, or one derived earlier) shift its root by the same delta;
-      // otherwise derive it fresh from the now-transposed first chord.
-      // DELIBERATE (codex #90 V1): this first-chord fallback can establish a key
-      // from a ONE-chord progression - a transpose is an explicit act on the
-      // progression, and deriveProgressionKey applies the same chord-1 fallback
-      // at save time. The Solo button appearing after that is wanted (owner C3:
-      // one-chord solo should be easy), not a leak of the inferKey >=2 rule
-      // (which governs passive auto-inference only).
+      // (explicit pick, or one derived earlier) shift its root by the same delta.
+      // D-KEYLESS (m-guide-ia-20260704.md section 4.3): keyless STAYS keyless on
+      // transpose - supersedes codex #90 V1's first-chord-fallback per operator
+      // input I4. Accepted consequence: the Solo CTA no longer lights from a
+      // keyless transpose alone; the pick-a-key CTA carries that path instead.
       if (songKey.root) {
         songKey.root = tpose(songKey.root, st);
-      } else {
-        var p0 = splitChord(progression[0]);
-        if (p0) songKey.root = p0.root;
       }
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
+      // M-GUIDANCE (intermediate tier): "transpose moves the key with it" JIT
+      // cue - play/index.html's renderTransposeTipNotable() listens for this.
+      notifyGuidanceEvent('music:compose-transposed');
     }
     // MODAL INTERCHANGE (Phase 2). Re-harmonize the whole built progression to a
     // PARALLEL mode: same tonic, same chord ROOTS, but each chord re-QUALIFIED to the
     // target mode's degree quality. C Major I-IV-V (C F G) -> C Minor i-iv-v (Cm Fm Gm).
     // Distinct from transpose (composeTpose): transpose moves roots and keeps qualities;
     // this keeps roots and flips qualities. Called by the one key/mode filter (#keyModes)
-    // whenever the mode changes with a progression present - so the filter always keeps
-    // the built chords in sync with the chosen mode (no separate re-harmonize button).
-    // Best-effort by the user's decision: a chord whose root is NOT a scale degree of the
-    // target mode (a chromatic/borrowed root) is left UNCHANGED rather than guessed at.
-    // A preserved 7th-type extension is re-based onto the new triad quality where the
-    // base triad maps to "" (major) or "m" (minor); on a "dim" degree we keep the bare
-    // dim triad. Round-trip is not perfect for chromatic chords (acceptable).
+    // whenever the mode changes with a progression present AND a key is explicitly set -
+    // the keyless case (no root yet) is handled directly by the mode-chip handler via
+    // the same pure fn, without resurrecting a root (D-KEYLESS, m-guide-ia-20260704.md
+    // section 4). The mapping itself (best-effort: a chromatic/borrowed root is left
+    // unchanged; a 7th extension re-bases onto the new triad quality) lives in the pure,
+    // exported convertProgressionQualities() above (section 4.5) so both paths share it.
     function convertToMode(targetMode) {
       if (!progression.length || !MODES[targetMode]) return;
+      invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
       // Parallel = same tonic. Use the explicit/derived song key root; else the first
       // chord's root. rootPc handles flat spellings; if it can't resolve, bail safely.
       var tonicRoot = songKey.root || (splitChord(progression[0]) || {}).root || null;
-      var tonicPc = tonicRoot != null ? rootPc(tonicRoot) : null;
-      if (tonicPc == null) return;
-      var steps = MODES[targetMode].steps, quals = MODES[targetMode].quals;
-      progression = progression.map(function (c) {
-        var p = splitChord(c);
-        if (!p) return c;
-        var rpc = rootPc(p.root);
-        if (rpc == null) return c;
-        var offset = ((rpc - tonicPc) % 12 + 12) % 12;
-        var i = steps.indexOf(offset);
-        if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
-        var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished
-        // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
-        // Re-base it onto the target triad quality: major degree -> maj7 keeps its own
-        // maj7-ness only if it was maj7; a dominant 7 stays a dominant 7; a minor 7
-        // becomes minor on a minor degree, etc. Simpler+correct rule: rebuild from the
-        // base triad and re-attach the extension class that survives a quality flip.
-        var ext = "";
-        if (/maj7$/.test(p.qual)) ext = "maj7-like";
-        else if (/m7$/.test(p.qual)) ext = "min7-like";
-        else if (/7$/.test(p.qual)) ext = "dom7-like";
-        var suffix;
-        if (ext === "") {
-          suffix = baseQual; // plain triad -> target triad quality
-        } else if (baseQual === "dim") {
-          suffix = "dim"; // keep the bare diminished triad on a dim degree
-        } else if (baseQual === "m") {
-          // minor degree: a 7th becomes a minor 7th (m7); a maj7 over a minor degree is
-          // uncommon - normalize to m7 to keep the chord diatonic-feeling.
-          suffix = "m7";
-        } else { // baseQual === "" -> major degree
-          // major degree: a maj7 stays maj7; a dominant/minor 7 becomes a dominant 7
-          // (the usual major-degree 7th in these jam styles).
-          suffix = (ext === "maj7-like") ? "maj7" : "7";
-        }
-        return p.root + suffix;
-      });
+      if (tonicRoot == null || rootPc(tonicRoot) == null) return;
+      progression = convertProgressionQualities(progression, targetMode, tonicRoot, songKey.mode);
       // Parallel interchange keeps the tonic fixed; only the mode changes. Roots do not
       // move, so cTpose (the transpose-from-origin readout) is intentionally untouched.
       songKey.root = tonicRoot;
@@ -1519,12 +3499,20 @@
     // 'allChordsActiveCat' persists which chromatic category tab (Major/Minor/7th/...)
     // is selected across re-renders, so switching tab doesn't reset to the first category.
     var allChordsActiveCat = Object.keys(CATS)[0] || "Major";
+    // S-CHORD-COLLAPSE: the Shapes toggle state - false = the advanced-level
+    // default (compact chips), true = full diagram tiles on demand. SESSION-
+    // scoped by design (a var, no storage key): the collapse is the standing
+    // preference the guidance level already encodes; Shapes is a transient
+    // peek, so it resets on reload rather than silently becoming a second
+    // stored display pref competing with music.diagram.pref.v1.
+    var composeShapesOn = false;
     // Resolve the effective view: an explicit pin wins; otherwise follow the key.
     function effectiveChordView() {
       if (chordView === 'inkey' || chordView === 'all') return chordView;
       return songKey.root ? 'inkey' : 'all';
     }
-    function buildGrid() {
+    function buildGrid(opts) {
+      opts = opts || {};
       if (!el.catChips || !el.buildGrid) return;
       var chips = el.catChips, grid = el.buildGrid;
       // FLATTENED layout split:
@@ -1566,6 +3554,50 @@
       });
       chips.appendChild(seg);
 
+      // S-CHORD-COLLAPSE (operator friction 2026-07-16): at the ADVANCED
+      // guidance level both palette grids render the compact suggChip token
+      // (letter + roman) instead of full diagram tiles - the diagrams were
+      // pushing the palette well below the fold. The tap verb is UNCHANGED
+      // (one tap = add + play, the G1 persona goalpost encodes it); the
+      // Shapes toggle below flips the whole grid back to diagram tiles on
+      // demand, so a shape is one tap away, never a scroll away.
+      // Method-level guard (Volley 2 Medium #1): mirror reserveLabelSlot's
+      // `typeof === 'function'` discipline so a partially-stubbed
+      // window.ChordCollapse degrades to full diagrams instead of throwing.
+      var collapse = !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+        && typeof global.ChordCollapse.chip === 'function' // chipTile calls it (Volley 3 Medium #2)
+        && global.ChordCollapse.active());
+      var useChips = collapse && !composeShapesOn;
+      if (collapse) {
+        var shBtn = document.createElement('button');
+        shBtn.type = 'button';
+        shBtn.className = 'chip ccShapes' + (composeShapesOn ? ' on' : '');
+        shBtn.textContent = 'Shapes';
+        shBtn.setAttribute('aria-pressed', composeShapesOn ? 'true' : 'false');
+        // renderProg() too (Volley 2 High #1): the filmstrip's collapse also
+        // keys on composeShapesOn, and renderProg is not otherwise called on
+        // a toggle tap - without this the palettes flip but the strip stays
+        // collapsed, an inconsistent "Shapes" answer.
+        shBtn.onclick = function () { composeShapesOn = !composeShapesOn; buildGrid(); renderProg(); };
+        chips.appendChild(shBtn);
+      }
+      // Always toggled (not only when useChips) so a level change or a Shapes
+      // flip can never leave a stale chip-sizing class on the persistent grid.
+      grid.classList.toggle('ccMode', useChips);
+      // Compact chip for one palette chord: the shared ChordCollapse primitive
+      // + the SAME wireTap add/play/flash every diagram tile gets. Roman is
+      // gated on an ACTUAL key (explicit or inferred - the key chip displays
+      // it either way): labelRoman's own no-key fallback labels vs
+      // progression[0] (labelTonic), which on a cleared-key All view would be
+      // a GUESSED roman - the goal spec's honest-omission rule forbids that
+      // (Volley 2 High #2; the suggest row / progression slots keep their
+      // pre-existing fallback semantics - out of this feature's scope).
+      function chipTile(c) {
+        return wireTap(global.ChordCollapse.chip({
+          chord: c, roman: songKey.root ? labelRoman(c) : '', display: dispChordName(c)
+        }), c);
+      }
+
       if (view === 'inkey') {
         if (!songKey.root) {
           // In-key view with no key set: a PROMINENT pick-a-key CTA (replaces the old
@@ -1584,14 +3616,31 @@
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
-        if (global.KeyExplorer) {
+        if (useChips) {
+          // S-CHORD-COLLAPSE: compact chip palette - needs no KeyExplorer (the
+          // chip is name + roman, both derived right here), so this branch
+          // also covers the no-KeyExplorer degraded path.
+          var ccWrap = document.createElement('div'); ccWrap.className = 'ccChips';
+          diatonicChords(keyRoot, keyMode).forEach(function (c) {
+            ccWrap.appendChild(chipTile(c));
+          });
+          leadWrap.appendChild(ccWrap);
+        } else if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
             return { chord: c, roman: labelRoman(c) };
           });
           // No 'label' opt: the key/mode chip already names the key, so no list header.
           global.KeyExplorer.renderChords(leadWrap, keItems, {
-            diagram: packDiagram,
+            diagram: function (cc, sz) { return packDiagram(cc, sz, dispChordName(cc)); },
             onTap: function (c, d) { addChord(c); packPlayChord(c); d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220); }
+          });
+        } else {
+          // Fallback when KeyExplorer isn't loaded: render the diatonic palette as plain
+          // chord tiles into #buildGrid (mirrors the All view's tile render) so In-key is
+          // never blank and degrades gracefully. wireTap is movement-cancelled like every
+          // other chord tile.
+          diatonicChords(keyRoot, keyMode).forEach(function (c) {
+            grid.appendChild(wireTap(packDiagram(c, 'small', dispChordName(c)), c));
           });
         }
         if (scroller) scroller.insertBefore(leadWrap, grid);
@@ -1605,13 +3654,30 @@
         var b = document.createElement('button');
         b.className = 'chip' + (cat === allChordsActiveCat ? ' on' : '');
         b.textContent = cat;
-        b.onclick = function () { allChordsActiveCat = cat; buildGrid(); };
+        // UAT U6 (2026-07-04): tapping a quality chip flags this rebuild as a
+        // filter tap so the anchor below only fires here - never on the FIRST
+        // render of the All view (which should stay at its natural scroll spot).
+        b.onclick = function () { allChordsActiveCat = cat; buildGrid({ anchorFilterRow: true }); };
         tabRow.appendChild(b);
       });
       if (scroller) scroller.insertBefore(tabRow, grid);
       (CATS[allChordsActiveCat] || []).forEach(function (c) {
-        grid.appendChild(wireTap(packDiagram(c, 'small'), c));
+        // S-CHORD-COLLAPSE: same chip-vs-tile fork as the in-key palette;
+        // chipTile itself gates the roman on songKey.root, so an un-keyed
+        // All view honestly shows letter-only chips - never a roman guessed
+        // vs progression[0] via labelRoman's labelTonic fallback (Volley 2
+        // High #2; the goal spec's honest-omission rule).
+        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small'), c));
       });
+      // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter
+      // (Major/Minor/7th/Maj7/Min7) rebuilds #catTabRow + #buildGrid in place, but
+      // the scroll area (#composeChords) was snapping back near the top afterward -
+      // re-surfacing the #suggest starter strip and hiding the just-tapped filter
+      // row + its results below the fold. Anchor the filter row to the top of the
+      // visible scroll area instead, so results are immediately visible and the
+      // suggestion strip scrolls above. Instant jump (behavior:'auto') - a smooth
+      // animation here read as jank on the actual tap, not "the filter I tapped".
+      if (opts.anchorFilterRow && tabRow) tabRow.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
 
     /* ---- Key: pick a key -> its diatonic chord palette (the solo scale/HSR
@@ -1621,7 +3687,11 @@
      * hidden. The 12-root grid is an on-demand popover, opened by tapping the key chip
      * and closed on selection; tapping the already-selected mode re-confirms and
      * closes it (a no-op re-harmonize guard, not a toggle). */
-    var songKey = { root: null, mode: "Major", explicit: false };
+    // Default to C major so Compose opens in the In-key view with real, tappable
+    // chords - "get to work immediately" (operator override of D-KEYLESS, 2026-07-10,
+    // made knowingly: the key stays fully changeable / clearable / transposable, so the
+    // keyless capability is preserved - only the DEFAULT changed). compose-key-system.md D-DEFAULT-C.
+    var songKey = { root: "C", mode: "Major", explicit: true };
     var keyPopoverOpen = false; // the 12-root grid popover - opens on chip tap, closes on pick
     function buildKeyPicker() {
       if (!el.keyRoots || !el.keyModes) return;
@@ -1658,8 +3728,12 @@
         var chipMode = MODE_SHORT[songKey.mode] || (MODES[songKey.mode] && MODES[songKey.mode].label) || escHTML(String(songKey.mode || ''));
         // Placeholder is short ("Key") so it fits the fixed-width chip without clipping;
         // the title attr carries the full "Key / mode - tap to change" affordance.
+        // FORK-4 removal: the chip shows the preferred enharmonic key name
+        // (A# major displays as Bb); songKey.root stays the canonical token.
+        var chipRoot = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(songKey.root, songKey.mode) : songKey.root;
         chip.innerHTML = songKey.root
-          ? (songKey.root + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
+          ? (chipRoot + ' <span class="kpcMode">' + chipMode + '</span> <span class="kpcCaret" aria-hidden="true">▾</span>')
           : ('Key <span class="kpcCaret" aria-hidden="true">▾</span>');
         chip.onclick = function () { keyPopoverOpen = !keyPopoverOpen; buildKeyPicker(); };
       }
@@ -1677,9 +3751,18 @@
       ROOTS.forEach(function (r) {
         var b = document.createElement('button');
         b.className = 'chip rootChip' + (r === songKey.root ? ' on' : '');
-        b.textContent = r;
+        // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10: "key selector drift -
+        // shows sharps only. SSOT"): a root chip in the KEY picker names a KEY,
+        // so it displays the preferred tonic name from the ONE provider
+        // (Circle.preferredTonicName - the same call the compact chip below
+        // already makes). Mode-aware: the current mode picks the name (A# major
+        // -> Bb, but D# minor stays D#m-territory). r stays the canonical token
+        // for identity/storage/transpose. Resolves IV-2 (the flat-keys mock).
+        b.textContent = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(r, songKey.mode || 'Major') : r;
         b.setAttribute('aria-pressed', r === songKey.root ? 'true' : 'false');
         b.onclick = function () {
+          invalidateClearUndo(); // A3: a key (root) change invalidates any pending Clear-undo
           // Picking a root sets the explicit key and KEEPS the panel open so the mode
           // can be chosen in the same visit (root -> mode is one gesture; the old
           // close-on-root-pick forced a reopen to get minor). A mode tap - or re-tapping
@@ -1728,48 +3811,225 @@
         b.textContent = MODES[mk].label;
         b.setAttribute('aria-pressed', mk === songKey.mode ? 'true' : 'false');
         b.onclick = function () {
-          // Re-tapping the CURRENT mode is a no-op confirm: change nothing, just close
-          // the panel (when a root is set - the gesture is complete). The old
-          // unconditional convertToMode call re-derived a key from the first chord and
-          // could swap the chord list underneath the user on a same-mode tap.
+          // Re-tapping the CURRENT mode is a no-op confirm: change nothing. With a
+          // root set the gesture is complete - close the panel. With NO root yet
+          // (F12 dead-chip fix, m-guide-ia-20260704.md section 4.1) the chip is
+          // already the selected one; still re-render so it stays visibly live/on
+          // and the panel stays open for a real pick, instead of doing nothing.
           if (mk === songKey.mode) {
             if (songKey.root) { keyPopoverOpen = false; buildKeyPicker(); }
+            else { buildKeyPicker(); }
             return;
           }
           // A real mode change re-harmonizes the built progression (solo-practice
           // scope): the one key/mode filter keeps the chords in sync - a root change
-          // transposes, a mode change re-qualifies. convertToMode sets songKey.mode,
-          // closes the panel + re-renders. If the progression is empty there's nothing
-          // to harmonize, so just set the mode, close (root + mode both chosen = the
-          // gesture is done; with no root yet, stay open for the root pick) and
-          // re-render the palette.
-          if (progression.length) {
-            convertToMode(mk);
+          // transposes, a mode change re-qualifies.
+          if (songKey.root) {
+            // Explicit key: convertToMode owns convert + set root/mode/explicit +
+            // close + full re-render (unchanged path). If the progression is empty
+            // there's nothing to harmonize, so just set the mode and close (root +
+            // mode both chosen = the gesture is done).
+            if (progression.length) {
+              convertToMode(mk); // invalidates internally
+            } else {
+              invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
+              songKey.mode = mk;
+              keyPopoverOpen = false;
+              renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            }
           } else {
-            songKey.mode = mk;
-            if (songKey.root) keyPopoverOpen = false;
-            renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            // D-KEYLESS mode-change (m-guide-ia-20260704.md section 4.2): no root yet,
+            // so re-qualify the progression around the FIRST CHORD's root (the tonic
+            // labelRoman already measures against) via the shared pure fn - but the
+            // root itself STAYS null (no resurrection, unlike the old unconditional
+            // convertToMode call) and the panel stays OPEN so mode taps keep landing.
+            invalidateClearUndo(); // A3: a mode change invalidates any pending Clear-undo
+            if (progression.length) {
+              var firstChordRoot = (splitChord(progression[0]) || {}).root || null;
+              if (firstChordRoot) {
+                progression = convertProgressionQualities(progression, mk, firstChordRoot, songKey.mode);
+              }
+              songKey.mode = mk;
+              renderProg(); renderKey(); buildKeyPicker(); renderKeyView(); buildGrid(); renderSuggest();
+            } else {
+              songKey.mode = mk;
+              renderKey(); buildKeyPicker(); renderKeyView(); renderProg(); buildGrid();
+            }
           }
         };
         el.keyModes.appendChild(b);
       });
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
     }
+    // M-EAR wave 1: the Compose key-preview's active scale-audition handle -
+    // declared immediately outside renderKeyView (mirrors tracks.js's
+    // studioSound var, same reasoning) so a NEW renderKeyView() call (a
+    // key/mode change) can silence a playback a PREVIOUS call started,
+    // before the DOM subtree it was marking gets wiped below.
+    var composeSound = null;
     function renderKeyView() {
+      if (composeSound) { composeSound.stop(); composeSound = null; }
       if (!el.keyView) return;
       el.keyView.innerHTML = '';
       if (el.keyClear) el.keyClear.hidden = !songKey.root;
       // #keyView lives INSIDE the key/mode fly-out (below the roots + mode toggle).
-      // The fly-out is a pure key/mode PICKER now (locked decision: the Studio owns
-      // the fretboard/scale teaching) - the in-flyout solo-scale box and the I-IV-V
-      // HSR chain moved out entirely. What remains: the key readout line and a
-      // "Triads & Inversions" deep-dive link that opens in the current instrument +
-      // key context.
+      // The fly-out is a pure key/mode PICKER (locked decision: the Studio owns the
+      // fretboard + guidance cards + chord-tone targeting) - the I-IV-V HSR chain
+      // stays out entirely. What it DOES carry (M-GUIDE W3b): a lightweight, purely
+      // decoupled solo-scale PREVIEW (chip row + notes + one-line caption) so you
+      // can preview what you'd solo with before ever opening the Studio - plus the
+      // key readout line and the "Triads & Inversions" deep-dive link.
       if (!songKey.root) return; // the 12-root grid above IS the empty-state CTA
       var keyRoot = songKey.root, keyMode = songKey.mode; // local aliases for this render
       var title = document.createElement('div'); title.className = 'keyTitle';
-      title.innerHTML = '<strong>' + keyRoot + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
+      // S-KEYPICKER-PREFERRED: the key readout displays the preferred key name
+      // (the same provider the compact chip + root grid use) - picking Bb must
+      // never read back as "A# Major" one line below.
+      var dispKeyRootName = (global.Circle && global.Circle.preferredTonicName)
+        ? global.Circle.preferredTonicName(keyRoot, keyMode) : keyRoot;
+      title.innerHTML = '<strong>' + dispKeyRootName + ' ' + ((MODES[keyMode] && MODES[keyMode].label) || escHTML(keyMode)) + '</strong> <span>' + (MODE_HINT[keyMode] || '') + '</span>';
       el.keyView.appendChild(title);
+      // M-GUIDE W3b: solo-scale PREVIEW row - DECOUPLED (isolation-tested below).
+      // A chip tap here re-renders ONLY this block; it never touches songKey,
+      // progression, the In-key palette, or the grid, and nothing persists across
+      // renders (every renderKeyView() call defaults back to the mode's own
+      // scale). See engineering-wiki/systems/compose-key-system.md.
+      (function renderSoloChips() {
+        var wrap = document.createElement('div');
+        var chipsRow = document.createElement('div'); chipsRow.className = 'keySoloScale';
+        var notesLine = document.createElement('div'); notesLine.className = 'keySoloNotes';
+        // S-CHIPS-PLUS: a degrees line under the notes line (P5 W3 verdict -
+        // "how do these notes function", not just their names). Same styling
+        // family as the Practice Studio's degree glyphs (tracks.js
+        // studioTheory/soloBundle -> Circle.scaleDegrees/soloScaleDegrees).
+        var degreesLine = document.createElement('div'); degreesLine.className = 'keySoloDegrees'; degreesLine.hidden = true;
+        var frameLine = document.createElement('div'); frameLine.className = 'keySoloFrame'; frameLine.hidden = true;
+        // M-EAR wave 1: per-note tokens (data-i) on notesLine/degreesLine so
+        // onNote(i) can bounce a .sounding marker across them, plus the
+        // play/stop toggle - composes the SAME .iconBtn.soundToggle primitive
+        // the Studio scale panel uses (tracks.js), not a one-off look
+        // (Element Consistency Law). notesRow puts the toggle beside the
+        // notes line without an extra vertical row (one-screen-above-the-fold).
+        var notesRow = document.createElement('div'); notesRow.className = 'keySoloNotesRow';
+        var soundToggle = document.createElement('button');
+        soundToggle.type = 'button'; soundToggle.className = 'iconBtn soundToggle keySoloSoundToggle';
+        soundToggle.setAttribute('aria-label', 'Hear this scale'); soundToggle.setAttribute('aria-pressed', 'false');
+        soundToggle.innerHTML = '&#9658;';
+        var curNotes = null; // the currently-selected chip's note names (for the toggle to derive pcs from)
+        function renderNoteTokens(notes) {
+          return notes.map(function (n, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(n) + '</span>'; }).join(' ');
+        }
+        function renderDegreeTokens(degrees) {
+          return (degrees || []).map(function (d, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(d) + '</span>'; }).join(' ');
+        }
+        function clearSoundMarks() {
+          [notesLine, degreesLine].forEach(function (c) {
+            Array.prototype.forEach.call(c.querySelectorAll('.sounding'), function (m) { m.classList.remove('sounding'); });
+          });
+        }
+        function markSoundingNote(i) {
+          [notesLine, degreesLine].forEach(function (c) {
+            var m = c.querySelector('[data-i="' + i + '"]');
+            if (m) m.classList.add('sounding');
+          });
+        }
+        function setSoundToggle(on) {
+          soundToggle.classList.toggle('on', on);
+          soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+          soundToggle.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
+          soundToggle.innerHTML = on ? '&#9632;' : '&#9658;';
+        }
+        // Chip switch and any renderKeyView() re-render (key/mode change, the
+        // popover closing - see the MutationObserver below) all stop playback
+        // (implementation note #3, M-EAR wave 1 spec) - this is the ONE place
+        // that does it for the Compose preview.
+        function stopComposeSound() {
+          if (composeSound) { composeSound.stop(); composeSound = null; }
+          setSoundToggle(false);
+          clearSoundMarks();
+        }
+        soundToggle.onclick = function () {
+          if (composeSound) { stopComposeSound(); return; }
+          if (!global.Sound || !curNotes) return;
+          // noteToPc (module scope, above) - the same generic note-name ->
+          // pitch-class parser chord transposition already uses.
+          var pcs = curNotes.map(noteToPc).filter(function (p) { return p !== null; });
+          if (!pcs.length) return;
+          setSoundToggle(true);
+          composeSound = global.Sound.playScale(pcs, {
+            onNote: function (i) { clearSoundMarks(); markSoundingNote(i % pcs.length); },
+            onStop: function () { composeSound = null; setSoundToggle(false); clearSoundMarks(); }
+          });
+        };
+        var scaleLabel = (MODES[keyMode] && MODES[keyMode].label) || escHTML(String(keyMode));
+        var CHIPS = [
+          { id: 'mode', label: scaleLabel },
+          { id: 'pentMajor', label: 'Pent major' },
+          { id: 'pentMinor', label: 'Pent minor' },
+          { id: 'blues', label: 'Blues' }
+        ];
+        // Blues-key dedup: when the KEY's own mode is already Blues, the standalone
+        // Blues chip would just re-select the identical 6-note scale under a second
+        // button - drop it (mirrors the Practice Studio's th.scaleMode === 'blues' fold).
+        // S-CHIPS-PLUS (P5 W3 verdict): the freed 4th slot becomes Mixolydian - the
+        // dominant-scale option a player actually reaches for over I7-IV7-V7 (Blues'
+        // own harmonizing palette is I7/IV7/V7, Circle.BLUES_KEY). Non-Blues keys
+        // keep their 4th chip as Blues, unchanged.
+        if (canonMode(keyMode) === 'Blues') {
+          CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+          CHIPS.push({ id: 'mixolydian', label: 'Mixolydian' });
+        }
+        var curChipId = 'mode';
+        function renderChips() {
+          chipsRow.innerHTML = CHIPS.map(function (c) {
+            return '<button type="button" class="chip' + (curChipId === c.id ? ' on' : '') + '" data-soloscale="' + escHTML(c.id) + '">' + escHTML(c.label) + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(chipsRow.querySelectorAll('.chip'), function (b) {
+            b.onclick = function () { selectChip(b.getAttribute('data-soloscale')); };
+          });
+        }
+        function selectChip(scaleId) {
+          var notes = soloChipScale(keyRoot, keyMode, scaleId);
+          if (!notes) return; // unresolvable -> keep whatever was already on-screen
+          // M-EAR wave 1 (implementation note #3): a scale-chip switch always
+          // stops any in-progress audition - the sounding scale is about to
+          // change out from under the marker.
+          stopComposeSound();
+          curChipId = scaleId;
+          curNotes = notes;
+          renderChips();
+          notesLine.innerHTML = 'Solo over it - <strong>' + renderNoteTokens(notes) + '</strong>';
+          // Degrees are best-effort labeling only - notes already resolved above,
+          // so a null/empty degrees result just hides the line, never blocks the chip.
+          var degrees = soloChipDegrees(keyMode, scaleId);
+          if (degrees && degrees.length) { degreesLine.innerHTML = renderDegreeTokens(degrees); degreesLine.hidden = false; }
+          else { degreesLine.textContent = ''; degreesLine.hidden = true; }
+          // S-REL-NAMES (U23): keyRoot (this render's own key) names any
+          // {relMinor}/{relMajor} token in the caption text.
+          var caption = soloChipCaption(scaleId, keyRoot);
+          if (caption) { frameLine.textContent = caption; frameLine.hidden = false; }
+          else { frameLine.textContent = ''; frameLine.hidden = true; }
+        }
+        renderChips();
+        selectChip('mode'); // default every render: the key's own scale, never persisted
+        notesRow.appendChild(notesLine); notesRow.appendChild(soundToggle);
+        wrap.appendChild(chipsRow); wrap.appendChild(notesRow); wrap.appendChild(degreesLine); wrap.appendChild(frameLine);
+        el.keyView.appendChild(wrap);
+        // Closing the key/mode flyout popover (buildKeyPicker toggles
+        // el.keyFlyout.hidden - out of this function's grant, so observed
+        // rather than hooked directly) also silences an in-progress preview -
+        // "tab/surface change" (implementation note #3) for the one teardown
+        // path that doesn't re-run renderKeyView() itself. One-shot: the next
+        // renderKeyView() call rebuilds this whole block and re-observes.
+        try {
+          if (typeof MutationObserver !== 'undefined' && el.keyFlyout) {
+            var mo = new MutationObserver(function () {
+              if (el.keyFlyout.hidden) { stopComposeSound(); mo.disconnect(); }
+            });
+            mo.observe(el.keyFlyout, { attributes: true, attributeFilter: ['hidden'] });
+          }
+        } catch (e) {}
+      })();
       // Carry the current instrument AND key so the inversions page opens in context -
       // same instrument profile, pre-selected to this key. mode rides along too so a
       // future minor-cycle variant can read it; the page ignores params it doesn't use.
@@ -1781,6 +4041,32 @@
       invParams.push('mode=' + encodeURIComponent(keyMode));
       more.href = 'triad-inversions.html?' + invParams.join('&');
       more.textContent = 'Triads & Inversions →';
+      // Open the deep-dive as a full-screen in-app modal (iframe) instead of
+      // navigating away - mirrors the curate-videos overlay. The href stays as a
+      // no-JS / direct-open fallback; the iframed page self-themes off
+      // music.theme.v1, so it matches Light/Dark. Registers with NavHistory so
+      // Android back closes the modal, not the app.
+      more.onclick = function (e) {
+        e.preventDefault();
+        var url = more.getAttribute('href');
+        var ov = document.getElementById('invModal');
+        if (!ov) {
+          ov = document.createElement('div');
+          ov.id = 'invModal';
+          ov.className = 'invModal';
+          ov.innerHTML = '<div class="invModal-box" role="dialog" aria-modal="true" aria-label="Triads & Inversions">'
+            + '<button class="invModal-x" type="button" aria-label="Close">✕</button>'
+            + '<iframe class="invModal-frame" title="Triads & Inversions"></iframe></div>';
+          document.body.appendChild(ov);
+          var close = function () { ov.classList.remove('on'); var f = ov.querySelector('.invModal-frame'); if (f) f.removeAttribute('src'); };
+          ov._close = close;
+          ov.querySelector('.invModal-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else close(); };
+          ov.onclick = function (ev) { if (ev.target === ov) { if (window.NavHistory) window.NavHistory.dismiss(); else close(); } };
+        }
+        ov.querySelector('.invModal-frame').src = url;
+        ov.classList.add('on');
+        if (window.NavHistory) window.NavHistory.open('inversions', ov._close);
+      };
       el.keyView.appendChild(more);
     }
 
@@ -1824,7 +4110,7 @@
       chip.type = 'button';
       chip.className = 'suggChip' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
-      var html = '<span class="scName">' + escHTML(c) + '</span>';
+      var html = '<span class="scName">' + escHTML(dispChordName(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
       chip.innerHTML = html;
       chip.onclick = function () { addChord(c); packPlayChord(c); };
@@ -1843,11 +4129,14 @@
         var row = document.createElement('div'); row.className = 'progPickRow';
         PROGRESSIONS.forEach(function (p) {
           var b = document.createElement('button'); b.className = 'progPick'; b.type = 'button';
-          var roman = chordsFromDegrees('C', 'Major', p.degrees)
+          // A Blues starter carries its own short p.preview ('I7 IV7 V7') - the
+          // generic per-slot derivation below is Major-diatonic-only and would
+          // mislabel a 12-bar/quick-change fill (12 slots collapsing to 3 romans).
+          var roman = p.preview || chordsFromDegrees('C', 'Major', p.degrees)
             .map(function (c) { return global.Circle && global.Circle.romanFor ? global.Circle.romanFor(c, 'C') : c; })
             .join(' ');
           b.innerHTML = '<span class="ppRoman">' + roman + '</span><span class="ppName">' + p.name + '</span>';
-          b.onclick = function () { loadProgression(p.degrees); };
+          b.onclick = function () { loadProgression(p); };
           row.appendChild(b);
         });
         el.suggest.appendChild(row);
@@ -1877,13 +4166,18 @@
         return;
       }
       var n = progression.length;
-      // Helpful "Add a Nth chord" guidance only for the first few; past that the panel's own
-      // "Next chord" summary already says it (avoid the duplicate header the user flagged).
-      if (n <= 3) {
-        var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-        lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : "Add a 4th chord:";
-        el.suggest.appendChild(lbl);
-      }
+      // Ordinal guidance for the first few; past that, F30 (UAT): a label must
+      // ALWAYS sit directly above the suggested chords - the old "the panel's
+      // own summary already says it" rationale didn't hold (no other on-screen
+      // text names this row past the 4th chord), so it read as an unlabeled row
+      // of chips. Reuse the SAME .suggLbl primitive both branches already share
+      // (component-conventions.md section-label convention).
+      // Issue #264 (operator UAT 2026-07-17): lead with "Suggested" so the row
+      // names its INTENT - the app is proposing coherent next chords, not
+      // demanding one - while the ordinal keeps the where-am-I scaffold.
+      var lbl = document.createElement('div'); lbl.className = 'suggLbl';
+      lbl.textContent = n === 1 ? "Suggested 2nd chord:" : n === 2 ? "Suggested 3rd chord:" : n === 3 ? "Suggested 4th chord:" : "Suggested chords";
+      el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
       // glow (no name caption - see suggChip).
@@ -1897,13 +4191,39 @@
      * so it costs zero vertical space until it's actually used (per the "one
      * screen, above the fold" rule) - and torn down again the moment it's
      * dismissed, rather than reserving a permanent row. ---- */
-    var composeRow = null, composeToast = null, toastTimer = null;
+    var composeRow = null, composeToast = null, composeModalBackdrop = null;
+    // One-shot id for the post-save discoverability scroll+highlight (B3 pilot
+    // UAT) - set by saveProgression right before the renderSongs() call that
+    // will actually paint the new row, consumed (cleared) on the next
+    // renderSongs() regardless of whether a matching row was found.
+    var pendingHighlightId = null;
     function ensureComposeUI() {
       if (!el.prog || !el.prog.parentNode) return false;
+      if (!composeModalBackdrop) {
+        // Real full-viewport dim layer, a SIBLING of composeRow - not a ::before
+        // pseudo-element on the card (F9 root cause: a negative z-index child
+        // paints ABOVE the stacking-context root's own background per CSS2.1
+        // painting order, so the old `.asModal::before{z-index:-1}` washed OUT
+        // the card's background/text instead of sitting behind it). A separate
+        // lower z-index element can never repaint over its own card.
+        composeModalBackdrop = document.createElement('div');
+        composeModalBackdrop.className = 'composeModalBackdrop';
+        composeModalBackdrop.hidden = true;
+        el.prog.parentNode.insertBefore(composeModalBackdrop, el.prog);
+      }
       if (!composeRow) {
         composeRow = document.createElement('div');
         composeRow.className = 'composeRow';
         composeRow.hidden = true;
+        // UAT U7 (2026-07-04): every composeRow-as-modal consumer (save-name
+        // entry, solo-CTA choice) presents as a dialog when .asModal is on -
+        // set the a11y contract + a focus target here ONCE rather than per
+        // opener. tabIndex lets a button-less modal (the solo-choice row) call
+        // composeRow.focus() directly (a plain div isn't focusable otherwise);
+        // harmless for the save-name row, which focuses its own input instead.
+        composeRow.setAttribute('role', 'dialog');
+        composeRow.setAttribute('aria-modal', 'true');
+        composeRow.tabIndex = -1;
         el.prog.parentNode.insertBefore(composeRow, el.prog);
       }
       if (!composeToast) {
@@ -1914,63 +4234,582 @@
       }
       return true;
     }
-    function hideComposeRow() { if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; } }
+    function hideComposeRow() {
+      if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); }
+      if (composeModalBackdrop) composeModalBackdrop.hidden = true;
+    }
+
+    // ---- S-CLEARGUARD (sprint-1 #1), migrated to S-TOAST+ACTION (M-DESIGN-
+    // ENFORCE wave 2, UAT U19): Compose Clear undo banner ----
+    // F1: Clear used to wipe the built progression with NO guard (native
+    // confirm() elsewhere in this file, nothing here). A3 (binding): the
+    // fix is an undo banner, not a confirm() dialog - snapshot the full
+    // pre-Clear state (progression + cTpose + songKey + the linked
+    // saved-song id), and let ANY subsequent mutating action (add/remove
+    // chord, transpose, mode change, key change, Save) invalidate it. It is
+    // route-local, in-memory, session-only - no backup.js surface, dies on
+    // tab-switch/reload. It is a SEPARATE element/variable from composeRow/
+    // composeToast above (deliberately - so an unrelated save/solo-choice
+    // flow that calls hideComposeRow() can never silently clobber this
+    // banner's own DOM out from under its tracked snapshot), but reuses the
+    // .composeRow/.composeRowMsg/.composeRowBtns classes for the visual
+    // look (F7: "reuse this pattern for Clear-undo messaging").
+    //
+    // U19 amendment (decisions.md D-ENFORCE-2): the banner used to be
+    // untimed (interaction-safety.md guard #3 as it read before this wave) -
+    // ANY mutation was the only thing that ever invalidated it. It now ALSO
+    // times out via the shared toast.js Toast.showAction() primitive (6s
+    // window, visible countdown bar, pause-on-touch) - mutation-invalidation
+    // (invalidateClearUndo(), unchanged below) and the timer both end the
+    // pending undo; whichever fires first wins.
+    var clearUndoBanner = null, clearUndoSnapshot = null, clearUndoHandle = null, clearUndoTeardown = null;
+    function ensureClearUndoBanner() {
+      if (!el.prog || !el.prog.parentNode) return false;
+      if (!clearUndoBanner) {
+        clearUndoBanner = document.createElement('div');
+        clearUndoBanner.className = 'composeRow toastAction';
+        clearUndoBanner.hidden = true;
+        el.prog.parentNode.insertBefore(clearUndoBanner, el.prog);
+      }
+      return true;
+    }
+    function paintClearUndoHidden() {
+      if (clearUndoTeardown) { clearUndoTeardown(); clearUndoTeardown = null; }
+      clearUndoHandle = null;
+      if (clearUndoBanner) { clearUndoBanner.hidden = true; clearUndoBanner.innerHTML = ''; }
+    }
+    // Dismiss the banner AND drop the pending snapshot together - the two
+    // must never go out of sync (a visible banner with no snapshot, or a
+    // snapshot with no way to reach it, are both bugs). Safe to call even
+    // when nothing is pending.
+    function hideClearUndoBanner() {
+      clearUndoSnapshot = null;
+      if (clearUndoHandle) clearUndoHandle.finish(); else paintClearUndoHidden();
+    }
+    // Call at the top of every progression/songKey mutator (add/remove
+    // chord, transpose, mode change, key change, Save) - the A3 invalidation
+    // contract. A no-op when nothing is pending, so every call site can call
+    // it unconditionally with no extra guard.
+    // F31 (UAT): piggybacks hideComposeToast() onto the SAME choke point every
+    // mutating action already calls (add/remove chord, transpose, mode/key
+    // change, a starter load, Save itself) - a stale save-confirmation toast
+    // must not survive any of them, the identical "ANY mutating action
+    // invalidates prior transient state" contract A3 already applies to the
+    // Clear-undo banner below.
+    // S-DELETE-UNDO: keepRemoveUndo=true is passed ONLY by the chord-remove
+    // path (a remove must not wipe its own undo trail); every other mutating
+    // call site passes nothing, so add/transpose/mode/key/starter/Save all
+    // invalidate the remove-undo stack too - the same A3 contract.
+    function invalidateClearUndo(keepRemoveUndo) {
+      if (clearUndoSnapshot) hideClearUndoBanner();
+      hideComposeToast();
+      if (!keepRemoveUndo) invalidateRemoveUndo();
+    }
+    function showClearUndoBanner(bannerMsg) {
+      if (!ensureClearUndoBanner() || !clearUndoSnapshot) return;
+      clearUndoBanner.hidden = false;
+      clearUndoBanner.innerHTML = '';
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      // UAT r2: the capture path passes its own message (the too-fast "Added X"
+      // toast is replaced by this persistent, pausable, actionable banner).
+      msg.textContent = bannerMsg || 'Progression cleared.';
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost ctrlBtn'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var snap = clearUndoSnapshot; if (!snap) return;
+        var restored = applyClearSnapshot(snap);
+        progression = restored.progression; cTpose = restored.cTpose;
+        songKey.root = restored.songKey.root; songKey.mode = restored.songKey.mode; songKey.explicit = restored.songKey.explicit;
+        savedComposeId = restored.savedComposeId;
+        hideClearUndoBanner();
+        renderProg(); renderKey();
+        if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
+      };
+      btnRow.appendChild(undoBtn);
+      clearUndoBanner.appendChild(msg); clearUndoBanner.appendChild(btnRow);
+      clearUndoHandle = global.Toast.showAction(bannerMsg || 'Progression cleared.', {
+        host: clearUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { clearUndoSnapshot = null; paintClearUndoHidden(); }
+      });
+      clearUndoTeardown = global.Toast.wirePauseOnTouch(clearUndoBanner, clearUndoHandle);
+    }
+
+    // S-PROG-REORDER (PROTOTYPE, operator directive 2026-07-10: "prototype drag
+    // and drop to reorder chosen chords in my progression"). Pointer-events
+    // drag on every progression slot, all three strip stages (full cards,
+    // fill-row, grid6 - nearest-center targeting is 2D so the grid6 second
+    // row just works):
+    //   touch: LONG-PRESS (300ms still) lifts - early movement is a scroll
+    //     and cancels the hold, so the filmstrip's pan gesture is untouched;
+    //     once lifted, a non-passive touchmove blocker owns the gesture.
+    //   mouse/pen: movement past a small slop lifts immediately.
+    // While lifted: source slot dims (.dragging), the nearest slot carries an
+    // accent insertion edge (.dropBefore/.dropAfter by pointer side). Release
+    // splices the progression (a mutation - full A3 invalidation) and
+    // re-renders; the click that trails pointerup is swallowed once so a drop
+    // never also strums the chord it landed on.
+    var dragSwallowClick = false;
+    function wireSlotDrag(slot, index) {
+      slot.addEventListener('pointerdown', function (e) {
+        if (progression.length < 2) return;
+        // NOTE: drags may START on the rm button - its 44px hit area covers a
+        // compact chip's center (probed live: elementFromPoint at slot center
+        // hits .rm), so excluding it made compact chips undraggable. The two
+        // gestures stay separable: the rm tap is movement-cancelled
+        // (composeWireTap), and this drag only commits after movement.
+        var id = e.pointerId, startX = e.clientX, startY = e.clientY;
+        var isTouch = e.pointerType === 'touch';
+        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        function slotsNow() { return Array.prototype.slice.call(el.prog.children); }
+        function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
+        function blockScroll(ev) { ev.preventDefault(); }
+        function lift() {
+          holdTimer = null;
+          lifted = true;
+          slot.classList.add('dragging');
+          try { slot.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        function onMove(ev) {
+          if (ev.pointerId !== id) return;
+          if (!lifted) {
+            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
+            // touch: early movement = the user is scrolling the strip - stand down.
+            if (isTouch) { if (moved > 8) cleanup(); }
+            else if (moved > 6) lift();
+            return;
+          }
+          if (ev.cancelable) ev.preventDefault();
+          clearMark();
+          var list = slotsNow(), best = -1, bestD = Infinity, bestCx = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            var d = Math.abs(ev.clientX - cx) + Math.abs(ev.clientY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCx = cx; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = ev.clientX > bestCx;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function onUp(ev) {
+          if (ev.pointerId !== id) return;
+          var commit = lifted && dropAt != null;
+          var to = dropAt;
+          cleanup();
+          if (!commit) return;
+          // swallow the click that trails this pointerup so the drop never
+          // ALSO plays/strums the chord it landed on (capture listener below).
+          dragSwallowClick = true;
+          setTimeout(function () { dragSwallowClick = false; }, 150);
+          var insert = to > index ? to - 1 : to;
+          if (insert === index) return;
+          invalidateClearUndo(); // A3: a reorder is a mutation like any other
+          var movedChord = progression.splice(index, 1)[0];
+          progression.splice(insert, 0, movedChord);
+          reinferKey();
+          renderProg(); renderSuggest(); renderKey();
+        }
+        function cleanup() {
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          clearMark();
+          slot.classList.remove('dragging');
+          try { slot.releasePointerCapture(id); } catch (err) {}
+          document.removeEventListener('touchmove', blockScroll);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+        }
+        if (isTouch) holdTimer = setTimeout(lift, 300);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      });
+    }
+    // The one-shot click swallow for drops (capture phase so it beats the
+    // token/diagram onclick that would otherwise strum the landing chord).
+    if (el.prog && el.prog.addEventListener) {
+      el.prog.addEventListener('click', function (e) {
+        if (dragSwallowClick) { e.stopPropagation(); e.preventDefault(); }
+      }, true);
+    }
+
+    // S-DELETE-UNDO (operator UAT 2026-07-10: "too easy to delete a chord.
+    // protect from simple delete. and offer 1 (or 2?) levels of undo using
+    // simple mechanism tracking previous actions"). Two halves:
+    //   ARM - the slot remover x never deletes on a single tap: the first tap
+    //   arms it (red, 1.6s auto-disarm; arming one x disarms any other), the
+    //   second tap deletes. Protection WITHOUT a confirm() dialog (the
+    //   feedback-debt direction is removing those).
+    //   UNDO - deletes push onto a bounded TWO-level stack surfaced through
+    //   the same composeRow + Toast.showAction pattern as the Clear-undo
+    //   banner above. Subsequent deletes KEEP the stack (that is the two
+    //   levels); every other mutation invalidates it via the A3 choke point
+    //   (invalidateClearUndo above). A re-render orphans any armed x - the
+    //   arm state simply resets, never deletes.
+    var removeUndoStack = [], removeUndoBanner = null, removeUndoHandle = null, removeUndoTeardown = null;
+    var armedRm = null, armedRmTimer = null;
+    function disarmRm() {
+      if (armedRmTimer) { clearTimeout(armedRmTimer); armedRmTimer = null; }
+      if (armedRm) { armedRm.classList.remove('armed'); armedRm = null; }
+    }
+    function armRm(btn) {
+      disarmRm();
+      armedRm = btn; btn.classList.add('armed');
+      armedRmTimer = setTimeout(disarmRm, 1600);
+    }
+    function ensureRemoveUndoBanner() {
+      if (!el.prog || !el.prog.parentNode) return false;
+      if (!removeUndoBanner) {
+        removeUndoBanner = document.createElement('div');
+        removeUndoBanner.className = 'composeRow toastAction';
+        removeUndoBanner.hidden = true;
+        el.prog.parentNode.insertBefore(removeUndoBanner, el.prog);
+      }
+      return true;
+    }
+    function paintRemoveUndoHidden() {
+      if (removeUndoTeardown) { removeUndoTeardown(); removeUndoTeardown = null; }
+      removeUndoHandle = null;
+      if (removeUndoBanner) { removeUndoBanner.hidden = true; removeUndoBanner.innerHTML = ''; }
+    }
+    function dismissRemoveUndo() { if (removeUndoHandle) removeUndoHandle.finish(); else paintRemoveUndoHidden(); }
+    function invalidateRemoveUndo() {
+      if (!removeUndoStack.length && !armedRm && !removeUndoHandle) return; // cheap no-op on the common path
+      removeUndoStack.length = 0;
+      disarmRm();
+      dismissRemoveUndo();
+    }
+    function pushRemoveUndo(chord, index) {
+      removeUndoStack.push({ chord: chord, index: index });
+      if (removeUndoStack.length > 2) removeUndoStack.shift(); // bounded: 2 levels (operator: "1 (or 2?)")
+      showRemoveUndoBanner();
+    }
+    function showRemoveUndoBanner() {
+      if (!ensureRemoveUndoBanner() || !removeUndoStack.length) return;
+      // Retime for the newest removal: tear down the prior toast instance but
+      // keep the stack (its onHide wipes the stack, so snapshot around it).
+      var keep = removeUndoStack.slice();
+      dismissRemoveUndo();
+      removeUndoStack = keep;
+      removeUndoBanner.hidden = false;
+      removeUndoBanner.innerHTML = '';
+      var last = removeUndoStack[removeUndoStack.length - 1];
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Removed ' + dispChordName(last.chord) + (removeUndoStack.length > 1 ? ' - 2 undos available' : '');
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost ctrlBtn'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        var entry = removeUndoStack.pop();
+        if (!entry) { dismissRemoveUndo(); return; }
+        progression.splice(Math.min(entry.index, progression.length), 0, entry.chord);
+        var kc = reinferKey();
+        renderProg(); renderSuggest(); renderKey();
+        if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+        if (removeUndoStack.length) showRemoveUndoBanner(); else dismissRemoveUndo();
+      };
+      btnRow.appendChild(undoBtn);
+      removeUndoBanner.appendChild(msg); removeUndoBanner.appendChild(btnRow);
+      removeUndoHandle = global.Toast.showAction('Removed ' + dispChordName(last.chord), {
+        host: removeUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { removeUndoStack.length = 0; paintRemoveUndoHidden(); }
+      });
+      removeUndoTeardown = global.Toast.wirePauseOnTouch(removeUndoBanner, removeUndoHandle);
+    }
+
     // Small non-blocking confirmation/error line (replaces alert()). Auto-hides
     // itself after ~3s so it never permanently claims screen space.
-    function showComposeToast(msg, isErr) {
+    // F31 (UAT): the Save-confirmation call sites used to pass persist=true
+    // ("don't hide the [saved] name after a few seconds", B3 pilot UAT) - that
+    // reads as a lingering confirmation panel once a NEW progression starts
+    // before the user taps it away (operator repro: saved, built a new
+    // progression, the PREVIOUS save's confirmation was still on screen).
+    // Reversed: every current caller always auto-dismisses. `persist` stays
+    // available on this primitive (and the underlying toast.js `Toast.show`) for
+    // a future caller that genuinely needs a tap-to-dismiss toast, but nothing
+    // passes true today - see hideComposeToast() below for the explicit-clear
+    // half of the F31 fix (any subsequent mutating action ends a still-showing
+    // toast immediately, same "ANY mutating action invalidates" contract as A3).
+    // S-TOAST (UAT U9): delegates to the shared toast.js primitive - see its
+    // header comment and showToast() above for the shared-`toastTimer` root
+    // cause this replaces. Every call still goes through its OWN host
+    // (composeToast), so this toast's timer can never be clobbered by, nor
+    // clobber, the unrelated Library toast above.
+    function showComposeToast(msg, isErr, persist) {
       if (!ensureComposeUI()) return;
-      clearTimeout(toastTimer);
-      composeToast.textContent = msg;
-      composeToast.className = 'composeToast' + (isErr ? ' err' : '');
-      composeToast.hidden = false;
-      toastTimer = setTimeout(function () { composeToast.hidden = true; }, 3000);
+      global.Toast.show(msg, {
+        host: composeToast,
+        error: isErr,
+        persist: persist,
+        duration: 3000,
+        onShow: function (host, m, isErrFlag) {
+          host.textContent = m;
+          host.className = 'composeToast' + (isErrFlag ? ' err' : '') + (persist ? ' tap' : '');
+          host.hidden = false;
+          // a persistent toast must still be dismissable (codex #91: no clear path
+          // could strand stale text indefinitely) - one tap hides it.
+          host.onclick = function () { host.hidden = true; };
+        },
+        onHide: function (host) { host.hidden = true; }
+      });
     }
-    // Inline name-entry row (replaces prompt()). done(name|null) fires once -
-    // the trimmed name on Save/Enter, or null on Cancel/Escape (same contract
-    // prompt() had: null == the user backed out).
+    // F31 (UAT): explicit-clear half of the fix, paired with dropping persist
+    // from the Save-confirmation calls above. Ends composeToast NOW (and cancels
+    // its pending auto-hide timer via Toast.hide()) rather than leaving a
+    // confirmation visible under whatever the user does next. Called from
+    // invalidateClearUndo() (the SAME choke point every mutating action already
+    // calls - add/remove chord, transpose, mode/key change, a starter load, Save
+    // itself) and from Clear directly (Clear does not route through
+    // invalidateClearUndo - it's what CREATES the undo snapshot, not what
+    // invalidates one).
+    function hideComposeToast() {
+      if (!composeToast) return;
+      global.Toast.hide(composeToast, { onHide: function (host) { host.hidden = true; } });
+    }
+    // Inline name-entry row (replaces prompt()). done(name|null, addToSetlist)
+    // fires once - the trimmed name on Save/Enter (plus whether the "Add to
+    // setlist" checkbox was checked), or null on Cancel/Escape (same contract
+    // prompt() had: null == the user backed out; addToSetlist is meaningless then).
     function openSaveNameRow(defaultName, done) {
-      if (!ensureComposeUI()) { done(defaultName); return; }
+      if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      // Present the save name-entry as a MODAL (backdrop + top-anchored card) so
+      // the user can't hit Clear / add more chords / other controls mid-save
+      // (UAT: Nik), and the card stays clear of a soft keyboard (F10 - see the
+      // top-anchor position in .composeRow.asModal, not vertical-center).
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'composeRowInput';
       input.placeholder = defaultName; input.value = defaultName;
       input.setAttribute('aria-label', 'Progression name');
+      // G4/FORK-1 (B3 pilot UAT): a saved custom song is one tap from
+      // performance-ready without a second trip to the Library row's own
+      // setToggle - checked by default, same "add to setlist" mechanism as
+      // the practice-view setToggle (toggleSet), wired by the caller.
+      var setLabel = document.createElement('label');
+      setLabel.className = 'composeRowSetToggle';
+      var setCheck = document.createElement('input');
+      setCheck.type = 'checkbox'; setCheck.checked = true;
+      setCheck.setAttribute('aria-label', 'Add to setlist');
+      setLabel.appendChild(setCheck);
+      setLabel.appendChild(document.createTextNode('Add to setlist'));
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save';
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
-      var settled = false;
-      function finish(name) { if (settled) return; settled = true; hideComposeRow(); done(name); }
-      saveBtn.onclick = function () { finish(input.value.trim() || defaultName); };
-      cancelBtn.onclick = function () { finish(null); };
+      // S-NAVHIST (2026-07-04, PR #144 finding): rawClose (DOM-only) and
+      // deliver (the done() callback, which MAY open a new NavHistory layer -
+      // the solo-flow's Save chains straight into openStudioCb) are kept as
+      // SEPARATE functions so Save/Enter can route through NavHistory.settleAfter
+      // directly instead of NavHistory.dismiss(). `delivered` guards done() from
+      // firing twice (settleAfter's own trailing history.back(), when nothing
+      // opened a new layer, replays through the registered closeFn below).
+      var rawSettled = false;
+      function rawClose() { if (rawSettled) return; rawSettled = true; hideComposeRow(); }
+      var delivered = false;
+      function deliver(name) { if (delivered) return; delivered = true; done(name, setCheck.checked); }
+      // UAT U7 (2026-07-04): backdrop tap / Escape / hardware-gesture Back all
+      // dismiss like Cancel. Cancel/backdrop/Escape never open a new layer, so
+      // they stay on NavHistory.dismiss() (the pushed history layer unwinds in
+      // step with the modal, per the WIRING CONTRACT). Defaults to null (Cancel)
+      // so a hardware Back press - which fires popstate DIRECTLY, bypassing the
+      // settleAfter/dismiss calls below - resolves to Cancel rather than
+      // silently confirming whatever pendingDismiss last held.
+      //
+      // Save/Enter is DIFFERENT (S-NAVHIST, PR #144 finding): its outcome MAY
+      // open a new NavHistory layer, so it routes directly through settleAfter
+      // instead, bypassing dismiss()'s history.back()+popstate path entirely.
+      // The prior dismiss()-based wiring let that NavHistory.open() run from
+      // INSIDE nav-history.js's popstate `while` loop (see its own settleAfter()
+      // doc comment - exactly the "closing one layer opens another" case that
+      // function exists to handle safely), double-popping the just-opened layer
+      // shut immediately (the name row would flash open then close, one step
+      // before the "Studio flashes open then closes" symptom the PR reported).
+      var pendingDismiss = null;
+      function choose(name) {
+        pendingDismiss = name;
+        if (window.NavHistory) window.NavHistory.settleAfter(rawClose, function () { deliver(name); });
+        else { rawClose(); deliver(name); }
+      }
+      function cancel() {
+        pendingDismiss = null;
+        if (window.NavHistory) window.NavHistory.dismiss(); else { rawClose(); deliver(null); }
+      }
+      saveBtn.onclick = function () { choose(input.value.trim() || defaultName); };
+      cancelBtn.onclick = cancel;
       input.onkeydown = function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim() || defaultName); }
-        else if (e.key === 'Escape') { finish(null); }
+        if (e.key === 'Enter') { e.preventDefault(); choose(input.value.trim() || defaultName); }
+        else if (e.key === 'Escape') { cancel(); }
       };
-      composeRow.appendChild(input); composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
+      if (composeModalBackdrop) composeModalBackdrop.onclick = cancel;
+      // Hardware/gesture Back bypasses all of the above (a real popstate fires
+      // directly - no JS interposition point exists before it). This registered
+      // closeFn is the only thing that then runs, from INSIDE nav-history.js's
+      // popstate `while` loop - deferring `deliver` one tick lets the loop
+      // finish unwinding before any nested NavHistory.open() the delivered
+      // choice might trigger (pendingDismiss defaults to null/Cancel here, which
+      // never opens anything, but the defer is cheap, uniform insurance).
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose();
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      composeRow.appendChild(input); composeRow.appendChild(setLabel);
+      composeRow.appendChild(saveBtn); composeRow.appendChild(cancelBtn);
       input.focus();
     }
     // Inline two-choice row (replaces confirm()). onPick('save'|'skip') fires once.
+    //
+    // UAT U7 (2026-07-04, operator Pixel walkthrough): this used to render as a
+    // plain inline composeRow - no backdrop, no dim, nothing stopping the rest
+    // of the page from reading as still-interactive - so the confirmation got
+    // lost among the surrounding controls ("hidden in the page"). It now
+    // presents through the SAME composeModalBackdrop pattern openSaveNameRow
+    // already uses (sprint-1 S-MODAL): dimmed backdrop, centered/top-anchored
+    // card, page behind inert. Dismiss paths (backdrop tap / Escape / hardware
+    // Back) all resolve to 'skip' - the same "did nothing destructive, just
+    // didn't confirm" semantics Cancel has on the save-name modal, and the
+    // conservative choice here too (Skip never persists anything; Save does).
+    // S-SONG-MODE UAT-1 (2026-07-16): with a song draft in the buffer, the
+    // Chords-mode "Save" button is genuinely ambiguous - the operator tapped it
+    // expecting his SONG and got a progression-only save ("was in wrong toggle
+    // but wasn't clear... felt like right thing"). When both things exist, ask
+    // - the ONE sanctioned ask-shape (copy-coach): outcome-named options, never
+    // a silent guess. Mirrors openSoloChoiceRow's modal + NavHistory wiring
+    // (see its comments for the settleAfter/double-pop rationale). Wired at the
+    // cSave BUTTON only - the solo flow's internal saveProgression() calls must
+    // never grow a nested second modal.
+    function openSaveChoiceRow() {
+      if (!ensureComposeUI()) { saveProgression(); return; } // no modal surface - old behavior
+      hideComposeRow();
+      composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
+      var n = songSections.length;
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Save your song, or just this progression?';
+      var songBtn = document.createElement('button');
+      songBtn.type = 'button'; songBtn.className = 'btn red ctrlBtn';
+      songBtn.textContent = 'Save song (' + n + (n === 1 ? ' section)' : ' sections)');
+      var progBtn = document.createElement('button');
+      progBtn.type = 'button'; progBtn.className = 'btn ghost ctrlBtn'; progBtn.textContent = 'Just this progression';
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
+      var delivered = false;
+      // Both real outcomes re-render this SAME composeRow into the name row
+      // (openSaveNameRow clears + repopulates it as its own first step), so
+      // only 'cancel' needs this row's DOM cleared here.
+      function rawClose(choice) { if (choice === 'cancel') hideComposeRow(); }
+      function deliver(choice) {
+        if (delivered) return; delivered = true;
+        if (choice === 'song') { setComposeMode('song'); assembleSong(); } // canvas behind the name row = what you're saving
+        else if (choice === 'prog') saveProgression();
+      }
+      var pendingDismiss = 'cancel'; // hardware Back = dismiss, never a save
+      function choose(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(choice); }, function () { deliver(choice); });
+        else { rawClose(choice); deliver(choice); }
+      }
+      songBtn.onclick = function () { choose('song'); };
+      progBtn.onclick = function () { choose('prog'); };
+      cancelBtn.onclick = function () { choose('cancel'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose(pendingDismiss);
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      btnRow.appendChild(songBtn); btnRow.appendChild(progBtn); btnRow.appendChild(cancelBtn);
+      composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
+    }
     function openSoloChoiceRow(onPick) {
       if (!ensureComposeUI()) { onPick('skip'); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Save to add a video backing track or skip to practice';
+      // S-PERSONA-COPY (copy-coach, 2026-07-10): outcome-named buttons inside the
+      // BEGINNER vocabulary budget - no internal jargon ("Studio"), no mechanism
+      // names ("Save", "Skip"). Universal copy (better for every level), choice
+      // semantics unchanged ('save'/'skip'/'cancel' below).
+      msg.textContent = 'Keep this progression, or just practice over it?';
       var saveBtn = document.createElement('button');
-      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Save & open Studio';
+      saveBtn.type = 'button'; saveBtn.className = 'btn red ctrlBtn'; saveBtn.textContent = 'Keep + practice';
       var skipBtn = document.createElement('button');
-      skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Skip';
-      var settled = false;
-      function finish(choice) { if (settled) return; settled = true; hideComposeRow(); onPick(choice); }
-      saveBtn.onclick = function () { finish('save'); };
-      skipBtn.onclick = function () { finish('skip'); };
+      skipBtn.type = 'button'; skipBtn.className = 'btn ghost ctrlBtn'; skipBtn.textContent = 'Just practice';
+      var delivered = false;
+      // S-NAVHIST (2026-07-04, PR #144 finding): 'save' hands this SAME
+      // composeRow container off to openSaveNameRow (it re-renders in place -
+      // not a separate DOM layer, and openSaveNameRow already clears+repopulates
+      // it as its own first step) - hiding it here too would wipe the name row
+      // it just rendered. 'skip' opens the Studio (a fully separate surface),
+      // so THIS row's own DOM genuinely needs clearing.
+      function rawClose(choice) { if (choice !== 'save') hideComposeRow(); }
+      function deliver(choice) { if (delivered) return; delivered = true; onPick(choice); }
+      // pendingDismiss defaults to 'cancel' so a hardware Back press (which
+      // bypasses the settleAfter path below entirely - see below) DISMISSES the
+      // modal and stays on Compose, matching backdrop/Escape. A dismiss gesture must
+      // never navigate: only an explicit Save/Skip button press opens the Studio.
+      // (S-POSTPROG-FLOW "can't cancel out of Solo" fix, 2026-07-10.)
+      var pendingDismiss = 'cancel';
+      // Both outcomes MAY open a new NavHistory layer (Save -> the name-entry
+      // row, reusing this modal slot; Skip -> the Studio) - route directly
+      // through settleAfter, NOT NavHistory.dismiss(). dismiss() closes via
+      // history.back() -> popstate -> nav-history.js's popstate `while` loop,
+      // and a NavHistory.open() call made from a closeFn running INSIDE that
+      // loop re-triggers its stack.length recheck, double-popping the
+      // just-opened layer immediately shut (PR #144's "Studio flashes open
+      // then closes" finding). settleAfter runs outside that loop entirely -
+      // no double-pop possible.
+      function choose(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(choice); }, function () { deliver(choice); });
+        else { rawClose(choice); deliver(choice); }
+      }
+      saveBtn.onclick = function () { choose('save'); };
+      skipBtn.onclick = function () { choose('skip'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
+      // Hardware/gesture Back bypasses all of the above (a real popstate fires
+      // directly - no JS interposition point exists before it). This registered
+      // closeFn is the only thing that then runs, from INSIDE nav-history.js's
+      // popstate `while` loop - deferring `deliver` one tick lets the loop
+      // finish unwinding before any nested NavHistory.open() the delivered
+      // choice triggers (the 'skip' default opens the Studio), avoiding the
+      // same double-pop.
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose(pendingDismiss);
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      // Cancel: a VISIBLE dismiss so "take me back to my progression" is discoverable,
+      // not just a backdrop tap (the operator UAT gap - a new user saw no way out).
+      var cancelBtn = document.createElement('button');
+      // S-PERSONA-COPY: outcome-named dismiss - closing the modal = back to composing.
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
+      cancelBtn.onclick = function () { choose('cancel'); };
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
-      btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
+      btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn); btnRow.appendChild(cancelBtn);
       composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
     }
     // Derive key/mode for a saved progression the same way repertoire.js's
     // deriveKey() does (first-chord regex) - reuse it directly (pure, node-tested)
@@ -1999,7 +4838,15 @@
     // need the result - the inline toast already gives feedback).
     function saveProgression(done) {
       done = done || function () {};
+      invalidateClearUndo(); // S-CLEARGUARD/A3: Save invalidates any pending Clear-undo
       if (progression.length === 0) { showComposeToast('Build a progression first.', true); done(null); return; }
+      // A1 (analysis-refactor-enhance-20260704): one truthful failure message shared
+      // by both branches below (update-in-place + fresh save) - a quota/blocked-storage
+      // write must never tell the user it saved (the app's #1 named fatal-dismissal
+      // trigger is exactly this: a saved song silently vanishing after being told it saved).
+      // SAVE_FAIL_MSG is hoisted to mount()'s top scope (near safeSet) as of
+      // S-HARDEN H4 so toggleSet's setlist-add branch can reuse the exact same
+      // wording instead of drifting its own copy.
       // Snapshot seq AND key/mode NOW: the name row waits on a user tap while
       // the progression and key panel stay live behind it. What gets saved is
       // what the user asked to save - not whatever the session mutated into
@@ -2011,18 +4858,52 @@
       // saved song" choice. The chord edits + any re-key flow straight onto cs.
       if (savedComposeId && customById(savedComposeId)) {
         var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
-        if (upd) { showComposeToast('Updated ' + upd.t); done(upd); return; }
+        if (upd) {
+          // updateCustomItem already persisted via its own internal saveCustom() call
+          // (that function body sits outside this mission's line-region grant, shared
+          // with 2 other call sites that have different null-semantics - see PR notes).
+          // Re-invoking saveCustom() here writes the SAME already-mutated customSongs
+          // array again (a harmless repeat of the identical value) purely to observe
+          // THIS write's real success/failure - the only way to get a truthful signal
+          // for the "Updated" toast without touching updateCustomItem's body.
+          var updOk = saveCustom();
+          // F31 (UAT): no persist - the confirmation always auto-dismisses now (see
+          // showComposeToast's header comment + hideComposeToast() below).
+          if (updOk) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
+          showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk);
+          done(upd); return;
+        }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
       }
-      openSaveNameRow('My progression', function (name) {
+      // S6 (B3 pilot UAT handoff): 'Original track' reads as a real title where
+      // 'My progression' read as placeholder text left behind. The ARTIST is left
+      // empty rather than mirrored to the same string (S5 finding: a hardcoded
+      // 'My progression' artist duplicated the title in the Studio's YouTube
+      // query once the title default changed too) - the Library row and the
+      // song/stage headers already omit an empty artist cleanly.
+      openSaveNameRow('Original track', function (name, addToSetlist) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
-          id: 'm' + Date.now(), t: name, a: 'My progression', y: new Date().getFullYear(), d: 'Mine',
+          id: 'm' + Date.now(), t: name, a: '', y: new Date().getFullYear(), d: 'Mine',
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
-        customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+        customSongs.push(cs);
+        var ok = saveCustom();
+        rebuildAll(); renderFilterChips();
+        // Post-save discoverability (B3): flag the new row for renderSongs() to
+        // scroll-to + highlight - whichever call actually paints it (below, or
+        // toggleSet's own renderSongs() when the checkbox added it to the set).
+        pendingHighlightId = cs.id;
+        if (addToSetlist) toggleSet(cs.id, true); else renderSongs(); // toTop - a just-saved progression is next up
+        // Linked regardless of write success: the record lives in customSongs for
+        // this session either way (Studio/Setlist keep working until reload), so a
+        // second Save click correctly takes the update-in-place branch above rather
+        // than creating a duplicate. It will NOT survive a reload if storage stays
+        // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        showComposeToast('Saved to your Repertoire');
+        if (ok) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
+        // F31 (UAT): no persist - see showComposeToast's header comment.
+        showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok);
         done(cs);
       });
     }
@@ -2059,21 +4940,125 @@
       cs.t = f.title || cs.t; cs.a = f.artist != null ? f.artist : cs.a; cs.genre = f.genre != null ? f.genre : cs.genre;
       cs.key = f.key != null ? f.key : cs.key; cs.mode = f.mode || cs.mode; cs.yt = f.yt != null ? f.yt : cs.yt;
       if (f.seq && f.seq.length) cs.seq = f.seq.slice(); else if (f.seq) delete cs.seq;
+      // Phase B (additive - no pre-existing caller passes sheet): Continue
+      // building's update-in-place save carries the rebuilt section sheet.
+      if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
       saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       if (STATE.current && STATE.current.id === id) {
         if (!cs.seq || !cs.seq.length) switchTab('library'); else renderPractice();
       }
       return cs;
     }
+    // S-SET-INTEGRITY (UAT U22, delete-heal): TOAST+ACTION undo for a custom
+    // item delete/fork-revert - the interaction-safety.md guard #3 primitive
+    // the setlist's own item-remove already has (showSetUndoBanner below),
+    // now on the ONE other place a library item can vanish out from under a
+    // setlist. Lives in the Library screen (delete/revert always
+    // switchTab('library') right after deleteCustomItem returns - see the
+    // D3s note there), mirroring showSetUndoBanner's stable-sibling-element
+    // pattern (never rebuilt inside renderSongs()'s innerHTML wipe).
+    var delUndoBanner = null, delUndoHandle = null, delUndoTeardown = null;
+    function ensureDelUndoBanner() {
+      if (!el.libSongs || !el.songsList) return false;
+      if (!delUndoBanner) {
+        delUndoBanner = document.createElement('div');
+        delUndoBanner.className = 'setUndo toastAction'; // same primitive skin as the setlist remove-undo
+        delUndoBanner.hidden = true;
+        el.libSongs.insertBefore(delUndoBanner, el.songsList);
+      }
+      return true;
+    }
+    function paintDelUndoHidden() {
+      if (delUndoTeardown) { delUndoTeardown(); delUndoTeardown = null; }
+      delUndoHandle = null;
+      if (delUndoBanner) { delUndoBanner.hidden = true; delUndoBanner.innerHTML = ''; }
+    }
+    // Only one pending delete-undo at a time - mirrors dismissSetUndo()'s
+    // "tear down a stale prior instance first" discipline below.
+    function dismissDelUndo() { if (delUndoHandle) delUndoHandle.finish(); }
+    // victim: the removed customSongs record (still a live object reference -
+    // deleteCustomItem only spliced it OUT of the array, never destroyed it).
+    // customIdx/setlistIdx: captured BEFORE the mutation, so Undo can restore
+    // both original positions - a plain delete removed a setlist slot
+    // outright (setlistIdx>=0, revertToId==null); a fork-revert REPLACED the
+    // slot in place with the catalog original (setlistIdx>=0, revertToId is
+    // that catalog id) rather than removing it, so the outcome message and
+    // the undo restore path both branch on isFork.
+    function showDeleteUndoBanner(victim, customIdx, setlistIdx, revertToId) {
+      if (!ensureDelUndoBanner()) return;
+      dismissDelUndo();
+      delUndoBanner.hidden = false;
+      delUndoBanner.innerHTML = '';
+      var isFork = !!(victim && victim.forkOf);
+      var title = (victim && victim.t) || 'song';
+      // Singular "your setlist" (this app has exactly ONE Jam setlist per
+      // profile, per data-model.md - never plural "N setlists").
+      var msg = isFork ? ('Reverted ' + title + ' to the original') : ('Deleted ' + title);
+      if (!isFork && setlistIdx >= 0) msg += ' - also removed from your setlist';
+      var msgEl = document.createElement('span'); msgEl.textContent = msg;
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        if (delUndoHandle) delUndoHandle.finish();
+        var atC = Math.min(customIdx < 0 ? customSongs.length : customIdx, customSongs.length);
+        customSongs.splice(atC, 0, victim);
+        var custOk = saveCustom();
+        var setOk = true;
+        if (setlistIdx >= 0) {
+          if (revertToId != null) {
+            // fork-revert: put the fork id back wherever the catalog id (that
+            // remapSetlist substituted in) now sits - re-resolved at undo
+            // time in case another setlist edit happened during the window.
+            var at = STATE.setlist.indexOf(revertToId);
+            if (at >= 0) STATE.setlist[at] = victim.id;
+          } else {
+            var atS = Math.min(setlistIdx, STATE.setlist.length); // clamp - a mutation mid-window may have shifted this
+            STATE.setlist.splice(atS, 0, victim.id);
+          }
+          setOk = saveSet();
+        }
+        rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); syncQueueToSetlist();
+        // D-SAVE-TRUTH: a restore that silently failed to persist is worse
+        // than one that says so - same truthful-on-failure discipline as
+        // saveProgression/toggleSet (SAVE_FAIL_MSG), on the Library toast host
+        // (a different host than delUndoBanner, so no collision with its
+        // own just-finished toast).
+        if (!custOk || !setOk) showToast(SAVE_FAIL_MSG, true);
+      };
+      delUndoBanner.appendChild(msgEl); delUndoBanner.appendChild(undoBtn);
+      delUndoHandle = global.Toast.showAction(msg, {
+        host: delUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { paintDelUndoHidden(); }
+      });
+      delUndoTeardown = global.Toast.wirePauseOnTouch(delUndoBanner, delUndoHandle);
+    }
     function deleteCustomItem(id) {
       var victim = customById(id);
+      var customIdx = customSongs.indexOf(victim); // -1 if already gone (defensive; capture BEFORE the filter below)
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
       saveCustom();
+      // Capture setlist membership BEFORE remapSetlist mutates it (S-SET-INTEGRITY,
+      // UAT U22 delete-heal) - undo needs the ORIGINAL slot to restore into.
+      var setlistIdx = STATE.setlist.indexOf(id);
+      var revertToId = (victim && victim.forkOf) ? victim.forkOf : null;
       // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore the
       // catalog id into every slot that held the fork (keep the song setlisted). A
       // plain custom delete has no original to fall back to, so drop those slots (null).
-      if (remapSetlist(STATE.setlist, id, (victim && victim.forkOf) ? victim.forkOf : null)) saveSet();
+      if (remapSetlist(STATE.setlist, id, revertToId)) saveSet();
+      // D3s (pilot UAT): a deleted song must not stay reachable via the active
+      // running-order queue or a stale STATE.current. Both delete call sites
+      // already switchTab('library') right after this returns, but switchTab
+      // pushes a NavHistory entry whose Back-button close callback replays
+      // applyTab('practice') -> renderPractice() - which would otherwise render
+      // the just-deleted song as a still-fully-formed ghost object (its own
+      // setToggle could even re-add the dead id back into the setlist). Purging
+      // the queue + clearing STATE.current here makes renderPractice's existing
+      // "!STATE.current -> empty state" guard the one that actually fires.
+      QUEUE.remove(id);
+      if (STATE.current && STATE.current.id === id) STATE.current = null;
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
+      if (victim) showDeleteUndoBanner(victim, customIdx, setlistIdx, revertToId);
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
     // ---- M2 Add/Edit form entry points ----
@@ -2127,7 +5112,10 @@
         mode: 'create',
         item: {
           t: (t && (t.title || t.t)) || '', a: (t && (t.artist || t.a)) || '',
-          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null
+          key: (t && t.key) || '', mode: (t && t.mode) || 'major', yt: (t && t.yt) || null,
+          // D-TRACKLIB-1 seam completion: the jam-discovery panel passes genre;
+          // forward it so the create form (and saved item) carry it.
+          genre: (t && t.genre) || ''
         },
         onSave: function (f) { createCustomItem(f); }
       });
@@ -2159,15 +5147,43 @@
       });
     }
     if (el.addBtn) el.addBtn.onclick = openAddForm;
-    if (el.cClear) el.cClear.onclick = function () {
+    // S-SONG-MODE UAT-2: extracted from the cClear handler verbatim so the Song
+    // canvas's "Build the chords" can start a genuinely FRESH section through
+    // the exact same guarded path (snapshot -> clear -> re-render -> Undo
+    // banner). Behavior of the Clear button itself is unchanged.
+    function clearProgression(bannerMsg) {
+      if (!progression.length) return; // button is hidden then too - defensive no-op
+      // S-CLEARGUARD (F1/A3): snapshot the full pre-Clear state BEFORE wiping
+      // it, so the persistent Undo banner (shown below) can restore it
+      // exactly. Never a native confirm() - see the banner functions above.
+      clearUndoSnapshot = buildClearSnapshot(progression, cTpose, songKey, savedComposeId);
       progression = []; cTpose = 0;
+      editingSectionIdx = null; // S-SECTION-EDIT: a Clear cancels an in-flight section edit
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
+      hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
+      // S-CLEAR-INKEY (UAT 2026-07-10): a fresh canvas returns to the follow-the-key
+      // view (In-key on the default key), not a stale 'All' pin from before the Clear -
+      // matching the initial default (D-DEFAULT-C). Reset the pin, then always rebuild
+      // the palette so the view reflects it even when the key itself didn't change.
+      chordView = null;
       var kc = reinferKey();
       renderProg(); renderKey();
-      if (kc && el.keyRoots) { renderKeyView(); buildGrid(); }
+      if (el.keyRoots) renderKeyView();
+      buildGrid();
+      showClearUndoBanner(bannerMsg);
+    }
+    if (el.cClear) el.cClear.onclick = function () { clearProgression(); };
+    // S-SONG-MODE UAT-1: with a song draft buffered, "Save" must ASK, not guess
+    // (see openSaveChoiceRow). Draft + no progression -> the song is the only
+    // thing to save, go straight there. No draft -> the original flow untouched
+    // (and the solo flow's internal saveProgression() calls never see any of
+    // this - the gate lives only on the button).
+    if (el.cSave) el.cSave.onclick = function () {
+      if (songSections.length && !progression.length) { setComposeMode('song'); assembleSong(); return; }
+      if (songSections.length && progression.length) { openSaveChoiceRow(); return; }
+      saveProgression(); // no callback needed - the inline toast is the feedback
     };
-    if (el.cSave) el.cSave.onclick = function () { saveProgression(); }; // no callback needed - the inline toast is the feedback
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };
     if (el.cTdown) el.cTdown.onclick = function () { composeTpose(-1); };
@@ -2187,6 +5203,9 @@
     // song, matching the locked-interface shape exactly (id/title/artist/key/
     // mode/custom); "Skip" opens the ephemeral Studio unchanged.
     if (el.soloBackingBtn) el.soloBackingBtn.onclick = function () {
+      // G2 S-POSTPROG-CUE: tapping Solo is the cue's goal - retire it (listener
+      // in play/index.html dismisses 'postprog' + clears the slot).
+      notifyGuidanceEvent('music:compose-solo');
       if (!songKey.root || !progression.length) return;
       if (openStudioCb) {
         // Already saved this session: no re-prompt. Save-in-place (updates the linked
@@ -2213,9 +5232,14 @@
             });
             return;
           }
+          if (choice === 'cancel') return; // dismiss - stay on Compose, keep the progression
           // Skip: open the ephemeral Studio without saving (locked vocabulary is
           // lowercase - songKey.mode is one of the capitalized Compose names).
-          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase() });
+          // S-SOLO-SCALE-DEFAULT (2026-07-10): carry the live progression as `seq` so the
+          // Studio's progression-aware default (inferSoloDefault) can read the ACTUAL
+          // chords - the Save path already passes saved.seq; Skip dropped it, so a bVII-
+          // laden progression could never infer Mixolydian on the (default) Skip path.
+          openStudioCb({ title: 'Solo practice', artist: '', key: songKey.root, mode: songKey.mode.toLowerCase(), seq: progression.slice() });
         });
       } else {
         switchTab('library');
@@ -2225,7 +5249,7 @@
     // The key/mode chip (#keyPickerCompact) is injected + wired by buildKeyPicker; it
     // opens the fly-out on tap (the old #cKey "snap back to key" readout is retired -
     // the chip is the unified key surface now).
-    if (el.keyClear) el.keyClear.onclick = function () { songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
+    if (el.keyClear) el.keyClear.onclick = function () { invalidateClearUndo(); songKey.root = null; songKey.explicit = false; keyPopoverOpen = false; buildKeyPicker(); renderKeyView(); renderProg(); renderKey(); buildGrid(); };
 
     /* ===================== TABS ===================== */
     var ACTIVE_TAB_KEY = prefix + ".activeTab.v1";
@@ -2247,10 +5271,18 @@
       if (name === 'jam') renderSetlist();
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
+      // S-CLEARGUARD (A3): the Clear-undo banner is route-local - leaving Compose
+      // (for any other tab) dies the pending undo, same as a reload would.
+      if (name !== 'compose') invalidateClearUndo();
       var viewEl = document.getElementById('view');
       if (viewEl) viewEl.scrollTop = 0;
       if (el.ctxLine && CONTEXTS[name] != null) el.ctxLine.textContent = CONTEXTS[name];
       if (pack && typeof pack.onSwitchTab === 'function') pack.onSwitchTab(name);
+      // M-GUIDANCE: fires on EVERY tab render, including the initial tab
+      // restore at boot (not just button-click switches) - play/index.html's
+      // renderTuneFirstNotable()/renderComposeIntroNotable() listen for this
+      // to mount their one-time JIT cues at "the tab's first visit."
+      notifyGuidanceEvent('music:tab-shown', { tab: name });
     }
     // USER-facing tab/screen switch (tab-bar taps, opening Practice, etc).
     // Pushes ONE back-history layer per actual screen change so hardware/gesture
@@ -2276,6 +5308,14 @@
 
     /* ===================== INIT ===================== */
     rebuildAll();
+    // S-SET-INTEGRITY (UAT U22, load-heal): right after ALLSONGS exists,
+    // silently prune any setlist entry that no longer resolves to a real
+    // song - defensive like every other reader in this app (no toast; this
+    // is housekeeping, not a user action - see safeSet's header comment on
+    // passive vs user-initiated feedback). Must run before the first
+    // renderSongs()/renderSetlist() so the very first paint never has to
+    // defend against a dangling ref either.
+    if (pruneDanglingSetlist(STATE.setlist, function (id) { return !!songById(id); })) saveSet();
     renderFilterChips();
     renderSongs();
     renderSetlist();
@@ -2287,6 +5327,17 @@
     renderKeyView();
     renderProgPicks();
     renderProg();
+    // S-PROG-WRAP (UAT U8): re-evaluate the strip's full/compact threshold on
+    // resize/orientation-change too, not just on add/remove - a phone rotated to
+    // landscape (wider strip) or a device with a narrower composeWrap needs the
+    // same degrade-or-restore check renderProg already runs on every mutation.
+    // window.addEventListener is a browser-only API (undefined under Node's
+    // test-stub `window`, matching the window.NavHistory guard pattern below) -
+    // guarded so this is a no-op outside a real browser. Max 12 slots means a
+    // plain re-render per resize tick is cheap enough to skip debouncing.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', function () { renderProg(); });
+    }
     // C1: renderKey() is what actually gates #soloBackingBtn's hidden state +
     // inline display (see renderKey above) - nothing else in INIT calls it, so
     // without this the button's very first paint relies on the CSS cascade bug
@@ -2334,6 +5385,172 @@
     // navigation correctly pushes a back-history layer.
     if (!currentTab) currentTab = 'library';
 
+    /* ---- M-COMPETENCY LZ: the Skills panel, self-injected into the Settings
+     * sheet body (#settingsBody). The Settings sheet markup lives in
+     * play/index.html (a coupled parent merge surface this engine does not
+     * edit), so - matching the songTray / composeToast self-injection pattern -
+     * the panel APPENDS itself into the existing #settingsBody DOM node rather
+     * than editing that file. It uses the shared .accSec/.accBtn/.accBody look
+     * (Element Consistency Law) and drives its own single-section Accordion so
+     * its open/close feel matches the other Settings sections. Guarded: if
+     * competency.js is not wired (no window.Competency), nothing injects. */
+    function mountSkillsPanel() {
+      var C = competencyRef();
+      if (!C || !C.FRAMEWORKS) return;                 // not wired yet -> no panel
+      var body = document.getElementById('settingsBody');
+      if (!body || document.getElementById('accSecSkills')) return; // no host, or already mounted
+
+      var sec = document.createElement('section');
+      sec.className = 'accSec'; sec.id = 'accSecSkills'; sec.setAttribute('data-acc', 'skills');
+      var btn = document.createElement('button');
+      btn.className = 'accBtn'; btn.id = 'accBtnSkills'; btn.type = 'button';
+      btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'accBodySkills');
+      btn.textContent = 'Skills';
+      var pane = document.createElement('div');
+      pane.className = 'accBody skillsPanel'; pane.id = 'accBodySkills';
+      pane.setAttribute('role', 'region'); pane.setAttribute('aria-labelledby', 'accBtnSkills');
+      pane.hidden = true;
+      sec.appendChild(btn); sec.appendChild(pane); body.appendChild(sec);
+
+      // Hidden file input for import (shared by the first-start lead + the row).
+      var fileInput = document.createElement('input');
+      fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
+      fileInput.accept = 'application/json,.json'; fileInput.hidden = true;
+      sec.appendChild(fileInput);
+      fileInput.onchange = function () {
+        var f = fileInput.files && fileInput.files[0];
+        if (!f) return;
+        var rdr = new FileReader();
+        rdr.onload = function () {
+          var res;
+          try { res = C.importProfile(String(rdr.result)); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+          if (res && res.ok) { showToast('Imported your ' + skillName(res.skill) + ' profile'); }
+          else { showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true); }
+          fileInput.value = ''; // allow re-picking the same file
+          renderSkillsPanel();
+        };
+        rdr.onerror = function () { showToast("Couldn't read that file", true); fileInput.value = ''; };
+        rdr.readAsText(f);
+      };
+
+      function skillName(id) {
+        for (var i = 0; i < C.FRAMEWORKS.length; i++) if (C.FRAMEWORKS[i].id === id) return C.FRAMEWORKS[i].name;
+        return id;
+      }
+      function fmtDate(iso) {
+        if (!iso) return '';
+        try { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; }
+      }
+      function downloadProfile(skillId) {
+        var json = C.exportProfile(skillId);
+        if (!json) { showToast("Nothing to export yet", true); return; }
+        try {
+          var blob = new Blob([json], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = skillId + '.json';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+          showToast('Exported ' + skillName(skillId));
+        } catch (e) { showToast("Couldn't export on this device", true); }
+      }
+
+      // Rebuild the panel body from the current working copy every open, so it
+      // reflects evidence recorded since it was last viewed.
+      function renderSkillsPanel() {
+        pane.textContent = '';
+        var hint = document.createElement('p'); hint.className = 'setHint';
+        hint.textContent = 'Your skills grow as you use the app. Everything here stays on this device - export a profile to carry it to another, or import one to personalize.';
+        pane.appendChild(hint);
+
+        var has = C.hasData();
+        // First-start lead: no data yet -> import affordance first (never a modal).
+        var importRow = document.createElement('button');
+        importRow.className = 'listItem setRow skillsImportRow'; importRow.type = 'button';
+        var ib = document.createElement('span'); ib.className = 'li-body';
+        var it = document.createElement('span'); it.className = 'li-title'; it.textContent = 'Import a profile';
+        var ia = document.createElement('span'); ia.className = 'li-artist';
+        ia.textContent = has ? 'Merge a profile file from another device.' : 'Have a profile? Import it to personalize.';
+        ib.appendChild(it); ib.appendChild(ia); importRow.appendChild(ib);
+        importRow.onclick = function () { fileInput.click(); };
+        if (!has) pane.appendChild(importRow); // lead with import when empty
+
+        // One expandable row per skill.
+        C.FRAMEWORKS.forEach(function (fw) {
+          var prof = C.getProfile(fw.id);
+          var row = document.createElement('div'); row.className = 'skillRow';
+          var head = document.createElement('button'); head.className = 'skillHead'; head.type = 'button';
+          head.setAttribute('aria-expanded', 'false');
+          var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = fw.name;
+          var ev = (prof.competencies || []).reduce(function (n, c) { return n + (c.evidence_count || 0); }, 0);
+          var meta = document.createElement('span'); meta.className = 'skillMeta';
+          meta.textContent = ev > 0 ? (ev + ' session' + (ev === 1 ? '' : 's')) : 'no evidence yet';
+          head.appendChild(nm); head.appendChild(meta);
+          var detail = document.createElement('div'); detail.className = 'skillDetail'; detail.hidden = true;
+          head.onclick = function () {
+            var open = detail.hidden;
+            detail.hidden = !open;
+            head.setAttribute('aria-expanded', open ? 'true' : 'false');
+          };
+
+          (prof.competencies || []).forEach(function (c) {
+            var cr = document.createElement('div'); cr.className = 'compRow';
+            var cn = document.createElement('span'); cn.className = 'compName'; cn.textContent = c.name;
+            var bar = document.createElement('div'); bar.className = 'compBar';
+            bar.setAttribute('role', 'img');
+            bar.setAttribute('aria-label', c.name + ': level ' + (c.level || 0) + ' of a ' + c.target + ' target');
+            var fill = document.createElement('div'); fill.className = 'compBarFill';
+            fill.style.width = Math.max(0, Math.min(100, c.level || 0)) + '%';
+            bar.appendChild(fill);
+            var cm = document.createElement('span'); cm.className = 'compMeta';
+            var when = fmtDate(c.last_evidence);
+            cm.textContent = (c.level || 0) + ' / ' + c.target + (c.evidence_count ? ' · ' + c.evidence_count + '×' : '') + (when ? ' · ' + when : '');
+            cr.appendChild(cn); cr.appendChild(bar); cr.appendChild(cm);
+            detail.appendChild(cr);
+          });
+
+          // Preferences (operator addendum): quiet read-only lines when present.
+          if (Array.isArray(prof.preferences) && prof.preferences.length) {
+            prof.preferences.forEach(function (p) {
+              var pr = document.createElement('p'); pr.className = 'skillPref';
+              var n = p.evidence_count || 0;
+              pr.textContent = 'Style: ' + (p.statement || '') + (n ? ' - ' + n + ' session' + (n === 1 ? '' : 's') : '');
+              detail.appendChild(pr);
+            });
+          }
+
+          var actRow = document.createElement('div'); actRow.className = 'skillActs';
+          var exp = document.createElement('button'); exp.className = 'btn ghost skillExport'; exp.type = 'button';
+          exp.textContent = 'Export ' + fw.name;
+          exp.onclick = function () { downloadProfile(fw.id); };
+          actRow.appendChild(exp); detail.appendChild(actRow);
+
+          row.appendChild(head); row.appendChild(detail); pane.appendChild(row);
+        });
+
+        if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
+      }
+
+      // Single-section accordion so the open/close feel matches the others; the
+      // body renders lazily the first time it opens and refreshes on each open.
+      var acc = (global.Accordion && global.Accordion.init) ? global.Accordion.init([{ btn: btn, body: pane }]) : null;
+      var origOnclick = btn.onclick;
+      btn.onclick = function (e) {
+        if (origOnclick) origOnclick.call(btn, e);      // let the accordion toggle first
+        if (!pane.hidden) renderSkillsPanel();          // now-open -> (re)render fresh
+        else if (!acc) pane.hidden = false;             // no accordion primitive -> fallback toggle
+      };
+      // Fallback wiring when Accordion is unavailable (keeps the panel usable).
+      if (!acc) {
+        btn.onclick = function () {
+          var open = pane.hidden; pane.hidden = !open;
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) renderSkillsPanel();
+        };
+      }
+    }
+    try { mountSkillsPanel(); } catch (e) { /* the Settings Skills panel is non-critical - never block mount */ }
+
     /* ---- controller ---- */
     return {
       switchTab: switchTab,
@@ -2341,18 +5558,70 @@
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
       rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); },
+      // S-CHORD-COLLAPSE (Volley 3 High #1): re-render the Compose grids so a
+      // guidance-level change (Settings row or the one-time ask) applies to
+      // ALREADY-rendered palettes/filmstrip immediately - not on the next
+      // compose mutation. Both callees no-op safely when Compose isn't wired
+      // (buildGrid checks el.catChips/el.buildGrid, renderProg checks el.prog).
+      refreshCompose: function () { buildGrid(); renderProg(); },
       // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
       openEditForm: openEditForm,
       openEditOrAdd: openEditOrAdd,
-      setCustomVideo: setCustomVideo
+      setCustomVideo: setCustomVideo,
+      // S-SET-INTEGRITY (UAT U22): exposed so callers reachable without a real
+      // repertoire-form.js (its own Delete/Revert button is the normal UI
+      // entry point, already confirm()-gated upstream of this call) can drive
+      // the delete-heal + toast+action undo directly - same pattern as
+      // openEditForm/setCustomVideo above.
+      deleteCustomItem: deleteCustomItem,
+      // S-SONG-MODE: the Compose view state, exposed for tests + future callers
+      // (e.g. a deep link straight to the Song canvas). setComposeMode ignores
+      // unknown values, so this can never wedge the screen.
+      composeMode: function () { return composeMode; },
+      setComposeMode: setComposeMode,
+      // Phase B: reopen a saved song on the Song canvas by id (the song view's
+      // "Continue building" button routes here; exposed for tests + deep links).
+      continueBuilding: function (id) { continueBuilding(songById(id)); }
     };
+  }
+
+  // S-SONG-MODE: the Song toggle's badge text - the count of buffered sections
+  // rides the segment label ('Song · 2') so parked song work stays visible from
+  // Chords mode (recognition over recall; numbers beat adverbs). Pure, exported
+  // for tests; the '·' matches the section chips' existing label convention.
+  function songBadgeText(n) { return n > 0 ? 'Song · ' + n : 'Song'; }
+
+  // S-SONG-MODE Phase B: the INVERSE of buildSongFromSections - parse a saved
+  // song's sheet back into builder sections so "Continue building" can reopen
+  // it on the Song canvas. One section per sheet row that carries at least one
+  // [chord] token (a builder-made song round-trips exactly; a lyric-rich or
+  // hand-edited sheet still yields its chords - the lyrics stay safe on the
+  // saved record, which update-in-place only overwrites with a NEW sheet on
+  // save). Chordless rows are skipped, junk shapes never throw. Pure, exported.
+  function sectionsFromSheet(sheet) {
+    var out = [];
+    (Array.isArray(sheet) ? sheet : []).forEach(function (row) {
+      if (!Array.isArray(row) || row.length < 2) return;
+      var toks = [];
+      String(row[1]).replace(/\[([^\]]+)\]/g, function (m, c) { toks.push(c.trim()); return m; });
+      var label = String(row[0] || 'Section');
+      // Operator UAT 2026-07-17: legacy plain-progression saves carry the
+      // off-vocabulary "Progression" label (buildSheetFromSeq pre-fix). Map it
+      // to Verse at parse time so the builder + section dropdown always speak
+      // the standard section set; the record self-heals to Verse on next save.
+      if (label === 'Progression') label = 'Verse';
+      if (toks.length) out.push({ label: label, seq: toks });
+    });
+    return out;
   }
 
   /* ---------- public surface ---------- */
   global.Songbook = {
     mount: mount,
+    songBadgeText: songBadgeText,
+    sectionsFromSheet: sectionsFromSheet,
     // pure helpers exposed for chord packs / tests
     tpose: tpose,
     tposeLine: tposeLine,
@@ -2360,29 +5629,66 @@
     noteToPc: noteToPc,
     chordRootFreq: chordRootFreq,
     renderSheet: renderSheet,
+    renderChordOnly: renderChordOnly,
+    // S-UI-RECONCILE (Lane A): key-aware song-view/Stage display speller + the
+    // action-ladder delete-button class contract - exposed for regression tests.
+    chordSpeller: chordSpeller,
+    deleteBtnClass: deleteBtnClass,
     fitScale: fitScale,
     soloKeyFor: soloKeyFor,
     isMine: isMine,
     hasChordSheet: hasChordSheet,
+    keySeedToken: keySeedToken,
+    addAffordance: addAffordance,
     shadowedCatalogIds: shadowedCatalogIds,
     buildAllSongs: buildAllSongs,
     buildSheetFromSeq: buildSheetFromSeq,
+    buildSongFromSections: buildSongFromSections, // M-13 SONG BUILDER: section buffer -> {seq, sheet}
     shadowedTrackKeys: shadowedTrackKeys,
     remapSetlist: remapSetlist,
+    // S-SET-INTEGRITY (UAT U22): load-heal + defensive-nav pure helpers
+    pruneDanglingSetlist: pruneDanglingSetlist,
+    skipNoticeText: skipNoticeText,
     studioTarget: studioTarget,
     libraryFilter: libraryFilter,
     libraryEmptyState: libraryEmptyState,
+    firstrunShouldRender: firstrunShouldRender,
+    savebasicsShouldRender: savebasicsShouldRender,
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,
+    // M-13 g1: roman -> canonical-sharp token realization (via Circle.romanFor,
+    // inverted) + key-aware display naming, exposed for unit tests.
+    romanChordSuffix: romanChordSuffix,
+    realizeRoman: realizeRoman,
+    realizeSection: realizeSection,
+    dispChordNameInKey: dispChordNameInKey,
+    sectionConnectScore: sectionConnectScore, // UAT: adjacent-section fit ranking
+    // M-13 g3: competency-profile-driven suggestion re-rank + why-cue, exposed
+    // for unit tests (pure - no DOM, no localStorage).
+    suggestionComplexity: suggestionComplexity,
+    matchedPreference: matchedPreference,
+    personalizeSuggestions: personalizeSuggestions,
+
+    convertProgressionQualities: convertProgressionQualities,
     chordInKey: chordInKey,
     romanInKey: romanInKey,
     mergeSuggestionRow: mergeSuggestionRow,
     PROGRESSIONS: PROGRESSIONS,
+    COMPOSE_MAX: COMPOSE_MAX, // D-CAP12: the Compose progression cap (12)
+    progStripMode: progStripMode, // S-PROG-WRAP (UAT U8): full/compact strip threshold
     degreeOf: degreeOf,
     completions: completions,
     inferKey: inferKey,
-    ROOTS: ROOTS
+    ROOTS: ROOTS,
+    wireTapCancel: wireTapCancel,
+    buildClearSnapshot: buildClearSnapshot,
+    applyClearSnapshot: applyClearSnapshot,
+    // M-GUIDE W3b: Compose key-view solo-scale preview - pure derivation, exposed for tests
+    soloChipScale: soloChipScale,
+    soloChipCaption: soloChipCaption,
+    // S-CHIPS-PLUS: degrees-line derivation, same export pattern as the two above
+    soloChipDegrees: soloChipDegrees
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.Songbook;
 

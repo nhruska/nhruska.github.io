@@ -1,0 +1,829 @@
+{
+  "generatedAt": "2026-07-17T10:59:16Z",
+  "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
+  "source_repo": "nhruska/nhruska.github.io",
+  "freshness_seconds_at_render": null,
+  "status": "ok",
+  "warnings": [],
+  "repo": {
+    "owner": "nhruska",
+    "name": "nhruska.github.io",
+    "slug": "nhruska/nhruska.github.io",
+    "url": "https://github.com/nhruska/nhruska.github.io",
+    "defaultBranch": "main"
+  },
+  "head": {
+    "date": "2026-07-16T19:28:39Z",
+    "sha": "7f8563792f29e1c1c552a92951d90b7770cce389",
+    "subject": "music(compose): Song mode - the composition ladder gets a full-screen home (#253)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/7f8563792f29e1c1c552a92951d90b7770cce389"
+  },
+  "commits": [
+    {
+      "date": "2026-07-16T19:28:39Z",
+      "sha": "7f8563792f29e1c1c552a92951d90b7770cce389",
+      "subject": "music(compose): Song mode - the composition ladder gets a full-screen home (#253)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7f8563792f29e1c1c552a92951d90b7770cce389"
+    },
+    {
+      "date": "2026-07-16T19:26:21Z",
+      "sha": "78a7c17d13fdc9996cacef16ef15020e7b5185af",
+      "subject": "music(settings): give .setRow an explicit dark surface so the Guidance-level row stops rendering washed-out (#254)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/78a7c17d13fdc9996cacef16ef15020e7b5185af"
+    },
+    {
+      "date": "2026-07-16T19:24:52Z",
+      "sha": "5a32b9cf2d85d15059a125d588fa65d5b3ba480f",
+      "subject": "music(compose): bound the song-builder section tray so it stops burying the chord picker (#252)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5a32b9cf2d85d15059a125d588fa65d5b3ba480f"
+    },
+    {
+      "date": "2026-07-16T11:14:24Z",
+      "sha": "fba69e2e88374d26203f036d8177453d523617c3",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fba69e2e88374d26203f036d8177453d523617c3"
+    },
+    {
+      "date": "2026-07-15T11:04:11Z",
+      "sha": "9402392870322be1c8921349da9e9beea866ce36",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9402392870322be1c8921349da9e9beea866ce36"
+    },
+    {
+      "date": "2026-07-14T10:58:33Z",
+      "sha": "6bda3523bdb5f974044aa60b940ab2109acfc29c",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/6bda3523bdb5f974044aa60b940ab2109acfc29c"
+    },
+    {
+      "date": "2026-07-13T12:18:30Z",
+      "sha": "f0df44411158b46f8af26bec380c9ff7235d70bc",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f0df44411158b46f8af26bec380c9ff7235d70bc"
+    },
+    {
+      "date": "2026-07-12T21:37:57Z",
+      "sha": "44a2c7e5c67dd656f4e71683bc21e7c01319008d",
+      "subject": "QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH (#251)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/44a2c7e5c67dd656f4e71683bc21e7c01319008d"
+    },
+    {
+      "date": "2026-07-12T20:52:29Z",
+      "sha": "b9533c86ea7c8294ef93a94b2a6bb35493c41aee",
+      "subject": "ops: merge - S-SETADD-KEYSEED merged (#250, v158): key-carrying chordless",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b9533c86ea7c8294ef93a94b2a6bb35493c41aee"
+    },
+    {
+      "date": "2026-07-12T20:52:16Z",
+      "sha": "abf7674b7b416b02c1f983859348d109a9efa477",
+      "subject": "S-SETADD-KEYSEED: seed the key's tonic chord on + for chordless-but-keyed rows (v158) (#250)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/abf7674b7b416b02c1f983859348d109a9efa477"
+    },
+    {
+      "date": "2026-07-12T15:48:11Z",
+      "sha": "b3bf6ea4aadca45d4ffc158353755f0d5654a5df",
+      "subject": "ops: merge - S-SETADD-EVIDENT merged (#249, v157): ghost + on setlist-ine",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b3bf6ea4aadca45d4ffc158353755f0d5654a5df"
+    },
+    {
+      "date": "2026-07-12T15:48:00Z",
+      "sha": "e80cc8b2554c10891c470b714b7c08a91d146041",
+      "subject": "S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157) (#249)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e80cc8b2554c10891c470b714b7c08a91d146041"
+    }
+  ],
+  "openPRs": [
+    {
+      "number": 261,
+      "title": "music(compose): per-section edit button - refine a section's chords in the builder",
+      "branch": "claude/music-section-edit",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/261",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29552479265/job/87797853936"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29552479261/job/87797854120"
+        }
+      ]
+    },
+    {
+      "number": 260,
+      "title": "music(perform): one-handed zoning - Next is the dominant bottom-right thumb target",
+      "branch": "claude/music-perform-bar-zones",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/260",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29550565098/job/87791979399"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29550565073/job/87791979372"
+        }
+      ]
+    },
+    {
+      "number": 259,
+      "title": "music(ui): anchor active-tab highlight to bottom border + bigger button icons",
+      "branch": "claude/music-tab-icon-polish",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/259",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549273106/job/87788170922"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549273065/job/87788170890"
+        }
+      ]
+    },
+    {
+      "number": 258,
+      "title": "music(toast): amber caution toast + readable duration for \"song already in progress\"",
+      "branch": "claude/music-warn-toast-amber",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/258",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549585723/job/87789094402"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549585693/job/87789094317"
+        }
+      ]
+    },
+    {
+      "number": 257,
+      "title": "music(settings+skills): UAT batch - accordion unity, guidance seg, CTA rows, SKILL.md/zip skills export + flexible import",
+      "branch": "claude/music-uat-settings-skills",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/257",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29548125491/job/87784733120"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29548125589/job/87784733379"
+        }
+      ]
+    },
+    {
+      "number": 256,
+      "title": "music(compose): advanced level collapses chord-chart palettes to letter+roman chips (S-CHORD-COLLAPSE)",
+      "branch": "claude/music-chord-collapse-advanced",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/256",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29547574582/job/87783092748"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29547574590/job/87783092776"
+        }
+      ]
+    },
+    {
+      "number": 255,
+      "title": "music(setlist): play/video action to a compact thumb-zone icon (reclaim a row)",
+      "branch": "claude/music-setlist-row-layout",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/255",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29531167114/job/87731538452"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29531167044/job/87731538360"
+        }
+      ]
+    },
+    {
+      "number": 88,
+      "title": "music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room",
+      "branch": "claude/music-chord-strumming-audio-ux-qqvg9e",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/88",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28651417136/job/84970109385"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/28651417128/job/84970109375"
+        }
+      ]
+    }
+  ],
+  "recentMerges": [
+    {
+      "createdAt": "2026-07-16T19:09:12Z",
+      "mergedAt": "2026-07-16T19:26:22Z",
+      "number": 254,
+      "title": "music(settings): fix the washed-out Guidance-level settings row (.setRow contrast)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/254"
+    },
+    {
+      "createdAt": "2026-07-16T10:52:28Z",
+      "mergedAt": "2026-07-16T19:28:40Z",
+      "number": 253,
+      "title": "music(compose): Song mode - the composition ladder gets a full-screen home",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/253"
+    },
+    {
+      "createdAt": "2026-07-15T11:39:36Z",
+      "mergedAt": "2026-07-16T19:24:52Z",
+      "number": 252,
+      "title": "music(compose): bound the song-builder section tray so it stops burying the chord picker",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/252"
+    },
+    {
+      "createdAt": "2026-07-12T21:35:04Z",
+      "mergedAt": "2026-07-12T21:37:58Z",
+      "number": 251,
+      "title": "QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/251"
+    },
+    {
+      "createdAt": "2026-07-12T20:51:10Z",
+      "mergedAt": "2026-07-12T20:52:16Z",
+      "number": 250,
+      "title": "S-SETADD-KEYSEED: seed the key's tonic chord on + for chordless-but-keyed rows (v158)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/250"
+    },
+    {
+      "createdAt": "2026-07-12T15:44:58Z",
+      "mergedAt": "2026-07-12T15:48:00Z",
+      "number": 249,
+      "title": "S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/249"
+    },
+    {
+      "createdAt": "2026-07-12T13:41:52Z",
+      "mergedAt": "2026-07-12T13:43:04Z",
+      "number": 248,
+      "title": "QUEUE: capture CE-SPAWN-ENV-REPOLOCK (ps-internal spawn root cause)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/248"
+    },
+    {
+      "createdAt": "2026-07-11T12:04:14Z",
+      "mergedAt": "2026-07-11T12:11:27Z",
+      "number": 247,
+      "title": "M-13 g4: drag-to-reorder buffer sections in the song builder (v156)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/247"
+    },
+    {
+      "createdAt": "2026-07-11T10:20:42Z",
+      "mergedAt": "2026-07-11T10:21:36Z",
+      "number": 246,
+      "title": "QUEUE reconcile: overnight arc close - M-13 shipped, M-COMPETENCY, Cockpit pick, CE frictions",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/246"
+    },
+    {
+      "createdAt": "2026-07-11T10:15:04Z",
+      "mergedAt": "2026-07-11T10:18:07Z",
+      "number": 245,
+      "title": "M-13 g3: song builder consumes the competency profile - personalized ranking + why-cue + evidence loop (v155)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/245"
+    },
+    {
+      "createdAt": "2026-07-11T09:57:08Z",
+      "mergedAt": "2026-07-11T09:58:13Z",
+      "number": 244,
+      "title": "M-13 g2: song-builder buffer persists across reloads + section reorder (v154)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/244"
+    },
+    {
+      "createdAt": "2026-07-11T09:39:35Z",
+      "mergedAt": "2026-07-11T09:40:31Z",
+      "number": 243,
+      "title": "M-COMPETENCY LZ: per-skill competency profile (local, export/import) + shell wiring (v153)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/243"
+    },
+    {
+      "createdAt": "2026-07-11T09:15:00Z",
+      "mergedAt": "2026-07-11T09:15:49Z",
+      "number": 242,
+      "title": "M-13 g1: template-suggested sections - the M-12 payoff, with the operator's UAT fold-ins (v152)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/242"
+    },
+    {
+      "createdAt": "2026-07-11T08:35:26Z",
+      "mergedAt": "2026-07-11T08:36:15Z",
+      "number": 241,
+      "title": "M-13 Song Builder LZ: section buffer in Compose assembles multi-section songs (v151)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/241"
+    },
+    {
+      "createdAt": "2026-07-11T08:10:42Z",
+      "mergedAt": "2026-07-11T08:11:22Z",
+      "number": 240,
+      "title": "THE PICK: Cockpit remix - C base (actionable surface) + B timeline",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/240"
+    }
+  ],
+  "lastCiRun": {
+    "workflowName": "cc-nightly",
+    "status": "in_progress",
+    "conclusion": null,
+    "runStartedAt": "2026-07-17T10:59:12Z",
+    "durationSeconds": 2,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29575303949",
+    "headBranch": "main"
+  },
+  "velocity": {
+    "window_days": 7,
+    "merged_count": 59,
+    "loc": null,
+    "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
+    "typical_merge_hours": 0.02,
+    "weekly": null
+  },
+  "deploy": {
+    "pages": {
+      "status": "built",
+      "htmlUrl": "https://nhruska.github.io/",
+      "sourceBranch": "main",
+      "buildType": "legacy"
+    },
+    "liveCacheVersion": "music-v162",
+    "localCacheVersion": "music-v162",
+    "cacheMatch": true
+  },
+  "missions": [
+    {
+      "title": "HiTL Mission Control - Design-System Day (retrospective): Storage Guardrail -> Consistency Law",
+      "status": "MISSION CLOSED - SHIPPED (v88 -> v105) - 27 PRs quietly professionalized the whole app: a real storage-migration guardrail, a shared toast primitive, a written ELEMENT CONSISTENCY LAW, and a 53-assert lint that makes it self-enforcing - then the day closed by turning a five-day-old undocumented removal into a registered decision.",
+      "file": "docs/artifacts/design-system-day-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/design-system-day-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - Ear-First Night (retrospective): Hear It, Play It, Trust It",
+      "status": "MISSION CLOSED - SHIPPED (v105 -> v116) - \"Hear the scale\" landed on both surfaces the same night; jam-discovery, YouTube prefill, and dim-chord classification joined it; then two UAT marathons (fourteen findings, U11 through U24, every one turned around same-session) hardened the whole audio-and-feedback surface before the operator stopped testing at 01:30.",
+      "file": "docs/artifacts/ear-first-night-20260705.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/ear-first-night-20260705.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/ear-first-night-20260705.html"
+    },
+    {
+      "title": "HiTL Mission Control - M-GUIDE: Blues Key + Scale Mentor Layer",
+      "status": "MISSION CLOSED - SHIPPED (v85) - Blues is a real key, the fretboard targets chord tones (with ghost dots), the mentor cards are player-true, Compose previews your solo scale, small necks got 12 frets",
+      "file": "docs/artifacts/m-guide-mission-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/m-guide-mission-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/m-guide-mission-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - M2: Wiki + Guitarist Toolset",
+      "status": "MISSION CLOSED - SHIPPED - wiki live on the site, pentatonic/blues chips live in the Studio (v80, PR #108)",
+      "file": "docs/artifacts/music-wiki-mission-20260704.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/music-wiki-mission-20260704.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html"
+    },
+    {
+      "title": "HiTL Mission Control - Music app UX persona mission",
+      "status": "MISSION CLOSED - sprint 1 live (v78); wave 2 parked on #98",
+      "file": "docs/artifacts/ux-personas-20260703.html",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/artifacts/ux-personas-20260703.html",
+      "liveUrl": "https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html"
+    }
+  ],
+  "visions": [
+    {
+      "title": "Vision Capture: Command Center Hierarchy (operator, 2026-07-05)",
+      "file": "docs/plans/vision-command-center-20260705.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md",
+      "statusGuess": "CAPTURED"
+    },
+    {
+      "title": "Vision Capture: Ear-First Player Growth (operator /goal-interview seed, 2026-07-04)",
+      "file": "docs/plans/vision-ear-first-20260704.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-ear-first-20260704.md",
+      "statusGuess": "INTERVIEW PENDING"
+    },
+    {
+      "title": "Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05)",
+      "file": "docs/plans/vision-tutor-deterministic-20260705.md",
+      "sourceUrl": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md",
+      "statusGuess": "CAPTURED"
+    }
+  ],
+  "queue": {
+    "NOW": [
+      {
+        "Mission": "**S-SDD-PILOT: \"Calluses\" (F Mixo/Dm)**",
+        "State": "**STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> \"store it\" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel",
+        "Spec": "[sdd-pilot-friction](sdd-pilot-friction-20260710.md)"
+      },
+      {
+        "Mission": "**FORK-4 removal - key-aware render wiring**",
+        "State": "**SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).",
+        "Spec": "[PR #199](https://github.com/nhruska/nhruska.github.io/pull/199)"
+      },
+      {
+        "Mission": "(v121 snapshot - superseded, kept for trace) #98 key-aware spelling was the stalled linchpin gating S1+S2; resolved by re-implementing its core fresh in #198 and closing #98",
+        "State": "CLOSED 2026-07-10",
+        "Spec": "[PR #98](https://github.com/nhruska/nhruska.github.io/pull/98)"
+      },
+      {
+        "Mission": "(v113 snapshot - superseded, kept for trace) idle - EAR-FIRST ARC night shipped v106->v113: audition+retarget+lights+full-neck, tempo+legend+accent-palette, jam matrix+yt-prefill, dim shapes, feedback reconcile w/ countdown undo, keyless playlist pipeline. AWAITING OPERATOR: bake veto + anchors veto -> anchors UI wave; wave-2 candidates: A/B compare, tempo, degree speech; follow-up: tab-switch icon reset",
+        "State": "[vision-ear-first](vision-ear-first-20260704.md)",
+        "Spec": ""
+      }
+    ],
+    "SHORT": [
+      {
+        "#": "S1",
+        "Mission": "Wave 2: S-TONES, S-ROMAN+S-KEYPOLICY, S-GOLDEN-B",
+        "Trigger / launch condition": "**UNBLOCKED 2026-07-10 - #199 merged.** Note: S-GOLDEN-B/S-KEYPOLICY specs may be partially satisfied by #199's professor-trap enforcement - re-read the spec against main before launching",
+        "Spec state": "Fully specced in [ux-sprint-1-20260703.md](ux-sprint-1-20260703.md) items 7-9 + amendments - APPROVED"
+      },
+      {
+        "#": "S2",
+        "Mission": "Sprint 2: M3 songs/tracks full merge",
+        "Trigger / launch condition": "**5A RESOLVED (operator, 2026-07-04: dissolve the finder - curation to +Add/per-item edit, circle panel into the Studio)**; remaining gate: ~~FORK-4 wiring~~ (#199 MERGED) + 30-min spec-formalize interview",
+        "Spec state": "Build plan in [UX-FRICTION-LOG](../../music/docs/UX-FRICTION-LOG.md) M3 section; council + chair sequencing decided; needs a 30-min goal-interview to spec-formalize -> then launch-ready"
+      },
+      {
+        "#": "S3",
+        "Mission": "S-BLUES-BOXES: named box positions 1-5 (root string + start fret + neighbor-move) on the Studio scale view",
+        "Trigger / launch condition": "Operator gate on a drafted spec (P5-demanded; drafts from solo-scales.md + posWindow)",
+        "Spec state": "Spec DRAFTED: [short-specs-20260704.md](short-specs-20260704.md) - one keyword to launch"
+      },
+      {
+        "#": "S4",
+        "Mission": "S-DIAGRAM-PREF: expertise-adaptive display (dots vs clean patterns + shape-classifier step 0)",
+        "Trigger / launch condition": "**REVIEW-READY: spec already drafted + P5-folded** - 5-min read, then one keyword (go S-DIAGRAM-PREF)",
+        "Spec state": "[short-specs-20260704.md](short-specs-20260704.md) + canonical detail in the wiki expertise-adaptive-display page"
+      },
+      {
+        "#": "S5",
+        "Mission": "S-SAVE-TRUTH: silent-fail saves fixed (quota detect + rollback + real failure message on all 5 save paths, backup.js applyAtomic pattern)",
+        "Trigger / launch condition": "**go save-truth**",
+        "Spec state": "Spec = [analysis A1](analysis-refactor-enhance-20260704.md) - the verdict's top pick (P1 data-loss trigger)"
+      },
+      {
+        "#": "S6",
+        "Mission": "~~S-HARDEN~~ FIRED -> NOW (2026-07-04): wireTap dedup x4->1, escHTML dedup x8->1, SW CORE/CACHE verify script wired into tests",
+        "Trigger / launch condition": "**go harden**",
+        "Spec state": "Spec = analysis A4+A5+A6 + toggleSet 'Added to setlist' unconditional-toast fix (same A1 bug shape, flagged in #116) + SW verify script asserts CACHE differs from origin/main when shared/ files changed (identical-string v83 collision, PR #117)"
+      },
+      {
+        "#": "S8",
+        "Mission": "S-BACKUP-NUDGE: one-shot Notable \"back up your library\" via free priority slot + backup.describe()",
+        "Trigger / launch condition": "**go backup-nudge**",
+        "Spec state": "Spec = analysis B2 (pairs with S5)"
+      },
+      {
+        "#": "S9",
+        "Mission": "S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots",
+        "Trigger / launch condition": "**go chips-plus**",
+        "Spec state": "Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission"
+      },
+      {
+        "#": "S-NAVHIST",
+        "Item": "**CLEARED-STALE 2026-07-10 (swarm, zero code)**: the double-pop fix already shipped inside #197's settleAfter + deferred-deliver machinery; solo-skip + solo-cancel scenarios both green",
+        "Source": "PR #144 finding, evidence in swarm audit"
+      },
+      {
+        "#": "S-POSTPROG-FLOW",
+        "Item": "**Post-progression workflow unclear (any experience level).** After adding a suggested progression, the Solo choice prompt (Save & open Studio / Skip) + the \"Solo\" button both appear - a new user is curious about Solo, felt they \"can't cancel\", and had no clear read on the next step. **\"Can't cancel\" FIXED in PR #197**: the Solo modal gained a visible **Cancel** and dismiss gestures (backdrop/Escape/Back) now stay on Compose instead of navigating into the Studio. REMAINING (needs a vision call): the broader intended after-you-build flow - should Solo/Save auto-surface at all, what is the ideal next-step guidance for a new user.",
+        "Source": "operator UAT 2026-07-10 (PR #197 preview)"
+      },
+      {
+        "#": "S-DELHANDLE-OVERFLOW",
+        "Item": "**Compose delete-handle overflows the chord card (1-3 chords).** In the `full` diagram-card stage, the per-slot `x` remover floats above/outside the card bounds (disconnected from the chord it deletes). Contain it to the card. **FOLLOW-UP FIXED 2026-07-10 (S-DELHANDLE-CENTER, keypicker branch, v142)**: the x glyph was padding-nudged off the circle's center - content box now carved to the exact 24x24 circle + flex-centered, true by construction at every stage; prog-delete-handles scenario green.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-PROG-FIT-6",
+        "Item": "**4-6 chords should fit with NO vertical scroll - \"so close to fitting\".** The fill-row/grid stages nearly fit the fixed region at 5-6 chords but tip into scroll. Tighten card/gap sizing so 4-6 fit above the fold (A7 geometry gate at 412x915). **ADDRESSED (PR #198), needs phone confirm**: trimmed the fixed .prog region (min-height 88->78, padding 12->9, full-stage gap 10->8) to reclaim ~16px WITHOUT shrinking the diagram cards (phone-DPI floor forbids that). Can't verify the fit at 412x915 on the remote box - tap the branch preview to confirm 4-6 fit with no scroll; if still short, the fallback is compacting the 4-chord stage to tokens.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-TYPEFILTER-ACCENT",
+        "Item": "**All-view Maj/Min/7th selected chip is full accent CTA - reads as friction.** The selected type-filter chip is `.chip.on` (accent fill, D-SELECTED-ACCENT). Operator feels it shouts. THIS IS THE D-SELECTED-ACCENT reconsideration flagged in the visual-language design: a secondary FILTER's selected state competing with the one primary. Decision needed: reverse D-SELECTED-ACCENT (selected = outline, fill reserved for primary) app-wide, or a filter-specific quieter selected treatment.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-CLEAR-INKEY",
+        "Item": "**After Clear, the view stayed on a stale \"All\" pin instead of returning to In-key.** With D-DEFAULT-C the initial state is In-key on C major, but Clear did not reset the view pin - if the user had tapped All while composing, that pin persisted over the fresh canvas. FIXED: Clear now resets chordView to follow-the-key + rebuilds the palette -> In-key on the default key.",
+        "Source": "operator UAT 2026-07-10 (missed msg)"
+      },
+      {
+        "#": "S-SUGG-DIFFERENTIATE",
+        "Item": "**Suggested next-chords need a visual distinction from the full palette.** The theory-ranked \"NEXT CHORD\" suggestions and the full In-key grid currently look alike. Differentiate by EMPHASIS + ORDER (music-theory-coach ranks by resolution strength; visual-language gives the suggestions a hair more prominence - a recommended marker/tint - while the full palette stays browse), never a new hue.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-SOLO-SCALE-DEFAULT",
+        "Item": "**Studio solo-scale picker should be theory-aware + emphasis-laddered.** Landing in the Studio (Solo practice, C major from a Compose progression), the \"SOLO OVER IT\" picker (Ionian / Pent major / Pent minor / Blues) defaults to **Pent minor** - wrong best-choice for a MAJOR-key context (Ionian or Pent major is the natural home over major). Per operator: (1) default-select the theory-BEST scale for the incoming key+mode, (2) OUTLINE the other picks (visual-language emphasis ladder - one filled primary), (3) disable/remove incompatible options where applicable. Best-scale + compatibility logic to come from the new **music-theory-coach** skill. **FIXED (PR #198)**: the picker now default-selects the theory-best pentatonic (major-family key -> Pent major, minor-family -> Pent minor, a Blues key keeps its own blues scale) via the music-theory-coach rule, and does a full select() so the fretboard/notes/guide render that scale too (not just the chip highlight). Part 2 (outline others) is the existing chip emphasis ladder - the one selected chip fills, the rest stay outline. Part 3 (disable incompatible) is n/a: over a diatonic key all four scale choices are playable (major/minor pentatonic interplay is a feature, not an incompatibility), so nothing to disable. **EXTENDED (PR #198)**: (a) the default is now PROGRESSION-AWARE - `Tracks.inferSoloDefault(key,mode,seq)` reads the actual chords via `Circle.romanFor` and upgrades the default to Mixolydian (a bVII-major tell over a major key) or Dorian (a major-IV tell over a minor key), else the safe pentatonic. (b) Mixolydian + Dorian are now SELECTABLE context chips (major key -> +Mixo +Dorian, minor key -> +Dorian, deduped against the key's own mode, none on a Blues key) - their `SoloGuide.card` coaching already shipped. Chip visual + fit need a phone tap on the branch preview. **SKIP-PATH FIX (PR #198)**: the Compose Solo->Skip hand-off (songbook.js) dropped the progression's `seq` (passed only key+mode), so progression-aware inference could never fire on the Skip path - the exact path UAT used. Now Skip carries `progression.slice()` as seq, matching the Save path.",
+        "Source": "operator UAT 2026-07-10 (post-#197 live)"
+      },
+      {
+        "#": "S-KEY-SPELLING",
+        "Item": "**A note/chord spelled with a SHARP contradicts the degree label the same UI shows (music-theory-coach REJECT).** Building C-F-A# in C major, the third chord shows \"A#\" under a \"bVII\" roman-numeral label. Music-theory-coach verdict: over a stated key, spelling is FUNCTION-driven - the bVII is the lowered 7th (B lowered = **Bb**), and \"A#\" names a raised 6th (#6), the WRONG function. Showing \"A#\" while labeling it \"bVII\" is internally self-contradictory (numeral says flat-7, note says sharp-6). Coach REJECTS whenever the UI asserts a key/degree function; sharp spelling is acceptable ONLY in a keyless/chromatic context. This is the FORK-4 canonical-sharp limitation - the fix is key-aware spelling, which is exactly what the stalled linchpin **#98** (`spellScaleKeyAware`/`keyLabel`) delivers. Operator (2026-07-10) AUTHORIZED removing FORK-4 -> key-aware, confirming it is deterministic. **CORE BUILT + PROVEN (PR #198)**: `Circle.spellScaleKeyAware(root,mode)` + `Circle.spellRootInKey(keyRoot,keyMode,noteRoot)` - deterministic letter-per-degree spelling (each of A-G once, accidental to hit each pitch). 14 passing unit tests (`test/key-spelling.test.js`): F major -> Bb (not A#), bVII of C -> Bb, the note name now AGREES with the degree label. REMAINING (the staged wiring = the real FORK-4 removal): (1) route the render paths (chord names, scale note list, fretboard) through the key-aware spellers instead of `spell()`/`spellScale()`; (2) the picker offers SHARP-only key names (A#, D#, G#), and those keys spell to double-sharps under correct theory - so the removal also needs the picker to name flat keys with FLAT letters (Bb not A#). That picker change is a scope/UX call (operator owns). Supersedes the #98 approach with a tested core.",
+        "Source": "operator UAT 2026-07-10 (music-theory-coach consult + operator go)"
+      },
+      {
+        "#": "S-PERSONA-COPY",
+        "Item": "**G1 (80) SHIPPED (first full USDD arc, red->green)**: Solo modal now speaks the beginner vocabulary budget with outcome-named buttons (Keep + practice / Just practice / Keep building - copy-coach), and beginners get ONE Studio orientation tip (studiofirst notable, pedagogy-coach: action-first, show-once, level-gated) while whynote stays intermediate+. Persona pair proves both sides on pixels; journey state (one-tip-at-a-time) modeled via dismissNotables.",
+        "Source": "[ux-friction-profiles](ux-friction-profiles-20260710.md), USDD arc"
+      },
+      {
+        "#": "S-POSTPROG-CUE",
+        "Item": "**G2 (75) SHIPPED (USDD arc 2, red->green)**: beginner-gated `postprog` notable fires the moment the progression goes Solo-ready ('Your chords are ready - tap Solo to practice over them'), never a modal; tapping Solo IS the goal so it self-retires (dismiss + slot clear), releasing the one-tip journey slot for the Studio tip - the full beginner journey (cue -> Solo -> modal -> Studio tip) is one pixel-proven scenario. Resolves S-POSTPROG-FLOW's remaining vision half; taste-reviewable on the preview.",
+        "Source": "ux-friction-profiles G2, USDD arc"
+      },
+      {
+        "#": "S-TYPEFILTER-QUIET",
+        "Item": "**G3 SHIPPED 2026-07-10 (swarm, PR #214, v137)**: library facet chips outline-on (red-first scenario kept); accent fill reserved for primary/mode - D-SELECTED-ACCENT intact app-wide",
+        "Source": "ux-friction-profiles G3"
+      },
+      {
+        "#": "S-JAM-STARTER",
+        "Item": "**G4 (48) - agent build CANCELLED by operator mid-swarm 2026-07-10** (no commit landed); goalpost stays open, spec unchanged: one-tap curated starter chip for the current key in the no-video Studio state",
+        "Source": "ux-friction-profiles G4"
+      },
+      {
+        "#": "S-SCALE-MEMORY",
+        "Item": "**G6 (24) SHIPPED 2026-07-10 (board resume, PR #220, v139)**: tapped scale chip persists per track (bt.soloScale.v1, additive, tap-only - the synthetic default select never pins an inference); remembered choice wins only while still an offered chip.",
+        "Source": "ux-friction-profiles G6"
+      },
+      {
+        "#": "S-FIRSTSESSION-SCENARIO",
+        "Item": "**CE3 north star: beginner cold start reaches a strummable, HEARD chord within 5 taps** - the canonical USDD regression to write red-first.",
+        "Source": "ux-friction-profiles CE3"
+      },
+      {
+        "#": "S-NOTABLE-PREEMPT-TEARDOWN",
+        "Item": "**SHIPPED 2026-07-10 (swarm, PR #215, v138)**: renderBanner registry + teardown-on-preempt at the primitive; teardown chosen over stack per the one-tip law (justified + reversible in the PR); 24 notables tests green",
+        "Source": "PR #215"
+      },
+      {
+        "#": "S-KEYPICKER-FLATNAMES",
+        "Item": "**RESOLVED as S-KEYPICKER-PREFERRED 2026-07-10 (branch claude/keypicker-preferred-names, v142 - PR pending connector re-auth)**: operator answered IV-2 by directive (\"key selector drift - shows sharps only. SSOT\") - every key selector now displays preferred key names from the ONE provider (Circle.preferredTonicName): Compose root grid, compact chip, key readout heading, repertoire-form Key dropdown, triads-page chips (on its own branch). Tokens stay canonical (storage/deep-links/transpose). Built FRESH - the cancelled ec74a46 stays untouched; the flat-keys mock branch is superseded and can be deleted. Scenario keypicker-preferred-names.json.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-WHYNOTE-SCALE",
+        "Item": "**G5 (48) SHIPPED 2026-07-10 (board resume, PR #220, v139)**: whynote banner re-derives its copy per selected scale chip (static templates named by chip label, theory-coach-checked, textContent swap on the live element - no re-claim); personas re-proven on pixels with shape-based asserts (/Why .+ works:/ - content-pinned rot fixed a 4th time, now in the persona pair).",
+        "Source": "in-Claude review of PR #198, 2026-07-10"
+      },
+      {
+        "#": "S-TRIADS-SPELLING",
+        "Item": "**FIXED 2026-07-10 (branch claude/triads-key-spelling, v140 - PR pending GitHub connector re-auth)**: Triads & Inversions kept its own sharp-only NAMES table from before the FORK-4 retirement, so F major showed \"IV = A#\" instead of Bb (operator UAT). All displayed chord/note names now route through Circle.noteInKey (theory SSOT, no duplicate speller); tokens (key chips, deep-links, storage) stay canonical-sharp. Regression scenario triads-key-spelling.json (shape assert: no A# anywhere in an F-major cycle).",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-TRIADS-AUDIBLE",
+        "Item": "**SHIPPED 2026-07-10 (branch claude/triads-audible, v143)**: inversion chord cards are tap-to-hear buttons - a tap strums the card's exact fullFrets voicing from the ACTIVE profile's open-string frequencies (accurate on every supported instrument by construction; shared ChordAudio engine, keyboard-reachable role=button). S-RN-STYLE folded in: standalone I/IV/V numerals in prose carry the .roman mono+accent family so they never blend into sentences (operator UAT).",
+        "Source": "operator directive 2026-07-10"
+      },
+      {
+        "#": "S-DELETE-UNDO",
+        "Item": "**Compose progression delete needs protection + undo (operator UAT 2026-07-10: \"too easy to delete a chord... offer 1 (or 2?) levels of undo using simple mechanism tracking previous actions\").** Design intent: no confirm() (feedback-debt direction is REMOVING those) - reuse the app's existing undo-toast pattern (Toast.showAction, the setlist item-remove undo) + a small bounded action stack (1-2 levels) for progression deletes. SHIPPED 2026-07-10 (branch claude/delete-undo, v144): first x tap ARMS (red, 1.6s auto-disarm, movement-cancelled taps intact), second deletes; bounded 2-level remove-undo stack on the Clear-undo toast pattern; deletes keep the stack, every other mutation invalidates it via the A3 choke point (keepRemoveUndo param). Unit suite locks \"first tap must NOT delete\"; prog-delete-undo scenario proves arm -> delete -> toast -> Undo -> restore on pixels.",
+        "Source": "operator UAT 2026-07-10"
+      },
+      {
+        "#": "S-PROG-REORDER",
+        "Item": "**PROTOTYPE SHIPPED 2026-07-10 (branch claude/prog-reorder, v145)**: drag-and-drop chord reorder across all 3 strip stages (2D nearest-center targeting so grid6's second row works). Touch = 300ms long-press lifts (early movement = scroll, untouched); mouse = lift on movement. Accent insertion edge marks the drop side; commit splices + full A3 invalidation; trailing click swallowed so a drop never strums. Live-probe finding: the delete-x 44px hit area covers a compact chip's center - drags may START on it (gestures separable: rm tap is movement-cancelled). Touch FEEL is the operator's pass.",
+        "Source": "operator directive 2026-07-10"
+      },
+      {
+        "#": "S-SETRM-ARM",
+        "Item": "**SHIPPED 2026-07-11 (#235, v150)**: setlist edit-mode remove handle joins the ONE inline-remove grammar (S-DELETE-UNDO) - quiet at rest, first tap ARMS red (1.6s auto-disarm, gate at the list-item PRIMITIVE), second tap removes, undo banner kept; J2 rest-red retired (red-at-rest reserved for labeled .btn.danger). Red-first scenario setlist-remove-arm + consistency-lint rule + source lock.",
+        "Source": "operator UAT 2026-07-11 (screenshot)"
+      },
+      {
+        "#": "M-COCKPIT-V2",
+        "Item": "**VISION + MOCKUPS SHIPPED 2026-07-11 (#236)**: fractal portfolio Cockpit - vision doc (granularity ladder, Postgres 4-table spine, FastAPI+SSE, agent execution backplane / zero-context-switch tenet, competency profiles, dept onboarding) + operator friction profile (USDD persona, signal contract C1-C7) + 3 tactical angles under docs/artifacts/cockpit-v2/ (instruments / tempo / signal), each scenario-verified at 412x915. **PICKED 2026-07-11: remix \"C mostly + B timeline\" (operator digits) - built as cockpit.html (#240); hub header grammar adopted, label = COCKPIT (#239 + workflows-hub #46 deployed). LZ HANDED OFF: ps-internal packet (ccp handoffs/cockpit-lz-packet-20260711.md) -> spawned autonomous session building FastAPI + schema spine behind AAD (notifies operator directly).**",
+        "Source": "operator mission 2026-07-11"
+      },
+      {
+        "#": "S-UI-RECONCILE",
+        "Item": "**SHIPPED 2026-07-11 (audit + 4-lane fix swarm, PRs #230-#233, v146-v149).** Read-only audit ([ui-reconcile-audit-20260710.md](ui-reconcile-audit-20260710.md)): 14 keyed-surface spelling misses + 8 primitive divergences, with a correctly-keyless guard list. Fixes at PRIMITIVES: Lane A song-view/Stage view-local speller (the screenshot bug - chip row/sheet/Stage/transpose/Maximize respell, no-double-transpose guarded) + delete button = danger primitive + .full class seam; Lane B Library facet chips/row badges/form Key dropdown (keyRank order preserved, values stay tokens); Lane C Studio prose/jam query/scale-tip mode/relative-key names (circle.js kept pure); Lane D 9 radii snapped to role tokens + 10 lint rows + the .actions .btn.full seam rule. DEFERRED (registered): chord-chip primitive unification (.chordChips .c vs .bt-st-chordchip - markup change, follow-up), native confirm() dialogs (SETX phase 2), .li-up/.li-dn setlist keys (findings-register rider).",
+        "Source": "operator UAT 2026-07-10 (2 screenshots)"
+      },
+      {
+        "#": "CE-SPAWN-ENV-REPOLOCK",
+        "Item": "**Friction (infra, diagnosed 2026-07-11): BOTH overnight ps-internal spawn sessions died at repo-attach with zero pushes.** Root cause: fresh-session triggers fired into the Cloud-With-Config environment (env_018ePk6pcuQ3xVYDS2dKausA), whose pre-attached nhruska sources lock the session's owner tier BEFORE its first add_repo - so `add_repo problemsolutions/ps-internal` dies on the cross-owner v1 limit at STEP 0 (triggers trig_014Ey2aRwZ2JzncgUnVkKu9S 09:05Z + trig_01RpyWGkzriwEhDvLyPLcge8 11:42Z, both `run_once_fired`, pushed_at never moved off 2026-07-07). The corrected path (spawn into the Default env, env_011CUMCmi2MSZxFpRc21acMx, no pre-attached repos) needs a permission approval the autonomous surface could not deliver (\"permission stream closed\" x4, including an AskUserQuestion). Encoded lesson: **cross-owner missions must spawn into an environment with NO pre-attached sources for the other owner tier** - the Default env, or a purpose-made problemsolutions env. Operator surfaced via \ud83d\udd34 telegram (msg 10); mission packet stays live in ccp handoffs/cockpit-lz-packet-20260711.md.",
+        "Source": "overnight /goal arc 2026-07-11"
+      },
+      {
+        "#": "S-SETADD-EVIDENT + S-SETADD-KEYSEED",
+        "Item": "**SHIPPED 2026-07-12 (UAT burst pair, #249 v157 + #250 v158)**: the Library + is a true 3-way setlist picker per the operator's bursts. #249: chordless rows get a GHOST + at the list-item primitive (dashed/faint, reason as aria-label, explaining toast) - an empty add slot never ships. #250: a row with a KNOWN key but no chords gets a LIVE + that seeds the key's tonic chord through the existing record machinery (updateCustomItem / the openEditOrAdd promotion shape - matchKey merge, no duplicate rows) and adds to the set; ghost narrows to keyless+chordless only. Scenarios setadd-keyseed + setadd-evident (fixture-seeded) + regressions green. DEFERRED (vision candidate, operator-gated): setlist-jam-items - chord-less tracks addable AS jam items (Perform learns to play tracks, not just sheets).",
+        "Source": "operator UAT bursts 2026-07-12 (2 screenshots + \"add one chord... be consistent\")"
+      },
+      {
+        "#": "CE-SPAWN-MIDRUN-DEATH",
+        "Item": "**Friction (infra, 2026-07-12): fresh-session spawns in the Default env die MID-RUN.** Attempts 3 (trig_013hDfzZgXTWZRfFwhQvUnpy, 13:50Z) and 4 (trig_01RiqP8WimPtyE8WSiaiuZwb, 20:18Z, adopt-mode) both attached ps-internal, pushed a branch + draft PR within ~7 min, then went permanently silent (attempt 4 despite an explicit 15-min push-cadence order; last pushes 13:57Z / 20:34Z). Signature: repo-attach + early pushes succeed, session dies ~10-15 min in - cause not diagnosable from the orchestrating session (no transcript access). 4-attempt cap enforced; operator holds the recovery (own session adopting the claude/cockpit-lz branch - \ud83d\udd34 telegram msg 12). Encoded lesson: **long autonomous cross-owner missions need a HUMAN-attached session or a purpose-built env until spawned-session stability is proven; the adopt-the-branch guard made attempts cheap and work cumulative.**",
+        "Source": "ps-internal arc 2026-07-12"
+      },
+      {
+        "#": "CE-WORKTREE-PREFLIGHT",
+        "Item": "**Friction (agent-side, self-caught 2026-07-11 overnight): the parent's coupled-step commit landed on the LOCAL main checkout** because `git worktree add` for a branch already checked out in the agent's worktree fails silently under `",
+        "Source": ""
+      },
+      {
+        "#": "CE-APP-DROPPED-INPUT",
+        "Item": "**Friction (surface-side, operator-flagged 2026-07-11): the Claude Android app DROPPED a typed operator message** - his preferences burst (\"using metaphors in lyrics... compounded from previous sessions\") never arrived and had to be re-sent via screenshot. Cost: one operator round-trip at ~1AM. Not fixable app-side from here; mitigation encoded: treat screenshots-of-typed-text as first-class burst input (already practiced), and the queues.json interview surface remains the durable channel for anything long.",
+        "Source": "operator burst 2026-07-11 (re-sent)"
+      },
+      {
+        "#": "S-TESTSTEPS-EXECUTABLE",
+        "Item": "**Friction: prescribed testing steps were not intuitive or possible.** The agent's \"build C, Bb, F\" test steps failed the operator: (a) Bb is non-diatonic to C so it's not offerable from the suggested/In-key palette (had to discover the All view + that Bb renders as A#), and (b) the agent had not traced the Skip path end-to-end, so the test could not have passed anyway (seq was dropped - see S-SOLO-SCALE-DEFAULT fix). Mobile-dev-coach lesson: never prescribe a manual test the agent has not traced as executable ON THE ACTUAL SURFACE and data-path. Encode: verify the code path carries the data before writing the test steps; write steps in the app's own vocabulary (All view, A# not Bb).",
+        "Source": "operator UAT 2026-07-10"
+      }
+    ],
+    "MID": [
+      {
+        "#": "M-0",
+        "Candidate": "**DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE",
+        "Vision source": "[vision-tutor-deterministic](vision-tutor-deterministic-20260705.md)"
+      },
+      {
+        "#": "M-1",
+        "Candidate": "Tutor Phase 4 complete: decoupled solo-scale selector over a FIXED progression (relative/parallel demos in place)",
+        "Vision source": "[TUTOR-ROADMAP](../../music/TUTOR-ROADMAP.md) Phase 4 (PARTIAL)"
+      },
+      {
+        "#": "M-2",
+        "Candidate": "Tutor Phase 5: song-form coaching (AABA, sections -> whole songs)",
+        "Vision source": "TUTOR-ROADMAP Phase 5 (PLANNED); operator Q5 2026-07-04: M-CONSTRUCT is a SEPARATE mission (with future-features intel) - P5 stays teaching-focused, M-CONSTRUCT is builder-focused"
+      },
+      {
+        "#": "M-11",
+        "Candidate": "M-CONSTRUCT: song construction + section transitions (OWN mission per operator Q5) - kickoff includes an INTEL pass on possible future features",
+        "Vision source": "[vision-ear-first](vision-ear-first-20260704.md)"
+      },
+      {
+        "#": "M-3",
+        "Candidate": "Strum-engine revival (draft PR #88: Karplus-Strong + humanized hand)",
+        "Vision source": "Existing draft PR - needs vision refresh + quality gate"
+      },
+      {
+        "#": "M-4",
+        "Candidate": "Music-app regression suite in CI (Playwright journeys J1-J4 + T-plans as automation)",
+        "Vision source": "Sprint-1 harness + test plan exist; needs CI-shape decision (box OOM rule -> CI-dispatched)"
+      },
+      {
+        "#": "M-5",
+        "Candidate": "buildAdapter extraction (inline HTML -> shared/chord-pack-adapter.js + real tests) - before next instrument profile or HSR Lens",
+        "Vision source": "[analysis A3](analysis-refactor-enhance-20260704.md)"
+      },
+      {
+        "#": "M-6",
+        "Candidate": "Client-storage strategy + schema inventory (issues #76 + #77) - the strategic layer above S-SAVE-TRUTH",
+        "Vision source": "gh #76/#77 + analysis A1 context"
+      },
+      {
+        "#": "M-7",
+        "Candidate": "~~Jam picker~~ CLOSED WON'T-DO (2026-07-04): the entry point was DELIBERATELY removed by operator interview 3 days earlier (commit 8cf0647, never registered - now D-HERO-REMOVED); re-adding = re-litigation. OPEN FORK for Tier-2 sitting: a lightweight STATIC jam-now affordance (no show/hide-on-filter) - operator call",
+        "Vision source": "agent stop + git archaeology"
+      },
+      {
+        "#": "M-8",
+        "Candidate": "SUGG table -> shared module + spelling-agreement test; modeSwitch selected-state language unify (taste pick at interview)",
+        "Vision source": "analysis A7 + B5"
+      },
+      {
+        "#": "M-9",
+        "Candidate": "mount() god-function incremental extraction - FOLD INTO M3, never big-bang",
+        "Vision source": "analysis A2"
+      },
+      {
+        "#": "M-10",
+        "Candidate": "M-PERFORM: true play/perform songbook experience (full sheet layout, auto-scroll?, stage mode?, set flow) - VISION INTERVIEW required",
+        "Vision source": "[uat-walkthrough-20260704.md](uat-walkthrough-20260704.md) U1 - first shared-walkthrough finding"
+      },
+      {
+        "#": "M-12",
+        "Candidate": "**S-SDD-TEMPLATES SHIPPED 2026-07-10 (swarm worktree agent, PR #216)**: SongTemplates runtime mining (sections -> roman patterns, ranked + song-cited) + canonical families, 16 tests; reuses Repertoire.deriveKey + Circle.romanFor. M-13's template input is LIVE",
+        "Vision source": "[sdd-vision](sdd-vision-20260710.md) + PR #216"
+      },
+      {
+        "#": "M-13",
+        "Candidate": "**M-SONG-WIZARD SHIPPED 2026-07-11 (overnight /goal arc, 4 PRs)**: LZ #241 (v151, section buffer in Compose assembles multi-section songs) -> g1 #242 (v152, template-suggested sections per label - M-12 payoff - + suggested/adjacent-section compatibility cues + catalog-cited recommendations, folding the operator's UAT burst) -> g2 #244 (v154, buffer persists across reloads via additive songbook.builderBuffer.v1 + up/dn section reorder) -> g3 #245 (v155, suggestions re-rank by the competency profile + preferences with a \"your style\"/\"easy fit\"/\"adds variety\" why-cue, accepts record evidence back - the compounding personalization loop closed). Every PR: red-first scenario + full ship chain under the overnight delegation. REMAINING (new goalposts, operator-taste-gated): drag-to-reorder in the buffer (S-PROG-REORDER pattern), tutor-style guided entry polish.",
+        "Vision source": "operator UAT bursts 2026-07-11 + [guided-and-free-vision](guided-and-free-vision-20260710.md)"
+      },
+      {
+        "#": "M-14",
+        "Candidate": "M-SKILL-PROFILE: **CORE SHIPPED as M-COMPETENCY 2026-07-11 (#243, v153)** - per-skill competency profiles (5 frameworks: fretboard/uke/guitar/composition/lyrics), evidence-driven leveling with diminishing returns, portable skill-competency-profile/v1 export/import (higher-wins merge, preferences union), Skills panel in Settings, evidence hooks from song building; g3 #245 wired the consume side (personalized suggestions). PRIVACY INVARIANT: public repo ships generic frameworks only - personal levels/preferences live in localStorage + ccp (profiles/skills/, seeds in ccp #20/#21). REMAINING: pedagogy-coach next-best-step surfacing + mastery path as USDD persona-state transitions (target profile - current profile = the practice queue).",
+        "Vision source": "[guided-and-free-vision](guided-and-free-vision-20260710.md) sections 3-4 + #243/#245"
+      }
+    ],
+    "LONG": [
+      {
+        "#": "M-EAR",
+        "Candidate": "Scale/mode AUDITION - hear it, hum it, A/B modes (\"music is heard not seen\")",
+        "State": "Vision CAPTURED ([vision-ear-first](vision-ear-first-20260704.md)); 5 async interview Qs pending; strum-engine #88 revival becomes its foundation"
+      },
+      {
+        "#": "M-SONG-ANCHORS",
+        "Candidate": "Known-songs-per-mode memory anchors + YT links",
+        "State": "same vision doc"
+      },
+      {
+        "#": "M-PHRASE",
+        "Candidate": "Solo phrasing depth (hang notes, tension/release)",
+        "State": "same vision doc; extends shipped mentor layer"
+      },
+      {
+        "#": "(merge)",
+        "Candidate": "M-CONSTRUCT folds into/ sharpens Tutor Phase 5 (M-2)",
+        "State": "operator Q5 pending"
+      }
+    ]
+  },
+  "suite": {
+    "testFileCount": 46,
+    "testCaseCount": 2349,
+    "testFailedCount": 0,
+    "workflow": ".github/workflows/tests.yml",
+    "runner": "node test/run-all.js"
+  },
+  "ops": {
+    "actions": "https://github.com/nhruska/nhruska.github.io/actions",
+    "pagesSettings": "https://github.com/nhruska/nhruska.github.io/settings/pages",
+    "wikiIndex": "https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/index.md",
+    "decisions": "https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md",
+    "uatLog": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md",
+    "queueFile": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+    "liveApp": "https://nhruska.github.io/music/play/",
+    "portfolioRoot": "https://nhruska.github.io/"
+  },
+  "infra": {
+    "note": "Static GitHub Pages site - no Azure CD envs; Pages + Actions are the whole deploy surface for this repo."
+  }
+}

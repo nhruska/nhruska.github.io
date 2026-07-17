@@ -130,4 +130,57 @@ test('ids() returns a defensive copy', function () {
   assert.strictEqual(q.size(), 2);
 });
 
+/* ---------- stepResolvable: defensive nav past dangling refs (S-SET-INTEGRITY, UAT U22) ---------- */
+function resolvesAllBut(deadIds) {
+  return function (id) { return deadIds.indexOf(id) < 0; };
+}
+test('stepResolvable: a plain single resolvable step behaves exactly like next()/prev() (skipped=0)', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c']);
+  var r = q.stepResolvable(1, resolvesAllBut([]));
+  assert.strictEqual(r.id, 'b');
+  assert.strictEqual(r.skipped, 0);
+  assert.strictEqual(q.index(), 1);
+});
+test('stepResolvable: skips ONE dangling member in the forward direction', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c']); // on 'a'
+  var r = q.stepResolvable(1, resolvesAllBut(['b']));
+  assert.strictEqual(r.id, 'c');
+  assert.strictEqual(r.skipped, 1);
+  assert.strictEqual(q.index(), 2);
+});
+test('stepResolvable: skips MULTIPLE consecutive dangling members', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c', 'd', 'e'], 0);
+  var r = q.stepResolvable(1, resolvesAllBut(['b', 'c', 'd']));
+  assert.strictEqual(r.id, 'e');
+  assert.strictEqual(r.skipped, 3);
+  assert.strictEqual(q.index(), 4);
+});
+test('stepResolvable: backward direction skips dangling members too', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c'], 2); // on 'c'
+  var r = q.stepResolvable(-1, resolvesAllBut(['b']));
+  assert.strictEqual(r.id, 'a');
+  assert.strictEqual(r.skipped, 1);
+  assert.strictEqual(q.index(), 0);
+});
+test('stepResolvable: every remaining member unresolvable -> id null, clamps at the end (never wraps, never throws)', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c'], 0); // on 'a'
+  var r = q.stepResolvable(1, resolvesAllBut(['b', 'c']));
+  assert.strictEqual(r.id, null);
+  assert.strictEqual(r.skipped, 2);
+  assert.strictEqual(q.atEnd(), true); // clamped, not looped
+});
+test('stepResolvable: never spins forever regardless of a pathological resolves() (hard-bounded by list length)', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c', 'd'], 0);
+  var r = q.stepResolvable(1, function () { return false; }); // nothing ever resolves
+  assert.strictEqual(r.id, null);
+  assert.ok(r.skipped <= 4, 'skipped must be bounded by the queue size, got ' + r.skipped);
+  assert.strictEqual(q.atEnd(), true);
+});
+test('stepResolvable: defaults resolves() to "always true" when omitted (matches next()/prev())', function () {
+  var q = createQueue(); q.set(['a', 'b', 'c']);
+  var r = q.stepResolvable(1);
+  assert.strictEqual(r.id, 'b');
+  assert.strictEqual(r.skipped, 0);
+});
+
 run();

@@ -23,7 +23,7 @@
 
     function current() { return cur >= 0 && cur < list.length ? list[cur] : null; }
 
-    return {
+    var api = {
       set: function (ids, startIdx) {
         list = (ids || []).slice();
         cur = list.length ? clamp(startIdx || 0, 0, list.length - 1) : -1;
@@ -49,8 +49,33 @@
         if (idx < cur) cur--;            // current song shifted left — follow it
         cur = clamp(cur, 0, list.length - 1); // removing the current/last clamps into range
         return true;
+      },
+      // S-SET-INTEGRITY (UAT U22 - dangling setlist ref defensive nav): step
+      // forward/backward, skipping any member `resolves(id)` reports falsy
+      // for (a dangling reference - e.g. a setlist song whose library item
+      // was deleted elsewhere and slipped past the delete/load-time heal).
+      // dir: +1 Next, -1 Prev. Same clamp-not-wrap contract as next()/prev()
+      // - stops at the end/start rather than looping, and is hard-bounded by
+      // list.length iterations so a pathological caller state can never spin
+      // forever. Returns { id, skipped }: id is the first resolvable member
+      // found, or null if every remaining member in that direction is
+      // unresolvable too (treat exactly like an empty queue - never render
+      // the unresolved id). skipped counts how many dangling members were
+      // passed over (0 = a normal single-step move, matching plain next()/
+      // prev() behavior for a caller that doesn't care about the distinction).
+      stepResolvable: function (dir, resolves) {
+        if (typeof resolves !== 'function') resolves = function () { return true; };
+        var skipped = 0;
+        for (var i = 0; i < list.length; i++) {
+          var moved = dir > 0 ? api.next() : api.prev();
+          if (resolves(moved)) return { id: moved, skipped: skipped };
+          skipped++;
+          if (dir > 0 ? api.atEnd() : api.atStart()) break; // no further movement possible
+        }
+        return { id: null, skipped: skipped };
       }
     };
+    return api;
   }
 
   var api = { createQueue: createQueue };

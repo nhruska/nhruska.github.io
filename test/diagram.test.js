@@ -118,4 +118,19 @@ test('empty scalePcs or openPcs never throws', function () {
   assert.deepStrictEqual(p.notesOn(0), []);
 });
 
+/* ---- F=12 open window (D-FRETS-4STR, m-guide-ia-20260704.md section 5) ----
+ * scalePlan itself has no built-in fret cap (the position-shift cap lives in
+ * key-explorer.js's posWindow) - a 12-fret open window is just a wider F, and
+ * should render the full 1-12 span with no self-clipping. Geometry: the SVG
+ * width formula in Diagram.scale (W = padX + openColW + F*fretW + padX =
+ * 15+19+12*25+15 = 349px) is a plain arithmetic consequence of this F, so this
+ * pure-math check is the regression lock for the 4-string default. */
+test('F=12 open window: full 1-12 span, no self-clipping (the UI cap is key-explorer.js, not here)', function () {
+  var p = D.scalePlan({ openPcs: GUITAR_OPEN, scalePcs: C_MAJOR, rootPc: 0, frets: 12 });
+  assert.strictEqual(p.showOpen, true);
+  assert.deepStrictEqual(p.trueFrets, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  assert.strictEqual(p.start, 1);
+  assert.strictEqual(p.end, 12);
+});
+
 run();

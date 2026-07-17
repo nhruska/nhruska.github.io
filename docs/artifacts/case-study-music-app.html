@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Case Study - The Music App: Origin of the Method</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<style>
+:root{
+--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 28px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(41,170,225,.22))}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}
+.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+.wrap{padding:0 16px}
+.cockpit{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:16px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.cockpit .state{font-size:1.05rem;font-weight:700;line-height:1.5;font-style:italic}
+.cockpit .statesub{font-size:.85rem;color:var(--dim);margin:8px 0 0;line-height:1.5;font-style:normal}
+.fchead{font-size:.85rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.fc{border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);background:var(--bg2);padding:12px 14px;margin:10px 0}
+.fc .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.fc .fw{color:var(--dim);font-size:.85rem;font-weight:700}
+.fc .fd{color:var(--txt);font-size:1rem;line-height:1.55}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:560px){.chips{grid-template-columns:1fr 1fr}}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:10px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary)}
+.chip .l{font-size:.74rem;font-weight:600;color:var(--dim);margin-top:2px}
+h2{font-size:1.05rem;font-weight:800;margin:22px 0 10px;color:var(--txt);border-left:4px solid var(--brand-primary);padding-left:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{color:var(--txt);font-weight:700;background:var(--bg2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+.wrapx{overflow-x:auto}
+.foot{margin-top:24px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-agent{background:#22845C}.pl-adv{background:#8A3FBF}.pl-ship{background:var(--brand-secondary)}.pl-next{background:#5A6B7E}
+</style></head><body>
+
+<header class="brand-header">
+<svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions">
+<path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/>
+<path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/>
+<path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/>
+</svg>
+<span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span>
+</header>
+<div class="wrap">
+
+<h1>Case Study - The Music App: Origin of the Method</h1>
+<div class="sub"><a href="https://nhruska.github.io/music/play/">live app</a> - <a href="https://github.com/nhruska/nhruska.github.io">repo</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/index.md">engineering wiki</a> - <a href="https://nhruska.github.io/docs/artifacts/cc/repo.html">Command Center</a> - 2026-06-07 to present</div>
+
+<div class="cockpit">
+<div class="state">"The first app I built letting AI agents do the work, shipping early and often, monitored with the HiTL feedback loop. Born out of my needs as a user. Iterations focused on usability, grounded with directives from me. The first iterations were separate apps per instrument; realizing different instruments were just PROFILES on the same app, we consolidated to a single app on a single source of truth for all components. We used the best available model as ORCHESTRATOR, which designed everything into atomic autonomous swarm sprint plans. HiTL Mission Control HTML pages kept me fully updated; telegram carried the short, direct notification - clear action-required-or-not plus the one link with the specific instructions I needed as the human in the loop."</div>
+<div class="statesub">- the operator's own account of how this app came together. What follows checks each part of it against the repo's own record.</div>
+</div>
+
+<div class="chips">
+<div class="chip"><div class="n">28</div><div class="l">days, first commit to today</div></div>
+<div class="chip"><div class="n">172</div><div class="l">merged PRs</div></div>
+<div class="chip"><div class="n">247</div><div class="l">commits on main</div></div>
+<div class="chip"><div class="n">8</div><div class="l">instrument profiles, one shared engine</div></div>
+</div>
+
+<h2>The arc</h2>
+
+<div class="fchead">1. Born from a user's need</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">2026-06-07</span><span class="fw">first commit</span></div>
+<div class="fd">The repo's <a href="https://github.com/nhruska/nhruska.github.io/commit/6689131cc50f91bcf216a4e72b9e0c47e69fd688">opening commit</a> already names itself in instrument terms - <code>music/ukulele/</code> as "Roadcase (uke performance kit)" and <code>music/ukulele/composer/</code> as "Uke Composer (standalone)," with Guitar noted as next. It carries a <code>Co-Authored-By: Claude Opus 4.8</code> trailer - an agent wrote code in the app's very first commit, not somewhere down the line.</div></div>
+
+<div class="fchead">2. Usability iterations grounded in operator directives</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">ongoing</span><span class="fw">the UAT loop</span></div>
+<div class="fd">The <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">UAT walkthrough log</a> records 24 numbered findings (U1-U24) written down verbatim as the operator hit them, most turned around the same session (U2: "fretboard section links are all different sizes" fixed same round; U9: a toast that never auto-hid, traced to a shadowed timer variable, extracted into a shared primitive). The <a href="https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html">Design-System Day pane</a> shows a full day (27 PRs, v88 to v105) spent turning operator directives into a written Element Consistency Law and a 53-assert lint that now enforces it on every PR.</div></div>
+
+<div class="fchead">3. The consolidation insight</div>
+<div class="fc"><div class="fh"><span class="pill pl-you">2026-06-07, 17:31-21:45</span><span class="fw">same day as the first commit</span></div>
+<div class="fd">Four hours after the first commit scaffolded separate per-instrument tools, the shape changed: <a href="https://github.com/nhruska/nhruska.github.io/commit/f9686a5">17:44</a> extracted a shared, instrument-agnostic songbook out of Roadcase; <a href="https://github.com/nhruska/nhruska.github.io/commit/e17473e">17:57</a> added a Guitar tool reusing that same songbook; <a href="https://github.com/nhruska/nhruska.github.io/commit/bd17426">19:48</a> shipped it as "a versatile app + data tuning-profiles (foundation)"; by <a href="https://github.com/nhruska/nhruska.github.io/commit/5f4cf0a">21:45</a> Roadcase was dropped, and by <a href="https://github.com/nhruska/nhruska.github.io/commit/799615d">01:13</a> the next morning so was the standalone Uke Composer. What's left today is <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/systems/instrument-profiles.md">one profile contract</a> - "profiles are pure data; rendering is shared" - backing 8 instruments (guitar in three tunings, ukulele, banjo, mandolin, mandola, cigar box) off one <code>diagram.js</code> renderer, one chord engine, one source of truth.</div></div>
+
+<div class="fchead">4. Orchestrator, HiTL Mission Control, and telegram</div>
+<div class="fc"><div class="fh"><span class="pill pl-agent">standing pattern</span><span class="fw">how the sprints actually ran</span></div>
+<div class="fd">The <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-20260703.md">UX sprint-1 plan</a> records it plainly: after a 12-finding adversarial pass, "resolution rulings by mission orchestrator (Opus); chair-level judgment was only required on the undo contract." The <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/atomic-queue-plan-20260704.md">atomic queue plan</a> shows the orchestrator's output directly - work stratified into Tier 0 (zero operator decisions, relay-launched as builders free up, capped at 5 concurrent), Tier 1 (one quick pick per item), and Tier 2 (one batched sitting). Five HiTL Mission Control pages carried the operator through each mission in turn: <a href="https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html">UX personas</a>, <a href="https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html">wiki + guitarist toolset</a>, <a href="https://nhruska.github.io/docs/artifacts/m-guide-mission-20260704.html">blues key/scale mentor</a>, <a href="https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html">design-system day</a>, and <a href="https://nhruska.github.io/docs/artifacts/ear-first-night-20260705.html">ear-first night</a>. The app's own <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/CLAUDE.md">working notes</a> name the telegram convention directly: verify the preview link is live, make it tappable, and "when the user is on their phone, also send it via the telegram surface" - the short, direct ping the operator describes.</div></div>
+
+<h2>Evidence rail</h2>
+<div class="wrapx"><table>
+<tr><th>Claim</th><th>Evidence</th></tr>
+<tr><td>Agents wrote the app from commit one</td><td><a href="https://github.com/nhruska/nhruska.github.io/commit/6689131cc50f91bcf216a4e72b9e0c47e69fd688">First commit</a>, co-authored by Claude Opus 4.8</td></tr>
+<tr><td>Shipping was early and continuous</td><td>247 commits, 172 merged PRs, <a href="https://github.com/nhruska/nhruska.github.io/commits/main">full commit history</a> across 28 days</td></tr>
+<tr><td>Iterations were grounded in operator directives, not agent guesswork</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">UAT walkthrough</a> (U1-U24, verbatim operator findings); <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions registry</a> (each row cites the operator directive or UAT finding that drove it)</td></tr>
+<tr><td>Separate per-instrument apps came first</td><td><a href="https://github.com/nhruska/nhruska.github.io/commit/6689131cc50f91bcf216a4e72b9e0c47e69fd688">First commit</a>: "Roadcase (uke performance kit)" + "Uke Composer (standalone)," Guitar "soon"</td></tr>
+<tr><td>Instruments consolidated into profiles on one app, same day</td><td>Commits <a href="https://github.com/nhruska/nhruska.github.io/commit/f9686a5">f9686a5</a>, <a href="https://github.com/nhruska/nhruska.github.io/commit/e17473e">e17473e</a>, <a href="https://github.com/nhruska/nhruska.github.io/commit/bd17426">bd17426</a>, <a href="https://github.com/nhruska/nhruska.github.io/commit/5f4cf0a">5f4cf0a</a>, <a href="https://github.com/nhruska/nhruska.github.io/commit/799615d">799615d</a> (2026-06-07 17:31 to 2026-06-08 01:13)</td></tr>
+<tr><td>One profile contract now backs every instrument</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/systems/instrument-profiles.md">Instrument Profiles wiki page</a>; <a href="https://github.com/nhruska/nhruska.github.io/tree/main/music/shared/profiles">profiles/ directory</a></td></tr>
+<tr><td>Best-available model acted as orchestrator</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/ux-sprint-1-20260703.md">UX sprint-1 plan</a>: "resolution rulings by mission orchestrator (Opus)"</td></tr>
+<tr><td>Work was designed into atomic, autonomous swarm sprints</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/atomic-queue-plan-20260704.md">Atomic queue plan</a> (Tier 0/1/2, relay-launch, 5-builder concurrency cap)</td></tr>
+<tr><td>A second model adversarially reviewed the work</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/m-guide-adversarial-fold-20260704.md">M-GUIDE adversarial fold record</a>: 4 rounds, 10 catches, all dispositioned before or with the shipping PR</td></tr>
+<tr><td>HiTL Mission Control pages kept the operator updated</td><td>5 mission panes: <a href="https://nhruska.github.io/docs/artifacts/ux-personas-20260703.html">UX personas</a>, <a href="https://nhruska.github.io/docs/artifacts/music-wiki-mission-20260704.html">wiki + guitarist toolset</a>, <a href="https://nhruska.github.io/docs/artifacts/m-guide-mission-20260704.html">blues key/scale mentor</a>, <a href="https://nhruska.github.io/docs/artifacts/design-system-day-20260704.html">design-system day</a>, <a href="https://nhruska.github.io/docs/artifacts/ear-first-night-20260705.html">ear-first night</a></td></tr>
+<tr><td>Telegram carried the short, action-required-or-not ping</td><td><a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/CLAUDE.md">music/CLAUDE.md</a>: preview links go out curl-verified and tappable, "when the user is on their phone, also send it via the telegram surface"</td></tr>
+</table></div>
+
+<h2>The method</h2>
+<div class="wrapx"><table>
+<tr><th>Step</th><th>What happens</th></tr>
+<tr><td>Capture</td><td>The operator's raw need or feedback is written down verbatim, not paraphrased - the UAT log and vision-capture docs are the record of this</td></tr>
+<tr><td>Interview</td><td>A vision or goal-interview document establishes scope before build starts, so agents aren't guessing at intent</td></tr>
+<tr><td>Orchestrator IA</td><td>The best available model plans the information architecture and resolves adversarial findings, per the sprint-1 plan's "mission orchestrator" ruling</td></tr>
+<tr><td>Adversarial gate</td><td>A second model reviews the design, then the implementation, before it ships - the M-GUIDE fold record is one example, 4 rounds and 10 catches</td></tr>
+<tr><td>Swarm waves</td><td>Work is tiered by how many operator decisions it needs and relay-launched under a concurrency cap, per the atomic queue plan</td></tr>
+<tr><td>HiTL pane + severity ping</td><td>Each mission gets one HTML Mission Control page; telegram carries the short action-required-or-not ping with the one link that matters</td></tr>
+<tr><td>UAT loop</td><td>The operator walks the shipped surface and findings turn around the same session, closing back into the next capture</td></tr>
+</table></div>
+
+<div class="card">This method extends past this one app: the same capture, orchestrator, adversarial-gate, swarm, HiTL, and UAT loop now organizes engineering work across every active project, not only this one.</div>
+
+<div class="foot">Every claim above links to the commit, PR, wiki page, or mission pane that grounds it - nothing here is asserted without a source. The opening quote is the operator's own account, unverified by nature (it describes intent, not a repo state) and presented as a quote for exactly that reason. Compiled from this repo's own history: <a href="https://github.com/nhruska/nhruska.github.io/commits/main">commits</a>, <a href="https://github.com/nhruska/nhruska.github.io/pulls?q=is%3Apr+is%3Amerged">merged PRs</a>, <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions registry</a>, <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">UAT log</a>. Problem Solutions - compound engineering.</div>
+</div>
+</body></html>

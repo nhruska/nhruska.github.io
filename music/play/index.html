@@ -5,6 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
+<!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
+<script src="../shared/theme.js"></script>
+<!-- Versioned localStorage boot migration runner (M-6 STORAGE-MIGRATE, shared/
+     storage-migrate.js). Loaded first (before backup.js/songbook.js and every
+     other shared/*.js consumer, and before the pre-paint read just below) so
+     its self-run at load time completes before anything else reads persisted
+     state. Ships this wave as a no-op v1 baseline - see storage-migrate.js. -->
+<script src="../shared/storage-migrate.js"></script>
+<script>
+/* Set theme + accent hue before first paint to avoid a flash. The full accent
+   derivation runs in the Settings script below; the CSS light fallbacks
+   (--accent-dim/deep/ink in :root[data-theme=light]) cover the brief gap. */
+(function(){try{
+  var stored=localStorage.getItem('music.theme.v1');
+  var prefersLight=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches);
+  var eff=window.Theme?Theme.effectiveTheme(stored,prefersLight)
+    :((stored==='light'||stored==='dark')?stored:(prefersLight?'light':'dark'));
+  document.documentElement.setAttribute('data-theme',eff);
+  var a=localStorage.getItem('music.accent.v1'); if(a){document.documentElement.style.setProperty('--accent',a);}
+  var m=document.querySelector('meta[name="theme-color"]'); if(m)m.setAttribute('content',eff==='light'?'#eef1f4':'#0d0f12');
+}catch(e){}})();
+</script>
 <link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
 <!-- Installable / offline (PWA): manifest + service worker (registered at end of body). -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -23,18 +45,73 @@
     font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
   .picker:focus{outline:none;border-color:var(--accent);}
   .picker:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  /* accent-colour chooser lives in the Tune tab now (not the always-on header) */
-  .tuneTheme{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;}
-  .themeWrap{position:relative;}
-  #themeBtn{font-size:1.3rem;line-height:1;}
-  .themePop{position:absolute;bottom:calc(100% + 8px);right:0;z-index:30;display:flex;gap:9px;flex-wrap:wrap;
-    width:202px;padding:12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:13px;
-    box-shadow:0 14px 34px rgba(0,0,0,.5);animation:fadeUp .18s ease;}
-  .themePop[hidden]{display:none;}
+  /* accent swatches - rendered inline in the Settings sheet (accentSwatches) */
   .sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;padding:0;
     background:var(--sc);transition:transform .08s;}
   .sw:active{transform:scale(.88);}
   .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
+  /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
+     sheet on phone; the accent chooser lives here now, not the Tune tab.
+     Structure (F11): sticky .setHd top, scrollable .setPanelBody middle, sticky
+     .setFoot bottom - a plain flex column. The card's own height is auto up to
+     max-height, so short content never leaves a gap above the footer; only when
+     content exceeds max-height does .setPanelBody actually scroll. */
+  #settingsBtn{line-height:0;}
+  #settingsBtn svg{width:21px;height:21px;display:block;}
+  .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
+    padding:0 12px calc(12px + env(safe-area-inset-bottom));}
+  .setOv[hidden]{display:none;}
+  .setCard{width:100%;max-width:520px;max-height:86dvh;display:flex;flex-direction:column;overflow:hidden;
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px 16px 0 0;
+    box-shadow:0 -14px 40px rgba(0,0,0,.55);}
+  .setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
+    padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
+  .setHd h2{margin:0;font-size:1.15rem;}
+  .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
+    display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+  .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
+  /* M-SETTINGS-CLARITY: sections are .accSec/.accBtn/.accBody (the shared
+     accordion primitive, songbook.css). The old .setSec rules retired with
+     the markup. .setRow composes the shared .listItem card family as a
+     <button> data row (Backup/Restore): explicit color because button text
+     does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
+     it reads as a list row, not an action button.
+     UAT 2026-07-16: also give it an explicit dark surface + border + padding.
+     A <button> with no background falls back to the UA default (light grey),
+     so on the dark theme the standalone Guidance-level .setRow rendered as a
+     washed-out white bar with near-invisible --txt text (operator screenshot).
+     The Backup/Restore .setRows live inside a collapsed accordion so the bug
+     only showed on the bare Guidance row - the fix reads correctly for all. */
+  .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
+  .setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
+  .setRow .li-title{display:block;}
+  .setRow .li-artist{display:block;}
+  /* About section link rows (round 2): external-link ink (--brass, the Links
+     convention) + inline-SVG icon taking currentColor; 44px touch floor. */
+  .aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
+    text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
+  .aboutLink svg{flex:0 0 auto;}
+  .aboutStamp{margin:10px 0 0;}
+  .setLbl{font-weight:600;margin-bottom:11px;}
+  .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
+  .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
+  .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
+  .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
+  .thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+  .thSeg.on{background:var(--accent);color:var(--on-accent);}
+  .thSeg:active{transform:scale(.97);}
+  .setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
+  .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
+  .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
+  .setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
+  .setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
+  .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
+  .setFoot{flex:0 0 auto;border-top:1px solid var(--line-strong);padding:14px 16px 18px;}
+  .setBtns{display:flex;gap:10px;}
+  .setBtns .btn{flex:1;}
+  .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 </style>
 </head>
 <body>
@@ -42,8 +119,29 @@
   <div class="appbar">
     <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
+    <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
+    <!-- M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
+         experience-level ask, rendered/managed entirely by the Settings
+         inline script below (renderGuidanceAsk). Sits FIRST, outside every
+         .screen, same rationale as diagramPrefSlot/backupNudgeSlot below -
+         it fires once at boot, on any tab, and 'guidanceask' outranks every
+         other Notables consumer (notables.js PRIORITY) so it wins the slot
+         ahead of firstrun on a truly fresh profile. -->
+    <div class="notableSlot" id="guidanceAskSlot"></div>
+    <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time dots|patterns
+         fretboard-diagram preference prompt, rendered/managed entirely by
+         the Settings inline script below (renderDiagramPrefPrompt). Sits
+         OUTSIDE every .screen, same rationale as backupNudgeSlot below - it
+         can fire the first time ANY chord diagram renders, on any tab. -->
+    <div class="notableSlot" id="diagramPrefSlot"></div>
+    <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
+         backup-staleness nudge, rendered/managed entirely by the Settings
+         inline script below (renderBackupNudge). Sits OUTSIDE every .screen
+         so it shows above whichever tab is active, not just Library - a
+         device-wide concern, unlike the per-Library firstrun/whynote notables. -->
+    <div class="notableSlot" id="backupNudgeSlot"></div>
     <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
          by repertoire.js). Search + Genre + Key chips filter the list; +Add sits on
          the search row. The old #typeToggle (Repertoire|Set) is retired - the Set /
@@ -69,11 +167,16 @@
     <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
+        <!-- UAT 2026-07-16 (operator): Start moves up into the header where Edit
+             was (compact, not a full-width bar); Edit sits to its LEFT; the
+             destructive Clear (✕) is hidden until edit mode and wears red. Order
+             is [✕][Edit][Start] - normal mode hides ✕ -> [Edit][Start]; edit mode
+             hides Start + shows the red ✕ -> [✕][Done]. -->
         <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
+          <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
-          <button class="iconBtn" id="setClear" title="Clear setlist">✕</button></div>
+          <button class="btn red" id="performBtn" title="Start performance">Start</button></div>
         <div id="setBody"></div>
-        <div class="setBar" id="setBar" style="display:none"><button class="btn red" id="performBtn">Start performance</button></div>
       </div>
     </section>
     <section class="screen" id="s-compose">
@@ -84,6 +187,14 @@
            Rationale: the old nested-accordion scroll container trapped vertical swipes on
            the in-key cells (the lingering swipe bug). With a single flat scroll container
            the chord cells scroll cleanly. -->
+      <!-- M-GUIDANCE (intermediate tier): key/mode intro on first Compose visit
+           (renderComposeIntroNotable, listens for music:tab-shown) + the
+           transpose==key tip on the first Compose transpose
+           (renderTransposeTipNotable, listens for music:compose-transposed).
+           Two slots (not one) since each fires on a different event and only
+           one can ever hold the Notables slot at a time anyway. -->
+      <div class="notableSlot" id="composeIntroSlot"></div>
+      <div class="notableSlot" id="transposeTipSlot"></div>
       <div class="composeWrap">
         <div class="composeTop">
           <!-- SINGLE-ROW button bar (375px-safe, no wrap). The key/mode chip
@@ -106,8 +217,11 @@
                top region stays as short as possible. -->
           <div class="progBox">
             <div class="prog" id="prog"></div>
+            <!-- G2 S-POSTPROG-CUE: beginner next-move cue slot; rendered by
+                 renderPostProgNotable below when the progression goes Solo-ready -->
+            <div class="notableSlot" id="postProgSlot"></div>
           </div>
-          <div class="maxNote" id="maxNote" hidden>Max 8 chords - remove one to add another.</div>
+          <div class="maxNote" id="maxNote" hidden>Max 12 chords - remove one to add another.</div>
           <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
                When hidden it takes NO vertical space (the old standalone chip row is gone -
                the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
@@ -122,11 +236,16 @@
             <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
             <div class="keyView" id="keyView"></div>
           </div>
-          <!-- In-key | All segmented toggle lives here (#catChips), in the fixed region. -->
-          <div class="chips" id="catChips"></div>
-          <!-- Phase 3: bridge a built progression to a matched backing track to solo over.
-               Hidden until a key + progression exist (toggled by songbook's renderKey). -->
-          <button class="btn soloBackingBtn" id="soloBackingBtn" type="button" hidden>Solo over a backing track</button>
+          <!-- F28+F29 (UI-std UAT): the In-key|All toggle (#catChips) and the Solo
+               entry point share ONE controls row directly above the chord grid
+               (#chordCtrlRow) - the operator flagged the old standalone full-width
+               "Solo over a backing track" CTA as buried below the toggle instead of
+               living beside it. Solo button still hidden until a key + progression
+               exist (toggled by songbook's renderKey - same gate, unchanged). -->
+          <div class="chordCtrlRow" id="chordCtrlRow">
+            <div class="chips" id="catChips"></div>
+            <button class="btn soloRowBtn" id="soloBackingBtn" type="button" title="Solo over it - open the Practice Studio" hidden>Solo</button>
+          </div>
         </div>
         <!-- The ONLY scroll area: the chord list, led by the suggestion surface
              (#suggest - starter progressions when empty, next-chord chips
@@ -145,6 +264,9 @@
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
+        <!-- M-GUIDANCE (beginner tier): "tune up first" cue on the Tune tab's
+             first visit (renderTuneFirstNotable, listens for music:tab-shown). -->
+        <div class="notableSlot" id="tuneFirstSlot"></div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub" style="margin:14px 0 8px">Tuning</div>
           <div class="chips" id="tuneTunings"></div>
@@ -155,13 +277,7 @@
         </div>
         <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
-        <div class="tuneTheme">
-          <span class="sub">Accent colour</span>
-          <div class="themeWrap">
-            <button class="ab-btn" id="themeBtn" title="Accent colour" aria-label="Choose accent colour" aria-haspopup="true" aria-expanded="false">●</button>
-            <div class="themePop" id="themePop" role="menu" aria-label="Accent colour" hidden></div>
-          </div>
-        </div>
+        <!-- Accent colour moved to the Settings sheet (gear in the appbar). -->
       </div>
     </section>
   </div>
@@ -186,22 +302,186 @@
   <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
 </div>
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
+<!-- Settings sheet: accent colour + whole-songbook backup/restore + which
+     offline build is actually running. Opened by the appbar gear (#settingsBtn). -->
+<!-- M-SETTINGS-CLARITY (2026-07-05): sections are a ONE-AT-A-TIME accordion
+     (shared/accordion.js + the .accSec/.accBtn/.accBody family, songbook.css).
+     Backup/Restore are DATA rows inside "Backup & Restore" (the .listItem card
+     family), NOT footer buttons - the old footer pair read as a Save/Cancel
+     pair and got tapped to dismiss the panel. The footer's ONE action is Done
+     (labeled Done, not Save: every control in this sheet applies on change,
+     so there is nothing staged to save or discard - see the PR).
+     Round 2 (operator UAT): purpose-named sections - Appearance / Preferences /
+     Backup & Restore / About ("&" matches the existing "Triads & Inversions"
+     copy style). -->
+<div class="setOv" id="setOv" hidden>
+  <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setPanelBody" id="settingsBody">
+      <section class="accSec" data-acc="appearance">
+        <button class="accBtn" id="accBtnAppearance" type="button" aria-expanded="false" aria-controls="accBodyAppearance">Appearance</button>
+        <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
+          <div class="setLbl">Theme</div>
+          <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
+          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+          <div class="setLbl">Accent color</div>
+          <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
+        </div>
+      </section>
+      <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
+           the dots|patterns pref can be changed any time - not just at the
+           one-time Notables prompt (#diagramPrefSlot above). Section renamed
+           "Preferences" (round 2) - it holds preference toggles; the inner
+           .setLbl keeps naming WHICH preference. -->
+      <section class="accSec" data-acc="prefs">
+        <button class="accBtn" id="accBtnPrefs" type="button" aria-expanded="false" aria-controls="accBodyPrefs">Preferences</button>
+        <div class="accBody" id="accBodyPrefs" role="region" aria-labelledby="accBtnPrefs" hidden>
+          <div class="setLbl">Fretboard diagrams</div>
+          <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
+          <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
+          <!-- M-GUIDANCE (2026-07-05): plain body-text row (NOT a heading, NOT
+               bold - operator explicit) that cycles music.guidanceLevel.v1.
+               Deliberately NOT a .setLbl + segmented-control pair like Theme/
+               Fretboard diagrams above it - the operator asked for plain text
+               here specifically, so this is a single tappable .setRow (bare,
+               no .listItem card family - that's where the bold titles live). -->
+          <button type="button" class="setRow" id="guidanceLevelRow"></button>
+        </div>
+      </section>
+      <section class="accSec" data-acc="backup">
+        <button class="accBtn" id="accBtnBackup" type="button" aria-expanded="false" aria-controls="accBodyBackup">Backup &amp; Restore</button>
+        <div class="accBody" id="accBodyBackup" role="region" aria-labelledby="accBtnBackup" hidden>
+          <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+          <div class="setSummary" id="dataSummary" aria-live="polite"></div>
+          <button class="listItem setRow" id="btnBackup" type="button">
+            <span class="li-body">
+              <span class="li-title">Back up</span>
+              <span class="li-artist">Save everything on this device to a file.</span>
+              <span class="li-meta" id="lastBackupMeta">Last backup: never</span>
+            </span>
+          </button>
+          <button class="listItem setRow" id="btnRestore" type="button">
+            <span class="li-body">
+              <span class="li-title">Restore</span>
+              <span class="li-artist">Read a backup file and bring everything across.</span>
+              <span class="li-meta" id="lastRestoreMeta">Last restore: never</span>
+            </span>
+          </button>
+          <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+        </div>
+      </section>
+      <!-- About (round 2, operator UAT): attribution + open-source funnel.
+           Icons are INLINE SVGs (GitHub mark + octicons; fill=currentColor so
+           they take the link ink) - this is an offline-capable PWA, no
+           external asset fetches. Links use the external-link ink (--brass,
+           the Links convention). The footer stamp below STAYS (the operator's
+           stale-detection anchor); #aboutStamp is the same text, one more
+           discoverable home. -->
+      <section class="accSec" data-acc="about">
+        <button class="accBtn" id="accBtnAbout" type="button" aria-expanded="false" aria-controls="accBodyAbout">About</button>
+        <div class="accBody" id="accBodyAbout" role="region" aria-labelledby="accBtnAbout" hidden>
+          <p class="setHint">Built by Nikolaus Hruska. Free and open source.</p>
+          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+            <span>View the source on GitHub</span>
+          </a>
+          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
+            <span>Report an issue or suggest an improvement</span>
+          </a>
+          <!-- F22 (operator UAT 2026-07-05): the "How this app is built"
+               write-up link (a case study of this project) was removed. -->
+          <p class="setHint aboutStamp" id="aboutStamp"></p>
+        </div>
+      </section>
+    </div>
+    <div class="setFoot">
+      <div class="setBtns">
+        <button class="btn red" id="setDone" type="button">Done</button>
+      </div>
+      <div class="setMeta" id="setMetaLine"><span id="appVer">Music</span></div>
+    </div>
+  </div>
+</div>
 
 <!-- Shared, instrument-agnostic runtime -->
+<!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - loads first since
+     list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
+     tracks.js all delegate to it. -->
+<script src="../shared/esc.js"></script>
+<!-- toast.js: S-TOAST (UAT U9 fix) - the shared per-host timer-isolation
+     primitive both showToast() and showComposeToast() in songbook.js
+     delegate to. Loads early, alongside esc.js, since any consumer could
+     show a toast. -->
+<script src="../shared/toast.js"></script>
+<!-- build-stamp.js: M-SETTINGS-CLARITY (2026-07-05) - the authored-at-change-
+     time version + freshness stamp the Settings meta line renders (VERSION
+     mirrors sw.js CACHE, guard-locked by scripts/check-cache-bump.sh).
+     Dependency-free; also loaded by play/triad-inversions.html. -->
+<script src="../shared/build-stamp.js"></script>
+<!-- accordion.js: M-SETTINGS-CLARITY (2026-07-05) - the exclusive disclosure
+     group primitive (one open section at a time), consumed by the Settings
+     sheet sections below. Dependency-free. -->
+<script src="../shared/accordion.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
-<script src="../shared/tempo.js"></script>
 <script src="../shared/circle.js"></script>
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
+<script src="../shared/notables.js"></script>
+<!-- M-GUIDANCE (2026-07-05): the beginner|intermediate|advanced experience
+     level (music.guidanceLevel.v1) - loaded right after notables.js, which
+     it grades claims against (see notables.js's LEVELS table). -->
+<script src="../shared/guidance-level.js"></script>
+<!-- S-CHORD-COLLAPSE (2026-07-16): advanced-level compact chord chips for the
+     Compose palettes - reads guidance-level.js (above), consumed lazily by
+     songbook.js (window.ChordCollapse, optional lookup). -->
+<script src="../shared/chord-collapse.js"></script>
 <script src="../shared/repertoire.js"></script>
+<script src="../shared/song-templates.js"></script>
+<script src="../shared/competency.js"></script>
 <script src="../shared/repertoire-form.js"></script>
+<!-- yt-info.js: U17 (M-TRACKLIB w2a) - keyless YouTube oEmbed lookup + title
+     field-hint parsing, consumed by repertoire-form.js's Video URL suggest
+     row. Resolves Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both
+     load later in this file), so its position here is only "near its
+     consumer", not a hard dependency order. -->
+<script src="../shared/yt-info.js"></script>
+<!-- M-GUIDE W3a: SoloGuide (per-scale mentor cards + framing) - before songbook.js
+     AND tracks.js so both W3a's Studio and W3b's Compose solo chips can call it. -->
+<script src="../shared/solo-guide.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
+<!-- S-DIAGRAM-PREF step 0: curated shape classifier (family/rootString/
+     inversion/barreFret per voicing). Loaded before diagram.js. Dependency-
+     free (no circle.js coupling) - see the module header for why. -->
+<script src="../shared/shape-classify.js"></script>
+<!-- S-DIAGRAM-PREF steps 1-2: the dots|patterns preference + the decision of
+     what label (if any) 'patterns' mode shows - the ONE place that knows
+     both "the pref key is music.diagram.pref.v1" and "ask ShapeClassify for
+     a label." Loaded after shape-classify.js (consumes it), before diagram.js
+     (diagram.js itself stays agnostic of both - see its own header). -->
+<script src="../shared/diagram-pref.js"></script>
 <script src="../shared/diagram.js"></script>
+<!-- M-EAR wave 1.6 (U16): the Legend primitive (dot-swatch + label rows) -
+     loads after diagram.js (the fretboard-dot renderer whose kx-* classes it
+     mirrors), before tracks.js's openStudio calls Legend.render(). -->
+<script src="../shared/legend.js"></script>
 <script src="../shared/audio.js"></script>
+<!-- M-EAR wave 1: zero-dependency scale/mode audition (Sound.playScale) -
+     loads after audio.js (thematically the other shared audio primitive),
+     before tracks.js/songbook.js's toggle wiring calls it. -->
+<script src="../shared/sound.js"></script>
+<!-- M-TRACKLIB wave 1: curated genre x feel jam-discovery query data - loads
+     before tracks.js so the Studio's "Find a jam" panel can call it. -->
+<script src="../shared/jam-queries.js"></script>
 <script src="../shared/tracks.js"></script>
 <script src="../shared/candidates.js"></script>
+<!-- S-EXTRACT (analysis-refactor-enhance-20260704 A3/A7): the chord-pack
+     adapter + the chord-suggestion map used to live inline in this file's
+     bootstrap script below (untestable); both are now shared modules. -->
+<script src="../shared/chord-pack-adapter.js"></script>
+<script src="../shared/sugg.js"></script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -209,287 +489,18 @@
   'use strict';
   function el(id) { return document.getElementById(id); }
 
-  // chord-progression suggestion map (instrument-agnostic chord names).
-  // Canonically SHARP names (FORK-4): the whole app labels A#, D#m - never Bb, Ebm -
-  // so a suggestion chip can't show "Bb" beside an in-key palette that says "A#".
-  // Shape lookup stays intact: the LIVE adapter resolves enharmonics via
-  // profileVoicing() in buildAdapter below (A# finds a Bb-keyed profile
-  // fingering); the legacy standalone packs carry the same logic as shapeFor().
-  var SUGG = {
-    C: ["G", "Am", "F", "Em", "Dm"], G: ["C", "D", "Em", "Am", "D7"], D: ["G", "A", "Bm", "Em", "A7"],
-    A: ["D", "E", "Bm", "E7", "F"], E: ["A", "B", "C#m", "B7", "A"], F: ["C", "G", "Dm", "A#", "Am"],
-    B: ["E", "A", "F#7", "E7", "G"], Am: ["F", "G", "C", "Dm", "E7"], Em: ["C", "G", "D", "Am", "B7"],
-    Dm: ["G", "C", "F", "Am", "A7"], Bm: ["G", "A", "D", "Em", "F#7"], Gm: ["F", "D7", "Cm", "D#", "A#"],
-    Cm: ["G7", "Fm", "G#", "D#", "A#"], Fm: ["C7", "A#m", "C#", "G#", "D#"],
-    G7: ["C", "Am", "F", "Em"], C7: ["F", "Dm", "G", "Am"], D7: ["G", "Em", "C", "Bm"],
-    A7: ["D", "Bm", "G", "F#m"], E7: ["A", "C#m", "F#m", "B7"], F7: ["A#", "Dm", "C", "Gm"],
-    B7: ["E", "G#m", "C#m", "F#m"]
-  };
+  // chord-progression suggestion map: moved to shared/sugg.js (S-EXTRACT,
+  // analysis-refactor-enhance-20260704 A7) - was inline + untested here.
+  var SUGG = window.Sugg.SUGG;
   var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
 
-  function rootFreq(name) {
-    if (window.Songbook && typeof window.Songbook.chordRootFreq === 'function') return window.Songbook.chordRootFreq(name);
-    return 261.63;
-  }
-
-  // ---- movable-shape fallback (instrument-agnostic) --------------------------
-  // Profiles list explicit fingerings only for common chords. Transpose/compose
-  // can land on any of the 12 roots, so for a chord the profile doesn't list we
-  // slide a CLOSED template (no open strings, so it moves) of the same quality up
-  // to the requested root - keeping the lowest valid window. Result: every key
-  // both draws a real shape and strums on every instrument.
-  var CHORD_PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
-  function freqPc(f) { return ((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12; }
-  // Parse the root pitch class generically (handles E#, B#, Cb, Fb, double accidentals
-  // that the CHORD_PC table can't) via the shared helper; table is the no-Songbook fallback.
-  function chordRootPc(name) {
-    if (window.Songbook && typeof window.Songbook.noteToPc === 'function') {
-      var m0 = /^([A-G][#bx]*)/.exec(name); if (m0) { var pc = window.Songbook.noteToPc(m0[1]); if (pc != null) return pc; }
-    }
-    var m = /^([A-G][#b]?)/.exec(name); return m ? (CHORD_PC[m[1]] != null ? CHORD_PC[m[1]] : null) : null;
-  }
-  function chordQual(name) { var m = /^[A-G][#b]?(.*)$/.exec(name); return m ? m[1] : ''; }
-  function buildTemplates(chords) {
-    var t = {}; if (!chords) return t;
-    Object.keys(chords).forEach(function (nm) {
-      var fr = chords[nm]; if (fr.indexOf(0) >= 0) return;        // open string -> can't slide
-      var q = chordQual(nm), rp = chordRootPc(nm); if (rp == null) return;
-      (t[q] = t[q] || []).push({ frets: fr, rootPc: rp });
-    });
-    return t;
-  }
-  // If a profile lists no CLOSED shape for a quality (e.g. Open-G has no movable
-  // maj7/m7 barre), slide a closely-related quality to the same root rather than
-  // drawing a blank name-only slot - a real, strummable shape beats nothing.
-  var QUAL_FALLBACK = { 'maj7': ['', '7'], 'm7': ['m'], '7': [''], '6': [''], 'sus4': [''], 'sus2': [''] };
-  function movableVoicing(templates, name) {
-    var q = chordQual(name), rp = chordRootPc(name); if (rp == null) return null;
-    var tries = [q].concat(QUAL_FALLBACK[q] || []);
-    for (var i = 0; i < tries.length; i++) {
-      var tpls = templates[tries[i]]; if (!tpls || !tpls.length) continue;
-      var best = null;
-      tpls.forEach(function (tp) {
-        var base = ((rp - tp.rootPc) % 12 + 12) % 12;             // slide up to the root,
-        [base, base - 12].forEach(function (d) {                  // or down an octave - lowest wins
-          var ok = true, f = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
-          if (!ok) return; var max = Math.max.apply(null, f); if (max > 14) return;
-          if (!best || max < best.max) best = { f: f, max: max };
-        });
-      });
-      if (best) return best.f;
-    }
-    return null;
-  }
-
-  // Build the chord-pack interface the songbook engine expects, from a pure-data
-  // profile + the shared Diagram / ChordAudio / Tuner modules.
-  // For instruments whose top three played strings (strings 4-3-2 in display
-  // order, A muted) form a [P4, M3] interval pattern, the artifact's three-
-  // string triad-inversion shapes apply: a C-shape index bar at fret N + the
-  // F-shape barre (bar at N, ring at N+2 string 4, middle at N+1 string 2) +
-  // A-shape (ring on string 4 etc.). The base profile only lists open-position
-  // four-string voicings, so movable fallback would otherwise reach for E/B
-  // templates that produce high-fret 4-string barres. Injecting the artifact's
-  // two barre shapes as additional movable major-quality templates makes the
-  // fallback pick the LOWEST-fret artifact voicing - which fixes both the
-  // palette (F# shows F-shape barre at fret 1, not E-shape at fret 6) and the
-  // I-IV-V chain (uses C-shape I and F-shape IV/V the artifact teaches).
-  // Restricted to ukulele - cigar box and banjo have their own intentional
-  // 4-string ring-bar profile (HSR-by-design) that we don't want to override.
-  function augmentTriadShapes(profile, templates) {
-    if (!profile || profile.instrument !== 'ukulele') return false;
-    var strs = profile.strings; if (!strs || strs.length !== 4) return false;
-    var pc0 = freqPc(strs[0].f), pc1 = freqPc(strs[1].f), pc2 = freqPc(strs[2].f);
-    if ((pc1 - pc0 + 12) % 12 !== 5) return false;     // strings 4->3 must be P4
-    if ((pc2 - pc1 + 12) % 12 !== 4) return false;     // strings 3->2 must be M3
-    templates[''] = templates[''] || [];
-    // unshift order matters: movableVoicing iterates templates in order and
-    // strict-less-than tiebreak means FIRST entry wins ties. So the artifact
-    // shapes go to the front - a profile-derived 4-string voicing only wins
-    // when its max fret is strictly lower. Result: F# resolves to the F-shape
-    // barre at fret 1 not the E-shape barre at fret 6, and natural-key chord
-    // voicings used in the I-IV-V chain pick the artifact's 3-string mute-A
-    // shapes over the open 4-string strums (matches the artifact's pedagogy).
-    // F-shape barre at fret 1: bar at 1, ring at 3 on string 4, middle at 2 on
-    // string 2. Triad root sits on string 2, so rootPc = (string-2 open + 2) % 12.
-    templates[''].unshift({ frets: [3, 1, 2, -1], rootPc: (pc2 + 2) % 12 });
-    // C-shape index-bar at fret 1: bar across strings 4-3-2 at fret 1, string 1
-    // muted. Triad root sits on string 3, so rootPc = (string-3 open + 1) % 12.
-    templates[''].unshift({ frets: [1, 1, 1, -1], rootPc: (pc1 + 1) % 12 });
-    // Em-shape closed barre [4, 4, 3, 2] - lowest movable minor barre on uke.
-    // Without this, the only closed minor template is Bm [4,3,2,2] (rp=11) so
-    // G#m, A#m etc end up high (rp=8 -> [13,11,11,11] max=13). With Em-shape
-    // (rp=4) injected, G#m lands at [8,8,7,6] max=8 - playable on a uke neck.
-    templates['m'] = templates['m'] || [];
-    // Notes for [4,4,3,2]: G+4=B, C+4=E, E+3=G, A+2=B - sounds Em (E G B). The
-    // root (E) sits on string 3, so rootPc = (string-3 open + 4) % 12.
-    templates['m'].unshift({ frets: [4, 4, 3, 2], rootPc: (pc1 + 4) % 12 });
-    return true;
-  }
-
-  function buildAdapter(profile) {
-    var openFreqs = profile.strings.map(function (s) { return s.f; });
-    var templates = buildTemplates(profile.chords);
-    var triadStyle = augmentTriadShapes(profile, templates);
-    // Enharmonic-tolerant profile lookup (FORK-4): the app requests canonical
-    // SHARP names (A#, D#m) while some profiles' hand-curated voicings are keyed
-    // with flats (mandolin's Bb). Try the exact name, then the root respelled,
-    // so the curated open shape wins over a movable approximation either way.
-    // The DISPLAY name stays whatever the caller passed.
-    var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
-    function profileVoicing(name) {
-      if (!profile.chords) return null;
-      if (profile.chords[name]) return profile.chords[name];
-      var m = /^([A-G][#b])(.*)$/.exec(name || '');
-      return (m && ENH[m[1]]) ? (profile.chords[ENH[m[1]] + m[2]] || null) : null;
-    }
-    // explicit profile voicing first; else a movable shape; else null (name-only)
-    function voicingFor(name) {
-      return profileVoicing(name) || movableVoicing(templates, name) || null;
-    }
-    // HSR Chain wants the CLOSED (movable) shape so I/IV/V show the same hand
-    // shape slid up the neck. If the profile only has an open shape (no closed
-    // template), fall back so the chord still renders.
-    function closedVoicingFor(name) {
-      return movableVoicing(templates, name) || profileVoicing(name) || null;
-    }
-    // I-IV-V chain voicings.
-    // On artifact-supported instruments (uke with the augmented C-shape/F-shape
-    // barre templates), the closed-voicing pool already prefers the artifact's
-    // adjacent-inversion shapes for every chord. Route both naturals and
-    // sharps/flats through closedVoicingFor so the chain shows the artifact's
-    // C-shape I + F-shape IV + F-shape+2 V even when the profile has an open
-    // 4-string voicing. The teaching point of the chain is the artifact's
-    // mechanic, not the everyday open strum.
-    // On other instruments (cigar box, banjo, guitar) the artifact templates
-    // are NOT injected, so chainVoicings keeps the original behavior: I uses
-    // the profile's preferred voicing (often open), IV/V use closed/movable.
-    function chainVoicings(names) {
-      if (!names || !names.length) return [];
-      if (triadStyle) return triadChainVoicings(names);
-      var I = voicingFor(names[0]);                   // home shape (open if profile has one)
-      var IV = closedVoicingFor(names[1]);            // closed/movable family for IV
-      if (!IV) return [I, voicingFor(names[1]), voicingFor(names[2])];
-      // V is IV slid up 2 frets - chord tones stay aligned because IV->V is a
-      // whole step in every supported mode. Muted strings stay muted.
-      var V = IV.map(function (f) { return f < 0 ? -1 : f + 2; });
-      var maxV = Math.max.apply(null, V.filter(function (f) { return f >= 0; }));
-      if (maxV > 14) {
-        // Slid V is off the fingerboard - try a lower IV family so the slide fits.
-        var alt = chainVoicingsBackoff(names);
-        if (alt) return alt;
-      }
-      return [I, IV, V];
-    }
-    // Artifact-style chain for uke: deterministic shape construction so EVERY
-    // key shows the same teaching mechanic (C-shape I + F-shape IV + F-shape
-    // slid+2 V). The math derives directly from the open-string pitch classes,
-    // so chord tones are guaranteed correct for any key:
-    //   C-shape index bar at fret N  -> sounds the chord rooted at (C_open + N)
-    //   F-shape barre at fret N      -> sounds the chord rooted at (E_open + N + 1) = IV when N matches I
-    //   F-shape barre at fret N + 2  -> V (a whole step up from IV)
-    // C major (rp=0) is the one exception: bar-at-fret-0 is impossible, so the
-    // artifact uses open-position partials at fret 0. Hard-coded.
-    // For high-rooted keys (B, sometimes A#) Position 1 runs off the 14-fret
-    // floor, so fall back to Position 2 (A-shape I + ring-bar IV + ring-bar+2 V)
-    // which sits lower on the neck.
-    function triadChainVoicings(names) {
-      if (names[0] === 'C' && names[1] === 'F' && names[2] === 'G') {
-        return [[0, 0, 0, -1], [2, 0, 1, -1], [4, 2, 3, -1]];
-      }
-      var rpI = chordRootPc(names[0]);
-      if (rpI == null) return [voicingFor(names[0]), voicingFor(names[1]), voicingFor(names[2])];
-      var f = rpI < 1 ? rpI + 12 : rpI;  // C-shape index bar at fret f
-      var p1 = [
-        [f, f, f, -1],
-        [f + 2, f, f + 1, -1],
-        [f + 4, f + 2, f + 3, -1]
-      ];
-      if (chainFitsFretboard(p1)) return p1;
-      // Position 2 fallback: A-shape I where X = ring fret on string 4 = the
-      // fret that puts the key root on string 4 = (rpI - G_open_pc + 12) % 12.
-      // Then middle on string 3 at X-1, index on string 2 at X-2. IV is the
-      // ring-bar AT the same fret X (sounds the IV chord because rotating
-      // hand keeps fret 4 but bars 4-3-2 at X). V is ring-bar at X+2.
-      // Lands B major at frets 2-6 instead of running off at fret 15.
-      var X = ((rpI - 7) % 12 + 12) % 12;
-      if (X < 2) X += 12;
-      var p2 = [
-        [X, X - 1, X - 2, -1],
-        [X, X, X, -1],
-        [X + 2, X + 2, X + 2, -1]
-      ];
-      if (chainFitsFretboard(p2)) return p2;
-      // Last resort: fall through to the per-chord closed-voicing logic.
-      var I = closedVoicingFor(names[0]);
-      var IV = closedVoicingFor(names[1]);
-      if (!I || !IV) return [voicingFor(names[0]), voicingFor(names[1]), voicingFor(names[2])];
-      var V = IV.map(function (fr) { return fr < 0 ? -1 : fr + 2; });
-      return [I, IV, V];
-    }
-    function chainFitsFretboard(chain) {
-      for (var i = 0; i < chain.length; i++) {
-        for (var j = 0; j < chain[i].length; j++) {
-          if (chain[i][j] > 14) return false;
-        }
-      }
-      return true;
-    }
-    // Backoff when the default V slid-up-2 falls off the fingerboard: try every
-    // major-quality template, pick one whose IV+2 voicing fits (max fret <= 14).
-    // Same-shape adjacency wins over absolute lowest position.
-    function chainVoicingsBackoff(names) {
-      var q = chordQual(names[1]); var tpls = templates[q];
-      if (!tpls || !tpls.length) return null;
-      var rpIV = chordRootPc(names[1]); if (rpIV == null) return null;
-      var best = null;
-      tpls.forEach(function (tp) {
-        var base = ((rpIV - tp.rootPc) % 12 + 12) % 12;
-        [base, base - 12].forEach(function (d) {
-          var ok = true, IV = tp.frets.map(function (x) { if (x < 0) return -1; var v = x + d; if (v < 1) ok = false; return v; });
-          if (!ok) return; var maxIV = Math.max.apply(null, IV); if (maxIV > 12) return;  // leave room to slide
-          var V = IV.map(function (f) { return f < 0 ? -1 : f + 2; });
-          var maxV = Math.max.apply(null, V.filter(function (f) { return f >= 0; }));
-          if (maxV > 14) return;
-          if (!best || maxV < best.max) best = { max: maxV, IV: IV, V: V };
-        });
-      });
-      return best ? [voicingFor(names[0]), best.IV, best.V] : null;
-    }
-    var adapter = {
-      meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
-      hasChord: function (name) { return !!voicingFor(name); },
-      diagram: function (name, size) { return window.Diagram.render(voicingFor(name), { size: size, name: name }); },
-      diagramClosed: function (name, size) { return window.Diagram.render(closedVoicingFor(name), { size: size, name: name }); },
-      diagramChain: function (names, size) {
-        var voicings = chainVoicings(names);
-        return voicings.map(function (frets, i) { return window.Diagram.render(frets, { size: size, name: names[i] }); });
-      },
-      // scale map for the active instrument: open-string pitch classes + the scale's
-      // pitch classes -> a low-position neck diagram (root tones in the accent colour).
-      // startFret (optional) slides the window up the neck - see scaleDiagram.supportsStart
-      // below, which is how KeyExplorer.renderScale feature-detects this before offering
-      // the position-shift control.
-      scaleDiagram: function (rootPc, scalePcs, frets, startFret, names) {
-        var openPcs = profile.strings.map(function (s) { return freqPc(s.f); });
-        return window.Diagram.scale({ openPcs: openPcs, scalePcs: scalePcs, rootPc: rootPc, frets: frets || 7, startFret: startFret || 0, names: names });
-      },
-      playChord: function (name) { var fr = voicingFor(name); if (fr) window.ChordAudio.strum(fr, openFreqs); else window.ChordAudio.tone(rootFreq(name)); },
-      playNote: function (name) { window.ChordAudio.tone(rootFreq(name), 1.1); },
-      playFreq: function (freq, dur) { window.ChordAudio.tone(freq, dur || 1.1); },
-      onLeaveTuner: function () { if (window.Tuner) window.Tuner.stop(); },
-      init: function (engine) {
-        if (window.Tuner) window.Tuner.mount({ strings: profile.strings });
-        var q = el('quickTune'); if (q) q.onclick = function () { engine.switchTab('tune'); };
-      }
-    };
-    // Feature flag KeyExplorer.renderScale checks before offering the position-shift
-    // control - a pack that doesn't set this (none exist today, but future ones might)
-    // degrades cleanly: renderScale still renders the frets-0-7 diagram, just without
-    // the up/down buttons.
-    adapter.scaleDiagram.supportsStart = true;
-    return adapter;
-  }
+  // rootFreq / movable-shape fallback / buildAdapter: moved to shared/
+  // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
+  // - was inline + untestable-except-via-regex-extraction here. See
+  // window.ChordPackAdapter.buildAdapter(profile), called below in start().
+  // S-DIAGRAM-PREF steps 1-2's patternLabel wiring (diagram/diagramClosed/
+  // diagramChain computing the label via DiagramPref.labelFor()) lives
+  // inside that module now too - see its own comments.
 
   function loadScript(src) {
     return new Promise(function (res, rej) {
@@ -502,8 +513,8 @@
   // Profile selection priority:
   //   1. ?p= query param (explicit)
   //   2. #hash (legacy)
-  //   3. localStorage (last selected — survives revisits without ?p=)
-  //   4. manifest order (the first id in the manifest array — deterministic)
+  //   3. localStorage (last selected - survives revisits without ?p=)
+  //   4. manifest order (the first id in the manifest array - deterministic)
   //   5. whatever Object.keys returns (last-resort; non-deterministic because
   //      profile scripts settle in load-completion order, not append order)
   var PROFILE_KEY = 'music.activeProfile.v1';
@@ -577,7 +588,7 @@
     el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' - Music';
     var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
-    var pack = buildAdapter(profile);
+    var pack = window.ChordPackAdapter.buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
     var tracksEl = el('s-tracks');
@@ -634,9 +645,20 @@
         ctxLine: el('ctxLine')
       }
     });
+    // S-CHORD-COLLAPSE (Volley 3 High #1): narrow window seam so the Settings
+    // script block (a SEPARATE <script> closure below - songbookCtl is not in
+    // its scope) can live-apply a guidance-level change to already-rendered
+    // Compose grids. Function-wrapped, not the controller itself: the other
+    // block gets exactly one capability, nothing else leaks.
+    window.songbookRefreshCompose = function () {
+      if (songbookCtl && songbookCtl.refreshCompose) songbookCtl.refreshCompose();
+    };
   }
 
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded earlier in this file's script order) - was one of ~8
+  // divergent local copies.
+  function esc(s) { return Esc.esc(s); }
   function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + esc(msg) + '</div>'; }
 
   // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
@@ -666,9 +688,13 @@
     .catch(function (err) { fail('Could not load (' + err.message + '). This page must be served over http(s) - open it via GitHub Pages or a local server.'); });
 })();
 </script>
-<!-- Accent-colour chooser. Re-skins the --accent family live (the tuner's
-     red/amber/green status colours are left alone) and remembers the choice
-     across instruments. Spectrum runs teal -> ... -> a warm amber/yellow. -->
+<!-- Schema/versioned backup+restore engine (shared/backup.js). Loaded before
+     the inline Settings script so runMigrations() can run at boot. -->
+<script src="../shared/backup.js"></script>
+<!-- Settings: accent colour + whole-songbook backup/restore + which offline
+     build is running. The accent chooser re-skins the --accent family live
+     (tuner red/amber/green status colours are left alone). Backup/Restore move
+     the whole songbook between devices via a JSON file (see shared/backup.js). -->
 <script>
 (function () {
   'use strict';
@@ -682,41 +708,670 @@
     { n: 'Coral',  a: '#fb923c', d: '#5c3115', p: '#38200d' },
     { n: 'Amber',  a: '#fbbf24', d: '#5c4715', p: '#38290b' }
   ];
-  var KEY = 'music.accent.v1';
-  function apply(t) {
-    var r = document.documentElement.style;
-    r.setProperty('--accent', t.a);
-    r.setProperty('--accent-dim', t.d);
-    r.setProperty('--accent-deep', t.p);
+  var ACCENT_KEY = 'music.accent.v1';
+  var THEME_KEY = 'music.theme.v1';   // 'auto' | 'light' | 'dark'
+  var LAST_BACKUP_KEY = 'music.lastBackup.v1';
+  // M-SETTINGS-CLARITY: the Restore row's own last-run stamp - same shape and
+  // same backup.js EXCLUDE treatment as LAST_BACKUP_KEY (device-local; a
+  // restored envelope must not overwrite THIS device's restore time). Both
+  // are registered in engineering-wiki/systems/data-model.md.
+  var LAST_RESTORE_KEY = 'music.lastRestore.v1';
+  var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+  function storedTheme() {
+    try { var v = localStorage.getItem(THEME_KEY); if (v === 'light' || v === 'dark' || v === 'auto') return v; } catch (e) {}
+    return 'auto';
   }
-  function current() {
-    try { var v = localStorage.getItem(KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
+  // 'auto' resolves against the OS setting; explicit light/dark win. (shared: theme.js)
+  function effectiveTheme() {
+    return Theme.effectiveTheme(storedTheme(), !!(mql && mql.matches));
+  }
+  // Apply the accent for the ACTIVE theme. Dark uses each swatch's hand-tuned
+  // dim/deep (pixel-identical to pre-theme builds) with ink = the vivid accent.
+  // Light re-derives pale dim/deep + a darkened, legible ink from the accent hue
+  // via color-mix, so ANY picked accent stays readable on light surfaces. (shared: theme.js)
+  function apply(t) {
+    var vars = Theme.accentVars(effectiveTheme(), t.a, t.d, t.p), r = document.documentElement.style;
+    for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) r.setProperty(k, vars[k]); }
+  }
+  function currentAccent() {
+    try { var v = localStorage.getItem(ACCENT_KEY); if (v) { for (var i = 0; i < PALETTE.length; i++) if (PALETTE[i].a === v) return PALETTE[i]; } } catch (e) {}
     return PALETTE[0];
   }
-  // apply persisted accent immediately (documentElement exists already) to avoid a flash
-  apply(current());
+  // Set <html data-theme> + browser-chrome colour, then (re)paint the accent for
+  // that theme. Called at boot, on user pick, and on OS change while in 'auto'.
+  function applyTheme() {
+    var eff = effectiveTheme();
+    document.documentElement.setAttribute('data-theme', eff);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', eff === 'light' ? '#eef1f4' : '#0d0f12');
+    apply(currentAccent());
+  }
+  function setTheme(mode) {
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+    applyTheme();
+  }
+  // paint theme + accent before first paint (documentElement already exists)
+  applyTheme();
+  // live-follow the OS while in 'auto'
+  if (mql) {
+    var onOS = function () { if (storedTheme() === 'auto') applyTheme(); };
+    if (mql.addEventListener) mql.addEventListener('change', onOS);
+    else if (mql.addListener) mql.addListener(onOS);
+  }
+  // bring THIS device's stored data up to the current schema before the app reads it
+  try { if (window.Backup) Backup.runMigrations(localStorage); } catch (e) {}
+
+  // M-SETTINGS-CLARITY: the old relative-time relWhen() retired with the
+  // footer's "Last backed up" line - the Backup/Restore rows show a full
+  // locale date+time via BuildStamp.fmt() (the ONE datetime formatter, so
+  // the rows and the footer stamp always read the same way).
+  function lastRunText(prefix, iso) {
+    if (!iso) return prefix + ': never';
+    var when = window.BuildStamp ? BuildStamp.fmt(iso) : '';
+    return prefix + ': ' + (when || String(iso).slice(0, 10)); // date-only fallback beats lying 'never'
+  }
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  /* ---- M-DESIGN-ENFORCE wave 2 (UAT U19): app-styled TOAST + MODAL for the
+   * Settings backup/restore flow - replaces every native alert()/confirm()
+   * there (the U19 directive's named KNOWN offender). Reuses the SAME
+   * shared primitives/classes songbook.js's Compose surface already ships
+   * (toast.js Toast.show; the composeModalBackdrop/composeRow.asModal
+   * pattern; NavHistory) rather than inventing a second visual language -
+   * see ui-primitives.md/component-conventions.md for the taxonomy this
+   * implements (TOAST = outcome, MODAL = decision, never a native dialog). */
+  var setToastEl = null;
+  // TOAST: every backup/restore OUTCOME (success or error) that used to be
+  // a blocking alert(). Errors get a longer 3000ms window (same convention
+  // showComposeToast already uses) since they carry more to read.
+  function showSettingsToast(msg, isErr) {
+    if (!window.Toast) return; // defensive - toast.js always loads earlier in this file's script order
+    if (!setToastEl) { setToastEl = document.createElement('div'); setToastEl.className = 'toast'; document.body.appendChild(setToastEl); }
+    Toast.show(msg, {
+      host: setToastEl, error: isErr, duration: isErr ? 3000 : 1600,
+      onShow: function (host, m, isErrFlag) { host.textContent = m; host.classList.toggle('err', !!isErrFlag); host.classList.add('on'); },
+      onHide: function (host) { host.classList.remove('on'); }
+    });
+  }
+  var settingsModalBackdrop = null, settingsModalCard = null;
+  function ensureSettingsModal() {
+    if (settingsModalBackdrop && settingsModalCard) return true;
+    if (!document.body) return false;
+    settingsModalBackdrop = document.createElement('div');
+    settingsModalBackdrop.className = 'composeModalBackdrop';
+    settingsModalBackdrop.hidden = true;
+    document.body.appendChild(settingsModalBackdrop);
+    settingsModalCard = document.createElement('div');
+    settingsModalCard.className = 'composeRow asModal';
+    settingsModalCard.hidden = true;
+    settingsModalCard.setAttribute('role', 'dialog');
+    settingsModalCard.setAttribute('aria-modal', 'true');
+    settingsModalCard.tabIndex = -1;
+    document.body.appendChild(settingsModalCard);
+    return true;
+  }
+  // MODAL: openConfirmModal(message, confirmLabel, onConfirm) - the
+  // app-styled decision surface (replaces the restore-confirm confirm()).
+  // Backdrop tap / Escape / hardware Back all resolve to the SAME
+  // conservative choice (Cancel - never confirm), routed through
+  // NavHistory exactly like songbook.js's openSaveNameRow/openSoloChoiceRow.
+  // This layers a NavHistory-registered dialog ON TOP of the Settings sheet
+  // (which itself has no NavHistory layer of its own) - e.stopPropagation()
+  // on Escape keeps the outer Settings-sheet Escape listener (below, in the
+  // DOMContentLoaded block) from ALSO closing the whole sheet in one keypress.
+  function openConfirmModal(message, confirmLabel, onConfirm) {
+    if (!ensureSettingsModal()) return;
+    settingsModalCard.innerHTML = '';
+    settingsModalCard.hidden = false;
+    settingsModalBackdrop.hidden = false;
+    var msg = document.createElement('p');
+    msg.className = 'composeRowMsg'; msg.style.whiteSpace = 'pre-line'; // the restore manifest is multi-line
+    msg.textContent = message;
+    var btnRow = document.createElement('div'); btnRow.className = 'composeRowBtns';
+    var okBtn = document.createElement('button');
+    okBtn.type = 'button'; okBtn.className = 'btn red ctrlBtn'; okBtn.textContent = confirmLabel || 'Confirm';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Cancel';
+    var delivered = false;
+    function rawClose() { settingsModalCard.hidden = true; settingsModalBackdrop.hidden = true; settingsModalCard.innerHTML = ''; }
+    function deliver(confirmed) { if (delivered) return; delivered = true; if (confirmed && typeof onConfirm === 'function') onConfirm(); }
+    function confirmChoice() {
+      if (window.NavHistory) window.NavHistory.settleAfter(rawClose, function () { deliver(true); });
+      else { rawClose(); deliver(true); }
+    }
+    function cancelChoice() {
+      if (window.NavHistory) window.NavHistory.dismiss(); else { rawClose(); deliver(false); }
+    }
+    okBtn.onclick = confirmChoice;
+    cancelBtn.onclick = cancelChoice;
+    settingsModalBackdrop.onclick = cancelChoice;
+    settingsModalCard.onkeydown = function (e) { if (e.key === 'Escape') { e.stopPropagation(); cancelChoice(); } };
+    if (window.NavHistory) window.NavHistory.open('settingsConfirm', function () {
+      rawClose();
+      setTimeout(function () { deliver(false); }, 0);
+    });
+    btnRow.appendChild(okBtn); btnRow.appendChild(cancelBtn);
+    settingsModalCard.appendChild(msg); settingsModalCard.appendChild(btnRow);
+    settingsModalCard.focus();
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.getElementById('themeBtn'), pop = document.getElementById('themePop');
-    if (!btn || !pop) return;
-    function mark(active) {
-      pop.querySelectorAll('.sw').forEach(function (s) { s.classList.toggle('on', s.dataset.a === active.a); });
+    /* accent swatches - rendered inline in the Settings sheet */
+    var swWrap = document.getElementById('accentSwatches');
+    function markAccent(active) {
+      if (!swWrap) return;
+      swWrap.querySelectorAll('.sw').forEach(function (s) { s.classList.toggle('on', s.dataset.a === active.a); });
     }
-    PALETTE.forEach(function (t) {
-      var s = document.createElement('button');
-      s.className = 'sw'; s.type = 'button'; s.dataset.a = t.a;
-      s.style.setProperty('--sc', t.a);
-      s.title = t.n; s.setAttribute('role', 'menuitemradio'); s.setAttribute('aria-label', t.n);
-      s.onclick = function () { apply(t); try { localStorage.setItem(KEY, t.a); } catch (e) {} mark(t); close(); };
-      pop.appendChild(s);
+    if (swWrap) {
+      PALETTE.forEach(function (t) {
+        var s = document.createElement('button');
+        s.className = 'sw'; s.type = 'button'; s.dataset.a = t.a;
+        s.style.setProperty('--sc', t.a);
+        s.title = t.n; s.setAttribute('role', 'radio'); s.setAttribute('aria-label', t.n);
+        s.onclick = function () { apply(t); try { localStorage.setItem(ACCENT_KEY, t.a); } catch (e) {} markAccent(t); };
+        swWrap.appendChild(s);
+      });
+      markAccent(currentAccent());
+    }
+
+    /* theme: Auto / Light / Dark segmented control */
+    var thWrap = document.getElementById('themeSeg');
+    var THEMES = [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']];
+    function markTheme(mode) {
+      if (!thWrap) return;
+      thWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === mode;
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (thWrap) {
+      THEMES.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' theme');
+        b.onclick = function () { setTheme(pair[0]); markTheme(pair[0]); markAccent(currentAccent()); };
+        thWrap.appendChild(b);
+      });
+      markTheme(storedTheme());
+    }
+
+    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): Dots / Patterns segmented control -
+       the Settings-row setter for music.diagram.pref.v1 (shared/diagram-pref.js
+       owns the storage; this is DOM glue only, mirroring the Theme control
+       above verbatim - same .themeSeg/.thSeg classes, same wiring shape). */
+    var dpWrap = document.getElementById('diagramPrefSeg');
+    var DIAGRAM_PREFS = [['dots', 'Dots'], ['patterns', 'Patterns']];
+    function markDiagramPref(val) {
+      if (!dpWrap) return;
+      dpWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === val;
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (dpWrap && window.DiagramPref) {
+      DIAGRAM_PREFS.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' fretboard diagrams');
+        b.onclick = function () {
+          DiagramPref.set(pair[0]);
+          markDiagramPref(pair[0]);
+          // Picking here also settles the one-time prompt below, if it's
+          // still open or still eligible to fire later - the user just
+          // answered the same question this Settings row asks.
+          if (window.Notables) Notables.dismiss('diagrampref');
+          var slot = document.getElementById('diagramPrefSlot'); if (slot) slot.innerHTML = '';
+        };
+        dpWrap.appendChild(b);
+      });
+      markDiagramPref(DiagramPref.get());
+    }
+
+    /* M-GUIDANCE (2026-07-05): plain-text Settings row that cycles
+       music.guidanceLevel.v1 - beginner -> intermediate -> advanced ->
+       beginner. Deliberately a single tappable row (not a segmented control
+       like Theme/Fretboard diagrams above) - operator explicit: plain body
+       text, not a heading, no bold (see .setRow's own CSS - no .listItem
+       card family, whose .li-title IS bold, applied here). An unset level
+       (the ask not yet answered) displays as "Beginner" - the same safe
+       default the ask's own dismiss-without-choosing path persists - so the
+       row never reads as blank, but nothing is WRITTEN until the user taps. */
+    var GUIDANCE_LEVEL_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+    var glRow = document.getElementById('guidanceLevelRow');
+    function guidanceLevelOrDefault() { return (window.GuidanceLevel && GuidanceLevel.get()) || 'beginner'; }
+    function renderGuidanceLevelRow() {
+      if (!glRow) return;
+      glRow.textContent = 'Guidance level: ' + GUIDANCE_LEVEL_LABEL[guidanceLevelOrDefault()] + ' (tap to change)';
+    }
+    if (glRow && window.GuidanceLevel) {
+      glRow.onclick = function () {
+        var levels = GuidanceLevel.LEVELS;
+        var i = levels.indexOf(guidanceLevelOrDefault());
+        GuidanceLevel.set(levels[(i + 1) % levels.length]);
+        renderGuidanceLevelRow();
+        // Picking here also settles the one-time ask, if it's still open -
+        // the user just answered the same question the ask asks (mirrors the
+        // diagramPref Settings-row precedent right above).
+        if (window.Notables) Notables.dismiss('guidanceask');
+        var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
+        // S-CHORD-COLLAPSE (Volley 3 High #1): a level change from Settings
+        // applies to already-rendered Compose grids immediately (window seam -
+        // songbookCtl is the other script block's closure variable).
+        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
+      };
+      renderGuidanceLevelRow();
+    }
+
+    /* M-SETTINGS-CLARITY: the sections are ONE-AT-A-TIME accordion sections
+       (shared/accordion.js owns the exclusivity state; the .accSec/.accBtn/
+       .accBody visual family lives in songbook.css). Per-open state only -
+       every openSettings() starts all-collapsed (the disclosure-family
+       contract in component-conventions.md), except a caller that names a
+       section (the backup nudge opens straight to "Backup & Restore"). */
+    var accSections = [], accIndexByKey = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#settingsBody .accSec'), function (sec, i) {
+      accSections.push({ btn: sec.querySelector('.accBtn'), body: sec.querySelector('.accBody') });
+      if (sec.dataset && sec.dataset.acc) accIndexByKey[sec.dataset.acc] = i;
     });
-    mark(current());
-    function open() { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
-    function close() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
-    btn.onclick = function (e) { e.stopPropagation(); pop.hidden ? open() : close(); };
-    pop.addEventListener('click', function (e) { e.stopPropagation(); });
-    document.addEventListener('click', function () { if (!pop.hidden) close(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) close(); });
+    var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections) : null;
+
+    /* About section (round 2): the same authored stamp as the footer, one
+       more discoverable home. Static content - render once. */
+    if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('aboutStamp'));
+
+    /* settings sheet open/close */
+    var ov = document.getElementById('setOv'),
+        openBtn = document.getElementById('settingsBtn'),
+        closeBtn = document.getElementById('setClose'),
+        doneBtn = document.getElementById('setDone');
+    function renderLastBackup() {
+      var el = document.getElementById('lastBackupMeta'); if (!el) return;
+      var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
+      el.textContent = lastRunText('Last backup', iso);
+    }
+    function renderLastRestore() {
+      var el = document.getElementById('lastRestoreMeta'); if (!el) return;
+      var iso = null; try { iso = localStorage.getItem(LAST_RESTORE_KEY); } catch (e) {}
+      el.textContent = lastRunText('Last restore', iso);
+    }
+    // Live "what's on THIS device" summary, so the counts are visible before a
+    // backup (and the origin/empty-storage case is obvious at a glance).
+    // profile id -> display name, read off the instrument picker, so the manifest
+    // reads "Ukulele 20 · Guitar 4" (setlists/progressions are per-instrument).
+    function instrumentNames() {
+      var m = {}, sel = document.getElementById('profilePicker');
+      if (sel) Array.prototype.forEach.call(sel.options, function (o) { if (o.value) m[o.value] = o.textContent; });
+      return m;
+    }
+    function renderSummary() {
+      var el = document.getElementById('dataSummary'); if (!el || !window.Backup) return;
+      var lines = Backup.describe(Backup.collect(localStorage), instrumentNames());
+      el.textContent = '';
+      if (!lines.length) {
+        var empty = document.createElement('div'); empty.className = 'empty';
+        empty.textContent = 'Nothing saved on this device yet.'; el.appendChild(empty); return;
+      }
+      function row(cls, k, v) {
+        var r = document.createElement('div'); r.className = 'row' + (cls ? ' ' + cls : '');
+        var ks = document.createElement('span'); ks.className = 'k'; ks.textContent = k; r.appendChild(ks);
+        if (v != null) { var vs = document.createElement('span'); vs.className = 'v'; vs.textContent = v; r.appendChild(vs); }
+        el.appendChild(r);
+      }
+      lines.forEach(function (l) {
+        if (l.rows && l.rows.length) {           // per-instrument: header, then one row each
+          row('head', l.label, null);
+          l.rows.forEach(function (r) { row('sub', r.k, r.v); });
+        } else {
+          row('', l.label, l.detail);
+        }
+      });
+    }
+    /* M-SETTINGS-CLARITY: the meta line leads with the authored build stamp
+       ("v117 - updated <local date+time>", shared/build-stamp.js) so "is what
+       I'm looking at fresh?" is answered at a glance, online or offline. The
+       SW round-trip then flags the one state the stamp alone can't see: page
+       assets from one build while an OLDER worker is still active (its CACHE
+       tag differs from the stamp's guard-locked VERSION mirror). */
+    function showVersion() {
+      var el = document.getElementById('appVer'); if (!el) return;
+      var base = window.BuildStamp ? BuildStamp.text() : 'Music';
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = base + ' - not installed offline'; return; }
+      el.textContent = base;
+      try {
+        var mc = new MessageChannel();
+        mc.port1.onmessage = function (ev) {
+          if (!(ev.data && ev.data.version)) return;
+          if (window.BuildStamp && ev.data.version === BuildStamp.VERSION) return; // page and worker agree - nothing to flag
+          el.textContent = base + ' - offline build ' + String(ev.data.version).replace(/^music-/, 'v') + ' active';
+        };
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
+      } catch (e) {}
+    }
+    function openSettings(sectionKey) {
+      if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+      if (settingsAcc) {
+        settingsAcc.closeAll(); // per-open state only, never persisted
+        if (sectionKey && accIndexByKey[sectionKey] != null) settingsAcc.open(accIndexByKey[sectionKey]);
+      }
+      renderSummary(); renderLastBackup(); renderLastRestore(); showVersion();
+    }
+    function closeSettings() { if (!ov) return; ov.hidden = true; if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
+    if (openBtn) openBtn.onclick = function () { openSettings(); };
+    if (closeBtn) closeBtn.onclick = closeSettings;
+    if (doneBtn) doneBtn.onclick = closeSettings; // Done = close; every setting already applied on change
+    if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
+
+    /* M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
+       experience-level ask, in the 'guidanceask' Notables slot - the
+       HIGHEST priority (notables.js PRIORITY), so it wins the slot ahead of
+       firstrun on a truly fresh profile (firstrun is itself now level-gated
+       and would otherwise never get a chance to show before a level exists).
+       Rendered once at boot (see the renderGuidanceAsk() call near
+       renderBackupNudge() below) - unlike diagrampref/backupNudge it has NO
+       trigger event of its own, since it must fire on the very first app
+       open regardless of which tab is active. Zero jargon (operator
+       explicit) - three plain-language buttons, same HTML-banner-with-
+       inline-buttons shape as renderDiagramPrefPrompt below (Notables.
+       renderBanner's opts.html + a manual querySelectorAll wiring pass). */
+    function renderGuidanceAsk() {
+      var slot = document.getElementById('guidanceAskSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (slot.childNodes.length) return;              // already showing - one at a time
+      if (Notables.isDismissed('guidanceask')) return;  // answered (or X'd) already - permanent, per notables.js's one-shot contract
+      if (!Notables.claim('guidanceask')) return;       // unrestricted + top priority in practice, but keep the claim() contract explicit
+      function choose(level) {
+        GuidanceLevel.set(level);
+        Notables.dismiss('guidanceask');
+        if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
+        slot.innerHTML = '';
+        // S-CHORD-COLLAPSE (Volley 3 High #1): apply the new level to any
+        // ALREADY-rendered Compose grids right now - an unset user answering
+        // "advanced" after mount must see the chips immediately, not after
+        // the next compose mutation. window seam: songbookCtl lives in the
+        // OTHER script block's closure (not in scope here).
+        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
+      }
+      var banner = Notables.renderBanner({
+        consumerId: 'guidanceask',
+        html: '<div style="margin-bottom:8px;font-weight:600;">How far along are you?</div>'
+          + '<button type="button" class="glAskOpt" data-lvl="beginner" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">Just starting out</button>'
+          + '<button type="button" class="glAskOpt" data-lvl="intermediate" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">I know some chords</button>'
+          + '<button type="button" class="glAskOpt" data-lvl="advanced" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">I know my way around the neck</button>',
+        // the banner's own [x]: dismissing WITHOUT choosing stores the
+        // operator's explicit safe default ('beginner') - an EXPLICIT
+        // set() here, never a guessed default inside guidance-level.js's
+        // own get() (see that file's header for why).
+        onDismiss: function () {
+          GuidanceLevel.set('beginner');
+          if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
+          slot.innerHTML = '';
+          // Same live-apply as choose() - the explicit beginner default must
+          // also reach any already-rendered grids (S-CHORD-COLLAPSE V3 H1).
+          if (window.songbookRefreshCompose) window.songbookRefreshCompose();
+        }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      var opts = banner.querySelectorAll ? banner.querySelectorAll('.glAskOpt') : [];
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-lvl')); });
+      }
+      slot.appendChild(banner);
+    }
+
+    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time "how do you read a
+       fretboard?" prompt, in the 'diagrampref' Notables slot (after roman,
+       before backup - notables.js PRIORITY). Trigger: diagram.js's render()
+       dispatches music:diagram-rendered every time an ACTUAL chord diagram
+       draws (any tab, any screen - see its header) - so this fires at "the
+       first chord-diagram surface" without touching songbook.js/tracks.js/
+       key-explorer.js at all. Eligibility ALSO requires firstrun to be
+       dismissed already ("never first-run" - the spec's explicit ordering);
+       Notables' own priority arbitration alone doesn't guarantee that, since
+       firstrun could simply not be claiming the slot at this exact moment
+       (e.g. the user is on a different tab) without yet being shown+closed. */
+    function renderDiagramPrefPrompt() {
+      var slot = document.getElementById('diagramPrefSlot');
+      if (!slot || !window.Notables || !window.DiagramPref) return;
+      if (slot.childNodes.length) return;              // already showing - one at a time
+      if (Notables.isDismissed('diagrampref')) return;  // picked (or X'd) already - permanent, per notables.js's one-shot contract
+      if (!Notables.isDismissed('firstrun')) return;    // never before the first-run cue has been shown+closed
+      if (!Notables.claim('diagrampref')) return;       // a higher-priority notable (roman/whynote/firstrun) holds the slot right now
+      // diagrampref now outranks backup - defensively clear a stale backup
+      // banner in ITS OWN slot rather than leaving two notables visible at
+      // once (notables.js arbitrates state, not DOM; each consumer owns its
+      // own slot's cleanup - see renderBackupNudge below for the mirror case).
+      var backupSlot = document.getElementById('backupNudgeSlot'); if (backupSlot) backupSlot.innerHTML = '';
+      function choose(pref) {
+        DiagramPref.set(pref);
+        markDiagramPref(pref);
+        Notables.dismiss('diagrampref');
+        slot.innerHTML = '';
+      }
+      var banner = Notables.renderBanner({
+        consumerId: 'diagrampref',
+        html: '<div style="margin-bottom:8px;font-weight:600;">How do you read a fretboard?</div>'
+          + '<button type="button" class="dgPrefOpt" data-pref="dots" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">1. Dots and finger numbers (I\'m learning new shapes)</button>'
+          + '<button type="button" class="dgPrefOpt" data-pref="patterns" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">2. Clean patterns with hand position (I move by feel)</button>',
+        onDismiss: function () { slot.innerHTML = ''; } // the banner's own [x] - dismisses forever, defaults to 'dots' (honest one-shot semantics, no re-offer)
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      var opts = banner.querySelectorAll ? banner.querySelectorAll('.dgPrefOpt') : [];
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-pref')); });
+      }
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:diagram-rendered', renderDiagramPrefPrompt);
+
+    /* M-GUIDANCE (beginner tier): "tune up first" JIT cue on the Tune tab's
+       first visit. Trigger: songbook.js's applyTab() dispatches
+       music:tab-shown on EVERY tab render (including the initial tab
+       restore at boot, not just button-click switches) - see its header.
+       Plain accent-card banner via the shared Notables.renderBanner (same
+       shape as firstrun/whynote's simple-text consumers), never hand-rolled. */
+    function renderTuneFirstNotable(ev) {
+      var slot = document.getElementById('tuneFirstSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || ev.detail.tab !== 'tune') return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('tunefirst')) return;
+      if (!Notables.claim('tunefirst', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'tunefirst',
+        text: 'Tune up first - everything sounds better in tune.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:tab-shown', renderTuneFirstNotable);
+
+    /* M-GUIDANCE (intermediate tier): key/mode intro JIT cue on the Compose
+       tab's first visit. Same trigger + shape as renderTuneFirstNotable above. */
+    function renderComposeIntroNotable(ev) {
+      var slot = document.getElementById('composeIntroSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || ev.detail.tab !== 'compose') return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('composeintro')) return;
+      if (!Notables.claim('composeintro', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'composeintro',
+        text: 'Pick a key and mode below to see which chords fit together.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:tab-shown', renderComposeIntroNotable);
+
+    /* M-GUIDANCE (intermediate tier): "transpose moves the key with it" JIT
+       cue on the first Compose transpose tap. Trigger: songbook.js's
+       composeTpose() dispatches music:compose-transposed on every transpose -
+       see its header. */
+    function renderTransposeTipNotable() {
+      var slot = document.getElementById('transposeTipSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('transposetip')) return;
+      if (!Notables.claim('transposetip', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'transposetip',
+        text: 'Transposing moves the key with it, so the chord palette below always matches what you hear.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:compose-transposed', renderTransposeTipNotable);
+
+    /* G2 S-POSTPROG-CUE (beginner tier): the after-you-build next move. Fires
+       when the progression first goes Solo-ready (key + chords - songbook.js
+       dispatches music:compose-progression from its solo-visibility seam).
+       Copy-coach: beginner vocabulary budget, action-first, names the on-screen
+       button. Pedagogy: one thing, moment of relevance, show-once. Tapping
+       Solo IS the goal - songbook dispatches music:compose-solo and the cue
+       dismisses itself for good, releasing the one-tip journey slot (so the
+       Studio orientation tip can claim next). */
+    function renderPostProgNotable(ev) {
+      var slot = document.getElementById('postProgSlot');
+      if (!slot || !window.Notables || !window.GuidanceLevel) return;
+      if (!ev || !ev.detail || !ev.detail.soloReady) { if (slot) slot.innerHTML = ''; return; }
+      if (slot.childNodes.length) return; // already showing
+      if (Notables.isDismissed('postprog')) return;
+      if (!Notables.claim('postprog', undefined, GuidanceLevel.get())) return;
+      var banner = Notables.renderBanner({
+        consumerId: 'postprog',
+        text: 'Your chords are ready - tap Solo to practice over them.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return;
+      slot.appendChild(banner);
+    }
+    window.addEventListener('music:compose-progression', renderPostProgNotable);
+    window.addEventListener('music:compose-solo', function () {
+      // goal reached: retire the cue forever + free the slot for the next tip
+      if (window.Notables) { Notables.dismiss('postprog'); }
+      var slot = document.getElementById('postProgSlot');
+      if (slot) slot.innerHTML = '';
+    });
+
+    /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
+       backup-staleness nudge in the free LOWEST Notables priority slot
+       ('backup' - after firstrun/whynote/roman, notables.js PRIORITY). The
+       eligibility/message decision is pure (Backup.songCount + .backupNudgeState,
+       shared/backup.js); this is just the DOM glue - claim the slot, render the
+       shared .notableBanner into #backupNudgeSlot, tap opens Settings (no new
+       UI surface), and auto-RELEASE (never dismiss) the instant a backup
+       actually completes so the banner can't linger showing stale advice. */
+    function renderBackupNudge() {
+      var slot = document.getElementById('backupNudgeSlot');
+      if (!slot || !window.Notables || !window.Backup) return;
+      slot.innerHTML = '';
+      if (Notables.isDismissed('backup')) return;
+      var lastIso = null; try { lastIso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
+      var count = Backup.songCount(Backup.collect(localStorage));
+      var state = Backup.backupNudgeState(count, lastIso);
+      if (!state.eligible) { Notables.release('backup'); return; }
+      if (!Notables.claim('backup')) return; // a higher-priority notable holds the slot right now
+      var banner = Notables.renderBanner({
+        consumerId: 'backup',
+        text: state.message,
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (!banner) return; // no `document` available (Node without a DOM stub)
+      banner.style.cursor = 'pointer';
+      banner.addEventListener('click', function (e) {
+        // the x button already handled its own tap (dismiss) via its own onclick -
+        // don't ALSO open Settings when that's what the tap was for.
+        if (e.target && e.target.closest && e.target.closest('.notableBanner-x')) return;
+        openSettings('backup'); // a backup nudge lands the user straight on the Backup & Restore section
+      });
+      slot.appendChild(banner);
+    }
+
+    /* backup + restore */
+    function markBackedUp() { try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch (e) {} renderLastBackup(); renderBackupNudge(); }
+    var btnBackup = document.getElementById('btnBackup'),
+        btnRestore = document.getElementById('btnRestore'),
+        fileIn = document.getElementById('restoreFile');
+    if (btnBackup) btnBackup.onclick = function () {
+      if (!window.Backup) { showSettingsToast('Backup is unavailable right now.', true); return; }
+      // Snapshot + serialize can throw (storage blocked, or a songbook large enough
+      // to trip a stringify/Blob limit); fail loud instead of silently doing nothing.
+      var payload, json, name, blob, file = null;
+      try {
+        payload = Backup.snapshot(localStorage, new Date().toISOString());
+        json = JSON.stringify(payload, null, 2);
+        name = 'music-songbook-' + payload.exportedAt.slice(0, 10) + '.json';
+        blob = new Blob([json], { type: 'application/json' });
+      } catch (e) { showSettingsToast('Could not build the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.', true); return; }
+      try { file = new File([blob], name, { type: 'application/json' }); } catch (e) {}
+      // Prefer the OS share sheet on mobile (save to Drive / Files / send to self);
+      // fall back to a plain download everywhere else. The whole branch is guarded:
+      // canShare/share can throw synchronously on some engines, and downloadBlob can
+      // fail - surface a message instead of leaving the user staring at a dead button.
+      try {
+        var canShareFiles = false;
+        try { canShareFiles = !!(file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share); } catch (e) { canShareFiles = false; }
+        if (canShareFiles) {
+          navigator.share({ files: [file], title: 'Music songbook backup' })
+            .then(markBackedUp)
+            .catch(function (err) { if (err && err.name === 'AbortError') return; try { downloadBlob(blob, name); markBackedUp(); } catch (e2) { showSettingsToast('Could not save the backup file.', true); } });
+        } else { downloadBlob(blob, name); markBackedUp(); }
+      } catch (e) { showSettingsToast('Could not save the backup file: ' + (e && e.message ? e.message : 'unknown error') + '.', true); }
+    };
+    if (btnRestore && fileIn) {
+      btnRestore.onclick = function () { fileIn.click(); };
+      fileIn.onchange = function () {
+        if (!window.Backup) { showSettingsToast('Restore is unavailable right now.', true); return; }
+        var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          var payload; try { payload = JSON.parse(rd.result); } catch (e) { showSettingsToast('That file is not a valid backup (not JSON).', true); return; }
+          var v = Backup.validate(payload);
+          if (!v.ok) { showSettingsToast('Could not restore: ' + v.error + '.', true); return; }
+          var lines = Backup.describe(payload.data, instrumentNames());
+          var manifest = lines.length ? lines.map(function (l) { return '• ' + l.label + ': ' + l.detail; }).join('\n') : '• Nothing recognizable in this file.';
+          // Only slice a STRING exportedAt - a malformed-but-valid payload could carry
+          // a number/object here, which would throw on .slice().
+          var when = (typeof payload.exportedAt === 'string') ? ' from ' + payload.exportedAt.slice(0, 10) : '';
+          // MODAL (replaces native confirm() - U19): a decision the user must
+          // resolve, app-styled, dim backdrop, never a native dialog.
+          openConfirmModal(
+            'This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.',
+            'Restore',
+            function () {
+              try { Backup.restore(localStorage, payload); } catch (e) { showSettingsToast('Restore failed: ' + e.message, true); return; }
+              // M-SETTINGS-CLARITY: stamp THIS device's restore time (the
+              // Restore row's meta). Written after the restore so a restore
+              // that throws never records a run; survives the reload below
+              // because it's already in localStorage (and backup.js EXCLUDEs
+              // it, so a future backup file never carries it).
+              try { localStorage.setItem(LAST_RESTORE_KEY, new Date().toISOString()); } catch (e) {}
+              renderLastRestore();
+              // Non-blocking outcome toast, then a short beat so it's actually
+              // seen before the reload (a native alert() blocked until
+              // dismissed; a toast doesn't - so a location.reload() right
+              // behind it would otherwise cut it off mid-fade).
+              showSettingsToast('Restored your songbook. Reloading the app.', false);
+              setTimeout(function () { location.reload(); }, 900);
+            }
+          );
+        };
+        rd.onerror = function () { showSettingsToast('Could not read that file. Try selecting the backup again.', true); };
+        rd.readAsText(f);
+      };
+    }
+
+    renderBackupNudge();
+    renderGuidanceAsk(); // M-GUIDANCE: fires once at boot, on any tab - see its header above
   });
 })();
 </script>

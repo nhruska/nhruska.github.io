@@ -1,0 +1,31 @@
+{
+  "name": "prog-reorder",
+  "note": "S-PROG-REORDER prototype (operator directive 2026-07-10): drag a progression chord to reorder it. Mouse path lifts on movement (touch uses a 300ms long-press - not simulatable here; the touch discipline is the operator's feel pass). Asserts the ORDER changed in the rendered strip and that the drop did not strum-click or delete anything.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tapChord", "name": "C" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tapChord", "name": "F" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tapChord", "name": "G" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tapChord", "name": "Am" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tapChord", "name": "Em" },
+    { "action": "wait", "ms": 300 },
+    { "action": "evalAssert", "label": "five chords, compact stage, starting order C F G Am Em", "js": "(function(){var n=Array.from(document.querySelectorAll('#prog .slot .scName')).map(function(e){return e.textContent.trim()});return n.join(' ')==='C F G Am Em'})()" },
+    { "action": "dragReorder", "from": "#prog .slot:nth-child(1)", "to": "#prog .slot:nth-child(5)", "side": "after" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "C moved to the end - order F G Am Em C", "js": "(function(){var n=Array.from(document.querySelectorAll('#prog .slot .scName')).map(function(e){return e.textContent.trim()});return n.join(' ')==='F G Am Em C'})()" },
+    { "action": "evalAssert", "label": "nothing deleted - still five chords", "js": "document.querySelectorAll('#prog .slot').length === 5" },
+    { "action": "screenshot", "name": "reordered" },
+    { "action": "dragReorder", "from": "#prog .slot:nth-child(5)", "to": "#prog .slot:nth-child(1)", "side": "before" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert", "label": "dragged back to the front - order C F G Am Em", "js": "(function(){var n=Array.from(document.querySelectorAll('#prog .slot .scName')).map(function(e){return e.textContent.trim()});return n.join(' ')==='C F G Am Em'})()" },
+    { "action": "screenshot", "name": "restored-order" }
+  ]
+}

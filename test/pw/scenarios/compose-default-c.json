@@ -1,0 +1,39 @@
+{
+  "name": "compose-default-c",
+  "description": "D-DEFAULT-C: Compose opens keyed to C major, In-key view selected, palette populated.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "assertChipOn",
+      "selector": "#catChips .chordSegBtn",
+      "text": "In key"
+    },
+    {
+      "action": "assertText",
+      "selector": "#keyChipSlot",
+      "contains": "C"
+    },
+    {
+      "action": "assertCount",
+      "selector": ".inKeyLead .chord-name",
+      "min": 6
+    },
+    {
+      "action": "screenshot",
+      "name": "compose-inkey-c"
+    }
+  ]
+}

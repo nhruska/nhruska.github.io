@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cockpit - Operator Remix (C + B)</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<link rel="stylesheet" href="cockpit.css">
+<style>
+/* OPERATOR REMIX (picked 2026-07-11): Angle C is the base - "actionable
+   surface, not just reporting" - with Angle B folded in for the timeline.
+   Angle C local: the QUEUE is the centerpiece - queue-first CIC. Roll-up
+   tiles ride a snap strip on mobile, a grid on desktop. Dispatch dock at the
+   bottom = the same-environment execution tenet made visible. */
+.deptstrip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:2px 2px 8px;-webkit-overflow-scrolling:touch}
+.deptstrip .tile{min-width:168px;scroll-snap-align:start;flex:0 0 auto}
+@media (min-width:900px){.deptstrip{flex-wrap:wrap;overflow:visible}.deptstrip .tile{flex:1 1 180px}}
+.qhead{display:flex;align-items:baseline;gap:10px}
+.qhead .big{font:800 1.5rem/1.1 var(--mono);color:var(--warn)}
+.calm{background:var(--okg);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;
+  font:600 .8rem/1.4 var(--sans);color:var(--ok);display:none}
+.dock{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.dock .dk{min-height:52px;border:1px solid var(--line2);border-radius:12px;background:var(--card);
+  color:var(--txt);font:700 .72rem var(--mono);letter-spacing:.06em;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.dock .dk small{font:600 .54rem var(--mono);color:var(--faint);letter-spacing:.1em}
+.dock .dk:active{border-color:var(--acc);background:var(--accg)}
+/* horizontal board (desktop) */
+.board{position:relative;overflow-x:auto}
+.lane{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;margin:7px 0}
+.lane .ln{font:700 .72rem var(--mono);color:var(--dim);display:flex;gap:7px;align-items:center}
+.lane .track{position:relative;height:44px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.blk{position:absolute;top:6px;bottom:6px;border-radius:7px;font:700 .62rem/1.2 var(--mono);
+  color:var(--txt);display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;
+  cursor:pointer;border:1px solid transparent}
+.blk.ok{background:var(--okg);border-color:var(--ok)} .blk.run{background:var(--rung);border-color:var(--run)}
+.blk.warn{background:var(--warng);border-color:var(--warn)} .blk.hold{background:var(--card2);border-color:var(--line2)}
+.nowline{position:absolute;top:0;bottom:0;width:2px;background:var(--bad);z-index:5}
+.nowline::after{content:'NOW';position:absolute;top:-1px;left:5px;font:700 .55rem var(--mono);color:var(--bad);letter-spacing:.1em}
+.axis{display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:2px}
+.axis .ticks{display:flex;justify-content:space-between;font:600 .58rem var(--mono);color:var(--faint)}
+/* vertical rail (mobile) */
+.rail{display:none}
+@media (max-width:899px){
+  .board,.axis{display:none}
+  .rail{display:block;position:relative;padding-left:20px}
+  .rail::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line2)}
+  .rev{position:relative;margin:10px 0}
+  .rev::before{content:'';position:absolute;left:-17px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--faint)}
+  .rev.ok::before{background:var(--ok)} .rev.run::before{background:var(--run);box-shadow:0 0 6px var(--run)}
+  .rev.warn::before{background:var(--warn)} .rev.now::before{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+  .rev .rt{font:600 .6rem var(--mono);color:var(--faint);letter-spacing:.06em}
+}
+.gate{display:flex;align-items:center;gap:9px;background:var(--card);border:1px dashed var(--line2);
+  border-radius:10px;padding:8px 12px;margin:6px 0;min-height:44px}
+.gate .gt{font:700 .7rem var(--mono);color:var(--warn);flex:0 0 auto}
+.gate .gn{font:600 .8rem/1.3 var(--sans)}
+
+</style>
+</head>
+<body>
+<div class="deck" id="app"></div>
+<script src="cockpit-data.js"></script>
+<script>
+(function(){
+'use strict';
+var C = window.Cockpit, S = C.SNAP, esc = C.esc;
+
+
+/* --- Angle B fold-in: the tempo block (rail on phone, board on desktop) --- */
+var BLOCKS = [
+  ['music',  'ui-reconcile', 'S-UI-RECONCILE swarm #230-#234', 'ok',   22, 30],
+  ['music',  'setrm',        '#235 arm grammar',               'ok',   58, 10],
+  ['music',  'eartest',      '#88 ear test',                   'warn', 74, 18],
+  ['config', 'ce',           'CE loop - rules + reconciles',   'run',  10, 62],
+  ['ai-os',  'cockpit',      'Cockpit v2 - remix shipped',     'run',  62, 30],
+  ['req',    'iv1',          'IV-1 interview queued',          'hold', 70, 22]
+];
+var NOW = 72;
+var lanesHtml = ['music', 'config', 'ai-os', 'req'].map(function(ln){
+  var blks = BLOCKS.filter(function(b){ return b[0] === ln; }).map(function(b){
+    return '<div class="blk ' + b[3] + '" data-mission="' + b[1] + '" style="left:' + b[4] + '%;width:' + b[5] + '%">' + esc(b[2]) + '</div>';
+  }).join('');
+  var led = ln === 'ai-os' ? 'run' : ln === 'req' ? 'idle' : 'ok';
+  return '<div class="lane"><span class="ln"><span class="led ' + led + '"></span>' + ln + '</span><div class="track">' + blks + '</div></div>';
+}).join('');
+var railHtml = [
+  ['now',  'NOW',    'Cockpit remix live - C base + B timeline', 'cockpit'],
+  ['ok',   '03:05Z', '#235 setlist arm grammar merged (v150)', 'setrm'],
+  ['ok',   '00:56Z', 'S-UI-RECONCILE swarm CLOSED - 5 PRs', 'ui-reconcile'],
+  ['warn', 'OPEN',   'Ear test #88 waits on your call', 'eartest']
+].map(function(r){
+  return '<div class="rev ' + r[0] + '"><div class="rt">' + r[1] + '</div>'
+    + '<div class="strip ' + (r[0] === 'now' ? 'run' : r[0]) + '" data-mission="' + r[3] + '" style="margin:3px 0"><div class="sbody"><div class="sname">' + esc(r[2]) + '</div></div></div></div>';
+}).join('');
+var tempoPanel = '<div class="panel"><div class="lbl"><span class="led run"></span>Tempo - last 24h</div>'
+  + '<div class="board">' + lanesHtml + '<div class="nowline" style="left:calc(110px + (100% - 118px) * ' + (NOW / 100) + ' + 8px)"></div></div>'
+  + '<div class="axis"><span></span><div class="ticks"><span>-24H</span><span>-18H</span><span>-12H</span><span>-6H</span><span>NOW</span><span>AHEAD</span></div></div>'
+  + '<div class="rail">' + railHtml + '</div></div>';
+
+var depts = S.departments.map(function(d){
+  return '<div class="tile" data-dept="' + d.id + '"><div class="trow"><span class="led ' + (d.status === 'ok' ? 'ok' : d.status === 'warn' ? 'warn' : 'idle') + '"></span><span class="tname">' + esc(d.name) + '</span></div>'
+    + '<div class="tstats"><span class="tstat">' + d.attention + '<small>NEEDS</small></span><span class="tstat">' + d.running + '<small>RUN</small></span><span class="tstat">' + d.wins + '<small>WINS</small></span></div></div>';
+}).join('');
+
+document.getElementById('app').innerHTML =
+  C.header('OPERATOR REMIX - SIGNAL + TEMPO')
+  + C.sigbar()
+  + '<div class="panel"><div class="lbl">Departments - tap to descend the ladder</div><div class="deptstrip">' + depts + '</div></div>'
+  + '<div class="cols"><div>'
+  + '<div class="panel"><div class="lbl"><span class="led warn"></span>Your turn - the stream IS the surface'
+  + '<span class="spacer"></span></div>'
+  + '<div class="qhead"><span class="big">' + S.needsMe + '</span><span class="lbl">items - peel from the top</span></div>'
+  + '<div class="calm" id="calm">Nothing needs you. Swarms hold the line - go play the ukulele.</div>'
+  + '<div id="stream">' + C.queueCards() + '</div>'
+  + '</div>' + tempoPanel + '</div><div>'
+  + '<div class="panel"><div class="lbl"><span class="led run"></span>Dispatch - same environment, zero switch</div>'
+  + '<div class="dock">'
+  + '<button class="dk" type="button">SWARM<small>ATOMIC FAN-OUT</small></button>'
+  + '<button class="dk" type="button">MISSION<small>GOAL + LEDGER</small></button>'
+  + '<button class="dk" type="button">INTERVIEW<small>QUEUE A SET</small></button>'
+  + '<button class="dk" type="button">CE LOOP<small>ENCODE FRICTION</small></button>'
+  + '<button class="dk" type="button">REPORT<small>ARC ROLL-UP</small></button>'
+  + '<button class="dk" type="button">AAR<small>AFTER ACTION</small></button>'
+  + '</div>'
+  + '<div class="qmeta" style="margin-top:8px;color:var(--faint)">Every button fronts the agent backplane with your full primitive stack loaded - a dispatch here is the same execution a terminal session runs.</div>'
+  + '</div></div></div>'
+  + C.ticker();
+
+/* dept -> projects drill (one altitude per screen) */
+document.querySelectorAll('[data-dept]').forEach(function(el){
+  el.onclick = function(){
+    var d = S.departments.filter(function(x){ return x.id === el.getAttribute('data-dept'); })[0];
+    if (!d) return;
+    var html = '<div class="lbl" style="margin:4px 0 8px">Projects - tap for missions</div><div class="tilegrid">'
+      + d.projects.map(function(p){
+        return '<div class="tile" data-project="' + p.id + '"><div class="trow"><span class="led ' + (p.status === 'ok' ? 'ok' : p.status === 'warn' ? 'warn' : 'idle') + '"></span><span class="tname">' + esc(p.name) + '</span></div>'
+          + '<div class="tstats"><span class="tstat">' + p.attention + '<small>NEEDS</small></span><span class="tstat">' + p.running + '<small>RUN</small></span><span class="tstat">' + p.wins + '<small>WINS</small></span></div></div>';
+      }).join('') + '</div>';
+    C.drill('org / department', d.name, html);
+  };
+});
+C.wireHeader();
+C.wire(document.getElementById('app'));
+C.overlay();
+})();
+</script>
+</body>
+</html>

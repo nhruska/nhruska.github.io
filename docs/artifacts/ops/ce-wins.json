@@ -1,0 +1,124 @@
+{
+  "updated": "2026-07-10T14:20:00Z",
+  "note": "Public-facing compound-engineering wins timeline, PR #197 -> now. Each entry explains the MECHANIC (the reusable pattern) and the WIN (what a user or the system permanently gained). Written for the public site: no client or business data - just the engineering.",
+  "intro": "This repo is run as a human-in-the-loop agent system: a human operator supplies vision and taste in short bursts, agents execute with evidence, and every lesson is encoded so the next pass starts further ahead. Every mission emits events to an append-only log (a commit is the broadcast); pull requests carry their own verification artifacts and an adversarial self-review; user flows are committed as replayable persona scenarios. This timeline shows the wins that machinery produced in one day.",
+  "wins": [
+    {
+      "pr": 197,
+      "date": "2026-07-10",
+      "title": "The Solo modal learns to let go",
+      "mechanic": "Live UAT burst -> same-day fix. The operator tapped through the app on a phone, reported 'I can't cancel' in one line, and the finding became a queue row, a fix, and a shipped PR without a meeting or a spec.",
+      "win": "A dead-end dialog gained a visible Cancel and dismiss gestures. Friction reported in seconds got fixed in minutes - the burst loop's first proof.",
+      "tags": ["burst", "uat"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/197"
+    },
+    {
+      "pr": 198,
+      "date": "2026-07-10",
+      "title": "The scale picker gets a music-theory brain",
+      "mechanic": "A subject-matter 'coach' (a small, permanent knowledge file) was consulted for the judgment call, then its answer was ENCODED as the app's deterministic default - progression-aware: the app reads the actual chords and infers the best practice scale.",
+      "win": "Land in the practice studio over a major-key progression and the right scale is already selected - Mixolydian if your chords say so. Expertise became a default, not advice.",
+      "tags": ["sme-coach", "deterministic"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/198"
+    },
+    {
+      "pr": 199,
+      "date": "2026-07-10",
+      "title": "Key-aware note spelling - a standing bug class retired",
+      "mechanic": "A recurring correctness thorn (sharp names shown where flats belong) was killed by deriving spelling from theory: letter-per-degree from the key. Twelve 'professor trap' cases were written as permanent unit tests FIRST, so the fix had deterministic goalposts.",
+      "win": "The bVII of C now reads Bb, never A#, everywhere a key is stated - and twelve traps guard it forever. The bug class cannot quietly return.",
+      "tags": ["red-green", "deterministic", "tests-as-goalposts"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/199"
+    },
+    {
+      "pr": 203,
+      "date": "2026-07-10",
+      "title": "Simulated users with skill levels - and the beginner wins",
+      "mechanic": "User-Simulation-Driven Development: a 'persona' is a deterministic app state (a beginner is seeded before page load), so 'the beginner sees plain words, the expert sees theory' is an assertable, replayable test. The failing persona scenario was written first (red), then the UI was built until it passed (green).",
+      "win": "Beginners get outcome-named buttons and one orientation tip; advanced players keep the theory. Both proven on real rendered pixels, kept as regressions.",
+      "tags": ["usdd", "red-green", "personas"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/203"
+    },
+    {
+      "pr": 204,
+      "date": "2026-07-10",
+      "title": "A guidance cue that removes itself",
+      "mechanic": "Same persona machinery, next flow: when a beginner's progression becomes playable, a one-line cue points at the next action - and doing the action IS the dismissal. Guidance that self-retires the moment it succeeds.",
+      "win": "The full beginner journey (build chords -> cue -> practice -> orientation tip) is one pixel-proven scenario. No nagging, no modal pile-up.",
+      "tags": ["usdd", "self-retiring-ui"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/204"
+    },
+    {
+      "pr": 205,
+      "date": "2026-07-10",
+      "title": "The Operator's Deck - this page's own birth",
+      "mechanic": "An append-only event log as the permanent contract; a git push IS the broadcast (GitHub Pages serves the log, the panel polls it). Every fetch lives in one swappable transport object, so upgrading the pipes later never rewrites the glass. Any agent emits with one stdlib command.",
+      "win": "One URL shows mission play-by-play - a live probe put an emitted event on this page in 16 seconds. The system that builds the app became watchable.",
+      "tags": ["event-log", "transport-swap", "live-proof"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/205"
+    },
+    {
+      "pr": 206,
+      "date": "2026-07-10",
+      "title": "Songwriting becomes a domain the system can learn",
+      "mechanic": "Entering a new domain = build the LOOP first: a corpus of proven examples (the song catalog itself), a deterministic verifier (the theory engine), and a coach file that accumulates craft rules. The bench of coaches grows itself when a judgment domain has no owner.",
+      "win": "A songwriting coach (proven progression families, section jobs, lyric craft) joined the bench - so composing help is encoded knowledge, not vibes.",
+      "tags": ["domain-loop", "sme-coach"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/206"
+    },
+    {
+      "pr": 207,
+      "date": "2026-07-10",
+      "title": "First song through the loop - drafted against the app's own engine",
+      "mechanic": "The draft's key palette was verified by the same code that runs the app (Dm is the vi of F Mixolydian; Eb is the bVII), so the songwriting stayed theory-true by construction. Proven section templates supplied the skeleton; the human supplies taste in bursts.",
+      "win": "A complete song skeleton + lyric draft, grounded in running code - and a working method where every taste reaction improves the next draft.",
+      "tags": ["sdd", "deterministic"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/207"
+    },
+    {
+      "pr": 208,
+      "date": "2026-07-10",
+      "title": "One queue to peel - operator attention gets a scheduler",
+      "mechanic": "Decision queues are the system's taxonomy, but the human surface is ONE merged stream, priority-ordered, where every item carries its FORM FACTOR: a burst to react to, a single word, a URL to tap, or a question set. Peeling the top item is a single act in the right medium.",
+      "win": "Proven the same day: one short operator message peeled three items of three different forms - a taste burst, an interview answer, and a one-word approval - and all three were executed.",
+      "tags": ["merged-queue", "form-factors", "attention"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/208"
+    },
+    {
+      "pr": 209,
+      "date": "2026-07-10",
+      "title": "Rails with exits - guided and free stop being enemies",
+      "mechanic": "The design law for the coming song wizard: every guided step is nothing but a pre-filled freeform state, so guidance is a path THROUGH the free canvas, never a fence around it. Plus: a learner's skill profile is a deterministic gap against an expert model - the gap IS the practice queue.",
+      "win": "A wizard can teach without locking anything, and 'meet the user at their point of need' became a computable statement, not a slogan.",
+      "tags": ["rails-with-exits", "skill-graph"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/209"
+    },
+    {
+      "pr": 210,
+      "date": "2026-07-10",
+      "title": "The method recognizes itself - this Deck is a learning-record store",
+      "mechanic": "The event contract here (actor - verb - object - timestamp, append-only, consumer-preference transport) is structurally the same architecture as the learning-record standards work the author did over a decade ago. Naming the pattern made it reusable: find the unit, find its collection, apply the same loop at every zoom level.",
+      "win": "A design seed with teeth: shape future event stores to the open standard and every existing analytics consumer can read agent-work telemetry for free.",
+      "tags": ["fractal", "standards"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/210"
+    },
+    {
+      "pr": 211,
+      "date": "2026-07-10",
+      "title": "The coach learns the writer's taste",
+      "mechanic": "Each taste verdict on the song draft (physical imagery over concepts; the 'instruments are just interfaces' motif) was encoded as a learned-preference row in the songwriting coach - so the NEXT draft starts from the writer's taste, not the model's.",
+      "win": "Draft v0.2 carried the writer's fingerprints (calluses, piano-to-ukulele-to-kalimba), and the preference rows persist for every future song.",
+      "tags": ["taste-encoding", "burst"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/211"
+    },
+    {
+      "pr": 212,
+      "date": "2026-07-10",
+      "title": "'Calluses' enters the catalog - the loop's first finished deliverable",
+      "mechanic": "'Store it' - two words - moved the co-written song into the app's catalog with full data validation, an offline-cache version bump, and a NEW permanent regression test proving the library renders it. The deliverable ships with its own guardrail.",
+      "win": "The first human+agent co-written song is playable in the app, over the exact progressions it was written on. Spark to stored deliverable in one afternoon - with every lesson kept.",
+      "tags": ["sdd", "deliverable", "regression"],
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/212"
+    }
+  ]
+}

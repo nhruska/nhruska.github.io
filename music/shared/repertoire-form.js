@@ -13,7 +13,8 @@
  *       mode: 'create' | 'edit',
  *       fork: boolean (optional; forking a catalog song - hides the Chords field
  *             since chords+lyrics are preserved from the original, and relabels
- *             the dialog "Make it mine" / delete -> "Revert to original"),
+ *             the dialog "Edit" (F24, was "Make it mine") / delete -> "Revert
+ *             to original"),
  *       item: {...} (edit mode: the existing custom song/track to prefill; also
  *             the fork seed in fork+create mode),
  *       onSave: function(fields) (host persists; may navigate). A VALID save always
@@ -28,11 +29,10 @@
 
   var ROOTS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies.
+  function esc(s) { return global.Esc.esc(s); }
   // Parse a freeform chords/seq textarea (space or comma separated tokens) into
   // a clean chord-token array. Empty input -> [] (a standalone track, no sheet).
   function parseSeq(raw) {
@@ -46,6 +46,26 @@
   function normFormMode(v) {
     var m = String(v == null ? '' : v).trim().toLowerCase();
     return MODES.indexOf(m) >= 0 ? m : 'major';
+  }
+  // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10) + its FORK-4-leftover fix
+  // (2026-07-11): the Key dropdown's option LABELS respell via the ONE provider
+  // (Circle.preferredTonicName), re-derived from the CURRENTLY SELECTED mode -
+  // option VALUES stay canonical-sharp tokens (round-trip unchanged). The old
+  // call hardcoded 'major', so an editing session on a minor/dorian/mixolydian
+  // item showed the wrong enharmonic (D# minor's preferred name is D#, not the
+  // major-mode Eb the hardcoded call produced). Cir is dependency-injected
+  // (same pattern as songbook.js's libraryFilter(Rep, ...)) - defaults to
+  // global.Circle (browser; absent under Node, per the file's existing "Node
+  // tests, stale cache" fallback convention) but a test can pass the real
+  // circle.js module directly to exercise the actual respelling. Exported so
+  // both render() (initial paint) and the Mode-select change handler (live
+  // re-render) call the SAME function - no drift between the two call sites.
+  function rootOptionsHtml(selMode, selKey, Cir) {
+    if (Cir === undefined) Cir = (global && global.Circle) ? global.Circle : null;
+    return ROOTS.map(function (r) {
+      var disp = (Cir && Cir.preferredTonicName) ? Cir.preferredTonicName(r, selMode) : r;
+      return '<option value="' + esc(r) + '"' + (r === selKey ? ' selected' : '') + '>' + esc(disp) + '</option>';
+    }).join('');
   }
   // Read the form's current field state into the { title, artist, key, mode,
   // genre, seq, yt } shape songbook.js's create/updateCustomItem expect.
@@ -63,6 +83,117 @@
       title: title, artist: artist, key: keyRaw || null, mode: mode,
       genre: genre, seq: seq, yt: yt, _urlRaw: urlRaw, _urlInvalid: !!(urlRaw && !yt)
     };
+  }
+
+  // U17 (M-TRACKLIB w2a) - given parsed YtInfo hints + the form's CURRENT
+  // string values, decide which fields are eligible for the suggestion -
+  // apply-to-empty-only, so a suggestion never overwrites something the
+  // operator already typed. Pure (no DOM) so the "empty only" contract is
+  // directly unit-testable (see test/repertoire-form.test.js). The Mode
+  // field has no true "empty" state (Key does - value ''), so its untouched
+  // sentinel is the rendered default 'major' - a deliberate, named scope
+  // note (see the shipping PR body), not a restructuring of the form.
+  function applicableYtHints(hints, cur) {
+    hints = hints || {}; cur = cur || {};
+    var out = {};
+    if (hints.t && !String(cur.title || '').trim()) out.title = hints.t;
+    if (hints.a && !String(cur.artist || '').trim()) out.artist = hints.a;
+    if (hints.key && !cur.key) out.key = hints.key;
+    if (hints.mode && cur.mode === 'major') out.mode = hints.mode;
+    if (hints.genre && !String(cur.genre || '').trim()) out.genre = hints.genre;
+    return out;
+  }
+
+  // U17 (M-TRACKLIB w2a) - YT-prefill: wires the Video URL field's paste/blur
+  // hook to shared/yt-info.js and renders a one-tap SUGGEST row. Entirely
+  // additive to the existing form: no new persisted fields, applies ONLY to
+  // the 5 fields the form already has (title/artist/key/mode/genre) - the
+  // module's bpm hint has no field to land in yet, so it's surfaced as a
+  // caption-only note. Fails silent (hidden row, zero errors) whenever
+  // YtInfo is missing, the URL doesn't resolve to a video, or the network
+  // lookup comes back empty - never blocks Save.
+  function wireYtSuggest(el) {
+    var urlIn = el.querySelector('[data-url]');
+    var row = el.querySelector('[data-yt-suggest]');
+    if (!urlIn || !row) return; // fork mode / unexpected DOM shape - no-op
+    var lastUrl = null, pendingToken = 0;
+
+    function fieldEls() {
+      return {
+        title: el.querySelector('[data-title]'),
+        artist: el.querySelector('[data-artist]'),
+        key: el.querySelector('[data-key]'),
+        mode: el.querySelector('[data-mode]'),
+        genre: el.querySelector('[data-genre]')
+      };
+    }
+    function hideRow() { row.hidden = true; row.innerHTML = ''; }
+    function showPending() {
+      row.hidden = false;
+      row.innerHTML = '<span class="rf-yt-pending">Looking up video info...</span>';
+    }
+    function applicableHints(hints) {
+      var f = fieldEls();
+      return applicableYtHints(hints, { title: f.title.value, artist: f.artist.value, key: f.key.value, mode: f.mode.value, genre: f.genre.value });
+    }
+    // bpm has no form field to land in (named scope note above) - it's folded
+    // into the summary text as a parenthetical when there's an applicable
+    // field to attach it to, or stands alone when it's the ONLY thing found
+    // (e.g. a title with no key/genre/artist info but a "120 bpm" token).
+    function summaryText(hints, applicable) {
+      var bits = [];
+      if (applicable.title) bits.push('"' + hints.t + '"');
+      if (applicable.artist) bits.push('by ' + hints.a);
+      if (applicable.key || applicable.mode) bits.push([applicable.key, applicable.mode].filter(Boolean).join(' '));
+      if (applicable.genre) bits.push(hints.genre);
+      var main = bits.join(', ');
+      var bpmNote = hints.bpm ? ('~' + hints.bpm + ' bpm') : '';
+      if (main && bpmNote) return main + ' (' + bpmNote + ')';
+      return main || bpmNote;
+    }
+    function applyHints(applicable) {
+      var f = fieldEls();
+      if (applicable.title) f.title.value = applicable.title;
+      if (applicable.artist) f.artist.value = applicable.artist;
+      if (applicable.key) f.key.value = applicable.key;
+      if (applicable.mode) f.mode.value = applicable.mode;
+      if (applicable.genre) f.genre.value = applicable.genre;
+      f.title.classList.remove('bad');
+    }
+    function showReady(hints, applicable) {
+      // A bpm-only find (no field to apply it to) has nothing an Apply button
+      // would do - show it as an info line with only a Dismiss, not a dead
+      // Apply. Every other case has >=1 field an Apply genuinely fills.
+      var hasApplicable = !!Object.keys(applicable).length;
+      row.hidden = false;
+      row.innerHTML = '<span class="rf-yt-txt">' + (hasApplicable ? 'Use: ' : '') + esc(summaryText(hints, applicable)) + '</span>'
+        + '<div class="rf-yt-actions">'
+        + (hasApplicable ? '<button type="button" class="rf-yt-apply" data-yt-apply>Apply</button>' : '')
+        + '<button type="button" class="rf-yt-dismiss" data-yt-dismiss>Dismiss</button>'
+        + '</div>';
+      if (hasApplicable) row.querySelector('[data-yt-apply]').onclick = function () { applyHints(applicable); hideRow(); };
+      row.querySelector('[data-yt-dismiss]').onclick = function () { hideRow(); };
+    }
+    function maybeSuggest(url) {
+      if (!url) { hideRow(); lastUrl = null; return; }
+      if (url === lastUrl) return; // no change since the last check
+      lastUrl = url;
+      if (!global.YtInfo) { hideRow(); return; } // module unavailable - fail soft
+      var id = global.YtInfo.videoId(url);
+      if (!id) { hideRow(); return; }
+      var token = ++pendingToken;
+      showPending();
+      global.YtInfo.fetchInfo(url).then(function (info) {
+        if (token !== pendingToken) return; // stale - the field changed again mid-flight
+        if (!info) { hideRow(); return; }
+        var hints = global.YtInfo.parseHints(info.title, info.author);
+        var applicable = applicableHints(hints);
+        if (!Object.keys(applicable).length && !hints.bpm) { hideRow(); return; }
+        showReady(hints, applicable);
+      }, function () { if (token === pendingToken) hideRow(); });
+    }
+    urlIn.addEventListener('blur', function () { maybeSuggest(urlIn.value.trim()); });
+    urlIn.addEventListener('paste', function () { setTimeout(function () { maybeSuggest(urlIn.value.trim()); }, 0); });
   }
 
   function mount(opts) {
@@ -97,10 +228,21 @@
       var genre = it.genre || '';
       var seqText = seqToText(it.seq);
       var urlText = it.yt ? ('https://youtu.be/' + it.yt) : '';
-      var rootOpts = ROOTS.map(function (r) { return '<option value="' + esc(r) + '"' + (r === key ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
+      // S-KEYPICKER-PREFERRED (operator UAT 2026-07-10, SSOT directive): the Key
+      // dropdown displays preferred key names via the ONE provider
+      // (Circle.preferredTonicName) - option VALUES stay canonical tokens so
+      // saves/edits round-trip unchanged. Guarded: without Circle (Node tests,
+      // stale cache) options fall back to the raw token. Labels are re-derived
+      // from the item's CURRENT mode (not hardcoded 'major') - see
+      // rootOptionsHtml() above; the Mode-select change handler wired below
+      // keeps them live when the operator changes Mode mid-edit.
+      var rootOpts = rootOptionsHtml(mode, key);
       el.innerHTML =
-        '<div class="rf-box" role="dialog" aria-label="' + (fork ? 'Make it mine' : editing ? 'Edit repertoire item' : 'Add a song or track') + '">'
-        + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Make it mine' : editing ? 'Edit' : 'Add a song or track') + '</span>'
+        // F24 (operator UAT 2026-07-05): fork's dialog title/aria-label read
+        // "Edit" (was "Make it mine") - the user doesn't need to know a
+        // fork/copy happens under the hood. F23: "repertoire" -> "Library".
+        '<div class="rf-box" role="dialog" aria-label="' + (fork ? 'Edit' : editing ? 'Edit library item' : 'Add a song or track') + '">'
+        + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Edit' : editing ? 'Edit' : 'Add a song or track') + '</span>'
         + '<button class="rf-x" type="button" data-close>close</button></div>'
         + '<div class="rf-body">'
         + '<label class="rf-lbl">Title</label><input data-title class="bt-in" value="' + esc(title) + '" placeholder="Song or track title" autocomplete="off">'
@@ -119,9 +261,24 @@
             + '<textarea data-seq class="bt-in rf-seq" placeholder="e.g. G D Em C" rows="2">' + esc(seqText) + '</textarea>')
         + '<label class="rf-lbl">Video URL <span class="rf-opt">(optional)</span></label>'
         + '<input data-url class="bt-in" value="' + esc(urlText) + '" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
+        // U17 (M-TRACKLIB w2a): YT-prefill suggestion row - populated/shown by
+        // wireYtSuggest() below, hidden until a valid video URL resolves info.
+        + '<div class="rf-yt-suggest" data-yt-suggest hidden></div>'
+        // F33 (UAT): Delete/Revert renders FIRST (left, away from the one-hand
+        // thumb zone) and Save renders SECOND (the thumb-easy right slot) - the
+        // operator flagged the old order ("delete seems to be in a risky place...
+        // bottom right should be save") plus the wrong color ("delete buttons
+        // should be red" - .btn.red is actually the accent fill, a misnomer; see
+        // .btn.danger in songbook.css). Both are destructive and confirm-gated:
+        // real Delete removes a custom item; fork "Revert to original" discards
+        // the fork's edits (onDelete -> deleteCustomItem; the confirm at ~278 says
+        // "Your edits and video will be removed" verbatim). Ghost (vs danger) for
+        // Revert is a deliberate SOFTER signal - discard-my-tweaks reads less
+        // alarming than delete-forever - NOT a claim it is non-destructive.
+        // (codex PR #195 V1 High: comment previously mis-stated "no data destroyed")
         + '<div class="rf-actions">'
-        + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Repertoire' : editing ? 'Save changes' : 'Create') + '</button>'
-        + (editing && current.onDelete ? '<button class="btn ghost" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
+        + (editing && current.onDelete ? '<button class="btn ' + (fork ? 'ghost' : 'danger') + '" data-delete type="button">' + (fork ? 'Revert to original' : 'Delete') + '</button>' : '')
+        + '<button class="btn red" data-save type="button">' + (fork && !editing ? 'Save to my Library' : editing ? 'Save changes' : 'Create') + '</button>'
         + '</div></div></div>';
       el.classList.add('on');
       el.querySelector('[data-close]').onclick = dismissForm;
@@ -130,6 +287,21 @@
       urlIn.oninput = function () { urlIn.classList.remove('bad'); };
       var titleIn = el.querySelector('[data-title]');
       titleIn.oninput = function () { titleIn.classList.remove('bad'); };
+      // Fix for the FORK-4 leftover: the Key select's option LABELS were built
+      // once at render() time against a hardcoded 'major', so switching Mode
+      // mid-edit (e.g. a D# minor track) left the labels wrong (showing the
+      // major-mode spelling) until the form was closed and reopened. Re-derive
+      // the labels from the newly-selected mode on every Mode change, via the
+      // SAME rootOptionsHtml() the initial paint used - option VALUES (and the
+      // currently-selected key) are preserved, only the display text changes.
+      var keySel = el.querySelector('[data-key]');
+      var modeSel = el.querySelector('[data-mode]');
+      if (keySel && modeSel) {
+        modeSel.addEventListener('change', function () {
+          var curKey = keySel.value;
+          keySel.innerHTML = '<option value="">-</option>' + rootOptionsHtml(modeSel.value, curKey);
+        });
+      }
       el.querySelector('[data-save]').onclick = function () {
         var f = readFields(el, (global.Tracks && global.Tracks.parseYouTubeId) || null);
         if (!f.title) { titleIn.classList.add('bad'); try { titleIn.focus({ preventScroll: true }); } catch (e2) { titleIn.focus(); } return; }
@@ -162,6 +334,7 @@
           }
         };
       }
+      wireYtSuggest(el);
     }
 
     function open(o) {
@@ -173,7 +346,7 @@
     return { open: open, close: close };
   }
 
-  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES };
+  var RepertoireForm = { mount: mount, parseSeq: parseSeq, seqToText: seqToText, readFields: readFields, normFormMode: normFormMode, MODES: MODES, applicableYtHints: applicableYtHints, rootOptionsHtml: rootOptionsHtml };
   global.RepertoireForm = RepertoireForm;
   if (typeof module !== 'undefined' && module.exports) module.exports = RepertoireForm;
 

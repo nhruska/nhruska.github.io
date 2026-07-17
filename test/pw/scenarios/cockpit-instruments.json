@@ -1,0 +1,62 @@
+{
+  "name": "cockpit-instruments",
+  "note": "Cockpit v2 Angle mockup - operator signal contract (friction profile C1-C5,C7) at the true-test viewport: boots clean, needs-me/running/shipped above the fold, drill-down descends the fractal ladder one altitude per screen within the tap budget.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/docs/artifacts/cockpit-v2/angle-instruments.html"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "C2-C4: the three-question signal bar is above the fold",
+      "js": "(function(){var b=document.getElementById('sigbar');if(!b)return false;var r=b.getBoundingClientRect();return r.top>=0&&r.bottom<915&&b.children.length===3})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "needs-me count is a real number",
+      "js": "parseInt(document.getElementById('sigNeeds').textContent,10)>0"
+    },
+    {
+      "action": "screenshot",
+      "name": "mobile-landing"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-project=\"music\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap 1: project drill open, mission altitude only",
+      "js": "(function(){var d=document.getElementById('drill');return d&&d.classList.contains('open')&&d.querySelectorAll('[data-mission]').length>0})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#drill [data-mission=\"ui-reconcile\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap 2: mission detail (PR level) within the <=3 tap budget",
+      "js": "document.getElementById('dtitle').textContent.indexOf('S-UI-RECONCILE')>=0"
+    },
+    {
+      "action": "screenshot",
+      "name": "mobile-drill-mission"
+    }
+  ]
+}

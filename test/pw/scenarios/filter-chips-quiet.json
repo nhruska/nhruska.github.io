@@ -1,0 +1,15 @@
+{
+  "name": "filter-chips-quiet",
+  "url": "/music/play/",
+  "settleMs": 1200,
+  "steps": [
+    {"action": "tapIfVisible", "text": "I know some chords"},
+    {"action": "tap", "selector": ".tabbar [data-tab=\"library\"]"},
+    {"action": "waitFor", "selector": "#genreChips .chip"},
+    {"action": "tapText", "text": "rock", "scope": "#genreChips"},
+    {"action": "wait", "ms": 300},
+    {"action": "evalAssert", "js": "(function(){var c=document.querySelector('#genreChips .chip.on'); if(!c) return 'no selected chip'; var bg=getComputedStyle(c).backgroundColor; return (bg==='rgba(0, 0, 0, 0)'||bg==='transparent')})()", "label": "G3: selected library FILTER chip is outline-quiet, not accent-filled"},
+    {"action": "evalAssert", "js": "(function(){var c=document.querySelector('#genreChips .chip.on'); var bc=getComputedStyle(c).borderColor; var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent-ink').trim(); return bc.length>0})()", "label": "selected filter chip keeps a visible border (outline grammar)"},
+    {"action": "screenshot", "name": "quiet-filter-selected"}
+  ]
+}

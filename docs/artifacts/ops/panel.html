@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cockpit - live mission glass</title>
+<link rel="icon" href="https://problemsolutions.github.io/logo-badge.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Cockpit (formerly Ops Deck) glass, restyled to the PS-internal ORG OS hub language (operator
+   screenshots 2026-07-10): dark navy brand header (always dark), LIGHT clean
+   body by default with an explicit Dark toggle (persisted), stat tiles,
+   white rounded cards with soft monospace status pills, uppercase
+   letter-spaced section labels. Mechanics unchanged - all data fetches stay
+   in the `transport` object (acceptance A6). */
+:root{
+--brand:#29AAE1;--brand-2:#2075BC;--navy:#0E1726;--navy-2:#151F31;
+--bg:#F7F9FB;--card:#FFFFFF;--txt:#16202C;--dim:#5A6B7E;--line:#E3E9EF;
+--acc:#2075BC;--accg:#EAF4FB;
+--ok:#1E8E5A;--okg:#E4F4EC;--warn:#8A5A00;--warng:#FBF0DC;--hot:#C0392B;--hotg:#FBE9E7;--merge:#6B4FBB;--mergeg:#F0EBFB;
+--r:14px;--mono:'Red Hat Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+[data-theme="dark"]{
+--bg:#10151F;--card:#1A2230;--txt:#EDF2F8;--dim:#9FB0C0;--line:#2C3A4D;
+--acc:#6FC9F0;--accg:#1D3A52;
+--ok:#4ADE9E;--okg:#173428;--warn:#FFC14D;--warng:#3A2E14;--hot:#FF8A80;--hotg:#3D1F1C;--merge:#B9A6F5;--mergeg:#2A2440}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0 auto;padding:0 0 34px;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+/* ---- brand header: always navy, like the hub ---- */
+.hdr{position:sticky;top:0;z-index:5;padding:12px 14px;display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff}
+.hdr img.logo{width:28px;height:28px;flex:0 0 auto}
+.wordmark{font-size:1.02rem;color:#fff;white-space:nowrap;line-height:1.2}
+.wordmark .light{font-weight:300}
+.wordmark .sol{font-weight:800;font-style:italic}
+.hdr .sys{display:flex;align-items:center;gap:7px;font:700 .72rem/1 var(--mono);letter-spacing:.12em;color:#C9D6E4;margin-left:6px;flex:1;min-width:0}
+.hdr .sys .now{font-weight:400;letter-spacing:0;text-transform:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.lamp{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.lamp.live{background:#3DDC84;box-shadow:0 0 8px #3DDC84;animation:pulse 1.6s infinite}
+.lamp.warm{background:#FFC14D;box-shadow:0 0 7px #FFC14D}
+.lamp.idle{background:#5A6B7E}
+@keyframes pulse{50%{opacity:.45}}
+.poll{font:.68rem/1.35 var(--mono);color:#8FA3B8;text-align:right;min-width:56px}
+.poll b{color:#fff}
+button.rf,button.theme{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:999px;padding:7px 13px;font:700 .78rem/1 var(--mono);cursor:pointer;white-space:nowrap}
+/* phone width: the hub header keeps brand + system label + buttons only -
+   the mission ticker and poll meter yield (they live in the feed anyway) */
+@media(max-width:640px){.poll{display:none}.hdr .sys .now{display:none}button.rf{display:none}.hdr{gap:8px}}
+/* ---- breadcrumb + hero + stat tiles, hub-style ---- */
+.crumb{font:600 .82rem/1 var(--mono);padding:16px 14px 0;color:var(--dim)}
+.crumb a{font-weight:600}
+.hero{padding:6px 14px 0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hero h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
+.hero .sub{font:500 .85rem/1 var(--mono);color:var(--dim)}
+.lead{padding:6px 14px 0;color:var(--dim);font-size:.95rem;max-width:640px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 10px;text-align:center}
+.stat .n{font-size:1.7rem;font-weight:800;line-height:1.1}
+.stat .l{font-size:.78rem;color:var(--dim);margin-top:3px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:#C77700} .stat.hot .n{color:var(--hot)}
+[data-theme="dark"] .stat.warn .n{color:var(--warn)}
+.wrap{padding:0 12px}
+.seclbl,h2{font:700 .74rem/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:20px 2px 8px;border:none;padding:0}
+/* ---- tabs: hub sidebar-item feel ---- */
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:4px 0 10px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:10px;padding:9px 15px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--accg);color:var(--acc);border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
+.tab .n{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:999px;background:var(--accg);color:var(--acc);font:700 .72rem/1.5 var(--mono)}
+.tab.on .n{background:var(--card)}
+.pane{display:none}.pane.on{display:block}
+.mstrip,.fstrip{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:2px}
+.mchip,.fchip{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:999px;padding:5px 11px;font:700 .74rem/1.4 var(--mono);cursor:pointer;white-space:nowrap}
+.mchip.on,.fchip.on{border-color:var(--acc);color:var(--acc);background:var(--accg)}
+/* ---- soft mono status pills (the hub's "attention" pill grammar) ---- */
+.badge{display:inline-flex;align-items:center;gap:6px;font:700 .7rem/1.6 var(--mono);border-radius:999px;padding:2px 10px;color:var(--dim);background:var(--bg)}
+.badge:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-green .badge,.t-report .badge{color:var(--ok);background:var(--okg)}
+.t-merge .badge,.t-review .badge{color:var(--merge);background:var(--mergeg)}
+.t-red .badge{color:var(--hot);background:var(--hotg)}
+.t-friction .badge,.t-queue .badge{color:var(--warn);background:var(--warng)}
+.t-pr .badge,.t-start .badge{color:var(--acc);background:var(--accg)}
+.t-build .badge,.t-test .badge,.t-phase .badge,.t-idle .badge{color:var(--dim);background:var(--bg)}
+/* ---- cards: white, rounded, soft border ---- */
+.ev,.lane,.qsec,.yt,.pr,.twin,.intro{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.ev{padding:12px 14px;margin:8px 0}
+.ev .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ev .when{font:.72rem/1 var(--mono);color:var(--dim);margin-left:auto;white-space:nowrap}
+.ev .agent{font:700 .68rem/1.6 var(--mono);color:var(--acc);background:var(--accg);border-radius:999px;padding:1px 8px}
+.ev .title{font-size:.95rem;font-weight:700;margin-top:6px;line-height:1.4}
+.ev .detail{font-size:.85rem;color:var(--dim);margin-top:3px;line-height:1.5}
+.ev .mis{font:.68rem/1 var(--mono);color:var(--dim)}
+.lane{padding:12px 12px 6px;margin:10px 0}
+.lane h3{margin:0 0 4px;font-size:.98rem;display:flex;align-items:center;gap:8px}
+.lane h3 .lamp{width:10px;height:10px}
+.lane .sub{font:.74rem/1 var(--mono);color:var(--dim);margin-bottom:6px}
+.lane .ev{margin:6px 0;background:var(--bg)}
+.qsec{padding:13px 15px;margin:10px 0}
+.qsec h3{margin:0;font-size:1.02rem}
+.qsec .desc{font-size:.8rem;color:var(--dim);margin:3px 0 8px;line-height:1.5}
+.qitem{border-top:1px solid var(--line);padding:9px 0;font-size:.9rem;line-height:1.5}
+.qitem .id{font:800 .68rem/1.6 var(--mono);color:var(--acc);background:var(--accg);border-radius:6px;padding:1px 6px;margin-right:7px}
+.qitem .links{font-size:.8rem;margin-top:3px}
+.yt{padding:12px 14px;margin:8px 0;border-left:4px solid var(--acc)}
+.yt .top{display:flex;align-items:center;gap:8px}
+.yt .rank{font-size:1.1rem;font-weight:800;color:var(--acc);min-width:22px}
+.yt .form{display:inline-flex;align-items:center;gap:6px;font:800 .66rem/1.7 var(--mono);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:1px 10px}
+.yt .form:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.f-burst{color:var(--hot);background:var(--hotg)} .f-digit{color:var(--acc);background:var(--accg)}
+.f-tap{color:var(--ok);background:var(--okg)} .f-interview{color:var(--merge);background:var(--mergeg)}
+.yt .src{font:.68rem/1 var(--mono);color:var(--dim);margin-left:auto;white-space:nowrap}
+.yt .ask{font-size:.95rem;font-weight:600;margin-top:6px;line-height:1.5}
+.yt .ttl{font-size:.78rem;color:var(--dim);margin-top:3px}
+.board{margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.84rem;margin:8px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{font:700 .72rem/1.5 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:var(--bg)}
+.wrapx{overflow-x:auto}
+.pr{padding:12px 14px;margin:8px 0}
+.pr .top{display:flex;align-items:center;gap:8px}
+.pr .num{font:800 .95rem/1 var(--mono);color:var(--acc)}
+.pr .pill{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font:800 .66rem/1.7 var(--mono);letter-spacing:.05em;border-radius:999px;padding:1px 10px;color:var(--acc);background:var(--accg)}
+.pr .pill:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.pr.merged .pill{color:var(--merge);background:var(--mergeg)} .pr.draft .pill{color:var(--dim);background:var(--bg)}
+.pr .title{font-size:.94rem;font-weight:700;margin-top:5px;line-height:1.4}
+.pr .meta{font:.76rem/1.5 var(--mono);color:var(--dim);margin-top:3px}
+.intro{padding:13px 15px;margin:10px 0;border-left:4px solid var(--brand);font-size:.92rem;line-height:1.6}
+.tl{position:relative;margin:14px 0 0 10px;padding-left:18px;border-left:2px solid var(--line)}
+.twin{position:relative;padding:13px 15px;margin:0 0 14px}
+.twin:before{content:'';position:absolute;left:-25px;top:18px;width:12px;height:12px;border-radius:50%;background:var(--brand)}
+.twin .thead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.twin .pr{border:none;padding:0;margin:0;font:800 .95rem/1 var(--mono);color:var(--acc);background:none}
+.twin .ttl2{font-size:1.02rem;font-weight:800;line-height:1.35;margin-top:5px}
+.twin .lbl{font:800 .68rem/1.5 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-top:9px}
+.twin .txt{font-size:.89rem;line-height:1.6;color:var(--txt);margin-top:2px}
+.twin .txt.dim{color:var(--dim)}
+.ttag{font:700 .66rem/1.6 var(--mono);border-radius:999px;padding:2px 9px;background:var(--accg);color:var(--acc);white-space:nowrap}
+.twin .when{font:.72rem/1 var(--mono);color:var(--dim)}
+.empty{color:var(--dim);font-size:.86rem;padding:14px 4px;text-align:center}
+.err{color:var(--warn);font-size:.8rem;padding:8px 4px}
+.foot{margin:22px 12px 0;color:var(--dim);font-size:.76rem;border-top:1px solid var(--line);padding-top:12px;line-height:1.6}
+code{font-family:var(--mono);background:var(--accg);border-radius:4px;padding:1px 5px;font-size:.85em}
+</style></head><body>
+
+<div class="hdr">
+  <img class="logo" src="https://problemsolutions.github.io/logo-badge.svg" alt="">
+  <div class="wordmark"><span class="light">Problem </span><span class="sol">Solutions</span></div>
+  <div class="sys"><span class="lamp idle" id="lamp"></span>COCKPIT<span class="now" id="misNow"></span></div>
+  <div class="poll">poll<br><b id="cd">-</b></div>
+  <button class="theme" id="themeBtn">Dark</button>
+  <button class="rf" id="rf">Refresh</button>
+</div>
+
+<div class="crumb"><a href="https://nhruska.github.io/">nhruska.github.io</a> / Cockpit</div>
+<div class="hero"><h1>Cockpit</h1><span class="sub">the operator's home for missions</span></div>
+<div class="lead">Live play-by-play, the merged decision stream, and evidence-bearing PRs. Green is running, amber needs you, red is blocked.</div>
+<div class="stats">
+  <div class="stat ok"><div class="n" id="stLive">-</div><div class="l">missions active today</div></div>
+  <div class="stat warn"><div class="n" id="stTurn">-</div><div class="l">need your turn</div></div>
+  <div class="stat hot"><div class="n" id="stRed">-</div><div class="l">red / friction today</div></div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab on" data-pane="live">Live<span class="n" id="nLive">0</span></button>
+    <button class="tab" data-pane="swarm">Swarm<span class="n" id="nSwarm">0</span></button>
+    <button class="tab" data-pane="queues">Queues<span class="n" id="nQ">0</span></button>
+    <button class="tab" data-pane="prs">PRs<span class="n" id="nPr">0</span></button>
+    <button class="tab" data-pane="wins">Wins<span class="n" id="nWins">0</span></button>
+  </div>
+
+  <div class="pane on" id="p-live">
+    <div class="mstrip" id="mstrip"></div>
+    <div class="fstrip" id="fstrip"></div>
+    <div id="feed"><div class="empty">Waiting for the event log&hellip;</div></div>
+  </div>
+
+  <div class="pane" id="p-swarm">
+    <div id="lanes"><div class="empty">No agent lanes yet.</div></div>
+  </div>
+
+  <div class="pane" id="p-queues">
+    <h2 style="margin-top:4px">Your turn - one stream, peel from the top</h2>
+    <div id="yourTurn"></div>
+    <h2>The four queues (the system's taxonomy)</h2>
+    <div id="opq"></div>
+    <div class="board">
+      <h2>Mission queue board (QUEUE.md, live)</h2>
+      <div id="qmd" class="wrapx"><div class="empty">Loading QUEUE.md&hellip;</div></div>
+    </div>
+  </div>
+
+  <div class="pane" id="p-prs">
+    <h2>Open</h2><div id="prOpen"><div class="empty">Loading&hellip;</div></div>
+    <h2>Recently merged</h2><div id="prMerged"><div class="empty">Loading&hellip;</div></div>
+  </div>
+
+  <div class="pane" id="p-wins">
+    <div class="intro" id="winsIntro"></div>
+    <div class="tl" id="winsTl"><div class="empty">Loading the wins timeline&hellip;</div></div>
+  </div>
+</div>
+
+<div class="foot">
+  Event contract: <code>docs/artifacts/ops/mission-events.jsonl</code> (append-only; emit via
+  <code>scripts/ops-emit.py</code>). v1 transport = same-origin polling on GitHub Pages - a
+  pushed commit IS the broadcast. v2 swaps the transport object to SSE on PS Azure without
+  touching this glass. Spec: <a href="../../plans/ops-deck-vision-20260710.md">ops-deck-vision-20260710</a>.
+  <div id="stamp"></div>
+</div>
+
+<script>
+'use strict';
+/* ============================ transport =====================================
+   ALL data access lives here (acceptance A6). The glass below only calls
+   transport.* and renders. v2 (Azure/Postgres/SSE) replaces this object -
+   same shapes out, zero render changes. Same-origin relative paths work on
+   GitHub Pages AND githack branch previews. */
+var GH = 'https://api.github.com/repos/nhruska/nhruska.github.io';
+var transport = {
+  pollMs: 15000,          // events/queues/QUEUE.md cadence
+  prPollMs: 5 * 60000,    // GitHub REST is unauth (60 req/hr) - poll PRs gently
+  bust: function (u) { return u + (u.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(); },
+  events: function () {   // -> [{ts,mission,type,title,detail?,agent,url?}] oldest->newest
+    return fetch(this.bust('./mission-events.jsonl'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('events ' + r.status); return r.text(); })
+      .then(function (t) {
+        var out = [];
+        t.split('\n').forEach(function (ln) {
+          ln = ln.trim(); if (!ln) return;
+          try { out.push(JSON.parse(ln)); } catch (e) { /* skip torn line */ }
+        });
+        return out;
+      });
+  },
+  queues: function () {   // -> queues.json object
+    return fetch(this.bust('./queues.json'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('queues ' + r.status); return r.json(); });
+  },
+  queueMd: function () {  // -> raw QUEUE.md text (panel parses the tables)
+    return fetch(this.bust('../../plans/QUEUE.md'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('QUEUE.md ' + r.status); return r.text(); });
+  },
+  openPRs: function () {
+    return fetch(GH + '/pulls?state=open&per_page=15')
+      .then(function (r) { if (!r.ok) throw new Error('gh ' + r.status); return r.json(); });
+  },
+  wins: function () {    // -> ce-wins.json (curated public timeline; changes rarely)
+    return fetch(this.bust('./ce-wins.json'), {cache: 'no-store'})
+      .then(function (r) { if (!r.ok) throw new Error('wins ' + r.status); return r.json(); });
+  },
+  mergedPRs: function () {
+    return fetch(GH + '/pulls?state=closed&sort=updated&direction=desc&per_page=20')
+      .then(function (r) { if (!r.ok) throw new Error('gh ' + r.status); return r.json(); })
+      .then(function (list) { return list.filter(function (p) { return p.merged_at; }).slice(0, 10); });
+  }
+};
+
+/* ============================ glass ======================================= */
+var S = {events: [], mission: null, typeOff: {}, tab: 'live', nextAt: 0};
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+  });
+}
+function ago(ts) {
+  var s = Math.max(0, (Date.now() - Date.parse(ts)) / 1000);
+  if (s < 90) return Math.round(s) + 's ago';
+  if (s < 5400) return Math.round(s / 60) + 'm ago';
+  if (s < 129600) return (s / 3600).toFixed(1) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+function evCard(e, showMission) {
+  return '<div class="ev t-' + esc(e.type) + '">' +
+    '<div class="top"><span class="badge">' + esc(e.type) + '</span>' +
+    (e.agent && e.agent !== 'main' ? '<span class="agent">' + esc(e.agent) + '</span>' : '') +
+    (showMission ? '<span class="mis">' + esc(e.mission) + '</span>' : '') +
+    '<span class="when">' + ago(e.ts) + '</span></div>' +
+    '<div class="title">' + esc(e.title) + '</div>' +
+    (e.detail ? '<div class="detail">' + esc(e.detail) + '</div>' : '') +
+    (e.url ? '<div class="qitem links"><a href="' + esc(e.url) + '">evidence / link</a></div>' : '') +
+    '</div>';
+}
+
+function renderFeed() {
+  var evs = S.events.slice().reverse();
+  var missions = [];
+  evs.forEach(function (e) { if (missions.indexOf(e.mission) < 0) missions.push(e.mission); });
+  $('mstrip').innerHTML = '<button class="mchip' + (S.mission === null ? ' on' : '') +
+    '" data-m="">all missions</button>' + missions.map(function (m) {
+      return '<button class="mchip' + (S.mission === m ? ' on' : '') + '" data-m="' + esc(m) + '">' + esc(m) + '</button>';
+    }).join('');
+  var types = [];
+  evs.forEach(function (e) { if (types.indexOf(e.type) < 0) types.push(e.type); });
+  $('fstrip').innerHTML = types.map(function (t) {
+    return '<button class="fchip' + (S.typeOff[t] ? '' : ' on') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>';
+  }).join('');
+  var rows = evs.filter(function (e) {
+    return (S.mission === null || e.mission === S.mission) && !S.typeOff[e.type];
+  });
+  $('nLive').textContent = rows.length;
+  $('feed').innerHTML = rows.length
+    ? rows.map(function (e) { return evCard(e, S.mission === null); }).join('')
+    : '<div class="empty">No events match the filters.</div>';
+
+  // header: newest event's mission + liveness lamp
+  var newest = evs[0];
+  if (newest) {
+    $('misNow').textContent = '\u00b7 ' + newest.mission + ' - ' + newest.title.slice(0, 60);
+    var age = (Date.now() - Date.parse(newest.ts)) / 60000;
+    $('lamp').className = 'lamp ' + (age < 5 ? 'live' : age < 30 ? 'warm' : 'idle');
+  }
+
+  // hub stat tiles (ORG-OS grammar: green running / amber needs-you / red blocked):
+  // green = distinct missions active in 24h, red = red|friction events in 24h.
+  // The amber tile (your-turn count) is filled by renderQueues.
+  var dayAgo = Date.now() - 86400000;
+  var missions = {}, reds = 0;
+  S.events.forEach(function (e) {
+    if (Date.parse(e.ts) < dayAgo) return;
+    missions[e.mission] = 1;
+    if (e.type === 'red' || e.type === 'friction') reds++;
+  });
+  $('stLive').textContent = Object.keys(missions).length;
+  $('stRed').textContent = reds;
+}
+
+function renderLanes() {
+  var byAgent = {};
+  S.events.slice(-200).forEach(function (e) {
+    (byAgent[e.agent || 'main'] = byAgent[e.agent || 'main'] || []).push(e);
+  });
+  var agents = Object.keys(byAgent);
+  $('nSwarm').textContent = agents.length;
+  $('lanes').innerHTML = agents.map(function (a) {
+    var evs = byAgent[a].slice(-6).reverse();
+    var age = (Date.now() - Date.parse(evs[0].ts)) / 60000;
+    return '<div class="lane"><h3><span class="lamp ' +
+      (age < 5 ? 'live' : age < 30 ? 'warm' : 'idle') + '"></span>' + esc(a) +
+      '</h3><div class="sub">' + evs.length + ' recent - last ' + ago(evs[0].ts) + '</div>' +
+      evs.map(function (e) { return evCard(e, true); }).join('') + '</div>';
+  }).join('') || '<div class="empty">No agent lanes yet.</div>';
+}
+
+function renderQueues(q) {
+  var keys = Object.keys(q.queues || {});
+  var total = 0;
+  // "Your turn": the MERGED stream - every item from every queue, one list,
+  // priority-ordered, each carrying its form factor + the exact ask. The four
+  // queues are the system's taxonomy; the operator peels from ONE top.
+  var merged = [];
+  keys.forEach(function (k) {
+    (q.queues[k].items || []).forEach(function (it) {
+      merged.push({q: q.queues[k].label, it: it});
+    });
+  });
+  merged.sort(function (a, b) { return (b.it.priority || 30) - (a.it.priority || 30); });
+  $('yourTurn').innerHTML = merged.map(function (m, i) {
+    var it = m.it, form = (it.form || 'tap');
+    return '<div class="yt"><div class="top"><span class="rank">' + (i + 1) + '</span>' +
+      '<span class="form f-' + esc(form) + '">' + esc(form) + '</span>' +
+      '<span class="src">' + esc(it.id) + ' &middot; ' + esc(m.q) + '</span></div>' +
+      '<div class="ask">' + esc(it.ask || it.title) + '</div>' +
+      '<div class="ttl">' + esc(it.title) + (it.priority ? ' &middot; p' + it.priority : '') + '</div>' +
+      '<div class="qitem links">' +
+      (it.url ? '<a href="' + esc(it.url) + '">open</a>' : '') +
+      (it.evidence ? ' &middot; <a href="' + esc(it.evidence) + '">evidence</a>' : '') +
+      '</div></div>';
+  }).join('') || '<div class="empty">Queue is empty - the system owes you a refill.</div>';
+  $('opq').innerHTML = keys.map(function (k) {
+    var Q = q.queues[k];
+    total += (Q.items || []).length;
+    return '<div class="qsec"><h3>' + esc(Q.label) + ' <span class="n" style="font-weight:600;color:var(--dim);font-size:.76rem">(' +
+      (Q.items || []).length + ')</span></h3><div class="desc">' + esc(Q.desc) + '</div>' +
+      ((Q.items || []).map(function (it) {
+        return '<div class="qitem"><span class="id">' + esc(it.id) + '</span>' + esc(it.title) +
+          '<div class="links">' +
+          (it.url ? '<a href="' + esc(it.url) + '">open</a>' : '') +
+          (it.evidence ? ' &middot; <a href="' + esc(it.evidence) + '">evidence</a>' : '') +
+          ' <span style="color:var(--dim)">added ' + esc(it.added || '') + '</span></div></div>';
+      }).join('') || '<div class="empty">empty - nothing needs you here</div>') + '</div>';
+  }).join('');
+  $('nQ').textContent = total;
+  $('stTurn').textContent = total; // the amber hub tile: items awaiting the operator
+}
+
+function renderQueueMd(md) {
+  // Parse the NOW + SHORT + "Newly queued" markdown tables into compact HTML.
+  function section(name) {
+    var re = new RegExp('^##+\\s+' + name + '[^\\n]*$', 'm');
+    var m = md.match(re);
+    if (!m) return '';
+    var rest = md.slice(m.index + m[0].length);
+    var next = rest.search(/^##+\s/m);  // stop at the NEXT heading of any level
+    return next < 0 ? rest : rest.slice(0, next);
+  }
+  function tables(txt, max) {
+    var rows = [], count = 0;
+    txt.split('\n').forEach(function (ln) {
+      ln = ln.trim();
+      if (!/^\|/.test(ln) || /^\|[\s:-]+\|/.test(ln)) return;
+      var cells = ln.split('|').slice(1, -1).map(function (c) { return c.trim(); });
+      if (!cells.length || count >= max) return;
+      // skip header rows
+      if (/^(#|Mission|Item)$/i.test(cells[0])) return;
+      count++;
+      var head = cells[0], body = cells[1] || '';
+      body = body.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+      head = head.replace(/\*\*/g, '');
+      if (body.length > 180) body = body.slice(0, 177) + '...';
+      rows.push('<tr><td style="white-space:nowrap;font-weight:700">' + esc(head) + '</td><td>' + esc(body) + '</td></tr>');
+    });
+    return rows.join('');
+  }
+  var html = '';
+  [['NOW', 'NOW (in flight)'], ['SHORT', 'SHORT (launch-ready)'], ['Newly queued', 'Newly queued (findings)']].forEach(function (p) {
+    var body = tables(section(p[0]), 12);
+    if (body) html += '<h2 style="font-size:.9rem;margin:12px 0 4px">' + esc(p[1]) + '</h2><table>' + body + '</table>';
+  });
+  $('qmd').innerHTML = html ||
+    '<div class="err">QUEUE.md tables not parseable - <a href="../../plans/QUEUE.md">open raw</a></div>';
+}
+
+function renderWins(w) {
+  $('winsIntro').textContent = w.intro || '';
+  var wins = (w.wins || []).slice().reverse();  // newest first
+  $('nWins').textContent = wins.length;
+  $('winsTl').innerHTML = wins.map(function (x) {
+    return '<div class="twin"><div class="thead">' +
+      '<a class="pr" href="' + esc(x.url) + '">#' + esc(x.pr) + '</a>' +
+      '<span class="when" style="font-size:.72rem;color:var(--dim)">' + esc(x.date) + '</span>' +
+      (x.tags || []).map(function (t) { return '<span class="ttag">' + esc(t) + '</span>'; }).join('') +
+      '</div><div class="ttl2">' + esc(x.title) + '</div>' +
+      '<div class="lbl">The mechanic</div><div class="txt dim">' + esc(x.mechanic) + '</div>' +
+      '<div class="lbl">The win</div><div class="txt">' + esc(x.win) + '</div></div>';
+  }).join('') || '<div class="empty">No wins recorded yet.</div>';
+}
+
+function prCard(p) {
+  var cls = p.merged_at ? 'merged' : (p.draft ? 'draft' : '');
+  var pill = p.merged_at ? 'MERGED' : (p.draft ? 'DRAFT' : 'OPEN');
+  return '<div class="pr ' + cls + '"><div class="top"><span class="num">#' + p.number +
+    '</span><span class="pill">' + pill + '</span></div>' +
+    '<div class="title"><a href="' + esc(p.html_url) + '">' + esc(p.title) + '</a></div>' +
+    '<div class="meta">' + esc(p.head && p.head.ref || '') + ' &middot; ' +
+    ago(p.merged_at || p.updated_at) + ' &middot; <a href="' + esc(p.html_url) + '">evidence thread</a></div></div>';
+}
+function renderPRs(open, merged) {
+  $('nPr').textContent = open.length;
+  $('prOpen').innerHTML = open.map(prCard).join('') || '<div class="empty">No open PRs - board is clear.</div>';
+  $('prMerged').innerHTML = merged.map(prCard).join('') || '<div class="empty">None fetched.</div>';
+}
+
+/* ============================ poll loop =================================== */
+function pollFast() {
+  transport.events().then(function (evs) {
+    S.events = evs; renderFeed(); renderLanes();
+    $('stamp').textContent = 'last poll ' + new Date().toLocaleTimeString() +
+      ' - ' + evs.length + ' events on the log';
+  }).catch(function (e) {
+    $('feed').innerHTML = '<div class="err">Event log unreachable (' + esc(e.message) + ')</div>';
+  });
+  transport.queues().then(renderQueues).catch(function (e) {
+    $('opq').innerHTML = '<div class="err">queues.json unreachable (' + esc(e.message) + ')</div>';
+  });
+  transport.queueMd().then(renderQueueMd).catch(function (e) {
+    $('qmd').innerHTML = '<div class="err">QUEUE.md unreachable (' + esc(e.message) + ') - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md">view on GitHub</a></div>';
+  });
+  S.nextAt = Date.now() + transport.pollMs;
+}
+function pollPRs() {
+  transport.wins().then(renderWins).catch(function (e) {
+    $('winsTl').innerHTML = '<div class="err">ce-wins.json unreachable (' + esc(e.message) + ')</div>';
+  });
+  Promise.all([transport.openPRs(), transport.mergedPRs()])
+    .then(function (r) { renderPRs(r[0], r[1]); })
+    .catch(function (e) {
+      $('prOpen').innerHTML = '<div class="err">GitHub API unreachable here (' + esc(e.message) +
+        ') - <a href="https://github.com/nhruska/nhruska.github.io/pulls">open PRs on GitHub</a></div>';
+      $('prMerged').innerHTML = '';
+    });
+}
+
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('.tab');
+  if (t) {
+    document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on'); });
+    document.querySelectorAll('.pane').forEach(function (x) { x.classList.remove('on'); });
+    t.classList.add('on');
+    $('p-' + t.getAttribute('data-pane')).classList.add('on');
+    return;
+  }
+  var m = ev.target.closest('.mchip');
+  if (m) { S.mission = m.getAttribute('data-m') || null; renderFeed(); return; }
+  var f = ev.target.closest('.fchip');
+  if (f) {
+    var ty = f.getAttribute('data-t');
+    S.typeOff[ty] = !S.typeOff[ty]; renderFeed(); return;
+  }
+});
+$('rf').addEventListener('click', function () { pollFast(); pollPRs(); });
+
+// ORG-OS-style explicit theme toggle: LIGHT is the hub default; Dark persists.
+function applyTheme(t) {
+  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  $('themeBtn').textContent = t === 'dark' ? 'Light' : 'Dark';
+}
+var savedTheme = 'light';
+try { savedTheme = localStorage.getItem('ops.theme') || 'light'; } catch (e) {}
+applyTheme(savedTheme);
+$('themeBtn').addEventListener('click', function () {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('ops.theme', next); } catch (e) {}
+  applyTheme(next);
+});
+
+setInterval(function () {  // countdown + relative-time refresh
+  var s = Math.max(0, Math.round((S.nextAt - Date.now()) / 1000));
+  $('cd').textContent = s + 's';
+}, 1000);
+setInterval(pollFast, transport.pollMs);
+setInterval(pollPRs, transport.prPollMs);
+pollFast(); pollPRs();
+</script>
+</body></html>

@@ -108,7 +108,13 @@
     if (!nb || nb.length < 3) return;
     function mark(entry, cls) {
     if (!entry || !entry.root) return;
-    var label = C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
+    // S-COF-SPELLING: the label text comes from the SAME provider renderWheel
+    // uses (Circle.wheelLabel - preferred key name, Bb never A#), so the match
+    // can't drift when spelling policy changes. spellRoot fallback keeps the
+    // old contract for a stale cached circle.js.
+    var label = (typeof C.wheelLabel === 'function')
+      ? C.wheelLabel(entry.root, entry.mode)
+      : C.spellRoot(entry.root) + (entry.mode === 'minor' ? 'm' : '');
     var texts = wheelEl.querySelectorAll('.cofLabel');
     for (var i = 0; i < texts.length; i++) {
       if (texts[i].textContent !== label) continue;
@@ -150,11 +156,14 @@
   function trackKey(t) {
     t = t || {};
     function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
-    // Serialize the FULL 4-mode vocabulary: coarsening dorian/mixolydian to
-    // 'major' let a modal track collide with a same-title/artist/key major row
-    // in the url overlay. Unknown/absent modes still default to 'major'.
+    // Serialize the FULL 5-mode vocabulary (M-GUIDE W2 adds 'blues'): coarsening
+    // dorian/mixolydian/blues to 'major' let a modal/blues track collide with a
+    // same-title/artist/key major row in the url overlay. Unknown/absent modes
+    // still default to 'major'. IDENTITY only - the Library/finder FACET still
+    // coarsens 'blues' to the major family via normMode (unchanged, per the IA);
+    // this is a narrower, separate concern (a stable storage key, not a UI facet).
     var m = norm(t.mode);
-    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian') m = 'major';
+    if (m !== 'minor' && m !== 'dorian' && m !== 'mixolydian' && m !== 'blues') m = 'major';
     return [norm(t.title), norm(t.artist), normRoot(t.key), m].join('|');
   }
   // Overlay a { trackKey: videoId } map onto a seed list, returning NEW track
@@ -187,11 +196,10 @@
   function notesToPcs(notes) {
     return (notes || []).map(noteToPc).filter(function (p) { return p >= 0; });
   }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
+  // esc.js (loaded before this file everywhere it's consumed) - was one of
+  // ~8 divergent local copies.
+  function esc(s) { return global.Esc.esc(s); }
   function focusNoJump(el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
   function familyMode(m) { return m === 'minor' ? 'aeolian' : 'ionian'; }
   // P3: coarsen any mode name (Major/Minor or a church mode) to the major/minor
@@ -214,6 +222,11 @@
     if (m === 'aeolian' || m === 'minor') return 'aeolian';
     if (m === 'dorian') return 'dorian';
     if (m === 'mixolydian') return 'mixolydian';
+    // M-GUIDE W2: Blues is a harmonizing key model (I7/IV7/V7, songbook.js MODES.Blues),
+    // not a circle-of-fifths mode - resolve it explicitly before the major/minor
+    // family fallback so a Blues-keyed Compose progression opens the Studio on its
+    // own blues scale + BLUES_KEY palette (studioTheory below), not a coarsened major.
+    if (m === 'blues') return 'blues';
     return familyMode(normMode(mode));
   }
   function shortMode(label) { return label.replace(/\s*\(.*\)/, ''); }
@@ -223,8 +236,12 @@
   // coarsen modal modes - unifying them is queued in the UI-polish arc.
   function keyLabelFor(key, mode) {
     var m = String(mode == null ? '' : mode).trim().toLowerCase();
+    // FORK-4 removal: the DISPLAYED key root is the preferred enharmonic name
+    // (A# minor -> Bbm); the key TOKEN callers store/compare stays canonical.
+    key = dispKeyRoot(key, m || 'major');
     if (m === 'minor' || m === 'aeolian') return key + 'm';
     if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
+    if (m === 'blues') return key + ' blues'; // M-GUIDE W2
     return key;
   }
   // Circle source: window.Circle in the browser (classic scripts). Under Node
@@ -238,6 +255,28 @@
     }
     return null;
   }
+  // Same guarded-reference pattern as circleRef() above, for the S-NOTABLES
+  // singleton: window.Notables in the browser, a require() fallback in Node so
+  // test/tracks.test.js drives the SAME module instance test/notables.test.js
+  // exercises directly (shared require-cache entry, not a duplicate).
+  function notablesRef() {
+    if (global.Notables) return global.Notables;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./notables.js'); } catch (e) {}
+    }
+    return null;
+  }
+  // M-GUIDANCE: same guarded-reference pattern, for guidance-level.js's
+  // music.guidanceLevel.v1 singleton (window.GuidanceLevel in the browser,
+  // a require() fallback in Node so test/tracks.test.js drives the SAME
+  // module instance test/guidance-level.test.js exercises directly).
+  function guidanceLevelRef() {
+    if (global.GuidanceLevel) return global.GuidanceLevel;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./guidance-level.js'); } catch (e) {}
+    }
+    return null;
+  }
   // The Practice Studio's theory bundle for a key+mode: scale notes, pitch
   // classes, degrees, diatonic chords, display label. Module-scope + exported
   // so tests can drive the SAME function the Studio wiring calls (a direct
@@ -247,12 +286,282 @@
   function studioTheory(key, mode) {
     var C = circleRef(), k = normRoot(key), rp = rootIndex(k);
     if (!C || rp < 0) return null;
-    var scaleMode = resolveScaleMode(mode), notes = C.scale(k, scaleMode);
+    var scaleMode = resolveScaleMode(mode);
+    // M-GUIDE W2: Blues has no Circle.MODE_INFO/diatonic() entry (it is the solo
+    // 'blues' scale plus the separate BLUES_KEY I7/IV7/V7 palette, not a circle-
+    // of-fifths mode) - branch before the generic diatonic path below.
+    if (scaleMode === 'blues') {
+      // FORK-4 removal: display notes are KEY-AWARE (C blues -> C Eb F Gb G Bb, the
+      // standard spelling) - tokens/pcs stay canonical; only note NAMES changed.
+      var bnotes = C.soloScaleInKey ? C.soloScaleInKey(k, 'blues', mode) : C.soloScale(k, 'blues');
+      return {
+        key: k, scaleMode: scaleMode, rootPc: rp, notes: bnotes, pcs: notesToPcs(bnotes),
+        degrees: C.soloScaleDegrees('blues'), chords: C.bluesKey(k), label: 'Blues'
+      };
+    }
+    // FORK-4 removal: scale note names spell letter-per-degree from the preferred
+    // tonic name (C mixolydian shows Bb, never A#; A#-major contexts render as Bb
+    // major). CHORD tokens below stay canonical-sharp - they key voicing/audio/
+    // theory lookups; their DISPLAY is remapped at the render seams (dispChord).
+    var notes = C.scaleInKey ? C.scaleInKey(k, scaleMode) : C.scale(k, scaleMode);
     return {
       key: k, scaleMode: scaleMode, rootPc: rp, notes: notes, pcs: notesToPcs(notes),
       degrees: C.scaleDegrees(scaleMode), chords: C.diatonic(k, scaleMode),
       label: shortMode(C.modeInfo(scaleMode).label)
     };
+  }
+  // FORK-4 removal display helpers: a chord/note NAME rendered inside a stated
+  // key respells by function (bVII of C = Bb); the underlying token is untouched
+  // (packs, audio, targeting, storage all stay canonical-sharp). Pure; exported
+  // for tests. Falls back to the token when Circle lacks the kernel.
+  function dispKeyRoot(key, mode) {
+    var C = circleRef();
+    return (C && C.preferredTonicName) ? C.preferredTonicName(key, mode) : key;
+  }
+  function dispChord(chord, keyRoot, keyMode) {
+    var C = circleRef();
+    if (!C || !C.noteInKey) return chord;
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(chord || '').trim());
+    if (!m) return chord;
+    return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
+  }
+  // S-BLUES: the Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
+  // scaleId 'mode' (or falsy) delegates straight to studioTheory() so the
+  // default chip is IDENTICAL to pre-S-BLUES Studio behavior (no
+  // reimplementation, no drift risk). Any other scaleId (a Circle.SOLO_SCALES
+  // key: pentMajor/pentMinor/blues) reads ONLY Circle.soloScale/soloScaleDegrees/
+  // soloScaleInfo - it never touches C.diatonic()/chords, so chords-in-key,
+  // buildWhy, and whynote are untouched by any chip tap (see the
+  // harmonization-isolation test in tracks.test.js). Module-scope + exported
+  // so tests drive the SAME function the Studio chip wiring calls. Returns
+  // null when Circle/key/scaleId can't resolve (callers keep the prior bundle
+  // on-screen rather than clearing it).
+  function soloBundle(key, mode, scaleId) {
+    if (!scaleId || scaleId === 'mode') {
+      var th = studioTheory(key, mode);
+      return th ? { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label } : null;
+    }
+    var C = circleRef(), k = normRoot(key);
+    if (!C || rootIndex(k) < 0 || typeof C.soloScale !== 'function') return null;
+    // FORK-4 removal: key-aware note names (letter-per-degree from the mode-aware
+    // preferred tonic); pcs derive from the same names so dots + names agree.
+    var notes = C.soloScaleInKey ? C.soloScaleInKey(k, scaleId, mode) : C.soloScale(k, scaleId);
+    if (!notes.length) return null;
+    var info = C.soloScaleInfo(scaleId);
+    return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
+  }
+  // S-SOLO-SCALE-DEFAULT + progression-aware (music-theory-coach, 2026-07-10): the
+  // theory-best solo scale to PRE-SELECT when the Studio opens, from the incoming key
+  // + mode AND the actual progression shape (t.seq, which studioTarget() preserves from
+  // the Compose hand-off). Reads Circle.romanFor (the SSOT for degree analysis) - never
+  // guesses. The two common modal signals:
+  //   - a bVII MAJOR in a major-key progression  -> Mixolydian (the b7 rock/backdoor color)
+  //   - a major IV in a minor-key progression      -> Dorian (the raised-6 color)
+  // Otherwise the safe pentatonic of the key's quality (the home a player of any level
+  // cannot sound wrong over). A Blues key keeps its own scale (its mode chip IS blues).
+  // The result maps 1:1 onto a chip wireScaleChips offers for that key (guarded there).
+  // Pure + module-scope + exported so tests drive the SAME function the Studio wiring calls.
+  function inferSoloDefault(key, mode, seq) {
+    var scaleMode = resolveScaleMode(mode);
+    if (scaleMode === 'blues') return 'mode';
+    var C = circleRef();
+    var fam = (C && C.modeInfo) ? ((C.modeInfo(scaleMode) || {}).family) : null;
+    var base = fam === 'minor' ? 'pentMinor' : 'pentMajor';
+    if (!C || typeof C.romanFor !== 'function' || !Array.isArray(seq) || !seq.length) return base;
+    var tonicChord = normRoot(key) + (fam === 'minor' ? 'm' : '');
+    var romans = seq.map(function (ch) { return C.romanFor(ch, tonicChord); }).filter(Boolean);
+    if (fam === 'major') {
+      // a bVII MAJOR (uppercase = major quality) is the Mixolydian tell; only offer it
+      // when the key is not ALREADY mixolydian (its own mode chip covers that).
+      if (scaleMode !== 'mixolydian' && romans.indexOf('bVII') >= 0) return 'mixolydian';
+    } else {
+      // a MAJOR IV (uppercase) over a minor tonic is the Dorian tell (raised 6th).
+      if (scaleMode !== 'dorian' && romans.indexOf('IV') >= 0) return 'dorian';
+    }
+    return base;
+  }
+  // S-BLUES-BOXES: which of the 3 box-eligible scale ids (pentMajor/
+  // pentMinor/blues) applies to the CURRENTLY selected chip - so the
+  // Studio's named-box chip + pager-snap (KeyExplorer.renderScale's
+  // opts.boxScaleId) only activate for those, never for a 7-note mode
+  // scale. scaleId 'mode' resolves via modeScaleMode (th.scaleMode): the
+  // ONLY 'mode' case that's box-eligible is the M-GUIDE W2 Blues key (its
+  // own scale IS the SOLO_SCALES.blues 6-note set) - every other mode
+  // (ionian/aeolian/dorian/mixolydian) keeps the classic fixed 0/5/10 walk.
+  // Module-scope + exported (mirrors soloBundle/scaleKeyFor) so this is
+  // directly unit-testable without the Studio DOM.
+  var BOX_SCALE_IDS = { pentMajor: true, pentMinor: true, blues: true };
+  function boxScaleIdFor(scaleId, modeScaleMode) {
+    if (scaleId && scaleId !== 'mode') return BOX_SCALE_IDS[scaleId] ? scaleId : null;
+    return modeScaleMode === 'blues' ? 'blues' : null;
+  }
+  // M-GUIDE W3a (D-CARDS-STATIC): soloScaleFraming MOVED VERBATIM to solo-guide.js
+  // as SoloGuide.framing(scaleId, family) - same behavior, same P5-voiced static
+  // strings. Moved (not duplicated) so W3b's Compose solo chips (songbook.js) can
+  // call the identical function without depending on tracks.js.
+  // Same guarded-reference pattern as circleRef()/notablesRef() above: window.SoloGuide
+  // in the browser, a require() fallback in Node so tracks.test.js and solo-guide.test.js
+  // share one require-cache module instance (not a duplicate).
+  function soloGuideRef() {
+    if (global.SoloGuide) return global.SoloGuide;
+    if (typeof module !== 'undefined' && module.exports) {
+      try { return require('./solo-guide.js'); } catch (e) {}
+    }
+    return null;
+  }
+  // M-GUIDE W3a (section 2, chord-tone targeting): pure pc-arithmetic classifier.
+  // Precedence root > chord > blue > scale (blue is defaultTones' job below, not
+  // this fn's). The chord's root is parsed locally (not read off Circle.chordTones'
+  // internal pc order) so this stays independent of that function's array shape.
+  // Returns null when chordName is falsy/unresolvable - callers treat that as "no
+  // target".
+  //
+  // GHOST DOTS (P5 seasoned-player adversarial fold, 2026-07-05, supersedes the
+  // original D-TARGET "intersection-only" deferral): a chord tone OUTSIDE the
+  // current scale is exactly the note a seasoned player reaches for on purpose
+  // (e.g. C# - the major 3rd - over A7 in A blues is the money note that IS the
+  // rub's resolution target). Hiding it taught the wrong habit. ghostPcs carries
+  // those out-of-scale chord tones so the caller can render them as hollow dots
+  // at their correct fret positions - never as a filled kx-chord/kx-root mark.
+  function targetTones(scalePcs, scaleRootPc, chordName) {
+    var C = circleRef();
+    if (!C || !chordName) return null;
+    var m = /^([A-Ga-g][#b]?)/.exec(String(chordName).trim());
+    if (!m) return null;
+    var chordRootPc = rootIndex(normRoot(m[1]));
+    if (chordRootPc < 0) return null;
+    var ctPcs = C.chordTones(chordName);
+    if (!ctPcs.length) return null;
+    var inScale = {};
+    (scalePcs || []).forEach(function (p) { inScale[((p % 12) + 12) % 12] = true; });
+    var byPc = {}, ghostPcs = [];
+    ctPcs.forEach(function (p) {
+      var pc = ((p % 12) + 12) % 12;
+      if (!inScale[pc]) { if (ghostPcs.indexOf(pc) < 0) ghostPcs.push(pc); return; }
+      byPc[pc] = (pc === chordRootPc) ? 'root' : 'chord';
+    });
+    // dominant-quality rub: chordTones carries BOTH the major 3rd (+4) and the
+    // dominant 7th (+10) -> the target's minor-3rd-equivalent (root+3) is the rub
+    // note (e.g. Eb over C7, Bb over G7 in C blues; nothing over a plain IV7).
+    var rubPc = null;
+    if (ctPcs.indexOf((chordRootPc + 4) % 12) >= 0 && ctPcs.indexOf((chordRootPc + 10) % 12) >= 0) {
+      var cand = (chordRootPc + 3) % 12;
+      if (inScale[cand]) rubPc = cand;
+    }
+    return { byPc: byPc, rubPc: rubPc, ghostPcs: ghostPcs };
+  }
+  // M-GUIDE W3a: the ALWAYS-ON default mark (independent of any active target) -
+  // the blues solo scale's b5 (scaleRootPc+6), whenever the blues scale renders.
+  // bundle.pcs[0] is always the scale's own root pc (every SOLO_SCALES/diatonic
+  // formula starts at semitone 0), so this works for both a studioTheory bundle
+  // and a soloBundle() chip-swap result without needing a separate rootPc field.
+  function defaultTones(bundle) {
+    if (!bundle || bundle.label !== 'Blues' || !bundle.pcs || !bundle.pcs.length) return null;
+    var rootPc = bundle.pcs[0];
+    var bluePc = (rootPc + 6) % 12;
+    var byPc = {}; byPc[bluePc] = 'blue';
+    return { byPc: byPc, rubPc: null };
+  }
+  // S-WHYNOTE (sprint-1 item 6, stretch; A9-bound): a one-shot JIT "why" notable
+  // at the Compose -> Studio hand-off (openStudio below - the seam where the
+  // solo-scale panel first renders for a key+mode). TWO STATIC templates only,
+  // chosen by a plain string switch on th.scaleMode - zero new theory derivation.
+  // modeName reuses the exact major/minor/label.toLowerCase() mapping buildWhy
+  // already computes for its own "A minor" display line (no new lookup either).
+  // Interpolates only th.key + that mode name - both are labels the Studio
+  // already renders elsewhere on the same screen.
+  function whynoteText(key, scaleMode, label) {
+    key = dispKeyRoot(key, scaleMode); // FORK-4 removal: prose shows the preferred name
+    var modeName = scaleMode === 'aeolian' ? 'minor' : scaleMode === 'ionian' ? 'major' : label.toLowerCase();
+    if (scaleMode === 'ionian') {
+      return 'Why this scale works: ' + key + ' major and its relative minor share the same notes - solo either over this progression.';
+    }
+    // Minor/modal (aeolian, dorian, mixolydian): the parallel-phrased equivalent -
+    // true for all three (each differs from its parallel major by at least one
+    // degree), so one template covers the whole non-ionian family.
+    return 'Why this scale works: ' + key + ' ' + modeName + ' and its parallel major share the same home note, not the same notes - stick with ' + key + ' ' + modeName + ' here.';
+  }
+  // G5 S-WHYNOTE-SCALE (2026-07-10): the whynote banner used to explain ONLY
+  // the key's own mode scale (whynoteText above) and never updated when a
+  // scale chip was tapped (wireScaleChips deliberately left it "keyed to
+  // th"). This re-derives the banner copy for the ACTUAL selected scale chip.
+  // scaleId 'mode' (or falsy) passes straight through to whynoteText - zero
+  // behavior change for the default/unswapped case. Every other scaleId gets
+  // its own STATIC one-line template (music-theory-coach + copy-coach,
+  // 2026-07-10) - no new theory derivation, same shape as whynoteText: only
+  // the key name is interpolated, via the same dispKeyRoot(key, keyScaleMode)
+  // call whynoteText makes (so a flat key still reads "Bb", never "A#").
+  // Scale identity is named by its own CHIP LABEL (Pent major/Pent minor/
+  // Blues/Mixolydian/Dorian), same vocabulary choice scaletipText already
+  // uses, rather than introducing the jargon noun "pentatonic" (whynote can
+  // show at the 'intermediate' guidance level, whose copy-coach vocabulary
+  // budget doesn't yet include that word).
+  function whynoteScaleText(key, scaleId, keyScaleMode, keyLabel) {
+    if (!scaleId || scaleId === 'mode') return whynoteText(key, keyScaleMode, keyLabel);
+    var dispKey = dispKeyRoot(key, keyScaleMode); // FORK-4 removal: prose shows the preferred name
+    switch (scaleId) {
+      case 'pentMajor':
+        return 'Why Pent major works: it drops the two notes that ever clash, so nothing you play over ' + dispKey + ' sounds wrong.';
+      case 'pentMinor':
+        return 'Why Pent minor works: it drops the two notes that ever clash, so nothing you play over ' + dispKey + ' sounds wrong.';
+      case 'blues':
+        return 'Why Blues works: Pent minor plus one extra in-between note - the classic blue note - for grit over ' + dispKey + '.';
+      case 'mixolydian':
+        return 'Why Mixolydian works: ' + dispKey + ' major with the 7th flatted - the bluesy, backdoor color for this progression.';
+      case 'dorian':
+        return 'Why Dorian works: a minor scale with the 6th raised, for a brighter, hopeful color over ' + dispKey + '.';
+      default:
+        return whynoteText(key, keyScaleMode, keyLabel);
+    }
+  }
+  // Consumer-side claim + template pick for the 'whynote' notable slot (priority
+  // order + show-once persistence are notables.js's job, not re-implemented here).
+  // Returns Notables.renderBanner()-ready opts when the slot is won (first ever
+  // call, or a repeat call while still un-dismissed); returns null when the slot
+  // is denied (already dismissed forever, OR a higher-priority notable - firstrun
+  // outranks whynote - currently holds it) or Notables isn't loaded. Callers skip
+  // silently on null, matching the notables.js consumer contract.
+  // M-GUIDANCE (retro-tagged 'intermediate'+'advanced' in notables.js's LEVELS
+  // table): reads the current level via guidanceLevelRef() and threads it as
+  // claim()'s 3rd arg - a beginner or unset level now blocks whynote entirely.
+  function whynoteBanner(th) {
+    var N = notablesRef();
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('whynote', undefined, level)) return null;
+    return { consumerId: 'whynote', text: whynoteText(th.key, th.scaleMode, th.label), className: 'bt-st-notable' };
+  }
+  // M-GUIDANCE (advanced tier): "scale chips work over any chord in the key"
+  // JIT cue on first Studio open - mirrors whynoteBanner's exact shape
+  // (consumer-side claim + template, priority/show-once left to notables.js).
+  // Pure text fn kept separate (like whynoteText) so tests can assert the
+  // copy independent of the claim/level plumbing.
+  function scaletipText(key, mode) {
+    key = dispKeyRoot(key, mode); // FORK-4 removal: prose shows the preferred name, real mode
+    return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
+  }
+  // S-PERSONA-COPY (pedagogy-coach + copy-coach, 2026-07-10): the BEGINNER
+  // Studio orientation tip - whynote/scaletip gate to intermediate/advanced,
+  // which correctly hid theory prose from beginners but left them with a bare
+  // fretboard and jargon chips. ONE action-first line in the beginner
+  // vocabulary budget, at the moment of relevance, show-once + dismissible
+  // (the notables contract). Mirrors scaletipBanner's exact shape.
+  function studioFirstText() {
+    return 'Tap a chord below to hear it - the dots show where to play along on the neck.';
+  }
+  function studioFirstBanner() {
+    var N = notablesRef();
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('studiofirst', undefined, level)) return null;
+    return { consumerId: 'studiofirst', text: studioFirstText(), className: 'bt-st-notable' };
+  }
+  function scaletipBanner(th) {
+    var N = notablesRef();
+    var GL = guidanceLevelRef();
+    var level = GL ? GL.get() : null;
+    if (!N || typeof N.claim !== 'function' || !N.claim('scaletip', undefined, level)) return null;
+    return { consumerId: 'scaletip', text: scaletipText(th.key, th.scaleMode), className: 'bt-st-notable' };
   }
 
   var STORE = 'bt.custom.v1';
@@ -281,6 +590,37 @@
       delete o[oldK]; changed = true;
     });
     return changed;
+  }
+  // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
+  // TAPPED for a given track, so the next Studio open pre-selects it instead
+  // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
+  // localStorage key, defensive try/catch on both read and write (private-
+  // mode safety, matching writeTempo's style below in mount()) - so per
+  // music/CLAUDE.md's storage-changes convention this needs no backup.js
+  // SCHEMA_VERSION bump. Keyed by trackKey(t), the same stable per-track
+  // identity music.trackUrls.v1 already uses, so the map survives catalog
+  // reordering. Module-scope + exported so the round-trip is unit-testable
+  // in Node without the Studio DOM (mirrors readTempo/writeTempo's shape,
+  // but those two stay mount()-local since they hold no per-track key).
+  var SOLOSCALE_STORE = 'bt.soloScale.v1'; // { [trackKey]: scaleId }
+  function readSoloScales() {
+    try {
+      var s = localStorage.getItem(SOLOSCALE_STORE);
+      var o = s ? JSON.parse(s) : {};
+      return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+    } catch (e) { return {}; }
+  }
+  function readSoloScaleFor(t) {
+    var o = readSoloScales();
+    var k = trackKey(t);
+    return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null;
+  }
+  function writeSoloScaleFor(t, scaleId) {
+    try {
+      var o = readSoloScales();
+      o[trackKey(t)] = scaleId;
+      localStorage.setItem(SOLOSCALE_STORE, JSON.stringify(o));
+    } catch (e) {}
   }
   var MODE_ORDER = ['ionian', 'lydian', 'mixolydian', 'dorian', 'aeolian', 'phrygian'];
   var ORD = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
@@ -413,7 +753,20 @@
       elPlayer.onclick = function (e) { if (e.target === elPlayer) { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); } };
       if (window.NavHistory) window.NavHistory.open('player', closePlayer);
     }
-    function closePlayer() { elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = ''; }
+    // M-EAR wave 1: the Studio's active scale-audition handle (Sound.playScale's
+    // return value), scoped here (same level as elPlayer/closePlayer, ABOVE
+    // openStudio) so closePlayer - shared by the plain player AND the Studio,
+    // the "tab/surface change" stop condition for whichever is open - can
+    // silence it on close regardless of which one is active. Sound.stopAll()
+    // is a defensive belt-and-suspenders call (harmless no-op if nothing is
+    // playing); studioSound itself resets openStudio's own toggle-icon state
+    // via its onStop callback (wired inside openStudio, below).
+    var studioSound = null;
+    function closePlayer() {
+      if (global.Sound) global.Sound.stopAll();
+      studioSound = null;
+      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
+    }
 
     /* ---- the Practice Studio: the track playing + the theory to solo over it ----
      * Scale-first layout: pinned backing track on top, the fretboard scale to
@@ -427,6 +780,34 @@
     // triad-inversions.html doesn't read ?mode= yet, but the vocabulary stays
     // consistent for whenever it does).
     var SCALE_MODE_TO_RECORD_MODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian' };
+    // M-EAR wave 1.6 (U14): the 3-stop tempo control's bpm values, chosen by
+    // ear feel against the wave-1 default (72bpm, D-EAR-1) - Slow keeps that
+    // exact hum-along pace unchanged; Med and Fast are roughly +45%/+95%
+    // faster, matching the operator's "needs faster tempo" complaint
+    // (docs/plans/uat-walkthrough-20260704.md U14) without abandoning the
+    // slow option a first-time learner still wants. Default is 'med' (was
+    // implicitly 'slow' pre-U14) - the operator's own complaint was that the
+    // ONLY speed available was too slow, so the fix ships a faster default
+    // alongside the control, not just the control alone.
+    var TEMPO_BPM = { slow: 72, med: 104, fast: 140 };
+    var TEMPO_DEFAULT = 'med';
+    // F13 (operator UAT 2026-07-05): the 3-button Slow/Med/Fast segmented
+    // control reclaimed into ONE compact cycling "Speed" button (lives in
+    // the new controls row alongside Play/Guide, F12/F15) - tap advances
+    // slow -> med -> fast -> slow (wrap). Same 3-value TEMPO_BPM model,
+    // just a different control shape.
+    var TEMPO_ORDER = ['slow', 'med', 'fast'];
+    var TEMPO_LABEL = { slow: 'Slow', med: 'Med', fast: 'Fast' };
+    // F17 (operator UAT 2026-07-05): "instead of stopping the animated
+    // sequence of notes, just continue it through two octaves with a pause
+    // on the root notes." SOLO_OCTAVES/ROOT_DWELL are Studio-only opts passed
+    // to Sound.playScale (sound.js) - Compose's OWN key-preview toggle
+    // (songbook.js) omits both and keeps its original 1-octave/no-dwell
+    // behavior untouched. ROOT_DWELL 2.2x is a "landing" pause distinctly
+    // longer than a normal note without reading as a stutter/glitch at any
+    // of the 3 tempo settings.
+    var SOLO_OCTAVES = 2;
+    var ROOT_DWELL = 2.2;
     // Deep-link to the same "Walk the full cycle up the neck" inversions page the
     // Compose tab links (songbook.js), now surfaced from the Practice Studio too -
     // carries the active instrument profile (so the page opens on the same fretboard)
@@ -465,13 +846,30 @@
       var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
-        + esc(th.key) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
+        + esc(dispKeyRoot(th.key, th.scaleMode)) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
       if (C && C.renderWheel) {
         var mode = normMode(th.scaleMode);
         var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
         try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF tint skipped (wheel DOM contract changed?):', e); }
         box.querySelector('.bt-st-wheel').appendChild(wheelEl);
       }
+    }
+    // M-EAR wave 1: per-note tokens (instead of one plain joined string) so
+    // the scale-audition marker can highlight the currently-sounding note.
+    // Each token carries data-i so onNote(i) (i % notes.length, see sound.js's
+    // header) can find and mark exactly one note per tick. The CONTAINER
+    // (.bt-st-notes, held via data-solonotes) keeps its own class for its own
+    // text treatment - "Solo over it" is uppercased by .bt-st-lbl; the NOTE
+    // NAMES must NOT be, or a flat "Bb" renders as "BB" (.bt-st-notes opts
+    // the whole run out).
+    // F14 (operator UAT 2026-07-05): the separate scale-degrees line
+    // (renderDegreeTokens, e.g. "1 2 b3 4 5 b6 b7" under the note names) read
+    // as a redundant second notes rendering - removed. This is the ONE notes
+    // rendering left in the Solo section.
+    function renderNoteTokens(notes) {
+      return notes.map(function (n, i) {
+        return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
+      }).join(' ');
     }
     function openStudio(t) {
       // Rehydrate from the merged track list BEFORE rendering: a bridge payload
@@ -485,36 +883,288 @@
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
       // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
-      // "G mixolydian" (modal). th.label is the mode name from circle.js.
-      var keyLabel = th.scaleMode === 'ionian' ? esc(th.key)
-        : th.scaleMode === 'aeolian' ? esc(th.key) + 'm'
-        : esc(th.key + ' ' + th.label.toLowerCase());
+      // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
+      // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
+      // textContent - keyLabel (escaped) still feeds the innerHTML meta line.
+      var dispKey = dispKeyRoot(th.key, th.scaleMode); // FORK-4 removal: display name
+      var keyLabelPlain = th.scaleMode === 'ionian' ? dispKey
+        : th.scaleMode === 'aeolian' ? dispKey + 'm'
+        : (dispKey + ' ' + th.label.toLowerCase());
+      var keyLabel = esc(keyLabelPlain);
       var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
         .filter(Boolean).join(' · ');
+      // M-GUIDE W3a (section 2/3): chord-tone targeting + per-scale guidance card
+      // state, scoped to this Studio open. scaleBoxWrap is the live boxWrap
+      // returned by KeyExplorer.renderScale - toggling a target calls its
+      // setTones() (preserves the position-walk); switching a solo-scale chip
+      // does a full renderScale() and replaces this reference. curBundle/curScaleId
+      // track whichever solo bundle is currently on-screen (the "mode" bundle = th
+      // itself, or a soloBundle() chip-swap result) so a chord-target toggle can
+      // re-derive tones against the RIGHT scale.
+      var scaleBoxWrap = null, activeTargetChord = null, curBundle = th, curScaleId = 'mode';
+      // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
+      // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
+      // to the new scale's first genre whenever the active genre isn't in that
+      // scale's list (renderJamPanel below); jamFeel persists across scale-chip
+      // switches (a "slow" preference likely holds across modes).
+      var jamGenre = null, jamFeel = 'mid';
+      // scaleId 'mode' resolves to th.scaleMode (one of the 5 SoloGuide-known
+      // modal keys, incl. 'blues'); any other scaleId (pentMajor/pentMinor/blues
+      // chip) IS the SoloGuide key directly.
+      function scaleKeyFor(scaleId, modeScaleKey) {
+        return (scaleId && scaleId !== 'mode') ? scaleId : modeScaleKey;
+      }
+      // Merge the always-on default mark (blue note) with the active target's
+      // root/chord/rub/ghost, active-target entries winning on any pc collision
+      // (D-TARGET precedence root > chord > blue > scale). Returns null when
+      // there is nothing to mark at all, so the fretboard renders byte-identical
+      // to the pre-targeting default (Diagram.scale's own opts.tones-absent
+      // contract). ghostPcs (P5 fold) passes through untouched - a ghost note is
+      // by definition NOT in the scale, so it never participates in the byPc
+      // precedence merge.
+      function computeTones(bundle, scaleId) {
+        var scalePcs = (bundle && bundle.pcs) || [];
+        var scaleRootPc = scalePcs.length ? scalePcs[0] : null;
+        var merged = {}, rubPc = null, ghostPcs = [];
+        var def = defaultTones(bundle);
+        if (def) { for (var k in def.byPc) if (Object.prototype.hasOwnProperty.call(def.byPc, k)) merged[k] = def.byPc[k]; }
+        if (activeTargetChord) {
+          var tt = targetTones(scalePcs, scaleRootPc, activeTargetChord);
+          if (tt) {
+            for (var k2 in tt.byPc) if (Object.prototype.hasOwnProperty.call(tt.byPc, k2)) merged[k2] = tt.byPc[k2];
+            rubPc = tt.rubPc;
+            ghostPcs = tt.ghostPcs || [];
+          }
+        }
+        return (Object.keys(merged).length || rubPc != null || ghostPcs.length)
+          ? { byPc: merged, rubPc: rubPc, ghostPcs: ghostPcs } : null;
+      }
+      // M-EAR wave 1.6 (U14): the tempo control's persisted choice - defensive
+      // read/write (registered in data-model.md's inventory): private
+      // browsing / disabled storage must never throw; any unrecognized
+      // stored value falls back to TEMPO_DEFAULT. Studio-scoped (spans every
+      // scale chip), not per-track.
+      function readTempo() {
+        try { var v = localStorage.getItem('music.tempo.v1'); return TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT; }
+        catch (e) { return TEMPO_DEFAULT; }
+      }
+      function writeTempo(v) {
+        try { localStorage.setItem('music.tempo.v1', TEMPO_BPM.hasOwnProperty(v) ? v : TEMPO_DEFAULT); } catch (e) {}
+      }
+      var tempo = readTempo();
+      // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
+      // retired - the fretboard always renders frets 0-12 now (noPosCtrl, no
+      // pager), regardless of instrument. This drops the pager UI and, with
+      // it, the S-BLUES-BOXES box-position label (KeyExplorer.renderScale
+      // only ever allocates the box chip when its OWN position-pager is
+      // active - see its showPosCtrl gate) - a documented removal, not an
+      // oversight: with the whole 0-12 span always on screen there is
+      // nothing left to "walk to" a box position for. boxScaleIdFor (below)
+      // stays defined/exported/tested as pure pitch-class math - only this
+      // render call site stopped wiring it in.
+      function scaleRenderOpts(names, tones) {
+        return { names: names, tones: tones, frets: 12, noPosCtrl: true };
+      }
+      // The ONE fretboard render choke point - the initial (mode) render and
+      // every scale-chip switch call this instead of duplicating the
+      // KeyExplorer.renderScale call, so both paths stay in sync with
+      // whichever bundle/scaleId is ACTIVE. Re-derives the [data-scale]
+      // container fresh each call (elPlayer's DOM is rebuilt per Studio open,
+      // never stale across opens/closes).
+      function renderFretboard(bundle, scaleId) {
+        var container = elPlayer.querySelector('[data-scale]');
+        if (!container || !global.KeyExplorer) return;
+        try {
+          container.innerHTML = '';
+          var nameMap = [];
+          bundle.notes.forEach(function (nm, i) { nameMap[bundle.pcs[i]] = nm; });
+          scaleBoxWrap = global.KeyExplorer.renderScale(container, pack, th.rootPc, bundle.pcs,
+            scaleRenderOpts(nameMap, computeTones(bundle, scaleId)));
+        } catch (e) {}
+      }
+      // Renders the 5 labeled SoloGuide.card lines into the Guide box (guarded -
+      // solo-guide.js may not have loaded). Called on Studio open + every chip
+      // select (re-derives, per m-guide-ia-20260704.md section 3), regardless of
+      // the box's hidden state, so content is never stale when the toggle opens.
+      // S-REL-NAMES (U23): passes th.key (the Studio's own canonical root, same
+      // for every chip - a scale-chip swap changes scaleKey/notes, never the
+      // key) as card()'s optional 3rd arg, so any {relMinor}/{relMajor} token
+      // in the card text (e.g. pentMajor.shapes) names the concrete instance.
+      function renderGuide(scaleKey, notes) {
+        if (!guideBox) return;
+        var SG = soloGuideRef();
+        var card = SG ? SG.card(scaleKey, notes, th.key) : null;
+        if (!card) { guideBox.innerHTML = ''; return; }
+        var rows = [['When', card.chooseWhen], ['Resolve', card.resolveTo], ['Watch', card.hangOn],
+          ['Phrase', card.startEnd], ['Shapes', card.shapes]];
+        guideBox.innerHTML = rows.map(function (r) {
+          return '<div class="bt-st-guide-row"><span class="bt-st-guide-lbl">' + esc(r[0]) + '</span>'
+            + '<span class="bt-st-guide-txt">' + esc(r[1]) + '</span></div>';
+        }).join('');
+      }
+      // M-EAR wave 1.6 (U16): replaces the old renderTargetCaption() prose
+      // sentence ("Showing X inside Y - accent = chord root, filled = chord
+      // tones, hollow = chord tone outside the scale.") with the Legend
+      // primitive (shared/legend.js) - real dot-swatch + label rows instead
+      // of a hand-rolled caption string. Derives which classes are
+      // CURRENTLY VISIBLE from the SAME computeTones()/defaultTones() the
+      // fretboard render itself consumes (never a second, divergent notion
+      // of "what's on screen") plus the live sounding state:
+      //   - 'root' is ALWAYS included - a solo scale always has a root note,
+      //     sounding or not, the one class every fretboard render carries.
+      //   - 'chord'/'ghost'/'rub' only when computeTones() actually produced
+      //     that piece (an inert tap - e.g. a chord whose tones are already
+      //     ALL in-scale with no rub candidate - must not show a dead row).
+      //   - 'blue' only for the Blues scale (defaultTones()'s always-on b5).
+      //   - 'sounding' only while studioSound is actually playing right now.
+      function legendClassesFor(bundle, scaleId, isSounding) {
+        var classes = ['root'];
+        var tones = computeTones(bundle, scaleId);
+        if (tones) {
+          var hasChord = false;
+          for (var pc in tones.byPc) {
+            if (Object.prototype.hasOwnProperty.call(tones.byPc, pc) && tones.byPc[pc] === 'chord') { hasChord = true; break; }
+          }
+          if (hasChord) classes.push('chord');
+          if (tones.ghostPcs && tones.ghostPcs.length) classes.push('ghost');
+          if (tones.rubPc != null) classes.push('rub');
+        }
+        if (defaultTones(bundle)) classes.push('blue');
+        if (isSounding) classes.push('sounding');
+        return classes;
+      }
+      function renderLegend() {
+        if (!legendEl || !global.Legend) return;
+        var el = global.Legend.render(legendClassesFor(curBundle, curScaleId, !!studioSound));
+        legendEl.innerHTML = '';
+        if (el) legendEl.appendChild(el);
+      }
+      // M-TRACKLIB wave 1 (docs/plans/vision-ear-first-20260704.md): reverse-map
+      // the Circle-internal scaleMode word back to the raw major/minor/dorian/
+      // mixolydian/blues vocabulary repertoire-form.js's normFormMode() expects -
+      // mirrors how a real track's t.mode already reads elsewhere in this file
+      // (keyLabelFor). 'blues' has no MODES entry there either (same pre-existing
+      // gap the Studio's own "Or edit song details" button already has for a
+      // blues-keyed track) - normFormMode silently defaults it to 'major'.
+      var SCALEMODE_TO_FORMMODE = { ionian: 'major', aeolian: 'minor', dorian: 'dorian', mixolydian: 'mixolydian', blues: 'blues' };
+      // Renders the key-aware jam-discovery explore panel: genre chips x feel
+      // chips (both compose the shared .chip primitive - accent-fill .on, no new
+      // chip variant) under the CURRENT key (th.key - unaffected by scale-chip
+      // switching) + whichever solo-scale chip is active (scaleId, resolved via
+      // scaleKeyFor - same resolution renderGuide uses). Called on Studio open +
+      // every scale-chip select (mirrors renderGuide's own call sites), so the
+      // genre list and generated query are never stale for the on-screen scale.
+      // RESPECTS D-HERO-REMOVED: purely additive/static, no show/hide-on-filter,
+      // lives in the Studio only.
+      function renderJamPanel(scaleId) {
+        if (!jamPanel) return;
+        var JQ = global.JamQueries;
+        if (!JQ) { jamPanel.innerHTML = ''; return; }
+        var scaleKey = scaleKeyFor(scaleId, th.scaleMode);
+        var genres = JQ.genresFor(scaleKey);
+        if (!genres.length) { jamPanel.innerHTML = ''; return; }
+        // A genre carried over from a different scale's list (or the first-ever
+        // render) resets to that scale's own first genre - the list itself is
+        // scale-specific, so a stale selection would silently point at a genre
+        // the current scale never offered.
+        if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
+        var feelBands = JQ.feels();
+        var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
+        jamPanel.innerHTML =
+          '<div class="bt-st-jamchips" data-jamgenres>' + genres.map(function (g) {
+            return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
+          }).join('') + '</div>'
+          + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
+            return '<button class="chip' + (f.id === jamFeel ? ' on' : '') + '" data-jamfeel="' + esc(f.id) + '" type="button">' + esc(f.label) + '</button>';
+          }).join('') + '</div>'
+          + '<div class="bt-st-jamquery">' + esc(query) + '</div>'
+          + '<div class="bt-st-jamresult">'
+          // Leave-app external link (new tab, arrow glyph) - same convention as
+          // the "Watch on YouTube" / "Search YouTube" links above.
+          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(query)) + '" target="_blank" rel="noopener">Search YouTube &#8599;</a>'
+          // "Add to library" - only when the host wired onEditRequest (same guard
+          // the "Or edit song details" affordance uses). Opens the SAME prefilled
+          // create-form seam (songbook.js openEditOrAdd): an object with no .id
+          // always takes the create branch. Key + mode prefill through this seam
+          // today; genre is carried on the object for a future form-side pickup
+          // (repertoire-form.js's create item shape doesn't read it yet) - see
+          // the PR notes for the one-line follow-up.
+          + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
+          + '</div>';
+        Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
+          b.onclick = function () { jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+        });
+        Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
+          b.onclick = function () { jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
+        });
+        var jamAddBtn = jamPanel.querySelector('[data-jamadd]');
+        if (jamAddBtn) jamAddBtn.onclick = function () {
+          opts.onEditRequest({
+            key: th.key, mode: SCALEMODE_TO_FORMMODE[th.scaleMode] || 'major',
+            title: '', artist: '', genre: jamGenre, yt: null
+          });
+        };
+      }
+      // Chords-in-key tap toggles that chord as the fretboard's target (in addition
+      // to the existing play-on-tap behavior) - one target surface, per section 2.
+      // Re-tapping the active target clears it; tapping a different chord switches.
+      function toggleTarget(chordName, tileEl) {
+        activeTargetChord = (activeTargetChord === chordName) ? null : chordName;
+        // F19 (operator UAT 2026-07-05): chord tiles are now flat name-only
+        // chips (.bt-st-chordchip), not the old diagram-cell structure.
+        var cells = elPlayer.querySelectorAll('.bt-st-chordchip');
+        Array.prototype.forEach.call(cells, function (el) { el.classList.remove('targeted'); });
+        if (activeTargetChord) tileEl.classList.add('targeted');
+        renderLegend();
+        if (scaleBoxWrap && typeof scaleBoxWrap.setTones === 'function') scaleBoxWrap.setTones(computeTones(curBundle, curScaleId));
+      }
       // Whether this session's video is attachable determines the no-video hint
       // wording below, so compute the seed-track check up front.
       var isSeedTrack = state.seed.some(function (s) { return trackKey(s) === trackKey(t); });
-      // Iframe when a curated yt id is present; otherwise a tap-to-search card.
-      // The HUD (scale + chords + circle) stays in both cases - the harmony
-      // teacher is the point; the embedded player is convenience. The hint's
-      // attach instruction matches what's actually rendered: seed tracks have
-      // the paste editor below, custom items attach via Edit, and an ephemeral
-      // session (no editor at all) gets no attach instruction.
-      var attachHint = t.custom ? (opts.onEditRequest ? ' Attach one anytime via Edit below.' : '')
-        : isSeedTrack ? ' Paste the one you like below.'
-        : '';
-      // S5: a custom song built from a chord progression (t.seq) has no real
-      // artist/title to search by - enrich the query with its genre + chords
-      // instead of the bare (unhelpful) "My progression backing track" search.
-      var ytQuery = (t.custom && Array.isArray(t.seq) && t.seq.length) ? customSearchQuery(t) : searchQuery(t);
+      // F27 (operator UAT 2026-07-05): "paste yt url and add a video are
+      // redundant - use single button where yt button is now." canAttach is
+      // true whenever a direct-attach mechanism applies to this track (custom
+      // song wired for onSetVideo/onEditRequest, or a seed track) - the
+      // trigger's label/hint read "Add a video" in that case, state-aware
+      // like the has-video "Edit" precedent below. An ephemeral session with
+      // nothing to attach keeps the plain "Find a jam" discovery wording.
+      var canAttach = t.custom ? !!((opts.onSetVideo && t.id) || opts.onEditRequest) : isSeedTrack;
+      // F21 (operator UAT 2026-07-05): "the find a jam link can be moved -
+      // it's redundant with existing yt button - but with more user
+      // options." Consolidates the OLD standalone "Find a jam" solo-section
+      // disclosure (genre/feel-aware discovery, renderJamPanel below) with
+      // the stage's own video/search affordance - ONE entry point instead of
+      // two. No curated video yet: the old blind "Watch on YouTube" link
+      // (single fixed query from the track's own title/artist) becomes THIS
+      // toggle, same stage position/prominence (.bt-st-ytlink), now opening
+      // the richer genre+feel panel instead. A video is already curated: a
+      // smaller secondary "Find another jam" trigger (.bt-st-editlink, same
+      // convention as "Edit"/"Or edit song details") sits right under the
+      // iframe - discovery is still one tap away without a second big
+      // control competing with the video. Both wire to the SAME jamPanel
+      // (below); only the trigger's label/prominence differs by video state.
+      //
+      // F27: the no-video paste box (urlEditor, below) used to render
+      // permanently visible right under this trigger - two competing entry
+      // points for the same "get a video" goal. It now shares THIS toggle
+      // (wired via data-urled-gated further down) instead of standing apart,
+      // so there is one button, one disclosure, for both the direct-paste
+      // and the genre/feel-search paths.
+      var jamPanelHtml = '<div class="bt-st-why" data-jampanel hidden></div>';
+      var noVideoLabel = canAttach ? 'Add a video &#8599;' : 'Find a jam &#8599;';
+      var noVideoHint = canAttach
+        ? 'No curated video yet - tap Add a video to paste a link or find one by genre and feel.'
+        : 'No curated video yet - pick a genre and feel below to find a backing track. The HUD below works either way.';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+          + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
+          + jamPanelHtml
         : '<div class="bt-st-search">'
-          + '<a class="bt-st-ytlink" href="' + esc(youtubeSearchUrl(ytQuery)) + '" target="_blank" rel="noopener">'
-          + 'Watch on YouTube &#8599;</a>'
-          + '<div class="bt-st-search-hint">No curated video yet - opens a YouTube search for the best current match.' + attachHint + ' The HUD below works either way.</div>'
-          + '</div>';
+          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
+          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
+          + '</div>'
+          + jamPanelHtml;
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -526,13 +1176,20 @@
       // callback is wired (graceful degrade). A seed track keeps the trackUrl-overlay
       // editor; an ephemeral session (no id/onSetVideo) gets nothing (a pasted url
       // would have nothing to attach to).
+      //
+      // F27 (operator UAT 2026-07-05): the NO-video variants below are marked
+      // data-urled-gated + hidden (instead of the always-visible data-urled
+      // the HAS-video variants keep) - they're wired to open/close together
+      // with jamFindToggle/jamPanel above, not shown unconditionally. Managing
+      // an EXISTING curated video (Edit / Curated video URL) is a different
+      // job from finding one, so those stay always-visible, untouched.
       var urlEditor = t.custom
         ? (t.yt
           ? (opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit</button></div>'
             : '')
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
-            ? '<div class="bt-st-urled" data-urled>'
+            ? '<div class="bt-st-urled" data-urled-gated hidden>'
               + ((opts.onSetVideo && t.id)
                 ? '<div class="bt-st-urled-lbl">Add the video you found</div>'
                   + '<div class="bt-st-urled-row">'
@@ -544,7 +1201,7 @@
               + '</div>'
             : ''))
         : (isSeedTrack
-          ? '<div class="bt-st-urled" data-urled>'
+          ? '<div class="bt-st-urled"' + (t.yt ? ' data-urled' : ' data-urled-gated hidden') + '>'
             + '<div class="bt-st-urled-lbl">' + (t.yt ? 'Curated video URL' : 'Add a video URL') + '</div>'
             + '<div class="bt-st-urled-row">'
             + '<input data-urlin class="bt-in" placeholder="Paste a YouTube URL" autocomplete="off" inputmode="url">'
@@ -556,12 +1213,18 @@
       // the left pane in the landscape two-pane split (CSS). Practice content
       // (scale, chords) leads the scrollable body; the url-curation editor sits
       // last, just above the "why" toggle - plumbing after the practice.
+      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (matches
+      // the song view's #backLib "iconBtn ←", leading the header, not a trailing
+      // "close" text pill) - "the Solo Studio close beats against brand standards
+      // - we have a back button and we're looking at the song view." Same
+      // NavHistory.dismiss()/closePlayer() wiring as before, just retargeted to
+      // the new .bt-st-back selector below (bt-st-x removed - see tracks.css).
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-head"><div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div>'
-        + '<button class="bt-st-x" type="button">close</button></div>'
+        + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
+        + '<span class="bt-st-meta">' + meta + '</span></div></div>'
         + playerBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
         // return to a videoless track the "add a video" control is immediately at
@@ -569,46 +1232,429 @@
         + urlEditor
         + '</div>'
         + '<div class="bt-st-body">'
+        // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
+        // (primary, 44px, was a 32px .soundToggle lost among the label text),
+        // Speed (one compact cycling button, replaces the 3-button Slow/Med/
+        // Fast segmented control), and Guide (a `?` icon, replaces the
+        // "Guide" text toggle - its content moves below the fretboard, see
+        // data-guide further down, F18). Sits at the TOP of the solo
+        // section, ahead of the notes line, so it reads as the section's
+        // primary controls rather than one more inline label decoration.
+        + '<div class="bt-st-sec"><div class="bt-st-ctrlrow" data-ctrlrow>'
+        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
+        + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
+        + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        + '</div>'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
-        + '<div class="bt-st-sec"><div class="bt-st-lbl">Solo over it - <span class="bt-st-notes">' + esc(th.notes.join(' ')) + '</span></div>'
+        // F14 (operator UAT 2026-07-05): this is the ONE notes rendering in
+        // the section now - the separate scale-degrees line underneath it
+        // (redundant second notes-shaped row) was removed.
+        + '<div class="bt-st-lbl">Solo over it - <span class="bt-st-notes" data-solonotes>' + renderNoteTokens(th.notes) + '</span></div>'
+        // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
+        // Solo layer only - swapping a chip here never touches chords-in-key below.
+        + '<div class="bt-st-scalechips" data-scalechips></div>'
+        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
+        // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
+        // retired - the fretboard always spans frets 0-12 now (see
+        // scaleRenderOpts above), so there is nothing left to toggle.
         + '<div class="bt-st-scale" data-scale></div>'
-        + '<a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Walk the full cycle up the neck →</a></div>'
+        // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js) - dot-
+        // swatch + label rows. No wrapping class/hidden attr needed: an empty
+        // container (Legend.render() returned null) is already invisible,
+        // and Legend.render()'s own returned element carries its own
+        // `.legend` styling.
+        + '<div data-legend></div>'
+        // M-GUIDE W3a, relocated (F18, operator UAT 2026-07-05): the per-
+        // scale mentor card (SoloGuide) used to sit ABOVE the fretboard,
+        // right after the scale chips, competing with the primary practice
+        // flow for attention. It now renders BELOW the fretboard + legend,
+        // collapsed by default, opened via the `?` icon in the controls row
+        // above (not a one-shot Notable dismiss - the card content is scale-
+        // dependent and re-derives on every chip switch, so a permanent
+        // dismiss would hide a genuinely reusable re-orientation aid; the `?`
+        // itself is the cheap re-open affordance).
+        + '<div class="bt-st-why" data-guide hidden></div>'
+        + '</div>'
+        // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
+        // + roman numeral - name-only chips (like the scale-chip row above),
+        // all 7 fit ONE row at 412px. Tap still plays + targets the fretboard
+        // (toggleTarget, unchanged) - only the visual weight changed, not the
+        // interaction. Rendered by renderChordChips() (below), not
+        // KeyExplorer.renderChords (that helper's cell+diagram+roman shape
+        // no longer fits; Compose's own use of renderChords is untouched).
         + '<div class="bt-st-sec"><div class="bt-st-lbl">Chords in this key - tap to hear</div>'
         + '<div class="bt-st-chords" data-chords></div></div>'
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes - the circle</button>'
+        // m-guide-ia-20260704.md section 5 chrome-trim (4): the "walk the cycle" link
+        // and the "why these notes" toggle merge onto one row (.bt-st-linkrow) instead
+        // of each owning its own row - saves vertical space in the scrollable body.
+        // U4 (operator UAT 2026-07-04): shortened from "Walk the full cycle up
+        // the neck →" / "Why these notes - the circle" - the long labels wrapped
+        // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
+        // just tighter so both fit on one line side by side.
+        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a>'
+        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes?</button></div>'
         + '<div class="bt-st-why" data-why hidden></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
+      // above in the template string, so they exist as soon as
+      // elPlayer.innerHTML lands) - guideToggle now lives in the controls
+      // row, guideBox now renders below the fretboard/legend.
+      var guideToggle = elPlayer.querySelector('[data-guidetoggle]'), guideBox = elPlayer.querySelector('[data-guide]');
+      // M-EAR wave 1.6 (U16): the Legend container ref (replaces the old
+      // target-caption ref).
+      var legendEl = elPlayer.querySelector('[data-legend]');
+      // F21: the jam-discovery trigger + panel, now consolidated with the
+      // stage's video/search affordance (see jamPanelHtml, above) - jamPanel
+      // itself is unchanged (still driven by renderJamPanel()), only its
+      // trigger's location/label moved.
+      var jamFindToggle = elPlayer.querySelector('[data-jamfindtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
+      // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
+      // line it bounces a marker across (curBundle already tracks whichever
+      // scale-chip is active - see the M-GUIDE W3a comment above).
+      var soundToggleEl = elPlayer.querySelector('[data-soundtoggle]');
+      var notesLineEl = elPlayer.querySelector('[data-solonotes]');
+      // M-EAR wave 1.5 (U12): clearSoundMarks/markSoundingNote now ALSO drive
+      // the fretboard highlight via scaleBoxWrap.setSounding(pc) - a class-swap
+      // over already-rendered dots (key-explorer.js), never a re-render. Reads
+      // scaleBoxWrap LIVE (not captured) so it always targets whichever
+      // fretboard is on-screen right now (a chip switch or the Window|Full-neck
+      // toggle both replace scaleBoxWrap via renderFretboard()).
+      // F14: only the notes line remains (the degrees line it used to share
+      // this marker-bounce with was removed) - a single element, not an array.
+      function clearSoundMarks() {
+        if (notesLineEl) {
+          Array.prototype.forEach.call(notesLineEl.querySelectorAll('.sounding'), function (el) { el.classList.remove('sounding'); });
+        }
+        if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(null);
+        markWheelPc(null);
+      }
+      function markSoundingNote(i, pc) {
+        var el = notesLineEl && notesLineEl.querySelector('[data-i="' + i + '"]');
+        if (el) el.classList.add('sounding');
+        if (scaleBoxWrap && typeof scaleBoxWrap.setSounding === 'function') scaleBoxWrap.setSounding(pc);
+        markWheelPc(pc);
+      }
+      // S-COF-ANIMATE (operator UAT 2026-07-10): the "why these notes" COF
+      // pulses the OUTER wedge at the sounding note's pc while the scale
+      // audition plays - a major scale is 7 ADJACENT fifths-wedges, so the
+      // audition visibly walks the key's neighborhood on the wheel (the
+      // teaching moment the static tint can't show). Structural addressing
+      // via renderWheel's data-pc/data-ring (never label text); guarded null
+      // if the Why panel was never opened (wheel lazily built) or a cached
+      // circle.js predates data-pc. Class-swap only, no re-render - same
+      // discipline as setSounding on the fretboard.
+      function markWheelPc(pc) {
+        var wheelEl = elPlayer.querySelector('.bt-st-wheel');
+        if (!wheelEl) return;
+        Array.prototype.forEach.call(wheelEl.querySelectorAll('.cofWedge-sound'), function (w) { w.classList.remove('cofWedge-sound'); });
+        if (pc == null) return;
+        var wedge = wheelEl.querySelector('.cofWedge[data-pc="' + (((pc % 12) + 12) % 12) + '"][data-ring="major"]');
+        if (wedge) wedge.classList.add('cofWedge-sound');
+      }
+      function setSoundToggle(on) {
+        if (!soundToggleEl) return;
+        soundToggleEl.classList.toggle('on', on);
+        soundToggleEl.setAttribute('aria-pressed', on ? 'true' : 'false');
+        soundToggleEl.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
+        soundToggleEl.innerHTML = on ? '&#9632;' : '&#9658;';
+      }
+      // Studio close (closePlayer, above) still stops outright (implementation
+      // note #3, M-EAR wave 1 spec). A scale-chip switch WHILE playing no
+      // longer routes through here (M-EAR wave 1.5, U11) - it retargets the
+      // live loop instead; stopStudioSound() remains the ONE place a genuine
+      // stop happens (second tap on the toggle, or Studio close).
+      function stopStudioSound() {
+        if (studioSound) { studioSound.stop(); studioSound = null; }
+        setSoundToggle(false);
+        clearSoundMarks();
+      }
+      if (soundToggleEl) {
+        soundToggleEl.onclick = function () {
+          if (studioSound) { stopStudioSound(); return; }
+          if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
+          setSoundToggle(true);
+          studioSound = global.Sound.playScale(curBundle.pcs, {
+            // M-EAR wave 1.6 (U14): the currently-selected tempo control
+            // value - live tempo changes route through studioSound.setTempo()
+            // (the tempo toggle's own onclick, below), not a re-call here.
+            bpm: TEMPO_BPM[tempo],
+            // F17: continuous two-octave run with a dwell on every root hit,
+            // instead of stopping/restarting each single-octave pass.
+            octaves: SOLO_OCTAVES,
+            rootDwell: ROOT_DWELL,
+            // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
+            // a value captured at play-start - after a chip-switch retarget,
+            // curBundle already points at the NEW bundle (select() updates it
+            // before calling retarget()), so the marker + fretboard light
+            // always match whichever scale is actually sounding right now,
+            // even across a differing note count (e.g. 7-note mode -> 5-note
+            // pentatonic).
+            onNote: function (i) {
+              var len = curBundle.pcs.length, idx = i % len;
+              clearSoundMarks();
+              markSoundingNote(idx, curBundle.pcs[idx]);
+            },
+            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
+          });
+          // U16: the 'sounding' legend row joins/leaves as playback starts/stops
+          // (onStop above handles the leaving half).
+          renderLegend();
+        };
+      }
+      // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
+      // content it explains - built via the shared Notables banner (same
+      // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
+      // whynoteBanner(th) already folds in the claim() check + show-once/priority
+      // arbitration; a null return (dismissed forever, or preempted by a
+      // higher-priority notable) skips silently, per the notables.js contract.
+      //
+      // M-GUIDANCE UAT fix (2026-07-05, operator: "I couldn't dismiss the
+      // guidance on Solo studio... went back, chose solo over -> skip and
+      // it's gone"): whynote's x correctly called Notables.dismiss('whynote')
+      // (persisted - a fresh Studio open never re-shows it), but this call
+      // site never wired opts.onDismiss, so the tap looked broken - the
+      // banner element stayed on screen until the NEXT Studio open, which
+      // read as "can't dismiss it" even though the dismissal WAS permanent.
+      // Both wnOpts and stOpts now get an onDismiss that removes their own
+      // element immediately, same as every other auto-appearing Notables
+      // consumer in this app (firstrun/diagrampref/backup all already do
+      // this - whynote/scaletip are auto-appearing guidance exactly like
+      // them, so they get the same one-tap-gone-for-good affordance). The
+      // on-demand '?' SoloGuide card (data-guide, above) is deliberately
+      // UNCHANGED by this fix - it is a manual collapse/expand toggle the
+      // user opens themselves, never auto-shown, so it is not "unbidden"
+      // guidance and does not need a dismiss-forever affordance (see its own
+      // comment above, "not a one-shot Notable dismiss").
+      try {
+        var wnOpts = whynoteBanner(th);
+        if (wnOpts) wnOpts.onDismiss = function () { if (wnEl && wnEl.parentNode) wnEl.parentNode.removeChild(wnEl); };
+        var wnEl = wnOpts ? notablesRef().renderBanner(wnOpts) : null;
+        var wnBody = wnEl && elPlayer.querySelector('.bt-st-body');
+        if (wnBody) wnBody.insertBefore(wnEl, wnBody.firstChild);
+        // M-GUIDANCE (advanced tier): same insertion shape as whynote above -
+        // only one of the two can ever actually render (they compete for the
+        // SAME Notables slot; scaletip is lower priority, so it only wins once
+        // whynote has been dismissed or is level-ineligible for this profile).
+        var stOpts = scaletipBanner(th);
+        if (stOpts) stOpts.onDismiss = function () { if (stEl && stEl.parentNode) stEl.parentNode.removeChild(stEl); };
+        var stEl = stOpts ? notablesRef().renderBanner(stOpts) : null;
+        var stBody = stEl && elPlayer.querySelector('.bt-st-body');
+        if (stBody) stBody.insertBefore(stEl, stBody.firstChild);
+        // S-PERSONA-COPY: the beginner orientation tip - same slot, same shape;
+        // it can never contest whynote/scaletip (disjoint LEVELS gates).
+        var sfOpts = studioFirstBanner();
+        if (sfOpts) sfOpts.onDismiss = function () { if (sfEl && sfEl.parentNode) sfEl.parentNode.removeChild(sfEl); };
+        var sfEl = sfOpts ? notablesRef().renderBanner(sfOpts) : null;
+        var sfBody = sfEl && elPlayer.querySelector('.bt-st-body');
+        if (sfBody) sfBody.insertBefore(sfEl, sfBody.firstChild);
+      } catch (e) {}
       // scale + chords via the shared KeyExplorer (also used by the Compose tab). Read-only
       // here: tap = hear, never add. The studio supplies its own labels + boxes, so the
       // chord render runs unwrapped into [data-chords] with the studio's cell class.
-      try {
-        // Fretboard spelling: map each scale pitch-class to the note name the scale
-        // carries (canonical sharps post-FORK-4: A#, not Bb, in F major) so the dots
-        // match the "Solo over it" list above, whatever names th.notes holds.
-        var nameByPc = [];
-        th.notes.forEach(function (nm, i) { nameByPc[th.pcs[i]] = nm; });
-        global.KeyExplorer.renderScale(elPlayer.querySelector('[data-scale]'), pack, th.rootPc, th.pcs, { frets: 7, names: nameByPc });
-      } catch (e) {}
-      global.KeyExplorer.renderChords(elPlayer.querySelector('[data-chords]'), th.chords, {
-        wrap: false,
-        cellClass: 'bt-st-chordcell',
-        diagram: function (name, size) {
-          var d;
-          try { d = pack.diagram(name, size); } catch (e) { return null; } // skip a chord the pack can't draw
-          d.className += ' bt-st-chip';
-          return d;
-        },
-        onTap: function (c, d) {
-          try { pack.playChord(c); } catch (e) {}
-          d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
+      // Fretboard spelling: renderFretboard() maps each scale pitch-class to the
+      // note name the scale carries (canonical sharps post-FORK-4: A#, not Bb, in
+      // F major) so the dots match the "Solo over it" list above, whatever names
+      // th.notes holds - th itself is the 'mode' bundle (curBundle's initial value).
+      renderFretboard(th, 'mode');
+      // M-EAR wave 1.6 (U16): initial legend render - 'mode' bundle, nothing
+      // sounding yet (matches the fresh-open state renderFretboard(th,'mode')
+      // just produced above).
+      renderLegend();
+      // F13 (operator UAT 2026-07-05): the Speed control wiring - one
+      // cycling button (slow -> med -> fast -> slow) replacing the old
+      // 3-button Slow/Med/Fast segmented control. A tap while playing calls
+      // studioSound.setTempo() (live boundary application, no re-tap/click/
+      // gap, same as before); a tap while stopped just persists the choice
+      // for the NEXT play tap to pick up (playScale's opts.bpm, above).
+      var speedBtn = elPlayer.querySelector('[data-speedtoggle]');
+      if (speedBtn) {
+        speedBtn.onclick = function () {
+          var i = TEMPO_ORDER.indexOf(tempo);
+          tempo = TEMPO_ORDER[(i + 1) % TEMPO_ORDER.length];
+          writeTempo(tempo);
+          speedBtn.textContent = TEMPO_LABEL[tempo];
+          if (studioSound && typeof studioSound.setTempo === 'function') studioSound.setTempo(TEMPO_BPM[tempo]);
+        };
+      }
+      // M-GUIDE W3a: default Guide card is the "mode" bundle (th itself).
+      renderGuide(th.scaleMode, th.notes);
+      // M-TRACKLIB wave 1: default jam-discovery panel is the "mode" bundle too.
+      renderJamPanel('mode');
+      // S-BLUES: the scale-chip row - [Mode label | Pent major | Pent minor |
+      // Blues]. Default = 'mode' (th itself; the fretboard/notes already
+      // rendered above are its output, so no re-render on open). A tap
+      // re-derives ONLY the solo bundle (notes line, framing caption,
+      // fretboard) via soloBundle() - chords-in-key (already rendered below),
+      // buildWhy, and whynote all stay keyed to `th`, untouched by any chip.
+      (function wireScaleChips() {
+        var chipsEl = elPlayer.querySelector('[data-scalechips]');
+        var frameEl = elPlayer.querySelector('[data-scaleframe]');
+        if (!chipsEl) return;
+        var C = circleRef();
+        var isBluesKey = (th.scaleMode === 'blues');
+        var famInfo = (C && C.modeInfo) ? C.modeInfo(th.scaleMode) : null;
+        var keyFam = famInfo ? famInfo.family : null;
+        var CHIPS = [
+          { id: 'mode', label: th.label },
+          { id: 'pentMajor', label: 'Pent major' },
+          { id: 'pentMinor', label: 'Pent minor' }
+        ];
+        // S-SOLO-MODES (music-theory-coach, 2026-07-10): surface the two common non-diatonic
+        // MODE colors as context chips, deduped against the key's own mode (if the key IS
+        // mixolydian/dorian its 'mode' chip already IS that scale). Mixolydian only over a
+        // MAJOR-family key (its major 3rd clashes a minor tonic); Dorian over either family
+        // (the raised-6 brightening). Neither on a Blues key (its own scale is blues).
+        if (!isBluesKey) {
+          if (keyFam === 'major' && th.scaleMode !== 'mixolydian') CHIPS.push({ id: 'mixolydian', label: 'Mixolydian' });
+          if (th.scaleMode !== 'dorian') CHIPS.push({ id: 'dorian', label: 'Dorian' });
         }
-      });
+        CHIPS.push({ id: 'blues', label: 'Blues' });
+        // M-GUIDE W2: when the mode chip ITSELF is already Blues (th.scaleMode ===
+        // 'blues'), the standalone 'blues' chip would just re-select the same
+        // bundle under a redundant second button - drop it.
+        if (isBluesKey) CHIPS = CHIPS.filter(function (c) { return c.id !== 'blues'; });
+        // S-SOLO-SCALE-DEFAULT (music-theory-coach, 2026-07-10): pre-select the theory-best
+        // solo scale for the incoming key AND the actual progression shape (see
+        // inferSoloDefault). Guard the result to a chip actually offered for this key, so a
+        // deduped mode (e.g. inference returns 'mixolydian' on an already-mixolydian key)
+        // falls back to a real chip rather than highlighting nothing.
+        // G6 S-SCALE-MEMORY (2026-07-10): chipIds now computed BEFORE curId so a
+        // remembered choice can be validated against the actually-offered chips for
+        // THIS key before falling back to inferSoloDefault - a remembered scaleId
+        // that's no longer offered (e.g. the key's own mode changed) still falls
+        // through to inference exactly like an inference-produced mismatch does below.
+        var chipIds = CHIPS.map(function (c) { return c.id; });
+        var storedScaleId = readSoloScaleFor(t);
+        var curId = (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
+          ? storedScaleId
+          : inferSoloDefault(t.key, t.mode, t.seq);
+        if (chipIds.indexOf(curId) < 0) {
+          curId = chipIds.indexOf('pentMajor') >= 0 ? 'pentMajor'
+            : chipIds.indexOf('pentMinor') >= 0 ? 'pentMinor' : 'mode';
+        }
+        function render() {
+          chipsEl.innerHTML = CHIPS.map(function (c) {
+            return '<button class="bt-st-scalechip' + (curId === c.id ? ' on' : '') + '" data-scaleid="' + esc(c.id) + '" type="button">'
+              + esc(c.label) + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(chipsEl.querySelectorAll('.bt-st-scalechip'), function (b) {
+            // G6: a chip TAP persists the choice (persist=true); the synthetic
+            // select() call below (the initial default landing) passes no 2nd
+            // arg, so opening the Studio never writes an inferred default as if
+            // it were a deliberate pick.
+            b.onclick = function () { select(b.getAttribute('data-scaleid'), true); };
+          });
+        }
+        function select(scaleId, persist) {
+          var bundle = soloBundle(t.key, t.mode, scaleId);
+          if (!bundle) return;
+          // M-EAR wave 1.5 (U11): a scale-chip switch WHILE auditioning
+          // retargets the live loop at the next note boundary instead of
+          // stopping - keeps playing, no re-tap, a seamless A/B compare of
+          // scales. When nothing is playing, stopStudioSound() stays a
+          // harmless idempotent reset (same behavior as pre-U11).
+          var wasPlaying = !!studioSound;
+          if (!wasPlaying) stopStudioSound();
+          curId = scaleId;
+          if (persist) writeSoloScaleFor(t, scaleId);
+          render();
+          if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
+          // G5 S-WHYNOTE-SCALE: the whynote banner (if it won its slot and is
+          // still on-screen) re-derives its TEXT for the now-selected scale -
+          // same element, same dismiss wiring, just a textContent swap on the
+          // existing .notableBanner-body node (never a re-render/re-claim).
+          // wnEl closes over openStudio's scope (var-hoisted); it is null when
+          // the banner never rendered (dismissed forever, level-ineligible, or
+          // preempted by a higher-priority notable) - guarded below.
+          if (wnEl) {
+            var wnBodyEl = wnEl.querySelector('.notableBanner-body');
+            if (wnBodyEl) wnBodyEl.textContent = whynoteScaleText(th.key, scaleId, th.scaleMode, th.label);
+          }
+          var info = (scaleId !== 'mode' && C) ? C.soloScaleInfo(scaleId) : null;
+          var SG = soloGuideRef();
+          // S-REL-NAMES (U23): th.key names any {relMinor}/{relMajor} token in
+          // the framing text (e.g. pentMajor's "same shape as {relMinor} pent").
+          var framing = (info && SG) ? SG.framing(scaleId, info.family, th.key) : null;
+          if (framing) { frameEl.textContent = framing; frameEl.hidden = false; }
+          else { frameEl.textContent = ''; frameEl.hidden = true; }
+          // M-GUIDE W3a: re-apply the active target (if any) against the NEW bundle,
+          // and re-derive the Guide card for whichever solo scale is now on-screen.
+          curBundle = bundle; curScaleId = scaleId;
+          renderGuide(scaleKeyFor(scaleId, th.scaleMode), bundle.notes);
+          // M-TRACKLIB wave 1: the jam-discovery panel is scale-context-reactive
+          // too - a chip switch re-derives its genre list + query LIVE (the spec's
+          // own words), never a show/hide of the panel itself (D-HERO-REMOVED).
+          renderJamPanel(scaleId);
+          // renderFretboard() is the ONE fretboard render choke point - the
+          // initial render and every chip switch both call it.
+          renderFretboard(bundle, scaleId);
+          // M-EAR wave 1.6 (U16): re-derive the legend for the NEW bundle -
+          // unlike the old target caption (whose text never varied by scale,
+          // only by activeTargetChord + the invariant keyLabelPlain), the
+          // legend's chord/ghost/rub rows DO vary per bundle (a target
+          // chord's tones can be in-scale for one scale-chip and a ghost for
+          // another), so this call is required here, not just at open/toggle.
+          renderLegend();
+          // Retarget AFTER curBundle/renderFretboard land, so the very next
+          // onNote tick (which reads curBundle + scaleBoxWrap live) already
+          // matches the NEW scale/fretboard the instant it fires.
+          if (wasPlaying && studioSound) studioSound.retarget(bundle.pcs);
+        }
+        // S-SOLO-SCALE-DEFAULT: when the theory-best default is a pentatonic (not
+        // 'mode'), do a full select() so the fretboard/notes/guide render that scale
+        // too - not just the chip highlight. 'mode'/blues keep the already-rendered
+        // fretboard (line ~1289 renderFretboard(th,'mode')), so a bare render() there.
+        if (curId !== 'mode') select(curId); else render();
+      })();
+      // F19 (operator UAT 2026-07-05): name-only chip row - no chord
+      // diagrams, no roman numerals ("like others", e.g. the scale-chip row
+      // above). Hand-rolled instead of KeyExplorer.renderChords: that
+      // helper's cell+diagram+roman shape doesn't fit a flat chip; Compose's
+      // OWN use of renderChords (songbook.js) is untouched. Tap still plays
+      // the chord (pack.playChord) AND toggles the fretboard chord-tone
+      // target (toggleTarget) - only the visual weight changed.
+      (function renderChordChips() {
+        var chordsEl = elPlayer.querySelector('[data-chords]');
+        if (!chordsEl || !th.chords) return;
+        chordsEl.innerHTML = th.chords.map(function (it) {
+          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
+        }).join('');
+        Array.prototype.forEach.call(chordsEl.querySelectorAll('.bt-st-chordchip'), function (d, idx) {
+          var c = th.chords[idx].chord;
+          d.onclick = function () {
+            try { pack.playChord(c); } catch (e) {}
+            d.classList.add('sel'); setTimeout(function () { d.classList.remove('sel'); }, 220);
+            // M-GUIDE W3a (section 2): one target surface - tap toggles the fretboard
+            // chord-tone target in addition to the existing play behavior.
+            toggleTarget(c, d);
+          };
+        });
+      })();
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {
         var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
         if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
+      };
+      if (guideToggle && guideBox) guideToggle.onclick = function () {
+        var show = guideBox.hidden; guideBox.hidden = !show;
+        guideToggle.classList.toggle('on', show);
+        guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+      };
+      // F21: same disclosure toggle behavior the old solo-section "Find a
+      // jam" button used - collapsed by default, per-open state only (no
+      // persistence) - just relocated to the stage (see jamPanelHtml, above).
+      // F27 (operator UAT 2026-07-05): the same tap now ALSO reveals the
+      // direct-paste box (data-urled-gated) when one applies to this track -
+      // one button, one disclosure, instead of a permanently-visible paste
+      // box competing with this trigger for the same "get a video" goal.
+      var gatedUrled = elPlayer.querySelector('[data-urled-gated]');
+      if (jamFindToggle && jamPanel) jamFindToggle.onclick = function () {
+        var show = jamPanel.hidden;
+        jamPanel.hidden = !show;
+        jamFindToggle.classList.toggle('on', show);
+        if (gatedUrled) gatedUrled.hidden = !show;
       };
       // URL editor: paste -> validate -> overlay -> reopen studio so the iframe shows.
       var urlIn = elPlayer.querySelector('[data-urlin]'),
@@ -649,7 +1695,7 @@
         var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
-      elPlayer.querySelector('.bt-st-x').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
+      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
       if (window.NavHistory) window.NavHistory.open('studio', closePlayer);
     }
 
@@ -793,7 +1839,9 @@
       if (!state.key) { elPanel.innerHTML = ''; return; }
       var C = global.Circle, label = C.modeInfo(state.scaleMode).label;
       var dia = C.diatonic(state.key, state.scaleMode), nb = C.neighbors(state.key, state.mode);
-      var notes = C.scale(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      // FORK-4 removal: panel note strip + chord labels render key-aware names
+      var notes = (C.scaleInKey ? C.scaleInKey : C.scale)(state.key, state.scaleMode), degs = C.scaleDegrees(state.scaleMode);
+      dia = dia.map(function (d) { return { roman: d.roman, chord: dispChord(d.chord, state.key, state.scaleMode), root: d.root, quality: d.quality }; });
       var changed = {}; C.modeChange(state.key, state.scaleMode).forEach(function (c) { changed[c.degree] = true; });
       var modeChips = MODE_ORDER.map(function (m) {
         return '<button class="cofModeChip' + (state.scaleMode === m ? ' on' : '') + '" data-mode="' + esc(m) + '">'
@@ -964,6 +2012,28 @@
     trackKey: trackKey, applyUrlOverlay: applyUrlOverlay,
     notesToPcs: notesToPcs, normMode: normMode, resolveScaleMode: resolveScaleMode,
     studioTheory: studioTheory, migrateUrls: migrateUrls, keyLabelFor: keyLabelFor, mount: mount,
+    whynoteText: whynoteText, whynoteBanner: whynoteBanner,
+    // G5 S-WHYNOTE-SCALE: re-derives the whynote copy for a tapped scale chip.
+    whynoteScaleText: whynoteScaleText,
+    // M-GUIDANCE (advanced tier): scaletipText/scaletipBanner mirror
+    // whynoteText/whynoteBanner's export shape exactly.
+    scaletipText: scaletipText, scaletipBanner: scaletipBanner,
+    // S-PERSONA-COPY: beginner Studio orientation tip - same export shape.
+    studioFirstText: studioFirstText, studioFirstBanner: studioFirstBanner,
+    // S-BLUES: solo-layer-only scale-chip swap (see the block above studioTheory).
+    soloBundle: soloBundle,
+    // S-SOLO-SCALE-DEFAULT: progression-aware theory-best default scale (key+mode+seq ->
+    // scaleId). Exported for direct unit tests independent of the Studio DOM.
+    inferSoloDefault: inferSoloDefault,
+    // G6 S-SCALE-MEMORY: per-track solo-scale chip persistence (trackKey -> scaleId).
+    readSoloScaleFor: readSoloScaleFor, writeSoloScaleFor: writeSoloScaleFor,
+    // S-BLUES-BOXES: which scale-chip selections are box-eligible (pentMajor/
+    // pentMinor/blues) - exported for direct unit tests independent of the
+    // Studio DOM wiring (mirrors the soloBundle export above it).
+    boxScaleIdFor: boxScaleIdFor,
+    // M-GUIDE W3a (section 2): chord-tone targeting - pure pc classifiers,
+    // exported for direct unit tests independent of the Studio DOM wiring.
+    targetTones: targetTones, defaultTones: defaultTones,
     // P3 seed: { [trackKey]: [{ id, label, note }] } - candidate videos surfaced
     // as tap-to-load suggestions in the curation queue. Populated by candidates.js
     // (loaded after tracks.js); empty when absent. Suggestions only - never applied

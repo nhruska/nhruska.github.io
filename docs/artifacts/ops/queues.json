@@ -1,0 +1,117 @@
+{
+  "updated": "2026-07-11T00:15:00Z",
+  "note": "The operator decision queues. The four queues are the SYSTEM's taxonomy; the operator's surface is ONE merged stream ordered by priority (the panel's 'Your turn' view). Every item carries: priority (0-100), form (how input is gathered: tap | digit | burst | interview), ask (the one line of what is needed). Peel from the top.",
+  "priority_model": "engagement momentum (what the operator is mid-flow on) > one-tap quick wins > direction unblocks > taste passes > design nits. Rescored on every operator return.",
+  "queues": {
+    "taste_review": {
+      "label": "Taste review",
+      "desc": "Shipped + preview-ready work awaiting the operator's feel pass.",
+      "items": [
+        {
+          "id": "TR-4",
+          "priority": 88,
+          "form": "tap",
+          "ask": "Calluses is IN THE APP (v136) - open the Library, play YOUR song over its own progressions, burst on what the fingers say",
+          "title": "Play 'Calluses' - first operator-authored catalog song",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/sdd-pilot-friction-20260710.md",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-6",
+          "priority": 74,
+          "form": "tap",
+          "ask": "Your three UAT bursts fixed on one preview: key names read Db/Eb/Ab/Bb in EVERY selector (pick Bb - every layer says Bb), delete-x dead-centered. Tap and burst",
+          "title": "S-KEYPICKER-PREFERRED + delete-handle centering feel pass (v142 branch)",
+          "url": "https://raw.githack.com/nhruska/nhruska.github.io/claude/keypicker-preferred-names/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/tree/claude/keypicker-preferred-names",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-5",
+          "priority": 70,
+          "form": "tap",
+          "ask": "G5+G6 live (v139): open a Studio, tap scale chips - the 'Why ... works' banner follows your chip; reopen the track and your choice is remembered. Burst on the per-scale copy",
+          "title": "Whynote-per-scale copy + scale memory feel pass",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/220",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-7",
+          "priority": 68,
+          "form": "tap",
+          "ask": "Triads page: chips + cycle agree everywhere (Db chip opens Db major, F's IV = Bb); COF branch adds the wheel walking the key neighborhood while the scale plays + printed-COF names",
+          "title": "Triads spelling (v140 branch) + COF animate/spelling (v141 branch) feel pass",
+          "url": "https://raw.githack.com/nhruska/nhruska.github.io/claude/triads-key-spelling/music/play/triad-inversions.html?key=F",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/tree/claude/cof-animate-spelling",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-1",
+          "priority": 62,
+          "form": "tap",
+          "ask": "Play the beginner journey once (cue -> Solo -> modal -> Studio tip) and the C-F-Bb spelling - one open of the live app covers both",
+          "title": "G1+G2 beginner journey + key-aware spelling feel pass",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/204",
+          "added": "2026-07-10"
+        },
+        {
+          "id": "TR-2",
+          "priority": 45,
+          "form": "tap",
+          "ask": "Folds into TR-1's app open - only stays listed until you confirm Bb/Eb read right on YOUR progressions",
+          "title": "Key-aware spelling on your real progressions",
+          "url": "https://nhruska.github.io/music/play/",
+          "evidence": "https://github.com/nhruska/nhruska.github.io/pull/199",
+          "added": "2026-07-10"
+        }
+      ]
+    },
+    "planning_approval": {
+      "label": "Planning approval",
+      "desc": "Go/no-go and re-rank decisions. One digit or one word each.",
+      "items": []
+    },
+    "design_review": {
+      "label": "Design review",
+      "desc": "Design calls parked for operator eyes when the SME bench + recorded taste could not resolve alone.",
+      "items": []
+    },
+    "interview": {
+      "label": "Interview",
+      "desc": "Open question sets. Answering ANY subset unblocks - the rest become cited assumed answers.",
+      "items": [
+        {
+          "id": "IV-1",
+          "priority": 48,
+          "form": "interview",
+          "ask": "30-min sitting when you want the M3 songs/tracks merge to go launch-ready",
+          "title": "S2 (M3 songs/tracks full merge) spec-formalize",
+          "url": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md",
+          "added": "2026-07-10"
+        }
+      ]
+    }
+  },
+  "retired": [
+    {
+      "id": "IV-4",
+      "resolution": "Q1 ANSWERED 'delivery' (operator digit, 2026-07-10) - delivery/PM is the first cockpit department. Q2-Q5 folded as cited assumed answers per the any-subset interview contract.",
+      "evidence": "https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/org-cockpit-vision-20260710.md",
+      "retired": "2026-07-10"
+    },
+    {
+      "id": "PA-1",
+      "resolution": "ANSWERED 'y' (operator, 2026-07-10) - goalpost board resumed. G5 S-WHYNOTE-SCALE + G6 S-SCALE-MEMORY dispatched to a worktree agent same turn.",
+      "retired": "2026-07-10"
+    },
+    {
+      "id": "IV-2",
+      "resolution": "ANSWERED by directive ('key selector drift - shows sharps only. SSOT', 2026-07-10) - every key selector displays preferred key names via Circle.preferredTonicName (the ONE provider). Built fresh on claude/keypicker-preferred-names (v142); the flat-keys mock branch is superseded; ec74a46 stays untouched per the cancellation.",
+      "evidence": "https://github.com/nhruska/nhruska.github.io/tree/claude/keypicker-preferred-names",
+      "retired": "2026-07-10"
+    }
+  ]
+}

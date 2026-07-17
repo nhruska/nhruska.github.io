@@ -6,6 +6,14 @@
 var assert = require('assert');
 var T = require('../music/shared/tracks.js');
 var Circle = require('../music/shared/circle.js');
+var Notables = require('../music/shared/notables.js');
+var GuidanceLevel = require('../music/shared/guidance-level.js');
+var lsReset = require('./helpers/local-storage-reset.js');
+// compat shim over the shared helper's {clear, fakeStore} API (same as notables.test.js)
+function resetLocalStorage(seed) {
+  global.localStorage = lsReset.fakeStore();
+  if (seed) Object.keys(seed).forEach(function (k) { global.localStorage.setItem(k, seed[k]); });
+}
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -197,6 +205,164 @@ test('studioTheory: unresolvable key returns null (caller falls back to player/s
   assert.strictEqual(T.studioTheory('H', 'major'), null);
 });
 
+/* ---------- M-GUIDE W2: Blues studioTheory/resolveScaleMode wiring ---------- */
+test('resolveScaleMode: blues resolves explicitly (not coarsened to major/minor family)', function () {
+  assert.strictEqual(T.resolveScaleMode('blues'), 'blues');
+  assert.strictEqual(T.resolveScaleMode('Blues'), 'blues'); // case-insensitive, matches every other branch
+});
+test('studioTheory: blues branches to the solo blues scale + BLUES_KEY palette, not diatonic()', function () {
+  var th = T.studioTheory('A', 'blues');
+  assert.strictEqual(th.scaleMode, 'blues');
+  assert.strictEqual(th.label, 'Blues');
+  assert.deepStrictEqual(th.notes, Circle.soloScaleInKey('A', 'blues', 'blues'));
+  assert.deepStrictEqual(th.degrees, Circle.soloScaleDegrees('blues'));
+  assert.strictEqual(th.pcs.length, 6);
+  // chords come from Circle.bluesKey (I7/IV7/V7), never Circle.diatonic
+  assert.deepStrictEqual(th.chords, Circle.bluesKey('A'));
+  assert.strictEqual(th.chords.length, 3);
+  assert.deepStrictEqual(th.chords.map(function (c) { return c.chord; }), ['A7', 'D7', 'E7']);
+});
+test('studioTheory: blues (capitalized, as songKey.mode carries it) resolves identically to lowercase', function () {
+  assert.deepStrictEqual(T.studioTheory('C', 'Blues'), T.studioTheory('C', 'blues'));
+});
+test('studioTheory: blues unresolvable key returns null (same contract as every other mode)', function () {
+  assert.strictEqual(T.studioTheory('H', 'blues'), null);
+});
+
+/* ---------- S-BLUES: soloBundle (Studio scale-chip swap, SOLO LAYER ONLY) ---------- */
+test("soloBundle: scaleId 'mode' is identical to studioTheory (no reimplementation)", function () {
+  var th = T.studioTheory('A', 'minor');
+  var bundle = T.soloBundle('A', 'minor', 'mode');
+  assert.deepStrictEqual(bundle, { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label });
+});
+test('soloBundle: a falsy scaleId also delegates to studioTheory (default chip)', function () {
+  var th = T.studioTheory('G', 'major');
+  assert.deepStrictEqual(T.soloBundle('G', 'major', null), { notes: th.notes, pcs: th.pcs, degrees: th.degrees, label: th.label });
+});
+test('soloBundle: pentMajor/pentMinor/blues route through Circle.soloScale, not studioTheory', function () {
+  var pm = T.soloBundle('A', 'major', 'pentMajor');
+  assert.deepStrictEqual(pm.notes, Circle.soloScaleInKey('A', 'pentMajor', 'major'));
+  assert.deepStrictEqual(pm.degrees, Circle.soloScaleDegrees('pentMajor'));
+  assert.strictEqual(pm.label, 'Pent major');
+  assert.strictEqual(pm.pcs.length, 5);
+
+  var mn = T.soloBundle('A', 'minor', 'pentMinor');
+  assert.deepStrictEqual(mn.notes, Circle.soloScaleInKey('A', 'pentMinor', 'minor'));
+  assert.strictEqual(mn.label, 'Pent minor');
+  assert.strictEqual(mn.pcs.length, 5);
+
+  var bl = T.soloBundle('A', 'minor', 'blues');
+  assert.deepStrictEqual(bl.notes, ['A', 'C', 'D', 'Eb', 'E', 'G']); // FORK-4 removal: key-aware blue note (b5 = Eb, never D#)
+  assert.strictEqual(bl.label, 'Blues');
+  assert.strictEqual(bl.pcs.length, 6);
+});
+test('soloBundle: unresolvable key -> null for every scaleId, including mode', function () {
+  assert.strictEqual(T.soloBundle('H', 'major', 'mode'), null);
+  assert.strictEqual(T.soloBundle('H', 'major', 'blues'), null);
+});
+test('soloBundle: unknown scaleId -> null (safe; never throws)', function () {
+  assert.strictEqual(T.soloBundle('A', 'minor', 'nonsense'), null);
+});
+
+/* ---------- S-BLUES-BOXES: boxScaleIdFor (which chip selections are box-eligible) ---------- */
+test('boxScaleIdFor: an explicit pentMajor/pentMinor/blues chip is always box-eligible, regardless of the underlying mode', function () {
+  assert.strictEqual(T.boxScaleIdFor('pentMajor', 'ionian'), 'pentMajor');
+  assert.strictEqual(T.boxScaleIdFor('pentMinor', 'aeolian'), 'pentMinor');
+  assert.strictEqual(T.boxScaleIdFor('blues', 'dorian'), 'blues');
+});
+test('boxScaleIdFor: the mode chip is box-eligible ONLY when the track\'s own mode IS blues (M-GUIDE W2)', function () {
+  assert.strictEqual(T.boxScaleIdFor('mode', 'blues'), 'blues');
+});
+test('boxScaleIdFor: the mode chip stays non-box for every 7-note mode (ionian/aeolian/dorian/mixolydian)', function () {
+  ['ionian', 'aeolian', 'dorian', 'mixolydian'].forEach(function (m) {
+    assert.strictEqual(T.boxScaleIdFor('mode', m), null, m + ' should not be box-eligible');
+  });
+});
+test('boxScaleIdFor: falsy scaleId behaves like \'mode\' (soloBundle\'s own falsy contract)', function () {
+  assert.strictEqual(T.boxScaleIdFor(null, 'blues'), 'blues');
+  assert.strictEqual(T.boxScaleIdFor(undefined, 'ionian'), null);
+});
+test('boxScaleIdFor: an unknown non-mode scaleId is never box-eligible (safe)', function () {
+  assert.strictEqual(T.boxScaleIdFor('nonsense', 'ionian'), null);
+});
+// soloScaleFraming MOVED to solo-guide.js (M-GUIDE W3a, D-CARDS-STATIC) as
+// SoloGuide.framing() - its coverage now lives in test/solo-guide.test.js.
+
+/* ---------- M-GUIDE W3a (section 2, P5-folded 2026-07-05): targetTones /
+ * defaultTones - chord-tone targeting, pure pc arithmetic. C blues scale pcs
+ * (Circle.soloScale('C','blues')): [0, 3, 5, 6, 7, 10] = C D# F F# G A#.
+ * GHOST DOTS (P5 fold): a chord tone OUTSIDE the scale is no longer silently
+ * dropped (the original D-TARGET "intersection-only" deferral) - it comes back
+ * as ghostPcs so the caller can render it hollow. ---------- */
+test('targetTones: C7 over C blues - root/chord marks, rub at D#(Eb); E (major 3rd) is now a GHOST pc (P5 fold)', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'C7');
+  assert.deepStrictEqual(tt.byPc, { 0: 'root', 7: 'chord', 10: 'chord' }, JSON.stringify(tt.byPc));
+  assert.strictEqual(tt.rubPc, 3, 'rub should land on D#/Eb (chordRootPc+3)');
+  assert.deepStrictEqual(tt.ghostPcs, [4], 'E (the major 3rd, pc 4) is outside C blues -> ghost, not dropped');
+});
+test('targetTones: G7 over C blues - rub at A#(Bb); B and D (pcs 11, 2) are ghosts, matching the plan\'s worked example', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'G7');
+  assert.deepStrictEqual(tt.byPc, { 7: 'root', 5: 'chord' });
+  assert.strictEqual(tt.rubPc, 10, 'rub should land on A#/Bb');
+  assert.deepStrictEqual(tt.ghostPcs.slice().sort(function (a, b) { return a - b; }), [2, 11]);
+});
+test('targetTones: F7 over C blues - dominant-quality but the rub candidate (Ab) is out of scale -> no rub; A (pc 9) is a ghost', function () {
+  var scalePcs = Circle.soloScale('C', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 0, 'F7');
+  assert.deepStrictEqual(tt.byPc, { 5: 'root', 0: 'chord', 3: 'chord' });
+  assert.strictEqual(tt.rubPc, null, 'F7\'s rub candidate (Ab, pc 8) is not in the C blues scale');
+  assert.deepStrictEqual(tt.ghostPcs, [9]);
+});
+test('targetTones: A blues + A7 -> C# (pc 1, the major 3rd - "the money note") is a ghost (P5\'s exact must-fix example)', function () {
+  var scalePcs = Circle.soloScale('A', 'blues').map(function (n) { return T.notesToPcs([n])[0]; });
+  var tt = T.targetTones(scalePcs, 9, 'A7');
+  assert.deepStrictEqual(tt.ghostPcs, [1], 'C# (pc 1) must surface as a ghost, not be silently hidden');
+  assert.strictEqual(tt.byPc[9], 'root');
+});
+test('targetTones: falsy/unresolvable chordName -> null (no target)', function () {
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, null), null);
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, ''), null);
+  assert.strictEqual(T.targetTones([0, 4, 7], 0, 'Zmaj7'), null);
+});
+test('targetTones: no scale-pc intersection -> every chord tone surfaces as a ghost, never throws', function () {
+  var tt = T.targetTones([], 0, 'C7');
+  assert.deepStrictEqual(tt.byPc, {});
+  assert.strictEqual(tt.rubPc, null);
+  assert.deepStrictEqual(tt.ghostPcs.slice().sort(function (a, b) { return a - b; }), [0, 4, 7, 10]);
+});
+test('defaultTones: marks the blues scale\'s b5 (scaleRootPc+6) whenever bundle.label is Blues', function () {
+  var bundle = { label: 'Blues', pcs: [0, 3, 5, 6, 7, 10] };
+  assert.deepStrictEqual(T.defaultTones(bundle), { byPc: { 6: 'blue' }, rubPc: null });
+});
+test('defaultTones: non-blues bundle (or missing/empty pcs) -> null', function () {
+  assert.strictEqual(T.defaultTones({ label: 'Ionian', pcs: [0, 2, 4, 5, 7, 9, 11] }), null);
+  assert.strictEqual(T.defaultTones(null), null);
+  assert.strictEqual(T.defaultTones({ label: 'Blues', pcs: [] }), null);
+});
+test('defaultTones works uniformly for a soloBundle()-shaped bundle (no rootPc field, just pcs)', function () {
+  var bundle = T.soloBundle('A', 'minor', 'blues'); // {notes, pcs, degrees, label} - no rootPc
+  assert.strictEqual(bundle.label, 'Blues');
+  var def = T.defaultTones(bundle);
+  assert.ok(def, 'expected a blue-note mark for a blues soloBundle result');
+  assert.strictEqual(Object.keys(def.byPc).length, 1);
+});
+
+test('harmonization-isolation: chords-in-key are identical before and after any solo-scale selection', function () {
+  var before = T.studioTheory('A', 'minor').chords;
+  // Exercise every non-mode scaleId - none of them may read or mutate diatonic()/chords.
+  ['pentMajor', 'pentMinor', 'blues'].forEach(function (scaleId) { T.soloBundle('A', 'minor', scaleId); });
+  var after = T.studioTheory('A', 'minor').chords;
+  assert.deepStrictEqual(after, before, 'chords-in-key must be untouched by any solo-scale chip tap');
+});
+test('harmonization-isolation (M-GUIDE W2): a Blues-mode Studio\'s own I7/IV7/V7 chords survive every solo-scale chip tap', function () {
+  var before = T.studioTheory('A', 'blues').chords;
+  ['pentMajor', 'pentMinor'].forEach(function (scaleId) { T.soloBundle('A', 'blues', scaleId); });
+  var after = T.studioTheory('A', 'blues').chords;
+  assert.deepStrictEqual(after, before, 'a Blues studioTheory\'s chords-in-key (BLUES_KEY) must be untouched by any solo-scale chip tap');
+});
+
 /* ---------- overlay re-key migration (catalog-key corrections must not orphan
  * a user's curated urls: trackKey embeds the key, so the stored key moves) ---------- */
 test('migrateUrls re-keys a legacy overlay entry and deletes the old key', function () {
@@ -235,14 +401,23 @@ test('a mixolydian track surfaces in its major-family keyed search', function ()
 });
 
 // --- trackKey 4-mode serialization (overlay identity) -----------------------
-test('trackKey serializes the full 4-mode vocabulary distinctly', function () {
+test('trackKey serializes the full 5-mode vocabulary distinctly (incl. blues, M-GUIDE W2)', function () {
   var base = { title: 'X', artist: 'Y', key: 'E' };
   var kMaj = T.trackKey(Object.assign({}, base, { mode: 'major' }));
   var kDor = T.trackKey(Object.assign({}, base, { mode: 'dorian' }));
   var kMix = T.trackKey(Object.assign({}, base, { mode: 'mixolydian' }));
-  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix));
+  var kBlu = T.trackKey(Object.assign({}, base, { mode: 'blues' }));
+  assert.ok(/\|major$/.test(kMaj) && /\|dorian$/.test(kDor) && /\|mixolydian$/.test(kMix) && /\|blues$/.test(kBlu));
   assert.notStrictEqual(kDor, kMaj); // the collision codex flagged
   assert.strictEqual(T.trackKey(Object.assign({}, base, { mode: 'weird' })), kMaj); // unknown -> major
+});
+test('trackKey: blues identity does not collide with major (professor finding, PR #115) - IDENTITY only, normMode facet coarsening unchanged', function () {
+  var kBlu = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'blues' });
+  var kMaj = T.trackKey({ title: 'X', artist: 'Y', key: 'A', mode: 'major' });
+  assert.notStrictEqual(kBlu, kMaj, 'a saved/curated blues track must not collide with a same-title/artist/key major row');
+  // the Library/finder FACET coarsening (normMode) is a SEPARATE, unchanged concern -
+  // blues still coarsens to the major family there, per the IA ruling.
+  assert.strictEqual(T.normMode('blues'), 'major');
 });
 
 // --- mode-honest key labels everywhere a key renders as text ----------------
@@ -252,6 +427,10 @@ test('keyLabelFor matches the Studio label convention', function () {
   assert.strictEqual(T.keyLabelFor('E', 'dorian'), 'E dorian');
   assert.strictEqual(T.keyLabelFor('G', 'Mixolydian'), 'G mixolydian');
   assert.strictEqual(T.keyLabelFor('C', null), 'C');
+});
+test('keyLabelFor: blues reads "<key> blues" (M-GUIDE W2) - previously fell through to the bare key', function () {
+  assert.strictEqual(T.keyLabelFor('A', 'blues'), 'A blues');
+  assert.strictEqual(T.keyLabelFor('D', 'Blues'), 'D blues'); // case-insensitive like every other branch
 });
 
 /* ---------- modeHint "often written Bb" gate (codex V2 fix, V3 test ask) ----------
@@ -354,6 +533,60 @@ test('tintWheel marks the relative key strong + V/IV dim on the REAL renderWheel
   assert.ok(wedgeClasses('D').indexOf('cofWedge-nb') >= 0, 'IV (D): ' + wedgeClasses('D'));
   assert.ok(wedgeClasses('A').indexOf('cofWedge-rel') < 0, 'tonic untinted');
 });
+/* ---------- S-COF-SPELLING: wheel labels are preferred KEY names ---------- */
+test('wheelLabel: printed-COF truth table (flat-preferred majors, conventional minors)', function () {
+  var C = require('../music/shared/circle.js');
+  assert.strictEqual(C.wheelLabel('A#', 'major'), 'Bb');
+  assert.strictEqual(C.wheelLabel('D#', 'major'), 'Eb');
+  assert.strictEqual(C.wheelLabel('G#', 'major'), 'Ab');
+  assert.strictEqual(C.wheelLabel('C#', 'major'), 'Db');
+  assert.strictEqual(C.wheelLabel('F#', 'major'), 'F#');
+  assert.strictEqual(C.wheelLabel('A#', 'minor'), 'Bbm');
+  assert.strictEqual(C.wheelLabel('D#', 'minor'), 'D#m');
+  assert.strictEqual(C.wheelLabel('G#', 'minor'), 'G#m');
+  assert.strictEqual(C.wheelLabel('C#', 'minor'), 'C#m');
+});
+test('renderWheel: labels carry preferred key names + wedges carry data-pc/data-ring identity', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = realWheel(C, 'C', 'major');
+  var texts = [];
+  var nodes = wheel.querySelectorAll('.cofLabel');
+  for (var i = 0; i < nodes.length; i++) texts.push(nodes[i].textContent);
+  ['Bb', 'Eb', 'Ab', 'Db', 'Bbm', 'D#m', 'G#m'].forEach(function (want) {
+    assert.ok(texts.indexOf(want) >= 0, 'label present: ' + want);
+  });
+  ['A#', 'D#', 'G#', 'C#', 'A#m'].forEach(function (bad) {
+    assert.ok(texts.indexOf(bad) < 0, 'sharp-only label absent: ' + bad);
+  });
+  // structural identity for consumers (markWheelPc): Bb major wedge = pc 10, major ring
+  for (var j = 0; j < nodes.length; j++) {
+    if (nodes[j].textContent === 'Bb') {
+      var w = nodes[j].previousElementSibling;
+      assert.strictEqual(w.getAttribute('data-pc'), '10', 'Bb wedge data-pc');
+      assert.strictEqual(w.getAttribute('data-ring'), 'major', 'Bb wedge data-ring');
+      return;
+    }
+  }
+  assert.fail('Bb label not found for identity check');
+});
+test('tintWheel matches the NEW preferred labels (A# major: rel Gm strong, F + Eb dim)', function () {
+  var C = require('../music/shared/circle.js');
+  var wheel = realWheel(C, 'A#', 'major');
+  T.tintWheel(wheel, C, 'A#', 'major');
+  function cls(labelText) {
+    var labels = wheel.querySelectorAll('.cofLabel');
+    for (var i = 0; i < labels.length; i++) {
+      if (labels[i].textContent === labelText) {
+        var w = labels[i].previousElementSibling;
+        return (w && w.classList.contains('cofWedge')) ? w.className : '(no wedge sibling)';
+      }
+    }
+    return '(label missing)';
+  }
+  assert.ok(cls('Gm').indexOf('cofWedge-rel') >= 0, 'relative minor Gm: ' + cls('Gm'));
+  assert.ok(cls('F').indexOf('cofWedge-nb') >= 0, 'V (F): ' + cls('F'));
+  assert.ok(cls('Eb').indexOf('cofWedge-nb') >= 0, 'IV (Eb): ' + cls('Eb'));
+});
 /* keep a tiny hand stub only for the graceful-degradation case */
 function stubWheel(labels) {
   var nodes = labels.map(function (txt) {
@@ -369,6 +602,377 @@ test('tintWheel survives a wheel with unexpected labels (no throw, no tint)', fu
   var wheel = stubWheel(['nonsense', 'labels']);
   T.tintWheel(wheel, C, 'A', 'major'); // must not throw
   assert.strictEqual(wheel.nodes[0].previousElementSibling.className, 'cofWedge');
+});
+
+/* ---------- S-WHYNOTE (sprint-1 item 6): static template selection ---------- */
+test('whynoteText: major-family (ionian) uses the exact A9-specified relative-minor template', function () {
+  assert.strictEqual(
+    T.whynoteText('C', 'ionian', 'Major'),
+    'Why this scale works: C major and its relative minor share the same notes - solo either over this progression.');
+});
+test('whynoteText: minor (aeolian) uses the parallel-phrased equivalent', function () {
+  assert.strictEqual(
+    T.whynoteText('A', 'aeolian', 'Minor'),
+    'Why this scale works: A minor and its parallel major share the same home note, not the same notes - stick with A minor here.');
+});
+test('whynoteText: dorian and mixolydian share the same non-ionian template shape', function () {
+  assert.strictEqual(
+    T.whynoteText('E', 'dorian', 'Dorian'),
+    'Why this scale works: E dorian and its parallel major share the same home note, not the same notes - stick with E dorian here.');
+  assert.strictEqual(
+    T.whynoteText('G', 'mixolydian', 'Mixolydian'),
+    'Why this scale works: G mixolydian and its parallel major share the same home note, not the same notes - stick with G mixolydian here.');
+});
+test('whynoteText: only two templates exist - the switch is on scaleMode, nothing else', function () {
+  // same key+label, only scaleMode flips -> exactly the two known bodies, never a third shape
+  var ionian = T.whynoteText('D', 'ionian', 'Major');
+  var aeolian = T.whynoteText('D', 'aeolian', 'Minor');
+  assert.notStrictEqual(ionian, aeolian);
+  assert.ok(/relative minor/.test(ionian));
+  assert.ok(/parallel major/.test(aeolian));
+});
+
+/* ---------- S-WHYNOTE: claim/dismiss consumer logic (via Notables) ----------
+ * M-GUIDANCE retro-tagged 'whynote' as intermediate+advanced in notables.js's
+ * LEVELS table (docs/plans/guidance-levels-spec-20260705.md) - every case
+ * below that expects a GRANT now seeds music.guidanceLevel.v1 first (via the
+ * real guidance-level.js module, same localStorage fake). */
+test('whynoteBanner: a fresh, un-dismissed slot grants renderBanner-ready opts', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('intermediate');
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  var opts = T.whynoteBanner(th);
+  assert.ok(opts, 'expected a granted banner on a fresh claim');
+  assert.strictEqual(opts.consumerId, 'whynote');
+  assert.strictEqual(opts.className, 'bt-st-notable');
+  assert.strictEqual(opts.text, T.whynoteText('C', 'ionian', 'Major'));
+});
+test('whynoteBanner: a repeat call while still un-dismissed keeps granting (idempotent re-claim)', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced');
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  assert.ok(T.whynoteBanner(th), 'first open of the Studio grants the slot');
+  assert.ok(T.whynoteBanner(th), 'reopening the Studio before dismissal grants it again');
+});
+test('whynoteBanner: dismiss() persists forever - a later call skips silently (returns null)', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('intermediate');
+  Notables._resetArbitration();
+  var th = T.studioTheory('A', 'minor');
+  assert.ok(T.whynoteBanner(th));
+  Notables.dismiss('whynote');
+  assert.strictEqual(T.whynoteBanner(th), null, 'a dismissed whynote must never render again');
+});
+test('whynoteBanner: a higher-priority notable (firstrun) already holding the slot preempts it', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('intermediate');
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true); // firstrun outranks whynote in PRIORITY
+  var th = T.studioTheory('G', 'major');
+  assert.strictEqual(T.whynoteBanner(th), null, 'whynote must skip silently while firstrun holds the slot');
+});
+/* ---------- M-GUIDANCE: whynote's level gate specifically ---------- */
+test('whynoteBanner: blocked for beginner or an unset level (intermediate+advanced only)', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  var th = T.studioTheory('C', 'major');
+  assert.strictEqual(T.whynoteBanner(th), null, 'unset level must not grant whynote');
+  GuidanceLevel.set('beginner');
+  Notables._resetArbitration();
+  assert.strictEqual(T.whynoteBanner(th), null, 'beginner level must not grant whynote');
+});
+
+/* ---------------------------------------------------------------------
+ * M-GUIDANCE (advanced tier): T.scaletipText/T.scaletipBanner - the Studio
+ * "scale chips work over any chord in the key" JIT cue. Same shape as
+ * whynoteText/whynoteBanner above.
+ * ------------------------------------------------------------------- */
+test('scaletipText interpolates the key', function () {
+  assert.strictEqual(
+    T.scaletipText('C'),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over C too. The fretboard pattern is the guide.'
+  );
+});
+/* ---------------------------------------------------------------------
+ * S-UI-RECONCILE Lane C (C3): scaletipText hardcoded 'major' when respelling
+ * the key, so a minor-key Studio's tip named the MAJOR-preferred spelling
+ * even when it differs from the minor-preferred one (G# minor -> "fit over
+ * Ab too", wrong; every other Studio surface says G#m). Threading the real
+ * scaleMode fixes it; the no-mode 1-arg call above must stay byte-identical
+ * (modeKey(undefined) already falls back to ionian, same as the old
+ * hardcoded 'major').
+ * ------------------------------------------------------------------- */
+test('scaletipText: S-UI-RECONCILE C3 - threading the real scaleMode fixes a minor key whose major- and minor-preferred spellings diverge (G# minor)', function () {
+  var th = T.studioTheory('G#', 'minor');
+  assert.strictEqual(th.scaleMode, 'aeolian');
+  assert.strictEqual(
+    T.scaletipText(th.key, th.scaleMode),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over G# too. The fretboard pattern is the guide.'
+  );
+  // the pre-fix bug, pinned so it never comes back: hardcoding 'major' would
+  // have produced the WRONG spelling (Ab) for this minor key.
+  assert.notStrictEqual(T.scaletipText(th.key, th.scaleMode), T.scaletipText(th.key));
+  assert.ok(!/Ab/.test(T.scaletipText(th.key, th.scaleMode)), 'must not leak the major-preferred spelling into a minor-key tip');
+});
+test('scaletipText: omitting mode (1-arg call) stays byte-identical to before the fix (modeKey(undefined) falls back to ionian, same as the old hardcoded "major")', function () {
+  assert.strictEqual(
+    T.scaletipText('C'),
+    'Try the scale chips below - Pent major, Pent minor, and Blues all fit over C too. The fretboard pattern is the guide.'
+  );
+});
+test('scaletipBanner: granted for level advanced on a fresh, empty slot', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced');
+  Notables._resetArbitration();
+  var th = T.studioTheory('D', 'major');
+  var opts = T.scaletipBanner(th);
+  assert.ok(opts, 'expected a granted banner on a fresh claim');
+  assert.strictEqual(opts.consumerId, 'scaletip');
+  assert.strictEqual(opts.className, 'bt-st-notable');
+  assert.strictEqual(opts.text, T.scaletipText('D'));
+});
+test('scaletipBanner: blocked for beginner/intermediate/unset (advanced only)', function () {
+  var th = T.studioTheory('D', 'major');
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(T.scaletipBanner(th), null, 'unset level must not grant scaletip');
+  ['beginner', 'intermediate'].forEach(function (lvl) {
+    resetLocalStorage();
+    GuidanceLevel.set(lvl);
+    Notables._resetArbitration();
+    assert.strictEqual(T.scaletipBanner(th), null, lvl + ' must not grant scaletip');
+  });
+});
+test('scaletipBanner: a higher-priority notable (whynote) already holding the slot preempts it, even when both are level-eligible', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced'); // eligible for BOTH whynote and scaletip
+  Notables._resetArbitration();
+  var th = T.studioTheory('E', 'major');
+  assert.ok(T.whynoteBanner(th), 'whynote claims the slot first');
+  assert.strictEqual(T.scaletipBanner(th), null, 'scaletip must skip silently while whynote holds the slot');
+  Notables.dismiss('whynote');
+  assert.ok(T.scaletipBanner(th), 'once whynote is dismissed, scaletip can claim on the next Studio open');
+});
+test('scaletipBanner: dismissed forever - a later call skips silently (returns null)', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('advanced');
+  Notables._resetArbitration();
+  var th = T.studioTheory('F', 'major');
+  assert.ok(T.scaletipBanner(th));
+  Notables.dismiss('scaletip');
+  assert.strictEqual(T.scaletipBanner(th), null, 'a dismissed scaletip must never render again');
+});
+
+/* =====================================================================
+ * F32 (UI-std UAT): the Studio's dismiss is now the app's STANDARD back
+ * affordance (matches the song view's #backLib "iconBtn <-"), not the old
+ * bordered "close"-text pill (.bt-st-x, trailing on the right). openStudio's
+ * DOM-building is Playwright/live-check territory (same convention this
+ * file's siblings already use for mount/open-shaped output) - this pins the
+ * SOURCE contract instead, mirroring songbook.test.js's existing
+ * "solo-button gate pins hidden + inline display" source-regex test.
+ * ===================================================================== */
+test('F32: Studio dismiss is .bt-st-back (iconBtn, "<-" glyph, title=Back) - the old close-pill CLASS is retired from actual markup/selectors, not left dormant', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  // Targets the actual CODE usages (a rendered class attribute, a live selector
+  // call) rather than banning the bare substring outright - a comment
+  // documenting the retirement (e.g. "bt-st-x removed - see tracks.css") is
+  // fine to keep and should not fail this test.
+  assert.ok(!/class="bt-st-x"/.test(src), 'the old close-pill class must not appear in any rendered markup');
+  assert.ok(!/querySelector\('\.bt-st-x'\)/.test(src), 'no selector may still target the old close-pill class');
+  assert.ok(/class="iconBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose the shared .iconBtn convention (matches #backLib elsewhere)');
+  assert.ok(/title="Back" aria-label="Back"/.test(src), 'the dismiss control must carry the standard Back label/aria-label, not "close"');
+  assert.ok(/elPlayer\.querySelector\('\.bt-st-back'\)\.onclick/.test(src), 'the NavHistory.dismiss()/closePlayer() wiring must target the new .bt-st-back selector');
+});
+
+// ---- S-SOLO-MODES: Mixolydian + Dorian as selectable solo scales ----
+test('soloScale mixolydian is the full 7-note mode (C -> C D E F G A A#)', function () {
+  var notes = Circle.soloScale('C', 'mixolydian');
+  assert.strictEqual(notes.length, 7, 'mixolydian has 7 notes');
+  // canonical-sharp spelling (FORK-4): b7 renders as A#, never Bb
+  assert.deepStrictEqual(notes, ['C', 'D', 'E', 'F', 'G', 'A', 'A#'], 'C mixolydian notes');
+  assert.deepStrictEqual(Circle.soloScaleDegrees('mixolydian'), ['1', '2', '3', '4', '5', '6', '♭7'], 'mixolydian degrees');
+});
+test('soloScale dorian is the full 7-note mode (C -> C D D# F G A A#)', function () {
+  var notes = Circle.soloScale('C', 'dorian');
+  assert.strictEqual(notes.length, 7, 'dorian has 7 notes');
+  assert.deepStrictEqual(notes, ['C', 'D', 'D#', 'F', 'G', 'A', 'A#'], 'C dorian notes (b3=D#, b7=A#, canonical-sharp)');
+  assert.deepStrictEqual(Circle.soloScaleDegrees('dorian'), ['1', '2', '♭3', '4', '5', '6', '♭7'], 'dorian degrees');
+});
+test('SoloGuide already ships cards for the two new modes (no blank Guide box)', function () {
+  var SG = require('../music/shared/solo-guide.js');
+  assert.ok(SG.card('mixolydian', Circle.soloScale('C', 'mixolydian'), 'C'), 'mixolydian Guide card exists');
+  assert.ok(SG.card('dorian', Circle.soloScale('C', 'dorian'), 'C'), 'dorian Guide card exists');
+});
+
+// ---- S-SOLO-SCALE-DEFAULT: progression-aware theory-best default ----
+test('inferSoloDefault: plain diatonic major progression -> pentMajor (safe home)', function () {
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', ['C', 'F', 'G', 'Am']), 'pentMajor');
+});
+test('inferSoloDefault: major progression with a bVII major -> mixolydian', function () {
+  // C major with a Bb (bVII) is the Mixolydian tell (b7 rock/backdoor color)
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', ['C', 'Bb', 'F', 'C']), 'mixolydian');
+});
+test('inferSoloDefault: plain diatonic minor progression -> pentMinor', function () {
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', ['Am', 'Dm', 'Em', 'Am']), 'pentMinor');
+});
+test('inferSoloDefault: minor progression with a MAJOR IV -> dorian', function () {
+  // A minor with a D major (major IV, the raised-6) is the Dorian tell
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', ['Am', 'D', 'Am', 'Em']), 'dorian');
+});
+test('inferSoloDefault: no seq falls back to the key-quality pentatonic', function () {
+  assert.strictEqual(T.inferSoloDefault('C', 'Major', null), 'pentMajor');
+  assert.strictEqual(T.inferSoloDefault('A', 'Minor', []), 'pentMinor');
+});
+test('inferSoloDefault: a Blues key keeps its own scale (mode chip IS blues)', function () {
+  assert.strictEqual(T.inferSoloDefault('E', 'blues', ['E7', 'A7', 'B7']), 'mode');
+});
+
+/* ---------------------------------------------------------------------
+ * G5 S-WHYNOTE-SCALE (2026-07-10): T.whynoteScaleText - the whynote banner
+ * re-derives its copy for the ACTUALLY-selected scale chip, not just the
+ * key's own mode scale.
+ * ------------------------------------------------------------------- */
+test('whynoteScaleText: scaleId "mode" (or falsy) passes straight through to whynoteText', function () {
+  assert.strictEqual(
+    T.whynoteScaleText('C', 'mode', 'ionian', 'Major'),
+    T.whynoteText('C', 'ionian', 'Major')
+  );
+  assert.strictEqual(
+    T.whynoteScaleText('A', undefined, 'aeolian', 'Minor'),
+    T.whynoteText('A', 'aeolian', 'Minor')
+  );
+});
+test('whynoteScaleText: pentMajor names itself and the key', function () {
+  var txt = T.whynoteScaleText('C', 'pentMajor', 'ionian', 'Major');
+  assert.ok(/Pent major/.test(txt), 'names the chip label');
+  assert.ok(/\bC\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: pentMinor names itself and the key', function () {
+  var txt = T.whynoteScaleText('A', 'pentMinor', 'aeolian', 'Minor');
+  assert.ok(/Pent minor/.test(txt), 'names the chip label');
+  assert.ok(/\bA\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: blues names itself and the key', function () {
+  var txt = T.whynoteScaleText('E', 'blues', 'ionian', 'Major');
+  assert.ok(/Blues/.test(txt), 'names the chip label');
+  assert.ok(/\bE\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: mixolydian names itself and the key', function () {
+  var txt = T.whynoteScaleText('G', 'mixolydian', 'ionian', 'Major');
+  assert.ok(/Mixolydian/.test(txt), 'names the chip label');
+  assert.ok(/\bG\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: dorian names itself and the key', function () {
+  var txt = T.whynoteScaleText('D', 'dorian', 'ionian', 'Major');
+  assert.ok(/Dorian/.test(txt), 'names the chip label');
+  assert.ok(/\bD\b/.test(txt), 'names the key');
+});
+test('whynoteScaleText: flat-key display goes through dispKeyRoot (Bb, never A#)', function () {
+  var txt = T.whynoteScaleText('A#', 'pentMinor', 'aeolian', 'Minor');
+  assert.ok(/\bBb\b/.test(txt), 'expected the preferred flat spelling Bb');
+  assert.ok(!/A#/.test(txt), 'must never show the canonical-sharp A# in prose');
+});
+test('whynoteScaleText: each non-mode scaleId produces a distinct template', function () {
+  var ids = ['pentMajor', 'pentMinor', 'blues', 'mixolydian', 'dorian'];
+  var texts = ids.map(function (id) { return T.whynoteScaleText('C', id, 'ionian', 'Major'); });
+  assert.strictEqual(new Set(texts).size, ids.length, 'every scaleId gets its own copy, no accidental collisions');
+});
+
+/* ---------------------------------------------------------------------
+ * G6 S-SCALE-MEMORY (2026-07-10): T.readSoloScaleFor / T.writeSoloScaleFor -
+ * per-track solo-scale chip persistence (bt.soloScale.v1).
+ * ------------------------------------------------------------------- */
+test('readSoloScaleFor: a fresh/empty store returns null (no memory yet)', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('writeSoloScaleFor + readSoloScaleFor: round-trips the chosen scaleId for that track', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  T.writeSoloScaleFor(t, 'pentMinor');
+  assert.strictEqual(T.readSoloScaleFor(t), 'pentMinor');
+});
+test('writeSoloScaleFor: is keyed per-track (trackKey) - a different track is unaffected', function () {
+  resetLocalStorage();
+  var t1 = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  var t2 = { title: 'Wonderwall', artist: 'Oasis', key: 'F#', mode: 'minor' };
+  T.writeSoloScaleFor(t1, 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t1), 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t2), null, 'a different track must not inherit t1\'s stored scale');
+});
+test('writeSoloScaleFor: overwrites a previous choice for the same track', function () {
+  resetLocalStorage();
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  T.writeSoloScaleFor(t, 'pentMajor');
+  T.writeSoloScaleFor(t, 'dorian');
+  assert.strictEqual(T.readSoloScaleFor(t), 'dorian');
+});
+test('readSoloScaleFor: tolerates invalid JSON in the store (defensive read -> null)', function () {
+  resetLocalStorage();
+  global.localStorage.setItem('bt.soloScale.v1', '{not valid json');
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('readSoloScaleFor: tolerates a non-object JSON value in the store (e.g. an array) -> null', function () {
+  resetLocalStorage();
+  global.localStorage.setItem('bt.soloScale.v1', '[1,2,3]');
+  var t = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  assert.strictEqual(T.readSoloScaleFor(t), null);
+});
+test('readSoloScaleFor: an unknown track (never written) among other stored tracks -> null', function () {
+  resetLocalStorage();
+  var t1 = { title: 'Sample in a Jar', artist: 'Phish', key: 'A', mode: 'major' };
+  var t2 = { title: 'Wonderwall', artist: 'Oasis', key: 'F#', mode: 'minor' };
+  T.writeSoloScaleFor(t1, 'blues');
+  assert.strictEqual(T.readSoloScaleFor(t2), null);
+});
+
+/* =======================================================================
+ * S-UI-RECONCILE Lane C (C1/C2): buildWhy's "why these notes" hint and the
+ * jam-discovery query/URL both live INSIDE openStudio()'s per-track closure -
+ * not exported, and openStudio's DOM surface is too large (~800 lines) to
+ * stub for a direct call. Same static source-scan discipline this repo
+ * already uses for seam regressions (consistency-lint.test.js,
+ * no-native-dialog-lint.test.js): pin the exact call-site pattern so a
+ * future edit that reintroduces the raw-th.key bug fails loud.
+ * ===================================================================== */
+var fs = require('fs');
+var path = require('path');
+function readSrc(rel) { return fs.readFileSync(path.join(__dirname, '..', rel), 'utf8'); }
+// Extract a named function's full body (brace-matched) from source, so the
+// lint below scopes its assertion to the RIGHT function, not a coincidental
+// match anywhere else in the file.
+function extractFunctionBody(src, signatureRe) {
+  var m = signatureRe.exec(src);
+  if (!m) return null;
+  var braceStart = src.indexOf('{', m.index);
+  var depth = 0;
+  for (var i = braceStart; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') { depth--; if (depth === 0) return src.slice(braceStart, i + 1); }
+  }
+  return null;
+}
+test('buildWhy (C1): the "why these notes" hint respells th.key via dispKeyRoot, never the raw canonical-sharp th.key', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th\) \{/);
+  assert.ok(body, 'buildWhy(box, th) not found in tracks.js');
+  assert.ok(/cofHint/.test(body), 'expected the cofHint prose block inside buildWhy');
+  assert.ok(/dispKeyRoot\(th\.key, th\.scaleMode\)/.test(body),
+    'buildWhy must call dispKeyRoot(th.key, th.scaleMode) to respell the key in the hint prose');
+  assert.ok(!/esc\(th\.key\)/.test(body),
+    'buildWhy must not emit the raw canonical-sharp th.key (e.g. "A#") beside the key-aware note names');
+});
+test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th.scaleMode) into JamQueries.jamQuery, never the raw th.key', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
+    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
 });
 
 run();

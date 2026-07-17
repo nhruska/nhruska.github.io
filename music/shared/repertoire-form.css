@@ -12,8 +12,9 @@
 .rf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;
   border-bottom:1px solid var(--line-strong);flex:0 0 auto;}
 .rf-t{font-weight:700;font-size:.98rem;}
+/* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact close-button oddball. */
 .rf-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-  font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;}
+  font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:var(--r-btn-sm);cursor:pointer;}
 .rf-x:hover{color:var(--accent);border-color:var(--accent);}
 .rf-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 22px;
   display:flex;flex-direction:column;gap:2px;}
@@ -26,9 +27,21 @@
 .rf-seq{resize:vertical;min-height:44px;font-family:'Space Mono',monospace;}
 .rf-actions{display:flex;gap:10px;margin-top:18px;}
 .rf-actions .btn{flex:1;}
+/* U17 (M-TRACKLIB w2a) - YT-prefill suggest row: same visual bucket as
+ * .rf-note (bg-2/line/radius 8), extended with an Apply/Dismiss action row. */
+.rf-yt-suggest{font-size:.8rem;color:var(--txt-dim);background:var(--bg-2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;margin:2px 0 4px;display:flex;flex-direction:column;gap:8px;}
+.rf-yt-suggest[hidden]{display:none;}
+.rf-yt-txt{color:var(--txt-soft);}
+.rf-yt-actions{display:flex;gap:8px;}
+.rf-yt-actions button{flex:1;min-height:44px;border:1px solid var(--line-strong);background:transparent;
+  color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.8rem;border-radius:var(--r-btn-sm);
+  cursor:pointer;transition:transform .08s,color .15s,border-color .15s;}
+.rf-yt-actions button:active{transform:scale(.97);}
+.rf-yt-apply{color:var(--accent-ink);border-color:var(--accent-ink);}
 /* Studio's plain "edit this track" link, replacing the retired inline paste-box
  * for t.custom items (Task 2 requirement 4). */
 .bt-st-editlink{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
-  font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 12px;border-radius:10px;cursor:pointer;
+  font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 12px;border-radius:var(--r-btn-sm);cursor:pointer;
   text-align:center;}
 .bt-st-editlink:hover{color:var(--accent);border-color:var(--accent);}

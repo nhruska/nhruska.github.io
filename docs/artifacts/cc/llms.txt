@@ -1,0 +1,46 @@
+# Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
+Generated: 2026-07-17T10:59:16Z
+Status: ok
+
+## NOW
+- Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
+- Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
+- Queue NOW: CLOSED 2026-07-10
+- Open draft PR #261 (CI green): music(compose): per-section edit button - refine a section's chords in the builder - https://github.com/nhruska/nhruska.github.io/pull/261
+- Open draft PR #260 (CI green): music(perform): one-handed zoning - Next is the dominant bottom-right thumb target - https://github.com/nhruska/nhruska.github.io/pull/260
+- Open draft PR #259 (CI green): music(ui): anchor active-tab highlight to bottom border + bigger button icons - https://github.com/nhruska/nhruska.github.io/pull/259
+- Open draft PR #258 (CI green): music(toast): amber caution toast + readable duration for "song already in progress" - https://github.com/nhruska/nhruska.github.io/pull/258
+- Open PR #257 (CI green): music(settings+skills): UAT batch - accordion unity, guidance seg, CTA rows, SKILL.md/zip skills export + flexible import - https://github.com/nhruska/nhruska.github.io/pull/257
+- Open PR #256 (CI green): music(compose): advanced level collapses chord-chart palettes to letter+roman chips (S-CHORD-COLLAPSE) - https://github.com/nhruska/nhruska.github.io/pull/256
+- Open draft PR #255 (CI green): music(setlist): play/video action to a compact thumb-zone icon (reclaim a row) - https://github.com/nhruska/nhruska.github.io/pull/255
+- Open draft PR #88 (CI green): music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room - https://github.com/nhruska/nhruska.github.io/pull/88
+
+## Open gaps / to-wire
+- Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
+- Vision INTERVIEW PENDING: Vision Capture: Ear-First Player Growth (operator /goal-interview seed, 2026-07-04) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-ear-first-20260704.md
+- Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
+
+## Recent work products
+- #254 - music(settings): fix the washed-out Guidance-level settings row (.setRow contrast) (2026-07-16) - https://github.com/nhruska/nhruska.github.io/pull/254
+- #253 - music(compose): Song mode - the composition ladder gets a full-screen home (2026-07-16) - https://github.com/nhruska/nhruska.github.io/pull/253
+- #252 - music(compose): bound the song-builder section tray so it stops burying the chord picker (2026-07-16) - https://github.com/nhruska/nhruska.github.io/pull/252
+- #251 - QUEUE: burst-close batch - S-SETADD pair SHIPPED + CE-SPAWN-MIDRUN-DEATH (2026-07-12) - https://github.com/nhruska/nhruska.github.io/pull/251
+- #250 - S-SETADD-KEYSEED: seed the key's tonic chord on + for chordless-but-keyed rows (v158) (2026-07-12) - https://github.com/nhruska/nhruska.github.io/pull/250
+- #249 - S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157) (2026-07-12) - https://github.com/nhruska/nhruska.github.io/pull/249
+- #248 - QUEUE: capture CE-SPAWN-ENV-REPOLOCK (ps-internal spawn root cause) (2026-07-12) - https://github.com/nhruska/nhruska.github.io/pull/248
+- #247 - M-13 g4: drag-to-reorder buffer sections in the song builder (v156) (2026-07-11) - https://github.com/nhruska/nhruska.github.io/pull/247
+
+## Links
+- Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
+- Live app: https://nhruska.github.io/music/play/
+- Engineering wiki: https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/index.md
+- Decisions log: https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md
+- Queue (horizons): https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/QUEUE.md
+- Actions: https://github.com/nhruska/nhruska.github.io/actions
+
+## Conventions
+- Payload: docs/artifacts/cc/payload-repo.json
+- Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
+- Suite: node test/run-all.js (2349 cases / 46 suites)
+- CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
+- Public repo: payload + this brief carry public data only (no session-file content)

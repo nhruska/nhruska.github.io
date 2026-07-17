@@ -1,0 +1,30 @@
+{
+  "name": "button-icons-evident",
+  "description": "S-ICON-EVIDENT (operator UAT 2026-07-17: 'increase the size of icons in buttons everywhere to make it more evident'). The glyphs inside the bottom-tab buttons and the per-row + add button must render visibly larger than the pre-bump sizes. Red-first: thresholds below PASS on the bumped sizes (tab icon 1.28rem, li-add 1.35rem) and FAIL on the pre-fix sizes (tab 1.05rem/~16.8px, li-add 1.1rem/~17.6px).",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "bottom-tab icon glyphs are enlarged (>= 19px; pre-fix 1.05rem ~16.8px FAILS)",
+      "js": "(function(){var ic=document.querySelector('.tabbar button .icn');return !!ic && parseFloat(getComputedStyle(ic).fontSize) >= 19;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "per-row + add button glyph is enlarged (>= 20px; pre-fix 1.1rem ~17.6px FAILS)",
+      "js": "(function(){var a=document.querySelector('#songsList .li-add');return !!a && parseFloat(getComputedStyle(a).fontSize) >= 20;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the appbar settings-gear button glyph is enlarged (>= 18px; pre-fix 1.05rem ~16.8px FAILS)",
+      "js": "(function(){var g=document.querySelector('.ab-btn');return !!g && parseFloat(getComputedStyle(g).fontSize) >= 18;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "button-icons-evident"
+    }
+  ]
+}

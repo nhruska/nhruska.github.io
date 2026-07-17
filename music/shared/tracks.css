@@ -19,63 +19,71 @@
    * .bt-card/.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta/.bt-open/.bt-why item rules
    * were retired here to keep one source of truth for the Library list item. */
   .bt-more{margin:14px 0 6px;}
+  /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - full-width button-styled oddball. */
   .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
-    font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;
     transition:border-color .15s,color .15s;}
-  .bt-more-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .bt-more-btn .ar{color:var(--accent);}
+  .bt-more-btn:hover{border-color:var(--accent-ink);color:var(--accent-ink);}
+  .bt-more-btn .ar{color:var(--accent-ink);}
   /* curate form */
   .bt-add{margin:12px 0 6px;}
   .bt-add-toggle{background:transparent;border:1px solid var(--line);color:var(--txt-dim);font-family:inherit;
-    font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:10px;cursor:pointer;}
-  .bt-add-toggle:hover{color:var(--accent);border-color:var(--line-strong);}
-  .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;
+    font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:var(--r-btn-sm);cursor:pointer;}
+  .bt-add-toggle:hover{color:var(--accent-ink);border-color:var(--line-strong);}
+  .bt-add-panel{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
     padding:13px;display:flex;flex-direction:column;gap:9px;}
   .bt-add-panel[hidden]{display:none;}
   .bt-in{width:100%;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--txt);
     font-family:inherit;font-size:.88rem;padding:10px 12px;border-radius:9px;}
-  .bt-in:focus{outline:none;border-color:var(--accent);}
-  .bt-in.bad{border-color:#f87171;}
+  .bt-in:focus{outline:none;border-color:var(--accent-ink);}
+  .bt-in.bad{border-color:var(--bad);}
   .bt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
   .bt-add-actions{display:flex;gap:9px;align-items:center;}
-  .bt-add-save{flex:1;background:var(--accent);color:#06201c;border:none;font-family:inherit;font-weight:700;
-    font-size:.86rem;padding:11px;border-radius:10px;cursor:pointer;}
+  /* M-DESIGN-ENFORCE E3: 10px -> var(--r-btn) (11px) - a primary full-width Save action,
+     same bucket as .btn.red/.bt-add-save's songbook.css siblings, not the compact icon bucket. */
+  .bt-add-save{flex:1;background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
+    font-size:.86rem;padding:11px;border-radius:var(--r-btn);cursor:pointer;}
   .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
     font-size:.82rem;cursor:pointer;padding:8px;}
   /* in-studio add/edit-video-URL editor */
-  .bt-st-urled{margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:11px 12px;}
+  /* S-UI-RECONCILE Lane D: 11px -> var(--r-card) (13px) - card-shaped surface
+     (background+border+padding), same bucket as .bt-add-panel/.cofPanelInner. */
+  .bt-st-urled{margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px 12px;}
   .bt-st-urled-lbl{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
     color:var(--txt-dim);margin-bottom:8px;}
   .bt-st-urled-row{display:flex;gap:8px;align-items:center;}
   .bt-st-urled-row .bt-in{flex:1;}
-  .bt-st-urled-save{background:var(--accent);color:#06201c;border:none;font-family:inherit;font-weight:700;
-    font-size:.82rem;padding:10px 14px;border-radius:9px;cursor:pointer;white-space:nowrap;}
+  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact button oddballs. */
+  .bt-st-urled-save{background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
+    font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;white-space:nowrap;}
   .bt-st-urled-clear{background:transparent;border:1px solid var(--line-strong);color:var(--txt-dim);
-    font-family:inherit;font-weight:600;font-size:.8rem;padding:9px 12px;border-radius:9px;cursor:pointer;white-space:nowrap;}
-  .bt-st-urled-clear:hover{color:#f87171;border-color:#f87171;}
+    font-family:inherit;font-weight:600;font-size:.8rem;padding:9px 12px;border-radius:var(--r-btn-sm);cursor:pointer;white-space:nowrap;}
+  .bt-st-urled-clear:hover{color:var(--bad);border-color:var(--bad);}
   /* curation queue */
   .bt-curate-bar{margin:6px 0 2px;}
   .bt-curate-bar:empty{display:none;}
   .bt-curate-btn{width:100%;background:transparent;border:1px solid var(--line);color:var(--txt-dim);
-    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:10px;cursor:pointer;}
-  .bt-curate-btn:hover{color:var(--accent);border-color:var(--line-strong);}
-  .bt-curate-btn.on{color:var(--accent);border-color:var(--line-strong);}
+    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;}
+  .bt-curate-btn:hover{color:var(--accent-ink);border-color:var(--line-strong);}
+  .bt-curate-btn.on{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-queue[hidden]{display:none;}
   .bt-qhead{font-size:1.05rem;font-weight:700;margin:8px 0 4px;}
   .bt-qhint{color:var(--txt-dim);font-size:.82rem;line-height:1.6;margin-bottom:14px;}
-  .bt-qcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:11px;
+  .bt-qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;margin-bottom:11px;
     display:flex;flex-direction:column;gap:9px;}
   .bt-qrow{display:flex;align-items:baseline;gap:10px;justify-content:space-between;}
   .bt-qtitle{font-weight:700;font-size:.95rem;}
-  .bt-qsearch{color:var(--accent);font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;
+  .bt-qsearch{color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;
     text-decoration:none;white-space:nowrap;}
   .bt-qsearch:hover{text-decoration:underline;}
   .bt-qmeta{color:var(--txt-dim);font-size:.78rem;}
   .bt-qcands:empty{display:none;}
   .bt-qcand-lbl{font-family:'Space Mono',monospace;font-size:.66rem;letter-spacing:.05em;color:var(--txt-dim);margin-bottom:6px;}
+  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - full-width text-left
+     button, same bucket as .bt-curate-btn (its own already-tokenized sibling). */
   .bt-qcand{display:block;width:100%;text-align:left;background:var(--bg-2);border:1px solid var(--line-strong);
-    color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:6px;}
-  .bt-qcand:hover{border-color:var(--accent);}
+    color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:var(--r-btn-sm);cursor:pointer;margin-bottom:6px;}
+  .bt-qcand:hover{border-color:var(--accent-ink);}
   .bt-qcand-note{color:var(--txt-dim);font-size:.72rem;margin-left:6px;}
   /* visible curate entry point under the Library list (curateBarEl host) - quiet,
      self-hides when there's nothing to curate */
@@ -86,7 +94,7 @@
   .bt-qpanel{position:fixed;inset:0;z-index:50;display:none;align-items:stretch;justify-content:center;
     background:rgba(0,0,0,.78);padding:calc(max(env(safe-area-inset-top,0px), 16px)) 12px calc(env(safe-area-inset-bottom,0px) + 12px);}
   .bt-qpanel.on{display:flex;}
-  .bt-qpanel-box{width:100%;max-width:640px;background:var(--paper,#0d0f12);border:1px solid var(--line-strong);
+  .bt-qpanel-box{width:100%;max-width:640px;background:var(--paper);border:1px solid var(--line-strong);
     border-radius:14px;display:flex;flex-direction:column;overflow:hidden;padding:12px 14px;}
   .bt-qpanel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex:0 0 auto;}
   .bt-qpanel-head .bt-qhead{margin:0;}
@@ -99,10 +107,11 @@
     border-radius:14px;overflow:hidden;}
   .bt-pl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;}
   .bt-pl-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact close-button oddball. */
   .bt-pl-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
-  .bt-pl-x:hover{color:var(--accent);border-color:var(--accent);}
-  .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:var(--r-btn-sm);cursor:pointer;flex:0 0 auto;}
+  .bt-pl-x:hover{color:var(--accent-ink);border-color:var(--accent-ink);}
+  .bt-pl-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);}
   .bt-pl-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
 
   /* Practice Studio: pinned track on top, fretboard scale (hero) + chords + circle below.
@@ -117,15 +126,18 @@
   /* Header + video pane. Portrait: a normal top-pinned column (head + frame stack,
      body scrolls below). Landscape: the fixed left pane of the two-pane split. */
   .bt-st-stage{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;}
-  .bt-st-head{display:flex;align-items:center;gap:10px;padding:11px 14px;flex:0 0 auto;
+  .bt-st-head{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:0 0 auto;
     border-bottom:1px solid var(--line-strong);}
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .bt-st-meta{font-size:.78rem;color:var(--accent);margin-top:1px;}
-  .bt-st-x{background:transparent;border:1px solid var(--line-strong);color:var(--txt-soft);font-family:inherit;
-    font-weight:600;font-size:.78rem;padding:7px 12px;border-radius:9px;cursor:pointer;flex:0 0 auto;}
-  .bt-st-x:hover{color:var(--accent);border-color:var(--accent);}
-  .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;flex:0 0 auto;}
+  .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
+  /* F32 (UI-std UAT): the dismiss control is now the SAME standard back affordance
+     the rest of the app uses (song view's #backLib "iconBtn ←") - .bt-st-back
+     composes the shared .iconBtn base (songbook.css: 44x44, --r-btn-sm radius,
+     accent-ink glyph) with zero Studio-specific overrides needed. The old
+     bordered "close"-text pill (.bt-st-x, trailing on the right) is retired -
+     removed here, not left dormant. */
+  .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   /* No-yt fallback: the Practice Studio still loads (HUD intact), the iframe slot
      becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
@@ -133,53 +145,99 @@
   .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
   .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
-    font-weight:700;font-size:.92rem;color:var(--accent);text-decoration:none;
+    font-weight:700;font-size:.92rem;color:var(--accent-ink);text-decoration:none;
     border:1px solid var(--accent-dim);background:var(--accent-deep);
-    padding:10px 16px;border-radius:10px;min-height:44px;}
+    padding:10px 16px;border-radius:var(--r-btn-sm);min-height:44px;}
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding:16px 14px 24px;display:flex;flex-direction:column;gap:18px;}
-  .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
-    margin-bottom:9px;font-weight:700;}
+    padding:12px 12px 18px;display:flex;flex-direction:column;gap:12px;}
+  /* S-WHYNOTE: .bt-st-body already spaces flex children via `gap`, so the shared
+     .notableBanner's own margin-bottom (songbook.css) would double up the gap
+     below the banner - zero it here, scoped to this one owned placement. */
+  .bt-st-notable{margin-bottom:0;}
+  .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);
+    margin-bottom:6px;font-weight:700;}
   /* note names inside an uppercased label must keep their case (Bb, not BB) */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
+  /* F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play (primary,
+     44px override below - the shared .soundToggle is 32px, fine for
+     Compose's compact inline preview, wrong for the Studio's now-PRIMARY
+     control), Speed (one compact cycling button, replaces the old 3-button
+     Slow/Med/Fast segmented control), and Guide (a `?` icon, replaces the
+     "Guide" text toggle - its content now renders below the fretboard, see
+     the .bt-st-guidebtn wiring). Sits ahead of the notes line so it reads as
+     the section's primary controls. Replaces the old .bt-st-solorow (the
+     play toggle used to share a row with the "Solo over it" label) and the
+     old .bt-st-degrees line (F14 - removed as a redundant second notes
+     rendering). */
+  .bt-st-ctrlrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.1rem;}
+  .bt-st-speedbtn{flex:0 0 auto;min-height:44px;min-width:64px;padding:0 14px;
+    border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);
+    font-family:inherit;font-weight:700;font-size:.78rem;border-radius:var(--r-btn-sm);cursor:pointer;
+    transition:transform .08s,background .15s,color .15s,border-color .15s;}
+  .bt-st-speedbtn:active{transform:scale(.96);}
+  .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
+     blues), solo layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below)
+     so the chip visual language reads consistently app-wide - but wraps instead
+     of horizontal-scrolling: exactly 4 short labels fit one row at 412px, wrap
+     is just the safety net. */
+  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
+  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - a genuine pill-shaped
+     chip; converges onto the .chip family's canonical radius (songbook.css). */
+  .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
+    transition:background .12s,color .12s,border-color .12s;}
+  .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
+  .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
-  /* uniform grid (was flex-wrap+flex-start): fret-numbered chord diagrams (F#m, C#dim) are
-     taller/wider, so the old layout left the romans misaligned + tiles squashed. Equal-width
-     columns + bottom-aligned cells line every roman up regardless of diagram height. */
-  .bt-st-chords{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px;align-items:end;}
-  .bt-st-chordcell{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
-  .bt-st-chordcell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
-    color:var(--txt-dim);letter-spacing:.04em;transition:color .12s;}
-  /* Stack the chord NAME above its diagram + center both - songbook.css scopes
-     this layout to specific parents (.prog, .suggRow, .chordGrid, .hsrChain),
-     none of which the Practice Studio is under. Without this rule the inline
-     <span class="chord-name"> floats to the left of the SVG (the misalignment
-     reported on the Tracks tab). */
-  .bt-st-chordcell .chord{display:flex;flex-direction:column;align-items:center;gap:4px;
-    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:12px;
-    padding:7px 5px 5px;box-sizing:border-box;}
-  .bt-st-chordcell .chord .chord-name{font-family:'Space Mono',monospace;font-weight:700;
-    font-size:.82rem;color:var(--txt);}
-  .bt-st-chip{cursor:pointer;border-radius:9px;transition:transform .12s,outline-color .12s,background .15s,border-color .15s;
+  /* F19 (operator UAT 2026-07-05): chords-in-key drops the SVG chord diagram
+     + roman numeral entirely - name-only chips (like the scale-chip row
+     above), all 7 fit ONE row at 412px (flex:1 1 0 divides the row evenly,
+     unlike .bt-st-scalechip's flex:0 0 auto+wrap, whose count varies 3-4).
+     S-LAYOUT-SSOT KNOWN GAP (music/engineering-wiki/systems/layout-tokens.md)
+     is now RESOLVED-BY-REMOVAL, not by adopting the --dg-canvas-w/--tile-min
+     clamp the gap note used to point at: there is no SVG canvas left in this
+     row to squeeze (the 4-column-diagram-width problem the gap described
+     cannot recur once the row renders text-only chips). Tap still plays the
+     chord + toggles the fretboard target (toggleTarget, tracks.js) - only
+     the visual weight changed. */
+  .bt-st-chords{display:flex;flex-wrap:nowrap;gap:4px;}
+  .bt-st-chordchip{flex:1 1 0;min-width:0;min-height:40px;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--txt);font-family:'Space Mono',monospace;font-weight:700;
+    font-size:.72rem;padding:0 2px;border-radius:var(--r-btn-sm);cursor:pointer;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    transition:transform .08s,background .15s,color .15s,border-color .15s,outline-color .12s;
     outline:2px solid transparent;outline-offset:2px;}
-  .bt-st-chip:active{transform:scale(.96);}
-  .bt-st-chip.sel{outline-color:var(--accent);}
-  .bt-st-chip.sel + .rn{color:var(--accent);}
+  .bt-st-chordchip:active{transform:scale(.96);}
+  .bt-st-chordchip.sel{outline-color:var(--accent-ink);}
+  /* Active chord-tone target: persistent outline on the tapped chords-in-key
+     chip (composes the .sel accent-outline language above, just not
+     auto-clearing after 220ms). */
+  .bt-st-chordchip.targeted{outline:2px solid var(--accent-ink);outline-offset:2px;}
   /* S1 (operator UAT): "Walk the full cycle up the neck" (.hsrMore, styled globally
      in songbook.css for the Compose tab) and this "Why these notes" toggle used to
      read like plain headings - no shared visual language marking either as
      tappable. Style both as a matching accent-colored underlined link/button here,
      scoped to the Studio only (.bt-studio .hsrMore) so the Compose tab's own
      .hsrMore look is untouched. */
-  .bt-studio .hsrMore{color:var(--accent);font-weight:700;text-decoration:underline;
+  .bt-studio .hsrMore{color:var(--accent-ink);font-weight:700;text-decoration:underline;
     text-decoration-color:var(--accent-dim);text-underline-offset:3px;border-bottom:none;padding-bottom:0;}
-  .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent);}
+  .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent-ink);}
+  /* m-guide-ia-20260704.md section 5 chrome-trim (4): "walk the cycle" link + the
+     "why these notes" toggle share one row instead of a row each - saves vertical
+     space. Zero the global .hsrMore vertical margin here only (Compose's own
+     .hsrMore look, defined in songbook.css, is untouched) so the row doesn't grow
+     taller than the toggle button beside it. */
+  .bt-st-linkrow{display:flex;align-items:center;gap:14px;}
+  .bt-st-linkrow .hsrMore{margin:0;}
   .bt-st-why-toggle{align-self:flex-start;background:transparent;border:none;padding:4px 0;
-    color:var(--accent);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
+    color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
     text-decoration:underline;text-decoration-color:var(--accent-dim);text-underline-offset:3px;}
-  .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent);}
+  .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent-ink);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
   /* SHORT landscape (phone held sideways): use the width. Two panes side by side -
@@ -199,9 +257,12 @@
   @media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
     .bt-studio{flex-direction:row;max-width:none;
       padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
-    .bt-st-stage{flex:0 0 48%;max-width:48%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    /* M-GUIDE W3a (D-LANDSCAPE-FLEX): stage narrowed 48% -> 44% and the scrollable
+       body tightened (padding 12px 12px 18px -> 10px 12px, gap 12px -> 10px) - the
+       Guide card + target caption added more content to the same short-height pane. */
+    .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
-    .bt-st-body{flex:1 1 auto;}
+    .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
   }
   /* (.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta item rules retired -> .listItem.) */
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
@@ -220,38 +281,264 @@
   .cofWedge.on{fill:var(--accent);}
   .cofWedge-rel{fill:var(--accent-dim);}
   .cofWedge-nb{fill:var(--accent-deep);}
+  /* S-COF-ANIMATE: the sounding scale note's wedge during the scale audition
+     (tracks.js markWheelPc) - a fill swap riding the existing .12s transition.
+     Color change only, no motion (reduced-motion safe); declared AFTER
+     on/rel/nb so the pulse wins while the note sounds, then the tint returns. */
+  .cofWedge-sound{fill:var(--accent);}
   .cofLabel{fill:var(--txt-soft);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
-  .cofLabel.on{fill:#06201c;}
+  .cofLabel.on{fill:var(--on-accent);}
   .cofLabel-rel{fill:var(--accent);}
   .cofLabel-nb{fill:var(--txt-soft);}
   .cofPanel:not(:empty){margin:6px 0 12px;}
-  .cofPanelInner{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
+  .cofPanelInner{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;}
   .cofKeyName{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;}
   .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
   .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
   /* uniform 44px tiles so longer names (C#dim, F#m) don't squash + every tile is a thumb target */
-  .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px;min-width:46px;min-height:44px;}
+  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - compact bordered
+     tile, same bucket as .cofDeg below. */
+  .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 9px;min-width:46px;min-height:44px;}
   .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
-  .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent);}
+  .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
   .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
   .cofNb{display:flex;flex-wrap:wrap;gap:6px;}
-  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .08s;}
+  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
+     chip, same bucket as .chordChips .c (songbook.css). */
+  .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s;}
   .cofNbChip:active{transform:scale(.94);}
   .cofNbChip b{font-weight:700;}
   /* modes layer + interval degrees (Phase 2.x) */
   .cofModes{display:flex;gap:5px;overflow-x:auto;margin:2px 0 11px;padding-bottom:2px;scrollbar-width:none;}
   .cofModes::-webkit-scrollbar{display:none;}
+  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - see .bt-st-scalechip above. */
   .cofModeChip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
-    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
-  .cofModeChip.on{background:var(--accent);color:#06201c;border-color:var(--accent);}
+  .cofModeChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .cofScale{display:flex;gap:4px;margin:0 0 9px;}
+  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
+     tile, same bucket as .cofChord above. */
   .cofDeg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);
-    border:1px solid var(--line);border-radius:8px;padding:6px 2px;min-width:0;}
+    border:1px solid var(--line);border-radius:var(--r-btn-sm);padding:6px 2px;min-width:0;}
   .cofDeg.char{background:var(--accent-deep);border-color:var(--accent-dim);}
   .cofDeg .nt{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:var(--txt);}
-  .cofDeg.char .nt{color:var(--accent);}
+  .cofDeg.char .nt{color:var(--accent-ink);}
   .cofDeg .dg{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--txt-dim);}
-  .cofDeg.char .dg{color:var(--accent);}
+  .cofDeg.char .dg{color:var(--accent-ink);}
   .cofHint{font-size:.72rem;color:var(--txt-soft);margin:0 0 12px;line-height:1.5;}
-  .cofHint b{color:var(--accent);font-weight:700;}
+  .cofHint b{color:var(--accent-ink);font-weight:700;}
+
+/* =====================================================================
+ * M-GUIDE W3a (m-guide-ia-20260704.md sections 2-3) - chord-tone targeting
+ * (kx-*) + the per-scale mentor card (Guide). New section, appended once;
+ * do not scatter kx-* or guide rules elsewhere in this file.
+ * U3 fix (operator UAT 2026-07-04): this comment used to end its "kx-*"
+ * mention immediately followed by a slash and "guide" with no separating
+ * space - that adjacency is a close-comment token, so it terminated THIS
+ * comment block early, silently swallowing the very next rule (the
+ * dark-theme :root block below setting --kx-chord/--kx-blue/--kx-ghost -
+ * browsers discard a malformed rule whose selector absorbs trailing comment
+ * text). Dark theme's kx-chord/kx-blue dots were rendering fill:black (the
+ * var resolved to empty, so the SVG default black won) - the light-theme
+ * override rule worked fine standalone, which is why this stayed invisible
+ * unless dark theme specifically was inspected. Keep a space before any
+ * slash that follows an asterisk in this file's comments.
+ * ===================================================================== */
+  /* Chord-tone targeting dot colors (diagram.js Diagram.scale opts.tones).
+   * kx-root/kx-scale intentionally carry NO rule here - they reuse the existing
+   * root/non-root fill diagram.js already applies (no visual change from today's
+   * default).
+   * --kx-ghost (P5 fold): the hollow/outline color for a target chord's tones
+   * OUTSIDE the current scale - diagram.js renders these fill:none, stroke +
+   * text both --kx-ghost, so no separate CSS rule is needed for them either. */
+  :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;--kx-ghost:#94a3b8;}
+  :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;--kx-ghost:#64748b;}
+  /* U3 (operator UAT 2026-07-04): kx-chord/kx-blue note text used to share the
+   * root dot's --on-accent (dark) ink, on the assumption their fills were
+   * always bright like --accent. True in dark theme (fill bright -> dark ink
+   * reads fine), but the light-theme fills above are deliberately DARKENED for
+   * contrast against a white page bg - dark ink on a dark fill was the "black
+   * font on a dark dot" the operator flagged. Per-class ink var, computed for
+   * WCAG-normal-text contrast (>=4.5:1) against the ACTUAL fill in each theme:
+   * dark theme keeps --on-accent (7.95:1 vs --kx-chord, 6.27:1 vs --kx-blue);
+   * light theme flips to white (5.02:1 vs --kx-chord, 5.70:1 vs --kx-blue). */
+  :root{--kx-chord-ink:var(--on-accent);--kx-blue-ink:var(--on-accent);}
+  :root[data-theme="light"]{--kx-chord-ink:#fff;--kx-blue-ink:#fff;}
+
+/* =====================================================================
+ * U20 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md, decisions.md
+ * D-EAR-1.6): "a THEME PALETTE with complementary and/or adjacent tones or
+ * hues" derived from the user's own accent hue, so the kx dot-class palette
+ * TRACKS the accent picker automatically instead of sitting at a fixed
+ * hue. Feature-detected (@supports (color: oklch(from red l c h))) - the
+ * literal fixed-hex declarations directly above are the fallback for
+ * browsers without CSS Relative Color Syntax support; nothing above this
+ * block changes.
+ *
+ * Hue offsets (relative to --accent's own hue, `h`):
+ *   root      -> --accent itself (unchanged, no override needed - it IS home)
+ *   chord     -> adjacent,        h + 30
+ *   blue      -> adjacent-opposite, h - 30 (a DIFFERENT adjacent side from
+ *                chord, so the two stay visually distinct from each other,
+ *                not just from root)
+ *   ghost     -> stays NEUTRAL (unchanged, --kx-ghost above) - it is
+ *                deliberately an outline/absence signal, not a "note color"
+ *   rub       -> no fill of its own (diagram.js renders it on a plain
+ *                --dg-dot-fill "scale" dot + a dashed ring - see
+ *                shared/legend.js's own comment); nothing to derive here
+ *   sounding  -> complementary, h + 180 (the single class needing MAXIMUM
+ *                perceptual distance from every other accent-derived hue,
+ *                since it marks a transient "playing right now" state, not
+ *                a persistent theory class)
+ *
+ * L (lightness)/C (chroma) are PINNED per theme (not derived from --accent's
+ * own L/C, which a bright vs muted user accent could otherwise swing wide
+ * enough to blow the >=4.5:1 ink-contrast floor) - only the hue rotates.
+ * Values chosen to land close to this file's PRE-U20 literal hex figures
+ * (verified equivalent-weight replacements, not arbitrary): dark theme
+ * kx-chord #f59e0b/kx-blue #a78bfa were ~L.74-.75; light theme kx-chord
+ * #b45309/kx-blue #7c3aed were ~L.48-.50. --kx-chord-ink/--kx-blue-ink
+ * (above) are UNCHANGED - OKLCH's perceptually-uniform L means ink-vs-fill
+ * contrast tracks the pinned L, not the rotating hue, so the existing
+ * >=4.5:1 figures hold across accent hues at these L/C pins (spot-verified
+ * live at the default teal accent AND a hue-changed accent - shipping PR's
+ * V&V section; not exhaustively re-verified against every possible
+ * user-chosen hue). */
+@supports (color: oklch(from red l c h)) {
+  :root{
+    --kx-chord:oklch(from var(--accent) 0.74 0.15 calc(h + 30));
+    --kx-blue:oklch(from var(--accent) 0.74 0.15 calc(h - 30));
+  }
+  :root[data-theme="light"]{
+    --kx-chord:oklch(from var(--accent) 0.50 0.16 calc(h + 30));
+    --kx-blue:oklch(from var(--accent) 0.48 0.18 calc(h - 30));
+  }
+}
+  /* (the F19 chip-targeting rule now lives with .bt-st-chordchip, above -
+   * the old .bt-st-chordcell .chord.targeted diagram-cell selector is gone.) */
+  /* Per-scale mentor card (Guide): reuses .bt-st-why-toggle/.bt-st-why verbatim
+   * for the toggle + collapse behavior (composed, not a new chip variant) - only
+   * the 5 labeled rows inside are new. */
+  .bt-st-guide-row{display:flex;gap:8px;padding:4px 0;font-size:.78rem;line-height:1.45;}
+  .bt-st-guide-lbl{flex:0 0 auto;width:58px;font-family:'Space Mono',monospace;font-size:.62rem;
+    font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);padding-top:1px;}
+  .bt-st-guide-txt{color:var(--txt-soft);}
+
+/* =====================================================================
+ * U2 (operator UAT 2026-07-04) - Studio position-pager (key-explorer.js
+ * .scalePosCtrl/.scalePosBtn, base rule in songbook.css) read as "different
+ * sizes" at 412px: the base rule's 42x42 box sits below the app's 44px GRIP
+ * touch floor (decisions.md GRIP), and disabled:opacity .32 faded the back
+ * button's border to near-invisible against its own bg, so it visually
+ * shrunk next to the fully-opaque forward button even though the DOM box was
+ * identical. Override here (tracks.css loads AFTER songbook.css - same
+ * specificity, later wins): explicit equal 44x44 box on BOTH states, and a
+ * less extreme disabled fade so the box stays equally legible either way.
+ * ===================================================================== */
+  .scalePosBtn{width:44px;height:44px;min-width:44px;min-height:44px;}
+  .scalePosBtn:disabled{opacity:.5;}
+
+/* =====================================================================
+ * S-BLUES-BOXES - the named-box chip key-explorer.js renders as a sibling
+ * of .scalePosCtrl whenever the active solo scale is pentMajor/pentMinor/
+ * blues and the pager's current position lands exactly on a box start.
+ * Composes the SAME accent-filled-pill language as .bt-st-scalechip.on
+ * above (this IS "the current box is active", same visual idea as an
+ * active chip) - centered, monospace fret/string text to match .scalePosLbl.
+ * Not a button (informational only; the pager buttons already drive it).
+ * ===================================================================== */
+  /* S-UI-RECONCILE Lane D: 12px -> var(--r-chip-pill) (18px) - this block's own
+     comment above states it composes the SAME accent-filled-pill language as
+     .bt-st-scalechip.on, which is already tokenized to --r-chip-pill; the
+     6px jump is the intended snap onto that shared pill language, not a
+     regression. */
+  .scaleBoxChip{text-align:center;margin:-4px 0 8px;font-family:'Space Mono',monospace;
+    font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--on-accent);
+    background:var(--accent);border-radius:var(--r-chip-pill);padding:4px 10px;display:inline-block;}
+  .scaleBoxChip[hidden]{display:none;}
+
+/* (the U5-class SVG clamp parity rule for .bt-st-chords is gone - F19,
+   2026-07-05, removed the chord diagrams that rule was clamping.) */
+
+/* =====================================================================
+ * M-TRACKLIB wave 1 - "Find a jam" explore panel (docs/plans/
+ * vision-ear-first-20260704.md). Reuses .bt-st-why-toggle/.bt-st-why for the
+ * disclosure (Guide's own primitive), the shared .chip base (songbook.css)
+ * for genre/feel selection (accent-fill .on grammar, no new chip variant),
+ * and .bt-st-ytlink/.bt-st-editlink (already styled) for the two actions -
+ * only the layout wrappers below are new.
+ *
+ * F21 (operator UAT 2026-07-05): the trigger (data-jamfindtoggle) moved from
+ * its own solo-section toggle into the stage's video/search affordance (see
+ * tracks.js openStudio's jamPanelHtml) - the .on state below is new (neither
+ * .bt-st-ytlink nor .bt-st-editlink had one; the old .bt-st-why-toggle it
+ * replaced got its "expanded" look from underline-color alone, which reads
+ * fine for a plain text link but not for these button-shaped primitives).
+ * ===================================================================== */
+  .bt-st-jamchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
+    letter-spacing:.02em;margin:0 0 8px;}
+  .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .bt-st-ytlink.on,.bt-st-editlink.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+
+/* =====================================================================
+ * M-EAR wave 1.5 (U12) - the sounding-note fretboard dot, key-explorer.js's
+ * boxWrap.setSounding(pc) class-swap target. Reuses the SAME --sound-bg/
+ * --sound-line pair the note/degree token .sounding marker uses
+ * (songbook.css, M-EAR wave 1) - one primitive, two surfaces (text pill AND
+ * fretboard dot), same Element Consistency Law reasoning as kx-chord/kx-blue
+ * above: a THIRD hue for a genuinely distinct surface would just be scatter.
+ * Contrast already verified for this pair (songbook.css's own comment):
+ * dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on #efe7fb = 5.12:1 -
+ * satisfies the >=4.5:1 text-on-fill floor for the note-name text on top of
+ * the dot, same mapping (fill=bg tint, text=line ink) as the existing pill.
+ * kx-sounding is added via JS classList AFTER render (never baked into
+ * diagram.js's own SVG string - see diagram.dom.test.js's own assertion of
+ * that), so it must win over diagram.js's inline fill/stroke style attribute:
+ * !important is the one sanctioned exception here (every other kx-* class is
+ * inline-styled at render time and needs no override rule at all - this is
+ * the only class applied post-render, hence the only one requiring it).
+ * The `+ text` sibling rule recolors the note-name letter drawn immediately
+ * after each dot (diagram.js always emits <circle/><text> as an adjacent
+ * pair, one per note - see scale()'s notesOn loop).
+ *
+ * U15 HARDEN (2026-07-05, docs/plans/uat-walkthrough-20260704.md, decisions.md
+ * D-EAR-1.6): re-repro this wave found the mechanism above fires correctly in
+ * EVERY tested state combo (window/full-neck x mode/pentMinor x target
+ * on/off - live Playwright evidence in the shipping PR) - no logic bug. The
+ * color-only delta was just too subtle to notice at a glance, especially
+ * light theme (--sound-bg #efe7fb sits close in luminance to the default
+ * --dg-dot #dfe6ee fill - a colour-only cue two adjacent pastels apart is
+ * easy to miss on a quickly-bouncing marker). Adds a SIZE + STROKE + GLOW
+ * signal that reads regardless of hue perception, on top of the unchanged
+ * fill/stroke colors (already reviewed/contrast-verified above - changing
+ * them risked re-litigating that pairing for a problem size/weight/glow
+ * already fixes): transform:scale (CSS animates SVG geometry attributes
+ * like `r` inconsistently across engines; transform-box:fill-box +
+ * transform-origin:center scales around the DOT'S OWN center instead of the
+ * SVG viewport's default 0,0 origin, so the enlarged circle stays centered
+ * on its unscaled sibling <text> - no visual drift), a heavier ring, and a
+ * soft matching-hue glow so the sounding note visually "pops" off a busy
+ * fretboard instead of being just another same-size circle.
+ * ===================================================================== */
+  .kx-sounding{fill:var(--sound-bg) !important;stroke:var(--sound-line) !important;stroke-width:2.6 !important;
+    transform:scale(1.35);transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 2px var(--sound-line));}
+  .kx-sounding + text{fill:var(--sound-line) !important;}
+
+/* =====================================================================
+ * M-EAR wave 1.6 (U16) - the Legend primitive (shared/legend.js): dot-swatch
+ * + label rows, replacing the old M-GUIDE W3a chord-target caption's prose
+ * sentence. ONE card-shaped surface (Element Consistency Law) - reuses
+ * --surface-2/--line/--r-card (the SAME card tokens .listItem/.bt-add-panel/
+ * .bt-qcard already consume, per component-conventions.md's radius-by-role
+ * table) rather than inventing a new surface. Label text reuses --txt-soft,
+ * the SAME ink family .bt-st-guide-txt (the Guide card's own row text)
+ * already uses - no new text-color token needed for a plain description row.
+ * ===================================================================== */
+  .legend{display:flex;flex-direction:column;gap:5px;margin:6px 0 10px;padding:8px 10px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);}
+  .legendRow{display:flex;align-items:center;gap:8px;}
+  .legendSwatch{flex:0 0 auto;display:flex;}
+  .legendDot{display:block;}
+  .legendLbl{font-size:.72rem;color:var(--txt-soft);line-height:1.3;}
