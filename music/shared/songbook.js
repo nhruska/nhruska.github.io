@@ -768,8 +768,15 @@
     return out;
   }
   // A composed custom's chord-only sheet (one "[C] [G] ..." progression line). Pure.
+  // Label is "Verse", not "Progression" (operator UAT 2026-07-17): a saved
+  // progression re-entered via Continue building must read as a STANDARD song
+  // section - "Progression" isn't in the section set, so it rendered a blank
+  // section dropdown and an off-vocabulary card label. A plain progression IS
+  // the seed of a verse (the add-row's own default), so name it that from the
+  // start. Legacy "Progression"-labeled sheets are mapped at parse time
+  // (sectionsFromSheet) and self-heal on their next save.
   function buildSheetFromSeq(seq) {
-    return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
+    return [["Verse", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
   }
   // M-13 SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
   // the { seq, sheet } shape a custom SONG stores. seq = first-appearance unique
@@ -2648,7 +2655,10 @@
     // after the strip. Standard song-form vocabulary (matches catalog `sect`).
     // M-13 g1 section labels - the ONE vocabulary shared by the add-row <select>
     // and the template-suggestion label switcher below.
-    var SONG_SECTIONS = ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'];
+    // S-PROG-GUIDANCE: Pre-Chorus joins the section set - it's a first-class
+    // section in the songwriting canon (the departure+build before the chorus),
+    // and it gives the Pre-chorus lift (IV-V) template family a home surface.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
@@ -2659,6 +2669,10 @@
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
     var suggestLabel = 'Verse';
+    // S-PROG-GUIDANCE: romanText of the suggestion whose FEEL/WHEN/PROVEN
+    // guidance panel is open (one at a time; null = all closed). Session-local
+    // UI state - a reveal is a moment, not a preference.
+    var suggestWhyOpen = null;
     // M-13 g4: drag-swallow flag for the buffer chips, mirroring S-PROG-REORDER's
     // dragSwallowClick (own flag/listener - the progression drag code is untouched
     // per the goalpost's boundary; the grammar is reused, not shared, on purpose).
@@ -2819,6 +2833,16 @@
           romanText: s.roman.join('-'),
           chordText: tokens.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join(' '),
           prov: suggestProv(s),
+          // S-PROG-GUIDANCE: the chooser's revealable guidance (feel/when from
+          // the family - present on mined entries too when the pattern IS a
+          // known family, via forSection's sig->family attach). provenText is
+          // the PROVEN row: real-song citations for mined, the canon note for
+          // pure families.
+          feel: s.feel || null,
+          when: s.when || null,
+          provenText: (s.source === 'mined' && s.citations && s.citations.length)
+            ? s.citations.slice(0, 3).join(', ')
+            : (s.note || null),
           _order: i,                                                  // forSection's proven rank (mined-first) - stable tiebreak
           _connect: sectionConnectScore(prevRoman, s.roman[0]),       // arrival from the previous section
           _complexity: suggestionComplexity(s.roman),                 // M-13 g3: skill-nudge input
@@ -2914,6 +2938,13 @@
         return 0;
       }
       suggestions.forEach(function (s) {
+        // S-PROG-GUIDANCE (operator UAT 2026-07-17): each suggestion is now a
+        // ROW - the fill chip plus a "?" reveal (the Studio solo view's "?"
+        // convention) that opens a FEEL / WHEN / PROVEN guidance ladder. The
+        // "?" is a SIBLING, never nested (a button can't contain a button);
+        // one panel open at a time so the list stays scannable (pedagogy:
+        // reveal on demand, never push prose).
+        var item = document.createElement('div'); item.className = 'songSuggestItem';
         var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'songSuggestChip';
         // M-13 g3: the why-cue rides the SAME provenance line (one visible line,
         // no new element/style - Element Consistency Law) - '<prov> · <tag>' when
@@ -2925,7 +2956,36 @@
         var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = provText;
         chip.appendChild(rn); chip.appendChild(ch); chip.appendChild(pv);
         composeWireTap(chip, function () { fillFromTemplate(s.tokens, suggestLabel); });
-        songSuggestChipsEl.appendChild(chip);
+        item.appendChild(chip);
+        var hasGuidance = !!(s.feel || s.when || s.provenText);
+        if (hasGuidance) {
+          var open = (suggestWhyOpen === s.romanText);
+          var why = document.createElement('button'); why.type = 'button';
+          why.className = 'ssWhy' + (open ? ' on' : '');
+          why.textContent = '?';
+          why.setAttribute('aria-expanded', open ? 'true' : 'false');
+          why.setAttribute('aria-label', (open ? 'Hide' : 'Show') + ' guidance for ' + s.romanText);
+          composeWireTap(why, function () {
+            suggestWhyOpen = open ? null : s.romanText;
+            renderSongTray();
+          });
+          item.appendChild(why);
+          if (open) {
+            var panel = document.createElement('div'); panel.className = 'ssWhyPanel';
+            var addRow = function (label, text) {
+              if (!text) return;
+              var r = document.createElement('div'); r.className = 'ssWhyRow';
+              var l = document.createElement('span'); l.className = 'ssWhyLbl'; l.textContent = label;
+              var t = document.createElement('span'); t.className = 'ssWhyTxt'; t.textContent = text;
+              r.appendChild(l); r.appendChild(t); panel.appendChild(r);
+            };
+            addRow('Feel', s.feel);
+            addRow('When', s.when);
+            addRow('Proven', s.provenText);
+            item.appendChild(panel);
+          }
+        }
+        songSuggestChipsEl.appendChild(item);
       });
       return suggestions.length;
     }
@@ -3134,7 +3194,18 @@
       stopSectPlay(); disarmRm();
       progression = sec.seq.slice(); cTpose = 0;
       editingSectionIdx = i;
-      if (songSectSelEl) songSectSelEl.value = sec.label;
+      // Operator UAT 2026-07-17: a section label outside SONG_SECTIONS (an old
+      // save, a future custom label) must never render a BLANK select - append
+      // it as an option before selecting so the control always shows the truth.
+      if (songSectSelEl) {
+        var has = Array.prototype.some.call(songSectSelEl.options || [], function (o) { return o.value === sec.label; });
+        if (!has) {
+          var opt = document.createElement('option');
+          opt.value = sec.label; opt.textContent = sec.label;
+          songSectSelEl.appendChild(opt);
+        }
+        songSectSelEl.value = sec.label;
+      }
       chordView = null;
       reinferKey();
       renderProg(); renderSuggest(); renderKey();
@@ -4095,14 +4166,17 @@
         return;
       }
       var n = progression.length;
-      // Ordinal guidance ("Add a Nth chord:") for the first few; past that, F30
-      // (UAT): a label must ALWAYS sit directly above the suggested chords - the
-      // old "the panel's own summary already says it" rationale didn't hold (no
-      // other on-screen text names this row past the 4th chord), so it read as an
-      // unlabeled row of chips. Reuse the SAME .suggLbl primitive both branches
-      // already share (component-conventions.md section-label convention).
+      // Ordinal guidance for the first few; past that, F30 (UAT): a label must
+      // ALWAYS sit directly above the suggested chords - the old "the panel's
+      // own summary already says it" rationale didn't hold (no other on-screen
+      // text names this row past the 4th chord), so it read as an unlabeled row
+      // of chips. Reuse the SAME .suggLbl primitive both branches already share
+      // (component-conventions.md section-label convention).
+      // Issue #264 (operator UAT 2026-07-17): lead with "Suggested" so the row
+      // names its INTENT - the app is proposing coherent next chords, not
+      // demanding one - while the ordinal keeps the where-am-I scaffold.
       var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord";
+      lbl.textContent = n === 1 ? "Suggested 2nd chord:" : n === 2 ? "Suggested 3rd chord:" : n === 3 ? "Suggested 4th chord:" : "Suggested chords";
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
@@ -5532,7 +5606,13 @@
       if (!Array.isArray(row) || row.length < 2) return;
       var toks = [];
       String(row[1]).replace(/\[([^\]]+)\]/g, function (m, c) { toks.push(c.trim()); return m; });
-      if (toks.length) out.push({ label: String(row[0] || 'Section'), seq: toks });
+      var label = String(row[0] || 'Section');
+      // Operator UAT 2026-07-17: legacy plain-progression saves carry the
+      // off-vocabulary "Progression" label (buildSheetFromSeq pre-fix). Map it
+      // to Verse at parse time so the builder + section dropdown always speak
+      // the standard section set; the record self-heals to Verse on next save.
+      if (label === 'Progression') label = 'Verse';
+      if (toks.length) out.push({ label: label, seq: toks });
     });
     return out;
   }

@@ -447,7 +447,7 @@ test('buildAllSongs: a fork PRESERVES its own sheet (chords+lyrics), not a chord
 test('buildAllSongs: a composed custom with seq (no sheet) gets a chord-only sheet', function () {
   var comp = { id: 'm2', custom: true, seq: ['Am', 'F'] };
   var out = Songbook.buildAllSongs(CAT, [comp]).find(function (s) { return s.id === 'm2'; });
-  assert.deepStrictEqual(out.sheet, [['Progression', '[Am] [F]']]);
+  assert.deepStrictEqual(out.sheet, [['Verse', '[Am] [F]']]); // operator UAT 2026-07-17: plain saves read as a standard section
 });
 test('buildAllSongs: a video-only custom (no seq, no sheet) gets NO sheet (routes to Studio)', function () {
   var vid = { id: 'm3', custom: true, yt: 'abc' };
@@ -1795,18 +1795,20 @@ function suggLbl(m) {
 test('F30: renderSuggest labels the suggested-chords row at every progression length, including past the 4th chord', function () {
   var m = mountForGridTests();
   function tap() { m.elMap.buildGrid.children[0].onclick(); }
+  // Issue #264 (operator UAT 2026-07-17): the row leads with "Suggested" so it
+  // names its INTENT; the ordinal keeps the where-am-I scaffold.
   tap(); // 1 chord
-  assert.strictEqual(suggLbl(m).textContent, 'Add a 2nd chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested 2nd chord:');
   tap(); // 2 chords
-  assert.strictEqual(suggLbl(m).textContent, 'Add a 3rd chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested 3rd chord:');
   tap(); // 3 chords
-  assert.strictEqual(suggLbl(m).textContent, 'Add a 4th chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested 4th chord:');
   tap(); // 4 chords - F30's exact gap: this used to render NO label at all
   var lbl = suggLbl(m);
   assert.ok(lbl, 'F30: a label must render above the suggested chords past the 4th chord too');
-  assert.strictEqual(lbl.textContent, 'Next chord');
+  assert.strictEqual(lbl.textContent, 'Suggested chords');
   tap(); // 5 chords - stays labeled, not just a one-time fix at exactly 4
-  assert.strictEqual(suggLbl(m).textContent, 'Next chord');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested chords');
 });
 
 function mountForSoloChoiceTests(openStudioSpy) {
