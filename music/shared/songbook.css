@@ -836,6 +836,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSuggest[hidden]{display:none;}
 .songSuggest{display:flex;flex-direction:column;gap:8px;padding:9px 10px;border-radius:11px;border:1px dashed var(--accent-dim);background:var(--accent-deep);}
 .songSuggestChips{display:flex;flex-direction:column;gap:6px;}
+/* S-PROG-GUIDANCE: each suggestion is a ROW - the fill chip (flex:1) beside a
+   44px "?" reveal, with the FEEL/WHEN/PROVEN ladder spanning full width below
+   when open. The ladder mirrors the Studio solo view's labeled-guidance look
+   (small accent label left, prose right) - the operator's stated bar. */
+.songSuggestItem{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;}
+.songSuggestItem .songSuggestChip{flex:1 1 auto;min-width:0;}
+.ssWhy{position:relative;flex:0 0 auto;width:44px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.05rem;font-weight:700;font-family:'Space Mono',monospace;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.ssWhy.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.ssWhy:active{background:var(--accent-deep);color:var(--accent-ink);}
+.ssWhyPanel{flex-basis:100%;display:flex;flex-direction:column;gap:5px;padding:9px 11px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg-2);}
+.ssWhyRow{display:flex;gap:10px;align-items:baseline;}
+.ssWhyLbl{flex:0 0 52px;font-family:'Space Mono',monospace;font-weight:700;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);}
+.ssWhyTxt{flex:1;font-size:.78rem;line-height:1.45;color:var(--txt);}
 .songSuggestChip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:44px;padding:7px 11px;border-radius:10px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--txt);cursor:pointer;text-align:left;font-family:inherit;transition:transform .08s,border-color .15s,background .15s;}
 .songSuggestChip:active{transform:scale(.98);background:var(--accent-deep);border-color:var(--accent-ink);}
 .songSuggestChip .ssRoman{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
