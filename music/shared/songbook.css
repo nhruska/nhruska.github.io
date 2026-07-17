@@ -850,6 +850,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
+/* S-CHORD-COLLAPSE (advanced guidance level): the Compose palettes render the
+   SAME suggChip token in a dense auto-fill grid (.ccChips = the in-key lead's
+   own wrapper; .chordGrid.ccMode = #buildGrid re-tracked while chips are on).
+   width:100% + min-width:0 mirrors the .prog fill-row/grid6 carve-out so chips
+   fill their track instead of centering at 58px. The 56px track floor keeps
+   ~6 columns at the 412px review viewport - one short row where the diagram
+   tiles needed a full screen. min-height comes from .suggChip (48px >= the
+   44px tap floor). */
+.ccChips{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;touch-action:pan-y;}
+.chordGrid.ccMode{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));}
+.ccChips .suggChip,
+.chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;}
+/* The Shapes toggle rides the fixed #catChips row next to the In key|All seg;
+   .chip supplies the pill, this adds only the ON state (accent tint, same cue
+   family as .chordSegBtn.on). */
+.ccShapes.on{background:var(--accent-deep);border-color:var(--accent-ink);color:var(--accent-ink);}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
