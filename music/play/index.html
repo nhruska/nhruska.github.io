@@ -85,6 +85,13 @@
      only showed on the bare Guidance row - the fix reads correctly for all. */
   .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
   .setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
+  /* S-SETTINGS-UAT (operator UAT 2026-07-16): settings ACTION rows (Back up,
+     Restore, the Skills import/export rows - button.listItem.setRow) read as
+     CTAs via the accent border, the suggChip/CTA ink family - one rule for
+     the whole action-row class, never per instance. Plain display rows and
+     the segmented controls keep the neutral line. */
+  #settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
+  #settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
   .setRow .li-title{display:block;}
   .setRow .li-artist{display:block;}
   /* About section link rows (round 2): external-link ink (--brass, the Links
@@ -334,13 +341,16 @@
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
-          <!-- M-GUIDANCE (2026-07-05): plain body-text row (NOT a heading, NOT
-               bold - operator explicit) that cycles music.guidanceLevel.v1.
-               Deliberately NOT a .setLbl + segmented-control pair like Theme/
-               Fretboard diagrams above it - the operator asked for plain text
-               here specifically, so this is a single tappable .setRow (bare,
-               no .listItem card family - that's where the bold titles live). -->
-          <button type="button" class="setRow" id="guidanceLevelRow"></button>
+          <!-- M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16:
+               "guidance level change needs to follow UI standards" - this
+               SUPERSEDES the 2026-07-05 plain-text-row directive): the
+               standard Settings setter pair, .setLbl + .themeSeg segmented
+               control, mirroring Theme / Fretboard diagrams above. Same
+               storage (music.guidanceLevel.v1), same ask-settling side
+               effect - only the control primitive changed. -->
+          <div class="setLbl">Guidance level</div>
+          <div class="themeSeg" id="guidanceLevelSeg" role="radiogroup" aria-label="Guidance level"></div>
+          <p class="setHint">Grades the one-time tips and how chord charts render. Advanced collapses chord grids to compact chips.</p>
         </div>
       </section>
       <section class="accSec" data-acc="backup">
@@ -435,6 +445,11 @@
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/song-templates.js"></script>
 <script src="../shared/competency.js"></script>
+<!-- S-SKILLS-PORTABLE (2026-07-16): SKILL.md render/parse + store-only zip
+     writer - the Skills panel's open-skills-format export/import
+     (skill-md.js consumes competency.js's exportProfile output). -->
+<script src="../shared/skill-md.js"></script>
+<script src="../shared/zip-store.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <!-- yt-info.js: U17 (M-TRACKLIB w2a) - keyless YouTube oEmbed lookup + title
      field-hint parsing, consumed by repertoire-form.js's Video URL suggest
@@ -927,38 +942,45 @@
       markDiagramPref(DiagramPref.get());
     }
 
-    /* M-GUIDANCE (2026-07-05): plain-text Settings row that cycles
-       music.guidanceLevel.v1 - beginner -> intermediate -> advanced ->
-       beginner. Deliberately a single tappable row (not a segmented control
-       like Theme/Fretboard diagrams above) - operator explicit: plain body
-       text, not a heading, no bold (see .setRow's own CSS - no .listItem
-       card family, whose .li-title IS bold, applied here). An unset level
-       (the ask not yet answered) displays as "Beginner" - the same safe
-       default the ask's own dismiss-without-choosing path persists - so the
-       row never reads as blank, but nothing is WRITTEN until the user taps. */
-    var GUIDANCE_LEVEL_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
-    var glRow = document.getElementById('guidanceLevelRow');
+    /* M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16 -
+       supersedes the 2026-07-05 plain-text-row directive): the standard
+       .themeSeg segmented control, wired verbatim like diagramPrefSeg
+       above (Element Consistency Law - one setter primitive, three
+       consumers: Theme, Fretboard diagrams, Guidance level). An unset
+       level (ask not yet answered) MARKS "Beginner" - the same safe
+       default the ask's dismiss path persists - but nothing is WRITTEN
+       until the user taps a segment. renderGuidanceLevelRow keeps its
+       name: the one-time ask's choose() calls it to sync this control. */
+    var GUIDANCE_LEVELS = [['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']];
+    var glWrap = document.getElementById('guidanceLevelSeg');
     function guidanceLevelOrDefault() { return (window.GuidanceLevel && GuidanceLevel.get()) || 'beginner'; }
     function renderGuidanceLevelRow() {
-      if (!glRow) return;
-      glRow.textContent = 'Guidance level: ' + GUIDANCE_LEVEL_LABEL[guidanceLevelOrDefault()] + ' (tap to change)';
+      if (!glWrap) return;
+      glWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === guidanceLevelOrDefault();
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
     }
-    if (glRow && window.GuidanceLevel) {
-      glRow.onclick = function () {
-        var levels = GuidanceLevel.LEVELS;
-        var i = levels.indexOf(guidanceLevelOrDefault());
-        GuidanceLevel.set(levels[(i + 1) % levels.length]);
-        renderGuidanceLevelRow();
-        // Picking here also settles the one-time ask, if it's still open -
-        // the user just answered the same question the ask asks (mirrors the
-        // diagramPref Settings-row precedent right above).
-        if (window.Notables) Notables.dismiss('guidanceask');
-        var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
-        // S-CHORD-COLLAPSE (Volley 3 High #1): a level change from Settings
-        // applies to already-rendered Compose grids immediately (window seam -
-        // songbookCtl is the other script block's closure variable).
-        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-      };
+    if (glWrap && window.GuidanceLevel) {
+      GUIDANCE_LEVELS.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' guidance level');
+        b.onclick = function () {
+          GuidanceLevel.set(pair[0]);
+          renderGuidanceLevelRow();
+          // Picking here also settles the one-time ask, if it's still open -
+          // the user just answered the same question the ask asks (mirrors
+          // the diagramPref Settings-row precedent right above).
+          if (window.Notables) Notables.dismiss('guidanceask');
+          var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
+          // S-CHORD-COLLAPSE live refresh (the #256 window seam - live since
+          // that merge): a level change applies to already-rendered Compose
+          // grids immediately.
+          if (window.songbookRefreshCompose) window.songbookRefreshCompose();
+        };
+        glWrap.appendChild(b);
+      });
       renderGuidanceLevelRow();
     }
 
@@ -973,7 +995,11 @@
       accSections.push({ btn: sec.querySelector('.accBtn'), body: sec.querySelector('.accBody') });
       if (sec.dataset && sec.dataset.acc) accIndexByKey[sec.dataset.acc] = i;
     });
-    var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections) : null;
+    // Named group (S-SETTINGS-UAT): late-injected sections (the Skills panel
+    // mounts after the async Songbook.mount) JOIN this group via
+    // Accordion.join('settings', ...) instead of running a parallel
+    // accordion - one exclusivity state for the whole sheet.
+    var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections, { name: 'settings' }) : null;
 
     /* About section (round 2): the same authored stamp as the footer, one
        more discoverable home. Static content - render once. */

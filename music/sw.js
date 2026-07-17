@@ -260,7 +260,17 @@
 // palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip
 // demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
 // play/index.html (script tag).
-var CACHE = 'music-v163';
+// S-SETTINGS-UAT + S-SKILLS-PORTABLE (2026-07-16): v163->v164 (branch cut
+// pre-#256 had reserved v164 while v163 was in flight; rebased onto the
+// v163 tip after #256 merged - plain max+1 now) - TWO new CORE paths:
+// shared/skill-md.js + shared/zip-store.js (open-skills-format SKILL.md
+// export/import + zip bundle). Also: accordion.js named-group join +
+// scroll-into-view, songbook.js Skills panel (joins the settings group,
+// SKILL.md/zip export, .md import), competency.js flexible skill-id
+// resolution, play/index.html (guidance segmented control, settings CTA
+// rows, accBtn hierarchy). check-cache-bump.sh re-verified against
+// origin/main immediately before push.
+var CACHE = 'music-v164';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -306,7 +316,11 @@ var CORE = [
   // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).
-  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js', './shared/repertoire-form.js',
+  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
+  // skill-md.js + zip-store.js: S-SKILLS-PORTABLE (2026-07-16) - script-tagged
+  // in play/index.html right after competency.js (whose export they render/bundle).
+  './shared/skill-md.js', './shared/zip-store.js',
+  './shared/repertoire-form.js',
   // yt-info.js: M-TRACKLIB wave 2a (U17) - script-tagged in play/index.html
   // right after repertoire-form.js (see the CACHE-bump comment above).
   './shared/yt-info.js',
