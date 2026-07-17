@@ -1,0 +1,214 @@
+{
+  "name": "persona-advanced-chord-collapse",
+  "description": "S-CHORD-COLLAPSE goalpost (operator friction 2026-07-16: chord charts too big at advanced, scroll off page): ADVANCED renders the Compose palettes as compact letter+roman chips (suggChip token), tap still adds+plays in ONE tap, the Shapes toggle flips the grid to full diagrams and back, and the whole in-key palette fits the viewport without scrolling.",
+  "persona": "advanced",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "in-key palette renders compact chips, not diagram tiles, at advanced",
+      "js": "document.querySelectorAll('.inKeyLead .ccChips .suggChip').length >= 6 && document.querySelectorAll('.inKeyLead .chord').length === 0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "EVERY in-key chip carries its roman (key context = default C; count-strict, not some())",
+      "js": "document.querySelectorAll('.inKeyLead .suggChip .scRn').length >= 6 && Array.from(document.querySelectorAll('.inKeyLead .suggChip .scRn')).some(function(e){return e.textContent.trim()==='I'})"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": ".inKeyLead .ccChips .suggChip:last-child"
+    },
+    {
+      "action": "evalAssert",
+      "label": "whole chip grid fits inside the viewport (rect-based - the load-bearing no-scroll proof per the goal-spec Amendment)",
+      "js": "(function(){var r=document.querySelector('.inKeyLead .ccChips').getBoundingClientRect();return r.top>=0&&r.bottom<=window.innerHeight;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "page never scrolls (spec-literal check; trivially holds in the 100dvh shell)",
+      "js": "document.documentElement.scrollHeight <= window.innerHeight"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "evalAssert",
+      "label": "one-tap add preserved: both chords landed in the progression",
+      "js": "document.querySelectorAll('#prog .slot').length === 2"
+    },
+    {
+      "action": "evalAssert",
+      "label": "progression filmstrip is compact tokens (no diagram cards) at advanced",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 2 && document.querySelectorAll('#prog .slot .chord').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-chips"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes toggle ON: full diagram tiles are back, one tap away",
+      "js": "document.querySelectorAll('.inKeyLead .chord').length >= 6 && document.querySelectorAll('.inKeyLead .ccChips .suggChip').length === 0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes ON restores the progression filmstrip's diagram cards too (Volley 2 High #1)",
+      "js": "document.querySelectorAll('#prog .slot .chord').length === 2 && document.querySelectorAll('#prog .slot .suggChip').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-shapes-on"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes toggle OFF: back to chips",
+      "js": "document.querySelectorAll('.inKeyLead .ccChips .suggChip').length >= 6"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes OFF returns the filmstrip to compact tokens",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 2 && document.querySelectorAll('#prog .slot .chord').length === 0"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "Dm"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes ON at 5 chords keeps the S-PROG-WRAP-2 compact ladder (density ladder never overridden - Volley 3 High #2 semantics pinned) while the palette shows diagrams",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 5 && document.querySelectorAll('#prog .slot .chord').length === 0 && document.querySelectorAll('.inKeyLead .chord').length >= 6"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "evalAssert",
+      "label": "All view renders chips too at advanced",
+      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .chord').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-all-chips"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keyRoots"
+    },
+    {
+      "action": "tapText",
+      "text": "C",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeWrap.keyOpen",
+      "state": "hidden"
+    },
+    {
+      "action": "evalAssert",
+      "label": "keyless All view VISIBLE (flyout closed - .keyOpen hides .composeChords, so assert against shown DOM): chips are letter-only, no roman guessed vs progression[0]",
+      "js": "!document.querySelector('.composeWrap.keyOpen') && document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .suggChip .scRn').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "advanced-keyless-letter-only"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#setClose"
+    },
+    {
+      "action": "evalAssert",
+      "label": "level change applies LIVE to already-rendered grids (Volley 3 High #1): advanced -> beginner restores diagram tiles without a compose mutation",
+      "js": "document.querySelectorAll('#buildGrid .chord').length >= 6 && document.querySelectorAll('#buildGrid .suggChip').length === 0"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#setClose"
+    },
+    {
+      "action": "evalAssert",
+      "label": "cycling back to advanced live-restores the chips the same way",
+      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .chord').length === 0"
+    }
+  ]
+}

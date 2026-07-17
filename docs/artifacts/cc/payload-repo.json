@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T11:14:18Z",
+  "generatedAt": "2026-07-17T10:59:16Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,36 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-15T11:04:11Z",
-    "sha": "9402392870322be1c8921349da9e9beea866ce36",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/9402392870322be1c8921349da9e9beea866ce36"
+    "date": "2026-07-16T19:28:39Z",
+    "sha": "7f8563792f29e1c1c552a92951d90b7770cce389",
+    "subject": "music(compose): Song mode - the composition ladder gets a full-screen home (#253)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/7f8563792f29e1c1c552a92951d90b7770cce389"
   },
   "commits": [
+    {
+      "date": "2026-07-16T19:28:39Z",
+      "sha": "7f8563792f29e1c1c552a92951d90b7770cce389",
+      "subject": "music(compose): Song mode - the composition ladder gets a full-screen home (#253)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7f8563792f29e1c1c552a92951d90b7770cce389"
+    },
+    {
+      "date": "2026-07-16T19:26:21Z",
+      "sha": "78a7c17d13fdc9996cacef16ef15020e7b5185af",
+      "subject": "music(settings): give .setRow an explicit dark surface so the Guidance-level row stops rendering washed-out (#254)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/78a7c17d13fdc9996cacef16ef15020e7b5185af"
+    },
+    {
+      "date": "2026-07-16T19:24:52Z",
+      "sha": "5a32b9cf2d85d15059a125d588fa65d5b3ba480f",
+      "subject": "music(compose): bound the song-builder section tray so it stops burying the chord picker (#252)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5a32b9cf2d85d15059a125d588fa65d5b3ba480f"
+    },
+    {
+      "date": "2026-07-16T11:14:24Z",
+      "sha": "fba69e2e88374d26203f036d8177453d523617c3",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fba69e2e88374d26203f036d8177453d523617c3"
+    },
     {
       "date": "2026-07-15T11:04:11Z",
       "sha": "9402392870322be1c8921349da9e9beea866ce36",
@@ -66,38 +90,14 @@
       "sha": "e80cc8b2554c10891c470b714b7c08a91d146041",
       "subject": "S-SETADD-EVIDENT: ghost + on setlist-ineligible library rows (v157) (#249)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e80cc8b2554c10891c470b714b7c08a91d146041"
-    },
-    {
-      "date": "2026-07-12T13:43:03Z",
-      "sha": "bfc7d847b54c8e9c619bf9d3a1368da4c6dc337a",
-      "subject": "QUEUE: capture CE-SPAWN-ENV-REPOLOCK (ps-internal spawn root cause) (#248)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/bfc7d847b54c8e9c619bf9d3a1368da4c6dc337a"
-    },
-    {
-      "date": "2026-07-12T10:47:05Z",
-      "sha": "d0dbdc7c8b999e136903ba79801fb05a06b11196",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d0dbdc7c8b999e136903ba79801fb05a06b11196"
-    },
-    {
-      "date": "2026-07-11T12:11:38Z",
-      "sha": "26102d830826cba3444fb9620e56e1a3df09f1ac",
-      "subject": "ops: merge - M-13 g4 merged (#247, v156): drag-to-reorder buffer sections",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/26102d830826cba3444fb9620e56e1a3df09f1ac"
-    },
-    {
-      "date": "2026-07-11T12:11:26Z",
-      "sha": "0071c2b07c15411f6a17d264d200ada8c36ab0a2",
-      "subject": "M-13 g4: drag-to-reorder buffer sections in the song builder (v156) (#247)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0071c2b07c15411f6a17d264d200ada8c36ab0a2"
     }
   ],
   "openPRs": [
     {
-      "number": 253,
-      "title": "music(compose): Song mode - the composition ladder gets a full-screen home",
-      "branch": "claude/music-compose-song-mode",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/253",
+      "number": 261,
+      "title": "music(compose): per-section edit button - refine a section's chords in the builder",
+      "branch": "claude/music-section-edit",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/261",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,22 +106,22 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29492374563/job/87601321615"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29552479265/job/87797853936"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29492374570/job/87601321650"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29552479261/job/87797854120"
         }
       ]
     },
     {
-      "number": 252,
-      "title": "music(compose): bound the song-builder section tray so it stops burying the chord picker",
-      "branch": "claude/music-compose-song-tray-scroll",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/252",
+      "number": 260,
+      "title": "music(perform): one-handed zoning - Next is the dominant bottom-right thumb target",
+      "branch": "claude/music-perform-bar-zones",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/260",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -130,14 +130,134 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29412407799/job/87342359755"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29550565098/job/87791979399"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29412407761/job/87342359712"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29550565073/job/87791979372"
+        }
+      ]
+    },
+    {
+      "number": 259,
+      "title": "music(ui): anchor active-tab highlight to bottom border + bigger button icons",
+      "branch": "claude/music-tab-icon-polish",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/259",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549273106/job/87788170922"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549273065/job/87788170890"
+        }
+      ]
+    },
+    {
+      "number": 258,
+      "title": "music(toast): amber caution toast + readable duration for \"song already in progress\"",
+      "branch": "claude/music-warn-toast-amber",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/258",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549585723/job/87789094402"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29549585693/job/87789094317"
+        }
+      ]
+    },
+    {
+      "number": 257,
+      "title": "music(settings+skills): UAT batch - accordion unity, guidance seg, CTA rows, SKILL.md/zip skills export + flexible import",
+      "branch": "claude/music-uat-settings-skills",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/257",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29548125491/job/87784733120"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29548125589/job/87784733379"
+        }
+      ]
+    },
+    {
+      "number": 256,
+      "title": "music(compose): advanced level collapses chord-chart palettes to letter+roman chips (S-CHORD-COLLAPSE)",
+      "branch": "claude/music-chord-collapse-advanced",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/256",
+      "draft": false,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29547574582/job/87783092748"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29547574590/job/87783092776"
+        }
+      ]
+    },
+    {
+      "number": 255,
+      "title": "music(setlist): play/video action to a compact thumb-zone icon (reclaim a row)",
+      "branch": "claude/music-setlist-row-layout",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/255",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29531167114/job/87731538452"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29531167044/job/87731538360"
         }
       ]
     },
@@ -167,6 +287,27 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-16T19:09:12Z",
+      "mergedAt": "2026-07-16T19:26:22Z",
+      "number": 254,
+      "title": "music(settings): fix the washed-out Guidance-level settings row (.setRow contrast)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/254"
+    },
+    {
+      "createdAt": "2026-07-16T10:52:28Z",
+      "mergedAt": "2026-07-16T19:28:40Z",
+      "number": 253,
+      "title": "music(compose): Song mode - the composition ladder gets a full-screen home",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/253"
+    },
+    {
+      "createdAt": "2026-07-15T11:39:36Z",
+      "mergedAt": "2026-07-16T19:24:52Z",
+      "number": 252,
+      "title": "music(compose): bound the song-builder section tray so it stops burying the chord picker",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/252"
+    },
     {
       "createdAt": "2026-07-12T21:35:04Z",
       "mergedAt": "2026-07-12T21:37:58Z",
@@ -250,41 +391,20 @@
       "number": 240,
       "title": "THE PICK: Cockpit remix - C base (actionable surface) + B timeline",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/240"
-    },
-    {
-      "createdAt": "2026-07-11T07:31:49Z",
-      "mergedAt": "2026-07-11T07:32:36Z",
-      "number": 239,
-      "title": "Cockpit v2: adopt the hub header grammar, label reads COCKPIT (operator taste pick)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/239"
-    },
-    {
-      "createdAt": "2026-07-11T03:51:02Z",
-      "mergedAt": "2026-07-11T03:51:34Z",
-      "number": 238,
-      "title": "Cockpit vision 1.1: the capability inventory IS the ingest map (docs-only)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/238"
-    },
-    {
-      "createdAt": "2026-07-11T03:47:11Z",
-      "mergedAt": "2026-07-11T03:47:42Z",
-      "number": 237,
-      "title": "QUEUE reconcile: S-SETRM-ARM shipped + M-COCKPIT-V2 vision/mockups shipped (docs-only)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/237"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-16T11:14:12Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29493689777",
+    "runStartedAt": "2026-07-17T10:59:12Z",
+    "durationSeconds": 2,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29575303949",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 56,
+    "merged_count": 59,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 0.02,
@@ -297,8 +417,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v158",
-    "localCacheVersion": "music-v158",
+    "liveCacheVersion": "music-v162",
+    "localCacheVersion": "music-v162",
     "cacheMatch": true
   },
   "missions": [
@@ -688,7 +808,7 @@
   },
   "suite": {
     "testFileCount": 46,
-    "testCaseCount": 2333,
+    "testCaseCount": 2349,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
