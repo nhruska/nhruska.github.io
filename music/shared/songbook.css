@@ -193,13 +193,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tabbar{--tabbar-pb:calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);flex:0 0 auto;display:flex;gap:2px;padding:6px 6px var(--tabbar-pb);background:var(--bg-2);border-top:1px solid var(--line);}
 .tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:var(--r-btn-sm);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
-/* Active tab extends its highlight DOWN through the tabbar's safe-area padding
-   so it meets the bottom border with no dead gap under the "you are here"
-   column (operator UAT: "extend further toward the bottom to match the other
-   borders"). Content stays put (padding-bottom absorbs the reclaimed space);
-   only the background grows. Top corners rounded, bottom squares to the edge
-   like a real tab. */
-.tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * var(--tabbar-pb));padding-bottom:calc(6px + var(--tabbar-pb));border-bottom-left-radius:0;border-bottom-right-radius:0;}
+/* Active tab highlight reclaims ONLY the safe-area slack below it, so the pill
+   ends up with the SAME ~6px inset on the bottom as on the top and sides -
+   symmetric margin, not flush to the screen edge (operator UAT 2026-07-17:
+   "same margin as the top and left and right sides", correcting the earlier
+   flush-to-edge over-reach). The tabbar's bottom padding is
+   `max(safe-area, 8px) + 6px`; we pull the pill down by the `max(safe-area,
+   8px)` slack only, leaving the +6px to match the top/side margin. Content
+   stays put (padding-bottom absorbs the reclaimed space); corners stay fully
+   rounded (it is an inset pill, not an edge-anchored tab). */
+.tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * max(env(safe-area-inset-bottom,0px), 8px));padding-bottom:calc(6px + max(env(safe-area-inset-bottom,0px), 8px));}
 .tabbar button .icn{font-size:1.28rem;line-height:1;}
 .tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;}
 .screen{display:none;}

@@ -255,7 +255,7 @@
 // section cards, Save-song naming, the guided template loop, 3 UAT rounds
 // (Save-asks / clear-on-capture / dismissible cues) + save-to-setlist-#1.
 // No new/removed CORE paths.
-var CACHE = 'music-v165';
+var CACHE = 'music-v166';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
