@@ -41,37 +41,80 @@
   // section they conventionally belong to ('verse'|'chorus'|'any'). Every
   // roman token here is a bare degree (no quality markers) - families don't
   // assert 7ths/dim/aug, only the degree shape.
+  // S-PROG-GUIDANCE (operator UAT 2026-07-17: "I could use that level of
+  // guidance when choosing standard progressions" - the Studio solo view's
+  // WHEN/RESOLVE ladder is the stated bar). Each family carries authored
+  // guidance the chooser can reveal:
+  //   feel - the mood in plain words (beginner vocabulary budget)
+  //   when - the genre/situation it serves
+  //   note - the canon-proof one-liner (pre-existing; the PROVEN row)
+  // songwriting-coach rule: every family is canon-PROVEN - it shipped in real
+  // songs - never theory-true-but-song-false.
   var FAMILIES = [
     {
       id: 'axis', name: 'Axis (I-V-vi-IV)', roman: ['I', 'V', 'vi', 'IV'], home: 'chorus',
+      feel: 'Big, bright, anthemic - instant singalong.',
+      when: 'Pop or rock when you want the crowd with you - the safe bet that always lands.',
       note: 'The most-recorded 4-chord pop/rock loop - safe and anthemic, the default chorus home base.'
     },
     {
+      id: 'axisRot', name: 'Axis from the minor (vi-IV-I-V)', roman: ['vi', 'IV', 'I', 'V'], home: 'verse',
+      feel: 'Moody start that keeps lifting - melancholy with momentum.',
+      when: 'Modern pop/rock verses - the minor-lean cousin of the Axis loop.',
+      note: 'The same four chords started from the minor - the modern pop-ballad staple.'
+    },
+    {
       id: 'doowop', name: '50s / doo-wop (I-vi-IV-V)', roman: ['I', 'vi', 'IV', 'V'], home: 'any',
+      feel: 'Warm, nostalgic, a slow-dance sway.',
+      when: 'Ballads and love songs - anywhere sweet and familiar beats clever.',
       note: 'The classic ballad turn (the Stand By Me shape) - warm and familiar as verse or chorus.'
     },
     {
       id: 'blues12', name: '12-bar blues', roman: ['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'I'], home: 'any',
+      feel: 'Gritty, rolling, made for repetition.',
+      when: 'Blues, early rock and roll, jam nights - the form everyone already knows how to follow.',
       note: 'The blues form itself - one chord per bar across 12 bars; the progression IS the song.'
     },
     {
       id: 'folk', name: 'Folk cadence (I-IV-V)', roman: ['I', 'IV', 'V'], home: 'verse',
+      feel: 'Plain, honest, sturdy.',
+      when: "Folk and country storytelling - three chords that stay out of the words' way.",
       note: 'The three-chord folk/country home base - simple, singable, room for the words to lead.'
     },
     {
+      id: 'prelift', name: 'Pre-chorus lift (IV-V)', roman: ['IV', 'V'], home: 'prechorus',
+      feel: 'Leaning forward - tension that begs for release.',
+      when: 'Pre-choruses - hold these two and the chorus lands like an arrival.',
+      note: "The canon's standard build: dominant tension held until the chorus resolves it."
+    },
+    {
       id: 'mixolydian', name: 'Mixolydian rock (I-bVII-IV)', roman: ['I', 'bVII', 'IV'], home: 'chorus',
+      feel: 'Loose, swaggering, windows-down rock.',
+      when: 'Classic-rock choruses and riffs - the flattened 7th is the swagger.',
       note: 'The classic-rock riff move - the flattened-7th door back to IV gives a chorus its lift.'
     },
     {
       id: 'minorPop', name: 'Minor pop (i-bVI-bIII-bVII)', roman: ['i', 'bVI', 'bIII', 'bVII'], home: 'chorus',
+      feel: 'Dark, driving, cinematic.',
+      when: 'Minor-key anthems - drama that still loops like pop.',
       note: "The modern minor-key anthem loop - dramatic without ever leaving the tonic's orbit."
     },
     {
       id: 'andalusian', name: 'Andalusian cadence (i-bVII-bVI-V)', roman: ['i', 'bVII', 'bVI', 'V'], home: 'verse',
+      feel: 'Falling, dramatic, a little dangerous.',
+      when: 'Flamenco-tinged verses and intros - the classic descending lament.',
       note: 'The descending lament-bass - dramatic, a flamenco/rock verse or intro device.'
     },
     {
+      id: 'pachelbel', name: 'Canon walk (I-V-vi-iii-IV-I-IV-V)', roman: ['I', 'V', 'vi', 'iii', 'IV', 'I', 'IV', 'V'], home: 'verse',
+      feel: 'Flowing, stately, endlessly familiar.',
+      when: 'Long verses that carry a melody - the walking line everyone recognizes.',
+      note: "Pachelbel's Canon descent, reborn across decades of pop and punk."
+    },
+    {
       id: 'jazzTurnaround', name: 'Jazz turnaround (ii-V-I)', roman: ['ii', 'V', 'I'], home: 'any',
+      feel: 'Smooth, resolved, grown-up.',
+      when: 'Jazz and soul cadences - the sound of a phrase landing exactly home.',
       note: 'The cadence of the jazz/soul idiom - the sound of resolution, usable wherever a phrase lands.'
     }
   ];
@@ -193,19 +236,27 @@
     Object.keys(mined).forEach(function (label) {
       if (normSectionKey(label) === normKey) minedList = mined[label];
     });
+    // S-PROG-GUIDANCE: signature -> family lookup, so a mined catalog pattern
+    // that IS a known family (the catalog's own I-V-vi-IV) still carries that
+    // family's feel/when/note guidance - dedupe must never cost the story.
+    var famBySig = {};
+    FAMILIES.forEach(function (f) { famBySig[f.roman.join(',')] = f; });
     var seen = {}, out = [];
     minedList.forEach(function (p) {
       var sig = p.roman.join(',');
       if (seen[sig]) return;
       seen[sig] = true;
-      out.push({ source: 'mined', roman: p.roman.slice(), count: p.count, citations: p.citations.slice() });
+      var entry = { source: 'mined', roman: p.roman.slice(), count: p.count, citations: p.citations.slice() };
+      var f = famBySig[sig];
+      if (f) { entry.familyId = f.id; entry.name = f.name; entry.feel = f.feel; entry.when = f.when; entry.note = f.note; }
+      out.push(entry);
     });
     FAMILIES.forEach(function (f) {
       if (f.home !== 'any' && normSectionKey(f.home) !== normKey) return;
       var sig = f.roman.join(',');
       if (seen[sig]) return;
       seen[sig] = true;
-      out.push({ source: 'family', id: f.id, name: f.name, roman: f.roman.slice(), note: f.note });
+      out.push({ source: 'family', id: f.id, name: f.name, roman: f.roman.slice(), note: f.note, feel: f.feel, when: f.when });
     });
     return out;
   }

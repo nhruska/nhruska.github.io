@@ -768,8 +768,15 @@
     return out;
   }
   // A composed custom's chord-only sheet (one "[C] [G] ..." progression line). Pure.
+  // Label is "Verse", not "Progression" (operator UAT 2026-07-17): a saved
+  // progression re-entered via Continue building must read as a STANDARD song
+  // section - "Progression" isn't in the section set, so it rendered a blank
+  // section dropdown and an off-vocabulary card label. A plain progression IS
+  // the seed of a verse (the add-row's own default), so name it that from the
+  // start. Legacy "Progression"-labeled sheets are mapped at parse time
+  // (sectionsFromSheet) and self-heal on their next save.
   function buildSheetFromSeq(seq) {
-    return [["Progression", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
+    return [["Verse", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
   }
   // M-13 SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
   // the { seq, sheet } shape a custom SONG stores. seq = first-appearance unique
@@ -1714,6 +1721,10 @@
     // subtree is disposable on the next render anyway).
     function renderSaveBasicsNotable() {
       if (!el.practiceBody || !global.Notables) return;
+      // UAT 2026-07-16 (operator: "guidance is misleading - I already have it
+      // added to setlist"): don't nudge "save this to your setlist" for a song
+      // that IS already in the setlist. The nudge teaches an action already taken.
+      if (STATE.current && STATE.setlist.indexOf(STATE.current.id) >= 0) return;
       if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
       var bannerEl = global.Notables.renderBanner({
         consumerId: 'savebasics',
@@ -1963,18 +1974,33 @@
     // (both used to share ONE `var toastTimer` in this closure - see toast.js
     // header comment for the full root-cause trace).
     var toastEl;
-    function showToast(msg, isErr) {
+    // kind (2nd arg):
+    //   falsy        -> neutral confirmation (e.g. "Added to setlist"), quick 1600ms.
+    //   true / 'err' -> ERROR (red): something failed. Back-compat: every legacy
+    //                   caller passing a boolean still lands here.
+    //   'warn'       -> CAUTION (amber): a heads-up, not a failure (e.g. "you've
+    //                   already got a song in progress"). Distinct colour so a
+    //                   caution never reads as an error.
+    // Error AND caution toasts carry REAL text a user must actually read, so
+    // their auto-hide scales with message length (min 3.2s, cap 6s) instead of
+    // the quick 1.6s confirm floor - operator UAT: the "save or clear it first"
+    // caution vanished before it could be read. Neutral confirms stay quick.
+    function showToast(msg, kind) {
       if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      var isErr = (kind === true || kind === 'err');
+      var isWarn = (kind === 'warn');
+      var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : 1600;
       global.Toast.show(msg, {
         host: toastEl,
         error: isErr,
-        duration: 1600,
-        onShow: function (host, m, isErrFlag) {
+        duration: dur,
+        onShow: function (host, m) {
           host.textContent = m;
-          host.classList.toggle('err', !!isErrFlag);
+          host.classList.toggle('err', isErr);
+          host.classList.toggle('warn', isWarn);
           host.classList.add('on');
         },
-        onHide: function (host) { host.classList.remove('on'); }
+        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); }
       });
     }
     // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
@@ -2101,9 +2127,14 @@
         el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
         el.setEdit.classList.toggle('on', STATE.setEditMode);
       }
-      // Clear (✕) hides on an empty setlist too - a destructive control with
-      // nothing to destroy is dead weight in the header (pilot polish audit).
-      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
+      // Clear (✕) is a destructive control: UAT 2026-07-16 hides it until EDIT
+      // mode (and it wears red - .setDelete) so a resting setlist never shows a
+      // one-tap wipe. (Also hidden on an empty setlist - nothing to destroy.)
+      if (el.setClear) el.setClear.style.display = (STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
+      // Start (perform) lives in the header now (UAT: not a full-width bar). It
+      // shows only in NORMAL mode with a non-empty set - performing isn't a thing
+      // you do mid-edit, and it sits rightmost (thumb) with Edit to its left.
+      if (el.performBtn) el.performBtn.style.display = (!STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
@@ -2139,9 +2170,8 @@
           onAction: function () { ytSearch(s); }
         }));
       });
-      // Hide the Start-performance bar while editing - reordering/removing isn't
-      // "ready to play", and it keeps the edit surface focused (UAT: Nik).
-      if (bar) bar.style.display = STATE.setEditMode ? 'none' : 'flex';
+      // (The old full-width Start-performance bar was retired 2026-07-16 - Start
+      // now lives compact in the header, toggled above.)
     }
     if (el.setEdit) el.setEdit.onclick = function () {
       STATE.setEditMode = !STATE.setEditMode;
@@ -2562,6 +2592,14 @@
     }
     function saveSongSections() { return safeSet(BUILDER_BUFFER_KEY, JSON.stringify(songSections)); }
     var songSections = loadSongSections();
+    // S-SECTION-EDIT (operator UAT 2026-07-17): which buffered section is being
+    // refined in the builder right now (index into songSections), or null. Set
+    // by editSection() when its ✎ is tapped; consumed by addSongSection() to
+    // UPDATE that section in place instead of appending a duplicate; cleared on
+    // any Clear (clearProgression) so an abandoned edit never silently
+    // overwrites a section later. Session-local (not persisted) - a refine is a
+    // live intent, not saved state.
+    var editingSectionIdx = null;
     // S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
     // behind one top-level toggle - 'chords' (the progression editor: strip +
     // picker) and 'song' (the arrangement canvas: section cards + proven
@@ -2617,7 +2655,10 @@
     // after the strip. Standard song-form vocabulary (matches catalog `sect`).
     // M-13 g1 section labels - the ONE vocabulary shared by the add-row <select>
     // and the template-suggestion label switcher below.
-    var SONG_SECTIONS = ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'];
+    // S-PROG-GUIDANCE: Pre-Chorus joins the section set - it's a first-class
+    // section in the songwriting canon (the departure+build before the chorus),
+    // and it gives the Pre-chorus lift (IV-V) template family a home surface.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
@@ -2628,6 +2669,10 @@
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
     var suggestLabel = 'Verse';
+    // S-PROG-GUIDANCE: romanText of the suggestion whose FEEL/WHEN/PROVEN
+    // guidance panel is open (one at a time; null = all closed). Session-local
+    // UI state - a reveal is a moment, not a preference.
+    var suggestWhyOpen = null;
     // M-13 g4: drag-swallow flag for the buffer chips, mirroring S-PROG-REORDER's
     // dragSwallowClick (own flag/listener - the progression drag code is untouched
     // per the goalpost's boundary; the grammar is reused, not shared, on purpose).
@@ -2788,6 +2833,16 @@
           romanText: s.roman.join('-'),
           chordText: tokens.map(function (t) { return dispChordNameInKey(t, km.root, km.mode); }).join(' '),
           prov: suggestProv(s),
+          // S-PROG-GUIDANCE: the chooser's revealable guidance (feel/when from
+          // the family - present on mined entries too when the pattern IS a
+          // known family, via forSection's sig->family attach). provenText is
+          // the PROVEN row: real-song citations for mined, the canon note for
+          // pure families.
+          feel: s.feel || null,
+          when: s.when || null,
+          provenText: (s.source === 'mined' && s.citations && s.citations.length)
+            ? s.citations.slice(0, 3).join(', ')
+            : (s.note || null),
           _order: i,                                                  // forSection's proven rank (mined-first) - stable tiebreak
           _connect: sectionConnectScore(prevRoman, s.roman[0]),       // arrival from the previous section
           _complexity: suggestionComplexity(s.roman),                 // M-13 g3: skill-nudge input
@@ -2883,6 +2938,13 @@
         return 0;
       }
       suggestions.forEach(function (s) {
+        // S-PROG-GUIDANCE (operator UAT 2026-07-17): each suggestion is now a
+        // ROW - the fill chip plus a "?" reveal (the Studio solo view's "?"
+        // convention) that opens a FEEL / WHEN / PROVEN guidance ladder. The
+        // "?" is a SIBLING, never nested (a button can't contain a button);
+        // one panel open at a time so the list stays scannable (pedagogy:
+        // reveal on demand, never push prose).
+        var item = document.createElement('div'); item.className = 'songSuggestItem';
         var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'songSuggestChip';
         // M-13 g3: the why-cue rides the SAME provenance line (one visible line,
         // no new element/style - Element Consistency Law) - '<prov> · <tag>' when
@@ -2894,7 +2956,36 @@
         var pv = document.createElement('span'); pv.className = 'ssProv'; pv.textContent = provText;
         chip.appendChild(rn); chip.appendChild(ch); chip.appendChild(pv);
         composeWireTap(chip, function () { fillFromTemplate(s.tokens, suggestLabel); });
-        songSuggestChipsEl.appendChild(chip);
+        item.appendChild(chip);
+        var hasGuidance = !!(s.feel || s.when || s.provenText);
+        if (hasGuidance) {
+          var open = (suggestWhyOpen === s.romanText);
+          var why = document.createElement('button'); why.type = 'button';
+          why.className = 'ssWhy' + (open ? ' on' : '');
+          why.textContent = '?';
+          why.setAttribute('aria-expanded', open ? 'true' : 'false');
+          why.setAttribute('aria-label', (open ? 'Hide' : 'Show') + ' guidance for ' + s.romanText);
+          composeWireTap(why, function () {
+            suggestWhyOpen = open ? null : s.romanText;
+            renderSongTray();
+          });
+          item.appendChild(why);
+          if (open) {
+            var panel = document.createElement('div'); panel.className = 'ssWhyPanel';
+            var addRow = function (label, text) {
+              if (!text) return;
+              var r = document.createElement('div'); r.className = 'ssWhyRow';
+              var l = document.createElement('span'); l.className = 'ssWhyLbl'; l.textContent = label;
+              var t = document.createElement('span'); t.className = 'ssWhyTxt'; t.textContent = text;
+              r.appendChild(l); r.appendChild(t); panel.appendChild(r);
+            };
+            addRow('Feel', s.feel);
+            addRow('When', s.when);
+            addRow('Proven', s.provenText);
+            item.appendChild(panel);
+          }
+        }
+        songSuggestChipsEl.appendChild(item);
       });
       return suggestions.length;
     }
@@ -2951,6 +3042,13 @@
         play.innerHTML = '&#9654;'; play.setAttribute('aria-label', 'Play ' + sec.label);
         composeWireTap(play, function () { playSection(sec.seq); });
         chip.appendChild(play);
+        // S-SECTION-EDIT: ✎ loads THIS section's chords straight into the builder
+        // so the operator can refine one part without rebuilding it - "Add to
+        // song" then updates this section in place (see editSection/addSongSection).
+        var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'songSectEdit';
+        edit.innerHTML = '&#9998;'; edit.setAttribute('aria-label', 'Edit ' + sec.label + ' chords in the builder');
+        composeWireTap(edit, (function (idx) { return function () { editSection(idx); }; })(i));
+        chip.appendChild(edit);
         var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
@@ -3085,9 +3183,52 @@
     // section. A3: additive - does NOT mutate the progression, so it does NOT
     // invalidate the Clear-undo snapshot. Does NOT clear the progression (the
     // musician often builds the chorus by editing the verse).
+    // S-SECTION-EDIT: pull a buffered section's chords back INTO the builder to
+    // refine it. Loads its seq into the progression, marks it as the section
+    // being edited, points the label selector at it, and drops into the Chords
+    // builder so the chords are right there to tweak. "Add to song" then routes
+    // through the editingSectionIdx update path below (replace, not append).
+    function editSection(i) {
+      if (i < 0 || i >= songSections.length) return;
+      var sec = songSections[i];
+      stopSectPlay(); disarmRm();
+      progression = sec.seq.slice(); cTpose = 0;
+      editingSectionIdx = i;
+      // Operator UAT 2026-07-17: a section label outside SONG_SECTIONS (an old
+      // save, a future custom label) must never render a BLANK select - append
+      // it as an option before selecting so the control always shows the truth.
+      if (songSectSelEl) {
+        var has = Array.prototype.some.call(songSectSelEl.options || [], function (o) { return o.value === sec.label; });
+        if (!has) {
+          var opt = document.createElement('option');
+          opt.value = sec.label; opt.textContent = sec.label;
+          songSectSelEl.appendChild(opt);
+        }
+        songSectSelEl.value = sec.label;
+      }
+      chordView = null;
+      reinferKey();
+      renderProg(); renderSuggest(); renderKey();
+      if (el.keyRoots) { renderKeyView(); buildGrid(); }
+      setComposeMode('chords');
+      showComposeToast('Editing ' + sec.label + ' - tweak it, then Add to song to update.');
+    }
     function addSongSection() {
       if (!progression.length) { showComposeToast('Build a progression first.', true); return; }
       var label = (songSectSelEl && songSectSelEl.value) || 'Verse';
+      // S-SECTION-EDIT: refining an existing section UPDATES it in place (same
+      // slot, new label + chords) instead of appending a duplicate. Read the
+      // index first - clearProgression() below nulls editingSectionIdx.
+      var editing = editingSectionIdx;
+      if (editing != null && editing >= 0 && editing < songSections.length) {
+        songSections[editing] = { label: label, seq: progression.slice() };
+        disarmRm();
+        saveSongSections();
+        recordComp('comp-song-form');
+        clearProgression('Updated ' + label + ' in your song. Strip cleared - Undo to keep editing.');
+        renderSongTray();
+        return;
+      }
       songSections.push({ label: label, seq: progression.slice() });
       disarmRm(); // a fresh add clears any armed chip remover
       saveSongSections();
@@ -3178,7 +3319,7 @@
       var secs = sectionsFromSheet(s.sheet);
       if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
       if (songSections.length && builderSourceId !== s.id) {
-        showToast('You have a song draft (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + ') in Compose - save or clear it first.', true);
+        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn');
         return;
       }
       if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft
@@ -4025,14 +4166,17 @@
         return;
       }
       var n = progression.length;
-      // Ordinal guidance ("Add a Nth chord:") for the first few; past that, F30
-      // (UAT): a label must ALWAYS sit directly above the suggested chords - the
-      // old "the panel's own summary already says it" rationale didn't hold (no
-      // other on-screen text names this row past the 4th chord), so it read as an
-      // unlabeled row of chips. Reuse the SAME .suggLbl primitive both branches
-      // already share (component-conventions.md section-label convention).
+      // Ordinal guidance for the first few; past that, F30 (UAT): a label must
+      // ALWAYS sit directly above the suggested chords - the old "the panel's
+      // own summary already says it" rationale didn't hold (no other on-screen
+      // text names this row past the 4th chord), so it read as an unlabeled row
+      // of chips. Reuse the SAME .suggLbl primitive both branches already share
+      // (component-conventions.md section-label convention).
+      // Issue #264 (operator UAT 2026-07-17): lead with "Suggested" so the row
+      // names its INTENT - the app is proposing coherent next chords, not
+      // demanding one - while the ordinal keeps the where-am-I scaffold.
       var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = n === 1 ? "Add a 2nd chord:" : n === 2 ? "Add a 3rd chord:" : n === 3 ? "Add a 4th chord:" : "Next chord";
+      lbl.textContent = n === 1 ? "Suggested 2nd chord:" : n === 2 ? "Suggested 3rd chord:" : n === 3 ? "Suggested 4th chord:" : "Suggested chords";
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
@@ -5014,6 +5158,7 @@
       // exactly. Never a native confirm() - see the banner functions above.
       clearUndoSnapshot = buildClearSnapshot(progression, cTpose, songKey, savedComposeId);
       progression = []; cTpose = 0;
+      editingSectionIdx = null; // S-SECTION-EDIT: a Clear cancels an in-flight section edit
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
@@ -5511,7 +5656,13 @@
       if (!Array.isArray(row) || row.length < 2) return;
       var toks = [];
       String(row[1]).replace(/\[([^\]]+)\]/g, function (m, c) { toks.push(c.trim()); return m; });
-      if (toks.length) out.push({ label: String(row[0] || 'Section'), seq: toks });
+      var label = String(row[0] || 'Section');
+      // Operator UAT 2026-07-17: legacy plain-progression saves carry the
+      // off-vocabulary "Progression" label (buildSheetFromSeq pre-fix). Map it
+      // to Verse at parse time so the builder + section dropdown always speak
+      // the standard section set; the record self-heals to Verse on next save.
+      if (label === 'Progression') label = 'Verse';
+      if (toks.length) out.push({ label: label, seq: toks });
     });
     return out;
   }

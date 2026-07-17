@@ -28,7 +28,7 @@ test('FAMILIES is a non-empty array of well-formed entries', function () {
     assert.ok(f.id && typeof f.id === 'string', 'missing id: ' + JSON.stringify(f));
     assert.ok(f.name && typeof f.name === 'string', 'missing name: ' + f.id);
     assert.ok(Array.isArray(f.roman) && f.roman.length, 'missing roman[]: ' + f.id);
-    assert.ok(['verse', 'chorus', 'any'].indexOf(f.home) >= 0, 'bad home on ' + f.id + ': ' + f.home);
+    assert.ok(['verse', 'chorus', 'prechorus', 'any'].indexOf(f.home) >= 0, 'bad home on ' + f.id + ': ' + f.home);
     assert.ok(f.note && typeof f.note === 'string', 'missing note: ' + f.id);
   });
 });

@@ -1,0 +1,30 @@
+{
+  "name": "tab-active-anchored",
+  "description": "S-TAB-ANCHOR (operator UAT 2026-07-17). The active bottom-tab highlight must sit with the SAME ~6px inset on the bottom as on the top and sides - symmetric margin, not a big dead gap below (the original complaint: '~14px extra space') and NOT flush to the screen edge (the over-correction: 'same margin as the top and left and right sides'). The pill reclaims only the safe-area slack, leaving the 6px symmetric margin; corners stay rounded. Red-first: FAILS on the pre-fix ~14px gap AND on the flush-to-edge 0px version.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "an active tab exists and carries the accent-deep highlight background (distinct from the transparent inactive tabs)",
+      "js": "(function(){var on=document.querySelector('.tabbar button.on');if(!on)return false;var inactive=document.querySelector('.tabbar button:not(.on)');var a=getComputedStyle(on).backgroundColor,b=getComputedStyle(inactive).backgroundColor;return a!==b && a!=='rgba(0, 0, 0, 0)' && a!=='transparent';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the active highlight has a SYMMETRIC bottom inset: the gap below the pill matches the gap above it (both ~6px) within 2px - FAILS on the ~14px pre-fix gap and on the 0px flush-to-edge over-correction",
+      "js": "(function(){var bar=document.querySelector('.tabbar');var on=document.querySelector('.tabbar button.on');var br=bar.getBoundingClientRect(),o=on.getBoundingClientRect();var topGap=o.top-br.top;var botGap=br.bottom-o.bottom;return botGap>2 && botGap<10 && Math.abs(botGap-topGap)<2.5;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "all four corners stay rounded - it is an inset pill, not an edge-anchored square tab",
+      "js": "(function(){var cs=getComputedStyle(document.querySelector('.tabbar button.on'));return parseFloat(cs.borderTopLeftRadius)>2 && parseFloat(cs.borderBottomLeftRadius)>2 && parseFloat(cs.borderBottomRightRadius)>2;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "tab-active-anchored"
+    }
+  ]
+}

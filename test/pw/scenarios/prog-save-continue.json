@@ -1,0 +1,55 @@
+{
+  "name": "prog-save-continue",
+  "note": "S-LIFECYCLE 1 (operator directive 2026-07-17: 'create the playwright scenario that creates a progression and saves it, then viewing the set list and clicking that progression, then clicking continue building - so you can reproduce and see what I'm seeing'). The REAL flow, no seeding: build a progression through the UI, Save through the real naming row (add-to-setlist default), open it FROM THE SETLIST, Continue building, and continue seamlessly - the section reads as a standard Verse, the dropdown is never blank, an edit updates the SAME record. Red-first vs the pre-fix label bug: the card read 'Progression' and the select went blank.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tapChord", "name": "C" },
+    { "action": "tapChord", "name": "G" },
+    { "action": "tapChord", "name": "Am" },
+    { "action": "tapChord", "name": "F" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tap", "selector": "#cSave" },
+    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
+    { "action": "tap", "selector": ".composeRow .btn.red" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "the saved progression sits at the TOP of the setlist (toTop - a just-saved progression is next up)",
+      "js": "(function(){var first=document.querySelector('#setBody .listItem .li-title');return !!first && /Original track/.test(first.textContent);})()"
+    },
+    { "action": "tap", "selector": "#setBody .listItem:has-text(\"Original track\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tapText", "text": "Continue building" },
+    { "action": "wait", "ms": 500 },
+    {
+      "action": "evalAssert",
+      "label": "Continue building lands on the Song canvas with the progression as a STANDARD Verse section (pre-fix: 'Progression')",
+      "js": "(function(){var n=document.querySelector('#songSections .songSect .songSectName');return !!n && /^Verse\\b/.test(n.textContent.trim()) && /4/.test(n.textContent);})()"
+    },
+    { "action": "tap", "selector": "#songSections .songSect .songSectEdit" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "the editor is SET to continue seamlessly: 4 chords loaded AND the section dropdown reads Verse - never blank (the reported bug)",
+      "js": "(function(){var s=document.getElementById('songSectSel');return document.querySelectorAll('#prog .slot').length===4 && !!s && s.value==='Verse';})()"
+    },
+    { "action": "tapChord", "name": "Dm" },
+    { "action": "wait", "ms": 200 },
+    { "action": "tap", "selector": "#songAddBtn" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Song\")" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "the refine UPDATED the same section in place - one card, now 5 chords, still one saved record",
+      "js": "(function(){var cards=document.querySelectorAll('#songSections .songSect');var n=cards.length===1 && /5/.test(cards[0].querySelector('.songSectName').textContent);var customs=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.custom.v1')||'[]');return n && customs.length===1;})()"
+    },
+    { "action": "screenshot", "name": "prog-save-continue" }
+  ]
+}
