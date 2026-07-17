@@ -2839,6 +2839,13 @@ test('Phase B: a DIFFERENT unsaved draft blocks Continue building - never clobbe
   assert.strictEqual(m.ctrl.composeMode(), 'chords', 'refused - no canvas switch over unsaved work');
   assert.strictEqual(global.localStorage.getItem('progwraptest.builderBuffer.v1'), before, 'the foreign draft is byte-identical');
   assert.ok(!global.localStorage.getItem('progwraptest.builderSource.v1'), 'no source link was planted');
+  // The refusal is a CAUTION (you have unsaved work), not a FAILURE - so it
+  // paints amber 'warn', never red 'err' (operator UAT: it read as an error and
+  // vanished too fast). Colour discipline: warn != err, two meanings two looks.
+  var toast = findPlainToast();
+  assert.ok(toast, 'the refusal shows a toast');
+  assert.strictEqual(toast.classList.contains('warn'), true, 'the "song already in progress" refusal is an amber caution');
+  assert.strictEqual(toast.classList.contains('err'), false, 'a caution is never styled as an error');
 });
 
 test('Phase B: emptying a continued draft drops the source link - the next draft saves FRESH, never overwriting the old song', function () {

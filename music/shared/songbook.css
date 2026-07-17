@@ -1360,6 +1360,14 @@ footer{display:none;}
 /* Subtle transient toast (add-to-setlist cue etc). Sits above the tab bar. */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+/* Semantic toast variants (same colored-border + colored-text discipline as
+   .btn.danger / .maxNote). warn=amber CAUTION (a heads-up, e.g. "you already
+   have a song in progress"), err=red FAILURE. Two different meanings never
+   share one look (Element Consistency Law): amber is never a failure, red is
+   never a mere caution. Text always carries the full meaning too, so the
+   colour is reinforcement, not the sole signal (a11y: not colour-alone). */
+.toast.warn{color:var(--warn);border-color:var(--warn);}
+.toast.err{color:var(--bad);border-color:var(--bad);}
 
 /* HELP-icon convention (M-DESIGN-ENFORCE wave 2, UAT U19 - "help panels
    clearly noted with an icon"): a portable, CSS-only marker for an
