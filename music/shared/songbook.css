@@ -1297,8 +1297,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}
-.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:center;}
+.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;}
 .pNav .btn{padding:14px 10px;flex:1;}
+/* One-handed performance zoning (operator UAT 2026-07-17: "make it easy for
+   single hand usage while performing without having to pick a button in the
+   middle"). Advance (Next / finish) is the ONE control tapped constantly mid-
+   song, so it becomes the dominant bottom-RIGHT target - the natural thumb-arc
+   resting spot for a one-handed grip - ~2.6x the width of Prev and taller (a
+   big target you can hit without aiming, Fitts's law). Prev (rarely used mid-
+   performance) shrinks to a small left tab. Transpose already lives top-right,
+   the hardest reach, correctly demoted for a rarely-touched control. */
+.pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.2rem;font-weight:800;}
+.pNav #pPrev{flex:1;color:var(--txt-dim);}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
 .pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
 .pSpeed.on{display:flex;}
