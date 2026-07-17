@@ -1967,18 +1967,33 @@
     // (both used to share ONE `var toastTimer` in this closure - see toast.js
     // header comment for the full root-cause trace).
     var toastEl;
-    function showToast(msg, isErr) {
+    // kind (2nd arg):
+    //   falsy        -> neutral confirmation (e.g. "Added to setlist"), quick 1600ms.
+    //   true / 'err' -> ERROR (red): something failed. Back-compat: every legacy
+    //                   caller passing a boolean still lands here.
+    //   'warn'       -> CAUTION (amber): a heads-up, not a failure (e.g. "you've
+    //                   already got a song in progress"). Distinct colour so a
+    //                   caution never reads as an error.
+    // Error AND caution toasts carry REAL text a user must actually read, so
+    // their auto-hide scales with message length (min 3.2s, cap 6s) instead of
+    // the quick 1.6s confirm floor - operator UAT: the "save or clear it first"
+    // caution vanished before it could be read. Neutral confirms stay quick.
+    function showToast(msg, kind) {
       if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      var isErr = (kind === true || kind === 'err');
+      var isWarn = (kind === 'warn');
+      var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : 1600;
       global.Toast.show(msg, {
         host: toastEl,
         error: isErr,
-        duration: 1600,
-        onShow: function (host, m, isErrFlag) {
+        duration: dur,
+        onShow: function (host, m) {
           host.textContent = m;
-          host.classList.toggle('err', !!isErrFlag);
+          host.classList.toggle('err', isErr);
+          host.classList.toggle('warn', isWarn);
           host.classList.add('on');
         },
-        onHide: function (host) { host.classList.remove('on'); }
+        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); }
       });
     }
     // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
@@ -3186,7 +3201,7 @@
       var secs = sectionsFromSheet(s.sheet);
       if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
       if (songSections.length && builderSourceId !== s.id) {
-        showToast('You have a song draft (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + ') in Compose - save or clear it first.', true);
+        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn');
         return;
       }
       if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft
