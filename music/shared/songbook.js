@@ -492,10 +492,18 @@
   // never demotes - the count-driven candidate stands, matching the original
   // "missing measurement defaults safe" invariant.
   var TOKEN_MIN_W = 58; // .suggChip{min-width:58px} in songbook.css
-  function progStripMode(count, cardW, gapW, availW) {
+  function progStripMode(count, cardW, gapW, availW, collapse) {
     if (count <= 0) return 'full';
     var stage = count <= 4 ? 'full' : count <= 6 ? 'fill-row' : 'grid6';
-    if (cardW <= 0 || availW <= 0) return stage; // unmeasured -> never demote
+    // S-CHORD-COLLAPSE: at the ADVANCED guidance level the filmstrip never
+    // shows full diagram cards - 1-4 chords take the SAME compact-token
+    // stage 5-6 already use (the maximize overlay stays the shapes view).
+    // A 5th positional param (not an opts object) keeps every existing
+    // caller/test byte-compatible: undefined is falsy = the old ladder.
+    if (collapse && stage === 'full') stage = 'fill-row';
+    // unmeasured -> the WIDTH guards below never demote (the count/level-
+    // driven candidate above, including the collapse demotion, still stands)
+    if (cardW <= 0 || availW <= 0) return stage;
     if (stage === 'full') {
       var fullNeed = count * cardW + Math.max(0, count - 1) * gapW;
       if (fullNeed > availW) stage = 'fill-row';
@@ -2456,7 +2464,18 @@
       // progStripMode measures real widths only as a narrow-viewport GUARD
       // (early demotion); it never promotes back up past the count-driven
       // candidate stage.
-      var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW());
+      var mode = progStripMode(progression.length, progCardW(), progGapW(), progAvailW(),
+        // S-CHORD-COLLAPSE: lazy optional lookup (same pattern as window.DiagramPref
+        // in chord-pack-adapter.js) - a page/test without the module reads false;
+        // method-level typeof guard per the buildGrid call site (Volley 2 Medium #1).
+        // composeShapesOn (Volley 2 High #1): Shapes ON restores the
+        // NON-ADVANCED rendering on the filmstrip too, not just the palettes.
+        // Deliberately that and no more (Volley 3 High #2): at 5+ chords the
+        // pre-existing S-PROG-WRAP-2 count ladder renders compact tokens for
+        // EVERY level - Shapes must not override the density ladder that
+        // exists for fit reasons; it only removes the advanced-level collapse.
+        !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+          && global.ChordCollapse.active() && !composeShapesOn));
       el.prog.classList.toggle('full', mode === 'full');
       el.prog.classList.toggle('fill-row', mode === 'fill-row');
       el.prog.classList.toggle('grid6', mode === 'grid6');
@@ -3354,6 +3373,13 @@
     // 'allChordsActiveCat' persists which chromatic category tab (Major/Minor/7th/...)
     // is selected across re-renders, so switching tab doesn't reset to the first category.
     var allChordsActiveCat = Object.keys(CATS)[0] || "Major";
+    // S-CHORD-COLLAPSE: the Shapes toggle state - false = the advanced-level
+    // default (compact chips), true = full diagram tiles on demand. SESSION-
+    // scoped by design (a var, no storage key): the collapse is the standing
+    // preference the guidance level already encodes; Shapes is a transient
+    // peek, so it resets on reload rather than silently becoming a second
+    // stored display pref competing with music.diagram.pref.v1.
+    var composeShapesOn = false;
     // Resolve the effective view: an explicit pin wins; otherwise follow the key.
     function effectiveChordView() {
       if (chordView === 'inkey' || chordView === 'all') return chordView;
@@ -3402,6 +3428,50 @@
       });
       chips.appendChild(seg);
 
+      // S-CHORD-COLLAPSE (operator friction 2026-07-16): at the ADVANCED
+      // guidance level both palette grids render the compact suggChip token
+      // (letter + roman) instead of full diagram tiles - the diagrams were
+      // pushing the palette well below the fold. The tap verb is UNCHANGED
+      // (one tap = add + play, the G1 persona goalpost encodes it); the
+      // Shapes toggle below flips the whole grid back to diagram tiles on
+      // demand, so a shape is one tap away, never a scroll away.
+      // Method-level guard (Volley 2 Medium #1): mirror reserveLabelSlot's
+      // `typeof === 'function'` discipline so a partially-stubbed
+      // window.ChordCollapse degrades to full diagrams instead of throwing.
+      var collapse = !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+        && typeof global.ChordCollapse.chip === 'function' // chipTile calls it (Volley 3 Medium #2)
+        && global.ChordCollapse.active());
+      var useChips = collapse && !composeShapesOn;
+      if (collapse) {
+        var shBtn = document.createElement('button');
+        shBtn.type = 'button';
+        shBtn.className = 'chip ccShapes' + (composeShapesOn ? ' on' : '');
+        shBtn.textContent = 'Shapes';
+        shBtn.setAttribute('aria-pressed', composeShapesOn ? 'true' : 'false');
+        // renderProg() too (Volley 2 High #1): the filmstrip's collapse also
+        // keys on composeShapesOn, and renderProg is not otherwise called on
+        // a toggle tap - without this the palettes flip but the strip stays
+        // collapsed, an inconsistent "Shapes" answer.
+        shBtn.onclick = function () { composeShapesOn = !composeShapesOn; buildGrid(); renderProg(); };
+        chips.appendChild(shBtn);
+      }
+      // Always toggled (not only when useChips) so a level change or a Shapes
+      // flip can never leave a stale chip-sizing class on the persistent grid.
+      grid.classList.toggle('ccMode', useChips);
+      // Compact chip for one palette chord: the shared ChordCollapse primitive
+      // + the SAME wireTap add/play/flash every diagram tile gets. Roman is
+      // gated on an ACTUAL key (explicit or inferred - the key chip displays
+      // it either way): labelRoman's own no-key fallback labels vs
+      // progression[0] (labelTonic), which on a cleared-key All view would be
+      // a GUESSED roman - the goal spec's honest-omission rule forbids that
+      // (Volley 2 High #2; the suggest row / progression slots keep their
+      // pre-existing fallback semantics - out of this feature's scope).
+      function chipTile(c) {
+        return wireTap(global.ChordCollapse.chip({
+          chord: c, roman: songKey.root ? labelRoman(c) : '', display: dispChordName(c)
+        }), c);
+      }
+
       if (view === 'inkey') {
         if (!songKey.root) {
           // In-key view with no key set: a PROMINENT pick-a-key CTA (replaces the old
@@ -3420,7 +3490,16 @@
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
-        if (global.KeyExplorer) {
+        if (useChips) {
+          // S-CHORD-COLLAPSE: compact chip palette - needs no KeyExplorer (the
+          // chip is name + roman, both derived right here), so this branch
+          // also covers the no-KeyExplorer degraded path.
+          var ccWrap = document.createElement('div'); ccWrap.className = 'ccChips';
+          diatonicChords(keyRoot, keyMode).forEach(function (c) {
+            ccWrap.appendChild(chipTile(c));
+          });
+          leadWrap.appendChild(ccWrap);
+        } else if (global.KeyExplorer) {
           var keItems = diatonicChords(keyRoot, keyMode).map(function (c) {
             return { chord: c, roman: labelRoman(c) };
           });
@@ -3457,7 +3536,12 @@
       });
       if (scroller) scroller.insertBefore(tabRow, grid);
       (CATS[allChordsActiveCat] || []).forEach(function (c) {
-        grid.appendChild(wireTap(packDiagram(c, 'small'), c));
+        // S-CHORD-COLLAPSE: same chip-vs-tile fork as the in-key palette;
+        // chipTile itself gates the roman on songKey.root, so an un-keyed
+        // All view honestly shows letter-only chips - never a roman guessed
+        // vs progression[0] via labelRoman's labelTonic fallback (Volley 2
+        // High #2; the goal spec's honest-omission rule).
+        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small'), c));
       });
       // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter
       // (Major/Minor/7th/Maj7/Min7) rebuilds #catTabRow + #buildGrid in place, but
@@ -5344,6 +5428,12 @@
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
       rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); },
+      // S-CHORD-COLLAPSE (Volley 3 High #1): re-render the Compose grids so a
+      // guidance-level change (Settings row or the one-time ask) applies to
+      // ALREADY-rendered palettes/filmstrip immediately - not on the next
+      // compose mutation. Both callees no-op safely when Compose isn't wired
+      // (buildGrid checks el.catChips/el.buildGrid, renderProg checks el.prog).
+      refreshCompose: function () { buildGrid(); renderProg(); },
       // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.

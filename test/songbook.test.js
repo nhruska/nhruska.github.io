@@ -1558,6 +1558,31 @@ test('progStripMode: an unmeasured strip (availW <= 0, e.g. before first layout)
   assert.strictEqual(Songbook.progStripMode(5, 84, 8, -5), 'fill-row');
   assert.strictEqual(Songbook.progStripMode(12, 84, 8, 0), 'grid6');
 });
+/* ---------- progStripMode collapse param (S-CHORD-COLLAPSE, 2026-07-16):
+ * at the ADVANCED guidance level the filmstrip never shows full diagram
+ * cards - the caller passes collapse=true and 1-4 chords take the same
+ * compact-token stage 5-6 already use. ---------- */
+test('progStripMode: collapse=true demotes the full stage to fill-row - advanced level never shows diagram cards', function () {
+  assert.strictEqual(Songbook.progStripMode(1, 84, 8, 2000, true), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 2000, true), 'fill-row');
+});
+test('progStripMode: collapse=true leaves the 5+ stages byte-identical - only full is demoted', function () {
+  assert.strictEqual(Songbook.progStripMode(5, 84, 8, 2000, true), 'fill-row');
+  assert.strictEqual(Songbook.progStripMode(7, 84, 8, 2000, true), 'grid6');
+  assert.strictEqual(Songbook.progStripMode(12, 84, 8, 2000, true), 'grid6');
+});
+test('progStripMode: collapse=true still honors the fill-row width guard - a too-narrow strip cascades to grid6', function () {
+  // 4 tokens x 58 + 3 gaps x 8 = 256 (overflows 200) -> grid6
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 200, true), 'grid6');
+});
+test('progStripMode: collapse omitted/falsy is byte-identical to the pre-existing ladder (the non-advanced inverse)', function () {
+  assert.strictEqual(Songbook.progStripMode(1, 84, 8, 2000), 'full');
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 2000, false), 'full');
+  assert.strictEqual(Songbook.progStripMode(4, 84, 8, 2000, undefined), 'full');
+});
+test('progStripMode: collapse with 0 chords stays full - nothing to lay out (the early return wins)', function () {
+  assert.strictEqual(Songbook.progStripMode(0, 84, 8, 2000, true), 'full');
+});
 test('progStripMode: an unmeasured card width (cardW <= 0, e.g. the probe was unavailable) never demotes either', function () {
   assert.strictEqual(Songbook.progStripMode(4, 0, 8, 10), 'full');
   assert.strictEqual(Songbook.progStripMode(12, 0, 8, 10), 'grid6');
