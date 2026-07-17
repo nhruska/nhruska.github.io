@@ -65,9 +65,13 @@
 - Inverse checks: 'beginner', 'intermediate', and UNSET levels render the
   chord surfaces byte-identical to origin/main (extend the SHA-256-lock
   pattern in test/diagram.dom.test.js or DOM-compare at the adapter layer).
-- Shapes toggle live-verified (per the Amendment): one tap restores full
-  diagram grids everywhere on the screen (palettes AND the progression
-  filmstrip); a second tap returns to chips. Zero console errors.
+- Shapes toggle live-verified (per the Amendment): one tap restores the
+  NON-ADVANCED rendering everywhere on the screen - full diagram tiles on
+  the palettes, and on the filmstrip full cards at 1-4 chords. At 5+ chords
+  the pre-existing S-PROG-WRAP-2 count ladder shows compact tokens for
+  EVERY level, Shapes ON included - the toggle removes the advanced-level
+  collapse, it never overrides the density ladder that exists for fit
+  reasons. A second tap returns to chips. Zero console errors.
 
 ## Design constraints (detected, binding)
 
@@ -92,9 +96,14 @@
 
 ## Scope
 
-- In: `music/shared/chord-pack-adapter.js`, chord-grid render paths in
-  `music/shared/songbook.js` / `music/shared/tracks.js` / key-explorer
-  chords-in-key row, minimal CSS for chips, `music/sw.js` CACHE bump +
+- In (as built - the pre-implementation estimate named chord-pack-adapter/
+  tracks/key-explorer, but the survey found every chord grid renders from
+  songbook.js's Compose calls and the Studio was already chips, so the
+  actual seam is narrower): `music/shared/chord-collapse.js` (new),
+  `music/shared/songbook.js` (chip/tile fork + Shapes toggle + filmstrip
+  demotion + refreshCompose), `music/play/index.html` (script tag +
+  level-change live refresh), minimal CSS for chips in
+  `music/shared/songbook.css`, `music/sw.js` CACHE bump +
   `music/shared/build-stamp.js` mirror, new/extended tests in `test/`.
 - Out: guidance-level.js semantics (read-only consumer), diagram.js internals
   beyond what an additive opt requires, Notables/ask flows, theory modules

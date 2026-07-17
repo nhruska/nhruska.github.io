@@ -95,6 +95,31 @@
       "js": "document.querySelectorAll('#prog .slot .suggChip').length === 2 && document.querySelectorAll('#prog .slot .chord').length === 0"
     },
     {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "Dm"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Shapes ON at 5 chords keeps the S-PROG-WRAP-2 compact ladder (density ladder never overridden - Volley 3 High #2 semantics pinned) while the palette shows diagrams",
+      "js": "document.querySelectorAll('#prog .slot .suggChip').length === 5 && document.querySelectorAll('#prog .slot .chord').length === 0 && document.querySelectorAll('.inKeyLead .chord').length >= 6"
+    },
+    {
+      "action": "tap",
+      "selector": "#catChips .ccShapes"
+    },
+    {
       "action": "tapText",
       "text": "All",
       "scope": "#catChips"
@@ -129,6 +154,52 @@
     {
       "action": "screenshot",
       "name": "advanced-keyless-letter-only"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#setClose"
+    },
+    {
+      "action": "evalAssert",
+      "label": "level change applies LIVE to already-rendered grids (Volley 3 High #1): advanced -> beginner restores diagram tiles without a compose mutation",
+      "js": "document.querySelectorAll('#buildGrid .chord').length >= 6 && document.querySelectorAll('#buildGrid .suggChip').length === 0"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#guidanceLevelRow"
+    },
+    {
+      "action": "tap",
+      "selector": "#setClose"
+    },
+    {
+      "action": "evalAssert",
+      "label": "cycling back to advanced live-restores the chips the same way",
+      "js": "document.querySelectorAll('#buildGrid .suggChip').length >= 6 && document.querySelectorAll('#buildGrid .chord').length === 0"
     }
   ]
 }

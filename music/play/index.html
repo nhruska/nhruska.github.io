@@ -640,6 +640,14 @@
         ctxLine: el('ctxLine')
       }
     });
+    // S-CHORD-COLLAPSE (Volley 3 High #1): narrow window seam so the Settings
+    // script block (a SEPARATE <script> closure below - songbookCtl is not in
+    // its scope) can live-apply a guidance-level change to already-rendered
+    // Compose grids. Function-wrapped, not the controller itself: the other
+    // block gets exactly one capability, nothing else leaks.
+    window.songbookRefreshCompose = function () {
+      if (songbookCtl && songbookCtl.refreshCompose) songbookCtl.refreshCompose();
+    };
   }
 
   // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
@@ -946,6 +954,10 @@
         // diagramPref Settings-row precedent right above).
         if (window.Notables) Notables.dismiss('guidanceask');
         var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
+        // S-CHORD-COLLAPSE (Volley 3 High #1): a level change from Settings
+        // applies to already-rendered Compose grids immediately (window seam -
+        // songbookCtl is the other script block's closure variable).
+        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
       };
       renderGuidanceLevelRow();
     }
@@ -1073,6 +1085,12 @@
         Notables.dismiss('guidanceask');
         if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
         slot.innerHTML = '';
+        // S-CHORD-COLLAPSE (Volley 3 High #1): apply the new level to any
+        // ALREADY-rendered Compose grids right now - an unset user answering
+        // "advanced" after mount must see the chips immediately, not after
+        // the next compose mutation. window seam: songbookCtl lives in the
+        // OTHER script block's closure (not in scope here).
+        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
       }
       var banner = Notables.renderBanner({
         consumerId: 'guidanceask',
@@ -1088,6 +1106,9 @@
           GuidanceLevel.set('beginner');
           if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
           slot.innerHTML = '';
+          // Same live-apply as choose() - the explicit beginner default must
+          // also reach any already-rendered grids (S-CHORD-COLLAPSE V3 H1).
+          if (window.songbookRefreshCompose) window.songbookRefreshCompose();
         }
       });
       if (!banner) return; // no `document` available (Node without a DOM stub)

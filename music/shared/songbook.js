@@ -2451,9 +2451,12 @@
         // S-CHORD-COLLAPSE: lazy optional lookup (same pattern as window.DiagramPref
         // in chord-pack-adapter.js) - a page/test without the module reads false;
         // method-level typeof guard per the buildGrid call site (Volley 2 Medium #1).
-        // composeShapesOn (Volley 2 High #2 review, High #1 finding): Shapes ON
-        // restores the filmstrip's diagram cards too, not just the palettes -
-        // one toggle answers "show me shapes" everywhere on the screen.
+        // composeShapesOn (Volley 2 High #1): Shapes ON restores the
+        // NON-ADVANCED rendering on the filmstrip too, not just the palettes.
+        // Deliberately that and no more (Volley 3 High #2): at 5+ chords the
+        // pre-existing S-PROG-WRAP-2 count ladder renders compact tokens for
+        // EVERY level - Shapes must not override the density ladder that
+        // exists for fit reasons; it only removes the advanced-level collapse.
         !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
           && global.ChordCollapse.active() && !composeShapesOn));
       el.prog.classList.toggle('full', mode === 'full');
@@ -3419,6 +3422,7 @@
       // `typeof === 'function'` discipline so a partially-stubbed
       // window.ChordCollapse degrades to full diagrams instead of throwing.
       var collapse = !!(global.ChordCollapse && typeof global.ChordCollapse.active === 'function'
+        && typeof global.ChordCollapse.chip === 'function' // chipTile calls it (Volley 3 Medium #2)
         && global.ChordCollapse.active());
       var useChips = collapse && !composeShapesOn;
       if (collapse) {
@@ -5407,6 +5411,12 @@
       getState: function () { return STATE; },
       getSongs: function () { return ALLSONGS.slice(); },
       rebuild: function () { rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); },
+      // S-CHORD-COLLAPSE (Volley 3 High #1): re-render the Compose grids so a
+      // guidance-level change (Settings row or the one-time ask) applies to
+      // ALREADY-rendered palettes/filmstrip immediately - not on the next
+      // compose mutation. Both callees no-op safely when Compose isn't wired
+      // (buildGrid checks el.catChips/el.buildGrid, renderProg checks el.prog).
+      refreshCompose: function () { buildGrid(); renderProg(); },
       // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
