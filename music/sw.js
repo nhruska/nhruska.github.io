@@ -260,7 +260,7 @@
 // palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip
 // demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
 // play/index.html (script tag).
-var CACHE = 'music-v167';
+var CACHE = 'music-v173';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
