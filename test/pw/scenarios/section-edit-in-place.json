@@ -23,6 +23,11 @@
       "label": "each of the two section cards has a ✎ edit button (the feature - absent pre-fix)",
       "js": "document.querySelectorAll('#songSections .songSect .songSectEdit').length === 2"
     },
+    {
+      "action": "evalAssert",
+      "label": "S-SECTION-TAP-A11y: the card controls' VISIBLE targets (halo ::before) are >= 34px, not the cramped 22-26px that read as below the mobile touch floor (operator UAT 2026-07-17). Hit boxes were already 44px; this locks the visible affordance.",
+      "js": "(function(){var c=document.querySelector('#songSections .songSect');var sels=['.songSectPlay','.songSectEdit','.songSectMove.up','.rm'];return sels.every(function(s){var el=c.querySelector(s);if(!el)return false;return parseFloat(getComputedStyle(el,'::before').width) >= 34;});})()"
+    },
     { "action": "tap", "selector": "#songSections .songSect:nth-child(1) .songSectEdit" },
     { "action": "wait", "ms": 400 },
     {
