@@ -5,9 +5,9 @@
  * charts are too big and cause scroll off page - when I'm in advanced
  * guidance level"; goal spec docs/plans/goal-chord-collapse-advanced-
  * 20260716.md). One-screen-above-the-fold made level-aware: a seasoned
- * player navigates by name + function (roman), not finger dots - the
- * diagrams stay ONE tap away via the Shapes toggle songbook.js renders
- * next to the In key|All segmented control (operator pick 2026-07-16:
+ * player navigates by name + function (roman), not finger dots - one tap
+ * on the Shapes toggle songbook.js renders next to the In key|All
+ * segmented control restores the full DIAGRAM GRID (operator pick 2026-07-16:
  * chips keep the one-tap add/play verb - the G1 persona goalpost encodes
  * it - so the expand affordance is grid-level, never per-chip).
  * ---------------------------------------------------------------------

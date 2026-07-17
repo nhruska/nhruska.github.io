@@ -80,6 +80,33 @@ test('active() is false when get() throws (defensive read, matches every other r
   });
 });
 
+/* ---------- active() through the REAL GuidanceLevel module ----------
+ * (Volley 1 Medium #4): the truth-table above stubs GuidanceLevel; this
+ * block wires the ACTUAL music/shared/guidance-level.js reader over a
+ * fake localStorage, so the real chain a browser executes - stored key
+ * -> GuidanceLevel.get() -> ChordCollapse.active() - is what's guarded,
+ * not a hand-rolled stand-in. */
+var lsReset = require('./helpers/local-storage-reset.js');
+var RealGuidance = require('../music/shared/guidance-level.js');
+function withStoredLevel(stored, fn) {
+  var prevLS = global.localStorage, prevGL = global.GuidanceLevel;
+  global.localStorage = lsReset.fakeStore(
+    stored === undefined ? null : { 'music.guidanceLevel.v1': stored });
+  global.GuidanceLevel = RealGuidance;
+  try { fn(); } finally { global.localStorage = prevLS; global.GuidanceLevel = prevGL; }
+}
+test('REAL chain: stored advanced -> GuidanceLevel.get() -> active() true', function () {
+  withStoredLevel('advanced', function () { assert.strictEqual(CC.active(), true); });
+});
+test('REAL chain: stored beginner/intermediate -> active() false', function () {
+  withStoredLevel('beginner', function () { assert.strictEqual(CC.active(), false); });
+  withStoredLevel('intermediate', function () { assert.strictEqual(CC.active(), false); });
+});
+test('REAL chain: no stored key (ask pending) and a corrupt value both read false', function () {
+  withStoredLevel(undefined, function () { assert.strictEqual(CC.active(), false); });
+  withStoredLevel('expert', function () { assert.strictEqual(CC.active(), false); });
+});
+
 /* ---------- chip(): the compact token DOM shape ---------- */
 test('chip() builds the suggChip token: button + scName + scRn', function () {
   var b = CC.chip({ chord: 'Dm', roman: 'ii' });

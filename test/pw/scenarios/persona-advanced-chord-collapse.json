@@ -31,6 +31,16 @@
       "selector": ".inKeyLead .ccChips .suggChip:last-child"
     },
     {
+      "action": "evalAssert",
+      "label": "whole chip grid fits inside the viewport (rect-based - the load-bearing no-scroll proof per the goal-spec Amendment)",
+      "js": "(function(){var r=document.querySelector('.inKeyLead .ccChips').getBoundingClientRect();return r.top>=0&&r.bottom<=window.innerHeight;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "page never scrolls (spec-literal check; trivially holds in the 100dvh shell)",
+      "js": "document.documentElement.scrollHeight <= window.innerHeight"
+    },
+    {
       "action": "tapChord",
       "name": "C"
     },

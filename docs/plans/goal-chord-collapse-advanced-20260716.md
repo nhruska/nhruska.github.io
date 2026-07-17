@@ -9,15 +9,43 @@
 
 | Question | Decision |
 |---|---|
-| Collapse UX | Collapsed chips + TAP TO EXPAND one chord's full diagram (tap again re-collapses) |
-| Scope | EVERYWHERE chord grids render (play page chord chain/grid, songbook grid, Studio chords-in-key row) |
+| Collapse UX | ~~Collapsed chips + TAP TO EXPAND one chord's full diagram~~ SUPERSEDED - see Amendment below |
+| Scope | EVERYWHERE chord grids render - see Amendment for the verified surface map |
 | Intermediate level | Same as beginner - full diagrams. ONLY 'advanced' collapses |
+
+## Amendment (operator re-decision, 2026-07-16, mid-build - BINDING over the rows above)
+
+1. **Collapse UX (supersedes the tap-to-expand row):** the original per-chip
+   tap-to-expand pick conflicted with the app's own G1 persona goalpost
+   (test/pw/scenarios/persona-advanced-studio.json) and the F19 UAT ruling:
+   a chord tile's tap IS the one-tap add+play verb, the core Compose action.
+   Re-asked with previews; operator picked: **chips keep tap = add/play
+   (unchanged verb); a grid-level `Shapes` toggle beside the In key|All
+   segmented control flips the whole grid chips <-> full diagrams**
+   (session-scoped, advanced-only). There is deliberately NO per-chip
+   expand and NO tap-again-collapse - do not re-introduce them.
+2. **Scope, verified surface map:** every chord-GRID surface in the app
+   lives in music/play/index.html's Compose screen (In-key palette, All
+   grid, progression filmstrip) - so loading chord-collapse.js on the play
+   page IS full coverage. music/play/triad-inversions.html contains zero
+   chord grids (verified: no diagram/chordGrid/songbook.js references) and
+   is a shapes-teaching artifact page, out of scope by nature. The Studio
+   chords-in-key row was ALREADY name-only chips for every level before
+   this feature (F19, operator UAT 2026-07-05) - it stays as-is; "only
+   advanced collapses" governs the surfaces THIS feature changes, and F19's
+   pre-existing all-level chips are not regressed to diagrams.
+3. **No-scroll verification wording:** the app shell is a fixed-height
+   (100dvh) layout, so the page-level `scrollHeight <= innerHeight` check
+   holds trivially; the LOAD-BEARING assertion is the chip grid's bounding
+   box fitting entirely inside the viewport (rect top >= 0 AND bottom <=
+   innerHeight). The scenario asserts both.
 
 ## Completion condition (paste into /goal)
 
 > At guidance level 'advanced', every chord-grid surface renders collapsed chips
-> (chord letter + roman numeral where key context exists) with tap-to-expand a
-> single diagram; beginner/intermediate/unset render byte-identical to today;
+> (chord letter + roman numeral where key context exists) with the grid-level
+> Shapes toggle restoring full diagrams on demand (per the Amendment below);
+> beginner/intermediate/unset render byte-identical to today;
 > `node --test test/` exits 0 with new unit tests covering the collapse decision
 > layer; `scripts/check-cache-bump.sh` passes; and a headless Playwright run at
 > 412x915 shows the play-page chord area causing no vertical page scroll at
