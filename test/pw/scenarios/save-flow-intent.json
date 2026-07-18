@@ -1,0 +1,94 @@
+{
+  "name": "save-flow-intent",
+  "note": "Issue #265 (operator UAT 2026-07-17), all three save-flow items in one pass. A: a FRESH progression save (no song structure touched) asks intent first - 'Save this progression, or build it into a song?'. B: the name row defaults to 'Original progression' (asset-type-aware, not 'Original track'). C: post-save shows the named-asset banner with a one-tap next step (Open Setlist when the opt-in was checked); tapping it lands on the Setlist with the saved item on top. Written red-first against main (no intent row, 'Original track' default, bare 'Saved to your Library' toast).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "#265-A: the intent row asks first - message + 'Save progression' (primary) + 'Build a song with it'",
+      "js": "(function(){var row=document.querySelector('.composeRow');if(!row||row.hidden)return false;var t=row.textContent;return t.indexOf('Save this progression, or build it into a song?')>=0 && t.indexOf('Save progression')>=0 && t.indexOf('Build a song with it')>=0;})()"
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "evalAssert",
+      "label": "#265-B: the default name is asset-type-aware - 'Original progression', not 'Original track'",
+      "js": "(function(){var i=document.querySelector('.composeRow .composeRowInput');return !!i && i.value==='Original progression';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "#265-C: the post-save banner names the saved asset and offers the Setlist as the one-tap next step",
+      "js": "(function(){var b=document.querySelector('.saveDone');if(!b||b.hidden)return false;var t=b.textContent;return t.indexOf('Saved Original progression')>=0 && t.indexOf('Open Setlist')>=0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "save-flow-banner"
+    },
+    {
+      "action": "tapText",
+      "text": "Open Setlist"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "#265-C: the next-step tap lands on the Setlist with the saved progression on top",
+      "js": "(function(){var scr=document.getElementById('s-jam');if(!scr||!scr.classList.contains('on'))return false;var first=document.querySelector('#setBody .listItem .li-title');return !!first && /Original progression/.test(first.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "save-flow-setlist"
+    }
+  ]
+}

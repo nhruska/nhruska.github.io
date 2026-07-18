@@ -910,11 +910,12 @@ test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear st
 test('Clear-undo: every A3-listed mutating action invalidates, Clear never regresses to confirm(), slot-x is movement-cancelled', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   // Clear builds a snapshot and shows the banner - never a native confirm().
-  // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10). S-SONG-MODE
+  // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10) ->1550
+  // (#265-C: the hideSaveDoneBanner line). S-SONG-MODE
   // UAT-2 extracted the handler body into clearProgression() (so the Song
   // canvas's "Build the chords" shares the exact guarded path) - the contract
   // now pins THAT function, plus the button's delegation to it.
-  var clearBlock = /function clearProgression\(bannerMsg\) \{[\s\S]{0,1400}?\n    \}/.exec(src);
+  var clearBlock = /function clearProgression\(bannerMsg\) \{[\s\S]{0,1550}?\n    \}/.exec(src);
   assert.ok(clearBlock, 'clearProgression() not found');
   assert.ok(/el\.cClear\.onclick = function \(\) \{ clearProgression\(\); \}/.test(src), 'the Clear button must delegate to clearProgression()');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
@@ -1126,16 +1127,32 @@ function mountForSaveTests() {
 // then drives the inline name row's own Save button (defaultName accepted,
 // "Add to setlist" unchecked so the toggleSet/"Added to setlist" path - out
 // of this mission's line-region grant - never fires and can't muddy the assert).
+// #265-A: a FRESH no-structure Save opens the intent row first ("Save this
+// progression, or build it into a song?") - drive its "Save progression"
+// branch (btnRow child 0) to reach the name row, which re-renders the SAME
+// composeRow element (openSaveNameRow clears + repopulates it).
+function throughIntentRow(m) {
+  var composeRow = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) composeRow = c; });
+  if (!composeRow) throw new Error('harness: composeRow was not created - ensureComposeUI() likely returned false');
+  composeRow.children[1].children[0].onclick(); // btnRow -> "Save progression"
+  return composeRow;
+}
 function buildAndSave(m) {
   var tile = m.elMap.buildGrid.children[0];
   tile.onclick(); tile.onclick();
   m.elMap.cSave.onclick();
-  var composeRow = null;
-  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) composeRow = c; });
-  if (!composeRow) throw new Error('A1 harness: composeRow was not created - ensureComposeUI() likely returned false');
+  var composeRow = throughIntentRow(m);
   var setCheck = composeRow.children[1].children[0]; // setLabel -> its checkbox
   setCheck.checked = false;
   composeRow.children[2].onclick(); // saveBtn -> finish(defaultName) -> saveProgression's done callback
+}
+// #265-C: success feedback is now the saved-with-next-step banner (a
+// composeRow toastAction sibling), not a composeToast.
+function findSaveDoneBanner(m) {
+  var b = null;
+  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('saveDone') >= 0) b = c; });
+  return b;
 }
 function findComposeToast(m) {
   var t = null;
@@ -1147,12 +1164,16 @@ function findComposeToast(m) {
 // (see makeStubEl), so class membership must be checked on the className string.
 function hasClass(el, cls) { return (' ' + el.className + ' ').indexOf(' ' + cls + ' ') >= 0; }
 
-test('A1: saveProgression on a healthy store shows the real success toast (not an err toast)', function () {
+test('A1/#265-C: saveProgression on a healthy store shows the named-asset banner with a next step (never an err toast)', function () {
   var m = mountForSaveTests();
   buildAndSave(m);
+  var banner = findSaveDoneBanner(m);
+  assert.ok(banner, 'expected the saveDone banner element');
+  assert.strictEqual(banner.hidden, false, 'banner visible after a successful save');
+  assert.strictEqual(banner.children[0].textContent, 'Saved Original progression.', '#265-B: the banner names the saved asset with the progression default');
+  assert.strictEqual(banner.children[1].textContent, 'Open Library', '#265-C: setlist opt-in was unchecked, so the next step is the Library');
   var toast = findComposeToast(m);
-  assert.strictEqual(toast.textContent, 'Saved to your Library');
-  assert.strictEqual(hasClass(toast, 'err'), false, 'a successful save must not carry the err class');
+  assert.ok(!toast || toast.hidden || !hasClass(toast, 'err'), 'a successful save must not show an err toast');
 });
 
 test('A1: saveProgression on a throwing (quota-exceeded) store shows a truthful failure toast, never the success message', function () {
@@ -1184,7 +1205,7 @@ test('A1: the update-in-place branch ("Updated ...") is equally truthful on a th
   // First save succeeds (healthy store) - links savedComposeId so a second Save
   // on the same buffer takes the update-in-place branch (not a fresh create).
   buildAndSave(m);
-  assert.strictEqual(findComposeToast(m).textContent, 'Saved to your Library');
+  assert.strictEqual(findSaveDoneBanner(m).children[0].textContent, 'Saved Original progression.');
   // Add one more chord, then start failing storage, then Save again -> the
   // "Updated ..." branch, not the create branch.
   var tile = m.elMap.buildGrid.children[0];
@@ -1229,9 +1250,7 @@ function buildAndSaveAddToSetlist(m) {
   var tile = m.elMap.buildGrid.children[0];
   tile.onclick(); tile.onclick();
   m.elMap.cSave.onclick();
-  var composeRow = null;
-  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) composeRow = c; });
-  if (!composeRow) throw new Error('H4 harness: composeRow was not created - ensureComposeUI() likely returned false');
+  var composeRow = throughIntentRow(m); // #265-A: drive the intent row's "Save progression" branch
   // setCheck defaults to checked=true (openSaveNameRow) - leave it as-is so
   // addToSetlist fires toggleSet(cs.id) and its toast becomes observable.
   composeRow.children[2].onclick(); // saveBtn -> finish(defaultName, true) -> saveProgression's done -> toggleSet
@@ -1317,11 +1336,12 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
     global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
   }
   var libraryToast = findPlainToast();
-  var composeToast = findComposeToast(m);
+  var saveBanner = findSaveDoneBanner(m);
   assert.ok(libraryToast, 'expected the Library .toast element in document.body');
   assert.strictEqual(libraryToast.textContent, 'Added to setlist');
-  assert.ok(composeToast, 'expected the Compose .composeToast element');
-  assert.strictEqual(composeToast.textContent, 'Saved to your Library');
+  assert.ok(saveBanner, 'expected the Compose saveDone banner (#265-C: success feedback moved off composeToast)');
+  assert.strictEqual(saveBanner.children[0].textContent, 'Saved Original progression.');
+  assert.strictEqual(saveBanner.children[1].textContent, 'Open Setlist', '#265-C: setlist opt-in stayed checked, so the next step is the Setlist');
   // buildAndSaveAddToSetlist also taps a chord tile twice on the way in, and
   // each tap schedules its OWN unrelated 220ms "sel" class-removal timer
   // (songbook.js's chord-tile tap animation, nothing to do with toasts) - so
@@ -1335,18 +1355,18 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
     byDuration[ms] = (byDuration[ms] || []).concat([Number(id)]);
   });
   assert.strictEqual((byDuration[1600] || []).length, 1, 'exactly one pending 1600ms auto-hide timer (the Library toast\'s)');
-  assert.strictEqual((byDuration[3000] || []).length, 1, 'F31: the Compose Save-confirmation toast must schedule its OWN 3000ms auto-hide timer (no persist:true)');
+  assert.strictEqual((byDuration[4000] || []).length, 1, 'F31/#265-C: the saveDone banner must schedule its OWN auto-hide timer (Toast.showAction default 4000ms - never stranded)');
   assert.strictEqual(libraryToast.classList.contains('on'), true, 'Library toast is visible immediately after showToast()');
-  assert.strictEqual(composeToast.hidden, false, 'Compose toast is visible immediately after showComposeToast()');
+  assert.strictEqual(saveBanner.hidden, false, 'saveDone banner is visible immediately after the save');
   // Fire the Library toast's own scheduled auto-hide (simulates the real
   // 1600ms elapsing) - this is the assertion that FAILED before the fix
   // (the timer had already been silently cancelled and would never fire).
   var id = byDuration[1600][0];
   scheduled[id].cb();
   assert.strictEqual(libraryToast.classList.contains('on'), false, 'Library toast must auto-hide once its own timer elapses - the U9 regression');
-  // The Compose toast must remain completely untouched by the Library toast's
+  // The saveDone banner must remain completely untouched by the Library toast's
   // own hide - the two hosts are fully independent (toast.js's per-host Map).
-  assert.strictEqual(composeToast.hidden, false, 'Compose toast must stay visible - unaffected by the unrelated Library toast auto-hiding');
+  assert.strictEqual(saveBanner.hidden, false, 'saveDone banner must stay visible - unaffected by the unrelated Library toast auto-hiding');
 });
 
 /* =====================================================================
@@ -1359,25 +1379,25 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
  * invalidateClearUndo - it's what CREATES the undo snapshot) explicitly ends
  * a still-showing confirmation via hideComposeToast().
  * ===================================================================== */
-test('F31: the Compose save-confirmation toast auto-dismisses on its own scheduled timer (no persist:true stranding it forever)', function () {
+test('F31/#265-C: the saveDone banner auto-dismisses on its own scheduled timer ("keep editing" stays the zero-tap default)', function () {
   var nextId = 1, scheduled = {};
   var realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
   global.setTimeout = function (cb, ms) { var id = nextId++; scheduled[id] = { cb: cb, ms: ms }; return id; };
   global.clearTimeout = function (id) { delete scheduled[id]; };
-  var m, composeToast;
+  var m, banner;
   try {
     m = mountForSaveTests();
     buildAndSave(m);
-    composeToast = findComposeToast(m);
-    assert.strictEqual(composeToast.hidden, false, 'toast visible immediately after Save');
+    banner = findSaveDoneBanner(m);
+    assert.strictEqual(banner.hidden, false, 'banner visible immediately after Save');
     var timerId = null;
-    Object.keys(scheduled).forEach(function (id) { if (scheduled[id].ms === 3000) timerId = id; });
-    assert.ok(timerId, 'expected a scheduled 3000ms auto-hide timer for the Save confirmation');
-    scheduled[timerId].cb(); // simulate the real 3000ms elapsing
+    Object.keys(scheduled).forEach(function (id) { if (scheduled[id].ms === 4000) timerId = id; });
+    assert.ok(timerId, 'expected a scheduled 4000ms auto-hide timer for the saveDone banner (Toast.showAction default)');
+    scheduled[timerId].cb(); // simulate the real 4000ms elapsing
   } finally {
     global.setTimeout = realSetTimeout; global.clearTimeout = realClearTimeout;
   }
-  assert.strictEqual(composeToast.hidden, true, 'the Save confirmation must auto-dismiss once its own timer elapses');
+  assert.strictEqual(banner.hidden, true, 'the saveDone banner must auto-dismiss once its own timer elapses');
 });
 
 test('F31: Clear ends a still-showing save-confirmation toast immediately (hideComposeToast), rather than leaving it stranded over the fresh canvas', function () {
@@ -1391,10 +1411,10 @@ test('F31: Clear ends a still-showing save-confirmation toast immediately (hideC
   var ctrl = Songbook.mount({ storagePrefix: 'a1clear', el: elMap });
   var m = { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
   buildAndSave(m);
-  var composeToast = findComposeToast(m);
-  assert.strictEqual(composeToast.hidden, false, 'sanity: the save confirmation is showing before Clear');
+  var banner = findSaveDoneBanner(m);
+  assert.strictEqual(banner.hidden, false, 'sanity: the saveDone banner is showing before Clear');
   elMap.cClear.onclick();
-  assert.strictEqual(composeToast.hidden, true, 'F31: Clear must hide a still-showing save-confirmation toast (hideComposeToast, not just invalidateClearUndo)');
+  assert.strictEqual(banner.hidden, true, 'F31/#265-C: Clear must hide a still-showing saveDone banner (hideSaveDoneBanner in clearProgression)');
 });
 
 /* =====================================================================

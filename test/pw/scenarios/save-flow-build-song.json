@@ -1,0 +1,64 @@
+{
+  "name": "save-flow-build-song",
+  "note": "Issue #265-A, the other intent branch: from a fresh progression, Save -> 'Build a song with it' captures the strip as the dropdown's section (Verse default) and lands on the Song canvas with the strip INTACT (the edit-the-verse workflow - returnToSong path, no clear). Written red-first against main (no intent row exists there).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tapText",
+      "text": "Build a song with it"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "#265-A song branch: the Song canvas is open with exactly ONE section (Verse) holding the strip's chords, and the strip itself is intact (2 slots)",
+      "js": "(function(){var cards=document.querySelectorAll('.songSect');if(cards.length!==1)return false;if(!/Verse/.test(cards[0].textContent))return false;var slots=document.querySelectorAll('#prog .slot').length;return slots===2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and NOTHING was saved to the library yet - building a song is not a save",
+      "js": "(function(){var c=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.custom.v1')||'[]');return c.length===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "save-flow-build-song"
+    }
+  ]
+}

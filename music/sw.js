@@ -264,7 +264,7 @@
 // TWO new CORE paths (shared/skill-md.js + shared/zip-store.js) + accordion.js
 // named groups, songbook.js Skills panel, competency.js flexible ids,
 // play/index.html settings rows. Re-staggered above main's v181 (#269 train).
-var CACHE = 'music-v182';
+var CACHE = 'music-v185';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

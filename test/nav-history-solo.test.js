@@ -129,7 +129,12 @@ if (typeof global.document === 'undefined') {
     body: makeStubEl('body'),
     getElementById: function () { return null; },
     querySelector: function () { return null; },
-    querySelectorAll: function () { return []; }
+    querySelectorAll: function () { return []; },
+    // #265-C: the saveDone banner's Toast.wirePauseOnTouch registers
+    // document-level touchend/pointerup listeners - no-op capture is enough
+    // here (no test simulates the pause gesture).
+    addEventListener: function () {},
+    removeEventListener: function () {}
   };
 }
 
