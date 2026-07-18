@@ -107,4 +107,36 @@ test('freqForString: 12 frets up is one octave', function () {
   assert.ok(Math.abs(ChordAudio.freqForString(110, 12) - 220) < 1e-9, 'octave math wrong');
 });
 
+/* ---- pick-scrape transient (ear-test round 3: "keyboard in the attack") ----
+ * Round 2's static cabinet lowpass (2600Hz) darkens the ATTACK along with the
+ * sustain - the onset reads felt-hammer, not pluck. The fix decouples them:
+ * scrapeRender() is a short broadband transient rendered separately and
+ * routed AROUND the tame filter (bus scrape input), so attack character and
+ * sustain warmth get independent knobs. These pin the transient's physics. */
+test('scrapeRender: a short, HF-dominant, decaying, click-free transient', function () {
+  var ms = 7, b = ChordAudio.scrapeRender(SR, ms);
+  assert.strictEqual(b.length, Math.round(SR * ms / 1000), 'length must match the requested ms');
+  // HF-dominant: the first-difference energy ratio of a highpassed burst sits
+  // WELL above the string's lowpassed excitation (~0.7 at strum brightness).
+  var d = 0, e = 0;
+  for (var i = 1; i < b.length; i++) { var df = b[i] - b[i - 1]; d += df * df; e += b[i] * b[i]; }
+  assert.ok(e > 0 && d / e > 1.5, 'scrape must be HF-dominant (first-diff ratio > 1.5, got ' + (e ? (d / e).toFixed(2) : 'silent') + ')');
+  // Decaying: the first third carries several times the energy of the last third.
+  var third = Math.floor(b.length / 3), e1 = 0, e3 = 0;
+  for (var j = 0; j < third; j++) { e1 += b[j] * b[j]; e3 += b[b.length - 1 - j] * b[b.length - 1 - j]; }
+  assert.ok(e1 > e3 * 4, 'scrape must decay (first-third energy > 4x last-third)');
+  // Click-free, bounded.
+  assert.ok(Math.abs(b[0]) < 0.02 && Math.abs(b[b.length - 1]) < 0.02, 'scrape must ramp in and out (no edge clicks)');
+  for (var k = 0; k < b.length; k++) assert.ok(b[k] >= -1 && b[k] <= 1 && isFinite(b[k]), 'scrape must stay bounded/finite');
+});
+
+test('scrape wiring: pluckKS fires the scrape through the bus scrape input (bypasses the tame lowpass)', function () {
+  // Static wiring lint (WebAudio topology is unreachable from Node): the bus
+  // must expose a scrapeIn that connects to the compressor NOT through `tame`,
+  // and the pluck path must route a scrapeRender buffer into it.
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'audio.js'), 'utf8');
+  assert.ok(/scrapeIn\.connect\(comp\)/.test(src), 'bus scrapeIn must connect straight to the compressor (around the tame filter)');
+  assert.ok(/scrapeRender\(/.test(src.split('function pluckKS')[1] || ''), 'pluckKS must render + fire the scrape transient');
+});
+
 run();
