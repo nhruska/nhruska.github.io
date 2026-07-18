@@ -1,0 +1,22 @@
+{
+  "name": "track-seed-add-follows",
+  "note": "S-ADD-FOLLOWS round 2 (operator repro 2026-07-17 on the #269 preview: tapping + on a keyed seq-less TRACK - 'Hendrix Style Jam in A Minor' - still vanishes the row). The KEYSEED path creates a seeded custom copy and suppresses the original track row via the track-merge, a DIFFERENT route from the custom-song add the first scenario covered. Contract: after tapping + on a keyed track row, a row with THAT TITLE must be CHECKED and FULLY INSIDE the viewport - the user's eyes never lose it. Written RED against the exact reported flow before any fix.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Hendrix Style Jam\") .li-add" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "after the keyseed +, a row titled 'Hendrix Style Jam' is CHECKED and FULLY IN VIEWPORT - the tapped row never vanishes from view (operator repro)",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Hendrix Style Jam')>=0;})[0];if(!r)return false;var b=r.getBoundingClientRect();return r.classList.contains('inSet') && b.top>=0 && b.bottom<=window.innerHeight;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and it actually joined the setlist (one entry, the seeded copy)",
+      "js": "(function(){var set=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');return set.length===1;})()"
+    },
+    { "action": "screenshot", "name": "track-seed-add-follows" }
+  ]
+}

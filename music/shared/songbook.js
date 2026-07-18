@@ -2085,6 +2085,12 @@
       if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
       if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
       var ok = saveSet();
+      // Operator repro 2026-07-17 (#269 preview, round 2): the keyseed add
+      // bypasses toggleSet, so it must flag the follow-the-row highlight
+      // ITSELF - the seeded copy consumes the track row and the merged row
+      // relocates; without this the row vanishes from the user's view. Same
+      // contract as toggleSet: the view scrolls to + flashes the added row.
+      pendingHighlightId = saved.id;
       renderSongs(); renderSetlist();
       // Display spelling via the SAME facet label the Key filter chip shows
       // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
