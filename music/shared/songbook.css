@@ -186,6 +186,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 .appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* #OFFLINE-PILL (operator UAT 2026-07-18): quiet connectivity status in the
+   appbar - amber (the app's one warn accent) because it's a heads-up, not an
+   error; the app keeps working offline. [hidden] wins the display cascade. */
+.offlinePill[hidden]{display:none;}
+.offlinePill{align-self:flex-start;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:1px 6px;}
 .ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.25rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
 .ab-btn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}

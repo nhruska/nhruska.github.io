@@ -124,7 +124,11 @@
 <body>
 <div class="app">
   <div class="appbar">
-    <div class="brand"><span class="nm">Music</span><span class="ctx" id="ctxLine">loading…</span></div>
+    <!-- Offline pill (operator UAT 2026-07-18 "how do I know if it's offline?"):
+         quiet chrome-tier status, visible only while disconnected. The app KEEPS
+         WORKING offline (that's the PWA promise) - the pill just names the state
+         so a failed YouTube thumbnail or search doesn't read as a broken app. -->
+    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span><span class="ctx" id="ctxLine">loading…</span></div>
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
@@ -1097,13 +1101,17 @@
     function showVersion() {
       var el = document.getElementById('appVer'); if (!el) return;
       var base = window.BuildStamp ? BuildStamp.text() : 'Music';
-      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = base + ' - not installed offline'; return; }
-      el.textContent = base;
+      // #OFFLINE-READY (operator UAT 2026-07-18 "ready for offline?"): answer
+      // the question in plain words. No controller = not saved yet, and the
+      // fix is stated (a reload while online lets the worker install); a
+      // controller in agreement = saved, say so positively.
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = base + ' - not saved for offline yet (reload once while online)'; return; }
+      el.textContent = base + ' - saved for offline';
       try {
         var mc = new MessageChannel();
         mc.port1.onmessage = function (ev) {
           if (!(ev.data && ev.data.version)) return;
-          if (window.BuildStamp && ev.data.version === BuildStamp.VERSION) return; // page and worker agree - nothing to flag
+          if (window.BuildStamp && ev.data.version === BuildStamp.VERSION) return; // page and worker agree - the positive line above stands
           el.textContent = base + ' - offline build ' + String(ev.data.version).replace(/^music-/, 'v') + ' active';
         };
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
@@ -1438,8 +1446,45 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(function () { });
+    // #OFFLINE-READY one-shot cue (operator UAT 2026-07-18 "should I be cued
+    // to download?"): the download is AUTOMATIC (the worker precaches on
+    // first visit - zero-friction by design), so the cue's job is to CONFIRM,
+    // once, that it happened: the first time this browser is controlled by
+    // the worker, a single toast says the app now works without internet.
+    // One-shot via localStorage (the notables earned-silence grammar).
+    var CUE_KEY = 'music.offlineReadyCued.v1';
+    function cueOnce() {
+      try {
+        if (localStorage.getItem(CUE_KEY)) return;
+        localStorage.setItem(CUE_KEY, '1');
+      } catch (e) { return; }
+      try {
+        var host = document.createElement('div');
+        host.className = 'toast';
+        document.body.appendChild(host);
+        Toast.show('Saved for offline - this app now works without internet', {
+          host: host,
+          duration: 3200,
+          onShow: function (h, m) { h.textContent = m; requestAnimationFrame(function () { h.classList.add('on'); }); },
+          onHide: function (h) { h.classList.remove('on'); }
+        });
+      } catch (e) {}
+    }
+    if (navigator.serviceWorker.controller) cueOnce();
+    else navigator.serviceWorker.addEventListener('controllerchange', cueOnce);
   });
 }
+// #OFFLINE-PILL (operator UAT 2026-07-18): reflect connectivity in the
+// appbar. navigator.onLine is the browser's own signal - coarse, but the
+// pill is informational chrome, never a gate (the app works either way).
+(function () {
+  var pill = document.getElementById('offlinePill');
+  if (!pill) return;
+  function paint() { pill.hidden = navigator.onLine !== false; }
+  window.addEventListener('online', paint);
+  window.addEventListener('offline', paint);
+  paint();
+})();
 </script>
 </body>
 </html>

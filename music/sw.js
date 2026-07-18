@@ -264,7 +264,7 @@
 // audio.js KS strum engine. v187 sits above main's v186 (#270/#271/#272).
 // S-AUDIO-PICK-TRANSIENT (#273, re-staggered past #275/#276): audio.js pick
 // scrape + (from main) voice cache/latency. v191 sits above main's v190.
-var CACHE = 'music-v191';
+var CACHE = 'music-v192';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -367,6 +367,10 @@ self.addEventListener('message', function (e) {
   }
 });
 
+// The bars-but-no-data deadline (see the same-origin handler below). 3.5s is
+// generous for a healthy connection's HTML/JS answer and short enough that a
+// dead one never strands the user on a spinner.
+var NET_DEADLINE_MS = 3500;
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
@@ -374,19 +378,37 @@ self.addEventListener('fetch', function (e) {
   if (req.headers.has('range')) return;          // let the browser handle media byte-range itself
   var sameOrigin = new URL(req.url).origin === self.location.origin;
   if (sameOrigin) {
-    // network-first: always fresh when online; cached copy only as offline fallback.
-    // On a cache miss offline (e.g. a deep link with ?p=…), fall back to the app
-    // shell so a navigation still renders instead of a dead network error.
+    // network-first WITH a cache-fallback deadline (operator UAT 2026-07-18:
+    // "I lost my Internet and app wouldn't load"). True offline makes fetch()
+    // REJECT fast and the catch-fallback below always worked - but a phone
+    // that "lost internet" usually has bars-with-no-data, where fetch()
+    // neither succeeds nor rejects for tens of seconds and the app hangs on
+    // a spinner. When a cached copy exists, the network now gets
+    // NET_DEADLINE_MS to answer; past that the cache serves IMMEDIATELY and
+    // the (eventual) network response still refreshes the cache in the
+    // background for next load. A cache MISS still waits for the network in
+    // full - there is nothing to fall back to, and first-visit installs must
+    // not be time-boxed. Fresh-when-online is preserved: a healthy network
+    // answers well inside the deadline.
     e.respondWith(
-      fetch(req).then(function (res) {
-        if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (cached) {
+      caches.match(req).then(function (cached) {
+        var netP = fetch(req).then(function (res) {
+          if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
+          return res;
+        });
+        var answered = netP.catch(function () {
           if (cached) return cached;
           if (req.mode === 'navigate') return caches.match('./play/').then(function (shell) { return shell || caches.match('./play/index.html'); });
           return Response.error();
         });
+        if (!cached) return answered;
+        // Keep the worker alive past the race so the background cache
+        // refresh from a late network answer still lands.
+        e.waitUntil(netP.catch(function () {}));
+        return Promise.race([
+          answered,
+          new Promise(function (resolve) { setTimeout(function () { resolve(cached); }, NET_DEADLINE_MS); })
+        ]);
       })
     );
   } else {

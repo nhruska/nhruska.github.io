@@ -101,4 +101,30 @@ test('(A5) esc.js specifically is both script-tagged and precached', function ()
   assert.ok(corePaths.indexOf('./shared/esc.js') !== -1, 'esc.js must be listed in sw.js CORE');
 });
 
+/* ---- offline resilience (operator UAT 2026-07-18: "I lost my Internet and
+ * app wouldn't load") ---------------------------------------------------
+ * The failure was bars-but-no-data: fetch() neither succeeds nor rejects for
+ * tens of seconds, and network-first with no deadline strands the user on a
+ * spinner even though the whole app sits in cache. These pin the deadline
+ * race in sw.js and the connectivity UX in play/index.html. A REQUEST-LEVEL
+ * hang can't be simulated by Playwright's set_offline, so the deadline is a
+ * source contract here; the true-offline boot itself is proven end-to-end by
+ * test/pw/scenarios/offline-boot.json. */
+var swSrc = fs.readFileSync(path.join(__dirname, '..', 'music', 'sw.js'), 'utf8');
+var playSrc = fs.readFileSync(path.join(__dirname, '..', 'music', 'play', 'index.html'), 'utf8');
+
+test('sw.js: cached requests race the network against NET_DEADLINE_MS (bars-but-no-data never hangs the boot)', function () {
+  assert.ok(/var NET_DEADLINE_MS = \d+/.test(swSrc), 'NET_DEADLINE_MS must exist');
+  assert.ok(/Promise\.race\(/.test(swSrc), 'the same-origin handler must race the network against the deadline');
+  assert.ok(/resolve\(cached\)/.test(swSrc), 'the deadline branch must resolve with the CACHED copy');
+  assert.ok(/if \(!cached\) return answered;/.test(swSrc), 'a cache MISS must still wait for the network in full (first visits are never time-boxed)');
+});
+
+test('play/index.html: the OFFLINE pill + one-shot saved-for-offline cue are wired', function () {
+  assert.ok(/id="offlinePill"/.test(playSrc), 'the appbar must carry the offline pill');
+  assert.ok(/addEventListener\('online'/.test(playSrc) && /addEventListener\('offline'/.test(playSrc), 'the pill must track online/offline events');
+  assert.ok(/music\.offlineReadyCued\.v1/.test(playSrc), 'the saved-for-offline confirmation must be a one-shot (localStorage-keyed) cue');
+  assert.ok(/not saved for offline yet/.test(playSrc), 'the Settings readiness line must answer "ready for offline?" in plain words, with the fix stated');
+});
+
 run();
