@@ -1,0 +1,70 @@
+{
+  "name": "song-canvas-fit",
+  "note": "Operator UAT 2026-07-18 (live v187), two layout findings on the Song canvas. (1) 'pre chorus causes wrap on 1 element breaking layout': the longest section label pushed the card's last control onto a second line - asserts ALL five controls share one row on EVERY standard-section card at a NARROW viewport (360px, where the wrap reproduces; flex line-breaking ignores shrinkability, so the label must be flex-basis:0). (2) 'missing solo section': the template-label switcher scrolled with no affordance, so Solo/Outro read as ABSENT - asserts the switcher does not overflow and every one of the 7 labels (Solo included) is fully inside its box.",
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "evalAssert",
+      "label": "capture as Pre-Chorus (the longest label - the wrap repro)",
+      "js": "(function(){var s=document.getElementById('songSectSel');if(!s)return false;s.value='Pre-Chorus';return s.value==='Pre-Chorus';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "open the Song canvas",
+      "js": "(function(){var b=Array.prototype.find.call(document.querySelectorAll('.composeModeBtn'),function(x){return /Song/.test(x.textContent);});if(!b)return false;b.click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "F1: the Pre-Chorus card keeps ALL FIVE controls on ONE row (no wrapped X) and the card does not overflow",
+      "js": "(function(){var card=Array.prototype.find.call(document.querySelectorAll('.songSect'),function(c){return c.textContent.indexOf('Pre-Chorus')>=0;});if(!card)return false;var tops=Array.prototype.map.call(card.querySelectorAll('button'),function(b){return Math.round(b.getBoundingClientRect().top);});if(tops.length!==5)return false;for(var i=1;i<tops.length;i++){if(Math.abs(tops[i]-tops[0])>2)return false;}return card.scrollWidth<=card.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F2: the template-label switcher shows ALL 7 sections with Solo fully visible - nothing hidden behind a scroll",
+      "js": "(function(){var sw=document.querySelector('.songSuggestLabels');if(!sw)return false;if(sw.scrollWidth>sw.clientWidth+1)return false;var btns=sw.querySelectorAll('button');if(btns.length!==7)return false;var box=sw.getBoundingClientRect();var names={};for(var i=0;i<btns.length;i++){var r=btns[i].getBoundingClientRect();if(r.left<box.left-1||r.right>box.right+1)return false;names[btns[i].textContent.trim()]=1;}return !!(names['Solo']&&names['Outro']&&names['Pre-Chorus']);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "song-canvas-fit"
+    }
+  ]
+}

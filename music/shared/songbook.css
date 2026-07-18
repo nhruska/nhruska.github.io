@@ -760,7 +760,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
 .songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;}
 .songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
-.songSect.card .songSectName{margin-right:auto;}
+/* Operator UAT 2026-07-18 ("pre chorus causes wrap on 1 element breaking
+   layout"): in a flex-wrap container, LINE BREAKING is computed on the items'
+   hypothetical sizes BEFORE any shrinking - so a long label ("Pre-Chorus · N",
+   or any label under a large device font scale) pushed the last control onto a
+   second line instead of the label shrinking. flex-basis:0 makes the label's
+   hypothetical size zero: the header line can never be forced to wrap by the
+   label, it GROWS into whatever's left and ellipsizes at the floor. The
+   controls (all flex:0 0 auto) stay on one line by construction. */
+.songSect.card .songSectName{margin-right:auto;flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .songSectPlay{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:1rem;line-height:1;cursor:pointer;}
 .songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--bg-2);}
 .songSectPlay:active{color:var(--on-accent);}
@@ -1114,13 +1122,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - was an oddball against the
    sibling segmented-control containers (.modeSwitch/.viewToggle), both already 11px. */
 .chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
-/* Operator UAT 2026-07-17: with 7 section labels the switcher clipped its last
-   segment ("Outr"). The songSuggest instance scrolls horizontally instead of
-   clipping - every label reachable, no cut text. Scoped: other chordSeg
-   consumers (2-3 segments) keep the sealed pill look. */
-.songSuggestLabels{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.songSuggestLabels::-webkit-scrollbar{display:none;}
-.songSuggestLabels .chordSegBtn{flex:0 0 auto;white-space:nowrap;padding-left:12px;padding-right:12px;}
+/* Operator UAT 2026-07-17: with 7 section labels the switcher clipped its
+   last segment ("Outr"); the first fix scrolled it horizontally - but UAT
+   2026-07-18 ("missing solo section") proved a scroll with no affordance is
+   WORSE: options past the fold read as absent, not reachable (recognition
+   over recall - an invisible option doesn't exist to the user). So the
+   switcher now WRAPS: all 7 labels visible at once, two rows on a phone.
+   Scoped: other chordSeg consumers (2-3 segments) keep the sealed pill look;
+   the border-radius overflow clip on .chordSeg still rounds the corners. */
+.songSuggestLabels{flex-wrap:wrap;}
+.songSuggestLabels .chordSegBtn{flex:1 0 auto;white-space:nowrap;padding-left:12px;padding-right:12px;}
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
 .chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
 .chordSegBtn:active{transform:scale(.98);}
