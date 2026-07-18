@@ -1,0 +1,57 @@
+{
+  "name": "inkey-suggest-barrier",
+  "note": "Operator UAT 2026-07-17: 'needs some barrier between suggested and chords in key...all chords has the scale select already to split'. In-key mode must render a labeled section boundary between the Suggested Chords row and the in-key palette (the All view's quality-chip row already provides this split). Asserts: a .inKeyLbl section label exists inside .inKeyLead, sits BELOW the suggest row, ABOVE the first palette chip, names the key, and draws a visible top hairline (the barrier).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "suggested row is showing (precondition for the barrier to matter)",
+      "js": "(function(){var r=document.querySelector('#suggest .suggRow');return !!r && r.getBoundingClientRect().height>0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a labeled barrier exists between suggested and the in-key palette: .inKeyLbl below the sugg row, above the first palette chip, naming the key",
+      "js": "(function(){var lbl=document.querySelector('.inKeyLead .inKeyLbl');if(!lbl)return false;var sugg=document.querySelector('#suggest .suggRow');var chip=document.querySelector('.inKeyLead .ccChips > *, .inKeyLead .keChordGrid > *, .inKeyLead > :not(.inKeyLbl)');if(!sugg||!chip)return false;var lb=lbl.getBoundingClientRect(),sb=sugg.getBoundingClientRect(),cb=chip.getBoundingClientRect();var t=(lbl.textContent||'').toLowerCase();return lb.top>=sb.bottom && lb.bottom<=cb.top+1 && t.indexOf('chords in')>=0 && t.indexOf('c')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the barrier draws a visible top hairline (group separation, not just text)",
+      "js": "(function(){var lbl=document.querySelector('.inKeyLead .inKeyLbl');if(!lbl)return false;var cs=getComputedStyle(lbl);return parseFloat(cs.borderTopWidth)>0 && cs.borderTopStyle==='solid';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "inkey-suggest-barrier"
+    }
+  ]
+}

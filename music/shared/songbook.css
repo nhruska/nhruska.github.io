@@ -881,6 +881,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggest:empty{display:none;}
 .suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+/* The suggested->in-key BARRIER (operator UAT 2026-07-17): same section-label
+   primitive as .suggLbl, plus a full-width top hairline so the two chord groups
+   read as two regions (the All view gets this split from its quality-chip row).
+   .lblNote opts the key ROOT out of the uppercase transform - a flat accidental
+   must render "Bb", never "BB" (note-spelling / a11y rule). */
+.inKeyLbl{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
+.inKeyLbl .lblNote{text-transform:none;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
 /* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.

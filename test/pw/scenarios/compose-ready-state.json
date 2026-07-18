@@ -1,47 +1,118 @@
 {
   "name": "compose-ready-state",
   "note": "S-LIFECYCLE 3 (operator directive 2026-07-17: 'verifying the state of the compose tab is reset and ready to start a new progression or song'). Two ready-states: (A) FRESH boot - Compose opens empty and ready (no chords, no phantom draft, add-row hidden, Song badge at zero); (B) AFTER a full save+continue cycle, Clear returns the editor to a ready state (empty strip, undo offered) and the Song draft state is not silently corrupted - the next build starts clean.",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "A: fresh Compose is empty and ready - zero chords in the strip, capture row hidden, Song badge shows no draft",
       "js": "(function(){var slots=document.querySelectorAll('#prog .slot').length;var addRow=document.getElementById('songAddBtn');var addHidden=!addRow || !!(addRow.closest('[hidden]')) || addRow.offsetParent===null;var badge=document.querySelectorAll('.composeModeBtn')[1];return slots===0 && addHidden && !!badge && !/[1-9]/.test(badge.textContent);})()"
     },
-    { "action": "tapChord", "name": "C" },
-    { "action": "tapChord", "name": "G" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tap", "selector": "#cSave" },
-    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
-    { "action": "tap", "selector": ".composeRow .btn.red" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "post-save the progression stays live for iteration (a second Save updates, never duplicates) - one record exists",
       "js": "(function(){var c=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.custom.v1')||'[]');return document.querySelectorAll('#prog .slot').length===2 && c.length===1;})()"
     },
-    { "action": "tap", "selector": "#cClear" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": "#cClear"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "B: Clear returns a READY editor - empty strip, and the Undo safety net is offered",
       "js": "(function(){var slots=document.querySelectorAll('#prog .slot').length;var undo=Array.prototype.some.call(document.querySelectorAll('button'),function(b){return /undo/i.test(b.textContent) && b.offsetParent!==null;});return slots===0 && undo;})()"
     },
-    { "action": "tapChord", "name": "Em" },
-    { "action": "wait", "ms": 300 },
-    { "action": "tap", "selector": "#cSave" },
-    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
-    { "action": "tap", "selector": ".composeRow .btn.red" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "tapChord",
+      "name": "Em"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the NEXT build after Clear saves as a NEW record (the cleared editor detached from the old save) - two records now",
       "js": "(function(){var c=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.custom.v1')||'[]');return c.length===2;})()"
     },
-    { "action": "screenshot", "name": "compose-ready-state" }
+    {
+      "action": "screenshot",
+      "name": "compose-ready-state"
+    }
   ]
 }
