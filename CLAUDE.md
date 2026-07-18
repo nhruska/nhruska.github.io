@@ -30,6 +30,12 @@ any project — copy it into other repos) and **this project** (the Music app).
 - **Voice:** match Nik's energy in the moment.
 - **Disagreement:** when you think a vision/scope/taste call is wrong, **object
   once**, clearly, with your reasoning — then defer and execute it well.
+- **Regressions get their CAUSE reversed, never compensated.** When Nik reports
+  a regression ("rows moved", "this used to work"), find the change that
+  introduced the behavior and restore the old contract — do NOT layer new
+  behavior on top to hide the symptom (a scroll that chases a relocating row
+  is a band-aid, not a fix). If the cause can't be cleanly reversed, say so
+  and ask before substituting anything.
 - **End every response with 3–5 next steps**, numbered, ordered
   most-likely-first.
 

@@ -141,16 +141,31 @@
         // skip already-used candidates
         while (idx < cands.length && cands[idx]._used) idx++;
         var pick = cands[idx < cands.length ? idx : 0];
-        if (pick && !pick._used) { pick._used = true; return mergeRec(s, pick); }
+        if (pick && !pick._used) {
+          pick._used = true;
+          var merged = mergeRec(s, pick);
+          // Operator spec 2026-07-17 ("the list should not be reordered"): a
+          // CUSTOM song that consumes a track (the keyseed copy, a user save
+          // matching a backing track) emits at the TRACK's own slot - the
+          // track row is the identity the user has been looking at, so it
+          // must not teleport to the custom's position. Catalog songs keep
+          // merging at the song's slot (the song row was always the visible
+          // identity there).
+          if (s.custom) { pick._mergedRec = merged; return null; }
+          return merged;
+        }
       }
       var only = {};
       for (var k in s) if (Object.prototype.hasOwnProperty.call(s, k)) only[k] = s[k];
       only.sources = ['song'];
       return only;
-    });
-    // standalone (unmatched) tracks
+    }).filter(function (r) { return r !== null; });
+    // tracks in their own original order: a custom-consumed track emits its
+    // merged rec HERE (holding the track's slot); a catalog-consumed track is
+    // skipped (its merge lives at the song's slot); the rest are standalone.
     var stIdx = 0;
     tracks.forEach(function (t) {
+      if (t._mergedRec) { var m = t._mergedRec; delete t._mergedRec; delete t._used; out.push(m); return; }
       if (t._used) { delete t._used; return; }
       var only = {};
       for (var k in t) if (Object.prototype.hasOwnProperty.call(t, k)) only[k] = t[k];

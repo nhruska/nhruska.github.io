@@ -800,14 +800,34 @@
   // a video-only track routes to the Studio, not a blank Practice screen). Extracted +
   // exported so the changed merge path has a real regression test (not DOM-coupled).
   function buildAllSongs(catalog, customs) {
-    var shadowed = shadowedCatalogIds(customs);
-    var all = (Array.isArray(catalog) ? catalog : [])
-      .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
-      .filter(function (s) { return !shadowed[s.id]; });
+    // Operator UAT 2026-07-17 ("rows disappear from my view instead of being
+    // checked"): a fork now shadows its catalog original IN PLACE - the copy
+    // takes the exact list position the original held, so the row the user is
+    // looking at never teleports out from under their thumb. Non-fork customs
+    // still append after the catalog block, unchanged.
+    var byFork = {};
     (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      // Only a well-formed catalog id (kN) shadows - honors the "catalog ids"
+      // contract and ignores a malformed/foreign forkOf.
+      if (cs && cs.forkOf && /^k\d+$/.test(cs.forkOf)) byFork[cs.forkOf] = cs;
+    });
+    function resolveSheet(cs) {
       var withSheet = (cs.sheet && cs.sheet.length) ? {}
         : (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
-      all.push(Object.assign({}, cs, withSheet));
+      return Object.assign({}, cs, withSheet);
+    }
+    var placed = {};
+    var all = (Array.isArray(catalog) ? catalog : [])
+      .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
+      .map(function (s) {
+        var f = byFork[s.id];
+        if (!f) return s;
+        placed[f.id] = true;
+        return resolveSheet(f); // the fork sits exactly where its original sat
+      });
+    (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      if (cs && placed[cs.id]) return; // already holding its original's slot
+      all.push(resolveSheet(cs));
     });
     return all;
   }
@@ -1617,7 +1637,10 @@
       // actually found and highlighted - a filtered/empty visible render keeps
       // the highlight pending for the render that really shows it (codex #91).
       if (visible && pendingHighlightId != null && justSavedEl) {
-        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // 'auto' (instant), not 'smooth': on Android a long smooth scroll can be
+        // interrupted by re-layout (toast mount) and strand the viewport mid-list
+        // - the follow contract needs a GUARANTEED landing on the row.
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center' });
         justSavedEl.classList.add('justSaved');
         pendingHighlightId = null;
       }
@@ -1652,7 +1675,13 @@
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
     // a lone song from the Library passes nothing → a one-song (inactive) queue.
+    var practiceOrigin = 'library'; // where the open song detail returns to on back
     function openPractice(id, queueIds) {
+      // Operator UAT 2026-07-17: back from the song detail returns WHERE YOU
+      // CAME FROM - setlist entries go back to the Setlist, library entries to
+      // the Library (it always went to Library before). Capture the origin tab
+      // at open time; queue-nav re-renders (openCurrent) never overwrite it.
+      practiceOrigin = (currentTab === 'jam') ? 'jam' : 'library';
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
       STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
@@ -1767,7 +1796,7 @@
       // row below is the single fullscreen/maximize control (t2 - the old ⤢
       // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
-        + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
+        + '<button class="iconBtn" id="backLib" title="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '" aria-label="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '">←</button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
         // artist (no hardcoded placeholder to duplicate the title) - omit the
         // ' · ' separator entirely rather than showing a leading, artist-less dot.
@@ -1867,7 +1896,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -2021,6 +2050,13 @@
       // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
       // way - they rely on the persistent Undo affordance, out of this fix's scope).
       var ok = saveSet();
+      // Operator spec 2026-07-17 (verbatim): "the list should not be
+      // reordered. it should not scroll....just set item selected." An add
+      // NEVER scrolls - and it CANCELS any stale post-save highlight so a
+      // leftover save-flag can't fire a scroll on this render either. The
+      // row order is stable by construction (in-place shadowing + track-slot
+      // merges), so the tapped row simply gains its check where it stands.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
       if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
@@ -2053,6 +2089,11 @@
       if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
       if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
       var ok = saveSet();
+      // Operator spec 2026-07-17: adds never scroll and never reorder - the
+      // seeded copy takes the TRACK's own slot in the merge (Repertoire.build
+      // track-slot rule), so the row stays exactly where the user tapped it.
+      // Cancel any stale post-save highlight so nothing scrolls this render.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       // Display spelling via the SAME facet label the Key filter chip shows
       // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
@@ -2585,8 +2626,14 @@
         if (!Array.isArray(arr)) return [];
         // Keep only well-shaped entries - a hand-edited or partially-corrupt
         // key degrades to dropping the bad rows, not the whole buffer.
+        // Operator UAT 2026-07-17 ("don't name things Progression - it poisons
+        // the well"): normalize the legacy pre-fix buffer label at load, same
+        // mapping sectionsFromSheet applies to saved sheets - the song context
+        // only ever speaks the standard section vocabulary.
         return arr.filter(function (s) {
           return s && typeof s.label === 'string' && Array.isArray(s.seq);
+        }).map(function (s) {
+          return s.label === 'Progression' ? Object.assign({}, s, { label: 'Verse' }) : s;
         });
       } catch (e) { return []; }
     }
@@ -2658,7 +2705,9 @@
     // S-PROG-GUIDANCE: Pre-Chorus joins the section set - it's a first-class
     // section in the songwriting canon (the departure+build before the chorus),
     // and it gives the Pre-chorus lift (IV-V) template family a home surface.
-    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+    // Solo (operator UAT 2026-07-17): the home for lead/solo-line work built in
+    // the Tracks Studio - conventionally sits after the bridge.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
@@ -3194,17 +3243,16 @@
       stopSectPlay(); disarmRm();
       progression = sec.seq.slice(); cTpose = 0;
       editingSectionIdx = i;
-      // Operator UAT 2026-07-17: a section label outside SONG_SECTIONS (an old
-      // save, a future custom label) must never render a BLANK select - append
-      // it as an option before selecting so the control always shows the truth.
+      // Operator UAT 2026-07-17 round 2: NEVER append a foreign label as an
+      // option ("don't name things Progression") - the dropdown speaks only the
+      // standard section set. Labels are normalized at every load boundary
+      // (loadSongSections, sectionsFromSheet), so a mismatch here is a truly
+      // custom label: default the select to the FIRST standard option and let
+      // the user pick - never a blank control, never a poisoned vocabulary.
       if (songSectSelEl) {
         var has = Array.prototype.some.call(songSectSelEl.options || [], function (o) { return o.value === sec.label; });
-        if (!has) {
-          var opt = document.createElement('option');
-          opt.value = sec.label; opt.textContent = sec.label;
-          songSectSelEl.appendChild(opt);
-        }
-        songSectSelEl.value = sec.label;
+        songSectSelEl.value = has ? sec.label
+          : (songSectSelEl.options && songSectSelEl.options.length ? songSectSelEl.options[0].value : '');
       }
       chordView = null;
       reinferKey();

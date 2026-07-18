@@ -261,10 +261,10 @@
 // demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
 // play/index.html (script tag).
 // S-SETTINGS-UAT + S-SKILLS-PORTABLE (#257, merged past the 2026-07-17 train):
-// v175->v176 - TWO new CORE paths (shared/skill-md.js + shared/zip-store.js)
-// + accordion.js named groups, songbook.js Skills panel, competency.js
-// flexible ids, play/index.html settings rows.
-var CACHE = 'music-v176';
+// TWO new CORE paths (shared/skill-md.js + shared/zip-store.js) + accordion.js
+// named groups, songbook.js Skills panel, competency.js flexible ids,
+// play/index.html settings rows. Re-staggered above main's v181 (#269 train).
+var CACHE = 'music-v182';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
