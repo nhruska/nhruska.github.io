@@ -1,39 +1,109 @@
 {
   "name": "perform-roundtrip-compose",
   "note": "S-LIFECYCLE 4 (issue #266 residue): the PERFORM entry point round-trip must leave Compose state untouched. Build a progression through the real UI, Save (to setlist, default), START a performance from the setlist header, page through, close the stage - then verify Compose still holds the live progression, the saved record is intact and unduplicated, and the section dropdown still speaks the standard set. Guards the compose-state seam against the perform view's enter/exit.",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "tapChord", "name": "G" },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tap", "selector": "#cSave" },
-    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
-    { "action": "tap", "selector": ".composeRow .btn.red" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "assertVisible", "selector": "#performBtn" },
-    { "action": "tap", "selector": "#performBtn" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the perform stage opened on the saved progression",
       "js": "(function(){var p=document.querySelector('.perform');return !!p && p.classList.contains('on');})()"
     },
-    { "action": "tap", "selector": "#pNext" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "tap",
+      "selector": "#pNext"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
-      "label": "on a one-page set the dominant Next is the ✓ finish - the stage closed cleanly through the thumb path",
+      "label": "on a one-page set the dominant Next is the \u2713 finish - the stage closed cleanly through the thumb path",
       "js": "(function(){var p=document.querySelector('.perform');return !p || !p.classList.contains('on');})()"
     },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "Compose state survived the perform round-trip: the 3-chord progression is still live, ONE saved record, no phantom song draft",
@@ -44,6 +114,9 @@
       "label": "the section dropdown still speaks the standard set (Verse default present)",
       "js": "(function(){var s=document.getElementById('songSectSel');return !!s && Array.prototype.some.call(s.options,function(o){return o.value==='Verse';});})()"
     },
-    { "action": "screenshot", "name": "perform-roundtrip-compose" }
+    {
+      "action": "screenshot",
+      "name": "perform-roundtrip-compose"
+    }
   ]
 }
