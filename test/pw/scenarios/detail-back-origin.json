@@ -1,45 +1,121 @@
 {
   "name": "detail-back-origin",
   "note": "S-BACK-ORIGIN (operator UAT 2026-07-17: 'when I'm in the setlist and open a song then hit back, I expect to return to the setlist - I always end up at the library'). The song-detail back button returns to the ORIGIN tab: setlist entries -> Setlist, library entries -> Library. Real flow: save a progression to the setlist, open it FROM the setlist, back -> assert the Setlist screen; then open a song FROM the library, back -> assert the Library screen. Red-first: pre-fix #backLib hard-coded switchTab('library').",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "tapChord", "name": "G" },
-    { "action": "tap", "selector": "#cSave" },
-    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
-    { "action": "tap", "selector": ".composeRow .btn.red" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#setBody .listItem:has-text(\"Original track\")" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem:has-text(\"Original progression\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the detail's back button names its true origin (Back to Setlist)",
       "js": "(function(){var b=document.getElementById('backLib');return !!b && /Setlist/.test(b.getAttribute('title')||'');})()"
     },
-    { "action": "tap", "selector": "#backLib" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "back from a SETLIST-opened song returns to the SETLIST (pre-fix: always the library)",
       "js": "(function(){var jam=document.querySelector('.tabbar [data-tab=\"jam\"]');var set=document.getElementById('setBody');return !!jam && jam.classList.contains('on') === false ? (set && set.offsetParent!==null) : (set && set.offsetParent!==null);})()"
     },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Original track\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#backLib" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Original progression\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "back from a LIBRARY-opened song still returns to the LIBRARY",
       "js": "(function(){var lib=document.getElementById('songsList');return !!lib && lib.offsetParent!==null;})()"
     },
-    { "action": "screenshot", "name": "detail-back-origin" }
+    {
+      "action": "screenshot",
+      "name": "detail-back-origin"
+    }
   ]
 }

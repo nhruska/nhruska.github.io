@@ -2708,7 +2708,7 @@
     // Solo (operator UAT 2026-07-17): the home for lead/solo-line work built in
     // the Tracks Studio - conventionally sits after the bridge.
     var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
-    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
+    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null, songMapEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
@@ -2756,7 +2756,15 @@
       addBtn.type = 'button'; addBtn.id = 'songAddBtn'; addBtn.className = 'btn ghost songAddBtn'; addBtn.textContent = 'Add to song';
       addBtn.onclick = function () { addSongSection(); };
       songAddRowEl.appendChild(songSectSelEl); songAddRowEl.appendChild(addBtn);
-      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songAddRowEl);
+      // #262 (operator UAT): the SONG MAP - the draft's section list, tappable,
+      // living on the CHORDS surface. The friction was the Song<->Chords
+      // round-trip just to see the structure or jump into a section's chords;
+      // each chip routes through editSection (the #261 in-place-edit path), so
+      // "design a chord and place it into a section" never leaves this screen.
+      songMapEl = document.createElement('div'); songMapEl.id = 'songMap'; songMapEl.className = 'songMap';
+      songMapEl.setAttribute('role', 'group'); songMapEl.setAttribute('aria-label', 'Song sections - tap to edit');
+      songMapEl.hidden = true;
+      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songMapEl); songTrayEl.appendChild(songAddRowEl);
       el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
       // --- the mode toggle: screen-level chrome, always visible, top of the wrap.
       // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
@@ -2908,7 +2916,11 @@
     // arrangement (empty state doubles as the one-line "what is a song" lesson,
     // in the beginner vocabulary budget).
     function songTrayCue(hasProg, hasSections) {
-      return (hasProg && !hasSections) ? 'Add this as a section to start a song.' : '';
+      if (hasProg && !hasSections) return 'Add this as a section to start a song.';
+      // #262: the song-map's one-shot lesson (dismissible, own key - see the
+      // renderSongTray call site picking 'songmap' vs 'capture').
+      if (hasSections) return 'Your song so far - tap a section to edit its chords.';
+      return '';
     }
     function songCanvasCue(hasSections) {
       return hasSections
@@ -3057,12 +3069,42 @@
         modeSongBtnEl.setAttribute('aria-pressed', inSong ? 'true' : 'false');
         modeSongBtnEl.textContent = songBadgeText(songSections.length);
       }
-      // --- Chords-mode tray: the capture row only (the canvas owns the rest).
-      // The add-control needs a live progression to snapshot; hide it with no chords.
-      songTrayEl.hidden = inSong || !hasProg;
+      // --- Chords-mode tray: the capture row + (#262) the song map.
+      // The add-control needs a live progression to snapshot; the MAP instead
+      // needs a draft - and matters MOST right after a capture cleared the
+      // strip (no chords, but "where was I?" is live), so the tray now shows
+      // whenever either exists.
+      songTrayEl.hidden = inSong || (!hasProg && !hasSections);
       songAddRowEl.hidden = !hasProg;
-      // UAT r2: cues render as dismissible one-shot tips (see renderCue).
-      renderCue(songTrayCueEl, 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
+      // #262: the tappable song map - one chip per section, in song order,
+      // duplicates numbered ("Verse 2") so every chip names a distinct target.
+      // Tap = editSection (the #261 path): chords load into the strip in
+      // edit-in-place mode, no Song-tab round-trip. The chip being edited
+      // carries the active state.
+      if (songMapEl) {
+        songMapEl.hidden = inSong || !hasSections;
+        songMapEl.innerHTML = '';
+        if (!songMapEl.hidden) {
+          var seen = {};
+          songSections.forEach(function (sec, i) {
+            seen[sec.label] = (seen[sec.label] || 0) + 1;
+            var nth = seen[sec.label];
+            var disp = nth > 1 ? sec.label + ' ' + nth : sec.label;
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'songMapChip' + (editingSectionIdx === i ? ' on' : '');
+            chip.textContent = disp;
+            chip.setAttribute('aria-label', 'Edit ' + disp);
+            chip.setAttribute('aria-pressed', editingSectionIdx === i ? 'true' : 'false');
+            composeWireTap(chip, function () { editSection(i); });
+            songMapEl.appendChild(chip);
+          });
+        }
+      }
+      // UAT r2: cues render as dismissible one-shot tips (see renderCue). The
+      // map lesson gets its OWN dismissal key so dismissing the capture cue
+      // never mutes it (and vice versa).
+      renderCue(songTrayCueEl, hasSections ? 'songmap' : 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
       // --- Song-mode canvas: cue + cards + templates + actions.
       // Templates render whenever the canvas does - in Song mode they ARE the
       // "add the next section" surface (and the empty state's proven starters).
@@ -3259,6 +3301,10 @@
       renderProg(); renderSuggest(); renderKey();
       if (el.keyRoots) { renderKeyView(); buildGrid(); }
       setComposeMode('chords');
+      // #262: setComposeMode no-ops when already in Chords (the song-map tap
+      // case) - re-render the tray explicitly so the tapped chip takes the
+      // active state and the add-row reappears for the loaded strip.
+      renderSongTray();
       showComposeToast('Editing ' + sec.label + ' - tweak it, then Add to song to update.');
     }
     function addSongSection() {
@@ -3664,6 +3710,25 @@
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
+        // Operator UAT 2026-07-17 ("needs some barrier between suggested and
+        // chords in key"): the suggested row flowed straight into the in-key
+        // palette with nothing splitting the two groups (the All view gets its
+        // split for free from the quality-chip row). A labeled section boundary
+        // - the SAME .suggLbl primitive the suggested row uses, plus a top
+        // hairline - makes the two zones read as two groups. This supersedes
+        // the older "the key chip already names the key, so no list header"
+        // rationale (KeyExplorer call below): the header's job here is group
+        // separation, naming the key is the bonus. The key ROOT renders inside
+        // an uppercase-transform opt-out span (.lblNote) so a flat accidental
+        // survives ("Bb", never "BB" - note-spelling.md / a11y rule).
+        var ikLbl = document.createElement('div'); ikLbl.className = 'suggLbl inKeyLbl';
+        ikLbl.appendChild(document.createTextNode('Chords in '));
+        var ikRoot = document.createElement('span'); ikRoot.className = 'lblNote';
+        ikRoot.textContent = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(keyRoot, keyMode) : keyRoot;
+        ikLbl.appendChild(ikRoot);
+        ikLbl.appendChild(document.createTextNode(' ' + String(keyMode || '')));
+        leadWrap.appendChild(ikLbl);
         if (useChips) {
           // S-CHORD-COLLAPSE: compact chip palette - needs no KeyExplorer (the
           // chip is name + roman, both derived right here), so this branch
@@ -4310,6 +4375,50 @@
     // window, visible countdown bar, pause-on-touch) - mutation-invalidation
     // (invalidateClearUndo(), unchanged below) and the timer both end the
     // pending undo; whichever fires first wins.
+    // #265-C: post-save confirmation with a NEXT STEP. A bare "Saved" toast on
+    // the same editing screen left the user without the saved name or a way
+    // out (operator UAT). This banner names the asset and offers ONE tap to
+    // where it went (Setlist when the opt-in was checked, Library otherwise);
+    // doing nothing auto-dismisses = "keep editing" stays the zero-tap default.
+    // Same composeRow/toastAction primitive as the Clear-undo banner.
+    var saveDoneBanner = null, saveDoneHandle = null, saveDoneTeardown = null;
+    function paintSaveDoneHidden() {
+      if (saveDoneTeardown) { saveDoneTeardown(); saveDoneTeardown = null; }
+      saveDoneHandle = null;
+      if (saveDoneBanner) { saveDoneBanner.hidden = true; saveDoneBanner.innerHTML = ''; }
+    }
+    function hideSaveDoneBanner() {
+      if (saveDoneHandle) saveDoneHandle.finish(); else paintSaveDoneHidden();
+    }
+    function showSaveDoneBanner(cs, addedToSet) {
+      if (!el.prog || !el.prog.parentNode || !global.Toast) { showComposeToast('Saved ' + cs.t); return; }
+      if (!saveDoneBanner) {
+        saveDoneBanner = document.createElement('div');
+        saveDoneBanner.className = 'composeRow toastAction saveDone';
+        saveDoneBanner.hidden = true;
+        el.prog.parentNode.insertBefore(saveDoneBanner, el.prog);
+      }
+      hideSaveDoneBanner();
+      saveDoneBanner.hidden = false;
+      saveDoneBanner.innerHTML = '';
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Saved ' + cs.t + '.';
+      var goBtn = document.createElement('button');
+      goBtn.type = 'button'; goBtn.className = 'btn ghost';
+      goBtn.textContent = addedToSet ? 'Open Setlist' : 'Open Library';
+      goBtn.onclick = function () {
+        hideSaveDoneBanner();
+        switchTab(addedToSet ? 'jam' : 'library');
+      };
+      saveDoneBanner.appendChild(msg); saveDoneBanner.appendChild(goBtn);
+      saveDoneHandle = global.Toast.showAction('Saved ' + cs.t, {
+        host: saveDoneBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { paintSaveDoneHidden(); }
+      });
+      saveDoneTeardown = global.Toast.wirePauseOnTouch(saveDoneBanner, saveDoneHandle);
+    }
     var clearUndoBanner = null, clearUndoSnapshot = null, clearUndoHandle = null, clearUndoTeardown = null;
     function ensureClearUndoBanner() {
       if (!el.prog || !el.prog.parentNode) return false;
@@ -4351,6 +4460,7 @@
     function invalidateClearUndo(keepRemoveUndo) {
       if (clearUndoSnapshot) hideClearUndoBanner();
       hideComposeToast();
+      hideSaveDoneBanner(); // #265-C: a stale "Saved X" banner must not outlive the next edit
       if (!keepRemoveUndo) invalidateRemoveUndo();
     }
     function showClearUndoBanner(bannerMsg) {
@@ -4786,6 +4896,62 @@
       composeRow.appendChild(msg); composeRow.appendChild(btnRow);
       composeRow.focus();
     }
+    // #265-A: intent clarification for a FRESH progression save (no song
+    // structure touched). The Chords tab's Save sits next to the "Add to song"
+    // machinery, and the operator's UAT found that ambiguous: someone saving a
+    // quick idea shouldn't wonder if they just committed to writing a song.
+    // Same modal shell + NavHistory wiring as openSaveChoiceRow (its sibling -
+    // that one asks the INVERSE question when a song draft DOES exist).
+    // "Build a song with it" routes through the existing addSongSection
+    // returnToSong path: current strip becomes the dropdown's section and the
+    // Song canvas opens with the strip intact (the edit-the-verse workflow).
+    function openSaveIntentRow() {
+      if (!ensureComposeUI()) { saveProgression(); return; } // no modal surface - old behavior
+      hideComposeRow();
+      composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'Save this progression, or build it into a song?';
+      var progBtn = document.createElement('button');
+      progBtn.type = 'button'; progBtn.className = 'btn red ctrlBtn';
+      progBtn.textContent = 'Save progression';
+      var songBtn = document.createElement('button');
+      songBtn.type = 'button'; songBtn.className = 'btn ghost ctrlBtn';
+      songBtn.textContent = 'Build a song with it';
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
+      var delivered = false;
+      // 'prog' re-renders this SAME composeRow into the name row; 'song' and
+      // 'cancel' need the row's DOM cleared here (same contract as the sibling).
+      function rawClose(choice) { if (choice !== 'prog') hideComposeRow(); }
+      function deliver(choice) {
+        if (delivered) return; delivered = true;
+        if (choice === 'prog') saveProgression();
+        else if (choice === 'song') { returnToSong = true; addSongSection(); }
+      }
+      var pendingDismiss = 'cancel'; // hardware Back = dismiss, never a save
+      function choose(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(choice); }, function () { deliver(choice); });
+        else { rawClose(choice); deliver(choice); }
+      }
+      progBtn.onclick = function () { choose('prog'); };
+      songBtn.onclick = function () { choose('song'); };
+      cancelBtn.onclick = function () { choose('cancel'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose(pendingDismiss);
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      btnRow.appendChild(progBtn); btnRow.appendChild(songBtn); btnRow.appendChild(cancelBtn);
+      composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
+    }
     function openSoloChoiceRow(onPick) {
       if (!ensureComposeUI()) { onPick('skip'); return; }
       hideComposeRow();
@@ -4874,6 +5040,17 @@
       var d = global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : { key: null, mode: null };
       return { key: d.key, mode: d.mode || 'major' };
     }
+    // #265-B: context-aware default names collide on repeat quick-saves -
+    // suffix a count so every saved asset keeps a distinct, scannable title.
+    function uniqueCustomName(base) {
+      function taken(nm) {
+        for (var i = 0; i < customSongs.length; i++) if (customSongs[i].t === nm) return true;
+        return false;
+      }
+      var name = base, n = 2;
+      while (taken(name)) name = base + ' ' + (n++);
+      return name;
+    }
     // Save the in-progress Compose progression as a stable custom song (cs.id).
     // Populates key/mode (Task 2 requirement 1, locked-interface contract) so the
     // saved song is immediately eligible for "Solo over it" + the Studio.
@@ -4923,13 +5100,15 @@
         }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
       }
-      // S6 (B3 pilot UAT handoff): 'Original track' reads as a real title where
-      // 'My progression' read as placeholder text left behind. The ARTIST is left
-      // empty rather than mirrored to the same string (S5 finding: a hardcoded
-      // 'My progression' artist duplicated the title in the Studio's YouTube
-      // query once the title default changed too) - the Library row and the
-      // song/stage headers already omit an empty artist cleanly.
-      openSaveNameRow('Original track', function (name, addToSetlist) {
+      // S6 (B3 pilot UAT handoff): a real-title default, not placeholder text.
+      // #265-B: the default names the ASSET TYPE - a 4-chord loop saved from
+      // the Chords tab is a PROGRESSION, not a "track" (the old 'Original
+      // track' default read mismatched in the Library). The song path keeps
+      // its own asset-aware default ('Song in C', assembleSong). Uniquified
+      // ('Original progression 2', 3...) so repeat quick-saves don't stack
+      // identical titles. The ARTIST stays empty (S5 finding: a mirrored
+      // artist duplicated the title in the Studio's YouTube query).
+      openSaveNameRow(uniqueCustomName('Original progression'), function (name, addToSetlist) {
         if (name === null) { done(null); return; } // cancelled
         var cs = {
           id: 'm' + Date.now(), t: name, a: '', y: new Date().getFullYear(), d: 'Mine',
@@ -4951,7 +5130,9 @@
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
         if (ok) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
         // F31 (UAT): no persist - see showComposeToast's header comment.
-        showComposeToast(ok ? 'Saved to your Library' : SAVE_FAIL_MSG, !ok);
+        // #265-C: success gets the named-asset banner with a one-tap next step;
+        // failure keeps the truthful error toast (never dress up a failed write).
+        if (ok) showSaveDoneBanner(cs, addToSetlist); else showComposeToast(SAVE_FAIL_MSG, true);
         done(cs);
       });
     }
@@ -5210,6 +5391,7 @@
       savedComposeId = null;   // fresh canvas - detach from any saved song
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
+      hideSaveDoneBanner();    // #265-C: same F31 contract for the saved-with-next-step banner
       // S-CLEAR-INKEY (UAT 2026-07-10): a fresh canvas returns to the follow-the-key
       // view (In-key on the default key), not a stale 'All' pin from before the Clear -
       // matching the initial default (D-DEFAULT-C). Reset the pin, then always rebuild
@@ -5230,7 +5412,12 @@
     if (el.cSave) el.cSave.onclick = function () {
       if (songSections.length && !progression.length) { setComposeMode('song'); assembleSong(); return; }
       if (songSections.length && progression.length) { openSaveChoiceRow(); return; }
-      saveProgression(); // no callback needed - the inline toast is the feedback
+      // #265-A (operator UAT): a FRESH save with no song structure asks intent
+      // first - "save a quick progression idea, or build a song with it?" - via
+      // openSaveIntentRow. A session-linked re-save (update-in-place) skips the
+      // ask: it's a quick update of a thing whose intent was already decided.
+      if (savedComposeId && customById(savedComposeId)) { saveProgression(); return; }
+      openSaveIntentRow();
     };
     if (el.cMax) el.cMax.onclick = function () { if (progression.length) openMaxWith(progression.slice()); };
     if (el.cTup) el.cTup.onclick = function () { composeTpose(1); };

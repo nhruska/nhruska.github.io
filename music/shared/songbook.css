@@ -845,6 +845,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    names the next move - never a fill/accent, it is guidance, not an action. */
 .songTrayCue[hidden]{display:none;}
 .songTrayCue{margin:0;font-size:.74rem;color:var(--txt-dim);}
+/* #262 SONG MAP: the draft's sections as tappable edit-target chips on the
+   CHORDS surface (kills the Song<->Chords round-trip). Action-tier pills
+   (solid outline, 44px targets - these DO something), never the dashed
+   suggestion grammar; the section being edited carries the accent state. */
+.songMap[hidden]{display:none;}
+.songMap{display:flex;flex-wrap:wrap;gap:6px;}
+.songMapChip{min-height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.songMapChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .songSuggest[hidden]{display:none;}
 .songSuggest{display:flex;flex-direction:column;gap:8px;padding:9px 10px;border-radius:11px;border:1px dashed var(--accent-dim);background:var(--accent-deep);}
 .songSuggestChips{display:flex;flex-direction:column;gap:6px;}
@@ -873,6 +881,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggest:empty{display:none;}
 .suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+/* The suggested->in-key BARRIER (operator UAT 2026-07-17): same section-label
+   primitive as .suggLbl, plus a full-width top hairline so the two chord groups
+   read as two regions (the All view gets this split from its quality-chip row).
+   .lblNote opts the key ROOT out of the uppercase transform - a flat accidental
+   must render "Bb", never "BB" (note-spelling / a11y rule). */
+.inKeyLbl{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
+.inKeyLbl .lblNote{text-transform:none;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
 /* COMPACT suggestion chip: chord name + interval, no fretboard diagram - keeps the
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.

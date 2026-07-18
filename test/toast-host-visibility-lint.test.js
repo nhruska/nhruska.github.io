@@ -82,7 +82,10 @@ function run() {
 
 test('every toast.js host in songbook.js is accounted for (known set, not silently grown/shrunk)', function () {
   var hostVars = findHostVars(js);
-  var expected = ['toastEl', 'setUndoBanner', 'clearUndoBanner', 'removeUndoBanner', 'composeToast', 'delUndoBanner'];
+  // #265-C added saveDoneBanner (className 'composeRow toastAction saveDone' -
+  // hidden-attr-controlled, covered by the existing .composeRow[hidden] rule
+  // the checker below verifies).
+  var expected = ['toastEl', 'setUndoBanner', 'clearUndoBanner', 'removeUndoBanner', 'composeToast', 'delUndoBanner', 'saveDoneBanner'];
   assert.deepStrictEqual(hostVars.slice().sort(), expected.slice().sort(),
     'toast host set changed - update this lint\'s expectations (and check the new host\'s hidden-CSS invariant): found ' + JSON.stringify(hostVars));
 });

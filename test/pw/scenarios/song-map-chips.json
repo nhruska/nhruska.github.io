@@ -1,0 +1,104 @@
+{
+  "name": "song-map-chips",
+  "note": "Issue #262 (operator UAT 2026-07-17): 'users must constantly jump between the Song and Chords tabs to design and place custom chords'. The SONG MAP puts the draft's sections on the Chords surface as tappable chips routed through editSection (#261's in-place path): see the structure, jump into a section's chords, update it - all without the Song tab. Asserts the map appears after the first capture (exactly when the strip clears), grows in song order with numbered duplicates, and a chip tap loads that section's chords in edit mode with the active state - Song canvas never opened. Written red-first against main (no song map exists there).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "#262: after the first capture (strip cleared) the song map is VISIBLE on the Chords surface with the Verse chip - no Song-tab visit needed to see the structure",
+      "js": "(function(){var map=document.getElementById('songMap');if(!map||map.hidden)return false;var chips=map.querySelectorAll('.songMapChip');return chips.length===1 && /^Verse$/.test(chips[0].textContent.trim()) && document.querySelectorAll('#prog .slot').length===0;})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pick Chorus as the next section's label (the capture row's own dropdown)",
+      "js": "(function(){var s=document.getElementById('songSectSel');if(!s)return false;s.value='Chorus';return s.value==='Chorus';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the map grew in song order: Verse, Chorus",
+      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');return chips.length===2 && /^Verse$/.test(chips[0].textContent.trim()) && /^Chorus$/.test(chips[1].textContent.trim());})()"
+    },
+    {
+      "action": "tapText",
+      "text": "Verse"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "#262 core: tapping the Verse chip loads ITS chords into the strip in edit mode (chip active, 2 slots) - and the Song canvas never opened",
+      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');var on=chips[0]&&chips[0].classList.contains('on');var slots=document.querySelectorAll('#prog .slot').length;var wrap=document.querySelector('.composeWrap');var inSong=!!(wrap&&wrap.classList.contains('songMode'));return on && slots===2 && !inSong;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the update path closes the loop: Add to song updates Verse IN PLACE (still 2 sections, no duplicate)",
+      "js": "(function(){var b=document.getElementById('songAddBtn');if(!b)return false;b.click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "still exactly Verse + Chorus after the in-place update",
+      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');return chips.length===2 && /^Verse$/.test(chips[0].textContent.trim()) && /^Chorus$/.test(chips[1].textContent.trim());})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "song-map-chips"
+    }
+  ]
+}

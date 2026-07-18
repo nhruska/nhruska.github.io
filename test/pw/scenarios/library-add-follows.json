@@ -35,6 +35,10 @@
       "selector": "#cSave"
     },
     {
+      "action": "tapText",
+      "text": "Save progression"
+    },
+    {
       "action": "waitFor",
       "selector": ".composeRow .composeRowInput"
     },
@@ -62,11 +66,11 @@
     {
       "action": "evalAssert",
       "label": "scroll the custom row into view (the user is looking at it) and snapshot order + scroll",
-      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original track')>=0;})[0];if(!r)return false;r.scrollIntoView({block:'center'});var sc=document.getElementById('libSongs');window.__preOrder2=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});window.__preScroll2=sc?sc.scrollTop:0;return true;})()"
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original progression')>=0;})[0];if(!r)return false;r.scrollIntoView({block:'center'});var sc=document.getElementById('libSongs');window.__preOrder2=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});window.__preScroll2=sc?sc.scrollTop:0;return true;})()"
     },
     {
       "action": "tap",
-      "selector": "#songsList .listItem:has-text(\"Original track\") .li-add"
+      "selector": "#songsList .listItem:has-text(\"Original progression\") .li-add"
     },
     {
       "action": "wait",
@@ -75,7 +79,7 @@
     {
       "action": "evalAssert",
       "label": "the added row is CHECKED IN PLACE - list order identical, scroll untouched (operator spec)",
-      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original track')>=0;})[0];if(!r||!r.classList.contains('inSet'))return false;var order=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});var sc=document.getElementById('libSongs');var scOK=!window.__preScroll2 || Math.abs((sc?sc.scrollTop:0)-window.__preScroll2)<=2;var ordOK=!window.__preOrder2 || JSON.stringify(order)===JSON.stringify(window.__preOrder2);return ordOK && scOK;})()"
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original progression')>=0;})[0];if(!r||!r.classList.contains('inSet'))return false;var order=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});var sc=document.getElementById('libSongs');var scOK=!window.__preScroll2 || Math.abs((sc?sc.scrollTop:0)-window.__preScroll2)<=2;var ordOK=!window.__preOrder2 || JSON.stringify(order)===JSON.stringify(window.__preOrder2);return ordOK && scOK;})()"
     },
     {
       "action": "screenshot",
