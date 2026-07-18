@@ -2708,7 +2708,7 @@
     // Solo (operator UAT 2026-07-17): the home for lead/solo-line work built in
     // the Tracks Studio - conventionally sits after the bridge.
     var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
-    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
+    var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null, songMapEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
@@ -2756,7 +2756,15 @@
       addBtn.type = 'button'; addBtn.id = 'songAddBtn'; addBtn.className = 'btn ghost songAddBtn'; addBtn.textContent = 'Add to song';
       addBtn.onclick = function () { addSongSection(); };
       songAddRowEl.appendChild(songSectSelEl); songAddRowEl.appendChild(addBtn);
-      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songAddRowEl);
+      // #262 (operator UAT): the SONG MAP - the draft's section list, tappable,
+      // living on the CHORDS surface. The friction was the Song<->Chords
+      // round-trip just to see the structure or jump into a section's chords;
+      // each chip routes through editSection (the #261 in-place-edit path), so
+      // "design a chord and place it into a section" never leaves this screen.
+      songMapEl = document.createElement('div'); songMapEl.id = 'songMap'; songMapEl.className = 'songMap';
+      songMapEl.setAttribute('role', 'group'); songMapEl.setAttribute('aria-label', 'Song sections - tap to edit');
+      songMapEl.hidden = true;
+      songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songMapEl); songTrayEl.appendChild(songAddRowEl);
       el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
       // --- the mode toggle: screen-level chrome, always visible, top of the wrap.
       // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
@@ -2908,7 +2916,11 @@
     // arrangement (empty state doubles as the one-line "what is a song" lesson,
     // in the beginner vocabulary budget).
     function songTrayCue(hasProg, hasSections) {
-      return (hasProg && !hasSections) ? 'Add this as a section to start a song.' : '';
+      if (hasProg && !hasSections) return 'Add this as a section to start a song.';
+      // #262: the song-map's one-shot lesson (dismissible, own key - see the
+      // renderSongTray call site picking 'songmap' vs 'capture').
+      if (hasSections) return 'Your song so far - tap a section to edit its chords.';
+      return '';
     }
     function songCanvasCue(hasSections) {
       return hasSections
@@ -3057,12 +3069,42 @@
         modeSongBtnEl.setAttribute('aria-pressed', inSong ? 'true' : 'false');
         modeSongBtnEl.textContent = songBadgeText(songSections.length);
       }
-      // --- Chords-mode tray: the capture row only (the canvas owns the rest).
-      // The add-control needs a live progression to snapshot; hide it with no chords.
-      songTrayEl.hidden = inSong || !hasProg;
+      // --- Chords-mode tray: the capture row + (#262) the song map.
+      // The add-control needs a live progression to snapshot; the MAP instead
+      // needs a draft - and matters MOST right after a capture cleared the
+      // strip (no chords, but "where was I?" is live), so the tray now shows
+      // whenever either exists.
+      songTrayEl.hidden = inSong || (!hasProg && !hasSections);
       songAddRowEl.hidden = !hasProg;
-      // UAT r2: cues render as dismissible one-shot tips (see renderCue).
-      renderCue(songTrayCueEl, 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
+      // #262: the tappable song map - one chip per section, in song order,
+      // duplicates numbered ("Verse 2") so every chip names a distinct target.
+      // Tap = editSection (the #261 path): chords load into the strip in
+      // edit-in-place mode, no Song-tab round-trip. The chip being edited
+      // carries the active state.
+      if (songMapEl) {
+        songMapEl.hidden = inSong || !hasSections;
+        songMapEl.innerHTML = '';
+        if (!songMapEl.hidden) {
+          var seen = {};
+          songSections.forEach(function (sec, i) {
+            seen[sec.label] = (seen[sec.label] || 0) + 1;
+            var nth = seen[sec.label];
+            var disp = nth > 1 ? sec.label + ' ' + nth : sec.label;
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'songMapChip' + (editingSectionIdx === i ? ' on' : '');
+            chip.textContent = disp;
+            chip.setAttribute('aria-label', 'Edit ' + disp);
+            chip.setAttribute('aria-pressed', editingSectionIdx === i ? 'true' : 'false');
+            composeWireTap(chip, function () { editSection(i); });
+            songMapEl.appendChild(chip);
+          });
+        }
+      }
+      // UAT r2: cues render as dismissible one-shot tips (see renderCue). The
+      // map lesson gets its OWN dismissal key so dismissing the capture cue
+      // never mutes it (and vice versa).
+      renderCue(songTrayCueEl, hasSections ? 'songmap' : 'capture', inSong ? '' : songTrayCue(hasProg, hasSections));
       // --- Song-mode canvas: cue + cards + templates + actions.
       // Templates render whenever the canvas does - in Song mode they ARE the
       // "add the next section" surface (and the empty state's proven starters).
@@ -3259,6 +3301,10 @@
       renderProg(); renderSuggest(); renderKey();
       if (el.keyRoots) { renderKeyView(); buildGrid(); }
       setComposeMode('chords');
+      // #262: setComposeMode no-ops when already in Chords (the song-map tap
+      // case) - re-render the tray explicitly so the tapped chip takes the
+      // active state and the add-row reappears for the loaded strip.
+      renderSongTray();
       showComposeToast('Editing ' + sec.label + ' - tweak it, then Add to song to update.');
     }
     function addSongSection() {
