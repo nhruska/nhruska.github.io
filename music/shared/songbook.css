@@ -1483,8 +1483,13 @@ footer{display:none;}
    ink in BOTH themes, the iconBtn glyph convention) that rotates open, plus
    press feedback. Fixed here at the primitive, never per instance. */
 .accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
-  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:700;
-  font-size:1rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:800;
+  font-size:1.08rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+/* S-SETTINGS-UAT (operator UAT 2026-07-16): "Appearance > Theme is a
+   hierarchy" - the section header must OUTRANK its inner .setLbl labels
+   (600/1rem-ish page styles), so the primitive steps up to 800/1.08rem.
+   Fixed here at the primitive: every accordion consumer gets the same
+   heading weight (Element Consistency Law). */
 .accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
   transition:transform .15s;}
 .accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}

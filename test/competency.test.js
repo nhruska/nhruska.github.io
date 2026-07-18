@@ -230,4 +230,36 @@ test('preferences merge unions by id, sums evidence, keeps the latest statement'
   assert.ok(prefs.some(function (p) { return p.id === 'internal-rhyme'; }), 'new preference added');
 });
 
+/* ---------- S-SKILLS-PORTABLE (2026-07-16): flexible skill resolution -
+ * id stays the contract, but case/whitespace drift and a framework's
+ * display NAME resolve instead of bouncing; garbage still denies, and the
+ * deny reason names the known ids (self-diagnosing bounce). */
+test('resolveSkillId: exact id, case/whitespace drift, and display name all resolve', function () {
+  assert.strictEqual(C.resolveSkillId('ukulele'), 'ukulele');
+  assert.strictEqual(C.resolveSkillId('  UKULELE '), 'ukulele');
+  assert.strictEqual(C.resolveSkillId('Ukulele'), 'ukulele');
+  assert.strictEqual(C.resolveSkillId('Stringed instrument'), 'stringed-instrument');
+});
+test('resolveSkillId: unknown/garbage stays null', function () {
+  assert.strictEqual(C.resolveSkillId('theremin'), null);
+  assert.strictEqual(C.resolveSkillId(''), null);
+  assert.strictEqual(C.resolveSkillId(null), null);
+});
+test('importProfile accepts a display-name skill and merges into the id-keyed profile', function () {
+  var s = new FakeStore();
+  var res = C.importProfile({
+    schema: C.SCHEMA, skill: 'Ukulele',
+    competencies: [{ id: 'uke-open-chords', level: 55, evidence_count: 2 }]
+  }, s);
+  assert.strictEqual(res.ok, true);
+  assert.strictEqual(res.skill, 'ukulele');
+  assert.strictEqual(C.getProfile('ukulele', s).competencies.filter(function (c) { return c.id === 'uke-open-chords'; })[0].level, 55);
+});
+test('importProfile deny reason for an unknown skill lists the known ids', function () {
+  var res = C.importProfile({ schema: C.SCHEMA, skill: 'theremin', competencies: [] }, new FakeStore());
+  assert.strictEqual(res.ok, false);
+  assert.ok(/unknown skill: theremin/.test(res.reason));
+  assert.ok(/ukulele/.test(res.reason), 'reason names the known ids');
+});
+
 run();

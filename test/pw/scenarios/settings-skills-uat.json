@@ -1,0 +1,108 @@
+{
+  "name": "settings-skills-uat",
+  "description": "S-SETTINGS-UAT + S-SKILLS-PORTABLE (operator UAT 2026-07-16): the Skills section joins the settings accordion group (exclusive open, scrolled into view), the guidance level is the standard segmented control, backup/restore rows read as CTAs, and the SKILL.md/zip export chain round-trips live in the page.",
+  "persona": "intermediate",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#settingsBody"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnAppearance"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#accBodyAppearance"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "assertHidden",
+      "selector": "#accBodyAppearance"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#accBodySkills"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "assertCount",
+      "selector": "#accBodySkills .skillRow",
+      "min": 4
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#accBodySkills .skillsImportRow"
+    },
+    {
+      "action": "evalAssert",
+      "label": "opening another section closes Skills (one exclusivity state for the whole sheet)",
+      "js": "(function(){document.getElementById('accBtnPrefs').click();return document.getElementById('accBodySkills').hidden===true && document.getElementById('accBodyPrefs').hidden===false;})()"
+    },
+    {
+      "action": "assertCount",
+      "selector": "#guidanceLevelSeg .thSeg",
+      "min": 3
+    },
+    {
+      "action": "assertChipOn",
+      "selector": "#guidanceLevelSeg .thSeg",
+      "text": "Intermediate"
+    },
+    {
+      "action": "screenshot",
+      "name": "settings-prefs-guidance-seg"
+    },
+    {
+      "action": "evalAssert",
+      "label": "tapping Advanced on the seg persists the level (standard setter semantics)",
+      "js": "(function(){var b=Array.from(document.querySelectorAll('#guidanceLevelSeg .thSeg')).filter(function(x){return x.textContent==='Advanced'})[0];b.click();return GuidanceLevel.get()==='advanced' && b.classList.contains('on');})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnBackup"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#btnBackup"
+    },
+    {
+      "action": "screenshot",
+      "name": "settings-backup-cta-rows"
+    },
+    {
+      "action": "evalAssert",
+      "label": "SKILL.md export chain round-trips LIVE in the page (competency -> skill-md render -> parse)",
+      "js": "(function(){var j=Competency.exportProfile('ukulele');var m=SkillMd.render(j);var p=SkillMd.parse(m);return p.ok===true && p.doc.skill==='ukulele' && p.doc.schema==='skill-competency-profile/v1';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "zip bundle builds live (store-only archive, non-trivial length, PK signature)",
+      "js": "(function(){var z=ZipStore.build([{path:SkillMd.bundlePath('ukulele'),text:'x'}]);return z.length>60 && z[0]===0x50 && z[1]===0x4B;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a SKILL.md round-trip document is accepted by importProfile (the .md import path's core)",
+      "js": "(function(){var m=SkillMd.render(Competency.exportProfile('ukulele'));var p=SkillMd.parse(m);var r=Competency.importProfile(p.doc);return r.ok===true && r.skill==='ukulele';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "settings-skills-panel"
+    }
+  ]
+}

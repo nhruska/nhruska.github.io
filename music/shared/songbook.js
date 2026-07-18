@@ -5461,17 +5461,28 @@
       sec.appendChild(btn); sec.appendChild(pane); body.appendChild(sec);
 
       // Hidden file input for import (shared by the first-start lead + the row).
+      // S-SKILLS-PORTABLE (operator UAT 2026-07-16): accepts BOTH the v1 JSON
+      // document AND a SKILL.md rendered by skill-md.js - a .md file's
+      // embedded ```json block is the same document (lossless round-trip),
+      // so competency.js's importProfile stays the ONE validator for both.
       var fileInput = document.createElement('input');
       fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
-      fileInput.accept = 'application/json,.json'; fileInput.hidden = true;
+      fileInput.accept = 'application/json,.json,text/markdown,.md'; fileInput.hidden = true;
       sec.appendChild(fileInput);
       fileInput.onchange = function () {
         var f = fileInput.files && fileInput.files[0];
         if (!f) return;
         var rdr = new FileReader();
         rdr.onload = function () {
-          var res;
-          try { res = C.importProfile(String(rdr.result)); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+          var res, text = String(rdr.result);
+          try {
+            if (/\.md$/i.test(f.name || '') && global.SkillMd && typeof global.SkillMd.parse === 'function') {
+              var md = global.SkillMd.parse(text);
+              res = md.ok ? C.importProfile(md.doc) : { ok: false, reason: md.reason };
+            } else {
+              res = C.importProfile(text);
+            }
+          } catch (e) { res = { ok: false, reason: 'could not read file' }; }
           if (res && res.ok) { showToast('Imported your ' + skillName(res.skill) + ' profile'); }
           else { showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true); }
           fileInput.value = ''; // allow re-picking the same file
@@ -5489,17 +5500,41 @@
         if (!iso) return '';
         try { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; }
       }
-      function downloadProfile(skillId) {
-        var json = C.exportProfile(skillId);
-        if (!json) { showToast("Nothing to export yet", true); return; }
+      function downloadBlob(blob, filename, doneMsg) {
         try {
-          var blob = new Blob([json], { type: 'application/json' });
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
-          a.href = url; a.download = skillId + '.json';
+          a.href = url; a.download = filename;
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
           setTimeout(function () { URL.revokeObjectURL(url); }, 0);
-          showToast('Exported ' + skillName(skillId));
+          if (doneMsg) showToast(doneMsg);
+        } catch (e) { showToast("Couldn't export on this device", true); }
+      }
+      // S-SKILLS-PORTABLE: per-skill export is a SKILL.md (open skills format;
+      // the v1 JSON travels INSIDE it as the embedded data block - see
+      // skill-md.js), named <skill-id>-SKILL.md as a bare download. The
+      // whole-bundle export below zips every skill as <skill-id>/SKILL.md
+      // (the folder convention) via the dependency-free zip-store.js.
+      function downloadProfile(skillId) {
+        var json = C.exportProfile(skillId);
+        var md = (json && global.SkillMd && typeof global.SkillMd.render === 'function')
+          ? global.SkillMd.render(json) : null;
+        if (!md) { showToast("Nothing to export yet", true); return; }
+        downloadBlob(new Blob([md], { type: 'text/markdown' }), skillId + '-SKILL.md', 'Exported ' + skillName(skillId));
+      }
+      function downloadBundle() {
+        if (!global.SkillMd || !global.ZipStore) { showToast("Couldn't export on this device", true); return; }
+        var files = [];
+        C.FRAMEWORKS.forEach(function (fw) {
+          var json = C.exportProfile(fw.id);
+          var md = json ? global.SkillMd.render(json) : null;
+          if (md) files.push({ path: global.SkillMd.bundlePath(fw.id), text: md });
+        });
+        if (!files.length) { showToast("Nothing to export yet", true); return; }
+        try {
+          var bytes = global.ZipStore.build(files);
+          downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'music-skills.zip',
+            'Exported all skills (' + files.length + ')');
         } catch (e) { showToast("Couldn't export on this device", true); }
       }
 
@@ -5576,20 +5611,35 @@
           row.appendChild(head); row.appendChild(detail); pane.appendChild(row);
         });
 
+        // S-SKILLS-PORTABLE: whole-bundle export - every skill as
+        // <skill-id>/SKILL.md in one zip (only when there is data to carry).
+        if (has) {
+          var exportAllRow = document.createElement('button');
+          exportAllRow.className = 'listItem setRow skillsExportAllRow'; exportAllRow.type = 'button';
+          var eb = document.createElement('span'); eb.className = 'li-body';
+          var et = document.createElement('span'); et.className = 'li-title'; et.textContent = 'Export all skills';
+          var ea = document.createElement('span'); ea.className = 'li-artist';
+          ea.textContent = 'One zip - every skill as skill-name/SKILL.md.';
+          eb.appendChild(et); eb.appendChild(ea); exportAllRow.appendChild(eb);
+          exportAllRow.onclick = downloadBundle;
+          pane.appendChild(exportAllRow);
+        }
         if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
       }
 
-      // Single-section accordion so the open/close feel matches the others; the
-      // body renders lazily the first time it opens and refreshes on each open.
-      var acc = (global.Accordion && global.Accordion.init) ? global.Accordion.init([{ btn: btn, body: pane }]) : null;
-      var origOnclick = btn.onclick;
-      btn.onclick = function (e) {
-        if (origOnclick) origOnclick.call(btn, e);      // let the accordion toggle first
-        if (!pane.hidden) renderSkillsPanel();          // now-open -> (re)render fresh
-        else if (!acc) pane.hidden = false;             // no accordion primitive -> fallback toggle
-      };
+      // S-SETTINGS-UAT (operator UAT 2026-07-16): JOIN the page's 'settings'
+      // accordion group instead of running a parallel single-section
+      // accordion - the old shape opened Skills WITHOUT collapsing the other
+      // sections (two independent groups can both hold an open section), the
+      // exact "opens independently" finding. Accordion.join is order-proof
+      // (queues if the page group hasn't init'd yet), onOpen keeps the
+      // lazy-render-on-every-open behavior, and the primitive itself now
+      // scrolls a tapped-open section into view (the "feels like nothing
+      // happens - it opened off-screen" half of the finding).
+      var joined = !!(global.Accordion && typeof global.Accordion.join === 'function'
+        && global.Accordion.join('settings', { btn: btn, body: pane, onOpen: renderSkillsPanel }));
       // Fallback wiring when Accordion is unavailable (keeps the panel usable).
-      if (!acc) {
+      if (!joined) {
         btn.onclick = function () {
           var open = pane.hidden; pane.hidden = !open;
           btn.setAttribute('aria-expanded', open ? 'true' : 'false');
