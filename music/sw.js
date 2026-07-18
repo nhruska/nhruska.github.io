@@ -260,11 +260,9 @@
 // palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip
 // demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
 // play/index.html (script tag).
-// S-SETTINGS-UAT + S-SKILLS-PORTABLE (#257, merged past the 2026-07-17 train):
-// TWO new CORE paths (shared/skill-md.js + shared/zip-store.js) + accordion.js
-// named groups, songbook.js Skills panel, competency.js flexible ids,
-// play/index.html settings rows. Re-staggered above main's v181 (#269 train).
-var CACHE = 'music-v186';
+// S-AUDIO-REALFEEL (#88, re-staggered past the 2026-07-18 morning train):
+// audio.js KS strum engine. v187 sits above main's v186 (#270/#271/#272).
+var CACHE = 'music-v187';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
