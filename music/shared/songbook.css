@@ -285,11 +285,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    repeated down the whole list, so its glyph is neutral (--txt-soft) - it stops the list
    reading as a column of accent circles competing with the song titles. Accent is reserved
    for the .inSet state below (a real selection: "this song is in your set"). */
-.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.35rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* 44px = the a11y tap-target floor (was 40). The glyph is a TEXT character
+   ('+' / '\2713'), and text centers by its LINE BOX, not its ink - the font
+   hangs descender space below the glyph, so pure flex-centering paints it
+   visibly HIGH (measured: + at -1.5 CSS px, check at -2.2). The 2.5px top pad
+   is the MEASURED optical correction (headless ink-centroid vs circle center,
+   deviceScaleFactor 3): check lands dead-center, + within 0.5 CSS px. Don't
+   "clean up" the fraction - line-box snapping quantizes in whole-px steps and
+   2.5 sits mid-plateau for both glyphs. */
+.listItem .li-add{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.5rem;line-height:1;padding:2.5px 0 0 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 /* Ghost add (S-SETADD-EVIDENT, operator UAT 2026-07-12): the row CAN'T join the
    set (no chord sheet) - state it quietly instead of an empty slot that reads
-   as broken. Dashed + faint, still a 40px tappable target (explains via toast). */
+   as broken. Dashed + faint, still a 44px tappable target (explains via toast). */
 .listItem .li-add.ghost{border-style:dashed;color:var(--txt-dim);opacity:.6;}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
