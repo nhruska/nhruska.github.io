@@ -185,7 +185,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
-.appbar .brand .ctx{font-size:.66rem;color:var(--txt-dim);font-weight:500;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* The per-tab context line moved OUT of the brand column (operator UAT
+   2026-07-18: it ellipsized between the picker and the gear). It is now the
+   full-width .tabIntro strip below the appbar: each tab's one orienting
+   sentence - purpose + next step - with room to wrap, never to truncate. */
+.tabIntro{flex:0 0 auto;margin:0;padding:8px 14px 0;font-size:.74rem;color:var(--txt-dim);line-height:1.4;}
 /* #OFFLINE-PILL (operator UAT 2026-07-18): quiet connectivity status in the
    appbar - amber (the app's one warn accent) because it's a heads-up, not an
    error; the app keeps working offline. [hidden] wins the display cascade. */
@@ -490,10 +494,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .lyricsLink{color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px 6px;font-weight:500;white-space:nowrap;}
 .lyricsLink:active{color:var(--accent-ink);}
 .note{font-size:.69rem;color:var(--txt-dim);text-align:center;margin-top:5px;line-height:1.45;}
-.setHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
+/* Operator UAT 2026-07-18: the setlist mirrors the Library's scroll model -
+   head row static, #setBody is the ONLY scroll container (same flat
+   single-scroller pattern, Element Consistency). The h2 left the head (tabbar
+   + intro strip already name and explain the tab); the count line is the
+   header's information, restyled up a step to carry it. */
+#s-jam{height:100%;}
+#s-jam.on{display:flex;flex-direction:column;}
+.libSet{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+.setHead{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
+#setBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
+#setBody::-webkit-scrollbar{width:0;}
 .setHead .ti{margin-right:auto;}  /* push Edit + Clear to the right (UAT: float Edit right) */
-.setHead .ti h2{font-weight:800;font-size:1.45rem;letter-spacing:-.02em;}
-.setHead .ti p{font-size:.76rem;color:var(--txt-dim);margin-top:2px;}
+.setHead .ti p{font-size:.82rem;font-weight:700;color:var(--txt-soft);}
 .setHead .btn{flex:0 0 auto;padding:12px 16px;}
 /* UAT 2026-07-16: the destructive Clear (✕) wears red so it never reads as a
    neutral header control - it only appears in edit mode (JS), and red is the

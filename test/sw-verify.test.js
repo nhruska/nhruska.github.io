@@ -124,6 +124,7 @@ test('play/index.html: the OFFLINE pill + one-shot saved-for-offline cue are wir
   assert.ok(/id="offlinePill"/.test(playSrc), 'the appbar must carry the offline pill');
   assert.ok(/addEventListener\('online'/.test(playSrc) && /addEventListener\('offline'/.test(playSrc), 'the pill must track online/offline events');
   assert.ok(/music\.offlineReadyCued\.v1/.test(playSrc), 'the saved-for-offline confirmation must be a one-shot (localStorage-keyed) cue');
+  assert.ok(/Saved to this device - your songs, chords and tuner work without internet/.test(playSrc), 'the cue copy leads with FUNCTIONAL VALUE (operator UAT 2026-07-18: no "now" framing - name what the user gets)');
   assert.ok(/not saved for offline yet/.test(playSrc), 'the Settings readiness line must answer "ready for offline?" in plain words, with the fix stated');
 });
 

@@ -1,0 +1,88 @@
+{
+  "name": "tab-intros",
+  "note": "Operator UAT 2026-07-18, three asks in one design: (1) 'library on first load may not be obvious purpose/next step' + 'setlist is the only tab with a heading' -> EVERY tab now opens with one orienting purpose sentence (the .tabIntro strip - the old brand ctx machinery relocated); (2) 'can't get cutoff like library tab does' -> the strip is full-width and never truncates; (3) 'make setlist header sticky/static, just scroll the songs like library' -> the setlist mirrors the Library scroll model (head static, #setBody the only scroller) and drops the redundant h2. The offline-toast value-copy is pinned in test/sw-verify.test.js. Written red-first against the pre-fix tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "the intro strip is FULL-WIDTH chrome (its own line under the appbar, not squeezed in the brand column) and cannot truncate",
+      "js": "(function(){var el=document.getElementById('ctxLine');if(!el)return false;if(el.closest('.brand'))return false;if(!el.classList.contains('tabIntro'))return false;var appW=document.querySelector('.app').getBoundingClientRect().width;var r=el.getBoundingClientRect();return r.width>appW*0.9 && el.scrollWidth<=el.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Library first load: the intro states purpose + next step (tap to play, + saves to setlist)",
+      "js": "(function(){var t=document.getElementById('ctxLine').textContent;return /tap a song/i.test(t) && /setlist/i.test(t);})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Setlist intro follows the same grammar (purpose + the Start next step) - no tab is the odd one out",
+      "js": "(function(){var t=document.getElementById('ctxLine').textContent;return /start/i.test(t) && /perform|show/i.test(t);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the redundant h2 is gone and the head row is STATIC chrome: #setBody is the scroll container (Library model), not the page",
+      "js": "(function(){var head=document.querySelector('.setHead');if(!head)return false;if(head.querySelector('h2'))return false;var body=document.getElementById('setBody');var cs=getComputedStyle(body);return cs.overflowY==='auto';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "Compose gets the same treatment (try chords -> grow into a song)",
+      "js": "(function(){var t=document.getElementById('ctxLine').textContent;return /chords/i.test(t) && /song/i.test(t);})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"tune\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "Tune names the action AND keeps the tuning readout the old ctx line carried",
+      "js": "(function(){var t=document.getElementById('ctxLine').textContent;return /pluck/i.test(t) && /G.*C.*E.*A|tuning/i.test(t);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "tab-intros-tune"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "screenshot",
+      "name": "tab-intros-setlist"
+    }
+  ]
+}

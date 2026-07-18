@@ -128,10 +128,17 @@
          quiet chrome-tier status, visible only while disconnected. The app KEEPS
          WORKING offline (that's the PWA promise) - the pill just names the state
          so a failed YouTube thumbnail or search doesn't read as a broken app. -->
-    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span><span class="ctx" id="ctxLine">loading…</span></div>
+    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span></div>
     <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
+  <!-- Per-tab intro strip (operator UAT 2026-07-18: "setlist is the only tab
+       with a heading... library on first load may not be obvious"). The SAME
+       per-tab CONTEXTS machinery that fed the old cramped brand .ctx line -
+       same element id, relocated to its own FULL-WIDTH line so it can never
+       truncate, and upgraded from noun-phrases to purpose + next step. Every
+       tab now opens with one orienting sentence. -->
+  <p class="tabIntro" id="ctxLine">loading&hellip;</p>
   <div class="view" id="view">
     <!-- M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
          experience-level ask, rendered/managed entirely by the Settings
@@ -183,7 +190,11 @@
              destructive Clear (✕) is hidden until edit mode and wears red. Order
              is [✕][Edit][Start] - normal mode hides ✕ -> [Edit][Start]; edit mode
              hides Start + shows the red ✕ -> [✕][Done]. -->
-        <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
+        <!-- Operator UAT 2026-07-18: the h2 came out - with the tabbar naming the
+             tab and the intro strip stating its purpose, "My Setlist" was a third
+             restatement; the count line carries the header's information. The
+             head row is STATIC (the songs scroll beneath it, Library-style). -->
+        <div class="setHead"><div class="ti"><p id="setCount">No songs yet</p></div>
           <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="btn red" id="performBtn" title="Start performance">Start</button></div>
@@ -511,7 +522,10 @@
   // chord-progression suggestion map: moved to shared/sugg.js (S-EXTRACT,
   // analysis-refactor-enhance-20260704 A7) - was inline + untested here.
   var SUGG = window.Sugg.SUGG;
-  var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
+  // Per-tab intro copy (operator UAT 2026-07-18): purpose + next step, not a
+  // noun-phrase - the strip is each tab's one orienting sentence (copy-coach:
+  // verb-first, beginner vocabulary, name the action the user came to do).
+  var CONTEXTS_BASE = { library: 'Tap a song to play it - the + saves it to your setlist', compose: 'Try chords, keep what sounds good - then grow it into a song', tracks: 'find a track in your key', practice: 'now playing', jam: 'Your songs, show-ready - hit Start to perform' };
 
   // rootFreq / movable-shape fallback / buildAdapter: moved to shared/
   // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
@@ -604,9 +618,8 @@
   }
 
   function start(profile, songs) {
-    el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' - Music';
-    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
+    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: 'Pluck a string and watch the needle - ' + profile.tuning });
     var pack = window.ChordPackAdapter.buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
@@ -1450,7 +1463,8 @@ if ('serviceWorker' in navigator) {
     // to download?"): the download is AUTOMATIC (the worker precaches on
     // first visit - zero-friction by design), so the cue's job is to CONFIRM,
     // once, that it happened: the first time this browser is controlled by
-    // the worker, a single toast says the app now works without internet.
+    // the worker, a single toast names the VALUE (operator UAT: functional purpose,
+    // not "now" framing): songs, chords and tuner work without internet.
     // One-shot via localStorage (the notables earned-silence grammar).
     var CUE_KEY = 'music.offlineReadyCued.v1';
     function cueOnce() {
@@ -1462,7 +1476,7 @@ if ('serviceWorker' in navigator) {
         var host = document.createElement('div');
         host.className = 'toast';
         document.body.appendChild(host);
-        Toast.show('Saved for offline - this app now works without internet', {
+        Toast.show('Saved to this device - your songs, chords and tuner work without internet', {
           host: host,
           duration: 3200,
           onShow: function (h, m) { h.textContent = m; requestAnimationFrame(function () { h.classList.add('on'); }); },
