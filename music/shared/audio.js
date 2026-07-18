@@ -206,6 +206,15 @@
 
     input.connect(body); body.connect(tame); tame.connect(comp);
 
+    // Pick-scrape input (ear-test round 3, "keyboard in the attack"): the
+    // static tame lowpass darkens the ATTACK along with the sustain, turning
+    // the onset into a felt-hammer thud. The scrape transient enters HERE -
+    // straight into the compressor, AROUND body+tame - so the first ~7ms
+    // keeps true broadband pluck character while the ringing string stays at
+    // the warm 2600Hz voicing. Attack and sustain now have independent knobs.
+    var scrapeIn = a.createGain(); scrapeIn.gain.value = 1;
+    scrapeIn.connect(comp);
+
     // Dry path.
     comp.connect(a.destination);
 
@@ -224,8 +233,43 @@
       tame.connect(rev); rev.connect(wet); wet.connect(a.destination);
     } catch (e) { /* no reverb; dry is fine */ }
 
-    bus = { a: a, input: input };
+    bus = { a: a, input: input, scrapeIn: scrapeIn };
     return bus;
+  }
+
+  /* ---------------------------------------------------------------------
+   * scrapeRender - the pick SCRAPE, rendered to a Float32Array (mono).
+   *
+   * The moment a pick (or nail) leaves a string is a short broadband
+   * friction transient - the "snap" that says PLUCKED. It is not part of
+   * the resonating string, so it's rendered separately from ksRender and
+   * routed around the master bus's tame lowpass (bus.scrapeIn): the string
+   * keeps the warm voicing, the attack keeps its bite.
+   *
+   * Highpassed white noise (first difference kills the lows) under a fast
+   * envelope: ~1ms ramp-in (edge-click insurance), decay to zero across the
+   * rest. Pure array math - Node-testable like ksRender.
+   *
+   *   sampleRate  audio sample rate
+   *   ms          transient length in milliseconds (default 7)
+   *   opts.level  peak amplitude 0..1 (default 0.5)
+   * ------------------------------------------------------------------- */
+  function scrapeRender(sampleRate, ms, opts) {
+    opts = opts || {};
+    ms = ms == null ? 7 : ms;
+    var n = Math.max(4, Math.round(sampleRate * ms / 1000));
+    var lvl = opts.level == null ? 0.5 : Math.max(0, Math.min(1, opts.level));
+    var out = new Float32Array(n);
+    var ramp = Math.max(2, Math.round(sampleRate * 0.001)); // ~1ms ramp-in
+    var prevW = 0;
+    for (var i = 0; i < n; i++) {
+      var w = Math.random() * 2 - 1;
+      var hp = (w - prevW) * 0.5; // first-difference highpass, kept in [-1,1]
+      prevW = w;
+      var env = (i < ramp ? i / ramp : 1) * Math.pow(1 - i / n, 2);
+      out[i] = hp * env * lvl;
+    }
+    return out;
   }
 
   function tone(freq, dur) {
@@ -245,11 +289,13 @@
   }
 
   // Play one plucked string through the voice cache: render at the CANONICAL
-  // freq once (twice, for two life-giving variants), then every later tap of
-  // the same string reuses the AudioBuffer and applies its per-tap micro-
-  // detune via playbackRate - near-zero work between tap and sound.
+  // freq once (twice, for two life-giving variants); every later tap reuses
+  // the AudioBuffer and applies its per-tap micro-detune via playbackRate -
+  // near-zero work between tap and sound (#276). `m` is the masterBus handle:
+  // the string rides m.input (warm voicing); the pick scrape rides m.scrapeIn
+  // around the tame lowpass (#273 - see scrapeRender). scrape 0 disables it.
   var voiceBufs = VoiceCache.create(24);
-  function pluckKS(a, input, freq, det, t, dur, gain, brightness) {
+  function pluckKS(a, m, freq, det, t, dur, gain, brightness, scrape) {
     var k = VoiceCache.key(freq, brightness, dur);
     var entry = voiceBufs.get(k);
     if (!entry) entry = { freq: freq, bufs: [], i: 0 };
@@ -270,9 +316,19 @@
     // Micro-detune rides playback, not the render - the cache's enabling move.
     src.playbackRate.value = (freq / entry.freq) * det;
     var g = a.createGain(); g.gain.value = gain;
-    src.connect(g); g.connect(input);
+    src.connect(g); g.connect(m.input);
     src.start(t);
     src.stop(t + dur + 0.05);
+    if (scrape && m.scrapeIn) {
+      var sd = scrapeRender(a.sampleRate, 7, { level: 1 });
+      var sb = a.createBuffer(1, sd.length, a.sampleRate);
+      sb.getChannelData(0).set(sd);
+      var ssrc = a.createBufferSource(); ssrc.buffer = sb;
+      var sg = a.createGain(); sg.gain.value = gain * scrape;
+      ssrc.connect(sg); sg.connect(m.scrapeIn);
+      ssrc.start(t);
+      ssrc.stop(t + 0.02);
+    }
   }
 
   // frets[]: per string (display order), -1 muted / 0 open / n fretted.
@@ -327,7 +383,11 @@
         // 3-6kHz. If a future ear test says "still bright", this range is the
         // second knob; "too dark" -> raise the tame cutoff first.
         var bright = 0.30 + vel * 0.22 + (Math.random() - 0.5) * 0.06;
-        pluckKS(a, m.input, v.freq, det, t, dur, gain, bright);
+        // Scrape intensity (round 3, "keyboard in the attack"): a real pick's
+        // snap scales with strum force; up-strums scrape lighter (the pick's
+        // back edge). Relative to the string's own gain inside pluckKS.
+        var scrape = (0.25 + vel * 0.35) * (up ? 0.7 : 1);
+        pluckKS(a, m, v.freq, det, t, dur, gain, bright, scrape);
         // advance the sweep with a little timing jitter (a human isn't exact)
         gap = Math.max(0.006, gap * accel + (Math.random() - 0.5) * 0.004);
         t += gap;
@@ -337,6 +397,6 @@
     });
   }
 
-  global.ChordAudio = { tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender, VoiceCache: VoiceCache };
+  global.ChordAudio = { tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender, scrapeRender: scrapeRender, VoiceCache: VoiceCache };
 
 })(typeof window !== 'undefined' ? window : this);
