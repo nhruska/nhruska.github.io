@@ -285,11 +285,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    repeated down the whole list, so its glyph is neutral (--txt-soft) - it stops the list
    reading as a column of accent circles competing with the song titles. Accent is reserved
    for the .inSet state below (a real selection: "this song is in your set"). */
-.listItem .li-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.35rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
+/* 44px = the a11y tap-target floor (was 40). The glyph is a TEXT character
+   ('+' / '\2713'), and text centers by its LINE BOX, not its ink - the font
+   hangs descender space below the glyph, so pure flex-centering paints it
+   visibly HIGH (measured: + at -1.5 CSS px, check at -2.2). The 2.5px top pad
+   is the MEASURED optical correction (headless ink-centroid vs circle center,
+   deviceScaleFactor 3): check lands dead-center, + within 0.5 CSS px. Don't
+   "clean up" the fraction - line-box snapping quantizes in whole-px steps and
+   2.5 sits mid-plateau for both glyphs. */
+.listItem .li-add{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.5rem;line-height:1;padding:2.5px 0 0 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
 /* Ghost add (S-SETADD-EVIDENT, operator UAT 2026-07-12): the row CAN'T join the
    set (no chord sheet) - state it quietly instead of an empty slot that reads
-   as broken. Dashed + faint, still a 40px tappable target (explains via toast). */
+   as broken. Dashed + faint, still a 44px tappable target (explains via toast). */
 .listItem .li-add.ghost{border-style:dashed;color:var(--txt-dim);opacity:.6;}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
@@ -750,18 +758,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
 /* A section CARD: label row (name + play + reorder + remove) over a chords row.
    Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
-.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 34px 9px 12px;}
+.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;}
 .songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
 .songSect.card .songSectName{margin-right:auto;}
-.songSectPlay{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:1rem;line-height:1;cursor:pointer;}
-.songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--surface-2);}
+.songSectPlay{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:1rem;line-height:1;cursor:pointer;}
+.songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--bg-2);}
 .songSectPlay:active{color:var(--on-accent);}
 .songSectPlay:active::before{background:var(--accent);border-color:var(--accent);}
 /* S-SECTION-EDIT: ✎ per-section edit-into-builder button. Same 44px hit target
    + halo grammar as .songSectPlay (Element Consistency Law - reuse the card's
    control primitive), neutral-toned so it reads as "edit" not "play". */
-.songSectEdit{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
-.songSectEdit::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.songSectEdit{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
+.songSectEdit::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSectEdit:active{color:var(--accent-ink);}
 .songSectEdit:active::before{background:var(--accent-deep);border-color:var(--accent-dim);}
 .songBuildBtn{min-height:44px;}
@@ -803,14 +811,18 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    flex flow (unlike the corner-absolute .rm), small decorative circle behind
    the glyph via ::before - the same "invisible halo over a small visual"
    convention as .rm, just not corner-pinned since two sit side by side. */
-.songSect .songSectMove{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.9rem;line-height:1;cursor:pointer;}
-.songSect .songSectMove::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+.songSect .songSectMove{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.9rem;line-height:1;cursor:pointer;}
+.songSect .songSectMove::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .songSectMove:disabled{opacity:.3;cursor:default;}
 .songSect .songSectMove:disabled::before{display:none;}
 .songSect .songSectMove:active:not(:disabled){color:var(--on-accent);}
 .songSect .songSectMove:active:not(:disabled)::before{background:var(--accent);border-color:var(--accent);}
-.songSect .rm{position:absolute;top:50%;right:-2px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
-.songSect .rm::before{content:'';position:absolute;top:50%;right:9px;transform:translateY(-50%);width:34px;height:34px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
+/* Operator UAT 2026-07-17: the delete X joins the SAME control row as
+   play/edit/up/dn (it was absolutely positioned against the whole card, so it
+   sat vertically off-center from its siblings). One row, five aligned 44px
+   targets, matching 36px visible halos. */
+.songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
+.songSect .rm::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .rm.armed{color:var(--on-danger);}
 .songSect .rm.armed::before{background:var(--bad);border-color:var(--bad);}
 .songSect .rm:active{color:var(--on-danger);}
@@ -1087,6 +1099,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - was an oddball against the
    sibling segmented-control containers (.modeSwitch/.viewToggle), both already 11px. */
 .chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
+/* Operator UAT 2026-07-17: with 7 section labels the switcher clipped its last
+   segment ("Outr"). The songSuggest instance scrolls horizontally instead of
+   clipping - every label reachable, no cut text. Scoped: other chordSeg
+   consumers (2-3 segments) keep the sealed pill look. */
+.songSuggestLabels{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.songSuggestLabels::-webkit-scrollbar{display:none;}
+.songSuggestLabels .chordSegBtn{flex:0 0 auto;white-space:nowrap;padding-left:12px;padding-right:12px;}
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
 .chordSegBtn + .chordSegBtn{border-left:1px solid var(--line-strong);}
 .chordSegBtn:active{transform:scale(.98);}
@@ -1419,6 +1438,10 @@ footer{display:none;}
 .invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}
 
 /* Subtle transient toast (add-to-setlist cue etc). Sits above the tab bar. */
+/* Boot-failure detail line (play/index.html fail()) - the technical residue
+   under the data-safe reassurance, quiet by design. */
+.failDetail{font-size:.7rem;color:var(--txt-dim);word-break:break-word;}
+.empty .btn{flex:0 1 auto;display:inline-block;margin-top:2px;}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 /* Semantic toast variants (same colored-border + colored-text discipline as
@@ -1460,8 +1483,13 @@ footer{display:none;}
    ink in BOTH themes, the iconBtn glyph convention) that rotates open, plus
    press feedback. Fixed here at the primitive, never per instance. */
 .accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
-  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:700;
-  font-size:1rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:800;
+  font-size:1.08rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+/* S-SETTINGS-UAT (operator UAT 2026-07-16): "Appearance > Theme is a
+   hierarchy" - the section header must OUTRANK its inner .setLbl labels
+   (600/1rem-ish page styles), so the primitive steps up to 800/1.08rem.
+   Fixed here at the primitive: every accordion consumer gets the same
+   heading weight (Element Consistency Law). */
 .accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
   transition:transform .15s;}
 .accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}

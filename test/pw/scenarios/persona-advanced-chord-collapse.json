@@ -1,6 +1,6 @@
 {
   "name": "persona-advanced-chord-collapse",
-  "description": "S-CHORD-COLLAPSE goalpost (operator friction 2026-07-16: chord charts too big at advanced, scroll off page): ADVANCED renders the Compose palettes as compact letter+roman chips (suggChip token), tap still adds+plays in ONE tap, the Shapes toggle flips the grid to full diagrams and back, and the whole in-key palette fits the viewport without scrolling.",
+  "description": "S-CHORD-COLLAPSE goalpost (operator friction 2026-07-16: chord charts too big at advanced, scroll off page): ADVANCED renders the Compose palettes as compact letter+roman chips (suggChip token), tap still adds+plays in ONE tap, the Shapes toggle flips the grid to full diagrams and back, and the whole in-key palette fits the viewport without scrolling. Level changes drive the #257 guidance segmented control (direct segment taps).",
   "persona": "advanced",
   "url": "/music/play/",
   "steps": [
@@ -174,7 +174,7 @@
     },
     {
       "action": "tap",
-      "selector": "#guidanceLevelRow"
+      "selector": "#guidanceLevelSeg .thSeg[data-m=beginner]"
     },
     {
       "action": "tap",
@@ -195,11 +195,7 @@
     },
     {
       "action": "tap",
-      "selector": "#guidanceLevelRow"
-    },
-    {
-      "action": "tap",
-      "selector": "#guidanceLevelRow"
+      "selector": "#guidanceLevelSeg .thSeg[data-m=advanced]"
     },
     {
       "action": "tap",

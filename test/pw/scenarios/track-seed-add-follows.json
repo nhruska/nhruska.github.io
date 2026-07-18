@@ -1,0 +1,59 @@
+{
+  "name": "track-seed-add-follows",
+  "note": "S-ADD-STABLE (operator spec 2026-07-17, verbatim: 'the list should not be reordered. it should not scroll....just set item selected'). Tapping + on a keyed seq-less TRACK row ('Hendrix Style Jam in A Minor'): (a) the visible LIST ORDER is IDENTICAL before and after, (b) the SCROLL POSITION does not move, (c) the tapped row shows the checked state, in place. No relocation, no snap, no follow - stability IS the contract. Written red-first against the scroll-follow band-aid this replaces.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "bring the target row into view FIRST (the user is looking at it), then snapshot the pre-tap world: full row-title order + scroll position",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Hendrix Style Jam')>=0;})[0];if(!r)return false;r.scrollIntoView({block:'center'});var sc=document.getElementById('libSongs');window.__preOrder=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});window.__preScroll=sc?sc.scrollTop:0;return window.__preOrder.length>10 && window.__preScroll>0;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Hendrix Style Jam\") .li-add"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "the LIST ORDER is byte-identical after the add - no row moved anywhere (operator: 'the list should not be reordered')",
+      "js": "(function(){var rows=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});if(rows.length!==window.__preOrder.length)return false;for(var i=0;i<rows.length;i++){if(rows[i]!==window.__preOrder[i])return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the SCROLL POSITION did not move (operator: 'it should not scroll')",
+      "js": "(function(){var sc=document.getElementById('libSongs');var now=sc?sc.scrollTop:0;return Math.abs(now-window.__preScroll)<=2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the tapped row is CHECKED, in place (operator: 'just set item selected')",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Hendrix Style Jam')>=0;})[0];return !!r && r.classList.contains('inSet');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the setlist gained exactly one entry",
+      "js": "(function(){var set=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');return set.length===1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "track-seed-add-stable"
+    }
+  ]
+}

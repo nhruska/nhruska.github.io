@@ -119,4 +119,91 @@ test('empty init() returns a working handle (no sections, openIndex stays -1)', 
   h.closeAll(); // must not throw
 });
 
+/* ---------- S-SETTINGS-UAT (2026-07-16): named-group join + add + onOpen +
+ * tap-open scroll-into-view - the late-injected-section seam (Skills panel). */
+test('add(): a late section joins the exclusivity state - opening it collapses the others and vice versa', function () {
+  var s = make(2);
+  var h = Accordion.init(s);
+  var late = stubSection();
+  var idx = h.add(late);
+  assert.strictEqual(idx, 2);
+  assert.strictEqual(late.body.hidden, true);           // renders closed
+  late.btn.onclick();
+  // NOTE: init()/add() share the caller's array, so `s` now holds 3 sections -
+  // slice to the original two when asserting "the others collapsed".
+  assert.deepStrictEqual(openStates(s.slice(0, 2)), [false, false]);
+  assert.strictEqual(late.body.hidden, false);
+  s[0].btn.onclick();                                    // opening another collapses the late one
+  assert.strictEqual(late.body.hidden, true);
+  assert.strictEqual(s[0].body.hidden, false);
+});
+
+test('join() AFTER a named init adds immediately', function () {
+  var s = make(2);
+  Accordion.init(s, { name: 'grp-after-' + Math.floor(1e6 * 0.5) });
+  var late = stubSection();
+  assert.strictEqual(Accordion.join('grp-after-' + Math.floor(1e6 * 0.5), late), true);
+  late.btn.onclick();
+  assert.strictEqual(late.body.hidden, false);
+  assert.deepStrictEqual(openStates(s.slice(0, 2)), [false, false]); // shared array - see note above
+});
+
+test('join() BEFORE the named init queues and drains at init (order-proof)', function () {
+  var late = stubSection();
+  assert.strictEqual(Accordion.join('grp-before', late), true);
+  var s = make(1);
+  Accordion.init(s, { name: 'grp-before' });
+  late.btn.onclick();
+  assert.strictEqual(late.body.hidden, false);
+  assert.strictEqual(s[0].body.hidden, true);            // exclusivity holds for the queued join
+  s[0].btn.onclick();
+  assert.strictEqual(late.body.hidden, true);
+});
+
+test('onOpen fires on the closed->open edge only (lazy-render hook)', function () {
+  var calls = 0;
+  var s = make(1);
+  var h = Accordion.init(s);
+  var late = stubSection(); late.onOpen = function () { calls++; };
+  h.add(late);
+  late.btn.onclick();                                    // open -> fires
+  assert.strictEqual(calls, 1);
+  late.btn.onclick();                                    // close -> no fire
+  assert.strictEqual(calls, 1);
+  late.btn.onclick();                                    // reopen -> fires again
+  assert.strictEqual(calls, 2);
+});
+
+test('a throwing onOpen never breaks the group', function () {
+  var s = make(2);
+  var h = Accordion.init(s);
+  var late = stubSection(); late.onOpen = function () { throw new Error('boom'); };
+  h.add(late);
+  late.btn.onclick();                                    // must not throw
+  assert.strictEqual(late.body.hidden, false);
+  s[0].btn.onclick();
+  assert.strictEqual(s[0].body.hidden, false);
+});
+
+test('tap-open calls body.scrollIntoView when available (and stays safe on stubs without it)', function () {
+  var s = make(1);
+  var h = Accordion.init(s);
+  var late = stubSection();
+  var scrolled = 0;
+  late.body.scrollIntoView = function () { scrolled++; };
+  h.add(late);
+  late.btn.onclick();                                    // user tap -> scrolls into view
+  assert.strictEqual(scrolled, 1);
+  h.closeAll();
+  h.open(1);                                             // programmatic open -> NO scroll (deep-links own their position)
+  assert.strictEqual(scrolled, 1);
+  s[0].btn.onclick();                                    // stub without scrollIntoView -> no throw
+  assert.strictEqual(s[0].body.hidden, false);
+});
+
+test('join() with a missing group name or section is refused, not queued garbage', function () {
+  assert.strictEqual(Accordion.join('', stubSection()), false);
+  assert.strictEqual(Accordion.join('grp-x', null), false);
+});
+
 run();

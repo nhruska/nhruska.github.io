@@ -277,6 +277,27 @@
   // Load a user's exported profile at runtime and merge it into the working
   // copy. Validates schema + a known skill; tolerates missing preferences and
   // unknown competency ids. Returns {ok, skill} or {ok:false, reason}.
+  // S-SKILLS-PORTABLE (operator UAT 2026-07-16): flexible skill resolution.
+  // The portable contract stays the framework ID, but a document whose
+  // `skill` differs only in case/whitespace, or that carries a framework's
+  // display NAME instead of its id ("Ukulele" for 'ukulele'), resolves to
+  // the framework rather than bouncing. Anything that resolves to no
+  // shipped framework is still DENIED - competencies merge INTO a known
+  // framework's profile, so there is nothing sensible to attach an unknown
+  // skill to (unknown COMPETENCY ids inside a known skill remain additive-
+  // tolerated, see mergeInto). The deny reason now names the known ids so
+  // a bounced file is self-diagnosing.
+  function resolveSkillId(raw) {
+    if (FRAMEWORK_BY_ID[raw]) return raw;
+    var norm = String(raw == null ? '' : raw).trim().toLowerCase();
+    if (!norm) return null;
+    if (FRAMEWORK_BY_ID[norm]) return norm;
+    for (var i = 0; i < FRAMEWORKS.length; i++) {
+      if (String(FRAMEWORKS[i].name).trim().toLowerCase() === norm) return FRAMEWORKS[i].id;
+    }
+    return null;
+  }
+
   function importProfile(json, store) {
     var parsed;
     if (typeof json === 'string') {
@@ -284,8 +305,10 @@
     } else { parsed = json; }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false, reason: 'not a profile' };
     if (parsed.schema !== SCHEMA) return { ok: false, reason: 'unrecognized profile format' };
-    var skillId = parsed.skill;
-    if (!FRAMEWORK_BY_ID[skillId]) return { ok: false, reason: 'unknown skill: ' + String(skillId) };
+    var skillId = resolveSkillId(parsed.skill);
+    if (!skillId) {
+      return { ok: false, reason: 'unknown skill: ' + String(parsed.skill) + ' (known: ' + FRAMEWORKS.map(function (f) { return f.id; }).join(', ') + ')' };
+    }
     if (!Array.isArray(parsed.competencies)) return { ok: false, reason: 'no competencies in profile' };
     var map = load(store);
     var local = map[skillId] || blankProfile(skillId);
@@ -302,6 +325,8 @@
     nextLevel: nextLevel,
     blankProfile: blankProfile,
     mergeInto: mergeInto,
+    resolveSkillId: resolveSkillId, // S-SKILLS-PORTABLE: flexible id/name resolution
+
     // storage-backed API (optional trailing store; browser falls back to localStorage)
     load: load,
     hasData: hasData,

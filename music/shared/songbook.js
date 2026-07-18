@@ -800,14 +800,34 @@
   // a video-only track routes to the Studio, not a blank Practice screen). Extracted +
   // exported so the changed merge path has a real regression test (not DOM-coupled).
   function buildAllSongs(catalog, customs) {
-    var shadowed = shadowedCatalogIds(customs);
-    var all = (Array.isArray(catalog) ? catalog : [])
-      .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
-      .filter(function (s) { return !shadowed[s.id]; });
+    // Operator UAT 2026-07-17 ("rows disappear from my view instead of being
+    // checked"): a fork now shadows its catalog original IN PLACE - the copy
+    // takes the exact list position the original held, so the row the user is
+    // looking at never teleports out from under their thumb. Non-fork customs
+    // still append after the catalog block, unchanged.
+    var byFork = {};
     (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      // Only a well-formed catalog id (kN) shadows - honors the "catalog ids"
+      // contract and ignores a malformed/foreign forkOf.
+      if (cs && cs.forkOf && /^k\d+$/.test(cs.forkOf)) byFork[cs.forkOf] = cs;
+    });
+    function resolveSheet(cs) {
       var withSheet = (cs.sheet && cs.sheet.length) ? {}
         : (cs.seq && cs.seq.length) ? { sheet: buildSheetFromSeq(cs.seq) } : {};
-      all.push(Object.assign({}, cs, withSheet));
+      return Object.assign({}, cs, withSheet);
+    }
+    var placed = {};
+    var all = (Array.isArray(catalog) ? catalog : [])
+      .map(function (s, i) { return Object.assign({}, s, { id: "k" + i }); })
+      .map(function (s) {
+        var f = byFork[s.id];
+        if (!f) return s;
+        placed[f.id] = true;
+        return resolveSheet(f); // the fork sits exactly where its original sat
+      });
+    (Array.isArray(customs) ? customs : []).forEach(function (cs) {
+      if (cs && placed[cs.id]) return; // already holding its original's slot
+      all.push(resolveSheet(cs));
     });
     return all;
   }
@@ -1617,7 +1637,10 @@
       // actually found and highlighted - a filtered/empty visible render keeps
       // the highlight pending for the render that really shows it (codex #91).
       if (visible && pendingHighlightId != null && justSavedEl) {
-        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // 'auto' (instant), not 'smooth': on Android a long smooth scroll can be
+        // interrupted by re-layout (toast mount) and strand the viewport mid-list
+        // - the follow contract needs a GUARANTEED landing on the row.
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center' });
         justSavedEl.classList.add('justSaved');
         pendingHighlightId = null;
       }
@@ -1652,7 +1675,13 @@
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
     // a lone song from the Library passes nothing → a one-song (inactive) queue.
+    var practiceOrigin = 'library'; // where the open song detail returns to on back
     function openPractice(id, queueIds) {
+      // Operator UAT 2026-07-17: back from the song detail returns WHERE YOU
+      // CAME FROM - setlist entries go back to the Setlist, library entries to
+      // the Library (it always went to Library before). Capture the origin tab
+      // at open time; queue-nav re-renders (openCurrent) never overwrite it.
+      practiceOrigin = (currentTab === 'jam') ? 'jam' : 'library';
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
       STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
@@ -1767,7 +1796,7 @@
       // row below is the single fullscreen/maximize control (t2 - the old ⤢
       // "Maximize chords" icon here was redundant with Stage and was removed).
       var head = '<div class="detailHead">'
-        + '<button class="iconBtn" id="backLib" title="Back to Library">←</button>'
+        + '<button class="iconBtn" id="backLib" title="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '" aria-label="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '">←</button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
         // artist (no hardcoded placeholder to duplicate the title) - omit the
         // ' · ' separator entirely rather than showing a leading, artist-less dot.
@@ -1867,7 +1896,7 @@
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab('library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -2021,6 +2050,13 @@
       // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
       // way - they rely on the persistent Undo affordance, out of this fix's scope).
       var ok = saveSet();
+      // Operator spec 2026-07-17 (verbatim): "the list should not be
+      // reordered. it should not scroll....just set item selected." An add
+      // NEVER scrolls - and it CANCELS any stale post-save highlight so a
+      // leftover save-flag can't fire a scroll on this render either. The
+      // row order is stable by construction (in-place shadowing + track-slot
+      // merges), so the tapped row simply gains its check where it stands.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
       if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
@@ -2053,6 +2089,11 @@
       if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
       if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
       var ok = saveSet();
+      // Operator spec 2026-07-17: adds never scroll and never reorder - the
+      // seeded copy takes the TRACK's own slot in the merge (Repertoire.build
+      // track-slot rule), so the row stays exactly where the user tapped it.
+      // Cancel any stale post-save highlight so nothing scrolls this render.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       // Display spelling via the SAME facet label the Key filter chip shows
       // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
@@ -2585,8 +2626,14 @@
         if (!Array.isArray(arr)) return [];
         // Keep only well-shaped entries - a hand-edited or partially-corrupt
         // key degrades to dropping the bad rows, not the whole buffer.
+        // Operator UAT 2026-07-17 ("don't name things Progression - it poisons
+        // the well"): normalize the legacy pre-fix buffer label at load, same
+        // mapping sectionsFromSheet applies to saved sheets - the song context
+        // only ever speaks the standard section vocabulary.
         return arr.filter(function (s) {
           return s && typeof s.label === 'string' && Array.isArray(s.seq);
+        }).map(function (s) {
+          return s.label === 'Progression' ? Object.assign({}, s, { label: 'Verse' }) : s;
         });
       } catch (e) { return []; }
     }
@@ -2658,7 +2705,9 @@
     // S-PROG-GUIDANCE: Pre-Chorus joins the section set - it's a first-class
     // section in the songwriting canon (the departure+build before the chorus),
     // and it gives the Pre-chorus lift (IV-V) template family a home surface.
-    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+    // Solo (operator UAT 2026-07-17): the home for lead/solo-line work built in
+    // the Tracks Studio - conventionally sits after the bridge.
+    var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
@@ -3194,17 +3243,16 @@
       stopSectPlay(); disarmRm();
       progression = sec.seq.slice(); cTpose = 0;
       editingSectionIdx = i;
-      // Operator UAT 2026-07-17: a section label outside SONG_SECTIONS (an old
-      // save, a future custom label) must never render a BLANK select - append
-      // it as an option before selecting so the control always shows the truth.
+      // Operator UAT 2026-07-17 round 2: NEVER append a foreign label as an
+      // option ("don't name things Progression") - the dropdown speaks only the
+      // standard section set. Labels are normalized at every load boundary
+      // (loadSongSections, sectionsFromSheet), so a mismatch here is a truly
+      // custom label: default the select to the FIRST standard option and let
+      // the user pick - never a blank control, never a poisoned vocabulary.
       if (songSectSelEl) {
         var has = Array.prototype.some.call(songSectSelEl.options || [], function (o) { return o.value === sec.label; });
-        if (!has) {
-          var opt = document.createElement('option');
-          opt.value = sec.label; opt.textContent = sec.label;
-          songSectSelEl.appendChild(opt);
-        }
-        songSectSelEl.value = sec.label;
+        songSectSelEl.value = has ? sec.label
+          : (songSectSelEl.options && songSectSelEl.options.length ? songSectSelEl.options[0].value : '');
       }
       chordView = null;
       reinferKey();
@@ -5413,17 +5461,28 @@
       sec.appendChild(btn); sec.appendChild(pane); body.appendChild(sec);
 
       // Hidden file input for import (shared by the first-start lead + the row).
+      // S-SKILLS-PORTABLE (operator UAT 2026-07-16): accepts BOTH the v1 JSON
+      // document AND a SKILL.md rendered by skill-md.js - a .md file's
+      // embedded ```json block is the same document (lossless round-trip),
+      // so competency.js's importProfile stays the ONE validator for both.
       var fileInput = document.createElement('input');
       fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
-      fileInput.accept = 'application/json,.json'; fileInput.hidden = true;
+      fileInput.accept = 'application/json,.json,text/markdown,.md'; fileInput.hidden = true;
       sec.appendChild(fileInput);
       fileInput.onchange = function () {
         var f = fileInput.files && fileInput.files[0];
         if (!f) return;
         var rdr = new FileReader();
         rdr.onload = function () {
-          var res;
-          try { res = C.importProfile(String(rdr.result)); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+          var res, text = String(rdr.result);
+          try {
+            if (/\.md$/i.test(f.name || '') && global.SkillMd && typeof global.SkillMd.parse === 'function') {
+              var md = global.SkillMd.parse(text);
+              res = md.ok ? C.importProfile(md.doc) : { ok: false, reason: md.reason };
+            } else {
+              res = C.importProfile(text);
+            }
+          } catch (e) { res = { ok: false, reason: 'could not read file' }; }
           if (res && res.ok) { showToast('Imported your ' + skillName(res.skill) + ' profile'); }
           else { showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true); }
           fileInput.value = ''; // allow re-picking the same file
@@ -5441,17 +5500,41 @@
         if (!iso) return '';
         try { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; }
       }
-      function downloadProfile(skillId) {
-        var json = C.exportProfile(skillId);
-        if (!json) { showToast("Nothing to export yet", true); return; }
+      function downloadBlob(blob, filename, doneMsg) {
         try {
-          var blob = new Blob([json], { type: 'application/json' });
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
-          a.href = url; a.download = skillId + '.json';
+          a.href = url; a.download = filename;
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
           setTimeout(function () { URL.revokeObjectURL(url); }, 0);
-          showToast('Exported ' + skillName(skillId));
+          if (doneMsg) showToast(doneMsg);
+        } catch (e) { showToast("Couldn't export on this device", true); }
+      }
+      // S-SKILLS-PORTABLE: per-skill export is a SKILL.md (open skills format;
+      // the v1 JSON travels INSIDE it as the embedded data block - see
+      // skill-md.js), named <skill-id>-SKILL.md as a bare download. The
+      // whole-bundle export below zips every skill as <skill-id>/SKILL.md
+      // (the folder convention) via the dependency-free zip-store.js.
+      function downloadProfile(skillId) {
+        var json = C.exportProfile(skillId);
+        var md = (json && global.SkillMd && typeof global.SkillMd.render === 'function')
+          ? global.SkillMd.render(json) : null;
+        if (!md) { showToast("Nothing to export yet", true); return; }
+        downloadBlob(new Blob([md], { type: 'text/markdown' }), skillId + '-SKILL.md', 'Exported ' + skillName(skillId));
+      }
+      function downloadBundle() {
+        if (!global.SkillMd || !global.ZipStore) { showToast("Couldn't export on this device", true); return; }
+        var files = [];
+        C.FRAMEWORKS.forEach(function (fw) {
+          var json = C.exportProfile(fw.id);
+          var md = json ? global.SkillMd.render(json) : null;
+          if (md) files.push({ path: global.SkillMd.bundlePath(fw.id), text: md });
+        });
+        if (!files.length) { showToast("Nothing to export yet", true); return; }
+        try {
+          var bytes = global.ZipStore.build(files);
+          downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'music-skills.zip',
+            'Exported all skills (' + files.length + ')');
         } catch (e) { showToast("Couldn't export on this device", true); }
       }
 
@@ -5528,20 +5611,35 @@
           row.appendChild(head); row.appendChild(detail); pane.appendChild(row);
         });
 
+        // S-SKILLS-PORTABLE: whole-bundle export - every skill as
+        // <skill-id>/SKILL.md in one zip (only when there is data to carry).
+        if (has) {
+          var exportAllRow = document.createElement('button');
+          exportAllRow.className = 'listItem setRow skillsExportAllRow'; exportAllRow.type = 'button';
+          var eb = document.createElement('span'); eb.className = 'li-body';
+          var et = document.createElement('span'); et.className = 'li-title'; et.textContent = 'Export all skills';
+          var ea = document.createElement('span'); ea.className = 'li-artist';
+          ea.textContent = 'One zip - every skill as skill-name/SKILL.md.';
+          eb.appendChild(et); eb.appendChild(ea); exportAllRow.appendChild(eb);
+          exportAllRow.onclick = downloadBundle;
+          pane.appendChild(exportAllRow);
+        }
         if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
       }
 
-      // Single-section accordion so the open/close feel matches the others; the
-      // body renders lazily the first time it opens and refreshes on each open.
-      var acc = (global.Accordion && global.Accordion.init) ? global.Accordion.init([{ btn: btn, body: pane }]) : null;
-      var origOnclick = btn.onclick;
-      btn.onclick = function (e) {
-        if (origOnclick) origOnclick.call(btn, e);      // let the accordion toggle first
-        if (!pane.hidden) renderSkillsPanel();          // now-open -> (re)render fresh
-        else if (!acc) pane.hidden = false;             // no accordion primitive -> fallback toggle
-      };
+      // S-SETTINGS-UAT (operator UAT 2026-07-16): JOIN the page's 'settings'
+      // accordion group instead of running a parallel single-section
+      // accordion - the old shape opened Skills WITHOUT collapsing the other
+      // sections (two independent groups can both hold an open section), the
+      // exact "opens independently" finding. Accordion.join is order-proof
+      // (queues if the page group hasn't init'd yet), onOpen keeps the
+      // lazy-render-on-every-open behavior, and the primitive itself now
+      // scrolls a tapped-open section into view (the "feels like nothing
+      // happens - it opened off-screen" half of the finding).
+      var joined = !!(global.Accordion && typeof global.Accordion.join === 'function'
+        && global.Accordion.join('settings', { btn: btn, body: pane, onOpen: renderSkillsPanel }));
       // Fallback wiring when Accordion is unavailable (keeps the panel usable).
-      if (!acc) {
+      if (!joined) {
         btn.onclick = function () {
           var open = pane.hidden; pane.hidden = !open;
           btn.setAttribute('aria-expanded', open ? 'true' : 'false');

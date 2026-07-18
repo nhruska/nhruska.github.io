@@ -260,7 +260,9 @@
 // palettes) + shared/songbook.js (chip/tile fork, Shapes toggle, filmstrip
 // demotion) + shared/songbook.css (.ccChips/.ccMode/.ccShapes) +
 // play/index.html (script tag).
-var CACHE = 'music-v177';
+// S-AUDIO-REALFEEL (#88, re-staggered past the 2026-07-18 train): audio.js
+// KS strum engine. v184 sits above main's v182 and open PR #270's v183.
+var CACHE = 'music-v184';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone
@@ -306,7 +308,11 @@ var CORE = [
   // list-item.js/repertoire.js/repertoire-form.js: S-HARDEN A6 backfill - all
   // 3 are script-tagged in play/index.html but were missing from CORE (see
   // the CACHE-bump comment above).
-  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js', './shared/repertoire-form.js',
+  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
+  // skill-md.js + zip-store.js: S-SKILLS-PORTABLE (2026-07-16) - script-tagged
+  // in play/index.html right after competency.js (whose export they render/bundle).
+  './shared/skill-md.js', './shared/zip-store.js',
+  './shared/repertoire-form.js',
   // yt-info.js: M-TRACKLIB wave 2a (U17) - script-tagged in play/index.html
   // right after repertoire-form.js (see the CACHE-bump comment above).
   './shared/yt-info.js',
