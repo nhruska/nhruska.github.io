@@ -2050,12 +2050,13 @@
       // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
       // way - they rely on the persistent Undo affordance, out of this fix's scope).
       var ok = saveSet();
-      // Operator UAT 2026-07-17: an add must never leave the user staring at
-      // the spot a row just vacated (fork/seed adds can relocate the merged
-      // row). Flag the added id for renderSongs' scroll-to + highlight so the
-      // view FOLLOWS the row - it lands checked, visible, and flashed wherever
-      // the merge placed it.
-      if (adding) pendingHighlightId = id;
+      // Operator spec 2026-07-17 (verbatim): "the list should not be
+      // reordered. it should not scroll....just set item selected." An add
+      // NEVER scrolls - and it CANCELS any stale post-save highlight so a
+      // leftover save-flag can't fire a scroll on this render either. The
+      // row order is stable by construction (in-place shadowing + track-slot
+      // merges), so the tapped row simply gains its check where it stands.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       if (STATE.current && STATE.current.id === id) renderPractice();
       if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok);
@@ -2088,12 +2089,11 @@
       if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
       if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
       var ok = saveSet();
-      // Operator repro 2026-07-17 (#269 preview, round 2): the keyseed add
-      // bypasses toggleSet, so it must flag the follow-the-row highlight
-      // ITSELF - the seeded copy consumes the track row and the merged row
-      // relocates; without this the row vanishes from the user's view. Same
-      // contract as toggleSet: the view scrolls to + flashes the added row.
-      pendingHighlightId = saved.id;
+      // Operator spec 2026-07-17: adds never scroll and never reorder - the
+      // seeded copy takes the TRACK's own slot in the merge (Repertoire.build
+      // track-slot rule), so the row stays exactly where the user tapped it.
+      // Cancel any stale post-save highlight so nothing scrolls this render.
+      pendingHighlightId = null;
       renderSongs(); renderSetlist();
       // Display spelling via the SAME facet label the Key filter chip shows
       // (Repertoire.keyLabel - canonical-sharp identity + Circle.preferredTonicName
