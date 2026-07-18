@@ -1,0 +1,32 @@
+{
+  "name": "library-add-follows",
+  "note": "S-ADD-FOLLOWS (operator UAT 2026-07-17: 'when I add songs or progressions from library to the setlist, they disappear from my view instead of being highlighted with a check mark'). Two guards: (1) a fork/seed/custom add must leave the tapped row VISIBLE IN THE VIEWPORT and CHECKED after the re-render - the view follows the row wherever the merge places it (pendingHighlightId on every toggleSet add); (2) buildAllSongs shadows a fork IN PLACE (node-locked) so rows stop teleporting at all. Real flow: save a custom progression (setlist unchecked), find its library row, tap its +, assert visible+checked.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tapChord", "name": "C" },
+    { "action": "tapChord", "name": "G" },
+    { "action": "tap", "selector": "#cSave" },
+    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
+    {
+      "action": "evalAssert",
+      "label": "uncheck add-to-setlist so the library + tap is the thing under test",
+      "js": "(function(){var c=document.querySelector('.composeRowSetToggle input');if(c && c.checked) c.click();return true;})()"
+    },
+    { "action": "tap", "selector": ".composeRow .btn.red" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Original track\") .li-add" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the added row is CHECKED and FULLY INSIDE the viewport after the re-render - never vanished from view (the reported bug)",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original track')>=0;})[0];if(!r)return false;var b=r.getBoundingClientRect();return r.classList.contains('inSet') && b.top>=0 && b.bottom<=window.innerHeight;})()"
+    },
+    { "action": "screenshot", "name": "library-add-follows" }
+  ]
+}

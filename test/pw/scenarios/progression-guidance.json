@@ -1,26 +1,53 @@
 {
   "name": "progression-guidance",
   "note": "S-PROG-GUIDANCE (operator UAT 2026-07-17: 'I could use that level of guidance when choosing standard progressions' + 'needs more progressions' + issue #264 rename + the blank-section-dropdown bug on a re-opened plain progression). Three asserts groups, all red-first: (1) the Song-canvas template chooser reveals a FEEL/WHEN/PROVEN guidance ladder behind a per-suggestion '?' (absent pre-fix), and the section switcher includes Pre-Chorus (absent pre-fix); (2) the Chords-mode suggest row leads with 'Suggested' (#264 - pre-fix said 'Add a 2nd chord:'); (3) a LEGACY custom saved with the off-vocabulary 'Progression' sheet label re-enters the builder as a standard 'Verse' section with a NON-BLANK section dropdown (pre-fix: card read 'Progression', select rendered blank).",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Song\")" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".composeModeBtn:has-text(\"Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
-      "label": "the section switcher includes Pre-Chorus (new home for the IV-V lift family)",
-      "js": "Array.prototype.some.call(document.querySelectorAll('#songSuggestLabels .chordSegBtn, .songSuggest .chordSegBtn'), function(b){return b.textContent.trim()==='Pre-Chorus';})"
+      "label": "the section switcher includes Pre-Chorus AND Solo (operator sections 2026-07-17)",
+      "js": "(function(){var t=Array.prototype.map.call(document.querySelectorAll('#songSuggestLabels .chordSegBtn, .songSuggest .chordSegBtn'),function(b){return b.textContent.trim();});return t.indexOf('Pre-Chorus')>=0 && t.indexOf('Solo')>=0;})()"
     },
     {
       "action": "evalAssert",
       "label": "every template suggestion renders as a row with a '?' guidance reveal (absent pre-fix)",
       "js": "(function(){var items=document.querySelectorAll('.songSuggestItem');if(!items.length)return false;return document.querySelectorAll('.ssWhy').length>=1;})()"
     },
-    { "action": "tap", "selector": ".songSuggestItem .ssWhy" },
-    { "action": "wait", "ms": 300 },
+    {
+      "action": "tap",
+      "selector": ".songSuggestItem .ssWhy"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
     {
       "action": "evalAssert",
       "label": "the guidance ladder opens with FEEL and WHEN labeled rows carrying real prose (the Studio-guidance bar)",
@@ -31,11 +58,26 @@
       "label": "the open '?' is marked (aria-expanded) and tapping is one-at-a-time revealable",
       "js": "(function(){var on=document.querySelector('.ssWhy.on');return !!on && on.getAttribute('aria-expanded')==='true' && document.querySelectorAll('.ssWhyPanel').length===1;})()"
     },
-    { "action": "screenshot", "name": "guidance-panel-open" },
-    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Chords\")" },
-    { "action": "wait", "ms": 300 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 300 },
+    {
+      "action": "screenshot",
+      "name": "guidance-panel-open"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeModeBtn:has-text(\"Chords\")"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
     {
       "action": "evalAssert",
       "label": "#264: the suggest row leads with 'Suggested' (pre-fix: 'Add a 2nd chord:')",
@@ -46,26 +88,59 @@
       "label": "seed a LEGACY plain-progression custom with the old 'Progression' sheet label",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'legacyProg1', t:'Legacy Prog', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G'], sheet:[['Progression','[C] [G]']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Legacy Prog\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapText", "text": "Continue building" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Legacy Prog\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapText",
+      "text": "Continue building"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the legacy 'Progression' section re-enters the canvas as a STANDARD Verse card (pre-fix: card read 'Progression')",
       "js": "(function(){var n=document.querySelector('#songSections .songSect .songSectName');return !!n && /^Verse\\b/.test(n.textContent.trim());})()"
     },
-    { "action": "tap", "selector": "#songSections .songSect .songSectEdit" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": "#songSections .songSect .songSectEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "editing it points the section dropdown at Verse - NEVER a blank select (the reported bug)",
       "js": "(function(){var s=document.getElementById('songSectSel');return !!s && s.value==='Verse';})()"
     },
-    { "action": "screenshot", "name": "legacy-prog-as-verse" }
+    {
+      "action": "screenshot",
+      "name": "legacy-prog-as-verse"
+    }
   ]
 }
