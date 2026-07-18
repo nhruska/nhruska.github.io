@@ -1637,7 +1637,10 @@
       // actually found and highlighted - a filtered/empty visible render keeps
       // the highlight pending for the render that really shows it (codex #91).
       if (visible && pendingHighlightId != null && justSavedEl) {
-        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // 'auto' (instant), not 'smooth': on Android a long smooth scroll can be
+        // interrupted by re-layout (toast mount) and strand the viewport mid-list
+        // - the follow contract needs a GUARANTEED landing on the row.
+        if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center' });
         justSavedEl.classList.add('justSaved');
         pendingHighlightId = null;
       }
