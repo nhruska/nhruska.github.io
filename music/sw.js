@@ -262,7 +262,7 @@
 // play/index.html (script tag).
 // S-AUDIO-REALFEEL (#88, re-staggered past the 2026-07-18 morning train):
 // audio.js KS strum engine. v187 sits above main's v186 (#270/#271/#272).
-var CACHE = 'music-v187';
+var CACHE = 'music-v188';
 var CORE = [
   './', './index.html',
   // tracks.json is the live data source for the play app's Tracks tab (the standalone

@@ -4289,7 +4289,7 @@
       // names its INTENT - the app is proposing coherent next chords, not
       // demanding one - while the ordinal keeps the where-am-I scaffold.
       var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = n === 1 ? "Suggested 2nd chord:" : n === 2 ? "Suggested 3rd chord:" : n === 3 ? "Suggested 4th chord:" : "Suggested chords";
+      lbl.textContent = "Suggested Chords";
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent

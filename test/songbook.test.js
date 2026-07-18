@@ -1821,17 +1821,17 @@ test('F30: renderSuggest labels the suggested-chords row at every progression le
   // Issue #264 (operator UAT 2026-07-17): the row leads with "Suggested" so it
   // names its INTENT; the ordinal keeps the where-am-I scaffold.
   tap(); // 1 chord
-  assert.strictEqual(suggLbl(m).textContent, 'Suggested 2nd chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested Chords');
   tap(); // 2 chords
-  assert.strictEqual(suggLbl(m).textContent, 'Suggested 3rd chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested Chords');
   tap(); // 3 chords
-  assert.strictEqual(suggLbl(m).textContent, 'Suggested 4th chord:');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested Chords');
   tap(); // 4 chords - F30's exact gap: this used to render NO label at all
   var lbl = suggLbl(m);
   assert.ok(lbl, 'F30: a label must render above the suggested chords past the 4th chord too');
-  assert.strictEqual(lbl.textContent, 'Suggested chords');
+  assert.strictEqual(lbl.textContent, 'Suggested Chords');
   tap(); // 5 chords - stays labeled, not just a one-time fix at exactly 4
-  assert.strictEqual(suggLbl(m).textContent, 'Suggested chords');
+  assert.strictEqual(suggLbl(m).textContent, 'Suggested Chords');
 });
 
 function mountForSoloChoiceTests(openStudioSpy) {
