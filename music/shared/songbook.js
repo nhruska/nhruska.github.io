@@ -3664,6 +3664,25 @@
         }
         var keyRoot = songKey.root, keyMode = songKey.mode;
         var leadWrap = document.createElement('div'); leadWrap.className = 'inKeyLead';
+        // Operator UAT 2026-07-17 ("needs some barrier between suggested and
+        // chords in key"): the suggested row flowed straight into the in-key
+        // palette with nothing splitting the two groups (the All view gets its
+        // split for free from the quality-chip row). A labeled section boundary
+        // - the SAME .suggLbl primitive the suggested row uses, plus a top
+        // hairline - makes the two zones read as two groups. This supersedes
+        // the older "the key chip already names the key, so no list header"
+        // rationale (KeyExplorer call below): the header's job here is group
+        // separation, naming the key is the bonus. The key ROOT renders inside
+        // an uppercase-transform opt-out span (.lblNote) so a flat accidental
+        // survives ("Bb", never "BB" - note-spelling.md / a11y rule).
+        var ikLbl = document.createElement('div'); ikLbl.className = 'suggLbl inKeyLbl';
+        ikLbl.appendChild(document.createTextNode('Chords in '));
+        var ikRoot = document.createElement('span'); ikRoot.className = 'lblNote';
+        ikRoot.textContent = (global.Circle && global.Circle.preferredTonicName)
+          ? global.Circle.preferredTonicName(keyRoot, keyMode) : keyRoot;
+        ikLbl.appendChild(ikRoot);
+        ikLbl.appendChild(document.createTextNode(' ' + String(keyMode || '')));
+        leadWrap.appendChild(ikLbl);
         if (useChips) {
           // S-CHORD-COLLAPSE: compact chip palette - needs no KeyExplorer (the
           // chip is name + roman, both derived right here), so this branch
