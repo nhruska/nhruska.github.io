@@ -139,4 +139,42 @@ test('scrape wiring: pluckKS fires the scrape through the bus scrape input (bypa
   assert.ok(/scrapeRender\(/.test(src.split('function pluckKS')[1] || ''), 'pluckKS must render + fire the scrape transient');
 });
 
+/* ---- tap-to-strum latency (UAT regression, live v187) --------------------
+ * The KS engine re-rendered every string on every tap (synchronous, on the
+ * UI thread) and kept a 20ms scheduling pad - a musician evaluating strums
+ * feels the gap. The fix: an LRU voice cache keyed by SEMITONE + brightness
+ * bucket, with per-tap micro-detune moved to playbackRate so nearby-detuned
+ * taps HIT the cache instead of forcing a fresh render. These pin the pure
+ * cache-key/LRU logic + the wiring. */
+test('VoiceCache: nearby detunes share a key; different notes/brightness do not', function () {
+  var VC = ChordAudio.VoiceCache;
+  assert.strictEqual(typeof VC.key, 'function', 'VoiceCache.key missing');
+  // +/-0.45% micro-detune (the strum jitter) must land on the SAME semitone key
+  assert.strictEqual(VC.key(220, 0.49, 1.6), VC.key(220 * 1.0045, 0.49, 1.6), 'micro-detuned tap must hit the same key');
+  assert.strictEqual(VC.key(220, 0.49, 1.6), VC.key(220 * 0.9955, 0.49, 1.6), 'micro-detuned tap must hit the same key (down)');
+  // a semitone away is a different string pitch - different key
+  assert.notStrictEqual(VC.key(220, 0.49, 1.6), VC.key(233.08, 0.49, 1.6), 'A vs A# must not collide');
+  // brightness buckets: within a bucket same key, across buckets different
+  assert.strictEqual(VC.key(220, 0.49, 1.6), VC.key(220, 0.51, 1.6), 'same 0.05 brightness bucket must share a key');
+  assert.notStrictEqual(VC.key(220, 0.30, 1.6), VC.key(220, 0.60, 1.6), 'far-apart brightness must not collide');
+});
+
+test('VoiceCache: LRU stays bounded and evicts oldest', function () {
+  var VC = ChordAudio.VoiceCache;
+  var c = VC.create(3);
+  c.put('a', 1); c.put('b', 2); c.put('c', 3);
+  assert.strictEqual(c.get('a'), 1, 'hit refreshes recency');
+  c.put('d', 4); // evicts b (a was refreshed)
+  assert.strictEqual(c.get('b'), undefined, 'oldest entry must be evicted at the cap');
+  assert.strictEqual(c.get('a'), 1); assert.strictEqual(c.get('c'), 3); assert.strictEqual(c.get('d'), 4);
+  assert.ok(c.size() <= 3, 'cache must never exceed its cap');
+});
+
+test('latency wiring: detune rides playbackRate, the running-context pad is tight, idle release is evaluation-friendly', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'audio.js'), 'utf8');
+  assert.ok(/playbackRate\.value\s*=/.test(src), 'per-tap detune must apply via playbackRate (so the cache can hit), not by re-rendering at a detuned freq');
+  assert.ok(/IDLE_RELEASE_MS\s*=\s*20000/.test(src), 'idle release must be 20s - a musician evaluating strums taps sparsely; 4s made every listen re-pay the context resume');
+  assert.ok(/wasRunning \? 0\.006 : 0\.02/.test(src), 'the already-running scheduling pad must be 6ms (20ms was audible); the just-resumed path keeps the generous pad');
+});
+
 run();
