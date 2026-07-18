@@ -21,6 +21,8 @@ Step vocabulary (keep it small + declarative - add verbs here, not imperative co
 in scenarios):
   goto {path}                          - navigate relative to base URL
   wait {ms}                            - settle time
+  setOffline {on}                      - flip the browser context's network (true=offline;
+                                         fetch() rejects + navigator.onLine false) - PWA tests
   tap {selector}                       - click first match
   tapText {text, scope?}               - click element whose exact trimmed text matches
   tapChord {name}                      - click the #buildGrid tile whose .chord-name == name
@@ -142,6 +144,11 @@ def run(scenario_path, base_url=None):
                         page.goto(base_url + step['path'], wait_until='domcontentloaded')
                     elif act == 'wait':
                         page.wait_for_timeout(step['ms'])
+                    elif act == 'setOffline':
+                        # PWA offline testing: flips the CONTEXT's network (real
+                        # request-level offline - fetch() rejects, navigator.onLine
+                        # goes false). {"action":"setOffline","on":true|false}
+                        ctx.set_offline(bool(step.get('on', True)))
                     elif act == 'tap':
                         page.locator(step['selector']).first.click(timeout=4000)
                     elif act == 'dragReorder':

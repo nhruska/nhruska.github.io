@@ -1,0 +1,75 @@
+{
+  "name": "offline-boot",
+  "note": "Operator UAT 2026-07-18: 'I lost my Internet and app wouldn't load. how do I know if it's offline?'. The PWA promise, end to end: visit once online (the worker precaches automatically - zero friction), then go OFFLINE and reload - the app MUST boot from cache, show the quiet OFFLINE pill in the appbar (so the state is named, per the UAT ask), and remain fully usable (a chord tap still works - engine assets came from cache). The bars-but-no-data hang (network-first with no deadline) is covered by the NET_DEADLINE_MS race asserted in test/sw-verify.test.js - a request-level hang isn't simulable with context.set_offline.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 2500
+    },
+    {
+      "action": "evalAssert",
+      "label": "precondition: the service worker controls the page (install + precache complete, clients.claim took effect)",
+      "js": "(function(){return !!(navigator.serviceWorker && navigator.serviceWorker.controller);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the OFFLINE pill is hidden while online",
+      "js": "(function(){var p=document.getElementById('offlinePill');return !!p && p.hidden;})()"
+    },
+    {
+      "action": "setOffline",
+      "on": true
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1500
+    },
+    {
+      "action": "evalAssert",
+      "label": "THE PWA PROMISE: the app booted with no network at all - tabbar visible, library rendered from cached data (NOTE: never sniff body.textContent for fail-banner strings - inline script SOURCE is part of textContent and always contains them)",
+      "js": "(function(){var bar=document.querySelector('.tabbar');var rows=document.querySelectorAll('#songsList .listItem');return !!bar && bar.offsetParent!==null && rows.length>3;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the OFFLINE pill names the state (operator: 'how do I know if it's offline?')",
+      "js": "(function(){var p=document.getElementById('offlinePill');return !!p && !p.hidden && /offline/i.test(p.textContent);})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the app is genuinely USABLE offline - the chord tap landed (engine + profile assets all came from cache)",
+      "js": "(function(){return document.querySelectorAll('#prog .slot').length===1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "offline-boot"
+    },
+    {
+      "action": "setOffline",
+      "on": false
+    }
+  ]
+}
