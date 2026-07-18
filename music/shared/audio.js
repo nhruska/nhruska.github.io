@@ -146,11 +146,16 @@
     if (bus && bus.a === a) return bus;
     var input = a.createGain(); input.gain.value = 0.9;
 
+    // Warmth voicing (ear-test 2026-07-17, "too much high end / cheap
+    // strings"): body peak up 3.5 -> 4.5dB (more wood to fill what the
+    // lowpass takes), tame cutoff down 4200 -> 2600Hz (steel-sparkle band
+    // out; uke/nylon character lives ~2-3kHz), Q 0.6 -> 0.5 for a gentler
+    // knee. Partner change: the softer pick range in strum().
     var body = a.createBiquadFilter();
-    body.type = 'peaking'; body.frequency.value = 120; body.Q.value = 0.7; body.gain.value = 3.5;
+    body.type = 'peaking'; body.frequency.value = 120; body.Q.value = 0.7; body.gain.value = 4.5;
 
     var tame = a.createBiquadFilter();
-    tame.type = 'lowpass'; tame.frequency.value = 4200; tame.Q.value = 0.6;
+    tame.type = 'lowpass'; tame.frequency.value = 2600; tame.Q.value = 0.5;
 
     var comp = a.createDynamicsCompressor();
     comp.threshold.value = -14; comp.knee.value = 24; comp.ratio.value = 3;
@@ -247,7 +252,17 @@
         var roll = 1 - i * (0.05 + (1 - vel) * 0.04);
         if (roll < 0.3) roll = 0.3;
         var gain = (up ? 0.11 : 0.15) * vel * roll;
-        var bright = 0.42 + vel * 0.28 + (Math.random() - 0.5) * 0.08;
+        // Pick tone (ear-test verdict 2026-07-17: "too much high end, sounds
+        // like cheap strings"): the old range (0.42 + vel*0.28 ~= 0.66 at
+        // default velocity) is a hard plastic pick - the noise burst carried
+        // too much HF into the string. 0.30 + vel*0.22 (~0.49 default) is a
+        // felt-pick/thumb range: same velocity->brightness slope, warmer
+        // resting tone. Measured: -1.6dB HF (>2kHz) attack energy at default
+        // velocity - the ATTACK's share of the fix; the sustained-tone cut
+        // comes from the master-bus tame lowpass (masterBus), -5..-8dB across
+        // 3-6kHz. If a future ear test says "still bright", this range is the
+        // second knob; "too dark" -> raise the tame cutoff first.
+        var bright = 0.30 + vel * 0.22 + (Math.random() - 0.5) * 0.06;
         pluckKS(a, m.input, v.freq * det, t, dur, gain, bright);
         // advance the sweep with a little timing jitter (a human isn't exact)
         gap = Math.max(0.006, gap * accel + (Math.random() - 0.5) * 0.004);
