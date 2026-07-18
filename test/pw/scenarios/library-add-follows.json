@@ -1,0 +1,85 @@
+{
+  "name": "library-add-follows",
+  "note": "S-ADD-STABLE sibling (operator spec 2026-07-17: 'the list should not be reordered. it should not scroll....just set item selected'). The CUSTOM-row add path: save a progression (setlist unchecked), tap its library +, and the row gains its check IN PLACE - list order identical, scroll untouched. Supersedes the earlier follow-the-row semantics (scroll-follow was a band-aid; stability is the contract).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "evalAssert",
+      "label": "uncheck add-to-setlist so the library + tap is the thing under test",
+      "js": "(function(){var c=document.querySelector('.composeRowSetToggle input');if(c && c.checked) c.click();return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "scroll the custom row into view (the user is looking at it) and snapshot order + scroll",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original track')>=0;})[0];if(!r)return false;r.scrollIntoView({block:'center'});var sc=document.getElementById('libSongs');window.__preOrder2=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});window.__preScroll2=sc?sc.scrollTop:0;return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Original track\") .li-add"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "the added row is CHECKED IN PLACE - list order identical, scroll untouched (operator spec)",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Original track')>=0;})[0];if(!r||!r.classList.contains('inSet'))return false;var order=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});var sc=document.getElementById('libSongs');var scOK=!window.__preScroll2 || Math.abs((sc?sc.scrollTop:0)-window.__preScroll2)<=2;var ordOK=!window.__preOrder2 || JSON.stringify(order)===JSON.stringify(window.__preOrder2);return ordOK && scOK;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "library-add-follows"
+    }
+  ]
+}

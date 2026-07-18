@@ -431,12 +431,15 @@ test('buildAllSongs: no customs -> catalog only, kN ids assigned in order', func
   var all = Songbook.buildAllSongs(CAT, []);
   assert.deepStrictEqual(all.map(function (s) { return s.id; }), ['k0', 'k1', 'k2']);
 });
-test('buildAllSongs: a fork SHADOWS its catalog original and appends the fork', function () {
+test('buildAllSongs: a fork SHADOWS its catalog original IN PLACE - the copy holds the original\'s list position', function () {
+  // Operator UAT 2026-07-17 ("rows disappear from my view"): the old contract
+  // appended the fork at the end, so the row the user tapped teleported down
+  // the list. New contract: the fork sits exactly where its original sat.
   var fork = { id: 'm1', custom: true, forkOf: 'k1', t: 'My B', a: 'Y', sheet: [['V', '[G] mine']] };
   var all = Songbook.buildAllSongs(CAT, [fork]);
   var ids = all.map(function (s) { return s.id; });
   assert.ok(ids.indexOf('k1') < 0, 'catalog k1 is shadowed (omitted)');
-  assert.deepStrictEqual(ids, ['k0', 'k2', 'm1']);           // k1 gone, fork appended
+  assert.deepStrictEqual(ids, ['k0', 'm1', 'k2']);           // fork IN k1's slot, not appended
   assert.strictEqual(all.find(function (s) { return s.id === 'm1'; }).t, 'My B');
 });
 test('buildAllSongs: a fork PRESERVES its own sheet (chords+lyrics), not a chord-only rebuild', function () {

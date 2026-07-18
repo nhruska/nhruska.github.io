@@ -659,7 +659,30 @@
   // esc.js (loaded earlier in this file's script order) - was one of ~8
   // divergent local copies.
   function esc(s) { return Esc.esc(s); }
-  function fail(msg) { var list = el('songsList'); if (list) list.innerHTML = '<div class="empty">' + esc(msg) + '</div>'; }
+  // Operator UAT 2026-07-17 ("I've lost every song I've built? there can't be
+  // a hard fail like that ever"): a boot failure must NEVER read as data loss.
+  // Saved songs/setlists live in this device's localStorage and are untouched
+  // by a failed script/asset load - say so FIRST, offer the one-tap recovery
+  // (reload re-fetches; the SW cache or a fresh CDN fetch usually heals a
+  // partial load), and only then the technical detail. esc() may itself be
+  // the missing module in a partial load, so fall back to textContent.
+  function fail(msg) {
+    var list = el('songsList');
+    if (!list) return;
+    var safe;
+    try { safe = esc(msg); } catch (e) { safe = ''; }
+    list.innerHTML = '<div class="empty">'
+      + '<p><strong>The app hit a loading hiccup - your saved songs and setlists are safe on this device.</strong></p>'
+      + '<p>Nothing is lost: saved work lives in this browser’s storage, not in the page. Tap reload to fetch a fresh copy of the app.</p>'
+      + '<p><button class="btn" onclick="location.reload()">Reload the app</button></p>'
+      + (safe ? '<p class="failDetail">Detail: ' + safe + '</p>' : '')
+      + '</div>';
+    if (!safe) {
+      var d = document.createElement('p'); d.className = 'failDetail';
+      d.textContent = 'Detail: ' + msg;
+      var box = list.querySelector('.empty'); if (box) box.appendChild(d);
+    }
+  }
 
   // Boot: manifest -> profile scripts -> active profile -> songs -> mount.
   var manifestOrder = [];
@@ -685,7 +708,15 @@
         .then(function (r) { if (!r.ok) throw new Error('songs.json ' + r.status); return r.json(); })
         .then(function (songs) { start(profile, songs); });
     })
-    .catch(function (err) { fail('Could not load (' + err.message + '). This page must be served over http(s) - open it via GitHub Pages or a local server.'); });
+    .catch(function (err) {
+      // Only blame the serving scheme when that IS the problem (file://) -
+      // a script/CDN hiccup got this generic message before and read as a
+      // scary dead-end (operator UAT 2026-07-17).
+      var hint = (location.protocol === 'file:')
+        ? ' This page must be served over http(s) - open it via GitHub Pages or a local server.'
+        : ' This is usually a stale or partial download (a CDN preview mid-update, a flaky connection) - reloading normally fixes it.';
+      fail('Could not load (' + err.message + ').' + hint);
+    });
 })();
 </script>
 <!-- Schema/versioned backup+restore engine (shared/backup.js). Loaded before
