@@ -24,8 +24,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "A: fresh Compose is empty and ready - zero chords in the strip, capture row hidden, Song badge shows no draft",
-      "js": "(function(){var slots=document.querySelectorAll('#prog .slot').length;var addRow=document.getElementById('songAddBtn');var addHidden=!addRow || !!(addRow.closest('[hidden]')) || addRow.offsetParent===null;var badge=document.querySelectorAll('.composeModeBtn')[1];return slots===0 && addHidden && !!badge && !/[1-9]/.test(badge.textContent);})()"
+      "label": "A: fresh Compose is empty and ready - zero chords, zero song chrome (S-COMPOSE-CALM: the toggle/tray are gone from the jam surface)",
+      "js": "(function(){var slots=document.querySelectorAll('#prog .slot').length;var tray=document.getElementById('songTray');var noChrome=!document.getElementById('composeModeSeg') && (!tray || tray.hidden);return slots===0 && noChrome;})()"
     },
     {
       "action": "tapChord",

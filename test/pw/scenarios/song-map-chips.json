@@ -1,26 +1,18 @@
 {
   "name": "song-map-chips",
-  "note": "Issue #262 (operator UAT 2026-07-17): 'users must constantly jump between the Song and Chords tabs to design and place custom chords'. The SONG MAP puts the draft's sections on the Chords surface as tappable chips routed through editSection (#261's in-place path): see the structure, jump into a section's chords, update it - all without the Song tab. Asserts the map appears after the first capture (exactly when the strip clears), grows in song order with numbered duplicates, and a chip tap loads that section's chords in edit mode with the active state - Song canvas never opened. Written red-first against main (no song map exists there).",
+  "note": "Issue #262 (operator UAT 2026-07-17): 'users must constantly jump between tabs to design and place chords'. S-COMPOSE-CALM (2026-07-19) evolves the answer: the map is TRANSACTION chrome now - it appears on the jam surface only DURING a canvas-initiated section edit (never ambiently), naming every section with the edited one active, and the Add updates in place. The ambient always-on map the original scenario pinned is deliberately retired (operator F: song tools off the jam surface); the no-tab-round-trip goalpost survives inside the edit loop.",
   "viewport": {
     "width": 412,
     "height": 915
   },
   "steps": [
     {
-      "action": "goto",
-      "path": "/music/play/"
-    },
-    {
-      "action": "wait",
-      "ms": 800
-    },
-    {
       "action": "tap",
       "selector": ".tabbar [data-tab=\"compose\"]"
     },
     {
-      "action": "wait",
-      "ms": 400
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
     },
     {
       "action": "tapChord",
@@ -28,28 +20,47 @@
     },
     {
       "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
       "name": "G"
     },
     {
+      "action": "wait",
+      "ms": 250
+    },
+    {
       "action": "tap",
-      "selector": "#songAddBtn"
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
     },
     {
       "action": "wait",
       "ms": 500
     },
     {
-      "action": "evalAssert",
-      "label": "#262: after the first capture (strip cleared) the song map is VISIBLE on the Chords surface with the Verse chip - no Song-tab visit needed to see the structure",
-      "js": "(function(){var map=document.getElementById('songMap');if(!map||map.hidden)return false;var chips=map.querySelectorAll('.songMapChip');return chips.length===1 && /^Verse$/.test(chips[0].textContent.trim()) && document.querySelectorAll('#prog .slot').length===0;})()"
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "tapChord",
       "name": "Am"
     },
     {
-      "action": "tapChord",
-      "name": "F"
+      "action": "wait",
+      "ms": 200
     },
     {
       "action": "evalAssert",
@@ -66,12 +77,17 @@
     },
     {
       "action": "evalAssert",
-      "label": "the map grew in song order: Verse, Chorus",
-      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');return chips.length===2 && /^Verse$/.test(chips[0].textContent.trim()) && /^Chorus$/.test(chips[1].textContent.trim());})()"
+      "label": "two sections buffered (Verse, Chorus), landed on the canvas",
+      "js": "(function(){var b=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');var w=document.querySelector('.composeWrap');return b.length===2 && b[0].label==='Verse' && b[1].label==='Chorus' && w.classList.contains('songMode');})()"
     },
     {
-      "action": "tapText",
-      "text": "Verse"
+      "action": "evalAssert",
+      "label": "NO ambient map on the jam surface - retired per S-COMPOSE-CALM (close the canvas to check)",
+      "js": "(function(){return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songCanvasClose"
     },
     {
       "action": "wait",
@@ -79,26 +95,55 @@
     },
     {
       "action": "evalAssert",
-      "label": "#262 core: tapping the Verse chip loads ITS chords into the strip in edit mode (chip active, 2 slots) - and the Song canvas never opened",
-      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');var on=chips[0]&&chips[0].classList.contains('on');var slots=document.querySelectorAll('#prog .slot').length;var wrap=document.querySelector('.composeWrap');var inSong=!!(wrap&&wrap.classList.contains('songMode'));return on && slots===2 && !inSong;})()"
+      "label": "the jam surface is clean: no map, no tray, outside an edit transaction",
+      "js": "(function(){var t=document.getElementById('songTray');var m=document.getElementById('songMap');function gone(e){return !e||e.hidden||e.getBoundingClientRect().height===0;}return gone(t)&&gone(m);})()"
     },
     {
-      "action": "evalAssert",
-      "label": "and the update path closes the loop: Add to song updates Verse IN PLACE (still 2 sections, no duplicate)",
-      "js": "(function(){var b=document.getElementById('songAddBtn');if(!b)return false;b.click();return true;})()"
+      "action": "tap",
+      "selector": "#cSave"
     },
     {
       "action": "wait",
-      "ms": 400
+      "ms": 450
+    },
+    {
+      "action": "tap",
+      "selector": "#songSections .songSect:nth-child(1) .songSectEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 450
     },
     {
       "action": "evalAssert",
-      "label": "still exactly Verse + Chorus after the in-place update",
-      "js": "(function(){var chips=document.querySelectorAll('#songMap .songMapChip');return chips.length===2 && /^Verse$/.test(chips[0].textContent.trim()) && /^Chorus$/.test(chips[1].textContent.trim());})()"
+      "label": "#262 core survives INSIDE the edit loop: Verse's chords load into the strip AND the map appears as transaction chrome with Verse active",
+      "js": "(function(){var slots=document.querySelectorAll('#prog .slot').length;var m=document.getElementById('songMap');if(slots!==3||!m||m.hidden)return false;var chips=m.querySelectorAll('.songMapChip');var names=Array.prototype.map.call(chips,function(c){return c.textContent;});var on=m.querySelector('.songMapChip.on');return chips.length===2 && names.join(',').indexOf('Chorus')>=0 && !!on && /Verse/.test(on.textContent);})()"
     },
     {
       "action": "screenshot",
-      "name": "song-map-chips"
+      "name": "map-during-edit"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the update path closes the loop: Add updates Verse IN PLACE - still exactly Verse + Chorus",
+      "js": "(function(){var b=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');return b.length===2 && b[0].label==='Verse' && b[1].label==='Chorus';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the transaction over, the jam surface is clean again",
+      "js": "(function(){var t=document.getElementById('songTray');return !t||t.hidden||t.getBoundingClientRect().height===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "clean-after-edit"
     }
   ]
 }

@@ -1,47 +1,200 @@
 {
   "name": "song-builder-templates",
-  "note": "M-13 g1 TEMPLATE-SUGGESTED SECTIONS (the M-12 -> M-13 payoff). Persona at 412x915: build a Verse (C-F-G), Add as Verse, then Clear the canvas. The buffer is non-empty + the progression is empty, so the SONG tray now offers proven-progression chips (SongTemplates.forSection) realized in the song's key. Switch the suggestion label to Chorus, tap the first chip -> the progression fills through the chord-add path (slots > 0, A3 clear-undo invalidated) and the add-row label is pre-set to Chorus. Add as Chorus, Assemble -> the song view shows BOTH Verse + Chorus headers. Red-first: #songSuggest does not exist on unmodified main, so step 12 (assertVisible #songSuggest) fails there. GREEN requires song-templates.js wired into play/index.html + sw.js CORE (a coupled parent merge step) so the chips populate.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "M-13 g1 TEMPLATE-SUGGESTED SECTIONS (the M-12 -> M-13 payoff). Persona at 412x915: build a Verse (C-F-G), Add as Verse, then Clear the canvas. The buffer is non-empty + the progression is empty, so the SONG tray now offers proven-progression chips (SongTemplates.forSection) realized in the song's key. Switch the suggestion label to Chorus, tap the first chip -> the progression fills through the chord-add path (slots > 0, A3 clear-undo invalidated) and the add-row label is pre-set to Chorus. Add as Chorus, Assemble -> the song view shows BOTH Verse + Chorus headers. Red-first: #songSuggest does not exist on unmodified main, so step 12 (assertVisible #songSuggest) fails there. GREEN requires song-templates.js wired into play/index.html + sw.js CORE (a coupled parent merge step) so the chips populate. S-COMPOSE-CALM (2026-07-19): first capture enters via the Save sheet (grow/add); later captures ride the Build-the-chords hop; every capture clears the strip and lands on the canvas.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 900 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "G" },
-    { "action": "wait", "ms": 200 },
-    { "action": "evalAssert", "label": "three chords in the progression", "js": "document.querySelectorAll('#prog .slot').length === 3" },
-    { "action": "assertVisible", "selector": "#songTray" },
-    { "action": "evalAssert", "label": "UAT cue: chords present, no sections yet -> start-a-song cue", "js": "(function(){var c=document.getElementById('songTrayCue');return !!c && !c.hidden && c.textContent.trim()==='Add this as a section to start a song.'})()" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "one buffered Verse, progression NOT cleared (A3)", "js": "document.querySelectorAll('#songSections .songSect').length === 1 && document.querySelectorAll('#prog .slot').length === 3" },
-    { "action": "evalAssert", "label": "UAT cue: buffer + chords -> add-more-or-assemble cue", "js": "/assemble/i.test(document.getElementById('songTrayCue').textContent)" },
-    { "action": "tap", "selector": "#cClear" },
-    { "action": "wait", "ms": 350 },
-    { "action": "evalAssert", "label": "progression empty, tray still visible (buffer non-empty)", "js": "document.querySelectorAll('#prog .slot').length === 0 && document.querySelectorAll('#songSections .songSect').length === 1 && !document.getElementById('songTray').hidden" },
-    { "action": "assertVisible", "selector": "#songSuggest" },
-    { "action": "evalAssert", "label": "UAT cue: buffer + empty canvas -> pick-a-label cue", "js": "(function(){var c=document.getElementById('songTrayCue');return !!c && !c.hidden && /label/i.test(c.textContent)})()" },
-    { "action": "tap", "selector": "#songSuggest .chordSegBtn[data-label=\"Chorus\"]" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "Chorus label is selected", "js": "!!document.querySelector('#songSuggest .chordSegBtn[data-label=\"Chorus\"].on')" },
-    { "action": "assertVisible", "selector": "#songSuggest .songSuggestChip" },
-    { "action": "evalAssert", "label": "at least one realized chorus template chip is offered", "js": "document.querySelectorAll('#songSuggest .songSuggestChip').length >= 1" },
-    { "action": "screenshot", "name": "chorus-suggestions" },
-    { "action": "tap", "selector": "#songSuggest .songSuggestChip" },
-    { "action": "wait", "ms": 350 },
-    { "action": "evalAssert", "label": "chip fills the progression (slots > 0) via the chord-add path", "js": "document.querySelectorAll('#prog .slot').length > 0" },
-    { "action": "evalAssert", "label": "A3: the Clear-undo banner is invalidated by the fill", "js": "(function(){var b=document.querySelector('.composeRow.toastAction');return !b || b.hidden === true})()" },
-    { "action": "evalAssert", "label": "the seeded section carries forward - add-row label pre-set to Chorus", "js": "document.getElementById('songSectSel').value === 'Chorus'" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "two buffered sections (Verse + Chorus)", "js": "document.querySelectorAll('#songSections .songSect').length === 2" },
-    { "action": "tap", "selector": "#songAssembleBtn" },
-    { "action": "wait", "ms": 500 },
-    { "action": "evalAssert", "label": "song view shows both section headers (Verse + Chorus)", "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()" },
-    { "action": "screenshot", "name": "assembled-song" }
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "three chords in the progression",
+      "js": "document.querySelectorAll('#prog .slot').length === 3"
+    },
+    {
+      "action": "evalAssert",
+      "label": "jam surface clean - tray is transaction chrome (S-COMPOSE-CALM)",
+      "js": "(function(){var t=document.getElementById('songTray');return !t || t.hidden || t.getBoundingClientRect().height===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "S-COMPOSE-CALM: no ambient tray cue on the jam surface (guidance moved to the Save sheet + canvas)",
+      "js": "(function(){var t=document.getElementById('songTray');return !t || t.hidden;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "one buffered Verse; the capture cleared the strip (one contract everywhere)",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1 && document.querySelectorAll('#prog .slot').length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the canvas cue is live once a section is buffered",
+      "js": "(function(){var c=document.querySelector('.songCue');return !!c && !c.hidden && c.textContent.length>4;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "progression empty; the draft persists in the buffer (the canvas shows it on demand)",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1;})()"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#songSuggest"
+    },
+    {
+      "action": "tap",
+      "selector": "#songSuggest .chordSegBtn[data-label=\"Chorus\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "Chorus label is selected",
+      "js": "!!document.querySelector('#songSuggest .chordSegBtn[data-label=\"Chorus\"].on')"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#songSuggest .songSuggestChip"
+    },
+    {
+      "action": "evalAssert",
+      "label": "at least one realized chorus template chip is offered",
+      "js": "document.querySelectorAll('#songSuggest .songSuggestChip').length >= 1"
+    },
+    {
+      "action": "screenshot",
+      "name": "chorus-suggestions"
+    },
+    {
+      "action": "tap",
+      "selector": "#songSuggest .songSuggestChip"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "chip fills the progression (slots > 0) via the chord-add path",
+      "js": "document.querySelectorAll('#prog .slot').length > 0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "A3: the Clear-undo banner is invalidated by the fill",
+      "js": "(function(){var b=document.querySelector('.composeRow.toastAction');return !b || b.hidden === true})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the seeded section carries forward - add-row label pre-set to Chorus",
+      "js": "document.getElementById('songSectSel').value === 'Chorus'"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "two buffered sections (Verse + Chorus)",
+      "js": "document.querySelectorAll('#songSections .songSect').length === 2"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAssembleBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "name the assembled song and confirm",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row||row.hidden)return false;var inp=row.querySelector('input');if(!inp)return false;inp.value='Template test song';var btns=row.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(/save/i.test(btns[i].textContent)){btns[i].click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "song view shows both section headers (Verse + Chorus)",
+      "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "assembled-song"
+    }
   ]
 }

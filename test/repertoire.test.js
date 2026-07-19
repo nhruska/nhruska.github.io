@@ -87,9 +87,14 @@ test('playability: chord-sheet song -> sheet; pure track -> studio; video flagge
   assert.deepStrictEqual(R.playability({ title: 'Nada' }), { sheet: false, studio: false, video: false });
 });
 
-test('genres() and keys() build sorted, unique facet lists', function () {
-  var list = R.build([SONG], [TRACK, { title: 'B', artist: 'B', key: 'G', mode: 'minor', genre: 'folk' }]);
-  assert.deepStrictEqual(R.genres(list), ['folk', 'reggae']);
+test('genres() and keys() build sorted, unique, CASE-INSENSITIVE facet lists (Title-case display; operator UAT 2026-07-19: Jam + jam rendered duplicate chips)', function () {
+  var list = R.build([SONG], [TRACK, { title: 'B', artist: 'B', key: 'G', mode: 'minor', genre: 'folk' },
+    { title: 'C', artist: 'C', key: 'D', mode: 'major', genre: 'Folk' },
+    { title: 'D', artist: 'D', key: 'A', mode: 'major', genre: 'REGGAE' }]);
+  assert.deepStrictEqual(R.genres(list), ['Folk', 'Reggae'], 'one chip per genre identity, Title-case display');
+  // and filter() honors the same identity: the Title-case chip matches the lowercase record
+  var hit = R.filter(list, { genre: 'Folk' });
+  assert.ok(hit.length >= 2, 'Folk chip matches folk AND Folk records, got ' + hit.length);
   var ks = R.keys(list);
   assert.ok(ks.indexOf('A') >= 0 && ks.indexOf('Gm') >= 0, 'A and Gm present: ' + ks.join(','));
 });

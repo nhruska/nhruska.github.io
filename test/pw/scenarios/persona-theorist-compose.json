@@ -1,0 +1,33 @@
+{
+  "name": "persona-theorist-compose",
+  "persona": "advanced",
+  "note": "S-COMPOSE-CALM slice 1, level-adaptive defaults (interview: 'a maestro lands on dense chips without configuring it'). Advanced: the empty-state starter cards are NOISE - suppressed; the dense collapsed chord chips (S-CHORD-COLLAPSE) are the landing. Red-first: pre-fix shows starters to every level.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "advanced emphasis: NO starter cards in the empty state (dense landing)",
+      "js": "(function(){return document.querySelectorAll('#suggest .progPick').length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and still zero song chrome",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return gone('#composeModeSeg') && gone('#songTray');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theorist-compose"
+    }
+  ]
+}

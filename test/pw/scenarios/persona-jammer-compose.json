@@ -1,0 +1,68 @@
+{
+  "name": "persona-jammer-compose",
+  "persona": "intermediate",
+  "note": "S-COMPOSE-CALM slice 1 (operator F 2026-07-19 + interview: B+ shape). P3 Jammer: Compose lands as a PURE JAM surface - no Chords|Song mode toggle, no song tray/capture row, no song-map chips ambient on the jam screen (the canvas is an on-demand editor behind Save > grow / Library > open). Save with a fresh strip asks intent with SAVE PROGRESSION as the primary (2-tap capture). Written red-first: the pre-fix tree renders #composeModeSeg + #songTray chrome.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no ambient song chrome: no mode toggle, no song tray, no map chips on the jam surface",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return gone('#composeModeSeg') && gone('#songTray') && gone('#songMap');})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "the strip carries the jam (2 chords)",
+      "js": "(function(){var pr=document.getElementById('prog');return !!pr && pr.children.length>=2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "STILL no song chrome after building a progression (the old tray appeared here)",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return gone('#songTray') && gone('#songMap') && gone('#composeModeSeg');})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Save sheet leads with SAVE PROGRESSION as the primary action (progression-first, decided 2026-07-19)",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal .composeRowBtns');if(!row)return false;var first=row.querySelector('button');return !!first && /save progression/i.test(first.textContent) && /red/.test(first.className);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Save sheet FITS the phone - no horizontal overflow (operator UAT 2026-07-19: popup caused horizontal scroll)",
+      "js": "(function(){var m=document.querySelector('.composeRow.asModal');if(!m)return false;var r=m.getBoundingClientRect();var fits=r.left>=-1 && r.right<=window.innerWidth+1;var noHScroll=document.documentElement.scrollWidth<=window.innerWidth+1;var inner=true;m.querySelectorAll('*').forEach(function(c){var cr=c.getBoundingClientRect();if(cr.right>window.innerWidth+1)inner=false;});return fits&&noHScroll&&inner;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "jammer-save-sheet"
+    }
+  ]
+}

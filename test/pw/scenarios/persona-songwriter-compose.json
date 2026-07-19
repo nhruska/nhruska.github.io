@@ -1,0 +1,74 @@
+{
+  "name": "persona-songwriter-compose",
+  "persona": "intermediate",
+  "note": "S-COMPOSE-CALM slice 1. P5 Songwriter entry: the Song canvas is BEHIND the Save sheet ('Grow it into a song') - it opens with the jam captured as the first section, and leaving it returns to a clean jam surface. Red-first vs the ambient-mode-toggle tree (the old grow path existed but the canvas was reachable/visible ambiently).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tapText",
+      "text": "Grow it into a song",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Song canvas opened with the jam as its first section",
+      "js": "(function(){var wrap=document.querySelector('.composeWrap');return !!wrap && wrap.classList.contains('songMode') && document.querySelectorAll('#songSections .songSect').length>=1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "songwriter-canvas"
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "leaving the canvas lands back on the pure jam surface (no ambient chrome)",
+      "js": "(function(){var wrap=document.querySelector('.composeWrap');function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return !!wrap && !wrap.classList.contains('songMode') && gone('#composeModeSeg');})()"
+    }
+  ]
+}

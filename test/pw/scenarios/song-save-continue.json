@@ -1,55 +1,158 @@
 {
   "name": "song-save-continue",
-  "note": "S-LIFECYCLE 2 (operator directive 2026-07-17: 'we should have playwright scenarios for building a progression, building a song ... and if I entered from the song and click continue building the interface is set to edit the song and I can continue seamlessly'). The REAL song flow, no seeding: build two sections through the UI, Save song through the real naming row, reopen it via Continue building - both sections come back as standard labeled cards and an edit continues seamlessly against the SAME record.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "S-LIFECYCLE 2 (operator directive 2026-07-17: 'we should have playwright scenarios for building a progression, building a song ... and if I entered from the song and click continue building the interface is set to edit the song and I can continue seamlessly'). The REAL song flow, no seeding: build two sections through the UI, Save song through the real naming row, reopen it via Continue building - both sections come back as standard labeled cards and an edit continues seamlessly against the SAME record. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "tapChord", "name": "F" },
-    { "action": "tapChord", "name": "G" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 300 },
-    { "action": "tapChord", "name": "Am" },
-    { "action": "tapChord", "name": "F" },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
     {
       "action": "evalAssert",
       "label": "label the second capture Chorus",
       "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus';})()"
     },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 300 },
-    { "action": "tap", "selector": ".composeModeBtn:has-text(\"Song\")" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#songAssembleBtn" },
-    { "action": "waitFor", "selector": ".composeRow .composeRowInput" },
-    { "action": "tap", "selector": ".composeRow .btn.red" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songAssembleBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "the song saved as ONE custom record carrying BOTH sections in its sheet",
       "js": "(function(){var c=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.custom.v1')||'[]');return c.length===1 && c[0].sheet && c[0].sheet.length===2;})()"
     },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#setBody .listItem" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapText", "text": "Continue building" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapText",
+      "text": "Continue building"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "Continue building restores BOTH sections as standard labeled cards (Verse + Chorus) - set to continue seamlessly",
       "js": "(function(){var names=Array.prototype.map.call(document.querySelectorAll('#songSections .songSect .songSectName'),function(n){return n.textContent.trim();});return names.length===2 && /^Verse\\b/.test(names[0]) && /^Chorus\\b/.test(names[1]);})()"
     },
-    { "action": "tap", "selector": "#songSections .songSect:nth-child(2) .songSectEdit" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": "#songSections .songSect:nth-child(2) .songSectEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "editing the Chorus loads its 2 chords with the dropdown reading Chorus - seamless, never blank",
       "js": "(function(){var s=document.getElementById('songSectSel');return document.querySelectorAll('#prog .slot').length===2 && !!s && s.value==='Chorus';})()"
     },
-    { "action": "screenshot", "name": "song-save-continue" }
+    {
+      "action": "screenshot",
+      "name": "song-save-continue"
+    }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "prog-save-continue",
-  "note": "S-LIFECYCLE 1 (operator directive 2026-07-17: 'create the playwright scenario that creates a progression and saves it, then viewing the set list and clicking that progression, then clicking continue building - so you can reproduce and see what I'm seeing'). The REAL flow, no seeding: build a progression through the UI, Save through the real naming row (add-to-setlist default), open it FROM THE SETLIST, Continue building, and continue seamlessly - the section reads as a standard Verse, the dropdown is never blank, an edit updates the SAME record. Red-first vs the pre-fix label bug: the card read 'Progression' and the select went blank.",
+  "note": "S-LIFECYCLE 1 (operator directive 2026-07-17: 'create the playwright scenario that creates a progression and saves it, then viewing the set list and clicking that progression, then clicking continue building - so you can reproduce and see what I'm seeing'). The REAL flow, no seeding: build a progression through the UI, Save through the real naming row (add-to-setlist default), open it FROM THE SETLIST, Continue building, and continue seamlessly - the section reads as a standard Verse, the dropdown is never blank, an edit updates the SAME record. Red-first vs the pre-fix label bug: the card read 'Progression' and the select went blank. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -119,7 +119,19 @@
     },
     {
       "action": "tap",
-      "selector": "#songAddBtn"
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
     },
     {
       "action": "wait",
@@ -127,7 +139,11 @@
     },
     {
       "action": "tap",
-      "selector": ".composeModeBtn:has-text(\"Song\")"
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 450
     },
     {
       "action": "wait",

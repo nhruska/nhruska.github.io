@@ -40,8 +40,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "#265-A: the intent row asks first - message + 'Save progression' (primary) + 'Build a song with it'",
-      "js": "(function(){var row=document.querySelector('.composeRow');if(!row||row.hidden)return false;var t=row.textContent;return t.indexOf('Save this progression, or build it into a song?')>=0 && t.indexOf('Save progression')>=0 && t.indexOf('Build a song with it')>=0;})()"
+      "label": "#265-A: the intent row asks first - message + 'Save progression' (primary) + 'Grow it into a song' (S-COMPOSE-CALM copy)",
+      "js": "(function(){var row=document.querySelector('.composeRow');if(!row||row.hidden)return false;var t=row.textContent;return t.indexOf('Save this progression, or build it into a song?')>=0 && t.indexOf('Save progression')>=0 && t.indexOf('Grow it into a song')>=0;})()"
     },
     {
       "action": "tapText",

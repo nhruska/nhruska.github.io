@@ -1,41 +1,113 @@
 {
   "name": "continue-building-caution",
-  "note": "S-CONTINUE-CAUTION (operator UAT 2026-07-17: the 'Continue building' guard toast 'disappeared before I could read it ... seems like an error'). Tapping Continue building on a saved song WHILE a DIFFERENT draft is already in the Compose buffer must refuse with an AMBER CAUTION toast (not a red error, not a 1.6s flash): warn class, amber color, readable text naming the blocked action. Setup: seed one saved custom song WITH a sheet (so its detail shows the Continue building button), then build a fresh 1-section draft through the real UI (builderSource stays null), open the saved song, tap Continue building. Red-first: on the pre-fix code the toast carried 'err' (red) not 'warn' (amber), so the warn/err asserts below FAIL on old code.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "S-CONTINUE-CAUTION (operator UAT 2026-07-17: the 'Continue building' guard toast 'disappeared before I could read it ... seems like an error'). Tapping Continue building on a saved song WHILE a DIFFERENT draft is already in the Compose buffer must refuse with an AMBER CAUTION toast (not a red error, not a 1.6s flash): warn class, amber color, readable text naming the blocked action. Setup: seed one saved custom song WITH a sheet (so its detail shows the Continue building button), then build a fresh 1-section draft through the real UI (builderSource stays null), open the saved song, tap Continue building. Red-first: on the pre-fix code the toast carried 'err' (red) not 'warn' (amber), so the warn/err asserts below FAIL on old code. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
     {
       "action": "evalAssert",
       "label": "seed a saved custom song with a section-yielding sheet so its detail renders the Continue building button",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'seedCB1', t:'Seeded CB Song', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','F','G'], sheet:[['Verse','[C] [F] [G]']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 150 },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 150 },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 300 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "wait", "ms": 400 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Seeded CB Song\")" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Seeded CB Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the saved song's detail shows the Continue building button",
       "js": "!!Array.prototype.find.call(document.querySelectorAll('button'), function(b){return b.textContent.trim()==='Continue building';})"
     },
-    { "action": "tapText", "text": "Continue building" },
-    { "action": "wait", "ms": 500 },
+    {
+      "action": "tapText",
+      "text": "Continue building"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
     {
       "action": "evalAssert",
       "label": "the refusal is an AMBER CAUTION toast: warn class present, err class absent, amber color, and the text names the blocked action",
       "js": "(function(){var t=document.querySelector('.toast.on');if(!t)return false;var amber=getComputedStyle(t).color.replace(/\\s/g,'')==='rgb(251,191,36)';return t.classList.contains('warn') && !t.classList.contains('err') && amber && /already have a song in progress/i.test(t.textContent) && /before opening another/i.test(t.textContent);})()"
     },
-    { "action": "screenshot", "name": "continue-building-caution" }
+    {
+      "action": "screenshot",
+      "name": "continue-building-caution"
+    }
   ]
 }

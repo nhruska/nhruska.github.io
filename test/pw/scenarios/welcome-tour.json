@@ -24,8 +24,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "no persistent orientation strip anywhere (tour-only, the .tabIntro/#ctxLine strip is retired)",
-      "js": "(function(){return !document.getElementById('ctxLine') && !document.querySelector('.tabIntro');})()"
+      "label": "orientation chrome is the COMPACT header form only (r3): tab pill + one purpose line, never the .tabIntro strip",
+      "js": "(function(){return !document.querySelector('.tabIntro') && !!document.getElementById('tabPill') && !!document.getElementById('ctxLine');})()"
     },
     {
       "action": "screenshot",

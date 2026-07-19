@@ -1,39 +1,184 @@
 {
   "name": "song-builder",
-  "note": "M-13 SONG BUILDER LZ (operator keyword 2026-07-11): Compose section buffer -> multi-section custom song. Persona at 412x915: build C-F-G, add as Verse, add Am, add as Chorus, assert 2 buffer sections, arm-guard a buffer chip remove (first tap must NOT remove), Assemble, assert the song view shows BOTH section headers (Verse, Chorus) + chord bars. Red-first: #songAddBtn is absent before the build so step 6 fails.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "M-13 SONG BUILDER LZ (operator keyword 2026-07-11): Compose section buffer -> multi-section custom song. Persona at 412x915: build C-F-G, add as Verse, add Am, add as Chorus, assert 2 buffer sections, arm-guard a buffer chip remove (first tap must NOT remove), Assemble, assert the song view shows BOTH section headers (Verse, Chorus) + chord bars. Red-first: #songAddBtn is absent before the build so step 6 fails. S-COMPOSE-CALM (2026-07-19): capture enters via the Save sheet (Grow it into a song) - the tray is transaction chrome now, never ambient; every add lands on the canvas, and the Build-the-chords hop re-arms the loop for the next section. Captures CLEAR the strip everywhere (one contract).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 900 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "G" },
-    { "action": "wait", "ms": 200 },
-    { "action": "evalAssert", "label": "three chords in the progression", "js": "document.querySelectorAll('#prog .slot').length === 3" },
-    { "action": "assertVisible", "selector": "#songTray" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "one buffered section, progression NOT cleared", "js": "document.querySelectorAll('#songSections .songSect').length === 1 && document.querySelectorAll('#prog .slot').length === 3" },
-    { "action": "tapChord", "name": "Am" },
-    { "action": "wait", "ms": 200 },
-    { "action": "evalAssert", "label": "set the second section label to Chorus", "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus'})()" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "two buffered sections", "js": "document.querySelectorAll('#songSections .songSect').length === 2" },
-    { "action": "screenshot", "name": "two-sections" },
-    { "action": "tap", "selector": "#songSections .songSect .rm" },
-    { "action": "wait", "ms": 200 },
-    { "action": "evalAssert", "label": "first tap ARMS the chip remover, nothing removed", "js": "document.querySelectorAll('#songSections .songSect').length === 2 && !!document.querySelector('#songSections .songSect .rm.armed')" },
-    { "action": "screenshot", "name": "chip-armed" },
-    { "action": "tap", "selector": "#songAssembleBtn" },
-    { "action": "wait", "ms": 500 },
-    { "action": "evalAssert", "label": "song view shows two section headers (Verse + Chorus)", "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()" },
-    { "action": "evalAssert", "label": "the song view renders the section chords", "js": "(function(){var t=document.getElementById('sheetBox').textContent;return t.indexOf('Am')>=0 && /\\bG\\b/.test(t) && t.indexOf('F')>=0})()" },
-    { "action": "evalAssert", "label": "buffer cleared after assemble", "js": "document.querySelectorAll('#songSections .songSect').length === 0" },
-    { "action": "screenshot", "name": "assembled-song" }
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "three chords in the progression",
+      "js": "document.querySelectorAll('#prog .slot').length === 3"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the jam surface stays clean - the tray is transaction chrome (S-COMPOSE-CALM)",
+      "js": "(function(){var t=document.getElementById('songTray');return !t || t.hidden;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "one buffered section; the capture CLEARED the strip (one contract everywhere)",
+      "js": "(function(){var b=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');return b.length===1 && document.getElementById('prog').children.length===0;})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "set the second section label to Chorus",
+      "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus'})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "two buffered sections",
+      "js": "document.querySelectorAll('#songSections .songSect').length === 2"
+    },
+    {
+      "action": "screenshot",
+      "name": "two-sections"
+    },
+    {
+      "action": "tap",
+      "selector": "#songSections .songSect .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "first tap ARMS the chip remover, nothing removed",
+      "js": "document.querySelectorAll('#songSections .songSect').length === 2 && !!document.querySelector('#songSections .songSect .rm.armed')"
+    },
+    {
+      "action": "screenshot",
+      "name": "chip-armed"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAssembleBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "Save song opens the naming row (the deliberate canvas save); name it and confirm",
+      "js": "(function(){var row=document.querySelector('.composeRow');if(!row||row.hidden)return false;var inp=row.querySelector('input');if(!inp)return false;inp.value='Builder test song';var btns=row.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(/save/i.test(btns[i].textContent)){btns[i].click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "song view shows two section headers (Verse + Chorus)",
+      "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the song view renders the section chords",
+      "js": "(function(){var pr=document.getElementById('s-practice');if(!pr)return false;var t=pr.textContent;return t.indexOf('Verse')>=0 && t.indexOf('Chorus')>=0 && t.indexOf('Am')>=0 && t.indexOf('G')>=0 && t.indexOf('F')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "buffer cleared after assemble",
+      "js": "document.querySelectorAll('#songSections .songSect').length === 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "assembled-song"
+    }
   ]
 }

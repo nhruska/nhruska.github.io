@@ -1,42 +1,195 @@
 {
   "name": "competency-profile",
-  "note": "M-COMPETENCY LZ (operator directive 2026-07-11): the app maintains a per-skill competency profile that grows from what the musician DOES, stored locally, exportable/importable. Persona at 412x915: Compose C-F-G -> add as Verse, add Am -> add as Chorus, Assemble the song; open Settings -> Skills; assert the 5 generic frameworks render, the composition skill recorded evidence (music.competency.v1 in localStorage, comp-song-form evidence_count>=1 and level moved off 0), and an Export control is present. RED-FIRST vs unmodified main: nothing here exists on main so #accSecSkills is absent and the evidence assert fails. NOTE: needs competency.js wired into play/index.html + music/sw.js CORE (a coupled PARENT merge step) for the Skills panel to inject - prove green with a temporary script-tag shim, then the parent's merge makes it permanent.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "M-COMPETENCY LZ (operator directive 2026-07-11): the app maintains a per-skill competency profile that grows from what the musician DOES, stored locally, exportable/importable. Persona at 412x915: Compose C-F-G -> add as Verse, add Am -> add as Chorus, Assemble the song; open Settings -> Skills; assert the 5 generic frameworks render, the composition skill recorded evidence (music.competency.v1 in localStorage, comp-song-form evidence_count>=1 and level moved off 0), and an Export control is present. RED-FIRST vs unmodified main: nothing here exists on main so #accSecSkills is absent and the evidence assert fails. NOTE: needs competency.js wired into play/index.html + music/sw.js CORE (a coupled PARENT merge step) for the Skills panel to inject - prove green with a temporary script-tag shim, then the parent's merge makes it permanent. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 900 },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 150 },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 150 },
-    { "action": "tapChord", "name": "G" },
-    { "action": "wait", "ms": 200 },
-    { "action": "assertVisible", "selector": "#songTray" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "one buffered section (Verse)", "js": "document.querySelectorAll('#songSections .songSect').length === 1" },
-    { "action": "tapChord", "name": "Am" },
-    { "action": "wait", "ms": 150 },
-    { "action": "evalAssert", "label": "set the second section label to Chorus", "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus'})()" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "two buffered sections", "js": "document.querySelectorAll('#songSections .songSect').length === 2" },
-    { "action": "tap", "selector": "#songAssembleBtn" },
-    { "action": "wait", "ms": 500 },
-    { "action": "evalAssert", "label": "song assembled + opened (section headers rendered)", "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()" },
-    { "action": "evalAssert", "label": "RED-FIRST: composition evidence recorded to localStorage", "js": "(function(){try{var m=JSON.parse(localStorage.getItem('music.competency.v1'));var p=m['music-composition'];var c=p.competencies.filter(function(x){return x.id==='comp-song-form'})[0];return c.evidence_count>=1 && c.level>0}catch(e){return false}})()" },
-    { "action": "tap", "selector": "#settingsBtn" },
-    { "action": "wait", "ms": 350 },
-    { "action": "assertVisible", "selector": "#accSecSkills" },
-    { "action": "tap", "selector": "#accBtnSkills" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "all 5 generic frameworks render as skill rows", "js": "document.querySelectorAll('#accBodySkills .skillRow').length === 5" },
-    { "action": "screenshot", "name": "skills-panel" },
-    { "action": "tap", "selector": "#accBodySkills .skillRow .skillHead" },
-    { "action": "wait", "ms": 200 },
-    { "action": "evalAssert", "label": "a skill drills to competency bars + an Export control", "js": "document.querySelectorAll('#accBodySkills .compBar').length > 0 && document.querySelectorAll('#accBodySkills .skillExport').length > 0" },
-    { "action": "screenshot", "name": "skill-detail" }
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "jam surface clean (S-COMPOSE-CALM)",
+      "js": "(function(){var t=document.getElementById('songTray');return !t||t.hidden;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "one buffered section (Verse) in the persisted buffer",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1;})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "evalAssert",
+      "label": "set the second section label to Chorus",
+      "js": "(function(){var s=document.getElementById('songSectSel');s.value='Chorus';return s.value==='Chorus'})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "two buffered sections (buffer-key truth)",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===2;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAssembleBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "name the assembled song and confirm",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row||row.hidden)return false;var inp=row.querySelector('input');if(!inp)return false;inp.value='Scenario song';var btns=row.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(/save/i.test(btns[i].textContent)){btns[i].click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "song assembled + opened (section headers rendered)",
+      "js": "(function(){var s=Array.from(document.querySelectorAll('#sheetBox .sect')).map(function(e){return e.textContent.trim()});return s.indexOf('Verse')>=0 && s.indexOf('Chorus')>=0})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED-FIRST: composition evidence recorded to localStorage",
+      "js": "(function(){try{var m=JSON.parse(localStorage.getItem('music.competency.v1'));var p=m['music-composition'];var c=p.competencies.filter(function(x){return x.id==='comp-song-form'})[0];return c.evidence_count>=1 && c.level>0}catch(e){return false}})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#accSecSkills"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "all 5 generic frameworks render as skill rows",
+      "js": "document.querySelectorAll('#accBodySkills .skillRow').length === 5"
+    },
+    {
+      "action": "screenshot",
+      "name": "skills-panel"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBodySkills .skillRow .skillHead"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "a skill drills to competency bars + an Export control",
+      "js": "document.querySelectorAll('#accBodySkills .compBar').length > 0 && document.querySelectorAll('#accBodySkills .skillExport').length > 0"
+    },
+    {
+      "action": "screenshot",
+      "name": "skill-detail"
+    }
   ]
 }

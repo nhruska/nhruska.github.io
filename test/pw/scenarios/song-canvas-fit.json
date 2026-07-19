@@ -1,6 +1,6 @@
 {
   "name": "song-canvas-fit",
-  "note": "Operator UAT 2026-07-18 (live v187), two layout findings on the Song canvas. (1) 'pre chorus causes wrap on 1 element breaking layout': the longest section label pushed the card's last control onto a second line - asserts ALL five controls share one row on EVERY standard-section card at a NARROW viewport (360px, where the wrap reproduces; flex line-breaking ignores shrinkability, so the label must be flex-basis:0). (2) 'missing solo section': the template-label switcher scrolled with no affordance, so Solo/Outro read as ABSENT - asserts the switcher does not overflow and every one of the 7 labels (Solo included) is fully inside its box.",
+  "note": "Operator UAT 2026-07-18 (live v187), two layout findings on the Song canvas. (1) 'pre chorus causes wrap on 1 element breaking layout': the longest section label pushed the card's last control onto a second line - asserts ALL five controls share one row on EVERY standard-section card at a NARROW viewport (360px, where the wrap reproduces; flex line-breaking ignores shrinkability, so the label must be flex-basis:0). (2) 'missing solo section': the template-label switcher scrolled with no affordance, so Solo/Outro read as ABSENT - asserts the switcher does not overflow and every one of the 7 labels (Solo included) is fully inside its box. S-COMPOSE-CALM (2026-07-19): first capture enters via the Save sheet (grow/add); later captures ride the Build-the-chords hop; every capture clears the strip and lands on the canvas.",
   "viewport": {
     "width": 360,
     "height": 800
@@ -37,7 +37,19 @@
     },
     {
       "action": "tap",
-      "selector": "#songAddBtn"
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
     },
     {
       "action": "wait",
@@ -45,8 +57,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "open the Song canvas",
-      "js": "(function(){var b=Array.prototype.find.call(document.querySelectorAll('.composeModeBtn'),function(x){return /Song/.test(x.textContent);});if(!b)return false;b.click();return true;})()"
+      "label": "open the Song canvas via Save (draft-only path - its editor is one tap from Save)",
+      "js": "(function(){var b=document.getElementById('cSave');if(!b)return false;b.click();return true;})()"
     },
     {
       "action": "wait",

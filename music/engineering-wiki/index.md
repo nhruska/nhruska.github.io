@@ -19,6 +19,8 @@
 | [design-principles.md](ux-philosophy/design-principles.md) | One-screen-above-the-fold; instrument-in-hands grip model; theory-authority trust chain; soul + anti-vision |
 | [personas.md](ux-philosophy/personas.md) | P1-P5 (incl. the Seasoned Guitarist), JTBD, dismissal triggers, journey matrix |
 | [interaction-safety.md](ux-philosophy/interaction-safety.md) | Destructive-guard taxonomy; scroll-rail rule; wireTap; undo contract; notables one-shot pattern |
+| [systems/onboarding-guidance.md](systems/onboarding-guidance.md) | Welcome tour (guards, ?welcome=1 replay), calm guidance (no inline asks, one tip/session), header tab pill + purpose line |
+| [systems/compose-jam-first.md](systems/compose-jam-first.md) | B+ Compose shape: pure jam surface, canvas doors, progression-first save, transaction tray, adaptive landing |
 | [expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) | Dots vs clean patterns; hand-position/fingering guidance; muscle-memory framing; S-DIAGRAM-PREF spec home |
 | [ui-primitives.md](ux-philosophy/ui-primitives.md) | TOAST vs NOTABLE vs MODAL vs CHIP/TOKEN taxonomy; toast.js primitive (S-TOAST/U9 fix); candidate toast placements |
 

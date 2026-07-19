@@ -1,6 +1,6 @@
 {
   "name": "progression-guidance",
-  "note": "S-PROG-GUIDANCE (operator UAT 2026-07-17: 'I could use that level of guidance when choosing standard progressions' + 'needs more progressions' + issue #264 rename + the blank-section-dropdown bug on a re-opened plain progression). Three asserts groups, all red-first: (1) the Song-canvas template chooser reveals a FEEL/WHEN/PROVEN guidance ladder behind a per-suggestion '?' (absent pre-fix), and the section switcher includes Pre-Chorus (absent pre-fix); (2) the Chords-mode suggest row leads with 'Suggested' (#264 - pre-fix said 'Add a 2nd chord:'); (3) a LEGACY custom saved with the off-vocabulary 'Progression' sheet label re-enters the builder as a standard 'Verse' section with a NON-BLANK section dropdown (pre-fix: card read 'Progression', select rendered blank).",
+  "note": "S-PROG-GUIDANCE (operator UAT 2026-07-17: 'I could use that level of guidance when choosing standard progressions' + 'needs more progressions' + issue #264 rename + the blank-section-dropdown bug on a re-opened plain progression). Three asserts groups, all red-first: (1) the Song-canvas template chooser reveals a FEEL/WHEN/PROVEN guidance ladder behind a per-suggestion '?' (absent pre-fix), and the section switcher includes Pre-Chorus (absent pre-fix); (2) the Chords-mode suggest row leads with 'Suggested' (#264 - pre-fix said 'Add a 2nd chord:'); (3) a LEGACY custom saved with the off-vocabulary 'Progression' sheet label re-enters the builder as a standard 'Verse' section with a NON-BLANK section dropdown (pre-fix: card read 'Progression', select rendered blank). S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -23,8 +23,36 @@
       "ms": 400
     },
     {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
       "action": "tap",
-      "selector": ".composeModeBtn:has-text(\"Song\")"
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
     },
     {
       "action": "wait",
@@ -64,7 +92,11 @@
     },
     {
       "action": "tap",
-      "selector": ".composeModeBtn:has-text(\"Chords\")"
+      "selector": "#songCanvasClose"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "wait",
@@ -87,6 +119,11 @@
       "action": "evalAssert",
       "label": "seed a LEGACY plain-progression custom with the old 'Progression' sheet label",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'legacyProg1', t:'Legacy Prog', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G'], sheet:[['Progression','[C] [G]']]}]));return true}catch(e){return false}})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "housekeeping: drop the scratch draft the guidance tour created (the reload picks up a clean buffer for the legacy-song phase)",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.builderBuffer.v1','[]');return true;}catch(e){return false;}})()"
     },
     {
       "action": "goto",

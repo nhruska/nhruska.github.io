@@ -1,0 +1,33 @@
+{
+  "name": "persona-strummer-compose",
+  "persona": "beginner",
+  "note": "S-COMPOSE-CALM slice 1. P2 Campfire Strummer (beginner): Compose lands quiet and inviting - proven starter progressions visible for the one-tap first-minute win, zero song-building machinery. Red-first vs the ambient-chrome tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "beginner emphasis: the proven starters lead the empty state",
+      "js": "(function(){return document.querySelectorAll('#suggest .progPick').length>=2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no song machinery for the strummer",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return gone('#composeModeSeg') && gone('#songTray') && gone('#songMap');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "strummer-compose"
+    }
+  ]
+}
