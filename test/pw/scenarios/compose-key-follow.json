@@ -180,6 +180,23 @@
     {
       "action": "screenshot",
       "name": "continue-building-in-key"
+    },
+    {
+      "action": "tap",
+      "selector": "#songCanvasClose"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT r6: leaving the canvas, the NAMED draft chip carries the song's title as the way back",
+      "js": "(function(){var c=document.getElementById('draftChip');return !!c && c.offsetParent!==null && /editing key follow jam/i.test(c.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "draft-chip-named"
     }
   ]
 }

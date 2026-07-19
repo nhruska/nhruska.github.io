@@ -101,6 +101,21 @@ idempotent. Anchors: `songbook.js` `setComposeMode`/`rawSetMode`.
   `save-choice-transpose-ask`. Companion: the continue-building caution toast
   now carries an "Open your draft" door (the guard must never dead-end).
 
+## UAT r6 - the draft chip (2026-07-19)
+
+- **#draftChip** (operator: "if there's active song being edited, show name
+  linked to open"): a parked draft announces itself on the CHORDS surface -
+  "Editing <name>" (continue-building drafts carry the source song's title)
+  or "Editing your song · N sections", one tap to the canvas. STATUS + LINK
+  only - the one deliberate, operator-directed exception to the B+
+  zero-ambient-chrome contract. Hidden on the canvas, during transaction
+  hops (the tray owns that context), and with no sections. Dashed border =
+  the draft grammar. Gotcha encoded in CSS: `display:block` defeats the
+  `[hidden]` UA style - `.draftChip[hidden]{display:none}` restates it.
+- Goalposts: `draft-chip` (lifecycle incl. UI-driven emptying - the runner
+  seed re-applies on every navigation, so reloads can't model an emptied
+  draft) + the named-chip tail on `compose-key-follow`.
+
 ## Verification
 
 USDD goalposts (red-first): `persona-jammer-compose` (P3, the operator's

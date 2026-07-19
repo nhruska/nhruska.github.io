@@ -1,0 +1,136 @@
+{
+  "name": "draft-chip",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "pulljam",
+    "backup"
+  ],
+  "seed": {
+    "roadcase-ukulele-gcea.builderBuffer.v1": "[{\"label\":\"Verse\",\"seq\":[\"A\",\"D\",\"E\"]},{\"label\":\"Chorus\",\"seq\":[\"A\",\"E\",\"D\"]},{\"label\":\"Bridge\",\"seq\":[\"D\",\"A\",\"E\"]}]"
+  },
+  "note": "UAT r6 (operator 2026-07-19, after the F8 stuck-state: '2 if there's active song being edited, show name linked to open'). An in-flight draft was INVISIBLE from the jam surface until a Save-sheet door - the status chip (#draftChip) names the song being edited and links straight to the canvas. Status + link only - the one deliberate exception to the B+ zero-ambient-chrome contract, operator-directed. Shows only on the chords surface with a parked draft (never on the canvas, never during a transaction hop, never without sections). Red-first on 4c9c630. (Absence phase drives the UI - the runner seed re-applies on every navigation, so a reload cannot model an emptied draft.)",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a parked unnamed draft announces itself: 'Editing your song' + the section count, tappable",
+      "js": "(function(){var c=document.getElementById('draftChip');return !!c && c.offsetParent!==null && /editing your song/i.test(c.textContent) && /3 sections/i.test(c.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "draft-chip-unnamed"
+    },
+    {
+      "action": "tap",
+      "selector": "#draftChip"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the chip opens the canvas holding the draft, and hides while the canvas is up",
+      "js": "(function(){var canvas=document.getElementById('composeSong');var c=document.getElementById('draftChip');return !!canvas && canvas.offsetParent!==null && document.querySelectorAll('.songSect.card').length===3 && (!c || c.offsetParent===null);})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songCanvasClose"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "back on the jam surface the chip returns (the draft is still parked)",
+      "js": "(function(){var c=document.getElementById('draftChip');return !!c && c.offsetParent!==null;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#draftChip"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songCanvasClose"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "emptying the draft through the canvas kills the chip live - no draft, no chrome",
+      "js": "(function(){var c=document.getElementById('draftChip');var buf=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');return buf.length===0 && (!c || c.offsetParent===null);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "no-draft-no-chip"
+    }
+  ]
+}

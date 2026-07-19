@@ -2755,6 +2755,7 @@
     var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null, songMapEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
+        draftChipEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
@@ -2811,6 +2812,15 @@
       songMapEl.hidden = true;
       songTrayEl.appendChild(songTrayCueEl); songTrayEl.appendChild(songMapEl); songTrayEl.appendChild(songAddRowEl);
       el.prog.parentNode.appendChild(songTrayEl); // end of the progression box, below the strip + cue slot
+      // UAT r6 (operator 2026-07-19, post-F8: "if there's active song being
+      // edited, show name linked to open"): a parked draft was INVISIBLE from
+      // the jam surface until a Save-sheet door. The chip is STATUS + LINK
+      // only (names the song, one tap to the canvas) - the one deliberate,
+      // operator-directed exception to the B+ zero-ambient-chrome contract.
+      draftChipEl = document.createElement('button');
+      draftChipEl.type = 'button'; draftChipEl.id = 'draftChip'; draftChipEl.className = 'draftChip'; draftChipEl.hidden = true;
+      composeWireTap(draftChipEl, function () { setComposeMode('song'); });
+      el.prog.parentNode.appendChild(draftChipEl);
       // --- the mode toggle: screen-level chrome, always visible, top of the wrap.
       // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
       // full-width, above everything) - and the two are never on screen together
@@ -3119,6 +3129,22 @@
       // adds go through the Save sheet's "Add to your song" instead.
       var inFlight = returnToSong || (editingSectionIdx != null);
       songTrayEl.hidden = inSong || !inFlight || (!hasProg && !hasSections);
+      // UAT r6 draft chip: parked-draft status on the CHORDS surface only -
+      // never on the canvas, never during a transaction hop (the tray already
+      // carries that context), never without sections. Named when the draft
+      // came from a saved song (Continue building), generic otherwise.
+      if (draftChipEl) {
+        var showChip = !inSong && !inFlight && hasSections;
+        draftChipEl.hidden = !showChip;
+        if (showChip) {
+          var chipSrc = (builderSourceId != null && typeof songById === 'function') ? songById(builderSourceId) : null;
+          var chipName = chipSrc && chipSrc.t ? chipSrc.t : null;
+          draftChipEl.textContent = (chipName
+            ? 'Editing ' + chipName
+            : 'Editing your song · ' + songSections.length + (songSections.length === 1 ? ' section' : ' sections')) + ' ›';
+          draftChipEl.setAttribute('aria-label', 'Open the song you are building' + (chipName ? ': ' + chipName : ''));
+        }
+      }
       songAddRowEl.hidden = !hasProg;
       // #262: the tappable song map - one chip per section, in song order,
       // duplicates numbered ("Verse 2") so every chip names a distinct target.
