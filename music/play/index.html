@@ -569,17 +569,27 @@
    * stays unset so the in-app ask can still teach later. */
   var WELCOME_KEY = 'music.welcomeDone.v1';
   function initWelcome(profiles, activeKey, manifestOrder) {
-    try {
-      if (localStorage.getItem(WELCOME_KEY)) return;
-      if (hadProfileKey || localStorage.getItem('music.guidanceLevel.v1')) {
-        localStorage.setItem(WELCOME_KEY, '1'); return; // lived-in device - never tour it
-      }
-    } catch (e) { return; }
+    // ?welcome=1 forces the tour on ANY device - the reviewer's replay hook.
+    // A lived-in origin (githack previews carry weeks of UAT localStorage)
+    // silently marks the tour done, so without this there is no way to
+    // eyeball the flow short of clearing site data.
+    var forced = /[?&]welcome=1/.test(location.search);
+    if (!forced) {
+      try {
+        if (localStorage.getItem(WELCOME_KEY)) return;
+        if (hadProfileKey || localStorage.getItem('music.guidanceLevel.v1')) {
+          localStorage.setItem(WELCOME_KEY, '1'); return; // lived-in device - never tour it
+        }
+      } catch (e) { return; }
+    }
     var ov = document.getElementById('welcomeOv'); if (!ov) return;
     var panels = document.getElementById('wPanels'), dotsEl = document.getElementById('wDots');
     var nextBtn = document.getElementById('wNext'), skipBtn = document.getElementById('welcomeSkip');
     var instList = document.getElementById('wInstList'), lvlList = document.getElementById('wLevelList');
-    var chosenInst = (profiles['guitar-standard'] ? 'guitar-standard' : activeKey);
+    // Fresh device: guitar-standard preselected (widest audience). Forced
+    // replay (?welcome=1): preselect the CURRENT instrument so tapping
+    // through the tour never silently switches a lived-in device's profile.
+    var chosenInst = (!forced && profiles['guitar-standard']) ? 'guitar-standard' : activeKey;
     var chosenLvl = null;
     function optRow(label, on) {
       var b = document.createElement('button');
