@@ -185,7 +185,7 @@ test('PRIORITY exposes the M-GUIDANCE order: guidanceask first, then the graded 
     'firstrun', 'tunefirst', 'savebasics',
     // S-PERSONA-COPY: studiofirst (beginner Studio orientation) sits beside its
     // studio siblings; disjoint LEVELS gate means it never actually contests them.
-    'postprog', 'studiofirst', 'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'postprog', 'studiofirst', 'whynote', 'composeintro', 'pulljam', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ]);
 });
@@ -236,6 +236,7 @@ test('LEVELS exposes the graded registry: firstrun/tunefirst/savebasics -> begin
     savebasics: ['beginner'],
     whynote: ['intermediate', 'advanced'],
     composeintro: ['intermediate'],
+    pulljam: ['intermediate'], // slice 2: the P5 pull-a-progression-into-a-section cue
     transposetip: ['intermediate'],
     scaletip: ['advanced']
   });

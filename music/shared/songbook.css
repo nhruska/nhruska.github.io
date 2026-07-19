@@ -800,6 +800,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSectEdit:active{color:var(--accent-ink);}
 .songSectEdit:active::before{background:var(--accent-deep);border-color:var(--accent-dim);}
 .songBuildBtn{min-height:44px;}
+/* slice 2: the duplicate handle joins the card control row - same 44px halo
+   convention as .rm / .songSectMove. */
+.songSectDup{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;cursor:pointer;border-radius:var(--r-btn-sm);}
+.songSectDup:active{background:var(--accent-deep);color:var(--accent-ink);}
 /* M-13 SONG BUILDER: the section buffer tray. In Chords mode it is now ONLY the
    capture row (cue + label + "Add to song"); the sections/templates/save all
    live on the Song canvas. [hidden] takes no space (the empty-canvas state). */

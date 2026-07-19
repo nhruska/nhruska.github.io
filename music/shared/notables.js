@@ -93,7 +93,7 @@
   var PRIORITY = [
     'guidanceask',
     'firstrun', 'tunefirst', 'savebasics',
-    'postprog', 'studiofirst', 'whynote', 'composeintro', 'transposetip', 'scaletip',
+    'postprog', 'studiofirst', 'whynote', 'composeintro', 'pulljam', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ];
 
@@ -113,6 +113,7 @@
     savebasics: ['beginner'],
     whynote: ['intermediate', 'advanced'],
     composeintro: ['intermediate'],
+    pulljam: ['intermediate'],
     transposetip: ['intermediate'],
     scaletip: ['advanced']
   };
