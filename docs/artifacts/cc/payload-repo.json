@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T10:43:23Z",
+  "generatedAt": "2026-07-19T10:46:50Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,54 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-18T06:35:26Z",
-    "sha": "f7ef57ea2a8906da578ae91f71f289511563e13d",
-    "subject": "music(audio): real-feel strum engine - Karplus-Strong string + humanized hand + body/room (#88)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/f7ef57ea2a8906da578ae91f71f289511563e13d"
+    "date": "2026-07-19T10:29:06Z",
+    "sha": "47a2b5b600ee03c4d1180124ab167d37361fc556",
+    "subject": "music(compose): jam-first Compose - song machinery off the ambient surface (#279)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/47a2b5b600ee03c4d1180124ab167d37361fc556"
   },
   "commits": [
+    {
+      "date": "2026-07-19T10:29:06Z",
+      "sha": "47a2b5b600ee03c4d1180124ab167d37361fc556",
+      "subject": "music(compose): jam-first Compose - song machinery off the ambient surface (#279)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/47a2b5b600ee03c4d1180124ab167d37361fc556"
+    },
+    {
+      "date": "2026-07-19T06:54:14Z",
+      "sha": "237834f31e5735e94233387b53540a1a8bfd8470",
+      "subject": "music(onboarding): first-run welcome tour, guidance calm, picker into Settings (#278)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/237834f31e5735e94233387b53540a1a8bfd8470"
+    },
+    {
+      "date": "2026-07-18T17:53:58Z",
+      "sha": "f96848cf1bf9afa6c09a14608ba2922dd1ceef38",
+      "subject": "music(pwa): offline that never hangs + connectivity you can see (#277)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f96848cf1bf9afa6c09a14608ba2922dd1ceef38"
+    },
+    {
+      "date": "2026-07-18T15:59:32Z",
+      "sha": "10c05820ad20e800f3060330f13669f6360ac7c7",
+      "subject": "music(audio): pick-scrape transient around the tame filter (ear-test round 3) (#273)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/10c05820ad20e800f3060330f13669f6360ac7c7"
+    },
+    {
+      "date": "2026-07-18T15:56:20Z",
+      "sha": "526cd08f1019f10b0919c87c3da982ce409b6f27",
+      "subject": "music(audio): tap-to-strum latency - voice cache, tight scheduling pad, evaluation-friendly idle (#276)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/526cd08f1019f10b0919c87c3da982ce409b6f27"
+    },
+    {
+      "date": "2026-07-18T15:55:35Z",
+      "sha": "b2e998e1eba0d2984d2041268ee83effc393086d",
+      "subject": "music(compose): Song-canvas fit - no control wrap on long labels, all 7 section labels visible (#275)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b2e998e1eba0d2984d2041268ee83effc393086d"
+    },
+    {
+      "date": "2026-07-18T10:43:28Z",
+      "sha": "ba611060d6267ac220eaa9cd106ba8bac6d38c57",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/ba611060d6267ac220eaa9cd106ba8bac6d38c57"
+    },
     {
       "date": "2026-07-18T06:35:26Z",
       "sha": "f7ef57ea2a8906da578ae91f71f289511563e13d",
@@ -48,65 +90,14 @@
       "sha": "060caaa1eaed510c2737c7b5505792fcab82f4f7",
       "subject": "music(settings+skills): UAT batch - accordion unity, guidance seg, CTA rows, SKILL.md/zip skills export + flexible import (#257)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/060caaa1eaed510c2737c7b5505792fcab82f4f7"
-    },
-    {
-      "date": "2026-07-18T04:02:53Z",
-      "sha": "b800333e937a7a9d8d506bbd0460ae0378171c7b",
-      "subject": "test(pw): perform-entry round-trip scenario - compose state survives the stage (#268)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/b800333e937a7a9d8d506bbd0460ae0378171c7b"
-    },
-    {
-      "date": "2026-07-18T04:02:42Z",
-      "sha": "4997db8331b866383ab63f99aa78d56a2ff59b06",
-      "subject": "music: UAT resilience batch - data-safe boot, order-stable adds, visible card controls, Solo section, back-to-origin (#269)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4997db8331b866383ab63f99aa78d56a2ff59b06"
-    },
-    {
-      "date": "2026-07-17T17:36:28Z",
-      "sha": "aef8994a2388fae170aa905ace894ced7a05a4eb",
-      "subject": "music(compose): progression-guidance ladder + new families + Suggested rename + lifecycle scenarios (#267)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/aef8994a2388fae170aa905ace894ced7a05a4eb"
-    },
-    {
-      "date": "2026-07-17T17:10:17Z",
-      "sha": "9fe20c9443aa32f13dd2c78b62fcd902b5db6503",
-      "subject": "music(compose): per-section edit button + a11y visible tap targets (#261)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9fe20c9443aa32f13dd2c78b62fcd902b5db6503"
-    },
-    {
-      "date": "2026-07-17T17:09:50Z",
-      "sha": "f6e7a347772070ad1c59338b9255bad1ea47a9ef",
-      "subject": "music(perform): one-handed zoning - Next is the dominant bottom-right thumb target (#260)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f6e7a347772070ad1c59338b9255bad1ea47a9ef"
-    },
-    {
-      "date": "2026-07-17T17:09:23Z",
-      "sha": "9f385c3e59467f7e399c7e37242cff00a0eaf224",
-      "subject": "music(ui): symmetric active-tab highlight inset + bigger button icons (#259)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9f385c3e59467f7e399c7e37242cff00a0eaf224"
-    },
-    {
-      "date": "2026-07-17T17:08:47Z",
-      "sha": "86228dbf4a9c2ca45a30342d3829ab4442a65d36",
-      "subject": "music(toast): amber caution toast + readable duration for \"song already in progress\" (#258)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/86228dbf4a9c2ca45a30342d3829ab4442a65d36"
     }
   ],
   "openPRs": [
     {
-      "number": 274,
-      "title": "docs: rename suggested chords section to name the intent",
-      "branch": "claude/suggested-chords-rename",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/274",
-      "draft": true,
-      "ciState": "unknown",
-      "checks": []
-    },
-    {
-      "number": 273,
-      "title": "music(audio): pick-scrape transient around the tame filter (ear-test round 3)",
-      "branch": "claude/music-pick-transient",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/273",
+      "number": 280,
+      "title": "music(compose): slice 2 - the canvas round-trip (transpose-on-pull, duplicate-section, pulljam cue)",
+      "branch": "claude/music-compose-roundtrip",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/280",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -115,19 +106,70 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29634373836/job/88053955728"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29683807667/job/88184543790"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29634373835/job/88053955756"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29683807648/job/88184543624"
         }
       ]
+    },
+    {
+      "number": 274,
+      "title": "docs: rename suggested chords section to name the intent",
+      "branch": "claude/suggested-chords-rename",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/274",
+      "draft": true,
+      "ciState": "unknown",
+      "checks": []
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-19T07:51:14Z",
+      "mergedAt": "2026-07-19T10:29:06Z",
+      "number": 279,
+      "title": "music(compose): jam-first Compose - song machinery off the ambient surface (S-COMPOSE-CALM slice 1)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/279"
+    },
+    {
+      "createdAt": "2026-07-18T18:12:27Z",
+      "mergedAt": "2026-07-19T06:54:14Z",
+      "number": 278,
+      "title": "music(onboarding): first-run welcome tour, picker into Settings, clean appbar (S-WELCOME)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/278"
+    },
+    {
+      "createdAt": "2026-07-18T17:45:27Z",
+      "mergedAt": "2026-07-18T17:53:58Z",
+      "number": 277,
+      "title": "music(pwa): offline that never hangs + connectivity you can see",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/277"
+    },
+    {
+      "createdAt": "2026-07-18T15:50:00Z",
+      "mergedAt": "2026-07-18T15:56:21Z",
+      "number": 276,
+      "title": "music(audio): tap-to-strum latency - voice cache, tight scheduling pad, evaluation-friendly idle",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/276"
+    },
+    {
+      "createdAt": "2026-07-18T15:44:37Z",
+      "mergedAt": "2026-07-18T15:55:35Z",
+      "number": 275,
+      "title": "music(compose): Song-canvas fit - no control wrap on long labels, all 7 section labels visible",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/275"
+    },
+    {
+      "createdAt": "2026-07-18T06:39:49Z",
+      "mergedAt": "2026-07-18T15:59:32Z",
+      "number": 273,
+      "title": "music(audio): pick-scrape transient around the tame filter (ear-test round 3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/273"
+    },
     {
       "createdAt": "2026-07-18T04:38:44Z",
       "mergedAt": "2026-07-18T06:34:32Z",
@@ -190,65 +232,23 @@
       "number": 259,
       "title": "music(ui): anchor active-tab highlight to bottom border + bigger button icons",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/259"
-    },
-    {
-      "createdAt": "2026-07-17T01:44:55Z",
-      "mergedAt": "2026-07-17T17:08:47Z",
-      "number": 258,
-      "title": "music(toast): amber caution toast + readable duration for \"song already in progress\"",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/258"
-    },
-    {
-      "createdAt": "2026-07-17T01:42:29Z",
-      "mergedAt": "2026-07-18T04:03:59Z",
-      "number": 257,
-      "title": "music(settings+skills): UAT batch - accordion unity, guidance seg, CTA rows, SKILL.md/zip skills export + flexible import",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/257"
-    },
-    {
-      "createdAt": "2026-07-16T23:46:41Z",
-      "mergedAt": "2026-07-17T14:39:22Z",
-      "number": 256,
-      "title": "music(compose): advanced level collapses chord-chart palettes to letter+roman chips (S-CHORD-COLLAPSE)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/256"
-    },
-    {
-      "createdAt": "2026-07-16T19:51:54Z",
-      "mergedAt": "2026-07-17T17:08:13Z",
-      "number": 255,
-      "title": "music(setlist): play/video action to a compact thumb-zone icon (reclaim a row)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/255"
-    },
-    {
-      "createdAt": "2026-07-16T19:09:12Z",
-      "mergedAt": "2026-07-16T19:26:22Z",
-      "number": 254,
-      "title": "music(settings): fix the washed-out Guidance-level settings row (.setRow contrast)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/254"
-    },
-    {
-      "createdAt": "2026-07-16T10:52:28Z",
-      "mergedAt": "2026-07-16T19:28:40Z",
-      "number": 253,
-      "title": "music(compose): Song mode - the composition ladder gets a full-screen home",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/253"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-18T10:43:19Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29641316386",
+    "runStartedAt": "2026-07-19T10:46:44Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29683939824",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 40,
+    "merged_count": 27,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 10.34,
+    "typical_merge_hours": 2.38,
     "weekly": null
   },
   "deploy": {
@@ -258,8 +258,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v187",
-    "localCacheVersion": "music-v187",
+    "liveCacheVersion": "music-v194",
+    "localCacheVersion": "music-v194",
     "cacheMatch": true
   },
   "missions": [
@@ -649,7 +649,7 @@
   },
   "suite": {
     "testFileCount": 50,
-    "testCaseCount": 2408,
+    "testCaseCount": 2420,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
