@@ -192,9 +192,19 @@
 
   // Facet lists for the filter bar. genres(): unique lowercased genres present.
   // keys(): unique key labels, musically ordered (circle-ish: C G D ... then minors).
+  // Operator UAT 2026-07-19: custom items carry hand-typed genres ('Jam',
+  // 'Rock') alongside the catalog's lowercase set, so a case-sensitive dedupe
+  // rendered duplicate chips (Jam + jam). Identity is CASE-INSENSITIVE; the
+  // chip displays the canonical Title-case form. filter() matches the same way.
   function genres(list) {
     var seen = {}, out = [];
-    (list || []).forEach(function (r) { if (r.genre && !seen[r.genre]) { seen[r.genre] = 1; out.push(r.genre); } });
+    (list || []).forEach(function (r) {
+      if (!r.genre) return;
+      var key = String(r.genre).toLowerCase();
+      if (seen[key]) return;
+      seen[key] = 1;
+      out.push(key.charAt(0).toUpperCase() + key.slice(1));
+    });
     out.sort();
     return out;
   }
@@ -223,7 +233,7 @@
     var g = sel.genre && sel.genre !== 'all' ? sel.genre : null;
     var k = sel.key && sel.key !== 'all' ? sel.key : null;
     return (list || []).filter(function (r) {
-      if (g && r.genre !== g) return false;
+      if (g && String(r.genre || '').toLowerCase() !== String(g).toLowerCase()) return false; // genre identity is case-insensitive (UAT 2026-07-19)
       if (k && keyLabel(r) !== k) return false;
       if (q) {
         var hay = (recTitle(r) + ' ' + recArtist(r)).toLowerCase();

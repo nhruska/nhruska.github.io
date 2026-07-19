@@ -56,6 +56,11 @@
       "js": "(function(){var row=document.querySelector('.composeRow.asModal .composeRowBtns');if(!row)return false;var first=row.querySelector('button');return !!first && /save progression/i.test(first.textContent) && /red/.test(first.className);})()"
     },
     {
+      "action": "evalAssert",
+      "label": "the Save sheet FITS the phone - no horizontal overflow (operator UAT 2026-07-19: popup caused horizontal scroll)",
+      "js": "(function(){var m=document.querySelector('.composeRow.asModal');if(!m)return false;var r=m.getBoundingClientRect();var fits=r.left>=-1 && r.right<=window.innerWidth+1;var noHScroll=document.documentElement.scrollWidth<=window.innerWidth+1;var inner=true;m.querySelectorAll('*').forEach(function(c){var cr=c.getBoundingClientRect();if(cr.right>window.innerWidth+1)inner=false;});return fits&&noHScroll&&inner;})()"
+    },
+    {
       "action": "screenshot",
       "name": "jammer-save-sheet"
     }

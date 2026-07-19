@@ -47,11 +47,16 @@
          quiet chrome-tier status, visible only while disconnected. The app KEEPS
          WORKING offline (that's the PWA promise) - the pill just names the state
          so a failed YouTube thumbnail or search doesn't read as a broken app. -->
-    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span></div>
+    <div class="brand"><span class="nm">Music</span><span class="tabPill" id="tabPill" aria-hidden="true">Library</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span></div>
     <!-- The instrument picker moved into Settings > Preferences (operator UAT
          2026-07-18: switching instruments is occasional, not per-session - the
          appbar keeps only always-relevant chrome: brand, offline pill, gear). -->
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <!-- Operator UAT 2026-07-19 r3 (reversal after living with tour-only
+         orientation): ONE brief functional-purpose line directly under the
+         header, per tab, plus the active-tab pill above. The engine's
+         contexts/ctxLine machinery drives the text (see Songbook.mount). -->
+    <p class="tabPurpose" id="ctxLine"></p>
   </div>
   <div class="view" id="view">
     <!-- S-GUIDANCE-CALM (operator interview 2026-07-19): the guidanceask and
@@ -258,6 +263,7 @@
         <p class="wLead">Chords, songs, a tuner - everything works offline, and what you build stays on your device.</p>
         <p class="wLead"><b>What are you playing?</b></p>
         <div id="wInstList" role="radiogroup" aria-label="Instrument"></div>
+        <p class="wLead">Each instrument keeps its own setlists and progressions - the song library is shared.</p>
       </section>
       <section class="wPanel">
         <h2>How far along are you?</h2>
@@ -364,7 +370,8 @@
             <span class="li-title">Replay the intro tour</span>
             <span class="li-artist">The 3-panel welcome walkthrough, any time</span>
           </button>
-          <p class="setHint aboutStamp" id="aboutStamp"></p>
+          <!-- Operator UAT 2026-07-19 r3: the build stamp lives ONCE, in the
+               settings footer (quick-glance home) - the About copy repeated it. -->
         </div>
       </section>
     </div>
@@ -473,10 +480,17 @@
   // Per-tab intro copy (operator UAT 2026-07-18): purpose + next step, not a
   // noun-phrase - the strip is each tab's one orienting sentence (copy-coach:
   // verb-first, beginner vocabulary, name the action the user came to do).
-  // Per-tab orientation moved into the S-WELCOME first-run tour's map panel
-  // (operator interview 2026-07-18: "first-run tour ONLY - no persistent
-  // intro text anywhere"). The old CONTEXTS_BASE/ctxLine strip is retired;
-  // songbook.js's optional contexts/ctxLine machinery stays for other packs.
+  // Per-tab orientation: ONE compact purpose line under the header (operator
+  // UAT 2026-07-19 r3 - revived after living with the tour-only design: "add
+  // back brief functional purpose value description... for each tab"). The
+  // engine's contexts/ctxLine machinery renders it; the tour's map panel
+  // remains the long-form orientation.
+  var CONTEXTS_BASE = { library: 'Tap a song to play it - the + saves it to your setlist', compose: 'Try chords, keep what sounds good - save it in two taps', tracks: 'Find a track in your key', practice: 'Now playing', jam: 'Your songs, show-ready - hit Start to perform' };
+  var TAB_LABELS = { library: 'Library', jam: 'Setlist', compose: 'Compose', tune: 'Tune', tracks: 'Tracks', practice: 'Playing' };
+  window.addEventListener('music:tab-shown', function (ev) {
+    var pill = document.getElementById('tabPill');
+    if (pill && ev && ev.detail && TAB_LABELS[ev.detail.tab]) pill.textContent = TAB_LABELS[ev.detail.tab];
+  });
 
   // rootFreq / movable-shape fallback / buildAdapter: moved to shared/
   // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
@@ -684,6 +698,7 @@
 
   function start(profile, songs) {
     document.title = profile.label + ' - Music';
+    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: 'Pluck a string and watch the needle - ' + profile.tuning });
     var pack = window.ChordPackAdapter.buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
@@ -711,6 +726,7 @@
       songs: songs,
       chordPack: pack,
       storagePrefix: 'roadcase-' + profile.id,
+      contexts: contexts,
       profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
       // M3: the merged repertoire reads the track catalog (seed + URL overlay + custom)
@@ -736,7 +752,8 @@
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
         maxNote: el('maxNote'),
-        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose')
+        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
+        ctxLine: el('ctxLine')
       }
     });
     // S-CHORD-COLLAPSE (Volley 3 High #1): narrow window seam so the Settings
@@ -1117,7 +1134,6 @@
 
     /* About section (round 2): the same authored stamp as the footer, one
        more discoverable home. Static content - render once. */
-    if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('aboutStamp'));
     // S-WELCOME UAT round 2: replay the intro tour on demand. Reuses the
     // ?welcome=1 force path (current instrument preselected there, so a
     // tap-through never switches the profile). Profile survives the search

@@ -179,12 +179,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   background-image:radial-gradient(1100px 360px at 50% -8%,var(--glow),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
-/* Slim header (one screen, above the fold): brand + offline pill + gear ONLY.
-   S-WELCOME moved the instrument picker into Settings > Preferences (it was
-   a rarely-used control taxing the always-on bar); quick-tune lives in the
-   Tune tab and the accent picker in Settings for the same reason. */
-.appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
-.appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
+/* Slim header: brand + active-tab pill + offline pill + gear on row 1, ONE
+   compact per-tab purpose line as row 2 (operator UAT 2026-07-19 r3 - revived
+   after living with tour-only orientation). flex-wrap makes the purpose line
+   its own full-width row without a second container. */
+.appbar{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
+.tabPill{flex:0 0 auto;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);border-radius:var(--r-chip-pill);padding:3px 10px;font-size:.68rem;font-weight:700;letter-spacing:.04em;}
+.tabPurpose{flex:1 1 100%;margin:0;font-size:.72rem;color:var(--txt-dim);line-height:1.35;min-height:1em;}
+.tabPurpose:empty{display:none;}
+.appbar .brand{display:flex;align-items:center;line-height:1;gap:8px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
 /* The per-tab context line is RETIRED (operator interview 2026-07-18:
    orientation lives in the S-WELCOME first-run tour only - no persistent
@@ -1251,7 +1254,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:var(--r-input);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.85rem;}
 .composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
-.composeRowBtns{flex:1 1 100%;display:flex;gap:8px;}
+/* Operator UAT 2026-07-19: three outcome-named buttons can exceed the modal's
+   min-content width on a phone (the intent sheet overflowed the viewport and
+   dragged the whole page into horizontal scroll). The button row WRAPS and
+   every button may shrink - labels ellipsize before the sheet ever spills. */
+.composeRowBtns{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;}
+.composeRowBtns .ctrlBtn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* G4/FORK-1: "Add to setlist" checkbox on the save row - own line (flex:1 1
    100% forces the wrap), checkbox + label kept on one compact line together.
    Full-contrast --txt (not --txt-soft) so the label reads clearly on the
