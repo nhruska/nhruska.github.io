@@ -3470,6 +3470,7 @@
       hideComposeRow();
       composeRow.hidden = false;
       composeRow.classList.add('asModal');
+      var myGen = ++composeRowGen; // supersedes any prior composeRow render
       if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
@@ -3483,7 +3484,7 @@
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
       var delivered = false;
-      function rawClose() { hideComposeRow(); }
+      function rawClose() { if (composeRowGen !== myGen) return; hideComposeRow(); }
       function deliver(choice) {
         if (delivered) return; delivered = true;
         if (choice === 'shift') commitSongSection(label, pulled.map(function (c) { return tpose(c, delta); }));
@@ -3593,7 +3594,11 @@
       var secs = sectionsFromSheet(s.sheet);
       if (!secs.length) { showToast('No chords to build from on this song yet.', true); return; }
       if (songSections.length && builderSourceId !== s.id) {
-        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn');
+        // UAT r5 F8 ("I'm stuck with a song in progress"): the guard is right,
+        // but a dead-end warn left no path TO the draft it protects - ride the
+        // action-toast primitive with a door to the canvas (save/clear live there).
+        showToast('You already have a song in progress (' + songSections.length + (songSections.length === 1 ? ' section' : ' sections') + '). Save or clear it before opening another.', 'warn',
+          { label: 'Open your draft', fn: function () { switchTab('compose'); setComposeMode('song'); } });
         return;
       }
       if (!songSections.length) { // fresh load; a same-song re-entry keeps the live draft
@@ -4547,6 +4552,14 @@
       }
       return true;
     }
+    // UAT r5 F8 (operator: "add to song button doesn't work"): every composeRow
+    // modal shares ONE container, and settleAfter closes the OLD layer AFTER the
+    // new one renders (runNext-first contract) - so a chained modal (choice row ->
+    // transpose ask) was being wiped by its predecessor's rawClose. The per-site
+    // carve-outs ('prog'/'save' skips) only covered the chains known at authoring
+    // time. Generation counter = the general fix at the primitive: each populator
+    // bumps it; a rawClose from a SUPERSEDED render is a no-op.
+    var composeRowGen = 0;
     function hideComposeRow() {
       if (composeRow) { composeRow.hidden = true; composeRow.innerHTML = ''; composeRow.classList.remove('asModal'); }
       if (composeModalBackdrop) composeModalBackdrop.hidden = true;
@@ -4942,6 +4955,7 @@
       if (!ensureComposeUI()) { done(defaultName, true); return; }
       hideComposeRow();
       composeRow.hidden = false;
+      var myGen = ++composeRowGen; // supersedes any prior composeRow render
       // Present the save name-entry as a MODAL (backdrop + top-anchored card) so
       // the user can't hit Clear / add more chords / other controls mid-save
       // (UAT: Nik), and the card stays clear of a soft keyboard (F10 - see the
@@ -4975,7 +4989,7 @@
       // firing twice (settleAfter's own trailing history.back(), when nothing
       // opened a new layer, replays through the registered closeFn below).
       var rawSettled = false;
-      function rawClose() { if (rawSettled) return; rawSettled = true; hideComposeRow(); }
+      function rawClose() { if (rawSettled) return; rawSettled = true; if (composeRowGen !== myGen) return; hideComposeRow(); }
       var delivered = false;
       function deliver(name) { if (delivered) return; delivered = true; done(name, setCheck.checked); }
       // UAT U7 (2026-07-04): backdrop tap / Escape / hardware-gesture Back all
@@ -5053,6 +5067,7 @@
       hideComposeRow();
       composeRow.hidden = false;
       composeRow.classList.add('asModal');
+      var myGen = ++composeRowGen; // supersedes any prior composeRow render
       if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var n = songSections.length;
       var msg = document.createElement('p');
@@ -5074,7 +5089,7 @@
       // 'prog' re-renders this SAME composeRow into the name row
       // (openSaveNameRow clears + repopulates it as its own first step), so
       // 'song' and 'cancel' need this row's DOM cleared here.
-      function rawClose(choice) { if (choice !== 'prog') hideComposeRow(); }
+      function rawClose(choice) { if (choice === 'prog' || composeRowGen !== myGen) return; hideComposeRow(); }
       function deliver(choice) {
         if (delivered) return; delivered = true;
         if (choice === 'song') { returnToSong = true; addSongSection(); } // strip -> section -> canvas (the grow hop)
@@ -5115,6 +5130,7 @@
       hideComposeRow();
       composeRow.hidden = false;
       composeRow.classList.add('asModal');
+      var myGen = ++composeRowGen; // supersedes any prior composeRow render
       if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
@@ -5130,7 +5146,7 @@
       var delivered = false;
       // 'prog' re-renders this SAME composeRow into the name row; 'song' and
       // 'cancel' need the row's DOM cleared here (same contract as the sibling).
-      function rawClose(choice) { if (choice !== 'prog') hideComposeRow(); }
+      function rawClose(choice) { if (choice === 'prog' || composeRowGen !== myGen) return; hideComposeRow(); }
       function deliver(choice) {
         if (delivered) return; delivered = true;
         if (choice === 'prog') saveProgression();
@@ -5162,6 +5178,7 @@
       hideComposeRow();
       composeRow.hidden = false;
       composeRow.classList.add('asModal');
+      var myGen = ++composeRowGen; // supersedes any prior composeRow render
       if (composeModalBackdrop) composeModalBackdrop.hidden = false;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
@@ -5181,7 +5198,7 @@
       // it as its own first step) - hiding it here too would wipe the name row
       // it just rendered. 'skip' opens the Studio (a fully separate surface),
       // so THIS row's own DOM genuinely needs clearing.
-      function rawClose(choice) { if (choice !== 'save') hideComposeRow(); }
+      function rawClose(choice) { if (choice === 'save' || composeRowGen !== myGen) return; hideComposeRow(); }
       function deliver(choice) { if (delivered) return; delivered = true; onPick(choice); }
       // pendingDismiss defaults to 'cancel' so a hardware Back press (which
       // bypasses the settleAfter path below entirely - see below) DISMISSES the

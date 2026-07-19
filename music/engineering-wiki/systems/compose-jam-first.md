@@ -90,6 +90,16 @@ idempotent. Anchors: `songbook.js` `setComposeMode`/`rawSetMode`.
   padded clear of it (goalpost: `stage-landscape-fit`).
 - **Action toast**: "Added to setlist" carries a Go-to-setlist button and the
   5200ms action-toast hold (goalpost: `setlist-add-toast`).
+- **composeRow generation guard (F8, "add to song button doesn't work")**:
+  every composeRow modal shares ONE container, and `settleAfter` closes the
+  old layer AFTER the new one renders - so the choice row's rawClose was
+  WIPING the transpose ask it had just chained into (the slice-2 goalpost
+  only walked the ask from the tray, no modal dismiss in flight). Fix at the
+  primitive: `composeRowGen` counter - each populator bumps it, a rawClose
+  from a superseded render no-ops. The per-site 'prog'/'save' carve-outs were
+  this problem solved manually per chain. Goalpost:
+  `save-choice-transpose-ask`. Companion: the continue-building caution toast
+  now carries an "Open your draft" door (the guard must never dead-end).
 
 ## Verification
 

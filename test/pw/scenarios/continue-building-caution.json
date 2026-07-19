@@ -1,6 +1,6 @@
 {
   "name": "continue-building-caution",
-  "note": "S-CONTINUE-CAUTION (operator UAT 2026-07-17: the 'Continue building' guard toast 'disappeared before I could read it ... seems like an error'). Tapping Continue building on a saved song WHILE a DIFFERENT draft is already in the Compose buffer must refuse with an AMBER CAUTION toast (not a red error, not a 1.6s flash): warn class, amber color, readable text naming the blocked action. Setup: seed one saved custom song WITH a sheet (so its detail shows the Continue building button), then build a fresh 1-section draft through the real UI (builderSource stays null), open the saved song, tap Continue building. Red-first: on the pre-fix code the toast carried 'err' (red) not 'warn' (amber), so the warn/err asserts below FAIL on old code. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X.",
+  "note": "S-CONTINUE-CAUTION (operator UAT 2026-07-17: the 'Continue building' guard toast 'disappeared before I could read it ... seems like an error'). Tapping Continue building on a saved song WHILE a DIFFERENT draft is already in the Compose buffer must refuse with an AMBER CAUTION toast (not a red error, not a 1.6s flash): warn class, amber color, readable text naming the blocked action. Setup: seed one saved custom song WITH a sheet (so its detail shows the Continue building button), then build a fresh 1-section draft through the real UI (builderSource stays null), open the saved song, tap Continue building. Red-first: on the pre-fix code the toast carried 'err' (red) not 'warn' (amber), so the warn/err asserts below FAIL on old code. S-COMPOSE-CALM (2026-07-19): jam surface carries zero song chrome; capture enters via the Save sheet, the canvas is the one song editor (Save-grow / Library-continue / draft-only Save), exits via its X. UAT r5 F8 extension: the caution is no longer a dead end - it rides the action-toast primitive with an 'Open your draft' door to the canvas (where save/clear live), so the guarded state is a one-tap recovery, never 'stuck'.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -108,6 +108,29 @@
     {
       "action": "screenshot",
       "name": "continue-building-caution"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F8: the caution carries an Open-your-draft action (the guarded state must never be a dead end)",
+      "js": "(function(){var t=document.querySelector('.toast.withAct.on');if(!t)return false;var b=t.querySelector('button');return /song in progress/i.test(t.textContent) && !!b && /open your draft/i.test(b.textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap the door",
+      "js": "(function(){var t=document.querySelector('.toast.withAct.on');var b=t&&t.querySelector('button');if(!b)return false;b.click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "and land on the canvas holding the in-progress draft",
+      "js": "(function(){var c=document.getElementById('composeSong');return !!c && c.offsetParent!==null && document.querySelectorAll('.songSect.card').length>=1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "caution-door-to-draft"
     }
   ]
 }
