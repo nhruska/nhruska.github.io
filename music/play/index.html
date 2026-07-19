@@ -54,20 +54,10 @@
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
-    <!-- M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
-         experience-level ask, rendered/managed entirely by the Settings
-         inline script below (renderGuidanceAsk). Sits FIRST, outside every
-         .screen, same rationale as diagramPrefSlot/backupNudgeSlot below -
-         it fires once at boot, on any tab, and 'guidanceask' outranks every
-         other Notables consumer (notables.js PRIORITY) so it wins the slot
-         ahead of firstrun on a truly fresh profile. -->
-    <div class="notableSlot" id="guidanceAskSlot"></div>
-    <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time dots|patterns
-         fretboard-diagram preference prompt, rendered/managed entirely by
-         the Settings inline script below (renderDiagramPrefPrompt). Sits
-         OUTSIDE every .screen, same rationale as backupNudgeSlot below - it
-         can fire the first time ANY chord diagram renders, on any tab. -->
-    <div class="notableSlot" id="diagramPrefSlot"></div>
+    <!-- S-GUIDANCE-CALM (operator interview 2026-07-19): the guidanceask and
+         diagrampref ASK banners no longer render inline - the first-run tour
+         and Settings > Preferences own those choices; unset values behave as
+         the safe defaults (beginner grading, dots) until changed there. -->
     <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
          backup-staleness nudge, rendered/managed entirely by the Settings
          inline script below (renderBackupNudge). Sits OUTSIDE every .screen
@@ -643,7 +633,6 @@
         } catch (e) {}
         if (typeof renderGuidanceLevelRow === 'function') { try { renderGuidanceLevelRow(); } catch (e) {} }
         if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
-        var slot = document.getElementById('guidanceAskSlot'); if (slot) slot.innerHTML = '';
       }
       ov.hidden = true;
       if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
@@ -1058,7 +1047,6 @@
           // still open or still eligible to fire later - the user just
           // answered the same question this Settings row asks.
           if (window.Notables) Notables.dismiss('diagrampref');
-          var slot = document.getElementById('diagramPrefSlot'); if (slot) slot.innerHTML = '';
         };
         dpWrap.appendChild(b);
       });
@@ -1096,7 +1084,6 @@
           // the user just answered the same question the ask asks (mirrors
           // the diagramPref Settings-row precedent right above).
           if (window.Notables) Notables.dismiss('guidanceask');
-          var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
           // S-CHORD-COLLAPSE live refresh (the #256 window seam - live since
           // that merge): a level change applies to already-rendered Compose
           // grids immediately.
@@ -1215,107 +1202,12 @@
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
-    /* M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
-       experience-level ask, in the 'guidanceask' Notables slot - the
-       HIGHEST priority (notables.js PRIORITY), so it wins the slot ahead of
-       firstrun on a truly fresh profile (firstrun is itself now level-gated
-       and would otherwise never get a chance to show before a level exists).
-       Rendered once at boot (see the renderGuidanceAsk() call near
-       renderBackupNudge() below) - unlike diagrampref/backupNudge it has NO
-       trigger event of its own, since it must fire on the very first app
-       open regardless of which tab is active. Zero jargon (operator
-       explicit) - three plain-language buttons, same HTML-banner-with-
-       inline-buttons shape as renderDiagramPrefPrompt below (Notables.
-       renderBanner's opts.html + a manual querySelectorAll wiring pass). */
-    function renderGuidanceAsk() {
-      var slot = document.getElementById('guidanceAskSlot');
-      if (!slot || !window.Notables || !window.GuidanceLevel) return;
-      if (slot.childNodes.length) return;              // already showing - one at a time
-      if (Notables.isDismissed('guidanceask')) return;  // answered (or X'd) already - permanent, per notables.js's one-shot contract
-      if (!Notables.claim('guidanceask')) return;       // unrestricted + top priority in practice, but keep the claim() contract explicit
-      function choose(level) {
-        GuidanceLevel.set(level);
-        Notables.dismiss('guidanceask');
-        if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
-        slot.innerHTML = '';
-        // S-CHORD-COLLAPSE (Volley 3 High #1): apply the new level to any
-        // ALREADY-rendered Compose grids right now - an unset user answering
-        // "advanced" after mount must see the chips immediately, not after
-        // the next compose mutation. window seam: songbookCtl lives in the
-        // OTHER script block's closure (not in scope here).
-        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-      }
-      var banner = Notables.renderBanner({
-        consumerId: 'guidanceask',
-        html: '<div class="askLbl">How far along are you?</div>'
-          + '<button type="button" class="askOpt glAskOpt" data-lvl="beginner">Just starting out</button>'
-          + '<button type="button" class="askOpt glAskOpt" data-lvl="intermediate">I know some chords</button>'
-          + '<button type="button" class="askOpt glAskOpt" data-lvl="advanced">I know my way around the neck</button>',
-        // the banner's own [x]: dismissing WITHOUT choosing stores the
-        // operator's explicit safe default ('beginner') - an EXPLICIT
-        // set() here, never a guessed default inside guidance-level.js's
-        // own get() (see that file's header for why).
-        onDismiss: function () {
-          GuidanceLevel.set('beginner');
-          if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
-          slot.innerHTML = '';
-          // Same live-apply as choose() - the explicit beginner default must
-          // also reach any already-rendered grids (S-CHORD-COLLAPSE V3 H1).
-          if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-        }
-      });
-      if (!banner) return; // no `document` available (Node without a DOM stub)
-      var opts = banner.querySelectorAll ? banner.querySelectorAll('.glAskOpt') : [];
-      for (var i = 0; i < opts.length; i++) {
-        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-lvl')); });
-      }
-      slot.appendChild(banner);
-    }
-
-    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time "how do you read a
-       fretboard?" prompt, in the 'diagrampref' Notables slot (after roman,
-       before backup - notables.js PRIORITY). Trigger: diagram.js's render()
-       dispatches music:diagram-rendered every time an ACTUAL chord diagram
-       draws (any tab, any screen - see its header) - so this fires at "the
-       first chord-diagram surface" without touching songbook.js/tracks.js/
-       key-explorer.js at all. Eligibility ALSO requires firstrun to be
-       dismissed already ("never first-run" - the spec's explicit ordering);
-       Notables' own priority arbitration alone doesn't guarantee that, since
-       firstrun could simply not be claiming the slot at this exact moment
-       (e.g. the user is on a different tab) without yet being shown+closed. */
-    function renderDiagramPrefPrompt() {
-      var slot = document.getElementById('diagramPrefSlot');
-      if (!slot || !window.Notables || !window.DiagramPref) return;
-      if (slot.childNodes.length) return;              // already showing - one at a time
-      if (Notables.isDismissed('diagrampref')) return;  // picked (or X'd) already - permanent, per notables.js's one-shot contract
-      if (!Notables.isDismissed('firstrun')) return;    // never before the first-run cue has been shown+closed
-      if (!Notables.claim('diagrampref')) return;       // a higher-priority notable (roman/whynote/firstrun) holds the slot right now
-      // diagrampref now outranks backup - defensively clear a stale backup
-      // banner in ITS OWN slot rather than leaving two notables visible at
-      // once (notables.js arbitrates state, not DOM; each consumer owns its
-      // own slot's cleanup - see renderBackupNudge below for the mirror case).
-      var backupSlot = document.getElementById('backupNudgeSlot'); if (backupSlot) backupSlot.innerHTML = '';
-      function choose(pref) {
-        DiagramPref.set(pref);
-        markDiagramPref(pref);
-        Notables.dismiss('diagrampref');
-        slot.innerHTML = '';
-      }
-      var banner = Notables.renderBanner({
-        consumerId: 'diagrampref',
-        html: '<div class="askLbl">How do you read a fretboard?</div>'
-          + '<button type="button" class="askOpt dgPrefOpt" data-pref="dots">1. Dots and finger numbers (I\'m learning new shapes)</button>'
-          + '<button type="button" class="askOpt dgPrefOpt" data-pref="patterns">2. Clean patterns with hand position (I move by feel)</button>',
-        onDismiss: function () { slot.innerHTML = ''; } // the banner's own [x] - dismisses forever, defaults to 'dots' (honest one-shot semantics, no re-offer)
-      });
-      if (!banner) return; // no `document` available (Node without a DOM stub)
-      var opts = banner.querySelectorAll ? banner.querySelectorAll('.dgPrefOpt') : [];
-      for (var i = 0; i < opts.length; i++) {
-        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-pref')); });
-      }
-      slot.appendChild(banner);
-    }
-    window.addEventListener('music:diagram-rendered', renderDiagramPrefPrompt);
+    /* S-GUIDANCE-CALM (operator interview 2026-07-19): renderGuidanceAsk and
+       renderDiagramPrefPrompt are RETIRED - the ask banners were inline
+       clutter next to the first-run tour. The tour asks the level once;
+       Settings > Preferences carries both choices forever after. Unset
+       means the safe defaults (beginner-graded tips stay quiet via the
+       notables LEVELS gate; DiagramPref.get() defaults dots). */
 
     /* M-GUIDANCE (beginner tier): "tune up first" JIT cue on the Tune tab's
        first visit. Trigger: songbook.js's applyTab() dispatches
@@ -1519,7 +1411,6 @@
     }
 
     renderBackupNudge();
-    renderGuidanceAsk(); // M-GUIDANCE: fires once at boot, on any tab - see its header above
   });
 })();
 </script>

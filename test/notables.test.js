@@ -338,6 +338,72 @@ test('dismiss via the x unregisters the live element (no stale teardown target)'
   assert.strictEqual(Notables.claim('guidanceask'), true);
 });
 
+/* ---- S-GUIDANCE-CALM (operator interview 2026-07-19): one tip per SESSION.
+ * The whack-a-mole finding: dismissing a tip let the next one claim on the
+ * user's return to a tab. With a sessionStorage present (stubbed here, real
+ * in the browser), at most ONE consumerId ever holds the slot per session -
+ * dismissal frees nothing until the next session. Node has no sessionStorage,
+ * so every pre-existing case above runs with the gate off (unchanged). */
+
+function stubSessionStorage() {
+  var m = {};
+  global.sessionStorage = {
+    getItem: function (k) { return Object.prototype.hasOwnProperty.call(m, k) ? m[k] : null; },
+    setItem: function (k, v) { m[k] = String(v); },
+    removeItem: function (k) { delete m[k]; }
+  };
+}
+function unstubSessionStorage() { delete global.sessionStorage; }
+
+test('session gate: after the session holder is DISMISSED, no other tip can claim this session', function () {
+  stubSessionStorage();
+  try {
+    resetLocalStorage();
+    Notables._resetArbitration();
+    assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true, 'first tip of the session claims normally');
+    Notables.dismiss('firstrun');
+    assert.strictEqual(Notables.claim('tunefirst', undefined, 'beginner'), false, 'dismissing never reveals another tip until the next session');
+    assert.strictEqual(Notables.claim('backup'), false, 'unrestricted consumers are session-gated too');
+  } finally { unstubSessionStorage(); }
+});
+
+test('session gate: the session holder itself may re-claim (banner re-renders on tab return until dismissed)', function () {
+  stubSessionStorage();
+  try {
+    resetLocalStorage();
+    Notables._resetArbitration();
+    assert.strictEqual(Notables.claim('tunefirst', undefined, 'beginner'), true);
+    Notables.release('tunefirst'); // left the tab without acting
+    assert.strictEqual(Notables.claim('tunefirst', undefined, 'beginner'), true, 'the same consumer re-claims freely within its session');
+    assert.strictEqual(Notables.claim('backup'), false, 'but a different consumer cannot take the released slot this session');
+  } finally { unstubSessionStorage(); }
+});
+
+test('session gate: a strictly-higher-priority claim still preempts a LIVE holder and takes over the session record', function () {
+  stubSessionStorage();
+  try {
+    resetLocalStorage();
+    Notables._resetArbitration();
+    assert.strictEqual(Notables.claim('backup'), true, 'low-priority tip grabs the empty slot at boot');
+    assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true, 'the boot-race preemption the priority table exists for still works');
+    Notables.release('firstrun');
+    assert.strictEqual(Notables.claim('backup'), false, 'the ousted consumer cannot come back this session');
+  } finally { unstubSessionStorage(); }
+});
+
+test('session gate: a NEW session (cleared sessionStorage) lets the next tip show', function () {
+  stubSessionStorage();
+  try {
+    resetLocalStorage();
+    Notables._resetArbitration();
+    assert.strictEqual(Notables.claim('scaletip', undefined, 'advanced'), true);
+    Notables.dismiss('scaletip');
+    assert.strictEqual(Notables.claim('whynote', undefined, 'advanced'), false, 'blocked in the same session');
+    Notables._resetArbitration(); // clears the session record - models the next app open
+    assert.strictEqual(Notables.claim('whynote', undefined, 'advanced'), true, 'next session, next tip');
+  } finally { unstubSessionStorage(); }
+});
+
 test('the new journey tips (tunefirst/savebasics/composeintro/transposetip/scaletip) preserve the pre-existing relative order of firstrun/whynote/roman/diagrampref/backup', function () {
   var p = Notables.PRIORITY;
   var idx = {};

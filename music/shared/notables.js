@@ -172,6 +172,37 @@
     if (activeGrant && activeGrant.id === consumerId) activeGrant = null;
   }
 
+  /* ---------- one tip per SESSION (S-GUIDANCE-CALM, operator interview
+   * 2026-07-19) -------------------------------------------------------
+   * The one-at-a-time slot stopped double-renders, but dismissing a tip
+   * let the NEXT one claim on the user's return to a tab - experienced as
+   * whack-a-mole ("after dismiss then return, another diff shows"). The
+   * calmer contract: at most ONE consumerId ever holds the slot per app
+   * session. sessionStorage scopes it - a fresh open (new tab / next
+   * launch) may surface the next tip; within a session, dismissing one
+   * reveals nothing. The session holder itself may re-claim (its banner
+   * legitimately re-renders on tab return until dismissed), and a
+   * strictly-higher-priority preemption of the CURRENT holder still wins
+   * (the boot-race ordering the priority table exists for) and takes over
+   * the session record. No sessionStorage (Node, blocked) = gate off. */
+  var SESSION_KEY = 'music.notables.session.v1';
+  function sessionStore() {
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
+    } catch (e) { /* blocked */ }
+    return null;
+  }
+  function sessionHolder() {
+    var st = sessionStore();
+    if (!st) return null;
+    try { return st.getItem(SESSION_KEY) || null; } catch (e) { return null; }
+  }
+  function recordSessionHolder(consumerId) {
+    var st = sessionStore();
+    if (!st) return;
+    try { st.setItem(SESSION_KEY, consumerId); } catch (e) { /* quota - gate degrades open */ }
+  }
+
   /* ---------- single-slot arbitration ("one notable per render pass") ---------- */
   var activeGrant = null; // { id: consumerId, p: priority } | null while a slot is held
 
@@ -197,12 +228,21 @@
     var declaredLevels = LEVELS[consumerId];
     if (declaredLevels && declaredLevels.indexOf(level) < 0) return false;
     var myP = priorityOf(consumerId, priority);
-    if (!activeGrant) { activeGrant = { id: consumerId, p: myP }; return true; }
+    // S-GUIDANCE-CALM session gate: a different consumer already had its
+    // moment this session. Only a strictly-higher-priority preemption of a
+    // LIVE holder gets past this (and takes over the record below) - an
+    // empty slot after a dismissal/release stays empty until next session.
+    var sess = sessionHolder();
+    if (sess && sess !== consumerId) {
+      if (!activeGrant || myP >= activeGrant.p) return false;
+    }
+    if (!activeGrant) { activeGrant = { id: consumerId, p: myP }; recordSessionHolder(consumerId); return true; }
     if (activeGrant.id === consumerId) return true; // idempotent re-claim of the slot it already holds
     if (myP < activeGrant.p) { // strictly higher priority preempts - AND tears the loser down
       var ousted = activeGrant.id;
       activeGrant = { id: consumerId, p: myP };
       teardownEl(ousted); // one tip at a time is the journey's law - visually too
+      recordSessionHolder(consumerId);
       return true;
     }
     return false; // ties and lower priority lose to the current holder
@@ -262,8 +302,13 @@
     isDismissed: isDismissed,
     renderBanner: renderBanner,
     // Test-only: clears in-memory arbitration state (NOT persisted dismissals)
-    // between cases that share one required module instance.
-    _resetArbitration: function () { activeGrant = null; liveEls = {}; }
+    // between cases that share one required module instance. Also clears the
+    // per-session one-tip record when a sessionStorage (stub) is present.
+    _resetArbitration: function () {
+      activeGrant = null; liveEls = {};
+      var st = sessionStore();
+      if (st) { try { st.removeItem(SESSION_KEY); } catch (e) {} }
+    }
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
