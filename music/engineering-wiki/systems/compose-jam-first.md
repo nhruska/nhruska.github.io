@@ -51,6 +51,24 @@ idempotent. Anchors: `songbook.js` `setComposeMode`/`rawSetMode`.
   (`renderSuggest` guidance-level gate); beginner/intermediate keep them.
   Level gates EMPHASIS, not access.
 
+## Slice 2 - the canvas round-trip (2026-07-19)
+
+- **Transpose-on-pull**: a fresh add whose strip key differs from the draft's
+  own inferred key ASKS (`openTransposeAskRow`): shift the pulled copy into
+  the song's key, keep it as a departure, or cancel. Keys compare by
+  RELATIVE-MAJOR root (a vi-IV part "in A minor" under a C-major draft is the
+  same pitch set - never asked). The strip's own key comes from
+  `inferKey(pulled)` - NOT `songKey.root`, which the canvas hop pins to the
+  song's key.
+- **Duplicate-section** (`.songSectDup`): one-tap chorus reuse, copy inserted
+  after its source.
+- **pulljam cue**: intermediate-gated one-shot notable on the canvas -
+  teaches once that a saved progression can become a section (fires when a
+  progression-only custom exists; session-gated like every tip).
+- Per-section proven-family starters were already shipped (S-PROG-GUIDANCE
+  canvas templates) - slice 2 verified, no change.
+- Goalpost: `persona-songwriter-roundtrip.json` (red-first).
+
 ## Verification
 
 USDD goalposts (red-first): `persona-jammer-compose` (P3, the operator's

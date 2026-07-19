@@ -1,0 +1,201 @@
+{
+  "name": "persona-songwriter-roundtrip",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip"
+  ],
+  "note": "S-COMPOSE-CALM slice 2 (P5 Songwriter round-trip, design doc + songwriting-coach): (1) the pulljam cue teaches once, on the canvas, that a SAVED progression can become a section (session-gated - composeintro/transposetip pre-dismissed so it is this session's tip); (2) duplicate-section is one tap (chorus reuse); (3) a pull from a differently-keyed jam OFFERS transpose-on-pull - shifting A-D-E into a C-major song yields C-F-G. Written red-first against the slice-1 tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tapText",
+      "text": "Save progression",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "name the progression and confirm (the P5 fixture: a saved progression now exists)",
+      "js": "(function(){var row=document.querySelector('.composeRow');if(!row||row.hidden)return false;var inp=row.querySelector('input');if(!inp)return false;inp.value='Jam one';var btns=row.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(/save/i.test(btns[i].textContent)){btns[i].click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#cClear"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tapText",
+      "text": "Grow it into a song",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "on the canvas with the Verse captured (song in C)",
+      "js": "(function(){var w=document.querySelector('.composeWrap');return !!w && w.classList.contains('songMode') && JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the pulljam cue teaches the P5 move ONCE - a saved progression can become a section",
+      "js": "(function(){var s=document.getElementById('pulljamSlot');return !!s && !!s.querySelector('.notableBanner') && /saved progression/i.test(s.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "roundtrip-pulljam-cue"
+    },
+    {
+      "action": "tap",
+      "selector": "#songSections .songSect:nth-child(1) .songSectDup"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "duplicate-section is one tap: two identical Verse sections in the buffer",
+      "js": "(function(){var b=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');return b.length===2 && b[0].label===b[1].label && JSON.stringify(b[0].seq)===JSON.stringify(b[1].seq);})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "A"
+    },
+    {
+      "action": "tapChord",
+      "name": "D"
+    },
+    {
+      "action": "tapChord",
+      "name": "E"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "a differently-keyed pull ASKS: this part is in A, your song is in C - shift or keep",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row||row.hidden)return false;var t=row.textContent;return /Shift it to C/.test(t) && /Keep it in A/.test(t);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "roundtrip-transpose-ask"
+    },
+    {
+      "action": "tapText",
+      "text": "Shift it to C",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the pulled part joined the song IN ITS KEY: A-D-E arrived as C-F-G (three sections total)",
+      "js": "(function(){var b=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');if(b.length!==3)return false;var last=b[2];return JSON.stringify(last.seq)===JSON.stringify(['C','F','G']);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "roundtrip-shifted"
+    }
+  ]
+}

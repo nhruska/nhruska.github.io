@@ -2804,6 +2804,11 @@
       // (Save sheet / Library) and closed via its own X or hardware Back.
       // --- the Song canvas: the arrangement altitude, full screen when active.
       composeSongEl = document.createElement('div'); composeSongEl.id = 'composeSong'; composeSongEl.className = 'composeSong';
+      // S-COMPOSE-CALM slice 2: the P5 pull-cue slot sits at the canvas top -
+      // rendered by renderPulljamCue (one-shot notable, session-gated).
+      var pulljamSlotEl = document.createElement('div');
+      pulljamSlotEl.className = 'notableSlot'; pulljamSlotEl.id = 'pulljamSlot';
+      composeSongEl.appendChild(pulljamSlotEl);
       // S-COMPOSE-CALM: the canvas's own dismiss - top-right X, 44px floor.
       var songCloseEl = document.createElement('button');
       songCloseEl.type = 'button'; songCloseEl.id = 'songCanvasClose'; songCloseEl.className = 'songCanvasClose';
@@ -3130,6 +3135,7 @@
       // Templates render whenever the canvas does - in Song mode they ARE the
       // "add the next section" surface (and the empty state's proven starters).
       renderSongSuggest(inSong);
+      renderPulljamCue(inSong);
       renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
       if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;
       songSectionsEl.innerHTML = '';
@@ -3161,6 +3167,19 @@
         edit.innerHTML = '&#9998;'; edit.setAttribute('aria-label', 'Edit ' + sec.label + ' chords in the builder');
         composeWireTap(edit, (function (idx) { return function () { editSection(idx); }; })(i));
         chip.appendChild(edit);
+        // S-COMPOSE-CALM slice 2 (songwriting-coach: chorus reuse is one tap):
+        // duplicate THIS section right after itself.
+        var dup = document.createElement('button'); dup.type = 'button'; dup.className = 'songSectDup';
+        dup.innerHTML = '&#10697;'; dup.setAttribute('aria-label', 'Duplicate ' + sec.label);
+        composeWireTap(dup, (function (idx) { return function () {
+          var src = songSections[idx]; if (!src) return;
+          songSections.splice(idx + 1, 0, { label: src.label, seq: src.seq.slice() });
+          disarmRm();
+          saveSongSections();
+          recordComp('comp-song-form');
+          renderSongTray();
+        }; })(i));
+        chip.appendChild(dup);
         var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
@@ -3344,7 +3363,37 @@
         renderSongTray();
         return;
       }
-      songSections.push({ label: label, seq: progression.slice() });
+      // S-COMPOSE-CALM slice 2 (songwriting-coach: key consistency): a pull
+      // from a differently-keyed jam OFFERS transpose-on-pull. Compare the
+      // strip's key against the DRAFT's own inferred key (plain inferKey on
+      // the sections' chords - suggestKey would echo the live strip key back).
+      var pulled = progression.slice();
+      if (songSections.length) {
+        var draftIk = inferKey(buildSongFromSections(songSections).seq);
+        // The strip's OWN key, inferred from its chords - NOT songKey.root,
+        // which the canvas hop deliberately pins to the SONG's key (so an
+        // A-D-E part built under a pinned C would read as "C" there).
+        var stripIk = inferKey(pulled);
+        // Relative major/minor share one pitch set (songwriting-coach): a
+        // vi-IV part inferred as "A minor" under a C-major draft is NOT a key
+        // departure - never ask there. Compare relative-MAJOR roots.
+        function relMajorRoot(ik) {
+          if (!ik || !ik.root) return null;
+          var i = ROOTS.indexOf(ik.root);
+          if (i < 0) return ik.root;
+          return String(ik.mode || '').toLowerCase() === 'minor' ? ROOTS[(i + 3) % 12] : ik.root;
+        }
+        if (draftIk && draftIk.root && stripIk && stripIk.root && relMajorRoot(draftIk) !== relMajorRoot(stripIk)) {
+          openTransposeAskRow(stripIk.root, draftIk, label, pulled);
+          return; // the ask's deliver() re-enters commitSongSection
+        }
+      }
+      commitSongSection(label, pulled);
+    }
+    // The actual section commit - shared by the direct path and the
+    // transpose-on-pull ask (which may hand over a transposed copy).
+    function commitSongSection(label, seq) {
+      songSections.push({ label: label, seq: seq });
       disarmRm(); // a fresh add clears any armed chip remover
       saveSongSections();
       recordComp('comp-song-form'); // M-COMPETENCY: shaping a section = song-form practice (small)
@@ -3372,6 +3421,78 @@
       // clear snapshots for undo, so nothing is ever lost.
       clearProgression('Added ' + label + ' to your song. Strip cleared for your next section - Undo to edit these chords.');
       renderSongTray();
+    }
+    // S-COMPOSE-CALM slice 2 (P5 pedagogy, design doc): a songwriter with a
+    // SAVED progression learns, once, that it can become a section. Fires on
+    // a canvas render when a progression-only custom exists; one-shot +
+    // level-gated (intermediate) + session-gated like every notable.
+    function renderPulljamCue(inSong) {
+      var slot = document.getElementById('pulljamSlot');
+      if (!slot) return;
+      slot.innerHTML = '';
+      if (!inSong || !global.Notables) return;
+      var hasProgCustom = customSongs.some(function (c) { return c && c.seq && c.seq.length && !c.sheet; });
+      if (!hasProgCustom) return;
+      var GL = guidanceLevelRef();
+      if (!global.Notables.claim('pulljam', undefined, GL && GL.get ? GL.get() : null)) return;
+      var banner = global.Notables.renderBanner({
+        consumerId: 'pulljam',
+        text: 'A saved progression can become a section - open it from the Library, then Add to song.',
+        onDismiss: function () { slot.innerHTML = ''; }
+      });
+      if (banner) slot.appendChild(banner);
+    }
+        // S-COMPOSE-CALM slice 2: the transpose-on-pull ask. Strip key differs
+    // from the draft's own key - offer to shift the pulled copy into the
+    // song's key (songwriting-coach: sections share the song key) or keep it
+    // as a deliberate departure. Cancel aborts the add; the strip survives.
+    function openTransposeAskRow(stripRoot, draftIk, label, pulled) {
+      var delta = (ROOTS.indexOf(draftIk.root) - ROOTS.indexOf(stripRoot) + 12) % 12;
+      if (!ensureComposeUI() || delta === 0) { commitSongSection(label, pulled); return; }
+      hideComposeRow();
+      composeRow.hidden = false;
+      composeRow.classList.add('asModal');
+      if (composeModalBackdrop) composeModalBackdrop.hidden = false;
+      var msg = document.createElement('p');
+      msg.className = 'composeRowMsg';
+      msg.textContent = 'This part is in ' + stripRoot + ' - your song is in ' + draftIk.root + ' ' + (draftIk.mode || 'major') + '.';
+      var shiftBtn = document.createElement('button');
+      shiftBtn.type = 'button'; shiftBtn.className = 'btn red ctrlBtn';
+      shiftBtn.textContent = 'Shift it to ' + draftIk.root;
+      var keepBtn = document.createElement('button');
+      keepBtn.type = 'button'; keepBtn.className = 'btn ghost ctrlBtn';
+      keepBtn.textContent = 'Keep it in ' + stripRoot;
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
+      var delivered = false;
+      function rawClose() { hideComposeRow(); }
+      function deliver(choice) {
+        if (delivered) return; delivered = true;
+        if (choice === 'shift') commitSongSection(label, pulled.map(function (c) { return tpose(c, delta); }));
+        else if (choice === 'keep') commitSongSection(label, pulled);
+        // 'cancel': the add aborts; the strip is untouched (returnToSong, if
+        // armed by the sheet, stays armed for the next attempt - harmless).
+      }
+      var pendingDismiss = 'cancel';
+      function choose(choice) {
+        pendingDismiss = choice;
+        if (window.NavHistory) window.NavHistory.settleAfter(function () { rawClose(); }, function () { deliver(choice); });
+        else { rawClose(); deliver(choice); }
+      }
+      shiftBtn.onclick = function () { choose('shift'); };
+      keepBtn.onclick = function () { choose('keep'); };
+      cancelBtn.onclick = function () { choose('cancel'); };
+      composeRow.onkeydown = function (e) { if (e.key === 'Escape') choose('cancel'); };
+      if (composeModalBackdrop) composeModalBackdrop.onclick = function () { choose('cancel'); };
+      if (window.NavHistory) window.NavHistory.open('composeModal', function () {
+        rawClose();
+        setTimeout(function () { deliver(pendingDismiss); }, 0);
+      });
+      var btnRow = document.createElement('div');
+      btnRow.className = 'composeRowBtns';
+      btnRow.appendChild(shiftBtn); btnRow.appendChild(keepBtn); btnRow.appendChild(cancelBtn);
+      composeRow.appendChild(msg); composeRow.appendChild(btnRow);
+      composeRow.focus();
     }
     // Assemble the buffer into ONE custom song via the existing createCustomItem
     // save path, then open it in the song view. A3: buffer-only op - leaves the
