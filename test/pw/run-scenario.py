@@ -108,6 +108,14 @@ def run(scenario_path, base_url=None):
             browser = p.chromium.launch(executable_path=exe) if exe else p.chromium.launch()
             vp = sc.get('viewport') or {'width': 412, 'height': 915}
             ctx = browser.new_context(viewport=vp)
+            # S-WELCOME: every scenario runs in a FRESH context, which the app
+            # reads as a brand-new device and greets with the first-run tour -
+            # blocking every step behind an overlay. Scenarios model a RETURNING
+            # user unless they opt in with "firstRun": true (the tour's own
+            # scenario), so mark the tour done before any page script runs.
+            if not sc.get('firstRun'):
+                ctx.add_init_script(
+                    "try{localStorage.setItem('music.welcomeDone.v1','1')}catch(e){}")
             # USDD: `persona` simulates a user skill level deterministically by
             # seeding the app's stores BEFORE any page script runs (beginner |
             # intermediate | advanced). A persona is a user who ANSWERED the
@@ -219,7 +227,12 @@ def run(scenario_path, base_url=None):
                             raise AssertionError(str(ok))
                     elif act == 'waitFor':
                         state = step.get('state', 'visible')
-                        page.locator(step['selector']).first.wait_for(state=state, timeout=6000)
+                        # timeoutMs: cross-navigation waits (e.g. the welcome tour's
+                        # finish reload) need to ride out a full app boot, which on a
+                        # blocked-egress box includes a hanging external-font fetch
+                        # (~12s) before `load` releases it. Default stays tight.
+                        page.locator(step['selector']).first.wait_for(
+                            state=state, timeout=step.get('timeoutMs', 6000))
                     elif act == 'assertVisible':
                         if not page.locator(step['selector']).first.is_visible():
                             raise AssertionError('%s not visible' % step['selector'])

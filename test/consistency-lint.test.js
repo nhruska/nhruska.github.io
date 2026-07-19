@@ -247,6 +247,9 @@ var RADIUS_CONSUMERS = [
   // same bucket as the .bt-curate-btn/.iconBtn family above.
   ['.chordChips .c', songbookStripped, '--r-btn-sm'],
   ['.chordOnly .bar', songbookStripped, '--r-btn-sm'],
+  // S-WELCOME (2026-07-19): the option-row primitive shared by the welcome
+  // tour panels and the in-app ask banners (.glAskOpt/.dgPrefOpt compose it).
+  ['.askOpt', songbookStripped, '--r-btn-sm'],
   ['.bt-qcand', tracksStripped, '--r-btn-sm'],
   ['.cofChord', tracksStripped, '--r-btn-sm'],
   ['.cofNbChip', tracksStripped, '--r-btn-sm'],

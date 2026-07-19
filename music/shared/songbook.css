@@ -179,17 +179,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   background-image:radial-gradient(1100px 360px at 50% -8%,var(--glow),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
-/* Slim header (one screen, above the fold): compact padding + smaller brand, the
-   instrument picker the only control here. ♪ quick-tune lives in the Tune tab and
-   the accent picker moved there too - both were redundant in the always-on bar. */
+/* Slim header (one screen, above the fold): brand + offline pill + gear ONLY.
+   S-WELCOME moved the instrument picker into Settings > Preferences (it was
+   a rarely-used control taxing the always-on bar); quick-tune lives in the
+   Tune tab and the accent picker in Settings for the same reason. */
 .appbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
 .appbar .brand{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
-/* The per-tab context line moved OUT of the brand column (operator UAT
-   2026-07-18: it ellipsized between the picker and the gear). It is now the
-   full-width .tabIntro strip below the appbar: each tab's one orienting
-   sentence - purpose + next step - with room to wrap, never to truncate. */
-.tabIntro{flex:0 0 auto;margin:0;padding:8px 14px 0;font-size:.74rem;color:var(--txt-dim);line-height:1.4;}
+/* The per-tab context line is RETIRED (operator interview 2026-07-18:
+   orientation lives in the S-WELCOME first-run tour only - no persistent
+   intro text). The old .tabIntro strip and brand ctx column are both gone. */
 /* #OFFLINE-PILL (operator UAT 2026-07-18): quiet connectivity status in the
    appbar - amber (the app's one warn accent) because it's a heads-up, not an
    error; the app keeps working offline. [hidden] wins the display cascade. */
@@ -1598,3 +1597,138 @@ footer{display:none;}
 .skillPref{margin-top:8px;font-size:.8rem;color:var(--txt-soft);line-height:1.4;}
 .skillActs{margin-top:12px;display:flex;}
 .skillExport{flex:0 0 auto;min-height:44px;}
+
+/* =====================================================================
+ * PLAY-PAGE CHROME (moved from play/index.html's inline <style> block,
+ * operator directive 2026-07-19: ALL css external - no inline styles).
+ * Scope: the appbar-adjacent controls, the Settings sheet, the About
+ * rows, and the S-WELCOME first-run tour. play/index.html is the only
+ * consumer today; living here keeps every component rule in the one
+ * theme file (Element Consistency Law) and inside the SW CORE cache.
+ * ===================================================================== */
+/* the instrument/tuning select (lives in Settings > Preferences since S-WELCOME) */
+.picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
+  font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
+.picker:focus{outline:none;border-color:var(--accent);}
+.picker:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+/* accent swatches - rendered inline in the Settings sheet (accentSwatches) */
+.sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;padding:0;
+  background:var(--sc);transition:transform .08s;}
+.sw:active{transform:scale(.88);}
+.sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
+/* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
+   sheet on phone; the accent chooser lives here now, not the Tune tab.
+   Structure (F11): sticky .setHd top, scrollable .setPanelBody middle, sticky
+   .setFoot bottom - a plain flex column. The card's own height is auto up to
+   max-height, so short content never leaves a gap above the footer; only when
+   content exceeds max-height does .setPanelBody actually scroll. */
+#settingsBtn{line-height:0;}
+#settingsBtn svg{width:21px;height:21px;display:block;}
+.setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
+  padding:0 12px calc(12px + env(safe-area-inset-bottom));}
+.setOv[hidden]{display:none;}
+/* S-WELCOME: the first-run 3-panel sheet. Same overlay family as .setOv;
+   panels are horizontal scroll-snap so a swipe OR the Next button advances. */
+.welcomeOv{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.6);animation:fadeUp .18s ease;padding:18px 14px;}
+.welcomeOv[hidden]{display:none;}
+.welcomeCard{position:relative;width:100%;max-width:440px;max-height:86dvh;display:flex;flex-direction:column;
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px;
+  box-shadow:0 14px 40px rgba(0,0,0,.55);padding:14px 0 14px;}
+.welcomeCard .x{position:absolute;top:4px;right:4px;z-index:1;background:none;border:0;color:var(--txt-dim);
+  font-size:1.1rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;}
+.wPanels{display:flex;overflow-x:auto;overflow-y:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;min-height:0;}
+.wPanels::-webkit-scrollbar{display:none;}
+.wPanel{flex:0 0 100%;scroll-snap-align:start;padding:8px 18px 4px;box-sizing:border-box;}
+.wPanel h2{margin:0 0 10px;font-size:1.2rem;font-weight:800;letter-spacing:-.01em;padding-right:40px;}
+.wLead{margin:0 0 12px;font-size:.84rem;color:var(--txt-soft);line-height:1.45;}
+.wLead b{color:var(--txt);}
+/* .askOpt - THE option-row primitive (Element Consistency Law): one look for
+   every "pick one" list - the welcome tour's instrument + level panels AND
+   the in-app ask banners (.glAskOpt guidance level, .dgPrefOpt diagram pref),
+   which previously carried a bespoke inline-style clone of this. Neutral
+   line-strong border at rest (GUIDANCE surfaces must not borrow the
+   SELECTION token --accent-dim); .on is the selected state. */
+.askOpt{display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--line-strong);
+  border-radius:var(--r-btn-sm);color:var(--txt);padding:10px 12px;margin-bottom:8px;min-height:44px;font-size:.88rem;
+  font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.askOpt.on{border-color:var(--accent-ink);background:var(--accent-deep);color:var(--accent-ink);font-weight:700;}
+.askLbl{margin-bottom:8px;font-weight:600;}
+.wMap{list-style:none;margin:0;padding:0;}
+.wMap li{display:flex;flex-direction:column;gap:2px;padding:10px 0;font-size:.84rem;color:var(--txt-soft);
+  line-height:1.4;border-bottom:1px solid var(--line);}
+.wMap li:last-child{border-bottom:0;}
+.wMap b{color:var(--txt);font-size:.9rem;}
+.wFoot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px 0;gap:12px;}
+.wFoot .btn{min-height:44px;padding:12px 22px;}
+.wDots{display:flex;gap:7px;}
+.wDot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);transition:background .2s;}
+.wDot.on{background:var(--accent);}
+/* The relocated instrument picker inside Settings > Preferences. Overrides
+   .picker's max-width:46vw (an appbar-era cap) - here it is a full row. */
+.setPicker{width:100%;max-width:100%;margin-bottom:4px;}
+/* Tune tab spacing + annotations (were inline style attrs pre-2026-07-19). */
+#tuneTuneRow .sub{margin:14px 0 8px;}
+.refSub{margin-top:22px;margin-bottom:10px;}
+.subNote{font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem;}
+.chipTuning{opacity:.55;font-weight:400;}
+.setCard{width:100%;max-width:520px;max-height:86dvh;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px 16px 0 0;
+  box-shadow:0 -14px 40px rgba(0,0,0,.55);}
+.setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
+  padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
+.setHd h2{margin:0;font-size:1.15rem;}
+.setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+.setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
+/* M-SETTINGS-CLARITY: sections are .accSec/.accBtn/.accBody (the shared
+   accordion primitive, songbook.css). The old .setSec rules retired with
+   the markup. .setRow composes the shared .listItem card family as a
+   <button> data row (Backup/Restore): explicit color because button text
+   does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
+   it reads as a list row, not an action button.
+   UAT 2026-07-16: also give it an explicit dark surface + border + padding.
+   A <button> with no background falls back to the UA default (light grey),
+   so on the dark theme the standalone Guidance-level .setRow rendered as a
+   washed-out white bar with near-invisible --txt text (operator screenshot).
+   The Backup/Restore .setRows live inside a collapsed accordion so the bug
+   only showed on the bare Guidance row - the fix reads correctly for all. */
+.setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
+.setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
+/* S-SETTINGS-UAT (operator UAT 2026-07-16): settings ACTION rows (Back up,
+   Restore, the Skills import/export rows - button.listItem.setRow) read as
+   CTAs via the accent border, the suggChip/CTA ink family - one rule for
+   the whole action-row class, never per instance. Plain display rows and
+   the segmented controls keep the neutral line. */
+#settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
+#settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
+.setRow .li-title{display:block;}
+.setRow .li-artist{display:block;}
+/* About section link rows (round 2): external-link ink (--brass, the Links
+   convention) + inline-SVG icon taking currentColor; 44px touch floor. */
+.aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
+  text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
+.aboutLink svg{flex:0 0 auto;}
+.aboutStamp{margin:10px 0 0;}
+.setLbl{font-weight:600;margin-bottom:11px;}
+.setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
+.setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
+.themeRow{display:flex;gap:11px;flex-wrap:wrap;}
+.themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
+.thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.thSeg.on{background:var(--accent);color:var(--on-accent);}
+.thSeg:active{transform:scale(.97);}
+.setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
+.setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
+.setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
+.setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
+.setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
+.setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
+.setFoot{flex:0 0 auto;border-top:1px solid var(--line-strong);padding:14px 16px 18px;}
+.setBtns{display:flex;gap:10px;}
+.setBtns .btn{flex:1;}
+.setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
