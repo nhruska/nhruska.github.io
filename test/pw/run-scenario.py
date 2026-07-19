@@ -39,6 +39,13 @@ in scenarios):
   dragReorder {from, to, side?}        - pointer-drag from one element onto the
                                          before/after side of another (S-PROG-REORDER)
   screenshot {name}                    - PNG to test/pw/evidence/<scenario>/<name>.png
+
+Top-level scenario keys (beside "steps"): "firstRun" (opt out of the runner's
+welcomeDone seed - tour scenarios), "persona" + "dismissNotables" (guidance-level
+fixture), and "seed" - a {localStorage key: string value} map applied BEFORE any
+page script runs, for persona fixtures that need app STATE (a heavy setlist, an
+in-flight song draft). Values are stored verbatim - JSON-encode structured values
+yourself in the scenario file.
 """
 import glob
 import json
@@ -136,6 +143,13 @@ def run(scenario_path, base_url=None):
                     "try{localStorage.setItem('music.guidanceLevel.v1',%s);"
                     "localStorage.setItem('music.notables.v1',%s)}catch(e){}"
                     % (json.dumps(sc['persona']), json.dumps(json.dumps(dismissed))))
+            # Persona STATE fixture: arbitrary localStorage seeds (heavy setlist,
+            # in-flight draft, saved progressions) applied before any page script,
+            # so a scenario can model a lived-in device deterministically.
+            for k, v in (sc.get('seed') or {}).items():
+                ctx.add_init_script(
+                    "try{localStorage.setItem(%s,%s)}catch(e){}"
+                    % (json.dumps(k), json.dumps(v)))
             page = ctx.new_page()
             page.on('pageerror', lambda e: page_errors.append(str(e)))
             page.on('console', lambda m: console_errors.append(m.text)

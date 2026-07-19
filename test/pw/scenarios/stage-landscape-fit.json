@@ -1,0 +1,86 @@
+{
+  "name": "stage-landscape-fit",
+  "persona": "intermediate",
+  "dismissNotables": ["composeintro", "transposetip", "backup"],
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
+  },
+  "note": "UAT r5 F7 (operator 2026-07-19, landscape screenshot: overlapping controls, sheet running under the next button, tiny icons): the Stage in LANDSCAPE. Contract: transpose leaves the top bar (it lives in the gear sheet as a Key row - rarely touched mid-performance, per the control-zoning coaching); remaining icons are 44px+; the nav becomes a right-edge column and the sheet is padded clear of it so chords NEVER run under the next button; vertical space goes to the music.",
+  "viewport": {
+    "width": 915,
+    "height": 412
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "transpose is OUT of the top bar: pDown/pUp live inside the gear sheet (closed by default), not the always-on tools row",
+      "js": "(function(){var d=document.getElementById('pDown');var sheet=document.getElementById('pSpeed');return !!d && !!sheet && sheet.contains(d) && d.offsetParent===null;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the remaining stage icons are 44px+ (arm's-length legibility, thumb targets)",
+      "js": "(function(){return ['pCtrls','pDimBtn','pClose'].every(function(id){var b=document.getElementById(id);if(!b)return false;var r=b.getBoundingClientRect();return r.width>=44 && r.height>=44;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "every top-bar control sits fully inside the viewport (nothing clipped off the right edge)",
+      "js": "(function(){return ['pCtrls','pDimBtn','pClose'].every(function(id){var r=document.getElementById(id).getBoundingClientRect();return r.left>=0 && r.right<=window.innerWidth;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape: the nav column sits in the sheet's cleared padding - chords can never run under the next button",
+      "js": "(function(){var nav=document.querySelector('.pNav');var sh=document.getElementById('pSheet');if(!nav||!sh)return false;var nr=nav.getBoundingClientRect(),sr=sh.getBoundingClientRect();var padR=parseFloat(getComputedStyle(sh).paddingRight)||0;return nr.left>=sr.right-padR-1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "stage-landscape"
+    },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "the gear sheet carries the relocated Key row - transpose is one tap away, never lost",
+      "js": "(function(){var d=document.getElementById('pDown');var u=document.getElementById('pUp');return !!d && !!u && d.offsetParent!==null && u.offsetParent!==null;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "snapshot the sheet, then key-down from the new home",
+      "js": "(function(){window.__stageSheetBefore=document.getElementById('pSheet').textContent;document.getElementById('pDown').click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "transpose still WORKS from the gear sheet (the rendered sheet shifted)",
+      "js": "(function(){return document.getElementById('pSheet').textContent!==window.__stageSheetBefore;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "stage-landscape-gear-sheet"
+    }
+  ]
+}

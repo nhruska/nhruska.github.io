@@ -1,0 +1,109 @@
+{
+  "name": "persona-performer-setlist",
+  "persona": "intermediate",
+  "dismissNotables": ["composeintro", "transposetip", "backup"],
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\",\"k3\",\"k4\"]"
+  },
+  "note": "S-COMPOSE-CALM slice 3, P4 Performer goalpost (design table: 'Setlist -> Perform; Compose only for quick key checks'). Fixture: a lived-in setlist-heavy device (5 catalog songs seeded via the runner's 'seed' map - catalog ids are k<index>). The journey: Setlist tab shows the set with Start thumb-reachable in the static head row (UAT 2026-07-16 contract), one tap opens the Stage with a real sheet, prev/next present; exit; Compose serves the mid-gig key check (key chip up, zero song chrome, no tips - this performer has seen them, including the backup nudge, which CORRECTLY fires for an un-backed-up 5-song set and is dismissed in the fixture; first red run proved it).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the seeded setlist is heavy and healed (all 5 catalog ids resolve - none pruned)",
+      "js": "(function(){var b=document.getElementById('setBody');return !!b && b.children.length>=5;})()"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "screenshot",
+      "name": "p4-setlist-ready"
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "one tap to the Stage: overlay on, a real sheet rendered, position readout live",
+      "js": "(function(){var p=document.getElementById('perform');var sh=document.getElementById('pSheet');return !!p && p.classList.contains('on') && !!sh && sh.textContent.trim().length>0;})()"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#pNext"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F7 portrait: transpose is out of the top bar (gear sheet owns it) and the remaining icons are 44px+",
+      "js": "(function(){var d=document.getElementById('pDown');var sheet=document.getElementById('pSpeed');if(!d||!sheet||!sheet.contains(d)||d.offsetParent!==null)return false;return ['pCtrls','pDimBtn','pClose'].every(function(id){var r=document.getElementById(id).getBoundingClientRect();return r.width>=44 && r.height>=44;});})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pNext"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "next-song works mid-set (title changed to the 2nd seeded song)",
+      "js": "(function(){var t=document.getElementById('pTitle');return !!t && t.textContent.trim().length>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p4-stage"
+    },
+    {
+      "action": "tap",
+      "selector": "#pClose"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "Stage closes clean back to the app",
+      "js": "(function(){var p=document.getElementById('perform');return !p || !p.classList.contains('on');})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Compose = the quick key check: key chip visible, zero ambient song chrome, no tip interrupts a performer who's seen them",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}var chip=document.getElementById('keyPickerCompact');var tips=Array.prototype.filter.call(document.querySelectorAll('.notableBanner'),function(n){return n.offsetParent!==null;});return !!chip && chip.offsetParent!==null && gone('#composeModeSeg') && gone('#songTray') && tips.length===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p4-key-check"
+    }
+  ]
+}

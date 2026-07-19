@@ -874,7 +874,7 @@ test('buildClearSnapshot is an independent copy - mutating the source after does
   songKey.root = 'G'; songKey.mode = 'Minor'; songKey.explicit = false;
   assert.deepStrictEqual(snap.progression, ['C', 'G', 'Am', 'F']);
   assert.strictEqual(snap.cTpose, 2);
-  assert.deepStrictEqual(snap.songKey, { root: 'C', mode: 'Major', explicit: true });
+  assert.deepStrictEqual(snap.songKey, { root: 'C', mode: 'Major', explicit: true, defaulted: false });
   assert.strictEqual(snap.savedComposeId, 'm123');
 });
 test('applyClearSnapshot returns an independent copy - mutating the result does not corrupt the stored snapshot', function () {
@@ -882,7 +882,7 @@ test('applyClearSnapshot returns an independent copy - mutating the result does 
   var restored = Songbook.applyClearSnapshot(snap);
   assert.deepStrictEqual(restored.progression, ['E', 'A', 'Bm', 'D']);
   assert.strictEqual(restored.cTpose, -1);
-  assert.deepStrictEqual(restored.songKey, { root: 'E', mode: 'Mixolydian', explicit: true });
+  assert.deepStrictEqual(restored.songKey, { root: 'E', mode: 'Mixolydian', explicit: true, defaulted: false });
   assert.strictEqual(restored.savedComposeId, null);
   // Mutate what the caller got back (as if the app kept editing after Undo) -
   // the SAVED snapshot object must be untouched, so a second Undo (if the
@@ -895,7 +895,7 @@ test('buildClearSnapshot -> applyClearSnapshot round-trips the full pre-Clear st
   var snap = Songbook.buildClearSnapshot(['G', 'D', 'Em', 'C'], 3, { root: 'G', mode: 'Major', explicit: false }, 'm999');
   assert.deepStrictEqual(Songbook.applyClearSnapshot(snap), {
     progression: ['G', 'D', 'Em', 'C'], cTpose: 3,
-    songKey: { root: 'G', mode: 'Major', explicit: false }, savedComposeId: 'm999'
+    songKey: { root: 'G', mode: 'Major', explicit: false, defaulted: false }, savedComposeId: 'm999'
   });
 });
 
@@ -1354,14 +1354,14 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
     var ms = scheduled[id].ms;
     byDuration[ms] = (byDuration[ms] || []).concat([Number(id)]);
   });
-  assert.strictEqual((byDuration[1600] || []).length, 1, 'exactly one pending 1600ms auto-hide timer (the Library toast\'s)');
+  assert.strictEqual((byDuration[5200] || []).length, 1, 'exactly one pending 5200ms auto-hide timer (UAT r5 F6: the Added-to-setlist toast carries a Go-to-setlist action, and an action toast earns the longer hold)');
   assert.strictEqual((byDuration[4000] || []).length, 1, 'F31/#265-C: the saveDone banner must schedule its OWN auto-hide timer (Toast.showAction default 4000ms - never stranded)');
   assert.strictEqual(libraryToast.classList.contains('on'), true, 'Library toast is visible immediately after showToast()');
   assert.strictEqual(saveBanner.hidden, false, 'saveDone banner is visible immediately after the save');
   // Fire the Library toast's own scheduled auto-hide (simulates the real
   // 1600ms elapsing) - this is the assertion that FAILED before the fix
   // (the timer had already been silently cancelled and would never fire).
-  var id = byDuration[1600][0];
+  var id = byDuration[5200][0];
   scheduled[id].cb();
   assert.strictEqual(libraryToast.classList.contains('on'), false, 'Library toast must auto-hide once its own timer elapses - the U9 regression');
   // The saveDone banner must remain completely untouched by the Library toast's

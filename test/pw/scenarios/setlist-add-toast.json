@@ -1,0 +1,62 @@
+{
+  "name": "setlist-add-toast",
+  "note": "UAT r5 F6 (operator 2026-07-19): the 'Added to setlist' toast needs (a) a longer hold and (b) a tappable 'Go to setlist' action riding in it. Action-toast contract: a toast that carries an action earns the longer timeout (you can't tap what's already gone); the plain 1600ms stays for actionless confirmations. Red-first: pre-fix the toast is text-only and hides before the 2500ms probe.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#setToggle"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the confirmation toast carries a tappable Go to setlist action",
+      "js": "(function(){var t=document.querySelector('.toast.withAct.on');if(!t)return false;var b=t.querySelector('button');return /added to setlist/i.test(t.textContent) && !!b && /go to setlist/i.test(b.textContent);})()"
+    },
+    {
+      "action": "wait",
+      "ms": 2500
+    },
+    {
+      "action": "evalAssert",
+      "label": "an action toast holds longer than the plain 1600ms confirmation (still up at ~2.9s)",
+      "js": "(function(){var t=document.querySelector('.toast.withAct.on');return !!t && /added to setlist/i.test(t.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "action-toast"
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap the action",
+      "js": "(function(){var t=document.querySelector('.toast.withAct.on');if(!t)return false;var b=t.querySelector('button');if(!b)return false;b.click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the action lands on the Setlist tab with the just-added song in the set",
+      "js": "(function(){var s=document.getElementById('s-jam');var body=document.getElementById('setBody');return !!s && s.classList.contains('on') && !!body && body.children.length>=1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "landed-on-setlist"
+    }
+  ]
+}

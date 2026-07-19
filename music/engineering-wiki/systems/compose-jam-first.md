@@ -69,6 +69,28 @@ idempotent. Anchors: `songbook.js` `setComposeMode`/`rawSetMode`.
   canvas templates) - slice 2 verified, no change.
 - Goalpost: `persona-songwriter-roundtrip.json` (red-first).
 
+## Slice 3 + UAT r5 (2026-07-19)
+
+- **Persona goalposts complete**: P1/P4/P7 scenarios + the runner's `seed`
+  fixture map land the full 7-persona registry -
+  [ux-philosophy/personas.md](../ux-philosophy/personas.md) "Goalpost personas".
+- **Key-follow**: the builder key follows the song being worked on
+  (D-KEY-FOLLOW amendment in [compose-key-system.md](compose-key-system.md)) -
+  continue-building, the next-section hop, and template fills all pin into the
+  song's key; the untouched C default re-infers from the music.
+- **Chord-chart visibility is a Settings choice** (`music.chordCharts.v1`,
+  global): the Compose-surface Shapes toggle is retired; Settings > Preferences
+  "Chord charts" (Charts | Compact) follows the guidance level until picked.
+  Distinct from Fretboard diagrams (Dots|Patterns - styles what renders).
+- **Section cards**: duplicate ⧉ wears the shared 36px halo primitive; card
+  controls tightened to a 38px pitch (44px hit boxes overlap via -3px margins)
+  so the longest label (Pre-Chorus) renders whole.
+- **Stage (fullscreen)**: transpose relocated into the gear sheet's Key row;
+  remaining icons 46px; LANDSCAPE gets a right-edge nav column with the sheet
+  padded clear of it (goalpost: `stage-landscape-fit`).
+- **Action toast**: "Added to setlist" carries a Go-to-setlist button and the
+  5200ms action-toast hold (goalpost: `setlist-add-toast`).
+
 ## Verification
 
 USDD goalposts (red-first): `persona-jammer-compose` (P3, the operator's

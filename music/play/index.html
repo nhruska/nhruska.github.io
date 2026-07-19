@@ -221,7 +221,10 @@
 </div>
 <div class="perform" id="perform">
   <div class="pTop"><span class="pos" id="pPos">1 / 1</span>
-    <div class="tools"><button class="pmini" id="pDown" title="Key down">−</button><button class="pmini" id="pUp" title="Key up">+</button><button class="pmini" id="pCtrls" title="Stage controls">⚙</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
+    <!-- UAT r5 F7 (operator 2026-07-19): transpose is OUT of the always-on bar
+         (rarely touched mid-performance - it lives in the gear sheet's Key row
+         below); the remaining icons grow to 44px+ stage targets. -->
+    <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls">⚙</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
   <div class="pTitle" id="pTitle"></div>
   <div class="pArtist" id="pArtist"></div>
   <div class="pKey" id="pKeyLine"></div>
@@ -229,6 +232,7 @@
   <div class="pSpeed" id="pSpeed">
     <div class="psRow"><label>View</label><div class="psBtns"><button class="psBtn" id="pViewLyrics">Lyrics</button><button class="psBtn" id="pViewChords">Chords</button><button class="psBtn" id="pViewBoth">Both</button></div></div>
     <div class="psRow"><label>Size</label><div class="psBtns"><button class="psBtn" id="pFontDown">A−</button><button class="psBtn" id="pFontAuto">Auto</button><button class="psBtn" id="pFontUp">A+</button></div></div>
+    <div class="psRow"><label>Key</label><div class="psBtns"><button class="psBtn" id="pDown" title="Key down">−</button><button class="psBtn" id="pUp" title="Key up">+</button></div></div>
   </div>
   <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
 </div>
@@ -301,6 +305,14 @@
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
+          <!-- UAT r5 F5 (operator 2026-07-19): chord-chart VISIBILITY moved here
+               from the Compose surface's Shapes toggle. Distinct from Fretboard
+               diagrams above (which styles the diagrams that do render). Follows
+               the guidance level until the user chooses; the choice is global
+               (crosses instrument profiles). -->
+          <div class="setLbl">Chord charts</div>
+          <div class="themeSeg" id="chordChartsSeg" role="radiogroup" aria-label="Chord chart display"></div>
+          <p class="setHint">Full charts while you're learning shapes, or compact chord names once you know them. Follows your guidance level until you pick one here.</p>
           <!-- M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16:
                "guidance level change needs to follow UI standards" - this
                SUPERSEDES the 2026-07-05 plain-text-row directive): the
@@ -1074,6 +1086,47 @@
       markDiagramPref(DiagramPref.get());
     }
 
+    /* UAT r5 F5 (2026-07-19): Chord charts - the Settings-row setter for
+       music.chordCharts.v1 ('charts' | 'chips'), replacing the Compose-surface
+       Shapes toggle. Same .themeSeg/.thSeg wiring as diagramPrefSeg above
+       (Element Consistency Law). The highlighted option is the EFFECTIVE
+       state: an explicit choice if stored, else the guidance-level default
+       (advanced -> Compact, everyone else -> Charts). */
+    var ccWrap = document.getElementById('chordChartsSeg');
+    var CHART_PREFS = [['charts', 'Charts'], ['chips', 'Compact']];
+    function effectiveChartsVal() {
+      try {
+        var p = localStorage.getItem('music.chordCharts.v1');
+        if (p === 'charts' || p === 'chips') return p;
+      } catch (e) {}
+      var lvl = window.GuidanceLevel ? GuidanceLevel.get() : null;
+      return lvl === 'advanced' ? 'chips' : 'charts';
+    }
+    function markChartsPref() {
+      if (!ccWrap) return;
+      var val = effectiveChartsVal();
+      ccWrap.querySelectorAll('.thSeg').forEach(function (b) {
+        var on = b.dataset.m === val;
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (ccWrap) {
+      CHART_PREFS.forEach(function (pair) {
+        var b = document.createElement('button');
+        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
+        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' chord display');
+        b.onclick = function () {
+          try { localStorage.setItem('music.chordCharts.v1', pair[0]); } catch (e) {}
+          markChartsPref();
+          // Repaint the live Compose grid + filmstrip so the choice shows
+          // the moment Settings closes, not on the next reload.
+          if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
+        };
+        ccWrap.appendChild(b);
+      });
+      markChartsPref();
+    }
+
     /* M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16 -
        supersedes the 2026-07-05 plain-text-row directive): the standard
        .themeSeg segmented control, wired verbatim like diagramPrefSeg
@@ -1109,6 +1162,9 @@
           // that merge): a level change applies to already-rendered Compose
           // grids immediately.
           if (window.songbookRefreshCompose) window.songbookRefreshCompose();
+          // UAT r5 F5: with no explicit chord-charts choice stored, the charts
+          // row highlights the level default - keep it honest on level change.
+          if (typeof markChartsPref === 'function') markChartsPref();
         };
         glWrap.appendChild(b);
       });

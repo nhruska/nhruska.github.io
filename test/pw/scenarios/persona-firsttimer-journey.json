@@ -1,0 +1,107 @@
+{
+  "name": "persona-firsttimer-journey",
+  "firstRun": true,
+  "note": "S-COMPOSE-CALM slice 3, P1 First-Timer goalpost (design table: 'tour -> Library -> hears a song; Compose shows starters, 5 taps to sound'). A truly fresh device, and - unlike welcome-tour.json which picks a level - P1 SKIPS the level ask, so this scenario owns the SAFE-DEFAULT path: unset level must behave as beginner (starter cards present, nothing dense). Tap budget to first sound via Compose: Next, Next, Start playing (3) + Compose tab (4) + one starter card (5). The Library detour (tap a song, see the playable sheet) is the 'hears a song' half of the journey.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "evalAssert",
+      "label": "fresh device: the tour greets first",
+      "js": "(function(){var ov=document.getElementById('welcomeOv');return !!ov && !ov.hidden;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#wNext"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#wNext"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#wNext"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem",
+      "timeoutMs": 30000
+    },
+    {
+      "action": "evalAssert",
+      "label": "level was SKIPPED and stays unset (the safe-default path this scenario owns)",
+      "js": "(function(){return localStorage.getItem('music.guidanceLevel.v1')===null;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "skipper lands on guitar-standard (the widest-audience default) with the tour done for good",
+      "js": "(function(){return localStorage.getItem('music.welcomeDone.v1')==='1' && /p=guitar-standard/.test(location.search);})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "hears a song: the first Library tap opens a playable chord sheet (Practice), no browse maze",
+      "js": "(function(){var p=document.getElementById('s-practice');return !!p && p.classList.contains('on') && p.textContent.trim().length>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p1-first-song"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "unset level shows the beginner landing: starter cards PRESENT (the theorist scenario asserts their absence for advanced)",
+      "js": "(function(){return document.querySelectorAll('#suggest .progPick').length>0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#suggest .progPick"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "5th tap = sound: one starter fills the strip with a playable progression",
+      "js": "(function(){var pr=document.getElementById('prog');return !!pr && pr.children.length>=3;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the jam surface stays calm for a first-timer - zero ambient song chrome",
+      "js": "(function(){function gone(sel){var e=document.querySelector(sel);return !e || e.hidden || e.getBoundingClientRect().height===0;}return gone('#composeModeSeg') && gone('#songTray') && gone('#songMap');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p1-five-taps-to-sound"
+    }
+  ]
+}
