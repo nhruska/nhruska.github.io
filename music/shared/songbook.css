@@ -742,17 +742,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    attached to the chord it removes. Compact stages keep the corner-overhang (tiny
    tokens have no interior room for the badge). */
 .prog.full .slot .rm{top:2px;right:2px;}
-/* S-SONG-MODE (docs/SONG-MODE-DESIGN.md): Compose is two full-screen views
-   behind one top-level toggle - Chords (the progression editor) and Song (the
-   arrangement canvas). One altitude on screen at a time: the M-13 tray used to
-   grow inside the FIXED composeTop and starve the chord picker's scroll area.
-   The toggle is deliberately BIGGER than the chord list's .chordSeg and sits at
-   the very top - scale + position differentiate the two segmented controls
-   (they are never on screen together anyway; Song mode hides the chord list). */
-.composeModeSeg{display:flex;gap:0;flex:0 0 auto;margin-bottom:8px;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
-.composeModeBtn{flex:1 1 0;min-height:46px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;padding:10px;transition:background .15s,color .15s;}
-.composeModeBtn + .composeModeBtn{border-left:1px solid var(--line-strong);}
-.composeModeBtn.on{background:var(--accent-deep);color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent);}
+/* S-COMPOSE-CALM (2026-07-19): the ambient Chords|Song segmented toggle is
+   RETIRED - the jam surface carries zero song chrome. The canvas opens on
+   demand (Save sheet / Library) and carries its own close: */
+.songCanvasClose{align-self:flex-end;flex:0 0 auto;background:none;border:0;color:var(--txt-dim);
+  font-size:1.05rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;margin:-4px -6px -10px 0;}
 /* Song mode hides the editor + picker but must keep .progBox itself DISPLAYED:
    the save-name modal (.composeRow.asModal), its backdrop and the compose toast
    are inserted INSIDE .progBox (siblings of #prog), and position:fixed cannot

@@ -1,36 +1,140 @@
 {
   "name": "song-builder-personalize",
-  "note": "M-13 g3 PERSONALIZED SONG BUILDER: the section-template suggestion panel now CONSUMES the local competency profile (music.competency.v1) - a re-rank, never a filter, plus a visible one-line why-cue (Songbook.personalizeSuggestions). Seed a HIGH comp-progressions level (70) via localStorage before opening the builder (an init step, since competency data is read fresh on every render - no page-boot ordering to fight). Build a Verse (C-F-G), Add as Verse, Clear the canvas so the SONG tray offers Verse template chips. Against the REAL catalog (song-templates.js mining songs.json), the top-ranked Verse suggestion WITHOUT a profile is the plain I-V-vi-IV loop (From With or Without You) - with a level-70 profile it's the more varied i-bVI-bIII-bVII minor-pop loop (Africa/Zombie/Stay With Me), tagged 'adds variety'. Tap it to accept -> fills the progression through the normal chord-add path AND records comp-progressions evidence (the compounding loop: accepted suggestions feed the next session's ranking). RED-FIRST vs unmodified main: personalizeSuggestions/_tag/_boost do not exist there, so the first chip's roman stays I-V-vi-IV even under a seeded high-skill profile and step 'the personalized pick now leads' fails.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "M-13 g3 PERSONALIZED SONG BUILDER: the section-template suggestion panel now CONSUMES the local competency profile (music.competency.v1) - a re-rank, never a filter, plus a visible one-line why-cue (Songbook.personalizeSuggestions). Seed a HIGH comp-progressions level (70) via localStorage before opening the builder (an init step, since competency data is read fresh on every render - no page-boot ordering to fight). Build a Verse (C-F-G), Add as Verse, Clear the canvas so the SONG tray offers Verse template chips. Against the REAL catalog (song-templates.js mining songs.json), the top-ranked Verse suggestion WITHOUT a profile is the plain I-V-vi-IV loop (From With or Without You) - with a level-70 profile it's the more varied i-bVI-bIII-bVII minor-pop loop (Africa/Zombie/Stay With Me), tagged 'adds variety'. Tap it to accept -> fills the progression through the normal chord-add path AND records comp-progressions evidence (the compounding loop: accepted suggestions feed the next session's ranking). RED-FIRST vs unmodified main: personalizeSuggestions/_tag/_boost do not exist there, so the first chip's roman stays I-V-vi-IV even under a seeded high-skill profile and step 'the personalized pick now leads' fails. S-COMPOSE-CALM (2026-07-19): first capture enters via the Save sheet (grow/add); later captures ride the Build-the-chords hop; every capture clears the strip and lands on the canvas.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 900 },
-    { "action": "evalAssert", "label": "seed a high comp-progressions competency profile (level 70, no preferences)", "js": "(function(){try{localStorage.setItem('music.competency.v1', JSON.stringify({'music-composition':{schema:'skill-competency-profile/v1',skill:'music-composition',discipline:'music',competencies:[{id:'comp-progressions',name:'Progressions',level:70,target:80,evidence_count:0,last_evidence:null}],preferences:[]}}));return true}catch(e){return false}})()" },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"compose\"]" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tapChord", "name": "C" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "F" },
-    { "action": "wait", "ms": 200 },
-    { "action": "tapChord", "name": "G" },
-    { "action": "wait", "ms": 200 },
-    { "action": "assertVisible", "selector": "#songTray" },
-    { "action": "tap", "selector": "#songAddBtn" },
-    { "action": "wait", "ms": 250 },
-    { "action": "evalAssert", "label": "one buffered Verse, progression NOT cleared (A3)", "js": "document.querySelectorAll('#songSections .songSect').length === 1 && document.querySelectorAll('#prog .slot').length === 3" },
-    { "action": "tap", "selector": "#cClear" },
-    { "action": "wait", "ms": 350 },
-    { "action": "evalAssert", "label": "progression empty, tray still visible (buffer non-empty)", "js": "document.querySelectorAll('#prog .slot').length === 0 && document.querySelectorAll('#songSections .songSect').length === 1 && !document.getElementById('songTray').hidden" },
-    { "action": "assertVisible", "selector": "#songSuggest" },
-    { "action": "evalAssert", "label": "Verse label is selected (default) - suggestions are for the section we're building next", "js": "!!document.querySelector('#songSuggest .chordSegBtn[data-label=\"Verse\"].on')" },
-    { "action": "evalAssert", "label": "at least 4 chips render", "js": "document.querySelectorAll('#songSuggest .songSuggestChip').length >= 4" },
-    { "action": "evalAssert", "label": "the PERSONALIZED pick now leads: first chip is the varied minor-pop loop, not the plain default", "js": "(function(){var r=document.querySelector('#songSuggest .songSuggestChip .ssRoman');return !!r && r.textContent.trim()==='i-bVI-bIII-bVII'})()" },
-    { "action": "evalAssert", "label": "the why-cue names it: the first chip's provenance line carries 'adds variety'", "js": "(function(){var p=document.querySelector('#songSuggest .songSuggestChip .ssProv');return !!p && /adds variety/i.test(p.textContent)})()" },
-    { "action": "screenshot", "name": "personalized-verse-suggestions" },
-    { "action": "tap", "selector": "#songSuggest .songSuggestChip" },
-    { "action": "wait", "ms": 350 },
-    { "action": "evalAssert", "label": "accepting the chip fills the progression through the normal chord-add path", "js": "document.querySelectorAll('#prog .slot').length > 0" },
-    { "action": "evalAssert", "label": "the compounding loop: accepting a suggestion recorded comp-progressions evidence back to the profile", "js": "(function(){try{var m=JSON.parse(localStorage.getItem('music.competency.v1'));var c=m['music-composition'].competencies.filter(function(x){return x.id==='comp-progressions'})[0];return c.evidence_count>=1}catch(e){return false}})()" },
-    { "action": "screenshot", "name": "accepted-fill" }
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "seed a high comp-progressions competency profile (level 70, no preferences)",
+      "js": "(function(){try{localStorage.setItem('music.competency.v1', JSON.stringify({'music-composition':{schema:'skill-competency-profile/v1',skill:'music-composition',discipline:'music',competencies:[{id:'comp-progressions',name:'Progressions',level:70,target:80,evidence_count:0,last_evidence:null}],preferences:[]}}));return true}catch(e){return false}})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "jam surface clean - tray is transaction chrome (S-COMPOSE-CALM)",
+      "js": "(function(){var t=document.getElementById('songTray');return !t || t.hidden || t.getBoundingClientRect().height===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "one buffered Verse; the capture cleared the strip (one contract everywhere)",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1 && document.querySelectorAll('#prog .slot').length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "strip cleared by the capture; the draft persists (canvas surface live)",
+      "js": "(function(){return JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]').length===1;})()"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#songSuggest"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Verse label is selected (default) - suggestions are for the section we're building next",
+      "js": "!!document.querySelector('#songSuggest .chordSegBtn[data-label=\"Verse\"].on')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "at least 4 chips render",
+      "js": "document.querySelectorAll('#songSuggest .songSuggestChip').length >= 4"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the PERSONALIZED pick now leads: first chip is the varied minor-pop loop, not the plain default",
+      "js": "(function(){var r=document.querySelector('#songSuggest .songSuggestChip .ssRoman');return !!r && r.textContent.trim()==='i-bVI-bIII-bVII'})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the why-cue names it: the first chip's provenance line carries 'adds variety'",
+      "js": "(function(){var p=document.querySelector('#songSuggest .songSuggestChip .ssProv');return !!p && /adds variety/i.test(p.textContent)})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "personalized-verse-suggestions"
+    },
+    {
+      "action": "tap",
+      "selector": "#songSuggest .songSuggestChip"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "accepting the chip fills the progression through the normal chord-add path",
+      "js": "document.querySelectorAll('#prog .slot').length > 0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the compounding loop: accepting a suggestion recorded comp-progressions evidence back to the profile",
+      "js": "(function(){try{var m=JSON.parse(localStorage.getItem('music.competency.v1'));var c=m['music-composition'].competencies.filter(function(x){return x.id==='comp-progressions'})[0];return c.evidence_count>=1}catch(e){return false}})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "accepted-fill"
+    }
   ]
 }

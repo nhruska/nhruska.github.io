@@ -2655,10 +2655,12 @@
     // scroll area (the "two sections and I'm stuck" operator report). One
     // altitude on screen at a time. Additive key; invalid stored values fall
     // back to 'chords' (the muscle-memory default).
-    var COMPOSE_MODE_KEY = prefix + ".composeMode.v1";
+    // S-COMPOSE-CALM (operator interview 2026-07-19, B+ shape): Compose ALWAYS
+    // lands in Chords - the Song canvas is a transient on-demand editor
+    // (entered via Save > grow/add, Library > continue building), never a
+    // persisted landing. The old <prefix>.composeMode.v1 key is abandoned
+    // (readers were defensive; additive removal, no schema bump).
     var composeMode = 'chords';
-    try { if (localStorage.getItem(COMPOSE_MODE_KEY) === 'song') composeMode = 'song'; } catch (e) { /* default stands */ }
-    function saveComposeMode() { return safeSet(COMPOSE_MODE_KEY, composeMode); }
     // The guided loop: a Song-mode template fill (or "Build the chords") drops
     // into Chords mode to edit; the next "Add to song" returns to the canvas.
     // Manual toggle taps clear the flag - the user taking the wheel wins.
@@ -2676,13 +2678,40 @@
       return builderSourceId ? safeSet(BUILDER_SOURCE_KEY, builderSourceId)
         : (function () { try { localStorage.removeItem(BUILDER_SOURCE_KEY); } catch (e) {} return true; })();
     }
+    var navSongOpen = false;
+    function rawSetMode(m) {
+      composeMode = m;
+      stopSectPlay(); // a section preview must not keep sounding under the other view
+      renderSongTray();
+    }
     function setComposeMode(m) {
       if (m !== 'chords' && m !== 'song') return; // unknown values never wedge the screen
       if (m === composeMode) return;
-      composeMode = m;
-      stopSectPlay(); // a section preview must not keep sounding under the other view
-      saveComposeMode();
-      renderSongTray();
+      // S-COMPOSE-CALM: the canvas is a history layer. Entering registers it so
+      // hardware/gesture Back leaves the canvas; ANY programmatic exit routes
+      // through NavHistory.dismiss() so the layer unwinds in step (the
+      // openSaveNameRow overlay contract). No NavHistory (Node stubs) = raw.
+      if (m === 'song') {
+        rawSetMode('song');
+        if (window.NavHistory && !navSongOpen) {
+          navSongOpen = true;
+          window.NavHistory.open('songCanvas', function () { navSongOpen = false; rawSetMode('chords'); });
+        }
+        return;
+      }
+      if (navSongOpen && window.NavHistory) {
+        // Programmatic exit (post-save flows, the canvas X mid-chain): switch
+        // the view NOW and leave our history entry in place. Popping it here
+        // is unsafe both ways - a synchronous dismiss can be swallowed by
+        // NavHistory's in-flight guard (canvas stuck open), and a deferred one
+        // can pop a layer that opened in between (observed: it closed the
+        // practice screen the save had just navigated to). The stale entry
+        // costs at most one visually-empty Back press; its closeFn is
+        // idempotent so that press is harmless.
+        rawSetMode('chords');
+        return;
+      }
+      rawSetMode('chords');
     }
     // Section preview: strum the section's chords in sequence through the SAME
     // pack path a chord tap uses (packs/voicings resolve identically). A fixed
@@ -2713,7 +2742,7 @@
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
-        composeWrapEl = null, modeSegEl = null, modeChordsBtnEl = null, modeSongBtnEl = null,
+        composeWrapEl = null,
         composeSongEl = null, songCueEl = null, songBuildBtnEl = null;
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
@@ -2770,18 +2799,18 @@
       // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
       // full-width, above everything) - and the two are never on screen together
       // anyway (Song mode hides the chord list wholesale).
-      modeSegEl = document.createElement('div'); modeSegEl.id = 'composeModeSeg'; modeSegEl.className = 'composeModeSeg';
-      modeSegEl.setAttribute('role', 'group'); modeSegEl.setAttribute('aria-label', 'Compose view');
-      modeChordsBtnEl = document.createElement('button');
-      modeChordsBtnEl.type = 'button'; modeChordsBtnEl.className = 'composeModeBtn on'; modeChordsBtnEl.textContent = 'Chords';
-      composeWireTap(modeChordsBtnEl, function () { returnToSong = false; setComposeMode('chords'); });
-      modeSongBtnEl = document.createElement('button');
-      modeSongBtnEl.type = 'button'; modeSongBtnEl.className = 'composeModeBtn'; modeSongBtnEl.textContent = songBadgeText(songSections.length);
-      composeWireTap(modeSongBtnEl, function () { returnToSong = false; setComposeMode('song'); });
-      modeSegEl.appendChild(modeChordsBtnEl); modeSegEl.appendChild(modeSongBtnEl);
-      composeWrapEl.insertBefore(modeSegEl, (composeWrapEl.children && composeWrapEl.children.length) ? composeWrapEl.children[0] : null);
+      // S-COMPOSE-CALM: the ambient Chords|Song toggle is RETIRED - the jam
+      // surface carries zero song chrome. The canvas is entered on demand
+      // (Save sheet / Library) and closed via its own X or hardware Back.
       // --- the Song canvas: the arrangement altitude, full screen when active.
       composeSongEl = document.createElement('div'); composeSongEl.id = 'composeSong'; composeSongEl.className = 'composeSong';
+      // S-COMPOSE-CALM: the canvas's own dismiss - top-right X, 44px floor.
+      var songCloseEl = document.createElement('button');
+      songCloseEl.type = 'button'; songCloseEl.id = 'songCanvasClose'; songCloseEl.className = 'songCanvasClose';
+      songCloseEl.setAttribute('aria-label', 'Close the song canvas');
+      songCloseEl.textContent = '\u2715';
+      composeWireTap(songCloseEl, function () { returnToSong = false; setComposeMode('chords'); });
+      composeSongEl.appendChild(songCloseEl);
       songCueEl = document.createElement('p'); songCueEl.className = 'songTrayCue songCue';
       songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
       // The one-shot click swallow for section-card drops (capture phase, mirrors
@@ -3060,21 +3089,13 @@
       // canvas); the toggle's active state + the Song count badge track every
       // render so parked work stays visible from Chords mode.
       if (composeWrapEl && composeWrapEl.classList) composeWrapEl.classList.toggle('songMode', inSong);
-      if (modeChordsBtnEl) {
-        modeChordsBtnEl.className = 'composeModeBtn' + (inSong ? '' : ' on');
-        modeChordsBtnEl.setAttribute('aria-pressed', inSong ? 'false' : 'true');
-      }
-      if (modeSongBtnEl) {
-        modeSongBtnEl.className = 'composeModeBtn' + (inSong ? ' on' : '');
-        modeSongBtnEl.setAttribute('aria-pressed', inSong ? 'true' : 'false');
-        modeSongBtnEl.textContent = songBadgeText(songSections.length);
-      }
-      // --- Chords-mode tray: the capture row + (#262) the song map.
-      // The add-control needs a live progression to snapshot; the MAP instead
-      // needs a draft - and matters MOST right after a capture cleared the
-      // strip (no chords, but "where was I?" is live), so the tray now shows
-      // whenever either exists.
-      songTrayEl.hidden = inSong || (!hasProg && !hasSections);
+      // --- S-COMPOSE-CALM: the tray (capture row + map) is TRANSACTION
+      // chrome, not ambient chrome. It shows only while a canvas-initiated
+      // edit is in flight (a template fill / "Build the chords" hop, or an
+      // in-place section edit) - a plain jam session never sees it. Jam-side
+      // adds go through the Save sheet's "Add to your song" instead.
+      var inFlight = returnToSong || (editingSectionIdx != null);
+      songTrayEl.hidden = inSong || !inFlight || (!hasProg && !hasSections);
       songAddRowEl.hidden = !hasProg;
       // #262: the tappable song map - one chip per section, in song order,
       // duplicates numbered ("Verse 2") so every chip names a distinct target.
@@ -3082,7 +3103,7 @@
       // edit-in-place mode, no Song-tab round-trip. The chip being edited
       // carries the active state.
       if (songMapEl) {
-        songMapEl.hidden = inSong || !hasSections;
+        songMapEl.hidden = inSong || !inFlight || !hasSections;
         songMapEl.innerHTML = '';
         if (!songMapEl.hidden) {
           var seen = {};
@@ -3332,7 +3353,14 @@
       // capture stays put so a musician mid-noodle never loses their editor.
       if (returnToSong) {
         showComposeToast('Added ' + label + ' to the song.');
-        returnToSong = false; setComposeMode('song'); return; // setComposeMode re-renders
+        // S-COMPOSE-CALM: the capture semantics are ONE contract everywhere
+        // (UAT r2): a captured strip clears so the next idea starts fresh -
+        // the hop path previously kept it, leaving a stale strip behind the
+        // canvas. Clear BEFORE the switch; the undo banner lands on the jam
+        // surface for when the user returns there.
+        returnToSong = false;
+        clearProgression('Added ' + label + ' to the song. Strip cleared - Undo to keep editing.');
+        setComposeMode('song'); return;
       }
       // UAT r2 (2026-07-16): a captured section now CLEARS the strip so the next
       // section starts FRESH. The operator hit "new-section chords append to the
@@ -3365,8 +3393,7 @@
           var updOk = saveCustom();
           songSections = []; disarmRm(); saveSongSections();
           builderSourceId = null; saveBuilderSource();
-          composeMode = 'chords'; saveComposeMode();
-          renderSongTray();
+          setComposeMode('chords');
           recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
           showComposeToast(updOk ? ('Updated ' + upd.t + ' – opening it now.') : SAVE_FAIL_MSG, !updOk);
           if (updOk) openPractice(upd.id);
@@ -3390,9 +3417,7 @@
         builderSourceId = null; saveBuilderSource(); // Phase B: a fresh save ends any (already-dead) source link
         if (addToSetlist) toggleSet(cs.id, true); // G4/FORK-1: one tap from performance-ready; toTop - a song you just wrote is next up
         // The draft is done - the next Compose visit starts back at the editor.
-        composeMode = 'chords';
-        saveComposeMode();
-        renderSongTray();
+        setComposeMode('chords');
         // M-COMPETENCY: assembling a whole song is the strongest observable
         // composition evidence - song-form + progressions, plus repertoire on
         // the active instrument (a playable song was produced).
@@ -3422,10 +3447,8 @@
         builderSourceId = s.id;
         saveBuilderSource();
       }
-      composeMode = 'song';
-      saveComposeMode();
-      renderSongTray();
       switchTab('compose');
+      setComposeMode('song'); // nav-aware: hardware Back leaves the canvas, then the tab
     }
     function addChord(c) {
       if (progression.length >= COMPOSE_MAX) return; // D-CAP12
@@ -4233,6 +4256,13 @@
       if (!el.suggest) return;
       el.suggest.innerHTML = '';
       if (progression.length === 0) {
+        // S-COMPOSE-CALM adaptive default (operator interview 2026-07-19): an
+        // ADVANCED player lands on the dense chord palette - the starter cards
+        // are beginner/intermediate scaffolding, noise at the top of a
+        // maestro's screen. Level gates EMPHASIS here, not access: starters
+        // are one In-key browse away regardless.
+        var GLs = guidanceLevelRef();
+        if (GLs && GLs.get && GLs.get() === 'advanced') return;
         // Empty state: show common progressions so the user has
         // actionable one-tap starters. #suggest leads the SCROLLING chord list (folded
         // in with the In key / All content) so the fixed top region stays short.
@@ -4857,22 +4887,27 @@
       var n = songSections.length;
       var msg = document.createElement('p');
       msg.className = 'composeRowMsg';
-      msg.textContent = 'Save your song, or just this progression?';
-      var songBtn = document.createElement('button');
-      songBtn.type = 'button'; songBtn.className = 'btn red ctrlBtn';
-      songBtn.textContent = 'Save song (' + n + (n === 1 ? ' section)' : ' sections)');
+      // S-COMPOSE-CALM (progression-first, operator interview 2026-07-19):
+      // quick capture is the zero-thought primary even with a draft in
+      // flight; adding to the draft is the explicit second intent, and the
+      // SONG's own save lives on the canvas (one home per action).
+      msg.textContent = 'Save this progression, or add it to your song?';
       var progBtn = document.createElement('button');
-      progBtn.type = 'button'; progBtn.className = 'btn ghost ctrlBtn'; progBtn.textContent = 'Just this progression';
+      progBtn.type = 'button'; progBtn.className = 'btn red ctrlBtn';
+      progBtn.textContent = 'Save progression';
+      var songBtn = document.createElement('button');
+      songBtn.type = 'button'; songBtn.className = 'btn ghost ctrlBtn';
+      songBtn.textContent = 'Add to your song (' + n + (n === 1 ? ' section)' : ' sections)');
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
       var delivered = false;
-      // Both real outcomes re-render this SAME composeRow into the name row
+      // 'prog' re-renders this SAME composeRow into the name row
       // (openSaveNameRow clears + repopulates it as its own first step), so
-      // only 'cancel' needs this row's DOM cleared here.
-      function rawClose(choice) { if (choice === 'cancel') hideComposeRow(); }
+      // 'song' and 'cancel' need this row's DOM cleared here.
+      function rawClose(choice) { if (choice !== 'prog') hideComposeRow(); }
       function deliver(choice) {
         if (delivered) return; delivered = true;
-        if (choice === 'song') { setComposeMode('song'); assembleSong(); } // canvas behind the name row = what you're saving
+        if (choice === 'song') { returnToSong = true; addSongSection(); } // strip -> section -> canvas (the grow hop)
         else if (choice === 'prog') saveProgression();
       }
       var pendingDismiss = 'cancel'; // hardware Back = dismiss, never a save
@@ -4892,7 +4927,7 @@
       });
       var btnRow = document.createElement('div');
       btnRow.className = 'composeRowBtns';
-      btnRow.appendChild(songBtn); btnRow.appendChild(progBtn); btnRow.appendChild(cancelBtn);
+      btnRow.appendChild(progBtn); btnRow.appendChild(songBtn); btnRow.appendChild(cancelBtn);
       composeRow.appendChild(msg); composeRow.appendChild(btnRow);
       composeRow.focus();
     }
@@ -4919,7 +4954,7 @@
       progBtn.textContent = 'Save progression';
       var songBtn = document.createElement('button');
       songBtn.type = 'button'; songBtn.className = 'btn ghost ctrlBtn';
-      songBtn.textContent = 'Build a song with it';
+      songBtn.textContent = 'Grow it into a song';
       var cancelBtn = document.createElement('button');
       cancelBtn.type = 'button'; cancelBtn.className = 'btn ghost ctrlBtn'; cancelBtn.textContent = 'Keep building';
       var delivered = false;
@@ -5410,7 +5445,10 @@
     // (and the solo flow's internal saveProgression() calls never see any of
     // this - the gate lives only on the button).
     if (el.cSave) el.cSave.onclick = function () {
-      if (songSections.length && !progression.length) { setComposeMode('song'); assembleSong(); return; }
+      // S-COMPOSE-CALM: with only a draft, the saveable thing IS the song -
+      // open its editor (the canvas owns the Save-song action), never a
+      // surprise name-row from the jam surface.
+      if (songSections.length && !progression.length) { setComposeMode('song'); return; }
       if (songSections.length && progression.length) { openSaveChoiceRow(); return; }
       // #265-A (operator UAT): a FRESH save with no song structure asks intent
       // first - "save a quick progression idea, or build a song with it?" - via

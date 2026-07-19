@@ -2492,7 +2492,10 @@ test('M-13/UAT-r2: Add to song captures the progression, then CLEARS the strip s
   assert.strictEqual(m.elMap.prog.children.length, 3, 'three chords built');
   var t = songTrayNodes(m);
   assert.ok(t.tray, 'the tray self-injected into the progression box');
-  assert.strictEqual(t.tray.hidden, false, 'the tray shows once a progression exists');
+  // S-COMPOSE-CALM: the tray is TRANSACTION chrome - a plain jam never sees
+  // it (adds go through the Save sheet); the capture mechanics below are
+  // driven directly, exactly what the sheet's "Add to your song" invokes.
+  assert.strictEqual(t.tray.hidden, true, 'no ambient capture row on the jam surface');
   t.sel.value = 'Verse';
   t.addBtn.click();
   // UAT r2: the strip clears so the NEXT section is not built on top of this one
@@ -2529,7 +2532,9 @@ test('M-13: a section card uses the ONE arm-to-remove grammar - first tap arms (
   // is nothing to capture - the tray correctly hides. Re-tap a chord and it returns.
   assert.strictEqual(t.tray.hidden, true, 'empty strip + empty draft -> nothing to add, tray hidden');
   tapChords(m, 1);
-  assert.strictEqual(songTrayNodes(m).tray.hidden, false, 'a fresh chord re-shows the capture row');
+  // S-COMPOSE-CALM: a fresh chord does NOT resurrect the tray - it is
+  // transaction chrome (canvas-initiated edits only), never ambient.
+  assert.strictEqual(songTrayNodes(m).tray.hidden, true, 'the jam surface stays clean after a fresh chord');
 });
 
 // --- M-13 g2: buffer persistence across a reload + reorder ---
@@ -2563,12 +2568,13 @@ test('M-13 g2: the section buffer persists across a reload (fresh mount, same lo
   assert.strictEqual(stored.length, 2, 'the additive builderBuffer key holds both sections');
   assert.deepStrictEqual(stored.map(function (s) { return s.label; }), ['Verse', 'Chorus'], 'stored labels match add order');
 
-  // Reload: a brand-new mount, same localStorage object, no re-add. S-SONG-MODE:
-  // the VIEW persists too (music.composeMode.v1) - the musician left on the
-  // canvas, the reload lands back on the canvas with their draft.
+  // Reload: a brand-new mount, same localStorage object, no re-add.
+  // S-COMPOSE-CALM: the DRAFT survives, the VIEW does not - Compose always
+  // lands on the jam surface; the canvas is re-entered on demand.
   var m2 = freshMountSharedStore();
+  assert.strictEqual(m2.ctrl.composeMode(), 'chords', 'a reload always lands on the jam surface');
+  m2.ctrl.setComposeMode('song');
   var t2 = songTrayNodes(m2);
-  assert.strictEqual(m2.ctrl.composeMode(), 'song', 'the Song view survives the reload alongside its draft');
   assert.strictEqual(t2.sections.children.length, 2, 'both buffered sections survive the reload');
   assert.strictEqual(t2.assemble.hidden, false, 'Save song stays available after a reload with a restored buffer');
 });
@@ -2643,6 +2649,7 @@ function songModeNodes(m) {
       var cls = (c.className || '').split(' ');
       if (cls.indexOf('composeModeBtn') >= 0) (out.modeBtns = out.modeBtns || []).push(c);
       if (cls.indexOf('songBuildBtn') >= 0) out.buildBtn = c;
+      if (cls.indexOf('songCanvasClose') >= 0) out.closeBtn = c;
       if (cls.indexOf('composeSong') >= 0) out.canvas = c;
       if (cls.indexOf('songSectChords') >= 0) out.cardChords = c;
       walk(c);
@@ -2656,28 +2663,25 @@ test('S-SONG-MODE: songBadgeText is pure - bare label at zero, a count badge pas
   assert.strictEqual(Songbook.songBadgeText(2), 'Song · 2');
 });
 
-test('S-SONG-MODE: defaults to chords; setComposeMode flips + persists; unknown values are ignored', function () {
+test('S-COMPOSE-CALM: defaults to chords; setComposeMode flips WITHOUT persisting (the canvas is transient); unknown values are ignored', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   assert.strictEqual(m.ctrl.composeMode(), 'chords', 'muscle-memory default');
   m.ctrl.setComposeMode('song');
   assert.strictEqual(m.ctrl.composeMode(), 'song');
-  assert.strictEqual(global.localStorage.getItem('progwraptest.composeMode.v1'), 'song', 'additive key persists the view');
+  assert.strictEqual(global.localStorage.getItem('progwraptest.composeMode.v1'), null, 'the retired composeMode key is never written - Compose always lands on the jam');
   m.ctrl.setComposeMode('bogus');
   assert.strictEqual(m.ctrl.composeMode(), 'song', 'an unknown mode can never wedge the screen');
   m.ctrl.setComposeMode('chords');
   assert.strictEqual(m.ctrl.composeMode(), 'chords');
 });
 
-test('S-SONG-MODE: the Song toggle carries the section-count badge and tracks adds live', function () {
+test('S-COMPOSE-CALM: the ambient Chords|Song toggle is RETIRED - no mode segment injects; the canvas carries its own close (X)', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   var n = songModeNodes(m);
-  assert.ok(n.modeBtns && n.modeBtns.length === 2, 'the two-segment toggle self-injected');
-  assert.strictEqual(n.modeBtns[1].textContent, 'Song', 'no badge with an empty draft');
-  tapChords(m, 2);
-  n.sel.value = 'Verse'; n.addBtn.click();
-  assert.strictEqual(n.modeBtns[1].textContent, 'Song · 1', 'a capture updates the badge from Chords mode - parked work stays visible');
+  assert.ok(!n.modeBtns || n.modeBtns.length === 0, 'zero song chrome on the jam surface (operator F 2026-07-19)');
+  assert.ok(n.closeBtn, 'the canvas owns its dismiss affordance instead');
 });
 
 test('S-SONG-MODE: a section card shows its chords (canvas furniture, recognition over recall)', function () {
@@ -2702,13 +2706,15 @@ test('S-SONG-MODE guided loop: Build-the-chords drops to Chords mode; the next A
   tapChords(m, 2);
   n.sel.value = 'Chorus'; n.addBtn.click();
   assert.strictEqual(m.ctrl.composeMode(), 'song', 'the capture returns to the canvas (guided loop)');
-  // Loop-break: leave via the toggle (the user taking the wheel), then capture again.
+  // Loop-break: dismissing the canvas via its X is the user taking the
+  // wheel - a later capture stays put (S-COMPOSE-CALM: the X clears the
+  // returnToSong hop exactly like the retired toggle taps did).
   tapWired(n.buildBtn);                        // canvas -> editor, loop armed
-  tapWired(n.modeBtns[1]);                     // manual hop to Song...
-  tapWired(n.modeBtns[0]);                     // ...and back to Chords - loop must now be broken
+  m.ctrl.setComposeMode('song');               // hop to the canvas...
+  tapWired(n.closeBtn);                        // ...and close it - loop must now be broken
   tapChords(m, 1);
   n.sel.value = 'Bridge'; n.addBtn.click();
-  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'after a manual toggle tap a capture stays put');
+  assert.strictEqual(m.ctrl.composeMode(), 'chords', 'after closing the canvas a capture stays put');
 });
 
 test('S-SONG-MODE: Save song opens the name row; saving names the song, clears the draft, returns to the editor', function () {
@@ -2736,29 +2742,29 @@ test('S-SONG-MODE: Save song opens the name row; saving names the song, clears t
   assert.strictEqual(m.ctrl.composeMode(), 'chords', 'a finished song lands the next visit back on the editor');
 });
 
-test('S-SONG-MODE UAT-1: with a song draft, Save ASKS - the song branch saves all sections, never a silent progression-only save', function () {
+test('S-COMPOSE-CALM: with a draft, Save asks PROGRESSION-FIRST; the add branch grows the draft and opens the canvas (song-save lives there)', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   tapChords(m, 2);
   var n = songModeNodes(m);
   n.sel.value = 'Verse'; n.addBtn.click(); // captures + clears the strip (UAT r2)
-  tapChords(m, 2);                          // a NEW progression alongside the draft -> Save is ambiguous
-  m.elMap.cSave.onclick(); // the ambiguous tap from the operator report
+  tapChords(m, 2);                          // a NEW progression alongside the draft -> Save asks
+  m.elMap.cSave.onclick();
   var row = null;
   m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
-  assert.ok(row, 'a choice row opened instead of a silent progression save');
+  assert.ok(row, 'a choice row opened instead of a silent guess');
   var btnRow = row.children[1];
-  assert.strictEqual(btnRow.children[0].textContent, 'Save song (1 section)', 'the song outcome is named, with the count');
-  btnRow.children[0].onclick(); // choose the song -> assembleSong -> the name row re-renders in place
-  assert.strictEqual(m.ctrl.composeMode(), 'song', 'the canvas comes up behind the name row - you see what you are saving');
-  row.children[1].children[0].checked = false; // skip the setlist path
-  try { row.children[2].onclick(); } catch (e) { /* openPractice nav tail - practice els absent from this stub mount */ }
+  assert.strictEqual(btnRow.children[0].textContent, 'Save progression', 'quick capture is the PRIMARY (operator interview 2026-07-19)');
+  assert.strictEqual(btnRow.children[1].textContent, 'Add to your song (1 section)', 'growing the draft is the named second intent');
+  btnRow.children[1].onclick(); // add the strip to the draft -> the canvas opens
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'the add branch lands on the canvas with the grown draft');
+  assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 2, 'the strip joined the draft as its second section');
+  assert.strictEqual(m.elMap.prog.children.length, 0, 'the strip cleared after the capture');
   var customs = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
-  assert.strictEqual(customs.length, 1, 'one custom song created');
-  assert.ok(customs[0].sheet && customs[0].sheet.length === 1, 'the saved record is the SONG (carries the section sheet), not a bare progression');
+  assert.strictEqual(customs.length, 0, 'nothing auto-saved - the SONG save is the canvas own deliberate action');
 });
 
-test('S-SONG-MODE UAT-1: the "Just this progression" branch runs the original save; the draft stays buffered', function () {
+test('S-COMPOSE-CALM: the Save-progression primary runs the original save; the draft stays buffered', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   tapChords(m, 2);
@@ -2768,7 +2774,7 @@ test('S-SONG-MODE UAT-1: the "Just this progression" branch runs the original sa
   m.elMap.cSave.onclick();
   var row = null;
   m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
-  row.children[1].children[1].onclick(); // 'Just this progression' -> the classic name row
+  row.children[1].children[0].onclick(); // 'Save progression' (the primary now) -> the classic name row
   row.children[1].children[0].checked = false; // its setlist toggle
   row.children[2].onclick(); // accept the default name
   var customs = JSON.parse(global.localStorage.getItem('progwraptest.custom.v1') || '[]');
@@ -2777,7 +2783,7 @@ test('S-SONG-MODE UAT-1: the "Just this progression" branch runs the original sa
   assert.strictEqual(JSON.parse(global.localStorage.getItem('progwraptest.builderBuffer.v1')).length, 1, 'the song draft is untouched');
 });
 
-test('S-SONG-MODE UAT-1: draft + EMPTY progression - Save goes straight to the song (the only thing to save)', function () {
+test('S-COMPOSE-CALM: draft + EMPTY progression - Save opens the song editor (its Save lives on the canvas, never a surprise name row)', function () {
   global.localStorage = lsReset.fakeStore();
   var m = freshMountSharedStore();
   tapChords(m, 2);
@@ -2786,11 +2792,14 @@ test('S-SONG-MODE UAT-1: draft + EMPTY progression - Save goes straight to the s
   m.ctrl.setComposeMode('song');
   tapWired(n.buildBtn);                 // UAT-2 path clears the strip...
   assert.strictEqual(m.elMap.prog.children.length, 0, 'Build the chords starts fresh');
-  m.elMap.cSave.onclick();              // ...so Save has exactly one meaning now
-  var row = null;
-  m.wrapper.children.forEach(function (c) { if (c.className && c.className.indexOf('composeRow') === 0) row = c; });
-  assert.ok(row, 'the name row opened directly - no choice needed with one thing to save');
-  assert.strictEqual(m.ctrl.composeMode(), 'song', 'and the canvas context came up behind it');
+  m.elMap.cSave.onclick();              // ...so Save means the song: open its editor
+  assert.strictEqual(m.ctrl.composeMode(), 'song', 'the canvas opened - the draft is the saveable thing');
+  var namerow = null;
+  m.wrapper.children.forEach(function (c) {
+    if (c.className && c.className.indexOf('composeRow') === 0 && !c.hidden && c.children.length &&
+        (c.children[0].tagName || '').toLowerCase() === 'input') namerow = c; // the name row leads with its input
+  });
+  assert.ok(!namerow, 'no auto name row - saving the song is a deliberate canvas action');
 });
 
 test('S-SONG-MODE UAT-2/r2: a Chords-mode capture clears the strip; Undo restores the exact chords to edit into the next section', function () {
