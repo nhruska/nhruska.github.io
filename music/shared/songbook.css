@@ -847,6 +847,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove
    grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
+/* UAT r6 draft chip: parked-draft status + link on the jam surface. Dashed
+   border = the draft grammar (echoes the strip container); quiet accent tint,
+   full-width tap target. Hidden by renderSongTray whenever the canvas or a
+   transaction hop owns the context. */
+.draftChip{display:block;width:100%;margin-top:8px;padding:11px 12px;min-height:44px;text-align:left;border:1px dashed var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);border-radius:var(--r-btn-sm);font-weight:600;font-size:.82rem;cursor:pointer;}
+/* display:block above would defeat the [hidden] UA style - restate it (the
+   probe caught the chip rendering with hidden=true after the draft emptied). */
+.draftChip[hidden]{display:none;}
+.draftChip:active{background:var(--accent);color:var(--on-accent);}
 .songSect{position:relative;display:flex;align-items:center;gap:6px;min-height:36px;padding:5px 30px 5px 11px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songSect .songSectName{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:var(--accent-ink);white-space:nowrap;}
 /* M-13 g2 reorder handles: real 44x44 hit target (a11y-coach floor) in normal
