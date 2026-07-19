@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-proto>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compose declutter - 3 prototypes</title>
+<link rel="icon" href="../../../music/play/icon.svg" type="image/svg+xml">
+<style>
+/* PROTOTYPE ARTIFACT (throwaway, docs/artifacts/proto) - self-contained on
+   purpose so it cannot fight the app's real stylesheet. Tokens mirror the
+   app's dark theme so the FEEL reads true. The app itself keeps all CSS
+   external per the 2026-07-19 operator directive; this page is not the app. */
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2129;--line:#2a3038;--line-strong:#3a4149;
+  --txt:#e6e8ea;--txt-soft:#b6bcc4;--txt-dim:#8a919a;--accent:#4dd6b8;--accent-deep:#12352e;
+  --accent-ink:#7fe8d2;--on-accent:#06231d;--warn:#fbbf24;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;padding:14px 10px 40px;}
+h1{font-size:1.05rem;margin:0 0 4px;}
+.lead{color:var(--txt-soft);font-size:.82rem;line-height:1.45;margin-bottom:12px;}
+.variantBar{display:flex;gap:8px;margin-bottom:14px;position:sticky;top:8px;z-index:5;}
+.vBtn{flex:1;min-height:44px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt);
+  border-radius:11px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;}
+.vBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.frame{max-width:412px;margin:0 auto;background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:18px;overflow:hidden;display:flex;flex-direction:column;height:72dvh;min-height:520px;}
+.mockbar{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);}
+.mockbar b{font-size:.95rem;}
+.mockbar .gear{color:var(--txt-dim);}
+.mockTabs{flex:0 0 auto;display:flex;border-top:1px solid var(--line);}
+.mockTabs span{flex:1;text-align:center;padding:10px 0 12px;font-size:.62rem;letter-spacing:.06em;color:var(--txt-dim);text-transform:uppercase;}
+.mockTabs .on{color:var(--accent);}
+.body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+/* --- shared jam mock --- */
+.ctrl{display:flex;gap:8px;align-items:center;padding:10px 12px 8px;}
+.icb{min-width:38px;min-height:38px;border:1px solid var(--line-strong);background:transparent;color:var(--txt);border-radius:10px;font-size:1rem;cursor:pointer;}
+.keychip{border:1px solid var(--accent-ink);color:var(--accent-ink);background:var(--accent-deep);border-radius:18px;padding:8px 14px;font-size:.8rem;font-weight:700;}
+.spacer{flex:1;}
+.pill{border:0;background:var(--accent);color:var(--on-accent);border-radius:11px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;}
+.ghost{border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);border-radius:11px;padding:10px 14px;font-family:inherit;cursor:pointer;}
+.progStrip{display:flex;gap:6px;padding:4px 12px 10px;flex-wrap:wrap;}
+.pchip{background:var(--surface2);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.9rem;}
+.sugg{padding:2px 12px 8px;color:var(--txt-dim);font-size:.75rem;}
+.sugg b{color:var(--txt-soft);}
+.grid{flex:1 1 auto;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:4px 12px 14px;align-content:start;}
+.gc{min-height:56px;border:1px solid var(--line-strong);background:var(--surface2);color:var(--txt);border-radius:10px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;}
+.gc:active{background:var(--accent-deep);border-color:var(--accent-ink);}
+.starters{padding:0 12px 8px;}
+.starter{display:block;width:100%;text-align:left;border:1px solid var(--line-strong);background:var(--surface2);color:var(--txt);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-family:inherit;font-size:.85rem;cursor:pointer;}
+.starter b{color:var(--accent-ink);}
+[data-lvl="advanced"] .starters{display:none;}
+[data-lvl="advanced"] .gc{min-height:40px;font-size:.85rem;}
+.lvlRow{display:flex;gap:6px;padding:0 12px 8px;}
+.lvlRow button{border:1px solid var(--line-strong);background:transparent;color:var(--txt-dim);border-radius:18px;padding:5px 12px;font-size:.7rem;font-family:inherit;cursor:pointer;}
+.lvlRow button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+/* --- A: swipe panels --- */
+.segRow{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:4px;margin:10px 12px 0;}
+.segRow button{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;}
+.segRow button.on{background:var(--accent);color:var(--on-accent);}
+.panes{flex:1 1 auto;min-height:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.panes::-webkit-scrollbar{display:none;}
+.pane{flex:0 0 100%;scroll-snap-align:start;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+/* --- song canvas mock (shared by A pane 2, B overlay, C accordion) --- */
+.songWrap{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px 12px 14px;}
+.sect{background:var(--surface2);border:1px solid var(--line-strong);border-radius:13px;padding:10px 12px;margin-bottom:8px;}
+.sect h4{font-size:.8rem;display:flex;justify-content:space-between;margin-bottom:6px;}
+.sect h4 span{color:var(--txt-dim);font-weight:400;}
+.sect .chips{display:flex;gap:5px;flex-wrap:wrap;}
+.sect .chips i{font-style:normal;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:4px 9px;font-size:.78rem;font-weight:700;}
+.pull{display:block;width:100%;border:1px dashed var(--accent-ink);background:transparent;color:var(--accent-ink);border-radius:11px;padding:11px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:8px;}
+.addSect{display:block;width:100%;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-dim);border-radius:11px;padding:11px;font-family:inherit;font-size:.82rem;cursor:pointer;}
+/* --- B: save sheet + overlay --- */
+.sheetOv{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;z-index:4;}
+.sheet{background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--line-strong);padding:16px 14px 18px;width:100%;}
+.sheet h3{font-size:.95rem;margin-bottom:12px;}
+.sheet .pill{display:block;width:100%;margin-bottom:8px;min-height:46px;}
+.sheet .ghost{display:block;width:100%;min-height:46px;text-align:center;}
+.overlay{position:absolute;inset:0;background:var(--surface);z-index:6;display:flex;flex-direction:column;}
+.ovHd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);}
+.ovHd button{border:0;background:none;color:var(--txt);font-size:1.1rem;cursor:pointer;min-width:44px;min-height:44px;}
+.ovHd b{font-size:.95rem;}
+.hidden{display:none!important;}
+.rel{position:relative;}
+/* --- C: accordion --- */
+.accBar{flex:0 0 auto;border-top:1px solid var(--line);}
+.accBtn2{display:flex;width:100%;justify-content:space-between;align-items:center;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:.88rem;padding:13px 14px;cursor:pointer;}
+.accBtn2 span{color:var(--accent);font-size:.8rem;}
+.accBody2{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.accBody2.open{max-height:44dvh;overflow-y:auto;}
+.note{max-width:412px;margin:10px auto 0;color:var(--txt-dim);font-size:.75rem;line-height:1.5;}
+</style>
+</head>
+<body>
+<h1>Compose declutter - three shapes, same jam</h1>
+<p class="lead">Every variant lands on the SAME clean jam surface (grid + strip + save). They differ only in where the Song canvas lives. The Beginner/Advanced toggle previews the adaptive defaults in each. Tap around, then reply <b>A</b>, <b>B</b>, or <b>C</b> (or a mix).</p>
+<div class="variantBar">
+  <button class="vBtn on" data-v="a" type="button">A - swipe</button>
+  <button class="vBtn" data-v="b" type="button">B - via Save</button>
+  <button class="vBtn" data-v="c" type="button">C - accordion</button>
+</div>
+
+<!-- ============ VARIANT A: Jam | Song swipe panels ============ -->
+<div class="frame rel" id="v-a" data-lvl="beginner">
+  <div class="mockbar"><b>Music</b><span class="gear">⚙</span></div>
+  <div class="segRow" id="aSeg"><button class="on" type="button">Jam</button><button type="button">Song</button></div>
+  <div class="lvlRow" data-lvlrow><button class="on" type="button">Beginner</button><button type="button">Advanced</button></div>
+  <div class="body">
+    <div class="panes" id="aPanes">
+      <div class="pane">
+        <div class="ctrl"><button class="icb" type="button">♭</button><span class="keychip">C major</span><button class="icb" type="button">♯</button><span class="spacer"></span><button class="ghost" type="button">Clear</button><button class="pill" type="button">Save</button></div>
+        <div class="progStrip"><span class="pchip">C</span><span class="pchip">Am</span><span class="pchip">F</span><span class="pchip">G</span></div>
+        <div class="sugg">Suggested next: <b>Dm</b> <b>Em</b> <b>G7</b></div>
+        <div class="starters"><button class="starter" type="button"><b>C - G - Am - F</b> - the four-chord classic</button><button class="starter" type="button"><b>C - F - G</b> - three chords, hundreds of songs</button></div>
+        <div class="grid"><button class="gc" type="button">C</button><button class="gc" type="button">Dm</button><button class="gc" type="button">Em</button><button class="gc" type="button">F</button><button class="gc" type="button">G</button><button class="gc" type="button">Am</button><button class="gc" type="button">Bdim</button><button class="gc" type="button">C7</button><button class="gc" type="button">G7</button></div>
+      </div>
+      <div class="pane">
+        <div class="songWrap">
+          <button class="pull" type="button">⇠ Pull the jam strip into a section (C Am F G)</button>
+          <div class="sect"><h4>Verse 1 <span>4 chords</span></h4><div class="chips"><i>C</i><i>Am</i><i>F</i><i>G</i></div></div>
+          <div class="sect"><h4>Chorus <span>3 chords</span></h4><div class="chips"><i>F</i><i>G</i><i>C</i></div></div>
+          <button class="addSect" type="button">+ Add a section (Bridge, Solo...)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mockTabs"><span>Library</span><span>Setlist</span><span class="on">Compose</span><span>Tune</span></div>
+</div>
+
+<!-- ============ VARIANT B: pure jam, Song via Save ============ -->
+<div class="frame rel hidden" id="v-b" data-lvl="beginner">
+  <div class="mockbar"><b>Music</b><span class="gear">⚙</span></div>
+  <div class="lvlRow" data-lvlrow><button class="on" type="button">Beginner</button><button type="button">Advanced</button></div>
+  <div class="body">
+    <div class="ctrl"><button class="icb" type="button">♭</button><span class="keychip">C major</span><button class="icb" type="button">♯</button><span class="spacer"></span><button class="ghost" type="button">Clear</button><button class="pill" id="bSave" type="button">Save</button></div>
+    <div class="progStrip"><span class="pchip">C</span><span class="pchip">Am</span><span class="pchip">F</span><span class="pchip">G</span></div>
+    <div class="sugg">Suggested next: <b>Dm</b> <b>Em</b> <b>G7</b></div>
+    <div class="starters"><button class="starter" type="button"><b>C - G - Am - F</b> - the four-chord classic</button><button class="starter" type="button"><b>C - F - G</b> - three chords, hundreds of songs</button></div>
+    <div class="grid"><button class="gc" type="button">C</button><button class="gc" type="button">Dm</button><button class="gc" type="button">Em</button><button class="gc" type="button">F</button><button class="gc" type="button">G</button><button class="gc" type="button">Am</button><button class="gc" type="button">Bdim</button><button class="gc" type="button">C7</button><button class="gc" type="button">G7</button></div>
+  </div>
+  <div class="sheetOv hidden" id="bSheet"><div class="sheet">
+    <h3>Save C - Am - F - G</h3>
+    <button class="pill" id="bSaveProg" type="button">Save progression</button>
+    <button class="ghost" id="bGrow" type="button">Grow it into a song →</button>
+  </div></div>
+  <div class="overlay hidden" id="bOverlay">
+    <div class="ovHd"><button id="bBack" type="button">←</button><b>Untitled song</b></div>
+    <div class="songWrap">
+      <div class="sect"><h4>Verse 1 <span>from your jam</span></h4><div class="chips"><i>C</i><i>Am</i><i>F</i><i>G</i></div></div>
+      <button class="addSect" type="button">+ Add a section (Chorus, Bridge...)</button>
+    </div>
+  </div>
+  <div class="mockTabs"><span>Library</span><span>Setlist</span><span class="on">Compose</span><span>Tune</span></div>
+</div>
+
+<!-- ============ VARIANT C: accordion under the grid ============ -->
+<div class="frame rel hidden" id="v-c" data-lvl="beginner">
+  <div class="mockbar"><b>Music</b><span class="gear">⚙</span></div>
+  <div class="lvlRow" data-lvlrow><button class="on" type="button">Beginner</button><button type="button">Advanced</button></div>
+  <div class="body">
+    <div class="ctrl"><button class="icb" type="button">♭</button><span class="keychip">C major</span><button class="icb" type="button">♯</button><span class="spacer"></span><button class="ghost" type="button">Clear</button><button class="pill" type="button">Save</button></div>
+    <div class="progStrip"><span class="pchip">C</span><span class="pchip">Am</span><span class="pchip">F</span><span class="pchip">G</span></div>
+    <div class="sugg">Suggested next: <b>Dm</b> <b>Em</b> <b>G7</b></div>
+    <div class="starters"><button class="starter" type="button"><b>C - G - Am - F</b> - the four-chord classic</button></div>
+    <div class="grid"><button class="gc" type="button">C</button><button class="gc" type="button">Dm</button><button class="gc" type="button">Em</button><button class="gc" type="button">F</button><button class="gc" type="button">G</button><button class="gc" type="button">Am</button><button class="gc" type="button">Bdim</button><button class="gc" type="button">C7</button><button class="gc" type="button">G7</button></div>
+  </div>
+  <div class="accBar">
+    <button class="accBtn2" id="cAcc" type="button">Song - 2 sections <span>▾</span></button>
+    <div class="accBody2" id="cAccBody">
+      <div class="songWrap">
+        <button class="pull" type="button">⇠ Pull the jam strip into a section</button>
+        <div class="sect"><h4>Verse 1 <span>4 chords</span></h4><div class="chips"><i>C</i><i>Am</i><i>F</i><i>G</i></div></div>
+        <div class="sect"><h4>Chorus <span>3 chords</span></h4><div class="chips"><i>F</i><i>G</i><i>C</i></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockTabs"><span>Library</span><span>Setlist</span><span class="on">Compose</span><span>Tune</span></div>
+</div>
+
+<p class="note"><b>What to feel for:</b> A - does the swipe read as "two rooms, one place"? B - is total jam calm worth a detour to edit an existing song? C - does the collapsed bar still tax the jam screen? The level toggle previews adaptive defaults: Beginner = starters up top; Advanced = starters gone, dense grid.</p>
+
+<script>
+(function () {
+  'use strict';
+  // variant switcher
+  var frames = { a: document.getElementById('v-a'), b: document.getElementById('v-b'), c: document.getElementById('v-c') };
+  Array.prototype.forEach.call(document.querySelectorAll('.vBtn'), function (b) {
+    b.onclick = function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.vBtn'), function (x) { x.className = 'vBtn'; });
+      b.className = 'vBtn on';
+      Object.keys(frames).forEach(function (k) { frames[k].classList.toggle('hidden', k !== b.getAttribute('data-v')); });
+    };
+  });
+  // level toggles (adaptive-defaults preview) - per frame
+  Array.prototype.forEach.call(document.querySelectorAll('[data-lvlrow]'), function (row) {
+    var frame = row.closest('.frame');
+    Array.prototype.forEach.call(row.children, function (b, i) {
+      b.onclick = function () {
+        Array.prototype.forEach.call(row.children, function (x) { x.className = ''; });
+        b.className = 'on';
+        frame.setAttribute('data-lvl', i === 0 ? 'beginner' : 'advanced');
+      };
+    });
+  });
+  // A: segment <-> swipe sync
+  var panes = document.getElementById('aPanes'), seg = document.getElementById('aSeg');
+  Array.prototype.forEach.call(seg.children, function (b, i) {
+    b.onclick = function () { panes.scrollTo({ left: panes.clientWidth * i, behavior: 'smooth' }); };
+  });
+  panes.addEventListener('scroll', function () {
+    requestAnimationFrame(function () {
+      var i = Math.round(panes.scrollLeft / panes.clientWidth);
+      Array.prototype.forEach.call(seg.children, function (b, j) { b.className = j === i ? 'on' : ''; });
+    });
+  });
+  // B: save sheet -> grow -> overlay
+  var sheet = document.getElementById('bSheet'), overlay = document.getElementById('bOverlay');
+  document.getElementById('bSave').onclick = function () { sheet.classList.remove('hidden'); };
+  document.getElementById('bSaveProg').onclick = function () { sheet.classList.add('hidden'); };
+  document.getElementById('bGrow').onclick = function () { sheet.classList.add('hidden'); overlay.classList.remove('hidden'); };
+  document.getElementById('bBack').onclick = function () { overlay.classList.add('hidden'); };
+  sheet.onclick = function (e) { if (e.target === sheet) sheet.classList.add('hidden'); };
+  // C: accordion
+  var acc = document.getElementById('cAcc'), accBody = document.getElementById('cAccBody');
+  acc.onclick = function () { accBody.classList.toggle('open'); };
+})();
+</script>
+</body>
+</html>
