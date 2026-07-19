@@ -279,7 +279,7 @@
 </div>
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
-    <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setHd"><h2 class="setHdTitle"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
     <div class="setPanelBody" id="settingsBody">
       <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
            the dots|patterns pref can be changed any time - not just at the
@@ -360,6 +360,10 @@
           </a>
           <!-- F22 (operator UAT 2026-07-05): the "How this app is built"
                write-up link (a case study of this project) was removed. -->
+          <button class="listItem setRow" id="replayTourBtn" type="button">
+            <span class="li-title">Replay the intro tour</span>
+            <span class="li-artist">The 3-panel welcome walkthrough, any time</span>
+          </button>
           <p class="setHint aboutStamp" id="aboutStamp"></p>
         </div>
       </section>
@@ -1114,6 +1118,12 @@
     /* About section (round 2): the same authored stamp as the footer, one
        more discoverable home. Static content - render once. */
     if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('aboutStamp'));
+    // S-WELCOME UAT round 2: replay the intro tour on demand. Reuses the
+    // ?welcome=1 force path (current instrument preselected there, so a
+    // tap-through never switches the profile). Profile survives the search
+    // reset via the persisted PROFILE_KEY.
+    var replayBtn = document.getElementById('replayTourBtn');
+    if (replayBtn) replayBtn.onclick = function () { location.search = '?welcome=1'; };
 
     /* settings sheet open/close */
     var ov = document.getElementById('setOv'),

@@ -1668,8 +1668,13 @@ footer{display:none;}
 .wDot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);transition:background .2s;}
 .wDot.on{background:var(--accent);}
 /* The relocated instrument picker inside Settings > Preferences. Overrides
-   .picker's max-width:46vw (an appbar-era cap) - here it is a full row. */
-.setPicker{width:100%;max-width:100%;margin-bottom:4px;}
+   .picker's appbar-era compact sizing (max-width:46vw, .8rem) - here it is a
+   full Settings row: bigger type + 44px floor (operator UAT 2026-07-19:
+   "drop down size/font size too small"). */
+.setPicker{width:100%;max-width:100%;margin-bottom:4px;font-size:.95rem;padding:12px;min-height:44px;}
+/* Settings sheet title carries the same gear glyph as the appbar button
+   (operator UAT 2026-07-19) - icon takes currentColor beside the word. */
+.setHdTitle{display:flex;align-items:center;gap:8px;}
 /* Tune tab spacing + annotations (were inline style attrs pre-2026-07-19). */
 #tuneTuneRow .sub{margin:14px 0 8px;}
 .refSub{margin-top:22px;margin-bottom:10px;}
