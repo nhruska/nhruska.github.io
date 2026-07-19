@@ -1,0 +1,66 @@
+{
+  "name": "guidance-calm-quiet",
+  "note": "S-GUIDANCE-CALM (operator interview 2026-07-19, from UAT 'guidance panels shown inline on each tab - not clean'): the guidanceask / diagrampref ASK banners never render inline anymore. A returning user with NO chosen level (this scenario: runner seeds only welcomeDone) gets a completely quiet app - the ask slots sat OUTSIDE every screen, so pre-fix the level ask was visible on every single tab. Level and fretboard-style live in Settings > Preferences; unset behaves as the safe defaults (beginner grading, dots). Written red-first against the pre-fix tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "Library is quiet: no ask banner, no notable of any kind for an unset-level returning user",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0 && !document.getElementById('guidanceAskSlot') && !document.getElementById('diagramPrefSlot');})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "Compose is quiet too - chord diagrams rendering no longer summons the fretboard-style ask",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"tune\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "Tune is quiet (level unset = level-gated tips stay blocked, asks gone)",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "quiet-tune"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the choices still exist where they belong: Settings > Preferences carries the guidance-level control",
+      "js": "(function(){var seg=document.querySelectorAll('#accBodyPrefs .thSeg');return seg.length>=3;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "quiet-settings"
+    }
+  ]
+}

@@ -39,87 +39,6 @@
 <link rel="stylesheet" href="../shared/songbook.css">
 <link rel="stylesheet" href="../shared/tracks.css">
 <link rel="stylesheet" href="../shared/repertoire-form.css">
-<style>
-  /* in-app instrument/tuning picker (appbar) */
-  .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
-    font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
-  .picker:focus{outline:none;border-color:var(--accent);}
-  .picker:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  /* accent swatches - rendered inline in the Settings sheet (accentSwatches) */
-  .sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;padding:0;
-    background:var(--sc);transition:transform .08s;}
-  .sw:active{transform:scale(.88);}
-  .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
-  /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
-     sheet on phone; the accent chooser lives here now, not the Tune tab.
-     Structure (F11): sticky .setHd top, scrollable .setPanelBody middle, sticky
-     .setFoot bottom - a plain flex column. The card's own height is auto up to
-     max-height, so short content never leaves a gap above the footer; only when
-     content exceeds max-height does .setPanelBody actually scroll. */
-  #settingsBtn{line-height:0;}
-  #settingsBtn svg{width:21px;height:21px;display:block;}
-  .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
-    background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
-    padding:0 12px calc(12px + env(safe-area-inset-bottom));}
-  .setOv[hidden]{display:none;}
-  .setCard{width:100%;max-width:520px;max-height:86dvh;display:flex;flex-direction:column;overflow:hidden;
-    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px 16px 0 0;
-    box-shadow:0 -14px 40px rgba(0,0,0,.55);}
-  .setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
-    padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
-  .setHd h2{margin:0;font-size:1.15rem;}
-  .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
-    display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
-  .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
-  /* M-SETTINGS-CLARITY: sections are .accSec/.accBtn/.accBody (the shared
-     accordion primitive, songbook.css). The old .setSec rules retired with
-     the markup. .setRow composes the shared .listItem card family as a
-     <button> data row (Backup/Restore): explicit color because button text
-     does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
-     it reads as a list row, not an action button.
-     UAT 2026-07-16: also give it an explicit dark surface + border + padding.
-     A <button> with no background falls back to the UA default (light grey),
-     so on the dark theme the standalone Guidance-level .setRow rendered as a
-     washed-out white bar with near-invisible --txt text (operator screenshot).
-     The Backup/Restore .setRows live inside a collapsed accordion so the bug
-     only showed on the bare Guidance row - the fix reads correctly for all. */
-  .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
-  .setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
-  /* S-SETTINGS-UAT (operator UAT 2026-07-16): settings ACTION rows (Back up,
-     Restore, the Skills import/export rows - button.listItem.setRow) read as
-     CTAs via the accent border, the suggChip/CTA ink family - one rule for
-     the whole action-row class, never per instance. Plain display rows and
-     the segmented controls keep the neutral line. */
-  #settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
-  #settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
-  .setRow .li-title{display:block;}
-  .setRow .li-artist{display:block;}
-  /* About section link rows (round 2): external-link ink (--brass, the Links
-     convention) + inline-SVG icon taking currentColor; 44px touch floor. */
-  .aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
-    text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
-  .aboutLink svg{flex:0 0 auto;}
-  .aboutStamp{margin:10px 0 0;}
-  .setLbl{font-weight:600;margin-bottom:11px;}
-  .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
-  .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
-  .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
-  .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
-  .thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
-  .thSeg.on{background:var(--accent);color:var(--on-accent);}
-  .thSeg:active{transform:scale(.97);}
-  .setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
-  .setSummary .row{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;}
-  .setSummary .row .k{color:var(--txt);} .setSummary .row .v{color:var(--ink-faint);}
-  .setSummary .row.head{margin-top:3px;} .setSummary .row.head .k{font-weight:600;}
-  .setSummary .row.sub{padding-left:16px;} .setSummary .row.sub .k{color:var(--ink-faint);} .setSummary .row.sub .v{color:var(--txt);}
-  .setSummary .empty{color:var(--ink-faint);font-size:.82rem;font-style:italic;}
-  .setFoot{flex:0 0 auto;border-top:1px solid var(--line-strong);padding:14px 16px 18px;}
-  .setBtns{display:flex;gap:10px;}
-  .setBtns .btn{flex:1;}
-  .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-</style>
 </head>
 <body>
 <div class="app">
@@ -128,25 +47,17 @@
          quiet chrome-tier status, visible only while disconnected. The app KEEPS
          WORKING offline (that's the PWA promise) - the pill just names the state
          so a failed YouTube thumbnail or search doesn't read as a broken app. -->
-    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span><span class="ctx" id="ctxLine">loading…</span></div>
-    <select class="picker" id="profilePicker" title="Instrument / tuning" aria-label="Instrument and tuning"></select>
+    <div class="brand"><span class="nm">Music</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span></div>
+    <!-- The instrument picker moved into Settings > Preferences (operator UAT
+         2026-07-18: switching instruments is occasional, not per-session - the
+         appbar keeps only always-relevant chrome: brand, offline pill, gear). -->
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
   <div class="view" id="view">
-    <!-- M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
-         experience-level ask, rendered/managed entirely by the Settings
-         inline script below (renderGuidanceAsk). Sits FIRST, outside every
-         .screen, same rationale as diagramPrefSlot/backupNudgeSlot below -
-         it fires once at boot, on any tab, and 'guidanceask' outranks every
-         other Notables consumer (notables.js PRIORITY) so it wins the slot
-         ahead of firstrun on a truly fresh profile. -->
-    <div class="notableSlot" id="guidanceAskSlot"></div>
-    <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time dots|patterns
-         fretboard-diagram preference prompt, rendered/managed entirely by
-         the Settings inline script below (renderDiagramPrefPrompt). Sits
-         OUTSIDE every .screen, same rationale as backupNudgeSlot below - it
-         can fire the first time ANY chord diagram renders, on any tab. -->
-    <div class="notableSlot" id="diagramPrefSlot"></div>
+    <!-- S-GUIDANCE-CALM (operator interview 2026-07-19): the guidanceask and
+         diagrampref ASK banners no longer render inline - the first-run tour
+         and Settings > Preferences own those choices; unset values behave as
+         the safe defaults (beginner grading, dots) until changed there. -->
     <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
          backup-staleness nudge, rendered/managed entirely by the Settings
          inline script below (renderBackupNudge). Sits OUTSIDE every .screen
@@ -183,7 +94,11 @@
              destructive Clear (✕) is hidden until edit mode and wears red. Order
              is [✕][Edit][Start] - normal mode hides ✕ -> [Edit][Start]; edit mode
              hides Start + shows the red ✕ -> [✕][Done]. -->
-        <div class="setHead"><div class="ti"><h2>My Setlist</h2><p id="setCount">No songs yet</p></div>
+        <!-- Operator UAT 2026-07-18: the h2 came out - with the tabbar naming the
+             tab and the intro strip stating its purpose, "My Setlist" was a third
+             restatement; the count line carries the header's information. The
+             head row is STATIC (the songs scroll beneath it, Library-style). -->
+        <div class="setHead"><div class="ti"><p id="setCount">No songs yet</p></div>
           <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
           <button class="btn red" id="performBtn" title="Start performance">Start</button></div>
@@ -279,14 +194,14 @@
              first visit (renderTuneFirstNotable, listens for music:tab-shown). -->
         <div class="notableSlot" id="tuneFirstSlot"></div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
-          <div class="sub" style="margin:14px 0 8px">Tuning</div>
+          <div class="sub">Tuning</div>
           <div class="chips" id="tuneTunings"></div>
         </div>
         <div class="tCard">
-          <h3>Auto-tuner <span style="font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem">- live needle by mic</span></h3>
+          <h3>Auto-tuner <span class="subNote">- live needle by mic</span></h3>
           <div class="micBox" id="micBox"></div>
         </div>
-        <div class="sub" style="margin-top:22px;margin-bottom:10px">Reference tones - tap a letter for a steady pitch.</div>
+        <div class="sub refSub">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
         <!-- Accent colour moved to the Settings sheet (gear in the appbar). -->
       </div>
@@ -325,20 +240,47 @@
      Round 2 (operator UAT): purpose-named sections - Appearance / Preferences /
      Backup & Restore / About ("&" matches the existing "Triads & Inversions"
      copy style). -->
+<!-- S-WELCOME (operator interview 2026-07-18): the first-run tour - a 3-panel
+     swipeable sheet shown ONCE on a truly fresh device. Panel 1 gathers the
+     instrument (guitar standard preselected - the widest-audience default),
+     panel 2 folds in the existing "how far along" level ask, panel 3 is the
+     four-tab map (the per-tab purpose copy's permanent home - the appbar
+     carries NO persistent intro text by operator decision). Skipping applies
+     the defaults and never asks again; the level ask card still appears
+     in-app later if skipped here. Existing devices never see this (any prior
+     visit persisted the profile key - see initWelcome's guard). -->
+<div class="welcomeOv" id="welcomeOv" hidden>
+  <div class="welcomeCard" role="dialog" aria-modal="true" aria-label="Welcome to Music">
+    <button class="x" id="welcomeSkip" type="button" aria-label="Skip intro and use defaults">✕</button>
+    <div class="wPanels" id="wPanels">
+      <section class="wPanel">
+        <h2>Welcome</h2>
+        <p class="wLead">Chords, songs, a tuner - everything works offline, and what you build stays on your device.</p>
+        <p class="wLead"><b>What are you playing?</b></p>
+        <div id="wInstList" role="radiogroup" aria-label="Instrument"></div>
+      </section>
+      <section class="wPanel">
+        <h2>How far along are you?</h2>
+        <div id="wLevelList" role="radiogroup" aria-label="Experience level"></div>
+        <p class="wLead">This grades the tips and how chord charts render. Change it any time in Settings.</p>
+      </section>
+      <section class="wPanel">
+        <h2>Four tabs, one glance</h2>
+        <ul class="wMap">
+          <li><b>Library</b><span>Tap a song to play it - the + saves it to your setlist</span></li>
+          <li><b>Setlist</b><span>Your songs, show-ready - hit Start to perform</span></li>
+          <li><b>Compose</b><span>Try chords, keep what sounds good - grow it into a song</span></li>
+          <li><b>Tune</b><span>Pluck a string and watch the needle</span></li>
+        </ul>
+      </section>
+    </div>
+    <div class="wFoot"><div class="wDots" id="wDots" aria-hidden="true"></div><button class="btn red" id="wNext" type="button">Next</button></div>
+  </div>
+</div>
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
-    <div class="setHd"><h2>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setHd"><h2 class="setHdTitle"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
     <div class="setPanelBody" id="settingsBody">
-      <section class="accSec" data-acc="appearance">
-        <button class="accBtn" id="accBtnAppearance" type="button" aria-expanded="false" aria-controls="accBodyAppearance">Appearance</button>
-        <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
-          <div class="setLbl">Theme</div>
-          <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
-          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
-          <div class="setLbl">Accent color</div>
-          <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
-        </div>
-      </section>
       <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
            the dots|patterns pref can be changed any time - not just at the
            one-time Notables prompt (#diagramPrefSlot above). Section renamed
@@ -347,6 +289,9 @@
       <section class="accSec" data-acc="prefs">
         <button class="accBtn" id="accBtnPrefs" type="button" aria-expanded="false" aria-controls="accBodyPrefs">Preferences</button>
         <div class="accBody" id="accBodyPrefs" role="region" aria-labelledby="accBtnPrefs" hidden>
+          <div class="setLbl">Instrument &amp; tuning</div>
+          <select class="picker setPicker" id="profilePicker" aria-label="Instrument and tuning"></select>
+          <p class="setHint">Every chord chart, diagram and the tuner follow this. Switching reloads the app.</p>
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
@@ -360,6 +305,16 @@
           <div class="setLbl">Guidance level</div>
           <div class="themeSeg" id="guidanceLevelSeg" role="radiogroup" aria-label="Guidance level"></div>
           <p class="setHint">Grades the one-time tips and how chord charts render. Advanced collapses chord grids to compact chips.</p>
+        </div>
+      </section>
+      <section class="accSec" data-acc="appearance">
+        <button class="accBtn" id="accBtnAppearance" type="button" aria-expanded="false" aria-controls="accBodyAppearance">Appearance</button>
+        <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
+          <div class="setLbl">Theme</div>
+          <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
+          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
+          <div class="setLbl">Accent color</div>
+          <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
         </div>
       </section>
       <section class="accSec" data-acc="backup">
@@ -405,6 +360,10 @@
           </a>
           <!-- F22 (operator UAT 2026-07-05): the "How this app is built"
                write-up link (a case study of this project) was removed. -->
+          <button class="listItem setRow" id="replayTourBtn" type="button">
+            <span class="li-title">Replay the intro tour</span>
+            <span class="li-artist">The 3-panel welcome walkthrough, any time</span>
+          </button>
           <p class="setHint aboutStamp" id="aboutStamp"></p>
         </div>
       </section>
@@ -511,7 +470,13 @@
   // chord-progression suggestion map: moved to shared/sugg.js (S-EXTRACT,
   // analysis-refactor-enhance-20260704 A7) - was inline + untested here.
   var SUGG = window.Sugg.SUGG;
-  var CONTEXTS_BASE = { library: 'choose from your song library', compose: 'build a progression', tracks: 'find a track in your key', practice: 'now playing', jam: 'your selected songs' };
+  // Per-tab intro copy (operator UAT 2026-07-18): purpose + next step, not a
+  // noun-phrase - the strip is each tab's one orienting sentence (copy-coach:
+  // verb-first, beginner vocabulary, name the action the user came to do).
+  // Per-tab orientation moved into the S-WELCOME first-run tour's map panel
+  // (operator interview 2026-07-18: "first-run tour ONLY - no persistent
+  // intro text anywhere"). The old CONTEXTS_BASE/ctxLine strip is retired;
+  // songbook.js's optional contexts/ctxLine machinery stays for other packs.
 
   // rootFreq / movable-shape fallback / buildAdapter: moved to shared/
   // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
@@ -537,6 +502,12 @@
   //   5. whatever Object.keys returns (last-resort; non-deterministic because
   //      profile scripts settle in load-completion order, not append order)
   var PROFILE_KEY = 'music.activeProfile.v1';
+  // S-WELCOME existing-user signal: EVERY prior visit persists the profile key
+  // (see the boot chain below), so its presence at parse time - BEFORE this
+  // boot's own persist runs - cleanly separates a lived-in device from a
+  // truly fresh one. Captured here, consumed by initWelcome().
+  var hadProfileKey = false;
+  try { hadProfileKey = !!localStorage.getItem(PROFILE_KEY); } catch (e) {}
   function activeId(profiles, manifestOrder) {
     var qp = new URLSearchParams(location.search).get('p');
     var hp = (location.hash || '').replace(/^#/, '');
@@ -582,6 +553,114 @@
     };
   }
 
+  /* S-WELCOME (operator interview 2026-07-18): the one-time 3-panel tour.
+   * Shown only on a truly fresh device (no persisted profile key, no chosen
+   * guidance level). Panel 1 picks the instrument (guitar-standard
+   * preselected - the widest-audience default); panel 2 is the SAME level
+   * choice the in-app ask offers (same storage, same ask-settling side
+   * effect); panel 3 maps the four tabs. Skip (the X / hardware back)
+   * applies the defaults and never asks again - except the level, which
+   * stays unset so the in-app ask can still teach later. */
+  var WELCOME_KEY = 'music.welcomeDone.v1';
+  function initWelcome(profiles, activeKey, manifestOrder) {
+    // ?welcome=1 forces the tour on ANY device - the reviewer's replay hook.
+    // A lived-in origin (githack previews carry weeks of UAT localStorage)
+    // silently marks the tour done, so without this there is no way to
+    // eyeball the flow short of clearing site data.
+    var forced = /[?&]welcome=1/.test(location.search);
+    if (!forced) {
+      try {
+        if (localStorage.getItem(WELCOME_KEY)) return;
+        if (hadProfileKey || localStorage.getItem('music.guidanceLevel.v1')) {
+          localStorage.setItem(WELCOME_KEY, '1'); return; // lived-in device - never tour it
+        }
+      } catch (e) { return; }
+    }
+    var ov = document.getElementById('welcomeOv'); if (!ov) return;
+    var panels = document.getElementById('wPanels'), dotsEl = document.getElementById('wDots');
+    var nextBtn = document.getElementById('wNext'), skipBtn = document.getElementById('welcomeSkip');
+    var instList = document.getElementById('wInstList'), lvlList = document.getElementById('wLevelList');
+    // Fresh device: guitar-standard preselected (widest audience). Forced
+    // replay (?welcome=1): preselect the CURRENT instrument so tapping
+    // through the tour never silently switches a lived-in device's profile.
+    var chosenInst = (!forced && profiles['guitar-standard']) ? 'guitar-standard' : activeKey;
+    var chosenLvl = null;
+    function optRow(label, on) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'askOpt' + (on ? ' on' : '');
+      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.textContent = label; return b;
+    }
+    (manifestOrder || Object.keys(profiles)).forEach(function (k) {
+      var p = profiles[k]; if (!p) return;
+      var b = optRow(p.label, k === chosenInst);
+      b.onclick = function () {
+        chosenInst = k;
+        Array.prototype.forEach.call(instList.children, function (c) { c.className = 'askOpt'; c.setAttribute('aria-checked', 'false'); });
+        b.className = 'askOpt on'; b.setAttribute('aria-checked', 'true');
+      };
+      instList.appendChild(b);
+    });
+    [['beginner', 'Just starting out'], ['intermediate', 'I know some chords'], ['advanced', 'I know my way around the neck']].forEach(function (lv) {
+      var b = optRow(lv[1], false);
+      b.onclick = function () {
+        chosenLvl = lv[0];
+        Array.prototype.forEach.call(lvlList.children, function (c) { c.className = 'askOpt'; c.setAttribute('aria-checked', 'false'); });
+        b.className = 'askOpt on'; b.setAttribute('aria-checked', 'true');
+      };
+      lvlList.appendChild(b);
+    });
+    var COUNT = 3;
+    for (var d = 0; d < COUNT; d++) { var dot = document.createElement('span'); dot.className = 'wDot' + (d === 0 ? ' on' : ''); dotsEl.appendChild(dot); }
+    function panelIdx() { return Math.min(COUNT - 1, Math.round(panels.scrollLeft / panels.clientWidth)); }
+    function paint() {
+      var i = panelIdx();
+      Array.prototype.forEach.call(dotsEl.children, function (c, j) { c.className = 'wDot' + (j === i ? ' on' : ''); });
+      nextBtn.textContent = (i === COUNT - 1) ? 'Start playing' : 'Next';
+    }
+    panels.addEventListener('scroll', function () { requestAnimationFrame(paint); });
+    // Standard overlay nav contract (the openSaveNameRow pattern): rawFinish is
+    // the DOM+storage close; button paths route through NavHistory.dismiss()
+    // so the pushed history layer unwinds in step, and the registered closeFn
+    // (hardware/gesture Back included) is the ONE place rawFinish runs.
+    var done = false, navOpened = false;
+    function rawFinish() {
+      if (done) return; done = true;
+      try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
+      if (chosenLvl && window.GuidanceLevel) {
+        GuidanceLevel.set(chosenLvl);
+        // Settle the in-app ask exactly like choosing on its card would.
+        try {
+          var dm = JSON.parse(localStorage.getItem('music.notables.v1') || '{}') || {};
+          dm.guidanceask = 1;
+          localStorage.setItem('music.notables.v1', JSON.stringify(dm));
+        } catch (e) {}
+        if (typeof renderGuidanceLevelRow === 'function') { try { renderGuidanceLevelRow(); } catch (e) {} }
+        if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
+      }
+      ov.hidden = true;
+      if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
+        try { localStorage.setItem(PROFILE_KEY, chosenInst); } catch (e) {}
+        location.search = '?p=' + encodeURIComponent(chosenInst);
+      }
+    }
+    function finish() {
+      if (done) return;
+      if (window.NavHistory && navOpened) { navOpened = false; NavHistory.dismiss(); }
+      else rawFinish();
+    }
+    nextBtn.onclick = function () {
+      var i = panelIdx();
+      if (i >= COUNT - 1) { finish(); return; }
+      panels.scrollTo({ left: panels.clientWidth * (i + 1), behavior: 'smooth' });
+    };
+    skipBtn.onclick = finish;
+    ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') finish(); });
+    if (window.NavHistory) { NavHistory.open('welcome', function () { navOpened = false; rawFinish(); }); navOpened = true; }
+    ov.hidden = false;
+    paint();
+  }
+
   // Tune tab: one-tap tuning presets for the active instrument (e.g. guitar
   // Standard / Drop D / Open G). Switching a preset switches the whole profile,
   // so the chord shapes retune to match the tuning - not just the needle.
@@ -597,16 +676,14 @@
       var b = document.createElement('button');
       b.className = 'chip' + (p.id === activeKey ? ' on' : '');
       var name = p.label.split(' - ').pop();
-      b.innerHTML = name + ' <span style="opacity:.55;font-weight:400">' + p.tuning + '</span>';
+      b.innerHTML = name + ' <span class="chipTuning">' + p.tuning + '</span>';
       b.onclick = function () { if (p.id !== activeKey) location.search = '?p=' + encodeURIComponent(p.id); };
       box.appendChild(b);
     });
   }
 
   function start(profile, songs) {
-    el('ctxLine').textContent = profile.label;
     document.title = profile.label + ' - Music';
-    var contexts = Object.assign({}, CONTEXTS_BASE, { tune: profile.tuning + ' · tune by ear or mic' });
     var pack = window.ChordPackAdapter.buildAdapter(profile);
     // Backing Tracks tab: same instrument pack -> the Studio can draw the fretboard
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
@@ -636,7 +713,6 @@
       storagePrefix: 'roadcase-' + profile.id,
       profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
-      contexts: contexts,
       // M3: the merged repertoire reads the track catalog (seed + URL overlay + custom)
       // from tracks.js, and opens the Practice Studio for a track / composed key.
       getTracks: function () { return tracksCtl ? tracksCtl.getTracks() : []; },
@@ -660,8 +736,7 @@
         keyRoots: el('keyRoots'), keyModes: el('keyModes'), keyView: el('keyView'), keyClear: el('keyClear'),
         keyChipSlot: el('keyChipSlot'), keyFlyout: el('keyFlyout'),
         maxNote: el('maxNote'),
-        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose'),
-        ctxLine: el('ctxLine')
+        maxOv: el('maxOv'), maxGrid: el('maxGrid'), maxClose: el('maxClose')
       }
     });
     // S-CHORD-COLLAPSE (Volley 3 High #1): narrow window seam so the Settings
@@ -718,6 +793,7 @@
       var key = activeId(profiles, manifestOrder);
       buildPicker(profiles, key, manifestOrder);
       renderTuningChips(profiles, key);
+      initWelcome(profiles, key, manifestOrder);
       // Also persist the resolved key on first load so a tab-bar refresh
       // doesn't snap back to manifest-default if the user navigated here
       // from a deep link and then later visited /music/play/ bare.
@@ -975,7 +1051,6 @@
           // still open or still eligible to fire later - the user just
           // answered the same question this Settings row asks.
           if (window.Notables) Notables.dismiss('diagrampref');
-          var slot = document.getElementById('diagramPrefSlot'); if (slot) slot.innerHTML = '';
         };
         dpWrap.appendChild(b);
       });
@@ -1013,7 +1088,6 @@
           // the user just answered the same question the ask asks (mirrors
           // the diagramPref Settings-row precedent right above).
           if (window.Notables) Notables.dismiss('guidanceask');
-          var askSlot = document.getElementById('guidanceAskSlot'); if (askSlot) askSlot.innerHTML = '';
           // S-CHORD-COLLAPSE live refresh (the #256 window seam - live since
           // that merge): a level change applies to already-rendered Compose
           // grids immediately.
@@ -1044,6 +1118,12 @@
     /* About section (round 2): the same authored stamp as the footer, one
        more discoverable home. Static content - render once. */
     if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('aboutStamp'));
+    // S-WELCOME UAT round 2: replay the intro tour on demand. Reuses the
+    // ?welcome=1 force path (current instrument preselected there, so a
+    // tap-through never switches the profile). Profile survives the search
+    // reset via the persisted PROFILE_KEY.
+    var replayBtn = document.getElementById('replayTourBtn');
+    if (replayBtn) replayBtn.onclick = function () { location.search = '?welcome=1'; };
 
     /* settings sheet open/close */
     var ov = document.getElementById('setOv'),
@@ -1132,107 +1212,12 @@
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
-    /* M-GUIDANCE (2026-07-05): the one-time "how far along are you?"
-       experience-level ask, in the 'guidanceask' Notables slot - the
-       HIGHEST priority (notables.js PRIORITY), so it wins the slot ahead of
-       firstrun on a truly fresh profile (firstrun is itself now level-gated
-       and would otherwise never get a chance to show before a level exists).
-       Rendered once at boot (see the renderGuidanceAsk() call near
-       renderBackupNudge() below) - unlike diagrampref/backupNudge it has NO
-       trigger event of its own, since it must fire on the very first app
-       open regardless of which tab is active. Zero jargon (operator
-       explicit) - three plain-language buttons, same HTML-banner-with-
-       inline-buttons shape as renderDiagramPrefPrompt below (Notables.
-       renderBanner's opts.html + a manual querySelectorAll wiring pass). */
-    function renderGuidanceAsk() {
-      var slot = document.getElementById('guidanceAskSlot');
-      if (!slot || !window.Notables || !window.GuidanceLevel) return;
-      if (slot.childNodes.length) return;              // already showing - one at a time
-      if (Notables.isDismissed('guidanceask')) return;  // answered (or X'd) already - permanent, per notables.js's one-shot contract
-      if (!Notables.claim('guidanceask')) return;       // unrestricted + top priority in practice, but keep the claim() contract explicit
-      function choose(level) {
-        GuidanceLevel.set(level);
-        Notables.dismiss('guidanceask');
-        if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
-        slot.innerHTML = '';
-        // S-CHORD-COLLAPSE (Volley 3 High #1): apply the new level to any
-        // ALREADY-rendered Compose grids right now - an unset user answering
-        // "advanced" after mount must see the chips immediately, not after
-        // the next compose mutation. window seam: songbookCtl lives in the
-        // OTHER script block's closure (not in scope here).
-        if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-      }
-      var banner = Notables.renderBanner({
-        consumerId: 'guidanceask',
-        html: '<div style="margin-bottom:8px;font-weight:600;">How far along are you?</div>'
-          + '<button type="button" class="glAskOpt" data-lvl="beginner" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">Just starting out</button>'
-          + '<button type="button" class="glAskOpt" data-lvl="intermediate" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">I know some chords</button>'
-          + '<button type="button" class="glAskOpt" data-lvl="advanced" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">I know my way around the neck</button>',
-        // the banner's own [x]: dismissing WITHOUT choosing stores the
-        // operator's explicit safe default ('beginner') - an EXPLICIT
-        // set() here, never a guessed default inside guidance-level.js's
-        // own get() (see that file's header for why).
-        onDismiss: function () {
-          GuidanceLevel.set('beginner');
-          if (typeof renderGuidanceLevelRow === 'function') renderGuidanceLevelRow();
-          slot.innerHTML = '';
-          // Same live-apply as choose() - the explicit beginner default must
-          // also reach any already-rendered grids (S-CHORD-COLLAPSE V3 H1).
-          if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-        }
-      });
-      if (!banner) return; // no `document` available (Node without a DOM stub)
-      var opts = banner.querySelectorAll ? banner.querySelectorAll('.glAskOpt') : [];
-      for (var i = 0; i < opts.length; i++) {
-        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-lvl')); });
-      }
-      slot.appendChild(banner);
-    }
-
-    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): one-time "how do you read a
-       fretboard?" prompt, in the 'diagrampref' Notables slot (after roman,
-       before backup - notables.js PRIORITY). Trigger: diagram.js's render()
-       dispatches music:diagram-rendered every time an ACTUAL chord diagram
-       draws (any tab, any screen - see its header) - so this fires at "the
-       first chord-diagram surface" without touching songbook.js/tracks.js/
-       key-explorer.js at all. Eligibility ALSO requires firstrun to be
-       dismissed already ("never first-run" - the spec's explicit ordering);
-       Notables' own priority arbitration alone doesn't guarantee that, since
-       firstrun could simply not be claiming the slot at this exact moment
-       (e.g. the user is on a different tab) without yet being shown+closed. */
-    function renderDiagramPrefPrompt() {
-      var slot = document.getElementById('diagramPrefSlot');
-      if (!slot || !window.Notables || !window.DiagramPref) return;
-      if (slot.childNodes.length) return;              // already showing - one at a time
-      if (Notables.isDismissed('diagrampref')) return;  // picked (or X'd) already - permanent, per notables.js's one-shot contract
-      if (!Notables.isDismissed('firstrun')) return;    // never before the first-run cue has been shown+closed
-      if (!Notables.claim('diagrampref')) return;       // a higher-priority notable (roman/whynote/firstrun) holds the slot right now
-      // diagrampref now outranks backup - defensively clear a stale backup
-      // banner in ITS OWN slot rather than leaving two notables visible at
-      // once (notables.js arbitrates state, not DOM; each consumer owns its
-      // own slot's cleanup - see renderBackupNudge below for the mirror case).
-      var backupSlot = document.getElementById('backupNudgeSlot'); if (backupSlot) backupSlot.innerHTML = '';
-      function choose(pref) {
-        DiagramPref.set(pref);
-        markDiagramPref(pref);
-        Notables.dismiss('diagrampref');
-        slot.innerHTML = '';
-      }
-      var banner = Notables.renderBanner({
-        consumerId: 'diagrampref',
-        html: '<div style="margin-bottom:8px;font-weight:600;">How do you read a fretboard?</div>'
-          + '<button type="button" class="dgPrefOpt" data-pref="dots" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;margin-bottom:6px;font-size:.82rem;min-height:44px;cursor:pointer;">1. Dots and finger numbers (I\'m learning new shapes)</button>'
-          + '<button type="button" class="dgPrefOpt" data-pref="patterns" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--accent-dim);border-radius:9px;color:var(--txt-soft);padding:8px 10px;font-size:.82rem;min-height:44px;cursor:pointer;">2. Clean patterns with hand position (I move by feel)</button>',
-        onDismiss: function () { slot.innerHTML = ''; } // the banner's own [x] - dismisses forever, defaults to 'dots' (honest one-shot semantics, no re-offer)
-      });
-      if (!banner) return; // no `document` available (Node without a DOM stub)
-      var opts = banner.querySelectorAll ? banner.querySelectorAll('.dgPrefOpt') : [];
-      for (var i = 0; i < opts.length; i++) {
-        opts[i].addEventListener('click', function (e) { choose(e.currentTarget.getAttribute('data-pref')); });
-      }
-      slot.appendChild(banner);
-    }
-    window.addEventListener('music:diagram-rendered', renderDiagramPrefPrompt);
+    /* S-GUIDANCE-CALM (operator interview 2026-07-19): renderGuidanceAsk and
+       renderDiagramPrefPrompt are RETIRED - the ask banners were inline
+       clutter next to the first-run tour. The tour asks the level once;
+       Settings > Preferences carries both choices forever after. Unset
+       means the safe defaults (beginner-graded tips stay quiet via the
+       notables LEVELS gate; DiagramPref.get() defaults dots). */
 
     /* M-GUIDANCE (beginner tier): "tune up first" JIT cue on the Tune tab's
        first visit. Trigger: songbook.js's applyTab() dispatches
@@ -1436,7 +1421,6 @@
     }
 
     renderBackupNudge();
-    renderGuidanceAsk(); // M-GUIDANCE: fires once at boot, on any tab - see its header above
   });
 })();
 </script>
@@ -1450,7 +1434,8 @@ if ('serviceWorker' in navigator) {
     // to download?"): the download is AUTOMATIC (the worker precaches on
     // first visit - zero-friction by design), so the cue's job is to CONFIRM,
     // once, that it happened: the first time this browser is controlled by
-    // the worker, a single toast says the app now works without internet.
+    // the worker, a single toast names the VALUE (operator UAT: functional purpose,
+    // not "now" framing): songs, chords and tuner work without internet.
     // One-shot via localStorage (the notables earned-silence grammar).
     var CUE_KEY = 'music.offlineReadyCued.v1';
     function cueOnce() {
@@ -1462,7 +1447,7 @@ if ('serviceWorker' in navigator) {
         var host = document.createElement('div');
         host.className = 'toast';
         document.body.appendChild(host);
-        Toast.show('Saved for offline - this app now works without internet', {
+        Toast.show('Saved to this device - your songs, chords and tuner work without internet', {
           host: host,
           duration: 3200,
           onShow: function (h, m) { h.textContent = m; requestAnimationFrame(function () { h.classList.add('on'); }); },

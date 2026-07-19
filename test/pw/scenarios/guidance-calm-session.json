@@ -1,0 +1,67 @@
+{
+  "name": "guidance-calm-session",
+  "persona": "beginner",
+  "note": "S-GUIDANCE-CALM (operator interview 2026-07-19, from UAT 'after dismiss then return, another diff shows on some - not smooth'): at most ONE journey tip per app session. A beginner sees the firstrun cue on Library; dismissing it must NOT let the tunefirst cue claim when they visit Tune in the same session (pre-fix it did - the whack-a-mole). The next session (fresh sessionStorage) may surface the next tip - covered by the session-gate unit tests in test/notables.test.js. Written red-first against the pre-fix tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "waitFor",
+      "selector": ".notableBanner"
+    },
+    {
+      "action": "evalAssert",
+      "label": "exactly one quiet tip is up (the beginner firstrun cue on Library)",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "session-one-tip"
+    },
+    {
+      "action": "tap",
+      "selector": ".notableBanner-x"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "dismissed - Library is quiet",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"tune\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "NO successor tip on Tune - dismissing never reveals another until the next session",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "returning to Library reveals nothing either - the session stays settled",
+      "js": "(function(){return document.querySelectorAll('.notableBanner').length===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "session-quiet-after-dismiss"
+    }
+  ]
+}

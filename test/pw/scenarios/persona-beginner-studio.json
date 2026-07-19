@@ -67,8 +67,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "beginner Studio orientation tip PRESENT (studiofirst notable)",
-      "js": "Array.from(document.querySelectorAll('.bt-st-notable')).some(function(e){return /Tap a chord/.test(e.textContent)})"
+      "label": "beginner Studio tip ABSENT in THIS session - the postprog cue already held the one-tip-per-session slot (S-GUIDANCE-CALM)",
+      "js": "!Array.from(document.querySelectorAll('.bt-st-notable')).some(function(e){return /Tap a chord/.test(e.textContent)})"
     },
     {
       "action": "evalAssert",
@@ -82,5 +82,6 @@
   ],
   "dismissNotables": [
     "firstrun"
-  ]
+  ],
+  "note": " S-GUIDANCE-CALM (2026-07-19): ONE tip per session - this beginner's session already spent its tip on the postprog cue (asserted above), so the studiofirst Studio tip must now be ABSENT here; it waits for a future session (session-gate contract: test/notables.test.js). The whynote-absent assert is unchanged."
 }
