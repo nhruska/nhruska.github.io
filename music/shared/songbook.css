@@ -179,13 +179,17 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   background-image:radial-gradient(1100px 360px at 50% -8%,var(--glow),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
-/* Slim header: brand + active-tab pill + offline pill + gear on row 1, ONE
-   compact per-tab purpose line as row 2 (operator UAT 2026-07-19 r3 - revived
-   after living with tour-only orientation). flex-wrap makes the purpose line
-   its own full-width row without a second container. */
-.appbar{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
+/* Slim header (operator format spec 2026-07-19 r4): GRID -
+     row 1: Music [tab pill]            | gear
+     row 2: per-tab purpose line        | (gear spans both rows, right)
+   The gear anchors the right edge across both rows so the header reads as
+   one block; the purpose line lives under the brand only, never under it. */
+.appbar{flex:0 0 auto;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:center;column-gap:10px;row-gap:3px;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) 14px 8px;border-bottom:1px solid var(--line);background:var(--appbar-bg);backdrop-filter:blur(8px);z-index:10;}
+.appbar .brand{grid-column:1;grid-row:1;}
+.appbar .tabPurpose{grid-column:1;grid-row:2;}
+.appbar #settingsBtn{grid-column:2;grid-row:1 / span 2;justify-self:end;align-self:center;}
 .tabPill{flex:0 0 auto;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);border-radius:var(--r-chip-pill);padding:3px 10px;font-size:.68rem;font-weight:700;letter-spacing:.04em;}
-.tabPurpose{flex:1 1 100%;margin:0;font-size:.72rem;color:var(--txt-dim);line-height:1.35;min-height:1em;}
+.tabPurpose{margin:0;font-size:.72rem;color:var(--txt-dim);line-height:1.35;min-height:1em;}
 .tabPurpose:empty{display:none;}
 .appbar .brand{display:flex;align-items:center;line-height:1;gap:8px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
