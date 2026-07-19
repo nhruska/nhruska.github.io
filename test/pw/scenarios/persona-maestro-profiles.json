@@ -1,0 +1,177 @@
+{
+  "name": "persona-maestro-profiles",
+  "persona": "advanced",
+  "seed": {
+    "roadcase-ukulele-gcea.builderBuffer.v1": "[{\"label\":\"Verse\",\"seq\":[\"C\",\"F\",\"G\"]}]"
+  },
+  "note": "S-COMPOSE-CALM slice 3, P7 Multi-Instrument Maestro goalpost (design table: 'switches profiles mid-thought; per-profile voicings; silence is the reward') + UAT r5 F5 (operator 2026-07-19: Shapes off the Compose surface; chord-chart visibility is a Settings > Preferences choice - Dots|Patterns stays, it styles diagrams, different job). Fixture: advanced + an in-flight uke draft. Journey: uke Compose lands dense and silent with NO Shapes chip; Save knows the uke draft; the maestro flips Chord charts -> Charts in Settings (4-string uke voicings appear); switches to guitar mid-thought; guitar keeps the advanced level AND the charts preference (both are global - 'profile switch persists'), draws 6-string voicings, and Save sees a FRESH side (per-profile draft separation). Zero tips anywhere.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "advanced maestro lands dense on ukulele: no starter cards, no tips",
+      "js": "(function(){var tips=Array.prototype.filter.call(document.querySelectorAll('.notableBanner'),function(n){return n.offsetParent!==null;});return document.querySelectorAll('#suggest .progPick').length===0 && tips.length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F5: the Shapes chip is GONE from the Compose surface (visibility now lives in Settings)",
+      "js": "(function(){return !document.querySelector('.ccShapes');})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "uke Save knows the uke draft: the choice row offers 'Add to your song (1 section)'",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');return !!row && /add to your song \\(1 section\\)/i.test(row.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p7-uke-draft-known"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "Keep building"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "F5: Settings > Preferences owns a Chord charts control, and the maestro flips it to Charts",
+      "js": "(function(){var seg=document.getElementById('chordChartsSeg');if(!seg)return false;var b=Array.prototype.find.call(seg.querySelectorAll('button'),function(x){return /charts/i.test(x.textContent);});if(!b)return false;b.click();return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#setClose"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "per-profile voicings, uke side: with charts on, the first visible diagram draws 4 string lines",
+      "js": "(function(){var svgs=document.querySelectorAll('#s-compose .chord svg');for(var i=0;i<svgs.length;i++){if(!svgs[i].closest('.chord').offsetParent)continue;var v=0,ls=svgs[i].querySelectorAll('line');for(var j=0;j<ls.length;j++){if(ls[j].getAttribute('x1')===ls[j].getAttribute('x2'))v++;}return v===4;}return false;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p7-uke-charts-on"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnPrefs"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "mid-thought switch: set the picker to guitar-standard (fires the app's own change handler)",
+      "js": "(function(){var pk=document.getElementById('profilePicker');if(!pk)return false;pk.value='guitar-standard';pk.dispatchEvent(new Event('change',{bubbles:true}));return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 1500
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem",
+      "timeoutMs": 30000
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar boots with the SAME advanced level - the profile switch persisted the maestro's identity",
+      "js": "(function(){return /p=guitar-standard/.test(location.search) && localStorage.getItem('music.guidanceLevel.v1')==='advanced';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar side stays starter-free and silent (level is global, tips stay gone)",
+      "js": "(function(){var tips=Array.prototype.filter.call(document.querySelectorAll('.notableBanner'),function(n){return n.offsetParent!==null;});return document.querySelectorAll('#suggest .progPick').length===0 && tips.length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the charts preference crossed the profile switch too: 6-string guitar voicings drawn",
+      "js": "(function(){var svgs=document.querySelectorAll('#s-compose .chord svg');for(var i=0;i<svgs.length;i++){if(!svgs[i].closest('.chord').offsetParent)continue;var v=0,ls=svgs[i].querySelectorAll('line');for(var j=0;j<ls.length;j++){if(ls[j].getAttribute('x1')===ls[j].getAttribute('x2'))v++;}return v===6;}return false;})()"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar Save sees a FRESH device-side: intent row ('Grow it into a song'), NOT the uke draft - per-profile separation",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row)return false;var t=row.textContent;return /grow it into a song/i.test(t) && !/add to your song/i.test(t);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "p7-guitar-fresh"
+    }
+  ]
+}

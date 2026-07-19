@@ -1,0 +1,97 @@
+{
+  "name": "save-choice-transpose-ask",
+  "persona": "intermediate",
+  "dismissNotables": ["composeintro", "transposetip", "pulljam", "backup"],
+  "seed": {
+    "roadcase-ukulele-gcea.builderBuffer.v1": "[{\"label\":\"Verse\",\"seq\":[\"A\",\"D\",\"E\"]},{\"label\":\"Chorus\",\"seq\":[\"A\",\"E\",\"D\"]},{\"label\":\"Bridge\",\"seq\":[\"D\",\"A\",\"E\"]}]"
+  },
+  "note": "UAT r5 F8 (operator 2026-07-19, on the #281 preview: 'I'm stuck with a song in progress. add to song button doesn't work'). The Save-choice row's 'Add to your song' with a DIFFERENTLY-KEYED draft chains the transpose ask MODAL out of the choice modal's own dismissal settle - a NavHistory layer opened inside the prior layer's settle window. The slice-2 goalpost only exercised the ask from the tray's Add (no modal dismiss in flight), so this path shipped unwalked. Contract: the ask row APPEARS and works; 'Shift it to A' commits the D-G-A strip as A-D-E section #4 and lands on the canvas. Red-first on ca6bf4e.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#s-compose"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "D"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tapChord",
+      "name": "A"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the choice row is up with the draft-aware Add",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');return !!row && /add to your song \\(3 sections\\)/i.test(row.textContent);})()"
+    },
+    {
+      "action": "tapText",
+      "text": "Add to your song (3 sections)",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "F8: the transpose ask ARRIVES (the operator's dead-button repro) - part in D, song in A, both actions offered",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row||row.hidden)return false;var t=row.textContent;return /this part is in D/i.test(t) && /your song is in A/i.test(t) && /shift it to A/i.test(t) && /keep it in D/i.test(t);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "transpose-ask-from-choice-row"
+    },
+    {
+      "action": "tapText",
+      "text": "Shift it to A",
+      "scope": ".composeRow.asModal"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "the shifted pull committed: 4 sections, the new one is A D E, and the canvas is open",
+      "js": "(function(){try{var buf=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.builderBuffer.v1')||'[]');if(buf.length!==4)return 'sections: '+buf.length;var s=buf[3].seq.join(' ');if(s!=='A D E')return 'seq: '+s;var canvas=document.getElementById('composeSong');return !!canvas && canvas.offsetParent!==null;}catch(e){return String(e);}})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "shifted-committed"
+    }
+  ]
+}

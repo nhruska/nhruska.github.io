@@ -76,6 +76,33 @@ Evidence: mission goal spec P5 definition; [hsr-notes stub](../../../docs/hsr-no
 | P4 | core-loop friction, no "why" | the loop IS the product |
 | P5 | beginner-splaining, dots-over-patterns | expertise recognized = respect earned |
 
+## Goalpost personas (S-COMPOSE-CALM registry, 2026-07-19) `[STABLE]`
+
+A SECOND registry with its OWN numbering (the compose-declutter design mission,
+docs/plans/compose-declutter-personas-20260719.md - do not conflate with the
+audit archetypes above): seven DETERMINISTIC personas, each a seeded app state
+plus a committed red-first scenario in [test/pw/scenarios/](../../../test/pw/README.md).
+A persona here is not prose - it is a runnable fixture (usdd): the runner's
+`persona` field seeds guidance level + settled asks, `dismissNotables` models
+journey position, and `seed` (added slice 3) seeds arbitrary localStorage state
+(a heavy setlist, an in-flight draft).
+
+| # | Persona | Fixture | Goalpost scenario |
+|---|---|---|---|
+| P1 | First-Timer | `firstRun: true`, level SKIPPED (safe-default path) | `persona-firsttimer-journey` - tour, hears a song, 5 taps to sound |
+| P2 | Campfire Strummer | beginner | `persona-strummer-compose` |
+| P3 | Jammer (operator's flow) | intermediate | `persona-jammer-compose` - pure jam surface + progression-first Save |
+| P4 | Performer | intermediate + seeded 5-song setlist, tips dismissed | `persona-performer-setlist` - Setlist -> Stage one tap, Compose = key check |
+| P5 | Songwriter | intermediate + draft/customs | `persona-songwriter-compose` + `persona-songwriter-roundtrip` |
+| P6 | Composer / Theorist | advanced | `persona-theorist-compose` - dense landing, no starters |
+| P7 | Multi-Instrument Maestro | advanced + uke draft, 2 profiles | `persona-maestro-profiles` - level + charts pref cross the profile switch, per-profile voicings (4 vs 6 strings), drafts separate, zero tips |
+
+Fixture recipes that bite: catalog song ids are `k<index>` (setlist seeds);
+the draft buffer is `<prefix>.builderBuffer.v1` = `[{label, seq}]`; the
+library row's tap surface is `.li-body` (the row's first `button` is the
+setlist +). The backup nudge CORRECTLY fires for any seeded un-backed-up
+library - dismiss `backup` in the fixture unless the nudge IS the test.
+
 ---
 
-**Anchors verified:** docs/plans/ux-personas-20260703.md (P1-P4 + matrix + shared context), mission goal spec (P5), docs/plans/ux-findings-20260703.md (audit definitions), docs/hsr-notes.md
+**Anchors verified:** docs/plans/ux-personas-20260703.md (P1-P4 + matrix + shared context), mission goal spec (P5), docs/plans/ux-findings-20260703.md (audit definitions), docs/hsr-notes.md, docs/plans/compose-declutter-personas-20260719.md (goalpost registry), test/pw/scenarios/persona-*.json

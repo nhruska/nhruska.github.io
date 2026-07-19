@@ -69,6 +69,38 @@ idempotent. Anchors: `songbook.js` `setComposeMode`/`rawSetMode`.
   canvas templates) - slice 2 verified, no change.
 - Goalpost: `persona-songwriter-roundtrip.json` (red-first).
 
+## Slice 3 + UAT r5 (2026-07-19)
+
+- **Persona goalposts complete**: P1/P4/P7 scenarios + the runner's `seed`
+  fixture map land the full 7-persona registry -
+  [ux-philosophy/personas.md](../ux-philosophy/personas.md) "Goalpost personas".
+- **Key-follow**: the builder key follows the song being worked on
+  (D-KEY-FOLLOW amendment in [compose-key-system.md](compose-key-system.md)) -
+  continue-building, the next-section hop, and template fills all pin into the
+  song's key; the untouched C default re-infers from the music.
+- **Chord-chart visibility is a Settings choice** (`music.chordCharts.v1`,
+  global): the Compose-surface Shapes toggle is retired; Settings > Preferences
+  "Chord charts" (Charts | Compact) follows the guidance level until picked.
+  Distinct from Fretboard diagrams (Dots|Patterns - styles what renders).
+- **Section cards**: duplicate ⧉ wears the shared 36px halo primitive; card
+  controls tightened to a 38px pitch (44px hit boxes overlap via -3px margins)
+  so the longest label (Pre-Chorus) renders whole.
+- **Stage (fullscreen)**: transpose relocated into the gear sheet's Key row;
+  remaining icons 46px; LANDSCAPE gets a right-edge nav column with the sheet
+  padded clear of it (goalpost: `stage-landscape-fit`).
+- **Action toast**: "Added to setlist" carries a Go-to-setlist button and the
+  5200ms action-toast hold (goalpost: `setlist-add-toast`).
+- **composeRow generation guard (F8, "add to song button doesn't work")**:
+  every composeRow modal shares ONE container, and `settleAfter` closes the
+  old layer AFTER the new one renders - so the choice row's rawClose was
+  WIPING the transpose ask it had just chained into (the slice-2 goalpost
+  only walked the ask from the tray, no modal dismiss in flight). Fix at the
+  primitive: `composeRowGen` counter - each populator bumps it, a rawClose
+  from a superseded render no-ops. The per-site 'prog'/'save' carve-outs were
+  this problem solved manually per chain. Goalpost:
+  `save-choice-transpose-ask`. Companion: the continue-building caution toast
+  now carries an "Open your draft" door (the guard must never dead-end).
+
 ## Verification
 
 USDD goalposts (red-first): `persona-jammer-compose` (P3, the operator's

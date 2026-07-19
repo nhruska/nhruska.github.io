@@ -777,7 +777,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
 /* A section CARD: label row (name + play + reorder + remove) over a chords row.
    Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
-.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;}
+.songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;gap:4px 0;}
+/* UAT r5 F4 (operator 2026-07-19: "Chor..." - the sixth control starved the
+   name): tighten the card controls' PITCH, not their touch targets. Each 44px
+   hit box keeps its size; -3px side margins overlap the boxes to a 38px pitch
+   while the 36px visual halos stay 2px apart. Frees ~40px per card - the
+   longest built-in label (Pre-Chorus) renders whole at phone width. */
+.songSect.card .songSectPlay,.songSect.card .songSectEdit,.songSect.card .songSectDup,.songSect.card .songSectMove,.songSect.card .rm{margin:0 -3px;}
 .songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
 /* Operator UAT 2026-07-18 ("pre chorus causes wrap on 1 element breaking
    layout"): in a flex-wrap container, LINE BREAKING is computed on the items'
@@ -802,8 +808,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songBuildBtn{min-height:44px;}
 /* slice 2: the duplicate handle joins the card control row - same 44px halo
    convention as .rm / .songSectMove. */
-.songSectDup{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;cursor:pointer;border-radius:var(--r-btn-sm);}
-.songSectDup:active{background:var(--accent-deep);color:var(--accent-ink);}
+/* UAT r5 F3 (operator 2026-07-19): the duplicate control wears the SAME 44px
+   box + 36px circular halo grammar as .songSectPlay/.songSectEdit (Element
+   Consistency Law - one card-control primitive, four instances). */
+.songSectDup{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1rem;line-height:1;cursor:pointer;}
+.songSectDup::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
+.songSectDup:active{color:var(--accent-ink);}
+.songSectDup:active::before{background:var(--accent-deep);border-color:var(--accent-dim);}
 /* M-13 SONG BUILDER: the section buffer tray. In Chords mode it is now ONLY the
    capture row (cue + label + "Add to song"); the sections/templates/save all
    live on the Song canvas. [hidden] takes no space (the empty-canvas state). */
@@ -946,10 +957,6 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chordGrid.ccMode{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));}
 .ccChips .suggChip,
 .chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;}
-/* The Shapes toggle rides the fixed #catChips row next to the In key|All seg;
-   .chip supplies the pill, this adds only the ON state (accent tint, same cue
-   family as .chordSegBtn.on). */
-.ccShapes.on{background:var(--accent-deep);border-color:var(--accent-ink);color:var(--accent-ink);}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
@@ -1400,9 +1407,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop .pos{font-family:'Space Mono',monospace;color:var(--txt-dim);font-size:.8rem;font-weight:700;}
 .pTop .tools{display:flex;gap:6px;align-items:center;}
 /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact icon-button oddballs. */
-.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:.9rem;cursor:pointer;}
+/* UAT r5 F7: stage icons at 46px (arm's-length / strap-grip targets - transpose
+   left the bar, so the three that remain earn the room). */
+.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:1.15rem;cursor:pointer;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
-.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:36px;height:36px;border-radius:var(--r-btn-sm);font-size:1.05rem;cursor:pointer;}
+.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-size:1.3rem;cursor:pointer;}
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.05;flex:0 0 auto;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);margin:2px 0 3px;flex:0 0 auto;}
 .pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
@@ -1429,10 +1438,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    song, so it becomes the dominant bottom-RIGHT target - the natural thumb-arc
    resting spot for a one-handed grip - ~2.6x the width of Prev and taller (a
    big target you can hit without aiming, Fitts's law). Prev (rarely used mid-
-   performance) shrinks to a small left tab. Transpose already lives top-right,
-   the hardest reach, correctly demoted for a rarely-touched control. */
-.pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.2rem;font-weight:800;}
-.pNav #pPrev{flex:1;color:var(--txt-dim);}
+   performance) shrinks to a small left tab. Transpose (rarely touched mid-
+   performance) is demoted OUT of the chrome entirely - it lives in the gear
+   sheet's Key row (UAT r5 F7). */
+.pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
+.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
 .pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
 .pSpeed.on{display:flex;}
@@ -1454,13 +1464,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    width would overlap), which is why there's no bare max-height branch. Placed
    AFTER the base .pSpeed rules so the row override wins on source order. */
 @media (orientation:landscape){
-  .perform{padding-top:calc(max(env(safe-area-inset-top,0px), 4px) + 4px);}
+  .perform{padding-top:calc(max(env(safe-area-inset-top,0px), 4px) + 4px);padding-right:calc(env(safe-area-inset-right,0px) + 12px);}
   .pTop{margin-bottom:3px;}
-  .pTitle{font-size:1.02rem;}
-  .pArtist{margin:0 0 2px;}
-  .pKey{margin-bottom:3px;}
-  .pSpeed{flex-direction:row;flex-wrap:nowrap;gap:8px 14px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);}
-  .pSpeed .psRow{flex:1 1 46%;min-width:0;}
+  /* UAT r5 F7: landscape vertical space goes to the MUSIC. The header lines
+     are flex items (blockified - inline can't merge them), so they TIGHTEN
+     instead: smaller title, zeroed margins, ~44px total for all three. */
+  .pTitle{font-size:.95rem;line-height:1.1;}
+  .pArtist{font-size:.72rem;margin:0;}
+  .pKey{font-size:.66rem;margin-bottom:2px;}
+  /* ...and the nav becomes a RIGHT-EDGE thumb column below the top bar: Next
+     dominant (Fitts's law, strap-grip thumb arc), Prev small beneath it. The
+     sheet is padded clear of the column, so chords can never run under the
+     next button (the operator's landscape-overlap screenshot). */
+  .pNav{left:auto;flex-direction:column;width:104px;gap:8px;top:calc(max(env(safe-area-inset-top,0px), 4px) + 64px);right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);}
+  .pNav #pNext{flex:2.6;padding:10px;font-size:1.6rem;}
+  .pNav #pPrev{flex:1;padding:10px;}
+  .pNav .scrollBtn{width:auto;}
+  .pSheet{padding-right:120px;padding-bottom:16px;}
+  .pSpeed{flex-direction:row;flex-wrap:nowrap;gap:8px 14px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);right:132px;}
+  .pSpeed .psRow{flex:1 1 30%;min-width:0;}
   .pSpeed .psBtns{min-width:0;}
   .pSpeed .psBtn{min-width:0;padding:8px 4px;font-size:.72rem;}
 }
@@ -1498,6 +1520,13 @@ footer{display:none;}
 .empty .btn{flex:0 1 auto;display:inline-block;margin-top:2px;}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+/* UAT r5 F6: action toast - a tappable follow-through button rides the toast
+   ("Go to setlist"). Only action toasts accept pointer events; plain toasts
+   stay tap-through. .toastGo (not .toastAction - that's the progress-bar
+   variant above). */
+.toast.withAct{display:flex;align-items:center;gap:12px;pointer-events:auto;padding:6px 6px 6px 16px;max-width:calc(100vw - 24px);}
+.toastGo{border:0;border-radius:var(--r-btn-sm);background:var(--accent);color:var(--on-accent);font-weight:800;font-size:.82rem;padding:10px 14px;min-height:44px;cursor:pointer;flex:0 0 auto;white-space:nowrap;}
+.toastGo:active{background:var(--accent-dim);}
 /* Semantic toast variants (same colored-border + colored-text discipline as
    .btn.danger / .maxNote). warn=amber CAUTION (a heads-up, e.g. "you already
    have a song in progress"), err=red FAILURE. Two different meanings never

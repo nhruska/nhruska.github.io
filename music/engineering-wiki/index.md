@@ -17,7 +17,7 @@
 | Page | Owns |
 |---|---|
 | [design-principles.md](ux-philosophy/design-principles.md) | One-screen-above-the-fold; instrument-in-hands grip model; theory-authority trust chain; soul + anti-vision |
-| [personas.md](ux-philosophy/personas.md) | P1-P5 (incl. the Seasoned Guitarist), JTBD, dismissal triggers, journey matrix |
+| [personas.md](ux-philosophy/personas.md) | Audit archetypes (P1-P5, JTBD, dismissal triggers, journey matrix) + the S-COMPOSE-CALM goalpost-persona registry (P1-P7 runnable fixtures, own numbering) |
 | [interaction-safety.md](ux-philosophy/interaction-safety.md) | Destructive-guard taxonomy; scroll-rail rule; wireTap; undo contract; notables one-shot pattern |
 | [systems/onboarding-guidance.md](systems/onboarding-guidance.md) | Welcome tour (guards, ?welcome=1 replay), calm guidance (no inline asks, one tip/session), header tab pill + purpose line |
 | [systems/compose-jam-first.md](systems/compose-jam-first.md) | B+ Compose shape: pure jam surface, canvas doors, progression-first save, transaction tray, adaptive landing |

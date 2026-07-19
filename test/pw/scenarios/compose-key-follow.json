@@ -1,0 +1,185 @@
+{
+  "name": "compose-key-follow",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "pulljam",
+    "backup"
+  ],
+  "note": "UAT r5 F1+F2 (operator 2026-07-19: 'seeing suggestions that are out of key... the chord builder seems to stay on C major - when I continue building I expect the key I'm working in'). Root cause: the D-DEFAULT-C landing key is marked explicit, so the untouched DEFAULT outranks the music everywhere (auto-infer never runs, canvas templates realize in C, Continue building never re-keys). Contract under test: a DEFAULTED key follows the music (infer on add, song-derived on canvas entry / continue-building); a key the user actually picked stays pinned. Also carries the F3/F4 section-card goalposts (duplicate button wears the shared halo primitive; the longest built-in label renders un-truncated). Red-first on the v195 tree.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#s-compose"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "A"
+    },
+    {
+      "action": "tapChord",
+      "name": "D"
+    },
+    {
+      "action": "tapChord",
+      "name": "E"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "F1a: the untouched default key FOLLOWS the music - A D E re-keys the chip to A, not stuck on C Maj",
+      "js": "(function(){var c=document.getElementById('keyPickerCompact');return !!c && /A\\s*Maj/i.test(c.textContent) && !/C\\s*Maj/i.test(c.textContent);})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#cSave"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(2)"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "F1b: canvas templates realize in the WORKING key - every chip starts from A-space, none renders the C realization",
+      "js": "(function(){var t=Array.prototype.map.call(document.querySelectorAll('.ssChords'),function(x){return x.textContent.trim();});return t.length>0 && t.every(function(x){return /^A[ m]/.test(x)||x.indexOf('A ')===0;}) && !t.some(function(x){return x==='F G C'||x==='C G Am F';});})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "canvas-templates-in-A"
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tapChord",
+      "name": "A"
+    },
+    {
+      "action": "tapChord",
+      "name": "D"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "pick the Pre-Chorus label for the hop's Add (the longest built-in label - the F4 width case)",
+      "js": "(function(){var s=document.getElementById('songSectSel');if(!s)return false;s.value='Pre-Chorus';return s.value==='Pre-Chorus';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAddBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "F4: the Pre-Chorus card shows its ENTIRE name (no ellipsis clipping) at phone width",
+      "js": "(function(){var n=Array.prototype.find.call(document.querySelectorAll('.songSectName'),function(x){return /pre-chorus/i.test(x.textContent);});return !!n && n.scrollWidth<=n.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F3: the duplicate button wears the SAME 36px circular halo primitive as its play/edit siblings",
+      "js": "(function(){var d=document.querySelector('.songSectDup');var p=document.querySelector('.songSectPlay');if(!d||!p)return false;var db=getComputedStyle(d,'::before'),pb=getComputedStyle(p,'::before');return db.width===pb.width && db.width==='36px' && db.borderRadius===pb.borderRadius;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "card-row-polish"
+    },
+    {
+      "action": "tap",
+      "selector": "#songAssembleBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "name the song and save it (name-row completion)",
+      "js": "(function(){var row=document.querySelector('.composeRow.asModal');if(!row)return false;var inp=row.querySelector('input');if(!inp)return false;inp.value='Key Follow Jam';inp.dispatchEvent(new Event('input',{bubbles:true}));var btns=row.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(/save/i.test(btns[i].textContent)){btns[i].click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem",
+      "timeoutMs": 30000
+    },
+    {
+      "action": "evalAssert",
+      "label": "open the saved song from the Library (row text carries title + meta, so match by contains)",
+      "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');for(var i=0;i<items.length;i++){if(items[i].textContent.indexOf('Key Follow Jam')>=0){var b=items[i].querySelector('.li-body');if(!b)return 'no li-body';b.click();return true;}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tapText",
+      "text": "Continue building",
+      "scope": "#s-practice"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "F2: Continue building lands IN THE SONG'S KEY on a fresh boot - chip re-keyed to A Maj, not the C default",
+      "js": "(function(){var c=document.getElementById('keyPickerCompact');var canvas=document.getElementById('composeSong');return !!canvas && canvas.offsetParent!==null && !!c && /A\\s*Maj/i.test(c.textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "F2b: and the canvas templates follow that key too (A-space chips, no C realizations)",
+      "js": "(function(){var t=Array.prototype.map.call(document.querySelectorAll('.ssChords'),function(x){return x.textContent.trim();});return t.length>0 && t.every(function(x){return /^A[ m]/.test(x)||x.indexOf('A ')===0;}) && !t.some(function(x){return x==='F G C'||x==='C G Am F';});})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "continue-building-in-key"
+    }
+  ]
+}
