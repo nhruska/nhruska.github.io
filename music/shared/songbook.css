@@ -259,6 +259,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem{position:relative;display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:13px 14px;cursor:pointer;transition:transform .08s,border-color .15s,background .15s;}
 .listItem:active{transform:scale(.99);background:var(--surface-2);}
 .listItem.inSet{border-color:var(--accent-dim);background:var(--accent-deep);}
+/* Setlist drag-to-reorder (wireSetlistDrag) - the vertical mirror of the
+   section-card drag markers (.songSect.dragging/.dropBefore/.dropAfter). A
+   VERTICAL list, so the insertion edge is TOP (before) / BOTTOM (after), not
+   left/right. Only setlist rows ever get these classes (added by the drag). */
+.listItem.dragging{opacity:.45;}
+.listItem.dropBefore{box-shadow:0 -3px 0 0 var(--accent-ink);}
+.listItem.dropAfter{box-shadow:0 3px 0 0 var(--accent-ink);}
+/* Operator UAT 2026-07-20 (setlist-drag preview: a long-press started Android
+   text-selection - the "Copy / Share / Select all" bubble + blue highlight -
+   which sometimes swallowed the drag). Every draggable surface opts OUT of
+   text selection + the long-press callout, so the hold cleanly becomes a lift.
+   NOT touch-action:none (that would kill the pre-lift scroll); selection only. */
+.prog .slot, .songSect, .listItem{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 /* B3 post-save discoverability: a brief accent pulse on the row a save just
    landed on, so it's findable in a long/scrolled library list. Fades on its
    own (no JS cleanup needed) - never blocks interaction, never persists. */

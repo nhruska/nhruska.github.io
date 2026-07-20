@@ -2174,9 +2174,98 @@
       });
       setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
+    // Operator 2026-07-19 ("drag and drop [at] all places where we have up and
+    // down arrows to reorder - we already support it for the progression
+    // builder"): the setlist rows were the last arrow-only reorder surface.
+    // This is the VERTICAL mirror of wireSectionDrag (the canvas section cards):
+    // same lift grammar (300ms long-press on touch, 6px slop on mouse), same
+    // insertion-edge marker + trailing-click swallow, but targeting is by Y
+    // (a vertical list) and it drives STATE.setlist. Gated to Edit mode by the
+    // render loop below (matching the up/dn arrows it joins, and keeping drag
+    // off the RESTING scroll rail). The arrows stay as the a11y/keyboard path.
+    var setlistDragSwallowClick = false, setlistSwallowWired = false;
+    function wireSetlistDrag(row, index) {
+      row.addEventListener('pointerdown', function (e) {
+        if (STATE.setlist.length < 2) return;
+        var id = e.pointerId, startX = e.clientX, startY = e.clientY;
+        var isTouch = e.pointerType === 'touch';
+        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        function rowsNow() { return Array.prototype.slice.call(el.setBody.children); }
+        function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
+        function blockScroll(ev) { ev.preventDefault(); }
+        function lift() {
+          holdTimer = null; lifted = true;
+          row.classList.add('dragging');
+          try { row.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        function onMove(ev) {
+          if (ev.pointerId !== id) return;
+          if (!lifted) {
+            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
+            if (isTouch) { if (moved > 8) cleanup(); } // early move = a scroll, not a drag
+            else if (moved > 6) lift();
+            return;
+          }
+          if (ev.cancelable) ev.preventDefault();
+          clearMark();
+          // Vertical list: nearest row by Y; the insertion edge is top/bottom.
+          var list = rowsNow(), best = -1, bestD = Infinity, bestCy = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cy = r.top + r.height / 2;
+            var d = Math.abs(ev.clientY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCy = cy; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = ev.clientY > bestCy;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function onUp(ev) {
+          if (ev.pointerId !== id) return;
+          var commit = lifted && dropAt != null;
+          var to = dropAt;
+          cleanup();
+          if (!commit) return;
+          // Swallow the click trailing this pointerup so the drop never ALSO
+          // fires the row's onActivate / up / dn / rm wireTap.
+          setlistDragSwallowClick = true;
+          setTimeout(function () { setlistDragSwallowClick = false; }, 150);
+          var insert = to > index ? to - 1 : to;
+          if (insert === index) return;
+          var moved = STATE.setlist.splice(index, 1)[0];
+          STATE.setlist.splice(insert, 0, moved);
+          saveSet(); syncQueueToSetlist(); renderSetlist();
+        }
+        function cleanup() {
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          clearMark();
+          row.classList.remove('dragging');
+          try { row.releasePointerCapture(id); } catch (err) {}
+          document.removeEventListener('touchmove', blockScroll);
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+        }
+        if (isTouch) holdTimer = setTimeout(lift, 300);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      });
+    }
     function renderSetlist() {
       if (!el.setBody) return;
       var body = el.setBody, bar = el.setBar, count = el.setCount;
+      // One-shot click swallow for setlist-row drops (capture phase, mirrors
+      // songSectionsEl's listener) - attached ONCE to the persistent #setBody.
+      if (!setlistSwallowWired) {
+        body.addEventListener('click', function (e) {
+          if (setlistDragSwallowClick) { e.stopPropagation(); e.preventDefault(); }
+        }, true);
+        setlistSwallowWired = true;
+      }
       // The Edit toggle reveals reorder/remove (codex: keep the resting set row clean +
       // destructive controls off the scroll rail until the user opts into editing).
       if (el.setEdit) {
@@ -2205,13 +2294,18 @@
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
-        body.appendChild(global.ListItem.render(displayRecFor(s), {
+        var setRow = global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
           setEdit: STATE.setEditMode,
-          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          // Operator UAT 2026-07-20 ("disable select song when editing setlist to
+          // prevent unwanted actions"): in EDIT mode a body-tap must NOT open the
+          // song - you're reordering/removing, and a mis-tap that jumps into
+          // Practice is exactly the unwanted action. Tapping to open is a
+          // NORMAL-mode affordance; edit mode is arrange-only (drag + up/dn + rm).
+          onActivate: STATE.setEditMode ? null : function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {
@@ -2225,7 +2319,11 @@
             showSetUndoBanner(sid, i); // S-TOAST+ACTION: after the repaint, so the stable banner sits above the fresh list
           },
           onAction: function () { ytSearch(s); }
-        }));
+        });
+        body.appendChild(setRow);
+        // Drag-to-reorder rides alongside the up/dn arrows, EDIT MODE ONLY
+        // (the arrows' own gate; also keeps drag off the resting scroll rail).
+        if (STATE.setEditMode) wireSetlistDrag(setRow, i);
       });
       // (The old full-width Start-performance bar was retired 2026-07-16 - Start
       // now lives compact in the header, toggled above.)

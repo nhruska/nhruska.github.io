@@ -1,0 +1,142 @@
+{
+  "name": "setlist-drag-reorder",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "pulljam",
+    "backup"
+  ],
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
+  },
+  "note": "Operator 2026-07-19 ('drag and drop [at] all places where we have up and down arrows to reorder - we already support it for the progression builder'). The setlist rows were the last arrow-only reorder surface (the progression strip and the song section cards already drag). This wires wireSetlistDrag - the vertical mirror of wireSectionDrag - gated to Edit mode (same gate as the up/dn arrows it joins; the 300ms long-press keeps it off the resting scroll rail). The arrows STAY as the keyboard/SR path. Red-first on 6b7044a (drag does nothing, order unchanged). Uses the runner's new side:below/above (vertical drop). Also pins UAT 2026-07-20 (operator: 'disable select song when editing setlist'): a body-tap in EDIT mode must NOT open Practice (arrange-only), but still opens after Done.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the seeded 3-song set is up",
+      "js": "(function(){return document.querySelectorAll('#setBody .listItem').length===3;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#setEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "edit mode reveals the up/dn arrows AND arms drag on the rows",
+      "js": "(function(){return !!document.querySelector('#setBody .listItem [data-act=\"up\"]') && !!document.querySelector('#setBody .listItem [data-act=\"dn\"]');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no-select: a draggable row opts out of text selection (long-press lifts, never selects - operator 2026-07-20)",
+      "js": "(function(){var r=document.querySelector('#setBody .listItem');return !!r && getComputedStyle(r).userSelect==='none';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "prep the drag: scroll the set into view, clear any stray text selection",
+      "js": "(function(){var r=document.querySelector('#setBody .listItem');if(!r)return false;r.scrollIntoView({block:'center'});try{window.getSelection().removeAllRanges();}catch(e){}return true;})()"
+    },
+    {
+      "action": "dragReorder",
+      "from": "#setBody .listItem:nth-child(1)",
+      "to": "#setBody .listItem:nth-child(3)",
+      "side": "below"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "row 1 dragged below row 3 - setlist persisted as k1,k2,k0",
+      "js": "(function(){var s=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');return JSON.stringify(s)===JSON.stringify(['k1','k2','k0']);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "after-drag-to-end"
+    },
+    {
+      "action": "evalAssert",
+      "label": "prep the second drag",
+      "js": "(function(){var r=document.querySelector('#setBody .listItem');if(!r)return false;r.scrollIntoView({block:'center'});try{window.getSelection().removeAllRanges();}catch(e){}return true;})()"
+    },
+    {
+      "action": "dragReorder",
+      "from": "#setBody .listItem:nth-child(3)",
+      "to": "#setBody .listItem:nth-child(1)",
+      "side": "above"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "dragging the last row (k0) above the first restores k0,k1,k2",
+      "js": "(function(){var s=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');return JSON.stringify(s)===JSON.stringify(['k0','k1','k2']);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the up/dn arrows STILL work after a drag - down-move the first row gives k1,k0,k2",
+      "js": "(function(){document.querySelector('#setBody .listItem:nth-child(1) [data-act=\"dn\"]').click();var s=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');return JSON.stringify(s)===JSON.stringify(['k1','k0','k2']);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "arrows-still-work"
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem:nth-child(1) .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT: a body-tap in EDIT mode does NOT open the song (arrange-only) - Practice stays closed, still on the setlist",
+      "js": "(function(){var p=document.getElementById('s-practice');var jam=document.getElementById('s-jam');return (!p||!p.classList.contains('on')) && !!jam && jam.classList.contains('on');})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#setEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem:nth-child(1) .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "after Done (normal mode) a body-tap opens the song as before",
+      "js": "(function(){var p=document.getElementById('s-practice');return !!p && p.classList.contains('on');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "normal-mode-opens"
+    }
+  ]
+}
