@@ -79,7 +79,7 @@
     p.push('backing track');
     return p.join(' ');
   }
-  // S5 (operator UAT): a custom "My progression" song has no real artist/title to
+  // A custom "My progression" song has no real artist/title to
   // search by - searchQuery's bare "<name> My progression backing track" returns
   // generic, unrelated results. Fold in the genre + the actual chord progression
   // (when the song carries one) so the search finds a stylistically/harmonically
@@ -101,13 +101,13 @@
   // Tint the Studio's circle-of-fifths wheel: relative key (strong) + V/IV
   // (dimmer). Post-processes circle.js's renderWheel DOM by matching label
   // text - exported for tests so a circle.js DOM-contract change fails loudly
-  // instead of silently dropping the tint (codex #89 V1).
+  // instead of silently dropping the tint.
   function tintWheel(wheelEl, C, key, mode) {
     var nb = C.neighbors(key, mode);
     if (!nb || nb.length < 3) return;
     function mark(entry, cls) {
     if (!entry || !entry.root) return;
-    // S-COF-SPELLING: the label text comes from the SAME provider renderWheel
+    // The label text comes from the SAME provider renderWheel
     // uses (Circle.wheelLabel - preferred key name, Bb never A#), so the match
     // can't drift when spelling policy changes. spellRoot fallback keeps the
     // old contract for a stale cached circle.js.
@@ -155,7 +155,7 @@
   function trackKey(t) {
     t = t || {};
     function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
-    // Serialize the FULL 5-mode vocabulary (M-GUIDE W2 adds 'blues'): coarsening
+    // Serialize the FULL 5-mode vocabulary (major/minor/dorian/mixolydian/blues): coarsening
     // dorian/mixolydian/blues to 'major' let a modal/blues track collide with a
     // same-title/artist/key major row in the url overlay. Unknown/absent modes
     // still default to 'major'. IDENTITY only - the Library/finder FACET still
@@ -181,7 +181,7 @@
   // note name -> chromatic pitch class (0-11), parsed generically from the letter
   // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
   // handles every enharmonic spelling — E#, B#, Cb, Fb and double accidentals.
-  // circle.js no longer emits those (canonical sharp table, FORK-4), but freeform
+  // circle.js no longer emits those (canonical sharp table), but freeform
   // user input and legacy saved data still can, so the generic parser stays.
   // -1 if unparseable.
   var LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -195,9 +195,8 @@
   function notesToPcs(notes) {
     return (notes || []).map(noteToPc).filter(function (p) { return p >= 0; });
   }
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-  // esc.js (loaded before this file everywhere it's consumed) - was one of
-  // ~8 divergent local copies.
+  // Delegates to the shared esc.js (loaded before this file everywhere it's
+  // consumed) - the one HTML-escaper (see decisions.md: D-HARDEN).
   function esc(s) { return global.Esc.esc(s); }
   function focusNoJump(el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
   function familyMode(m) { return m === 'minor' ? 'aeolian' : 'ionian'; }
