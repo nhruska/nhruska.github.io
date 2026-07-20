@@ -49,7 +49,7 @@ var CORE = [
   './shared/skill-md.js', './shared/zip-store.js',
   './shared/repertoire-form.js',
   './shared/yt-info.js',
-  './shared/theory.js', './shared/suggest-model.js', './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
+  './shared/theory.js', './shared/suggest-model.js', './shared/sheet-render.js', './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/legend.js',
   './shared/notables.js',
   './shared/guidance-level.js',
