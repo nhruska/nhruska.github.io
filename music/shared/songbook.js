@@ -2853,7 +2853,7 @@
     var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null, songMapEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
-        draftChipEl = null,
+        draftChipEl = null, songCanvasDivEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
@@ -2979,6 +2979,17 @@
       songAssembleBtnEl.onclick = function () { assembleSong(); };
       composeSongEl.appendChild(songCueEl);
       composeSongEl.appendChild(songSectionsEl);
+      // Operator UAT 2026-07-20 ("horiz divider needed"): the section cards
+      // ran straight into the add-a-section templates below with no break. A
+      // labeled hairline splits "your song so far" from "add the next section"
+      // - the app's own group-boundary grammar (cf. the in-key barrier). Shown
+      // only when sections exist above it (renderSongTray toggles `hidden`).
+      songCanvasDivEl = document.createElement('div');
+      songCanvasDivEl.id = 'songCanvasDiv'; songCanvasDivEl.className = 'songCanvasDiv'; songCanvasDivEl.hidden = true;
+      var songCanvasDivLbl = document.createElement('span');
+      songCanvasDivLbl.className = 'songCanvasDivLbl'; songCanvasDivLbl.textContent = 'Add a section';
+      songCanvasDivEl.appendChild(songCanvasDivLbl);
+      composeSongEl.appendChild(songCanvasDivEl);
       composeSongEl.appendChild(songSuggestEl);
       composeSongEl.appendChild(songBuildBtnEl);
       composeSongEl.appendChild(songAssembleBtnEl);
@@ -3277,6 +3288,10 @@
       // Templates render whenever the canvas does - in Song mode they ARE the
       // "add the next section" surface (and the empty state's proven starters).
       renderSongSuggest(inSong);
+      // The "Add a section" divider shows only on the canvas WITH cards above
+      // it (an empty canvas has nothing to divide - the templates ARE the
+      // primary content there).
+      if (songCanvasDivEl) songCanvasDivEl.hidden = !(inSong && hasSections);
       renderPulljamCue(inSong);
       renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
       if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;

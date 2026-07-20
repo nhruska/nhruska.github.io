@@ -790,6 +790,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
 /* A section CARD: label row (name + play + reorder + remove) over a chords row.
    Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
+/* Operator UAT 2026-07-20 ("horiz divider needed"): a labeled hairline between
+   the section cards and the add-a-section templates. Centered label flanked by
+   two lines (the app's labeled-boundary grammar, cf. the in-key barrier). */
+.songCanvasDiv{display:flex;align-items:center;gap:10px;margin:14px 2px 8px;}
+.songCanvasDiv[hidden]{display:none;}
+.songCanvasDiv::before,.songCanvasDiv::after{content:'';flex:1;height:1px;background:var(--line);}
+.songCanvasDivLbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--txt-dim);font-weight:700;white-space:nowrap;}
 .songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;gap:4px 0;}
 /* UAT r5 F4 (operator 2026-07-19: "Chor..." - the sixth control starved the
    name): tighten the card controls' PITCH, not their touch targets. Each 44px

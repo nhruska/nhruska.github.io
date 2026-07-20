@@ -1,0 +1,108 @@
+{
+  "name": "canvas-section-divider",
+  "persona": "intermediate",
+  "dismissNotables": ["composeintro", "transposetip", "pulljam", "backup"],
+  "seed": {
+    "roadcase-ukulele-gcea.builderBuffer.v1": "[{\"label\":\"Verse\",\"seq\":[\"Em\",\"G\",\"C\",\"Am\"]},{\"label\":\"Chorus\",\"seq\":[\"E\",\"B\",\"D\",\"A\"]},{\"label\":\"Verse\",\"seq\":[\"Em\",\"G\",\"C\",\"Am\"]}]",
+    "roadcase-ukulele-gcea.builderSource.v1": ""
+  },
+  "note": "Operator 2026-07-20 ('horiz divider needed', screenshot of the song canvas): the stacked section cards ran straight into the add-a-section template area below with no visual break. A labeled horizontal divider (#songCanvasDiv, 'Add a section') separates 'your song so far' from 'add the next section' - the app's own group-boundary grammar (same rationale as the in-key barrier, decisions.md). Shows only on the canvas WITH sections above it (nothing to divide on an empty canvas). Red-first on 6b7044a.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#draftChip"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the canvas is open with the 3 seeded section cards",
+      "js": "(function(){var c=document.getElementById('composeSong');return !!c && c.offsetParent!==null && document.querySelectorAll('.songSect.card').length===3;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a labeled horizontal divider is visible between the sections and the add-section area",
+      "js": "(function(){var d=document.getElementById('songCanvasDiv');return !!d && d.offsetParent!==null && /add a section/i.test(d.textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the divider sits in DOM AFTER #songSections and BEFORE #songSuggest (it splits the two zones)",
+      "js": "(function(){var sec=document.getElementById('songSections'),d=document.getElementById('songCanvasDiv'),sug=document.getElementById('songSuggest');if(!sec||!d||!sug)return false;var order=sec.compareDocumentPosition(d)&Node.DOCUMENT_POSITION_FOLLOWING;var order2=d.compareDocumentPosition(sug)&Node.DOCUMENT_POSITION_FOLLOWING;return !!order && !!order2;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "divider-with-sections"
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": ".songSect.card .rm"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "an empty canvas (no sections) hides the divider - nothing above it to divide",
+      "js": "(function(){var d=document.getElementById('songCanvasDiv');return document.querySelectorAll('.songSect.card').length===0 && (!d || d.offsetParent===null);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "empty-canvas-no-divider"
+    }
+  ]
+}
