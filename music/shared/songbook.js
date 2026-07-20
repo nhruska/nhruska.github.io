@@ -2190,6 +2190,13 @@
         var id = e.pointerId, startX = e.clientX, startY = e.clientY;
         var isTouch = e.pointerType === 'touch';
         var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        // Edge-auto-scroll (UAT 2026-07-20 "can't drag setlist from 10 to
+        // anything less than 7"): a lifted drag blocks native scroll and only
+        // sees rows in the DOM viewport, so a long setlist's off-screen rows
+        // were unreachable. While the finger holds near #setBody's top/bottom
+        // we scroll the rail and re-paint the marker as rows slide in.
+        var lastY = startY, scrollRAF = null;
+        var EDGE = 48, MAX_SPEED = 16; // px trigger zone / max px per frame
         function rowsNow() { return Array.prototype.slice.call(el.setBody.children); }
         function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
         function blockScroll(ev) { ev.preventDefault(); }
@@ -2198,6 +2205,40 @@
           row.classList.add('dragging');
           try { row.setPointerCapture(id); } catch (err) {}
           document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        // Nearest row to lastY; the insertion edge is top/bottom. Split out so
+        // the auto-scroll loop can refresh the marker after each scroll step.
+        function paintDrop() {
+          clearMark();
+          var list = rowsNow(), best = -1, bestD = Infinity, bestCy = 0;
+          for (var s = 0; s < list.length; s++) {
+            var r = list[s].getBoundingClientRect();
+            var cy = r.top + r.height / 2;
+            var d = Math.abs(lastY - cy);
+            if (d < bestD) { bestD = d; best = s; bestCy = cy; }
+          }
+          if (best < 0) { dropAt = null; return; }
+          var after = lastY > bestCy;
+          dropAt = best + (after ? 1 : 0);
+          marked = list[best];
+          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+        }
+        function autoScrollStep() {
+          scrollRAF = null;
+          if (!lifted) return;
+          var box = el.setBody.getBoundingClientRect(), dy = 0;
+          if (lastY < box.top + EDGE) dy = -Math.ceil(MAX_SPEED * Math.min(1, (box.top + EDGE - lastY) / EDGE));
+          else if (lastY > box.bottom - EDGE) dy = Math.ceil(MAX_SPEED * Math.min(1, (lastY - (box.bottom - EDGE)) / EDGE));
+          if (dy === 0) return; // finger left the zone - stop the loop
+          var before = el.setBody.scrollTop;
+          el.setBody.scrollTop = before + dy;
+          if (el.setBody.scrollTop !== before) paintDrop(); // rows moved under the finger - refresh
+          scrollRAF = requestAnimationFrame(autoScrollStep);
+        }
+        function maybeAutoScroll() {
+          if (scrollRAF != null) return;
+          var box = el.setBody.getBoundingClientRect();
+          if (lastY < box.top + EDGE || lastY > box.bottom - EDGE) scrollRAF = requestAnimationFrame(autoScrollStep);
         }
         function onMove(ev) {
           if (ev.pointerId !== id) return;
@@ -2208,20 +2249,9 @@
             return;
           }
           if (ev.cancelable) ev.preventDefault();
-          clearMark();
-          // Vertical list: nearest row by Y; the insertion edge is top/bottom.
-          var list = rowsNow(), best = -1, bestD = Infinity, bestCy = 0;
-          for (var s = 0; s < list.length; s++) {
-            var r = list[s].getBoundingClientRect();
-            var cy = r.top + r.height / 2;
-            var d = Math.abs(ev.clientY - cy);
-            if (d < bestD) { bestD = d; best = s; bestCy = cy; }
-          }
-          if (best < 0) { dropAt = null; return; }
-          var after = ev.clientY > bestCy;
-          dropAt = best + (after ? 1 : 0);
-          marked = list[best];
-          marked.classList.add(after ? 'dropAfter' : 'dropBefore');
+          lastY = ev.clientY;
+          paintDrop();
+          maybeAutoScroll();
         }
         function onUp(ev) {
           if (ev.pointerId !== id) return;
@@ -2241,6 +2271,7 @@
         }
         function cleanup() {
           if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          if (scrollRAF != null) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
           clearMark();
           row.classList.remove('dragging');
           try { row.releasePointerCapture(id); } catch (err) {}
