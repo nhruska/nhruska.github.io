@@ -99,8 +99,7 @@ self.addEventListener('fetch', function (e) {
   if (req.headers.has('range')) return;          // let the browser handle media byte-range itself
   var sameOrigin = new URL(req.url).origin === self.location.origin;
   if (sameOrigin) {
-    // network-first WITH a cache-fallback deadline (operator UAT 2026-07-18:
-    // "I lost my Internet and app wouldn't load"). True offline makes fetch()
+    // network-first WITH a cache-fallback deadline. True offline makes fetch()
     // REJECT fast and the catch-fallback below always worked - but a phone
     // that "lost internet" usually has bars-with-no-data, where fetch()
     // neither succeeds nor rejects for tens of seconds and the app hangs on
