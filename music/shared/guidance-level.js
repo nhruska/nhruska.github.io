@@ -1,40 +1,33 @@
 /* =====================================================================
- * guidance-level.js  -  M-GUIDANCE: the beginner|intermediate|advanced
- * self-reported experience level that grades which one-shot Notables
- * guidance tips a player sees (docs/plans/guidance-levels-spec-20260705.md).
+ * guidance-level.js  -  the beginner|intermediate|advanced self-reported
+ * experience level that grades which one-shot Notables guidance tips a
+ * player sees.
  * ---------------------------------------------------------------------
  * Storage: music.guidanceLevel.v1 = 'beginner' | 'intermediate' | 'advanced'.
- * UNSET (missing key, OR any value other than the 3 above) reads as null -
- * "ask pending". Unlike diagram-pref.js's 'dots' default, there is NO
- * silent default here: the spec's own rule is "unset level: only the ask
- * may show" (notables.js's LEVELS gate, below), so inventing a default in
- * get() would be wrong - the correct behavior for "never answered" is the
- * one-time level ask (the 'guidanceask' Notables consumer, play/index.html
- * renderGuidanceAsk()), not a guess. The ask's own dismiss-without-choosing
- * path calls set('beginner') explicitly (the one safe default the operator
- * spec names) - get() itself never invents that default.
+ * A missing key, or any value other than those three, reads as null =
+ * "ask pending". There is deliberately NO silent default: when the level
+ * has never been answered, the correct behavior is to show the one-time
+ * level ask (the 'guidanceask' Notables consumer), not to guess a level.
+ * The ask's dismiss-without-choosing path calls set('beginner') explicitly;
+ * get() itself never invents a default. (see decisions.md: GUIDANCE_LEVEL)
  *
- * Additive key - falls under backup.js's `music.` OWNED_PREFIXES, so it is
- * captured by backup/restore for free; per backup.js's own header rule
- * ("Additive changes... do NOT need a bump") this needs NO SCHEMA_VERSION
- * bump. Every reader here is defensive (try/catch -> null), matching every
- * other reader in this app.
+ * Additive `music.`-prefixed key, so backup.js captures it via OWNED_PREFIXES
+ * with no SCHEMA_VERSION bump. Every reader is defensive (try/catch -> null).
  *
- * Pure + dependency-free (like diagram-pref.js/notables.js): exported for
- * Node unit tests AND attached to window.GuidanceLevel in the browser.
+ * Pure + dependency-free: exported for Node unit tests AND attached to
+ * window.GuidanceLevel in the browser.
  *
  *   GuidanceLevel.KEY     -> 'music.guidanceLevel.v1'
  *   GuidanceLevel.LEVELS  -> ['beginner', 'intermediate', 'advanced'], the
  *       canonical order (ask-card button order; Settings-row cycle order).
  *   GuidanceLevel.get() -> 'beginner' | 'intermediate' | 'advanced' | null
- *       null = unset OR a corrupt/foreign stored value (never guessed at -
- *       "unset" and "corrupt" both mean the ask has not been answered yet).
+ *       null = unset OR a corrupt/foreign stored value (both mean the ask
+ *       has not been answered yet).
  *   GuidanceLevel.set(value)
  *       Persists value ONLY if it is exactly one of LEVELS; anything else
- *       is a silent no-op (never writes garbage, never coerces to a nearby
- *       valid value) - every real caller here is a fixed-vocabulary tap
- *       (an ask-card button, the ask's own x-dismiss default, or a
- *       Settings-row cycle), so there is nothing sensible to coerce FROM.
+ *       is a silent no-op. Every caller is a fixed-vocabulary tap (an
+ *       ask-card button, the ask's x-dismiss default, or a Settings-row
+ *       cycle), so there is nothing to coerce from.
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -42,9 +35,8 @@
   var KEY = 'music.guidanceLevel.v1';
   var LEVELS = ['beginner', 'intermediate', 'advanced'];
 
-  // Bare `localStorage` (matches notables.js/diagram-pref.js convention) so
-  // this runs unmodified in the browser; Node tests stub it via
-  // test/helpers/local-storage-reset.js, same pattern as diagram-pref.test.js.
+  // Bare `localStorage` so this runs unmodified in the browser; Node tests
+  // stub it. Returns null when storage is blocked (private mode / disabled).
   function defaultStore() {
     try {
       if (typeof localStorage !== 'undefined' && localStorage) return localStorage;

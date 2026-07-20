@@ -6,10 +6,9 @@
  *   effectiveTheme(stored, prefersLight) -> 'light' | 'dark'
  *   accentVars(theme, accent, dim, deep) -> { --accent, --accent-dim, ... }
  *
- * Dark returns each swatch's hand-tuned dim/deep with ink = the vivid accent,
- * so the dark theme is byte-identical to pre-theme builds. Light re-derives
- * pale dim/deep + a darkened, legible ink from the accent hue via color-mix,
- * so ANY picked accent stays readable on light surfaces.
+ * Dark returns each swatch's hand-tuned dim/deep with ink = the vivid accent.
+ * Light re-derives pale dim/deep + a darkened, legible ink from the accent hue
+ * via color-mix, so ANY picked accent stays readable on light surfaces.
  * ===================================================================== */
 (function (root) {
   'use strict';
