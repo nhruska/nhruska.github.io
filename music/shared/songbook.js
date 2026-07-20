@@ -2300,7 +2300,12 @@
           first: i === 0,
           last: i === STATE.setlist.length - 1,
           setEdit: STATE.setEditMode,
-          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          // Operator UAT 2026-07-20 ("disable select song when editing setlist to
+          // prevent unwanted actions"): in EDIT mode a body-tap must NOT open the
+          // song - you're reordering/removing, and a mis-tap that jumps into
+          // Practice is exactly the unwanted action. Tapping to open is a
+          // NORMAL-mode affordance; edit mode is arrange-only (drag + up/dn + rm).
+          onActivate: STATE.setEditMode ? null : function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {

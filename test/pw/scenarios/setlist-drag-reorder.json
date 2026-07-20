@@ -10,7 +10,7 @@
   "seed": {
     "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
   },
-  "note": "Operator 2026-07-19 ('drag and drop [at] all places where we have up and down arrows to reorder - we already support it for the progression builder'). The setlist rows were the last arrow-only reorder surface (the progression strip and the song section cards already drag). This wires wireSetlistDrag - the vertical mirror of wireSectionDrag - gated to Edit mode (same gate as the up/dn arrows it joins; the 300ms long-press keeps it off the resting scroll rail). The arrows STAY as the keyboard/SR path. Red-first on 6b7044a (drag does nothing, order unchanged). Uses the runner's new side:below/above (vertical drop).",
+  "note": "Operator 2026-07-19 ('drag and drop [at] all places where we have up and down arrows to reorder - we already support it for the progression builder'). The setlist rows were the last arrow-only reorder surface (the progression strip and the song section cards already drag). This wires wireSetlistDrag - the vertical mirror of wireSectionDrag - gated to Edit mode (same gate as the up/dn arrows it joins; the 300ms long-press keeps it off the resting scroll rail). The arrows STAY as the keyboard/SR path. Red-first on 6b7044a (drag does nothing, order unchanged). Uses the runner's new side:below/above (vertical drop). Also pins UAT 2026-07-20 (operator: 'disable select song when editing setlist'): a body-tap in EDIT mode must NOT open Practice (arrange-only), but still opens after Done.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -99,6 +99,44 @@
     {
       "action": "screenshot",
       "name": "arrows-still-work"
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem:nth-child(1) .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT: a body-tap in EDIT mode does NOT open the song (arrange-only) - Practice stays closed, still on the setlist",
+      "js": "(function(){var p=document.getElementById('s-practice');var jam=document.getElementById('s-jam');return (!p||!p.classList.contains('on')) && !!jam && jam.classList.contains('on');})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#setEdit"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#setBody .listItem:nth-child(1) .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "after Done (normal mode) a body-tap opens the song as before",
+      "js": "(function(){var p=document.getElementById('s-practice');return !!p && p.classList.contains('on');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "normal-mode-opens"
     }
   ]
 }
