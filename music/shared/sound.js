@@ -1,32 +1,25 @@
 /* =====================================================================
- * sound.js  -  M-EAR wave 1: zero-dependency scale/mode AUDITION. Global: Sound
+ * sound.js  -  zero-dependency scale/mode audition. Global: Sound
  * ---------------------------------------------------------------------
- * "Music is heard, not seen" (vision-ear-first-20260704.md). A scale/mode is
- * hummable: tap play, hear it loop at a slow hum-along tempo, watch a marker
- * bounce across the notes so eye and ear land on the same note together.
+ * Makes a scale/mode hummable: tap play, hear it loop at a slow hum-along
+ * tempo, and drive a marker across the notes so eye and ear land on the same
+ * note together.
  *
  * Public API:
  *   Sound.noteHz(pc, octave)                    - A440 equal-temperament Hz
  *                                                  for a pitch class + octave
  *   Sound.playScale(pcs, opts) -> { stop(), retarget(newPcs), setTempo(bpm) }
- *     - loop an octave-folded
+ *     - loop an octave-folded ascent of the given scale.
  *     opts: rootOctave (default 4), bpm (default 72), loop (default true),
- *           octaves (default 1, F17/operator UAT 2026-07-05) - how many
- *                        octaves the ascent climbs before the closing root.
- *                        Studio's Solo view passes 2 for a continuous
- *                        two-octave run instead of the shorter single-octave
- *                        hum; every other caller (Compose's key preview)
- *                        omits it and keeps the original 1-octave behavior
- *                        byte-identical.
- *           rootDwell (default 1, F17) - a duration MULTIPLIER applied only
- *                        to notes that share the scale's root pitch class
- *                        (the start, and, at octaves>1, every subsequent
- *                        octave-up root along the ascent) - a musical
- *                        "landing" pause on the root instead of a silent gap
- *                        (per the operator's own "pause on the root notes"
- *                        wording; a longer note, not a rest, keeps the run
- *                        from feeling like it stutters/glitches). Ignored
- *                        (behaves as 1) when <= 1.
+ *           octaves (default 1) - how many octaves the ascent climbs before
+ *                        the closing root. A continuous two-octave run passes
+ *                        2; the default 1 keeps a single-octave hum.
+ *           rootDwell (default 1) - a duration MULTIPLIER applied only to
+ *                        notes that share the scale's root pitch class (the
+ *                        start, and, at octaves>1, every subsequent octave-up
+ *                        root along the ascent) - a musical "landing" pause on
+ *                        the root. It is a longer note, not a rest, so the run
+ *                        doesn't stutter. Ignored (behaves as 1) when <= 1.
  *           onNote(i)  - fires once per note, i indexes the FULL played
  *                        sequence (length = pcs.length*octaves + 1: the
  *                        ascent plus the closing root an octave up).
@@ -37,28 +30,26 @@
  *                        extra DOM node needed. After a retarget(), i
  *                        resumes counting from 0 against the NEW pcs - map
  *                        against the CURRENTLY active scale's length, not a
- *                        value captured at playScale() call time (M-EAR wave
- *                        1.5).
+ *                        value captured at playScale() call time.
  *           onStop()   - fires once when playback ends (stop() called, the
  *                        non-looping pass finished, or another playScale()
  *                        call preempted this one). retarget() never fires
  *                        onStop - the loop keeps running, just on new pcs.
- *     handle.retarget(newPcs) (M-EAR wave 1.5, U11) - swaps the sounding
- *       scale to newPcs at the NEXT note boundary (no click/gap: the note
- *       already in flight finishes naturally; only the tick AFTER it picks
- *       up the new sequence, restarting the ascent from newPcs's own root -
- *       i resets to 0, not wherever the old sequence had reached). Lets a
- *       scale-chip switch keep the audition PLAYING for a live A/B compare
- *       instead of stop-then-restart. A no-op (silently ignored, playback
- *       continues unchanged) if newPcs is empty/unresolvable, or if playback
- *       has already stopped.
- *     handle.setTempo(bpm) (M-EAR wave 1.6, U14) - queues a new tempo,
- *       applied at the SAME next-tick boundary retarget() uses (the note
- *       already in flight keeps its already-scheduled duration; only the
- *       FOLLOWING tick's own scheduling interval changes) - a tempo-control
- *       tap never clicks/gaps the currently-sounding note. A no-op (ignored,
- *       current tempo continues) if bpm isn't a finite number > 0, or after
- *       stop().
+ *     handle.retarget(newPcs) - swaps the sounding scale to newPcs at the
+ *       NEXT note boundary (no click/gap: the note already in flight finishes
+ *       naturally; only the tick AFTER it picks up the new sequence,
+ *       restarting the ascent from newPcs's own root - i resets to 0, not
+ *       wherever the old sequence had reached). Lets a scale-chip switch keep
+ *       the audition PLAYING for a live A/B compare instead of
+ *       stop-then-restart. A no-op (silently ignored, playback continues
+ *       unchanged) if newPcs is empty/unresolvable, or if playback has already
+ *       stopped.
+ *     handle.setTempo(bpm) - queues a new tempo, applied at the SAME next-tick
+ *       boundary retarget() uses (the note already in flight keeps its
+ *       already-scheduled duration; only the FOLLOWING tick's own scheduling
+ *       interval changes) - a tempo-control tap never clicks/gaps the
+ *       currently-sounding note. A no-op (ignored, current tempo continues) if
+ *       bpm isn't a finite number > 0, or after stop().
  *   Sound.stopAll()                              - stop whatever is playing,
  *     app-wide, without holding a handle (teardown safety net for a view
  *     that's going away).
@@ -69,18 +60,17 @@
  *
  * THE SWAP SEAM: every oscillator this module ever creates goes through the
  * ONE internal voice(a, freq, when, dur) function below. A future provider
- * (Karplus-Strong string synthesis, #88; or sampled tones) replaces ONLY
- * voice()'s body - noteHz/playScale/schedulePass and every consumer
- * (tracks.js, songbook.js) stay untouched. Keep all timbre decisions there.
+ * (string synthesis or sampled tones) replaces ONLY voice()'s body -
+ * noteHz/playScale/schedulePass and every consumer (tracks.js, songbook.js)
+ * stay untouched. Keep all timbre decisions there.
  *
- * OWN AudioContext (not shared with audio.js/tuner.js): this app's existing
- * convention is each module owns a private lazy AudioContext (audio.js's
- * ChordAudio has one, tuner.js has a SEPARATE one for reference tones plus
- * its own mic-input context) - none are exported for reuse. sound.js follows
- * the same convention rather than inventing a new cross-module sharing seam.
+ * OWN AudioContext (not shared with audio.js/tuner.js): each module owns a
+ * private lazy AudioContext (audio.js's ChordAudio has one, tuner.js has a
+ * SEPARATE one for reference tones plus its own mic-input context) - none are
+ * exported for reuse. sound.js follows the same convention rather than
+ * inventing a cross-module sharing seam.
  *
- * Test-only hooks (leading underscore, mirrors notables.js's
- * _resetArbitration convention): _buildNoteSequence, _schedulePass,
+ * Test-only hooks (leading underscore): _buildNoteSequence, _schedulePass,
  * _nextIndex, _ctxState. Real (non-test) consumers use only the public API
  * above.
  * ===================================================================== */
@@ -114,12 +104,10 @@
   // entry is { pc, octave }. Length is always pcs.length + 1 for a non-empty
   // input, [] for an empty one.
   //
-  // F17 (operator UAT 2026-07-05): `octaves` (default 1, backward-compatible)
-  // repeats the ascent that many times before the closing root - each pass
-  // continues climbing from wherever the previous pass left off (the SAME
-  // prev/oct carry-forward the single-pass version already used for its own
-  // closing root, just generalized across N passes instead of 1). A caller
-  // that omits `octaves` gets the exact pre-F17 1-octave-then-close shape.
+  // `octaves` (default 1) repeats the ascent that many times before the
+  // closing root - each pass continues climbing from wherever the previous
+  // pass left off (the same prev/oct carry-forward the closing root uses,
+  // generalized across N passes).
   function buildNoteSequence(pcsIn, rootOctave, octaves) {
     var rootOct = typeof rootOctave === 'number' ? rootOctave : 4;
     var passes = (typeof octaves === 'number' && octaves > 0) ? Math.floor(octaves) : 1;
@@ -193,10 +181,9 @@
     var bpm = opts.bpm || 72;
     var noteDur = 60 / bpm; // quarter-note pulse at a hummable (slow) tempo
     var loop = opts.loop !== false;
-    // F17: a duration multiplier for root-pitch-class hits only (see header).
-    // <= 1 (including the default/omitted case) is treated as "no dwell" -
-    // every existing caller that doesn't pass rootDwell gets byte-identical
-    // per-note timing to before this option existed.
+    // Duration multiplier for root-pitch-class hits only (see header). <= 1
+    // (including the default/omitted case) means "no dwell" - uniform per-note
+    // timing.
     var rootDwell = (typeof opts.rootDwell === 'number' && opts.rootDwell > 1) ? opts.rootDwell : 1;
 
     stopAll(); // starting a new audition always silences whatever else was sounding
@@ -204,16 +191,16 @@
     var a = ctx();
     var stopped = false;
     var timers = [];
-    // M-EAR wave 1.5 (U11): a queued scale swap, applied at the NEXT step()
-    // tick rather than immediately - the note already scheduled via
-    // schedulePass keeps sounding to its natural end (no click/gap); only the
-    // boundary after it picks up the new sequence, restarting at index 0 (the
-    // new scale's own root) per the header's documented contract.
+    // A queued scale swap, applied at the NEXT step() tick rather than
+    // immediately - the note already scheduled via schedulePass keeps sounding
+    // to its natural end (no click/gap); only the boundary after it picks up
+    // the new sequence, restarting at index 0 (the new scale's own root) per
+    // the header's contract.
     var pendingNotes = null;
-    // M-EAR wave 1.6 (U14): a queued tempo swap - SAME next-tick-boundary
-    // mechanics as pendingNotes above (reused, not reinvented): the in-flight
-    // note keeps the noteDur it was already scheduled with; only step()'s
-    // OWN next setTimeout (below) picks up the new interval.
+    // A queued tempo swap - same next-tick-boundary mechanics as pendingNotes
+    // above: the in-flight note keeps the noteDur it was already scheduled
+    // with; only step()'s OWN next setTimeout (below) picks up the new
+    // interval.
     var pendingBpm = null;
     var handle = { stop: doStop, retarget: retarget, setTempo: setTempo };
     activePlayback = handle;
@@ -235,9 +222,9 @@
       if (!newNotes.length) return; // unresolvable target - keep playing the current scale
       pendingNotes = newNotes;
     }
-    // M-EAR wave 1.6 (U14): queues a tempo change - applied at the next tick,
-    // same boundary as retarget() above. Invalid (non-finite / <= 0) bpm is
-    // silently ignored, mirroring retarget()'s "unresolvable target" no-op.
+    // Queues a tempo change - applied at the next tick, same boundary as
+    // retarget() above. Invalid (non-finite / <= 0) bpm is silently ignored,
+    // mirroring retarget()'s "unresolvable target" no-op.
     function setTempo(newBpm) {
       if (stopped) return;
       if (typeof newBpm !== 'number' || !isFinite(newBpm) || newBpm <= 0) return;

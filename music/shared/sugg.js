@@ -3,22 +3,17 @@
  * names). Songbook's Compose "suggested next chord" chips read this table
  * (music/shared/songbook.js: `var SUGG = opts.suggestions || {};`).
  * ---------------------------------------------------------------------
- * S-EXTRACT (analysis-refactor-enhance-20260704 A7): moved out of
- * music/play/index.html's inline bootstrap script (previously hand-
- * maintained inline with zero test coverage) into its own module so it can
- * be direct-required and regression-guarded - see test/sugg.test.js, which
- * asserts every key AND every follower chord name resolves under FORK-4
- * canonical-sharp spelling, plus a content-identity snapshot against this
- * exact table.
+ * Pattern: a plain lookup table keyed by chord token; each value is the
+ * ordered list of likely follower chords. Its own module so it can be
+ * direct-required and regression-guarded (test/sugg.test.js).
  *
- * Canonically SHARP names (FORK-4): the whole app labels A#, D#m - never
- * Bb, Ebm - so a suggestion chip can't show "Bb" beside an in-key palette
- * that says "A#". Shape lookup stays intact: the LIVE adapter resolves
- * enharmonics via profileVoicing() in chord-pack-adapter.js's buildAdapter
- * (A# finds a Bb-keyed profile fingering); the legacy standalone packs
- * carry the same logic as shapeFor().
+ * Chord names are canonical-sharp (A#, D#m - never Bb, Ebm) so a suggestion
+ * chip can't show "Bb" beside an in-key palette that says "A#". Shape lookup
+ * still works because the adapter resolves enharmonics (A# finds a Bb-keyed
+ * profile fingering via profileVoicing() in chord-pack-adapter.js).
  *
- * music/sw.js CORE must precache this file (test/sw-verify.test.js A6 guard).
+ * Gotcha: music/sw.js CORE must precache this file (test/sw-verify.test.js
+ * guards it) - drop it from CORE and offline builds lose the suggestions.
  * ===================================================================== */
 (function (global) {
   'use strict';

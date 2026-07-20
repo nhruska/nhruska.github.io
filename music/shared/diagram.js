@@ -8,73 +8,60 @@
  * High-position shapes (lowest fretted note > 4) render in a 4-fret window
  * with just the digit ("5", "10") as a base-fret label instead of the nut bar.
  *
- * Replaces the per-instrument renderers that used to live in each chord
- * pack. A profile supplies only the fret arrays (data); this draws them.
+ * A profile supplies only the fret arrays (data); this draws them.
  *
+ * Public API:
  *   Diagram.render(frets, { size:'small'|'big', name:'C', patternLabel:'', reserveLabelSlot:false })
  *     -> HTMLElement
- *   opts.patternLabel (optional, S-DIAGRAM-PREF step 2): a pre-computed
- *   string drawn as a small caption below the diagram - e.g. the shape-
- *   classify.js label ("E-shape barre, root on 6, root position"). Absent/
- *   falsy renders byte-identical to the pre-existing output; this module
- *   never reads the dots/patterns preference or calls ShapeClassify itself
- *   (see shared/diagram-pref.js, the caller-side decision layer).
- *   opts.reserveLabelSlot (M-EAR wave 1.6, U21 - docs/plans/
- *   uat-walkthrough-20260704.md): when true, the label slot renders even if
- *   patternLabel is '' (an honest-null classifier result, e.g. shape-
- *   classify.js's uncurated dim/aug quality) - so a caller that KNOWS it is
- *   in "patterns" display mode (diagram-pref.js) can keep every card in a
- *   row the SAME height whatever the classifier returns, without diagram.js
- *   knowing anything about the dots/patterns preference itself (same
- *   agnostic-of-the-decision contract as patternLabel). Absent/false (every
- *   pre-existing caller, and every 'dots'-mode call) is BYTE-IDENTICAL to
- *   the pre-U21 behavior (SHA-256 locked in diagram.dom.test.js) - the empty
- *   reserved div only ever appears when a caller explicitly opts in.
- *   U25 (M-SETTINGS-CLARITY, 2026-07-05): chord-pack-adapter.js - the one
- *   caller that computes these opts - now passes both ONLY for 'big'
- *   renders (small picker/strip cards never label). This module stays
- *   agnostic either way: it draws whatever it is handed, or nothing.
+ *
+ * Seam invariants:
+ *   opts.patternLabel - optional pre-computed caption drawn below the diagram
+ *     (e.g. a shape-classify label like "E-shape barre, root on 6, root
+ *     position"). This module never reads the dots/patterns preference or
+ *     calls ShapeClassify itself - it just draws whatever string it's handed,
+ *     or nothing. The caller-side decision layer is shared/diagram-pref.js.
+ *   opts.reserveLabelSlot - when true, the label slot renders even if
+ *     patternLabel is '' (an honest-null classifier result). Lets a caller in
+ *     "patterns" display mode keep every card in a row the SAME height whatever
+ *     the classifier returns, without diagram.js knowing about the preference.
+ *   Absent/falsy patternLabel AND reserveLabelSlot renders no label slot -
+ *     regression-locked (SHA-256) in test/diagram.dom.test.js, so the empty
+ *     reserved div only appears when a caller explicitly opts in.
  * ===================================================================== */
 (function (global) {
   'use strict';
 
-  // S-LAYOUT-SSOT cross-reference (music/engineering-wiki/systems/layout-tokens.md):
-  // sx/padX (below) plus the labelPad computed in render() determine the rendered
-  // SVG canvas width (canvasW = padX*2 + cols*sx + labelPad) - the quantity
-  // music/shared/songbook.css's --dg-canvas-w token documents for the WIDEST
-  // 'small' case (a 6-string guitar, cols=5: 12*2 + 5*9.6 + 14 = 86px), which
-  // --tile-min (.chordGrid's grid-template-columns) is tuned to comfortably fit.
-  // This object is DELIBERATELY NOT tokenized into that CSS var - canvasW is
-  // computed per string-count at render time (a 4-string ukulele produces a
-  // narrower canvas from this SAME object), not a single fixed pixel value a
-  // CSS custom property could hold, and this file emits a plain SVG string so
-  // it cannot read a CSS var even if it wanted to. If sx/padX/labelPad ever
-  // change for 'small', re-derive --dg-canvas-w by hand in songbook.css and
-  // re-run scripts/layout-check.py (the live render-verify regression suite)
-  // to confirm --tile-min still comfortably fits the new canvas width.
+  // The rendered SVG canvas width is canvasW = padX*2 + cols*sx + labelPad
+  // (labelPad is computed in render()). songbook.css's --dg-canvas-w token
+  // documents this (see engineering-wiki/systems/layout-tokens.md) for the
+  // WIDEST 'small' case (a 6-string guitar, cols=5:
+  // 12*2 + 5*9.6 + 14 = 86px), which --tile-min (.chordGrid's
+  // grid-template-columns) is tuned to comfortably fit.
+  // These sizes are NOT tokenized into that CSS var: canvasW is computed per
+  // string-count at render time (a 4-string ukulele produces a narrower canvas
+  // from this SAME object), not a single fixed value a CSS custom property could
+  // hold, and this file emits a plain SVG string so it cannot read a CSS var.
+  // If sx/padX/labelPad ever change for 'small', re-derive --dg-canvas-w by hand
+  // in songbook.css and re-run scripts/layout-check.py to confirm --tile-min
+  // still comfortably fits the new canvas width.
   var SIZES = {
-    // baseFont sized to render readable digit on phone screens. Was 7.5 (small)
-    // - the "5" / "10" digits were technically present in the SVG but crammed
-    // against "fr" at a sub-pixel width on high-DPI mobile. Dropping "fr" frees
-    // ~16px of horizontal labelPad that was eating into the diagram width.
+    // baseFont must be >= 10 so the "5"/"10" base-fret digit stays readable at
+    // phone DPI (see the phone-DPI text floor in music/CLAUDE.md).
     small: { wrapClass: 'chord', nameClass: 'chord-name', sx: 9.6, padX: 12, padY: 13, bottomPad: 6, rows: 4, dotR: 4.6, markR: 3, sw: 1.1, nutPad: 1, nutH: 3, basePad: 4, baseFont: 10, markY: 7, markSw: 1.2, H: 74 },
     big: { wrapClass: 'bigC', nameClass: 'nm', sx: 22, padX: 22, padY: 30, bottomPad: 12, rows: 4, dotR: 11, markR: 6, sw: 1.5, nutPad: 2, nutH: 5, basePad: 6, baseFont: 14, markY: 16, markSw: 2, H: 184 }
   };
 
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-  // esc.js (loaded before this file everywhere it's consumed) - was one of
-  // ~8 divergent local copies (this one was the only quote-unescaped variant
-  // besides play/index.html's; both now get the strict &<>"' superset).
+  // Delegates to the shared esc.js (loaded before this file everywhere it's
+  // consumed) so escaping stays consistent (strict &<>"' superset).
   function esc(s) { return global.Esc.esc(s); }
 
-  // S-DIAGRAM-PREF step 1 trigger hook: fires a lightweight signal every time
-  // an ACTUAL chord diagram draws (never the name-only "no chord" fallback
-  // below), so play/index.html can mount the one-time dots/patterns
-  // preference prompt at "the first chord-diagram surface" without this
-  // generic, instrument-agnostic renderer knowing anything about Notables,
-  // localStorage, or which screen/tab is active. Guarded: the Node test
-  // harness (test/diagram.dom.test.js) stubs only `document`, never
-  // `window.dispatchEvent`/`CustomEvent`, so this is a safe no-op there.
+  // Fires a lightweight signal every time an ACTUAL chord diagram draws (never
+  // the name-only "no chord" fallback below), so play/index.html can mount the
+  // one-time dots/patterns preference prompt at the first chord-diagram surface
+  // without this generic, instrument-agnostic renderer knowing anything about
+  // Notables, localStorage, or which screen/tab is active. Guarded so it's a
+  // safe no-op under the Node test harness, which stubs `document` but not
+  // `window.dispatchEvent`/`CustomEvent`.
   function notifyRendered() {
     if (typeof global.dispatchEvent !== 'function' || typeof global.CustomEvent !== 'function') return;
     try { global.dispatchEvent(new global.CustomEvent('music:diagram-rendered')); } catch (e) { /* ignore */ }
@@ -110,20 +97,18 @@
     var sy = (H - padY - o.bottomPad) / rows;
 
     // High-position shapes render a single base-fret digit to the LEFT of the
-    // diagram (e.g. just "5" instead of "5fr"). The label is right-anchored at
-    // x = padX - basePad and grows leftward. Dropping the "fr" suffix saves
-    // ~16px of labelPad that was eating into the diagram width on phone-sized
-    // cards. The canvas + viewBox extend leftward by labelPad to make room.
-    // labelPad sized to fit two digits at the current baseFont. Small size:
-    // 10px monospace x 2 chars ~= 12px; pad to 14 for breathing room. Big size:
-    // 14px monospace x 2 chars ~= 17px; pad to 20.
+    // diagram (e.g. just "5"). The label is right-anchored at x = padX - basePad
+    // and grows leftward; the canvas + viewBox extend leftward by labelPad to
+    // make room. labelPad is sized to fit two digits at the current baseFont
+    // (small: 10px monospace x 2 chars ~= 12px, pad to 14; big: 14px x 2 ~= 17px,
+    // pad to 20).
     //
-    // labelPad is RESERVED for EVERY diagram (not just base>1) so that the canvas
-    // dimensions are identical across open and offset shapes. Without this, offset
-    // shapes had a wider canvas and rendered SMALLER than open shapes in the
-    // maximize grid (the wider canvas hit the width cap first, shrinking the fret
-    // grid). A constant canvas size makes the fretboard render uniformly regardless
-    // of fret offset; for base-1 shapes the reserved space is simply empty.
+    // labelPad is RESERVED for EVERY diagram (not just base>1) so the canvas
+    // dimensions are identical across open and offset shapes. Without it, offset
+    // shapes get a wider canvas and render SMALLER than open shapes in the
+    // maximize grid (the wider canvas hits the width cap first, shrinking the
+    // fret grid). A constant canvas size renders the fretboard uniformly
+    // regardless of fret offset; for base-1 shapes the reserved space is empty.
     var labelPad = (opts.size === 'big' ? 20 : 14);
     var canvasW = W + labelPad;
     var svg = '<svg width="' + canvasW + '" height="' + H + '" viewBox="' + (-labelPad) + ' 0 ' + canvasW + ' ' + H + '">';
@@ -155,34 +140,22 @@
       }
     });
     svg += '</svg>';
-    // S-DIAGRAM-PREF step 2 ('patterns' render): opts.patternLabel is an
-    // EXTEND-not-overlay addition - same contract as scale()'s opts.tones
-    // below. Absent/falsy WITHOUT opts.reserveLabelSlot (every existing
-    // caller, and every 'dots'-pref call) renders BYTE-IDENTICAL to the
-    // pre-existing output (regression-locked in diagram.dom.test.js). This
-    // renderer stays agnostic of the dots/patterns preference and of
-    // ShapeClassify entirely - it just draws whatever text string it's
-    // handed, or nothing; see diagram-pref.js for who decides WHETHER to
-    // pass one and what it says.
+    // opts.patternLabel is an EXTEND-not-overlay addition (same contract as
+    // scale()'s opts.tones below). Absent/falsy WITHOUT opts.reserveLabelSlot
+    // renders no label slot - regression-locked in test/diagram.dom.test.js.
+    // This renderer stays agnostic of the dots/patterns preference and of
+    // ShapeClassify - it just draws whatever text string it's handed, or
+    // nothing; diagram-pref.js decides WHETHER to pass one and what it says.
     //
-    // U21 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md): a
-    // 'patterns'-mode caller whose voicing shape-classify.js can't classify
-    // (honest null - e.g. an uncurated dim/aug quality) still needs a
-    // reserved vertical slot close to what a REAL label commonly wraps to
-    // in a card row, not just one line. (U25 narrowed WHO reserves: chord-
-    // pack-adapter.js now opts in for 'big' renders only - the maximize
-    // overlay - since small cards never label. The em-based sizing below,
-    // measured on the original small-card consumer, still holds: it ties to
-    // this div's own font-size, which is size-independent.)
-    // shape-classify.js's label() always
-    // follows the same template shape ("<family> shape[ barre], root on
-    // <string>, <inversion>" - see that file's own label() function), which
-    // measured 3 lines at the 'small' card's ~86px canvas width in the
-    // shipping PR's live-Playwright verification (component-conventions.md/
-    // decisions.md D-EAR-1.6 cite the exact px). min-height is in `em`
-    // (ties to THIS div's own font-size) so the 3-line reservation stays
-    // proportional to whatever font-size the rule above declares, rather
-    // than a separate px figure to keep in sync by hand.
+    // A 'patterns'-mode caller whose voicing shape-classify.js can't classify
+    // (honest null - e.g. an uncurated dim/aug quality) still needs a reserved
+    // vertical slot sized close to what a REAL label commonly wraps to in a card
+    // row, not just one line. shape-classify.js's label() follows a fixed
+    // template ("<family> shape[ barre], root on <string>, <inversion>") that
+    // measures ~3 lines at the 'small' card's ~86px canvas width. min-height is
+    // in `em` (ties to THIS div's own font-size) so the 3-line reservation stays
+    // proportional to whatever font-size the rule below declares, instead of a
+    // separate px figure to keep in sync by hand.
     var showLabelSlot = !!opts.patternLabel || !!opts.reserveLabelSlot;
     var labelHtml = showLabelSlot
       ? '<div class="dg-shapeLabel" style="max-width:100%;word-break:break-word;white-space:normal;'
@@ -234,11 +207,11 @@
       });
       return out;
     }
-    // Ghost notes (M-GUIDE W3a, P5 seasoned-player fold): the SAME per-string
-    // fret math as notesOn() above, but for pcs OUTSIDE the scale - a target
-    // chord's tone the current scale doesn't contain (e.g. C# over A7 in A
-    // blues). wantedPcs is a CALL-TIME set (which chord is targeted can change
-    // without rebuilding the whole plan), unlike scalePcs which is fixed here.
+    // Ghost notes: the SAME per-string fret math as notesOn() above, but for
+    // pcs OUTSIDE the scale - a target chord's tone the current scale doesn't
+    // contain (e.g. C# over A7 in A blues). wantedPcs is a CALL-TIME set (which
+    // chord is targeted can change without rebuilding the whole plan), unlike
+    // scalePcs which is fixed here.
     function ghostsOn(s, wantedPcs) {
       var openPc = openPcs[s], out = [];
       var wanted = {}; (wantedPcs || []).forEach(function (p) { wanted[((p % 12) + 12) % 12] = true; });
@@ -267,12 +240,13 @@
     var plan = scalePlan(opts);
     var F = plan.frets, showOpen = plan.showOpen, trueFrets = plan.trueFrets;
     // dotR/strSpace sized so the 10px note-name labels (phone-DPI floor for SVG
-    // text, CLAUDE.md) fit their circles with clearance between adjacent strings.
+    // text, music/CLAUDE.md) fit their circles with clearance between adjacent
+    // strings.
     var padX = 15, padY = 13, openColW = 19, fretW = 25, strSpace = 21, dotR = 9.2;
-    // Fret-number labels get their OWN band below the board. The bottom string's
-    // dots (r 9.2 around cy = boardBot) used to reach into the label row - and the
-    // labels painted BEFORE the dots, so the numbers hid behind them. The band
-    // reserves clearance and the labels now paint last (see below).
+    // Fret-number labels get their OWN band below the board, because the bottom
+    // string's dots (r 9.2 around cy = boardBot) reach into the label row. The
+    // band reserves clearance and the labels paint last (see below), so the
+    // numbers can't hide behind the dots.
     var labelBand = plan.markers.length ? 10 : 0;
     var nutX = showOpen ? (padX + openColW) : padX;
     var boardBot = padY + (n - 1) * strSpace; // last string line - board ends here, band follows
@@ -283,11 +257,10 @@
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
     for (var f = 0; f <= F; f++) { var x = nutX + f * fretW; svg += '<line x1="' + x + '" y1="' + padY + '" x2="' + x + '" y2="' + boardBot + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="' + (showOpen && f === 0 ? 3 : 1) + '"/>'; }
     for (var s = 0; s < n; s++) { var y = yOf(s); svg += '<line x1="' + padX + '" y1="' + y + '" x2="' + (nutX + F * fretW) + '" y2="' + y + '" stroke="#3a4150" style="stroke:var(--dg-grid)" stroke-width="1"/>'; }
-    // M-GUIDE W3a (section 2, chord-tone targeting): opts.tones = { byPc: {pc:
-    // class}, rubPc } is an EXTEND-not-overlay addition. Absent/falsy -> every
-    // dot below renders byte-identical to the pre-targeting default (regression-
-    // locked in diagram.dom.test.js) - the tones-aware branch below only ever
-    // runs when a caller explicitly opts in.
+    // opts.tones = { byPc: {pc: class}, rubPc } is an EXTEND-not-overlay
+    // chord-tone-targeting addition. Absent/falsy -> every dot below renders as
+    // the pre-targeting default (regression-locked in test/diagram.dom.test.js);
+    // the tones-aware branch only runs when a caller explicitly opts in.
     var tones = opts.tones || null;
     for (var s2 = 0; s2 < n; s2++) {
       var y2 = yOf(s2);
@@ -296,7 +269,7 @@
         var cx = xOf(col), isRoot = note.isRoot;
         var fill = isRoot ? '#5eead4' : '#2a3340', stroke = isRoot ? '#2a4f49' : '#4b5563', tf = isRoot ? '#06201c' : '#cbd5e1';
         var st = isRoot ? ' style="fill:var(--accent);stroke:var(--accent-dim)"' : ' style="fill:var(--dg-dot);stroke:var(--dg-dot-line)"';
-        // Targeting overlay: precedence root > chord > blue > scale (D-TARGET).
+        // Targeting overlay: precedence root > chord > blue > scale.
         // 'root'/'scale' classes keep the existing fill/stroke untouched; only
         // 'chord'/'blue' swap in their own theme-safe CSS vars. The rub modifier
         // (dashed ring) never changes fill/stroke, only adds stroke-dasharray.
@@ -309,46 +282,39 @@
           else if (cls === 'blue') st = ' style="fill:var(--kx-blue);stroke:var(--kx-blue)"';
           if (isRub) dash = ' stroke-dasharray="3 2"';
         } else {
-          // M-EAR wave 1.5 (U12): tones-absent dots still need the kxDot class
-          // (below, data-pc is added either way) so key-explorer.js's
-          // boxWrap.setSounding(pc) has a consistent `.kxDot[data-pc]` shape to
-          // query regardless of whether a chord target is active. Deliberate,
-          // reviewed change to the tones-absent baseline - the SHA-256 lock in
-          // diagram.dom.test.js was re-verified and updated for this change
-          // (see that test's own re-verify-deliberately comment).
+          // tones-absent dots still need the kxDot class (data-pc is added
+          // either way) so key-explorer.js's boxWrap.setSounding(pc) has a
+          // consistent `.kxDot[data-pc]` shape to query regardless of whether a
+          // chord target is active. Regression-locked in test/diagram.dom.test.js.
           classAttr = ' class="kxDot"';
         }
-        // data-pc (M-EAR wave 1.5, U12): the ONE per-dot marker the sounding-
-        // note fretboard highlight is built on - every octave/string of the
-        // currently-sounding pitch class shares this attribute, so a plain
-        // querySelectorAll('[data-pc="N"]') lights all of them at once. Added
-        // unconditionally (tones present or absent) - the kx-sounding CLASS
-        // itself is never baked in here; it's added later via JS classList
-        // (key-explorer.js), so THAT stays byte-identical either way.
+        // data-pc: the ONE per-dot marker the sounding-note fretboard highlight
+        // is built on - every octave/string of the currently-sounding pitch
+        // class shares this attribute, so a plain querySelectorAll('[data-pc="N"]')
+        // lights all of them at once. Added unconditionally (tones present or
+        // absent); the kx-sounding CLASS is never baked in here - it's added later
+        // via JS classList in key-explorer.js.
         var pcAttr = ' data-pc="' + note.pc + '"';
         svg += '<circle cx="' + cx + '" cy="' + y2 + '" r="' + dotR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"' + st + classAttr + pcAttr + dash + '/>';
-        // Prefer the caller's spelling (opts.names[pc] - canonical sharp post-FORK-4,
-        // e.g. A# in F major) so the fretboard matches the "Solo over it" note list;
-        // fall back to the sharp table.
+        // Prefer the caller's spelling (opts.names[pc], key-aware) so the
+        // fretboard matches the "Solo over it" note list; fall back to the sharp
+        // table.
         var noteName = (opts.names && opts.names[note.pc]) || NOTE_NAMES[note.pc];
-        // Root note text sits on the bright --accent fill -> dark --on-accent ink.
-        // U3 (operator UAT 2026-07-04): kx-chord/kx-blue used to share that SAME
-        // --on-accent ink on the assumption their fills were equally bright - true
-        // in dark theme, but tracks.css deliberately DARKENS --kx-chord/--kx-blue
-        // in light theme for contrast against the page bg, so dark-on-dark was
-        // unreadable there. Each class now gets its own theme-safe ink var (tracks.css
-        // picks the readable value per theme); 'scale'/no-tones text keeps --dg-note.
+        // Text ink per class, theme-safe. Root sits on the bright --accent fill,
+        // so it takes --on-accent. kx-chord/kx-blue can NOT reuse --on-accent:
+        // tracks.css darkens --kx-chord/--kx-blue in light theme for page-bg
+        // contrast, which would leave dark-on-dark text unreadable, so each gets
+        // its own ink var. 'scale'/no-tones text keeps --dg-note.
         var textFillVar = isRoot ? '--on-accent' : (cls === 'chord' ? '--kx-chord-ink' : (cls === 'blue' ? '--kx-blue-ink' : null));
         svg += '<text x="' + cx + '" y="' + (y2 + 3.5) + '" fill="' + tf + '" font-size="10" font-family="monospace" font-weight="700" text-anchor="middle"' + (textFillVar ? ' style="fill:var(' + textFillVar + ')"' : ' style="fill:var(--dg-note)"') + '>' + noteName + '</text>';
       });
     }
-    // GHOST DOTS (M-GUIDE W3a, P5 seasoned-player fold): a target chord's tones
-    // that fall OUTSIDE the current scale render as hollow (fill:none) outline
-    // dots at their correct fret position - same per-string fret math as the
-    // in-scale dots above (plan.ghostsOn mirrors plan.notesOn), just for pcs the
-    // scale doesn't contain. Zero ghosts when no target is active (tones.ghostPcs
-    // absent/empty) - this block never runs in that case, preserving the
-    // opts.tones-absent byte-identical render.
+    // GHOST DOTS: a target chord's tones that fall OUTSIDE the current scale
+    // render as hollow (fill:none) outline dots at their correct fret position -
+    // same per-string fret math as the in-scale dots above (plan.ghostsOn mirrors
+    // plan.notesOn), just for pcs the scale doesn't contain. No target active
+    // (tones.ghostPcs absent/empty) -> this block never runs, preserving the
+    // tones-absent render.
     if (tones && tones.ghostPcs && tones.ghostPcs.length) {
       for (var sG = 0; sG < n; sG++) {
         var yG = yOf(sG);
@@ -361,10 +327,11 @@
         });
       }
     }
-    // fret-number labels: font-size 10 is the phone-DPI floor for SVG text (CLAUDE.md) -
-    // these are TRUE fret numbers even in a shifted window (plan.markers already reflects
-    // that). Drawn LAST (SVG paints in document order) and inside the reserved labelBand,
-    // so the numbers can never hide behind the note dots again.
+    // fret-number labels: font-size 10 is the phone-DPI floor for SVG text
+    // (music/CLAUDE.md). These are TRUE fret numbers even in a shifted window
+    // (plan.markers already reflects that). Drawn LAST (SVG paints in document
+    // order) and inside the reserved labelBand, so the numbers can never hide
+    // behind the note dots.
     plan.markers.forEach(function (fn) {
       var col = trueFrets.indexOf(fn) + 1;
       svg += '<text x="' + xOf(col) + '" y="' + (H - 1) + '" fill="#6b7280" style="fill:var(--dg-fret-lbl)" font-size="10" font-family="monospace" text-anchor="middle">' + fn + '</text>';
@@ -378,8 +345,8 @@
 
   // expose the pure fret-window math for Node unit tests (no DOM needed), plus
   // scale() for the stub-document render tests (label band + paint order), plus
-  // render() (S-DIAGRAM-PREF step 2: opts.patternLabel + notifyRendered() dots/
-  // patterns regression coverage - test/diagram.dom.test.js).
+  // render() for the opts.patternLabel + notifyRendered() regression coverage
+  // in test/diagram.dom.test.js.
   if (typeof module !== 'undefined' && module.exports) {
     module.exports.scalePlan = scalePlan;
     module.exports.scale = scale;

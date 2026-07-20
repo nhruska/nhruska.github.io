@@ -13,16 +13,15 @@
 (function (global) {
   'use strict';
 
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-  // esc.js (loaded before this file everywhere it's consumed) - was one of
-  // ~8 divergent local copies.
+  // HTML-escape, delegating to the shared esc.js (loaded before this file
+  // everywhere it's consumed) so escaping stays identical across modules.
   function esc(s) { return global.Esc.esc(s); }
 
-  // Circle source: window.Circle in the browser (classic scripts). Under Node
-  // the IIFE's `global` is this module's own exports object, so a test can
-  // never inject Circle there - fall back to a guarded require so the REAL
-  // preferredTonicName kernel is what test/list-item.test.js exercises (same
-  // guarded-reference pattern as tracks.js's circleRef() / repertoire.js's).
+  // Resolve the Circle theory kernel. In the browser it's window.Circle. Under
+  // Node the IIFE's `global` is this module's own exports object, so Circle
+  // can't be injected there - fall back to a guarded require of circle.js so
+  // tests exercise the real preferredTonicName. Same pattern as tracks.js and
+  // repertoire.js.
   function circleRef() {
     if (global.Circle) return global.Circle;
     if (typeof module !== 'undefined' && module.exports) {
@@ -31,11 +30,10 @@
     return null;
   }
 
-  // S-SETRM-ARM: module-scope arm state for the inline remove handle (one armed
-  // handle at a time, RM_ARM_MS auto-disarm) - the same 1.6s window as
-  // songbook.js's progression .rm (S-DELETE-UNDO grammar). Re-renders rebuild
-  // the nodes, so a stale armed ref simply fails the identity check and the
-  // next tap arms fresh; the pending timer no-ops on the detached node.
+  // Module-scope arm state for the inline remove handle: one armed handle at a
+  // time, auto-disarmed after RM_ARM_MS. Re-renders rebuild the nodes, so a
+  // stale armed ref simply fails the identity check and the next tap arms
+  // fresh; the pending timer no-ops on the detached node.
   var RM_ARM_MS = 1600;
   var armedRmBtn = null, armedRmTimer = null;
   function disarmRmBtn() {
@@ -57,9 +55,9 @@
     var raw = rec.seq || rec.chords || null;
     var chords = Array.isArray(raw) ? raw : (raw ? [raw] : null);
     // Derive the key from the first chord when none is given - matches the app's
-    // labelTonic convention (a song's first chord is its working tonic). This is what
-    // turns "Key?" into a real key for chord-sheet songs that carry no key field, and
-    // lets key-based filtering span songs + tracks. Editable later (curate/M2).
+    // labelTonic convention (a song's first chord is its working tonic). This
+    // turns "Key?" into a real key for chord-sheet songs that carry no key
+    // field, and lets key-based filtering span songs + tracks.
     var key = rec.key || null, mode = rec.mode || null;
     if (!key && chords && chords.length) {
       var km = /^([A-G][#b]?)(m(?!aj)|min)?/.exec(String(chords[0]));
@@ -82,35 +80,28 @@
     };
   }
 
-  // The action ladder, labelled by CONSEQUENCE (not brand): a curated video plays
-  // IN-APP ("Video", ▶) - the only action a row ever advertises. Distinct glyph +
-  // (in CSS) weight/colour so it doesn't rely on colour alone. The tap is routed
-  // through opts.onAction; rendering is movement-cancelled so a scroll-grab on the
-  // right rail can't fire it.
-  //
-  // F25 (operator UAT 2026-07-05): "search link in library rows - remove. it's too
-  // quick on first screen users see to leave the app." The old no-video fallback
-  // ({kind:'search', external:true}) opened a YouTube search in a new tab - a leave-
-  // the-app link on the very first screen a user sees. Removed outright: a row with
-  // no in-app video now advertises no action at all (render() below skips the
-  // .li-act element entirely when this returns null).
+  // The row's single action, labelled by consequence (not brand): a curated
+  // video plays IN-APP ("Video", the play glyph) and is the only action a row
+  // ever advertises. Distinct glyph + (in CSS) weight/colour so it doesn't rely
+  // on colour alone. A row with no in-app video advertises no action at all -
+  // returns null, and render() below skips the .li-act element entirely.
+  // Deliberately no leave-the-app fallback (e.g. an external YouTube search),
+  // which would pull a first-screen user out of the app.
   function action(item) {
     return item.video
       ? { kind: 'play', label: 'Video', glyph: '▶', external: false }     // ▶ in-app
       : null;                                                             // no video -> no action shown
   }
 
-  // The key label, mode spelled out: "Bb major" / "A minor", and mode-honest for
-  // named church modes ("G mixolydian") rather than force-collapsing them to
-  // major/minor. F34 (operator UAT): the old compact form showed "Am" for minor
-  // but a bare "C" for major - a bare letter read as incomplete. Real modal
-  // tracks exist (tracks.json has mixolydian), so asserting "G major" for a
-  // mixolydian key would be worse than the bare key (codex PR #195 V1 Medium).
-  // Regime B (2026-07-10, FORK-4 retired): the root respells key-aware via
-  // Circle.preferredTonicName - a raw stored "A#" root badges as "Bb major",
-  // never the canonical-sharp token. Falls back to the raw item.key (same
-  // guard pattern as tracks.js's dispKeyRoot) when Circle is unavailable.
-  // Display-only (the badge); no logic consumer keys off this string.
+  // The key label, mode spelled out: "Bb major" / "A minor". Named church modes
+  // stay mode-honest ("G mixolydian") rather than collapsing to major/minor -
+  // real modal tracks exist (tracks.json has mixolydian), and asserting
+  // "G major" for a mixolydian key would be wrong. The mode is always spelled
+  // so a bare letter never reads as an incomplete label. The root respells
+  // key-aware via Circle.preferredTonicName (a stored "A#" root badges as
+  // "Bb major", never the canonical-sharp token), falling back to the raw
+  // item.key when Circle is unavailable. Display-only (the badge); no logic
+  // consumer keys off this string.
   function keyLabel(item) {
     if (!item.key) return null;
     var mode = String(item.mode || '').toLowerCase();
@@ -121,9 +112,10 @@
     return root + ' ' + mode; // dorian/phrygian/lydian/mixolydian/locrian - mode-honest
   }
 
-  // Pre-commit difficulty signal (codex: a bare count loses the risk a player needs
-  // before grabbing a song). At most one short hazard tag: accidental-root chords
-  // (F#m, Bb...) read first, else extended chords (7/maj7/dim/aug/sus/9/add).
+  // Pre-commit difficulty signal so a player sees the risk before grabbing a
+  // song (a bare chord count wouldn't). At most one short hazard tag:
+  // accidental-root chords (F#m, Bb...) win, else extended chords
+  // (7/maj7/dim/aug/sus/9/add).
   function hazards(item) {
     if (!item.chords || !item.chords.length) return [];
     if (item.chords.some(function (c) { return /^[A-G][#b]/.test(c); })) return ['sharps/flats'];
@@ -149,16 +141,11 @@
   }
 
   // Movement-cancelled tap: fire fn only if the touch did NOT move (a tap, not a
-  // scroll-grab). Critical on the right rail, where the thumb scrolls + grips the
-  // propped phone - codex flagged that a big always-hot button there fires on a
-  // scroll-grab. Mouse clicks (no touch) are unaffected, so desktop still works.
-  //
-  // S-HARDEN (analysis-refactor-enhance-20260704 A4): this is now the SSOT for
-  // the pattern - songbook.js's wireTapCancel/composeWireTap delegate here
-  // instead of each carrying its own ~15-line copy. fn receives the triggering
-  // click event (composeWireTap's prior contract); the other call sites in this
-  // file and in songbook.js never read the argument, so passing it is a no-op
-  // for them.
+  // scroll-grab). Critical on the right rail, where the thumb scrolls while
+  // gripping the propped phone - a big always-hot button there would otherwise
+  // fire on a scroll-grab. Mouse clicks (no touch) are unaffected, so desktop
+  // still works. Shared entry point - songbook.js delegates here. fn receives
+  // the triggering click event; call sites that don't need it just ignore it.
   function wireTap(el, fn) {
     if (!el || !fn) return;
     var sx = 0, sy = 0, moved = false;
@@ -203,9 +190,9 @@
     var root = (global.document).createElement('div');
     root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '');
 
-    // Right tag is KEY-FIRST and never silently a year (codex/musician): the accent
-    // key-slot is where a player's eye reads "the key". Unknown -> a quiet "Key?"
-    // badge (empty would read as a render bug). Year, if known, rides the artist line.
+    // Right tag is KEY-FIRST and never silently a year: the accent key-slot is
+    // where a player's eye reads "the key". Unknown -> a quiet "Key?" badge
+    // (empty would read as a render bug). Year, if known, rides the artist line.
     var tagHtml = kl
       ? '<span class="li-tag isKey">' + esc(kl) + '</span>'
       : '<span class="li-tag isKeyUnknown">Key?</span>';
@@ -222,19 +209,19 @@
     cells.forEach(function (c, i) {
       metaHtml += (i ? '<span class="dot"></span>' : '') + '<span>' + esc(c) + '</span>';
     });
-    // Action: a real tappable target (CSS gives it >=44px + a box), glyph + label so
-    // it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
-    // F25: act is null for a no-video row (no external-search fallback anymore) -
-    // skip the element entirely rather than render an empty/dangling action span.
+    // Action: a real tappable target (CSS gives it >=44px + a box), glyph + label
+    // so it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
+    // act is null for a no-video row - skip the element entirely rather than
+    // render an empty/dangling action span.
     if (act) {
       metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
         + (act.external ? ' title="Opens YouTube"' : '') + '>'
         + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
     }
 
-    // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode (codex:
-    // a destructive x next to reorder on the scroll rail is a one-thumb minefield;
-    // hide them until the user opts into editing the set).
+    // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode - a
+    // destructive x next to reorder on the scroll rail is a one-thumb minefield,
+    // so hide them until the user opts into editing the set.
     var ctrl = '';
     if (seg === 'set' && opts.setEdit) {
       ctrl = '<div class="li-ctrl">'
@@ -244,10 +231,10 @@
     } else if (seg !== 'set' && opts.onAdd) {
       ctrl = btn('li-add', opts.inSet ? '&#10003;' : '+', 'add', opts.inSet ? ' title="In set"' : ' title="Add to set"');
     } else if (seg !== 'set' && opts.addBlockedReason) {
-      // Operator UAT 2026-07-12: rows that CAN'T join the set used to render
-      // nothing in the add slot - "feels like something is broken". The ghost +
-      // states the limitation and teaches on tap (Element Consistency: the add
-      // slot always communicates, at the primitive).
+      // Rows that can't join the set render a ghost + rather than nothing in the
+      // add slot - a blank slot reads as a broken row. The ghost + states the
+      // limitation (title/aria) and teaches on tap, so the add slot always
+      // communicates (Element Consistency, at the primitive).
       ctrl = btn('li-add ghost', '+', 'addblocked',
         ' title="' + esc(opts.addBlockedReason) + '" aria-label="' + esc(opts.addBlockedReason) + '"');
     }
@@ -276,11 +263,9 @@
         else if (a === 'up' && opts.onUp) opts.onUp(rec);
         else if (a === 'dn' && opts.onDn) opts.onDn(rec);
         else if (a === 'rm' && opts.onRemove) {
-          // S-SETRM-ARM (operator UAT 2026-07-11): the inline remove handle is
-          // arm-to-delete, the same grammar as songbook.js's progression .rm
-          // (S-DELETE-UNDO) - first tap ARMS (red, RM_ARM_MS auto-disarm),
-          // second tap on the SAME armed handle removes. Gate lives here at the
-          // PRIMITIVE so every li-rm consumer inherits it.
+          // The inline remove handle is arm-to-delete: first tap ARMS (red,
+          // RM_ARM_MS auto-disarm), second tap on the SAME armed handle removes.
+          // Gate lives here at the primitive so every li-rm consumer inherits it.
           if (armedRmBtn !== b) { armRmBtn(b); return; }
           disarmRmBtn();
           opts.onRemove(rec);

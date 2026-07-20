@@ -1,28 +1,24 @@
 /* =====================================================================
- * accordion.js  -  M-SETTINGS-CLARITY (2026-07-05): the EXCLUSIVE
- * disclosure group primitive (the ACCORDION in ui-primitives.md).
+ * accordion.js - the exclusive-disclosure group primitive.
  * ---------------------------------------------------------------------
  * One open section at a time: opening a section collapses the others;
  * tapping the open section's header closes it (zero-open is a valid
  * state). Per-open state only, never persisted - same contract as the
- * disclosure family in component-conventions.md "Modal / Disclosure /
- * Tabs". First consumer: the Settings sheet sections (play/index.html).
+ * rest of the disclosure family (see component-conventions.md "Modal /
+ * Disclosure / Tabs"). Consumer: the Settings sheet sections.
  *
- * Scope note (decision D6 still stands): the accordion is for PANEL
- * surfaces (bottom sheets, dialogs) that own a single scroller. It is
- * NOT for the Compose screen scroller - D6 flattened Compose precisely
- * to kill the nested-scroll swipe trap, and this primitive does not
- * reopen that question.
+ * Scope: this is for PANEL surfaces (bottom sheets, dialogs) that own a
+ * single scroller - NOT for the Compose screen scroller, which is kept
+ * flat on purpose to avoid the nested-scroll swipe trap.
  *
  * Same "module owns state, caller owns DOM shape" split as toast.js:
  * init() takes element-LIKE section pairs (real elements in the app, tiny
  * stubs in Node tests - see test/accordion.test.js), toggles body.hidden
  * + btn aria-expanded, and never touches classes/styles beyond that. The
- * visual is the .accSec/.accBtn/.accBody family in songbook.css - the ONE
- * look for every consumer (THE ELEMENT CONSISTENCY LAW). NOTE the U24
- * precedent: body.hidden only collapses if no author display rule defeats
- * [hidden] - songbook.css ships the explicit .accBody[hidden]{display:none}
- * guard, and any NEW body class must keep that invariant.
+ * visual is the .accSec/.accBtn/.accBody family in songbook.css - the one
+ * look for every consumer. Gotcha: body.hidden only collapses if no author
+ * display rule defeats [hidden], so songbook.css ships an explicit
+ * .accBody[hidden]{display:none} guard - any NEW body class must keep it.
  *
  * Dependency-free by design (like esc.js).
  *
@@ -38,12 +34,11 @@
 (function (root) {
   'use strict';
 
-  // S-SETTINGS-UAT (operator UAT 2026-07-16): named-group registry so a
-  // LATE-INJECTED section (the Skills panel self-injects after an async
-  // mount, long after the page wired its group) can JOIN the page's group
-  // instead of running its own parallel accordion - the "Skills opens
-  // independently and off-screen" finding. join() is order-proof: joining
-  // before the named init() queues the section; init() drains the queue.
+  // Named-group registry so a LATE-INJECTED section (e.g. the Skills panel,
+  // which self-injects after an async mount, long after the page wired its
+  // group) can JOIN the page's group instead of running its own parallel
+  // accordion. join() is order-proof: joining before the named init() queues
+  // the section; init() drains the queue.
   var GROUPS = {};   // name -> handle
   var PENDING = {};  // name -> [section, ...] queued joins before init
 
@@ -62,13 +57,12 @@
           // Per-section open hook (lazy renders - the Skills panel rebuilds
           // its body on every open). Fires only on the closed->open edge.
           if (typeof s.onOpen === 'function') { try { s.onOpen(); } catch (e) { /* a hook must never break the group */ } }
-          // Bring the newly-opened section into view (operator UAT 2026-07-16:
-          // opening a below-the-fold section "feels like nothing happens" -
-          // it opened off-screen). block:'nearest' = no scroll when already
-          // visible. Only on a USER toggle (cause 'tap'), never on the
-          // initial paint or programmatic open - openSettings() deep-links
-          // manage their own scroll position. Guarded: Node test stubs have
-          // no scrollIntoView.
+          // Bring the newly-opened section into view - a below-the-fold
+          // section that opens off-screen looks like nothing happened.
+          // block:'nearest' = no scroll when already visible. Only on a USER
+          // toggle (cause 'tap'), never on the initial paint or programmatic
+          // open - deep-link openers manage their own scroll position.
+          // Guarded: Node test stubs have no scrollIntoView.
           if (cause === 'tap' && s.body && typeof s.body.scrollIntoView === 'function') {
             try { s.body.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { s.body.scrollIntoView(); }
           }

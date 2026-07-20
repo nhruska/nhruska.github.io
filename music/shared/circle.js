@@ -1,16 +1,18 @@
 /* =====================================================================
  * circle.js  -  circle-of-fifths theory engine + wheel renderer (shared)
  * ---------------------------------------------------------------------
- * The "spine" of the Backing Tracks surface (see backing-tracks/DESIGN.md):
- * keys are positions on the circle, chords are derived from it, neighbors
- * are adjacent. Pure music theory here (unit-tested in Node); the SVG wheel
- * renderer is added alongside.
+ * The theory spine: keys are positions on the circle, chords are derived
+ * from it, neighbors are adjacent. Pure music theory (unit-tested in Node)
+ * plus a browser-only SVG wheel renderer.
  *
- * CANONICAL SHARP SPELLING throughout (matches Songbook.ROOTS and the sharp-named
- * chord packs: F#m, A#, ...). ONE spelling table app-wide - the ROOTS row indexed
- * by pitch class - so what the user picked is what every derived label shows:
- * D# stays D#, never Eb, across key, scale, chords-in-key, COF and fret notes.
- * Flats are normalized on INPUT (Bb -> A#); they never appear in output.
+ * Two spelling regimes coexist:
+ *  - Canonical-sharp (spell/spellScale/diatonic/soloScale): keyless/chromatic
+ *    contexts (tuner, All-browse palette, pack seams, storage tokens). Flats
+ *    normalize on INPUT (Bb -> A#) and never appear in output.
+ *  - Key-aware (the *InKey twins + spellScaleKeyAware/spellRootInKey): inside a
+ *    stated key, each of the seven letters A-G is used once so a note name
+ *    agrees with its degree label (F major spells Bb, not A#).
+ *
  * No build step. Exposes window.Circle, and require()-able in Node.
  *   Circle.diatonic('C','major') -> [{roman:'I', chord:'C', root:'C', quality:''}, ...]
  * ===================================================================== */
@@ -29,7 +31,7 @@
 
   // The seven modes as semitone formulas from the root. 'major'/'minor' alias
   // Ionian/Aeolian. Everything below (scales, interval degrees, the "one note
-  // changed" hint, and the diatonic triads) derives from these — one source.
+  // changed" hint, and the diatonic triads) derives from these single source.
   var MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
   var MODES = {
     ionian: [0, 2, 4, 5, 7, 9, 11], dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10],
@@ -48,9 +50,9 @@
   };
   var DEG = ['1', '2', '3', '4', '5', '6', '7'];
   var RN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-  // Case-insensitive: callers pass both 'minor' (repertoire-form) and 'Minor'
-  // (songbook's songKey). The old exact-match lookup silently fell back to
-  // IONIAN on a capitalized mode - a minor key deriving MAJOR chords.
+  // Normalize a mode name to a MODES key. Case-insensitive and alias-aware,
+  // because callers pass both 'minor' and 'Minor'; don't tighten to exact-match
+  // or a capitalized mode falls through to IONIAN (a minor key deriving MAJOR chords).
   function modeKey(mode) {
     var m = String(mode || '').toLowerCase();
     m = ALIAS[m] || m;
@@ -58,14 +60,11 @@
   }
 
   // ---- canonical note spelling (sharps only) ---------------------------------
-  // ONE spelling table app-wide: the sharp ROOTS row, indexed by pitch class.
-  // The key picker offers sharps only and every label is sharp-canonical
-  // (voicing TABLES may key shapes under either spelling - the pack seam
-  // resolves enharmonically), so every derived label echoes what the user picked -
-  // D# stays D#, never Eb. Flat INPUT still normalizes (norm/F2S); flats just
-  // never appear in output. (The old letter-per-degree/fewest-accidentals
-  // speller chose Eb for D# mixolydian while the chord chips said A# - one key,
-  // two names on the same screen. Retired by design: FORK-4, pilot UAT.)
+  // Spell a scale using the sharp ROOTS row, indexed by pitch class. Keyless
+  // contexts only: every note comes out sharp (D# never Eb), so the note name
+  // matches the sharp-canonical chord tokens on the same screen. Flat INPUT
+  // still normalizes (norm/F2S); flats never appear in output. For in-key
+  // display use spellScaleKeyAware instead.
   function spellScale(root, mode) {
     var pc = pcOf(root); if (pc < 0) return [];
     return MODES[modeKey(mode)].map(function (s) { return spell(pc + s); });
@@ -151,13 +150,11 @@
   }
 
   // ---- KEY-AWARE (letter-per-degree) spelling -------------------------------
-  // S-KEY-SPELLING (2026-07-10): the deterministic, theory-correct speller that
-  // supersedes canonical-sharp (FORK-4). Given a key, each of the seven letters
+  // Deterministic theory-correct speller. Given a key, each of the seven letters
   // A-G is used EXACTLY ONCE, in order from the root's letter, with the accidental
-  // chosen to hit each scale pitch. This is what makes F major spell Bb (not A#)
-  // and a bVII chord read Bb (a lowered 7th), never A# (a raised 6th) - the note
-  // name then AGREES with the degree label the UI shows. Fully deterministic +
-  // Node-tested (test/key-spelling.test.js); pure, no DOM.
+  // chosen to hit each scale pitch. This makes F major spell Bb (not A#) and a
+  // bVII chord read Bb (a lowered 7th), never A# (a raised 6th) - the note name
+  // then AGREES with the degree label the UI shows. Pure, no DOM.
   var LETTERS7 = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   var NAT_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   // accidental string for a signed semitone offset from a natural letter, choosing
@@ -197,12 +194,11 @@
     return L + accidentalFor(cp - NAT_PC[L]);
   }
 
-  // ---- FORK-4 REMOVAL: the key-aware render kernel (2026-07-10) --------------
-  // Everything below is what the app's render paths call instead of the legacy
-  // sharp-only spell()/spellScale()/diatonic()/soloScale(). The legacy functions
+  // ---- key-aware render kernel ----------------------------------------------
+  // What the app's render paths call instead of the sharp-only
+  // spell()/spellScale()/diatonic()/soloScale(). The sharp-canonical functions
   // stay for KEYLESS/chromatic contexts (tuner, All-browse palette, pack seams,
-  // storage tokens) where the music-theory-coach verdict says sharp-canonical is
-  // acceptable because no key function is asserted.
+  // storage tokens) where no key function is asserted.
   //
   // preferredTonicName: the enharmonic NAME a key is conventionally written in -
   // chosen deterministically as the spelling with the FEWEST total accidentals in
@@ -273,11 +269,10 @@
     return 'M' + o1[0] + ' ' + o1[1] + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + o2[0] + ' ' + o2[1] +
       ' L' + i2[0] + ' ' + i2[1] + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + i1[0] + ' ' + i1[1] + ' Z';
   }
-  // S-COF-SPELLING (regime B, 2026-07-10): a wheel wedge names a KEY, so its
-  // label is that key's PREFERRED tonic name (Bb, not A#; Eb, not D#) - the
-  // same accidental-count rule every other keyed surface uses. ONE provider
-  // for the label so renderWheel and every post-processor (tracks.js
-  // tintWheel) can never disagree on the text again. Root tokens stay
+  // A wheel wedge names a KEY, so its label is that key's PREFERRED tonic name
+  // (Bb, not A#; Eb, not D#) - the same accidental-count rule every keyed surface
+  // uses. The single label provider, so renderWheel and any post-processor
+  // (tracks.js tintWheel) can't disagree on the text. Root tokens stay
   // canonical-sharp for identity (onPick, selected-match, data-pc).
   function wheelLabel(root, ringMode) {
     var m = ringMode === 'minor' ? 'minor' : 'major';
@@ -300,9 +295,8 @@
         var path = document.createElementNS(NS, 'path');
         path.setAttribute('d', sector(c, ring.r1, ring.r2, a1, a2));
         path.setAttribute('class', 'cofWedge' + (on ? ' on' : ''));
-        // S-COF-ANIMATE: pc + ring identity on every wedge so consumers (the
-        // Studio's sounding-note pulse) address wedges structurally, never by
-        // label text - the brittleness the old tintWheel label-match had.
+        // pc + ring identity on every wedge so consumers (the Studio's
+        // sounding-note pulse) address wedges structurally, not by label text.
         path.setAttribute('data-pc', String(pcOf(root)));
         path.setAttribute('data-ring', ring.mode);
         path.addEventListener('click', function () { onPick(root, ring.mode); });
@@ -313,7 +307,7 @@
         t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
         t.setAttribute('class', 'cofLabel' + (on ? ' on' : ''));
         t.style.pointerEvents = 'none';
-        t.textContent = wheelLabel(root, ring.mode); // S-COF-SPELLING: preferred key name (Bb, not A#)
+        t.textContent = wheelLabel(root, ring.mode); // preferred key name (Bb, not A#)
         svg.appendChild(t);
       });
     });
@@ -321,27 +315,18 @@
     return wrap;
   }
 
-  // ---- S-BLUES: pentatonic + blues scales, SOLO LAYER ONLY -------------------
-  // Zero surface in diatonic()/romanFor()/triadQuality() - these are consumed
-  // exclusively by the Practice Studio's scale-swap chips (tracks.js), never by
-  // harmonization (chords-in-key, buildWhy, whynote). formula = semitones from
-  // the root; degrees use the SAME flat glyph (♭) as scaleDegrees() above.
+  // ---- pentatonic + blues scales, SOLO LAYER ONLY ---------------------------
+  // Zero surface in diatonic()/romanFor()/triadQuality() - consumed exclusively
+  // by the Practice Studio's scale-swap chips (tracks.js), never by harmonization
+  // (chords-in-key, buildWhy, whynote). formula = semitones from the root;
+  // degrees use the SAME flat glyph (♭) as scaleDegrees() above.
   //
-  // Regime A (NOW, [TRACKS-#98]): soloScale() spells every note through the
-  // SAME spell() the rest of this module uses (FORK-4 canonical sharps) - one
-  // provider, one seam. So the blue note (blues' formula[3], a flat 5th) comes
-  // out SHARP-spelled like any other chromatic tone (e.g. A blues = A C D D# E
-  // G) rather than key-aware-flattened. This is NOT special-cased here - doing
-  // so would break the list==fretboard invariant every other scale/chord
-  // surface on this screen already honors (see spellScale's header comment).
-  //
-  // Regime B (S-BLUES-B, post-#98, NOT built now): the pentatonic degrees would
-  // spell key-aware via spellScaleKeyAware(root, parentMode), and the blue note
-  // would spell as the key-aware 5th-degree LETTER flattened (b5 never #4).
-  // soloScale() routes every name through this ONE internal provider call by
-  // design, so that regime swap only needs to swap the provider inside
-  // soloScale() once #98 lands spellScaleKeyAware/keyLabel - nothing else in
-  // this file, or in tracks.js, needs to change.
+  // Names come out sharp-canonical via spell(): the blue note (blues' formula[3],
+  // a flat 5th) is SHARP-spelled like any other chromatic tone (A blues =
+  // A C D D# E G). Don't key-aware-flatten it here - that would break the
+  // list==fretboard invariant every scale/chord surface on this screen honors
+  // (see spellScale's header). soloScale() routes every name through one internal
+  // provider call, so a future key-aware swap only touches that one call.
   //
   // Subset proofs (asserted in test/solo-scales.test.js against MODE_STEPS):
   // pentMajor's formula is a subset of ionian/lydian/mixolydian; pentMinor's
@@ -350,16 +335,15 @@
     pentMajor: { label: 'Pent major', kind: 'pent', family: 'major', formula: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'] },
     pentMinor: { label: 'Pent minor', kind: 'pent', family: 'minor', formula: [0, 3, 5, 7, 10], degrees: ['1', '♭3', '4', '5', '♭7'] },
     blues: { label: 'Blues', kind: 'blues', formula: [0, 3, 5, 6, 7, 10], degrees: ['1', '♭3', '4', '♭5', '5', '♭7'] },
-    // S-SOLO-MODES (music-theory-coach, 2026-07-10): the two common non-diatonic MODE
-    // colors surfaced as selectable solo scales (their SoloGuide.card + framing already
-    // ship - see solo-guide.js). Mixolydian = the b7 bluesy/dominant color over a major
-    // key; Dorian = the natural-6 hopeful-minor color. Formulas are the full 7-note modes
-    // (a superset of pentMajor / pentMinor respectively - the pentatonic subset proofs in
-    // solo-scales.test.js already assert pentMajor c mixolydian, pentMinor c dorian).
+    // The two common non-diatonic MODE colors surfaced as selectable solo scales.
+    // Mixolydian = the b7 bluesy/dominant color over a major key; Dorian = the
+    // natural-6 hopeful-minor color. Formulas are the full 7-note modes (a superset
+    // of pentMajor / pentMinor respectively - the pentatonic subset proofs in
+    // solo-scales.test.js assert pentMajor c mixolydian, pentMinor c dorian).
     mixolydian: { label: 'Mixolydian', kind: 'mode', family: 'major', formula: [0, 2, 4, 5, 7, 9, 10], degrees: ['1', '2', '3', '4', '5', '6', '♭7'] },
     dorian: { label: 'Dorian', kind: 'mode', family: 'minor', formula: [0, 2, 3, 5, 7, 9, 10], degrees: ['1', '2', '♭3', '4', '5', '6', '♭7'] }
   };
-  // Names via spell() - see the regime comment above. Unknown root or unknown
+  // Names via spell() - see the block comment above. Unknown root or unknown
   // scaleId -> [] (safe; never throws, matching pcOf/spellScale's own contract).
   function soloScale(root, scaleId) {
     var pc = pcOf(root), s = SOLO_SCALES[scaleId];
@@ -372,12 +356,12 @@
   }
   function soloScaleInfo(scaleId) { return SOLO_SCALES[scaleId] || null; }
 
-  // ---- M-GUIDE W2: Blues as a HARMONIZING key model (I7/IV7/V7), distinct from
-  // SOLO_SCALES.blues above (the 6-note solo scale). This is the palette-kind
-  // entry mirroring the SOLO_SCALES block's shape/pattern: a registry + a pure
-  // deriver, additive, zero surface in diatonic()/romanFor()/triadQuality().
-  // Consumed by songbook.js's MODES.Blues (the strummable I7/IV7/V7 palette)
-  // and the Practice Studio's chords-in-key row (tracks.js studioTheory).
+  // ---- Blues as a HARMONIZING key model (I7/IV7/V7) --------------------------
+  // Distinct from SOLO_SCALES.blues above (the 6-note solo scale). Mirrors the
+  // SOLO_SCALES block's pattern: a registry + a pure deriver, additive, zero
+  // surface in diatonic()/romanFor()/triadQuality(). Consumed by songbook.js's
+  // MODES.Blues (the strummable I7/IV7/V7 palette) and the Practice Studio's
+  // chords-in-key row (tracks.js studioTheory).
   var BLUES_KEY = {
     label: 'Blues',
     degrees: [ { roman: 'I7', semis: 0 }, { roman: 'IV7', semis: 5 }, { roman: 'V7', semis: 7 } ],
@@ -398,7 +382,7 @@
   // plus 7th detection: maj7 adds the major 7th (+11); any OTHER trailing 7
   // ('7', 'm7', 'm7b5', ...) adds the minor/dominant 7th (+10). Unknown suffixes
   // fall back to the bare triad rather than throwing - exported so Studio-side
-  // chord-tone targeting (W3a) can intersect these against a scale's pcs.
+  // chord-tone targeting can intersect these against a scale's pcs.
   function chordTones(chord) {
     var p = chordParts(chord);
     if (!p) return [];
@@ -441,13 +425,11 @@
     keyName: keyName,
     spellRoot: spellRoot,
     spellScale: spellScale,
-    // S-KEY-SPELLING: deterministic key-aware (letter-per-degree) spelling - the
-    // theory-correct successor to canonical-sharp. Wiring into the render paths is
-    // the staged FORK-4 removal; these are the vetted, unit-tested core.
+    // deterministic key-aware (letter-per-degree) spelling core (unit-tested).
     spellScaleKeyAware: spellScaleKeyAware,
     spellRootInKey: spellRootInKey,
-    // FORK-4 removal render kernel: preferred enharmonic key names + key-aware
-    // twins of scale/diatonic/soloScale + single-note display naming.
+    // key-aware render kernel: preferred enharmonic key names + key-aware twins
+    // of scale/diatonic/soloScale + single-note display naming.
     preferredTonicName: preferredTonicName,
     scaleInKey: scaleInKey,
     diatonicInKey: diatonicInKey,
@@ -459,14 +441,14 @@
     modeInfo: function (mode) { return MODE_INFO[modeKey(mode)]; },
     MODE_INFO: MODE_INFO,
     renderWheel: renderWheel,
-    // S-COF-SPELLING: the ONE wheel-label provider (preferred key name + m suffix).
+    // the single wheel-label provider (preferred key name + m suffix).
     wheelLabel: wheelLabel,
-    // S-BLUES: solo-layer-only pentatonic/blues scales - see the block above.
+    // solo-layer-only pentatonic/blues scales - see the block above.
     SOLO_SCALES: SOLO_SCALES,
     soloScale: soloScale,
     soloScaleDegrees: soloScaleDegrees,
     soloScaleInfo: soloScaleInfo,
-    // M-GUIDE W2: Blues as a harmonizing key model (I7/IV7/V7) - see the block above.
+    // Blues as a harmonizing key model (I7/IV7/V7) - see the block above.
     BLUES_KEY: BLUES_KEY,
     bluesKey: bluesKey,
     chordTones: chordTones
