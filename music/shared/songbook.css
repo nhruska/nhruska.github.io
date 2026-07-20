@@ -497,6 +497,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    demotes to an OUTLINE so it never out-shouts the chord cards - the real "obvious next
    move". #id specificity beats .btn.red; it returns to fill the moment a chord lands. */
 .composeWrap.progEmpty #cSave{background:transparent;color:var(--accent-ink);border-color:var(--accent-dim);}
+/* UAT 2026-07-20: Save disabled when there is genuinely nothing to save (empty
+   strip + no song draft) - dimmed + non-interactive, so a post-Clear tap can't
+   open the intent modal on an empty canvas. */
+#cSave:disabled{opacity:.4;cursor:default;}
 /* F33 (UAT): genuinely destructive actions (songbook.js song view's real Delete -
    the fork "Revert to original" is ALSO destructive (discards the fork's edits,
    confirm-gated) but stays .btn.ghost as a deliberate softer signal; see

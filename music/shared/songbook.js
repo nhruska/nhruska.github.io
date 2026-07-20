@@ -2657,6 +2657,14 @@
         // real "obvious next move" (visual-language.md emphasis ladder).
         wrap.classList.toggle('progEmpty', progression.length === 0);
       }
+      // UAT 2026-07-20 ("disable Save when there is no progression to save"):
+      // after Save-then-Clear the empty canvas used to still open the intent
+      // modal (cSave fell through every guard to openSaveIntentRow). Disable
+      // Save when there's genuinely nothing to save - no progression AND no
+      // parked song draft. A song draft with an empty strip keeps Save live (it
+      // opens the canvas). renderProg runs on every add/clear, so the state
+      // tracks the strip.
+      if (el.cSave) el.cSave.disabled = (progression.length === 0 && songSections.length === 0);
       if (el.maxNote) el.maxNote.hidden = !maxed;
       var tonic = labelTonic();
       // S-PROG-WRAP-2 (UAT U8b): count-driven staged density ladder - full
@@ -2885,7 +2893,7 @@
     var SONG_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Solo', 'Outro'];
     var songTrayEl = null, songTrayCueEl = null, songSectSelEl = null, songAddRowEl = null, songMapEl = null,
         songSectionsEl = null, songAssembleBtnEl = null,
-        draftChipEl = null, songCanvasDivEl = null,
+        draftChipEl = null, progDraftChipEl = null, songCanvasDivEl = null,
         songSuggestEl = null, songSuggestLabelsEl = null, songSuggestChipsEl = null,
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
@@ -2951,6 +2959,22 @@
       draftChipEl.type = 'button'; draftChipEl.id = 'draftChip'; draftChipEl.className = 'draftChip'; draftChipEl.hidden = true;
       composeWireTap(draftChipEl, function () { setComposeMode('song'); });
       el.prog.parentNode.appendChild(draftChipEl);
+      // Operator UAT 2026-07-20 ("also show draft message for progressions...
+      // immediately after save"): the progression-side counterpart to the song
+      // draft chip. A saved progression had NO persistent "which draft am I on"
+      // indicator - only a transient Saved/Updated toast - so the sense that
+      // work was saved appeared to arrive one save late. This chip shows the
+      // saved name the moment savedComposeId is set (first save) and stays while
+      // that saved progression is being edited. STATUS + LINK only (tap opens it
+      // in the Library), same B+ exception the song draft chip is.
+      progDraftChipEl = document.createElement('button');
+      progDraftChipEl.type = 'button'; progDraftChipEl.id = 'progDraftChip'; progDraftChipEl.className = 'draftChip'; progDraftChipEl.hidden = true;
+      composeWireTap(progDraftChipEl, function () {
+        if (savedComposeId == null || typeof customById !== 'function' || !customById(savedComposeId)) return;
+        pendingHighlightId = savedComposeId; // scroll-to + flash the row, same as post-save
+        switchTab('library'); renderSongs();
+      });
+      el.prog.parentNode.appendChild(progDraftChipEl);
       // --- the mode toggle: screen-level chrome, always visible, top of the wrap.
       // Distinct from the chord list's .chordSeg by SCALE and POSITION (bigger,
       // full-width, above everything) - and the two are never on screen together
@@ -3295,6 +3319,21 @@
             ? 'Editing ' + chipName
             : 'Editing your song · ' + songSections.length + (songSections.length === 1 ? ' section' : ' sections')) + ' ›';
           draftChipEl.setAttribute('aria-label', 'Open the song you are building' + (chipName ? ': ' + chipName : ''));
+        }
+      }
+      // Progression draft chip (UAT 2026-07-20): the progression-side twin of the
+      // song draft chip above. Shows on the Chords surface while editing a SAVED
+      // progression (savedComposeId resolves) with chords but no sections - so a
+      // just-saved progression names itself immediately and persistently. Mutually
+      // exclusive with the song chip (that one needs sections, this one needs none).
+      if (progDraftChipEl) {
+        var savedProg = (savedComposeId != null && typeof customById === 'function') ? customById(savedComposeId) : null;
+        var showProgChip = !inSong && !inFlight && !hasSections && hasProg && !!savedProg;
+        progDraftChipEl.hidden = !showProgChip;
+        if (showProgChip) {
+          var pName = savedProg.t || 'your progression';
+          progDraftChipEl.textContent = 'Editing ' + pName + ' ›';
+          progDraftChipEl.setAttribute('aria-label', 'Open the saved progression: ' + pName);
         }
       }
       songAddRowEl.hidden = !hasProg;
@@ -5521,6 +5560,7 @@
           // showComposeToast's header comment + hideComposeToast() below).
           if (updOk) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
           showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk);
+          renderProg(); // keep the progression draft chip current with the saved name
           done(upd); return;
         }
         savedComposeId = null; // the saved song vanished - fall through to a fresh save
@@ -5558,6 +5598,7 @@
         // #265-C: success gets the named-asset banner with a one-tap next step;
         // failure keeps the truthful error toast (never dress up a failed write).
         if (ok) showSaveDoneBanner(cs, addToSetlist); else showComposeToast(SAVE_FAIL_MSG, true);
+        renderProg(); // paint the progression draft chip NOW (fixes the "shows one save late") - savedComposeId is set above
         done(cs);
       });
     }
@@ -5835,6 +5876,9 @@
     // (and the solo flow's internal saveProgression() calls never see any of
     // this - the gate lives only on the button).
     if (el.cSave) el.cSave.onclick = function () {
+      // Nothing to save (empty strip + no song draft): no-op, never a modal.
+      // Belt-and-suspenders with the disabled attr set in renderProg (UAT 2026-07-20).
+      if (!progression.length && !songSections.length) return;
       // S-COMPOSE-CALM: with only a draft, the saveable thing IS the song -
       // open its editor (the canvas owns the Save-song action), never a
       // surprise name-row from the jam surface.
