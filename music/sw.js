@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v290';
+var CACHE = 'music-v291';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -49,7 +49,7 @@ var CORE = [
   './shared/skill-md.js', './shared/zip-store.js',
   './shared/repertoire-form.js',
   './shared/yt-info.js',
-  './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
+  './shared/theory.js', './shared/suggest-model.js', './shared/sheet-render.js', './shared/song-model.js', './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
   './shared/legend.js',
   './shared/notables.js',
   './shared/guidance-level.js',
