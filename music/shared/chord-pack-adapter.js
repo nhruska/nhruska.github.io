@@ -320,6 +320,16 @@
       meta: { instrument: profile.instrument, tuning: profile.tuning, strings: profile.strings.length, stringNames: profile.strings.map(function (s) { return s.n; }) },
       hasChord: function (name) { return !!voicingFor(name); },
       diagram: function (name, size) { var frets = voicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets, size), reserveLabelSlot: reserveLabelSlot(size) }); },
+      // Preview variant (UAT 2026-07-20): render in an EXPLICIT 'dots'|'patterns'
+      // mode instead of the global DiagramPref, so the Settings preview can show
+      // BOTH side by side. Same window.Diagram.render path as diagram() above -
+      // any change to the real diagram rendering flows through here too (SSOT).
+      diagramForMode: function (name, size, mode) {
+        var frets = voicingFor(name);
+        if (!frets) return null;
+        var patterns = (mode === 'patterns');
+        return window.Diagram.render(frets, { size: size, name: name, patternLabel: patterns ? labelFor(name, frets, size) : '', reserveLabelSlot: patterns });
+      },
       diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets, size), reserveLabelSlot: reserveLabelSlot(size) }); },
       diagramChain: function (names, size) {
         var voicings = chainVoicings(names);

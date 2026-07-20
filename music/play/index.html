@@ -304,6 +304,15 @@
           <p class="setHint">Every chord chart, diagram and the tuner follow this. Switching reloads the app.</p>
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
+          <!-- UAT 2026-07-20: visual preview of each option, aligned under its
+               toggle half, active one highlighted (recognition over recall).
+               Rendered from the SSOT (window.MusicPreview -> the app's real
+               diagram/chart renderers) by populatePrefPreviews() on open, so a
+               rendering change in the app shows up here automatically. -->
+          <div class="prefPreview" id="diagramPrefPreview" aria-hidden="true">
+            <div class="prefEx" data-m="dots"></div>
+            <div class="prefEx" data-m="patterns"></div>
+          </div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
           <!-- UAT r5 F5 (operator 2026-07-19): chord-chart VISIBILITY moved here
                from the Compose surface's Shapes toggle. Distinct from Fretboard
@@ -312,6 +321,13 @@
                (crosses instrument profiles). -->
           <div class="setLbl">Chord charts</div>
           <div class="themeSeg" id="chordChartsSeg" role="radiogroup" aria-label="Chord chart display"></div>
+          <!-- UAT 2026-07-20: Charts = the app's real chord diagram; Compact =
+               the app's real compact chip. Rendered from the SSOT, active
+               highlighted. -->
+          <div class="prefPreview" id="chordChartsPreview" aria-hidden="true">
+            <div class="prefEx" data-m="charts"></div>
+            <div class="prefEx" data-m="chips"></div>
+          </div>
           <p class="setHint">Full charts while you're learning shapes, or compact chord names once you know them. Follows your guidance level until you pick one here.</p>
           <!-- M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16:
                "guidance level change needs to follow UI standards" - this
@@ -1080,6 +1096,8 @@
         var on = b.dataset.m === val;
         b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
       });
+      var pv = document.getElementById('diagramPrefPreview'); // highlight the matching preview example
+      if (pv) pv.querySelectorAll('.prefEx').forEach(function (x) { x.classList.toggle('on', x.dataset.m === val); });
     }
     if (dpWrap && window.DiagramPref) {
       DIAGRAM_PREFS.forEach(function (pair) {
@@ -1122,6 +1140,8 @@
         var on = b.dataset.m === val;
         b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
       });
+      var pv = document.getElementById('chordChartsPreview'); // highlight the matching preview example
+      if (pv) pv.querySelectorAll('.prefEx').forEach(function (x) { x.classList.toggle('on', x.dataset.m === val); });
     }
     if (ccWrap) {
       CHART_PREFS.forEach(function (pair) {
@@ -1282,13 +1302,31 @@
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
       } catch (e) {}
     }
+    // Fill the diagram/chart preview cells from the SSOT (window.MusicPreview ->
+    // the app's real renderers). Done on open (post-mount, current instrument);
+    // the .prefEx.on highlight is owned by markDiagramPref/markChartsPref and
+    // survives this innerHTML swap (it's on the cell, not its content).
+    function populatePrefPreviews() {
+      if (!window.MusicPreview) return;
+      function fill(previewId, kind) {
+        var pv = document.getElementById(previewId);
+        if (!pv) return;
+        pv.querySelectorAll('.prefEx').forEach(function (ex) {
+          var node = (kind === 'diagram') ? window.MusicPreview.diagram(ex.dataset.m) : window.MusicPreview.chart(ex.dataset.m);
+          ex.innerHTML = '';
+          if (node) ex.appendChild(node);
+        });
+      }
+      fill('diagramPrefPreview', 'diagram');
+      fill('chordChartsPreview', 'chart');
+    }
     function openSettings(sectionKey) {
       if (!ov) return; ov.hidden = false; if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
       if (settingsAcc) {
         settingsAcc.closeAll(); // per-open state only, never persisted
         if (sectionKey && accIndexByKey[sectionKey] != null) settingsAcc.open(accIndexByKey[sectionKey]);
       }
-      renderSummary(); renderLastBackup(); renderLastRestore(); showVersion();
+      renderSummary(); renderLastBackup(); renderLastRestore(); showVersion(); populatePrefPreviews();
     }
     function closeSettings() { if (!ov) return; ov.hidden = true; if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
     if (openBtn) openBtn.onclick = function () { openSettings(); };
