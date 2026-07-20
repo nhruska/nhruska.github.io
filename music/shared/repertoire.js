@@ -1,9 +1,8 @@
 /* =====================================================================
- * repertoire.js  -  M3 merged-repertoire model (songs + tracks -> ONE list).
+ * repertoire.js  -  merged-repertoire model (songs + tracks -> ONE list).
  *
- * The Library's old Songs|Tracks split dissolves into a single Repertoire:
- * a song and its curated backing track are the SAME item (chords/sheet from
- * the song, genre/bpm/key/video from the track). This module is the pure,
+ * A song and its curated backing track are the SAME item: chords/sheet come
+ * from the song, genre/bpm/key/video from the track. This module is the pure,
  * Node-testable core: build() dedups + merges, and the filter/facet helpers
  * drive the unified Search + Genre + Key bar. Presentation stays in
  * list-item.js; routing (open chord sheet vs open studio) stays in songbook.js.
@@ -11,7 +10,7 @@
  * A merged record keeps the SONG shape (t/a/y/d/seq/sheet/id) so existing
  * song code paths (openPractice by id) keep working, and adds the TRACK fields
  * (genre/bpm/capo/key/mode/yt/tags) so ListItem shows the union and the studio
- * can solo over it. Pure functions exported for tests.
+ * can solo over it. All functions are pure and exported for tests.
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -26,9 +25,8 @@
 
   // Circle source: window.Circle in the browser (classic scripts). Under Node
   // the IIFE's `global` is this module's own exports object, so a test can
-  // never inject Circle there - fall back to a guarded require so the REAL
-  // preferredTonicName kernel is what test/repertoire.test.js exercises (same
-  // guarded-reference pattern as tracks.js's circleRef()).
+  // never inject Circle there - fall back to a guarded require so the real
+  // preferredTonicName kernel is what the tests exercise.
   function circleRef() {
     if (global.Circle) return global.Circle;
     if (typeof module !== 'undefined' && module.exports) {
@@ -66,13 +64,12 @@
     return { key: null, mode: null };
   }
   // Short key label for the Key filter facet + chip: "Am", "Bb", or null.
-  // Regime B (2026-07-10, FORK-4 retired): the root displays via
-  // Circle.preferredTonicName - key-aware, so A# major reads "Bb" (never A#)
-  // while G# minor stays "G#" (per note-spelling.md). Falls back to the
-  // canonical-sharp identity (F2S) when Circle is unavailable. CRITICAL: both
-  // the facet SET (keys(), below) and each item's facet TAG (filter(), below)
-  // call this SAME function, so a respelled label still matches its own facet
-  // chip - see test/repertoire.test.js's filter-self-consistency case.
+  // The root displays via Circle.preferredTonicName - key-aware, so A# major
+  // reads "Bb" (never A#) while G# minor stays "G#" (per note-spelling.md).
+  // Falls back to the canonical-sharp identity (F2S) when Circle is
+  // unavailable. Both the facet SET (keys(), below) and each item's facet TAG
+  // (filter(), below) call this SAME function, so a respelled label still
+  // matches its own facet chip - don't inline a different spelling in either.
   function keyLabel(rec) {
     var k = deriveKey(rec);
     if (!k.key) return null;
@@ -144,11 +141,10 @@
         if (pick && !pick._used) {
           pick._used = true;
           var merged = mergeRec(s, pick);
-          // Operator spec 2026-07-17 ("the list should not be reordered"): a
-          // CUSTOM song that consumes a track (the keyseed copy, a user save
-          // matching a backing track) emits at the TRACK's own slot - the
-          // track row is the identity the user has been looking at, so it
-          // must not teleport to the custom's position. Catalog songs keep
+          // Don't reorder the list. A CUSTOM song that consumes a track (a
+          // user save matching a backing track) emits at the TRACK's own slot
+          // - the track row is the identity the user has been looking at, so
+          // it must not teleport to the custom's position. Catalog songs keep
           // merging at the song's slot (the song row was always the visible
           // identity there).
           if (s.custom) { pick._mergedRec = merged; return null; }
@@ -190,12 +186,12 @@
     };
   }
 
-  // Facet lists for the filter bar. genres(): unique lowercased genres present.
+  // Facet lists for the filter bar. genres(): unique genres present.
   // keys(): unique key labels, musically ordered (circle-ish: C G D ... then minors).
-  // Operator UAT 2026-07-19: custom items carry hand-typed genres ('Jam',
-  // 'Rock') alongside the catalog's lowercase set, so a case-sensitive dedupe
-  // rendered duplicate chips (Jam + jam). Identity is CASE-INSENSITIVE; the
-  // chip displays the canonical Title-case form. filter() matches the same way.
+  // Custom items carry hand-typed genres ('Jam', 'Rock') alongside the
+  // catalog's lowercase set, so genre identity is CASE-INSENSITIVE (else 'Jam'
+  // and 'jam' render as duplicate chips). The chip displays the canonical
+  // Title-case form; filter() matches case-insensitively the same way.
   function genres(list) {
     var seen = {}, out = [];
     (list || []).forEach(function (r) {
@@ -212,9 +208,9 @@
   function keyRank(label) {
     var minor = /m$/.test(label);
     var root = minor ? label.slice(0, -1) : label;
-    // keyLabel() may now display either enharmonic spelling (regime B); canonicalize
-    // a flat root back to its sharp identity (F2S) so the circle-of-fifths chip
-    // order is unaffected by which name is shown ("Bb" ranks where "A#" would).
+    // keyLabel() may display either enharmonic spelling; canonicalize a flat
+    // root back to its sharp identity (F2S) so the circle-of-fifths chip order
+    // is unaffected by which name is shown ("Bb" ranks where "A#" would).
     root = F2S[root] || root;
     var i = KEY_ORDER.indexOf(root);
     return (minor ? 100 : 0) + (i < 0 ? 50 : i);
@@ -233,7 +229,7 @@
     var g = sel.genre && sel.genre !== 'all' ? sel.genre : null;
     var k = sel.key && sel.key !== 'all' ? sel.key : null;
     return (list || []).filter(function (r) {
-      if (g && String(r.genre || '').toLowerCase() !== String(g).toLowerCase()) return false; // genre identity is case-insensitive (UAT 2026-07-19)
+      if (g && String(r.genre || '').toLowerCase() !== String(g).toLowerCase()) return false; // genre identity is case-insensitive
       if (k && keyLabel(r) !== k) return false;
       if (q) {
         var hay = (recTitle(r) + ' ' + recArtist(r)).toLowerCase();

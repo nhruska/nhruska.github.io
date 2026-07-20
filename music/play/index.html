@@ -7,11 +7,10 @@
 <title>Music</title>
 <!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
 <script src="../shared/theme.js"></script>
-<!-- Versioned localStorage boot migration runner (M-6 STORAGE-MIGRATE, shared/
-     storage-migrate.js). Loaded first (before backup.js/songbook.js and every
-     other shared/*.js consumer, and before the pre-paint read just below) so
-     its self-run at load time completes before anything else reads persisted
-     state. Ships this wave as a no-op v1 baseline - see storage-migrate.js. -->
+<!-- Versioned localStorage boot migration runner (shared/storage-migrate.js).
+     Loaded first - before backup.js/songbook.js and every other shared/*.js
+     consumer, and before the pre-paint read just below - so its self-run at
+     load time completes before anything else reads persisted state. -->
 <script src="../shared/storage-migrate.js"></script>
 <script>
 /* Set theme + accent hue before first paint to avoid a flash. The full accent
@@ -43,38 +42,34 @@
 <body>
 <div class="app">
   <div class="appbar">
-    <!-- Offline pill (operator UAT 2026-07-18 "how do I know if it's offline?"):
-         quiet chrome-tier status, visible only while disconnected. The app KEEPS
-         WORKING offline (that's the PWA promise) - the pill just names the state
-         so a failed YouTube thumbnail or search doesn't read as a broken app. -->
+    <!-- Offline pill: quiet chrome-tier status, visible only while disconnected.
+         The app keeps working offline (the PWA promise) - the pill just names the
+         state so a failed YouTube thumbnail or search doesn't read as a broken app. -->
     <div class="brand"><span class="nm">Music</span><span class="tabPill" id="tabPill" aria-hidden="true">Library</span><span class="offlinePill" id="offlinePill" role="status" hidden>Offline</span></div>
-    <!-- The instrument picker moved into Settings > Preferences (operator UAT
-         2026-07-18: switching instruments is occasional, not per-session - the
-         appbar keeps only always-relevant chrome: brand, offline pill, gear). -->
+    <!-- The instrument picker lives in Settings > Preferences - switching
+         instruments is occasional, not per-session, so the appbar keeps only
+         always-relevant chrome: brand, offline pill, gear. -->
     <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    <!-- Operator UAT 2026-07-19 r3 (reversal after living with tour-only
-         orientation): ONE brief functional-purpose line directly under the
-         header, per tab, plus the active-tab pill above. The engine's
-         contexts/ctxLine machinery drives the text (see Songbook.mount). -->
+    <!-- One brief functional-purpose line directly under the header, per tab,
+         plus the active-tab pill above. The engine's contexts/ctxLine machinery
+         drives the text (see Songbook.mount). -->
     <p class="tabPurpose" id="ctxLine"></p>
   </div>
   <div class="view" id="view">
-    <!-- S-GUIDANCE-CALM (operator interview 2026-07-19): the guidanceask and
-         diagrampref ASK banners no longer render inline - the first-run tour
-         and Settings > Preferences own those choices; unset values behave as
-         the safe defaults (beginner grading, dots) until changed there. -->
-    <!-- S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
-         backup-staleness nudge, rendered/managed entirely by the Settings
-         inline script below (renderBackupNudge). Sits OUTSIDE every .screen
-         so it shows above whichever tab is active, not just Library - a
+    <!-- The guidanceask and diagrampref ASK banners no longer render inline - the
+         first-run tour and Settings > Preferences own those choices; unset values
+         behave as the safe defaults (beginner grading, dots) until changed there. -->
+    <!-- One-shot backup-staleness nudge, rendered/managed entirely by the
+         Settings inline script below (renderBackupNudge). Sits OUTSIDE every
+         .screen so it shows above whichever tab is active, not just Library - a
          device-wide concern, unlike the per-Library firstrun/whynote notables. -->
     <div class="notableSlot" id="backupNudgeSlot"></div>
-    <!-- UNIFIED LIBRARY (the merged Repertoire: songs.json + backing tracks, deduped
-         by repertoire.js). Search + Genre + Key chips filter the list; +Add sits on
-         the search row. The old #typeToggle (Repertoire|Set) is retired - the Set /
-         Perform surface is its own main tab now (#s-jam). The old finder tab
-         (#s-tracks) stays hidden so Tracks.mount can still power the Practice
-         Studio, which opens as a <body>-level overlay on tapping a track. -->
+    <!-- Unified Library (the merged Repertoire: songs.json + backing tracks,
+         deduped by repertoire.js). Search + Genre + Key chips filter the list;
+         +Add sits on the search row. The Set / Perform surface is its own main
+         tab (#s-jam). The finder tab (#s-tracks) stays hidden so Tracks.mount
+         can still power the Practice Studio, which opens as a <body>-level
+         overlay on tapping a track. -->
     <section class="screen on" id="s-library">
       <div class="libSearchRow">
         <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
@@ -88,21 +83,20 @@
         <div class="libCount" id="libCount"></div>
         <div class="curateSlot" id="curateSlot"></div>
       </div>
-      <!-- Retired finder container: hidden, retained only so Tracks.mount can power the Studio -->
+      <!-- Finder container: hidden, retained only so Tracks.mount can power the Studio -->
       <div class="libTracks" id="s-tracks" hidden></div>
     </section>
-    <!-- JAM (the Set / Perform surface the old library toggle switched to) -->
+    <!-- Jam: the Set / Perform surface -->
     <section class="screen" id="s-jam">
       <div class="libSet" id="libSet">
-        <!-- UAT 2026-07-16 (operator): Start moves up into the header where Edit
-             was (compact, not a full-width bar); Edit sits to its LEFT; the
-             destructive Clear (✕) is hidden until edit mode and wears red. Order
-             is [✕][Edit][Start] - normal mode hides ✕ -> [Edit][Start]; edit mode
-             hides Start + shows the red ✕ -> [✕][Done]. -->
-        <!-- Operator UAT 2026-07-18: the h2 came out - with the tabbar naming the
-             tab and the intro strip stating its purpose, "My Setlist" was a third
-             restatement; the count line carries the header's information. The
-             head row is STATIC (the songs scroll beneath it, Library-style). -->
+        <!-- Head row layout: Start sits compact in the header (not a full-width
+             bar), Edit to its LEFT, and the destructive Clear (✕) is hidden until
+             edit mode and wears red. Order is [✕][Edit][Start] - normal mode hides
+             ✕ -> [Edit][Start]; edit mode hides Start + shows the red ✕ ->
+             [✕][Done]. -->
+        <!-- No h2 here: the tabbar names the tab and the intro strip states its
+             purpose, so the count line carries the header's information. The head
+             row is STATIC (the songs scroll beneath it, Library-style). -->
         <div class="setHead"><div class="ti"><p id="setCount">No songs yet</p></div>
           <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
           <button class="btn ghost" id="setEdit" title="Edit setlist (reorder / remove)">Edit</button>
@@ -111,19 +105,19 @@
       </div>
     </section>
     <section class="screen" id="s-compose">
-      <!-- FLATTENED Compose (no accordions). Two regions:
+      <!-- Flat Compose (no accordions). Two regions:
              1. .composeTop (FIXED, does NOT scroll): button bar + progression box +
                 compact key/mode chip + In-key|All toggle.
              2. .composeChords (the ONLY scroll area): the chord list.
-           Rationale: the old nested-accordion scroll container trapped vertical swipes on
-           the in-key cells (the lingering swipe bug). With a single flat scroll container
-           the chord cells scroll cleanly. -->
-      <!-- M-GUIDANCE (intermediate tier): key/mode intro on first Compose visit
+           Keep it a single flat scroll container: a nested-accordion scroll
+           container traps vertical swipes on the in-key cells, so the chord cells
+           stop scrolling. -->
+      <!-- Two Notables slots: key/mode intro on first Compose visit
            (renderComposeIntroNotable, listens for music:tab-shown) + the
            transpose==key tip on the first Compose transpose
            (renderTransposeTipNotable, listens for music:compose-transposed).
-           Two slots (not one) since each fires on a different event and only
-           one can ever hold the Notables slot at a time anyway. -->
+           Two slots (not one) since each fires on a different event and only one
+           can hold the Notables slot at a time anyway. -->
       <div class="notableSlot" id="composeIntroSlot"></div>
       <div class="notableSlot" id="transposeTipSlot"></div>
       <div class="composeWrap">
@@ -148,31 +142,29 @@
                top region stays as short as possible. -->
           <div class="progBox">
             <div class="prog" id="prog"></div>
-            <!-- G2 S-POSTPROG-CUE: beginner next-move cue slot; rendered by
-                 renderPostProgNotable below when the progression goes Solo-ready -->
+            <!-- Beginner next-move cue slot; rendered by renderPostProgNotable
+                 below when the progression goes Solo-ready -->
             <div class="notableSlot" id="postProgSlot"></div>
           </div>
           <div class="maxNote" id="maxNote" hidden>Max 12 chords - remove one to add another.</div>
           <!-- Key/mode fly-out, opened by the chip in the button bar (#keyPickerCompact).
-               When hidden it takes NO vertical space (the old standalone chip row is gone -
-               the chip now lives in .ctrlBar). Holds the 12 roots (#keyRoots), the mode
-               toggle (#keyModes), and the key title + Triads & Inversions link
-               (#keyView; the solo scale + HSR moved to the Studio). The In-key|All toggle
-               (#catChips) sits below in the fixed region, but is HIDDEN together
-               with the chord list whenever this fly-out is open (.composeWrap.keyOpen)
-               so Compose needs no vertical scroll. -->
+               When hidden it takes NO vertical space. Holds the 12 roots (#keyRoots),
+               the mode toggle (#keyModes), and the key title + Triads & Inversions
+               link (#keyView). The In-key|All toggle (#catChips) sits below in the
+               fixed region, but is HIDDEN together with the chord list whenever this
+               fly-out is open (.composeWrap.keyOpen) so Compose needs no vertical
+               scroll. -->
           <div class="keyFlyout" id="keyFlyout" hidden>
             <div class="keyRoots" id="keyRoots"></div>
             <div class="chips keyModes" id="keyModes"></div>
             <div class="keyFilterHead"><button class="keyClearBtn" id="keyClear" hidden>Clear key</button></div>
             <div class="keyView" id="keyView"></div>
           </div>
-          <!-- F28+F29 (UI-std UAT): the In-key|All toggle (#catChips) and the Solo
-               entry point share ONE controls row directly above the chord grid
-               (#chordCtrlRow) - the operator flagged the old standalone full-width
-               "Solo over a backing track" CTA as buried below the toggle instead of
-               living beside it. Solo button still hidden until a key + progression
-               exist (toggled by songbook's renderKey - same gate, unchanged). -->
+          <!-- The In-key|All toggle (#catChips) and the Solo entry point share ONE
+               controls row directly above the chord grid (#chordCtrlRow), so Solo
+               lives beside the toggle rather than buried below it. Solo button is
+               hidden until a key + progression exist (toggled by songbook's
+               renderKey). -->
           <div class="chordCtrlRow" id="chordCtrlRow">
             <div class="chips" id="catChips"></div>
             <button class="btn soloRowBtn" id="soloBackingBtn" type="button" title="Solo over it - open the Practice Studio" hidden>Solo</button>
@@ -195,8 +187,8 @@
     </section>
     <section class="screen" id="s-tune">
       <div class="tunerWrap">
-        <!-- M-GUIDANCE (beginner tier): "tune up first" cue on the Tune tab's
-             first visit (renderTuneFirstNotable, listens for music:tab-shown). -->
+        <!-- "Tune up first" cue on the Tune tab's first visit
+             (renderTuneFirstNotable, listens for music:tab-shown). -->
         <div class="notableSlot" id="tuneFirstSlot"></div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub">Tuning</div>
@@ -208,7 +200,7 @@
         </div>
         <div class="sub refSub">Reference tones - tap a letter for a steady pitch.</div>
         <div class="tStrings" id="tStrings"></div>
-        <!-- Accent colour moved to the Settings sheet (gear in the appbar). -->
+        <!-- Accent colour lives in the Settings sheet (gear in the appbar). -->
       </div>
     </section>
   </div>
@@ -221,9 +213,9 @@
 </div>
 <div class="perform" id="perform">
   <div class="pTop"><span class="pos" id="pPos">1 / 1</span>
-    <!-- UAT r5 F7 (operator 2026-07-19): transpose is OUT of the always-on bar
-         (rarely touched mid-performance - it lives in the gear sheet's Key row
-         below); the remaining icons grow to 44px+ stage targets. -->
+    <!-- Transpose is NOT in the always-on bar (rarely touched mid-performance -
+         it lives in the gear sheet's Key row below); the remaining icons grow to
+         44px+ stage targets. -->
     <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls">⚙</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
   <div class="pTitle" id="pTitle"></div>
   <div class="pArtist" id="pArtist"></div>
@@ -238,26 +230,22 @@
 </div>
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
 <!-- Settings sheet: accent colour + whole-songbook backup/restore + which
-     offline build is actually running. Opened by the appbar gear (#settingsBtn). -->
-<!-- M-SETTINGS-CLARITY (2026-07-05): sections are a ONE-AT-A-TIME accordion
-     (shared/accordion.js + the .accSec/.accBtn/.accBody family, songbook.css).
-     Backup/Restore are DATA rows inside "Backup & Restore" (the .listItem card
-     family), NOT footer buttons - the old footer pair read as a Save/Cancel
-     pair and got tapped to dismiss the panel. The footer's ONE action is Done
-     (labeled Done, not Save: every control in this sheet applies on change,
-     so there is nothing staged to save or discard - see the PR).
-     Round 2 (operator UAT): purpose-named sections - Appearance / Preferences /
-     Backup & Restore / About ("&" matches the existing "Triads & Inversions"
-     copy style). -->
-<!-- S-WELCOME (operator interview 2026-07-18): the first-run tour - a 3-panel
-     swipeable sheet shown ONCE on a truly fresh device. Panel 1 gathers the
-     instrument (guitar standard preselected - the widest-audience default),
-     panel 2 folds in the existing "how far along" level ask, panel 3 is the
-     four-tab map (the per-tab purpose copy's permanent home - the appbar
-     carries NO persistent intro text by operator decision). Skipping applies
-     the defaults and never asks again; the level ask card still appears
-     in-app later if skipped here. Existing devices never see this (any prior
-     visit persisted the profile key - see initWelcome's guard). -->
+     offline build is running. Opened by the appbar gear (#settingsBtn). -->
+<!-- Sections are a ONE-AT-A-TIME accordion (shared/accordion.js + the
+     .accSec/.accBtn/.accBody family, songbook.css). Backup/Restore are DATA
+     rows inside "Backup & Restore" (the .listItem card family), NOT footer
+     buttons - a footer pair reads as a Save/Cancel pair and gets tapped to
+     dismiss the panel. The footer's ONE action is Done (labeled Done, not Save:
+     every control in this sheet applies on change, so there is nothing staged to
+     save or discard). Purpose-named sections: Appearance / Preferences / Backup
+     & Restore / About. -->
+<!-- First-run tour - a 3-panel swipeable sheet shown ONCE on a truly fresh
+     device. Panel 1 gathers the instrument (guitar standard preselected - the
+     widest-audience default), panel 2 folds in the "how far along" level ask,
+     panel 3 is the four-tab map. Skipping applies the defaults and never asks
+     again; the level ask card still appears in-app later if skipped here.
+     Existing devices never see this (any prior visit persisted the profile key
+     - see initWelcome's guard). -->
 <div class="welcomeOv" id="welcomeOv" hidden>
   <div class="welcomeCard" role="dialog" aria-modal="true" aria-label="Welcome to Music">
     <button class="x" id="welcomeSkip" type="button" aria-label="Skip intro and use defaults">✕</button>
@@ -291,11 +279,10 @@
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="setHd"><h2 class="setHdTitle"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
     <div class="setPanelBody" id="settingsBody">
-      <!-- S-DIAGRAM-PREF steps 1-2 (2026-07-06): the Settings-row setter, so
-           the dots|patterns pref can be changed any time - not just at the
-           one-time Notables prompt (#diagramPrefSlot above). Section renamed
-           "Preferences" (round 2) - it holds preference toggles; the inner
-           .setLbl keeps naming WHICH preference. -->
+      <!-- The Settings-row setter, so the dots|patterns pref can be changed any
+           time - not just at the one-time Notables prompt. The "Preferences"
+           section holds preference toggles; the inner .setLbl names WHICH
+           preference. -->
       <section class="accSec" data-acc="prefs">
         <button class="accBtn" id="accBtnPrefs" type="button" aria-expanded="false" aria-controls="accBodyPrefs">Preferences</button>
         <div class="accBody" id="accBodyPrefs" role="region" aria-labelledby="accBtnPrefs" hidden>
@@ -304,38 +291,32 @@
           <p class="setHint">Every chord chart, diagram and the tuner follow this. Switching reloads the app.</p>
           <div class="setLbl">Fretboard diagrams</div>
           <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
-          <!-- UAT 2026-07-20: visual preview of each option, aligned under its
-               toggle half, active one highlighted (recognition over recall).
-               Rendered from the SSOT (window.MusicPreview -> the app's real
-               diagram/chart renderers) by populatePrefPreviews() on open, so a
-               rendering change in the app shows up here automatically. -->
+          <!-- Visual preview of each option, aligned under its toggle half, active
+               one highlighted (recognition over recall). Rendered from the SSOT
+               (window.MusicPreview -> the app's real diagram/chart renderers) by
+               populatePrefPreviews() on open, so a rendering change in the app
+               shows up here automatically. -->
           <div class="prefPreview" id="diagramPrefPreview" aria-hidden="true">
             <div class="prefEx" data-m="dots"></div>
             <div class="prefEx" data-m="patterns"></div>
           </div>
           <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
-          <!-- UAT r5 F5 (operator 2026-07-19): chord-chart VISIBILITY moved here
-               from the Compose surface's Shapes toggle. Distinct from Fretboard
-               diagrams above (which styles the diagrams that do render). Follows
-               the guidance level until the user chooses; the choice is global
-               (crosses instrument profiles). -->
+          <!-- Chord-chart VISIBILITY. Distinct from Fretboard diagrams above
+               (which styles the diagrams that do render). Follows the guidance
+               level until the user chooses; the choice is global (crosses
+               instrument profiles). -->
           <div class="setLbl">Chord charts</div>
           <div class="themeSeg" id="chordChartsSeg" role="radiogroup" aria-label="Chord chart display"></div>
-          <!-- UAT 2026-07-20: Charts = the app's real chord diagram; Compact =
-               the app's real compact chip. Rendered from the SSOT, active
-               highlighted. -->
+          <!-- Charts = the app's real chord diagram; Compact = the app's real
+               compact chip. Rendered from the SSOT, active highlighted. -->
           <div class="prefPreview" id="chordChartsPreview" aria-hidden="true">
             <div class="prefEx" data-m="charts"></div>
             <div class="prefEx" data-m="chips"></div>
           </div>
           <p class="setHint">Full charts while you're learning shapes, or compact chord names once you know them. Follows your guidance level until you pick one here.</p>
-          <!-- M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16:
-               "guidance level change needs to follow UI standards" - this
-               SUPERSEDES the 2026-07-05 plain-text-row directive): the
-               standard Settings setter pair, .setLbl + .themeSeg segmented
-               control, mirroring Theme / Fretboard diagrams above. Same
-               storage (music.guidanceLevel.v1), same ask-settling side
-               effect - only the control primitive changed. -->
+          <!-- The standard Settings setter pair, .setLbl + .themeSeg segmented
+               control, mirroring Theme / Fretboard diagrams above. Storage:
+               music.guidanceLevel.v1. -->
           <div class="setLbl">Guidance level</div>
           <div class="themeSeg" id="guidanceLevelSeg" role="radiogroup" aria-label="Guidance level"></div>
           <p class="setHint">Grades the one-time tips and how chord charts render. Advanced collapses chord grids to compact chips.</p>
@@ -373,13 +354,10 @@
           <input type="file" id="restoreFile" accept="application/json,.json" hidden>
         </div>
       </section>
-      <!-- About (round 2, operator UAT): attribution + open-source funnel.
-           Icons are INLINE SVGs (GitHub mark + octicons; fill=currentColor so
-           they take the link ink) - this is an offline-capable PWA, no
-           external asset fetches. Links use the external-link ink (--brass,
-           the Links convention). The footer stamp below STAYS (the operator's
-           stale-detection anchor); #aboutStamp is the same text, one more
-           discoverable home. -->
+      <!-- About: attribution + open-source funnel. Icons are INLINE SVGs (GitHub
+           mark + octicons; fill=currentColor so they take the link ink) - this
+           is an offline-capable PWA, no external asset fetches. Links use the
+           external-link ink (--brass, the Links convention). -->
       <section class="accSec" data-acc="about">
         <button class="accBtn" id="accBtnAbout" type="button" aria-expanded="false" aria-controls="accBodyAbout">About</button>
         <div class="accBody" id="accBodyAbout" role="region" aria-labelledby="accBtnAbout" hidden>
@@ -392,14 +370,12 @@
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
             <span>Report an issue or suggest an improvement</span>
           </a>
-          <!-- F22 (operator UAT 2026-07-05): the "How this app is built"
-               write-up link (a case study of this project) was removed. -->
           <button class="listItem setRow" id="replayTourBtn" type="button">
             <span class="li-title">Replay the intro tour</span>
             <span class="li-artist">The 3-panel welcome walkthrough, any time</span>
           </button>
-          <!-- Operator UAT 2026-07-19 r3: the build stamp lives ONCE, in the
-               settings footer (quick-glance home) - the About copy repeated it. -->
+          <!-- The build stamp lives ONCE, in the settings footer (quick-glance
+               home) - don't repeat it here. -->
         </div>
       </section>
     </div>
@@ -413,23 +389,21 @@
 </div>
 
 <!-- Shared, instrument-agnostic runtime -->
-<!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - loads first since
+<!-- esc.js: the ONE HTML-escape util - loads first since
      list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
      tracks.js all delegate to it. -->
 <script src="../shared/esc.js"></script>
-<!-- toast.js: S-TOAST (UAT U9 fix) - the shared per-host timer-isolation
-     primitive both showToast() and showComposeToast() in songbook.js
-     delegate to. Loads early, alongside esc.js, since any consumer could
-     show a toast. -->
+<!-- toast.js: the shared per-host timer-isolation primitive both showToast()
+     and showComposeToast() in songbook.js delegate to. Loads early, alongside
+     esc.js, since any consumer could show a toast. -->
 <script src="../shared/toast.js"></script>
-<!-- build-stamp.js: M-SETTINGS-CLARITY (2026-07-05) - the authored-at-change-
-     time version + freshness stamp the Settings meta line renders (VERSION
-     mirrors sw.js CACHE, guard-locked by scripts/check-cache-bump.sh).
-     Dependency-free; also loaded by play/triad-inversions.html. -->
+<!-- build-stamp.js: the authored-at-change-time version + freshness stamp the
+     Settings meta line renders (VERSION mirrors sw.js CACHE, guard-locked by
+     scripts/check-cache-bump.sh). Dependency-free; also loaded by
+     play/triad-inversions.html. -->
 <script src="../shared/build-stamp.js"></script>
-<!-- accordion.js: M-SETTINGS-CLARITY (2026-07-05) - the exclusive disclosure
-     group primitive (one open section at a time), consumed by the Settings
-     sheet sections below. Dependency-free. -->
+<!-- accordion.js: the exclusive disclosure group primitive (one open section
+     at a time), consumed by the Settings sheet sections below. Dependency-free. -->
 <script src="../shared/accordion.js"></script>
 <script src="../shared/nav-history.js"></script>
 <script src="../shared/queue.js"></script>
@@ -437,62 +411,63 @@
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
 <script src="../shared/notables.js"></script>
-<!-- M-GUIDANCE (2026-07-05): the beginner|intermediate|advanced experience
-     level (music.guidanceLevel.v1) - loaded right after notables.js, which
-     it grades claims against (see notables.js's LEVELS table). -->
+<!-- guidance-level.js: the beginner|intermediate|advanced experience level
+     (music.guidanceLevel.v1) - loaded right after notables.js, which grades
+     claims against it (see notables.js's LEVELS table). -->
 <script src="../shared/guidance-level.js"></script>
-<!-- S-CHORD-COLLAPSE (2026-07-16): advanced-level compact chord chips for the
-     Compose palettes - reads guidance-level.js (above), consumed lazily by
-     songbook.js (window.ChordCollapse, optional lookup). -->
+<!-- chord-collapse.js: advanced-level compact chord chips for the Compose
+     palettes - reads guidance-level.js (above), consumed lazily by songbook.js
+     (window.ChordCollapse, optional lookup). -->
 <script src="../shared/chord-collapse.js"></script>
 <script src="../shared/repertoire.js"></script>
 <script src="../shared/song-templates.js"></script>
 <script src="../shared/competency.js"></script>
-<!-- S-SKILLS-PORTABLE (2026-07-16): SKILL.md render/parse + store-only zip
-     writer - the Skills panel's open-skills-format export/import
-     (skill-md.js consumes competency.js's exportProfile output). -->
+<!-- skill-md.js: SKILL.md render/parse + store-only zip writer - the Skills
+     panel's open-skills-format export/import (consumes competency.js's
+     exportProfile output). -->
 <script src="../shared/skill-md.js"></script>
 <script src="../shared/zip-store.js"></script>
 <script src="../shared/repertoire-form.js"></script>
-<!-- yt-info.js: U17 (M-TRACKLIB w2a) - keyless YouTube oEmbed lookup + title
-     field-hint parsing, consumed by repertoire-form.js's Video URL suggest
-     row. Resolves Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both
-     load later in this file), so its position here is only "near its
-     consumer", not a hard dependency order. -->
+<!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
+     consumed by repertoire-form.js's Video URL suggest row. Resolves
+     Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both load later in this
+     file), so its position here is only "near its consumer", not a hard
+     dependency order. -->
 <script src="../shared/yt-info.js"></script>
-<!-- M-GUIDE W3a: SoloGuide (per-scale mentor cards + framing) - before songbook.js
-     AND tracks.js so both W3a's Studio and W3b's Compose solo chips can call it. -->
+<!-- solo-guide.js: SoloGuide (per-scale mentor cards + framing) - loads before
+     songbook.js AND tracks.js so both the Studio and the Compose solo chips can
+     call it. -->
 <script src="../shared/solo-guide.js"></script>
 <script src="../shared/songbook.js"></script>
 <script src="../shared/tuner.js"></script>
-<!-- S-DIAGRAM-PREF step 0: curated shape classifier (family/rootString/
-     inversion/barreFret per voicing). Loaded before diagram.js. Dependency-
-     free (no circle.js coupling) - see the module header for why. -->
+<!-- shape-classify.js: curated shape classifier (family/rootString/inversion/
+     barreFret per voicing). Loaded before diagram.js. Dependency-free (no
+     circle.js coupling) - see the module header for why. -->
 <script src="../shared/shape-classify.js"></script>
-<!-- S-DIAGRAM-PREF steps 1-2: the dots|patterns preference + the decision of
-     what label (if any) 'patterns' mode shows - the ONE place that knows
-     both "the pref key is music.diagram.pref.v1" and "ask ShapeClassify for
-     a label." Loaded after shape-classify.js (consumes it), before diagram.js
-     (diagram.js itself stays agnostic of both - see its own header). -->
+<!-- diagram-pref.js: the dots|patterns preference + the decision of what label
+     (if any) 'patterns' mode shows - the ONE place that knows both "the pref key
+     is music.diagram.pref.v1" and "ask ShapeClassify for a label." Loaded after
+     shape-classify.js (consumes it), before diagram.js (which stays agnostic of
+     both - see its own header). -->
 <script src="../shared/diagram-pref.js"></script>
 <script src="../shared/diagram.js"></script>
-<!-- M-EAR wave 1.6 (U16): the Legend primitive (dot-swatch + label rows) -
-     loads after diagram.js (the fretboard-dot renderer whose kx-* classes it
-     mirrors), before tracks.js's openStudio calls Legend.render(). -->
+<!-- legend.js: the Legend primitive (dot-swatch + label rows) - loads after
+     diagram.js (the fretboard-dot renderer whose kx-* classes it mirrors),
+     before tracks.js's openStudio calls Legend.render(). -->
 <script src="../shared/legend.js"></script>
 <script src="../shared/audio.js"></script>
-<!-- M-EAR wave 1: zero-dependency scale/mode audition (Sound.playScale) -
-     loads after audio.js (thematically the other shared audio primitive),
-     before tracks.js/songbook.js's toggle wiring calls it. -->
+<!-- sound.js: zero-dependency scale/mode audition (Sound.playScale) - loads
+     after audio.js (the other shared audio primitive), before
+     tracks.js/songbook.js's toggle wiring calls it. -->
 <script src="../shared/sound.js"></script>
-<!-- M-TRACKLIB wave 1: curated genre x feel jam-discovery query data - loads
+<!-- jam-queries.js: curated genre x feel jam-discovery query data - loads
      before tracks.js so the Studio's "Find a jam" panel can call it. -->
 <script src="../shared/jam-queries.js"></script>
 <script src="../shared/tracks.js"></script>
 <script src="../shared/candidates.js"></script>
-<!-- S-EXTRACT (analysis-refactor-enhance-20260704 A3/A7): the chord-pack
-     adapter + the chord-suggestion map used to live inline in this file's
-     bootstrap script below (untestable); both are now shared modules. -->
+<!-- chord-pack-adapter.js + sugg.js: the chord-pack adapter + the
+     chord-suggestion map, extracted into shared modules so they're testable
+     (not inline in the bootstrap script below). -->
 <script src="../shared/chord-pack-adapter.js"></script>
 <script src="../shared/sugg.js"></script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
@@ -502,17 +477,12 @@
   'use strict';
   function el(id) { return document.getElementById(id); }
 
-  // chord-progression suggestion map: moved to shared/sugg.js (S-EXTRACT,
-  // analysis-refactor-enhance-20260704 A7) - was inline + untested here.
+  // chord-progression suggestion map (shared/sugg.js).
   var SUGG = window.Sugg.SUGG;
-  // Per-tab intro copy (operator UAT 2026-07-18): purpose + next step, not a
-  // noun-phrase - the strip is each tab's one orienting sentence (copy-coach:
-  // verb-first, beginner vocabulary, name the action the user came to do).
-  // Per-tab orientation: ONE compact purpose line under the header (operator
-  // UAT 2026-07-19 r3 - revived after living with the tour-only design: "add
-  // back brief functional purpose value description... for each tab"). The
-  // engine's contexts/ctxLine machinery renders it; the tour's map panel
-  // remains the long-form orientation.
+  // Per-tab intro copy: ONE compact purpose line under the header, each tab's
+  // one orienting sentence (verb-first, name the action the user came to do).
+  // The engine's contexts/ctxLine machinery renders it; the tour's map panel is
+  // the long-form orientation.
   var CONTEXTS_BASE = { library: 'Tap a song to play it - the + saves it to your setlist', compose: 'Build chord progressions and songs', tracks: 'Find a track in your key', practice: 'Now playing', jam: 'Your songs, show-ready - hit Start to perform' };
   var TAB_LABELS = { library: 'Library', jam: 'Setlist', compose: 'Compose', tune: 'Tune', tracks: 'Tracks', practice: 'Playing' };
   window.addEventListener('music:tab-shown', function (ev) {
@@ -520,13 +490,11 @@
     if (pill && ev && ev.detail && TAB_LABELS[ev.detail.tab]) pill.textContent = TAB_LABELS[ev.detail.tab];
   });
 
-  // rootFreq / movable-shape fallback / buildAdapter: moved to shared/
-  // chord-pack-adapter.js (S-EXTRACT, analysis-refactor-enhance-20260704 A3)
-  // - was inline + untestable-except-via-regex-extraction here. See
-  // window.ChordPackAdapter.buildAdapter(profile), called below in start().
-  // S-DIAGRAM-PREF steps 1-2's patternLabel wiring (diagram/diagramClosed/
-  // diagramChain computing the label via DiagramPref.labelFor()) lives
-  // inside that module now too - see its own comments.
+  // rootFreq / movable-shape fallback / buildAdapter live in shared/
+  // chord-pack-adapter.js. See window.ChordPackAdapter.buildAdapter(profile),
+  // called below in start(). The patternLabel wiring (diagram/diagramClosed/
+  // diagramChain computing the label via DiagramPref.labelFor()) lives in that
+  // module too - see its own comments.
 
   function loadScript(src) {
     return new Promise(function (res, rej) {
@@ -544,10 +512,10 @@
   //   5. whatever Object.keys returns (last-resort; non-deterministic because
   //      profile scripts settle in load-completion order, not append order)
   var PROFILE_KEY = 'music.activeProfile.v1';
-  // S-WELCOME existing-user signal: EVERY prior visit persists the profile key
-  // (see the boot chain below), so its presence at parse time - BEFORE this
-  // boot's own persist runs - cleanly separates a lived-in device from a
-  // truly fresh one. Captured here, consumed by initWelcome().
+  // Existing-user signal: EVERY prior visit persists the profile key (see the
+  // boot chain below), so its presence at parse time - BEFORE this boot's own
+  // persist runs - cleanly separates a lived-in device from a truly fresh one.
+  // Captured here, consumed by initWelcome().
   var hadProfileKey = false;
   try { hadProfileKey = !!localStorage.getItem(PROFILE_KEY); } catch (e) {}
   function activeId(profiles, manifestOrder) {
@@ -595,19 +563,17 @@
     };
   }
 
-  /* S-WELCOME (operator interview 2026-07-18): the one-time 3-panel tour.
-   * Shown only on a truly fresh device (no persisted profile key, no chosen
-   * guidance level). Panel 1 picks the instrument (guitar-standard
-   * preselected - the widest-audience default); panel 2 is the SAME level
-   * choice the in-app ask offers (same storage, same ask-settling side
-   * effect); panel 3 maps the four tabs. Skip (the X / hardware back)
-   * applies the defaults and never asks again - except the level, which
-   * stays unset so the in-app ask can still teach later. */
+  /* The one-time 3-panel tour. Shown only on a truly fresh device (no
+   * persisted profile key, no chosen guidance level). Panel 1 picks the
+   * instrument (guitar-standard preselected - the widest-audience default);
+   * panel 2 is the SAME level choice the in-app ask offers (same storage, same
+   * ask-settling side effect); panel 3 maps the four tabs. Skip (the X /
+   * hardware back) applies the defaults and never asks again - except the
+   * level, which stays unset so the in-app ask can still teach later. */
   var WELCOME_KEY = 'music.welcomeDone.v1';
   function initWelcome(profiles, activeKey, manifestOrder) {
-    // ?welcome=1 forces the tour on ANY device - the reviewer's replay hook.
-    // A lived-in origin (githack previews carry weeks of UAT localStorage)
-    // silently marks the tour done, so without this there is no way to
+    // ?welcome=1 forces the tour on ANY device - the replay hook. A lived-in
+    // origin silently marks the tour done, so without this there is no way to
     // eyeball the flow short of clearing site data.
     var forced = /[?&]welcome=1/.test(location.search);
     if (!forced) {
@@ -732,8 +698,8 @@
     // scale + chord shapes for a track's key. Mounted here (not earlier) so the pack exists.
     var tracksEl = el('s-tracks');
     var songbookCtl = null;
-    // M3: tracks.js still mounts (hidden) to power the Practice Studio + supply the
-    // track catalog for the merged repertoire. onReady fires when tracks.json loads,
+    // tracks.js mounts (hidden) to power the Practice Studio + supply the track
+    // catalog for the merged repertoire. onReady fires when tracks.json loads,
     // so the repertoire rebuilds once the track data is in.
     var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
       container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
@@ -742,9 +708,9 @@
       // -hidden finder tab, making the whole curation queue unreachable otherwise).
       curateBarEl: el('curateSlot'),
       onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); },
-      // Task 2 requirement 4: the Studio's "Edit this track to add a video" link
-      // (t.custom items only) opens the M2 Add/Edit form. songbookCtl doesn't exist
-      // yet at mount time (built just below), so this indirects through the closure.
+      // The Studio's "Edit this track to add a video" link (t.custom items only)
+      // opens the Add/Edit form. songbookCtl doesn't exist yet at mount time
+      // (built just below), so this indirects through the closure.
       onEditRequest: function (t) { if (songbookCtl && songbookCtl.openEditOrAdd) songbookCtl.openEditOrAdd(t); },
       // Attach a video to a custom song inline from the Studio (returns the updated
       // studio-shaped record so the Studio can re-render with the embed).
@@ -757,11 +723,12 @@
       contexts: contexts,
       profileId: profile.id, // carried onto the "walk the cycle" inversions deep-link (?p=)
       suggestions: SUGG,
-      // M3: the merged repertoire reads the track catalog (seed + URL overlay + custom)
-      // from tracks.js, and opens the Practice Studio for a track / composed key.
+      // The merged repertoire reads the track catalog (seed + URL overlay +
+      // custom) from tracks.js, and opens the Practice Studio for a track /
+      // composed key.
       getTracks: function () { return tracksCtl ? tracksCtl.getTracks() : []; },
       openStudio: function (t) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t); },
-      // P3 fallback (no-op when openStudio is wired): seed the finder with a built key.
+      // Fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
         songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
@@ -784,27 +751,24 @@
         ctxLine: el('ctxLine')
       }
     });
-    // S-CHORD-COLLAPSE (Volley 3 High #1): narrow window seam so the Settings
-    // script block (a SEPARATE <script> closure below - songbookCtl is not in
-    // its scope) can live-apply a guidance-level change to already-rendered
-    // Compose grids. Function-wrapped, not the controller itself: the other
-    // block gets exactly one capability, nothing else leaks.
+    // Narrow window seam so the Settings script block (a SEPARATE <script>
+    // closure below - songbookCtl is not in its scope) can live-apply a
+    // guidance-level change to already-rendered Compose grids. Function-wrapped,
+    // not the controller itself: the other block gets exactly one capability,
+    // nothing else leaks.
     window.songbookRefreshCompose = function () {
       if (songbookCtl && songbookCtl.refreshCompose) songbookCtl.refreshCompose();
     };
   }
 
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-  // esc.js (loaded earlier in this file's script order) - was one of ~8
-  // divergent local copies.
+  // Delegates to the shared esc.js (loaded earlier in this file's script order).
   function esc(s) { return Esc.esc(s); }
-  // Operator UAT 2026-07-17 ("I've lost every song I've built? there can't be
-  // a hard fail like that ever"): a boot failure must NEVER read as data loss.
-  // Saved songs/setlists live in this device's localStorage and are untouched
-  // by a failed script/asset load - say so FIRST, offer the one-tap recovery
-  // (reload re-fetches; the SW cache or a fresh CDN fetch usually heals a
-  // partial load), and only then the technical detail. esc() may itself be
-  // the missing module in a partial load, so fall back to textContent.
+  // A boot failure must NEVER read as data loss. Saved songs/setlists live in
+  // this device's localStorage and are untouched by a failed script/asset load
+  // - say so FIRST, offer the one-tap recovery (reload re-fetches; the SW cache
+  // or a fresh CDN fetch usually heals a partial load), and only then the
+  // technical detail. esc() may itself be the missing module in a partial load,
+  // so fall back to textContent.
   function fail(msg) {
     var list = el('songsList');
     if (!list) return;
@@ -849,9 +813,8 @@
         .then(function (songs) { start(profile, songs); });
     })
     .catch(function (err) {
-      // Only blame the serving scheme when that IS the problem (file://) -
-      // a script/CDN hiccup got this generic message before and read as a
-      // scary dead-end (operator UAT 2026-07-17).
+      // Only blame the serving scheme when that IS the problem (file://) - a
+      // script/CDN hiccup should not read as a scary dead-end.
       var hint = (location.protocol === 'file:')
         ? ' This page must be served over http(s) - open it via GitHub Pages or a local server.'
         : ' This is usually a stale or partial download (a CDN preview mid-update, a flaky connection) - reloading normally fixes it.';
@@ -870,14 +833,12 @@
 (function () {
   'use strict';
   // a = accent, d = dim (borders), p = deep (tinted backgrounds)
-  // LAUNCH REBRAND (operator 2026-07-20 "bold colors across the spectrum like
-  // cigarette elite - red, green, gold, silver, blue"): a curated bold JEWEL
-  // spectrum, 1-2 shades per hue, on the calm dark base (jewel accent, not a
-  // flood - the "one calm screen" principle holds). Style only, no semantic
-  // color-coding. Tuner red/amber/green stay FIXED (pitch-feedback trust) and
-  // are untouched by this list. d/p mix each accent toward the #0d0f12 canvas
-  // (~29% / ~14%), matching the pre-rebrand swatches; Teal + Amethyst keep
-  // their heritage hex so a saved pick carries over.
+  // A curated bold jewel spectrum, 1-2 shades per hue, on the calm dark base
+  // (jewel accent, not a flood - the "one calm screen" principle holds). Style
+  // only, no semantic color-coding. Tuner red/amber/green stay FIXED
+  // (pitch-feedback trust) and are untouched by this list. d/p mix each accent
+  // toward the #0d0f12 canvas (~29% / ~14%); Teal + Amethyst keep their heritage
+  // hex so a saved pick carries over.
   var PALETTE = [
     { n: 'Teal',     a: '#5eead4', d: '#244b45', p: '#16302c' },
     { n: 'Ruby',     a: '#fb3b5c', d: '#521c27', p: '#2e151c' },
@@ -895,10 +856,10 @@
   var ACCENT_KEY = 'music.accent.v1';
   var THEME_KEY = 'music.theme.v1';   // 'auto' | 'light' | 'dark'
   var LAST_BACKUP_KEY = 'music.lastBackup.v1';
-  // M-SETTINGS-CLARITY: the Restore row's own last-run stamp - same shape and
-  // same backup.js EXCLUDE treatment as LAST_BACKUP_KEY (device-local; a
-  // restored envelope must not overwrite THIS device's restore time). Both
-  // are registered in engineering-wiki/systems/data-model.md.
+  // The Restore row's own last-run stamp - same shape and same backup.js
+  // EXCLUDE treatment as LAST_BACKUP_KEY (device-local; a restored envelope
+  // must not overwrite THIS device's restore time). Both are registered in
+  // engineering-wiki/systems/data-model.md.
   var LAST_RESTORE_KEY = 'music.lastRestore.v1';
   var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
 
@@ -911,9 +872,9 @@
     return Theme.effectiveTheme(storedTheme(), !!(mql && mql.matches));
   }
   // Apply the accent for the ACTIVE theme. Dark uses each swatch's hand-tuned
-  // dim/deep (pixel-identical to pre-theme builds) with ink = the vivid accent.
-  // Light re-derives pale dim/deep + a darkened, legible ink from the accent hue
-  // via color-mix, so ANY picked accent stays readable on light surfaces. (shared: theme.js)
+  // dim/deep with ink = the vivid accent. Light re-derives pale dim/deep + a
+  // darkened, legible ink from the accent hue via color-mix, so ANY picked
+  // accent stays readable on light surfaces. (shared: theme.js)
   function apply(t) {
     var vars = Theme.accentVars(effectiveTheme(), t.a, t.d, t.p), r = document.documentElement.style;
     for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) r.setProperty(k, vars[k]); }
@@ -946,10 +907,9 @@
   // bring THIS device's stored data up to the current schema before the app reads it
   try { if (window.Backup) Backup.runMigrations(localStorage); } catch (e) {}
 
-  // M-SETTINGS-CLARITY: the old relative-time relWhen() retired with the
-  // footer's "Last backed up" line - the Backup/Restore rows show a full
-  // locale date+time via BuildStamp.fmt() (the ONE datetime formatter, so
-  // the rows and the footer stamp always read the same way).
+  // The Backup/Restore rows show a full locale date+time via BuildStamp.fmt()
+  // (the ONE datetime formatter, so the rows and the footer stamp always read
+  // the same way).
   function lastRunText(prefix, iso) {
     if (!iso) return prefix + ': never';
     var when = window.BuildStamp ? BuildStamp.fmt(iso) : '';
@@ -961,18 +921,17 @@
     document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
   }
 
-  /* ---- M-DESIGN-ENFORCE wave 2 (UAT U19): app-styled TOAST + MODAL for the
-   * Settings backup/restore flow - replaces every native alert()/confirm()
-   * there (the U19 directive's named KNOWN offender). Reuses the SAME
-   * shared primitives/classes songbook.js's Compose surface already ships
-   * (toast.js Toast.show; the composeModalBackdrop/composeRow.asModal
-   * pattern; NavHistory) rather than inventing a second visual language -
-   * see ui-primitives.md/component-conventions.md for the taxonomy this
-   * implements (TOAST = outcome, MODAL = decision, never a native dialog). */
+  /* App-styled TOAST + MODAL for the Settings backup/restore flow - replaces
+   * every native alert()/confirm() there. Reuses the SAME shared
+   * primitives/classes songbook.js's Compose surface ships (toast.js
+   * Toast.show; the composeModalBackdrop/composeRow.asModal pattern;
+   * NavHistory) rather than inventing a second visual language - see
+   * ui-primitives.md/component-conventions.md for the taxonomy this implements
+   * (TOAST = outcome, MODAL = decision, never a native dialog). */
   var setToastEl = null;
-  // TOAST: every backup/restore OUTCOME (success or error) that used to be
-  // a blocking alert(). Errors get a longer 3000ms window (same convention
-  // showComposeToast already uses) since they carry more to read.
+  // TOAST: every backup/restore OUTCOME (success or error). Errors get a longer
+  // 3000ms window (same convention showComposeToast uses) since they carry more
+  // to read.
   function showSettingsToast(msg, isErr) {
     if (!window.Toast) return; // defensive - toast.js always loads earlier in this file's script order
     if (!setToastEl) { setToastEl = document.createElement('div'); setToastEl.className = 'toast'; document.body.appendChild(setToastEl); }
@@ -1084,10 +1043,10 @@
       markTheme(storedTheme());
     }
 
-    /* S-DIAGRAM-PREF steps 1-2 (2026-07-06): Dots / Patterns segmented control -
-       the Settings-row setter for music.diagram.pref.v1 (shared/diagram-pref.js
-       owns the storage; this is DOM glue only, mirroring the Theme control
-       above verbatim - same .themeSeg/.thSeg classes, same wiring shape). */
+    /* Dots / Patterns segmented control - the Settings-row setter for
+       music.diagram.pref.v1 (shared/diagram-pref.js owns the storage; this is
+       DOM glue only, mirroring the Theme control above - same .themeSeg/.thSeg
+       classes, same wiring shape). */
     var dpWrap = document.getElementById('diagramPrefSeg');
     var DIAGRAM_PREFS = [['dots', 'Dots'], ['patterns', 'Patterns']];
     function markDiagramPref(val) {
@@ -1117,10 +1076,9 @@
       markDiagramPref(DiagramPref.get());
     }
 
-    /* UAT r5 F5 (2026-07-19): Chord charts - the Settings-row setter for
-       music.chordCharts.v1 ('charts' | 'chips'), replacing the Compose-surface
-       Shapes toggle. Same .themeSeg/.thSeg wiring as diagramPrefSeg above
-       (Element Consistency Law). The highlighted option is the EFFECTIVE
+    /* Chord charts - the Settings-row setter for music.chordCharts.v1
+       ('charts' | 'chips'). Same .themeSeg/.thSeg wiring as diagramPrefSeg
+       above (Element Consistency Law). The highlighted option is the EFFECTIVE
        state: an explicit choice if stored, else the guidance-level default
        (advanced -> Compact, everyone else -> Charts). */
     var ccWrap = document.getElementById('chordChartsSeg');
@@ -1160,15 +1118,13 @@
       markChartsPref();
     }
 
-    /* M-GUIDANCE, restyled S-SETTINGS-UAT (operator UAT 2026-07-16 -
-       supersedes the 2026-07-05 plain-text-row directive): the standard
-       .themeSeg segmented control, wired verbatim like diagramPrefSeg
-       above (Element Consistency Law - one setter primitive, three
-       consumers: Theme, Fretboard diagrams, Guidance level). An unset
-       level (ask not yet answered) MARKS "Beginner" - the same safe
-       default the ask's dismiss path persists - but nothing is WRITTEN
-       until the user taps a segment. renderGuidanceLevelRow keeps its
-       name: the one-time ask's choose() calls it to sync this control. */
+    /* Guidance level - the standard .themeSeg segmented control, wired like
+       diagramPrefSeg above (Element Consistency Law - one setter primitive,
+       three consumers: Theme, Fretboard diagrams, Guidance level). An unset
+       level (ask not yet answered) MARKS "Beginner" - the same safe default the
+       ask's dismiss path persists - but nothing is WRITTEN until the user taps
+       a segment. The one-time ask's choose() calls renderGuidanceLevelRow to
+       sync this control. */
     var GUIDANCE_LEVELS = [['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']];
     var glWrap = document.getElementById('guidanceLevelSeg');
     function guidanceLevelOrDefault() { return (window.GuidanceLevel && GuidanceLevel.get()) || 'beginner'; }
@@ -1191,12 +1147,11 @@
           // the user just answered the same question the ask asks (mirrors
           // the diagramPref Settings-row precedent right above).
           if (window.Notables) Notables.dismiss('guidanceask');
-          // S-CHORD-COLLAPSE live refresh (the #256 window seam - live since
-          // that merge): a level change applies to already-rendered Compose
-          // grids immediately.
+          // Live refresh (the window seam): a level change applies to
+          // already-rendered Compose grids immediately.
           if (window.songbookRefreshCompose) window.songbookRefreshCompose();
-          // UAT r5 F5: with no explicit chord-charts choice stored, the charts
-          // row highlights the level default - keep it honest on level change.
+          // With no explicit chord-charts choice stored, the charts row
+          // highlights the level default - keep it honest on level change.
           if (typeof markChartsPref === 'function') markChartsPref();
         };
         glWrap.appendChild(b);
@@ -1204,26 +1159,24 @@
       renderGuidanceLevelRow();
     }
 
-    /* M-SETTINGS-CLARITY: the sections are ONE-AT-A-TIME accordion sections
-       (shared/accordion.js owns the exclusivity state; the .accSec/.accBtn/
-       .accBody visual family lives in songbook.css). Per-open state only -
-       every openSettings() starts all-collapsed (the disclosure-family
-       contract in component-conventions.md), except a caller that names a
-       section (the backup nudge opens straight to "Backup & Restore"). */
+    /* The sections are ONE-AT-A-TIME accordion sections (shared/accordion.js
+       owns the exclusivity state; the .accSec/.accBtn/.accBody visual family
+       lives in songbook.css). Per-open state only - every openSettings() starts
+       all-collapsed (the disclosure-family contract in
+       component-conventions.md), except a caller that names a section (the
+       backup nudge opens straight to "Backup & Restore"). */
     var accSections = [], accIndexByKey = {};
     Array.prototype.forEach.call(document.querySelectorAll('#settingsBody .accSec'), function (sec, i) {
       accSections.push({ btn: sec.querySelector('.accBtn'), body: sec.querySelector('.accBody') });
       if (sec.dataset && sec.dataset.acc) accIndexByKey[sec.dataset.acc] = i;
     });
-    // Named group (S-SETTINGS-UAT): late-injected sections (the Skills panel
-    // mounts after the async Songbook.mount) JOIN this group via
-    // Accordion.join('settings', ...) instead of running a parallel
-    // accordion - one exclusivity state for the whole sheet.
+    // Named group: late-injected sections (the Skills panel mounts after the
+    // async Songbook.mount) JOIN this group via Accordion.join('settings', ...)
+    // instead of running a parallel accordion - one exclusivity state for the
+    // whole sheet.
     var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections, { name: 'settings' }) : null;
 
-    /* About section (round 2): the same authored stamp as the footer, one
-       more discoverable home. Static content - render once. */
-    // S-WELCOME UAT round 2: replay the intro tour on demand. Reuses the
+    // Replay the intro tour on demand. Reuses the
     // ?welcome=1 force path (current instrument preselected there, so a
     // tap-through never switches the profile). Profile survives the search
     // reset via the persisted PROFILE_KEY.
@@ -1277,19 +1230,17 @@
         }
       });
     }
-    /* M-SETTINGS-CLARITY: the meta line leads with the authored build stamp
-       ("v117 - updated <local date+time>", shared/build-stamp.js) so "is what
-       I'm looking at fresh?" is answered at a glance, online or offline. The
-       SW round-trip then flags the one state the stamp alone can't see: page
-       assets from one build while an OLDER worker is still active (its CACHE
-       tag differs from the stamp's guard-locked VERSION mirror). */
+    /* The meta line leads with the authored build stamp (shared/build-stamp.js)
+       so "is what I'm looking at fresh?" is answered at a glance, online or
+       offline. The SW round-trip then flags the one state the stamp alone can't
+       see: page assets from one build while an OLDER worker is still active (its
+       CACHE tag differs from the stamp's guard-locked VERSION mirror). */
     function showVersion() {
       var el = document.getElementById('appVer'); if (!el) return;
       var base = window.BuildStamp ? BuildStamp.text() : 'Music';
-      // #OFFLINE-READY (operator UAT 2026-07-18 "ready for offline?"): answer
-      // the question in plain words. No controller = not saved yet, and the
-      // fix is stated (a reload while online lets the worker install); a
-      // controller in agreement = saved, say so positively.
+      // Answer "ready for offline?" in plain words. No controller = not saved
+      // yet, and the fix is stated (a reload while online lets the worker
+      // install); a controller in agreement = saved, say so positively.
       if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { el.textContent = base + ' - not saved for offline yet (reload once while online)'; return; }
       el.textContent = base + ' - saved for offline';
       try {
@@ -1335,19 +1286,17 @@
     if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeSettings(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
-    /* S-GUIDANCE-CALM (operator interview 2026-07-19): renderGuidanceAsk and
-       renderDiagramPrefPrompt are RETIRED - the ask banners were inline
-       clutter next to the first-run tour. The tour asks the level once;
-       Settings > Preferences carries both choices forever after. Unset
-       means the safe defaults (beginner-graded tips stay quiet via the
-       notables LEVELS gate; DiagramPref.get() defaults dots). */
+    /* No inline ask banners here: the first-run tour asks the level once, and
+       Settings > Preferences carries both the level and diagram choices
+       thereafter. Unset means the safe defaults (beginner-graded tips stay quiet
+       via the notables LEVELS gate; DiagramPref.get() defaults dots). */
 
-    /* M-GUIDANCE (beginner tier): "tune up first" JIT cue on the Tune tab's
-       first visit. Trigger: songbook.js's applyTab() dispatches
-       music:tab-shown on EVERY tab render (including the initial tab
-       restore at boot, not just button-click switches) - see its header.
-       Plain accent-card banner via the shared Notables.renderBanner (same
-       shape as firstrun/whynote's simple-text consumers), never hand-rolled. */
+    /* "Tune up first" JIT cue on the Tune tab's first visit. Trigger:
+       songbook.js's applyTab() dispatches music:tab-shown on EVERY tab render
+       (including the initial tab restore at boot, not just button-click
+       switches) - see its header. Plain accent-card banner via the shared
+       Notables.renderBanner (same shape as firstrun/whynote's simple-text
+       consumers), never hand-rolled. */
     function renderTuneFirstNotable(ev) {
       var slot = document.getElementById('tuneFirstSlot');
       if (!slot || !window.Notables || !window.GuidanceLevel) return;
@@ -1365,8 +1314,8 @@
     }
     window.addEventListener('music:tab-shown', renderTuneFirstNotable);
 
-    /* M-GUIDANCE (intermediate tier): key/mode intro JIT cue on the Compose
-       tab's first visit. Same trigger + shape as renderTuneFirstNotable above. */
+    /* Key/mode intro JIT cue on the Compose tab's first visit. Same trigger +
+       shape as renderTuneFirstNotable above. */
     function renderComposeIntroNotable(ev) {
       var slot = document.getElementById('composeIntroSlot');
       if (!slot || !window.Notables || !window.GuidanceLevel) return;
@@ -1384,10 +1333,9 @@
     }
     window.addEventListener('music:tab-shown', renderComposeIntroNotable);
 
-    /* M-GUIDANCE (intermediate tier): "transpose moves the key with it" JIT
-       cue on the first Compose transpose tap. Trigger: songbook.js's
-       composeTpose() dispatches music:compose-transposed on every transpose -
-       see its header. */
+    /* "Transpose moves the key with it" JIT cue on the first Compose transpose
+       tap. Trigger: songbook.js's composeTpose() dispatches
+       music:compose-transposed on every transpose - see its header. */
     function renderTransposeTipNotable() {
       var slot = document.getElementById('transposeTipSlot');
       if (!slot || !window.Notables || !window.GuidanceLevel) return;
@@ -1404,14 +1352,13 @@
     }
     window.addEventListener('music:compose-transposed', renderTransposeTipNotable);
 
-    /* G2 S-POSTPROG-CUE (beginner tier): the after-you-build next move. Fires
-       when the progression first goes Solo-ready (key + chords - songbook.js
-       dispatches music:compose-progression from its solo-visibility seam).
-       Copy-coach: beginner vocabulary budget, action-first, names the on-screen
-       button. Pedagogy: one thing, moment of relevance, show-once. Tapping
-       Solo IS the goal - songbook dispatches music:compose-solo and the cue
-       dismisses itself for good, releasing the one-tip journey slot (so the
-       Studio orientation tip can claim next). */
+    /* The after-you-build next move. Fires when the progression first goes
+       Solo-ready (key + chords - songbook.js dispatches music:compose-progression
+       from its solo-visibility seam). Copy: beginner vocabulary budget,
+       action-first, names the on-screen button. One thing, moment of relevance,
+       show-once. Tapping Solo IS the goal - songbook dispatches
+       music:compose-solo and the cue dismisses itself for good, releasing the
+       one-tip journey slot (so the Studio orientation tip can claim next). */
     function renderPostProgNotable(ev) {
       var slot = document.getElementById('postProgSlot');
       if (!slot || !window.Notables || !window.GuidanceLevel) return;
@@ -1435,14 +1382,13 @@
       if (slot) slot.innerHTML = '';
     });
 
-    /* S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): one-shot
-       backup-staleness nudge in the free LOWEST Notables priority slot
+    /* One-shot backup-staleness nudge in the LOWEST Notables priority slot
        ('backup' - after firstrun/whynote/roman, notables.js PRIORITY). The
        eligibility/message decision is pure (Backup.songCount + .backupNudgeState,
        shared/backup.js); this is just the DOM glue - claim the slot, render the
-       shared .notableBanner into #backupNudgeSlot, tap opens Settings (no new
-       UI surface), and auto-RELEASE (never dismiss) the instant a backup
-       actually completes so the banner can't linger showing stale advice. */
+       shared .notableBanner into #backupNudgeSlot, tap opens Settings (no new UI
+       surface), and auto-RELEASE (never dismiss) the instant a backup completes
+       so the banner can't linger showing stale advice. */
     function renderBackupNudge() {
       var slot = document.getElementById('backupNudgeSlot');
       if (!slot || !window.Notables || !window.Backup) return;
@@ -1515,18 +1461,18 @@
           // Only slice a STRING exportedAt - a malformed-but-valid payload could carry
           // a number/object here, which would throw on .slice().
           var when = (typeof payload.exportedAt === 'string') ? ' from ' + payload.exportedAt.slice(0, 10) : '';
-          // MODAL (replaces native confirm() - U19): a decision the user must
-          // resolve, app-styled, dim backdrop, never a native dialog.
+          // MODAL (replaces native confirm()): a decision the user must resolve,
+          // app-styled, dim backdrop, never a native dialog.
           openConfirmModal(
             'This backup' + when + ' contains:\n\n' + manifest + '\n\nRestore onto this device? It adds to and overwrites these items. It will not delete anything already here.',
             'Restore',
             function () {
               try { Backup.restore(localStorage, payload); } catch (e) { showSettingsToast('Restore failed: ' + e.message, true); return; }
-              // M-SETTINGS-CLARITY: stamp THIS device's restore time (the
-              // Restore row's meta). Written after the restore so a restore
-              // that throws never records a run; survives the reload below
-              // because it's already in localStorage (and backup.js EXCLUDEs
-              // it, so a future backup file never carries it).
+              // Stamp THIS device's restore time (the Restore row's meta).
+              // Written after the restore so a restore that throws never records
+              // a run; survives the reload below because it's already in
+              // localStorage (and backup.js EXCLUDEs it, so a future backup file
+              // never carries it).
               try { localStorage.setItem(LAST_RESTORE_KEY, new Date().toISOString()); } catch (e) {}
               renderLastRestore();
               // Non-blocking outcome toast, then a short beat so it's actually
@@ -1553,13 +1499,11 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(function () { });
-    // #OFFLINE-READY one-shot cue (operator UAT 2026-07-18 "should I be cued
-    // to download?"): the download is AUTOMATIC (the worker precaches on
-    // first visit - zero-friction by design), so the cue's job is to CONFIRM,
-    // once, that it happened: the first time this browser is controlled by
-    // the worker, a single toast names the VALUE (operator UAT: functional purpose,
-    // not "now" framing): songs, chords and tuner work without internet.
-    // One-shot via localStorage (the notables earned-silence grammar).
+    // One-shot cue: the download is AUTOMATIC (the worker precaches on first
+    // visit - zero-friction by design), so the cue's job is to CONFIRM, once,
+    // that it happened. The first time this browser is controlled by the worker,
+    // a single toast names the value: songs, chords and tuner work without
+    // internet. One-shot via localStorage (the notables earned-silence grammar).
     var CUE_KEY = 'music.offlineReadyCued.v1';
     function cueOnce() {
       try {
@@ -1582,9 +1526,9 @@ if ('serviceWorker' in navigator) {
     else navigator.serviceWorker.addEventListener('controllerchange', cueOnce);
   });
 }
-// #OFFLINE-PILL (operator UAT 2026-07-18): reflect connectivity in the
-// appbar. navigator.onLine is the browser's own signal - coarse, but the
-// pill is informational chrome, never a gate (the app works either way).
+// Reflect connectivity in the appbar. navigator.onLine is the browser's own
+// signal - coarse, but the pill is informational chrome, never a gate (the app
+// works either way).
 (function () {
   var pill = document.getElementById('offlinePill');
   if (!pill) return;

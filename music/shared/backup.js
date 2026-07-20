@@ -32,33 +32,29 @@
   // composed progressions and perform prefs, so it MUST be captured. `songbook.` is
   // the engine's default prefix (other mount points). Missing `roadcase-` here is a
   // data-loss bug: the setlist + progressions would silently not back up. `tri.` is
-  // play/triad-inversions.html's own namespace (activeKey/dismissed/firstVisitSeen) -
-  // added by S-BACKUP-INTEGRATE (M-6 follow-up #3); it was a pre-existing gap this
-  // inventory surfaced, not introduced by it (see engineering-wiki/systems/data-model.md).
+  // play/triad-inversions.html's own namespace (activeKey/dismissed/firstVisitSeen).
   var OWNED_PREFIXES = ['songbook.', 'roadcase-', 'bt.', 'music.', 'tri.'];
   // ...except these: dev-only scratch, the schema marker, and the device-local
   // "last backed up" stamp (carrying an old stamp into a restore would mislead).
   //
   // Deliberately NOT excluded: 'music.schema.version' (StorageMigrate's own version
   // marker, shared/storage-migrate.js VERSION_KEY). It falls under the 'music.'
-  // prefix like everything else and is left in the envelope on purpose (S-BACKUP-
-  // INTEGRATE, M-6 follow-up #1+#2, superseding storage-migrate.js's own header note
-  // that suggested excluding it). The pair "version travels WITH the data" + "restore
-  // replays StorageMigrate.run() below" is the correct design: a backup must carry
-  // the SOURCE device's true migration-runner version alongside its data, so restoring
-  // it (fresh device, or a device rolled back to an older backup) stamps that TRUE
-  // version rather than leaving the DESTINATION's own marker sitting over brand-new
-  // (possibly older-shape) data. If we excluded it, the destination's pre-existing
-  // marker (or none, on a fresh device) would look "already current" to the runner
-  // even though the data it now holds is only as new as the backup's schema - and
-  // any migration that data still needs would be silently skipped. Keeping the two
-  // keys in lockstep, then replaying the runner immediately after write, is what
-  // makes an old backup restore cleanly into a build with newer migrations.
+  // prefix like everything else and is left in the envelope on purpose. The pair
+  // "version travels WITH the data" + "restore replays StorageMigrate.run() below"
+  // is the correct design: a backup must carry the SOURCE device's true
+  // migration-runner version alongside its data, so restoring it (fresh device, or a
+  // device rolled back to an older backup) stamps that TRUE version rather than
+  // leaving the DESTINATION's own marker sitting over brand-new (possibly
+  // older-shape) data. If we excluded it, the destination's pre-existing marker (or
+  // none, on a fresh device) would look "already current" to the runner even though
+  // the data it now holds is only as new as the backup's schema - and any migration
+  // that data still needs would be silently skipped. Keeping the two keys in
+  // lockstep, then replaying the runner immediately after write, is what makes an old
+  // backup restore cleanly into a build with newer migrations.
   //
-  // music.lastRestore. (M-SETTINGS-CLARITY, 2026-07-05) mirrors the
-  // music.lastBackup. reasoning exactly: it is THIS device's own restore
-  // time (the Settings Restore row's meta) - restoring a backup must not
-  // overwrite when the DESTINATION device last ran a restore.
+  // music.lastRestore. mirrors the music.lastBackup. reasoning exactly: it is THIS
+  // device's own restore time (the Settings Restore row's meta) - restoring a backup
+  // must not overwrite when the DESTINATION device last ran a restore.
   var EXCLUDE = ['music.devlog.', 'music.lastBackup.', 'music.lastRestore.', SCHEMA_KEY];
 
   // Ordered migrations. MIGRATIONS[n] upgrades the {key:value} map FROM (n-1)
@@ -186,23 +182,20 @@
     var data = migrate(payload.data, payload.schema);
     var stamp = {}; stamp[SCHEMA_KEY] = String(SCHEMA_VERSION);
     var written = applyAtomic(store, data, stamp);
-    // POST-RESTORE MIGRATION REPLAY (S-BACKUP-INTEGRATE, M-6 follow-up #2). The
-    // write above just landed on `store` (the payload's own 'music.schema.version'
-    // travels inside `data` - see the EXCLUDE comment above for why that key is
-    // deliberately left in the envelope), so this device is now stamped with the
-    // SOURCE device's true StorageMigrate version sitting on top of the data that
-    // version actually describes. Replay the runner now so any migration the
-    // restored data still needs (registered after the backup was taken, or never
-    // run at all if the backup predates storage-migrate.js entirely) applies
-    // immediately instead of waiting for the next full page load. Only runs where
-    // the runner is actually wired: today that is play/index.html only (loaded
-    // before backup.js there) - triad-inversions.html never loads backup.js at all,
-    // so restore() is unreachable there regardless; the guard is defensive, not
-    // load-bearing, matching this file's own dependency-free-module discipline (no
-    // top-level require of storage-migrate.js). Never lets a migration hiccup here
-    // undo an already-successful restore: StorageMigrate.run() already fails soft
-    // internally (quota/blocked storage), and the try/catch is belt-and-suspenders
-    // in case a future version of that contract changes.
+    // POST-RESTORE MIGRATION REPLAY. The write above just landed on `store` (the
+    // payload's own 'music.schema.version' travels inside `data` - see the EXCLUDE
+    // comment above for why that key is deliberately left in the envelope), so this
+    // device is now stamped with the SOURCE device's true StorageMigrate version
+    // sitting on top of the data that version actually describes. Replay the runner
+    // now so any migration the restored data still needs (registered after the backup
+    // was taken, or never run at all if the backup predates storage-migrate.js
+    // entirely) applies immediately instead of waiting for the next full page load.
+    // Only runs where the runner is actually wired (play/index.html loads it before
+    // backup.js); the typeof guard is defensive, matching this file's own
+    // dependency-free-module discipline (no top-level require of storage-migrate.js).
+    // A migration hiccup here must never undo an already-successful restore:
+    // StorageMigrate.run() fails soft internally (quota/blocked storage), and the
+    // try/catch is belt-and-suspenders in case that contract ever changes.
     if (typeof StorageMigrate !== 'undefined' && StorageMigrate && typeof StorageMigrate.run === 'function') {
       try { StorageMigrate.run(store); } catch (e) { /* restore already succeeded; migration replay is best-effort */ }
     }
@@ -278,10 +271,9 @@
     return lines;
   }
 
-  // S-BACKUP-NUDGE (analysis-refactor-enhance-20260704 B2): thresholds for the
-  // one-shot backup-staleness nudge (rendered via the free 'backup' Notables
-  // priority slot in play/index.html). Below NUDGE_MIN_SONGS the data-loss risk
-  // is low enough to stay silent; above it, the clock only matters once it has
+  // Thresholds for the one-shot backup-staleness nudge (rendered via the 'backup'
+  // Notables priority slot in play/index.html). Below NUDGE_MIN_SONGS the data-loss
+  // risk is low enough to stay silent; above it, the clock only matters once it has
   // actually run past NUDGE_STALE_DAYS (or never run at all).
   var NUDGE_MIN_SONGS = 3;
   var NUDGE_STALE_DAYS = 30;

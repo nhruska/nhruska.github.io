@@ -1,17 +1,13 @@
 /* =====================================================================
- * competency.js  -  M-COMPETENCY LZ (2026-07-11): the app maintains a
- * per-skill COMPETENCY PROFILE that grows from what the musician actually
- * DOES in the app, stored locally, and exports/imports as a portable
- * skill-competency-profile/v1 document. The Music app is the first
- * consumer of the operator's portable competency pattern (the ccp side is
- * already merged; the ids below MUST match it byte-for-byte).
+ * competency.js - per-skill COMPETENCY PROFILE that grows from what the
+ * musician actually does in the app, stored locally, and exported/imported
+ * as a portable skill-competency-profile/v1 document.
  * ---------------------------------------------------------------------
- * PRIVACY: this repo is PUBLIC. This file ships only the GENERIC
- * FRAMEWORKS (skill/competency ids, names, descriptions, targets - all
- * publishable). A user's LEVELS + evidence live ONLY in their own
- * localStorage (key `music.competency.v1`) and in a file they export;
- * nothing personal is ever committed here. Import = the user loads their
- * OWN profile file at runtime.
+ * PRIVACY: this repo is PUBLIC, so this file ships only the GENERIC
+ * FRAMEWORKS (skill/competency ids, names, descriptions, targets). A user's
+ * LEVELS + evidence live ONLY in their own localStorage (key
+ * `music.competency.v1`) and in a file they export; nothing personal is
+ * committed here. Import = the user loads their own profile file at runtime.
  *
  * Pure + dependency-free (same shape as backup.js / build-stamp.js): every
  * function takes an optional trailing Storage-LIKE object so tests drive a
@@ -19,8 +15,8 @@
  * presentation (the Settings Skills panel) lives in songbook.js. Exposes
  * window.Competency and require()-able in Node.
  *
- * ADDITIVE storage (backup.js rule): ONE new key under the already-owned
- * `music.` namespace, so backup.js snapshots/restores it with zero schema
+ * Storage is ADDITIVE (backup.js rule): ONE key under the already-owned
+ * `music.` namespace, so backup.js snapshots/restores it with no schema
  * bump. The value is a map { [skillId]: profile }.
  *
  * The portable document (schema "skill-competency-profile/v1"):
@@ -37,8 +33,8 @@
   var EXPORT_SOURCE = 'app:music';
 
   // ---- FRAMEWORKS: the generic, publishable competency maps. ids are the
-  // portable contract (verbatim - the ccp side keys on them); names + descs
-  // are UI-facing and may be shortened without breaking portability.
+  // portable contract - keep them verbatim; names + descs are UI-facing and
+  // may be shortened without breaking portability.
   var FRAMEWORKS = [
     {
       id: 'stringed-instrument', name: 'Stringed instrument',
@@ -190,7 +186,7 @@
   // stamp last_evidence, move the level (diminishing, capped). Additive write
   // to the ONE key. Returns {ok, ...} or {ok:false, reason}. `note` is
   // reserved for a future evidence log (unused today - kept in the signature
-  // so the call sites and the ccp contract stay stable).
+  // so call sites and the portable contract stay stable).
   function recordEvidence(skillId, competencyId, note, store) {
     var map = load(store);
     var p = map[skillId] || blankProfile(skillId);
@@ -274,19 +270,14 @@
     return merged;
   }
 
-  // Load a user's exported profile at runtime and merge it into the working
-  // copy. Validates schema + a known skill; tolerates missing preferences and
-  // unknown competency ids. Returns {ok, skill} or {ok:false, reason}.
-  // S-SKILLS-PORTABLE (operator UAT 2026-07-16): flexible skill resolution.
-  // The portable contract stays the framework ID, but a document whose
-  // `skill` differs only in case/whitespace, or that carries a framework's
-  // display NAME instead of its id ("Ukulele" for 'ukulele'), resolves to
-  // the framework rather than bouncing. Anything that resolves to no
-  // shipped framework is still DENIED - competencies merge INTO a known
-  // framework's profile, so there is nothing sensible to attach an unknown
-  // skill to (unknown COMPETENCY ids inside a known skill remain additive-
-  // tolerated, see mergeInto). The deny reason now names the known ids so
-  // a bounced file is self-diagnosing.
+  // Resolve an imported document's `skill` to a shipped framework id.
+  // The portable contract is the framework id, but a `skill` that differs
+  // only in case/whitespace, or that carries a framework's display NAME
+  // instead of its id ("Ukulele" for 'ukulele'), still resolves. Anything
+  // that resolves to no shipped framework returns null (DENIED): competencies
+  // merge INTO a known framework's profile, so there is nothing sensible to
+  // attach an unknown skill to. Unknown COMPETENCY ids inside a known skill
+  // stay additive-tolerated (see mergeInto).
   function resolveSkillId(raw) {
     if (FRAMEWORK_BY_ID[raw]) return raw;
     var norm = String(raw == null ? '' : raw).trim().toLowerCase();
@@ -325,7 +316,7 @@
     nextLevel: nextLevel,
     blankProfile: blankProfile,
     mergeInto: mergeInto,
-    resolveSkillId: resolveSkillId, // S-SKILLS-PORTABLE: flexible id/name resolution
+    resolveSkillId: resolveSkillId, // flexible id/name resolution
 
     // storage-backed API (optional trailing store; browser falls back to localStorage)
     load: load,

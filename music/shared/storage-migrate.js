@@ -1,65 +1,49 @@
 /* =====================================================================
  * storage-migrate.js  -  general-purpose, versioned localStorage boot
- * migration runner (M-6 STORAGE-MIGRATE, D-STORAGE-LS-MIGRATE, gh #76/#77).
+ * migration runner.
  * ---------------------------------------------------------------------
- * PURPOSE. Today every ad-hoc storage-shape change is hand-rolled inline in
- * its own loader - songbook.js's loadPerfPrefs() falls back from perfprefs.v2
- * to perfprefs.v1 with a value transform; tracks.js's migrateUrls() re-keys
- * trackUrls.v1 entries under LEGACY_TRACKKEYS. Both work, but each is a
- * one-off, undiscoverable, and easy to forget when a NEW breaking change
- * lands. This file is the seam so the NEXT one is one registered migration,
- * not another hand-rolled defensive read: register(fromVersion, fn) once,
- * and run() (called automatically at boot - see the bottom of this file)
- * applies whatever is pending.
+ * A single registrable seam for breaking localStorage-shape changes.
+ * Instead of each loader hand-rolling its own defensive fallback read, a
+ * breaking change becomes one registered step: register(fromVersion, fn)
+ * once, and run() (called automatically at boot - see the bottom of this
+ * file) applies whatever is pending and stamps the version marker.
  *
- * NOT A REPLACEMENT FOR shared/backup.js. backup.js already owns a very
- * similar SCHEMA_VERSION/MIGRATIONS engine (music.schema.v1), but it is
- * scoped to backup.js's OWNED_PREFIXES and its migrations transform a
- * {key:value} DATA MAP (for the whole-snapshot backup/restore path). THIS
- * runner is lower-level and broader: register(fromVersion, fn) migrations
- * receive the LIVE Storage-like object directly (not a copied map) and are
- * not restricted to any prefix list - any current or future key qualifies.
- * The two compose (see "Known composition gap" below), they do not compete.
+ * Distinct from shared/backup.js. backup.js has its own
+ * SCHEMA_VERSION/MIGRATIONS engine scoped to its OWNED_PREFIXES, whose
+ * migrations transform a {key:value} DATA MAP for the backup/restore path.
+ * This runner is lower-level and broader: its migrations receive the LIVE
+ * Storage-like object directly (not a copied map) and are not restricted to
+ * any prefix list - any current or future key qualifies. The two compose,
+ * they do not compete.
  *
- * SHIPPED STATE THIS WAVE: CURRENT = 1, REGISTRY = {} (empty). This is a
- * behavior-preserving no-op baseline - the value delivered now is the RAIL
- * (a versioned, registrable seam + a stamped marker key), not a migration.
- * No existing key changes shape in this commit.
+ * FRESH INSTALL vs PRE-RUNNER INSTALL (the "absent marker" ambiguity). An
+ * absent VERSION_KEY means either (a) a brand-new device with no app data -
+ * stamp CURRENT, nothing to migrate - or (b) an older device whose data
+ * predates this runner ("implicit v0") and never wrote the marker. Rule:
+ * absent marker + ANY known-prefix key present -> treat as version 0 and run
+ * every registered migration up to CURRENT; absent marker + NO known-prefix
+ * key -> fresh install, stamp CURRENT with no migrations. KNOWN_PREFIXES is
+ * a superset of backup.js's OWNED_PREFIXES (adds 'tri.', see gotcha) so a
+ * device holding only triad-inversions prefs is not misclassified as fresh.
  *
- * FRESH INSTALL vs PRE-RUNNER INSTALL (the "absent marker" ambiguity). When
- * VERSION_KEY is absent, that means either (a) a brand-new device with no
- * app data at all - stamp CURRENT directly, nothing to migrate - or (b) an
- * existing user's device that predates this file ever shipping - its data
- * has been in "implicit v0" the whole time and never had a chance to write
- * the marker. The rule this file applies: absent marker + ANY known-prefix
- * key present -> treat as version 0 and run every registered migration up
- * to CURRENT. Absent marker + NO known-prefix key present -> fresh install,
- * stamp CURRENT with no migrations run. KNOWN_PREFIXES below is therefore a
- * superset of backup.js's OWNED_PREFIXES (it also lists 'tri.', the
- * triad-inversions.html prefix backup.js does not capture - see the gap
- * note below) so this detector does not misclassify a device that only has
- * triad-inversions prefs as "fresh."
+ * ---- Public API + seam invariants ----
+ *   VERSION_KEY ('music.schema.version') stays IN the backup envelope, NOT
+ *     excluded: a backup carries the schema version of its data, and
+ *     backup.js restore() replays run() afterward, so old backups migrate
+ *     correctly. Excluding it would leave a NEW marker over OLD restored data
+ *     and silently skip migrations.
+ *   register(fromVersion, fn) / run(store) / readVersion(store) /
+ *     hasLegacyData(store) - all take a Storage-LIKE object (real
+ *     localStorage or a test fake), so nothing here is global except the one
+ *     auto-run side effect at the bottom of this file.
  *
- * Composition with backup.js (RESOLVED 2026-07-04, PR #138 - supersedes this
- * file's original follow-up notes):
- *   1. VERSION_KEY ('music.schema.version') DELIBERATELY stays IN the backup
- *      envelope (NOT excluded): a backup carries the schema version of its
- *      data, and restore() replays this runner afterward, so old backups
- *      migrate correctly. Excluding it would leave a NEW version marker over
- *      OLD restored data and silently skip migrations.
- *   2. backup.js restore() now calls StorageMigrate.run() after a successful
- *      atomic apply (guarded; see backup.js).
- *   3. play/triad-inversions.html's 'tri.*' keys are outside backup.js's
- *      OWNED_PREFIXES entirely (a pre-existing gap, not introduced here) -
- *      those prefs are not currently backed up/restored at all. Documented
- *      here because this file's inventory pass surfaced it; fixing it is a
- *      backup.js change, out of this file's scope.
+ * GOTCHA: play/triad-inversions.html's 'tri.*' keys are outside backup.js's
+ * OWNED_PREFIXES, so they are not backed up/restored at all. Listed here in
+ * KNOWN_PREFIXES only so this runner's fresh-install detector sees them;
+ * fixing the backup gap is a backup.js change, out of scope here.
  *
  * Pure + dependency-free: exported for Node unit tests AND attached to
- * window.StorageMigrate in the browser (same dual-mode pattern as
- * backup.js). Every function takes a Storage-LIKE object (real localStorage,
- * or a tiny fake in tests) so nothing here is global except the one
- * documented auto-run side effect at the bottom of this file.
+ * window.StorageMigrate in the browser (same dual-mode pattern as backup.js).
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -68,32 +52,30 @@
   // older version. Add the matching REGISTRY[n] step (register(n-1, fn)) in
   // the SAME change - see register() below.
   var CURRENT = 1;
-  // Device-local implementation marker, NOT user data. Deliberately named
-  // distinctly from backup.js's own SCHEMA_KEY ('music.schema.v1') - the two
-  // markers track two different engines (see the module header). Falls
-  // under the 'music.' prefix per KNOWN_PREFIXES/backup.js's OWNED_PREFIXES;
-  // see "Known composition gaps" #1 above for the pending backup.js exclusion.
+  // Device-local implementation marker, NOT user data. Named distinctly from
+  // backup.js's own SCHEMA_KEY ('music.schema.v1') because the two markers
+  // track two different engines (see the module header). Falls under the
+  // 'music.' prefix per KNOWN_PREFIXES.
   var VERSION_KEY = 'music.schema.version';
 
-  // Every prefix this app has ever stored data under. Kept as a literal,
-  // load-order-safe copy (NOT a reference to window.Backup.OWNED_PREFIXES) -
-  // this file loads BEFORE backup.js (play/index.html script order), so it
-  // cannot depend on window.Backup existing yet. Superset of backup.js's
-  // OWNED_PREFIXES (adds 'tri.' - see the module header gap note). Update
-  // alongside backup.js's OWNED_PREFIXES and
-  // test/helpers/local-storage-reset.js's DEFAULT_PREFIXES if the app adds a
-  // new storage prefix.
+  // Every prefix this app has ever stored data under. A literal copy, NOT a
+  // reference to window.Backup.OWNED_PREFIXES: this file loads BEFORE
+  // backup.js (play/index.html script order), so window.Backup may not exist
+  // yet. Superset of backup.js's OWNED_PREFIXES (adds 'tri.'). Keep in sync
+  // with backup.js's OWNED_PREFIXES and
+  // test/helpers/local-storage-reset.js's DEFAULT_PREFIXES when a new storage
+  // prefix is added.
   var KNOWN_PREFIXES = ['songbook.', 'roadcase-', 'bt.', 'music.', 'tri.'];
 
   // Ordered migration registry. REGISTRY[n] brings a device FROM (n-1) TO n.
-  // Empty today (see module header - this wave ships the no-op baseline).
+  // Empty at CURRENT = 1 (the runner rail, no migrations registered yet).
   var REGISTRY = {};
 
   // Register a migration step. `fn(storageLike)` MUST mutate the live store
-  // directly (get/set/removeItem - not return a new map; contrast with
-  // backup.js's MIGRATIONS, which transform a data map) and MUST be
-  // idempotent - run() may invoke it on a device that already partially
-  // applied it if an earlier step in the same run() call threw.
+  // directly (get/set/removeItem - not return a new map, unlike backup.js's
+  // MIGRATIONS which transform a data map) and MUST be idempotent - run() may
+  // invoke it on a device that already partially applied it if an earlier
+  // step in the same run() call threw.
   function register(fromVersion, fn) {
     if (typeof fromVersion !== 'number' || fromVersion < 0 || (fromVersion | 0) !== fromVersion) {
       throw new Error('StorageMigrate.register: fromVersion must be a non-negative integer');
@@ -140,10 +122,10 @@
   }
 
   // Run every pending migration on `store`, in order, then stamp CURRENT.
-  // Never throws - a failure (quota, storage blocked) fails soft, same as
-  // backup.js's runMigrations(); a partial/failed run leaves result.to
-  // short of CURRENT so the caller can tell, and the NEXT boot retries from
-  // wherever readVersion() finds the marker (or re-detects legacy data).
+  // Never throws - a failure (quota, storage blocked) fails soft; a
+  // partial/failed run leaves result.to short of CURRENT so the caller can
+  // tell, and the NEXT boot retries from wherever readVersion() finds the
+  // marker (or re-detects legacy data).
   // Returns { from: int|null, to: int|null, ran: string[] } - `ran` lists
   // each applied step as "fromVersion->toVersion"; `from`/`to` are null only
   // if `store` isn't Storage-like at all (nothing was touched).
@@ -157,8 +139,8 @@
       if (from >= CURRENT) {
         // Nothing pending: either a fresh install stamping CURRENT for the
         // first time, or a marker already at/ahead of CURRENT (a newer
-        // build's stamp on an older cached page) - never step it backward,
-        // mirroring backup.js's downgrade guard.
+        // build's stamp seen by an older cached page) - never step it
+        // backward.
         if (readVersion(store) === null) store.setItem(VERSION_KEY, String(from));
         result.to = from;
         return result;
@@ -188,14 +170,12 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   if (root) {
     root.StorageMigrate = API;
-    // Auto-run at script load, browser only. This IS the "wire at app boot"
-    // step: play/index.html adds exactly one <script> tag (no inline call),
-    // placed as the very first script tag (right after theme.js, before the
-    // pre-paint theme/accent read and every shared/*.js consumer) so this
-    // completes before backup.js/songbook.js or anything else reads
-    // persisted state. Guarded end-to-end: root.localStorage access itself
-    // can throw in some private-browsing modes, so this never assumes it's
-    // safe to touch.
+    // Auto-run at script load, browser only - the app-boot wiring. This
+    // <script> is placed first in play/index.html (right after theme.js,
+    // before every shared/*.js consumer) so migration completes before
+    // backup.js/songbook.js or anything else reads persisted state. Guarded:
+    // root.localStorage access itself can throw in some private-browsing
+    // modes, so never assume it is safe to touch.
     try { if (root.localStorage) run(root.localStorage); } catch (e) { /* storage blocked - app still runs */ }
   }
 })(typeof window !== 'undefined' ? window : null);

@@ -1,18 +1,17 @@
 /* =====================================================================
- * song-templates.js  -  M-12 S-SDD-TEMPLATES: a deterministic, runtime
- * song-template library mined from the song catalog (songs.json), plus a
- * canonical proven-families table. Feeds the upcoming song wizard (M-13).
+ * song-templates.js - a deterministic, runtime song-template library
+ * mined from the song catalog (songs.json), plus a canonical
+ * proven-families table.
  *
  * Pure functions only - no DOM, no fetch. Callers pass the songs array in
  * (same "pure core, presentation stays out" shape as repertoire.js/tracks.js).
  * No build step. Exposes window.SongTemplates, and require()-able in Node.
  *
  * Key inference reuses Repertoire.deriveKey (the app's ONE key-inference path -
- * "a song's first chord is its working tonic", per repertoire.js/list-item.js)
- * so a mined pattern's roman analysis always agrees with what the Library
- * badge and the Studio already call "the key". Roman analysis reuses
- * Circle.romanFor (the app's ONE degree-analysis path, per tracks.js
- * inferSoloDefault) - never a second theory implementation.
+ * "a song's first chord is its working tonic") so a mined pattern's roman
+ * analysis always agrees with what the Library badge and the Studio already
+ * call "the key". Roman analysis reuses Circle.romanFor (the app's ONE
+ * degree-analysis path) - never a second theory implementation.
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -37,19 +36,15 @@
   }
 
   // ---- FAMILIES: canonical proven progression families (roman, key-
-  // independent) - songwriting-coach's proven-families table, home = the
-  // section they conventionally belong to ('verse'|'chorus'|'any'). Every
-  // roman token here is a bare degree (no quality markers) - families don't
-  // assert 7ths/dim/aug, only the degree shape.
-  // S-PROG-GUIDANCE (operator UAT 2026-07-17: "I could use that level of
-  // guidance when choosing standard progressions" - the Studio solo view's
-  // WHEN/RESOLVE ladder is the stated bar). Each family carries authored
-  // guidance the chooser can reveal:
+  // independent), home = the section they conventionally belong to
+  // ('verse'|'chorus'|'any'). Every roman token here is a bare degree (no
+  // quality markers) - families don't assert 7ths/dim/aug, only the degree
+  // shape. Each family carries authored guidance the chooser can reveal:
   //   feel - the mood in plain words (beginner vocabulary budget)
   //   when - the genre/situation it serves
-  //   note - the canon-proof one-liner (pre-existing; the PROVEN row)
-  // songwriting-coach rule: every family is canon-PROVEN - it shipped in real
-  // songs - never theory-true-but-song-false.
+  //   note - the canon-proof one-liner (the PROVEN row)
+  // Every family is canon-PROVEN - it shipped in real songs - never
+  // theory-true-but-song-false.
   var FAMILIES = [
     {
       id: 'axis', name: 'Axis (I-V-vi-IV)', roman: ['I', 'V', 'vi', 'IV'], home: 'chorus',
@@ -236,9 +231,9 @@
     Object.keys(mined).forEach(function (label) {
       if (normSectionKey(label) === normKey) minedList = mined[label];
     });
-    // S-PROG-GUIDANCE: signature -> family lookup, so a mined catalog pattern
-    // that IS a known family (the catalog's own I-V-vi-IV) still carries that
-    // family's feel/when/note guidance - dedupe must never cost the story.
+    // signature -> family lookup, so a mined catalog pattern that IS a known
+    // family (the catalog's own I-V-vi-IV) still carries that family's
+    // feel/when/note guidance - dedupe must never cost the story.
     var famBySig = {};
     FAMILIES.forEach(function (f) { famBySig[f.roman.join(',')] = f; });
     var seen = {}, out = [];

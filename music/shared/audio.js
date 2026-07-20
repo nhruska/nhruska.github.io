@@ -12,14 +12,11 @@
  *   ChordAudio.freqForString(openFreq, fret)      - helper
  *   ChordAudio.ksRender(sampleRate, freq, dur, o) - pure DSP (node-testable)
  *
- * REAL-FEEL ENGINE (why it's built this way):
- *   The old engine plucked each string with two oscillators (triangle +
- *   sine at 2.001x) and a fixed exponential decay - clean, but obviously
- *   synthetic and identical every tap. A real strummed chord is a *plucked
- *   string* (Karplus-Strong: a noise burst fed round a tuned delay line
- *   that a damping filter slowly bleeds), swept by a hand so the strings
- *   don't all speak at once or at the same volume, coloured by a wooden
- *   body and the room. This engine models each of those:
+ * REAL-FEEL ENGINE (the model):
+ *   A strummed chord is modelled as plucked strings (Karplus-Strong: a
+ *   noise burst fed round a tuned delay line that a damping filter slowly
+ *   bleeds), swept by a hand so the strings don't all speak at once or at
+ *   the same volume, coloured by a wooden body and the room:
  *     - ksRender()  : the string itself (physical-model pluck), pure math
  *                     so it renders identically in Node and the browser and
  *                     needs zero audio assets (stays a lean offline PWA).
@@ -28,30 +25,24 @@
  *     - the master bus : the body + room - body-resonance peak, a taming
  *                     lowpass, a short generated reverb, and a safety
  *                     compressor so six summed strings never clip.
- *   tone() is deliberately left as a clean sustained tone (NOT a pluck):
- *   it's the tuner's pitch reference and must stay stable and uncoloured.
+ *   tone() is deliberately a clean sustained tone (NOT a pluck): it's the
+ *   tuner's pitch reference and must stay stable and uncoloured.
  * ===================================================================== */
 (function (global) {
   'use strict';
 
   var AC = null;
   function ctx() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); return AC; }
-  // Be a polite audio citizen: a *running* WebAudio context claims the device's
-  // audio focus, which pauses other apps' playback (Spotify etc.) on Android.
-  // So we DON'T warm the context up on page load / first tap — it's created
-  // lazily only when a chord actually sounds, and suspended again shortly after
-  // the sound ends so background audio resumes. (Suspended releases focus.)
-  // Be a polite audio citizen WITHOUT killing tap latency. We suspend only after
-  // a genuine idle gap (well past the longest note + a comfortable margin), so a
-  // run of taps during a jam keeps the context warm and notes fire instantly.
-  // Suspending the instant a note's envelope ended made every tap re-pay the
-  // hardware resume cost (the ~0.5s lag) — that's the regression this fixes.
-  // UAT regression (2026-07-18, tap-to-strum gap): 4s was far too aggressive
-  // for how a musician actually uses this - tap a chord, LISTEN, think, tap
-  // again. Gaps between evaluative taps routinely exceed 4s, so nearly every
-  // tap re-paid the hardware resume cost the idle-release note above
-  // describes. 20s keeps an evaluation session warm; audio focus still
-  // releases (Spotify resumes) once the user has genuinely moved on.
+  // A *running* WebAudio context claims the device's audio focus, which pauses
+  // other apps' playback (Spotify etc.) on Android. So the context is created
+  // lazily only when a chord actually sounds, and suspended again once idle so
+  // background audio resumes (suspended releases focus).
+  // Suspend only after a genuine idle gap, NOT the instant a note's envelope
+  // ends: a hardware resume costs ~0.5s of lag, so releasing too eagerly makes
+  // every tap during a jam re-pay it. The gap must exceed how a musician
+  // actually plays - tap a chord, listen, think, tap again - so 20s keeps an
+  // evaluation session warm while still releasing focus once the user has
+  // genuinely moved on.
   var IDLE_RELEASE_MS = 20000;
   var idleTimer = null;
   function releaseWhenIdle(secondsFromNow) {
@@ -63,29 +54,28 @@
 
   function freqForString(openFreq, fret) { return openFreq * Math.pow(2, fret / 12); }
 
-  // Run `play` against a running context. If the context is already running
-  // (the common jam case) we schedule SYNCHRONOUSLY — zero added latency. Only
-  // when it's been suspended (after a long idle, or on the very first tap) do we
-  // go through resume()'s promise, because scheduling against a frozen
-  // currentTime would drop the note.
-  // play(wasRunning) - callers use the flag to pick their scheduling pad: a
-  // RUNNING context schedules reliably ~6ms out; only the resume path keeps
-  // the generous 20ms pad (the clock just unfroze).
+  // Run `play` against a running context. If it's already running (the common
+  // jam case) schedule SYNCHRONOUSLY - zero added latency; only when suspended
+  // (after a long idle, or the very first tap) go through resume()'s promise,
+  // because scheduling against a frozen currentTime would drop the note.
+  // play(wasRunning): callers use the flag to pick their scheduling pad - a
+  // running context schedules reliably ~6ms out, the just-resumed path needs
+  // the generous 20ms pad because its clock just unfroze.
   function whenRunning(a, play) {
     if (a.state === 'running') { play(true); return; }
     a.resume().then(function () { play(false); });
   }
 
-  /* ---- voice cache (UAT regression 2026-07-18: tap-to-strum latency) ----
-   * The KS engine re-rendered every string on every tap - synchronous work on
-   * the UI thread, right between the finger and the sound. But taps repeat
-   * the same string pitches constantly, so the render is cacheable IF the
-   * per-tap micro-detune stops changing the render input: detune now rides
-   * the SOURCE's playbackRate instead (pitch still shimmers per tap, cache
-   * still hits). Key = semitone + brightness bucket + duration bucket; LRU
-   * capped so a long session can't hoard buffers (~24 x ~300KB max). Two
-   * variants per key keep tap-to-tap life (different noise seeds), rotated.
-   * Pure key/LRU logic exported for tests. */
+  /* ---- voice cache -------------------------------------------------------
+   * Re-rendering every string's KS buffer on each tap is synchronous work on
+   * the UI thread, right between the finger and the sound. Taps repeat the
+   * same string pitches constantly, so the render is cacheable - as long as
+   * the per-tap micro-detune rides the SOURCE's playbackRate (see pluckKS)
+   * rather than the render input (pitch still shimmers per tap, cache still
+   * hits). Key = semitone + brightness bucket + duration bucket; LRU capped so
+   * a long session can't hoard buffers (~24 x ~300KB max). Two variants per
+   * key (different noise seeds) rotate for tap-to-tap life. Pure key/LRU logic
+   * exported for tests. */
   var VoiceCache = {
     key: function (freq, brightness, dur) {
       var semi = Math.round(12 * Math.log(freq / 440) / Math.LN2);
@@ -189,11 +179,10 @@
     if (bus && bus.a === a) return bus;
     var input = a.createGain(); input.gain.value = 0.9;
 
-    // Warmth voicing (ear-test 2026-07-17, "too much high end / cheap
-    // strings"): body peak up 3.5 -> 4.5dB (more wood to fill what the
-    // lowpass takes), tame cutoff down 4200 -> 2600Hz (steel-sparkle band
-    // out; uke/nylon character lives ~2-3kHz), Q 0.6 -> 0.5 for a gentler
-    // knee. Partner change: the softer pick range in strum().
+    // Warmth voicing: a body-resonance peak adds wood to fill what the tame
+    // lowpass takes; the lowpass cutoff sits at 2600Hz to keep the
+    // steel-sparkle band out (uke/nylon character lives ~2-3kHz), with a
+    // gentle-knee Q. Partners the softer pick range in strum().
     var body = a.createBiquadFilter();
     body.type = 'peaking'; body.frequency.value = 120; body.Q.value = 0.7; body.gain.value = 4.5;
 
@@ -206,12 +195,12 @@
 
     input.connect(body); body.connect(tame); tame.connect(comp);
 
-    // Pick-scrape input (ear-test round 3, "keyboard in the attack"): the
-    // static tame lowpass darkens the ATTACK along with the sustain, turning
-    // the onset into a felt-hammer thud. The scrape transient enters HERE -
-    // straight into the compressor, AROUND body+tame - so the first ~7ms
-    // keeps true broadband pluck character while the ringing string stays at
-    // the warm 2600Hz voicing. Attack and sustain now have independent knobs.
+    // Pick-scrape input: the tame lowpass would darken the ATTACK along with
+    // the sustain, turning the onset into a felt-hammer thud. So the scrape
+    // transient enters HERE - straight into the compressor, AROUND body+tame -
+    // and the first ~7ms keeps true broadband pluck character while the
+    // ringing string stays at the warm voicing. Attack and sustain get
+    // independent knobs.
     var scrapeIn = a.createGain(); scrapeIn.gain.value = 1;
     scrapeIn.connect(comp);
 
@@ -289,11 +278,11 @@
   }
 
   // Play one plucked string through the voice cache: render at the CANONICAL
-  // freq once (twice, for two life-giving variants); every later tap reuses
-  // the AudioBuffer and applies its per-tap micro-detune via playbackRate -
-  // near-zero work between tap and sound (#276). `m` is the masterBus handle:
-  // the string rides m.input (warm voicing); the pick scrape rides m.scrapeIn
-  // around the tame lowpass (#273 - see scrapeRender). scrape 0 disables it.
+  // freq once (twice, for two variants); every later tap reuses the
+  // AudioBuffer and applies its per-tap micro-detune via playbackRate -
+  // near-zero work between tap and sound. `m` is the masterBus handle: the
+  // string rides m.input (warm voicing); the pick scrape rides m.scrapeIn
+  // around the tame lowpass (see scrapeRender). scrape 0 disables it.
   var voiceBufs = VoiceCache.create(24);
   function pluckKS(a, m, freq, det, t, dur, gain, brightness, scrape) {
     var k = VoiceCache.key(freq, brightness, dur);
@@ -359,9 +348,8 @@
       // spacing. Up-strums are faster and lighter than down-strums.
       var base = up ? 0.011 : 0.018;                   // s between first strings
       var accel = 0.85;                                // each gap a touch shorter
-      // UAT regression (tap-to-strum gap): the 20ms pad was audible on top of
-      // everything else. A running context schedules reliably ~6ms out; only
-      // the just-resumed path keeps the generous pad (its clock just unfroze).
+      // Scheduling pad: a running context schedules reliably ~6ms out; only the
+      // just-resumed path needs the generous 20ms pad (its clock just unfroze).
       var t0 = a.currentTime + (wasRunning ? 0.006 : 0.02), t = t0, gap = base;
       voices.forEach(function (v, i) {
         // Micro-detune (+/- ~4 cents) so no two strings are phase-locked -

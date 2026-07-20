@@ -48,7 +48,7 @@
     Ab: [4, 6, 6, 5, 4, 4], Bbm: [-1, 1, 3, 3, 2, 1], Db: [-1, 4, 6, 6, 6, 4], Eb: [-1, 6, 8, 8, 8, 6],
     'F#7': [2, 4, 2, 3, 2, 2], 'G#m': [4, 6, 6, 4, 4, 4]
   };
-  // Enharmonic-tolerant shape lookup (FORK-4, pilot UAT): the app labels chords
+  // Enharmonic-tolerant shape lookup: the app labels chords
   // canonically SHARP (A#, D#m ...) while this table names some shapes with flats
   // (Bb, Eb, Bbm ...). Try the exact name first, then the same chord with its
   // root respelled enharmonically - so 'A#' finds the Bb shape. The DISPLAY name

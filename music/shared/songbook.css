@@ -1,7 +1,7 @@
 /* =====================================================================
  * songbook.css  -  shared styles for the instrument-agnostic songbook
  * ---------------------------------------------------------------------
- * The dark-teal "Roadcase" look, lifted verbatim so any instrument tool
+ * The dark-teal look, shared so any instrument tool
  * (ukulele, guitar, ...) renders identically. Fonts: Inter + Space Mono.
  * Palette is driven by CSS variables under :root  -  swap --accent etc. to
  * re-skin per instrument without touching component rules.
@@ -30,48 +30,35 @@
      Hear-on-YouTube / Genius links, capo + meta dots). Tied to the theme accent so
      it RE-SKINS when the accent picker changes, and muted (mixed toward the dim text)
      so it reads as SECONDARY to the bright --accent chord highlights. The literal is
-     the fallback for browsers without color-mix (keeps the prior fixed brass). */
+     the fallback for browsers without color-mix. */
   --brass:#7fb8ad;
   --brass:color-mix(in srgb, var(--accent) 62%, var(--txt-dim));
   --brass-soft:var(--accent);--red:var(--accent);--red-deep:var(--accent-dim);
-  /* M-DESIGN-ENFORCE E1 (U10 camouflage finding, engineering-wiki/systems/
-     ssot-registry.md): a GUIDANCE surface for Notables.renderBanner() cards,
+  /* GUIDANCE surface for the Notables banner cards (.notableBanner below),
      distinct from --accent-deep/--accent-dim (the SELECTION-surface pair
-     .listItem.inSet/.setUndo/etc. use). Computed off --txt-dim (a genuinely
-     NEUTRAL, accent-INDEPENDENT hue direction) rather than --brass - an
-     earlier draft tried --brass, but --brass is ITSELF an accent-mix, so at
-     any accent hue its diluted tint converges back toward the accent-deep
-     family once mixed further into --surface-2 (confirmed too subtle in a
-     live Playwright screenshot, light theme especially, where every pastel
-     surface trends toward white). --txt-dim carries zero accent hue, so
-     --guide-bg reads as "neutral app chrome talking", never "you selected
-     this", at ANY user-chosen accent color, not just the default teal.
-     Declared ONCE here (not re-declared under the light override below) -
-     same lazy per-theme technique as --brass itself: recomputes automatically
-     because --txt-dim/--surface-2/--line-strong already differ per theme.
-     See .notableBanner below (the ONE consumer; the law requires every
-     consumer inherit this one primitive, not a per-instance restyle) - its
-     left accent stripe (var(--brass)) supplies the "branded" touch instead,
-     since a decorative 3px stripe carries no text-contrast obligation.
-     Screenshot-verified side-by-side against .listItem.inSet at 412x915,
-     both themes (PR body). */
+     .listItem.inSet/.setUndo use). Computed off --txt-dim (a neutral,
+     accent-INDEPENDENT hue) rather than --brass: --brass is itself an
+     accent-mix, so at any accent hue its diluted tint converges back toward
+     the accent-deep family once mixed into --surface-2 - too subtle to read
+     as distinct. --txt-dim carries zero accent hue, so --guide-bg reads as
+     "neutral app chrome", never "you selected this", at any accent color.
+     Declared once here (not re-declared under the light override) - it
+     recomputes per theme because --txt-dim/--surface-2/--line-strong already
+     differ per theme. The .notableBanner left accent stripe (var(--brass))
+     supplies the branded touch instead, since a 3px stripe carries no
+     text-contrast obligation. */
   --guide-bg:color-mix(in srgb, var(--txt-dim) 16%, var(--surface-2));
   --guide-line:color-mix(in srgb, var(--txt-dim) 55%, var(--line-strong));
-  /* M-EAR wave 1 (2026-07-04, engineering-wiki/systems/ssot-registry.md's
-     Element Consistency Law): the ".sounding" marker on a scale-audition
-     note/degree token - a THIRD surface, genuinely distinct from BOTH
-     --accent-deep/--accent-dim (SELECTION) and --guide-bg/--guide-line
-     (GUIDANCE). A violet hue carries no existing app semantic: not the teal
-     --accent (selection), not the neutral --txt-dim-derived guidance chrome,
-     and deliberately NOT color-mixed from --warn/--bad/--good (those are the
-     FIXED tuner/status colors - reusing one as an input would risk "this
-     note is sounding" reading as a tuner warning). Declared per-theme as
-     literal hex (like --accent-dim/--accent-deep/--accent-ink below), not a
-     single color-mix formula, because unlike --guide-bg's --txt-dim trick a
-     fresh hue has no existing per-theme-varying base to auto-derive from.
-     Contrast-checked >=4.5:1 both themes (component-conventions.md's text-
-     on-fill floor): dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on
-     #efe7fb = 5.12:1. Guarded by test/consistency-lint.test.js. */
+  /* The ".sounding" marker on a scale-audition note/degree token - a THIRD
+     surface, distinct from both --accent-deep/--accent-dim (SELECTION) and
+     --guide-bg/--guide-line (GUIDANCE). A violet hue carries no existing app
+     semantic: not the teal --accent (selection), not the neutral guidance
+     chrome, and deliberately NOT mixed from --warn/--bad/--good (the fixed
+     tuner/status colors - reusing one would risk "sounding" reading as a
+     tuner warning). Declared per-theme as literal hex (like --accent-dim/
+     --accent-deep below), not a color-mix formula, because a fresh hue has no
+     per-theme-varying base to auto-derive from. Contrast >=4.5:1 both themes.
+     Guarded by test/consistency-lint.test.js. */
   --sound-bg:#3a2f57;--sound-line:#b39ddb;
   /* text/icon placed ON an --accent fill (dark, legible on EVERY accent incl.
      light ones like amber/coral) - same in light + dark. Must be a literal, not
@@ -91,31 +78,19 @@
   --dg-mute:#7a8294;--dg-fret-lbl:#6b7280;
 }
 
-/* ===== M-DESIGN-ENFORCE E3: radius token block =====
- * THE ELEMENT CONSISTENCY LAW (music/CLAUDE.md; engineering-wiki/systems/
- * ssot-registry.md) names a radius scatter (7-13px oddballs) among BUTTON-
- * family components as a design-enforce finding (component-conventions.md's
- * "KNOWN SCATTER" line). These five tokens are the SSOT for radius BY
- * SEMANTIC ROLE - a component that is one of these roles must consume the
- * var, never a re-hardcoded literal. Guarded by test/consistency-lint.test.js.
- * Theme-independent (radius doesn't flip light/dark), so ONE bare block.
- * VALUES are the actual per-class MAJORITY found by inventory (not a fixed
- * default) - --r-card is 13px (not 14) because 6 of 8 card-shaped consumers
- * (.listItem, .tCanvasWrap, .tCard, .bt-add-panel, .bt-qcard, .cofPanelInner)
- * already agree on 13; --r-chip-pill is 18px by USAGE weight (`.chip` is the
- * one reused-everywhere primitive per ui-primitives.md, vs 2 narrow 16px
- * clones), not raw rule-count. See the PR body's migration table for the
- * full inventory + before/after values.
- * Scope note (deliberate, not an oversight): this pass tokenizes + migrates
- * the flagged BUTTON scatter (7-13px -> --r-btn/--r-btn-sm), the pill-shaped
- * chip oddballs (--r-chip-pill), and the 14/15px card oddballs (--r-card).
- * It does NOT force-migrate: chord-diagram tiles (S-LAYOUT-SSOT's own
- * geometry domain, a different concern from radius); modal/overlay boxes
- * (component-conventions.md documents 14-16px as their OWN accepted range,
- * distinct from --r-card's card range); or text-input radii beyond the one
- * consumer that already matched (component-conventions.md documents 9-12px
- * as an ACCEPTED range for .search/.bt-in, not a scatter finding) - all
- * three explicitly out of scope for this wave. */
+/* ===== Radius token block (SSOT for border-radius by semantic role) =====
+ * These five tokens are the single source for radius BY SEMANTIC ROLE - a
+ * component of one of these roles must consume the var, never a re-hardcoded
+ * literal. Guarded by test/consistency-lint.test.js. Radius doesn't flip
+ * light/dark, so ONE bare block. Values are the per-role majority across
+ * existing consumers (e.g. --r-card is 13px because most card-shaped consumers
+ * already agree on 13; --r-chip-pill is 18px, the .chip primitive's value,
+ * over the narrow 16px clones).
+ * Scope: covers button, pill-chip, and card radii. Deliberately NOT applied to
+ * chord-diagram tiles (their own geometry domain), modal/overlay boxes (14-16px
+ * is their own accepted range), or text-input radii beyond the one consumer
+ * that already matched (9-12px is an accepted range for .search/.bt-in, not a
+ * scatter). */
 :root{
   --r-btn:11px;       /* primary/secondary buttons + segmented-control CONTAINERS (.modeSwitch/.viewToggle/.transposeChip) */
   --r-btn-sm:10px;    /* icon/compact buttons + segmented-control INNER buttons */
@@ -134,8 +109,8 @@
   --txt:#161b22;--txt-soft:#3f4854;--txt-dim:#5f6875;
   --shadow:rgba(20,30,45,.14);--glow:rgba(13,148,136,.05);
   --accent-dim:#bfe6df;--accent-deep:#e7f6f2;--accent-ink:#0f766e;
-  /* M-EAR wave 1: light-theme override of the --sound-* pair declared in the
-     bare :root block above (same reasoning; see that comment). */
+  /* Light-theme override of the --sound-* pair declared in the bare :root
+     block above (same reasoning; see that comment). */
   --sound-bg:#efe7fb;--sound-line:#6a4bc4;
   --dg-grid:#aab4c0;--dg-nut:#2b3440;--dg-base:#5f6875;
   --dg-dot:#dfe6ee;--dg-dot-line:#9aa7b5;--dg-note:#334155;
@@ -145,23 +120,18 @@
 :root[data-theme="light"] body{-webkit-font-smoothing:auto;}
 
 /* =====================================================================
- * U20 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md, decisions.md
- * D-EAR-1.6): the --sound-bg/--sound-line pair re-derived from the user's
- * OWN accent hue via CSS Relative Color Syntax, complementary (h + 180) -
- * the single kx-* class needing MAXIMUM perceptual distance from every
- * other accent-derived hue (tracks.css's --kx-chord/--kx-blue, h +-30),
- * since "sounding" marks a transient playing-right-now state, not a
+ * The --sound-bg/--sound-line pair re-derived from the user's OWN accent
+ * hue via CSS Relative Color Syntax, complementary (h + 180) - the one
+ * class needing MAXIMUM perceptual distance from every other accent-derived
+ * hue, since "sounding" marks a transient playing-right-now state, not a
  * persistent theory class. Feature-detected: the literal hex pair declared
- * above (both bare :root and this light override) is the fallback for
+ * above (both bare :root and the light override) is the fallback for
  * browsers without support - nothing above this block changes.
  *
- * L/C pinned per theme (not derived from --accent's own L/C - see
- * tracks.css's matching U20 comment for the full rationale), chosen to
- * land close to this file's PRE-U20 literal figures: dark --sound-bg
- * #3a2f57/--sound-line #b39ddb were ~L.22/L.72; light --sound-bg #efe7fb/
- * --sound-line #6a4bc4 were ~L.93/L.42. Spot-verified live at the default
- * teal accent AND a hue-changed accent (shipping PR's V&V section) - not
- * exhaustively re-verified against every possible user-chosen hue. */
+ * L/C are pinned per theme (not derived from --accent's own L/C - see
+ * tracks.css's matching comment for the rationale), chosen to land close to
+ * the pre-existing literal figures. Verified at the default teal accent and
+ * a hue-changed accent, not against every possible user-chosen hue. */
 @supports (color: oklch(from red l c h)) {
   :root{
     --sound-bg:oklch(from var(--accent) 0.22 0.06 calc(h + 180));
@@ -179,7 +149,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   background-image:radial-gradient(1100px 360px at 50% -8%,var(--glow),transparent 70%);
   -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative;}
-/* Slim header (operator format spec 2026-07-19 r4): GRID -
+/* Slim header GRID -
      row 1: Music [tab pill]            | gear
      row 2: per-tab purpose line        | (gear spans both rows, right)
    The gear anchors the right edge across both rows so the header reads as
@@ -193,12 +163,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tabPurpose:empty{display:none;}
 .appbar .brand{display:flex;align-items:center;line-height:1;gap:8px;min-width:0;}
 .appbar .brand .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.02em;}
-/* The per-tab context line is RETIRED (operator interview 2026-07-18:
-   orientation lives in the S-WELCOME first-run tour only - no persistent
-   intro text). The old .tabIntro strip and brand ctx column are both gone. */
-/* #OFFLINE-PILL (operator UAT 2026-07-18): quiet connectivity status in the
-   appbar - amber (the app's one warn accent) because it's a heads-up, not an
-   error; the app keeps working offline. [hidden] wins the display cascade. */
+/* Quiet connectivity status in the appbar - amber (the app's one warn accent)
+   because it's a heads-up, not an error; the app keeps working offline.
+   [hidden] wins the display cascade. */
 .offlinePill[hidden]{display:none;}
 .offlinePill{align-self:flex-start;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:1px 6px;}
 .ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.25rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
@@ -210,11 +177,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .tabbar button:active{transform:scale(.92);}
 /* Active tab highlight reclaims ONLY the safe-area slack below it, so the pill
    ends up with the SAME ~6px inset on the bottom as on the top and sides -
-   symmetric margin, not flush to the screen edge (operator UAT 2026-07-17:
-   "same margin as the top and left and right sides", correcting the earlier
-   flush-to-edge over-reach). The tabbar's bottom padding is
-   `max(safe-area, 8px) + 6px`; we pull the pill down by the `max(safe-area,
-   8px)` slack only, leaving the +6px to match the top/side margin. Content
+   symmetric margin, not flush to the screen edge. The tabbar's bottom padding
+   is max(safe-area, 8px) + 6px; we pull the pill down by the max(safe-area,
+   8px) slack only, leaving the +6px to match the top/side margin. Content
    stays put (padding-bottom absorbs the reclaimed space); corners stay fully
    rounded (it is an inset pill, not an edge-anchored tab). */
 .tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * max(env(safe-area-inset-bottom,0px), 8px));padding-bottom:calc(6px + max(env(safe-area-inset-bottom,0px), 8px));}
@@ -237,8 +202,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:var(--r-chip-pill);cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* Library head row: search (flex) + the +Add entry point, one row. The old
-   Repertoire|Set type toggle is retired - Set/Perform lives on the Jam tab. */
+/* Library head row: search (flex) + the +Add entry point, one row. */
 .libSearchRow{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
 .libSearchRow .searchWrap{flex:1 1 auto;min-width:0;margin-bottom:0;}
 .libTracks[hidden]{display:none;}
@@ -266,29 +230,27 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem.dragging{opacity:.45;}
 .listItem.dropBefore{box-shadow:0 -3px 0 0 var(--accent-ink);}
 .listItem.dropAfter{box-shadow:0 3px 0 0 var(--accent-ink);}
-/* Operator UAT 2026-07-20 (setlist-drag preview: a long-press started Android
-   text-selection - the "Copy / Share / Select all" bubble + blue highlight -
-   which sometimes swallowed the drag). Every draggable surface opts OUT of
-   text selection + the long-press callout, so the hold cleanly becomes a lift.
-   NOT touch-action:none (that would kill the pre-lift scroll); selection only. */
+/* Every draggable surface opts OUT of text selection + the long-press callout,
+   so a hold cleanly becomes a lift instead of triggering Android text-selection
+   (the "Copy / Share / Select all" bubble), which can swallow the drag. NOT
+   touch-action:none (that would kill the pre-lift scroll); selection only. */
 .prog .slot, .songSect, .listItem{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
-/* B3 post-save discoverability: a brief accent pulse on the row a save just
-   landed on, so it's findable in a long/scrolled library list. Fades on its
-   own (no JS cleanup needed) - never blocks interaction, never persists. */
+/* A brief accent pulse on the row a save just landed on, so it's findable in a
+   long/scrolled library list. Fades on its own (no JS cleanup needed) - never
+   blocks interaction, never persists. */
 @keyframes justSavedPulse{from{box-shadow:0 0 0 2px var(--accent);}to{box-shadow:0 0 0 2px transparent;}}
 .listItem.justSaved{animation:justSavedPulse 2s ease-out;}
 .listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;min-width:22px;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
-/* Title bumped for the arm's-length <1s glance; meta + artist raised off --txt-dim
- * to --txt-soft and up in size (legibility-at-distance, council accessibility lens). */
-/* F26 (operator UAT 2026-07-05): min-width:0 + overflow-wrap:break-word - .li-title
- * is a flex item of .li-row1, and its default automatic-minimum-size (min-content,
- * i.e. the width of its longest unbroken word/run) can exceed the row's available
- * space for a long/unspaced title, overflowing past the card and behind the +
- * button instead of wrapping. .li-body already carries flex:1 1 auto;min-width:0
- * (the row-level containment) - this is the same fix one level deeper, on the
- * title span itself, confirmed with Playwright against an all-one-word title. */
+/* Title sized for the arm's-length <1s glance; meta + artist on --txt-soft and
+ * bumped up for legibility at distance. */
+/* min-width:0 + overflow-wrap:break-word - .li-title is a flex item of .li-row1,
+ * and its default automatic-minimum-size (min-content, the width of its longest
+ * unbroken word) can exceed the row's available space for a long/unspaced title,
+ * overflowing past the card and behind the + button instead of wrapping. .li-body
+ * already carries flex:1 1 auto;min-width:0 (the row-level containment) - this is
+ * the same fix one level deeper, on the title span itself. */
 .listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;min-width:0;overflow-wrap:break-word;}
 /* Setup pair (capo + key) live together, right of the title. Key is KEY-FIRST; an
  * unknown key shows a quiet "Key?" rather than a year (which read as the key). */
@@ -306,66 +268,54 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;}
 .listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
 .listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
-/* Add-to-setlist affordance reads accent-inviting (operator UAT): the "+" is an
-   accent OUTLINE (like .soloRowBtn), the added "✓" is accent FILL (.inSet below)
-   - a clear add -> added progression, both in the accent family. */
-/* Emphasis ladder (visual-language.md): the resting + is a per-row SECONDARY affordance
-   repeated down the whole list, so its glyph is neutral (--txt-soft) - it stops the list
-   reading as a column of accent circles competing with the song titles. Accent is reserved
+/* Emphasis ladder: the resting + is a per-row SECONDARY affordance repeated down
+   the whole list, so its glyph is neutral (--txt-soft) - it stops the list reading
+   as a column of accent circles competing with the song titles. Accent is reserved
    for the .inSet state below (a real selection: "this song is in your set"). */
-/* 44px = the a11y tap-target floor (was 40). The glyph is a TEXT character
-   ('+' / '\2713'), and text centers by its LINE BOX, not its ink - the font
-   hangs descender space below the glyph, so pure flex-centering paints it
-   visibly HIGH (measured: + at -1.5 CSS px, check at -2.2). The 2.5px top pad
-   is the MEASURED optical correction (headless ink-centroid vs circle center,
-   deviceScaleFactor 3): check lands dead-center, + within 0.5 CSS px. Don't
-   "clean up" the fraction - line-box snapping quantizes in whole-px steps and
-   2.5 sits mid-plateau for both glyphs. */
+/* 44px = the a11y tap-target floor. The glyph is a TEXT character ('+' /
+   '\2713'), and text centers by its LINE BOX, not its ink - the font hangs
+   descender space below the glyph, so pure flex-centering paints it visibly
+   HIGH. The 2.5px top pad is the optical correction that lands both glyphs
+   dead-center. Don't "clean up" the fraction - line-box snapping quantizes in
+   whole-px steps and 2.5 sits mid-plateau for both glyphs. */
 .listItem .li-add{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-size:1.5rem;line-height:1;padding:2.5px 0 0 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .listItem .li-add:active{transform:scale(.85);}
-/* Ghost add (S-SETADD-EVIDENT, operator UAT 2026-07-12): the row CAN'T join the
-   set (no chord sheet) - state it quietly instead of an empty slot that reads
-   as broken. Dashed + faint, still a 44px tappable target (explains via toast). */
+/* Ghost add: the row CAN'T join the set (no chord sheet) - state it quietly
+   instead of an empty slot that reads as broken. Dashed + faint, still a 44px
+   tappable target (explains via toast). */
 .listItem .li-add.ghost{border-style:dashed;color:var(--txt-dim);opacity:.6;}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* Edit-mode reorder/remove targets enlarged (gapped) - only rendered in
- * edit-set mode, so they no longer sit always-hot on the scroll rail.
- * NOTE (S-SETX rider, sprint-1): li-up/li-dn are 40x32 - BELOW the 44px floor
- * in both dimensions. Out of this rider's scope (only li-rm was named 40->44
- * in the sprint plan); flagged to the backlog rather than resized here, since
- * growing them would also grow .li-ctrl's stacked height (70px) past li-body's
- * content height and shift the row - the exact regression the "no layout
- * shift" acceptance criterion guards against. */
+/* Edit-mode reorder/remove targets - only rendered in edit-set mode, so they no
+ * longer sit always-hot on the scroll rail. NOTE: li-up/li-dn are 40x32, below
+ * the 44px floor; growing them would grow .li-ctrl's stacked height past
+ * li-body's content height and shift the row, so they stay at 40x32 (tracked as
+ * a known gap). */
 .listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
-/* S-SETX rider b: 40x40 -> >=44x44 via padding (NOT a bigger glyph - the "x"
- * stays font-size:1.2rem). min-width/min-height set the deterministic floor;
- * padding keeps the glyph from crowding the now-larger border box. */
+/* >=44x44 via padding (NOT a bigger glyph - the "x" stays font-size:1.2rem).
+ * min-width/min-height set the deterministic floor; padding keeps the glyph from
+ * crowding the larger border box. */
 .listItem .li-rm{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--txt-dim);font-size:1.35rem;cursor:pointer;padding:2px;min-width:44px;min-height:44px;border-radius:8px;align-self:center;margin-left:4px;transition:color .15s,transform .08s,border-color .15s;}
 .listItem .li-rm:active{transform:scale(.9);color:var(--bad);border-color:var(--bad);}
-/* S-SETRM-ARM (operator UAT 2026-07-11, "delete state style misalignment"):
- * the setlist remove handle follows the app's ONE inline-remove grammar
- * (S-DELETE-UNDO): QUIET at rest, red only when ARMED by a first tap (1.6s
- * auto-disarm, gate lives in list-item.js), second tap removes. The old J2
- * "destructive-at-rest" red is retired - after S-DELETE-UNDO, red on an inline
- * handle reads as already-armed; red-at-rest belongs only to labeled
- * destructive BUTTONS (.btn.danger). */
+/* The setlist remove handle follows the app's ONE inline-remove grammar: QUIET
+ * at rest, red only when ARMED by a first tap (1.6s auto-disarm, gate lives in
+ * list-item.js), second tap removes. Red on an inline handle reads as
+ * already-armed, so red-at-rest belongs only to labeled destructive BUTTONS
+ * (.btn.danger), never an inline handle at rest. */
 .listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
-/* Timed toast+action undo banner (S-TOAST+ACTION, UAT U19/U22) - shared skin for
- * the setlist item-remove undo (showSetUndoBanner) and the Library delete-undo
- * (showDeleteUndoBanner), both toggled via the DOM `hidden` attribute from JS. */
+/* Timed toast+action undo banner - shared skin for the setlist item-remove undo
+ * (showSetUndoBanner) and the Library delete-undo (showDeleteUndoBanner), both
+ * toggled via the DOM hidden attribute from JS. */
 .setUndo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:11px;padding:9px 12px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
-/* S-TOAST-HOST (UAT U24): `.setUndo{display:flex}` is an AUTHOR-origin rule, which
- * always outranks the user-agent's `[hidden]{display:none}` regardless of
- * specificity (origin is resolved before specificity in the cascade) - so without
- * this explicit override, setting `el.hidden = true` had ZERO visual effect and the
- * emptied host (innerHTML cleared by paintSetUndoHidden/paintDelUndoHidden) stayed
- * on screen as a visible, empty pill after every toast lifecycle completed. Same
- * fix already applied to .composeToast[hidden] below - this class was the one
- * instance of the pattern that got missed. */
+/* .setUndo{display:flex} is an AUTHOR-origin rule, which always outranks the
+ * user-agent's [hidden]{display:none} regardless of specificity (origin is
+ * resolved before specificity in the cascade) - so without this explicit
+ * override, setting el.hidden = true has ZERO visual effect and the emptied host
+ * stays on screen as a visible, empty pill. Same guard as .composeToast[hidden]
+ * below. */
 .setUndo[hidden]{display:none;}
 /* Edit-set toggle: ghost button that lights up accent when editing. */
 #setEdit.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
@@ -375,50 +325,42 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .empty .emptyClear:active{transform:scale(.96);background:var(--accent);color:var(--on-accent);}
 .libCount{text-align:center;color:var(--txt-dim);font-size:.72rem;margin-top:16px;letter-spacing:.04em;}
 
-/* M-DESIGN-ENFORCE E3: 15px -> var(--r-card) (13px) - the card-radius majority (see the
-   :root token block above); a 2px reduction on the song-detail panel, imperceptible next
-   to its 16px content padding. */
+/* Song-detail panel uses the card radius token (--r-card). */
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;}
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
 .detailHead .ti{flex:1;min-width:0;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
-/* Visual-language emphasis ladder (ux-philosophy/visual-language.md): an icon button is a
-   SECONDARY affordance, not a primary action - so its glyph is neutral (--txt-soft), not the
-   bright --accent-ink that competes with the one primary per screen. Accent still flashes on
-   :active (feedback) and on the .setBtn.on selected state below (D-SELECTED-ACCENT). */
+/* Emphasis ladder: an icon button is a SECONDARY affordance, not a primary
+   action - so its glyph is neutral (--txt-soft), not the bright --accent-ink that
+   competes with the one primary per screen. Accent still flashes on :active
+   (feedback) and on the .setBtn.on selected state below. */
 .iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.25rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* M-EAR wave 1: the scale-audition play/stop toggle - ONE primitive, composed
-   by BOTH the Studio scale panel (tracks.js) and the Compose key preview
-   (songbook.js). Base = .iconBtn (44x44 icon button, component-conventions.md);
-   the STICKY on/playing state reuses the D-SELECTED-ACCENT accent-fill
-   grammar (same as .iconBtn.setBtn.on above), not a new one-off look - "while
-   playing" IS a selected/active state (music/CLAUDE.md's Element Consistency
-   Law). Compact so it fits inline beside the "Solo over it" label without
-   pushing content below the fold. */
+/* The scale-audition play/stop toggle - ONE primitive, composed by both the
+   Studio scale panel (tracks.js) and the Compose key preview (songbook.js).
+   Base = .iconBtn (44x44 icon button); the sticky on/playing state reuses the
+   accent-fill selected grammar (same as .iconBtn.setBtn.on above) - "while
+   playing" is a selected/active state. Compact so it fits inline beside the
+   "Solo over it" label without pushing content below the fold. */
 .soundToggle{width:32px;height:32px;font-size:.85rem;}
 .soundToggle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* The bouncing marker (M-EAR wave 1): a per-note token currently sounding, on
-   BOTH the notes line and the degrees line, on BOTH surfaces (Studio +
-   Compose). ONE primitive (--sound-bg/--sound-line, declared above) - not a
-   re-hardcoded literal, not the SELECTION or GUIDANCE token pair. Small pill
-   treatment (border-radius literal, like the .li-capo/.li-note tag pills -
-   these are inline text tokens, not buttons/chips/cards, so they sit outside
-   the 5 radius-by-role tokens' scope per component-conventions.md). */
+/* The per-note "currently sounding" marker, on both the notes line and the
+   degrees line, on both surfaces (Studio + Compose). ONE primitive
+   (--sound-bg/--sound-line, declared above) - not the SELECTION or GUIDANCE
+   token pair. Small pill treatment (border-radius literal, like the .li-capo/
+   .li-note tag pills - inline text tokens, not buttons/chips/cards, so outside
+   the radius-by-role tokens' scope). */
 .soundNote{transition:background .12s,color .12s;border-radius:4px;}
 .soundNote.sounding{background:var(--sound-bg);color:var(--sound-line);padding:0 2px;}
 .viewToggle{display:flex;margin:8px 0 13px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:4px;}
 .viewToggle button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.78rem;color:var(--txt-dim);padding:9px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .viewToggle button:active{transform:scale(.96);}
-/* D-SELECTED-ACCENT (M-DESIGN-ENFORCE E2, shipped): converges onto the SAME
-   accent-fill grammar as .chip.on/.modeSwitch button.on below - was the
-   surface-2 + box-shadow-ring look the law flagged as a duplicate selected-
-   state grammar (engineering-wiki/systems/ssot-registry.md Duplication
-   watchlist; component-conventions.md's Segmented controls row). No
-   border-color override needed: the base rule has border:none. */
+/* Selected state uses the SAME accent-fill grammar as .chip.on/.modeSwitch
+   button.on below - one selected-state grammar app-wide. No border-color
+   override needed: the base rule has border:none. */
 .viewToggle button.on{background:var(--accent);color:var(--on-accent);}
 /* queue nav: prev / position / next - shown in Practice when a setlist is loaded */
 .queueNav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;}
@@ -433,30 +375,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:3px;}
 .modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}
-/* D-SELECTED-ACCENT (M-DESIGN-ENFORCE E2, shipped 2026-07-04): this is the
-   NAMED offender in component-conventions.md's Segmented controls row -
-   surface-2 + box-shadow ring, DIFFERENT from .chip.on's accent-fill grammar
-   even though both mean "this is the current selection." Converges here onto
-   the SAME accent-fill language (background:accent, color:on-accent) as
-   .chip.on / #setEdit.on / .iconBtn.setBtn.on / .pSpeed .psBtn.on - ONE
-   selected-state grammar app-wide, per the law. No border-color override
-   needed: the base rule has border:none (unlike .chip, which does). */
+/* Selected state uses the SAME accent-fill grammar (background:accent,
+   color:on-accent) as .chip.on / #setEdit.on / .iconBtn.setBtn.on /
+   .pSpeed .psBtn.on - ONE selected-state grammar app-wide. No border-color
+   override needed: the base rule has border:none (unlike .chip, which does). */
 .modeSwitch button.on{background:var(--accent);color:var(--on-accent);}
 .transposeChip{display:flex;align-items:center;gap:0;flex:0 0 auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:4px;}
 .transposeChip button{border:none;background:var(--surface-2);color:var(--txt);font-family:'Space Mono';font-weight:700;font-size:.95rem;width:30px;height:34px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,transform .08s,color .15s;}
 .transposeChip button:active{transform:scale(.86);background:var(--accent);color:var(--on-accent);}
-/* D2s: ch (not px) so the reserved width tracks the monospace glyph itself -
-   a min-width in px only covers a fixed pixel count and lets a wider label
-   (e.g. "A" -> "A#" after transposing) grow past it, shifting the buttons
-   on either side. +12px accounts for the 0 6px padding: box-sizing is
-   border-box (global reset) so a bare `3ch` min-width would count that
-   padding AGAINST the 3 characters instead of reserving room for them,
-   still letting 2-char labels overflow it. calc(3ch + 12px) reserves a
-   full 3 characters of text room on top of the existing padding. */
+/* ch (not px) so the reserved width tracks the monospace glyph itself - a
+   min-width in px only covers a fixed pixel count and lets a wider label
+   (e.g. "A" -> "A#" after transposing) grow past it, shifting the buttons on
+   either side. +12px accounts for the 0 6px padding: box-sizing is border-box
+   (global reset) so a bare 3ch min-width would count that padding AGAINST the
+   3 characters instead of reserving room for them, still letting 2-char labels
+   overflow it. calc(3ch + 12px) reserves a full 3 characters of text room on
+   top of the existing padding. */
 .transposeChip .v{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);padding:0 6px;min-width:calc(3ch + 12px);text-align:center;}
 .modeSwitch button:disabled{opacity:.35;cursor:default;}
-/* Stage: compact fullscreen icon button on the view row (replaces the old
- * full-width CTA) - accent-filled so the perform entry stays discoverable. */
+/* Stage: compact fullscreen icon button on the view row - accent-filled so the
+ * perform entry stays discoverable. */
 .stageGo{height:auto;min-height:44px;width:40px;background:var(--accent-deep);border-color:var(--accent-dim);}
 .stageGo:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Campfire: big chords-only, sized for jamming with the phone on the table */
@@ -465,13 +403,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
 .chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
-/* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered chord
-   chip, same bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact
-   control, not the pill-shaped .chip family). */
+/* Compact bordered chord chip using the small-button radius (--r-btn-sm), same
+   bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact control, not the
+   pill-shaped .chip family). */
 .chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
-/* S-UI-RECONCILE Lane D: 11px -> var(--r-card) (13px) - the practice-sheet
-   card surface hosting the chord/lyric grid. */
+/* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}
 .sect:first-child{margin-top:0;}
@@ -479,66 +416,58 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .lyrLine{font-size:.98rem;line-height:1.32;white-space:pre;margin-bottom:11px;color:var(--txt);}
 .lyrLine .crd{color:var(--accent-ink);font-weight:700;}
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
-/* S-UI-RECONCILE Lane D: 7px -> var(--r-btn-sm) (10px) - compact bordered chord
-   tile, same bucket as .chordChips .c; .campfireSheet .chordOnly .bar inherits
-   this radius (no override of its own). */
+/* Compact bordered chord tile (--r-btn-sm), same bucket as .chordChips .c;
+   .campfireSheet .chordOnly .bar inherits this radius (no override of its own). */
 .chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
-/* S-UI-RECONCILE locked interface (Lane A <-> Lane D seam): a full-width action
-   button in the song-view .actions row (e.g. songbook.js song view's "Delete
-   progression") composes .btn with .full instead of an inline flexBasis hack. */
+/* A full-width action button in the song-view .actions row (e.g. "Delete
+   progression") composes .btn with .full instead of an inline flex-basis hack. */
 .actions .btn.full{flex-basis:100%;}
 .btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}
-/* Emphasis ladder (visual-language.md): Save is the compose PRIMARY (accent fill) only
-   once there is a progression to save. On an empty canvas (.composeWrap.progEmpty) it
-   demotes to an OUTLINE so it never out-shouts the chord cards - the real "obvious next
-   move". #id specificity beats .btn.red; it returns to fill the moment a chord lands. */
+/* Emphasis ladder: Save is the compose PRIMARY (accent fill) only once there is a
+   progression to save. On an empty canvas (.composeWrap.progEmpty) it demotes to an
+   OUTLINE so it never out-shouts the chord cards - the real "obvious next move".
+   #id specificity beats .btn.red; it returns to fill the moment a chord lands. */
 .composeWrap.progEmpty #cSave{background:transparent;color:var(--accent-ink);border-color:var(--accent-dim);}
-/* UAT 2026-07-20: Save disabled when there is genuinely nothing to save (empty
-   strip + no song draft) - dimmed + non-interactive, so a post-Clear tap can't
-   open the intent modal on an empty canvas. */
+/* Save disabled when there is genuinely nothing to save (empty strip + no song
+   draft) - dimmed + non-interactive, so a post-Clear tap can't open the intent
+   modal on an empty canvas. */
 #cSave:disabled{opacity:.4;cursor:default;}
-/* F33 (UAT): genuinely destructive actions (songbook.js song view's real Delete -
-   the fork "Revert to original" is ALSO destructive (discards the fork's edits,
-   confirm-gated) but stays .btn.ghost as a deliberate softer signal; see
-   repertoire-form.js). ".btn.red" is a MISNOMER (it's the accent-fill primary,
-   not danger) - this is the actual red. Rest state = transparent bg + --bad
-   border/text; :active mirrors .prog .slot .rm's tap-flash (--bad fill +
-   --on-danger ink). Red-at-rest is reserved for LABELED destructive buttons
-   like this one - inline remove handles (.rm, .li-rm) rest QUIET and wear red
-   only when ARMED (S-SETRM-ARM retired the old li-rm rest-red precedent). */
+/* Genuinely destructive labeled buttons (the song view's real Delete). Note
+   ".btn.red" is a MISNOMER - it is the accent-fill primary, not danger; THIS is
+   the actual red. Rest state = transparent bg + --bad border/text; :active
+   mirrors .prog .slot .rm's tap-flash (--bad fill + --on-danger ink). Red-at-rest
+   is reserved for LABELED destructive buttons like this one - inline remove
+   handles (.rm, .li-rm) rest QUIET and wear red only when ARMED. */
 .btn.danger{background:transparent;border-color:var(--bad);color:var(--bad);}
 .btn.danger:active{background:var(--bad);color:var(--on-danger);border-color:var(--bad);}
-/* both secondary links on one centered row (t3) */
+/* both secondary links on one centered row */
 .lyricsLinks{display:flex;justify-content:center;align-items:center;gap:6px 22px;flex-wrap:wrap;margin-top:12px;}
 .lyricsLink{color:var(--brass);font-size:.84rem;text-decoration:none;padding:8px 6px;font-weight:500;white-space:nowrap;}
 .lyricsLink:active{color:var(--accent-ink);}
 .note{font-size:.69rem;color:var(--txt-dim);text-align:center;margin-top:5px;line-height:1.45;}
-/* Operator UAT 2026-07-18: the setlist mirrors the Library's scroll model -
-   head row static, #setBody is the ONLY scroll container (same flat
-   single-scroller pattern, Element Consistency). The h2 left the head (tabbar
-   + intro strip already name and explain the tab); the count line is the
-   header's information, restyled up a step to carry it. */
+/* The setlist mirrors the Library's scroll model - head row static, #setBody is
+   the ONLY scroll container (same flat single-scroller pattern). No h2 in the
+   head (the tabbar already names the tab); the count line carries the header
+   information, restyled up a step. */
 #s-jam{height:100%;}
 #s-jam.on{display:flex;flex-direction:column;}
 .libSet{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
 .setHead{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
 #setBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
 #setBody::-webkit-scrollbar{width:0;}
-.setHead .ti{margin-right:auto;}  /* push Edit + Clear to the right (UAT: float Edit right) */
+.setHead .ti{margin-right:auto;}  /* push Edit + Clear to the right */
 .setHead .ti p{font-size:.82rem;font-weight:700;color:var(--txt-soft);}
 .setHead .btn{flex:0 0 auto;padding:12px 16px;}
-/* UAT 2026-07-16: the destructive Clear (✕) wears red so it never reads as a
-   neutral header control - it only appears in edit mode (JS), and red is the
-   standard destructive signal. Fills red on press. */
+/* The destructive Clear (✕) wears red so it never reads as a neutral header
+   control - it only appears in edit mode (JS), and red is the standard
+   destructive signal. Fills red on press. */
 .setHead .setDelete{color:var(--bad);border-color:var(--bad);}
 .setHead .setDelete:active{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 .setEmpty{text-align:center;padding:44px 18px;color:var(--txt-dim);font-size:.95rem;line-height:1.6;}
-/* (.setItem retired -> .listItem in 'set' mode; see the unified block above.) */
-/* (.setBar retired 2026-07-16 - Start moved compact into .setHead.) */
 /* #s-tune: full-viewport, no-scroll layout (mirrors #s-compose's fixed-top /
    flex-hero pattern below). #s-tune fills the .view's available height;
    .tunerWrap is the single flex column inside it. Every direct child is
@@ -603,7 +532,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .micMeter.locked{animation:lockPulse .34s ease;}
 .micMeter.sharp{box-shadow:0 0 0 2px var(--bad) inset;border-radius:8px;}
 @keyframes lockPulse{0%{transform:scale(1)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
-/* strobe POC: the classic "stands still = in tune" display. Stripes drift left
+/* strobe: the classic "stands still = in tune" display. Stripes drift left
    when flat / right when sharp (speed ∝ how far off), freeze + glow green when
    locked. Far easier to land than chasing a needle. */
 .strobe{position:relative;height:30px;margin:10px 2px 4px;border-radius:8px;overflow:hidden;
@@ -632,42 +561,31 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .progLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .progTools{display:flex;align-items:center;gap:6px;}
-/* S-PROG-WRAP-2 (UAT U8b, docs/plans/uat-walkthrough-20260704.md section U8b;
-   supersedes S-PROG-WRAP's binary full/compact split - see D-PROG-WRAP,
-   amended, engineering-wiki/decisions.md): a COUNT-driven staged density
-   ladder, never a free flex-wrap (the plain flex-wrap this replaced was a
-   real regression once - it pushed a 4th chord to a 2nd row unconditionally).
-   The base rule below is shared box chrome ONLY (bg, border, radius, padding,
-   gap) - each stage class fully owns its own layout mode, so there's no
-   "default" nowrap/scroll fallback to reconcile with the stage rules. Never
+/* The progression strip is a COUNT-driven staged density ladder, never a free
+   flex-wrap (a plain flex-wrap pushes a 4th chord to a 2nd row unconditionally -
+   a regression). The base rule below is shared box chrome ONLY (bg, border,
+   radius, padding, gap) - each stage class fully owns its own layout mode, so
+   there's no "default" nowrap/scroll fallback to reconcile. Never
    horizontal-scrolls in ANY stage (overflow-x:hidden). overflow-y MUST stay
-   explicit here (not just omitted): setting overflow-x to a non-'visible'
-   value silently forces overflow-y to compute as 'auto' too per the CSS
-   overflow spec's paired-longhand rule, which would turn a 2-row grid6 strip
-   into a clipped scroll box instead of growing its FIXED (non-scrolling)
-   composeTop region - the actual intended behavior (A7 fold-budget check
-   lives in the manual test plan, not in CSS clipping). JS (progStripMode,
+   explicit (not omitted): setting overflow-x to a non-'visible' value silently
+   forces overflow-y to compute as 'auto' too (the CSS overflow paired-longhand
+   rule), which would turn a 2-row grid6 strip into a clipped scroll box instead
+   of growing its FIXED (non-scrolling) composeTop region. JS (progStripMode,
    songbook.js renderProg) picks the stage class + (for fill-row) the inline
-   grid-template-columns per render; a resize re-check can flip stages live
-   (Songbook's resize listener). */
-/* S-PROG-FIT-6 (UAT 2026-07-10): 4-6 chords were "so close to fitting" the fixed
-   (non-scrolling) composeTop region at 412x915 - a small vertical trim (min-height
-   88->78, padding 12->9, full-stage gap 10->8 below) reclaims ~16px WITHOUT shrinking
-   the diagram cards (the phone-DPI text floor forbids that). Enough to tip the common
-   4-6 chord case above the fold. */
+   grid-template-columns per render; a resize re-check can flip stages live.
+   (see decisions.md: D-PROG-WRAP) */
+/* Vertical trim tuned so the common 4-6 chord case fits the fixed (non-scrolling)
+   composeTop region above the fold, WITHOUT shrinking the diagram cards (the
+   phone-DPI text floor forbids that). */
 .prog{display:flex;gap:8px;min-height:78px;margin-bottom:0;padding:9px;border-radius:13px;background:var(--bg-2);border:1px dashed var(--line-strong);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:visible;}
 .prog::-webkit-scrollbar{display:none;}
-/* S-PROG-WRAP (UAT U8, amends D-CAP12's "strip scrolls" note to "strip degrades
-   + wraps"): the unconditional flex-wrap the comment above warns against was a
-   real regression (an early wrap pushed a 4th chord to row 2) - this
-   reintroduction is threshold-gated, not unconditional. JS (progStripMode,
+/* .wrapped is threshold-gated, not an unconditional flex-wrap (an unconditional
+   wrap pushes a 4th chord to row 2 - a regression). JS (progStripMode,
    songbook.js renderProg) only adds .wrapped once the diagram-card row would
-   genuinely overflow the strip, so a normal 2-4 chord progression still gets
-   the one-row nowrap+scroll behavior above, untouched. overflow-y stays
-   visible - .prog sits in the FIXED (non-scrolling) composeTop region, so a
-   taller wrapped strip grows the fixed region's own height rather than
-   clipping content (A7 fold-budget check lives in the manual test plan, not
-   in CSS clipping). */
+   genuinely overflow the strip, so a normal 2-4 chord progression keeps the
+   one-row nowrap+scroll behavior above. overflow-y stays visible - .prog sits in
+   the FIXED (non-scrolling) composeTop region, so a taller wrapped strip grows
+   the fixed region's own height rather than clipping content. */
 .prog.wrapped{flex-wrap:wrap;overflow-x:hidden;overflow-y:visible;touch-action:auto;align-content:flex-start;}
 .prog .slot{flex:0 0 auto;}
 .prog .slot .chord{min-width:var(--prog-tile-min);}
@@ -680,12 +598,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    a viewport too narrow to fit even that natural size (see the JS-side
    comment on progStripMode). */
 .prog.full{flex-wrap:nowrap;justify-content:center;gap:8px;}
-/* S-DELHANDLE-OVERFLOW v2 (UAT 2026-07-10): the slot must SHRINK-WRAP the card, not
-   flex-GROW wider than it - a grown slot left the absolutely-positioned delete badge
-   (anchored to the slot's right edge) floating in the empty slot space, worse with
-   fewer chords (wider slots). flex:0 1 auto sizes the slot to the card so the badge
-   lands on the card's own corner at every count; justify-content:center + gap still
-   space the cards across the row. */
+/* The slot must SHRINK-WRAP the card, not flex-GROW wider than it - a grown slot
+   floats the absolutely-positioned delete badge (anchored to the slot's right
+   edge) in empty slot space. flex:0 1 auto sizes the slot to the card so the
+   badge lands on the card's own corner at every count; justify-content:center +
+   gap still space the cards across the row. */
 .prog.full .slot{flex:0 1 auto;max-width:150px;min-width:0;}
 /* Stage 2 (5-6 chords, or an early width-guard demotion from stage 1): the
    existing compact chord token (suggChip - see the compact-token rules
@@ -696,10 +613,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog.fill-row{display:grid;}
 /* Stage 3 (7-12 chords): the SAME compact token, but a FIXED 6-column grid -
    12 chords (the COMPOSE_MAX cap) is exactly two clean rows of 6, never a 3rd
-   orphan row (the binary mode's failure shape this ladder replaces: an
-   11-chord progression used to flex-wrap as 5+5+1). align-content:flex-start
-   keeps a short (7-11 chord) grid's row(s) pinned to the top of the strip's
-   min-height rather than centered/stretched across it. */
+   orphan row (a plain flex-wrap breaks an 11-chord run as 5+5+1).
+   align-content:flex-start keeps a short (7-11 chord) grid's row(s) pinned to
+   the top of the strip's min-height rather than centered/stretched. */
 .prog.grid6{display:grid;grid-template-columns:repeat(6,1fr);align-content:flex-start;}
 /* Both compact stages: the token must fill its OWN grid cell, not just sit at
    its 58px CSS min-width - .slot's flex layout (below) centers children by
@@ -713,62 +629,45 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog:empty{min-height:0;padding:0;border:0;}
 .prog .slot{position:relative;animation:fadeUp .2s ease;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .prog .slot .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-/* S-SLOTX (sprint-1 #1, F2): >=44px TAP target via padding - glyph size
-   unchanged. Supersedes the old "24px clears WCAG 2.5.8, no oversized hit
-   area" note: the sprint-1 geometry audit found 24px still invites
-   wrong-chord removal in this destructive-tap context, so the binding spec
-   calls for 44px here too. The VISIBLE circle is a ::before, still 24x24 and
-   still anchored at the SAME top:-7px/right:-7px corner as before this
-   change, so it looks and sits exactly where it did. The button (the tap
-   target) keeps that IDENTICAL top:-7px/right:-7px anchor too - deliberately
-   NOT centered growth: `.prog` has `overflow:auto` (implied overflow-y, per
-   its overflow-x:auto), so growing the badge upward/rightward past its old
-   footprint clips the added area against the *scroll container's own edge*,
-   producing a silently-dead invisible zone (verified live via Playwright
-   elementFromPoint - a symmetric top:-17px/right:-17px 44x44 box measurably
-   lost its top ~4px to that clip). Growing DOWN and LEFT instead - toward
-   the slot's own interior, which is never clipped - reaches 44x44 with a
-   fully live hit area; the tradeoff is more overlap with the chord diagram
-   below (already an accepted cost here - movement-cancelled taps via
-   composeWireTap in songbook.js keep a scroll-grab from misfiring either
-   target, same rationale as the original "no oversized hit area" note this
-   supersedes). isolation:isolate scopes the ::before's z-index:-1 to this
-   button only (paints it behind the × text without affecting sibling
-   stacking). The old `transform:scale(.85)` press-feedback is DROPPED here
-   (color-only feedback now) - verified live via Playwright that a
-   mousedown-time scale-shrink moves the box's edges inward before mouseup,
-   so a tap near the (now much bigger) 44px edge can miss the shrunken
-   hit-box entirely and silently produce no click. Reliability of the full
-   44px area wins over the press-animation flourish. */
-/* S-DELHANDLE-CENTER (operator UAT 2026-07-10): the old padding:5px 5px 0 0 nudged
-   the x glyph toward the circle's top-right instead of its center. border-box +
-   bottom/left padding of 20px (44-24) carves the CONTENT box down to the exact
-   top-right 24x24 the ::before circle occupies, and flex centering centers the
-   glyph in it - true centering by construction, no hand-tuned offsets, identical
-   at every prog stage. The 44x44 hit area is unchanged. */
+/* >=44px TAP target via padding - glyph size unchanged. The VISIBLE circle is a
+   ::before, 24x24, anchored at top:-7px/right:-7px. The button (the tap target)
+   keeps that IDENTICAL anchor and grows DOWN and LEFT, NOT up/right: .prog has
+   overflow:auto (implied overflow-y from its overflow-x:auto), so growing the
+   badge past its old footprint upward/rightward clips the added area against the
+   scroll container's edge - a silently-dead invisible zone. Growing toward the
+   slot's own interior (never clipped) reaches 44x44 with a fully live hit area;
+   the tradeoff is more overlap with the chord diagram below (accepted -
+   movement-cancelled taps via composeWireTap keep a scroll-grab from misfiring).
+   isolation:isolate scopes the ::before's z-index:-1 to this button (paints it
+   behind the × without affecting sibling stacking). NO transform:scale
+   press-feedback here: a mousedown-time scale-shrink moves the box's edges inward
+   before mouseup, so a tap near the 44px edge can miss the shrunken hit-box and
+   produce no click. Color-only feedback instead. */
+/* border-box + bottom/left padding of 20px (44-24) carves the CONTENT box down to
+   the exact top-right 24x24 the ::before circle occupies, and flex centering
+   centers the glyph in it - true centering by construction, no hand-tuned offsets,
+   identical at every prog stage. The 44x44 hit area is unchanged. */
 .prog .slot .rm{position:absolute;top:-7px;right:-7px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0 0 20px 20px;isolation:isolate;color:var(--txt-soft);font-size:.72rem;line-height:1;cursor:pointer;background:none;border:none;}
 .prog .slot .rm::before{content:'';position:absolute;top:0;right:0;width:24px;height:24px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
-/* S-PROG-REORDER (prototype): the lifted slot dims; the nearest slot carries
-   an accent insertion edge on the side the chord will land. box-shadow edges
-   work identically across all three strip stages (flex cards + both grids). */
+/* Drag-to-reorder: the lifted slot dims; the nearest slot carries an accent
+   insertion edge on the side the chord will land. box-shadow edges work
+   identically across all three strip stages (flex cards + both grids). */
 .prog .slot.dragging{opacity:.45;}
 .prog .slot.dropBefore{box-shadow:-3px 0 0 0 var(--accent-ink);border-radius:4px;}
 .prog .slot.dropAfter{box-shadow:3px 0 0 0 var(--accent-ink);border-radius:4px;}
-/* S-DELETE-UNDO: armed = "tap again to delete" - the danger palette the
-   :active state already uses, held for the 1.6s arm window. */
+/* armed = "tap again to delete" - the danger palette the :active state already
+   uses, held for the 1.6s arm window. */
 .prog .slot .rm.armed{color:var(--on-danger);}
 .prog .slot .rm.armed::before{background:var(--bad);border-color:var(--bad);}
 .prog .slot .rm:active::before{background:var(--bad);}
 .prog .slot .rm:active{color:var(--on-danger);}
-/* S-DELHANDLE-OVERFLOW (UAT 2026-07-10): in the full diagram-card stage (1-4 chords)
-   the default -7px overhang floats the delete badge OFF the card, reading as
-   disconnected. Pull it just inside the card's top-right corner so it reads as
-   attached to the chord it removes. Compact stages keep the corner-overhang (tiny
-   tokens have no interior room for the badge). */
+/* In the full diagram-card stage (1-4 chords) the default -7px overhang floats the
+   delete badge OFF the card, reading as disconnected. Pull it just inside the
+   card's top-right corner so it reads as attached to the chord it removes. Compact
+   stages keep the corner-overhang (tiny tokens have no interior room for it). */
 .prog.full .slot .rm{top:2px;right:2px;}
-/* S-COMPOSE-CALM (2026-07-19): the ambient Chords|Song segmented toggle is
-   RETIRED - the jam surface carries zero song chrome. The canvas opens on
-   demand (Save sheet / Library) and carries its own close: */
+/* The jam surface carries zero song chrome - the canvas opens on demand (Save
+   sheet / Library) and carries its own close: */
 .songCanvasClose{align-self:flex-end;flex:0 0 auto;background:none;border:0;color:var(--txt-dim);
   font-size:1.05rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
   min-width:44px;min-height:44px;margin:-4px -6px -10px 0;}
@@ -783,147 +682,139 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.songMode .progBox{margin-bottom:0;}
 .composeWrap.songMode .composeChords{display:none;}
 /* The Song canvas: the ONLY scroll area in Song mode - sections can grow
-   without ever burying an action (the bug that motivated all of this). */
+   without ever burying an action. */
 .composeSong{display:none;}
 .composeWrap.songMode .composeSong{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;}
 .songCue{margin:0;}
 .songCue[hidden]{display:none;}
-/* Cards stack vertically on the canvas; neutralize both the tray-era wrap AND
-   the tray-scroll hotfix's 22vh cap (the canvas scrolls as a whole, so an
-   inner cap would just re-create a nested scroll trap). */
+/* Cards stack vertically on the canvas; neutralize the .songSections wrap and
+   22vh cap (the canvas scrolls as a whole, so an inner cap would re-create a
+   nested scroll trap). */
 .composeSong .songSections{flex-direction:column;flex-wrap:nowrap;max-height:none;overflow-y:visible;}
 /* A section CARD: label row (name + play + reorder + remove) over a chords row.
    Reuses .songSect's chip chrome + the drag/armed-remove/move grammar. */
-/* Operator UAT 2026-07-20 ("horiz divider needed"): a labeled hairline between
-   the section cards and the add-a-section templates. Centered label flanked by
-   two lines (the app's labeled-boundary grammar, cf. the in-key barrier). */
+/* A labeled hairline between the section cards and the add-a-section templates.
+   Centered label flanked by two lines (the app's labeled-boundary grammar, cf.
+   the in-key barrier). */
 .songCanvasDiv{display:flex;align-items:center;gap:10px;margin:14px 2px 8px;}
 .songCanvasDiv[hidden]{display:none;}
 .songCanvasDiv::before,.songCanvasDiv::after{content:'';flex:1;height:1px;background:var(--line);}
 .songCanvasDivLbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--txt-dim);font-weight:700;white-space:nowrap;}
 .songSect.card{width:100%;flex-wrap:wrap;align-items:center;padding:9px 12px;gap:4px 0;}
-/* UAT r5 F4 (operator 2026-07-19: "Chor..." - the sixth control starved the
-   name): tighten the card controls' PITCH, not their touch targets. Each 44px
-   hit box keeps its size; -3px side margins overlap the boxes to a 38px pitch
-   while the 36px visual halos stay 2px apart. Frees ~40px per card - the
-   longest built-in label (Pre-Chorus) renders whole at phone width. */
+/* Tighten the card controls' PITCH, not their touch targets: each 44px hit box
+   keeps its size; -3px side margins overlap the boxes to a 38px pitch while the
+   36px visual halos stay 2px apart. Frees ~40px per card so the longest built-in
+   label (Pre-Chorus) renders whole at phone width. */
 .songSect.card .songSectPlay,.songSect.card .songSectEdit,.songSect.card .songSectDup,.songSect.card .songSectMove,.songSect.card .rm{margin:0 -3px;}
 .songSect.card .songSectChords{flex-basis:100%;margin-top:4px;font-family:'Space Mono',monospace;font-size:.82rem;color:var(--txt);white-space:normal;word-spacing:2px;}
-/* Operator UAT 2026-07-18 ("pre chorus causes wrap on 1 element breaking
-   layout"): in a flex-wrap container, LINE BREAKING is computed on the items'
-   hypothetical sizes BEFORE any shrinking - so a long label ("Pre-Chorus · N",
-   or any label under a large device font scale) pushed the last control onto a
-   second line instead of the label shrinking. flex-basis:0 makes the label's
-   hypothetical size zero: the header line can never be forced to wrap by the
-   label, it GROWS into whatever's left and ellipsizes at the floor. The
-   controls (all flex:0 0 auto) stay on one line by construction. */
+/* In a flex-wrap container, LINE BREAKING is computed on items' hypothetical
+   sizes BEFORE any shrinking - so a long label ("Pre-Chorus · N", or any label
+   under a large device font scale) pushes the last control onto a second line
+   instead of the label shrinking. flex-basis:0 makes the label's hypothetical
+   size zero: the header line can never be forced to wrap by the label, it GROWS
+   into whatever's left and ellipsizes at the floor. The controls (all
+   flex:0 0 auto) stay on one line by construction. */
 .songSect.card .songSectName{margin-right:auto;flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .songSectPlay{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--accent-ink);font-size:1rem;line-height:1;cursor:pointer;}
 .songSectPlay::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--accent-dim);background:var(--bg-2);}
 .songSectPlay:active{color:var(--on-accent);}
 .songSectPlay:active::before{background:var(--accent);border-color:var(--accent);}
-/* S-SECTION-EDIT: ✎ per-section edit-into-builder button. Same 44px hit target
-   + halo grammar as .songSectPlay (Element Consistency Law - reuse the card's
-   control primitive), neutral-toned so it reads as "edit" not "play". */
+/* ✎ per-section edit-into-builder button. Same 44px hit target + halo grammar as
+   .songSectPlay (reuse the card's control primitive), neutral-toned so it reads
+   as "edit" not "play". */
 .songSectEdit{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
 .songSectEdit::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSectEdit:active{color:var(--accent-ink);}
 .songSectEdit:active::before{background:var(--accent-deep);border-color:var(--accent-dim);}
 .songBuildBtn{min-height:44px;}
-/* slice 2: the duplicate handle joins the card control row - same 44px halo
-   convention as .rm / .songSectMove. */
-/* UAT r5 F3 (operator 2026-07-19): the duplicate control wears the SAME 44px
-   box + 36px circular halo grammar as .songSectPlay/.songSectEdit (Element
-   Consistency Law - one card-control primitive, four instances). */
+/* The duplicate handle wears the SAME 44px box + 36px circular halo grammar as
+   .songSectPlay/.songSectEdit / .rm / .songSectMove (one card-control primitive). */
 .songSectDup{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1rem;line-height:1;cursor:pointer;}
 .songSectDup::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSectDup:active{color:var(--accent-ink);}
 .songSectDup:active::before{background:var(--accent-deep);border-color:var(--accent-dim);}
-/* M-13 SONG BUILDER: the section buffer tray. In Chords mode it is now ONLY the
-   capture row (cue + label + "Add to song"); the sections/templates/save all
-   live on the Song canvas. [hidden] takes no space (the empty-canvas state). */
+/* The section buffer tray. In Chords mode it is ONLY the capture row (cue +
+   label + "Add to song"); the sections/templates/save all live on the Song
+   canvas. [hidden] takes no space (the empty-canvas state). */
 .songTray[hidden]{display:none;}
-/* UAT r2 (2026-07-16): the capture zone reads as ONE bounded group in the song
-   accent family - visually split from the chord picker below (was floating
-   chrome with no container). Same card grammar as .songSuggest, solid not
+/* The capture zone reads as ONE bounded group in the song accent family, split
+   from the chord picker below. Same card grammar as .songSuggest, solid not
    dashed (this is a standing control, not a suggestion). */
 .songTray{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:9px 10px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songAdd{display:flex;gap:8px;align-items:center;}
 .songAdd[hidden]{display:none;}
 .songSectSel{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.86rem;}
 .songSectSel:focus{outline:none;border-color:var(--accent-ink);}
-/* UAT r2: "Add to song" climbs the CTA ladder - accent outline + ink, above a
+/* "Add to song" sits high on the CTA ladder - accent outline + ink, above a
    ghost button, below the ONE filled primary (Save). It is the bridge into the
-   song feature and was reading as an afterthought. */
+   song feature. */
 .songAdd .songAddBtn{flex:1 1 auto;min-height:44px;border-color:var(--accent-ink);color:var(--accent-ink);font-weight:700;}
-/* UAT r2: teaching cues are dismissible one-shot tips - small × glyph on a
-   full 44px hit target (the .rm halo convention), quiet until pressed. */
+/* Teaching cues are dismissible one-shot tips - small × glyph on a full 44px hit
+   target (the .rm halo convention), quiet until pressed. */
 .songTrayCue{position:relative;display:flex;align-items:center;gap:6px;padding-right:30px;}
 .songTrayCue .cueText{flex:1 1 auto;}
 .cueDismiss{position:absolute;top:50%;right:-8px;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.8rem;line-height:1;cursor:pointer;}
 .cueDismiss::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface-2);}
 .cueDismiss:active{color:var(--txt);}
-/* S-SONGTRAY-BOUND (#252, merged): the base bounded-scroll cap kept for any
-   .songSections OUTSIDE the canvas. In Song mode the `.composeSong .songSections`
-   rule below overrides it (max-height:none) so the full-screen canvas scrolls as
-   a whole - the two coexist cleanly (Song mode supersedes the stopgap). */
+/* The base bounded-scroll cap, kept for any .songSections OUTSIDE the canvas. In
+   Song mode the .composeSong .songSections rule below overrides it
+   (max-height:none) so the full-screen canvas scrolls as a whole. */
 .songSections{display:flex;flex-wrap:wrap;gap:8px;max-height:22vh;overflow-y:auto;overscroll-behavior:contain;}
 .songSections:empty{display:none;}
 /* A buffered-section chip: label + chord count, with the ONE inline-remove
    grammar - the × rests QUIET (--txt-soft) and only wears red once ARMED. */
-/* UAT r6 draft chip: parked-draft status + link on the jam surface. Dashed
-   border = the draft grammar (echoes the strip container); quiet accent tint,
-   full-width tap target. Hidden by renderSongTray whenever the canvas or a
-   transaction hop owns the context. */
+/* Draft chip: parked-draft status + link on the jam surface. Dashed border = the
+   draft grammar (echoes the strip container); quiet accent tint, full-width tap
+   target. Hidden by renderSongTray whenever the canvas or a transaction hop owns
+   the context. */
 .draftChip{display:block;width:100%;margin-top:8px;padding:11px 12px;min-height:44px;text-align:left;border:1px dashed var(--accent-dim);background:var(--accent-deep);color:var(--accent-ink);border-radius:var(--r-btn-sm);font-weight:600;font-size:.82rem;cursor:pointer;}
-/* display:block above would defeat the [hidden] UA style - restate it (the
-   probe caught the chip rendering with hidden=true after the draft emptied). */
+/* display:block above would defeat the [hidden] UA style - restate it so the
+   chip stays hidden when hidden=true after the draft empties. */
 .draftChip[hidden]{display:none;}
 .draftChip:active{background:var(--accent);color:var(--on-accent);}
 .songSect{position:relative;display:flex;align-items:center;gap:6px;min-height:36px;padding:5px 30px 5px 11px;border-radius:11px;border:1px solid var(--accent-dim);background:var(--accent-deep);}
 .songSect .songSectName{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:var(--accent-ink);white-space:nowrap;}
-/* M-13 g2 reorder handles: real 44x44 hit target (a11y-coach floor) in normal
-   flex flow (unlike the corner-absolute .rm), small decorative circle behind
-   the glyph via ::before - the same "invisible halo over a small visual"
-   convention as .rm, just not corner-pinned since two sit side by side. */
+/* Reorder handles: real 44x44 hit target in normal flex flow (unlike the
+   corner-absolute .rm), small decorative circle behind the glyph via ::before -
+   the same "invisible halo over a small visual" convention as .rm, just not
+   corner-pinned since two sit side by side. */
 .songSect .songSectMove{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:.9rem;line-height:1;cursor:pointer;}
 .songSect .songSectMove::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .songSectMove:disabled{opacity:.3;cursor:default;}
 .songSect .songSectMove:disabled::before{display:none;}
 .songSect .songSectMove:active:not(:disabled){color:var(--on-accent);}
 .songSect .songSectMove:active:not(:disabled)::before{background:var(--accent);border-color:var(--accent);}
-/* Operator UAT 2026-07-17: the delete X joins the SAME control row as
-   play/edit/up/dn (it was absolutely positioned against the whole card, so it
-   sat vertically off-center from its siblings). One row, five aligned 44px
-   targets, matching 36px visible halos. */
+/* The delete X joins the SAME control row as play/edit/up/dn (not absolutely
+   positioned against the whole card, which sat it vertically off-center from its
+   siblings). One row, five aligned 44px targets, matching 36px visible halos. */
 .songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
 .songSect .rm::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .rm.armed{color:var(--on-danger);}
 .songSect .rm.armed::before{background:var(--bad);border-color:var(--bad);}
 .songSect .rm:active{color:var(--on-danger);}
 .songSect .rm:active::before{background:var(--bad);}
-/* M-13 g4: drag-to-reorder, same accent-edge grammar as S-PROG-REORDER's
-   .prog .slot.dragging/.dropBefore/.dropAfter. No border-radius override here
-   (ux-coach: the chip is a filled, already-rounded 11px pill, not the bare
-   .slot - forcing 4px would clash/flicker mid-drag against its own rounding). */
+/* Drag-to-reorder, same accent-edge grammar as the .prog .slot.dragging/
+   .dropBefore/.dropAfter markers. No border-radius override here: the chip is a
+   filled, already-rounded 11px pill, not the bare .slot - forcing 4px would
+   clash/flicker mid-drag against its own rounding. */
 .songSect.dragging{opacity:.45;}
 .songSect.dropBefore{box-shadow:-3px 0 0 0 var(--accent-ink);}
 .songSect.dropAfter{box-shadow:3px 0 0 0 var(--accent-ink);}
 .songAssembleBtn[hidden]{display:none;}
 .songAssembleBtn{min-height:44px;}
-/* M-13 g1 TEMPLATE-SUGGESTED SECTIONS: proven-progression chips shown inside the
-   SONG tray when the buffer awaits its next (empty) progression. Suggestion-tier
+/* Template-suggested sections: proven-progression chips shown inside the SONG
+   tray when the buffer awaits its next (empty) progression. Suggestion-tier
    grammar - dashed outline + surface fill, NOT the accent-fill of a selected
    state (these are offers, not the current pick). The label switcher reuses the
-   .chordSeg segmented primitive (its own rules above). */
-/* UAT assembly cue: ONE quiet chrome-tier line (S-POSTPROG-CUE grammar) that
-   names the next move - never a fill/accent, it is guidance, not an action. */
+   .chordSeg segmented primitive. */
+/* Assembly cue: ONE quiet chrome-tier line that names the next move - never a
+   fill/accent, it is guidance, not an action. */
 .songTrayCue[hidden]{display:none;}
 .songTrayCue{margin:0;font-size:.74rem;color:var(--txt-dim);}
-/* #262 SONG MAP: the draft's sections as tappable edit-target chips on the
-   CHORDS surface (kills the Song<->Chords round-trip). Action-tier pills
-   (solid outline, 44px targets - these DO something), never the dashed
-   suggestion grammar; the section being edited carries the accent state. */
+/* Song map: the draft's sections as tappable edit-target chips on the CHORDS
+   surface (avoids the Song<->Chords round-trip). Action-tier pills (solid
+   outline, 44px targets - these DO something), never the dashed suggestion
+   grammar; the section being edited carries the accent state. */
 .songMap[hidden]{display:none;}
 .songMap{display:flex;flex-wrap:wrap;gap:6px;}
 .songMapChip{min-height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
@@ -931,10 +822,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .songSuggest[hidden]{display:none;}
 .songSuggest{display:flex;flex-direction:column;gap:8px;padding:9px 10px;border-radius:11px;border:1px dashed var(--accent-dim);background:var(--accent-deep);}
 .songSuggestChips{display:flex;flex-direction:column;gap:6px;}
-/* S-PROG-GUIDANCE: each suggestion is a ROW - the fill chip (flex:1) beside a
-   44px "?" reveal, with the FEEL/WHEN/PROVEN ladder spanning full width below
-   when open. The ladder mirrors the Studio solo view's labeled-guidance look
-   (small accent label left, prose right) - the operator's stated bar. */
+/* Each suggestion is a ROW - the fill chip (flex:1) beside a 44px "?" reveal,
+   with the FEEL/WHEN/PROVEN ladder spanning full width below when open. The
+   ladder mirrors the Studio solo view's labeled-guidance look (small accent
+   label left, prose right). */
 .songSuggestItem{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;}
 .songSuggestItem .songSuggestChip{flex:1 1 auto;min-width:0;}
 .ssWhy{position:relative;flex:0 0 auto;width:44px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-size:1.05rem;font-weight:700;font-family:'Space Mono',monospace;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
@@ -956,11 +847,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .suggest:empty{display:none;}
 .suggEmpty{font-style:italic;margin:6px 2px 2px;}
 .suggLbl{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
-/* The suggested->in-key BARRIER (operator UAT 2026-07-17): same section-label
-   primitive as .suggLbl, plus a full-width top hairline so the two chord groups
-   read as two regions (the All view gets this split from its quality-chip row).
-   .lblNote opts the key ROOT out of the uppercase transform - a flat accidental
-   must render "Bb", never "BB" (note-spelling / a11y rule). */
+/* The suggested->in-key BARRIER: same section-label primitive as .suggLbl, plus a
+   full-width top hairline so the two chord groups read as two regions. .lblNote
+   opts the key ROOT out of the uppercase transform - a flat accidental must render
+   "Bb", never "BB" (note-spelling / a11y rule). */
 .inKeyLbl{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
 .inKeyLbl .lblNote{text-transform:none;}
 .suggRow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
@@ -968,24 +858,22 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    "Next chord" panel a few short rows instead of a viewport-eating wall of diagrams.
    A chord that COMPLETES a famous progression gets an accent glow (no name caption -
    the caption blew the chip width and wrapped the row). */
-/* S-SUGG-DIFFERENTIATE (UAT 2026-07-10): the suggested next-chords are the app's
-   RECOMMENDED picks (music-theory-coach ranks them, strongest first), so they read a
-   step warmer than the neutral browse palette below - a subtle accent-deep tint + an
-   accent-ink border, WITHOUT the full accent-fill that would read as "selected". The
-   .complete glow (a chord that finishes a famous progression) stays the strongest cue. */
+/* The suggested next-chords are the app's RECOMMENDED picks (ranked strongest
+   first), so they read a step warmer than the neutral browse palette below - a
+   subtle accent-deep tint + an accent-ink border, WITHOUT the full accent-fill
+   that would read as "selected". The .complete glow (a chord that finishes a
+   famous progression) stays the strongest cue. */
 .suggChip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:48px;padding:7px 12px;border-radius:12px;border:1px solid var(--accent-ink);background:var(--accent-deep);font-family:inherit;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;}
 .suggChip:active{transform:scale(.93);background:var(--accent-deep);border-color:var(--accent-ink);}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
-/* S-CHORD-COLLAPSE (advanced guidance level): the Compose palettes render the
-   SAME suggChip token in a dense auto-fill grid (.ccChips = the in-key lead's
-   own wrapper; .chordGrid.ccMode = #buildGrid re-tracked while chips are on).
-   width:100% + min-width:0 mirrors the .prog fill-row/grid6 carve-out so chips
-   fill their track instead of centering at 58px. The 56px track floor keeps
-   ~6 columns at the 412px review viewport - one short row where the diagram
-   tiles needed a full screen. min-height comes from .suggChip (48px >= the
-   44px tap floor). */
+/* Advanced guidance level: the Compose palettes render the SAME suggChip token in
+   a dense auto-fill grid (.ccChips = the in-key lead's wrapper; .chordGrid.ccMode
+   = #buildGrid re-tracked while chips are on). width:100% + min-width:0 mirrors
+   the .prog fill-row/grid6 carve-out so chips fill their track instead of
+   centering at 58px. The 56px track floor keeps ~6 columns at a 412px viewport.
+   min-height comes from .suggChip (48px >= the 44px tap floor). */
 .ccChips{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;touch-action:pan-y;}
 .chordGrid.ccMode{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));}
 .ccChips .suggChip,
@@ -1002,20 +890,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .cActions{display:flex;gap:8px;margin:14px 0;}
 /* touch-action:pan-y - the chord tiles are a vertical grid (no horizontal scroll of its
    own), so a vertical swipe over it MUST pan the page/accordion, never get trapped. */
-/* ===== S-LAYOUT-SSOT: chord-tile/diagram geometry token block =====
- * ONE declared source for the numeric constants that keep a chord-diagram
- * SVG from spilling into its neighbour (the U5/#96 overlap bug class) - see
- * music/engineering-wiki/systems/layout-tokens.md for the full contract,
- * the independent-by-design constants this deliberately does NOT fold in
- * (diagram.js's per-string-count SIZES, .prog's scroll-strip floor), and
- * the ONE known gap it surfaced (tracks.css .bt-st-chords) - RESOLVED-BY-
- * REMOVAL, not by adopting this token block: F19 (operator UAT 2026-07-05)
- * dropped the Studio's chords-in-key SVG diagrams entirely (name-only chips
- * now), so there is no diagram canvas left in that row to squeeze.
- * --dg-canvas-w is a documentation-anchor, not a live coupling: diagram.js
- * emits a plain SVG string and cannot read a CSS var, so this promotes what
- * used to be a prose-only "86px" comment into a real value --tile-min
- * derives from, so the two numbers can't silently drift apart again. */
+/* ===== Chord-tile/diagram geometry token block =====
+ * ONE declared source for the numeric constants that keep a chord-diagram SVG
+ * from spilling into its neighbour (the tile-overlap bug class) - see
+ * music/engineering-wiki/systems/layout-tokens.md for the full contract and
+ * the constants this deliberately does NOT fold in (diagram.js's per-string-count
+ * SIZES, .prog's scroll-strip floor). --dg-canvas-w is a documentation-anchor,
+ * not a live coupling: diagram.js emits a plain SVG string and cannot read a CSS
+ * var, so this promotes what was a prose-only "86px" comment into a real value
+ * --tile-min derives from, so the two numbers can't silently drift apart. */
 :root{
   --dg-canvas-w:86px;  /* diagram.js SIZES.small canvas width, 6-string guitar (widest 'small' diagram): W=2*12+5*9.6=72, +labelPad 14 = 86 - see diagram.js's cross-ref comment on SIZES.small */
   --tile-min:calc(var(--dg-canvas-w) - 2px);  /* .chordGrid track min - just under the reference canvas so the shrink-to-fit clamp below does negligible work in the common case */
@@ -1029,16 +912,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
      squeeze-fit value - see music/engineering-wiki/systems/layout-tokens.md. */
   --prog-tile-min:62px;
 }
-/* Track min was 84px (now var(--tile-min), which computes to the same 84px)
-   so a cell holds a full chord card. A 6-string guitar diagram is an
-   86px-wide SVG (var(--dg-canvas-w)); its card adds padding+border to ~100px.
-   At the old 72px min, a wide (laptop) viewport's auto-fill collapsed cells
-   to ~79px - narrower than the card - so the in-key cards overflowed their
-   cells and overlapped, and the fixed-width SVG spilled past the scroll
-   container (the few-px horizontal scroll). The current min keeps phones
-   (<=412px, e.g. Pixel 10) at the same 4-column count while widening laptop
-   cells (6 -> 5 columns) enough that the native-size diagram fits - so
-   nothing shrinks below the phone-DPI label floor. */
+/* Track min (var(--tile-min)) sizes a cell to hold a full chord card. A 6-string
+   guitar diagram is an 86px-wide SVG (var(--dg-canvas-w)); its card adds
+   padding+border to ~100px. Too small a min lets a wide (laptop) viewport's
+   auto-fill collapse cells narrower than the card, so the in-key cards overflow
+   and overlap and the fixed-width SVG spills past the scroll container. The
+   current min keeps phones (<=412px) at 4 columns while widening laptop cells to
+   5 columns so the native-size diagram fits - nothing shrinks below the phone-DPI
+   label floor. */
 .chordGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile-min),1fr));gap:var(--tile-gap);touch-action:pan-y;}
 /* ONE chord-tile style, shared by the progression, the suggestions and the build
    grid, so every chord box reads the same. Suggestions add an accent border to
@@ -1070,18 +951,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .prog .slot .chord,
 .suggRow .chord.suggPick,
 .chordGrid .chord{display:flex;flex-direction:column;align-items:center;gap:5px;box-sizing:border-box;cursor:pointer;border-radius:12px;padding:8px 6px 6px;border:1px solid var(--line-strong);background:var(--surface-2);transition:transform .08s,background .15s,border-color .15s;}
-/* UAT U5 (2026-07-04, operator Pixel walkthrough): the All-view #buildGrid tiles
-   render .chord DIRECTLY as the grid item (no wrapping .chordCell like the
-   in-key view above), so they never got that view's own min-width:0 +
-   max-width:100% clamp (.keyPalette .chordCell / .keyPalette .chordCell >
-   .chord, above) - the exact hardening the S-LAYOUT-SSOT token block above
-   (music/engineering-wiki/systems/layout-tokens.md) already documents as the
-   fix for this SAME --dg-canvas-w-vs---tile-min squeeze. Investigated under
-   simulated Android font scaling (root font-size up to 1.5x) plus a 360-432px
-   viewport sweep - no live overlap reproduced in Chromium (see the PR body
-   for the measurement table; scripts/layout-check.py now automates this
-   sweep), but this closes the parity gap: a diagram wider than its column
-   now shrinks to fit instead of visually bleeding into the next tile. */
+/* The All-view #buildGrid tiles render .chord DIRECTLY as the grid item (no
+   wrapping .chordCell like the in-key view above), so they never got that view's
+   min-width:0 + max-width:100% clamp (.keyPalette .chordCell > .chord, above).
+   This adds the same clamp so a diagram wider than its column shrinks to fit
+   instead of bleeding into the next tile. */
 .chordGrid .chord{min-width:0;}
 .chordGrid .chord svg{max-width:100%;height:auto;display:block;}
 .prog .slot .chord .chord-name,
@@ -1103,14 +977,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyLbl{font-size:.68rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.1em;}
 .keyClearBtn{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:14px;cursor:pointer;}
 .keyClearBtn:active{background:var(--surface-2);transform:scale(.94);}
-/* Key/mode chip - lives in the button bar (#keyChipSlot) now, doing double duty: shows
-   the current key (root + abbreviated mode, tracking songKey so it reads as the transpose
-   readout) AND toggles the key/mode fly-out. FIXED WIDTH so "C Maj" and "G# Mixo" render
-   the same size and the button bar never jumps as the key name changes; overflow ellipsis
-   guards an unexpectedly long label. 'shifted' lights it when transposed off the built-in
-   key (mirrors the retired #cKey readout indicator). M-GUIDE W2: 80->88px - Blues is NOT
-   abbreviated (MODE_SHORT.Blues = 'Blues', full word, by design per the IA), so "G# Blues"
-   needs 8 more px than the old "G# Mixo" longest-case to clear the chip-clip fold gate. */
+/* Key/mode chip - lives in the button bar (#keyChipSlot), doing double duty: shows
+   the current key (root + abbreviated mode, tracking songKey so it reads as the
+   transpose readout) AND toggles the key/mode fly-out. FIXED WIDTH so "C Maj" and
+   "G# Mixo" render the same size and the button bar never jumps as the key name
+   changes; overflow ellipsis guards an unexpectedly long label. 'shifted' lights
+   it when transposed off the built-in key. 88px, not 80px, because Blues is NOT
+   abbreviated (MODE_SHORT.Blues = 'Blues', full word), so "G# Blues" needs the
+   extra width to clear the chip-clip fold gate. */
 .keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:88px;min-width:88px;max-width:88px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
 .keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.95);}
 .keyPickerCompact[hidden]{display:none;}
@@ -1133,20 +1007,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyTitle{margin:8px 0 4px;font-size:1rem;}
 .keyTitle strong{color:var(--txt);font-weight:800;}
 .keyTitle span{color:var(--accent-ink);font-size:.76rem;font-weight:600;margin-left:6px;}
-/* M-GUIDE W3b: Compose key-view solo-scale PREVIEW row (decoupled, non-persisted -
-   see compose-key-system.md). Composes the existing .chip base class for the
-   buttons themselves - this rule only lays out the row; no new chip-variant
-   border/background/radius (3 chip variants already exist app-wide). */
+/* Compose key-view solo-scale PREVIEW row (decoupled, non-persisted - see
+   compose-key-system.md). Composes the existing .chip base class for the buttons;
+   this rule only lays out the row, no new chip-variant border/background/radius. */
 .keySoloScale{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
-/* M-EAR wave 1: the play/stop audition toggle sits beside the notes line
-   (not its own row) - costs no extra vertical space, mirrors the Studio's
-   .bt-st-solorow layout (tracks.css) for the same reason. */
+/* The play/stop audition toggle sits beside the notes line (not its own row) -
+   costs no extra vertical space, mirrors the Studio's .bt-st-solorow layout
+   (tracks.css). */
 .keySoloNotesRow{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .keySoloNotes{font-size:.82rem;color:var(--txt-soft);margin:0 0 4px;}
 .keySoloNotes strong{color:var(--txt);font-weight:600;}
-/* S-CHIPS-PLUS: the degrees line under the notes line - same styling family as
-   the Practice Studio's degree glyphs (tracks.css .cofDeg .dg: monospace, dim,
-   small) so "1 2 3 4 5 6 ♭7" reads as the SAME kind of label app-wide. */
+/* The degrees line under the notes line - same styling family as the Practice
+   Studio's degree glyphs (tracks.css .cofDeg .dg: monospace, dim, small) so
+   "1 2 3 4 5 6 ♭7" reads as the SAME kind of label app-wide. */
 .keySoloDegrees{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);letter-spacing:.03em;margin:0 0 4px;}
 .keySoloDegrees[hidden]{display:none;}
 .keySoloFrame{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 10px;}
@@ -1158,41 +1031,36 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    (chord name bold at top via .chord-name, Roman muted at bottom via .rn). */
 .keyPalette .chordCell{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;}
 /* Clamp the bordered card to its cell (min-width:0 lets the cell shrink to the grid
-   track). Without this the card is content-sized (~100px) and, being centered in a
-   narrower cell, overflows into its neighbours - the in-key overlap. The All-chords
-   tiles never had this because there the card IS the grid item, already clamped to the
-   track; this makes the in-key card behave the same. Same S-LAYOUT-SSOT contract as
-   the .chordGrid token block above (music/engineering-wiki/systems/layout-tokens.md) -
-   this is the ADDITIONAL clamp layer the in-key view needs because of its extra
-   .chordCell wrapper (the All-grid's .chord is the direct grid item, so its own
-   .chordGrid .chord{min-width:0} + svg{max-width:100%} suffice there). */
+   track). Without this the card is content-sized (~100px) and, centered in a narrower
+   cell, overflows into its neighbours - the in-key overlap. The All-chords tiles never
+   had this because there the card IS the grid item, already clamped to the track; this
+   makes the in-key card behave the same. It is the ADDITIONAL clamp layer the in-key
+   view needs because of its extra .chordCell wrapper (see the geometry token block
+   above; music/engineering-wiki/systems/layout-tokens.md). */
 .keyPalette .chordCell > .chord{max-width:100%;box-sizing:border-box;}
 .keyPalette .chordCell .rn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
-/* ---- Adaptive chord surface (Phase 1) ----
+/* ---- Adaptive chord surface ----
    #catChips in the Chords panel becomes a vertical stack: the in-key lead palette (or
    the no-key hint), the "+ all chords" expander, and an inner scrollable category-tab
-   row. Override the default .chips horizontal-flex behavior for this stacked layout. */
+   row. Overrides the default .chips horizontal-flex behavior for this stacked layout. */
 .adaptiveChips{display:flex;flex-direction:column;gap:0;overflow:visible;margin-bottom:10px;}
 .inKeyLead{margin-bottom:4px;}
-/* F28+F29 (UI-std UAT): #catChips now SHARES its row with the Solo entry point
-   (#chordCtrlRow, play/index.html) instead of stacking a full-width CTA below it -
-   the toggle flexes to fill the remaining width beside the compact Solo button. */
+/* #catChips SHARES its row with the Solo entry point (#chordCtrlRow,
+   play/index.html) instead of stacking a full-width CTA below it - the toggle
+   flexes to fill the remaining width beside the compact Solo button. */
 .chordCtrlRow{display:flex;align-items:stretch;gap:8px;margin-bottom:8px;}
 /* Segmented "In key | All" toggle: ONE control (in the FIXED #catChips) that swaps the
    scrolling chord list's content. A pill pair, full-width (of its OWN flexed
    column - see .chordCtrlRow above), each segment >=44px tall. */
 #catChips{flex:1 1 auto;margin:0;}
-/* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - was an oddball against the
-   sibling segmented-control containers (.modeSwitch/.viewToggle), both already 11px. */
+/* Uses --r-btn to match the sibling segmented-control containers
+   (.modeSwitch/.viewToggle). */
 .chordSeg{display:flex;gap:0;width:100%;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-btn);overflow:hidden;}
-/* Operator UAT 2026-07-17: with 7 section labels the switcher clipped its
-   last segment ("Outr"); the first fix scrolled it horizontally - but UAT
-   2026-07-18 ("missing solo section") proved a scroll with no affordance is
-   WORSE: options past the fold read as absent, not reachable (recognition
-   over recall - an invisible option doesn't exist to the user). So the
-   switcher now WRAPS: all 7 labels visible at once, two rows on a phone.
-   Scoped: other chordSeg consumers (2-3 segments) keep the sealed pill look;
-   the border-radius overflow clip on .chordSeg still rounds the corners. */
+/* With 7 section labels the switcher WRAPS: all 7 labels visible at once, two
+   rows on a phone. A horizontal scroll was worse - options past the fold read as
+   absent, not reachable (recognition over recall). Scoped: other chordSeg
+   consumers (2-3 segments) keep the sealed pill look; the border-radius overflow
+   clip on .chordSeg still rounds the corners. */
 .songSuggestLabels{flex-wrap:wrap;}
 .songSuggestLabels .chordSegBtn{flex:1 0 auto;white-space:nowrap;padding-left:12px;padding-right:12px;}
 .chordSegBtn{flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 10px;transition:background .15s,color .15s;}
@@ -1203,41 +1071,36 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    child of the scroll area, not .adaptiveChips). */
 .catTabRow{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .catTabRow::-webkit-scrollbar{display:none;}
-/* S-TYPEFILTER-ACCENT (UAT 2026-07-10): the All-view quality filter (Maj/Min/7th/...) is a
-   SECONDARY narrowing control, not a primary action - its selected chip in full accent fill
-   read as a competing CTA (emphasis-by-scarcity friction). Demote the selected type filter
-   to an accent OUTLINE (accent-ink text + border, transparent bg) so accent-fill stays
-   reserved for the one primary/recommended thing. Scoped to this filter row: the app-wide
-   selected-grammar reversal (all .chip.on / toggles) is a separate, fully-verified pass.
-   Lint-safe: outline is neither the surface-2 + box-shadow ring the consistency lint forbids
-   nor a new hue. */
+/* The All-view quality filter (Maj/Min/7th/...) is a SECONDARY narrowing control,
+   not a primary action - a full accent-fill selected chip reads as a competing CTA.
+   Its selected state is an accent OUTLINE (accent-ink text + border, transparent
+   bg) so accent-fill stays reserved for the one primary/recommended thing.
+   Lint-safe: outline is neither the surface-2 + box-shadow ring the consistency
+   lint forbids nor a new hue. */
 .catTabRow .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
-/* G3 S-TYPEFILTER-QUIET completion (2026-07-10): the SAME quiet grammar for the
-   Library facet bars (#genreChips/#keyChips live in .chips containers). FILTER
-   chips select with an outline; the accent FILL stays reserved for primary
-   actions and true mode selections (.keyModes, segmented views) - that is the
-   filter-vs-selection line the G3 decision drew. */
+/* The SAME quiet grammar for the Library facet bars (#genreChips/#keyChips live in
+   .chips containers). FILTER chips select with an outline; the accent FILL stays
+   reserved for primary actions and true mode selections (.keyModes, segmented
+   views) - the filter-vs-selection line. */
 .chips .chip.on{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink);}
 .chordsHint{margin:0 2px 4px;}
 /* Empty in-key state: the pick-a-key CTA is the primary action, full width so it
-   reads as THE next step (the old prose hint buried it). */
+   reads as THE next step. */
 .pickKeyCta{display:block;width:100%;margin:2px 0 8px;}
-/* Solo entry point (F28+F29, UAT): the SAME compact companion-button treatment on
-   BOTH surfaces - shares Compose's #chordCtrlRow (beside the In-key|All toggle)
-   and the song view's .practiceRow (beside Lyrics/Chords/Both + transpose + Stage -
-   see the .practiceRow rule below). Accent-outlined pill, matches the row's other
-   controls' height (44px floor via the host row's align-items:stretch) and radius
-   (--r-btn, per component-conventions.md's segmented-control convention) rather
-   than a bolted-on full-width CTA. Auto-hidden entirely (not disabled) when there's
-   nothing to solo over - songbook.js's canSolo gate / renderKey, unchanged. */
+/* Solo entry point: the SAME compact companion-button treatment on BOTH surfaces -
+   shares Compose's #chordCtrlRow (beside the In-key|All toggle) and the song view's
+   .practiceRow (beside Lyrics/Chords/Both + transpose + Stage). Accent-outlined
+   pill, matches the row's other controls' height (44px floor via the host row's
+   align-items:stretch) and radius (--r-btn) rather than a bolted-on full-width CTA.
+   Auto-hidden entirely (not disabled) when there's nothing to solo over
+   (songbook.js's canSolo gate / renderKey). */
 .soloRowBtn{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:8px 14px;border-radius:var(--r-btn);border:1px solid var(--accent-dim);background:transparent;color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;}
 .soloRowBtn:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.97);}
 /* "All chords" header: marks the revealed browse so its type tabs (Major/Minor/7th/...)
    are never mistaken for the key-MODE toggle above. */
 .allChordsHdr{font-size:.66rem;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px;}
 /* "+ all chords" expander: a quiet full-width control under the in-key lead */
-/* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - a full-width button-styled
-   toggle; migrated with the other button-family oddballs. */
+/* Full-width button-styled toggle - uses --r-btn like the other button family. */
 .allChordsToggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:700;font-size:.8rem;padding:8px 14px;border-radius:var(--r-btn);cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .08s;}
 .allChordsToggle:active{transform:scale(.98);}
 .allChordsToggle.open{border-style:solid;border-color:var(--accent-ink);color:var(--txt);}
@@ -1255,20 +1118,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .scalePosBtn:active{transform:scale(.94);}
 .scalePosBtn:disabled{opacity:.32;cursor:default;}
 .scalePosLbl{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--txt-dim);letter-spacing:.03em;min-width:76px;text-align:center;}
-/* Deep-dive link (Compose fly-out "Triads & Inversions" + the Studio's
-   "Walk the full cycle" - tracks.js renders the same class). The HSR chain
-   cards this used to sit under left Compose with the fly-out scale (locked
-   decision: the Studio owns fretboard/scale teaching). */
+/* Deep-dive link (Compose fly-out "Triads & Inversions" + the Studio's "Walk the
+   full cycle" - tracks.js renders the same class). Compose links to the fly-out
+   scale; the Studio owns fretboard/scale teaching. */
 .hsrMore{display:inline-block;margin:6px 0 14px;font-size:.78rem;color:var(--accent-ink);text-decoration:none;border-bottom:1px dashed var(--accent-dim);padding-bottom:1px;}
 .hsrMore:active{opacity:.6;}
-/* ---- Compose density: sticky live-loop band + collapsible advanced/onboarding panels ---- */
-/* Pin the part of Compose that changes every cycle (progression + next-chord nudge)
-   so build->solo->build never scrolls it away; the key picker, scale, and grids flow
-   below. The bg matches the app so chords scroll cleanly under it. */
-/* FLATTENED Compose (no accordions). A flex column: a FIXED top region (button bar +
+/* ---- Compose layout ----
+   FLATTENED Compose (no accordions). A flex column: a FIXED top region (button bar +
    progression box + key/mode chip + In-key|All toggle) over the chord list, which is the
    ONLY scroll container. No nested scroller -> vertical swipes on the in-key cells scroll
-   cleanly (fixes the lingering nested-accordion swipe bug). */
+   cleanly. */
 #s-compose{height:100%;}
 .composeWrap{display:flex;flex-direction:column;height:100%;}
 .composeTop{flex:0 0 auto;background:var(--bg);padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line);}
@@ -1285,78 +1144,70 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:10px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-strong);}
 .composeRow[hidden]{display:none;}
 /* Full-viewport dim layer for the save-name modal - a real sibling element
-   (songbook.js: composeModalBackdrop), NOT a ::before on the card. The prior
-   ::before with z-index:-1 painted ABOVE the card's own background (CSS2.1
-   stacking order: an element's own background paints first/bottom, THEN its
-   negative-z-index children, then its in-flow content) - so the dim overlay
-   washed out the card instead of sitting behind it (F9). A separate, lower
-   z-index sibling can never repaint over the card. */
+   (songbook.js: composeModalBackdrop), NOT a ::before on the card. A ::before with
+   z-index:-1 paints ABOVE the card's own background (CSS stacking order: an
+   element's own background paints first/bottom, THEN its negative-z-index children,
+   then its in-flow content) - so it would wash out the card instead of sitting
+   behind it. A separate, lower-z-index sibling can never repaint over the card. */
 .composeModalBackdrop{position:fixed;inset:0;z-index:74;background:rgba(0,0,0,.55);}
 .composeModalBackdrop[hidden]{display:none;}
-/* Save name-entry as a modal: an OPAQUE --surface card (never blended with the
-   dim layer above), anchored near the TOP of the viewport rather than
-   vertical-center - a soft mobile keyboard (~50% of a 412x915 viewport) would
-   otherwise cover the input and Save/Cancel (F10). max-height + internal
-   scroll is the guard if a short viewport still can't fit it. */
+/* Save name-entry as a modal: an OPAQUE --surface card (never blended with the dim
+   layer above), anchored near the TOP of the viewport rather than vertical-center -
+   a soft mobile keyboard (~50% of a phone viewport) would otherwise cover the input
+   and Save/Cancel. max-height + internal scroll is the guard if a short viewport
+   still can't fit it. */
 .composeRow.asModal{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10vh);transform:translateX(-50%);z-index:75;width:calc(100% - 32px);max-width:420px;max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 20px 60px var(--shadow);}
 .composeRowInput{flex:1 1 140px;min-width:0;min-height:42px;padding:0 12px;border-radius:var(--r-input);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-size:.85rem;}
 .composeRowInput:focus{outline:none;border-color:var(--accent-ink);}
 .composeRowMsg{flex:1 1 100%;font-size:.78rem;line-height:1.4;color:var(--txt-soft);}
-/* Operator UAT 2026-07-19: three outcome-named buttons can exceed the modal's
-   min-content width on a phone (the intent sheet overflowed the viewport and
-   dragged the whole page into horizontal scroll). The button row WRAPS and
-   every button may shrink - labels ellipsize before the sheet ever spills. */
+/* Three outcome-named buttons can exceed the modal's min-content width on a phone
+   (dragging the whole page into horizontal scroll). The button row WRAPS and every
+   button may shrink - labels ellipsize before the sheet ever spills. */
 .composeRowBtns{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;}
 .composeRowBtns .ctrlBtn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* G4/FORK-1: "Add to setlist" checkbox on the save row - own line (flex:1 1
-   100% forces the wrap), checkbox + label kept on one compact line together.
-   Full-contrast --txt (not --txt-soft) so the label reads clearly on the
-   solid modal card (F9). */
+/* "Add to setlist" checkbox on the save row - own line (flex:1 1 100% forces the
+   wrap), checkbox + label kept on one compact line together. Full-contrast --txt
+   (not --txt-soft) so the label reads clearly on the solid modal card. */
 .composeRowSetToggle{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--txt);cursor:pointer;
-  min-height:44px;padding:4px 2px;} /* one-handed mobile tap target (codex #91) */
+  min-height:44px;padding:4px 2px;} /* one-handed mobile tap target */
 .composeRowSetToggle input{margin:0;width:18px;height:18px;flex:0 0 auto;accent-color:var(--accent);}
-/* Save/Cancel on the save-name modal only (scoped to .asModal, not the
-   shared .ctrlBtn used by the Compose action bar's own Clear/Save) - >=44px
-   tall tap targets (F10 spec item 3). */
+/* Save/Cancel on the save-name modal only (scoped to .asModal, not the shared
+   .ctrlBtn used by the Compose action bar's own Clear/Save) - >=44px tall tap
+   targets. */
 .composeRow.asModal .ctrlBtn{min-height:44px;}
 .composeToast{margin-bottom:8px;padding:9px 12px;border-radius:10px;font-size:.78rem;font-weight:600;background:var(--accent-deep);color:var(--accent-ink);border:1px solid var(--accent-dim);}
 .composeToast.tap{cursor:pointer;} /* persistent toast: tap anywhere on it to dismiss */
 .composeToast[hidden]{display:none;}
 .composeToast.err{background:var(--bg-2);color:var(--bad);border-color:var(--bad);}
-/* TOAST+ACTION host modifier (M-DESIGN-ENFORCE wave 2, UAT U19; toast.js
-   Toast.showAction) - any undoable-outcome panel (setlist item-remove undo,
-   Compose Clear-undo) adds this class alongside its own visual class
-   (.setUndo, .composeRow) so it can host the shared countdown .toastBar
-   without each consumer re-declaring position:relative/overflow:hidden. */
+/* TOAST+ACTION host modifier (toast.js Toast.showAction) - any undoable-outcome
+   panel (setlist item-remove undo, Compose Clear-undo) adds this class alongside
+   its own visual class (.setUndo, .composeRow) so it can host the shared countdown
+   .toastBar without each consumer re-declaring position:relative/overflow:hidden. */
 .toastAction{position:relative;overflow:hidden;}
-/* The countdown bar itself - toast.js creates + times it (Toast.showAction),
-   this file only styles it, so its look is identical everywhere it appears
-   (the SSOT point of a shared primitive). Accent-derived per component-
-   conventions.md token rule (never a hardcoded color); width is animated
-   from JS via an inline `transition`/`width` pair - this rule supplies the
-   static geometry + color only. */
+/* The countdown bar itself - toast.js creates + times it (Toast.showAction), this
+   file only styles it, so its look is identical everywhere it appears. Accent-
+   derived (never a hardcoded color); width is animated from JS via an inline
+   transition/width pair - this rule supplies the static geometry + color only. */
 .toastBar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);pointer-events:none;}
-/* prefers-reduced-motion fallback (design refinement rule 4): NO width
-   animation - a static full-width stripe for the toast's whole lifetime.
-   The toast still auto-hides at its normal duration; only the motion is
-   suppressed. !important guards against toast.js's own inline width/
-   transition writes (it early-returns before touching the bar when this
-   class is present, but this is cheap, explicit insurance). */
+/* prefers-reduced-motion fallback: NO width animation - a static full-width
+   stripe for the toast's whole lifetime. The toast still auto-hides at its normal
+   duration; only the motion is suppressed. !important guards against toast.js's own
+   inline width/transition writes (cheap, explicit insurance). */
 .toastBar-static{width:100% !important;transition:none !important;}
-/* key/mode fly-out (roots + mode toggle + Triads & Inversions link; solo scale/HSR moved
-   to the Studio). The chip that opens it lives in the button bar now; this is just the
-   drop-down, hidden by default (no row when closed). */
+/* key/mode fly-out (roots + mode toggle + Triads & Inversions link). The chip that
+   opens it lives in the button bar; this is just the drop-down, hidden by default
+   (no row when closed). */
 /* max-height leaves room for the app header + button bar + progression box +
    tab bar above/below (dvh so mobile URL-bar changes are respected); overflow-y
    is the hard guard - if a pathologically short viewport still can't fit, the
    fly-out scrolls INTERNALLY so the page itself never overflows. */
 .keyFlyout{margin:0 0 6px;padding:10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);max-height:calc(100dvh - 210px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .keyFlyout[hidden]{display:none;}
-/* UAT r3 - eliminate Compose scroll: while the key/mode fly-out is open, hide
-   the chord picker (In-key|All toggle + chord list + solo-backing CTA) so the
-   fly-out uses that freed height and the tab fits with no vertical overflow.
-   The underlying chord list still rebuilds on a root/mode pick - it's only
-   hidden, not torn down - so it's current the moment the fly-out closes. */
+/* While the key/mode fly-out is open, hide the chord picker (In-key|All toggle +
+   chord list + solo-backing CTA) so the fly-out uses that freed height and the tab
+   fits with no vertical overflow. The underlying chord list still rebuilds on a
+   root/mode pick - only hidden, not torn down - so it's current the moment the
+   fly-out closes. */
 .composeWrap.keyOpen #chordCtrlRow,
 .composeWrap.keyOpen .composeChords,
 .composeWrap.keyOpen #maxNote{display:none;}
@@ -1364,22 +1215,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .keyFlyout .keyView{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);}
 /* SINGLE control row, no wrap. DOM order is [♭] [key/mode chip] [♯] [⤢] [?] |
    [Clear] [Save]; VISUAL order (via #cClear{order}, below) moves Clear to the
-   front: [Clear] [♭] [chip] [♯] [⤢] [?] | [Save] - S-CLEARGUARD/F1/F8: Clear
-   sat directly beside Save (mis-reach hazard for a thumb stretching from an
-   instrument grip); this maximizes the on-screen distance between the two
-   without changing the row's height or which elements are in it. Must fit
-   375px (content width ~347px after the .view 14px side padding). Icon
-   buttons and the buttons are compacted in this context; the chip is a fixed
-   96px. The spacer flexes to push Save to the right but collapses to 0 first
-   when space is tight, so nothing overflows. */
+   front: [Clear] [♭] [chip] [♯] [⤢] [?] | [Save] - this maximizes the on-screen
+   distance between Clear and Save so a thumb stretching from an instrument grip
+   can't mis-reach, without changing the row's height or which elements are in it.
+   Must fit 375px (content width ~347px after the .view 14px side padding). Icon
+   buttons and the buttons are compacted here; the chip is a fixed 96px. The spacer
+   flexes to push Save right but collapses to 0 first when space is tight, so
+   nothing overflows. */
 .ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
 /* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
-/* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact icon-button oddball. */
+/* Compact icon buttons use the small-button radius (--r-btn-sm). */
 .ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:var(--r-btn-sm);}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
-/* S-CLEARGUARD: visual-only resequence (DOM/tab order unchanged - this app is
-   touch-first; see composeWireTap/wireTap for the actual tap-safety layer). */
+/* Visual-only resequence (DOM/tab order unchanged - this app is touch-first; see
+   composeWireTap/wireTap for the actual tap-safety layer). */
 .ctrlBar #cClear{order:-1;}
 /* 8-chord cap: gray ALL the choosers so it reads as "no more allowed". .maxed sits on
    .composeWrap so it covers both regions: the all-chords tiles (#buildGrid .chord), the
@@ -1391,22 +1241,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .composeWrap.maxed .inKeyLead .chordCell,
 .composeWrap.maxed .progPick,
 .composeWrap.maxed .suggChip{opacity:.35;pointer-events:none;}
-/* S-PROG-WRAP / S-PROG-WRAP-2 (UAT U8, U8b): the compact progression token
-   reuses .suggChip verbatim (same class - not a 4th chip variant), but the
-   maxed-dim rule above targets the NEXT-CHORD suggestion chip's "add more"
-   role, which must NOT extend to a chord already IN the progression - the
-   cap's whole point is "remove one to add another," so the progression's own
-   slots (whichever of the full/fill-row/grid6 stages is active) must stay
-   tappable at the cap. 4 class selectors beats the 3-class rule above
-   regardless of source order. */
+/* The compact progression token reuses .suggChip verbatim (same class - not a 4th
+   chip variant), but the maxed-dim rule above targets the NEXT-CHORD suggestion
+   chip's "add more" role, which must NOT extend to a chord already IN the
+   progression - the cap's point is "remove one to add another," so the
+   progression's own slots (whichever of full/fill-row/grid6 is active) stay
+   tappable at the cap. 4 class selectors beats the 3-class rule above regardless
+   of source order. */
 .composeWrap.maxed .prog .suggChip{opacity:1;pointer-events:auto;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
 .keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
-/* solo-scale preview chips (M-GUIDE W3b) - same 44px thumb floor */
+/* solo-scale preview chips - same 44px thumb floor */
 .keySoloScale .chip{display:inline-flex;align-items:center;min-height:44px;}
-/* keyboard focus ring - the app previously stripped all outlines (a11y regression).
-   No border-radius here: the outline follows each element's own radius; setting it
-   would square off pill chips/buttons when focused. */
+/* keyboard focus ring. No border-radius here: the outline follows each element's
+   own radius; setting it would square off pill chips/buttons when focused. */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .search:focus-visible{outline:2px solid var(--accent);outline-offset:0;}
 /* keep the "All chords" category chips on the same 44px touch floor as the key controls */
@@ -1429,7 +1277,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .maxGrid{grid-template-columns:repeat(4,1fr);align-content:center;gap:12px;overflow:hidden;}
   .maxGrid .bigC svg{width:auto;height:auto;max-width:100%;max-height:62vh;}
 }
-/* M-DESIGN-ENFORCE E3: 14px -> var(--r-card) (13px) - the card-radius majority. */
+/* Uses the card radius token (--r-card). */
 .bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:var(--r-card);padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
 .bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent-ink);}
@@ -1439,9 +1287,8 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex:0 0 auto;margin-bottom:6px;}
 .pTop .pos{font-family:'Space Mono',monospace;color:var(--txt-dim);font-size:.8rem;font-weight:700;}
 .pTop .tools{display:flex;gap:6px;align-items:center;}
-/* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact icon-button oddballs. */
-/* UAT r5 F7: stage icons at 46px (arm's-length / strap-grip targets - transpose
-   left the bar, so the three that remain earn the room). */
+/* Compact icon buttons use the small-button radius (--r-btn-sm). */
+/* Stage icons at 46px (arm's-length / strap-grip targets). */
 .pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:1.15rem;cursor:pointer;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
 .pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-size:1.3rem;cursor:pointer;}
@@ -1465,15 +1312,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}
 .pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;}
 .pNav .btn{padding:14px 10px;flex:1;}
-/* One-handed performance zoning (operator UAT 2026-07-17: "make it easy for
-   single hand usage while performing without having to pick a button in the
-   middle"). Advance (Next / finish) is the ONE control tapped constantly mid-
-   song, so it becomes the dominant bottom-RIGHT target - the natural thumb-arc
-   resting spot for a one-handed grip - ~2.6x the width of Prev and taller (a
-   big target you can hit without aiming, Fitts's law). Prev (rarely used mid-
-   performance) shrinks to a small left tab. Transpose (rarely touched mid-
-   performance) is demoted OUT of the chrome entirely - it lives in the gear
-   sheet's Key row (UAT r5 F7). */
+/* One-handed performance zoning. Advance (Next / finish) is the ONE control tapped
+   constantly mid-song, so it becomes the dominant bottom-RIGHT target - the natural
+   thumb-arc resting spot for a one-handed grip - ~2.6x the width of Prev and taller
+   (a big target you can hit without aiming, Fitts's law). Prev (rarely used
+   mid-performance) shrinks to a small left tab. Transpose is demoted OUT of the
+   chrome entirely - it lives in the gear sheet's Key row. */
 .pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
 .pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
@@ -1488,27 +1332,27 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed .psBtn:active{transform:scale(.94);}
 .pSpeed .psBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
-   disabled, matching the practice modeSwitch - the disable was functional-only. */
+   disabled, matching the practice modeSwitch. */
 .pSpeed .psBtn:disabled{opacity:.35;cursor:default;}
-/* Landscape only (UAT r3): collapse the Stage View+Size controls into a SINGLE
-   row and shrink the header so the sheet keeps the vertical room. Landscape
-   guarantees width > height, so the one row always has horizontal space; a
-   narrow SHORT PORTRAIT must NOT trigger this (label + 3 View buttons at ~half
-   width would overlap), which is why there's no bare max-height branch. Placed
-   AFTER the base .pSpeed rules so the row override wins on source order. */
+/* Landscape only: collapse the Stage View+Size controls into a SINGLE row and
+   shrink the header so the sheet keeps the vertical room. Landscape guarantees
+   width > height, so the one row always has horizontal space; a narrow SHORT
+   PORTRAIT must NOT trigger this (label + 3 View buttons at ~half width would
+   overlap), which is why there's no bare max-height branch. Placed AFTER the base
+   .pSpeed rules so the row override wins on source order. */
 @media (orientation:landscape){
   .perform{padding-top:calc(max(env(safe-area-inset-top,0px), 4px) + 4px);padding-right:calc(env(safe-area-inset-right,0px) + 12px);}
   .pTop{margin-bottom:3px;}
-  /* UAT r5 F7: landscape vertical space goes to the MUSIC. The header lines
-     are flex items (blockified - inline can't merge them), so they TIGHTEN
-     instead: smaller title, zeroed margins, ~44px total for all three. */
+  /* Landscape vertical space goes to the MUSIC. The header lines are flex items
+     (blockified - inline can't merge them), so they TIGHTEN instead: smaller
+     title, zeroed margins, ~44px total for all three. */
   .pTitle{font-size:.95rem;line-height:1.1;}
   .pArtist{font-size:.72rem;margin:0;}
   .pKey{font-size:.66rem;margin-bottom:2px;}
   /* ...and the nav becomes a RIGHT-EDGE thumb column below the top bar: Next
      dominant (Fitts's law, strap-grip thumb arc), Prev small beneath it. The
-     sheet is padded clear of the column, so chords can never run under the
-     next button (the operator's landscape-overlap screenshot). */
+     sheet is padded clear of the column so chords can never run under the next
+     button. */
   .pNav{left:auto;flex-direction:column;width:104px;gap:8px;top:calc(max(env(safe-area-inset-top,0px), 4px) + 64px);right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);}
   .pNav #pNext{flex:2.6;padding:10px;font-size:1.6rem;}
   .pNav #pPrev{flex:1;padding:10px;}
@@ -1553,10 +1397,10 @@ footer{display:none;}
 .empty .btn{flex:0 1 auto;display:inline-block;margin-top:2px;}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-/* UAT r5 F6: action toast - a tappable follow-through button rides the toast
-   ("Go to setlist"). Only action toasts accept pointer events; plain toasts
-   stay tap-through. .toastGo (not .toastAction - that's the progress-bar
-   variant above). */
+/* Action toast - a tappable follow-through button rides the toast ("Go to
+   setlist"). Only action toasts accept pointer events; plain toasts stay
+   tap-through. .toastGo (not .toastAction - that's the progress-bar variant
+   above). */
 .toast.withAct{display:flex;align-items:center;gap:12px;pointer-events:auto;padding:6px 6px 6px 16px;max-width:calc(100vw - 24px);}
 .toastGo{border:0;border-radius:var(--r-btn-sm);background:var(--accent);color:var(--on-accent);font-weight:800;font-size:.82rem;padding:10px 14px;min-height:44px;cursor:pointer;flex:0 0 auto;white-space:nowrap;}
 .toastGo:active{background:var(--accent-dim);}
@@ -1569,88 +1413,64 @@ footer{display:none;}
 .toast.warn{color:var(--warn);border-color:var(--warn);}
 .toast.err{color:var(--bad);border-color:var(--bad);}
 
-/* HELP-icon convention (M-DESIGN-ENFORCE wave 2, UAT U19 - "help panels
-   clearly noted with an icon"): a portable, CSS-only marker for an
-   always-available explainer toggle (ui-primitives.md HELP primitive) -
-   add this class ALONGSIDE a toggle's own class (e.g. class="bt-st-why-
-   toggle helpIcon") to prefix its label with a small (i)-style glyph, no
-   markup change needed. Declared here (not tracks.css) so it is reusable
-   app-wide - songbook.css loads on every page, the app's cross-file class
-   SSOT (ssot-registry.md). Applying it to the existing why-toggle/Guide
-   family (tracks.js, M-EAR-1.6 grant) is a DEFERRED-TO-SIBLING follow-up,
-   not built in this mission - see component-conventions.md Findings
-   register. */
+/* HELP-icon convention: a portable, CSS-only marker for an always-available
+   explainer toggle - add this class ALONGSIDE a toggle's own class (e.g.
+   class="bt-st-why-toggle helpIcon") to prefix its label with a small (i)-style
+   glyph, no markup change needed. Declared here (not tracks.css) so it is reusable
+   app-wide - songbook.css loads on every page. */
 .helpIcon::before{content:'\24D8';margin-right:.35em;opacity:.75;font-weight:400;}
 
-/* ACCORDION (M-SETTINGS-CLARITY, 2026-07-05): the EXCLUSIVE disclosure-group
-   primitive - shared/accordion.js owns the one-open-at-a-time state machine;
-   this .accSec/.accBtn/.accBody family is its ONE visual (THE ELEMENT
-   CONSISTENCY LAW - never hand-roll a second accordion look). For PANEL
-   surfaces (sheets/dialogs) with a single scroller; decision D6 (Compose =
-   flattened, no accordions) still stands for screen scrollers. First
-   consumer: the play/index.html Settings sheet sections. Declared here (not
-   a page style) for the same app-wide-SSOT reason as .helpIcon above. */
+/* ACCORDION: the EXCLUSIVE disclosure-group primitive - shared/accordion.js owns
+   the one-open-at-a-time state machine; this .accSec/.accBtn/.accBody family is its
+   ONE visual (never hand-roll a second accordion look). For PANEL surfaces
+   (sheets/dialogs) with a single scroller; Compose stays flattened (no accordions)
+   for screen scrollers. Declared here (not a page style) for the same app-wide-SSOT
+   reason as .helpIcon above. */
 .accSec{border-top:1px solid var(--line-strong);}
 .accSec:first-of-type{border-top:0;}
-/* Header treatment (operator UAT round 2): section titles must READ as
-   tappable headings, not plain text rows - heavier + larger than body text
-   (700/1rem vs the .82rem setHint body) with an EXPLICIT expand affordance:
-   an accent-ink chevron (accent-ink = the readable-on-surface interactive
-   ink in BOTH themes, the iconBtn glyph convention) that rotates open, plus
-   press feedback. Fixed here at the primitive, never per instance. */
+/* Header treatment: section titles must READ as tappable headings, not plain text
+   rows - heavier + larger than body text with an EXPLICIT expand affordance: an
+   accent-ink chevron (readable-on-surface interactive ink in BOTH themes) that
+   rotates open, plus press feedback. Fixed here at the primitive, never per
+   instance. */
 .accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
   padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:800;
   font-size:1.08rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
-/* S-SETTINGS-UAT (operator UAT 2026-07-16): "Appearance > Theme is a
-   hierarchy" - the section header must OUTRANK its inner .setLbl labels
-   (600/1rem-ish page styles), so the primitive steps up to 800/1.08rem.
-   Fixed here at the primitive: every accordion consumer gets the same
-   heading weight (Element Consistency Law). */
+/* The section header must OUTRANK its inner .setLbl labels (Appearance > Theme is
+   a hierarchy), so the primitive steps up to 800/1.08rem. Fixed here at the
+   primitive: every accordion consumer gets the same heading weight. */
 .accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
   transition:transform .15s;}
 .accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}
 .accBtn:active{transform:scale(.99);} /* the .listItem press language, not the no-scale close family */
 .accBody{padding:2px 0 16px;}
-/* U24 precedent (S-TOAST-HOST): an author display rule on the SAME element
-   defeats [hidden] - .accBody carries no display rule today, but this guard
-   keeps the collapse honest if one is ever added. */
+/* An author display rule on the SAME element defeats [hidden] - .accBody carries
+   no display rule today, but this guard keeps the collapse honest if one is ever
+   added. */
 .accBody[hidden]{display:none;}
 
-/* S-NOTABLES (sprint-1 item 3): the one-shot dismissible "notable" banner,
- * produced by Notables.renderBanner() in shared/notables.js.
- * M-DESIGN-ENFORCE E1 (U10 camouflage finding, shipped): this USED TO share
- * .setUndo's accent-deep/accent-dim SELECTION-surface look - exactly the
- * "guidance banner reads as a selected row" camouflage the operator UAT
- * flagged (engineering-wiki/systems/ssot-registry.md Duplication watchlist;
- * component-conventions.md Findings register). Now uses the dedicated
- * --guide-bg/--guide-line GUIDANCE tokens (declared in the :root block
- * above, computed off --txt-dim - a genuinely accent-INDEPENDENT hue
- * direction, not the --accent-deep/-dim selection family) PLUS a --brass
- * left accent stripe for a touch of theme personality without tinting the
- * whole surface, so a notable reads as "the app talking" at a glance,
- * distinct from an in-setlist selected row (.listItem.inSet, still
- * accent-deep/-dim). Screenshot-verified side-by-side against .listItem.inSet
- * at 412x915, both themes (PR body). The dismiss icon uses --txt-soft, not
- * --accent-ink - keeps the control neutral like the rest of the banner
- * (contrast-checked >=4.5:1 in both themes; --accent-ink measured BELOW the
- * floor against --guide-bg in light theme during verification). Own class
- * (not folded into .setUndo) so a notable stays shown-once-forever, not a
- * scoped undo toast - the two never fork by accident. Live consumers today:
- * S-FIRSTRUN (songbook.js), S-WHYNOTE (tracks.js), S-BACKUP-NUDGE +
- * S-DIAGRAM-PREF (play/index.html); S-ROMAN queued, not yet wired. */
+/* The one-shot dismissible "notable" banner, produced by Notables.renderBanner()
+ * in shared/notables.js. Uses the dedicated --guide-bg/--guide-line GUIDANCE
+ * tokens (computed off --txt-dim - an accent-INDEPENDENT hue, not the
+ * --accent-deep/-dim SELECTION family) PLUS a --brass left accent stripe for a
+ * touch of theme personality without tinting the whole surface, so a notable reads
+ * as "the app talking", distinct from an in-setlist selected row (.listItem.inSet,
+ * still accent-deep/-dim). The dismiss icon uses --txt-soft, not --accent-ink, to
+ * keep the control neutral (accent-ink falls below the 4.5:1 contrast floor against
+ * --guide-bg in light theme). Own class (not folded into .setUndo) so a notable
+ * stays shown-once-forever, not a scoped undo toast. */
 .notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--guide-bg);border:1px solid var(--guide-line);border-left:3px solid var(--brass);border-radius:11px;padding:10px 12px 10px 10px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
 .notableBanner-body{flex:1;min-width:0;line-height:1.4;}
 .notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--guide-line);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .notableBanner-x:active{transform:scale(.9);color:var(--txt);}
 
 /* =====================================================================
- * M-COMPETENCY LZ (2026-07-11): the Settings "Skills" panel - the
- * per-skill competency profile viewer (self-injected into #settingsBody
- * by songbook.js mountSkillsPanel()). Uses the shared .accSec/.accBtn/
- * .accBody look for the section shell; the pieces below are the panel's
- * own primitives. .compBar is a NEW element (competency-level meter) -
- * deliberately NOT reusing .prog (the chord-progression strip) per the
- * Element Consistency Law: two different meanings never share one look.
+ * The Settings "Skills" panel - the per-skill competency profile viewer
+ * (self-injected into #settingsBody by songbook.js mountSkillsPanel()). Uses
+ * the shared .accSec/.accBtn/.accBody look for the section shell; the pieces
+ * below are the panel's own primitives. .compBar is a competency-level meter,
+ * deliberately NOT reusing .prog (the chord-progression strip): two different
+ * meanings never share one look.
  * ===================================================================== */
 .skillsPanel .skillsImportRow{margin-top:10px;}
 .skillRow{border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);margin-top:10px;overflow:hidden;}
@@ -1672,14 +1492,12 @@ footer{display:none;}
 .skillExport{flex:0 0 auto;min-height:44px;}
 
 /* =====================================================================
- * PLAY-PAGE CHROME (moved from play/index.html's inline <style> block,
- * operator directive 2026-07-19: ALL css external - no inline styles).
- * Scope: the appbar-adjacent controls, the Settings sheet, the About
- * rows, and the S-WELCOME first-run tour. play/index.html is the only
- * consumer today; living here keeps every component rule in the one
- * theme file (Element Consistency Law) and inside the SW CORE cache.
+ * PLAY-PAGE CHROME: the appbar-adjacent controls, the Settings sheet, the
+ * About rows, and the first-run welcome tour. play/index.html is the only
+ * consumer; living here keeps every component rule in the one theme file
+ * and inside the SW CORE cache (all CSS is external, no inline styles).
  * ===================================================================== */
-/* the instrument/tuning select (lives in Settings > Preferences since S-WELCOME) */
+/* the instrument/tuning select (lives in Settings > Preferences) */
 .picker{background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:10px;
   font-family:inherit;font-size:.8rem;font-weight:600;padding:8px 10px;max-width:46vw;cursor:pointer;}
 .picker:focus{outline:none;border-color:var(--accent);}
@@ -1690,19 +1508,19 @@ footer{display:none;}
 .sw:active{transform:scale(.88);}
 .sw.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--surface-2),0 0 0 4px var(--sc);}
 /* Settings sheet (gear in the appbar): accent + backup/restore + build. Bottom
-   sheet on phone; the accent chooser lives here now, not the Tune tab.
-   Structure (F11): sticky .setHd top, scrollable .setPanelBody middle, sticky
-   .setFoot bottom - a plain flex column. The card's own height is auto up to
-   max-height, so short content never leaves a gap above the footer; only when
-   content exceeds max-height does .setPanelBody actually scroll. */
+   sheet on phone; the accent chooser lives here, not the Tune tab. Structure:
+   sticky .setHd top, scrollable .setPanelBody middle, sticky .setFoot bottom - a
+   plain flex column. The card's own height is auto up to max-height, so short
+   content never leaves a gap above the footer; only when content exceeds
+   max-height does .setPanelBody actually scroll. */
 #settingsBtn{line-height:0;}
 #settingsBtn svg{width:21px;height:21px;display:block;}
 .setOv{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
   background:rgba(0,0,0,.6);animation:fadeUp .18s ease;
   padding:0 12px calc(12px + env(safe-area-inset-bottom));}
 .setOv[hidden]{display:none;}
-/* S-WELCOME: the first-run 3-panel sheet. Same overlay family as .setOv;
-   panels are horizontal scroll-snap so a swipe OR the Next button advances. */
+/* The first-run 3-panel welcome sheet. Same overlay family as .setOv; panels are
+   horizontal scroll-snap so a swipe OR the Next button advances. */
 .welcomeOv{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.6);animation:fadeUp .18s ease;padding:18px 14px;}
 .welcomeOv[hidden]{display:none;}
@@ -1719,12 +1537,11 @@ footer{display:none;}
 .wPanel h2{margin:0 0 10px;font-size:1.2rem;font-weight:800;letter-spacing:-.01em;padding-right:40px;}
 .wLead{margin:0 0 12px;font-size:.84rem;color:var(--txt-soft);line-height:1.45;}
 .wLead b{color:var(--txt);}
-/* .askOpt - THE option-row primitive (Element Consistency Law): one look for
-   every "pick one" list - the welcome tour's instrument + level panels AND
-   the in-app ask banners (.glAskOpt guidance level, .dgPrefOpt diagram pref),
-   which previously carried a bespoke inline-style clone of this. Neutral
-   line-strong border at rest (GUIDANCE surfaces must not borrow the
-   SELECTION token --accent-dim); .on is the selected state. */
+/* .askOpt - THE option-row primitive: one look for every "pick one" list - the
+   welcome tour's instrument + level panels AND the in-app ask banners (.glAskOpt
+   guidance level, .dgPrefOpt diagram pref). Neutral line-strong border at rest
+   (GUIDANCE surfaces must not borrow the SELECTION token --accent-dim); .on is the
+   selected state. */
 .askOpt{display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--line-strong);
   border-radius:var(--r-btn-sm);color:var(--txt);padding:10px 12px;margin-bottom:8px;min-height:44px;font-size:.88rem;
   font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
@@ -1740,15 +1557,14 @@ footer{display:none;}
 .wDots{display:flex;gap:7px;}
 .wDot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);transition:background .2s;}
 .wDot.on{background:var(--accent);}
-/* The relocated instrument picker inside Settings > Preferences. Overrides
-   .picker's appbar-era compact sizing (max-width:46vw, .8rem) - here it is a
-   full Settings row: bigger type + 44px floor (operator UAT 2026-07-19:
-   "drop down size/font size too small"). */
+/* The instrument picker inside Settings > Preferences. Overrides .picker's compact
+   sizing (max-width:46vw, .8rem) - here it is a full Settings row: bigger type +
+   44px floor. */
 .setPicker{width:100%;max-width:100%;margin-bottom:4px;font-size:.95rem;padding:12px;min-height:44px;}
-/* Settings sheet title carries the same gear glyph as the appbar button
-   (operator UAT 2026-07-19) - icon takes currentColor beside the word. */
+/* Settings sheet title carries the same gear glyph as the appbar button - icon
+   takes currentColor beside the word. */
 .setHdTitle{display:flex;align-items:center;gap:8px;}
-/* Tune tab spacing + annotations (were inline style attrs pre-2026-07-19). */
+/* Tune tab spacing + annotations. */
 #tuneTuneRow .sub{margin:14px 0 8px;}
 .refSub{margin-top:22px;margin-bottom:10px;}
 .subNote{font-weight:400;font-style:italic;color:var(--ink-faint);font-size:.8rem;}
@@ -1762,31 +1578,25 @@ footer{display:none;}
 .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
   display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
-/* M-SETTINGS-CLARITY: sections are .accSec/.accBtn/.accBody (the shared
-   accordion primitive, songbook.css). The old .setSec rules retired with
-   the markup. .setRow composes the shared .listItem card family as a
-   <button> data row (Backup/Restore): explicit color because button text
-   does not inherit (music/CLAUDE.md gotcha), full-width + left-aligned so
-   it reads as a list row, not an action button.
-   UAT 2026-07-16: also give it an explicit dark surface + border + padding.
-   A <button> with no background falls back to the UA default (light grey),
-   so on the dark theme the standalone Guidance-level .setRow rendered as a
-   washed-out white bar with near-invisible --txt text (operator screenshot).
-   The Backup/Restore .setRows live inside a collapsed accordion so the bug
-   only showed on the bare Guidance row - the fix reads correctly for all. */
+/* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive). .setRow
+   composes the shared .listItem card family as a <button> data row (Backup/Restore):
+   explicit color because button text does not inherit (music/CLAUDE.md gotcha),
+   full-width + left-aligned so it reads as a list row, not an action button. It also
+   needs an explicit dark surface + border + padding: a <button> with no background
+   falls back to the UA default (light grey), which on the dark theme renders as a
+   washed-out white bar with near-invisible --txt text. */
 .setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
 .setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
-/* S-SETTINGS-UAT (operator UAT 2026-07-16): settings ACTION rows (Back up,
-   Restore, the Skills import/export rows - button.listItem.setRow) read as
-   CTAs via the accent border, the suggChip/CTA ink family - one rule for
-   the whole action-row class, never per instance. Plain display rows and
-   the segmented controls keep the neutral line. */
+/* Settings ACTION rows (Back up, Restore, the Skills import/export rows -
+   button.listItem.setRow) read as CTAs via the accent border - one rule for the
+   whole action-row class, never per instance. Plain display rows and the segmented
+   controls keep the neutral line. */
 #settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
 #settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
 .setRow .li-title{display:block;}
 .setRow .li-artist{display:block;}
-/* About section link rows (round 2): external-link ink (--brass, the Links
-   convention) + inline-SVG icon taking currentColor; 44px touch floor. */
+/* About section link rows: external-link ink (--brass, the Links convention) +
+   inline-SVG icon taking currentColor; 44px touch floor. */
 .aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
   text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
 .aboutLink svg{flex:0 0 auto;}
@@ -1795,11 +1605,11 @@ footer{display:none;}
 .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
 .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
 .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
-/* UAT 2026-07-20: visual preview under the Fretboard-diagrams and Chord-charts
-   toggles. Both options shown (contrast at a glance - recognition over recall),
-   the ACTIVE one highlighted; the two halves align under the toggle halves
-   above. Content is rendered from the SSOT (the app's real diagram/chart
-   renderers via window.MusicPreview) - not a hand-drawn copy. */
+/* Visual preview under the Fretboard-diagrams and Chord-charts toggles. Both
+   options shown (contrast at a glance - recognition over recall), the ACTIVE one
+   highlighted; the two halves align under the toggle halves above. Content is
+   rendered from the app's real diagram/chart renderers (window.MusicPreview), not a
+   hand-drawn copy. */
 .prefPreview{display:flex;gap:8px;margin:8px 0 2px;align-items:stretch;}
 .prefEx{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:6px 4px;
   border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;

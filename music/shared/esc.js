@@ -1,24 +1,19 @@
 /* =====================================================================
- * esc.js  -  ONE HTML-escape utility for every shared/*.js module and the
- * two play/ HTML entry points that build innerHTML from app/user data.
+ * esc.js  -  the ONE HTML-escape utility for every shared/*.js module and
+ * the play/ HTML entry points that build innerHTML from app/user data.
  * ---------------------------------------------------------------------
- * S-HARDEN (analysis-refactor-enhance-20260704 A5): consolidates the ~8
- * divergent copies that had accumulated - list-item.js/tracks.js/notables.js/
- * repertoire-form.js escaped &<>" ; diagram.js/play/index.html escaped only
- * &<> ; play/triad-inversions.html additionally escaped ' (the actual
- * strictest of the lot). PR #67 volley 6 (chord-pack XSS) is the standing
- * proof this class of divergence is a real, recurring risk, not a style nit.
+ * Pattern: single source of truth for escaping, exposed on the shared
+ * global object (classic-<script>-tag codebase, no module loader across
+ * files) and via module.exports for the Node test suite.
  *
- * esc() escapes all five HTML-significant characters (&<>"') - a strict
- * superset of every prior variant, so every existing call site keeps
- * rendering identically (escaping ' never changes what a browser DISPLAYS in
- * a text/innerHTML sink; it only closes an attribute-injection seam none of
- * the callers happened to hit yet).
+ * esc() escapes all five HTML-significant characters (&<>"'). Escaping the
+ * quote characters is a superset of what a plain text sink needs - it does
+ * not change what a browser DISPLAYS, and it closes the attribute-injection
+ * seam for callers that interpolate into an attribute value.
  *
- * Load BEFORE any shared/*.js consumer (play/index.html + play/
- * triad-inversions.html script order; music/sw.js CORE; test files require
- * this first) - classic-<script>-tag codebase, no module loader across
- * files, so consumers reach it via the shared `window`/`global` object.
+ * Gotcha: load BEFORE any shared/*.js consumer (matches play/ script order,
+ * the music/sw.js CORE list, and the test-file require order) - consumers
+ * reach it through the shared window/global, so it must exist first.
  * ===================================================================== */
 (function (global) {
   'use strict';

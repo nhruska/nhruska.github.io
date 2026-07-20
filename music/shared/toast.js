@@ -1,33 +1,18 @@
 /* =====================================================================
  * toast.js  -  ONE shared transient-feedback primitive for every toast/
- * snackbar in the app (S-TOAST, UAT U9 fix).
+ * snackbar in the app.
  * ---------------------------------------------------------------------
- * Root cause of U9 ("Added to setlist" toast never auto-hides, screenshot-
- * confirmed on device, operator Pixel walkthrough): songbook.js declared
- * `var toastTimer` TWICE inside the SAME Songbook.mount() closure - once
- * for the Library's plain "Added to setlist"/err toast (~old L1454), once
- * for the Compose "Saved to your Library"/"Updated .../err toast
- * (~old L2441). `var` hoists to FUNCTION scope, so both declarations were
- * literally the SAME variable.
+ * Pattern: this module owns the TIMING, callers own the PAINT. It holds
+ * ONE timer PER HOST (a Map keyed by the caller's own DOM node) so
+ * unrelated toast instances can never clobber each other's schedule, no
+ * matter how or when they interleave. It does not dictate visual mechanics
+ * - callers supply onShow/onHide paint callbacks, so each call site keeps
+ * its own look-and-feel (a fixed-position fade, an inline row toggle, etc.).
  *
- * Confirmed repro: Compose Save with the default-checked "Add to setlist"
- * box calls, in one synchronous tick, toggleSet(cs.id) - which schedules
- * the Library toast's 1600ms auto-hide via that shared var - and THEN
- * showComposeToast(..., persist: true). showComposeToast's own
- * clearTimeout(toastTimer) killed the Library toast's still-pending hide
- * timeout, and persist:true meant nothing ever rescheduled a replacement.
- * The Library "Added to setlist" toast was left on-screen permanently -
- * exactly the stuck state the operator screenshotted.
- *
- * Fix: this module owns ONE timer PER HOST (a Map keyed by the caller's own
- * DOM node), so unrelated toast instances can never clobber each other's
- * schedule no matter how or when they interleave. It does NOT dictate
- * visual mechanics (the Library toast is a fixed-position fade via a `.on`
- * class; the Compose toast is an inline row toggled via `[hidden]` plus an
- * `err`/`tap` class) - callers supply onShow/onHide paint callbacks so each
- * call site's exact existing look-and-feel is preserved byte-for-byte. This
- * is a pure timer-isolation fix, not a visual redesign (see decisions.md
- * D-TOAST-PRIMITIVE: keep-both, not a forced single visual style).
+ * DON'T give two toasts on the same page a shared timer variable: if one
+ * schedules an auto-hide and another then clears "the timer", the first
+ * toast's hide is cancelled and it sticks on-screen forever. Keying every
+ * timer by host is what prevents that cross-talk.
  *
  * No build step. Classic script + CommonJS export, same shape as esc.js /
  * list-item.js. Load BEFORE any shared/*.js consumer that shows a toast
@@ -48,58 +33,45 @@
   }
 
   /* ---------------------------------------------------------------------
-   * showAction() - TOAST+ACTION (M-DESIGN-ENFORCE wave 2, UAT U19): the
-   * undoable-outcome variant. A NEW entry point, not an option bag on
-   * show() above - the two SHIPPED plain-toast consumers (Library "Added
-   * to X", Compose save confirmations) stay byte-for-byte unchanged; this
-   * is pure addition to a SHIPPED, tested primitive, never a behavior
-   * change to it (same discipline D-TOAST-PRIMITIVE already established).
+   * showAction() - the undoable-outcome variant of a toast: a message plus
+   * a time-bound action window with a VISIBLE COUNTDOWN BAR. Separate entry
+   * point from show(), not an option bag on it, so the plain-toast callers
+   * stay untouched. The window is time-bound (default 4s) so a user
+   * mid-hands-on-instrument gets a visible signal instead of a banner that
+   * lingers or vanishes with no cue. A caller's own mutating-action
+   * invalidation can still finish the toast early, on top of this timer -
+   * whichever fires first wins.
    *
-   * Replaces the app's prior ad-hoc "persistent undo banner" pattern
-   * (interaction-safety.md guard #3), which had NO time limit at all -
-   * only ANY subsequent mutating action would invalidate it. Operator +
-   * parent ruling (U19 design refinement) amends that: the undo window is
-   * now time-bound (default 6s) with a VISIBLE COUNTDOWN BAR so a user
-   * mid-hands-on-instrument who glances away doesn't have the window
-   * silently vanish with no signal. Mutating-action invalidation (the
-   * app's existing A3 contract) still applies on TOP of this timer -
-   * whichever fires first wins; see decisions.md D-ENFORCE-2.
-   *
-   * Stays DOM-agnostic like show() above (a test can pass a plain object
-   * as `host` - see toast.test.js's fake hosts): this module does NOT
-   * attach any touchstart/pointerdown listeners itself. Pause-on-touch is
-   * exposed as pause()/resume() on the returned handle; wirePauseOnTouch()
-   * below is an OPT-IN convenience for real DOM callers so the touch-event
-   * boilerplate isn't duplicated at every call site.
+   * Stays DOM-agnostic like show() (a test can pass a plain object as
+   * `host`): this module does NOT attach any touchstart/pointerdown
+   * listeners itself. Pause-on-touch is exposed as pause()/resume() on the
+   * returned handle; wirePauseOnTouch() below is an OPT-IN convenience for
+   * real DOM callers so the touch-event boilerplate isn't duplicated at
+   * every call site.
    *
    *   opts.host            REQUIRED (unlike show(), no single-toast-page
    *                        fallback - an actionable toast always needs its
    *                        own DOM/state home).
    *   opts.onShow(host, msg, barEl)
-   *                        paint the message + insert barEl whereever the
-   *                        caller's existing markup wants the countdown
-   *                        stripe (same "toast.js times, caller paints"
-   *                        split show() already has). barEl is `null` when
-   *                        no `document` is available (Node unit tests).
+   *                        paint the message + insert barEl wherever the
+   *                        caller's markup wants the countdown stripe.
+   *                        barEl is `null` when no `document` is available
+   *                        (Node unit tests).
    *   opts.onHide(host)    called exactly once at the end - action fired,
    *                        window expired, or an explicit finish().
-   *   opts.duration        ms (default 6000 - DEFAULT_ACTION_DURATION_MS).
-   *   opts.now             clock fn, default Date.now (test seam - lets a
-   *                        unit test control pause/resume elapsed-time math
-   *                        without monkey-patching the global Date).
+   *   opts.duration        ms (default DEFAULT_ACTION_DURATION_MS).
+   *   opts.now             clock fn, default Date.now (test seam for
+   *                        pause/resume elapsed-time math without
+   *                        monkey-patching the global Date).
    *   opts.reducedMotion   force the static (no width-animation) bar;
    *                        default reads prefers-reduced-motion.
    * Returns { bar, finish(), pause(), resume() } or `null` if opts.host is
-   * missing. finish() is what the caller's action button (e.g. "Undo")
-   * calls on tap - ends the toast (cancels the timer, calls onHide) exactly
-   * once, whether reached via tap, timer expiry, or a programmatic call
-   * (e.g. invalidateClearUndo() finishing an active toast early because a
-   * DIFFERENT mutation just invalidated the pending undo).
+   * missing. finish() ends the toast (cancels the timer, calls onHide)
+   * exactly once, whether reached via the action button's tap, timer
+   * expiry, or a programmatic call.
    * ------------------------------------------------------------------- */
-  // 6000 -> 4000 (operator UAT 2026-07-16: "undo delete timer is about 1.5x
-  // too long"). Callers that pass an explicit duration are untouched.
   var DEFAULT_ACTION_DURATION_MS = 4000;
-  var actionStates = new Map(); // host -> in-flight state (mirrors `timers` above, kept separate so a plain show() on the same host can never cross-talk with an active showAction())
+  var actionStates = new Map(); // host -> in-flight state, kept separate from `timers` so a plain show() on the same host can never cross-talk with an active showAction()
 
   function prefersReducedMotion() {
     try {
@@ -165,10 +137,9 @@
     return {
       bar: bar,
       finish: finish,
-      // pause()/resume() - the touch-approach freeze contract (design
-      // refinement: "any touchstart/pointerdown on the toast freezes the
-      // countdown... releasing outside resumes"). Wire these to real DOM
-      // events via wirePauseOnTouch() below, or call directly.
+      // pause()/resume() - freeze the countdown while a finger is down on
+      // the toast, resume on release. Wire these to real DOM events via
+      // wirePauseOnTouch() below, or call directly.
       pause: function () {
         if (state.resolved || state.paused) return;
         state.paused = true;

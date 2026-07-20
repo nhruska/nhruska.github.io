@@ -1,25 +1,22 @@
 /* =====================================================================
- * zip-store.js  -  S-SKILLS-PORTABLE (operator UAT 2026-07-16): minimal
- * STORE-only (no compression) ZIP writer, so the Skills panel can export
- * the whole bundle - every skill as `<skill-id>/SKILL.md` - as one .zip
- * with zero dependencies (this is a no-build static app; a bundler-less
- * page cannot pull in JSZip, and store-only is bit-simple + universally
- * readable).
+ * zip-store.js  -  minimal STORE-only (no compression) ZIP writer, so the
+ * Skills panel can export the whole bundle - every skill as
+ * `<skill-id>/SKILL.md` - as one .zip with zero dependencies. This is a
+ * no-build static app: a bundler-less page cannot pull in JSZip, and
+ * store-only is bit-simple and universally readable.
  * ---------------------------------------------------------------------
  *   ZipStore.build([{ path:'ukulele/SKILL.md', text:'...' }, ...])
  *     -> Uint8Array of a valid ZIP archive (UTF-8 names + contents,
  *        method 0 = stored, one local header + central-directory entry
  *        per file, single end-of-central-directory record).
- *   ZipStore.crc32(bytes) -> unsigned 32-bit CRC (exposed for tests -
- *        verified against the standard vector crc32("hello")).
+ *   ZipStore.crc32(bytes) -> unsigned 32-bit CRC (exposed for tests).
  *
  * DOS timestamp is a fixed constant (2026-01-01 00:00): the archive's
- * meaningful "when" lives INSIDE each SKILL.md (`updated`), and a
- * deterministic byte stream keeps tests exact (no Date.now in modules -
- * same determinism discipline as the rest of the app).
+ * meaningful "when" lives INSIDE each SKILL.md (`updated`), and a fixed
+ * timestamp keeps the byte stream deterministic (no Date.now in modules).
  *
- * Pure + dependency-free; TextEncoder in the browser, Buffer fallback in
- * Node (tests). Exposes window.ZipStore and require()-able.
+ * Pure and dependency-free; TextEncoder in the browser, Buffer fallback in
+ * Node (tests). Exposes window.ZipStore and is require()-able.
  * music/sw.js CORE must precache this file.
  * ===================================================================== */
 (function (root) {
@@ -56,8 +53,8 @@
   function pushBytes(arr, bytes) { for (var i = 0; i < bytes.length; i++) arr.push(bytes[i]); }
 
   // files: [{ path, text }] -> Uint8Array (a complete ZIP archive).
-  // Duplicate paths are rejected loudly (a silent duplicate unzips
-  // unpredictably per tool) - the one hard input rule.
+  // Duplicate paths are rejected: don't allow them, because a duplicate
+  // path unzips unpredictably (behavior varies per tool).
   function build(files) {
     files = files || [];
     var seen = {};

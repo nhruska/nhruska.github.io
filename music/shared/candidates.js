@@ -1,8 +1,7 @@
-/* candidates.js - P3 seed of suggested YouTube videos for url-less tracks.
+/* candidates.js - suggested YouTube videos for url-less tracks.
  * Loaded after tracks.js in play/index.html. Maps Tracks.trackKey(t) -> [{id,label,note}].
- * Sourced via web search (real watch URLs, verified format, not fabricated); the user
- * taps a suggestion in the curation queue to load it, then Saves to confirm. SUGGESTIONS
- * ONLY - nothing is applied automatically. */
+ * The user taps a suggestion in the curation queue to load it, then Saves to confirm.
+ * Suggestions ONLY - nothing is applied automatically. */
 (function (global) {
   'use strict';
   var CANDIDATES = {

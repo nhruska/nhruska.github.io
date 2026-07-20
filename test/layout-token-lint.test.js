@@ -89,7 +89,7 @@ test('diagram.js cross-references --dg-canvas-w near SIZES.small (documentation-
 });
 
 test('tracks.css documents the .bt-st-chords known-gap (Practice Studio chords-in-key row, not fixed by this SSOT pass)', function () {
-  assert.ok(tracksCss.indexOf('S-LAYOUT-SSOT KNOWN GAP') >= 0, 'expected tracks.css to carry the S-LAYOUT-SSOT KNOWN GAP comment near .bt-st-chords');
+  assert.ok(tracksCss.indexOf('KNOWN GAP') >= 0, 'expected tracks.css to carry the KNOWN GAP comment near .bt-st-chords');
   assert.ok(tracksCss.indexOf('--dg-canvas-w') >= 0, 'expected the known-gap comment to reference --dg-canvas-w (86px reference canvas) for the arithmetic it cites');
 });
 

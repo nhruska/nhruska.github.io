@@ -4,20 +4,19 @@
  * A NOTABLE is a one-time, dismissible tip/prompt (a first-run cue, a JIT
  * "why" explainer at a mode hand-off, a roman-numeral settings nudge, a
  * backup-staleness nudge, ...).
- * At most ONE may render at a time - this module is the single arbiter
- * that decides which consumer (if any) holds that slot right now, plus the
- * persisted "already shown, never again" bookkeeping, plus a ready-styled
- * dismissible banner element. Consumers wire their own call sites on top of
- * this file (S-FIRSTRUN + S-WHYNOTE in songbook.js/tracks.js; S-BACKUP-NUDGE
- * + S-DIAGRAM-PREF in play/index.html's Settings script; S-ROMAN not yet
- * wired).
+ *
+ * Pattern: at most ONE notable renders at a time. This module is the single
+ * arbiter that decides which consumer (if any) holds that slot right now,
+ * plus the persisted "already shown, never again" bookkeeping, plus a
+ * ready-styled dismissible banner element. Consumers wire their own call
+ * sites on top of this file (songbook.js / tracks.js / play/index.html's
+ * Settings script).
  *
  * Storage: ONE key, `music.notables.v1` = { consumerId: dismissedEpochMs }.
  * It falls under backup.js's `music.` prefix (OWNED_PREFIXES), so it is
- * captured by backup/restore for free. Per backup.js's own header rule -
- * "Additive changes (a new optional field, a new key) do NOT need a bump" -
- * this NEW key needs NO SCHEMA_VERSION bump; every reader here is defensive
- * (try/catch -> safe default), matching every other reader in this app.
+ * captured by backup/restore for free. A new key is an additive change, so
+ * per backup.js's rule it needs no SCHEMA_VERSION bump; every reader here is
+ * defensive (try/catch -> safe default), matching every other reader.
  *
  * ---- API (siblings build directly on this - keep it stable) ----
  *   Notables.claim(consumerId, priority, level) -> boolean granted
@@ -25,15 +24,13 @@
  *       consumer can never claim again (already shown, once, forever).
  *       Otherwise: the first claimant into an EMPTY slot wins. A later
  *       claim only wins by PREEMPTING a lower-priority holder - lower
- *       PRIORITY index wins ('firstrun' > 'whynote' > 'roman' > 'backup',
- *       per the sprint amendment + S-BACKUP-NUDGE). `priority` is optional:
- *       omit it to use the built-in table; pass an explicit number to
- *       override it (for a future consumer not yet in the table, or a
- *       one-off test). Equal
+ *       PRIORITY index wins. `priority` is optional: omit it to use the
+ *       built-in table; pass an explicit number to override it (for a
+ *       future consumer not yet in the table, or a one-off test). Equal
  *       priority does NOT preempt - first-come keeps the slot, so two
  *       simultaneous same-priority claims never both grant true (the
  *       "double-fire" case). At most one consumerId ever holds the slot.
- *       `level` (M-GUIDANCE, optional 3rd arg) is the CALLER's current
+ *       `level` (optional 3rd arg) is the CALLER's current
  *       music.guidanceLevel.v1 value ('beginner'|'intermediate'|'advanced'
  *       |null/undefined - this module stays agnostic of what those strings
  *       MEAN, exactly like `priority` is just an opaque number). A
@@ -41,9 +38,7 @@
  *       `level` is a member of its declared array - an omitted/unset level
  *       never matches, so a level-gated consumer is blocked until the
  *       caller has a real answer (see LEVELS below). A consumerId NOT in
- *       LEVELS is unrestricted, exactly like today (guidanceask itself,
- *       roman, diagrampref, backup) - this is purely additive, so every
- *       pre-existing 2-arg claim() call keeps working unchanged.
+ *       LEVELS is unrestricted - so every 2-arg claim() call works unchanged.
  *   Notables.release(consumerId)
  *       Frees the slot WITHOUT dismissing, if `consumerId` currently holds
  *       it (e.g. its screen was left before the user acted on it) - so a
@@ -71,25 +66,16 @@
   // Lower index = higher priority. An unlisted consumerId (no entry here,
   // no explicit `priority` passed to claim()) falls back to the lowest
   // priority - after every named one - so it never silently outranks them.
-  // 'diagrampref' (S-DIAGRAM-PREF steps 1-2) sits after 'roman' (a queued,
-  // not-yet-wired settings nudge) and before 'backup' (S-BACKUP-NUDGE) per
-  // the spec's explicit ordering (music/engineering-wiki/ux-philosophy/
-  // expertise-adaptive-display.md): onboarding/theory guidance still wins,
-  // but the one-time dots/patterns prompt still outranks the lower-urgency
-  // backup-staleness nudge. 'backup' stays deliberately last: it never
-  // preempts anything, it only shows when nothing higher-priority claims
-  // the slot.
+  // 'diagrampref' sits after 'roman' and before 'backup': onboarding/theory
+  // guidance still wins, but the one-time dots/patterns prompt outranks the
+  // lower-urgency backup-staleness nudge. 'backup' stays deliberately last:
+  // it never preempts anything, it only shows when nothing higher-priority
+  // claims the slot.
   //
-  // M-GUIDANCE (docs/plans/guidance-levels-spec-20260705.md): 'guidanceask'
-  // (the one-time "how far along are you?" level prompt, play/index.html
-  // renderGuidanceAsk) is inserted FIRST - it must win the slot ahead of
-  // even 'firstrun' on a truly fresh profile, since firstrun is now itself
-  // level-gated (see LEVELS below) and would otherwise never get a chance
-  // to show before the level exists. The 6 new graded JIT tips are inserted
-  // at their journey point WITHOUT disturbing the pre-existing relative
-  // order of firstrun/whynote/roman/diagrampref/backup (every pairwise
-  // comparison notables.test.js already locked in for those 5 still holds -
-  // only their absolute indices shifted).
+  // 'guidanceask' (the one-time "how far along are you?" level prompt) is
+  // FIRST - it must win the slot ahead of even 'firstrun' on a truly fresh
+  // profile, since firstrun is itself level-gated (see LEVELS below) and
+  // would otherwise never get a chance to show before the level exists.
   var PRIORITY = [
     'guidanceask',
     'firstrun', 'tunefirst', 'savebasics',
@@ -97,14 +83,13 @@
     'roman', 'diagrampref', 'backup'
   ];
 
-  // M-GUIDANCE: which music.guidanceLevel.v1 values a consumerId is graded
-  // for. A consumerId here ONLY grants claim() when the level passed to
-  // claim() is a member of its array - an omitted/null/unset level never
-  // matches any array (Array.indexOf(undefined) is always -1), which is
-  // exactly the spec's "unset level: only the ask may show" rule: every
-  // OTHER consumerId listed here stays blocked until a real level exists.
-  // A consumerId NOT in this table (guidanceask, roman, diagrampref,
-  // backup) is unrestricted, unchanged from pre-M-GUIDANCE behavior.
+  // Which music.guidanceLevel.v1 values a consumerId is graded for. A
+  // consumerId here ONLY grants claim() when the level passed to claim() is
+  // a member of its array - an omitted/null/unset level never matches any
+  // array (Array.indexOf(undefined) is always -1), so with no level set only
+  // the ask may show and every other listed consumerId stays blocked until a
+  // real level exists. A consumerId NOT in this table (guidanceask, roman,
+  // diagrampref, backup) is unrestricted.
   var LEVELS = {
     firstrun: ['beginner'],
     postprog: ['beginner'],
@@ -126,8 +111,7 @@
 
   // Bare `localStorage` (matches songbook.js/tracks.js convention) so this
   // runs unmodified in the browser; Node tests stub it via `global.localStorage`
-  // (see test/helpers/local-storage-reset.js), same pattern as diagram.dom.test.js
-  // stubbing `global.document`.
+  // (see test/helpers/local-storage-reset.js).
   function defaultStore() {
     try {
       if (typeof localStorage !== 'undefined' && localStorage) return localStorage;
@@ -173,17 +157,14 @@
     if (activeGrant && activeGrant.id === consumerId) activeGrant = null;
   }
 
-  /* ---------- one tip per SESSION (S-GUIDANCE-CALM, operator interview
-   * 2026-07-19) -------------------------------------------------------
-   * The one-at-a-time slot stopped double-renders, but dismissing a tip
-   * let the NEXT one claim on the user's return to a tab - experienced as
-   * whack-a-mole ("after dismiss then return, another diff shows"). The
-   * calmer contract: at most ONE consumerId ever holds the slot per app
-   * session. sessionStorage scopes it - a fresh open (new tab / next
-   * launch) may surface the next tip; within a session, dismissing one
-   * reveals nothing. The session holder itself may re-claim (its banner
-   * legitimately re-renders on tab return until dismissed), and a
-   * strictly-higher-priority preemption of the CURRENT holder still wins
+  /* ---------- one tip per SESSION -----------------------------------
+   * At most ONE consumerId ever holds the slot per app session. Without
+   * this, dismissing a tip lets the NEXT one claim on the user's return to
+   * a tab - felt as whack-a-mole. sessionStorage scopes it: a fresh open
+   * (new tab / next launch) may surface the next tip; within a session,
+   * dismissing one reveals nothing. The session holder itself may re-claim
+   * (its banner legitimately re-renders on tab return until dismissed), and
+   * a strictly-higher-priority preemption of the CURRENT holder still wins
    * (the boot-race ordering the priority table exists for) and takes over
    * the session record. No sessionStorage (Node, blocked) = gate off. */
   var SESSION_KEY = 'music.notables.session.v1';
@@ -207,11 +188,10 @@
   /* ---------- single-slot arbitration ("one notable per render pass") ---------- */
   var activeGrant = null; // { id: consumerId, p: priority } | null while a slot is held
 
-  // S-NOTABLE-PREEMPT-TEARDOWN: live banner elements by consumerId. The slot
-  // arbitration knew who LOST a preemption, but nothing removed the loser's
-  // already-rendered card - so a preempting claim left TWO banners on screen
-  // (operator-observed on pixels, 2026-07-10). renderBanner() registers here;
-  // a preempting claim() tears the ousted holder's element down.
+  // Live banner elements by consumerId. Slot arbitration alone knows who LOST
+  // a preemption but does not remove the loser's already-rendered card, which
+  // would leave TWO banners on screen. renderBanner() registers here; a
+  // preempting claim() tears the ousted holder's element down.
   var liveEls = {};
 
   function teardownEl(consumerId) {
@@ -224,15 +204,15 @@
 
   function claim(consumerId, priority, level) {
     if (!consumerId || isDismissed(consumerId)) return false;
-    // M-GUIDANCE level gate: a consumerId registered in LEVELS only grants
-    // when `level` is one of its declared values - see LEVELS' header above.
+    // Level gate: a consumerId registered in LEVELS only grants when `level`
+    // is one of its declared values - see LEVELS' header above.
     var declaredLevels = LEVELS[consumerId];
     if (declaredLevels && declaredLevels.indexOf(level) < 0) return false;
     var myP = priorityOf(consumerId, priority);
-    // S-GUIDANCE-CALM session gate: a different consumer already had its
-    // moment this session. Only a strictly-higher-priority preemption of a
-    // LIVE holder gets past this (and takes over the record below) - an
-    // empty slot after a dismissal/release stays empty until next session.
+    // Session gate: if a different consumer already had its moment this
+    // session, only a strictly-higher-priority preemption of a LIVE holder
+    // gets past (and takes over the record below) - an empty slot after a
+    // dismissal/release stays empty until next session.
     var sess = sessionHolder();
     if (sess && sess !== consumerId) {
       if (!activeGrant || myP >= activeGrant.p) return false;
@@ -242,7 +222,7 @@
     if (myP < activeGrant.p) { // strictly higher priority preempts - AND tears the loser down
       var ousted = activeGrant.id;
       activeGrant = { id: consumerId, p: myP };
-      teardownEl(ousted); // one tip at a time is the journey's law - visually too
+      teardownEl(ousted); // one tip at a time - remove the ousted card too
       recordSessionHolder(consumerId);
       return true;
     }
@@ -254,11 +234,8 @@
   }
 
   /* ---------- dismissible banner (app-styled; see songbook.css .notableBanner) ---------- */
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): the local esc() that used
-  // to live here was dead code - renderBanner() below never calls it (opts.html
-  // is trusted verbatim per its own contract; opts.text goes through
-  // .textContent, which is inherently safe). Removed rather than left as an
-  // unused delegate to the new shared esc.js.
+  // No escape helper here on purpose: opts.html is trusted verbatim per its
+  // own contract, and opts.text goes through .textContent, which is safe.
 
   // opts: { consumerId, text (plain, escaped) | html (trusted, verbatim),
   //         className (extra class), onDismiss(consumerId) }

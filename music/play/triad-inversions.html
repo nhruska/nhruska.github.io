@@ -44,9 +44,9 @@ body{max-width:540px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 1
 h1{font-size:1.18rem;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
 h1 .em{color:var(--accent-ink)}
 .lede{color:var(--txt-soft);font-size:.84rem;line-height:1.5;margin:6px 0 14px}
-/* S-RN-STYLE (operator UAT 2026-07-10): standalone I/IV/V tokens in prose read
-   as CHORD FUNCTIONS, not sentence words - same mono+accent family as the
-   step cards' .roman so one meaning keeps one look (consistency law). */
+/* Standalone I/IV/V tokens in prose read as CHORD FUNCTIONS, not sentence
+   words - same mono+accent family as the step cards' .roman so one meaning
+   keeps one look. */
 .rn{font-family:'Space Mono','SF Mono',Menlo,monospace;font-weight:700;color:var(--accent-ink);letter-spacing:.04em}
 /* Key picker */
 .keyChips{display:flex;gap:5px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
@@ -77,11 +77,9 @@ h1 .em{color:var(--accent-ink)}
 .step .frets{font-family:'Space Mono','SF Mono',Menlo,monospace;font-size:.68rem;color:var(--ink-faint);margin-top:2px}
 .step .notes{font-size:.74rem;color:var(--txt-soft);margin-top:3px;line-height:1.4}
 /* Transition rows sit between chord cards; the left border + indent + dim
-   text already mark them as "the move between two chords." We used to render
-   a SLIDE/HAMMER/ROTATE/FLIP pill on each one, but the labels were misleading
-   ("SLIDE +2" on a one-fret shape change, "ROTATE +1" on what was really a
-   ring-finger bar hammer) and the prose already says what the move is - so
-   the pills were noise, not signal. */
+   text mark them as "the move between two chords." Don't add a
+   SLIDE/HAMMER/ROTATE/FLIP move-type pill here - the prose already names the
+   move, and a short pill label misreads the actual motion. */
 .transition{display:flex;align-items:flex-start;gap:8px;margin:2px 0 2px 14px;font-size:.76rem;color:var(--txt-dim);padding:6px 10px;border-left:2px solid var(--line-strong);line-height:1.4}
 .flipBox{background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:10px;padding:10px 12px;margin:12px 0 4px;font-size:.78rem;line-height:1.5;color:var(--txt-soft)}
 .flipBox .head{margin-bottom:6px;color:var(--accent-ink);font-weight:700}
@@ -110,9 +108,9 @@ h1 .em{color:var(--accent-ink)}
 #resetIntros{border:1px solid var(--line);background:transparent;color:var(--txt-faint);font-family:inherit;font-weight:600;font-size:.72rem;padding:7px 14px;border-radius:9px;cursor:pointer}
 #resetIntros:hover{color:var(--txt-soft)}
 #resetIntros[hidden]{display:none}
-/* M-SETTINGS-CLARITY: the authored build stamp (shared/build-stamp.js) - the
-   page-footer twin of play/index.html's .setMeta line (this page deliberately
-   loads no songbook.css, so the small-print rule is local). */
+/* Authored build stamp (shared/build-stamp.js) - the page-footer twin of
+   play/index.html's .setMeta line. This page loads no songbook.css, so the
+   small-print rule is local. */
 .buildStamp{margin:26px 0 8px;text-align:center;font-size:.72rem;color:var(--txt-faint);}
 /* Incompatible-instrument fallback */
 .fallback{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:16px;margin:14px 0;font-size:.84rem;line-height:1.5;color:var(--txt-soft)}
@@ -123,22 +121,21 @@ h1 .em{color:var(--accent-ink)}
 </style>
 <!-- Shared theme-resolution helpers (same source as the main app). -->
 <script src="../shared/theme.js"></script>
-<!-- esc.js: the ONE HTML-escape util (S-HARDEN A5) - this page's own esc()
-     below delegates to it. -->
+<!-- esc.js: the shared HTML-escape util - this page's own esc() below
+     delegates to it. -->
 <script src="../shared/esc.js"></script>
-<!-- build-stamp.js: M-SETTINGS-CLARITY (2026-07-05) - the authored version +
-     freshness stamp rendered in the page footer (#buildStamp below); same
-     guard-locked pair as the main app's Settings meta line. -->
+<!-- build-stamp.js: the authored version + freshness stamp rendered in the
+     page footer (#buildStamp below); same guard-locked pair as the main app's
+     Settings meta line. -->
 <script src="../shared/build-stamp.js"></script>
-<!-- circle.js: the theory SSOT - regime B key-aware spelling (S-TRIADS-SPELLING,
-     2026-07-10). This page's chord/note NAMES spell by function inside the
-     stated key (the IV of F reads Bb, never A#); the local NAMES table below
-     stays canonical-sharp for identity only. -->
+<!-- circle.js: the theory SSOT for key-aware spelling. This page's chord/note
+     NAMES spell by function inside the stated key (the IV of F reads Bb, never
+     A#); the local NAMES table below stays canonical-sharp for identity only. -->
 <script src="../shared/circle.js"></script>
-<!-- audio.js: the app's ONE strum engine (S-TRIADS-AUDIBLE, 2026-07-10) -
-     tapping a chord card strums its exact voicing. Pitches derive from the
-     active profile's own open-string frequencies + the card's fret array,
-     so tones are accurate on every supported instrument by construction. -->
+<!-- audio.js: the app's shared strum engine - tapping a chord card strums its
+     exact voicing. Pitches derive from the active profile's own open-string
+     frequencies + the card's fret array, so tones are accurate on every
+     supported instrument by construction. -->
 <script src="../shared/audio.js"></script>
 </head>
 <body>
@@ -255,7 +252,7 @@ h1 .em{color:var(--accent-ink)}
   <button id="resetIntros" type="button" hidden>Show dismissed explainers</button>
 </div>
 
-<!-- M-SETTINGS-CLARITY: "v117 - updated <local date+time>" (shared/build-stamp.js) -->
+<!-- "vN - updated <local date+time>" (shared/build-stamp.js) -->
 <div class="buildStamp" id="buildStamp"></div>
 <script>
   if (window.BuildStamp) BuildStamp.renderInto(document.getElementById('buildStamp'));
@@ -268,8 +265,8 @@ h1 .em{color:var(--accent-ink)}
 // Resolves the active instrument id in this order:
 //   1. ?p= URL query param (explicit deep link, wins so a link can override
 //      a stale persisted choice).
-//   2. main app's localStorage at music.activeProfile.v1 (PR #45 stores a
-//      bare profile id string here, not a JSON blob).
+//   2. main app's localStorage at music.activeProfile.v1 (a bare profile id
+//      string, not a JSON blob).
 //   3. ukulele-gcea as the deterministic default.
 // The id is then validated against the manifest before script load (see the
 // .then(wantId => ...) below); an unknown id falls back to the first valid
@@ -297,39 +294,35 @@ function loadScript(src) {
 // HTML-escape any string before injecting it via innerHTML. Profile fields
 // (label, tuning, id) come from our own profile scripts today but a future
 // schema drift / external profile source could turn them into an injection
-// vector. Defensive escape on every untrusted-by-default field.
-// S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-// esc.js (loaded above) - this was the strictest of ~8 divergent copies (the
-// only one escaping ' too); esc.js's escape set now matches it everywhere.
+// vector. Defensive escape on every untrusted-by-default field. Delegates to
+// the shared esc.js (loaded above).
 function esc(s) { return Esc.esc(s); }
 
 // ---- pitch + interval helpers ---------------------------------------------
 const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
-// S-TRIADS-SPELLING (regime B, 2026-07-10): every DISPLAYED note/chord name on
-// this page spells by function inside the stated key via the shared Circle
-// speller - the IV of F reads Bb, never A# (this page predated the FORK-4
-// retirement and kept sharp-only labels). Tokens (key chips, ?key= deep-links,
-// tri.activeKey.v1 storage) stay canonical-sharp for identity; only display
-// respells. Guarded: if circle.js failed to load, fall back to the raw name
-// so the page still renders.
+// Every DISPLAYED note/chord name on this page spells by function inside the
+// stated key via the shared Circle speller - the IV of F reads Bb, never A#.
+// Tokens (key chips, ?key= deep-links, tri.activeKey.v1 storage) stay
+// canonical-sharp for identity; only display respells. Guarded: if circle.js
+// failed to load, fall back to the raw name so the page still renders.
 function inKeyName(keyTok, n) {
   return (window.Circle && Circle.noteInKey) ? Circle.noteInKey(keyTok, 'major', n) : n;
 }
-// S-RN-STYLE (operator UAT 2026-07-10): escape prose, then wrap standalone
-// I/IV/V roman-numeral tokens in a styled span so they don't blend into the
-// surrounding sentence. In this page's prose those single letters ALWAYS mean
-// the chord function (there is no first-person "I" anywhere in the copy), so
-// the word-boundary match is safe; IV before V before I keeps IV whole.
+// Escape prose, then wrap standalone I/IV/V roman-numeral tokens in a styled
+// span so they don't blend into the surrounding sentence. In this page's prose
+// those single letters ALWAYS mean the chord function (there is no first-person
+// "I" anywhere in the copy), so the word-boundary match is safe; IV before V
+// before I keeps IV whole.
 function rnProse(text) {
   return esc(text).replace(/\b(IV|V|I)\b/g, '<span class="rn">$1</span>');
 }
-// S-TRIADS-AUDIBLE (operator UAT 2026-07-10): strum a card's exact voicing.
-// fullFrets is in DISPLAY order (same order as activeProfile.strings), and
-// each pitch derives from that profile's own open-string frequency + fret -
-// accurate on every supported instrument by construction. ChordAudio is the
-// app's ONE strum engine (shared/audio.js); muted strings (-1) stay silent
-// inside strum(). Guarded no-op if audio failed to load.
+// Strum a card's exact voicing. fullFrets is in DISPLAY order (same order as
+// activeProfile.strings), and each pitch derives from that profile's own
+// open-string frequency + fret - accurate on every supported instrument by
+// construction. ChordAudio is the app's shared strum engine (shared/audio.js);
+// muted strings (-1) stay silent inside strum(). Guarded no-op if audio failed
+// to load.
 function strumCard(fullFrets) {
   if (!window.ChordAudio || !activeProfile) return;
   ChordAudio.strum(fullFrets, activeProfile.strings.map(s => s.f));
@@ -433,10 +426,10 @@ function pickStartShape(stringPcs, keyRootPc) {
 // We iterate up to 4 positions, stopping when the next would run off the neck.
 function buildCycle(startShape, startFret, keyRoot, stringPcs, ivName, vName) {
   const positions = [];
-  // S-TRIADS-SPELLING: keyRoot arrives as the canonical token; inside this
-  // function it is DISPLAY-only (chord labels + prose - all pitch math uses
-  // stringPcs/frets), so keep the token for spelling context and respell the
-  // label once (A# -> Bb).
+  // keyRoot arrives as the canonical token; inside this function it is
+  // DISPLAY-only (chord labels + prose - all pitch math uses stringPcs/frets),
+  // so keep the token for spelling context and respell the label once
+  // (A# -> Bb).
   const keyTok = keyRoot;
   keyRoot = inKeyName(keyTok, keyTok);
   function noteAt(stringIdx, fret) { return fret < 0 ? null : inKeyName(keyTok, NAMES[(stringPcs[stringIdx] + fret) % 12]); }
@@ -719,10 +712,9 @@ function buildKeyChips() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'keyChip' + (k === activeKey ? ' on' : '');
-    // S-TRIADS-SPELLING follow-up (operator UAT: "c# selected, Db displays"):
-    // a key CHIP names a KEY, so it shows the preferred key name too -
-    // otherwise the tapped chip reads C# while everything it opens reads Db
-    // (two names for one key on one screen). k stays the canonical token
+    // A key CHIP names a KEY, so it shows the preferred key name too -
+    // otherwise the tapped chip could read C# while everything it opens reads
+    // Db (two names for one key on one screen). k stays the canonical token
     // (identity, storage, ?key= deep-links).
     btn.textContent = (window.Circle && Circle.preferredTonicName) ? Circle.preferredTonicName(k, 'major') : k;
     btn.onclick = function () {
@@ -745,8 +737,8 @@ function renderCycle() {
   if (keyRootPc == null) return;
   const ivPc = (keyRootPc + 5) % 12;
   const vPc = (keyRootPc + 7) % 12;
-  // S-TRIADS-SPELLING: spell the IV/V (and the key's own display name) by
-  // function in the active key - F major's IV is Bb, never A#.
+  // Spell the IV/V (and the key's own display name) by function in the active
+  // key - F major's IV is Bb, never A#.
   const ivName = inKeyName(activeKey, NAMES[ivPc]);
   const vName = inKeyName(activeKey, NAMES[vPc]);
   const dispKey = inKeyName(activeKey, activeKey);
@@ -780,8 +772,7 @@ function renderCycle() {
           <div class="frets">[${fullFrets.join(', ')}]</div>
           <div class="notes">${rnProse(step.notes)}</div>
         </div>`;
-      // S-TRIADS-AUDIBLE: the card is a tap-to-hear button for its own
-      // voicing (the Studio's "tap to hear" convention). Keyboard-reachable
+      // The card is a tap-to-hear button for its own voicing. Keyboard-reachable
       // (a11y: role/tabindex/Enter+Space); fullFrets is captured per card.
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
@@ -796,7 +787,7 @@ function renderCycle() {
         const t = pos.transitions[si];
         const tr = document.createElement('div');
         tr.className = 'transition';
-        tr.innerHTML = '<div>' + rnProse(t.text) + '</div>'; // S-RN-STYLE; single child (transition is flex)
+        tr.innerHTML = '<div>' + rnProse(t.text) + '</div>'; // single child (transition is flex)
         block.appendChild(tr);
       }
     });

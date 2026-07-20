@@ -1,9 +1,8 @@
 /* =====================================================================
  * tracks.css  -  styles for the Backing Tracks finder + circle-of-fifths
  * panel, shared so the surface can mount as a tab in the play app.
- * Ported verbatim from the standalone backing-tracks page.
  * ===================================================================== */
-  /* backing-tracks finder (Phase 1) - compact one-row filters */
+  /* backing-tracks finder - compact one-row filters */
   .bt-controls{margin:2px 0 4px;}
   .bt-bar{display:flex;align-items:center;gap:9px;margin:5px 0;}
   .bt-tag{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
@@ -12,14 +11,12 @@
   .bt-bar .chip{padding:6px 12px;}
   .bt-mode{flex:0 0 auto;display:flex;gap:5px;margin-left:2px;}
   .bt-mode .chip{padding:6px 9px;font-size:.68rem;}
-  /* (.bt-why retired -> the related-match note renders as .li-note in the SSOT item.) */
+  /* The related-match note renders as .li-note in the shared list item. */
   .bt-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--txt-dim);margin:3px 2px 9px;}
-  /* Track result items now render via the SSOT .listItem (music/shared/list-item.js);
-   * the list container (.bt-results) + item styles live in songbook.css. The old
-   * .bt-card/.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta/.bt-open/.bt-why item rules
-   * were retired here to keep one source of truth for the Library list item. */
+  /* Track result items render via the shared .listItem (music/shared/list-item.js);
+   * the list container (.bt-results) + item styles live in songbook.css. */
   .bt-more{margin:14px 0 6px;}
-  /* M-DESIGN-ENFORCE E3: 12px -> var(--r-btn) (11px) - full-width button-styled oddball. */
+  /* Full-width button styled with the standard button radius. */
   .bt-more-btn{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.84rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;
     transition:border-color .15s,color .15s;}
@@ -39,21 +36,21 @@
   .bt-in.bad{border-color:var(--bad);}
   .bt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
   .bt-add-actions{display:flex;gap:9px;align-items:center;}
-  /* M-DESIGN-ENFORCE E3: 10px -> var(--r-btn) (11px) - a primary full-width Save action,
-     same bucket as .btn.red/.bt-add-save's songbook.css siblings, not the compact icon bucket. */
+  /* Primary full-width Save action - uses the standard button radius, same bucket
+     as .btn.red and its songbook.css siblings, not the compact icon bucket. */
   .bt-add-save{flex:1;background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
     font-size:.86rem;padding:11px;border-radius:var(--r-btn);cursor:pointer;}
   .bt-add-cancel{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-weight:600;
     font-size:.82rem;cursor:pointer;padding:8px;}
   /* in-studio add/edit-video-URL editor */
-  /* S-UI-RECONCILE Lane D: 11px -> var(--r-card) (13px) - card-shaped surface
-     (background+border+padding), same bucket as .bt-add-panel/.cofPanelInner. */
+  /* Card-shaped surface (background+border+padding), same bucket as
+     .bt-add-panel/.cofPanelInner. */
   .bt-st-urled{margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px 12px;}
   .bt-st-urled-lbl{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
     color:var(--txt-dim);margin-bottom:8px;}
   .bt-st-urled-row{display:flex;gap:8px;align-items:center;}
   .bt-st-urled-row .bt-in{flex:1;}
-  /* M-DESIGN-ENFORCE E3: 9px -> var(--r-btn-sm) (10px) - compact button oddballs. */
+  /* Compact buttons - use the small button radius. */
   .bt-st-urled-save{background:var(--accent);color:var(--on-accent);border:none;font-family:inherit;font-weight:700;
     font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;white-space:nowrap;}
   .bt-st-urled-clear{background:transparent;border:1px solid var(--line-strong);color:var(--txt-dim);
@@ -79,18 +76,16 @@
   .bt-qmeta{color:var(--txt-dim);font-size:.78rem;}
   .bt-qcands:empty{display:none;}
   .bt-qcand-lbl{font-family:'Space Mono',monospace;font-size:.66rem;letter-spacing:.05em;color:var(--txt-dim);margin-bottom:6px;}
-  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - full-width text-left
-     button, same bucket as .bt-curate-btn (its own already-tokenized sibling). */
+  /* Full-width text-left button, same bucket as .bt-curate-btn. */
   .bt-qcand{display:block;width:100%;text-align:left;background:var(--bg-2);border:1px solid var(--line-strong);
     color:var(--txt);font-family:inherit;font-size:.82rem;padding:9px 11px;border-radius:var(--r-btn-sm);cursor:pointer;margin-bottom:6px;}
   .bt-qcand:hover{border-color:var(--accent-ink);}
   .bt-qcand-note{color:var(--txt-dim);font-size:.72rem;margin-left:6px;}
-  /* visible curate entry point under the Library list (curateBarEl host) - quiet,
-     self-hides when there's nothing to curate */
+  /* Visible curate entry point under the Library list (curateBarEl host) - quiet,
+     self-hides when there's nothing to curate. */
   .curateSlot{margin-top:10px;text-align:center;}
   .curateSlot:empty{display:none;}
-  /* body-level curation-queue panel (the in-container queue lives inside the
-     permanently-hidden finder tab). Same overlay family as .bt-player. */
+  /* Body-level curation-queue panel. Same overlay family as .bt-player. */
   .bt-qpanel{position:fixed;inset:0;z-index:50;display:none;align-items:stretch;justify-content:center;
     background:rgba(0,0,0,.78);padding:calc(max(env(safe-area-inset-top,0px), 16px)) 12px calc(env(safe-area-inset-bottom,0px) + 12px);}
   .bt-qpanel.on{display:flex;}
@@ -118,8 +113,8 @@
      The overlay fills the viewport; head + frame are fixed, the body scrolls so the
      iframe keeps playing while you explore the theory. */
   .bt-player.studio{padding:0;align-items:stretch;justify-content:stretch;}
-  /* Default = single centered column, matching the app shell width (.app is 540px)
-     so the Studio reads "like the rest of the app" on desktop/large browsers. The
+  /* Default = single centered column matching the app shell width (540px) so the
+     Studio reads like the rest of the app on desktop/large browsers. The
      landscape-phone two-pane split (short-height media query below) overrides this. */
   .bt-studio{display:flex;flex-direction:column;width:100%;height:100%;max-width:540px;margin:0 auto;
     background:var(--surface);}
@@ -131,16 +126,14 @@
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
-  /* F32 (UI-std UAT): the dismiss control is now the SAME standard back affordance
-     the rest of the app uses (song view's #backLib "iconBtn ←") - .bt-st-back
-     composes the shared .iconBtn base (songbook.css: 44x44, --r-btn-sm radius,
-     accent-ink glyph) with zero Studio-specific overrides needed. The old
-     bordered "close"-text pill (.bt-st-x, trailing on the right) is retired -
-     removed here, not left dormant. */
+  /* The dismiss control is the standard back affordance the rest of the app uses
+     (song view's #backLib "iconBtn"): .bt-st-back composes the shared .iconBtn base
+     (songbook.css: 44x44, --r-btn-sm radius, accent-ink glyph) with no
+     Studio-specific overrides. */
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-  /* No-yt fallback: the Practice Studio still loads (HUD intact), the iframe slot
-     becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
+  /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact), the iframe
+     slot becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
      harmony-teacher surface usable for every track regardless of curated IDs. */
   .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
@@ -152,25 +145,19 @@
   .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:12px 12px 18px;display:flex;flex-direction:column;gap:12px;}
-  /* S-WHYNOTE: .bt-st-body already spaces flex children via `gap`, so the shared
-     .notableBanner's own margin-bottom (songbook.css) would double up the gap
-     below the banner - zero it here, scoped to this one owned placement. */
+  /* .bt-st-body spaces flex children via `gap`, so the shared .notableBanner's own
+     margin-bottom (songbook.css) would double up the gap below the banner - zero it
+     here, scoped to this one placement. */
   .bt-st-notable{margin-bottom:0;}
   .bt-st-lbl{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);
     margin-bottom:6px;font-weight:700;}
-  /* note names inside an uppercased label must keep their case (Bb, not BB) */
+  /* Note names inside an uppercased label must keep their case (Bb, not BB). */
   .bt-st-notes{text-transform:none;letter-spacing:0;}
-  /* F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play (primary,
-     44px override below - the shared .soundToggle is 32px, fine for
-     Compose's compact inline preview, wrong for the Studio's now-PRIMARY
-     control), Speed (one compact cycling button, replaces the old 3-button
-     Slow/Med/Fast segmented control), and Guide (a `?` icon, replaces the
-     "Guide" text toggle - its content now renders below the fretboard, see
-     the .bt-st-guidebtn wiring). Sits ahead of the notes line so it reads as
-     the section's primary controls. Replaces the old .bt-st-solorow (the
-     play toggle used to share a row with the "Solo over it" label) and the
-     old .bt-st-degrees line (F14 - removed as a redundant second notes
-     rendering). */
+  /* The controls row: Play (primary; 44px override below - the shared .soundToggle
+     is 32px, right for Compose's compact inline preview but too small for the
+     Studio's primary control), Speed (one compact cycling button), and Guide (a `?`
+     icon whose content renders below the fretboard, see the .bt-st-guidebtn wiring).
+     Sits ahead of the notes line so it reads as the section's primary controls. */
   .bt-st-ctrlrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.1rem;}
   .bt-st-speedbtn{flex:0 0 auto;min-height:44px;min-width:64px;padding:0 14px;
@@ -179,14 +166,12 @@
     transition:transform .08s,background .15s,color .15s,border-color .15s;}
   .bt-st-speedbtn:active{transform:scale(.96);}
   .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-  /* S-BLUES: Studio-only scale-chip row (mode scale default + pent major/minor +
-     blues), solo layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below)
-     so the chip visual language reads consistently app-wide - but wraps instead
-     of horizontal-scrolling: exactly 4 short labels fit one row at 412px, wrap
-     is just the safety net. */
+  /* Studio-only scale-chip row (mode scale default + pent major/minor + blues), solo
+     layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below) so the chip
+     visual language reads consistently, but wraps instead of horizontal-scrolling:
+     4 short labels fit one row at 412px, wrap is the safety net. */
   .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
-  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - a genuine pill-shaped
-     chip; converges onto the .chip family's canonical radius (songbook.css). */
+  /* Pill-shaped chip on the .chip family's canonical radius (songbook.css). */
   .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
@@ -194,17 +179,16 @@
   .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
   .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
-  /* F19 (operator UAT 2026-07-05): chords-in-key drops the SVG chord diagram
-     + roman numeral entirely - name-only chips (like the scale-chip row
-     above), all 7 fit ONE row at 412px (flex:1 1 0 divides the row evenly,
-     unlike .bt-st-scalechip's flex:0 0 auto+wrap, whose count varies 3-4).
-     S-LAYOUT-SSOT KNOWN GAP (music/engineering-wiki/systems/layout-tokens.md)
-     is now RESOLVED-BY-REMOVAL, not by adopting the --dg-canvas-w/--tile-min
-     clamp the gap note used to point at: there is no SVG canvas left in this
-     row to squeeze (the 4-column-diagram-width problem the gap described
-     cannot recur once the row renders text-only chips). Tap still plays the
-     chord + toggles the fretboard target (toggleTarget, tracks.js) - only
-     the visual weight changed. */
+  /* Chords-in-key: name-only chips (like the scale-chip row above), all 7 fit one
+     row at 412px (flex:1 1 0 divides the row evenly, unlike .bt-st-scalechip's
+     flex:0 0 auto+wrap whose count varies 3-4). Tap plays the chord + toggles the
+     fretboard target (toggleTarget, tracks.js). */
+  /* Chords-in-key row: name-only chips (no fretboard SVG), flex:1 1 0 so all 7
+     divide one 412px row evenly. KNOWN GAP (see engineering-wiki/systems/
+     layout-tokens.md): the SVG-canvas-width squeeze this row once had - the
+     --dg-canvas-w / --tile-min clamp - no longer applies, because there is no
+     SVG canvas left to squeeze once the chips render text-only. Tap still plays
+     the chord + toggles the fretboard target (toggleTarget in tracks.js). */
   .bt-st-chords{display:flex;flex-wrap:nowrap;gap:4px;}
   .bt-st-chordchip{flex:1 1 0;min-width:0;min-height:40px;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--txt);font-family:'Space Mono',monospace;font-weight:700;
@@ -214,24 +198,20 @@
     outline:2px solid transparent;outline-offset:2px;}
   .bt-st-chordchip:active{transform:scale(.96);}
   .bt-st-chordchip.sel{outline-color:var(--accent-ink);}
-  /* Active chord-tone target: persistent outline on the tapped chords-in-key
-     chip (composes the .sel accent-outline language above, just not
-     auto-clearing after 220ms). */
+  /* Active chord-tone target: persistent outline on the tapped chords-in-key chip
+     (composes the .sel accent-outline language above, but does not auto-clear). */
   .bt-st-chordchip.targeted{outline:2px solid var(--accent-ink);outline-offset:2px;}
-  /* S1 (operator UAT): "Walk the full cycle up the neck" (.hsrMore, styled globally
-     in songbook.css for the Compose tab) and this "Why these notes" toggle used to
-     read like plain headings - no shared visual language marking either as
-     tappable. Style both as a matching accent-colored underlined link/button here,
-     scoped to the Studio only (.bt-studio .hsrMore) so the Compose tab's own
-     .hsrMore look is untouched. */
+  /* Style the "Walk the full cycle up the neck" link (.hsrMore, styled globally in
+     songbook.css for the Compose tab) and the "Why these notes" toggle as matching
+     accent-colored underlined links, scoped to the Studio (.bt-studio .hsrMore) so
+     the Compose tab's own .hsrMore look is untouched. */
   .bt-studio .hsrMore{color:var(--accent-ink);font-weight:700;text-decoration:underline;
     text-decoration-color:var(--accent-dim);text-underline-offset:3px;border-bottom:none;padding-bottom:0;}
   .bt-studio .hsrMore:hover,.bt-studio .hsrMore:active{text-decoration-color:var(--accent-ink);}
-  /* m-guide-ia-20260704.md section 5 chrome-trim (4): "walk the cycle" link + the
-     "why these notes" toggle share one row instead of a row each - saves vertical
-     space. Zero the global .hsrMore vertical margin here only (Compose's own
-     .hsrMore look, defined in songbook.css, is untouched) so the row doesn't grow
-     taller than the toggle button beside it. */
+  /* The "walk the cycle" link and the "why these notes" toggle share one row to save
+     vertical space. Zero the global .hsrMore vertical margin here only (Compose's own
+     .hsrMore look in songbook.css is untouched) so the row doesn't grow taller than
+     the toggle button beside it. */
   .bt-st-linkrow{display:flex;align-items:center;gap:14px;}
   .bt-st-linkrow .hsrMore{margin:0;}
   .bt-st-why-toggle{align-self:flex-start;background:transparent;border:none;padding:4px 0;
@@ -240,51 +220,47 @@
   .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent-ink);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
-  /* SHORT landscape (phone held sideways): use the width. Two panes side by side -
-     header + video pinned in the left ~48% pane, the scrollable theory (scale /
-     chords / url editor / why) on the right - so the video isn't pushed off-screen
-     when vertical space is scarce. The .bt-st-frame's 16/9 aspect-ratio holds at
-     the narrower pane width; safe-area padding guards the notch.
+  /* SHORT landscape (phone held sideways): two panes side by side - header + video
+     pinned in the left ~44% pane, the scrollable theory (scale / chords / url editor
+     / why) on the right - so the video isn't pushed off-screen when vertical space is
+     scarce. The .bt-st-frame's 16/9 aspect-ratio holds at the narrower pane width;
+     safe-area padding guards the notch.
 
-     Gated on `max-height:600px` AND `pointer:coarse` (t1): a desktop/large browser is
-     ALSO landscape but has plenty of height, so it must NOT split - it falls through to
-     the default `.bt-studio` rule above (flex-direction:column, max-width:540px,
-     margin:0 auto), keeping the video (top) and theory (bottom) together as one
-     centered column. `pointer:coarse` further excludes a SHORT desktop / DevTools-docked
-     window (fine pointer, short height) from the split - only a touch device held
-     sideways qualifies. Bare `orientation:landscape` used to fire on every desktop
-     window and tore the top/bottom apart into a wide two-pane spread. */
+     Gated on `max-height:600px` AND `pointer:coarse`: a desktop/large browser is also
+     landscape but has plenty of height, so it must NOT split - it falls through to the
+     default `.bt-studio` rule above (flex-direction:column, max-width:540px, margin:0
+     auto), keeping video (top) and theory (bottom) as one centered column.
+     `pointer:coarse` further excludes a short desktop / DevTools-docked window (fine
+     pointer, short height) - only a touch device held sideways qualifies. Do NOT relax
+     this to bare `orientation:landscape`: that fires on every desktop window and tears
+     the top/bottom apart into a wide two-pane spread. */
   @media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
     .bt-studio{flex-direction:row;max-width:none;
       padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
-    /* M-GUIDE W3a (D-LANDSCAPE-FLEX): stage narrowed 48% -> 44% and the scrollable
-       body tightened (padding 12px 12px 18px -> 10px 12px, gap 12px -> 10px) - the
-       Guide card + target caption added more content to the same short-height pane. */
+    /* Left stage pane at 44%, scrollable body tightened, to fit the Guide card +
+       target caption in the short-height pane. */
     .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
     .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
   }
-  /* (.bt-row/.bt-title/.bt-key/.bt-sub/.bt-meta item rules retired -> .listItem.) */
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
-  /* circle of fifths (Phase 2) — the key explorer */
+  /* circle of fifths - the key explorer */
   .cof{display:flex;justify-content:center;margin:4px 0 2px;}
   .cofWheel{width:230px;height:230px;max-width:74vw;}
-  /* S2/FORK-3 (operator UAT): the only wheel a user ever sees today renders inside
-     the Studio's read-only "why these notes" panel (buildWhy) - the interactive
-     key-picker (onPick-wired) lives in the retired, permanently-hidden #s-tracks
-     container. A hover recolor here implied every wedge was tappable when tapping
-     did nothing; removed. tracks.js's tintWheel() now marks the relative key
-     (.cofWedge-rel, strong) + the V/IV neighbors (.cofWedge-nb, dimmer) as a static
-     teaching cue instead - no click affordance, no dead-end tap. */
+  /* The wheel renders inside the Studio's read-only "why these notes" panel
+     (buildWhy) as a static teaching cue: tracks.js's tintWheel() marks the relative
+     key (.cofWedge-rel, strong) + the V/IV neighbors (.cofWedge-nb, dimmer). Wedges
+     are not tappable here (cursor:default, no hover recolor) so nothing implies a
+     dead-end tap. */
   .cofWedge{fill:var(--surface-2);stroke:var(--bg);stroke-width:1.5;cursor:default;transition:fill .12s;}
   .cofWedge.on{fill:var(--accent);}
   .cofWedge-rel{fill:var(--accent-dim);}
   .cofWedge-nb{fill:var(--accent-deep);}
-  /* S-COF-ANIMATE: the sounding scale note's wedge during the scale audition
-     (tracks.js markWheelPc) - a fill swap riding the existing .12s transition.
-     Color change only, no motion (reduced-motion safe); declared AFTER
-     on/rel/nb so the pulse wins while the note sounds, then the tint returns. */
+  /* The sounding scale note's wedge during the scale audition (tracks.js
+     markWheelPc) - a fill swap riding the existing .12s transition. Color change
+     only, no motion (reduced-motion safe). Declared AFTER on/rel/nb so the pulse
+     wins while the note sounds, then the tint returns. */
   .cofWedge-sound{fill:var(--accent);}
   .cofLabel{fill:var(--txt-soft);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
   .cofLabel.on{fill:var(--on-accent);}
@@ -295,30 +271,27 @@
   .cofKeyName{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;}
   .cofWhy{font-size:.74rem;color:var(--txt-dim);margin:2px 0 10px;}
   .cofChords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
-  /* uniform 44px tiles so longer names (C#dim, F#m) don't squash + every tile is a thumb target */
-  /* S-UI-RECONCILE Lane D: 9px -> var(--r-btn-sm) (10px) - compact bordered
-     tile, same bucket as .cofDeg below. */
+  /* Uniform 44px tiles so longer names (C#dim, F#m) don't squash, and every tile is
+     a thumb target. Compact bordered tile, same bucket as .cofDeg below. */
   .cofChord{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 9px;min-width:46px;min-height:44px;}
   .cofChord .rn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);letter-spacing:.03em;}
   .cofChord .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--accent-ink);}
   .cofNbLbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;margin-bottom:5px;}
   .cofNb{display:flex;flex-wrap:wrap;gap:6px;}
-  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
-     chip, same bucket as .chordChips .c (songbook.css). */
+  /* Compact bordered chip, same bucket as .chordChips .c (songbook.css). */
   .cofNbChip{background:var(--accent-deep);border:1px solid var(--accent-dim);color:var(--accent-ink);font-family:inherit;font-weight:600;font-size:.74rem;padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s;}
   .cofNbChip:active{transform:scale(.94);}
   .cofNbChip b{font-weight:700;}
   /* modes layer + interval degrees (Phase 2.x) */
   .cofModes{display:flex;gap:5px;overflow-x:auto;margin:2px 0 11px;padding-bottom:2px;scrollbar-width:none;}
   .cofModes::-webkit-scrollbar{display:none;}
-  /* M-DESIGN-ENFORCE E3: 16px -> var(--r-chip-pill) (18px) - see .bt-st-scalechip above. */
+  /* Pill-shaped chip - see .bt-st-scalechip above. */
   .cofModeChip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
     transition:background .12s,color .12s,border-color .12s;}
   .cofModeChip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   .cofScale{display:flex;gap:4px;margin:0 0 9px;}
-  /* S-UI-RECONCILE Lane D: 8px -> var(--r-btn-sm) (10px) - compact bordered
-     tile, same bucket as .cofChord above. */
+  /* Compact bordered tile, same bucket as .cofChord above. */
   .cofDeg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);
     border:1px solid var(--line);border-radius:var(--r-btn-sm);padding:6px 2px;min-width:0;}
   .cofDeg.char{background:var(--accent-deep);border-color:var(--accent-dim);}
@@ -330,81 +303,61 @@
   .cofHint b{color:var(--accent-ink);font-weight:700;}
 
 /* =====================================================================
- * M-GUIDE W3a (m-guide-ia-20260704.md sections 2-3) - chord-tone targeting
- * (kx-*) + the per-scale mentor card (Guide). New section, appended once;
- * do not scatter kx-* or guide rules elsewhere in this file.
- * U3 fix (operator UAT 2026-07-04): this comment used to end its "kx-*"
- * mention immediately followed by a slash and "guide" with no separating
- * space - that adjacency is a close-comment token, so it terminated THIS
- * comment block early, silently swallowing the very next rule (the
- * dark-theme :root block below setting --kx-chord/--kx-blue/--kx-ghost -
- * browsers discard a malformed rule whose selector absorbs trailing comment
- * text). Dark theme's kx-chord/kx-blue dots were rendering fill:black (the
- * var resolved to empty, so the SVG default black won) - the light-theme
- * override rule worked fine standalone, which is why this stayed invisible
- * unless dark theme specifically was inspected. Keep a space before any
- * slash that follows an asterisk in this file's comments.
+ * Chord-tone targeting (kx-*) + the per-scale mentor card (Guide). Keep all
+ * kx-* and guide rules in this section; do not scatter them elsewhere.
+ *
+ * GOTCHA: never write an asterisk immediately followed by a slash inside a
+ * comment in this file (`*` `/` with no space). That sequence is a
+ * close-comment token, so it terminates the comment early and the browser
+ * discards the next rule whose selector then absorbs the trailing comment
+ * text - which silently drops a kx-* :root var and makes dot fills fall back
+ * to black. Always put a space before a slash that follows an asterisk.
  * ===================================================================== */
   /* Chord-tone targeting dot colors (diagram.js Diagram.scale opts.tones).
-   * kx-root/kx-scale intentionally carry NO rule here - they reuse the existing
-   * root/non-root fill diagram.js already applies (no visual change from today's
-   * default).
-   * --kx-ghost (P5 fold): the hollow/outline color for a target chord's tones
-   * OUTSIDE the current scale - diagram.js renders these fill:none, stroke +
-   * text both --kx-ghost, so no separate CSS rule is needed for them either. */
+   * kx-root/kx-scale carry NO rule here - they reuse the root/non-root fill
+   * diagram.js already applies.
+   * --kx-ghost: the hollow/outline color for a target chord's tones OUTSIDE the
+   * current scale - diagram.js renders these fill:none with stroke + text both
+   * --kx-ghost, so no separate CSS rule is needed. */
   :root{--kx-chord:#f59e0b;--kx-blue:#a78bfa;--kx-ghost:#94a3b8;}
   :root[data-theme="light"]{--kx-chord:#b45309;--kx-blue:#7c3aed;--kx-ghost:#64748b;}
-  /* U3 (operator UAT 2026-07-04): kx-chord/kx-blue note text used to share the
-   * root dot's --on-accent (dark) ink, on the assumption their fills were
-   * always bright like --accent. True in dark theme (fill bright -> dark ink
-   * reads fine), but the light-theme fills above are deliberately DARKENED for
-   * contrast against a white page bg - dark ink on a dark fill was the "black
-   * font on a dark dot" the operator flagged. Per-class ink var, computed for
-   * WCAG-normal-text contrast (>=4.5:1) against the ACTUAL fill in each theme:
-   * dark theme keeps --on-accent (7.95:1 vs --kx-chord, 6.27:1 vs --kx-blue);
-   * light theme flips to white (5.02:1 vs --kx-chord, 5.70:1 vs --kx-blue). */
+  /* Per-class ink var for the kx-chord/kx-blue note text, computed for WCAG
+   * normal-text contrast (>=4.5:1) against the ACTUAL fill in each theme (the
+   * light fills above are darkened for contrast against a white page bg, so they
+   * need a different ink than dark theme): dark theme uses --on-accent (7.95:1 vs
+   * --kx-chord, 6.27:1 vs --kx-blue); light theme flips to white (5.02:1 vs
+   * --kx-chord, 5.70:1 vs --kx-blue). */
   :root{--kx-chord-ink:var(--on-accent);--kx-blue-ink:var(--on-accent);}
   :root[data-theme="light"]{--kx-chord-ink:#fff;--kx-blue-ink:#fff;}
 
 /* =====================================================================
- * U20 (M-EAR wave 1.6, docs/plans/uat-walkthrough-20260704.md, decisions.md
- * D-EAR-1.6): "a THEME PALETTE with complementary and/or adjacent tones or
- * hues" derived from the user's own accent hue, so the kx dot-class palette
- * TRACKS the accent picker automatically instead of sitting at a fixed
- * hue. Feature-detected (@supports (color: oklch(from red l c h))) - the
- * literal fixed-hex declarations directly above are the fallback for
- * browsers without CSS Relative Color Syntax support; nothing above this
- * block changes.
+ * Accent-derived kx dot-class palette: hues derived from the user's own
+ * accent hue so the kx dot colors TRACK the accent picker automatically
+ * instead of sitting at fixed hues. Feature-detected via @supports (CSS
+ * Relative Color Syntax); the fixed-hex declarations above are the fallback
+ * for browsers without it, and nothing above this block changes.
  *
  * Hue offsets (relative to --accent's own hue, `h`):
- *   root      -> --accent itself (unchanged, no override needed - it IS home)
- *   chord     -> adjacent,        h + 30
- *   blue      -> adjacent-opposite, h - 30 (a DIFFERENT adjacent side from
- *                chord, so the two stay visually distinct from each other,
- *                not just from root)
- *   ghost     -> stays NEUTRAL (unchanged, --kx-ghost above) - it is
- *                deliberately an outline/absence signal, not a "note color"
+ *   root      -> --accent itself (it IS home, no override needed)
+ *   chord     -> adjacent,          h + 30
+ *   blue      -> adjacent-opposite, h - 30 (a different adjacent side from
+ *                chord, so the two stay distinct from each other, not just
+ *                from root)
+ *   ghost     -> stays NEUTRAL (--kx-ghost above) - an outline/absence
+ *                signal, not a note color
  *   rub       -> no fill of its own (diagram.js renders it on a plain
  *                --dg-dot-fill "scale" dot + a dashed ring - see
- *                shared/legend.js's own comment); nothing to derive here
- *   sounding  -> complementary, h + 180 (the single class needing MAXIMUM
- *                perceptual distance from every other accent-derived hue,
- *                since it marks a transient "playing right now" state, not
- *                a persistent theory class)
+ *                shared/legend.js); nothing to derive here
+ *   sounding  -> complementary, h + 180 (needs MAXIMUM perceptual distance
+ *                from every other accent-derived hue, since it marks a
+ *                transient "playing right now" state)
  *
- * L (lightness)/C (chroma) are PINNED per theme (not derived from --accent's
- * own L/C, which a bright vs muted user accent could otherwise swing wide
- * enough to blow the >=4.5:1 ink-contrast floor) - only the hue rotates.
- * Values chosen to land close to this file's PRE-U20 literal hex figures
- * (verified equivalent-weight replacements, not arbitrary): dark theme
- * kx-chord #f59e0b/kx-blue #a78bfa were ~L.74-.75; light theme kx-chord
- * #b45309/kx-blue #7c3aed were ~L.48-.50. --kx-chord-ink/--kx-blue-ink
- * (above) are UNCHANGED - OKLCH's perceptually-uniform L means ink-vs-fill
- * contrast tracks the pinned L, not the rotating hue, so the existing
- * >=4.5:1 figures hold across accent hues at these L/C pins (spot-verified
- * live at the default teal accent AND a hue-changed accent - shipping PR's
- * V&V section; not exhaustively re-verified against every possible
- * user-chosen hue). */
+ * L (lightness)/C (chroma) are PINNED per theme, only the hue rotates - do
+ * NOT derive L/C from --accent's own L/C, because a bright vs muted user
+ * accent could swing them wide enough to blow the >=4.5:1 ink-contrast floor.
+ * The pinned L keeps --kx-chord-ink/--kx-blue-ink (above) valid across accent
+ * hues (OKLCH's perceptually-uniform L means ink-vs-fill contrast tracks L,
+ * not the rotating hue). */
 @supports (color: oklch(from red l c h)) {
   :root{
     --kx-chord:oklch(from var(--accent) 0.74 0.15 calc(h + 30));
@@ -415,66 +368,48 @@
     --kx-blue:oklch(from var(--accent) 0.48 0.18 calc(h - 30));
   }
 }
-  /* (the F19 chip-targeting rule now lives with .bt-st-chordchip, above -
-   * the old .bt-st-chordcell .chord.targeted diagram-cell selector is gone.) */
-  /* Per-scale mentor card (Guide): reuses .bt-st-why-toggle/.bt-st-why verbatim
-   * for the toggle + collapse behavior (composed, not a new chip variant) - only
-   * the 5 labeled rows inside are new. */
+  /* Per-scale mentor card (Guide): reuses .bt-st-why-toggle/.bt-st-why for the
+   * toggle + collapse behavior; only the labeled rows inside are specific to it. */
   .bt-st-guide-row{display:flex;gap:8px;padding:4px 0;font-size:.78rem;line-height:1.45;}
   .bt-st-guide-lbl{flex:0 0 auto;width:58px;font-family:'Space Mono',monospace;font-size:.62rem;
     font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);padding-top:1px;}
   .bt-st-guide-txt{color:var(--txt-soft);}
 
 /* =====================================================================
- * U2 (operator UAT 2026-07-04) - Studio position-pager (key-explorer.js
- * .scalePosCtrl/.scalePosBtn, base rule in songbook.css) read as "different
- * sizes" at 412px: the base rule's 42x42 box sits below the app's 44px GRIP
- * touch floor (decisions.md GRIP), and disabled:opacity .32 faded the back
- * button's border to near-invisible against its own bg, so it visually
- * shrunk next to the fully-opaque forward button even though the DOM box was
- * identical. Override here (tracks.css loads AFTER songbook.css - same
- * specificity, later wins): explicit equal 44x44 box on BOTH states, and a
- * less extreme disabled fade so the box stays equally legible either way.
+ * Studio position-pager (key-explorer.js .scalePosCtrl/.scalePosBtn, base
+ * rule in songbook.css). Override here (tracks.css loads AFTER songbook.css,
+ * same specificity so later wins) to hold the app's 44px touch floor: an
+ * explicit equal 44x44 box on BOTH states, and a moderate disabled fade so
+ * the disabled back button stays as legible as the forward button rather than
+ * fading to a near-invisible border and looking smaller (see decisions.md:
+ * GRIP).
  * ===================================================================== */
   .scalePosBtn{width:44px;height:44px;min-width:44px;min-height:44px;}
   .scalePosBtn:disabled{opacity:.5;}
 
 /* =====================================================================
- * S-BLUES-BOXES - the named-box chip key-explorer.js renders as a sibling
- * of .scalePosCtrl whenever the active solo scale is pentMajor/pentMinor/
- * blues and the pager's current position lands exactly on a box start.
- * Composes the SAME accent-filled-pill language as .bt-st-scalechip.on
- * above (this IS "the current box is active", same visual idea as an
- * active chip) - centered, monospace fret/string text to match .scalePosLbl.
- * Not a button (informational only; the pager buttons already drive it).
+ * The named-box chip key-explorer.js renders as a sibling of .scalePosCtrl
+ * whenever the active solo scale is pentMajor/pentMinor/blues and the pager's
+ * current position lands exactly on a box start. Composes the same
+ * accent-filled-pill language as .bt-st-scalechip.on above (it marks "the
+ * current box is active"), centered with monospace fret/string text to match
+ * .scalePosLbl. Not a button (informational only; the pager buttons drive it).
  * ===================================================================== */
-  /* S-UI-RECONCILE Lane D: 12px -> var(--r-chip-pill) (18px) - this block's own
-     comment above states it composes the SAME accent-filled-pill language as
-     .bt-st-scalechip.on, which is already tokenized to --r-chip-pill; the
-     6px jump is the intended snap onto that shared pill language, not a
-     regression. */
+  /* Pill radius matches .bt-st-scalechip.on's shared pill language. */
   .scaleBoxChip{text-align:center;margin:-4px 0 8px;font-family:'Space Mono',monospace;
     font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--on-accent);
     background:var(--accent);border-radius:var(--r-chip-pill);padding:4px 10px;display:inline-block;}
   .scaleBoxChip[hidden]{display:none;}
 
-/* (the U5-class SVG clamp parity rule for .bt-st-chords is gone - F19,
-   2026-07-05, removed the chord diagrams that rule was clamping.) */
-
 /* =====================================================================
- * M-TRACKLIB wave 1 - "Find a jam" explore panel (docs/plans/
- * vision-ear-first-20260704.md). Reuses .bt-st-why-toggle/.bt-st-why for the
- * disclosure (Guide's own primitive), the shared .chip base (songbook.css)
- * for genre/feel selection (accent-fill .on grammar, no new chip variant),
- * and .bt-st-ytlink/.bt-st-editlink (already styled) for the two actions -
- * only the layout wrappers below are new.
- *
- * F21 (operator UAT 2026-07-05): the trigger (data-jamfindtoggle) moved from
- * its own solo-section toggle into the stage's video/search affordance (see
- * tracks.js openStudio's jamPanelHtml) - the .on state below is new (neither
- * .bt-st-ytlink nor .bt-st-editlink had one; the old .bt-st-why-toggle it
- * replaced got its "expanded" look from underline-color alone, which reads
- * fine for a plain text link but not for these button-shaped primitives).
+ * "Find a jam" explore panel. Reuses .bt-st-why-toggle/.bt-st-why for the
+ * disclosure, the shared .chip base (songbook.css) for genre/feel selection,
+ * and .bt-st-ytlink/.bt-st-editlink for the two actions - only the layout
+ * wrappers below are specific to it. The trigger (data-jamfindtoggle) lives on
+ * the stage's video/search affordance (see tracks.js openStudio's
+ * jamPanelHtml), so the .on state below gives those button-shaped links an
+ * expanded look (a plain underline-color change reads fine for a text link but
+ * not for a button-shaped primitive).
  * ===================================================================== */
   .bt-st-jamchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
   .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
@@ -483,58 +418,43 @@
   .bt-st-ytlink.on,.bt-st-editlink.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 
 /* =====================================================================
- * M-EAR wave 1.5 (U12) - the sounding-note fretboard dot, key-explorer.js's
- * boxWrap.setSounding(pc) class-swap target. Reuses the SAME --sound-bg/
- * --sound-line pair the note/degree token .sounding marker uses
- * (songbook.css, M-EAR wave 1) - one primitive, two surfaces (text pill AND
- * fretboard dot), same Element Consistency Law reasoning as kx-chord/kx-blue
- * above: a THIRD hue for a genuinely distinct surface would just be scatter.
- * Contrast already verified for this pair (songbook.css's own comment):
- * dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on #efe7fb = 5.12:1 -
- * satisfies the >=4.5:1 text-on-fill floor for the note-name text on top of
- * the dot, same mapping (fill=bg tint, text=line ink) as the existing pill.
- * kx-sounding is added via JS classList AFTER render (never baked into
- * diagram.js's own SVG string - see diagram.dom.test.js's own assertion of
- * that), so it must win over diagram.js's inline fill/stroke style attribute:
- * !important is the one sanctioned exception here (every other kx-* class is
- * inline-styled at render time and needs no override rule at all - this is
- * the only class applied post-render, hence the only one requiring it).
- * The `+ text` sibling rule recolors the note-name letter drawn immediately
- * after each dot (diagram.js always emits <circle/><text> as an adjacent
- * pair, one per note - see scale()'s notesOn loop).
+ * The sounding-note fretboard dot, key-explorer.js's boxWrap.setSounding(pc)
+ * class-swap target. Reuses the same --sound-bg/--sound-line pair the
+ * note/degree token .sounding marker uses (songbook.css) - one primitive
+ * across the text pill and the fretboard dot. Contrast is verified for this
+ * pair (see songbook.css): dark #b39ddb on #3a2f57 = 5.08:1; light #6a4bc4 on
+ * #efe7fb = 5.12:1, both above the >=4.5:1 text-on-fill floor (fill=bg tint,
+ * text=line ink).
  *
- * U15 HARDEN (2026-07-05, docs/plans/uat-walkthrough-20260704.md, decisions.md
- * D-EAR-1.6): re-repro this wave found the mechanism above fires correctly in
- * EVERY tested state combo (window/full-neck x mode/pentMinor x target
- * on/off - live Playwright evidence in the shipping PR) - no logic bug. The
- * color-only delta was just too subtle to notice at a glance, especially
- * light theme (--sound-bg #efe7fb sits close in luminance to the default
- * --dg-dot #dfe6ee fill - a colour-only cue two adjacent pastels apart is
- * easy to miss on a quickly-bouncing marker). Adds a SIZE + STROKE + GLOW
- * signal that reads regardless of hue perception, on top of the unchanged
- * fill/stroke colors (already reviewed/contrast-verified above - changing
- * them risked re-litigating that pairing for a problem size/weight/glow
- * already fixes): transform:scale (CSS animates SVG geometry attributes
- * like `r` inconsistently across engines; transform-box:fill-box +
- * transform-origin:center scales around the DOT'S OWN center instead of the
- * SVG viewport's default 0,0 origin, so the enlarged circle stays centered
- * on its unscaled sibling <text> - no visual drift), a heavier ring, and a
- * soft matching-hue glow so the sounding note visually "pops" off a busy
- * fretboard instead of being just another same-size circle.
+ * GOTCHA - !important is required here: kx-sounding is added via JS classList
+ * AFTER render (never baked into diagram.js's SVG string - diagram.dom.test.js
+ * asserts that), so it must win over diagram.js's inline fill/stroke style
+ * attribute. This is the only kx-* class applied post-render, hence the only
+ * one needing the override. The `+ text` sibling rule recolors the note-name
+ * letter drawn immediately after each dot (diagram.js emits <circle/><text> as
+ * an adjacent pair, one per note - see scale()'s notesOn loop).
+ *
+ * The size + stroke + glow signal (on top of the fill/stroke colors) makes the
+ * sounding note read regardless of hue perception, since a color-only delta is
+ * easy to miss on a quickly-bouncing marker (light theme especially: --sound-bg
+ * #efe7fb sits close in luminance to the default --dg-dot #dfe6ee fill). Use
+ * transform:scale, NOT the SVG `r` attribute - CSS animates SVG geometry
+ * attributes inconsistently across engines. transform-box:fill-box +
+ * transform-origin:center scales around the dot's own center instead of the SVG
+ * viewport's default 0,0 origin, so the enlarged circle stays centered on its
+ * unscaled sibling <text> (no visual drift).
  * ===================================================================== */
   .kx-sounding{fill:var(--sound-bg) !important;stroke:var(--sound-line) !important;stroke-width:2.6 !important;
     transform:scale(1.35);transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 2px var(--sound-line));}
   .kx-sounding + text{fill:var(--sound-line) !important;}
 
 /* =====================================================================
- * M-EAR wave 1.6 (U16) - the Legend primitive (shared/legend.js): dot-swatch
- * + label rows, replacing the old M-GUIDE W3a chord-target caption's prose
- * sentence. ONE card-shaped surface (Element Consistency Law) - reuses
- * --surface-2/--line/--r-card (the SAME card tokens .listItem/.bt-add-panel/
- * .bt-qcard already consume, per component-conventions.md's radius-by-role
- * table) rather than inventing a new surface. Label text reuses --txt-soft,
- * the SAME ink family .bt-st-guide-txt (the Guide card's own row text)
- * already uses - no new text-color token needed for a plain description row.
+ * The Legend primitive (shared/legend.js): dot-swatch + label rows. One
+ * card-shaped surface reusing the --surface-2/--line/--r-card card tokens
+ * .listItem/.bt-add-panel/.bt-qcard already consume (per
+ * component-conventions.md's radius-by-role table). Label text reuses
+ * --txt-soft, the same ink family .bt-st-guide-txt (the Guide card's row text)
+ * uses - no new text-color token for a plain description row.
  * ===================================================================== */
   .legend{display:flex;flex-direction:column;gap:5px;margin:6px 0 10px;padding:8px 10px;
     background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);}

@@ -56,8 +56,8 @@
    * Normalised square-difference autocorrelation, searched ONLY across the
    * instrument's plausible period band, picking the FIRST strong peak (the
    * fundamental) instead of the global max. That first-peak rule is the
-   * standard cure for octave errors - the bug that made low strings read an
-   * octave off and land on the wrong string. Band-limiting both speeds it up
+   * standard cure for octave errors (a low string reading an octave off would
+   * otherwise land on the wrong string). Band-limiting both speeds it up
    * and refuses sub-octave lock-ons. Returns { freq, clarity }, clarity 0..1
    * (1 = perfectly periodic) - the confidence the loop gates noise on. */
   function detectPitch(buf, sr, fmin, fmax) {
@@ -155,14 +155,11 @@
     return ref > 0 && freq > 0 && Math.abs(1200 * Math.log2(freq / ref)) > (maxCents || 70);
   }
   // Tuning advice for "always tune UP from flat" (approach pitch from below so the
-  // string seats under tension). Asymmetric + biased to the way you actually land:
+  // string seats under tension). Asymmetric — biased to the way you actually land:
   //   'flat'  (≤ -4¢)      keep coming up — the good direction
-  //   'near'  (-3..+2¢)    you're on it — lock (the GREEN zone; now aligned to the
-  //                        needlePos ±3 in-tune band, widened from the old -2..+1
-  //                        which was so tight a well-tuned string still read as overshoot)
-  //   'sharp' (≥ +3¢)      overshot — drop below and re-approach (still tight on sharp)
-  // (T4: the -4 / +3 thresholds are the live-tunable green-zone knobs — widen if the
-  //  owner reports green is still hard to land, tighten if it greens while audibly off.)
+  //   'near'  (-3..+2¢)    you're on it — lock (the GREEN zone, aligned to the
+  //                        needlePos ±3 in-tune band)
+  //   'sharp' (≥ +3¢)      overshot — drop below and re-approach (tight on sharp)
   function tuneHint(cents) {
     if (cents >= 3) return 'sharp';
     if (cents <= -4) return 'flat';
@@ -228,8 +225,8 @@
       // Note-name hysteresis: don't flip the displayed string on a transient, and
       // don't thrash when a note sits near the midpoint between two strings. Require
       // the candidate to be CLEARLY closer (SWITCH_MARGIN cents) for SWITCH_FRAMES
-      // consecutive frames. (T4: both are live-tunable — raise to steady a flickering
-      // name, lower if a genuinely new string is slow to appear. Was: 3 frames, no margin.)
+      // consecutive frames. Raise to steady a flickering name, lower if a genuinely
+      // new string is slow to appear.
       var SWITCH_FRAMES = 5, SWITCH_MARGIN = 20;
       if (lockedString === null) { lockedString = tgt; switchFrames = 0; }
       else if (tgt !== lockedString) {
@@ -247,12 +244,10 @@
       if (hint === 'near') inTuneHold = 8; else if (hint === 'sharp') inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
       var locked = inTuneHold > 0;
       // Zoomed needle, driven by the same smoothed value as the cents readout.
-      // ASYMMETRIC smoothing — fast ATTACK, slow RELEASE. The tension the owner felt
-      // ("jitters" wants MORE damping, "slow to settle" wants LESS) is one knob pulled
-      // two ways; splitting it by distance-to-target resolves both: a new string or a
-      // big error catches up FAST, honing the last few cents damps HEAVY so the needle
-      // sits dead still. (T4: these four k's are the live-iteration surface — raise the
-      // honing k if it feels laggy near centre, lower it if it still jitters.)
+      // ASYMMETRIC smoothing — fast ATTACK, slow RELEASE, split by distance-to-target:
+      // a new string or a big error catches up FAST, honing the last few cents damps
+      // HEAVY so the needle sits dead still. Raise the honing k if it feels laggy near
+      // centre, lower it if it jitters.
       var target = needlePos(cents), acents = Math.abs(cents), k;
       if (shown !== prevShown) k = 0.5;        // new string   — snap to it
       else if (acents > 15) k = 0.35;          // far off      — track quickly (fast attack)

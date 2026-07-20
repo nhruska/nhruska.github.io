@@ -1,7 +1,7 @@
 /* =====================================================================
- * skill-md.js  -  S-SKILLS-PORTABLE (operator UAT 2026-07-16): render a
- * skill-competency-profile/v1 document as an open-skills-format SKILL.md
- * file, and parse one back. The JSON document (competency.js) stays the
+ * skill-md.js  -  render a skill-competency-profile/v1 document as an
+ * open-skills-format SKILL.md file, and parse one back. The JSON document
+ * (competency.js) stays the
  * INTERNAL machine SSOT (localStorage `music.competency.v1`); SKILL.md is
  * the INTERCHANGE render - human/agent-readable, one per skill, bundled
  * as `<skill-id>/SKILL.md` inside the zip export (zip-store.js).

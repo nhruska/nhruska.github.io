@@ -30,13 +30,11 @@
     Cmaj7: [0, 0, 0, 2], Dmaj7: [2, 2, 2, 4], Emaj7: [1, 3, 0, 2], Fmaj7: [2, 4, 1, 3], Gmaj7: [0, 2, 2, 2], Amaj7: [1, 1, 0, 0], Bmaj7: [3, 3, 2, 2],
     Cm7: [3, 3, 3, 3], Dm7: [2, 2, 1, 3], Em7: [0, 2, 0, 2], Fm7: [1, 3, 1, 3], Gm7: [0, 2, 1, 1], Am7: [0, 0, 0, 0], Bm7: [2, 2, 2, 2]
   };
-  // Enharmonic-tolerant shape lookup (FORK-4, pilot UAT): the app labels chords
-  // canonically SHARP (A#, D#m ...). THIS table only voices natural-root chords
-  // (no sharp or flat entries at all), so the resolver currently finds nothing
-  // extra here - black-key chords render name-only either way (pre-existing).
-  // Kept for consistency with the guitar pack: if flat-keyed voicings are ever
-  // added under either spelling, both names will resolve. Lookup-only; the
-  // DISPLAY name stays whatever the caller passed.
+  // Enharmonic-tolerant shape lookup: the app labels chords canonically SHARP
+  // (A#, D#m ...). This table only voices natural-root chords, so black-key
+  // chords render name-only. Kept in sync with the guitar pack: if flat-keyed
+  // voicings are ever added under either spelling, both names resolve.
+  // Lookup-only - the DISPLAY name stays whatever the caller passed.
   var ENH = { 'A#': 'Bb', 'Bb': 'A#', 'C#': 'Db', 'Db': 'C#', 'D#': 'Eb', 'Eb': 'D#', 'F#': 'Gb', 'Gb': 'F#', 'G#': 'Ab', 'Ab': 'G#' };
   function shapeFor(name) {
     if (CHORDS[name]) return CHORDS[name];

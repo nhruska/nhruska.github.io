@@ -2,15 +2,17 @@
  * key-explorer.js  -  shared "key explorer" render primitives
  * ---------------------------------------------------------------------
  * The chords-in-key palette + solo-scale box, rendered identically in
- * BOTH the Compose tab (interactive: tap a chord = add to progression)
- * and the Tracks player (read-only: tap = hear). To stay context-neutral
- * the THEORY is pre-computed by the caller and passed in - Compose drops
- * the diminished vii deg and uses its own mode vocabulary, Tracks keeps
- * vii and uses circle.js's; a shared computer would silently change one
- * side's palette. This module only paints pixels + wires the supplied
- * tap behaviour. It imports NO context state (no addChord/progression/
- * STATE) - everything context-specific arrives via opts callbacks, so a
- * Compose mount and a Tracks mount never share mutable state.
+ * both the Compose tab (interactive: tap a chord = add to progression)
+ * and the Tracks player (read-only: tap = hear).
+ *
+ * Pattern: the caller pre-computes the THEORY and passes it in - the two
+ * mounts use different vocabularies (Compose drops the diminished vii and
+ * uses its own mode names, Tracks keeps vii and uses circle.js's), so a
+ * shared computer here would silently change one side's palette. This
+ * module only paints pixels + wires the supplied tap behaviour. It imports
+ * NO context state (no addChord/progression/STATE) - everything
+ * context-specific arrives via opts callbacks, so a Compose mount and a
+ * Tracks mount never share mutable state.
  *
  * Exposes window.KeyExplorer, and require()-able in Node.
  * ===================================================================== */
@@ -26,8 +28,8 @@
    *     onTap    - optional fn(chordName, tileEl); when set, makes the tile interactive.
    *                Compose passes add-to-progression+play; Tracks passes play-only.
    *     tapClass - optional class added to each tile (opt-in). Lets add-tiles LOOK
-   *                different from read-only hear-tiles (prevents the "same UI, different
-   *                consequence" mis-train) WITHOUT changing DOM for callers that omit it.
+   *                different from read-only hear-tiles (so the same UI never implies a
+   *                different consequence) WITHOUT changing DOM for callers that omit it.
    *     gridClass - optional override (default 'chordGrid keyPalette') */
   function renderChords(container, items, opts) {
     opts = opts || {};
@@ -62,13 +64,10 @@
     return parent;
   }
 
-  // Default fret-window depth per instrument (D-FRETS-4STR, m-guide-ia-20260704.md
-  // section 5): 4-string necks (uke/mandolin/mandola/cigar box) get a taller 12-fret
-  // window - a 7-fret open window covers less musical value per fret on 4 strings
-  // than on 6+. Banjo(5) and guitars keep the classic 7-fret window. Exported for
-  // direct testing. Geometry verified: the F=12 open window (349px: 15+19 nut/open
-  // col + 12*25 fret width + 15 pad) fits 412-portrait content and the landscape
-  // right pane; posWindow's 0/5/10 walk + the fret-14 cap both hold unchanged.
+  // Default fret-window depth per instrument. 4-string necks (uke/mandolin/
+  // mandola/cigar box) get a taller 12-fret window - a 7-fret open window
+  // covers less musical value per fret on 4 strings than on 6+. Banjo(5) and
+  // guitars keep the classic 7-fret window. Exported for direct testing.
   function defaultFrets(pack) {
     return (pack && pack.meta && pack.meta.strings <= 4) ? 12 : 7;
   }
@@ -80,11 +79,11 @@
   var POS_STEP = 5, POS_CAP = 14;
 
   /* ---------------------------------------------------------------------
-   * S-BLUES-BOXES: named box positions (Box 1-5) for the pentatonic/blues
-   * scale-chip selections, riding this same posWindow pager. Pure pitch-
-   * class math - no DOM, node-testable - so the position-control wiring
-   * below can offer a "snap to box start" walk instead of the fixed
-   * 0/5/10 step whenever the active solo scale is pentMajor/pentMinor/blues.
+   * Named box positions (Box 1-5) for the pentatonic/blues scale-chip
+   * selections, riding this same posWindow pager. Pure pitch-class math -
+   * no DOM, node-testable - so the position-control wiring below can offer
+   * a "snap to box start" walk instead of the fixed 0/5/10 step whenever
+   * the active solo scale is pentMajor/pentMinor/blues.
    *
    * The 5 boxes are the classic CAGED-derived teaching windows: each box's
    * START FRET is the natural fret (on the LOWEST string, index 0 of the
@@ -92,12 +91,12 @@
    * convention, not necessarily lowest acoustic pitch on a re-entrant neck
    * like ukulele) where the NEXT pentatonic-minor scale degree occurs, above
    * the previous box's fret. blues rides the SAME 5 windows as pentMinor
-   * (S-BLUES §3a: blues = pentMinor + the b5 passing tone - a 6th note that
-   * never earns its own box). pentMajor is "the same shapes" as its relative
-   * minor (solo-scales.md): box windows derive from the relative-minor root
-   * (rootPc - 3), then each box's labeled root-string anchor is re-solved
-   * for the ACTUAL major rootPc the caller asked for, so the highlighted
-   * tonic always matches the query, not the shape's internal reference root.
+   * (blues = pentMinor + the b5 passing tone - a 6th note that never earns
+   * its own box). pentMajor is "the same shapes" as its relative minor: box
+   * windows derive from the relative-minor root (rootPc - 3), then each
+   * box's labeled root-string anchor is re-solved for the ACTUAL major
+   * rootPc the caller asked for, so the highlighted tonic always matches the
+   * query, not the shape's internal reference root.
    * ------------------------------------------------------------------- */
   var PENT_MINOR_OFFSETS = [0, 3, 5, 7, 10]; // root, b3, 4, 5, b7 - one per box
 
@@ -164,11 +163,10 @@
    *             the instrument profile's `strings` array (index 0 = the
    *             array's first entry - this codebase's "lowest string"
    *             convention; see profiles/*.js `l` labels).
-   * moveHint is template-generated (A9 discipline - no curated per-box
-   * prose): the fret delta to the NEXT box walking up the neck (by
-   * startFret, not by box number - a player slides to whichever box comes
-   * next physically), or a loop-back note for the box at the top of the
-   * mapped (0-14) range.
+   * moveHint is template-generated (no curated per-box prose): the fret
+   * delta to the NEXT box walking up the neck (by startFret, not by box
+   * number - a player slides to whichever box comes next physically), or a
+   * loop-back note for the box at the top of the mapped (0-14) range.
    * Safe/empty: returns [] when rootPc or openPcs is missing. */
   function boxes(rootPc, scaleId, openPcs) {
     if (rootPc == null || !openPcs || !openPcs.length) return [];
@@ -180,9 +178,9 @@
       var floor = i === 0 ? 0 : raw[i - 1] + 1;
       raw.push(fretOf(pc, anchorOpenPc, floor));
     });
-    // Wrap-fix: fold anything past the pager cap back down an octave,
-    // never below fret 0 (MVC contract: "subtract 12 when a start would
-    // exceed the pager cap of 14; keep startFret >= 0").
+    // Fold anything past the pager cap back down an octave, never below
+    // fret 0: subtract 12 when a start would exceed the pager cap of 14,
+    // keeping startFret >= 0.
     var frets = raw.map(function (f) {
       while (f > POS_CAP && (f - 12) >= 0) f -= 12;
       return f;
@@ -264,9 +262,8 @@
    *   rootPc  - pitch-class index of the tonic
    *   pcs     - scale pitch classes
    *   opts: label (optional 'Solo over it ...'), frets (default 7), tones
-   *         (optional; M-GUIDE W3a chord-tone targeting - see diagram.js's
-   *         Diagram.scale() opts.tones contract), boxScaleId (optional,
-   *         S-BLUES-BOXES - see below)
+   *         (optional chord-tone targeting - see diagram.js's Diagram.scale()
+   *         opts.tones contract), boxScaleId (optional - see below)
    * No-ops (returns null) when the pack can't render a scale or pcs is empty.
    * When the pack exposes pack.scaleDiagram.supportsStart, also renders a compact
    * back/forward position control beneath the diagram so the player can walk the
@@ -274,7 +271,7 @@
    * scaleDiagram call and get no control; they do share the boxWrap/diagBox
    * wrapper structure (needed so flex-row hosts lay out identically).
    *
-   * S-BLUES-BOXES: when opts.boxScaleId is 'pentMajor'/'pentMinor'/'blues'
+   * Box-snapping: when opts.boxScaleId is 'pentMajor'/'pentMinor'/'blues'
    * (the caller's currently-active solo scale-chip) AND the pack supports
    * position-start, the back/forward buttons SNAP to box() start frets
    * (physical neck order, ascending) instead of the fixed 0/5/10 walk, and a
@@ -284,13 +281,13 @@
    * walk untouched. Silently degrades to the classic walk if the pack can't
    * supply openPcsFromPack() (e.g. no meta.stringNames) - never throws.
    *
-   * The returned boxWrap ALSO carries setTones(tones) (M-GUIDE W3a): re-renders
-   * ONLY diagBox with new opts.tones, preserving startFret - use this instead of
-   * a full renderScale() re-call when just toggling a chord target on/off, so
-   * the player's position-walk isn't reset by the re-mark.
+   * The returned boxWrap ALSO carries setTones(tones): re-renders ONLY diagBox
+   * with new opts.tones, preserving startFret - use this instead of a full
+   * renderScale() re-call when just toggling a chord target on/off, so the
+   * player's position-walk isn't reset by the re-mark.
    *
-   * M-EAR wave 1.5 additions:
-   *   opts.noPosCtrl (U13, full-neck view) - suppresses the back/forward
+   * Two more boxWrap seams:
+   *   opts.noPosCtrl (full-neck view) - suppresses the back/forward
    *     position-control UI (and any box-chip) even when the pack
    *     supportsStart - the pack's full 6-arg scaleDiagram call still fires
    *     (names/tones still forward), there's just nothing to walk when the
@@ -298,15 +295,15 @@
    *     pair this with frets:POS_CAP (see the exported POS_CAP below) for the
    *     "0-14, no pager" full-neck window; posWindow(0, POS_CAP, ...) then
    *     shows the whole thing at startFret 0 with no need for the buttons.
-   *   boxWrap.setSounding(pc) (U12) - a class-swap pass over ALREADY-RENDERED
-   *     dots (never a re-render, mirroring setTones' position-preserving
-   *     precedent): lights every dot whose data-pc (diagram.js, unconditional
-   *     now) matches pc with kx-sounding, clearing whichever dots were lit
-   *     before. Re-applies itself automatically after every renderBox() (a
-   *     position walk or setTones call) so the sounding mark survives a fret
-   *     window change instead of silently vanishing. setSounding(null) clears
-   *     with no new highlight - the Studio's stop/chip-switch/view-toggle
-   *     paths all route through this for the "nothing sounding" state. */
+   *   boxWrap.setSounding(pc) - a class-swap pass over ALREADY-RENDERED dots
+   *     (never a re-render, mirroring setTones' position-preserving behavior):
+   *     lights every dot whose data-pc matches pc with kx-sounding, clearing
+   *     whichever dots were lit before. Re-applies itself automatically after
+   *     every renderBox() (a position walk or setTones call) so the sounding
+   *     mark survives a fret window change instead of silently vanishing.
+   *     setSounding(null) clears with no new highlight - the Studio's
+   *     stop/chip-switch/view-toggle paths all route through this for the
+   *     "nothing sounding" state. */
   function renderScale(container, pack, rootPc, pcs, opts) {
     opts = opts || {};
     if (!(pack && typeof pack.scaleDiagram === 'function' && pcs && pcs.length)) return null;
@@ -316,10 +313,10 @@
     }
     var F = opts.frets || defaultFrets(pack);
     var supportsStart = !!pack.scaleDiagram.supportsStart;
-    // U13: the pack-contract call shape (names/tones passthrough) stays keyed
-    // to supportsStart alone; ONLY the position-control UI is additionally
-    // gated on !opts.noPosCtrl, so full-neck mode still gets a proper 6-arg
-    // render, just without walk buttons that would have nothing useful to do.
+    // The pack-contract call shape (names/tones passthrough) stays keyed to
+    // supportsStart alone; ONLY the position-control UI is additionally gated
+    // on !opts.noPosCtrl, so full-neck mode still gets a proper 6-arg render,
+    // just without walk buttons that would have nothing useful to do.
     var showPosCtrl = supportsStart && !opts.noPosCtrl;
     var startFret = 0;
     var curTones = opts.tones || null;
@@ -335,8 +332,8 @@
     // min(F, POS_CAP - startFret + 1) frets, so the last position renders 10-14
     // and never draws frets past the top-of-neck cap the comments promise.
     function shownFrets() { return posWindow(startFret, F, POS_STEP, POS_CAP).shown; }
-    // U12: sounding-note highlight state, applied/re-applied by renderBox() so
-    // it survives every re-render path (position walk, setTones, and its own
+    // Sounding-note highlight state, applied/re-applied by renderBox() so it
+    // survives every re-render path (position walk, setTones, and its own
     // setSounding() calls) without ever forcing an EXTRA re-render itself.
     var curSoundingPc = null, soundingEls = [];
     function clearSounding() {
@@ -361,8 +358,8 @@
     }
     renderBox();
     if (showPosCtrl) {
-      // S-BLUES-BOXES: box() list for the active scale-chip, in NECK order
-      // (ascending startFret) - empty unless opts.boxScaleId is one of the 3
+      // box() list for the active scale-chip, in NECK order (ascending
+      // startFret) - empty unless opts.boxScaleId is one of the 3
       // box-eligible ids AND the pack can supply openPcsFromPack(). Kept
       // read-only/local to this renderScale() call (a chip switch always
       // calls renderScale() fresh, so no stale box list can leak across
@@ -399,8 +396,8 @@
       var fwd = document.createElement('button');
       fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
       fwd.setAttribute('aria-label', 'Shift the scale up the neck');
-      // Box-name chip: only allocated when a box list actually resolved, so
-      // every non-box (mode-scale) render stays byte-identical to before.
+      // Box-name chip: only allocated when a box list actually resolved, so a
+      // plain mode-scale render adds no chip.
       var chipEl = null;
       if (neckOrder.length) { chipEl = document.createElement('div'); chipEl.className = 'scaleBoxChip'; chipEl.hidden = true; }
       function refresh() {
@@ -445,25 +442,24 @@
       boxWrap.appendChild(ctrl);
       if (chipEl) boxWrap.appendChild(chipEl);
     }
-    // M-GUIDE W3a: re-render just diagBox with new tones - startFret (closure
-    // var above) is untouched, so a target toggle never resets the position walk.
+    // Re-render just diagBox with new tones - startFret (closure var above) is
+    // untouched, so a target toggle never resets the position walk.
     boxWrap.setTones = function (tones) { curTones = tones || null; renderBox(); };
-    // U12: pc==null (or omitted) clears with no new highlight - callers use
-    // this for "nothing sounding" (stop / chip-switch-while-stopped / Studio
-    // close). A class-swap only - never triggers renderBox() itself.
+    // pc==null (or omitted) clears with no new highlight - callers use this for
+    // "nothing sounding" (stop / chip-switch-while-stopped / Studio close). A
+    // class-swap only - never triggers renderBox() itself.
     boxWrap.setSounding = function (pc) { curSoundingPc = (pc == null ? null : pc); applySounding(); };
     return boxWrap;
   }
 
   var KeyExplorer = {
     renderChords: renderChords, renderScale: renderScale, posWindow: posWindow, defaultFrets: defaultFrets,
-    // S-BLUES-BOXES: pure box-position math + its pack-metadata helper,
-    // exported for direct Node tests independent of the renderScale DOM wiring.
+    // Pure box-position math + its pack-metadata helper, exported for direct
+    // Node tests independent of the renderScale DOM wiring.
     boxes: boxes, openPcsFromPack: openPcsFromPack,
-    // M-EAR wave 1.5 (U13): the same top-of-neck fret cap the position-pager
-    // already enforces internally - exported so callers (tracks.js) can
-    // request the full-neck span (frets: POS_CAP) without duplicating the
-    // constant.
+    // The same top-of-neck fret cap the position-pager already enforces
+    // internally - exported so callers (tracks.js) can request the full-neck
+    // span (frets: POS_CAP) without duplicating the constant.
     POS_CAP: POS_CAP
   };
   global.KeyExplorer = KeyExplorer;

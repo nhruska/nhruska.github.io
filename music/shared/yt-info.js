@@ -1,7 +1,7 @@
 /* =====================================================================
- * yt-info.js  -  M-TRACKLIB wave 2a (U17): given a YouTube URL, fetch its
- * public video info (keyless, no API key) and derive best-effort field
- * hints (title/artist split, key/mode/genre/bpm) from the title text.
+ * yt-info.js - given a YouTube URL, fetch its public video info (keyless,
+ * no API key) and derive best-effort field hints (title/artist split,
+ * key/mode/genre/bpm) from the title text.
  * ---------------------------------------------------------------------
  * Two independent halves, both usable standalone:
  *
@@ -17,22 +17,18 @@
  *
  * Network strategy (both keyless, no API key anywhere in this module):
  *   A. YouTube's own oEmbed endpoint (www.youtube.com/oembed) - the
- *      "should work" keyless option, but its CORS policy for a same-origin
- *      GitHub Pages fetch() is UNDOCUMENTED and must be confirmed live (see
- *      the shipping PR's V&V section for the actual verdict from a real
- *      browser, not from this comment).
+ *      primary keyless lookup.
  *   B. noembed.com/embed - a CORS-friendly third-party wrapper over the
  *      same oEmbed data. Used ONLY as a fallback if A fails, and is itself
- *      feature-detected/timed-out so a flaky third party can never block
- *      the form (per rules/self-serve-execution.md - never let an optional
- *      network enhancement wedge a primary UI flow).
+ *      feature-detected/timed-out so a flaky third party can never wedge
+ *      the primary UI flow.
  *
  * Depends on nothing at load time - Tracks.parseYouTubeId and
  * Circle.spellRoot are used WHEN REACHABLE (both resolved at CALL time via
  * `global.*`, not at module-definition time), so this file's position in
  * play/index.html's script order relative to tracks.js/circle.js does not
  * matter. Falls back to a local copy of each when the other module isn't
- * loaded (e.g. under node in tests, or if load order ever changes).
+ * loaded (e.g. under node in tests, or if load order changes).
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -106,11 +102,11 @@
   // a genre/key hint but leaves .mode null rather than forcing an unsupported
   // value into the 4-option select.
   var SUPPORTED_MODES = ['major', 'minor', 'dorian', 'mixolydian'];
-  // FORK-4: every key display in this app is sharp-canonical (circle.js
-  // norm/F2S). Delegate to Circle.spellRoot when reachable so a title like
-  // "Bb blues" hints key:'A#', matching every other key label; local F2S
-  // fallback only if circle.js isn't loaded (this module must not hard-
-  // require it - see the header note on call-time resolution).
+  // Key display in this app is sharp-canonical. Delegate to Circle.spellRoot
+  // when reachable so a title like "Bb blues" hints key:'A#', matching every
+  // other key label; local F2S fallback only if circle.js isn't loaded (this
+  // module must not hard-require it - see the header note on call-time
+  // resolution).
   var F2S = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
   function normRoot(r) {
     if (global.Circle && typeof global.Circle.spellRoot === 'function') {

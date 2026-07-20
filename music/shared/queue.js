@@ -50,10 +50,9 @@
         cur = clamp(cur, 0, list.length - 1); // removing the current/last clamps into range
         return true;
       },
-      // S-SET-INTEGRITY (UAT U22 - dangling setlist ref defensive nav): step
-      // forward/backward, skipping any member `resolves(id)` reports falsy
-      // for (a dangling reference - e.g. a setlist song whose library item
-      // was deleted elsewhere and slipped past the delete/load-time heal).
+      // Step forward/backward, skipping any member `resolves(id)` reports
+      // falsy for (a dangling reference - e.g. a setlist song whose library
+      // item was deleted elsewhere and slipped past the delete/load-time heal).
       // dir: +1 Next, -1 Prev. Same clamp-not-wrap contract as next()/prev()
       // - stops at the end/start rather than looping, and is hard-bounded by
       // list.length iterations so a pathological caller state can never spin
