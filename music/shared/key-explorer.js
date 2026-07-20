@@ -396,8 +396,8 @@
       var fwd = document.createElement('button');
       fwd.type = 'button'; fwd.className = 'scalePosBtn'; fwd.textContent = String.fromCharCode(0x25B6);
       fwd.setAttribute('aria-label', 'Shift the scale up the neck');
-      // Box-name chip: only allocated when a box list actually resolved, so
-      // every non-box (mode-scale) render stays byte-identical to before.
+      // Box-name chip: only allocated when a box list actually resolved, so a
+      // plain mode-scale render adds no chip.
       var chipEl = null;
       if (neckOrder.length) { chipEl = document.createElement('div'); chipEl.className = 'scaleBoxChip'; chipEl.hidden = true; }
       function refresh() {
