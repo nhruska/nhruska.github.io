@@ -1331,7 +1331,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
 .pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
-.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
+/* Settings popover sits ABOVE the nav bar with a clear gap. The old +74px let
+   its bottom edge collide with the tall #pNext (~63px + 14px bottom = ~77px top)
+   in portrait (operator UAT: "settings panel overlapping bottom controls");
+   +92px clears it. Both share env(safe-area-inset-bottom), so the relative gap
+   is stable across devices. */
+.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
 .pSpeed.on{display:flex;}
 .pSpeed .psRow{display:flex;align-items:center;gap:11px;}
 .pSpeed label{flex:0 0 42px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;}

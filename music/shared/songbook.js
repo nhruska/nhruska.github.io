@@ -1690,6 +1690,18 @@
       var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
     }
+    // Re-fit the stage sheet on orientation change / resize (operator UAT): a
+    // phone rotated to landscape has a very different viewport, and without this
+    // the auto-fit keeps the portrait scale so the sheet doesn't fill the wider
+    // screen. Only while the stage is open AND in auto mode - a manual scale is
+    // the user's explicit pin, left alone. applyPerfFont is a cheap measure+set,
+    // so no debounce (same call the font buttons make). Guarded because the unit
+    // test mount-harness supplies a minimal window without addEventListener.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', function () {
+        if (performEl && performEl.classList.contains('on') && STATE.fontMode === 'auto') applyPerfFont();
+      });
+    }
     function updateStageBtns() {
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
       // Custom sheets force the chords renderer (showPerform); the segmented
