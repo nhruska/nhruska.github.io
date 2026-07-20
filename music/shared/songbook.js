@@ -2577,6 +2577,29 @@
     // bound to the live songKey - ONE display-naming path shared with the M-13
     // template-suggestion chips (which pass their own realization key).
     function dispChordName(c) { return dispChordNameInKey(c, songKey.root, songKey.mode); }
+    // SSOT preview for the Settings diagram/chart toggles (UAT 2026-07-20 "use
+    // the same single source of truth to render the previews... so that changing
+    // the rendering in the app will also be updated in the preview"). Renders
+    // through the SAME primitives the app uses - pack.diagramForMode (real
+    // Diagram.render), packDiagram (real chart), ChordCollapse.chip (real compact
+    // token) - so there is no separate hand-drawn copy to drift. Uses a real
+    // in-key voicing for the CURRENT instrument.
+    function previewChord() {
+      var cands = ['C', 'G', 'Am', 'D', 'Em', 'A', 'E'];
+      for (var i = 0; i < cands.length; i++) if (pack && pack.hasChord && pack.hasChord(cands[i])) return cands[i];
+      return (progression && progression[0]) || 'C';
+    }
+    global.MusicPreview = {
+      diagram: function (mode) {
+        var c = previewChord();
+        return (pack && pack.diagramForMode) ? pack.diagramForMode(c, 'small', mode) : null;
+      },
+      chart: function (mode) {
+        var c = previewChord();
+        if (mode === 'chips') return global.ChordCollapse ? global.ChordCollapse.chip({ chord: c, display: dispChordName(c) }) : null;
+        return packDiagram(c, 'small', dispChordName(c));
+      }
+    };
     // S-PROG-WRAP (UAT U8): real measurements feeding progStripMode's decision -
     // the DOM-caller half of the fitScale-style contract (pure fn takes plain
     // numbers; the caller measures the real page and passes them in).

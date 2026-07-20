@@ -1795,6 +1795,20 @@ footer{display:none;}
 .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
 .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
 .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
+/* UAT 2026-07-20: visual preview under the Fretboard-diagrams and Chord-charts
+   toggles. Both options shown (contrast at a glance - recognition over recall),
+   the ACTIVE one highlighted; the two halves align under the toggle halves
+   above. Content is rendered from the SSOT (the app's real diagram/chart
+   renderers via window.MusicPreview) - not a hand-drawn copy. */
+.prefPreview{display:flex;gap:8px;margin:8px 0 2px;align-items:stretch;}
+.prefEx{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:6px 4px;
+  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;
+  opacity:.45;transition:opacity .15s,border-color .15s,box-shadow .15s;}
+.prefEx.on{opacity:1;border-color:var(--accent-dim);box-shadow:0 0 0 1px var(--accent-dim);}
+/* the real small chord diagram is sized for chord cards - scale it to fit the
+   preview cell; the compact chip needs no scaling. */
+.prefEx .chord,.prefEx .bigC{transform:scale(.82);}
+.prefEx .suggChip{margin:0;cursor:default;}
 .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
 .thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
 .thSeg.on{background:var(--accent);color:var(--on-accent);}
