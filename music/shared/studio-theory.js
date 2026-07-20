@@ -5,7 +5,7 @@
  * tracks.js so the theory/solo-scale/whynote reasoning reads apart from
  * the finder data (tracks-model.js) and the Studio DOM wiring (tracks.js).
  * Owns: mode resolution, the Circle/Notables/GuidanceLevel/SoloGuide
- * guarded refs, key labels, the studioTheory scale bundle, the S-BLUES
+ * guarded refs, key labels, the studioTheory scale bundle, the
  * solo-scale chip bundle, the progression-aware default-scale inference,
  * box-scale eligibility, chord-tone targeting, and the whynote/scaletip/
  * studio-first JIT banner copy. Pure + module-scope so tests drive the
@@ -41,7 +41,7 @@
     if (m === 'aeolian' || m === 'minor') return 'aeolian';
     if (m === 'dorian') return 'dorian';
     if (m === 'mixolydian') return 'mixolydian';
-    // M-GUIDE W2: Blues is a harmonizing key model (I7/IV7/V7, songbook.js MODES.Blues),
+    // Blues is a harmonizing key model (I7/IV7/V7, songbook.js MODES.Blues),
     // not a circle-of-fifths mode - resolve it explicitly before the major/minor
     // family fallback so a Blues-keyed Compose progression opens the Studio on its
     // own blues scale + BLUES_KEY palette (studioTheory below), not a coarsened major.
@@ -55,12 +55,12 @@
   // coarsen modal modes - unifying them is queued in the UI-polish arc.
   function keyLabelFor(key, mode) {
     var m = String(mode == null ? '' : mode).trim().toLowerCase();
-    // FORK-4 removal: the DISPLAYED key root is the preferred enharmonic name
-    // (A# minor -> Bbm); the key TOKEN callers store/compare stays canonical.
+    // Key-aware spelling: the DISPLAYED key root is the preferred enharmonic
+    // name (A# minor -> Bbm); the key TOKEN callers store/compare stays canonical.
     key = dispKeyRoot(key, m || 'major');
     if (m === 'minor' || m === 'aeolian') return key + 'm';
     if (m === 'dorian' || m === 'mixolydian') return key + ' ' + m;
-    if (m === 'blues') return key + ' blues'; // M-GUIDE W2
+    if (m === 'blues') return key + ' blues';
     return key;
   }
   // Circle source: window.Circle in the browser (classic scripts). Under Node
@@ -74,7 +74,7 @@
     }
     return null;
   }
-  // Same guarded-reference pattern as circleRef() above, for the S-NOTABLES
+  // Same guarded-reference pattern as circleRef() above, for the Notables
   // singleton: window.Notables in the browser, a require() fallback in Node so
   // test/tracks.test.js drives the SAME module instance test/notables.test.js
   // exercises directly (shared require-cache entry, not a duplicate).
@@ -85,7 +85,7 @@
     }
     return null;
   }
-  // M-GUIDANCE: same guarded-reference pattern, for guidance-level.js's
+  // Same guarded-reference pattern, for guidance-level.js's
   // music.guidanceLevel.v1 singleton (window.GuidanceLevel in the browser,
   // a require() fallback in Node so test/tracks.test.js drives the SAME
   // module instance test/guidance-level.test.js exercises directly).
@@ -106,11 +106,11 @@
     var C = circleRef(), k = normRoot(key), rp = rootIndex(k);
     if (!C || rp < 0) return null;
     var scaleMode = resolveScaleMode(mode);
-    // M-GUIDE W2: Blues has no Circle.MODE_INFO/diatonic() entry (it is the solo
+    // Blues has no Circle.MODE_INFO/diatonic() entry (it is the solo
     // 'blues' scale plus the separate BLUES_KEY I7/IV7/V7 palette, not a circle-
     // of-fifths mode) - branch before the generic diatonic path below.
     if (scaleMode === 'blues') {
-      // FORK-4 removal: display notes are KEY-AWARE (C blues -> C Eb F Gb G Bb, the
+      // Key-aware spelling: display notes are KEY-AWARE (C blues -> C Eb F Gb G Bb, the
       // standard spelling) - tokens/pcs stay canonical; only note NAMES changed.
       var bnotes = C.soloScaleInKey ? C.soloScaleInKey(k, 'blues', mode) : C.soloScale(k, 'blues');
       return {
@@ -118,7 +118,7 @@
         degrees: C.soloScaleDegrees('blues'), chords: C.bluesKey(k), label: 'Blues'
       };
     }
-    // FORK-4 removal: scale note names spell letter-per-degree from the preferred
+    // Key-aware spelling: scale note names spell letter-per-degree from the preferred
     // tonic name (C mixolydian shows Bb, never A#; A#-major contexts render as Bb
     // major). CHORD tokens below stay canonical-sharp - they key voicing/audio/
     // theory lookups; their DISPLAY is remapped at the render seams (dispChord).
@@ -129,7 +129,7 @@
       label: shortMode(C.modeInfo(scaleMode).label)
     };
   }
-  // FORK-4 removal display helpers: a chord/note NAME rendered inside a stated
+  // Key-aware spelling display helpers: a chord/note NAME rendered inside a stated
   // key respells by function (bVII of C = Bb); the underlying token is untouched
   // (packs, audio, targeting, storage all stay canonical-sharp). Pure; exported
   // for tests. Falls back to the token when Circle lacks the kernel.
@@ -144,9 +144,9 @@
     if (!m) return chord;
     return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
   }
-  // S-BLUES: the Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
+  // The Practice Studio's scale-chip swap bundle - SOLO LAYER ONLY.
   // scaleId 'mode' (or falsy) delegates straight to studioTheory() so the
-  // default chip is IDENTICAL to pre-S-BLUES Studio behavior (no
+  // default chip is IDENTICAL to prior Studio behavior (no
   // reimplementation, no drift risk). Any other scaleId (a Circle.SOLO_SCALES
   // key: pentMajor/pentMinor/blues) reads ONLY Circle.soloScale/soloScaleDegrees/
   // soloScaleInfo - it never touches C.diatonic()/chords, so chords-in-key,
@@ -162,17 +162,17 @@
     }
     var C = circleRef(), k = normRoot(key);
     if (!C || rootIndex(k) < 0 || typeof C.soloScale !== 'function') return null;
-    // FORK-4 removal: key-aware note names (letter-per-degree from the mode-aware
+    // Key-aware spelling: key-aware note names (letter-per-degree from the mode-aware
     // preferred tonic); pcs derive from the same names so dots + names agree.
     var notes = C.soloScaleInKey ? C.soloScaleInKey(k, scaleId, mode) : C.soloScale(k, scaleId);
     if (!notes.length) return null;
     var info = C.soloScaleInfo(scaleId);
     return { notes: notes, pcs: notesToPcs(notes), degrees: C.soloScaleDegrees(scaleId), label: info ? info.label : scaleId };
   }
-  // S-SOLO-SCALE-DEFAULT + progression-aware (music-theory-coach, 2026-07-10): the
-  // theory-best solo scale to PRE-SELECT when the Studio opens, from the incoming key
-  // + mode AND the actual progression shape (t.seq, which studioTarget() preserves from
-  // the Compose hand-off). Reads Circle.romanFor (the SSOT for degree analysis) - never
+  // The theory-best solo scale to PRE-SELECT when the Studio opens (music-theory-coach),
+  // from the incoming key + mode AND the actual progression shape (t.seq, which
+  // studioTarget() preserves from the Compose hand-off). Reads Circle.romanFor (the
+  // SSOT for degree analysis) - never
   // guesses. The two common modal signals:
   //   - a bVII MAJOR in a major-key progression  -> Mixolydian (the b7 rock/backdoor color)
   //   - a major IV in a minor-key progression      -> Dorian (the raised-6 color)
@@ -199,12 +199,12 @@
     }
     return base;
   }
-  // S-BLUES-BOXES: which of the 3 box-eligible scale ids (pentMajor/
+  // Which of the 3 box-eligible scale ids (pentMajor/
   // pentMinor/blues) applies to the CURRENTLY selected chip - so the
   // Studio's named-box chip + pager-snap (KeyExplorer.renderScale's
   // opts.boxScaleId) only activate for those, never for a 7-note mode
   // scale. scaleId 'mode' resolves via modeScaleMode (th.scaleMode): the
-  // ONLY 'mode' case that's box-eligible is the M-GUIDE W2 Blues key (its
+  // ONLY 'mode' case that's box-eligible is the Blues key (its
   // own scale IS the SOLO_SCALES.blues 6-note set) - every other mode
   // (ionian/aeolian/dorian/mixolydian) keeps the classic fixed 0/5/10 walk.
   // Module-scope + exported (mirrors soloBundle/scaleKeyFor) so this is
@@ -214,9 +214,9 @@
     if (scaleId && scaleId !== 'mode') return BOX_SCALE_IDS[scaleId] ? scaleId : null;
     return modeScaleMode === 'blues' ? 'blues' : null;
   }
-  // M-GUIDE W3a (D-CARDS-STATIC): soloScaleFraming MOVED VERBATIM to solo-guide.js
-  // as SoloGuide.framing(scaleId, family) - same behavior, same P5-voiced static
-  // strings. Moved (not duplicated) so W3b's Compose solo chips (songbook.js) can
+  // soloScaleFraming MOVED VERBATIM to solo-guide.js
+  // as SoloGuide.framing(scaleId, family) - same behavior, same static
+  // strings. Moved (not duplicated) so the Compose solo chips (songbook.js) can
   // call the identical function without depending on tracks.js.
   // Same guarded-reference pattern as circleRef()/notablesRef() above: window.SoloGuide
   // in the browser, a require() fallback in Node so tracks.test.js and solo-guide.test.js
@@ -228,20 +228,21 @@
     }
     return null;
   }
-  // M-GUIDE W3a (section 2, chord-tone targeting): pure pc-arithmetic classifier.
+  // Chord-tone targeting: pure pc-arithmetic classifier.
   // Precedence root > chord > blue > scale (blue is defaultTones' job below, not
   // this fn's). The chord's root is parsed locally (not read off Circle.chordTones'
   // internal pc order) so this stays independent of that function's array shape.
   // Returns null when chordName is falsy/unresolvable - callers treat that as "no
   // target".
   //
-  // GHOST DOTS (P5 seasoned-player adversarial fold, 2026-07-05, supersedes the
-  // original D-TARGET "intersection-only" deferral): a chord tone OUTSIDE the
+  // Ghost dots: a chord tone OUTSIDE the
   // current scale is exactly the note a seasoned player reaches for on purpose
   // (e.g. C# - the major 3rd - over A7 in A blues is the money note that IS the
-  // rub's resolution target). Hiding it taught the wrong habit. ghostPcs carries
-  // those out-of-scale chord tones so the caller can render them as hollow dots
-  // at their correct fret positions - never as a filled kx-chord/kx-root mark.
+  // rub's resolution target). Hiding it taught the wrong habit - this supersedes
+  // an earlier intersection-only approach that dropped those notes entirely.
+  // ghostPcs carries those out-of-scale chord tones so the caller can render
+  // them as hollow dots at their correct fret positions - never as a filled
+  // kx-chord/kx-root mark.
   function targetTones(scalePcs, scaleRootPc, chordName) {
     var C = circleRef();
     if (!C || !chordName) return null;
@@ -269,7 +270,7 @@
     }
     return { byPc: byPc, rubPc: rubPc, ghostPcs: ghostPcs };
   }
-  // M-GUIDE W3a: the ALWAYS-ON default mark (independent of any active target) -
+  // The ALWAYS-ON default mark (independent of any active target) -
   // the blues solo scale's b5 (scaleRootPc+6), whenever the blues scale renders.
   // bundle.pcs[0] is always the scale's own root pc (every SOLO_SCALES/diatonic
   // formula starts at semitone 0), so this works for both a studioTheory bundle
@@ -281,7 +282,7 @@
     var byPc = {}; byPc[bluePc] = 'blue';
     return { byPc: byPc, rubPc: null };
   }
-  // S-WHYNOTE (sprint-1 item 6, stretch; A9-bound): a one-shot JIT "why" notable
+  // A one-shot JIT "why" notable
   // at the Compose -> Studio hand-off (openStudio below - the seam where the
   // solo-scale panel first renders for a key+mode). TWO STATIC templates only,
   // chosen by a plain string switch on th.scaleMode - zero new theory derivation.
@@ -290,7 +291,7 @@
   // Interpolates only th.key + that mode name - both are labels the Studio
   // already renders elsewhere on the same screen.
   function whynoteText(key, scaleMode, label) {
-    key = dispKeyRoot(key, scaleMode); // FORK-4 removal: prose shows the preferred name
+    key = dispKeyRoot(key, scaleMode); // Key-aware spelling: prose shows the preferred name
     var modeName = scaleMode === 'aeolian' ? 'minor' : scaleMode === 'ionian' ? 'major' : label.toLowerCase();
     if (scaleMode === 'ionian') {
       return 'Why this scale works: ' + key + ' major and its relative minor share the same notes - solo either over this progression.';
@@ -300,24 +301,24 @@
     // degree), so one template covers the whole non-ionian family.
     return 'Why this scale works: ' + key + ' ' + modeName + ' and its parallel major share the same home note, not the same notes - stick with ' + key + ' ' + modeName + ' here.';
   }
-  // G5 S-WHYNOTE-SCALE (2026-07-10): the whynote banner used to explain ONLY
+  // The whynote banner used to explain ONLY
   // the key's own mode scale (whynoteText above) and never updated when a
   // scale chip was tapped (wireScaleChips deliberately left it "keyed to
   // th"). This re-derives the banner copy for the ACTUAL selected scale chip.
   // scaleId 'mode' (or falsy) passes straight through to whynoteText - zero
   // behavior change for the default/unswapped case. Every other scaleId gets
-  // its own STATIC one-line template (music-theory-coach + copy-coach,
-  // 2026-07-10) - no new theory derivation, same shape as whynoteText: only
+  // its own STATIC one-line template (music-theory-coach + copy-coach) - no
+  // new theory derivation, same shape as whynoteText: only
   // the key name is interpolated, via the same dispKeyRoot(key, keyScaleMode)
   // call whynoteText makes (so a flat key still reads "Bb", never "A#").
   // Scale identity is named by its own CHIP LABEL (Pent major/Pent minor/
   // Blues/Mixolydian/Dorian), same vocabulary choice scaletipText already
   // uses, rather than introducing the jargon noun "pentatonic" (whynote can
-  // show at the 'intermediate' guidance level, whose copy-coach vocabulary
+  // show at the 'intermediate' guidance level, whose copy vocabulary
   // budget doesn't yet include that word).
   function whynoteScaleText(key, scaleId, keyScaleMode, keyLabel) {
     if (!scaleId || scaleId === 'mode') return whynoteText(key, keyScaleMode, keyLabel);
-    var dispKey = dispKeyRoot(key, keyScaleMode); // FORK-4 removal: prose shows the preferred name
+    var dispKey = dispKeyRoot(key, keyScaleMode); // Key-aware spelling: prose shows the preferred name
     switch (scaleId) {
       case 'pentMajor':
         return 'Why Pent major works: it drops the two notes that ever clash, so nothing you play over ' + dispKey + ' sounds wrong.';
@@ -340,9 +341,9 @@
   // is denied (already dismissed forever, OR a higher-priority notable - firstrun
   // outranks whynote - currently holds it) or Notables isn't loaded. Callers skip
   // silently on null, matching the notables.js consumer contract.
-  // M-GUIDANCE (retro-tagged 'intermediate'+'advanced' in notables.js's LEVELS
-  // table): reads the current level via guidanceLevelRef() and threads it as
-  // claim()'s 3rd arg - a beginner or unset level now blocks whynote entirely.
+  // Reads the current level via guidanceLevelRef() and threads it as
+  // claim()'s 3rd arg (retro-tagged 'intermediate'+'advanced' in notables.js's
+  // LEVELS table) - a beginner or unset level now blocks whynote entirely.
   function whynoteBanner(th) {
     var N = notablesRef();
     var GL = guidanceLevelRef();
@@ -350,17 +351,17 @@
     if (!N || typeof N.claim !== 'function' || !N.claim('whynote', undefined, level)) return null;
     return { consumerId: 'whynote', text: whynoteText(th.key, th.scaleMode, th.label), className: 'bt-st-notable' };
   }
-  // M-GUIDANCE (advanced tier): "scale chips work over any chord in the key"
-  // JIT cue on first Studio open - mirrors whynoteBanner's exact shape
-  // (consumer-side claim + template, priority/show-once left to notables.js).
+  // "scale chips work over any chord in the key"
+  // JIT cue on first Studio open, advanced tier only - mirrors whynoteBanner's
+  // exact shape (consumer-side claim + template, priority/show-once left to notables.js).
   // Pure text fn kept separate (like whynoteText) so tests can assert the
   // copy independent of the claim/level plumbing.
   function scaletipText(key, mode) {
-    key = dispKeyRoot(key, mode); // FORK-4 removal: prose shows the preferred name, real mode
+    key = dispKeyRoot(key, mode); // Key-aware spelling: prose shows the preferred name, real mode
     return 'Try the scale chips below - Pent major, Pent minor, and Blues all fit over ' + key + ' too. The fretboard pattern is the guide.';
   }
-  // S-PERSONA-COPY (pedagogy-coach + copy-coach, 2026-07-10): the BEGINNER
-  // Studio orientation tip - whynote/scaletip gate to intermediate/advanced,
+  // The BEGINNER Studio orientation tip (pedagogy-coach + copy-coach) -
+  // whynote/scaletip gate to intermediate/advanced,
   // which correctly hid theory prose from beginners but left them with a bare
   // fretboard and jargon chips. ONE action-first line in the beginner
   // vocabulary budget, at the moment of relevance, show-once + dismissible
