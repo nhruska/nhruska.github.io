@@ -177,11 +177,19 @@ def run(scenario_path, base_url=None):
                         # S-PROG-REORDER: pointer-drag `from` onto the far side
                         # of `to` (mouse pointerType -> movement-threshold lift,
                         # no long-press wait). Staged moves so pointermove fires.
+                        # side: after/before nudge X (horizontal chip strips);
+                        # below/above nudge Y (VERTICAL lists, e.g. the setlist -
+                        # whose drop target is decided by clientY vs row center).
                         src = page.locator(step['from']).first.bounding_box()
                         dst = page.locator(step['to']).first.bounding_box()
                         sx, sy = src['x'] + src['width'] / 2, src['y'] + src['height'] / 2
-                        dx = dst['x'] + dst['width'] * (0.85 if step.get('side', 'after') == 'after' else 0.15)
-                        dy = dst['y'] + dst['height'] / 2
+                        side = step.get('side', 'after')
+                        if side in ('below', 'above'):
+                            dx = dst['x'] + dst['width'] / 2
+                            dy = dst['y'] + dst['height'] * (0.85 if side == 'below' else 0.15)
+                        else:
+                            dx = dst['x'] + dst['width'] * (0.85 if side == 'after' else 0.15)
+                            dy = dst['y'] + dst['height'] / 2
                         page.mouse.move(sx, sy)
                         page.mouse.down()
                         for k in range(1, 7):
