@@ -25,7 +25,7 @@
   var canonMode = T.canonMode;
   var chordsFromDegrees = T.chordsFromDegrees;
 
-  // ADJACENT-SECTION FIT (UAT 2026-07-11): score how strongly a suggestion (its
+  // ADJACENT-SECTION FIT: score how strongly a suggestion (its
   // FIRST roman) ARRIVES from the previous buffered section (its LAST roman), both
   // as romans in the SAME song key. The songwriting-coach cadence ladder: V->I
   // authentic (strongest arrival into the next section), IV->I plagal, vi->IV the
@@ -42,7 +42,7 @@
     if (s != null) return s;
     return p === f ? 1 : 0; // shared chord across the seam = smooth overlap
   }
-  // ---- M-13 g3 PERSONALIZED RANKING: nudge template suggestions by the
+  // ---- PERSONALIZED RANKING: nudge template suggestions by the
   // musician's OWN competency profile (music.competency.v1, competency.js) -
   // never a filter (pedagogy-coach: levels gate DEPTH, not access), only a
   // re-rank plus a one-line why-cue. A cheap deterministic complexity proxy:
@@ -54,7 +54,7 @@
   // recorded preference statement and the suggestion's own family/citation
   // text) always wins the tag slot - an explicit personal signal outranks an
   // inferred skill nudge. No profile, or no signal either way, leaves every
-  // suggestion untagged with zero boost - the ranking degrades byte-for-byte
+  // suggestion untagged with zero boost - the ranking degrades exactly
   // to forSection/sectionConnectScore's own order (graceful absence).
   var COMPLEXITY_SIMPLE_MAX = 4, COMPLEXITY_VARIED_MIN = 6;
   var PREF_STOPWORDS = { the: 1, and: 1, uses: 1, use: 1, using: 1, with: 1, your: 1, for: 1, that: 1, this: 1, from: 1, into: 1, over: 1, when: 1 };
@@ -114,8 +114,8 @@
     });
     return suggestions;
   }
-  // MODAL INTERCHANGE core (Phase 2), extracted per m-guide-ia-20260704.md section 4.5 so
-  // BOTH the explicit-key path (mount()'s convertToMode) and the keyless mode-change
+  // MODAL INTERCHANGE core - shared so BOTH the explicit-key path (mount()'s
+  // convertToMode) and the keyless mode-change
   // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
   // ROOT against `targetMode`'s steps (offset from tonicRoot) to find its scale degree,
   // then re-qualifies to that degree's quality, re-basing any 7th-type extension that
@@ -127,9 +127,9 @@
   // Blues): converting INTO Blues collapses any palette-degree root to a dominant
   // 7th (baseQual === '7', regardless of the original extension); converting OUT
   // OF Blues (fromBlues guard) only re-qualifies a chord whose root sits on the
-  // BLUES PALETTE (offsets 0/5/7 from tonicRoot, the professor-fold amendment
-  // 8A - NOT "any target-mode degree") - anything else (a user-added secondary
-  // like A7 over a C blues) is left byte-for-byte unchanged, and a bare dominant
+  // BLUES PALETTE (offsets 0/5/7 from tonicRoot - NOT "any target-mode
+  // degree") - anything else (a user-added secondary like A7 over a
+  // C blues) is left unchanged, and a bare dominant
   // 7th surviving from a palette root is treated as a plain triad before target
   // re-qualification (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7
   // keeps its own extension-class survival (not stripped).
@@ -137,7 +137,7 @@
     // Canonicalize targetMode the SAME way sourceMode already is below (canonMode) -
     // callers outside the in-app UI (saved/custom items, the bridge payload) carry
     // the lowercase MODE_CANON vocabulary ('blues', 'major', ...); a bare MODES[targetMode]
-    // lookup silently no-ops on those (codex finding, PR #115).
+    // lookup silently no-ops on those.
     var tm = canonMode(targetMode);
     var m = MODES[tm];
     if (!chords || !chords.length || !m) return chords ? chords.slice() : [];
@@ -151,8 +151,8 @@
       var rpc = rootPc(p.root);
       if (rpc == null) return c;
       var offset = ((rpc - tonicPc) % 12 + 12) % 12;
-      // BLUES-SOURCE GUARD (professor fold 8A, supersedes the section-1 dom-7-strip
-      // scope): a chord surviving FROM Blues only re-qualifies when its root sits on
+      // BLUES-SOURCE GUARD: a chord surviving FROM Blues only re-qualifies when its
+      // root sits on
       // the BLUES PALETTE (I7/IV7/V7 -> offsets 0,5,7 from the blues tonic) - not on
       // any degree the TARGET mode happens to have there. A user-added secondary
       // (A7 over a C blues) is not palette material; leave it fully unchanged.
@@ -207,14 +207,12 @@
     { name: "12-bar blues",       mode: "Blues", degrees: [0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" },
     { name: "Quick-change blues", mode: "Blues", degrees: [0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2], preview: "I7 IV7 V7" }
   ];
-  // D-CAP12 (m-guide-ia-20260704.md section 1): the Compose progression cap, raised
-  // from 8 to fit the 12-bar starters above. ONE shared const replaces both the
+  // The Compose progression cap (see decisions.md: D-CAP12), raised from 8 to fit
+  // the 12-bar starters above. ONE shared const replaces both the
   // addChord and renderProg `>= 8` gates so it can never drift between the two.
   var COMPOSE_MAX = 12;
-  // S-PROG-WRAP-2 (UAT U8b, docs/plans/uat-walkthrough-20260704.md section U8b;
-  // supersedes S-PROG-WRAP's pure width-driven binary full/compact split - see
-  // D-PROG-WRAP, amended): a COUNT-driven staged density ladder, so a short
-  // progression keeps generous full diagram cards instead of shrinking to
+  // A COUNT-driven staged density ladder (see decisions.md: D-PROG-WRAP), so a
+  // short progression keeps generous full diagram cards instead of shrinking to
   // match however crowded a 12-chord strip would be. Three stages:
   //   'full'      1-4 chords  - diagram cards, one row, flex-grown to fill it
   //               (capped - "sane bounds" - never shrunk below their natural
@@ -247,7 +245,7 @@
   function progStripMode(count, cardW, gapW, availW, collapse) {
     if (count <= 0) return 'full';
     var stage = count <= 4 ? 'full' : count <= 6 ? 'fill-row' : 'grid6';
-    // S-CHORD-COLLAPSE: at the ADVANCED guidance level the filmstrip never
+    // At the ADVANCED guidance level the filmstrip never
     // shows full diagram cards - 1-4 chords take the SAME compact-token
     // stage 5-6 already use (the maximize overlay stays the shapes view).
     // A 5th positional param (not an opts object) keeps every existing
@@ -294,7 +292,7 @@
       // degrees index into a 3-entry palette, not the 7-degree MAJOR_STEPS canon
       // this loop matches against, so a coincidental degree-index prefix match
       // (e.g. both starting on degree 0) would leak a Blues-derived "completion"
-      // into a plain Major/Minor/Mixolydian/Dorian session (codex finding, PR #115).
+      // into a plain Major/Minor/Mixolydian/Dorian session.
       if (p.mode) return;
       if (p.degrees.length <= degs.length) return;        // nothing left to add
       var isPrefix = degs.every(function (d, i) { return d === p.degrees[i]; });

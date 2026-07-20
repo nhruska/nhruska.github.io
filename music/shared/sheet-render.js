@@ -24,13 +24,12 @@
   // the localStorage import path accept freeform tokens, so chord names and
   // section labels are user-controlled strings, not trusted vocabulary. The
   // quote entity makes the same helper safe inside attribute values.
-  // S-HARDEN (analysis-refactor-enhance-20260704 A5): delegates to the shared
-  // esc.js (loaded before this file everywhere it's consumed) - was one of ~8
-  // divergent local copies. Name kept (escHTML, not esc) - this file's ~19
-  // call sites are unchanged.
+  // Delegates to the shared esc.js (loaded before this file everywhere it's
+  // consumed) - the one HTML-escaper (see decisions.md: D-HARDEN). Name kept
+  // escHTML (not esc) so this file's call sites are unchanged.
   function escHTML(s) { return global.Esc.esc(s); }
 
-  // S-UI-RECONCILE (Lane A, 2026-07-10): a view-local key-aware DISPLAY speller.
+  // A view-local key-aware DISPLAY speller.
   // Given a stated key (canonical-sharp token) + mode it returns token->display,
   // routing chord ROOTS through Circle.noteInKey so the bVII of F reads Bb, never
   // A# - the same regime-B contract the Studio/Compose surfaces already honor.
@@ -71,12 +70,12 @@
     lyricRow += raw.slice(last);
     return '<div class="lyrLine"><span class="crd">' + escHTML(chordRow) + '</span>\n' + escHTML(lyricRow) + '</div>';
   }
-  // S-UI-RECONCILE (Lane A): the action-ladder class for the song-view
+  // The action-ladder class for the song-view
   // remove/revert button. A real destructive delete is the `danger` primitive
   // (was mislabeled `.ghost`, the low-emphasis look); a fork's "Revert to
   // original" is NOT destructive of a user creation (it restores the catalog
-  // song), so it keeps `ghost`. Both span the row via the `.full` class (Lane D:
-  // `.actions .btn.full{flex-basis:100%}`) rather than an inline flexBasis style.
+  // song), so it keeps `ghost`. Both span the row via the `.full` class
+  // (`.actions .btn.full{flex-basis:100%}`) rather than an inline flexBasis style.
   // Pure + exported so the class contract has a real regression test.
   function deleteBtnClass(isFork) { return isFork ? 'btn ghost full' : 'btn danger full'; }
   function renderChordOnly(sheet, st, map) {

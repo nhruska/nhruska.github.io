@@ -69,8 +69,8 @@
    * diminished degree dropped from the strummable palette (kept in the solo scale).
    * If circle is somehow absent, the inline steps are an identical fallback. */
   var CIRCLE_MODE = { Major: "ionian", Minor: "aeolian", Mixolydian: "mixolydian", Dorian: "dorian" };
-  // Blues is a PALETTE-KIND key model (I7/IV7/V7, m-guide-ia-20260704.md section 1),
-  // not a 7-note circle-of-fifths mode - it stays OUT of CIRCLE_MODE on purpose
+  // Blues is a PALETTE-KIND key model (I7/IV7/V7), not a 7-note
+  // circle-of-fifths mode - it stays OUT of CIRCLE_MODE on purpose
   // (syncStepsFromCircle below only iterates CIRCLE_MODE's keys, so Blues.steps is
   // never overwritten by a nonexistent Circle.MODE_STEPS.blues). `romans` is a
   // Blues-only field (diatonic modes fall back to RN_UP in romanInKey below).
@@ -109,18 +109,18 @@
   // Does `chord` belong to the key's usable in-key set? Its root must sit on a
   // scale degree AND its triad quality must match that degree's quality - a 7th
   // reduces to its triad (D7 counts as D in G major; Dm7 does not). Used to keep
-  // the key-agnostic Markov suggestions honest when a key is set (C4, pilot UAT).
+  // the key-agnostic Markov suggestions honest when a key is set.
   // Suffix parsing mirrors Circle.suffixQuality: half-diminished (m7b5/ø) reduces
   // to dim; aug/+ maps to 'aug', which no mode's quals contain -> never diatonic.
-  // HARMONIC-MINOR EXCEPTION (owner ruling, volley-1 council D1): in Minor, the
+  // HARMONIC-MINOR EXCEPTION: in Minor, the
   // degree-5 MAJOR triad and dominant 7th (A / A7 in D minor) are admitted -
   // i -> V(7) -> i is the default cadence of real minor-key songs; strict
   // natural-minor gating stripped the most-played chord from every minor key.
   // Vmaj7 stays out (not the harmonic-minor dominant).
   // Mode names are case-normalized: saved custom items carry lowercase modes
   // ('minor', per deriveProgressionKey's locked vocabulary) while songKey uses
-  // capitalized keys - both must hit the same table (codex V2 medium; same trap
-  // class Circle.modeKey already guards).
+  // capitalized keys - both must hit the same table (same trap class
+  // Circle.modeKey already guards).
   var MODE_CANON = { major: 'Major', minor: 'Minor', mixolydian: 'Mixolydian', dorian: 'Dorian', blues: 'Blues' };
   function canonMode(modeKey) {
     return MODES[modeKey] ? modeKey : (MODE_CANON[String(modeKey || '').toLowerCase()] || modeKey);
@@ -139,7 +139,7 @@
       : /^m(?!aj)/.test(suf) ? 'm' : '';
     // BLUES palette degree (I7/IV7/V7, m.quals[deg] === '7'): in-key is the root as
     // a plain major triad OR its dominant 7th - deliberately no ii/dim/maj7/subs
-    // (D-BLUES-KEY minimalism; the "All" chord view is the escape hatch).
+    // (palette minimalism, see decisions.md: D-BLUES-KEY; "All" view is the escape hatch).
     if (m.quals[deg] === '7') return q === '' && (suf === '' || suf === '7');
     if (mk === 'Minor' && deg === 4 && q === '' && (suf === '' || /^7/.test(suf))) return true;
     return q === m.quals[deg];
@@ -149,7 +149,8 @@
   // Circle.diatonic labels), while non-diatonic/borrowed chords keep the
   // chromatic parallel-major label from Circle.romanFor (bVII in major, I for a
   // borrowed major tonic in minor). Without this, a Compose chip said "bIII" for
-  // F in D minor while the Studio said "III" for the same chord (pilot UAT).
+  // F in D minor while the Studio said "III" for the same chord
+  // (see decisions.md: ROMAN-HYBRID).
   var RN_UP = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   function romanInKey(chord, root, modeKey) {
     var mk = canonMode(modeKey);
@@ -179,7 +180,7 @@
     var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
     return (C && C.romanFor) ? C.romanFor(chord, root) : '';
   }
-  // The suggestion chip-row merge, pure and testable (codex V3): filter the
+  // The suggestion chip-row merge, pure and testable: filter the
   // Markov picks to the key (chordInKey; fall back to unfiltered when the
   // filter empties - a borrowed suggestion beats none), dedupe against the
   // progression-completing chords, float completions to the FRONT (their
@@ -212,7 +213,7 @@
       return ROOTS[(rp + m.steps[i]) % 12] + m.quals[i];
     });
   }
-  // ---- M-13 g1 TEMPLATE-SUGGESTED SECTIONS: roman -> chord realization --------
+  // ---- TEMPLATE-SUGGESTED SECTIONS: roman -> chord realization --------
   // Realize a roman-numeral token (SongTemplates.forSection's chromatic-roman
   // shape, e.g. 'I','vi','IV','bVII','i') into a canonical-sharp chord TOKEN in a
   // key, using the app's ONE degree-analysis path (Circle.romanFor) INVERTED by

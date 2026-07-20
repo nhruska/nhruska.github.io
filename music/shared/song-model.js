@@ -43,8 +43,8 @@
   // chord-sheet items can open the Practice screen or join a setlist/Stage - a
   // seq-less track would crash s.seq.map / render empty. Pure + Node-testable.
   function hasChordSheet(rec) { return !!(rec && Array.isArray(rec.seq) && rec.seq.length); }
-  // S-SETADD-KEYSEED (operator burst 2026-07-12): the seed-chord TOKEN for a row
-  // with a known key but no chord sheet - the key's tonic, canonical-sharp. `key`
+  // The seed-chord TOKEN for a row with a known key but no chord sheet - the
+  // key's tonic, canonical-sharp. `key`
   // normalizes through this module's own F2S map (same one-liner idiom rootPc()
   // uses below: "Eb" -> "D#"); 'm' is appended for every minor-family mode,
   // mirroring Repertoire.keyLabel's own minor test (min*/aeolian/dorian/phrygian/
@@ -57,11 +57,11 @@
     var minor = m.indexOf('min') === 0 || /aeolian|dorian|phrygian|locrian/.test(m);
     return root + (minor ? 'm' : '');
   }
-  // S-SETADD-KEYSEED: Library "+" affordance state for a repertoire row -
-  // 'add' (chord sheet -> live +, joins the setlist as-is - S-SETADD unchanged),
+  // Library "+" affordance state for a repertoire row -
+  // 'add' (chord sheet -> live +, joins the setlist as-is),
   // 'seed' (no sheet but Repertoire.deriveKey resolves a key -> live + that
-  // SEEDS one chord instead of a ghost), or 'blocked' (neither -> ghost +,
-  // S-SETADD-EVIDENT's #249 reason/toast, unchanged). `hasSheet` is supplied by
+  // SEEDS one chord instead of a ghost), or 'blocked' (neither -> ghost +
+  // with a reason/toast). `hasSheet` is supplied by
   // the caller's own hasChordSheet(songById(sid)) check just above - a seq-less
   // CUSTOM track has an id too, so sid!=null alone can't decide (see
   // hasChordSheet's comment); this function only decides the fallback. Repertoire
@@ -85,7 +85,7 @@
     return out;
   }
   // A composed custom's chord-only sheet (one "[C] [G] ..." progression line). Pure.
-  // Label is "Verse", not "Progression" (operator UAT 2026-07-17): a saved
+  // Label is "Verse", not "Progression": a saved
   // progression re-entered via Continue building must read as a STANDARD song
   // section - "Progression" isn't in the section set, so it rendered a blank
   // section dropdown and an off-vocabulary card label. A plain progression IS
@@ -95,7 +95,7 @@
   function buildSheetFromSeq(seq) {
     return [["Verse", (seq || []).map(function (c) { return "[" + c + "]"; }).join(" ")]];
   }
-  // M-13 SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
+  // SONG BUILDER: assemble a section buffer (each {label, seq:[...]}) into
   // the { seq, sheet } shape a custom SONG stores. seq = first-appearance unique
   // chords across ALL sections (the song's chord set - what the Studio/solo reads);
   // sheet = one [label, "[C] [F] ..."] pair per section (the existing chord-only
@@ -117,8 +117,7 @@
   // a video-only track routes to the Studio, not a blank Practice screen). Extracted +
   // exported so the changed merge path has a real regression test (not DOM-coupled).
   function buildAllSongs(catalog, customs) {
-    // Operator UAT 2026-07-17 ("rows disappear from my view instead of being
-    // checked"): a fork now shadows its catalog original IN PLACE - the copy
+    // A fork shadows its catalog original IN PLACE - the copy
     // takes the exact list position the original held, so the row the user is
     // looking at never teleports out from under their thumb. Non-fork customs
     // still append after the catalog block, unchanged.
@@ -181,9 +180,9 @@
     }
     return changed;
   }
-  // S-SET-INTEGRITY (UAT U22, load-heal): drop any setlist entry that no
-  // longer resolves to a real song - e.g. a setlist persisted before the
-  // delete-heal existed, or restored from an older backup taken pre-fix.
+  // Load-heal: drop any setlist entry that no longer resolves to a real
+  // song - e.g. a setlist persisted before the delete-heal existed, or
+  // restored from an older backup taken pre-fix.
   // `resolves(id)` is the caller's lookup (mount()'s songById); kept
   // dependency-injected so this stays Node-testable without a real ALLSONGS.
   // Mutates `setlist` in place (same contract as remapSetlist above - keeps
