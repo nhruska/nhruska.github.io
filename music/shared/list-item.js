@@ -219,15 +219,17 @@
         + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
     }
 
-    // Trailing affordances. Set reorder/remove appear ONLY in edit-set mode - a
-    // destructive x next to reorder on the scroll rail is a one-thumb minefield,
-    // so hide them until the user opts into editing the set.
+    // Trailing affordances. A set row is ALWAYS reorderable + removable now
+    // (operator UAT: no Edit round-trip, drag anytime). Reorder is a dedicated
+    // grip (drag from the grip; a body tap still plays - the grip carries no tap
+    // action, so it never opens the song). Remove is the arm-to-delete handle -
+    // its red-arm IS the mis-tap guard, so both can live on the resting rail
+    // without the old one-thumb-minefield risk. The up/dn arrows retired: drag
+    // replaces them.
     var ctrl = '';
-    if (seg === 'set' && opts.setEdit) {
-      ctrl = '<div class="li-ctrl">'
-        + btn('li-up', '&#9650;', 'up', opts.first ? ' disabled' : '')
-        + btn('li-dn', '&#9660;', 'dn', opts.last ? ' disabled' : '')
-        + '</div>' + btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
+    if (seg === 'set') {
+      ctrl = '<button class="li-grip" type="button" aria-label="Drag to reorder" title="Drag to reorder">&#8942;&#8942;</button>'
+        + btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
     } else if (seg !== 'set' && opts.onAdd) {
       ctrl = btn('li-add', opts.inSet ? '&#10003;' : '+', 'add', opts.inSet ? ' title="In set"' : ' title="Add to set"');
     } else if (seg !== 'set' && opts.addBlockedReason) {

@@ -1405,8 +1405,14 @@
     // off the RESTING scroll rail). The arrows stay as the a11y/keyboard path.
     var setlistDragSwallowClick = false, setlistSwallowWired = false;
     function wireSetlistDrag(row, index) {
-      row.addEventListener('pointerdown', function (e) {
+      // Drag initiates from the dedicated grip handle ONLY - a body tap plays the
+      // song, so there is no scroll-vs-drag ambiguity and no Edit-mode gate. The
+      // grip is drag-only (no tap action), so we lift on pointerdown immediately.
+      var grip = row.querySelector('.li-grip');
+      if (!grip) return;
+      grip.addEventListener('pointerdown', function (e) {
         if (STATE.setlist.length < 2) return;
+        e.preventDefault(); // grip is drag-only: never a scroll-start or a tap
         var id = e.pointerId, startX = e.clientX, startY = e.clientY;
         var isTouch = e.pointerType === 'touch';
         var lifted = false, dropAt = null, marked = null, holdTimer = null;
@@ -1423,7 +1429,7 @@
         function lift() {
           holdTimer = null; lifted = true;
           row.classList.add('dragging');
-          try { row.setPointerCapture(id); } catch (err) {}
+          try { grip.setPointerCapture(id); } catch (err) {}
           document.addEventListener('touchmove', blockScroll, { passive: false });
         }
         // Nearest row to lastY; the insertion edge is top/bottom. Split out so
@@ -1494,13 +1500,13 @@
           if (scrollRAF != null) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
           clearMark();
           row.classList.remove('dragging');
-          try { row.releasePointerCapture(id); } catch (err) {}
+          try { grip.releasePointerCapture(id); } catch (err) {}
           document.removeEventListener('touchmove', blockScroll);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
           window.removeEventListener('pointercancel', onUp);
         }
-        if (isTouch) holdTimer = setTimeout(lift, 300);
+        lift(); // dedicated grip - lift on pointerdown, no hold delay, no scroll race
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
         window.addEventListener('pointercancel', onUp);
@@ -1517,46 +1523,34 @@
         }, true);
         setlistSwallowWired = true;
       }
-      // The Edit toggle reveals reorder/remove (codex: keep the resting set row clean +
-      // destructive controls off the scroll rail until the user opts into editing).
-      if (el.setEdit) {
-        el.setEdit.style.display = STATE.setlist.length ? '' : 'none';
-        el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
-        el.setEdit.classList.toggle('on', STATE.setEditMode);
-      }
-      // Clear (✕) is a destructive control: UAT 2026-07-16 hides it until EDIT
-      // mode (and it wears red - .setDelete) so a resting setlist never shows a
-      // one-tap wipe. (Also hidden on an empty setlist - nothing to destroy.)
-      if (el.setClear) el.setClear.style.display = (STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
-      // Start (perform) lives in the header now (UAT: not a full-width bar). It
-      // shows only in NORMAL mode with a non-empty set - performing isn't a thing
-      // you do mid-edit, and it sits rightmost (thumb) with Edit to its left.
-      if (el.performBtn) el.performBtn.style.display = (!STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
+      // No Edit round-trip (operator UAT): a set row is always reorderable (grip
+      // drag) and removable (arm-red x), so the slim header just carries Clear +
+      // Start, both shown whenever the set is non-empty. The Clear x is itself
+      // arm-to-delete (wired below), NOT a one-tap wipe, so it is safe resting.
+      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
+      if (el.performBtn) el.performBtn.style.display = STATE.setlist.length ? '' : 'none';
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
-        STATE.setEditMode = false; dismissSetUndo(); STATE.lastRemoved = null;
+        dismissSetUndo(); STATE.lastRemoved = null;
         return;
       }
-      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '')
-        + (STATE.setEditMode ? ' · editing' : ' · ready to play');
+      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '') + ' · ready to play';
       body.innerHTML = '';
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
-        // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
+        // SSOT: same renderer as Songs/Tracks, in 'set' mode - always reorderable
+        // (grip) + removable (arm-red x); a body tap always plays.
         var setRow = global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
-          setEdit: STATE.setEditMode,
-          // Operator UAT 2026-07-20 ("disable select song when editing setlist to
-          // prevent unwanted actions"): in EDIT mode a body-tap must NOT open the
-          // song - you're reordering/removing, and a mis-tap that jumps into
-          // Practice is exactly the unwanted action. Tapping to open is a
-          // NORMAL-mode affordance; edit mode is arrange-only (drag + up/dn + rm).
-          onActivate: STATE.setEditMode ? null : function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          // A body tap always plays - reorder (grip) and remove (arm-red x) are
+          // their own dedicated handles, off the body, so a tap can't mis-fire
+          // either. No Edit mode to disable opening.
+          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {
@@ -1572,28 +1566,33 @@
           onAction: function () { ytSearch(s); }
         });
         body.appendChild(setRow);
-        // Drag-to-reorder rides alongside the up/dn arrows, EDIT MODE ONLY
-        // (the arrows' own gate; also keeps drag off the resting scroll rail).
-        if (STATE.setEditMode) wireSetlistDrag(setRow, i);
+        // Drag-to-reorder is always available now, initiated from the row's grip.
+        wireSetlistDrag(setRow, i);
       });
       // (The old full-width Start-performance bar was retired 2026-07-16 - Start
       // now lives compact in the header, toggled above.)
     }
-    if (el.setEdit) el.setEdit.onclick = function () {
-      STATE.setEditMode = !STATE.setEditMode;
-      if (!STATE.setEditMode) { dismissSetUndo(); STATE.lastRemoved = null; } // leaving edit mode dismisses the undo affordance
-      renderSetlist();
-    };
-    // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
-    // header rail must not fire the destructive Clear confirm(). Behavior is
-    // otherwise unchanged - same native confirm(), same effect. (Native
-    // confirm() itself is PRE-EXISTING debt, unchanged by M-DESIGN-ENFORCE
-    // wave 2 - see component-conventions.md Findings register: this wave's
-    // MODAL-standard grant covers the backup/restore flow only, not every
-    // confirm() call app-wide.)
+    // Clear the whole setlist: arm-to-delete, matching the per-row remove handle
+    // (operator UAT - "tap to turn red is a confirmation without a popup"). First
+    // tap ARMS the x red (auto-disarms after RM_ARM_MS); a second tap while armed
+    // wipes the set. Replaces the old native confirm() dialog. Movement-cancelled
+    // via wireTapCancel so a scroll-grab on the header rail never arms it.
+    var setClearArmed = false, setClearTimer = null;
+    function disarmSetClear() {
+      setClearArmed = false;
+      if (setClearTimer) { clearTimeout(setClearTimer); setClearTimer = null; }
+      if (el.setClear) el.setClear.classList.remove('armed');
+    }
     if (el.setClear) wireTapCancel(el.setClear, function () {
-      if (STATE.setlist.length === 0) return;
-      if (confirm('Clear your setlist?')) { dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
+      if (STATE.setlist.length === 0) { disarmSetClear(); return; }
+      if (!setClearArmed) {
+        setClearArmed = true;
+        el.setClear.classList.add('armed');
+        setClearTimer = setTimeout(disarmSetClear, 1600);
+        return;
+      }
+      disarmSetClear();
+      dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; saveSet(); renderSetlist(); renderSongs();
     });
 
     /* ===================== PERFORM ===================== */

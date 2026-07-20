@@ -1009,12 +1009,15 @@ test('wireTapCancel: no-op guard when el or fn is missing (never throws)', funct
   assert.doesNotThrow(function () { Songbook.wireTapCancel(new FakeTapEl(), null); });
 });
 
-test('setClear wiring: routed through wireTapCancel, not a raw .onclick= (movement-cancel guard, S-SETX)', function () {
+test('setClear wiring: routed through wireTapCancel + arm-to-delete, not a raw .onclick= or native confirm (S-SETX + operator UAT)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/wireTapCancel\(el\.setClear,/.test(src), 'el.setClear must be wired via wireTapCancel(), not a raw onclick=');
   assert.ok(!/el\.setClear\.onclick\s*=/.test(src), 'a raw el.setClear.onclick= would bypass the movement-cancel guard');
-  // the underlying confirm() + clear behavior must be unchanged (rider keeps it, only adds the guard)
-  assert.ok(/confirm\('Clear your setlist\?'\)/.test(src), 'the native confirm() prompt text must stay unchanged');
+  // Clear is now arm-to-delete (operator UAT: tap-to-red confirm, no popup) - the
+  // native confirm() was removed in favor of the .armed red-arm pattern, matching
+  // the per-row li-rm remove handle.
+  assert.ok(!/confirm\('Clear your setlist\?'\)/.test(src), 'the setlist Clear must NOT use a native confirm() (moved to arm-to-delete)');
+  assert.ok(/setClear\.classList\.add\('armed'\)/.test(src), 'Clear must arm the ✕ red first (arm-to-delete)');
 });
 
 /* =====================================================================

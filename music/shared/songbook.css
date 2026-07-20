@@ -305,6 +305,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * already-armed, so red-at-rest belongs only to labeled destructive BUTTONS
  * (.btn.danger), never an inline handle at rest. */
 .listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
+/* Drag-to-reorder grip (set rows). Drag-only handle: touch-action:none so the
+   browser doesn't claim the touch for scrolling, letting the pointer-drag lift.
+   The two vertical-ellipsis glyphs tuck together into a 6-dot grip. */
+.listItem .li-grip{flex:0 0 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
+  cursor:grab;min-width:38px;min-height:44px;align-self:center;display:flex;align-items:center;justify-content:center;
+  touch-action:none;-webkit-user-select:none;user-select:none;padding-right:2px;}
+.listItem .li-grip:active{cursor:grabbing;color:var(--txt-soft);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
 /* Timed toast+action undo banner - shared skin for the setlist item-remove undo
  * (showSetUndoBanner) and the Library delete-undo (showDeleteUndoBanner), both
@@ -467,6 +474,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    destructive signal. Fills red on press. */
 .setHead .setDelete{color:var(--bad);border-color:var(--bad);}
 .setHead .setDelete:active{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
+/* Arm-to-delete: first tap fills the ✕ red (matches the per-row li-rm.armed),
+   a second tap while armed clears the set. No native confirm popup. */
+.setHead .setDelete.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 .setEmpty{text-align:center;padding:44px 18px;color:var(--txt-dim);font-size:.95rem;line-height:1.6;}
 /* #s-tune: full-viewport, no-scroll layout (mirrors #s-compose's fixed-top /
    flex-hero pattern below). #s-tune fills the .view's available height;
