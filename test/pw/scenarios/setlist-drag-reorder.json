@@ -1,7 +1,12 @@
 {
   "name": "setlist-drag-reorder",
   "persona": "intermediate",
-  "dismissNotables": ["composeintro", "transposetip", "pulljam", "backup"],
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "pulljam",
+    "backup"
+  ],
   "seed": {
     "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
   },
@@ -36,6 +41,11 @@
       "action": "evalAssert",
       "label": "edit mode reveals the up/dn arrows AND arms drag on the rows",
       "js": "(function(){return !!document.querySelector('#setBody .listItem [data-act=\"up\"]') && !!document.querySelector('#setBody .listItem [data-act=\"dn\"]');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no-select: a draggable row opts out of text selection (long-press lifts, never selects - operator 2026-07-20)",
+      "js": "(function(){var r=document.querySelector('#setBody .listItem');return !!r && getComputedStyle(r).userSelect==='none';})()"
     },
     {
       "action": "evalAssert",

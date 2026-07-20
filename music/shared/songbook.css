@@ -266,6 +266,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem.dragging{opacity:.45;}
 .listItem.dropBefore{box-shadow:0 -3px 0 0 var(--accent-ink);}
 .listItem.dropAfter{box-shadow:0 3px 0 0 var(--accent-ink);}
+/* Operator UAT 2026-07-20 (setlist-drag preview: a long-press started Android
+   text-selection - the "Copy / Share / Select all" bubble + blue highlight -
+   which sometimes swallowed the drag). Every draggable surface opts OUT of
+   text selection + the long-press callout, so the hold cleanly becomes a lift.
+   NOT touch-action:none (that would kill the pre-lift scroll); selection only. */
+.prog .slot, .songSect, .listItem{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 /* B3 post-save discoverability: a brief accent pulse on the row a save just
    landed on, so it's findable in a long/scrolled library list. Fades on its
    own (no JS cleanup needed) - never blocks interaction, never persists. */
