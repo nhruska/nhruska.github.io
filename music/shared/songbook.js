@@ -2807,6 +2807,7 @@
       // openSaveNameRow overlay contract). No NavHistory (Node stubs) = raw.
       if (m === 'song') {
         rawSetMode('song');
+        pinKeyToDraft(); // UAT 2026-07-20: entering the canvas pins the home key so the chip + new-section building agree with the suggestions
         if (window.NavHistory && !navSongOpen) {
           navSongOpen = true;
           window.NavHistory.open('songCanvas', function () { navSongOpen = false; rawSetMode('chords'); });
@@ -3001,13 +3002,15 @@
     // exactly this fallback). Post-Clear the inferred key is nulled, so the SONG's
     // own key (the verse the musician already wrote) is what the chips realize in.
     function suggestKey() {
-      var km = deriveProgressionKey(buildSongFromSections(songSections).seq);
-      // S-SONG-MODE: an EMPTY canvas still shows proven starters (the pedagogy
-      // first-minute rule: sound within one tap) - fall back to C major so the
-      // template chips realize instead of rendering "no template in this key".
-      // deriveProgressionKey already preferred the live Compose songKey when set.
-      if (!km.key) return { root: 'C', mode: 'major' };
-      return { root: km.key, mode: km.mode };
+      // A key the user actually PINNED (explicit pick, or pinKeyToDraft on canvas
+      // entry) wins. Otherwise the HOME key (first section) anchors it - NOT the
+      // whole-song concat that averaged mixed-key sections into a muddy key
+      // (operator UAT 2026-07-20, see songHomeKey). Empty canvas -> C so the
+      // proven starters still realize (pedagogy: sound within one tap).
+      if (songKey.root && !songKey.defaulted) return { root: songKey.root, mode: songKey.mode.toLowerCase() };
+      var home = songHomeKey();
+      if (home) return { root: home.root, mode: home.mode };
+      return { root: 'C', mode: 'major' };
     }
     // Provenance line for a chip: a mined pattern cites its first real song; a
     // canonical family names itself (minus the roman parenthetical the chip's own
@@ -3050,10 +3053,19 @@
       var ST = global.SongTemplates;
       if (!ST || typeof ST.forSection !== 'function' || !km || !km.root) return [];
       var raw = ST.forSection(label, CATALOG) || [];
-      var prevRoman = prevSectionLastRoman(km.root);
+      // The proven families carry MAJOR-mode romans (I-V-vi-IV etc.), and
+      // realizeRoman does major-key degree math. Realizing them against a MINOR
+      // tonic as if it were major produces OUT-OF-KEY chords (A minor's vi-IV-I-V
+      // came out F#m D A E - the F# is not in A minor). Operator UAT 2026-07-20
+      // ("suggested are incompatible key"): for a minor key, realize against its
+      // RELATIVE MAJOR (A minor -> C), so every chord lands in the key's own
+      // pitch set (vi-IV-I-V -> Am F C G, all diatonic to A minor). Display still
+      // spells in the actual key via dispChordNameInKey below.
+      var realizeRoot = km.mode === 'minor' ? ROOTS[(ROOTS.indexOf(km.root) + 3) % 12] : km.root;
+      var prevRoman = prevSectionLastRoman(realizeRoot);
       var out = [];
       raw.forEach(function (s, i) {
-        var tokens = realizeSection(s.roman, km.root);
+        var tokens = realizeSection(s.roman, realizeRoot);
         if (!tokens) return; // unrealizable roman -> skip, never approximate
         out.push({
           tokens: tokens,
@@ -3717,14 +3729,30 @@
     // the key I'm working in". Derives from the draft's own chords; a song whose
     // key can't be derived leaves the builder key untouched. The pin is a real
     // pick (explicit, not defaulted) so later strip work stays in the song's key.
+    // The song's ESTABLISHED (home) key comes from the FIRST section - the one
+    // that sets the tonic (songwriting-coach: the verse anchors home; the first
+    // section establishes the key). Operator UAT 2026-07-20 ("suggested are
+    // incompatible key, new sections too suggests wrong key"): the old
+    // whole-song concat averaged mixed-key sections into a muddy key (a
+    // C-major-ish verse + a chorus in another key derived to a confident "E
+    // minor" that fit no section). The first section is the stable anchor every
+    // section's suggestions share. Falls back to the whole song, then null.
+    function songHomeKey() {
+      if (!global.Repertoire || !global.Repertoire.deriveKey) return null;
+      var first = songSections[0];
+      var d = (first && first.seq && first.seq.length) ? global.Repertoire.deriveKey({ seq: first.seq }) : null;
+      if (!d || !d.key) { // first section keyless/empty - fall back to the whole song
+        var whole = buildSongFromSections(songSections).seq;
+        d = whole.length ? global.Repertoire.deriveKey({ seq: whole }) : null;
+      }
+      return (d && d.key) ? { root: d.key, mode: String(d.mode || 'major').toLowerCase() } : null;
+    }
     function pinKeyToDraft() {
-      var seq = buildSongFromSections(songSections).seq;
-      if (!seq.length) return;
-      var d = global.Repertoire && global.Repertoire.deriveKey ? global.Repertoire.deriveKey({ seq: seq }) : null;
-      if (!d || !d.key) return;
-      var mode = String(d.mode || 'major').toLowerCase() === 'minor' ? 'Minor' : 'Major';
-      if (songKey.root === d.key && songKey.mode === mode && songKey.explicit && !songKey.defaulted) return;
-      songKey.root = d.key; songKey.mode = mode; songKey.explicit = true; songKey.defaulted = false;
+      var d = songHomeKey();
+      if (!d || !d.root) return;
+      var mode = d.mode === 'minor' ? 'Minor' : 'Major';
+      if (songKey.root === d.root && songKey.mode === mode && songKey.explicit && !songKey.defaulted) return;
+      songKey.root = d.root; songKey.mode = mode; songKey.explicit = true; songKey.defaulted = false;
       renderProg(); renderKey();
       if (el.keyRoots) { buildKeyPicker(); renderKeyView(); buildGrid(); }
     }

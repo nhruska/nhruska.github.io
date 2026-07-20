@@ -1,0 +1,67 @@
+{
+  "name": "canvas-home-key",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "pulljam",
+    "backup"
+  ],
+  "seed": {
+    "roadcase-ukulele-gcea.builderBuffer.v1": "[{\"label\":\"Verse\",\"seq\":[\"Am\",\"F\",\"C\",\"G\"]},{\"label\":\"Chorus\",\"seq\":[\"Am\",\"G\",\"F\"]}]"
+  },
+  "note": "Operator UAT 2026-07-20 ('suggested are incompatible key, new sections too suggests wrong key'; chose 'home key from first section'). Two bugs: (1) the suggestion key came from the whole-song concat (muddy on mixed-key songs) - now songHomeKey() anchors it to the FIRST (key-establishing) section, pinned on canvas entry so the chip + new-section building agree; (2) minor-key templates realized against a MAJOR-root produced OUT-OF-KEY chords (A minor's vi-IV-I-V came out F#m D A E) - now minor keys realize against their RELATIVE MAJOR so every chord lands in the key's pitch set. This song is A minor: templates must contain ZERO sharp/flat-root chords (A minor is all naturals), and building a new section must land in A Minor. Red-first on 026774a (F#m in the templates, and the derived key mismatched).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#draftChip"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "the canvas is open on the A-minor draft",
+      "js": "(function(){var c=document.getElementById('composeSong');return !!c && c.offsetParent!==null && document.querySelectorAll('.songSect.card').length===2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "home-key + minor-realization: EVERY template chord is diatonic to A minor (all-natural roots) - no F#/accidental-root chord (the pre-fix F#m bug)",
+      "js": "(function(){var chips=Array.from(document.querySelectorAll('.songSuggestChips .ssChords'));if(!chips.length)return false;var all=chips.map(function(x){return x.textContent.trim();}).join(' ').split(/\\s+/);for(var i=0;i<all.length;i++){if(/[#b]/.test(all[i]))return false;}return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "am-templates-in-key"
+    },
+    {
+      "action": "tap",
+      "selector": "#songBuildBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "building a new section lands in the song's home key (A Minor), matching the suggestions",
+      "js": "(function(){var c=document.getElementById('keyPickerCompact');var ik=document.querySelector('.inKeyLbl');return !!c && /A\\s*Min/i.test(c.textContent) && !!ik && /A Minor/i.test(ik.textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "new-section-a-minor"
+    }
+  ]
+}
