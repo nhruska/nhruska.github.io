@@ -711,6 +711,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    without ever burying an action. */
 .composeSong{display:none;}
 .composeWrap.songMode .composeSong{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;}
+/* The song being built, named at the top of the canvas (operator UAT). Sits
+   just under the close ✕ row; -8px margin tightens the flex gap to it. */
+.songCanvasTitle{margin:-8px 0 0;font-weight:800;font-size:1.15rem;line-height:1.15;letter-spacing:-.01em;color:var(--txt);}
+.songCanvasTitle[hidden]{display:none;}
 .songCue{margin:0;}
 .songCue[hidden]{display:none;}
 /* Cards stack vertically on the canvas; neutralize the .songSections wrap and
@@ -1318,9 +1322,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:1.15rem;cursor:pointer;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
 .pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-size:1.3rem;cursor:pointer;}
-.pTitle{font-weight:800;font-size:1.2rem;line-height:1.05;flex:0 0 auto;letter-spacing:-.02em;}
-.pArtist{font-size:.8rem;color:var(--txt-dim);margin:2px 0 3px;flex:0 0 auto;}
-.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
+/* Title + artist + key flow inline on one row (wrap to a 2nd only if the title
+   is long), baseline-aligned, to reclaim vertical space for the sheet - one row
+   in landscape where width is ample (operator UAT). */
+.pHead{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:9px;row-gap:1px;flex:0 0 auto;margin-bottom:5px;}
+.pTitle{font-weight:800;font-size:1.2rem;line-height:1.12;letter-spacing:-.02em;}
+.pArtist{font-size:.8rem;color:var(--txt-dim);}
+.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;}
 /* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let

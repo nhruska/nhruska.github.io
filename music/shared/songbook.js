@@ -977,7 +977,7 @@
       if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
       var bannerEl = global.Notables.renderBanner({
         consumerId: 'savebasics',
-        text: 'Tap the + up top to save this song to your setlist, so it is easy to find again.',
+        text: 'Tap the + to save this song to your setlist, so it is easy to find again.',
         onDismiss: function () { if (bannerEl && bannerEl.parentNode) bannerEl.parentNode.removeChild(bannerEl); }
       });
       if (!bannerEl) return; // no `document` available (Node without a DOM stub)
@@ -2191,7 +2191,7 @@
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
         composeWrapEl = null,
-        composeSongEl = null, songCueEl = null, songBuildBtnEl = null;
+        composeSongEl = null, songCueEl = null, songBuildBtnEl = null, songCanvasTitleEl = null;
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
     var suggestLabel = 'Verse';
@@ -2289,6 +2289,12 @@
       songCloseEl.textContent = '\u2715';
       composeWireTap(songCloseEl, function () { returnToSong = false; setComposeMode('chords'); });
       composeSongEl.appendChild(songCloseEl);
+      // Operator UAT: the canvas never showed WHICH song you're building - you saw
+      // the sections but not the title. This names it at the top (the song being
+      // continued, or "New song" for a fresh draft). The draft chip carries the
+      // same name on the Chords surface; this is its canvas twin.
+      songCanvasTitleEl = document.createElement('div');
+      songCanvasTitleEl.id = 'songCanvasTitle'; songCanvasTitleEl.className = 'songCanvasTitle'; songCanvasTitleEl.hidden = true;
       songCueEl = document.createElement('p'); songCueEl.className = 'songTrayCue songCue';
       songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
       // The one-shot click swallow for section-card drops (capture phase, mirrors
@@ -2326,6 +2332,7 @@
       songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
       songAssembleBtnEl.textContent = 'Save song'; songAssembleBtnEl.hidden = true;
       songAssembleBtnEl.onclick = function () { assembleSong(); };
+      composeSongEl.appendChild(songCanvasTitleEl);
       composeSongEl.appendChild(songCueEl);
       composeSongEl.appendChild(songSectionsEl);
       // Operator UAT 2026-07-20 ("horiz divider needed"): the section cards
@@ -2669,6 +2676,18 @@
       if (songCanvasDivEl) songCanvasDivEl.hidden = !(inSong && hasSections);
       renderPulljamCue(inSong);
       renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
+      // Name the song being built at the top of the canvas (operator UAT). The
+      // song being continued (builderSourceId), else "New song" for a fresh draft.
+      // Canvas-only; the Chords surface has the draft chip.
+      if (songCanvasTitleEl) {
+        if (inSong) {
+          var srcSong = (builderSourceId != null && typeof songById === 'function') ? songById(builderSourceId) : null;
+          songCanvasTitleEl.textContent = (srcSong && srcSong.t) ? srcSong.t : 'New song';
+          songCanvasTitleEl.hidden = false;
+        } else {
+          songCanvasTitleEl.hidden = true;
+        }
+      }
       if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;
       songSectionsEl.innerHTML = '';
       if (!inSong) return; // cards are canvas furniture; skip the build when hidden

@@ -215,9 +215,13 @@
          it lives in the gear sheet's Key row below); the remaining icons grow to
          44px+ stage targets. -->
     <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls">⚙</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
-  <div class="pTitle" id="pTitle"></div>
-  <div class="pArtist" id="pArtist"></div>
-  <div class="pKey" id="pKeyLine"></div>
+  <!-- Title / artist / key flow inline (wrap to a 2nd row only if needed) to
+       reclaim vertical space for the sheet - one row in landscape (operator UAT). -->
+  <div class="pHead">
+    <span class="pTitle" id="pTitle"></span>
+    <span class="pArtist" id="pArtist"></span>
+    <span class="pKey" id="pKeyLine"></span>
+  </div>
   <div class="pSheet" id="pSheet"></div>
   <div class="pSpeed" id="pSpeed">
     <div class="psRow"><label>View</label><div class="psBtns"><button class="psBtn" id="pViewLyrics">Lyrics</button><button class="psBtn" id="pViewChords">Chords</button><button class="psBtn" id="pViewBoth">Both</button></div></div>
