@@ -1405,6 +1405,32 @@
       });
       setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
+    // Timed undo for the whole-setlist Clear (operator UAT). Same banner + toast
+    // infra as the per-row remove undo, but restores the ENTIRE prior list on
+    // Undo - Clear is the most destructive setlist action, so it earns the same
+    // pause-on-touch, auto-dismissing safety net.
+    function showSetClearUndoBanner(prevList) {
+      if (!ensureSetUndoBanner() || !prevList || !prevList.length) return;
+      dismissSetUndo(); // tear down any stale prior instance first
+      setUndoBanner.hidden = false;
+      setUndoBanner.innerHTML = '';
+      var n = prevList.length, label = 'Cleared ' + n + ' song' + (n > 1 ? 's' : '');
+      var msg = document.createElement('span'); msg.textContent = label;
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        STATE.setlist = prevList.slice(); STATE.lastRemoved = null;
+        if (setUndoHandle) setUndoHandle.finish();
+        saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
+      };
+      setUndoBanner.appendChild(msg); setUndoBanner.appendChild(undoBtn);
+      setUndoHandle = global.Toast.showAction(label, {
+        host: setUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { STATE.lastRemoved = null; paintSetUndoHidden(); }
+      });
+      setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
+    }
     // Operator 2026-07-19 ("drag and drop [at] all places where we have up and
     // down arrows to reorder - we already support it for the progression
     // builder"): the setlist rows were the last arrow-only reorder surface.
@@ -1603,7 +1629,9 @@
         return;
       }
       disarmSetClear();
+      var prevList = STATE.setlist.slice(); // snapshot BEFORE wiping, for the timed undo
       dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; saveSet(); renderSetlist(); renderSongs();
+      showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
     });
 
     /* ===================== PERFORM ===================== */
