@@ -1011,52 +1011,48 @@
       // a catalog song.
       var forcedChords = s.custom && !s.forkOf;
       var view = forcedChords ? 'chords' : STATE.songView;
-      // header: icon-only back arrow (top-left, beside the title) + a compact
-      // setlist checkmark toggle (top-right). The Stage (⛶) button in the view
-      // row below is the single fullscreen/maximize control (t2 - the old ⤢
-      // "Maximize chords" icon here was redundant with Stage and was removed).
+      // Resolve the Solo entry + the key-aware chord speller BEFORE the header is
+      // built, so Stage + Solo can live in the header actions (operator UAT: they
+      // were crowding the Lyrics/Chords/Both view row and truncating its labels).
+      // "Solo over it" bridges any song whose key we can determine; prefer the
+      // MERGED repertoire record (a matched backing track's authoritative key/mode
+      // beats re-deriving from a possibly non-tonic first chord), else the raw
+      // record - soloKeyFor still derives from the transposed seq when neither
+      // carries an explicit key, so soloing always matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
+      // Key-aware display speller for every chord NAME on this screen (chip row,
+      // transpose readout, sheet). Chord TOKENS stay canonical-sharp (data-c,
+      // play/audio, storage) - only labels respell (an F song at +2 spells in G);
+      // falls back to the raw token when the progression is keyless.
+      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
+      // Stage (fullscreen) + Solo are rarely-used relative to Back / the setlist
+      // toggle, so they live in an OVERFLOW menu off the header (operator UAT:
+      // out of the crowded view row, and off the header row itself so the title
+      // keeps its space). Stage is always present; Solo only when soloable.
+      var stageBtnHtml = '<button class="moreItem" id="stageBtn" type="button"><span aria-hidden="true">⛶</span> Stage - perform fullscreen</button>';
+      var soloRowBtn = canSolo ? '<button class="moreItem" id="soloOverBtn" type="button">Solo over it - open the Studio</button>' : '';
+      // Header: a prominent LABELED Back CTA (top-left) - the bare ← arrow was the
+      // least-evident control (operator UAT) - then the setlist toggle + a compact
+      // overflow (⋯) holding Stage/Solo. Title stays flexible (min-width:0) so it
+      // keeps its room instead of being squeezed by inline action buttons.
+      var backLabel = practiceOrigin === 'jam' ? 'Setlist' : 'Library';
       var head = '<div class="detailHead">'
-        + '<button class="iconBtn" id="backLib" title="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '" aria-label="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '">←</button>'
+        + '<button class="btn ghost backBtn" id="backLib" title="Back to ' + backLabel + '" aria-label="Back to ' + backLabel + '"><span class="backArrow" aria-hidden="true">←</span> Back</button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
         // artist (no hardcoded placeholder to duplicate the title) - omit the
         // ' · ' separator entirely rather than showing a leading, artist-less dot.
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
+        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">⋯</span></button>'
+        + '<div class="moreMenu" id="moreMenu" hidden>' + stageBtnHtml + soloRowBtn + '</div></div>'
         + '</div></div>';
-      // F28 (UI-std UAT): resolve the Solo entry point BEFORE the controls row is
-      // built, so the button lives IN that row (beside modeSwitch/transpose/stage) -
-      // directly above the chord content, not bolted on below the sheet where the
-      // operator flagged it as "in the way when you don't need it, and not in the
-      // right place when you do." "Solo over it" used to require s.custom (only
-      // progressions built in Compose carried a key/mode). Any song can bridge to
-      // the Studio if we can determine a key. Prefer the MERGED repertoire record:
-      // Repertoire.build copies a matched backing track's authoritative key/mode
-      // onto it, which beats re-deriving from the first chord (a non-tonic opener
-      // would mislabel). Fall back to the raw record; soloKeyFor still derives from
-      // the TRANSPOSED seq when neither has an explicit key, so soloing always
-      // matches what's on screen.
-      var mergedRec = null;
-      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
-      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
-      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
-      // S-UI-RECONCILE (Lane A): key-aware display speller for every chord NAME on
-      // this song screen (chip row, transpose readout, campfire sheet). soloKey is
-      // already transpose-adjusted and `seq` is already transposed, so this maps
-      // transposed-token -> transposed-key display name (F song at +2 spells in G).
-      // Falls back to the raw token when the progression is keyless. Chord TOKENS
-      // (data-c, play/audio, storage) stay canonical-sharp - only labels respell.
-      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
-      // Compact label ("Solo"; the title attr carries the full phrase) so it fits
-      // the SAME row as modeSwitch/transposeChip/stageGo at 375-412px - mirrors
-      // Compose's #chordCtrlRow treatment on the other surface (songbook.css
-      // .soloRowBtn). Entirely absent (not just disabled) when canSolo is false -
-      // no dead tap, no row filler.
-      var soloRowBtn = canSolo ? '<button class="btn soloRowBtn" id="soloOverBtn" title="Solo over it - open the Practice Studio">Solo</button>' : '';
-      // view row: Lyrics / Chords / Both segmented + compact transpose chip +
-      // a compact Stage (fullscreen) icon button + (F28) the Solo entry point, all
-      // on ONE row (UAT round 2 locked decision - replaces the full-width Stage
-      // CTA; F28 UAT folds Solo into the same row instead of a separate CTA below).
+      // View row: just Lyrics / Chords / Both + the transpose chip now (Stage +
+      // Solo moved to the header), so the segmented toggle gets full width and no
+      // longer truncates its labels.
       function segBtn(v, lbl) {
         var dis = forcedChords && v !== 'chords';
         return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
@@ -1065,8 +1061,6 @@
       var switcher = '<div class="practiceRow">'
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(dispMap(seq[0])) + '</span><button id="tUp" title="Transpose up">+</button></div>'
-        + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
-        + soloRowBtn
         + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded.
       // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
@@ -1117,6 +1111,23 @@
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
+      // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The
+      // dismiss listener is attached only WHILE open and removes itself, so no
+      // per-render leak (renderPractice runs on every open / view change). Stage
+      // and Solo both navigate away, so their own taps tear the menu down.
+      var moreBtn = el.practiceBody.querySelector('#moreBtn');
+      var moreMenu = el.practiceBody.querySelector('#moreMenu');
+      if (moreBtn && moreMenu) moreBtn.onclick = function (e) {
+        e.stopPropagation();
+        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); return; }
+        moreMenu.hidden = false; moreBtn.setAttribute('aria-expanded', 'true');
+        var closer = function (ev) {
+          if (moreMenu.contains(ev.target) || ev.target === moreBtn) return;
+          moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+          document.removeEventListener('pointerdown', closer, true);
+        };
+        setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
+      };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);

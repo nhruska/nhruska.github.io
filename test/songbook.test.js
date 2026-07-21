@@ -851,11 +851,18 @@ test('F28/F29: #catChips and #soloBackingBtn are nested inside #chordCtrlRow (pl
  * source-pinned per the repo pattern (see the songbook.js DOM-render note ~767).
  * Asserts the button carries #soloOverBtn AND is concatenated into .practiceRow
  * before the row closes - a regression moving it out fails. (codex PR #195 V2 Medium) */
-test('F28: song-view Solo (#soloOverBtn) is appended inside the .practiceRow row (songbook.js)', function () {
+test('song-view Stage + Solo live in the header actions, not the view row (operator UAT)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/soloRowBtn = canSolo \? '<button[^']*id="soloOverBtn"/.test(src), '#soloOverBtn definition (in soloRowBtn) missing');
-  assert.ok(/'<div class="practiceRow">'[\s\S]{0,600}\+ soloRowBtn[\s\S]{0,40}\+ '<\/div>'/.test(src),
-    'soloRowBtn (Solo) not appended inside the .practiceRow row before its close - F28 song-view move regressed');
+  assert.ok(/var stageBtnHtml = '<button[^']*id="stageBtn"/.test(src), 'stageBtnHtml (Stage) definition missing');
+  // Stage + Solo moved OUT of .practiceRow into an overflow menu off the header
+  // so the Lyrics/Chords/Both toggle stops truncating AND the title keeps its
+  // room (operator UAT).
+  assert.ok(/'<div class="moreMenu" id="moreMenu" hidden>' \+ stageBtnHtml \+ soloRowBtn/.test(src),
+    'stageBtnHtml + soloRowBtn must live inside the #moreMenu overflow');
+  // The view row is now just the toggle + transpose - Stage/Solo removed.
+  assert.ok(/'<div class="practiceRow">'[\s\S]{0,400}transposeChip[\s\S]{0,200}\+ '<\/div>'/.test(src),
+    'the .practiceRow should end after the transposeChip (Stage/Solo removed)');
 });
 
 /* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------

@@ -335,10 +335,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Song-detail panel uses the card radius token (--r-card). */
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;}
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
+/* Prominent labeled Back CTA (operator UAT: the bare ← icon was the least-evident
+   control). Accent-tinted so it reads as the primary exit; compact so the title
+   keeps room. flex:0 0 auto - it holds its width and the title (min-width:0) wraps. */
+.detailHead .backBtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:8px 13px;
+  font-weight:700;font-size:.88rem;color:var(--accent-ink);background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:var(--r-btn);cursor:pointer;}
+.detailHead .backBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);transform:scale(.97);}
+.detailHead .backBtn .backArrow{font-size:1.15rem;line-height:1;}
 .detailHead .ti{flex:1;min-width:0;}
 .detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
+/* Overflow menu (Stage / Solo) off the song-view header - keeps rarely-used
+   actions one tap away without crowding the title. Anchored to the ⋯ button. */
+.moreWrap{position:relative;flex:0 0 auto;}
+.moreMenu{position:absolute;top:calc(100% + 6px);right:0;z-index:20;min-width:210px;display:flex;flex-direction:column;gap:2px;
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,.4);}
+.moreMenu[hidden]{display:none;}
+.moreItem{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:0;color:var(--txt);
+  font-family:inherit;font-weight:600;font-size:.88rem;padding:11px 12px;border-radius:8px;cursor:pointer;min-height:44px;white-space:nowrap;}
+.moreItem:active{background:var(--accent-deep);color:var(--accent-ink);}
 /* Emphasis ladder: an icon button is a SECONDARY affordance, not a primary
    action - so its glyph is neutral (--txt-soft), not the bright --accent-ink that
    competes with the one primary per screen. Accent still flashes on :active
