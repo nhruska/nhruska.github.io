@@ -291,22 +291,17 @@
           <div class="setLbl">Instrument &amp; tuning</div>
           <select class="picker setPicker" id="profilePicker" aria-label="Instrument and tuning"></select>
           <p class="setHint">Every chord chart, diagram and the tuner follow this. Switching reloads the app.</p>
-          <div class="setLbl">Fretboard diagrams</div>
-          <div class="themeSeg" id="diagramPrefSeg" role="radiogroup" aria-label="Fretboard diagram style"></div>
-          <!-- Visual preview of each option, aligned under its toggle half, active
-               one highlighted (recognition over recall). Rendered from the SSOT
-               (window.MusicPreview -> the app's real diagram/chart renderers) by
-               populatePrefPreviews() on open, so a rendering change in the app
-               shows up here automatically. -->
-          <div class="prefPreview" id="diagramPrefPreview" aria-hidden="true">
-            <div class="prefEx" data-m="dots"></div>
-            <div class="prefEx" data-m="patterns"></div>
-          </div>
-          <p class="setHint">Dots and finger-position numbers while you're learning new shapes, or clean patterns once you're moving by feel. With Patterns on, the maximized chord view names each shape.</p>
-          <!-- Chord-chart VISIBILITY. Distinct from Fretboard diagrams above
-               (which styles the diagrams that do render). Follows the guidance
-               level until the user chooses; the choice is global (crosses
-               instrument profiles). -->
+          <!-- The Dots/Patterns "Fretboard diagrams" control was removed (UAT
+               2026-07-21): its two states were pixel-identical on every chord
+               card (the only difference - a shape-name caption - showed solely
+               in the maximized view), and the hint promised "finger-position
+               numbers" the app has never rendered. Diagram DEPTH is moving to a
+               competency-driven band instead of a manual toggle - see
+               docs/plans/competency-adaptive-depth-20260721.md. shared/diagram-pref.js
+               (the storage) stays for that future consumer. -->
+          <!-- Chord-chart VISIBILITY: styles whether a chord shows as a full
+               diagram or a compact chip. Follows the guidance level until the
+               user chooses; the choice is global (crosses instrument profiles). -->
           <div class="setLbl">Chord charts</div>
           <div class="themeSeg" id="chordChartsSeg" role="radiogroup" aria-label="Chord chart display"></div>
           <!-- Charts = the app's real chord diagram; Compact = the app's real
@@ -1070,45 +1065,11 @@
       });
     }
 
-    /* Dots / Patterns segmented control - the Settings-row setter for
-       music.diagram.pref.v1 (shared/diagram-pref.js owns the storage; this is
-       DOM glue only, mirroring the Theme control above - same .themeSeg/.thSeg
-       classes, same wiring shape). */
-    var dpWrap = document.getElementById('diagramPrefSeg');
-    var DIAGRAM_PREFS = [['dots', 'Dots'], ['patterns', 'Patterns']];
-    function markDiagramPref(val) {
-      if (!dpWrap) return;
-      dpWrap.querySelectorAll('.thSeg').forEach(function (b) {
-        var on = b.dataset.m === val;
-        b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
-      });
-      var pv = document.getElementById('diagramPrefPreview'); // highlight the matching preview example
-      if (pv) pv.querySelectorAll('.prefEx').forEach(function (x) { x.classList.toggle('on', x.dataset.m === val); });
-    }
-    // One setter, two triggers: the toggle button AND the preview cell (below).
-    // Picking either settles the one-time prompt too - the user just answered
-    // the same question this Settings row asks.
-    function applyDiagramPref(m) {
-      DiagramPref.set(m);
-      markDiagramPref(m);
-      if (window.Notables) Notables.dismiss('diagrampref');
-    }
-    if (dpWrap && window.DiagramPref) {
-      DIAGRAM_PREFS.forEach(function (pair) {
-        var b = document.createElement('button');
-        b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
-        b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' fretboard diagrams');
-        b.onclick = function () { applyDiagramPref(pair[0]); };
-        dpWrap.appendChild(b);
-      });
-      markDiagramPref(DiagramPref.get());
-      // The preview cell IS a tappable target too (operator UAT: "I expected to
-      // tap the preview, but I can only click toggles"). Each .prefEx[data-m]
-      // selects its option, same as the toggle. Wired once on the persistent
-      // cells (populatePrefPreviews swaps only their inner content, not the
-      // cell elements), so this survives every re-populate.
-      wirePreviewCells('diagramPrefPreview', applyDiagramPref);
-    }
+    /* The Dots/Patterns "Fretboard diagrams" Settings control was removed (UAT
+       2026-07-21): pixel-identical states + a copy that promised finger numbers
+       the app never rendered. Diagram depth is moving to a competency-driven
+       band (docs/plans/competency-adaptive-depth-20260721.md); shared/diagram-pref.js
+       stays as the storage for that consumer. No Settings row wires it for now. */
 
     /* Chord charts - the Settings-row setter for music.chordCharts.v1
        ('charts' | 'chips'). Same .themeSeg/.thSeg wiring as diagramPrefSeg
@@ -1306,7 +1267,8 @@
           if (node) ex.appendChild(node);
         });
       }
-      fill('diagramPrefPreview', 'diagram');
+      // diagramPrefPreview removed with the Dots/Patterns control (UAT 2026-07-21);
+      // only the Chord-charts preview remains.
       fill('chordChartsPreview', 'chart');
     }
     function openSettings(sectionKey) {
@@ -1325,9 +1287,9 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.hidden) closeSettings(); });
 
     /* No inline ask banners here: the first-run tour asks the level once, and
-       Settings > Preferences carries both the level and diagram choices
-       thereafter. Unset means the safe defaults (beginner-graded tips stay quiet
-       via the notables LEVELS gate; DiagramPref.get() defaults dots). */
+       Settings > Preferences carries the level + chord-charts choice thereafter.
+       Unset means the safe defaults (beginner-graded tips stay quiet via the
+       notables LEVELS gate; DiagramPref.get() defaults dots). */
 
     /* "Tune up first" JIT cue on the Tune tab's first visit. Trigger:
        songbook.js's applyTab() dispatches music:tab-shown on EVERY tab render
