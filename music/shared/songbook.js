@@ -1028,19 +1028,25 @@
       // play/audio, storage) - only labels respell (an F song at +2 spells in G);
       // falls back to the raw token when the progression is keyless.
       var dispMap = chordSpeller(soloKey.key, soloKey.mode);
-      // Stage (fullscreen) + Solo are rarely-used relative to Back / the setlist
-      // toggle, so they live in an OVERFLOW menu off the header (operator UAT:
-      // out of the crowded view row, and off the header row itself so the title
-      // keeps its space). Stage is always present; Solo only when soloable.
-      var stageBtnHtml = '<button class="moreItem" id="stageBtn" type="button"><span aria-hidden="true">⛶</span> Stage - perform fullscreen</button>';
-      var soloRowBtn = canSolo ? '<button class="moreItem" id="soloOverBtn" type="button">Solo over it - open the Studio</button>' : '';
-      // Header: a prominent LABELED Back CTA (top-left) - the bare ← arrow was the
-      // least-evident control (operator UAT) - then the setlist toggle + a compact
-      // overflow (⋯) holding Stage/Solo. Title stays flexible (min-width:0) so it
-      // keeps its room instead of being squeezed by inline action buttons.
+      // Stage (fullscreen) + Solo are KEY actions - kept VISIBLE in their own
+      // controls row under the view toggle (operator UAT: don't hide them in the
+      // overflow). Stage always; Solo only when soloable.
+      var stageBtnHtml = '<button class="btn ghost songActBtn" id="stageBtn" type="button" title="Perform fullscreen"><span aria-hidden="true">⛶</span> Full screen</button>';
+      var soloRowBtn = canSolo ? '<button class="btn ghost songActBtn soloRowBtn" id="soloOverBtn" type="button" title="Solo over it - open the Practice Studio">Solo</button>' : '';
+      // Rarely-used actions live in the OVERFLOW (⋯) instead: Hear-on-YouTube,
+      // Full-lyrics, and (custom songs) Delete - tucked away so the header stays
+      // clean and the key controls stay in reach (operator UAT).
+      var ytURL = ytSearchURL(mergedRec || s);
+      var geniusURL = 'https://genius.com/search?q=' + encodeURIComponent(s.t + ' ' + s.a);
+      var overflowItems = '<a class="moreItem" href="' + ytURL + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>'
+        + '<a class="moreItem" href="' + geniusURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
+        + (s.custom ? '<button class="moreItem moreItemDanger" id="delSongBtn" type="button">' + (s.forkOf ? 'Revert to original' : 'Delete this song') + '</button>' : '');
+      // Header: a prominent ARROW-ONLY Back (top-left) - the likeliest next tap, so
+      // it wears the accent; a labeled "Back" was squashing the title into 2-3
+      // wrapped lines (operator UAT). Then the setlist toggle + the overflow (⋯).
       var backLabel = practiceOrigin === 'jam' ? 'Setlist' : 'Library';
       var head = '<div class="detailHead">'
-        + '<button class="btn ghost backBtn" id="backLib" title="Back to ' + backLabel + '" aria-label="Back to ' + backLabel + '"><span class="backArrow" aria-hidden="true">←</span> Back</button>'
+        + '<button class="iconBtn backArrowBtn" id="backLib" title="Back to ' + backLabel + '" aria-label="Back to ' + backLabel + '"><span aria-hidden="true">←</span></button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
         // artist (no hardcoded placeholder to duplicate the title) - omit the
         // ' · ' separator entirely rather than showing a leading, artist-less dot.
@@ -1048,7 +1054,7 @@
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
         + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">⋯</span></button>'
-        + '<div class="moreMenu" id="moreMenu" hidden>' + stageBtnHtml + soloRowBtn + '</div></div>'
+        + '<div class="moreMenu" id="moreMenu" hidden>' + overflowItems + '</div></div>'
         + '</div></div>';
       // View row: just Lyrics / Chords / Both + the transpose chip now (Stage +
       // Solo moved to the header), so the segmented toggle gets full width and no
@@ -1062,6 +1068,10 @@
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(dispMap(seq[0])) + '</span><button id="tUp" title="Transpose up">+</button></div>'
         + '</div>';
+      // Key actions row: Full-screen (Stage) + Solo kept VISIBLE right under the
+      // toggle (operator UAT: not buried in the overflow). Full width buttons so
+      // they read as primary reach targets.
+      var songActRow = '<div class="songActRow">' + stageBtnHtml + soloRowBtn + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded.
       // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
       // skip notice (see navQueue()) so a defended-against dangling ref is
@@ -1077,28 +1087,21 @@
       // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
       // action-ladder host appended further down for custom/catalog songs.
       var actions = '<div class="actions"></div>';
-      // Hear the real recording: same YouTube search the list-item action ladder
-      // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
-      // not the sheet). The MERGED record feeds the query so track-derived
-      // fields (key etc.) match what the ladder builds from.
-      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>';
+      // Hear-on-YouTube + Full-lyrics moved to the header OVERFLOW (⋯) - rarely
+      // used, tucked away so the sheet gets the space (operator UAT). No longer
+      // duplicated on a below-sheet link row.
       var body;
       if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords', dispMap) + '</div>'
-          + actions
-          + '<div class="lyricsLinks">' + ytLink + '</div>';
+          + actions;
       } else {
-        var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
-        var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
           + actions
-          // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
-          + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
+      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + songActRow + queueNav + body + '</div>';
       renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
@@ -1128,6 +1131,15 @@
         };
         setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
       };
+      // Overflow Delete / Revert (custom songs only). Same confirm + effect as the
+      // old ladder button - a fork REVERTS to the catalog original, a real custom
+      // song is DELETED. Closes the menu on tap (it navigates away anyway).
+      var delSong = el.practiceBody.querySelector('#delSongBtn');
+      if (delSong) delSong.onclick = function () {
+        var isFork = !!s.forkOf;
+        var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
+        if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
+      };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -1150,7 +1162,6 @@
       };
       var act = el.practiceBody.querySelector('.actions');
       if (act && s.custom) {
-        var isFork = !!s.forkOf;
         // S-SONG-MODE Phase B: back into the builder - the sheet parses to
         // sections, the Song canvas reopens, and Save updates THIS song in
         // place. Only offered when the sheet actually yields sections (a
@@ -1165,19 +1176,9 @@
         eb.className = 'btn'; eb.textContent = 'Edit';
         eb.onclick = function () { openEditForm(s.id); };
         act.appendChild(eb);
-        var db = document.createElement('button');
-        // S-UI-RECONCILE (Lane A): danger primitive for a real delete, ghost for a
-        // non-destructive fork revert; full-width via CSS `.full` (Lane D), not an
-        // inline style. See deleteBtnClass for the full rationale.
-        db.className = deleteBtnClass(isFork);
-        // A fork shadows a catalog song, so removing it REVERTS to the original
-        // rather than deleting a user creation - label + confirm say so.
-        db.textContent = isFork ? 'Revert to original' : 'Delete progression';
-        db.onclick = function () {
-          var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
-          if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
-        };
-        act.appendChild(db);
+        // Delete / Revert moved to the header OVERFLOW (#delSongBtn) - a
+        // rarely-used, destructive action tucked out of the primary ladder
+        // (operator UAT). Wired below alongside the overflow menu.
       } else if (act && !s.custom) {
         // Catalog song: fork it into an editable, user-owned copy that SHADOWS
         // the original (add a video, rename, re-key). Chords + lyrics preserved.
@@ -1862,6 +1863,11 @@
     global.MusicPreview = {
       diagram: function (mode) {
         var c = previewChord();
+        // SMALL preview cells; the dots-vs-patterns difference (the shape-name
+        // caption 'patterns' adds) is now drawn at any size by diagramForMode, so
+        // the small cell shows the real difference - a clean grid (dots) vs a grid
+        // + shape caption (patterns) - without the 300px-tall big card. Fixes the
+        // "both previews look identical" UAT while keeping the panel compact.
         return (pack && pack.diagramForMode) ? pack.diagramForMode(c, 'small', mode) : null;
       },
       chart: function (mode) {

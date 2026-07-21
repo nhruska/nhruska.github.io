@@ -846,23 +846,25 @@ test('F28/F29: #catChips and #soloBackingBtn are nested inside #chordCtrlRow (pl
   assert.ok(/id="soloBackingBtn"/.test(block), '#soloBackingBtn (Solo entry) must live inside #chordCtrlRow');
 });
 
-/* F28 (UI-std) song-view half: the Solo entry (#soloOverBtn) is built dynamically
- * into the .practiceRow controls-row template (songbook.js), closure-bound so it's
- * source-pinned per the repo pattern (see the songbook.js DOM-render note ~767).
- * Asserts the button carries #soloOverBtn AND is concatenated into .practiceRow
- * before the row closes - a regression moving it out fails. (codex PR #195 V2 Medium) */
-test('song-view Stage + Solo live in the header actions, not the view row (operator UAT)', function () {
+/* F28 (UI-std) song-view half: Full-screen (#stageBtn) + Solo (#soloOverBtn) are
+ * KEY actions and stay VISIBLE in their own .songActRow controls row under the
+ * view toggle - NOT buried in the header overflow (operator UAT reversal 2026-07-21:
+ * "hamburger... hides key features"). The overflow (⋯) instead holds the rarely-
+ * used YouTube / Full-lyrics / Delete. Source-pinned per the repo DOM-render
+ * pattern (see the songbook.js note ~767) so a regression re-hiding them fails. */
+test('song-view Full-screen + Solo stay VISIBLE in the .songActRow, not the overflow (operator UAT)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/soloRowBtn = canSolo \? '<button[^']*id="soloOverBtn"/.test(src), '#soloOverBtn definition (in soloRowBtn) missing');
-  assert.ok(/var stageBtnHtml = '<button[^']*id="stageBtn"/.test(src), 'stageBtnHtml (Stage) definition missing');
-  // Stage + Solo moved OUT of .practiceRow into an overflow menu off the header
-  // so the Lyrics/Chords/Both toggle stops truncating AND the title keeps its
-  // room (operator UAT).
-  assert.ok(/'<div class="moreMenu" id="moreMenu" hidden>' \+ stageBtnHtml \+ soloRowBtn/.test(src),
-    'stageBtnHtml + soloRowBtn must live inside the #moreMenu overflow');
-  // The view row is now just the toggle + transpose - Stage/Solo removed.
-  assert.ok(/'<div class="practiceRow">'[\s\S]{0,400}transposeChip[\s\S]{0,200}\+ '<\/div>'/.test(src),
-    'the .practiceRow should end after the transposeChip (Stage/Solo removed)');
+  assert.ok(/var stageBtnHtml = '<button[^']*id="stageBtn"/.test(src), 'stageBtnHtml (Full screen) definition missing');
+  // Stage + Solo live in a VISIBLE .songActRow (not the overflow).
+  assert.ok(/'<div class="songActRow">' \+ stageBtnHtml \+ soloRowBtn \+ '<\/div>'/.test(src),
+    'stageBtnHtml + soloRowBtn must compose the visible .songActRow');
+  // The overflow menu holds the rarely-used items (YouTube / lyrics / delete),
+  // NOT Stage/Solo.
+  assert.ok(/'<div class="moreMenu" id="moreMenu" hidden>' \+ overflowItems/.test(src),
+    'the #moreMenu overflow must hold overflowItems (YouTube/lyrics/delete)');
+  assert.ok(!/moreMenu[^]{0,60}stageBtnHtml/.test(src),
+    'Stage/Solo must NOT be inside the overflow menu (they are visible now)');
 });
 
 /* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------
