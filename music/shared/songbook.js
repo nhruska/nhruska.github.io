@@ -1255,6 +1255,22 @@
       var isErr = (kind === true || kind === 'err');
       var isWarn = (kind === 'warn');
       var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : (action ? 5200 : 1600);
+      // Tap-outside-to-dismiss (operator UAT: "the add-to-setlist confirm needs
+      // to be dismissed by tapping outside"). A tap anywhere off the toast clears
+      // it early instead of waiting out the timer; the listener is armed AFTER
+      // this tap (setTimeout 0) so the opening gesture can't instantly close it,
+      // and it tears itself down on any hide (outside tap, action tap, or timer).
+      var outsideCloser = null;
+      function teardownCloser() {
+        if (outsideCloser && typeof document !== 'undefined' && document.removeEventListener) {
+          document.removeEventListener('pointerdown', outsideCloser, true);
+        }
+        outsideCloser = null;
+      }
+      function paintHide(host) {
+        host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); host.classList.remove('withAct');
+        teardownCloser();
+      }
       global.Toast.show(msg, {
         host: toastEl,
         error: isErr,
@@ -1266,15 +1282,26 @@
           if (action) {
             var b = document.createElement('button');
             b.type = 'button'; b.className = 'toastGo'; b.textContent = action.label;
-            b.onclick = function () { host.classList.remove('on'); action.fn(); };
+            // Route through Toast.hide so the action tap also clears the timer +
+            // the outside-tap listener (not just the visual 'on' class).
+            b.onclick = function () { global.Toast.hide(host, { onHide: paintHide }); action.fn(); };
             host.appendChild(b);
           }
           host.classList.toggle('withAct', !!action);
           host.classList.toggle('err', isErr);
           host.classList.toggle('warn', isWarn);
           host.classList.add('on');
+          // Arm the outside-tap dismissal (guarded for the stub DOM in tests).
+          if (typeof document !== 'undefined' && document.addEventListener && typeof host.contains === 'function') {
+            teardownCloser();
+            outsideCloser = function (ev) {
+              if (host.contains(ev.target)) return; // taps on the toast / its action button keep it
+              global.Toast.hide(host, { onHide: paintHide });
+            };
+            setTimeout(function () { if (outsideCloser) document.addEventListener('pointerdown', outsideCloser, true); }, 0);
+          }
         },
-        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); host.classList.remove('withAct'); }
+        onHide: paintHide
       });
     }
     // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to

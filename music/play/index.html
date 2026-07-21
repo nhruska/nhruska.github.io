@@ -1050,6 +1050,26 @@
       markTheme(storedTheme());
     }
 
+    /* Make each Settings preview cell a tappable target that selects its option
+       (operator UAT: "I expected to tap the preview, but I can only click
+       toggles"). role=button + Enter/Space for keyboard. The .prefEx cells
+       persist across populatePrefPreviews() re-fills (only their inner content
+       is swapped), so wiring once here is enough. */
+    function wirePreviewCells(previewId, apply) {
+      var pv = document.getElementById(previewId);
+      if (!pv) return;
+      pv.querySelectorAll('.prefEx').forEach(function (ex) {
+        var m = ex.dataset.m;
+        ex.setAttribute('role', 'button');
+        ex.setAttribute('tabindex', '0');
+        ex.setAttribute('aria-label', 'Select this option');
+        ex.addEventListener('click', function () { apply(m); });
+        ex.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); apply(m); }
+        });
+      });
+    }
+
     /* Dots / Patterns segmented control - the Settings-row setter for
        music.diagram.pref.v1 (shared/diagram-pref.js owns the storage; this is
        DOM glue only, mirroring the Theme control above - same .themeSeg/.thSeg
@@ -1065,22 +1085,29 @@
       var pv = document.getElementById('diagramPrefPreview'); // highlight the matching preview example
       if (pv) pv.querySelectorAll('.prefEx').forEach(function (x) { x.classList.toggle('on', x.dataset.m === val); });
     }
+    // One setter, two triggers: the toggle button AND the preview cell (below).
+    // Picking either settles the one-time prompt too - the user just answered
+    // the same question this Settings row asks.
+    function applyDiagramPref(m) {
+      DiagramPref.set(m);
+      markDiagramPref(m);
+      if (window.Notables) Notables.dismiss('diagrampref');
+    }
     if (dpWrap && window.DiagramPref) {
       DIAGRAM_PREFS.forEach(function (pair) {
         var b = document.createElement('button');
         b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
         b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' fretboard diagrams');
-        b.onclick = function () {
-          DiagramPref.set(pair[0]);
-          markDiagramPref(pair[0]);
-          // Picking here also settles the one-time prompt below, if it's
-          // still open or still eligible to fire later - the user just
-          // answered the same question this Settings row asks.
-          if (window.Notables) Notables.dismiss('diagrampref');
-        };
+        b.onclick = function () { applyDiagramPref(pair[0]); };
         dpWrap.appendChild(b);
       });
       markDiagramPref(DiagramPref.get());
+      // The preview cell IS a tappable target too (operator UAT: "I expected to
+      // tap the preview, but I can only click toggles"). Each .prefEx[data-m]
+      // selects its option, same as the toggle. Wired once on the persistent
+      // cells (populatePrefPreviews swaps only their inner content, not the
+      // cell elements), so this survives every re-populate.
+      wirePreviewCells('diagramPrefPreview', applyDiagramPref);
     }
 
     /* Chord charts - the Settings-row setter for music.chordCharts.v1
@@ -1108,21 +1135,25 @@
       var pv = document.getElementById('chordChartsPreview'); // highlight the matching preview example
       if (pv) pv.querySelectorAll('.prefEx').forEach(function (x) { x.classList.toggle('on', x.dataset.m === val); });
     }
+    // One setter, two triggers: the toggle button AND the preview cell.
+    function applyChartsPref(m) {
+      try { localStorage.setItem('music.chordCharts.v1', m); } catch (e) {}
+      markChartsPref();
+      // Repaint the live Compose grid + filmstrip so the choice shows the
+      // moment Settings closes, not on the next reload.
+      if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
+    }
     if (ccWrap) {
       CHART_PREFS.forEach(function (pair) {
         var b = document.createElement('button');
         b.className = 'thSeg'; b.type = 'button'; b.dataset.m = pair[0];
         b.textContent = pair[1]; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', pair[1] + ' chord display');
-        b.onclick = function () {
-          try { localStorage.setItem('music.chordCharts.v1', pair[0]); } catch (e) {}
-          markChartsPref();
-          // Repaint the live Compose grid + filmstrip so the choice shows
-          // the moment Settings closes, not on the next reload.
-          if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
-        };
+        b.onclick = function () { applyChartsPref(pair[0]); };
         ccWrap.appendChild(b);
       });
       markChartsPref();
+      // Tappable preview cells (operator UAT), same as the diagram row above.
+      wirePreviewCells('chordChartsPreview', applyChartsPref);
     }
 
     /* Guidance level - the standard .themeSeg segmented control, wired like

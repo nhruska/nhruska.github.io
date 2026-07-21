@@ -343,11 +343,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .detailHead .backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
 .detailHead .backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .detailHead .ti{flex:1;min-width:0;}
-/* Title sized to breathe next to the arrow-only Back + the two header buttons:
-   at 1.42rem a long parenthetical title ("Good Riddance (Time of Your Life)")
-   wrapped to 4 lines even with the width the arrow freed; 1.24rem keeps it to
-   ~2 and never truncates (the full-screen view shows the full title big anyway). */
-.detailHead .ti h2{font-weight:800;font-size:1.24rem;line-height:1.12;letter-spacing:-.02em;}
+/* Title sized to breathe next to the arrow-only Back + the two header buttons
+   (1.42->1.24rem), AND clamped to 2 lines with an ellipsis (operator UAT: even
+   the freed width left a long parenthetical title wrapping 3 lines). The full
+   title still shows big in the full-screen perform view, so the clamp trades a
+   tail no one needs in the header for a tidy 2-line cap. */
+.detailHead .ti h2{font-weight:800;font-size:1.24rem;line-height:1.12;letter-spacing:-.02em;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
 /* Overflow menu (Hear-on-YouTube / Full-lyrics / Delete) off the song-view
@@ -1667,9 +1669,13 @@ footer{display:none;}
    hand-drawn copy. */
 .prefPreview{display:flex;gap:8px;margin:8px 0 2px;align-items:stretch;}
 .prefEx{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:6px 4px;
-  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;
-  opacity:.45;transition:opacity .15s,border-color .15s,box-shadow .15s;}
+  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;cursor:pointer;
+  opacity:.45;transition:opacity .15s,border-color .15s,box-shadow .15s,transform .08s;}
 .prefEx.on{opacity:1;border-color:var(--accent-dim);box-shadow:0 0 0 1px var(--accent-dim);}
+/* The preview cell is itself the selector (operator UAT) - press feedback +
+   a focus ring so the tap affordance reads. */
+.prefEx:active{transform:scale(.97);}
+.prefEx:focus-visible{outline:2px solid var(--accent-dim);outline-offset:2px;}
 /* the real small chord diagram is sized for chord cards - scale it to fit the
    preview cell; the compact chip needs no scaling. */
 .prefEx .chord,.prefEx .bigC{transform:scale(.82);}
