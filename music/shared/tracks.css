@@ -415,6 +415,20 @@
   .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
     letter-spacing:.02em;margin:0 0 8px;}
   .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  /* SECONDARY action primitive (operator UAT 2026-07-22): "Find another jam",
+     "Add to library", "Edit" all use .bt-st-editlink but had NO resting rule -
+     only the .on fill below - so their text fell back to system black on the
+     dark theme and read as invisible until tapped (the documented
+     button-needs-explicit-colour gotcha). One base rule here fixes all three
+     (Element Consistency Law): a visible ghost/secondary button that matches
+     the Studio's .bt-st-ytlink primary grammar, one emphasis step down. */
+  .bt-st-editlink{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;color:var(--txt-soft);
+    border:1px solid var(--line-strong);background:var(--surface-2);text-decoration:none;
+    padding:9px 14px;border-radius:var(--r-btn-sm);min-height:44px;cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s,transform .08s;}
+  .bt-st-editlink:active{transform:scale(.97);}
+  .bt-st-editlink:hover,.bt-st-editlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .bt-st-ytlink.on,.bt-st-editlink.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 
 /* =====================================================================
