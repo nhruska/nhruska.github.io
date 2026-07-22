@@ -1,14 +1,13 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-21T11:20:57Z
+Generated: 2026-07-22T11:22:24Z
 Status: ok
 
 ## NOW
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #295 (CI green): music: Setlist + perform + song-view UAT (grip-drag, arm-red delete, slim header, landscape refit, Back+overflow) - https://github.com/nhruska/nhruska.github.io/pull/295
-- Open draft PR #294 (CI green): music: first-run per-tab callouts + single-panel welcome (UAT) - https://github.com/nhruska/nhruska.github.io/pull/294
-- Open draft PR #293 (CI green): music: split tracks.js - extract studio-theory.js (Studio theory + JIT text) - https://github.com/nhruska/nhruska.github.io/pull/293
+- Open draft PR #298 (CI green): music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3) - https://github.com/nhruska/nhruska.github.io/pull/298
+- Open draft PR #297 (CI green): music: white-circle app icon, rainbow accent palette, N5 double-undo fix - https://github.com/nhruska/nhruska.github.io/pull/297
 - Open draft PR #274 (CI unknown): docs: rename suggested chords section to name the intent - https://github.com/nhruska/nhruska.github.io/pull/274
 
 ## Open gaps / to-wire
@@ -17,14 +16,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #296 - music: Studio jam-finder UAT - visible secondary buttons (batch, in progress) (2026-07-22) - https://github.com/nhruska/nhruska.github.io/pull/296
+- #295 - music: Setlist + perform + song-view UAT (grip-drag, arm-red delete, slim header, landscape refit, Back+overflow) (2026-07-22) - https://github.com/nhruska/nhruska.github.io/pull/295
+- #294 - music: first-run per-tab callouts + single-panel welcome (UAT) (2026-07-22) - https://github.com/nhruska/nhruska.github.io/pull/294
+- #293 - music: split tracks.js - extract studio-theory.js (Studio theory + JIT text) (2026-07-22) - https://github.com/nhruska/nhruska.github.io/pull/293
 - #292 - music: split tracks.js - extract tracks-model.js (finder data layer) (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/292
 - #291 - music: engine split - extract theory / suggest-model / sheet-render / song-model from songbook.js (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/291
 - #290 - music: codebase readability sweep - standard + sw.js exemplar (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/290
 - #289 - music(settings): simplified visual previews under the diagram/chart toggles (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/289
-- #288 - music(compose): progression draft chip + disable Save when empty (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/288
-- #287 - music(appearance): bold jewel accent spectrum - launch color rebrand (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/287
-- #286 - music(setlist): drag edge-auto-scrolls so off-screen rows are reachable (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/286
-- #285 - music(compose): canvas suggestions use the song's home key + minor keys stay in-key (2026-07-20) - https://github.com/nhruska/nhruska.github.io/pull/285
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -37,6 +36,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (2425 cases / 50 suites)
+- Suite: node test/run-all.js (2438 cases / 51 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
