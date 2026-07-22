@@ -569,19 +569,12 @@
         var JQ = global.JamQueries;
         if (!JQ) { jamPanel.innerHTML = ''; return; }
         var scaleKey = scaleKeyFor(scaleId, th.scaleMode);
-        // #3 (operator UAT): the genre CHOICES read from the SAME source as the
-        // Library filter (uniqueGenres over the merged catalog) - one genre
-        // vocabulary app-wide, and MODE NO LONGER DICTATES GENRE. The active
-        // scale still flavors the SEARCH PHRASE (scaleKey feeds jamQuery below),
-        // but the chip list is stable across scale switches. Fall back to the
-        // curated per-scale list only if the catalog carries no genres at all,
-        // so the panel never renders empty.
-        var genres = uniqueGenres(state.tracks);
-        if (!genres.length) genres = JQ.genresFor(scaleKey);
+        var genres = JQ.genresFor(scaleKey);
         if (!genres.length) { jamPanel.innerHTML = ''; return; }
-        // First render (or a stale pick no longer in the list) lands on the first
-        // genre; a valid current pick is preserved across scale switches now that
-        // the list itself doesn't change with the scale.
+        // A genre carried over from a different scale's list (or the first-ever
+        // render) resets to that scale's own first genre - the list itself is
+        // scale-specific, so a stale selection would silently point at a genre
+        // the current scale never offered.
         if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
         var feelBands = JQ.feels();
         var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
