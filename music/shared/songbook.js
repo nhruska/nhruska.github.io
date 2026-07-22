@@ -977,7 +977,7 @@
       if (!savebasicsShouldRender(global.Notables)) return; // dismissed, wrong level, or slot held elsewhere - skip silently
       var bannerEl = global.Notables.renderBanner({
         consumerId: 'savebasics',
-        text: 'Tap the + up top to save this song to your setlist, so it is easy to find again.',
+        text: 'Tap the + to save this song to your setlist, so it is easy to find again.',
         onDismiss: function () { if (bannerEl && bannerEl.parentNode) bannerEl.parentNode.removeChild(bannerEl); }
       });
       if (!bannerEl) return; // no `document` available (Node without a DOM stub)
@@ -1011,52 +1011,54 @@
       // a catalog song.
       var forcedChords = s.custom && !s.forkOf;
       var view = forcedChords ? 'chords' : STATE.songView;
-      // header: icon-only back arrow (top-left, beside the title) + a compact
-      // setlist checkmark toggle (top-right). The Stage (⛶) button in the view
-      // row below is the single fullscreen/maximize control (t2 - the old ⤢
-      // "Maximize chords" icon here was redundant with Stage and was removed).
+      // Resolve the Solo entry + the key-aware chord speller BEFORE the header is
+      // built, so Stage + Solo can live in the header actions (operator UAT: they
+      // were crowding the Lyrics/Chords/Both view row and truncating its labels).
+      // "Solo over it" bridges any song whose key we can determine; prefer the
+      // MERGED repertoire record (a matched backing track's authoritative key/mode
+      // beats re-deriving from a possibly non-tonic first chord), else the raw
+      // record - soloKeyFor still derives from the transposed seq when neither
+      // carries an explicit key, so soloing always matches what's on screen.
+      var mergedRec = null;
+      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
+      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
+      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
+      // Key-aware display speller for every chord NAME on this screen (chip row,
+      // transpose readout, sheet). Chord TOKENS stay canonical-sharp (data-c,
+      // play/audio, storage) - only labels respell (an F song at +2 spells in G);
+      // falls back to the raw token when the progression is keyless.
+      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
+      // Stage (fullscreen) + Solo are KEY actions - kept VISIBLE in their own
+      // controls row under the view toggle (operator UAT: don't hide them in the
+      // overflow). Stage always; Solo only when soloable.
+      var stageBtnHtml = '<button class="btn ghost songActBtn" id="stageBtn" type="button" title="Perform fullscreen"><span aria-hidden="true">⛶</span> Full screen</button>';
+      var soloRowBtn = canSolo ? '<button class="btn ghost songActBtn soloRowBtn" id="soloOverBtn" type="button" title="Solo over it - open the Practice Studio">Solo</button>' : '';
+      // Rarely-used actions live in the OVERFLOW (⋯) instead: Hear-on-YouTube,
+      // Full-lyrics, and (custom songs) Delete - tucked away so the header stays
+      // clean and the key controls stay in reach (operator UAT).
+      var ytURL = ytSearchURL(mergedRec || s);
+      var geniusURL = 'https://genius.com/search?q=' + encodeURIComponent(s.t + ' ' + s.a);
+      var overflowItems = '<a class="moreItem" href="' + ytURL + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>'
+        + '<a class="moreItem" href="' + geniusURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>'
+        + (s.custom ? '<button class="moreItem moreItemDanger" id="delSongBtn" type="button">' + (s.forkOf ? 'Revert to original' : 'Delete this song') + '</button>' : '');
+      // Header: a prominent ARROW-ONLY Back (top-left) - the likeliest next tap, so
+      // it wears the accent; a labeled "Back" was squashing the title into 2-3
+      // wrapped lines (operator UAT). Then the setlist toggle + the overflow (⋯).
+      var backLabel = practiceOrigin === 'jam' ? 'Setlist' : 'Library';
       var head = '<div class="detailHead">'
-        + '<button class="iconBtn" id="backLib" title="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '" aria-label="Back to ' + (practiceOrigin === 'jam' ? 'Setlist' : 'Library') + '">←</button>'
+        + '<button class="iconBtn backArrowBtn" id="backLib" title="Back to ' + backLabel + '" aria-label="Back to ' + backLabel + '"><span aria-hidden="true">←</span></button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
         // artist (no hardcoded placeholder to duplicate the title) - omit the
         // ' · ' separator entirely rather than showing a leading, artist-less dot.
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
+        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">⋯</span></button>'
+        + '<div class="moreMenu" id="moreMenu" hidden>' + overflowItems + '</div></div>'
         + '</div></div>';
-      // F28 (UI-std UAT): resolve the Solo entry point BEFORE the controls row is
-      // built, so the button lives IN that row (beside modeSwitch/transpose/stage) -
-      // directly above the chord content, not bolted on below the sheet where the
-      // operator flagged it as "in the way when you don't need it, and not in the
-      // right place when you do." "Solo over it" used to require s.custom (only
-      // progressions built in Compose carried a key/mode). Any song can bridge to
-      // the Studio if we can determine a key. Prefer the MERGED repertoire record:
-      // Repertoire.build copies a matched backing track's authoritative key/mode
-      // onto it, which beats re-deriving from the first chord (a non-tonic opener
-      // would mislabel). Fall back to the raw record; soloKeyFor still derives from
-      // the TRANSPOSED seq when neither has an explicit key, so soloing always
-      // matches what's on screen.
-      var mergedRec = null;
-      for (var ri = 0; ri < REPERTOIRE.length; ri++) { if (REPERTOIRE[ri].id === s.id) { mergedRec = REPERTOIRE[ri]; break; } }
-      var soloKey = soloKeyFor((mergedRec && mergedRec.key && mergedRec.mode) ? mergedRec : s, seq, STATE.transpose);
-      var canSolo = typeof openStudioCb === 'function' && !!(soloKey.key && soloKey.mode);
-      // S-UI-RECONCILE (Lane A): key-aware display speller for every chord NAME on
-      // this song screen (chip row, transpose readout, campfire sheet). soloKey is
-      // already transpose-adjusted and `seq` is already transposed, so this maps
-      // transposed-token -> transposed-key display name (F song at +2 spells in G).
-      // Falls back to the raw token when the progression is keyless. Chord TOKENS
-      // (data-c, play/audio, storage) stay canonical-sharp - only labels respell.
-      var dispMap = chordSpeller(soloKey.key, soloKey.mode);
-      // Compact label ("Solo"; the title attr carries the full phrase) so it fits
-      // the SAME row as modeSwitch/transposeChip/stageGo at 375-412px - mirrors
-      // Compose's #chordCtrlRow treatment on the other surface (songbook.css
-      // .soloRowBtn). Entirely absent (not just disabled) when canSolo is false -
-      // no dead tap, no row filler.
-      var soloRowBtn = canSolo ? '<button class="btn soloRowBtn" id="soloOverBtn" title="Solo over it - open the Practice Studio">Solo</button>' : '';
-      // view row: Lyrics / Chords / Both segmented + compact transpose chip +
-      // a compact Stage (fullscreen) icon button + (F28) the Solo entry point, all
-      // on ONE row (UAT round 2 locked decision - replaces the full-width Stage
-      // CTA; F28 UAT folds Solo into the same row instead of a separate CTA below).
+      // View row: just Lyrics / Chords / Both + the transpose chip now (Stage +
+      // Solo moved to the header), so the segmented toggle gets full width and no
+      // longer truncates its labels.
       function segBtn(v, lbl) {
         var dis = forcedChords && v !== 'chords';
         return '<button data-v="' + v + '" class="' + (view === v ? 'on' : '') + '"'
@@ -1065,9 +1067,11 @@
       var switcher = '<div class="practiceRow">'
         + '<div class="modeSwitch">' + segBtn('lyrics', 'Lyrics') + segBtn('chords', 'Chords') + segBtn('both', 'Both') + '</div>'
         + '<div class="transposeChip"><button id="tDown" title="Transpose down">−</button><span class="v" id="keyV">' + escHTML(dispMap(seq[0])) + '</span><button id="tUp" title="Transpose up">+</button></div>'
-        + '<button class="iconBtn stageGo" id="stageBtn" title="Stage: perform fullscreen" aria-label="Stage: perform fullscreen"><span aria-hidden="true">⛶</span></button>'
-        + soloRowBtn
         + '</div>';
+      // Key actions row: Full-screen (Stage) + Solo kept VISIBLE right under the
+      // toggle (operator UAT: not buried in the overflow). Full width buttons so
+      // they read as primary reach targets.
+      var songActRow = '<div class="songActRow">' + stageBtnHtml + soloRowBtn + '</div>';
       // queue nav — only when a real running order (the setlist) is loaded.
       // S-SET-INTEGRITY (UAT U22): the position readout appends the one-shot
       // skip notice (see navQueue()) so a defended-against dangling ref is
@@ -1083,28 +1087,21 @@
       // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
       // action-ladder host appended further down for custom/catalog songs.
       var actions = '<div class="actions"></div>';
-      // Hear the real recording: same YouTube search the list-item action ladder
-      // uses (item 5, UAT round 2) - present in BOTH views (it's about the ear,
-      // not the sheet). The MERGED record feeds the query so track-derived
-      // fields (key etc.) match what the ladder builds from.
-      var ytLink = '<a class="lyricsLink" href="' + ytSearchURL(mergedRec || s) + '" target="_blank" rel="noopener">Hear on YouTube ↗</a>';
+      // Hear-on-YouTube + Full-lyrics moved to the header OVERFLOW (⋯) - rarely
+      // used, tucked away so the sheet gets the space (operator UAT). No longer
+      // duplicated on a below-sheet link row.
       var body;
       if (view === 'chords') {
         body = chips
           + '<div class="sheet campfireSheet" id="sheetBox">' + renderSheet(s, STATE.transpose, 'chords', dispMap) + '</div>'
-          + actions
-          + '<div class="lyricsLinks">' + ytLink + '</div>';
+          + actions;
       } else {
-        var lyricsURL = "https://genius.com/search?q=" + encodeURIComponent(s.t + " " + s.a);
-        var geniusLink = '<a class="lyricsLink" href="' + lyricsURL + '" target="_blank" rel="noopener">Full lyrics on Genius ↗</a>';
         body = chips
           + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
           + actions
-          // Both secondary links on ONE row (t3) - Hear-on-YouTube + Full-lyrics-on-Genius.
-          + '<div class="lyricsLinks">' + ytLink + geniusLink + '</div>'
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
-      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + queueNav + body + '</div>';
+      el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + songActRow + queueNav + body + '</div>';
       renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
@@ -1117,6 +1114,32 @@
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
+      // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The
+      // dismiss listener is attached only WHILE open and removes itself, so no
+      // per-render leak (renderPractice runs on every open / view change). Stage
+      // and Solo both navigate away, so their own taps tear the menu down.
+      var moreBtn = el.practiceBody.querySelector('#moreBtn');
+      var moreMenu = el.practiceBody.querySelector('#moreMenu');
+      if (moreBtn && moreMenu) moreBtn.onclick = function (e) {
+        e.stopPropagation();
+        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); return; }
+        moreMenu.hidden = false; moreBtn.setAttribute('aria-expanded', 'true');
+        var closer = function (ev) {
+          if (moreMenu.contains(ev.target) || ev.target === moreBtn) return;
+          moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+          document.removeEventListener('pointerdown', closer, true);
+        };
+        setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
+      };
+      // Overflow Delete / Revert (custom songs only). Same confirm + effect as the
+      // old ladder button - a fork REVERTS to the catalog original, a real custom
+      // song is DELETED. Closes the menu on tap (it navigates away anyway).
+      var delSong = el.practiceBody.querySelector('#delSongBtn');
+      if (delSong) delSong.onclick = function () {
+        var isFork = !!s.forkOf;
+        var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
+        if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
+      };
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -1139,7 +1162,6 @@
       };
       var act = el.practiceBody.querySelector('.actions');
       if (act && s.custom) {
-        var isFork = !!s.forkOf;
         // S-SONG-MODE Phase B: back into the builder - the sheet parses to
         // sections, the Song canvas reopens, and Save updates THIS song in
         // place. Only offered when the sheet actually yields sections (a
@@ -1154,19 +1176,9 @@
         eb.className = 'btn'; eb.textContent = 'Edit';
         eb.onclick = function () { openEditForm(s.id); };
         act.appendChild(eb);
-        var db = document.createElement('button');
-        // S-UI-RECONCILE (Lane A): danger primitive for a real delete, ghost for a
-        // non-destructive fork revert; full-width via CSS `.full` (Lane D), not an
-        // inline style. See deleteBtnClass for the full rationale.
-        db.className = deleteBtnClass(isFork);
-        // A fork shadows a catalog song, so removing it REVERTS to the original
-        // rather than deleting a user creation - label + confirm say so.
-        db.textContent = isFork ? 'Revert to original' : 'Delete progression';
-        db.onclick = function () {
-          var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
-          if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
-        };
-        act.appendChild(db);
+        // Delete / Revert moved to the header OVERFLOW (#delSongBtn) - a
+        // rarely-used, destructive action tucked out of the primary ladder
+        // (operator UAT). Wired below alongside the overflow menu.
       } else if (act && !s.custom) {
         // Catalog song: fork it into an editable, user-owned copy that SHADOWS
         // the original (add a video, rename, re-key). Chords + lyrics preserved.
@@ -1243,6 +1255,22 @@
       var isErr = (kind === true || kind === 'err');
       var isWarn = (kind === 'warn');
       var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : (action ? 5200 : 1600);
+      // Tap-outside-to-dismiss (operator UAT: "the add-to-setlist confirm needs
+      // to be dismissed by tapping outside"). A tap anywhere off the toast clears
+      // it early instead of waiting out the timer; the listener is armed AFTER
+      // this tap (setTimeout 0) so the opening gesture can't instantly close it,
+      // and it tears itself down on any hide (outside tap, action tap, or timer).
+      var outsideCloser = null;
+      function teardownCloser() {
+        if (outsideCloser && typeof document !== 'undefined' && document.removeEventListener) {
+          document.removeEventListener('pointerdown', outsideCloser, true);
+        }
+        outsideCloser = null;
+      }
+      function paintHide(host) {
+        host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); host.classList.remove('withAct');
+        teardownCloser();
+      }
       global.Toast.show(msg, {
         host: toastEl,
         error: isErr,
@@ -1254,15 +1282,26 @@
           if (action) {
             var b = document.createElement('button');
             b.type = 'button'; b.className = 'toastGo'; b.textContent = action.label;
-            b.onclick = function () { host.classList.remove('on'); action.fn(); };
+            // Route through Toast.hide so the action tap also clears the timer +
+            // the outside-tap listener (not just the visual 'on' class).
+            b.onclick = function () { global.Toast.hide(host, { onHide: paintHide }); action.fn(); };
             host.appendChild(b);
           }
           host.classList.toggle('withAct', !!action);
           host.classList.toggle('err', isErr);
           host.classList.toggle('warn', isWarn);
           host.classList.add('on');
+          // Arm the outside-tap dismissal (guarded for the stub DOM in tests).
+          if (typeof document !== 'undefined' && document.addEventListener && typeof host.contains === 'function') {
+            teardownCloser();
+            outsideCloser = function (ev) {
+              if (host.contains(ev.target)) return; // taps on the toast / its action button keep it
+              global.Toast.hide(host, { onHide: paintHide });
+            };
+            setTimeout(function () { if (outsideCloser) document.addEventListener('pointerdown', outsideCloser, true); }, 0);
+          }
         },
-        onHide: function (host) { host.classList.remove('on'); host.classList.remove('err'); host.classList.remove('warn'); host.classList.remove('withAct'); }
+        onHide: paintHide
       });
     }
     // toTop (UAT 2026-07-16, operator "should we add new songs/progressions to
@@ -1394,6 +1433,32 @@
       });
       setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
+    // Timed undo for the whole-setlist Clear (operator UAT). Same banner + toast
+    // infra as the per-row remove undo, but restores the ENTIRE prior list on
+    // Undo - Clear is the most destructive setlist action, so it earns the same
+    // pause-on-touch, auto-dismissing safety net.
+    function showSetClearUndoBanner(prevList) {
+      if (!ensureSetUndoBanner() || !prevList || !prevList.length) return;
+      dismissSetUndo(); // tear down any stale prior instance first
+      setUndoBanner.hidden = false;
+      setUndoBanner.innerHTML = '';
+      var n = prevList.length, label = 'Cleared ' + n + ' song' + (n > 1 ? 's' : '');
+      var msg = document.createElement('span'); msg.textContent = label;
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'btn ghost'; undoBtn.textContent = 'Undo';
+      undoBtn.onclick = function () {
+        STATE.setlist = prevList.slice(); STATE.lastRemoved = null;
+        if (setUndoHandle) setUndoHandle.finish();
+        saveSet(); syncQueueToSetlist(); renderSetlist(); renderSongs();
+      };
+      setUndoBanner.appendChild(msg); setUndoBanner.appendChild(undoBtn);
+      setUndoHandle = global.Toast.showAction(label, {
+        host: setUndoBanner,
+        onShow: function (host, m, bar) { if (bar) host.appendChild(bar); },
+        onHide: function () { STATE.lastRemoved = null; paintSetUndoHidden(); }
+      });
+      setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
+    }
     // Operator 2026-07-19 ("drag and drop [at] all places where we have up and
     // down arrows to reorder - we already support it for the progression
     // builder"): the setlist rows were the last arrow-only reorder surface.
@@ -1405,8 +1470,14 @@
     // off the RESTING scroll rail). The arrows stay as the a11y/keyboard path.
     var setlistDragSwallowClick = false, setlistSwallowWired = false;
     function wireSetlistDrag(row, index) {
-      row.addEventListener('pointerdown', function (e) {
+      // Drag initiates from the dedicated grip handle ONLY - a body tap plays the
+      // song, so there is no scroll-vs-drag ambiguity and no Edit-mode gate. The
+      // grip is drag-only (no tap action), so we lift on pointerdown immediately.
+      var grip = row.querySelector('.li-grip');
+      if (!grip) return;
+      grip.addEventListener('pointerdown', function (e) {
         if (STATE.setlist.length < 2) return;
+        e.preventDefault(); // grip is drag-only: never a scroll-start or a tap
         var id = e.pointerId, startX = e.clientX, startY = e.clientY;
         var isTouch = e.pointerType === 'touch';
         var lifted = false, dropAt = null, marked = null, holdTimer = null;
@@ -1423,7 +1494,7 @@
         function lift() {
           holdTimer = null; lifted = true;
           row.classList.add('dragging');
-          try { row.setPointerCapture(id); } catch (err) {}
+          try { grip.setPointerCapture(id); } catch (err) {}
           document.addEventListener('touchmove', blockScroll, { passive: false });
         }
         // Nearest row to lastY; the insertion edge is top/bottom. Split out so
@@ -1494,13 +1565,13 @@
           if (scrollRAF != null) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
           clearMark();
           row.classList.remove('dragging');
-          try { row.releasePointerCapture(id); } catch (err) {}
+          try { grip.releasePointerCapture(id); } catch (err) {}
           document.removeEventListener('touchmove', blockScroll);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
           window.removeEventListener('pointercancel', onUp);
         }
-        if (isTouch) holdTimer = setTimeout(lift, 300);
+        lift(); // dedicated grip - lift on pointerdown, no hold delay, no scroll race
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
         window.addEventListener('pointercancel', onUp);
@@ -1517,46 +1588,34 @@
         }, true);
         setlistSwallowWired = true;
       }
-      // The Edit toggle reveals reorder/remove (codex: keep the resting set row clean +
-      // destructive controls off the scroll rail until the user opts into editing).
-      if (el.setEdit) {
-        el.setEdit.style.display = STATE.setlist.length ? '' : 'none';
-        el.setEdit.textContent = STATE.setEditMode ? 'Done' : 'Edit';
-        el.setEdit.classList.toggle('on', STATE.setEditMode);
-      }
-      // Clear (✕) is a destructive control: UAT 2026-07-16 hides it until EDIT
-      // mode (and it wears red - .setDelete) so a resting setlist never shows a
-      // one-tap wipe. (Also hidden on an empty setlist - nothing to destroy.)
-      if (el.setClear) el.setClear.style.display = (STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
-      // Start (perform) lives in the header now (UAT: not a full-width bar). It
-      // shows only in NORMAL mode with a non-empty set - performing isn't a thing
-      // you do mid-edit, and it sits rightmost (thumb) with Edit to its left.
-      if (el.performBtn) el.performBtn.style.display = (!STATE.setEditMode && STATE.setlist.length) ? '' : 'none';
+      // No Edit round-trip (operator UAT): a set row is always reorderable (grip
+      // drag) and removable (arm-red x), so the slim header just carries Clear +
+      // Start, both shown whenever the set is non-empty. The Clear x is itself
+      // arm-to-delete (wired below), NOT a one-tap wipe, so it is safe resting.
+      if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
+      if (el.performBtn) el.performBtn.style.display = STATE.setlist.length ? '' : 'none';
       if (STATE.setlist.length === 0) {
         body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
-        STATE.setEditMode = false; dismissSetUndo(); STATE.lastRemoved = null;
+        dismissSetUndo(); STATE.lastRemoved = null;
         return;
       }
-      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '')
-        + (STATE.setEditMode ? ' · editing' : ' · ready to play');
+      if (count) count.textContent = STATE.setlist.length + ' song' + (STATE.setlist.length > 1 ? 's' : '') + ' · ready to play';
       body.innerHTML = '';
       STATE.setlist.forEach(function (sid, i) {
         var s = songById(sid); if (!s) return;
-        // SSOT: same renderer as Songs/Tracks, in 'set' mode. Reorder/remove only when setEdit.
+        // SSOT: same renderer as Songs/Tracks, in 'set' mode - always reorderable
+        // (grip) + removable (arm-red x); a body tap always plays.
         var setRow = global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
-          setEdit: STATE.setEditMode,
-          // Operator UAT 2026-07-20 ("disable select song when editing setlist to
-          // prevent unwanted actions"): in EDIT mode a body-tap must NOT open the
-          // song - you're reordering/removing, and a mis-tap that jumps into
-          // Practice is exactly the unwanted action. Tapping to open is a
-          // NORMAL-mode affordance; edit mode is arrange-only (drag + up/dn + rm).
-          onActivate: STATE.setEditMode ? null : function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          // A body tap always plays - reorder (grip) and remove (arm-red x) are
+          // their own dedicated handles, off the body, so a tap can't mis-fire
+          // either. No Edit mode to disable opening.
+          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () {
@@ -1572,28 +1631,35 @@
           onAction: function () { ytSearch(s); }
         });
         body.appendChild(setRow);
-        // Drag-to-reorder rides alongside the up/dn arrows, EDIT MODE ONLY
-        // (the arrows' own gate; also keeps drag off the resting scroll rail).
-        if (STATE.setEditMode) wireSetlistDrag(setRow, i);
+        // Drag-to-reorder is always available now, initiated from the row's grip.
+        wireSetlistDrag(setRow, i);
       });
       // (The old full-width Start-performance bar was retired 2026-07-16 - Start
       // now lives compact in the header, toggled above.)
     }
-    if (el.setEdit) el.setEdit.onclick = function () {
-      STATE.setEditMode = !STATE.setEditMode;
-      if (!STATE.setEditMode) { dismissSetUndo(); STATE.lastRemoved = null; } // leaving edit mode dismisses the undo affordance
-      renderSetlist();
-    };
-    // Movement-cancelled (codex A2/S-SETX rider): a scroll-grab on the setlist
-    // header rail must not fire the destructive Clear confirm(). Behavior is
-    // otherwise unchanged - same native confirm(), same effect. (Native
-    // confirm() itself is PRE-EXISTING debt, unchanged by M-DESIGN-ENFORCE
-    // wave 2 - see component-conventions.md Findings register: this wave's
-    // MODAL-standard grant covers the backup/restore flow only, not every
-    // confirm() call app-wide.)
+    // Clear the whole setlist: arm-to-delete, matching the per-row remove handle
+    // (operator UAT - "tap to turn red is a confirmation without a popup"). First
+    // tap ARMS the x red (auto-disarms after RM_ARM_MS); a second tap while armed
+    // wipes the set. Replaces the old native confirm() dialog. Movement-cancelled
+    // via wireTapCancel so a scroll-grab on the header rail never arms it.
+    var setClearArmed = false, setClearTimer = null;
+    function disarmSetClear() {
+      setClearArmed = false;
+      if (setClearTimer) { clearTimeout(setClearTimer); setClearTimer = null; }
+      if (el.setClear) el.setClear.classList.remove('armed');
+    }
     if (el.setClear) wireTapCancel(el.setClear, function () {
-      if (STATE.setlist.length === 0) return;
-      if (confirm('Clear your setlist?')) { dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; STATE.setEditMode = false; saveSet(); renderSetlist(); renderSongs(); }
+      if (STATE.setlist.length === 0) { disarmSetClear(); return; }
+      if (!setClearArmed) {
+        setClearArmed = true;
+        el.setClear.classList.add('armed');
+        setClearTimer = setTimeout(disarmSetClear, 1600);
+        return;
+      }
+      disarmSetClear();
+      var prevList = STATE.setlist.slice(); // snapshot BEFORE wiping, for the timed undo
+      dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; saveSet(); renderSetlist(); renderSongs();
+      showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
     });
 
     /* ===================== PERFORM ===================== */
@@ -1690,6 +1756,18 @@
       var needW = inner.scrollWidth; // white-space:pre lyric lines never wrap - width must win
       var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
+    }
+    // Re-fit the stage sheet on orientation change / resize (operator UAT): a
+    // phone rotated to landscape has a very different viewport, and without this
+    // the auto-fit keeps the portrait scale so the sheet doesn't fill the wider
+    // screen. Only while the stage is open AND in auto mode - a manual scale is
+    // the user's explicit pin, left alone. applyPerfFont is a cheap measure+set,
+    // so no debounce (same call the font buttons make). Guarded because the unit
+    // test mount-harness supplies a minimal window without addEventListener.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', function () {
+        if (performEl && performEl.classList.contains('on') && STATE.fontMode === 'auto') applyPerfFont();
+      });
     }
     function updateStageBtns() {
       if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
@@ -1812,6 +1890,11 @@
     global.MusicPreview = {
       diagram: function (mode) {
         var c = previewChord();
+        // SMALL preview cells; the dots-vs-patterns difference (the shape-name
+        // caption 'patterns' adds) is now drawn at any size by diagramForMode, so
+        // the small cell shows the real difference - a clean grid (dots) vs a grid
+        // + shape caption (patterns) - without the 300px-tall big card. Fixes the
+        // "both previews look identical" UAT while keeping the panel compact.
         return (pack && pack.diagramForMode) ? pack.diagramForMode(c, 'small', mode) : null;
       },
       chart: function (mode) {
@@ -2141,7 +2224,7 @@
         // S-SONG-MODE chrome: the wrap (mode class host), the top-level toggle,
         // and the full-screen Song canvas the tray's builder pieces moved into.
         composeWrapEl = null,
-        composeSongEl = null, songCueEl = null, songBuildBtnEl = null;
+        composeSongEl = null, songCueEl = null, songBuildBtnEl = null, songCanvasTitleEl = null;
     // Which section the template chips seed (tappable switcher). Defaults to Verse
     // (the add-row default) - the musician switches to the section they need next.
     var suggestLabel = 'Verse';
@@ -2239,6 +2322,12 @@
       songCloseEl.textContent = '\u2715';
       composeWireTap(songCloseEl, function () { returnToSong = false; setComposeMode('chords'); });
       composeSongEl.appendChild(songCloseEl);
+      // Operator UAT: the canvas never showed WHICH song you're building - you saw
+      // the sections but not the title. This names it at the top (the song being
+      // continued, or "New song" for a fresh draft). The draft chip carries the
+      // same name on the Chords surface; this is its canvas twin.
+      songCanvasTitleEl = document.createElement('div');
+      songCanvasTitleEl.id = 'songCanvasTitle'; songCanvasTitleEl.className = 'songCanvasTitle'; songCanvasTitleEl.hidden = true;
       songCueEl = document.createElement('p'); songCueEl.className = 'songTrayCue songCue';
       songSectionsEl = document.createElement('div'); songSectionsEl.id = 'songSections'; songSectionsEl.className = 'songSections';
       // The one-shot click swallow for section-card drops (capture phase, mirrors
@@ -2276,6 +2365,7 @@
       songAssembleBtnEl.type = 'button'; songAssembleBtnEl.id = 'songAssembleBtn'; songAssembleBtnEl.className = 'btn red songAssembleBtn';
       songAssembleBtnEl.textContent = 'Save song'; songAssembleBtnEl.hidden = true;
       songAssembleBtnEl.onclick = function () { assembleSong(); };
+      composeSongEl.appendChild(songCanvasTitleEl);
       composeSongEl.appendChild(songCueEl);
       composeSongEl.appendChild(songSectionsEl);
       // Operator UAT 2026-07-20 ("horiz divider needed"): the section cards
@@ -2619,6 +2709,18 @@
       if (songCanvasDivEl) songCanvasDivEl.hidden = !(inSong && hasSections);
       renderPulljamCue(inSong);
       renderCue(songCueEl, hasSections ? 'canvas-live' : 'canvas-empty', inSong ? songCanvasCue(hasSections) : '');
+      // Name the song being built at the top of the canvas (operator UAT). The
+      // song being continued (builderSourceId), else "New song" for a fresh draft.
+      // Canvas-only; the Chords surface has the draft chip.
+      if (songCanvasTitleEl) {
+        if (inSong) {
+          var srcSong = (builderSourceId != null && typeof songById === 'function') ? songById(builderSourceId) : null;
+          songCanvasTitleEl.textContent = (srcSong && srcSong.t) ? srcSong.t : 'New song';
+          songCanvasTitleEl.hidden = false;
+        } else {
+          songCanvasTitleEl.hidden = true;
+        }
+      }
       if (songAssembleBtnEl) songAssembleBtnEl.hidden = !hasSections;
       songSectionsEl.innerHTML = '';
       if (!inSong) return; // cards are canvas furniture; skip the build when hidden

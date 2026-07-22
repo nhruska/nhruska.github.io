@@ -846,16 +846,25 @@ test('F28/F29: #catChips and #soloBackingBtn are nested inside #chordCtrlRow (pl
   assert.ok(/id="soloBackingBtn"/.test(block), '#soloBackingBtn (Solo entry) must live inside #chordCtrlRow');
 });
 
-/* F28 (UI-std) song-view half: the Solo entry (#soloOverBtn) is built dynamically
- * into the .practiceRow controls-row template (songbook.js), closure-bound so it's
- * source-pinned per the repo pattern (see the songbook.js DOM-render note ~767).
- * Asserts the button carries #soloOverBtn AND is concatenated into .practiceRow
- * before the row closes - a regression moving it out fails. (codex PR #195 V2 Medium) */
-test('F28: song-view Solo (#soloOverBtn) is appended inside the .practiceRow row (songbook.js)', function () {
+/* F28 (UI-std) song-view half: Full-screen (#stageBtn) + Solo (#soloOverBtn) are
+ * KEY actions and stay VISIBLE in their own .songActRow controls row under the
+ * view toggle - NOT buried in the header overflow (operator UAT reversal 2026-07-21:
+ * "hamburger... hides key features"). The overflow (⋯) instead holds the rarely-
+ * used YouTube / Full-lyrics / Delete. Source-pinned per the repo DOM-render
+ * pattern (see the songbook.js note ~767) so a regression re-hiding them fails. */
+test('song-view Full-screen + Solo stay VISIBLE in the .songActRow, not the overflow (operator UAT)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/soloRowBtn = canSolo \? '<button[^']*id="soloOverBtn"/.test(src), '#soloOverBtn definition (in soloRowBtn) missing');
-  assert.ok(/'<div class="practiceRow">'[\s\S]{0,600}\+ soloRowBtn[\s\S]{0,40}\+ '<\/div>'/.test(src),
-    'soloRowBtn (Solo) not appended inside the .practiceRow row before its close - F28 song-view move regressed');
+  assert.ok(/var stageBtnHtml = '<button[^']*id="stageBtn"/.test(src), 'stageBtnHtml (Full screen) definition missing');
+  // Stage + Solo live in a VISIBLE .songActRow (not the overflow).
+  assert.ok(/'<div class="songActRow">' \+ stageBtnHtml \+ soloRowBtn \+ '<\/div>'/.test(src),
+    'stageBtnHtml + soloRowBtn must compose the visible .songActRow');
+  // The overflow menu holds the rarely-used items (YouTube / lyrics / delete),
+  // NOT Stage/Solo.
+  assert.ok(/'<div class="moreMenu" id="moreMenu" hidden>' \+ overflowItems/.test(src),
+    'the #moreMenu overflow must hold overflowItems (YouTube/lyrics/delete)');
+  assert.ok(!/moreMenu[^]{0,60}stageBtnHtml/.test(src),
+    'Stage/Solo must NOT be inside the overflow menu (they are visible now)');
 });
 
 /* ---------- S-CLEARGUARD (sprint-1 #1): Compose Clear undo snapshot (A3) ----------
@@ -1009,12 +1018,15 @@ test('wireTapCancel: no-op guard when el or fn is missing (never throws)', funct
   assert.doesNotThrow(function () { Songbook.wireTapCancel(new FakeTapEl(), null); });
 });
 
-test('setClear wiring: routed through wireTapCancel, not a raw .onclick= (movement-cancel guard, S-SETX)', function () {
+test('setClear wiring: routed through wireTapCancel + arm-to-delete, not a raw .onclick= or native confirm (S-SETX + operator UAT)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/wireTapCancel\(el\.setClear,/.test(src), 'el.setClear must be wired via wireTapCancel(), not a raw onclick=');
   assert.ok(!/el\.setClear\.onclick\s*=/.test(src), 'a raw el.setClear.onclick= would bypass the movement-cancel guard');
-  // the underlying confirm() + clear behavior must be unchanged (rider keeps it, only adds the guard)
-  assert.ok(/confirm\('Clear your setlist\?'\)/.test(src), 'the native confirm() prompt text must stay unchanged');
+  // Clear is now arm-to-delete (operator UAT: tap-to-red confirm, no popup) - the
+  // native confirm() was removed in favor of the .armed red-arm pattern, matching
+  // the per-row li-rm remove handle.
+  assert.ok(!/confirm\('Clear your setlist\?'\)/.test(src), 'the setlist Clear must NOT use a native confirm() (moved to arm-to-delete)');
+  assert.ok(/setClear\.classList\.add\('armed'\)/.test(src), 'Clear must arm the ✕ red first (arm-to-delete)');
 });
 
 /* =====================================================================

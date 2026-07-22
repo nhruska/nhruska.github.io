@@ -74,13 +74,16 @@ test('play/index.html uses the app-styled Toast/Modal primitives for backup/rest
   assert.ok(/openConfirmModal\(\s*[\s\S]{0,40}'This backup'/.test(src), 'restore confirm must route through openConfirmModal');
 });
 
-test('songbook.js confirm() call sites are pinned to the KNOWN pre-existing debt (delete-item, clear-setlist) - exactly 2, not grown', function () {
+test('songbook.js confirm() call sites are pinned to the KNOWN pre-existing debt (delete-item) - exactly 1, not grown', function () {
   var src = read('music/shared/songbook.js');
   var confirms = realCallSites(src, 'confirm');
-  assert.strictEqual(confirms.length, 2, 'expected exactly 2 pre-existing confirm() call sites in songbook.js (delete custom item + clear setlist), found: ' + JSON.stringify(confirms));
+  // Was 2 (delete-item + clear-setlist); the setlist Clear moved to an
+  // arm-to-delete pattern (operator UAT: tap-to-red, no popup), so only the
+  // delete-custom-item confirm() remains as pre-existing native-dialog debt.
+  assert.strictEqual(confirms.length, 1, 'expected exactly 1 pre-existing confirm() call site in songbook.js (delete custom item), found: ' + JSON.stringify(confirms));
   var texts = confirms.map(function (c) { return c.text; });
   assert.ok(texts.some(function (t) { return /confirm\(msg\)/.test(t); }), 'expected the delete-custom-item confirm(msg) call site');
-  assert.ok(texts.some(function (t) { return /confirm\('Clear your setlist\?'\)/.test(t); }), 'expected the clear-setlist confirm(\'Clear your setlist?\') call site');
+  assert.ok(!texts.some(function (t) { return /Clear your setlist/.test(t); }), 'the clear-setlist native confirm() must be gone (replaced by arm-to-delete)');
 });
 
 test('songbook.js has ZERO native alert() call sites (already fully migrated to toast.js pre-U19)', function () {

@@ -295,7 +295,20 @@
         var frets = voicingFor(name);
         if (!frets) return null;
         var patterns = (mode === 'patterns');
-        return window.Diagram.render(frets, { size: size, name: name, patternLabel: patterns ? labelFor(name, frets, size) : '', reserveLabelSlot: patterns });
+        // Preview only (this method has no other caller): show the shape-name
+        // CAPTION that 'patterns' adds in the maximized view - the honest
+        // dots-vs-patterns difference IS that caption. Compute it straight from
+        // ShapeClassify, NOT DiagramPref.labelFor: labelFor() short-circuits to ''
+        // unless the user's CURRENT global pref is 'patterns', which would blank
+        // the patterns preview cell whenever 'dots' is the active choice (the exact
+        // "both previews look the same" UAT). Same classifier + label string the
+        // maximized view renders (SSOT, not a hand-copy); '' when unclassifiable.
+        var label = '';
+        if (patterns && window.ShapeClassify && typeof window.ShapeClassify.classify === 'function') {
+          var info = window.ShapeClassify.classify(profile.id, name, frets);
+          if (info) label = window.ShapeClassify.label(info);
+        }
+        return window.Diagram.render(frets, { size: size, name: name, patternLabel: label, reserveLabelSlot: patterns });
       },
       diagramClosed: function (name, size) { var frets = closedVoicingFor(name); return window.Diagram.render(frets, { size: size, name: name, patternLabel: labelFor(name, frets, size), reserveLabelSlot: reserveLabelSlot(size) }); },
       diagramChain: function (names, size) {

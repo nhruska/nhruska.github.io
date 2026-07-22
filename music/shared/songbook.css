@@ -305,6 +305,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * already-armed, so red-at-rest belongs only to labeled destructive BUTTONS
  * (.btn.danger), never an inline handle at rest. */
 .listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
+/* Drag-to-reorder grip (set rows). Drag-only handle: touch-action:none so the
+   browser doesn't claim the touch for scrolling, letting the pointer-drag lift.
+   The two vertical-ellipsis glyphs tuck together into a 6-dot grip. */
+.listItem .li-grip{flex:0 0 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
+  cursor:grab;min-width:38px;min-height:44px;align-self:center;display:flex;align-items:center;justify-content:center;
+  touch-action:none;-webkit-user-select:none;user-select:none;padding-right:2px;}
+.listItem .li-grip:active{cursor:grabbing;color:var(--txt-soft);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
 /* Timed toast+action undo banner - shared skin for the setlist item-remove undo
  * (showSetUndoBanner) and the Library delete-undo (showDeleteUndoBanner), both
@@ -328,10 +335,44 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* Song-detail panel uses the card radius token (--r-card). */
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;}
 .detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;}
+/* Back = arrow ONLY, but PROMINENT (operator UAT: a labeled "← Back" ate the
+   horizontal space and squashed the song title into 2-3 wrapped lines; yet the
+   bare neutral arrow was too weak). Resolution: arrow glyph, accent-FILLED so it
+   reads as the likeliest next tap without stealing title width. flex:0 0 auto so
+   it holds its 44px and the title (min-width:0) keeps the rest. */
+.detailHead .backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
+.detailHead .backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .detailHead .ti{flex:1;min-width:0;}
-.detailHead .ti h2{font-weight:800;font-size:1.42rem;line-height:1.06;letter-spacing:-.02em;}
+/* Title sized to breathe next to the arrow-only Back + the two header buttons
+   (1.42->1.24rem), AND clamped to 2 lines with an ellipsis (operator UAT: even
+   the freed width left a long parenthetical title wrapping 3 lines). The full
+   title still shows big in the full-screen perform view, so the clamp trades a
+   tail no one needs in the header for a tidy 2-line cap. */
+.detailHead .ti h2{font-weight:800;font-size:1.24rem;line-height:1.12;letter-spacing:-.02em;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;}
 .detailHead .ti p{font-size:.8rem;color:var(--txt-dim);margin-top:4px;}
 .headActions{display:flex;gap:8px;flex:0 0 auto;}
+/* Overflow menu (Hear-on-YouTube / Full-lyrics / Delete) off the song-view
+   header - keeps rarely-used actions one tap away without crowding the title.
+   Anchored to the ⋯ button. */
+.moreWrap{position:relative;flex:0 0 auto;}
+.moreMenu{position:absolute;top:calc(100% + 6px);right:0;z-index:20;min-width:210px;display:flex;flex-direction:column;gap:2px;
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,.4);}
+.moreMenu[hidden]{display:none;}
+/* One primitive for both <button> and <a> overflow items (the YouTube/Genius
+   links are anchors) - text-decoration:none kills the anchor underline. */
+.moreItem{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:0;color:var(--txt);text-decoration:none;
+  font-family:inherit;font-weight:600;font-size:.88rem;padding:11px 12px;border-radius:8px;cursor:pointer;min-height:44px;white-space:nowrap;}
+.moreItem:active{background:var(--accent-deep);color:var(--accent-ink);}
+/* Destructive overflow item (Delete / Revert) - danger-tinted glyph so it reads
+   apart from the neutral navigation items. */
+.moreItemDanger{color:var(--bad);}
+.moreItemDanger:active{background:var(--bad);color:var(--on-danger);}
+/* Key-actions row (Full screen + Solo) kept VISIBLE under the view toggle
+   (operator UAT: these are primary, not overflow). Full-width split so both are
+   easy thumb targets. */
+.songActRow{display:flex;gap:8px;margin:10px 0 4px;}
+.songActRow .songActBtn{flex:1;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 /* Emphasis ladder: an icon button is a SECONDARY affordance, not a primary
    action - so its glyph is neutral (--txt-soft), not the bright --accent-ink that
    competes with the one primary per screen. Accent still flashes on :active
@@ -467,6 +508,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    destructive signal. Fills red on press. */
 .setHead .setDelete{color:var(--bad);border-color:var(--bad);}
 .setHead .setDelete:active{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
+/* Arm-to-delete: first tap fills the ✕ red (matches the per-row li-rm.armed),
+   a second tap while armed clears the set. No native confirm popup. */
+.setHead .setDelete.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 .setEmpty{text-align:center;padding:44px 18px;color:var(--txt-dim);font-size:.95rem;line-height:1.6;}
 /* #s-tune: full-viewport, no-scroll layout (mirrors #s-compose's fixed-top /
    flex-hero pattern below). #s-tune fills the .view's available height;
@@ -685,6 +729,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    without ever burying an action. */
 .composeSong{display:none;}
 .composeWrap.songMode .composeSong{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;}
+/* The song being built, named at the top of the canvas (operator UAT). Sits
+   just under the close ✕ row; -8px margin tightens the flex gap to it. */
+.songCanvasTitle{margin:-8px 0 0;font-weight:800;font-size:1.15rem;line-height:1.15;letter-spacing:-.01em;color:var(--txt);}
+.songCanvasTitle[hidden]{display:none;}
 .songCue{margin:0;}
 .songCue[hidden]{display:none;}
 /* Cards stack vertically on the canvas; neutralize the .songSections wrap and
@@ -1292,9 +1340,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:1.15rem;cursor:pointer;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
 .pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-size:1.3rem;cursor:pointer;}
-.pTitle{font-weight:800;font-size:1.2rem;line-height:1.05;flex:0 0 auto;letter-spacing:-.02em;}
-.pArtist{font-size:.8rem;color:var(--txt-dim);margin:2px 0 3px;flex:0 0 auto;}
-.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;margin-bottom:5px;flex:0 0 auto;}
+/* Title + artist + key flow inline on one row (wrap to a 2nd only if the title
+   is long), baseline-aligned, to reclaim vertical space for the sheet - one row
+   in landscape where width is ample (operator UAT). */
+.pHead{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:9px;row-gap:1px;flex:0 0 auto;margin-bottom:5px;}
+.pTitle{font-weight:800;font-size:1.2rem;line-height:1.12;letter-spacing:-.02em;}
+.pArtist{font-size:.8rem;color:var(--txt-dim);}
+.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;}
 /* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let
@@ -1321,7 +1373,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
 .pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
-.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
+/* Settings popover sits ABOVE the nav bar with a clear gap. The old +74px let
+   its bottom edge collide with the tall #pNext (~63px + 14px bottom = ~77px top)
+   in portrait (operator UAT: "settings panel overlapping bottom controls");
+   +92px clears it. Both share env(safe-area-inset-bottom), so the relative gap
+   is stable across devices. */
+.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
 .pSpeed.on{display:flex;}
 .pSpeed .psRow{display:flex;align-items:center;gap:11px;}
 .pSpeed label{flex:0 0 42px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;}
@@ -1642,9 +1699,13 @@ footer{display:none;}
    hand-drawn copy. */
 .prefPreview{display:flex;gap:8px;margin:8px 0 2px;align-items:stretch;}
 .prefEx{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:6px 4px;
-  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;
-  opacity:.45;transition:opacity .15s,border-color .15s,box-shadow .15s;}
+  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);min-height:96px;overflow:hidden;cursor:pointer;
+  opacity:.45;transition:opacity .15s,border-color .15s,box-shadow .15s,transform .08s;}
 .prefEx.on{opacity:1;border-color:var(--accent-dim);box-shadow:0 0 0 1px var(--accent-dim);}
+/* The preview cell is itself the selector (operator UAT) - press feedback +
+   a focus ring so the tap affordance reads. */
+.prefEx:active{transform:scale(.97);}
+.prefEx:focus-visible{outline:2px solid var(--accent-dim);outline-offset:2px;}
 /* the real small chord diagram is sized for chord cards - scale it to fit the
    preview cell; the compact chip needs no scaling. */
 .prefEx .chord,.prefEx .bigC{transform:scale(.82);}
