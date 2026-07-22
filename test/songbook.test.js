@@ -920,16 +920,19 @@ test('Clear-undo: every A3-listed mutating action invalidates, Clear never regre
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   // Clear builds a snapshot and shows the banner - never a native confirm().
   // Window widened 900->1100 (F31) ->1400 (S-CLEAR-INKEY, 2026-07-10) ->1550
-  // (#265-C: the hideSaveDoneBanner line). S-SONG-MODE
+  // (#265-C: the hideSaveDoneBanner line) ->1900 (N5 UAT r2: the
+  // invalidateRemoveUndo() line + its explanatory comment, so Clear tears down
+  // a pending chord-remove undo and never stacks two undo banners). S-SONG-MODE
   // UAT-2 extracted the handler body into clearProgression() (so the Song
   // canvas's "Build the chords" shares the exact guarded path) - the contract
   // now pins THAT function, plus the button's delegation to it.
-  var clearBlock = /function clearProgression\(bannerMsg\) \{[\s\S]{0,1550}?\n    \}/.exec(src);
+  var clearBlock = /function clearProgression\(bannerMsg\) \{[\s\S]{0,1900}?\n    \}/.exec(src);
   assert.ok(clearBlock, 'clearProgression() not found');
   assert.ok(/el\.cClear\.onclick = function \(\) \{ clearProgression\(\); \}/.test(src), 'the Clear button must delegate to clearProgression()');
   assert.ok(/buildClearSnapshot\(progression, cTpose, songKey, savedComposeId\)/.test(clearBlock[0]), 'Clear must snapshot the full pre-Clear state before wiping it');
   assert.ok(/showClearUndoBanner\(bannerMsg\)/.test(clearBlock[0]), 'Clear must show the persistent undo banner (with the optional caller message - UAT r2)');
   assert.ok(/hideComposeToast\(\)/.test(clearBlock[0]), 'F31 (UAT): Clear must also end a still-showing save-confirmation toast (Clear does not route through invalidateClearUndo)');
+  assert.ok(/invalidateRemoveUndo\(\)/.test(clearBlock[0]), 'N5 (UAT r2): Clear must tear down a pending chord-remove undo banner so two undo banners never stack');
   // (matches an actual confirm('...') CALL, not the word appearing in a code comment)
   assert.ok(!/confirm\(['"]/.test(clearBlock[0]), 'Clear must NEVER use a native confirm() dialog (A3)');
   // Each A3-listed mutating action calls invalidateClearUndo() somewhere in its body.
