@@ -111,32 +111,35 @@
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < (global.innerHeight || 9999);
   }
 
-  // Build one ring+label pair over `el`. `primary` sizes/brightens it.
-  function placeMark(doc, layer, el, text, primary) {
+  // (Re)position an existing ring+label pair over `el` from its CURRENT rect.
+  // Split out from placeMark so the settle-window loop below can re-hug the
+  // target after first-load reflow (fonts, banners, URL-bar) without rebuilding.
+  function positionMark(el, ring, lab, primary) {
     var r = el.getBoundingClientRect();
-    var ring = doc.createElement('div');
-    ring.className = 'coRing' + (primary ? ' coPrimary' : ' coMuted');
     var pad = primary ? 6 : 3;
     ring.style.left = (r.left - pad) + 'px';
     ring.style.top = (r.top - pad) + 'px';
     ring.style.width = (r.width + pad * 2) + 'px';
     ring.style.height = (r.height + pad * 2) + 'px';
-    layer.appendChild(ring);
-
-    var lab = doc.createElement('div');
-    lab.className = 'coLabel' + (primary ? ' coPrimary' : ' coMuted');
-    lab.textContent = text;
-    layer.appendChild(lab);
     // Prefer below the target; flip above if it would run off the bottom.
     var vh = global.innerHeight || 800;
     var belowTop = r.bottom + pad + 8;
     lab.style.left = Math.max(8, Math.min(r.left, (global.innerWidth || 400) - 220)) + 'px';
-    if (belowTop + 44 > vh) {
-      lab.style.top = Math.max(8, r.top - pad - 40) + 'px';
-    } else {
-      lab.style.top = belowTop + 'px';
-    }
-    return ring;
+    lab.style.top = (belowTop + 44 > vh) ? Math.max(8, r.top - pad - 40) + 'px' : belowTop + 'px';
+  }
+
+  // Build one ring+label pair over `el` and return the mark so it can be
+  // re-positioned. `primary` sizes/brightens it.
+  function placeMark(doc, layer, el, text, primary) {
+    var ring = doc.createElement('div');
+    ring.className = 'coRing' + (primary ? ' coPrimary' : ' coMuted');
+    layer.appendChild(ring);
+    var lab = doc.createElement('div');
+    lab.className = 'coLabel' + (primary ? ' coPrimary' : ' coMuted');
+    lab.textContent = text;
+    layer.appendChild(lab);
+    positionMark(el, ring, lab, primary);
+    return { el: el, ring: ring, lab: lab, primary: primary };
   }
 
   // Draw the layer for `tab` around an already-resolved, visible primary `pEl`.
@@ -148,15 +151,38 @@
     layer.setAttribute('aria-hidden', 'true');
     doc.body.appendChild(layer);
 
-    placeMark(doc, layer, pEl, cfg.primary.text, true);
+    var marks = [placeMark(doc, layer, pEl, cfg.primary.text, true)];
     (cfg.secondary || []).forEach(function (s) {
       var el = resolveTarget(doc, s.sel);
-      if (visible(el)) placeMark(doc, layer, el, s.text, false);
+      if (visible(el)) marks.push(placeMark(doc, layer, el, s.text, false));
     });
 
     markShown(tab); // once drawn, it has served its first-run turn
 
     var killed = false, timer = null;
+    // Re-hug the targets through the first-load settle window. The ring is
+    // position:fixed at a rect snapshot, but on a fresh load the page reflows
+    // AFTER the first placement - the 'Space Mono' font swaps in, the offline
+    // chip / notables banner dismisses, the mobile URL-bar collapses - and a
+    // static ring would drift off its target (operator UAT: "has to be perfect
+    // or we lose credibility on first load"). Re-measure on a short rAF cadence
+    // (+ once fonts settle), stopping the moment it's killed. Cheap, exact fit.
+    function reposition() {
+      if (killed) return;
+      for (var i = 0; i < marks.length; i++) positionMark(marks[i].el, marks[i].ring, marks[i].lab, marks[i].primary);
+    }
+    if (global.requestAnimationFrame) {
+      var settleStart = null;
+      (function settleTick(ts) {
+        if (killed) return;
+        reposition();
+        if (settleStart == null) settleStart = ts || 0;
+        if ((ts || 0) - settleStart < 700) global.requestAnimationFrame(settleTick);
+      })();
+    }
+    if (doc.fonts && doc.fonts.ready && typeof doc.fonts.ready.then === 'function') {
+      doc.fonts.ready.then(reposition).catch(function () {});
+    }
     function kill() {
       if (killed) return; killed = true;
       if (timer) { clearTimeout(timer); timer = null; }
