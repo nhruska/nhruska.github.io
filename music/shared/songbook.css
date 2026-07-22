@@ -1594,6 +1594,14 @@ footer{display:none;}
 .wPanel h2{margin:0 0 10px;font-size:1.2rem;font-weight:800;letter-spacing:-.01em;padding-right:40px;}
 .wLead{margin:0 0 12px;font-size:.84rem;color:var(--txt-soft);line-height:1.45;}
 .wLead b{color:var(--txt);}
+/* Offline promise, elevated (UAT): a status chip at the top of the welcome
+   panel so the "works offline" message reads prominently and can't be missed -
+   the old toast that stated it (and overlapped Start) is suppressed while this
+   panel is up. */
+.wOffline{display:flex;align-items:center;gap:9px;margin:0 0 14px;padding:10px 12px;font-size:.82rem;line-height:1.4;
+  color:var(--accent-ink);background:var(--accent-deep);border:1px solid var(--accent-dim);border-radius:var(--r-btn-sm);font-weight:600;}
+.wOfflineDot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent);}
 /* .askOpt - THE option-row primitive: one look for every "pick one" list - the
    welcome tour's instrument + level panels AND the in-app ask banners (.glAskOpt
    guidance level, .dgPrefOpt diagram pref). Neutral line-strong border at rest
@@ -1610,10 +1618,32 @@ footer{display:none;}
 .wMap li:last-child{border-bottom:0;}
 .wMap b{color:var(--txt);font-size:.9rem;}
 .wFoot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px 0;gap:12px;}
-.wFoot .btn{min-height:44px;padding:12px 22px;}
+/* Single-panel tour: the lone "Start playing" CTA spans the footer (flex:1),
+   reading as the one prominent primary action. (Dots are absent now; the
+   space-between + flex:1 still lays out cleanly if panels are ever restored.) */
+.wFoot .btn{min-height:48px;padding:12px 22px;flex:1;}
 .wDots{display:flex;gap:7px;}
 .wDot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);transition:background .2s;}
 .wDot.on{background:var(--accent);}
+/* First-run per-tab callouts (callouts.js). A non-blocking coach-mark: a
+   pulsing ring hugs the target + a small label names the ONE action. The layer
+   sits BELOW the welcome overlay (z 65 < 70) and is pointer-events:none, so
+   every tap falls straight through to the real control it points at. */
+.coLayer{position:fixed;inset:0;z-index:65;pointer-events:none;}
+.coRing{position:fixed;border-radius:10px;box-sizing:border-box;}
+.coRing.coPrimary{border:2px solid var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 34%,transparent),0 0 14px color-mix(in srgb,var(--accent) 50%,transparent);
+  animation:coPulse 1.4s ease-in-out infinite;}
+.coRing.coMuted{border:1.5px dashed var(--brass);opacity:.8;}
+.coLabel{position:fixed;max-width:min(72vw,240px);padding:7px 11px;border-radius:9px;font-size:.8rem;line-height:1.3;
+  font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.coLabel.coPrimary{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent-ink);}
+.coLabel.coMuted{background:var(--surface-2);color:var(--txt-soft);border:1px solid var(--line-strong);font-weight:500;font-size:.74rem;}
+@keyframes coPulse{
+  0%,100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 34%,transparent),0 0 14px color-mix(in srgb,var(--accent) 50%,transparent);}
+  50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 16%,transparent),0 0 22px color-mix(in srgb,var(--accent) 32%,transparent);}
+}
+@media (prefers-reduced-motion:reduce){.coRing.coPrimary{animation:none;}}
 /* The instrument picker inside Settings > Preferences. Overrides .picker's compact
    sizing (max-width:46vw, .8rem) - here it is a full Settings row: bigger type +
    44px floor. */
