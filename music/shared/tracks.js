@@ -579,7 +579,7 @@
         var feelBands = JQ.feels();
         var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
         jamPanel.innerHTML =
-          '<div class="bt-st-jamchips" data-jamgenres>' + genres.map(function (g) {
+          '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
             return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
           }).join('') + '</div>'
           + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
