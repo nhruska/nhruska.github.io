@@ -268,6 +268,25 @@
     if (has('music.activeProfile.v1')) prefs.push('instrument');
     if (anyKey(function (k) { return /\.(perfprefs\.v2|songview\.v1|chordsonly\.v1|activeTab\.v1|last\.v1)$/.test(k); })) prefs.push('view + screen prefs');
     if (prefs.length) lines.push({ label: 'Preferences', detail: prefs.join(', ') });
+    // Skill progress (competency profiles, music.competency.v1) travels in every
+    // backup via the music. prefix - the user never manages it separately (the
+    // export/import-skills buttons are only a convenience for carrying a skill to
+    // another AI tool and back). Surface it here so the summary VISIBLY confirms
+    // skills are covered. Count only skills that actually carry progress, so an
+    // untouched profile map doesn't inflate the line.
+    var skillsN = 0;
+    if (has('music.competency.v1')) {
+      try {
+        var cm = JSON.parse(data['music.competency.v1']);
+        if (cm && typeof cm === 'object') {
+          Object.keys(cm).forEach(function (sid) {
+            var p = cm[sid];
+            if (p && Array.isArray(p.competencies) && p.competencies.some(function (c) { return (c && c.level || 0) > 0; })) skillsN++;
+          });
+        }
+      } catch (e) { /* corrupt profile map -> just omit the line */ }
+    }
+    if (skillsN > 0) lines.push({ label: 'Skill progress', detail: plural(skillsN, 'skill') });
     return lines;
   }
 

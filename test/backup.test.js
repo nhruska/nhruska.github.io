@@ -45,6 +45,30 @@ test('owned() accepts app namespaces, rejects foreign + excluded keys', function
   assert.strictEqual(Backup.owned(null), false);
 });
 
+/* ---------- skills (competency profiles) travel in the main backup ---------- */
+// Operator directive 2026-07-22: the app's main backup/restore must manage the
+// competency "skills" so users never worry about them; the export/import-skills
+// buttons are only a convenience for carrying a skill to another AI tool and
+// back. music.competency.v1 rides the `music.` prefix - lock that here so a
+// future prefix change can't silently drop skills from every backup.
+test('skills (music.competency.v1) are OWNED by the backup and surface in the summary', function () {
+  assert.strictEqual(Backup.owned('music.competency.v1'), true);
+  // A profile map with real progress shows a "Skill progress" line; an
+  // all-zero (untouched) map does not inflate the summary.
+  var withProgress = JSON.stringify({
+    ukulele: { competencies: [{ id: 'uke-open-chords', level: 40 }, { id: 'uke-repertoire', level: 0 }] },
+    guitar: { competencies: [{ id: 'gtr-open-chords', level: 0 }] }
+  });
+  var lines = Backup.describe({ 'music.competency.v1': withProgress });
+  var skillLine = lines.filter(function (l) { return l.label === 'Skill progress'; })[0];
+  assert.ok(skillLine, 'expected a "Skill progress" summary line when a skill carries progress');
+  assert.strictEqual(skillLine.detail, '1 skill', 'only the ukulele profile has progress (>0 level)');
+  // Untouched (all-zero) map -> no line (never inflate).
+  var zero = JSON.stringify({ ukulele: { competencies: [{ id: 'uke-open-chords', level: 0 }] } });
+  assert.ok(!Backup.describe({ 'music.competency.v1': zero }).some(function (l) { return l.label === 'Skill progress'; }),
+    'an untouched (all-zero) profile map must not add a Skill-progress line');
+});
+
 /* ---------- M-SETTINGS-CLARITY: a restored envelope must never carry/overwrite
  * the DESTINATION device's own last-run stamps ---------- */
 test('snapshot() excludes both last-run stamps, so a restore can never overwrite the destination\'s own times', function () {
