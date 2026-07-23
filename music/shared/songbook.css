@@ -443,12 +443,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
-.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
+.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
 /* Compact bordered chord chip using the small-button radius (--r-btn-sm), same
    bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact control, not the
-   pill-shaped .chip family). */
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+   pill-shaped .chip family). Real <button>s now (S-CHORDCHIP-A11Y) - margin:0
+   resets the UA default button margin (Safari/iOS) so the flex gap stays exact. */
+.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
+/* S-CHORDCHIP-A11Y: the "tap a chord to hear it" discoverability caption right
+   under the chip row. Composes the existing .note primitive (small dim
+   caption - see the "Sheet shows a short representative snippet" usage
+   further down) rather than inventing a new visual language; tightened
+   margins so it reads as one unit with the chip row above it. */
+.chordHint{margin:0 0 11px;}
 /* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}

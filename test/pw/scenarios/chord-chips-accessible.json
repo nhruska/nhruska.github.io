@@ -1,0 +1,53 @@
+{
+  "name": "chord-chips-accessible",
+  "note": "P3-2/P3-5 (P0): chord chips in the practice/chord-sheet header ARE tappable-to-hear (onclick -> packPlayChord) but shipped as bare <span data-c> with no button semantics, no accessible name, and no visible affordance - a first-timer never discovers the app's strongest 'prove it works' moment, and it's invisible to keyboard/screen-reader users. RED-FIRST vs unmodified main: chips render as <span> (not BUTTON, no tabIndex), carry no aria-label, and no .chordHint cue exists anywhere in the practice card.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".chordChips .c"
+    },
+    {
+      "action": "evalAssert",
+      "label": "every chord chip is a real, keyboard-focusable control (native <button>, tabIndex >= 0)",
+      "js": "Array.prototype.every.call(document.querySelectorAll('.chordChips .c'), function(e){ return e.tagName === 'BUTTON' && e.tabIndex >= 0; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "every chord chip has a non-empty accessible name that names the chord",
+      "js": "Array.prototype.every.call(document.querySelectorAll('.chordChips .c'), function(e){ var l = e.getAttribute('aria-label'); return !!l && l.trim().length > 0 && l.indexOf(e.textContent.trim()) >= 0; })"
+    },
+    {
+      "action": "assertVisible",
+      "selector": ".chordHint"
+    },
+    {
+      "action": "assertText",
+      "selector": ".chordHint",
+      "contains": "Tap a chord"
+    },
+    {
+      "action": "screenshot",
+      "name": "chord-chip-affordance"
+    }
+  ]
+}

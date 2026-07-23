@@ -1082,7 +1082,24 @@
         + '<span class="qPos">' + (QUEUE.index() + 1) + ' / ' + QUEUE.size()
         + (STATE.queueSkipNotice ? ' - ' + escHTML(STATE.queueSkipNotice) : '') + '</span>'
         + '<button id="qNext" ' + (QUEUE.atEnd() ? 'disabled' : '') + '>Next ›</button></div>' : '';
-      var chips = '<div class="chordChips">' + seq.map(function (c) { return '<span class="c" data-c="' + escHTML(c) + '">' + escHTML(dispMap(c)) + '</span>'; }).join('') + '</div>';
+      // S-CHORDCHIP-A11Y (P3-2/P3-5, P0): the chips are already tap-to-hear
+      // (packPlayChord wiring below) but shipped as bare <span data-c> - no
+      // button semantics, no accessible name, and nothing on-screen said "tap
+      // this". A real <button> gives native keyboard focus + Enter/Space
+      // activation for free (no separate keydown handler needed); the
+      // existing querySelectorAll('.chordChips .c').onclick wiring below is
+      // tag-agnostic, so it keeps working unchanged. aria-label mirrors the
+      // "Play " + label convention already used elsewhere in this file (the
+      // section play button). The .chordHint caption (reuses the .note
+      // primitive - see songbook.css) is the persistent discoverability cue:
+      // a one-shot Notable was considered but rejected here - this moment
+      // needs a GUARANTEED cue (not a dismiss-and-forget one), and it must
+      // work with zero dependency on guidance-level / session-arbitration
+      // state, which a Notables claim would introduce.
+      var chips = '<div class="chordChips">' + seq.map(function (c) {
+        var label = escHTML(dispMap(c));
+        return '<button type="button" class="c" data-c="' + escHTML(c) + '" aria-label="Play ' + label + '">' + label + '</button>';
+      }).join('') + '</div><p class="note chordHint">Tap a chord to hear it</p>';
       // F28: the Solo button now lives in the practiceRow controls row above (the
       // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
       // action-ladder host appended further down for custom/catalog songs.
