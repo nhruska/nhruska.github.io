@@ -25,7 +25,7 @@
   'use strict';
 
   // Both lines move together with sw.js's CACHE bump - see the header.
-  var VERSION = 'music-v297';
+  var VERSION = 'music-v300';
   var UPDATED_ISO = '2026-07-23T22:23:38Z';
 
   // ISO -> the reader's locale, e.g. "Jul 5, 2026, 10:07 AM" (en-US, EDT).
