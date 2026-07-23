@@ -42,3 +42,36 @@ execution + generic landing). Fix: open on a one-tap **"Play now" hero**
 (recognition over recall), make any song one tap from playable (collapse the
 gulf), and size the sheet for arm's length (legibility). The flaky tuner was a
 **trust** problem solved by signal smoothing — not a redesign.
+
+## Measured evidence (capture harness)
+
+Diagnosis above is principle-first, but claims about tap-target size,
+contrast, and truncation should be measured, not eyeballed. Run
+[scripts/web-ux-capture.js](scripts/web-ux-capture.js) against the screen
+under review before writing up a critique:
+
+```
+node .claude/skills/ux-coach/scripts/web-ux-capture.js \
+  --root . --path "/music/play/index.html?p=ukulele-gcea" [--dark]
+```
+
+It serves the repo locally, drives headless Chromium at a phone viewport
+(412x915 @2x by default), and emits a screenshot plus measured WCAG contrast
+ratios and tap-target geometry per screen (edit the `SCREENS` array for the
+flow under review). Full procedure, environment gotchas, and what it does
+NOT cover: [references/web-ux-capture-method.md](references/web-ux-capture-method.md).
+
+This is the measurement step, not a substitute for the method above - name
+the situation of use and the principle first, then use the harness to prove
+(or disprove) the specific claim. For a flow already guarded by a committed
+persona scenario, prefer running [test/pw](../../../test/pw/README.md)
+instead of a fresh capture.
+
+## Related
+
+- [a11y-coach](../a11y-coach/SKILL.md) - the hard tap-target/contrast floors
+  this harness measures against
+- [usdd](../usdd/SKILL.md) - turn a capture finding into a committed
+  regression scenario once it becomes a goalpost
+- [test/pw/README.md](../../../test/pw/README.md) - the persona scenario
+  suite; run this instead of a fresh capture when the flow is already covered
