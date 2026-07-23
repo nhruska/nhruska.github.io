@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T11:22:24Z",
+  "generatedAt": "2026-07-23T11:21:55Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-22T05:19:20Z",
-    "sha": "068444638b1182181004aeba5581c086b321f301",
-    "subject": "music: Studio buttons + first-run callout fit + giant-? removal + skills-in-backup (#296)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/068444638b1182181004aeba5581c086b321f301"
+    "date": "2026-07-22T11:22:30Z",
+    "sha": "2313235fd819a354d27d3addf3284bf6ca141a32",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/2313235fd819a354d27d3addf3284bf6ca141a32"
   },
   "commits": [
+    {
+      "date": "2026-07-22T11:22:30Z",
+      "sha": "2313235fd819a354d27d3addf3284bf6ca141a32",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2313235fd819a354d27d3addf3284bf6ca141a32"
+    },
     {
       "date": "2026-07-22T05:19:20Z",
       "sha": "068444638b1182181004aeba5581c086b321f301",
@@ -84,12 +90,6 @@
       "sha": "41edc3b85b9c99a8193170506dd4953c5744c53a",
       "subject": "music(appearance): bold jewel accent spectrum - launch color rebrand (#287)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/41edc3b85b9c99a8193170506dd4953c5744c53a"
-    },
-    {
-      "date": "2026-07-20T11:59:55Z",
-      "sha": "d95d3570fbbfe32b51cfed11070c89248214b217",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d95d3570fbbfe32b51cfed11070c89248214b217"
     }
   ],
   "openPRs": [
@@ -262,9 +262,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-22T11:22:18Z",
+    "runStartedAt": "2026-07-23T11:21:48Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29915440666",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30002838858",
     "headBranch": "main"
   },
   "velocity": {
