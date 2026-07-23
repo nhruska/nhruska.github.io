@@ -1753,9 +1753,31 @@
       var availH = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
       var needH = inner.scrollHeight;
       var availW = pSheet.clientWidth;
-      var needW = inner.scrollWidth; // white-space:pre lyric lines never wrap - width must win
+      var needW = inner.scrollWidth; // an un-wrapped white-space:pre line - width must win
       var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
+    }
+    // CW-1: char-width probe for the stage sheet, used only when showPerform
+    // finds a line still wider than the viewport even at applyPerfFont's
+    // floor scale (0.5x - never shrunk further, illegible past that point).
+    // Renders a known-length sample with the SAME class (".lyrLine", so the
+    // ".pSheet .lyrLine" font-size rule applies) at the CURRENT --pscale
+    // (already set on pSheet by the time this runs) so the measured px/char
+    // matches what's actually on screen; monospace (Space Mono) guarantees
+    // every character shares that width, which is what lets
+    // wrapChordLyricPair's character-index cuts land in the same pixel column
+    // for the chord row and the lyric row.
+    function perfWrapMaxChars(sheetEl) {
+      var probe = document.createElement('div');
+      probe.className = 'lyrLine';
+      probe.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:-9999px;white-space:pre;';
+      probe.textContent = '0123456789';
+      sheetEl.appendChild(probe);
+      var charW = probe.getBoundingClientRect().width / 10;
+      sheetEl.removeChild(probe);
+      if (!charW) return null;
+      var chars = Math.floor((sheetEl.clientWidth - 4) / charW); // small safety margin off the edge
+      return chars >= 12 ? chars : null; // below a sane floor, wrapping wouldn't help legibility - leave the scroll fallback
     }
     // Re-fit the stage sheet on orientation change / resize (operator UAT): a
     // phone rotated to landscape has a very different viewport, and without this
@@ -1824,6 +1846,22 @@
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
         pSheet.scrollTop = 0;
         applyPerfFont();
+        // CW-1: a chord-over-lyric line never CSS-wraps (white-space:pre), and
+        // the auto-fit shrink above floors at 0.5x so it stays legible - a
+        // genuinely long line can still be wider than the stage viewport at
+        // that floor. Only THEN re-render with an explicit, column-synced
+        // wrap (see renderLyricLine/wrapChordLyricPair) instead of leaving it
+        // to hard-overflow / require a horizontal scroll gesture mid-song.
+        // Cheap no-op for the common case: nothing overflows, no re-render.
+        var stageInner = pSheet.firstElementChild;
+        if (stageInner && stageInner.scrollWidth > pSheet.clientWidth + 1) {
+          var wrapChars = perfWrapMaxChars(pSheet);
+          if (wrapChars) {
+            pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp, wrapChars) + '</div>';
+            pSheet.scrollTop = 0;
+            applyPerfFont();
+          }
+        }
       }
       updateStageBtns();
       if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';

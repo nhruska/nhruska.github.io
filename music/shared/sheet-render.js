@@ -55,7 +55,17 @@
   // behavior. Column alignment keys off the DISPLAYED label's length so a
   // respelled name (A# -> Bb, same width; and any exotic double-accidental) never
   // shifts the chord row off its lyric.
-  function renderLyricLine(raw, map) {
+  // `maxChars` (optional, CW-1): when a line's rendered LYRIC row would be
+  // wider than the caller's measured viewport (in characters, monospace), wrap
+  // it into multiple `.lyrLine` rows instead of rendering one unbroken
+  // `white-space:pre` line that hard-overflows the stage view (unreadable
+  // mid-performance, both hands on the instrument). Wrapping happens HERE, in
+  // JS, at explicit indices shared by both rows - never via CSS soft-wrap -
+  // because chordRow/lyricRow only stay column-aligned if both break at the
+  // IDENTICAL character offset, and letting the browser word-wrap the chord
+  // span and the lyric text node independently (different word/space layout in
+  // each) desyncs them. See wrapChordLyricPair for the split algorithm.
+  function renderLyricLine(raw, map, maxChars) {
     var chordRow = "", lyricRow = "", last = 0, m;
     var re = /\[([^\]]+)\]/g;
     while ((m = re.exec(raw))) {
@@ -68,7 +78,40 @@
       last = re.lastIndex;
     }
     lyricRow += raw.slice(last);
+    if (!maxChars || lyricRow.length <= maxChars) return oneLyrLine(chordRow, lyricRow);
+    return wrapChordLyricPair(chordRow, lyricRow, maxChars).map(function (r) {
+      return oneLyrLine(r.chord, r.lyric);
+    }).join('');
+  }
+  function oneLyrLine(chordRow, lyricRow) {
     return '<div class="lyrLine"><span class="crd">' + escHTML(chordRow) + '</span>\n' + escHTML(lyricRow) + '</div>';
+  }
+  // Splits a (chordRow, lyricRow) pair into synced chunks no wider than
+  // maxChars characters each. chordRow is always <= lyricRow.length (it stops
+  // after the last chord token; any lyric tail beyond that has no chord to
+  // align, which is correct - JS String#slice clamps past chordRow's end and
+  // yields '' for those columns). Every cut index is applied identically to
+  // BOTH rows, which is what keeps a wrapped chord glued to its lyric: since
+  // both rows are built column-for-column in lockstep (renderLyricLine above),
+  // slicing them at the same index can never desync a chord from its word.
+  // Prefers to cut at the last lyric-row SPACE within the window (never splits
+  // a sung word) and falls back to a hard character cut only when a single
+  // unbroken run (no space at all) exceeds maxChars on its own - the same
+  // last-resort every wrapping scheme (CSS overflow-wrap:anywhere included)
+  // has to take for an unbreakable token. Pure + Node-testable, no DOM - same
+  // contract as fitScale (the DOM caller measures the viewport and passes the
+  // character budget in).
+  function wrapChordLyricPair(chordRow, lyricRow, maxChars) {
+    var rows = [], start = 0, total = lyricRow.length;
+    while (total - start > maxChars) {
+      var limit = start + maxChars, cut = -1;
+      for (var i = limit; i > start; i--) { if (lyricRow[i] === ' ') { cut = i; break; } }
+      if (cut <= start) cut = limit; // no space in the window - hard cut (one long unbreakable token)
+      rows.push({ chord: chordRow.slice(start, cut), lyric: lyricRow.slice(start, cut) });
+      start = (lyricRow[cut] === ' ') ? cut + 1 : cut; // drop the boundary space itself, don't waste a column on it
+    }
+    rows.push({ chord: chordRow.slice(start), lyric: lyricRow.slice(start) });
+    return rows;
   }
   // The action-ladder class for the song-view
   // remove/revert button. A real destructive delete is the `danger` primitive
@@ -103,15 +146,18 @@
     return out.join('');
   }
   // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
-  // 'both' (default) = chords positioned over lyrics.
-  function renderSheet(song, st, view, map) {
+  // 'both' (default) = chords positioned over lyrics. `maxChars` (optional,
+  // CW-1) threads through to renderLyricLine for the 'both' view only - see
+  // its header comment. Irrelevant to 'chords' (already wraps via flex) and
+  // 'lyrics' (no chord row to keep aligned, out of this fix's scope).
+  function renderSheet(song, st, view, map, maxChars) {
     if (view === 'chords') return renderChordOnly(song.sheet, st, map);
     if (view === 'lyrics') return renderLyricsOnly(song.sheet);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { html += '<div class="sect">' + escHTML(sect) + '</div>'; last = sect; }
-      html += renderLyricLine(tposeLine(line, st), map);
+      html += renderLyricLine(tposeLine(line, st), map, maxChars);
     });
     return html;
   }
@@ -132,6 +178,7 @@
     escHTML: escHTML,
     chordSpeller: chordSpeller,
     renderLyricLine: renderLyricLine,
+    wrapChordLyricPair: wrapChordLyricPair,
     deleteBtnClass: deleteBtnClass,
     renderChordOnly: renderChordOnly,
     renderLyricsOnly: renderLyricsOnly,
