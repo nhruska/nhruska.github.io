@@ -52,8 +52,27 @@ All five confirmed by direct code inspection this session (line refs in the Veri
 - **Chord-chip upgrade (one PR):** P3-2 + P3-5 - button semantics + accessible name + a "tap to hear" affordance. P3-2 is arguably a prerequisite for the CE3 J1 cold-start scenario ever passing meaningfully - sequence it before CE3's build.
 - **Theory spelling pair:** P2-1 (fix the All-view non-chip branch to pass `dispChordName`) + P2-3 (add the 12x4 spelling regression net so it can't silently regress again).
 
+## Cowork live-render round (2026-07-23) - complementary method
+
+> The 4 persona analysts above worked from SOURCE (read-only, in Claude Code). A parallel Cowork session drove the app LIVE in Chromium at 412x915 (both themes) and measured the rendered DOM. That surfaced render-layer defects invisible to source analysis, and independently corroborated two P0s. Source-analysis + live-render measurement are complementary - run both.
+
+**Corroborations (two methods, same defect):**
+- P1-2 transpose geometry: Cowork measured the Perform transpose stepper at 30x34px live (source showed 36px `.pmini`) - both below 44px. Confirmed from two directions.
+- P3-2 chord chips: Cowork confirmed no visible "tap to hear" affordance on the chips. Confirmed.
+
+**New items (render-layer - only visible live):**
+
+| ID | Surface | Friction | Red-goalpost scenario (fails today) | Priority | Verified |
+|----|---------|----------|-------------------------------------|----------|----------|
+| CW-1 | Perform chord sheet (`.lyrLine`) | Chord-over-lyric lines use `white-space:pre` (no wrap) inside a stage view that is `overflow-x:hidden` - long lines HARD-CLIP at 412px ("gonna be[...]"), breaking the one thing you do while playing: read the next words. Highest user-impact defect found. | Render Perform at 412px on a song with a long lyric line; assert no line is horizontally clipped (line wraps or shrink-fits). | P0 | CONFIRMED - `.lyrLine{white-space:pre}` @songbook.css:433 + stage `overflow-x:hidden` @~579 |
+| CW-2 | First-run coach-marks | On Setlist/Compose/Tune the callouts overlap the element they point at and each other (Setlist callout covers "Your setlist is empty"; two Compose tips overlap/clip). One-time, but it's the first impression. | Trigger first-run at 412px on each tab; assert no coach-mark rect overlaps its target or another coach-mark. | P1 | Cowork live-render (412px, both themes) |
+| CW-3 | Perform | No auto-scroll control - a gigging musician with both hands on the instrument can't advance the sheet hands-free. | Assert Perform exposes a hands-free scroll (auto-scroll toggle or speed control). | P1 | Cowork live-render |
+| CW-4 | Light theme muted text | `#5f6875` muted gray on the nav bar measures 4.58:1 - passes AA by ~2%, no margin. | Assert muted-gray-on-nav contrast >= a safer floor (e.g. 4.8:1). | P2 | Cowork measured (4.58:1) |
+
+CW-1 arguably outranks the source-found P0s on user impact (it breaks the core reading task mid-performance) and is a small fix (`.lyrLine` -> `white-space:pre-wrap` or shrink-to-fit). CW-3 pairs with the Stage-header PR. CW-2 is its own onboarding fix. The light-render filter-chip finding overlaps P3-4 (already queued).
+
 ## Next
 
 1. Operator greenlight -> assign S-codes and fold P0s into [QUEUE.md](QUEUE.md).
-2. First autonomous build swarm targets the 5 verified P0s (write each red-goalpost scenario first, then implement) - worktree-isolated, one build per batch, respecting the repo's build conventions (cache-bump, schema, lint gates).
+2. First autonomous build swarm targets the 6 verified P0s (the 5 source-verified + CW-1) - write each red-goalpost scenario first, then implement - worktree-isolated, one build per batch, respecting the repo's build conventions (cache-bump, schema, lint gates). CW-1 is the recommended first fix: highest impact, smallest change.
 3. Re-run each red-goalpost after build; green = shipped.
