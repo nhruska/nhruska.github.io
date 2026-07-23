@@ -1,6 +1,6 @@
 {
   "name": "chord-chips-accessible",
-  "note": "P3-2/P3-5 (P0): chord chips in the practice/chord-sheet header ARE tappable-to-hear (onclick -> packPlayChord) but shipped as bare <span data-c> with no button semantics, no accessible name, and no visible affordance - a first-timer never discovers the app's strongest 'prove it works' moment, and it's invisible to keyboard/screen-reader users. RED-FIRST vs unmodified main: chips render as <span> (not BUTTON, no tabIndex), carry no aria-label, and no .chordHint cue exists anywhere in the practice card.",
+  "note": "P3-2/P3-5 (P0) + P3 UAT regression/taste fixes (PR #300 follow-up). Base a11y claim, RED-FIRST vs pre-S-CHORDCHIP-A11Y main: chips render as <span> (not BUTTON, no tabIndex), carry no aria-label. UAT fix 1 (regression): <button> chips resubjected chord-play to the mobile click-delay - play must fire on pointerdown (before/without a click), and a click that follows a pointerdown must NOT replay (double-sound guard), while a keyboard-only click (no preceding pointerdown) still plays exactly once. UAT fix 2 (taste): the old persistent '.chordHint' row is retired for a one-shot Notable banner under the chip row - reclaims the row once dismissed/re-shown.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -37,13 +37,54 @@
       "js": "Array.prototype.every.call(document.querySelectorAll('.chordChips .c'), function(e){ var l = e.getAttribute('aria-label'); return !!l && l.trim().length > 0 && l.indexOf(e.textContent.trim()) >= 0; })"
     },
     {
-      "action": "assertVisible",
+      "action": "evalAssert",
+      "label": "chip has touch-action:manipulation (drops the mobile double-tap-zoom click delay)",
+      "js": "getComputedStyle(document.querySelector('.chordChips .c')).touchAction === 'manipulation'"
+    },
+    {
+      "action": "evalAssert",
+      "label": "S-CHORDCHIP-LAG: a bare pointerdown (no click) plays the chord immediately - no wait for the browser's follow-up click",
+      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "S-CHORDCHIP-LAG: the browser's follow-up click after a pointerdown on the SAME chip does not replay it (no double-sound)",
+      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));\n  chip.click(); // the browser's synthesized follow-up click for the same tap\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "keyboard activation (click with no preceding pointerdown - the Enter/Space path) still plays exactly once",
+      "js": "(function(){\n  var chip = document.querySelectorAll('.chordChips .c')[1] || document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.focus();\n  chip.click(); // native <button> Enter/Space activation dispatches click with no pointerdown\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+    },
+    {
+      "action": "assertHidden",
       "selector": ".chordHint"
     },
     {
+      "action": "waitFor",
+      "selector": ".notableBanner"
+    },
+    {
       "action": "assertText",
-      "selector": ".chordHint",
+      "selector": ".notableBanner",
       "contains": "Tap a chord"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the tap-to-hear cue is a dismissible one-shot Notable (has its own close control), not a permanent row",
+      "js": "!!document.querySelector('.notableBanner .notableBanner-x')"
+    },
+    {
+      "action": "screenshot",
+      "name": "chord-chip-affordance-notable-shown"
+    },
+    {
+      "action": "tap",
+      "selector": ".notableBanner .notableBanner-x"
+    },
+    {
+      "action": "assertHidden",
+      "selector": ".notableBanner"
     },
     {
       "action": "screenshot",

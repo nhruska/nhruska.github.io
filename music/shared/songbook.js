@@ -214,6 +214,21 @@
     return Notables.claim('savebasics', undefined, level);
   }
 
+  // S-CHORDCHIP-A11Y (P3 UAT, PR #300): one-shot "tap a chord to hear it"
+  // cue, replacing the old persistent .chordHint row (see the chip-render
+  // comment in renderPractice). Deliberately NOT in notables.js's LEVELS
+  // table - unlike firstrun/savebasics (beginner-only), tap-to-hear
+  // discoverability is useful at every guidance level, and it must still
+  // work before a level is ever chosen (level arg is null pre-onboarding;
+  // an unregistered consumerId skips the level gate entirely - see
+  // notables.js claim()). Pure decision fn, same dependency-injected shape
+  // as firstrunShouldRender/savebasicsShouldRender above.
+  function chordtapShouldRender(Notables) {
+    if (!Notables) return false;
+    if (Notables.isDismissed('chordtap')) return false;
+    return Notables.claim('chordtap');
+  }
+
   // Transpose stepping WRAPS at the range ends instead of stopping (UAT item 9):
   // from +6 another + lands on -5 and keeps cycling, so repeated taps walk all
   // 12 keys forever. Values normalize into (-6, +6] (a value only matters mod 12
@@ -985,6 +1000,25 @@
       if (detail) detail.insertBefore(bannerEl, detail.firstChild);
     }
 
+    // S-CHORDCHIP-A11Y (P3 UAT, PR #300): one-shot "tap a chord to hear it"
+    // cue, inserted directly under the chip row it explains (not at the top
+    // of the card like savebasics - this one is spatially tied to the chips).
+    // Same disposable-subtree reasoning as renderSaveBasicsNotable: called at
+    // the end of every renderPractice(), re-attempts the claim each time,
+    // no-ops once dismissed or once the session slot went to something else.
+    function renderChordTapNotable() {
+      if (!el.practiceBody || !global.Notables) return;
+      if (!chordtapShouldRender(global.Notables)) return; // dismissed, or slot held elsewhere - skip silently
+      var bannerEl = global.Notables.renderBanner({
+        consumerId: 'chordtap',
+        text: 'Tap a chord to hear it.',
+        onDismiss: function () { if (bannerEl && bannerEl.parentNode) bannerEl.parentNode.removeChild(bannerEl); }
+      });
+      if (!bannerEl) return; // no `document` available (Node without a DOM stub)
+      var chipsEl = el.practiceBody.querySelector('.chordChips');
+      if (chipsEl && chipsEl.parentNode) chipsEl.parentNode.insertBefore(bannerEl, chipsEl.nextSibling);
+    }
+
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -1087,19 +1121,29 @@
       // button semantics, no accessible name, and nothing on-screen said "tap
       // this". A real <button> gives native keyboard focus + Enter/Space
       // activation for free (no separate keydown handler needed); the
-      // existing querySelectorAll('.chordChips .c').onclick wiring below is
+      // existing querySelectorAll('.chordChips .c') wiring below is
       // tag-agnostic, so it keeps working unchanged. aria-label mirrors the
       // "Play " + label convention already used elsewhere in this file (the
-      // section play button). The .chordHint caption (reuses the .note
-      // primitive - see songbook.css) is the persistent discoverability cue:
-      // a one-shot Notable was considered but rejected here - this moment
-      // needs a GUARANTEED cue (not a dismiss-and-forget one), and it must
-      // work with zero dependency on guidance-level / session-arbitration
-      // state, which a Notables claim would introduce.
+      // section play button) and is the GUARANTEED, dependency-free a11y
+      // affordance - it does not depend on guidance-level / session
+      // arbitration state.
+      //
+      // P3 UAT (operator, PR #300): the sighted discoverability caption was
+      // originally a PERSISTENT "<p class=\"note chordHint\">" row, spending a
+      // whole line of vertical space forever. Operator: "can't use a whole
+      // row and use vertical space." Swapped for the app's one-shot Notable
+      // infra (renderChordTapNotable, below - same claim/dismiss/renderBanner
+      // pattern as firstrun/savebasics) so the cue teaches once, then gives
+      // the row back. This DOES reintroduce the session-arbitration
+      // dependency an earlier pass deliberately avoided (a higher-priority
+      // notable can win the slot and this one never shows this session) -
+      // accepted trade-off because the aria-label above already carries the
+      // affordance unconditionally; the banner is a bonus for sighted
+      // first-timers, not the only teach.
       var chips = '<div class="chordChips">' + seq.map(function (c) {
         var label = escHTML(dispMap(c));
         return '<button type="button" class="c" data-c="' + escHTML(c) + '" aria-label="Play ' + label + '">' + label + '</button>';
-      }).join('') + '</div><p class="note chordHint">Tap a chord to hear it</p>';
+      }).join('') + '</div>';
       // F28: the Solo button now lives in the practiceRow controls row above (the
       // canSolo gate is unchanged) - .actions stays as the Edit/Delete/fork-revert
       // action-ladder host appended further down for custom/catalog songs.
@@ -1120,6 +1164,7 @@
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + songActRow + queueNav + body + '</div>';
       renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
+      renderChordTapNotable(); // S-CHORDCHIP-A11Y: one-shot tap-to-hear cue, under the chip row
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
       var qNext = el.practiceBody.querySelector('#qNext'); if (qNext) qNext.onclick = function () { navQueue(1); };
       el.practiceBody.querySelectorAll('.modeSwitch button').forEach(function (b) {
@@ -1128,7 +1173,25 @@
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
-      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) { elc.onclick = function () { packPlayChord(elc.dataset.c); }; });
+      // S-CHORDCHIP-LAG (P3 UAT regression, PR #300): the chips became real
+      // <button>s for a11y (S-CHORDCHIP-A11Y above), which re-subjects a
+      // plain click listener to the mobile browser's ~300ms tap-to-click
+      // delay - the chord no longer sounded the instant a finger landed.
+      // pointerdown fires immediately on touch/mouse contact, before any
+      // click is synthesized, so play from there for true immediacy; click
+      // stays wired too so keyboard Enter/Space (which fires click directly,
+      // with NO preceding pointerdown) still plays. The `lastPtr` guard
+      // stops the browser's own follow-up click from replaying the SAME tap
+      // a second time - it only suppresses a click that arrives shortly
+      // after a pointerdown on the same chip, never a keyboard-only click.
+      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) {
+        var lastPtr = 0;
+        elc.addEventListener('pointerdown', function () { lastPtr = Date.now(); packPlayChord(elc.dataset.c); });
+        elc.onclick = function () {
+          if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
+          packPlayChord(elc.dataset.c);
+        };
+      });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
       // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The
@@ -5778,6 +5841,7 @@
     libraryEmptyState: libraryEmptyState,
     firstrunShouldRender: firstrunShouldRender,
     savebasicsShouldRender: savebasicsShouldRender,
+    chordtapShouldRender: chordtapShouldRender,
     ytSearchURL: ytSearchURL,
     nextTranspose: nextTranspose,
     chordsFromDegrees: chordsFromDegrees,

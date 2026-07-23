@@ -448,14 +448,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact control, not the
    pill-shaped .chip family). Real <button>s now (S-CHORDCHIP-A11Y) - margin:0
    resets the UA default button margin (Safari/iOS) so the flex gap stays exact. */
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+/* touch-action:manipulation (S-CHORDCHIP-LAG, PR #300) drops the mobile
+   double-tap-zoom delay on every click path through this button too - the
+   pointerdown handler in songbook.js is what makes the FIRST tap instant;
+   this keeps any click-only path (mouse, some a11y tooling) equally snappy. */
+.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
-/* S-CHORDCHIP-A11Y: the "tap a chord to hear it" discoverability caption right
-   under the chip row. Composes the existing .note primitive (small dim
-   caption - see the "Sheet shows a short representative snippet" usage
-   further down) rather than inventing a new visual language; tightened
-   margins so it reads as one unit with the chip row above it. */
-.chordHint{margin:0 0 11px;}
 /* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
 .sect{font-size:.68rem;color:var(--brass);text-transform:uppercase;letter-spacing:.16em;margin:15px 0 7px;font-weight:700;}
