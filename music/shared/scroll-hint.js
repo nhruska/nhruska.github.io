@@ -71,8 +71,20 @@
     var wrap = strip.parentNode;
     if (!wrap || wrap.className.indexOf('chipScrollWrap') < 0) return;
     strip.__scrollHint = true;
-    if (!wrap.querySelector('.csh-l')) wrap.appendChild(overlay('csh-l'));
-    if (!wrap.querySelector('.csh-r')) wrap.appendChild(overlay('csh-r'));
+    var lEl = wrap.querySelector('.csh-l') || wrap.appendChild(overlay('csh-l'));
+    var rEl = wrap.querySelector('.csh-r') || wrap.appendChild(overlay('csh-r'));
+    // Tapping an active edge snaps the strip to that end. The overlay only
+    // takes pointer events while its edge is active (CSS), so a tap here is
+    // always a deliberate "scroll that way" - and it intercepts the tap that
+    // would otherwise fall through to a half-off-screen chip (the UAT).
+    var snap = function (toEnd) {
+      var rm = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var left = toEnd ? (strip.scrollWidth - strip.clientWidth) : 0;
+      if (strip.scrollTo) strip.scrollTo({ left: left, behavior: rm ? 'auto' : 'smooth' });
+      else strip.scrollLeft = left;
+    };
+    lEl.addEventListener('click', function () { snap(false); });
+    rEl.addEventListener('click', function () { snap(true); });
     var upd = function () { measure(strip, wrap); };
     strip.addEventListener('scroll', upd, { passive: true });
     if (global.ResizeObserver) { new global.ResizeObserver(upd).observe(strip); }

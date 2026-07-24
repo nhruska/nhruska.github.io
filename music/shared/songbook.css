@@ -210,14 +210,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .chipScrollWrap{position:relative;margin-bottom:14px;}
 .chipScrollWrap > .chips{margin-bottom:0;}
 .chipScrollWrap:has(> .chips[hidden]){display:none;}
-.csh{position:absolute;top:0;bottom:0;width:34px;z-index:2;pointer-events:none;display:flex;align-items:center;opacity:0;transition:opacity .15s;}
+/* Tappable: an active edge is a 44px hit target (a11y floor) that snap-scrolls
+   the strip to that end - AND, by capturing the tap, shields the partially
+   off-screen chip beneath it from a mis-tap (the UAT: tapping the edge used to
+   pass through and select a chip you couldn't fully see). Inactive edges are
+   pointer-events:none so an extreme never eats a tap. Hit area extends 6px
+   above/below the row (top/bottom:-6px) into empty gutter to reach 44px tall
+   without a taller visual; the chevron stays centred on the row. */
+.csh{position:absolute;top:-6px;bottom:-6px;width:44px;z-index:2;pointer-events:none;display:flex;align-items:center;opacity:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent;}
 .csh::after{content:"";width:14px;height:22px;background:center/14px 22px no-repeat;}
-.csh-l{left:0;justify-content:flex-start;padding-left:1px;background:linear-gradient(to right,var(--bg) 34%,transparent);}
-.csh-r{right:0;justify-content:flex-end;padding-right:1px;background:linear-gradient(to left,var(--bg) 34%,transparent);}
+.csh-l{left:0;justify-content:flex-start;padding-left:1px;background:linear-gradient(to right,var(--bg) 22%,transparent 68%);}
+.csh-r{right:0;justify-content:flex-end;padding-right:1px;background:linear-gradient(to left,var(--bg) 22%,transparent 68%);}
 .csh-l::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22' viewBox='0 0 14 22'%3E%3Cpath d='M11 3l-5 8 5 8M7 3l-5 8 5 8' fill='none' stroke='%23808a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
 .csh-r::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22' viewBox='0 0 14 22'%3E%3Cpath d='M3 3l5 8-5 8M7 3l5 8-5 8' fill='none' stroke='%23808a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
-.chipScrollWrap.can-l .csh-l{opacity:1;}
-.chipScrollWrap.can-r .csh-r{opacity:1;}
+.chipScrollWrap.can-l .csh-l,.chipScrollWrap.can-r .csh-r{opacity:1;pointer-events:auto;cursor:pointer;}
 .chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:var(--r-chip-pill);cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
