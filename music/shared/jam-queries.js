@@ -28,15 +28,19 @@
   'use strict';
 
   // Curated per-scale genre lists. Every list carries >= 3 genres
-  // (locked by jam-queries.test.js).
+  // (locked by jam-queries.test.js). Widened to ~6-8 per scale (operator UAT
+  // 2026-07-22: "keep per-scale curation with a larger list of genres"),
+  // coach-validated (songwriting-coach + music-theory-coach) so every genre
+  // genuinely sits in / exploits its mode - gospel + jam band read as
+  // mixolydian (dominant-heavy / bVII), not ionian/dorian.
   var GENRES = {
-    ionian: ['classic rock', 'pop', 'country', 'folk'],
-    aeolian: ['rock', 'metal', 'cinematic', 'indie'],
-    dorian: ['funk', 'latin rock', 'modal jazz', 'blues rock'],
-    mixolydian: ['jam band', 'country rock', 'blues rock', 'celtic'],
-    blues: ['slow blues', 'shuffle blues', 'quick change blues', 'minor blues'],
-    pentMajor: ['country', 'pop rock', 'bluegrass'],
-    pentMinor: ['rock', 'blues rock', 'grunge']
+    ionian: ['classic rock', 'pop', 'country', 'folk', 'singer-songwriter', 'soft rock', 'worship'],
+    aeolian: ['rock', 'metal', 'cinematic', 'indie', 'alt rock', 'post-rock', 'synthwave'],
+    dorian: ['funk', 'latin rock', 'modal jazz', 'blues rock', 'soul', 'reggae', 'jazz fusion'],
+    mixolydian: ['jam band', 'country rock', 'blues rock', 'celtic', 'southern rock', 'funk rock', 'gospel'],
+    blues: ['slow blues', 'shuffle blues', 'quick change blues', 'minor blues', 'delta blues', 'texas blues', 'jump blues', 'soul blues'],
+    pentMajor: ['country', 'pop rock', 'bluegrass', 'folk rock', 'americana', 'classic rock'],
+    pentMinor: ['rock', 'blues rock', 'grunge', 'hard rock', 'metal', 'punk']
   };
 
   // Tempo/feel bands: slow ~60-80 / mid ~90-110 / up 120+.
