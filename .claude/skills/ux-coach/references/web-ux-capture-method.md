@@ -45,8 +45,8 @@ markdown report.
 
 ## Procedure
 
-1. Point `--root` at a checkout of this repo (or pass `--url` for an already
-   -reachable deployment) and `--path` at the screen's URL (query params like
+1. Point `--root` at a checkout of this repo (or pass `--url` for a deployment
+   that is already reachable) and `--path` at the screen's URL (query params like
    `?p=ukulele-gcea` carry app state the same way a real link would).
 2. Identify the screens under review and how to reach each (bottom-nav
    selectors, routes, or query params). List them in the script's `SCREENS`

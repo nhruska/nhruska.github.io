@@ -52,8 +52,13 @@ under review before writing up a critique:
 
 ```
 node .claude/skills/ux-coach/scripts/web-ux-capture.js \
-  --root . --path "/music/play/index.html?p=ukulele-gcea" [--dark]
+  --root . --path "/music/play/index.html?p=ukulele-gcea"
 ```
+
+Add `--dark` to the same command to capture the dark theme, `--first-run` to
+measure the onboarding tour instead of skipping it. A screen whose click
+selector misses is reported as NOT CAPTURED and the run exits non-zero - it
+never screenshots the previous screen under the requested screen's name.
 
 It serves the repo locally, drives headless Chromium at a phone viewport
 (412x915 @2x by default), and emits a screenshot plus measured WCAG contrast
