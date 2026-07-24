@@ -217,7 +217,14 @@
     <!-- Transpose is NOT in the always-on bar (rarely touched mid-performance -
          it lives in the gear sheet's Key row below); the remaining icons grow to
          44px+ stage targets. -->
-    <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls">⚙</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
+    <!-- P0 (operator UAT): was ⚙ (a gear) - read as "app settings" even though it
+         opens the STAGE controls drawer (View/Size/Key), not the app gear
+         (#settingsBtn). Swapped to ≡ (three bars) - single-tone, same .pmini
+         weight as ◐/✕, and not already claimed elsewhere in the app (the
+         overflow-menu convention is ⋯, a different glyph). Explicit aria-label
+         since a glyph button's accessible name defaults to its text content,
+         not its title. -->
+    <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls" aria-label="Stage controls">≡</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
   <!-- Title / artist / key flow inline (wrap to a 2nd row only if needed) to
        reclaim vertical space for the sheet - one row in landscape (operator UAT). -->
   <div class="pHead">

@@ -1853,7 +1853,9 @@
       // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
       var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
       var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
-      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + stageDisp(seq[0]) + '  ·  ' : '') + seq.map(stageDisp).join('  ');
+      // P0 (operator UAT): show the key by default, not only when transposed -
+      // the performer wants the key at a glance whether or not they've shifted it.
+      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(seq[0]) + '  ·  ' + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';

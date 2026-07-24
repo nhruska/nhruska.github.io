@@ -23,6 +23,11 @@
     },
     {
       "action": "evalAssert",
+      "label": "P0 (operator UAT): the key shows by DEFAULT at transpose 0, not only when transposed - pKeyLine must start with 'Key '",
+      "js": "(function(){var k=document.getElementById('pKeyLine');return /^Key\\s/.test(k.textContent.trim());})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "pKey's computed font-size is >= pArtist's AND >= a 13px absolute floor (FAILS pre-fix: pKey .7rem/11.2px < pArtist .8rem/12.8px < 13px)",
       "js": "(function(){var k=parseFloat(getComputedStyle(document.getElementById('pKeyLine')).fontSize),a=parseFloat(getComputedStyle(document.getElementById('pArtist')).fontSize);return k>=a && k>=13;})()"
     },
