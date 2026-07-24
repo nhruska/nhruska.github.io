@@ -7,7 +7,8 @@
   },
   "seed": {
     "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"pa\",\"t\":\"Persist Song A\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]sing a little line [G]here tonight\"]]},{\"id\":\"pb\",\"t\":\"Persist Song B\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k2\",\"seq\":[\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[Am]another little line [F]for the night\"]]}]",
-    "roadcase-ukulele-gcea.setlist.v1": "[\"pa\",\"pb\"]"
+    "roadcase-ukulele-gcea.setlist.v1": "[\"pa\",\"pb\"]",
+    "music.offlineReadyCued.v1": "1"
   },
   "steps": [
     {

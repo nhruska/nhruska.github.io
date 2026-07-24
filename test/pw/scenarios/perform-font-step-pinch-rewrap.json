@@ -6,7 +6,8 @@
     "height": 915
   },
   "seed": {
-    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"longLineSong\",\"t\":\"Long Line Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\",\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[C] a short intro line [G] here\"],[\"Chorus\",\"[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too\"]]}]"
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"longLineSong\",\"t\":\"Long Line Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\",\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[C] a short intro line [G] here\"],[\"Chorus\",\"[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too\"]]}]",
+    "music.offlineReadyCued.v1": "1"
   },
   "steps": [
     {

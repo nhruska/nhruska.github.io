@@ -256,5 +256,8 @@
       "action": "screenshot",
       "name": "three-little-birds-desktop-expanded"
     }
-  ]
+  ],
+  "seed": {
+    "music.offlineReadyCued.v1": "1"
+  }
 }

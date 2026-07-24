@@ -6,7 +6,8 @@
     "height": 915
   },
   "seed": {
-    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"trailchord\",\"t\":\"Trailing Chord Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"F\"],\"sheet\":[[\"Verse\",\"la la [Gmaj7add13sus4]\"],[\"Verse\",\"sing one [C] two [Gmaj7add13] three\"],[\"Chorus\",\"a longer sung line that runs and runs to force wrapping [F] on [Bbmaj7add13]\"]]}]"
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"trailchord\",\"t\":\"Trailing Chord Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"F\"],\"sheet\":[[\"Verse\",\"la la [Gmaj7add13sus4]\"],[\"Verse\",\"sing one [C] two [Gmaj7add13] three\"],[\"Chorus\",\"a longer sung line that runs and runs to force wrapping [F] on [Bbmaj7add13]\"]]}]",
+    "music.offlineReadyCued.v1": "1"
   },
   "steps": [
     {

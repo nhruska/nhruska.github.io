@@ -1918,8 +1918,21 @@
         pSheet.scrollLeft = 0; // belt-and-braces: overflow-x is hidden, but never leave a stale offset clipping the left edge
         pSheet.scrollTop = preserveScroll ? savedTop : 0;
         var stageInner = pSheet.firstElementChild;
-        if (!stageInner || stageInner.scrollWidth <= avail + 1) return; // fits - the common case, done after one render
+        if (!stageInner || stageInner.scrollWidth <= avail) return; // fits - the common case, done after one render
         if (!wrapChars) return; // unmeasurable DOM - nothing to converge on
+        // Still over. Correct by MODE, honoring rule 2 (fit-by-font first):
+        // in AUTO above the floor the browser's font-size quantization can
+        // render a couple % wider than the linear probe predicted - the
+        // right correction is SHRINKING THE SCALE (stay unwrapped), never
+        // wrapping a fitted line off a rendering artifact. At the floor, or
+        // at a MANUAL size (which is respected, not shrunk), the correction
+        // is the char budget - wrap tighter until the rows fit.
+        if (STATE.fontMode !== 'manual' && scale > FONT_MIN + 0.001) {
+          scale = clampFontScale(scale * (avail / stageInner.scrollWidth) * 0.99);
+          applyScale(scale);
+          wrapChars = perfWrapMaxChars(pSheet); // budget moves with the size
+          continue;
+        }
         var next = Math.floor(wrapChars * (avail / stageInner.scrollWidth) * 0.97);
         if (next >= wrapChars) next = wrapChars - 1; // guarantee forward progress even on a 1-2px rounding overflow
         if (next < 1) return; // absolute floor - a 1-char budget cannot shrink further
@@ -1981,6 +1994,20 @@
           refitStage(true);
         }, 150);
       });
+    }
+    // Webfont-swap re-fit: the stage measures REAL glyph metrics, so a fit
+    // computed while the fallback monospace was still rendering goes stale
+    // the moment Space Mono swaps in (~2% wider here - enough to push an
+    // edge-fitted line past the content width, the exact hair-overflow the
+    // core invariant forbids). Whenever font loading settles, re-run the one
+    // shared refit path if the stage is open. Guarded: the unit-test mount
+    // harness has no document.fonts.
+    if (typeof document !== 'undefined' && document.fonts) {
+      var stageFontRefit = function () {
+        if (performEl && performEl.classList.contains('on')) refitStage(true);
+      };
+      if (document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(stageFontRefit);
+      if (typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', stageFontRefit);
     }
     function updateStageBtns() {
       // The middle size button highlights while auto-fit is driving the size.

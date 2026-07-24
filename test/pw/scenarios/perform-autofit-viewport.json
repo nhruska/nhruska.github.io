@@ -6,7 +6,8 @@
     "height": 915
   },
   "seed": {
-    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"autofit1\",\"t\":\"Autofit Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]hello wide world [G]sing it loud\"],[\"Verse\",\"[C]a second line to [G]hold the tune\"]]}]"
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"autofit1\",\"t\":\"Autofit Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]hello wide world [G]sing it loud\"],[\"Verse\",\"[C]a second line to [G]hold the tune\"]]}]",
+    "music.offlineReadyCued.v1": "1"
   },
   "steps": [
     {
