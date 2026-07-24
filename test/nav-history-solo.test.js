@@ -161,7 +161,7 @@ function findComposeBackdrop(m) {
   return bd;
 }
 function startSoloChoice(m) {
-  var startRow = m.elMap.suggest.children[1];
+  var startRow = m.elMap.suggest.children[1].children[0]; // [1]=chipScrollWrap -> [0]=progPickRow
   startRow.children[0].onclick();
   m.elMap.soloBackingBtn.onclick();
 }

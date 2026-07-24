@@ -1,11 +1,19 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-23T11:21:55Z
+Generated: 2026-07-24T11:14:51Z
 Status: ok
 
 ## NOW
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
+- Open draft PR #306 (CI green): perf(audio): keep chord playback context warm for immediate taps - https://github.com/nhruska/nhruska.github.io/pull/306
+- Open draft PR #305 (CI green): fix(perform): legible back button + deterministic nav z-index (UAT) - https://github.com/nhruska/nhruska.github.io/pull/305
+- Open draft PR #304 (CI green): fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6) - https://github.com/nhruska/nhruska.github.io/pull/304
+- Open draft PR #303 (CI green): fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3) - https://github.com/nhruska/nhruska.github.io/pull/303
+- Open draft PR #302 (CI green): fix(perform): wrap chord/lyric lines so they don't clip at 412px (CW-1) - https://github.com/nhruska/nhruska.github.io/pull/302
+- Open draft PR #301 (CI green): skills(ux-coach): wire in measured-evidence capture harness - https://github.com/nhruska/nhruska.github.io/pull/301
+- Open draft PR #300 (CI green): fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5) - https://github.com/nhruska/nhruska.github.io/pull/300
+- Open draft PR #299 (CI green): fix(perform): re-acquire wake lock on visibilitychange (P1-1) - https://github.com/nhruska/nhruska.github.io/pull/299
 - Open draft PR #298 (CI green): music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3) - https://github.com/nhruska/nhruska.github.io/pull/298
 - Open draft PR #297 (CI green): music: white-circle app icon, rainbow accent palette, N5 double-undo fix - https://github.com/nhruska/nhruska.github.io/pull/297
 - Open draft PR #274 (CI unknown): docs: rename suggested chords section to name the intent - https://github.com/nhruska/nhruska.github.io/pull/274

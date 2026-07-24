@@ -579,7 +579,7 @@
         var feelBands = JQ.feels();
         var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
         jamPanel.innerHTML =
-          '<div class="bt-st-jamchips" data-jamgenres>' + genres.map(function (g) {
+          '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
             return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
           }).join('') + '</div>'
           + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
@@ -662,7 +662,11 @@
       var noVideoLabel = canAttach ? 'Add a video &#8599;' : 'Find a jam &#8599;';
       var noVideoHint = canAttach
         ? 'No curated video yet - tap Add a video to paste a link or find one by genre and feel.'
-        : 'No curated video yet - pick a genre and feel below to find a backing track. The HUD below works either way.';
+        // #2 (operator UAT): the genre/feel chips live behind the "Find a jam"
+        // toggle (F27 one-button disclosure - it also reveals the paste box), so
+        // "below" pointed at empty space until you tapped. Point the hint at the
+        // BUTTON instead, so the pointer matches where the controls actually are.
+        : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
       var playerBlock = t.yt
         ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
