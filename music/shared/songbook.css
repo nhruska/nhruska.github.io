@@ -1347,18 +1347,20 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.12;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);}
 .pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;}
-/* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
-   the sheet within the viewport width itself, but manual font-size steps (A+/A-)
-   can still push a long unwrapped (white-space:pre) lyric line past the edge - let
-   it scroll rather than silently clip. */
-.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
-/* pInner shrink-wraps to its widest pre line so applyPerfFont's scrollWidth
-   measurement sees the CONTENT width. As a plain block it would fill pSheet,
-   pinning needW >= availW and silently blocking the short-song auto UPSCALE
-   (only downscales could ever fire). */
+/* WRAP-FIRST sizing model (songbook.js fitStageSheet): the sheet renders at
+   the USER's size (--pscale, buttons + pinch, persisted) with long lines
+   wrapped to the measured character budget; overflow-y scrolls a tall sheet.
+   overflow-x is a last-resort escape hatch for one unbreakable token on a
+   tiny screen at max zoom - let it scroll rather than silently clip.
+   touch-action pan-y: one finger pans the sheet natively; the two-finger
+   pinch (font size) is handled in JS. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;touch-action:pan-y;}
+/* pInner shrink-wraps to its widest pre line so fitStageSheet's scrollWidth
+   measurement sees the CONTENT width (a plain block would fill pSheet and
+   hide row overflow from the re-measure pass). */
 .pSheet .pInner{width:max-content;}
 .pSheet::-webkit-scrollbar{width:0;}
-/* font-size scales with --pscale (perform Size control / auto-fit) */
+/* font-size scales with --pscale (perform Size control / pinch) */
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}

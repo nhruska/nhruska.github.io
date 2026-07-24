@@ -2,8 +2,11 @@
  * sheet-render.js  -  chord-over-lyric sheet rendering (instrument-agnostic)
  * ---------------------------------------------------------------------
  * Turns a song's sheet model into HTML: HTML-escaping of user tokens, the
- * key-aware DISPLAY speller, chord-over-lyric line rendering, the
- * chords-only / lyrics-only / both views, and the fit-to-viewport scale.
+ * key-aware DISPLAY speller, chord-over-lyric line rendering, and the
+ * chords-only / lyrics-only / both views. Sizing model is WRAP-FIRST
+ * (operator-approved 2026-07-24): the font is a readable size the USER
+ * controls; long lines WRAP at the caller's measured character budget.
+ * There is deliberately NO fit-to-viewport auto-shrink in this layer.
  * Renders chord NAMES only - no instrument knowledge. Builds on theory.js
  * for transposition; escaping delegates to esc.js.
  *
@@ -98,9 +101,9 @@
   // a sung word) and falls back to a hard character cut only when a single
   // unbroken run (no space at all) exceeds maxChars on its own - the same
   // last-resort every wrapping scheme (CSS overflow-wrap:anywhere included)
-  // has to take for an unbreakable token. Pure + Node-testable, no DOM - same
-  // contract as fitScale (the DOM caller measures the viewport and passes the
-  // character budget in).
+  // has to take for an unbreakable token. Pure + Node-testable, no DOM - the
+  // DOM caller (songbook.js fitStageSheet/perfWrapMaxChars) measures the
+  // viewport and passes the character budget in.
   function wrapChordLyricPair(chordRow, lyricRow, maxChars) {
     var rows = [], start = 0, total = lyricRow.length;
     while (total - start > maxChars) {
@@ -134,25 +137,34 @@
   }
   // Lyrics with the [chord] tokens stripped - the sing-along view. Lines that
   // were pure chord calls (all tokens, no words) vanish rather than leaving
-  // blank rows.
-  function renderLyricsOnly(sheet) {
+  // blank rows. `maxChars` (optional, wrap-first model): a lyrics-only line is
+  // still white-space:pre in the stage sheet, so a long one must WRAP at the
+  // caller's character budget too - reuse wrapChordLyricPair with an empty
+  // chord row (no alignment constraint here, but the same last-space-in-window
+  // cut keeps sung words whole and the row widths consistent with 'both').
+  function renderLyricsOnly(sheet, maxChars) {
     var out = [], last = null;
     sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
       if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var lyr = line.replace(/\[([^\]]+)\]/g, '').replace(/[ ]{2,}/g, ' ');
-      if (lyr.trim().length) out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>');
+      if (!lyr.trim().length) return;
+      if (!maxChars || lyr.length <= maxChars) { out.push('<div class="lyrLine">' + escHTML(lyr) + '</div>'); return; }
+      wrapChordLyricPair('', lyr, maxChars).forEach(function (r) {
+        out.push('<div class="lyrLine">' + escHTML(r.lyric) + '</div>');
+      });
     });
     return out.join('');
   }
   // view: 'chords' = chord bars only; 'lyrics' = lyrics only (no chord row);
   // 'both' (default) = chords positioned over lyrics. `maxChars` (optional,
-  // CW-1) threads through to renderLyricLine for the 'both' view only - see
-  // its header comment. Irrelevant to 'chords' (already wraps via flex) and
-  // 'lyrics' (no chord row to keep aligned, out of this fix's scope).
+  // wrap-first model) threads through to renderLyricLine ('both') and
+  // renderLyricsOnly ('lyrics') - both render white-space:pre rows that must
+  // wrap at the measured budget. Irrelevant to 'chords' (already wraps via
+  // flex).
   function renderSheet(song, st, view, map, maxChars) {
     if (view === 'chords') return renderChordOnly(song.sheet, st, map);
-    if (view === 'lyrics') return renderLyricsOnly(song.sheet);
+    if (view === 'lyrics') return renderLyricsOnly(song.sheet, maxChars);
     var html = '', last = null;
     song.sheet.forEach(function (pair) {
       var sect = pair[0], line = pair[1];
@@ -160,19 +172,6 @@
       html += renderLyricLine(tposeLine(line, st), map, maxChars);
     });
     return html;
-  }
-  // Stage/Perform auto-fit scale: shrinks the sheet until it fits BOTH the
-  // available height AND width, or grows a short song up to a cap. Lyric lines
-  // render with white-space:pre (no wrapping), so a height-only fit lets a
-  // short song scale up past its own width and clip words off-screen - width
-  // must always be allowed to win. Pure + Node-testable; DOM callers pass real
-  // measurements (see applyPerfFont).
-  function fitScale(availH, needH, availW, needW) {
-    var heightScale = needH > 0 ? availH / needH : Infinity;
-    var widthScale = needW > 0 ? availW / needW : Infinity;
-    var scale = Math.min(heightScale, widthScale);
-    if (!isFinite(scale)) scale = 1;
-    return Math.max(0.5, Math.min(2.2, scale));
   }
   global.SongbookSheet = {
     escHTML: escHTML,
@@ -182,8 +181,7 @@
     deleteBtnClass: deleteBtnClass,
     renderChordOnly: renderChordOnly,
     renderLyricsOnly: renderLyricsOnly,
-    renderSheet: renderSheet,
-    fitScale: fitScale
+    renderSheet: renderSheet
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.SongbookSheet;
 

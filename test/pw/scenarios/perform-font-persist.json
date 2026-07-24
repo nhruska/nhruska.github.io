@@ -1,0 +1,118 @@
+{
+  "name": "perform-font-persist",
+  "note": "Wrap-first sizing model (operator-approved 2026-07-24), goalpost 4: the chosen font size PERSISTS across songs AND sessions. Set a size with A+, step to the next setlist song (size holds), then fully reload the app and reopen the stage - the size must be RESTORED from perfprefs, not reset. Red-first vs the pre-model branch: startPerform force-reset fontMode/fontScale to auto/1 on every open and savePerfPrefs never wrote fontScale, so the reload step comes back at the auto-fit scale instead of the user's 1.3.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"pa\",\"t\":\"Persist Song A\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]sing a little line [G]here tonight\"]]},{\"id\":\"pb\",\"t\":\"Persist Song B\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k2\",\"seq\":[\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[Am]another little line [F]for the night\"]]}]",
+    "roadcase-ukulele-gcea.setlist.v1": "[\"pa\",\"pb\"]"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "stage open on Persist Song A at the default 1.0 base (no persisted size yet)",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var t=document.getElementById('pTitle');if(!t||t.textContent.indexOf('Persist Song A')===-1)return false;var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));return Math.abs(sc-1)<0.011;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x3 -> --pscale 1.3",
+      "js": "(function(){var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));return Math.abs(sc-1.3)<0.011;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pNext"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "next song (Persist Song B): the size HOLDS across the song change",
+      "js": "(function(){var t=document.getElementById('pTitle');if(!t||t.textContent.indexOf('Persist Song B')===-1)return false;var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));return Math.abs(sc-1.3)<0.011;})()"
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "SESSION PERSISTENCE: after a full reload, the stage reopens at the user's 1.3 - restored from perfprefs (FAILS pre-model: force-reset to auto/1 on every open, fontScale never saved)",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));if(Math.abs(sc-1.3)>=0.011)return false;var pp;try{pp=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.perfprefs.v2')||'{}');}catch(e){return false;}return typeof pp.fontScale==='number'&&Math.abs(pp.fontScale-1.3)<0.011;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "restored-at-1-3"
+    }
+  ]
+}

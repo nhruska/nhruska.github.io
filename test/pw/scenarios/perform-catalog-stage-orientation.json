@@ -1,17 +1,47 @@
 {
   "name": "perform-catalog-stage-orientation",
-  "note": "CW-1 regression guard (operator UAT fix-up, 3 defects): using REAL catalog songs (not the synthetic overflow-forcing seed in perform-long-line-wrap.json) with genuinely wide chord vocabularies - 'No Woman No Cry' (open C/G/Am/F) and 'Calluses' (Dm/Bb/F/C/Eb, several 5-letter+ chord-with-quality tokens) - confirms the padding-aware wrap budget + rotate re-fit didn't regress the COMMON case: normal-length catalog lines that may not even need to wrap still render with zero overflow and correct chord-over-lyric column alignment in both portrait and landscape.",
-  "viewport": { "width": 412, "height": 915 },
+  "note": "CW-1 regression guard (operator UAT fix-up, 3 defects): using REAL catalog songs (not the synthetic overflow-forcing seed in perform-long-line-wrap.json) with genuinely wide chord vocabularies - 'No Woman No Cry' (open C/G/Am/F) and 'Calluses' (Dm/Bb/F/C/Eb, several 5-letter+ chord-with-quality tokens) - confirms the padding-aware wrap budget + rotate re-fit didn't regress the COMMON case: normal-length catalog lines that may not even need to wrap still render with zero overflow and correct chord-over-lyric column alignment in both portrait and landscape. Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every song/orientation leg now also asserts the 0.8x/~13px legibility floor - the old shrink-to-fit model failed this on tall songs (Calluses landed ~0.64x in portrait).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
-    { "action": "tapIfVisible", "text": "I know some chords" },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "waitFor", "selector": "#songsList" },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"No Woman No Cry\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"No Woman No Cry\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "No Woman No Cry: stage open",
@@ -24,12 +54,27 @@
     },
     {
       "action": "evalAssert",
+      "label": "No Woman No Cry (portrait): LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "No Woman No Cry (portrait): chord stays column-synced over its lyric",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
     },
-    { "action": "screenshot", "name": "no-woman-no-cry-portrait" },
-    { "action": "resize", "width": 915, "height": 412 },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "screenshot",
+      "name": "no-woman-no-cry-portrait"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "No Woman No Cry (landscape): no .lyrLine overflows",
@@ -37,21 +82,63 @@
     },
     {
       "action": "evalAssert",
+      "label": "No Woman No Cry (landscape): LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "No Woman No Cry (landscape): no .lyrLine overlaps the .pNav button column",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var nav=document.querySelector('.pNav');if(!pSheet||!nav)return false;var navBox=nav.getBoundingClientRect();var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){var b=lines[i].getBoundingClientRect();var overlaps=!(b.right<=navBox.left||b.left>=navBox.right||b.bottom<=navBox.top||b.top>=navBox.bottom);if(overlaps)return false;}return true;})()"
     },
-    { "action": "screenshot", "name": "no-woman-no-cry-landscape" },
-    { "action": "resize", "width": 412, "height": 915 },
-    { "action": "wait", "ms": 400 },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tapIfVisible", "text": "I know some chords" },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "waitFor", "selector": "#songsList" },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Calluses\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "screenshot",
+      "name": "no-woman-no-cry-landscape"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Calluses\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "Calluses: stage open",
@@ -64,12 +151,27 @@
     },
     {
       "action": "evalAssert",
+      "label": "Calluses (portrait): LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "Calluses (portrait): chord stays column-synced over its lyric (Dm/Bb/F/C/Eb, wider tokens than the plain C/G/Am/F set)",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
     },
-    { "action": "screenshot", "name": "calluses-portrait" },
-    { "action": "resize", "width": 915, "height": 412 },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "screenshot",
+      "name": "calluses-portrait"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "Calluses (landscape): no .lyrLine overflows",
@@ -77,9 +179,17 @@
     },
     {
       "action": "evalAssert",
+      "label": "Calluses (landscape): LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "Calluses (landscape): no .lyrLine overlaps the .pNav button column",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var nav=document.querySelector('.pNav');if(!pSheet||!nav)return false;var navBox=nav.getBoundingClientRect();var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){var b=lines[i].getBoundingClientRect();var overlaps=!(b.right<=navBox.left||b.left>=navBox.right||b.bottom<=navBox.top||b.top>=navBox.bottom);if(overlaps)return false;}return true;})()"
     },
-    { "action": "screenshot", "name": "calluses-landscape" }
+    {
+      "action": "screenshot",
+      "name": "calluses-landscape"
+    }
   ]
 }

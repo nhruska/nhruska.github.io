@@ -1,6 +1,6 @@
 {
   "name": "perform-stage-orientation-rewrap",
-  "note": "CW-1 follow-up (3 defects found in operator UAT on top of the original portrait fix in perform-long-line-wrap.json): (1) perfWrapMaxChars' budget used a flat '-4' fudge instead of the sheet's REAL computed horizontal padding, so it under-accounted for landscape's padding-right:120px (reserved for the absolutely-positioned nav-button column) and wrapped rows ran under the buttons; (2) a bold chord label (.crd{font-weight:700}) can render a touch wider per character than the plain-weight measuring probe, so a single wrap pass could still land a few px over budget - the fix re-measures and shrinks the char budget until it actually fits; (3) the resize listener only called applyPerfFont() (re-scale), never re-checked/re-wrapped, so a wrap computed for one orientation's width silently carried into the other. Red-first repro (verified empirically before writing this assertion): open the Stage view with the phone ALREADY in landscape (defect 1 - the fresh wrap uses the too-generous landscape budget, right edge of every .lyrLine lands at 888px while the nav column starts at 799px, a clear overlap) then rotate to portrait WITHOUT closing the stage (defect 3 - pre-fix the landscape wrap (long rows) is never rebuilt for the narrower portrait frame: observed scrollWidth 870px inside a 380px-wide pSheet even at the auto-fit floor scale 0.500, a hard overflow). Rotating back to landscape must also re-wrap cleanly (not just applyPerfFont-rescale a stale portrait wrap).",
+  "note": "CW-1 follow-up (3 defects found in operator UAT on top of the original portrait fix in perform-long-line-wrap.json): (1) perfWrapMaxChars' budget used a flat '-4' fudge instead of the sheet's REAL computed horizontal padding, so it under-accounted for landscape's padding-right:120px (reserved for the absolutely-positioned nav-button column) and wrapped rows ran under the buttons; (2) a bold chord label (.crd{font-weight:700}) can render a touch wider per character than the plain-weight measuring probe, so a single wrap pass could still land a few px over budget - the fix re-measures and shrinks the char budget until it actually fits; (3) the resize listener only called applyPerfFont() (re-scale), never re-checked/re-wrapped, so a wrap computed for one orientation's width silently carried into the other. Red-first repro (verified empirically before writing this assertion): open the Stage view with the phone ALREADY in landscape (defect 1 - the fresh wrap uses the too-generous landscape budget, right edge of every .lyrLine lands at 888px while the nav column starts at 799px, a clear overlap) then rotate to portrait WITHOUT closing the stage (defect 3 - pre-fix the landscape wrap (long rows) is never rebuilt for the narrower portrait frame: observed scrollWidth 870px inside a 380px-wide pSheet even at the auto-fit floor scale 0.500, a hard overflow). Rotating back to landscape must also re-wrap cleanly (not just rescale a stale portrait wrap). Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every orientation step now also asserts the 0.8x/~13px legibility floor - a tiny-but-fitting render fails; wrapping plus vertical scroll, never sub-readable shrink, is what absorbs each orientation's width.",
   "viewport": { "width": 915, "height": 412 },
   "steps": [
     { "action": "goto", "path": "/music/play/" },
@@ -42,6 +42,11 @@
     },
     {
       "action": "evalAssert",
+      "label": "landscape-open: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "landscape-open: pSheet.scrollLeft is 0",
       "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
     },
@@ -77,6 +82,11 @@
     },
     {
       "action": "evalAssert",
+      "label": "rotated-to-portrait: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective (a rotate must re-WRAP for the narrower frame, never shrink below readable)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "rotated-to-portrait: pSheet.scrollLeft is 0",
       "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
     },
@@ -99,6 +109,11 @@
       "action": "evalAssert",
       "label": "rotated back to landscape: no .lyrLine overflows",
       "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated back to landscape: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
     },
     {
       "action": "evalAssert",

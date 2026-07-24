@@ -1,0 +1,131 @@
+{
+  "name": "perform-font-step-pinch-rewrap",
+  "note": "Wrap-first sizing model (operator-approved 2026-07-24), goalposts 2+5: the user controls the size via the A-/A+ buttons AND a pinch gesture on the sheet, and EVERY size change re-computes the wrap (maxChars at the new size) - never a bare rescale of a stale wrap. Red-first vs the pre-model branch: (a) stepFont only rescaled (--pscale up, same wrap) so two A+ taps left rows clipping and the same chars/row; (b) no pinch handler existed at all, so the simulated two-finger spread left --pscale unchanged; (c) pinch-in had no 0.8x floor to clamp to. The seeded custom song carries one genuinely long chorus line so the wrap is guaranteed to engage at every size.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"longLineSong\",\"t\":\"Long Line Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\",\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[C] a short intro line [G] here\"],[\"Chorus\",\"[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too\"]]}]"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Long Line Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "stage open, long line wrapped into >1 row at the default readable size, floor honored",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!(lines.length>2))return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));return sc>=0.799;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "record the baseline: current --pscale and the widest row's character count (chars/row must DROP after a size increase re-wraps)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');var max=0;for(var i=0;i<lines.length;i++){var t=lines[i].textContent.split('\\n');for(var j=0;j<t.length;j++)max=Math.max(max,t[j].length);}window.__base={scale:parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale')),maxChars:max};return max>0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x2: --pscale rose by ~0.2 from the baseline",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));return Math.abs(sc-(window.__base.scale+0.2))<0.02;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x2 RE-WRAPS: no .lyrLine clips at the bigger size (FAILS pre-model: stepFont rescaled the stale wrap and rows ran past the viewport)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x2 RE-WRAPS: the widest row now holds FEWER characters than at the baseline size (the wrap budget was recomputed, not reused)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');var max=0;for(var i=0;i<lines.length;i++){var t=lines[i].textContent.split('\\n');for(var j=0;j<t.length;j++)max=Math.max(max,t[j].length);}window.__afterBtns={scale:parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale')),maxChars:max};return max>0&&max<window.__base.maxChars;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "column alignment survives the button re-wrap",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "01-after-font-buttons"
+    },
+    {
+      "action": "evalAssert",
+      "label": "PINCH OUT (simulated two-finger spread on the sheet): --pscale grows past the button-set size (FAILS pre-model: no pinch handler, scale unchanged)",
+      "js": "(function(){var sheet=document.getElementById('pSheet');function t(id,x,y){return new Touch({identifier:id,target:sheet,clientX:x,clientY:y});}function fire(type,touches,changed){sheet.dispatchEvent(new TouchEvent(type,{touches:touches,targetTouches:touches,changedTouches:changed||touches,bubbles:true,cancelable:true}));}fire('touchstart',[t(1,150,400),t(2,250,400)]);fire('touchmove',[t(1,110,400),t(2,310,400)]);fire('touchend',[],[t(1,110,400),t(2,310,400)]);var sc=parseFloat(getComputedStyle(sheet).getPropertyValue('--pscale'));return sc>window.__afterBtns.scale+0.05;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "after the pinch gesture ends: re-wrapped (no clip) and the new size is PERSISTED to perfprefs.fontScale",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));var pp;try{pp=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.perfprefs.v2')||'{}');}catch(e){return false;}return typeof pp.fontScale==='number'&&Math.abs(pp.fontScale-sc)<0.011;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "02-after-pinch-out"
+    },
+    {
+      "action": "evalAssert",
+      "label": "PINCH IN hard: the scale CLAMPS at the 0.8x legibility floor - it moves down but never below (FAILS pre-model: no handler, scale never moves)",
+      "js": "(function(){var sheet=document.getElementById('pSheet');function t(id,x,y){return new Touch({identifier:id,target:sheet,clientX:x,clientY:y});}function fire(type,touches,changed){sheet.dispatchEvent(new TouchEvent(type,{touches:touches,targetTouches:touches,changedTouches:changed||touches,bubbles:true,cancelable:true}));}fire('touchstart',[t(1,100,400),t(2,340,400)]);fire('touchmove',[t(1,200,400),t(2,230,400)]);fire('touchend',[],[t(1,200,400),t(2,230,400)]);var sc=parseFloat(getComputedStyle(sheet).getPropertyValue('--pscale'));return Math.abs(sc-0.8)<0.011;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "at the floor: still wrapped with no clip, still column-aligned",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'))>=0.799;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "03-at-floor-after-pinch-in"
+    }
+  ]
+}

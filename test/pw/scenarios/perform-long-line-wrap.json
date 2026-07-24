@@ -1,6 +1,6 @@
 {
   "name": "perform-long-line-wrap",
-  "note": "CW-1 (P0): a long chord-over-lyric line HARD-CLIPS/requires horizontal scroll in the Perform (Stage) view at 412px because .lyrLine{white-space:pre} never wraps and the font-shrink auto-fit floors at 0.5x - the line can still be wider than the viewport at the floor. Reading the whole line mid-performance (both hands busy) must not require a scroll gesture, and the chord must stay directly over its lyric after wrapping. Red-first: seed a saved custom song with one genuinely long chorus line, open it, tap Stage - pre-fix, the seeded long line's .lyrLine scrollWidth exceeds its clientWidth (still overflowing even at the auto-fit floor). Portrait-only regression guard for the original fix - see perform-stage-orientation-rewrap.json for the 3 operator-UAT defects found on top of it (landscape padding-aware budget, chord-overhang re-measure, rotate re-wrap).",
+  "note": "CW-1 (P0), bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): a long chord-over-lyric line must WRAP (never CSS-soft-wrap, never hard-clip) AND render at a READABLE size - the old assertion accepted any tiny-but-fitting render, which was the wrong bar (the shrink-to-fit model regressed 4 times behind it). Now: >1 wrapped .lyrLine row, no row wider than the stage viewport, chord glued over its lyric, AND --pscale/font-size at or above the 0.8x (~13px) legibility floor. Portrait guard - see perform-stage-orientation-rewrap.json for the orientation half.",
   "viewport": { "width": 412, "height": 915 },
   "steps": [
     { "action": "goto", "path": "/music/play/" },
@@ -34,6 +34,11 @@
       "action": "evalAssert",
       "label": "CW-1: the long chorus line actually WRAPPED into multiple rows (not just already short enough) - more .lyrLine rows render than raw sheet lines with lyric content",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');return lines.length>2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "LEGIBILITY FLOOR (wrap-first model): --pscale >= 0.8 and every .lyrLine's effective font-size >= 13px - a tiny-but-fitting render now FAILS this scenario",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
     },
     {
       "action": "evalAssert",

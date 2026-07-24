@@ -1,0 +1,47 @@
+{
+  "name": "perform-readable-floor",
+  "note": "Wrap-first sizing model (operator-approved 2026-07-24): the Perform font is a READABLE size the user controls - it never auto-shrinks to fit. This is the goalpost that retires the old 'fits at ANY size' bar: a tall catalog song (Calluses, 30 sheet lines) that the old shrink-to-fit model rendered at ~0.64x (below the 0.8x legibility floor, tiny-but-fitting) must now render at >= 0.8x with every line WRAPPED to the content width and the overflow going to VERTICAL SCROLL, not to a smaller font. Red-first vs the shrink model: the floor assert fails (auto-fit computes ~0.64x for this song at 412x915) and the vertical-scroll assert fails (the whole point of the old model was to shrink until it fit the viewport height).",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tapIfVisible", "text": "I know some chords" },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
+    { "action": "waitFor", "selector": "#songsList" },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Calluses\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": "#stageBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "stage open",
+      "js": "(function(){var p=document.querySelector('.perform');return !!p && p.classList.contains('on');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "LEGIBILITY FLOOR: --pscale >= 0.8 and every .lyrLine's effective font-size >= 13px - a tall song must NOT be auto-shrunk below readable to fit the viewport (FAILS on the shrink-to-fit model, which lands ~0.64x here)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "VERTICAL SCROLL, not shrink: at the readable size this 30-line song is taller than the stage viewport, so pSheet must have real vertical overflow to scroll through (FAILS on the shrink-to-fit model, which shrinks until it fits the height)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && (pSheet.scrollHeight - pSheet.clientHeight) > 40;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no .lyrLine clips horizontally at the readable size (wrapping, not shrinking, is what absorbs the width)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "chord stays column-synced over its lyric at the readable size",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pSheet.scrollLeft is 0 (no stale horizontal scroll)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
+    },
+    { "action": "screenshot", "name": "calluses-readable-floor" }
+  ]
+}
