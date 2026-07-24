@@ -412,6 +412,15 @@
  * not for a button-shaped primitive).
  * ===================================================================== */
   .bt-st-jamchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  /* #298 UAT (ux-coach): the widened genre list (6-8 chips) wrapped to 3-4 rows
+     and pushed the feel chips + Search/Add actions off screen. Keep the rich
+     list but put the GENRE row on ONE horizontally-scrolling line so the primary
+     actions stay above the fold. Chips don't shrink (flex:0 0 auto), so the
+     rightmost one is cut off - that peek IS the "more to the right" affordance.
+     Only the genre row scrolls; the 3-chip feel row keeps the wrap default. */
+  .bt-st-jamchips-scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity;}
+  .bt-st-jamchips-scroll::-webkit-scrollbar{display:none;}
+  .bt-st-jamchips-scroll .chip{flex:0 0 auto;scroll-snap-align:start;}
   .bt-st-jamquery{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);
     letter-spacing:.02em;margin:0 0 8px;}
   .bt-st-jamresult{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
