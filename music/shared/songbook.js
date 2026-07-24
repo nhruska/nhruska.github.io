@@ -3554,7 +3554,13 @@
         // All view honestly shows letter-only chips - never a roman guessed
         // vs progression[0] via labelRoman's labelTonic fallback (Volley 2
         // High #2; the goal spec's honest-omission rule).
-        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small'), c));
+        // P2-1 (2026-07-23): the diagram-tile (non-chip) branch was missing the
+        // displayName arg chipTile's `display: dispChordName(c)` already passes -
+        // a keyed All view showed the raw canonical-sharp TOKEN (A#) while the
+        // chip branch and the In-key view showed the key-aware Bb on the same
+        // screen. dispChordName no-ops (returns c unchanged) when no key is set,
+        // so this is safe for the keyless All-browse case too.
+        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small', dispChordName(c)), c));
       });
       // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter
       // (Major/Minor/7th/Maj7/Min7) rebuilds #catTabRow + #buildGrid in place, but
