@@ -1,0 +1,133 @@
+{
+  "name": "perform-trailing-chord-invariant",
+  "note": "Codex finding (PR #302 review, SHA 237a56c) + CORE INVARIANT goalpost: a SHORT lyric with a TRAILING WIDE CHORD ('la la [Gmaj7add13sus4]') must never overflow the Perform sheet sideways - the wrap decision and split loop key on max(chordRow, lyricRow), and the wrap boundary must not EAT a chord character (pre-fix the boundary-space drop rendered Gmaj7add13sus4 as Gmaj7a|d13sus4, one d lost). The invariant is asserted at the auto-fit default, at the pinch-to-max size (which forces the trailing-chord line itself to wrap), through A- steps (which must be strictly monotonic from the effective scale - the A- bug), and across a landscape rotation. NO row - .lyrLine or .chordOnly - may ever exceed the sheet's padding-aware content width; .pSheet overflow-x is hidden.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"trailchord\",\"t\":\"Trailing Chord Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"F\"],\"sheet\":[[\"Verse\",\"la la [Gmaj7add13sus4]\"],[\"Verse\",\"sing one [C] two [Gmaj7add13] three\"],[\"Chorus\",\"a longer sung line that runs and runs to force wrapping [F] on [Bbmaj7add13]\"]]}]",
+    "music.offlineReadyCued.v1": "1"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Trailing Chord Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "open (auto-fit): the long chorus floors the scale at 0.8 and wraps; NO row overflows the content width; the full trailing chord Gmaj7add13sus4 renders with no character lost",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine,.chordOnly');if(!(rows.length>3))return false;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}var crd='';pSheet.querySelectorAll('.crd').forEach(function(c){crd+=c.textContent;});crd=crd.replace(/\\s/g,'');return crd.indexOf('Gmaj7add13sus4')!==-1&&crd.indexOf('Bbmaj7add13')!==-1&&pSheet.scrollLeft===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "01-open-autofit-floor"
+    },
+    {
+      "action": "evalAssert",
+      "label": "PINCH OUT to the 2.2 cap: the short-lyric + trailing-wide-chord line now exceeds the budget and must WRAP (row count grows) - pre-fix it rendered unwrapped and the chord overflowed sideways",
+      "js": "(function(){var sheet=document.getElementById('pSheet');var before=sheet.querySelectorAll('.lyrLine').length;function t(id,x,y){return new Touch({identifier:id,target:sheet,clientX:x,clientY:y});}function fire(type,touches,changed){sheet.dispatchEvent(new TouchEvent(type,{touches:touches,targetTouches:touches,changedTouches:changed||touches,bubbles:true,cancelable:true}));}fire('touchstart',[t(1,180,400),t(2,220,400)]);fire('touchmove',[t(1,60,400),t(2,360,400)]);fire('touchend',[],[t(1,60,400),t(2,360,400)]);var sc=parseFloat(getComputedStyle(sheet).getPropertyValue('--pscale'));window.__afterPinch=sc;return Math.abs(sc-2.2)<0.011&&sheet.querySelectorAll('.lyrLine').length>before;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "at 2.2: STILL no row overflows (the wrapped trailing chord honors the budget) and STILL no chord character lost across the wrap boundary",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine,.chordOnly');if(!rows.length)return false;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}var crd='';pSheet.querySelectorAll('.crd').forEach(function(c){crd+=c.textContent;});crd=crd.replace(/\\s/g,'');return crd.indexOf('Gmaj7add13sus4')!==-1&&crd.indexOf('Bbmaj7add13')!==-1&&pSheet.scrollLeft===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "column alignment survives the trailing-chord wrap: every sampled chord character sits in the same pixel column as the lyric character below it",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "02-pinched-max-wrapped"
+    },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "A- BUG FIX: three A- presses each yield a STRICTLY smaller effective --pscale (stepping from the effective scale, never a stale baseline that could render A- bigger)",
+      "js": "(function(){var btn=document.getElementById('pFontDown');var sheet=document.getElementById('pSheet');function sc(){return parseFloat(getComputedStyle(sheet).getPropertyValue('--pscale'));}var s0=sc();for(var i=0;i<3;i++){var before=sc();btn.click();var after=sc();if(!(after<before-0.001))return false;}return sc()<s0-0.2;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "after A- x3: no row overflows, chord text still intact",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine,.chordOnly');if(!rows.length)return false;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}var crd='';pSheet.querySelectorAll('.crd').forEach(function(c){crd+=c.textContent;});return crd.replace(/\\s/g,'').indexOf('Gmaj7add13sus4')!==-1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x3 mirrors back up (strictly larger each press, capped at 2.2), still no overflow",
+      "js": "(function(){var btn=document.getElementById('pFontUp');var sheet=document.getElementById('pSheet');function sc(){return parseFloat(getComputedStyle(sheet).getPropertyValue('--pscale'));}for(var i=0;i<3;i++){var before=sc();btn.click();var after=sc();if(before<2.19&&!(after>before+0.001))return false;if(after>2.201)return false;}var cs=getComputedStyle(sheet);var avail=sheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=sheet.querySelectorAll('.lyrLine,.chordOnly');for(var j=0;j<rows.length;j++){if(rows[j].scrollWidth>avail+1)return false;}return true;})()"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape: no row overflows the padding-aware content width and none runs under the .pNav column; chord text intact",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine,.chordOnly');if(!rows.length)return false;var nav=document.querySelector('.pNav');var navLeft=nav?nav.getBoundingClientRect().left:Infinity;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;var r=rows[i].getBoundingClientRect();if(r.left+rows[i].scrollWidth>navLeft+1)return false;}var crd='';pSheet.querySelectorAll('.crd').forEach(function(c){crd+=c.textContent;});return crd.replace(/\\s/g,'').indexOf('Gmaj7add13sus4')!==-1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "03-landscape-invariant"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "back to portrait: invariant still holds (re-fit + re-wrap on the width change)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine,.chordOnly');if(!rows.length)return false;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}return pSheet.scrollLeft===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "04-back-portrait"
+    }
+  ]
+}
