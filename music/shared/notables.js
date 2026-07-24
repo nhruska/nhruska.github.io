@@ -92,8 +92,10 @@
   // a member of its array - an omitted/null/unset level never matches any
   // array (Array.indexOf(undefined) is always -1), so with no level set only
   // the ask may show and every other listed consumerId stays blocked until a
-  // real level exists. A consumerId NOT in this table (guidanceask, roman,
-  // diagrampref, backup) is unrestricted.
+  // real level exists. A consumerId NOT in this table (guidanceask, chordtap,
+  // roman, diagrampref, backup) is unrestricted - chordtap deliberately so:
+  // "tap a chord to hear it" is the sheet's core interaction, useful at every
+  // level, so it is NOT level-gated (PR #300).
   var LEVELS = {
     firstrun: ['beginner'],
     postprog: ['beginner'],

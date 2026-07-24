@@ -38,18 +38,48 @@
     },
     {
       "action": "evalAssert",
+      "label": "layout settle gate: await document.fonts.ready before any geometry assert, so a measurement never lands on a half-laid-out page",
+      "js": "document.fonts.ready.then(function(){ return true; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (volley-1 high): every VISIBLE chord chip clears the 44px tap-target floor on BOTH axes (measured 32-48 x 34 pre-fix at 412x915) - a11y is not just a name and a role, the thing has to be hittable. Measured with offsetWidth/offsetHeight, NOT getBoundingClientRect: the rect is the TRANSFORMED box, so the chip's own :active scale(.9) makes a compliant 44px control read 39.6px and the gate cries wolf (observed 1 sub-floor read in 8 runs). Zero-box chips are filtered FIRST so a hidden chip cannot fake a pass",
+      "js": "(function(){var cs=Array.prototype.slice.call(document.querySelectorAll('.chordChips .c'));var vis=cs.filter(function(c){return c.offsetWidth>0&&c.offsetHeight>0;});if(!vis.length)return false;return vis.every(function(c){return c.offsetHeight>=44&&c.offsetWidth>=44;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "chips do not overflow the 412px viewport horizontally at the 44px floor (they wrap instead)",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth"
+    },
+    {
+      "action": "evalAssert",
+      "label": "MOCK-INTEGRITY GUARD: the production audio entrypoints the next steps stub actually exist as functions on the real ChordAudio - a rename/removal must fail HERE, not pass silently because the mock stood in for a function prod no longer has",
+      "js": "(function(){return !!window.ChordAudio && typeof window.ChordAudio.strum === 'function' && typeof window.ChordAudio.tone === 'function';})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "chip has touch-action:manipulation (drops the mobile double-tap-zoom click delay)",
       "js": "getComputedStyle(document.querySelector('.chordChips .c')).touchAction === 'manipulation'"
     },
     {
       "action": "evalAssert",
       "label": "S-CHORDCHIP-LAG: a bare pointerdown (no click) plays the chord immediately - no wait for the browser's follow-up click",
-      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch', button: 0, isPrimary: true }));\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
     },
     {
       "action": "evalAssert",
       "label": "S-CHORDCHIP-LAG: the browser's follow-up click after a pointerdown on the SAME chip does not replay it (no double-sound)",
-      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));\n  chip.click(); // the browser's synthesized follow-up click for the same tap\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+      "js": "(function(){\n  var chip = document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch', button: 0, isPrimary: true }));\n  chip.click(); // the browser's synthesized follow-up click for the same tap\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 1;\n})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (volley-1 medium): a SECONDARY-button press (button=2, e.g. right-click / stylus barrel) does NOT sound the chord - pointerdown plays on press, so it must be constrained to the primary button",
+      "js": "(function(){\n  var chip = document.querySelectorAll('.chordChips .c')[2] || document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse', button: 2, isPrimary: true }));\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 0;\n})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (volley-1 medium): a NON-primary pointer (second multitouch finger) does NOT sound the chord",
+      "js": "(function(){\n  var chip = document.querySelectorAll('.chordChips .c')[3] || document.querySelector('.chordChips .c');\n  if (!chip) return 'no chip found';\n  var calls = 0;\n  var origStrum = window.ChordAudio.strum, origTone = window.ChordAudio.tone;\n  window.ChordAudio.strum = function(){ calls++; };\n  window.ChordAudio.tone = function(){ calls++; };\n  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch', button: 0, isPrimary: false }));\n  window.ChordAudio.strum = origStrum; window.ChordAudio.tone = origTone;\n  return calls === 0;\n})()"
     },
     {
       "action": "evalAssert",

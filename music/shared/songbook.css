@@ -452,7 +452,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    double-tap-zoom delay on every click path through this button too - the
    pointerdown handler in songbook.js is what makes the FIRST tap instant;
    this keeps any click-only path (mouse, some a11y tooling) equally snappy. */
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
+/* min-height/min-width are the 44px tap-target floor, not styling: as real
+   <button>s these measured 32-48 x 34 at 412x915 - under the floor on both
+   axes for a control whose whole purpose is being tapped to hear the chord.
+   inline-flex + centering keeps the glyph optically centred in the taller
+   box instead of riding the top edge. */
+.chordChips .c{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 /* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}

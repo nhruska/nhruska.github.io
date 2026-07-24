@@ -1186,7 +1186,16 @@
       // after a pointerdown on the same chip, never a keyboard-only click.
       el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) {
         var lastPtr = 0;
-        elc.addEventListener('pointerdown', function () { lastPtr = Date.now(); packPlayChord(elc.dataset.c); });
+        // Volley-1 (medium): pointerdown fires on ANY press, so a right-click
+        // or a second multitouch finger would sound the chord. Constrain to
+        // the PRIMARY pointer's primary button - the touch/left-click case
+        // immediacy was actually asked for. Deliberate residual: a press that
+        // turns into a scroll drag still plays, because deferring to pointerup
+        // to detect the drag is exactly the tap-to-hear latency this fixed.
+        elc.addEventListener('pointerdown', function (e) {
+          if (e && (e.button > 0 || e.isPrimary === false)) return;
+          lastPtr = Date.now(); packPlayChord(elc.dataset.c);
+        });
         elc.onclick = function () {
           if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
           packPlayChord(elc.dataset.c);
