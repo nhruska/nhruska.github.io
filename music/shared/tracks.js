@@ -177,6 +177,16 @@
     var elPlayer = document.createElement('div');
     elPlayer.className = 'bt-player';
     document.body.appendChild(elPlayer);
+    // Eagerly resumes the WebAudio context the instant a finger LANDS
+    // anywhere on the player/Studio overlay (pointerdown), rather than
+    // waiting for the click on a chord chip that actually schedules the
+    // note - see ChordAudio.primeNow()'s header comment in audio.js. elPlayer
+    // is created once and reused for both the bare player and the Studio (its
+    // innerHTML is replaced per open), so one delegated listener here covers
+    // every Studio open without being re-wired per chord chip. Idempotent /
+    // cheap (a no-op once already running), harmless on the plain-player path
+    // too (no chords there, so it just never has anything to warm for).
+    if (window.ChordAudio) elPlayer.addEventListener('pointerdown', function () { window.ChordAudio.primeNow(); }, { passive: true });
 
     var state = { genre: 'all', key: null, mode: 'major', scaleMode: 'ionian', view: 'finder', seed: [], custom: [], urls: {}, tracks: [] };
     var elGenre = $('[data-genre]'), elKeys = $('[data-keys]'), elMode = $('[data-modetoggle]');
@@ -270,9 +280,17 @@
     // playing); studioSound itself resets openStudio's own toggle-icon state
     // via its onStop callback (wired inside openStudio, below).
     var studioSound = null;
+    // Audio-focus keep-warm (immediate chord taps): true only while the
+    // STUDIO (not the bare video player) is the one open - set in openStudio,
+    // cleared here. Tracked locally (not just ChordAudio.isWarm()) so
+    // closePlayer - shared by both the plain player and the Studio - only
+    // releases when IT was the one that actually kept the context warm.
+    var studioAudioWarm = false;
     function closePlayer() {
       if (global.Sound) global.Sound.stopAll();
       studioSound = null;
+      if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
+      studioAudioWarm = false;
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
     }
 
@@ -390,6 +408,11 @@
       }
       var th = studioTheory(t.key, t.mode);
       if (!th || !pack) { openPlayer(t); return; }
+      // Past this point the Studio (with its playable chord chips + fretboard)
+      // is definitely opening - hold the audio engine warm for as long as it
+      // stays open, so every chord tap is immediate (see keepWarm() in
+      // audio.js). closePlayer() (above) releases it.
+      if (window.ChordAudio) { window.ChordAudio.keepWarm(); studioAudioWarm = true; }
       // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
       // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
       // (unescaped) form kept alongside for the M-GUIDE W3a target caption's

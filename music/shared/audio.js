@@ -45,11 +45,100 @@
   // genuinely moved on.
   var IDLE_RELEASE_MS = 20000;
   var idleTimer = null;
+
+  /* ---- keep-warm mode ----------------------------------------------------
+   * The 20s idle-release above is right for the BACKGROUND case (context
+   * left running after the last tap, then genuinely abandoned) but wrong for
+   * the moment a chord-interactive surface (Practice/Stage, Compose, the
+   * backing-track Studio) first OPENS: the very first tap on that surface
+   * still pays the ~0.5s resume() lag if the context happened to be
+   * suspended from a prior idle gap, and that first tap is exactly the one
+   * a musician judges immediacy by.
+   *
+   * keepWarm()/releaseWarm() suppress the idle-release entirely while such a
+   * surface is on screen (so `whenRunning` above always takes its
+   * SYNCHRONOUS zero-latency branch) and eagerly resume the context the
+   * moment the surface opens, rather than waiting for the first note. They
+   * are reference-counted so nested/overlapping surfaces (e.g. the Studio
+   * overlay opened while Practice is still technically "current") don't
+   * release focus until the LAST one closes.
+   *
+   * By design this holds audio focus (pauses background music) for the
+   * ENTIRE time such a surface stays open and visible, past any idle
+   * threshold - immediacy wins for as long as the user is actively on a
+   * chord screen (operator-confirmed, standing behavior - not a hedge).
+   * Focus is handed back ONLY on: the surface closing (after a short grace
+   * so an in-flight strum still rings out) or the tab backgrounding
+   * (immediately - the app isn't in the foreground to be heard anyway, so
+   * there's no reason to keep another app's audio paused).
+   */
+  var warmCount = 0;
+  // Grace after the LAST warm surface closes, before actually suspending:
+  // long enough that a strum triggered right as the surface closes still
+  // rings out (strum's default dur is 1.6s), short enough that it isn't the
+  // full 20s background-idle window - the user just told us, by navigating
+  // away, that they're done with chords for now.
+  var SURFACE_CLOSE_RELEASE_MS = 1800;
+
   function releaseWhenIdle(secondsFromNow) {
     if (idleTimer) clearTimeout(idleTimer);
+    if (warmCount > 0) return; // a surface is open: stay running, no idle-release
     idleTimer = setTimeout(function () {
       if (AC && AC.state === 'running') AC.suspend();
     }, secondsFromNow * 1000 + IDLE_RELEASE_MS);
+  }
+
+  // Call when a chord-interactive surface OPENS. Guarded so it's a harmless
+  // no-op in a non-browser environment (Node tests) - only the reference
+  // count itself needs to be pure/testable there.
+  function keepWarm() {
+    warmCount++;
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      var a = ctx();
+      if (a.state !== 'running') a.resume();
+    }
+  }
+  // Call when that surface CLOSES. Once the LAST opener releases (the exact
+  // 1->0 transition), re-arm a short grace-then-suspend rather than
+  // immediately cutting audio focus. A redundant call while already at 0 is
+  // a true no-op - it must NOT re-arm/extend the grace timer, or a stray
+  // extra close call would silently push the suspend deadline out forever.
+  function releaseWarm() {
+    if (warmCount === 0) return;
+    warmCount--;
+    if (warmCount === 0) {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () {
+        if (AC && AC.state === 'running') AC.suspend();
+      }, SURFACE_CLOSE_RELEASE_MS);
+    }
+  }
+  function isWarm() { return warmCount > 0; }
+  // Eagerly starts the resume() handshake the instant a finger LANDS on a
+  // chord control (pointerdown), rather than waiting for the click that
+  // actually schedules the note - covers the narrow window right after a
+  // surface opens (before keepWarm()'s own resume() has settled) and any tap
+  // that lands before keepWarm() ran at all. Idempotent/cheap: a no-op once
+  // already running.
+  function primeNow() {
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      var a = ctx();
+      if (a.state !== 'running') a.resume();
+    }
+  }
+  // Backgrounding the tab hard-releases immediately and unconditionally -
+  // regardless of warmCount - because the point of releasing focus is to
+  // hand it back to another app the instant this one isn't in the
+  // foreground to be heard, not to wait out a grace period.
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        warmCount = 0;
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        if (AC && AC.state === 'running') AC.suspend();
+      }
+    });
   }
 
   function freqForString(openFreq, fret) { return openFreq * Math.pow(2, fret / 12); }
@@ -127,12 +216,33 @@
     var n = Math.max(L + 1, Math.floor(sampleRate * dur));
     var out = new Float32Array(n);
 
-    // Longer, wound (low) strings ring longer than thin high ones - so decay
-    // rises toward 1 as frequency falls. Kept < 1 so the loop is always stable.
+    // Re-tuned 2026-07-24 (UAT: "chord tail still cuts off" even after the
+    // exponential-release fix below - diagnosed by RECONSTRUCTING the heard
+    // signal: the string barely decayed on its own, so it was still loud
+    // (~-13dB) when the release grabbed it at `dur` and yanked it to silence
+    // in ~0.5s - THAT fast drop from loud is what read as a cutoff, not the
+    // stop itself). Fix: make the string actually ring down to inaudible
+    // over a natural, musical time so it is already quiet by the time the
+    // release starts.
+    //
+    // Counter-intuitive but correct: `decay` (the loop's PER-CYCLE loss)
+    // must RISE toward 1 as frequency RISES, even though wound (low)
+    // strings still ring longer in real SECONDS than thin (high) ones. A
+    // low string completes far fewer cycles per second - e.g. low E
+    // (82Hz) does ~132 cycles in 1.6s where high E (659Hz) does ~1055 - so
+    // to reach the same real-time ring-out, the high string's per-cycle
+    // loss has to be much smaller (closer to 1) just to survive that many
+    // more cycles. `1 - K*freq^-P` is a power-law fit to a solved decay
+    // curve targeting ~-45..-50dB below peak by ~3-4s for the lowest
+    // strings and ~1.5-2.5s for the highest (audio-dsp-coach realistic
+    // range) - the "low rings longer in real time" law still holds (see
+    // test 'low (wound) strings ring longer than high strings'), it's just
+    // not decay-parameter direction that encodes it here. Kept < 1 so the
+    // loop is always stable.
     var decay = opts.decay;
-    if (decay == null) decay = 0.9995 - Math.min(0.008, freq * 0.0000085);
-    if (decay > 0.99995) decay = 0.99995;
-    if (decay < 0.985) decay = 0.985;
+    if (decay == null) decay = 1 - 0.3 * Math.pow(freq, -0.73);
+    if (decay > 0.99985) decay = 0.99985;
+    if (decay < 0.94) decay = 0.94;
 
     var bright = opts.brightness == null ? 0.5 : opts.brightness;
     if (bright < 0.05) bright = 0.05; if (bright > 0.95) bright = 0.95;
@@ -261,6 +371,37 @@
     return out;
   }
 
+  /* ---- natural release (chord-tail UAT: "cuts off abruptly instead of
+   * ringing out") --------------------------------------------------------
+   * pluckKS used to play its buffer at a CONSTANT gain and rely solely on
+   * ksRender's own 40ms buffer-edge fade to end the note - fine for click
+   * safety, but the physical KS decay hasn't reached anywhere near silence
+   * by `dur` (a low string is still ~50% amplitude), so that 40ms bake reads
+   * as a hard stop, not a ring-out. The fix (audio-dsp-coach: "always
+   * release with an exponential ramp, never stop() cold") is a real
+   * top-level release on the GAIN NODE: hold at `gain` through the
+   * requested `dur`, then fall away exponentially to inaudible over
+   * releaseFor(freq) seconds - longer for low/long-ringing strings, same
+   * "wound strings ring longer" physics ksRender already models - and only
+   * stop() once that fade has actually finished.
+   * ------------------------------------------------------------------- */
+  var REL_MIN = 0.3, REL_MAX = 0.6, REL_FREQ_SPAN = 400; // Hz taper span
+  function releaseFor(freq) {
+    var f = Math.max(0, Math.min(1, (REL_FREQ_SPAN - freq) / REL_FREQ_SPAN));
+    return REL_MIN + f * (REL_MAX - REL_MIN); // 0.3s (bright/high) .. 0.6s (deep/long-ringing)
+  }
+  // Pure re-implementation of the exponentialRampToValueAtTime curve pluckKS
+  // schedules on the GainNode (WebAudioParam math has no Node stand-in) -
+  // exported so the envelope shape itself is node-testable: flat at `gain`
+  // through `dur`, then an exponential decay to ~0 across releaseFor(freq).
+  function releaseGain(elapsed, dur, freq, gain) {
+    var rel = releaseFor(freq);
+    if (elapsed <= dur) return gain;
+    if (elapsed >= dur + rel) return 0.0001;
+    var frac = (elapsed - dur) / rel;
+    return gain * Math.pow(0.0001 / gain, frac);
+  }
+
   function tone(freq, dur) {
     dur = dur || 1.1;
     var a = ctx();
@@ -269,8 +410,13 @@
       o.type = 'sine'; o2.type = 'triangle';
       o.frequency.value = freq; o2.frequency.value = freq;
       var t = a.currentTime;
+      // Release lengthened toward the same natural-ring-out feel as pluckKS
+      // (was a hard 0.25s window) - proportional to `dur` so a short
+      // reference tone (tuner / playNote) still fits its release inside its
+      // own sustain, clamped to the same 0.3-0.6s "feels like a string" band.
+      var rel = Math.min(REL_MAX, Math.max(REL_MIN, dur * 0.35));
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.2, t + 0.04);
-      g.gain.setValueAtTime(0.2, t + dur - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.gain.setValueAtTime(0.2, t + Math.max(0.04, dur - rel)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(g); o2.connect(g); g.connect(a.destination);
       o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
       releaseWhenIdle(dur);
@@ -292,7 +438,13 @@
     if (entry.bufs.length < 2) {
       // First (and second) tap of this string: fill a variant. Later taps are
       // pure cache hits - the render cost never sits on the tap path again.
-      var data = ksRender(a.sampleRate, entry.freq, dur, { brightness: brightness });
+      // Rendered past `dur` by REL_MAX (the longest possible release, so a
+      // cache entry shared by two near-identical taps is always long enough
+      // regardless of which of them actually rendered it) - otherwise the
+      // release scheduled below would run the buffer dry and get silently
+      // truncated by the AudioBufferSourceNode ending, right back to the
+      // abrupt-cutoff bug this fixes.
+      var data = ksRender(a.sampleRate, entry.freq, dur + REL_MAX + 0.05, { brightness: brightness });
       buf = a.createBuffer(1, data.length, a.sampleRate);
       buf.getChannelData(0).set(data);
       entry.bufs.push(buf);
@@ -304,10 +456,14 @@
     var src = a.createBufferSource(); src.buffer = buf;
     // Micro-detune rides playback, not the render - the cache's enabling move.
     src.playbackRate.value = (freq / entry.freq) * det;
-    var g = a.createGain(); g.gain.value = gain;
+    var g = a.createGain();
+    var rel = releaseFor(freq), relStart = t + dur, relEnd = relStart + rel;
+    g.gain.setValueAtTime(gain, t);
+    g.gain.setValueAtTime(gain, relStart);              // hold flat through the sustain
+    g.gain.exponentialRampToValueAtTime(0.0001, relEnd); // then ring out, not cut off
     src.connect(g); g.connect(m.input);
     src.start(t);
-    src.stop(t + dur + 0.05);
+    src.stop(relEnd + 0.05);                            // stop AFTER the fade - already silent, no click
     if (scrape && m.scrapeIn) {
       var sd = scrapeRender(a.sampleRate, 7, { level: 1 });
       var sb = a.createBuffer(1, sd.length, a.sampleRate);
@@ -381,10 +537,17 @@
         t += gap;
       });
 
-      releaseWhenIdle((t - t0) + dur);
+      // +REL_MAX: the idle-release timer must not fire while the last
+      // string's natural release tail is still ringing out.
+      releaseWhenIdle((t - t0) + dur + REL_MAX);
     });
   }
 
-  global.ChordAudio = { tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender, scrapeRender: scrapeRender, VoiceCache: VoiceCache };
+  global.ChordAudio = {
+    tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender,
+    scrapeRender: scrapeRender, VoiceCache: VoiceCache,
+    keepWarm: keepWarm, releaseWarm: releaseWarm, isWarm: isWarm, primeNow: primeNow,
+    releaseFor: releaseFor, releaseGain: releaseGain
+  };
 
 })(typeof window !== 'undefined' ? window : this);
