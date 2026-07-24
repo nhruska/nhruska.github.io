@@ -38,7 +38,11 @@
 // Screens are app-specific: edit SCREENS below (selector to click, key for
 // filenames) for the flow under review.
 
-const { chromium } = require('playwright');
+// playwright is required LAZILY inside the run block, never at module load:
+// test/ux-capture-serve.test.js requires this file for its path-resolution
+// helper, and CI runs the node suite with no playwright installed. A top-level
+// require here fails that suite with MODULE_NOT_FOUND even though nothing in
+// the test touches a browser.
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const os = require('os');
 
@@ -201,6 +205,7 @@ const MEASURE = () => {
 module.exports = { resolveRequestPath };
 
 if (require.main === module) (async()=>{
+  const { chromium } = require('playwright'); // lazy - see the note at the top
   fs.mkdirSync(OUT,{recursive:true});
   const server = URL_ABS ? null : serve();
   await new Promise(r=>setTimeout(r,400));
