@@ -18,7 +18,7 @@
     {
       "action": "evalAssert",
       "label": "spy installed on navigator.wakeLock.request BEFORE Stage opens, so the entry call is counted too",
-      "js": "(function(){window.__wakeCalls=0;var stub={release:function(){return Promise.resolve();}};var request=function(){window.__wakeCalls++;return Promise.resolve(stub);};try{Object.defineProperty(navigator,'wakeLock',{value:{request:request},configurable:true});}catch(e){navigator.wakeLock={request:request};}return true;})()"
+      "js": "(function(){window.__wakeCalls=0;window.__wakeReleases=0;var stub={release:function(){window.__wakeReleases++;return Promise.resolve();}};var request=function(){window.__wakeCalls++;return Promise.resolve(stub);};try{Object.defineProperty(navigator,'wakeLock',{value:{request:request},configurable:true});}catch(e){navigator.wakeLock={request:request};}return true;})()"
     },
     {
       "action": "tap",
@@ -50,6 +50,54 @@
     {
       "action": "screenshot",
       "name": "stage-wakelock-reacquire"
+    },
+    {
+      "action": "tap",
+      "selector": "#pClose"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (volley-1 medium): closing Stage RELEASES the held sentinel - the mock now models release(), so a lock left held fails here",
+      "js": "window.__wakeReleases >= 1"
+    },
+    {
+      "action": "evalAssert",
+      "label": "arm the close-during-request race: wakeLock.request now returns a PENDING promise resolved on demand, and its sentinel records its own release",
+      "js": "(function(){window.__lateReleased=false;var late={release:function(){window.__lateReleased=true;return Promise.resolve();}};var request=function(){window.__wakeCalls++;return new Promise(function(res){window.__resolveWake=function(){res(late);};});};try{Object.defineProperty(navigator,'wakeLock',{value:{request:request},configurable:true});}catch(e){navigator.wakeLock={request:request};}return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#pClose"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "resolve the in-flight request AFTER Stage already closed",
+      "js": "(function(){window.__resolveWake();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (volley-1 high): a sentinel that lands after Stage closed is RELEASED, not stored - otherwise the screen stays awake with Stage gone",
+      "js": "window.__lateReleased === true"
     }
   ]
 }

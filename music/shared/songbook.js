@@ -1664,7 +1664,12 @@
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
-    function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
+    // The request is async: Stage can close (or a second request can land)
+    // between the call and its resolution, so the sentinel is only KEPT if
+    // Stage is still the live overlay - otherwise it is released on arrival.
+    // Without that recheck, relWake() runs while STATE.wakeLock is still null
+    // and the late sentinel holds the screen awake after Stage is gone.
+    function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { if (!w) return; if (!performEl || !performEl.classList.contains('on')) { try { w.release(); } catch (e) { } return; } if (STATE.wakeLock && STATE.wakeLock !== w) { try { STATE.wakeLock.release(); } catch (e) { } } STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // P1-1 (P0): the Wake Lock API auto-releases on ANY backgrounding
     // (notification, incoming call, app-switch) - the browser does this on its
