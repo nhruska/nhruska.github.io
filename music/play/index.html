@@ -78,8 +78,8 @@
         <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
         <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
       </div>
-      <div class="chips" id="genreChips"></div>
-      <div class="chips" id="keyChips"></div>
+      <div class="chipScrollWrap"><div class="chips" id="genreChips"></div></div>
+      <div class="chipScrollWrap"><div class="chips" id="keyChips"></div></div>
       <!-- Repertoire list (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
         <div class="songs" id="songsList"></div>
@@ -193,7 +193,7 @@
         <div class="notableSlot" id="tuneFirstSlot"></div>
         <div class="tuneTuneRow" id="tuneTuneRow" style="display:none">
           <div class="sub">Tuning</div>
-          <div class="chips" id="tuneTunings"></div>
+          <div class="chipScrollWrap"><div class="chips" id="tuneTunings"></div></div>
         </div>
         <div class="tCard">
           <h3>Auto-tuner <span class="subNote">- live needle by mic</span></h3>
@@ -399,6 +399,7 @@
 <script src="../shared/circle.js"></script>
 <script src="../shared/key-explorer.js"></script>
 <script src="../shared/list-item.js"></script>
+<script src="../shared/scroll-hint.js"></script>
 <script src="../shared/notables.js"></script>
 <!-- guidance-level.js: the beginner|intermediate|advanced experience level
      (music.guidanceLevel.v1) - loaded right after notables.js, which grades
