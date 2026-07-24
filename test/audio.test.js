@@ -178,7 +178,8 @@ function energy(buf, a, b) { var e = 0; for (var i = a; i < b; i++) e += buf[i] 
 
 test('module loads and exposes the real-feel engine surface', function () {
   assert.strictEqual(typeof ChordAudio, 'object', 'ChordAudio not exported');
-  ['tone', 'strum', 'freqForString', 'ksRender', 'keepWarm', 'releaseWarm', 'isWarm', 'primeNow'].forEach(function (k) {
+  ['tone', 'strum', 'freqForString', 'ksRender', 'keepWarm', 'releaseWarm', 'isWarm', 'primeNow',
+    'releaseFor', 'releaseGain'].forEach(function (k) {
     assert.strictEqual(typeof ChordAudio[k], 'function', 'missing ChordAudio.' + k);
   });
 });
@@ -209,6 +210,92 @@ test('the string decays - the tail is far quieter than the attack', function () 
   var head = energy(b, 0, Math.floor(SR * 0.1));
   var tail = energy(b, b.length - Math.floor(SR * 0.1), b.length);
   assert.ok(tail < head * 0.5, 'tail energy ' + tail.toFixed(2) + ' not << head ' + head.toFixed(2));
+});
+
+/* ---- natural release envelope (UAT: "chord tail cuts off abruptly instead
+ * of ringing out") -----------------------------------------------------
+ * pluckKS used to play its buffer at a CONSTANT gain and rely only on
+ * ksRender's own 40ms buffer-edge fade to end the note - well before the
+ * physical KS decay had reached anywhere near silence, so it read as a hard
+ * stop. The fix schedules a real exponential release on the top-level
+ * GainNode (releaseFor/releaseGain, mirrored here as pure math since
+ * WebAudioParam automation has no Node stand-in) and only stop()s once that
+ * release has actually finished. These pin the envelope SHAPE - continuous
+ * at the hold->release boundary, monotonically decreasing, inaudible by the
+ * time playback is cut - i.e. prove there is no hard cutoff, quantitatively. */
+test('releaseFor: longer for low/long-ringing strings, always within the natural-feel band', function () {
+  var low = ChordAudio.releaseFor(82.41);   // low E
+  var high = ChordAudio.releaseFor(659.25); // high E, two octaves up
+  assert.ok(low > high, 'a low string should get a longer release than a high string (got ' + low + ' vs ' + high + ')');
+  [82.41, 196, 440, 659.25, 1200].forEach(function (f) {
+    var r = ChordAudio.releaseFor(f);
+    assert.ok(r >= 0.3 && r <= 0.6, f + 'Hz release ' + r + 's outside the 0.3-0.6s natural-feel band');
+  });
+});
+
+test('releaseGain: continuous at the hold->release boundary (no jump at the old cutoff instant)', function () {
+  // A vanishingly small epsilon isolates CONTINUITY (the limit as elapsed ->
+  // dur from either side must equal `gain`) from the release's normal decay
+  // rate, which is legitimately fast in absolute-ms terms over a <=0.6s window.
+  var dur = 1.6, freq = 196, gain = 0.15, eps = 1e-6;
+  var justBefore = ChordAudio.releaseGain(dur - eps, dur, freq, gain);
+  var atBoundary = ChordAudio.releaseGain(dur, dur, freq, gain);
+  var justAfter = ChordAudio.releaseGain(dur + eps, dur, freq, gain);
+  assert.strictEqual(atBoundary, gain, 'still at full gain exactly at the old hard-stop instant - the string keeps ringing, not cut');
+  [justBefore, justAfter].forEach(function (v) {
+    assert.ok(Math.abs(v - gain) / gain < 0.001, 'no jump at the sustain/release boundary (got ' + v + ' vs held gain ' + gain + ')');
+  });
+});
+
+test('releaseGain: monotonically decreasing and inaudible by the moment stop() actually fires', function () {
+  var dur = 1.6, freq = 196, gain = 0.15;
+  var rel = ChordAudio.releaseFor(freq);
+  var prev = ChordAudio.releaseGain(dur, dur, freq, gain);
+  var steps = 40;
+  for (var i = 1; i <= steps; i++) {
+    var elapsed = dur + (rel * i / steps);
+    var v = ChordAudio.releaseGain(elapsed, dur, freq, gain);
+    assert.ok(v <= prev + 1e-9, 'release must never get LOUDER (step ' + i + ': ' + v + ' > ' + prev + ')');
+    // Smooth, not steppy: no single increment should slam most of the way to
+    // silence at once (a real cutoff is exactly a huge single-step drop).
+    assert.ok(prev - v < gain * 0.35, 'release step ' + i + ' dropped too far at once (' + (prev - v).toFixed(4) + ') - reads as a cutoff, not a fade');
+    prev = v;
+  }
+  // By the time pluckKS's stop() fires (relEnd + 0.05, i.e. AT relEnd here),
+  // the gain has already reached the WebAudio-floor value - inaudible, so the
+  // hard truncation lands on silence rather than on a still-ringing string.
+  var atStop = ChordAudio.releaseGain(dur + rel, dur, freq, gain);
+  assert.ok(atStop <= 0.0001 + 1e-9, 'gain at stop() time must already be at the near-silent floor, got ' + atStop);
+});
+
+test('the heard signal (ksRender x releaseGain) is far quieter at the new stop point than at the OLD hard-cutoff instant', function () {
+  // Reconstructs what pluckKS actually plays: the same extended-length
+  // ksRender buffer it renders, scaled sample-by-sample by the same top-level
+  // envelope it schedules on the GainNode. Regression guard for the reported
+  // defect: previously, amplitude at `dur` (the old stop point) was still a
+  // large fraction of the raw string - now it should be, by design (release
+  // hasn't started yet); the new stop point (dur+rel) must instead be the
+  // quiet one.
+  var dur = 1.5, freq = 196, gain = 0.15;
+  var rel = ChordAudio.releaseFor(freq);
+  var raw = ChordAudio.ksRender(SR, freq, dur + rel + 0.05, { brightness: 0.4 });
+  function heardAt(seconds) {
+    var i = Math.min(raw.length - 1, Math.round(seconds * SR));
+    return raw[i] * ChordAudio.releaseGain(seconds, dur, freq, gain);
+  }
+  var atOldCutoff = Math.abs(heardAt(dur));
+  var atNewStop = Math.abs(heardAt(dur + rel));
+  assert.ok(atNewStop < atOldCutoff * 0.05 || atNewStop < 0.0001,
+    'new stop point (' + atNewStop.toFixed(5) + ') should be far quieter than the old abrupt-cutoff instant (' + atOldCutoff.toFixed(5) + ')');
+  // And a window right AT the new stop point should be near-silent throughout
+  // (not just at one lucky sample) - prove the tail, not a single point.
+  var win = Math.floor(SR * 0.01), peak = 0;
+  for (var s = Math.round((dur + rel) * SR) - win; s < raw.length; s++) {
+    if (s < 0) continue;
+    var v = Math.abs(raw[s] * ChordAudio.releaseGain(s / SR, dur, freq, gain));
+    peak = Math.max(peak, v);
+  }
+  assert.ok(peak < 0.001, 'the 10ms window around the actual stop point must be near-silent, peaked at ' + peak.toFixed(5));
 });
 
 test('low (wound) strings ring longer than high strings', function () {

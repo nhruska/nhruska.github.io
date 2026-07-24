@@ -350,6 +350,37 @@
     return out;
   }
 
+  /* ---- natural release (chord-tail UAT: "cuts off abruptly instead of
+   * ringing out") --------------------------------------------------------
+   * pluckKS used to play its buffer at a CONSTANT gain and rely solely on
+   * ksRender's own 40ms buffer-edge fade to end the note - fine for click
+   * safety, but the physical KS decay hasn't reached anywhere near silence
+   * by `dur` (a low string is still ~50% amplitude), so that 40ms bake reads
+   * as a hard stop, not a ring-out. The fix (audio-dsp-coach: "always
+   * release with an exponential ramp, never stop() cold") is a real
+   * top-level release on the GAIN NODE: hold at `gain` through the
+   * requested `dur`, then fall away exponentially to inaudible over
+   * releaseFor(freq) seconds - longer for low/long-ringing strings, same
+   * "wound strings ring longer" physics ksRender already models - and only
+   * stop() once that fade has actually finished.
+   * ------------------------------------------------------------------- */
+  var REL_MIN = 0.3, REL_MAX = 0.6, REL_FREQ_SPAN = 400; // Hz taper span
+  function releaseFor(freq) {
+    var f = Math.max(0, Math.min(1, (REL_FREQ_SPAN - freq) / REL_FREQ_SPAN));
+    return REL_MIN + f * (REL_MAX - REL_MIN); // 0.3s (bright/high) .. 0.6s (deep/long-ringing)
+  }
+  // Pure re-implementation of the exponentialRampToValueAtTime curve pluckKS
+  // schedules on the GainNode (WebAudioParam math has no Node stand-in) -
+  // exported so the envelope shape itself is node-testable: flat at `gain`
+  // through `dur`, then an exponential decay to ~0 across releaseFor(freq).
+  function releaseGain(elapsed, dur, freq, gain) {
+    var rel = releaseFor(freq);
+    if (elapsed <= dur) return gain;
+    if (elapsed >= dur + rel) return 0.0001;
+    var frac = (elapsed - dur) / rel;
+    return gain * Math.pow(0.0001 / gain, frac);
+  }
+
   function tone(freq, dur) {
     dur = dur || 1.1;
     var a = ctx();
@@ -358,8 +389,13 @@
       o.type = 'sine'; o2.type = 'triangle';
       o.frequency.value = freq; o2.frequency.value = freq;
       var t = a.currentTime;
+      // Release lengthened toward the same natural-ring-out feel as pluckKS
+      // (was a hard 0.25s window) - proportional to `dur` so a short
+      // reference tone (tuner / playNote) still fits its release inside its
+      // own sustain, clamped to the same 0.3-0.6s "feels like a string" band.
+      var rel = Math.min(REL_MAX, Math.max(REL_MIN, dur * 0.35));
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.2, t + 0.04);
-      g.gain.setValueAtTime(0.2, t + dur - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.gain.setValueAtTime(0.2, t + Math.max(0.04, dur - rel)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(g); o2.connect(g); g.connect(a.destination);
       o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
       releaseWhenIdle(dur);
@@ -381,7 +417,13 @@
     if (entry.bufs.length < 2) {
       // First (and second) tap of this string: fill a variant. Later taps are
       // pure cache hits - the render cost never sits on the tap path again.
-      var data = ksRender(a.sampleRate, entry.freq, dur, { brightness: brightness });
+      // Rendered past `dur` by REL_MAX (the longest possible release, so a
+      // cache entry shared by two near-identical taps is always long enough
+      // regardless of which of them actually rendered it) - otherwise the
+      // release scheduled below would run the buffer dry and get silently
+      // truncated by the AudioBufferSourceNode ending, right back to the
+      // abrupt-cutoff bug this fixes.
+      var data = ksRender(a.sampleRate, entry.freq, dur + REL_MAX + 0.05, { brightness: brightness });
       buf = a.createBuffer(1, data.length, a.sampleRate);
       buf.getChannelData(0).set(data);
       entry.bufs.push(buf);
@@ -393,10 +435,14 @@
     var src = a.createBufferSource(); src.buffer = buf;
     // Micro-detune rides playback, not the render - the cache's enabling move.
     src.playbackRate.value = (freq / entry.freq) * det;
-    var g = a.createGain(); g.gain.value = gain;
+    var g = a.createGain();
+    var rel = releaseFor(freq), relStart = t + dur, relEnd = relStart + rel;
+    g.gain.setValueAtTime(gain, t);
+    g.gain.setValueAtTime(gain, relStart);              // hold flat through the sustain
+    g.gain.exponentialRampToValueAtTime(0.0001, relEnd); // then ring out, not cut off
     src.connect(g); g.connect(m.input);
     src.start(t);
-    src.stop(t + dur + 0.05);
+    src.stop(relEnd + 0.05);                            // stop AFTER the fade - already silent, no click
     if (scrape && m.scrapeIn) {
       var sd = scrapeRender(a.sampleRate, 7, { level: 1 });
       var sb = a.createBuffer(1, sd.length, a.sampleRate);
@@ -470,14 +516,17 @@
         t += gap;
       });
 
-      releaseWhenIdle((t - t0) + dur);
+      // +REL_MAX: the idle-release timer must not fire while the last
+      // string's natural release tail is still ringing out.
+      releaseWhenIdle((t - t0) + dur + REL_MAX);
     });
   }
 
   global.ChordAudio = {
     tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender,
     scrapeRender: scrapeRender, VoiceCache: VoiceCache,
-    keepWarm: keepWarm, releaseWarm: releaseWarm, isWarm: isWarm, primeNow: primeNow
+    keepWarm: keepWarm, releaseWarm: releaseWarm, isWarm: isWarm, primeNow: primeNow,
+    releaseFor: releaseFor, releaseGain: releaseGain
   };
 
 })(typeof window !== 'undefined' ? window : this);
