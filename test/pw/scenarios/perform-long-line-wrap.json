@@ -1,6 +1,6 @@
 {
   "name": "perform-long-line-wrap",
-  "note": "CW-1 (P0): a long chord-over-lyric line HARD-CLIPS/requires horizontal scroll in the Perform (Stage) view at 412px because .lyrLine{white-space:pre} never wraps and the font-shrink auto-fit floors at 0.5x - the line can still be wider than the viewport at the floor. Reading the whole line mid-performance (both hands busy) must not require a scroll gesture, and the chord must stay directly over its lyric after wrapping. Red-first: seed a saved custom song with one genuinely long chorus line, open it, tap Stage - pre-fix, the seeded long line's .lyrLine scrollWidth exceeds its clientWidth (still overflowing even at the auto-fit floor).",
+  "note": "CW-1 (P0): a long chord-over-lyric line HARD-CLIPS/requires horizontal scroll in the Perform (Stage) view at 412px because .lyrLine{white-space:pre} never wraps and the font-shrink auto-fit floors at 0.5x - the line can still be wider than the viewport at the floor. Reading the whole line mid-performance (both hands busy) must not require a scroll gesture, and the chord must stay directly over its lyric after wrapping. Red-first: seed a saved custom song with one genuinely long chorus line, open it, tap Stage - pre-fix, the seeded long line's .lyrLine scrollWidth exceeds its clientWidth (still overflowing even at the auto-fit floor). Portrait-only regression guard for the original fix - see perform-stage-orientation-rewrap.json for the 3 operator-UAT defects found on top of it (landscape padding-aware budget, chord-overhang re-measure, rotate re-wrap).",
   "viewport": { "width": 412, "height": 915 },
   "steps": [
     { "action": "goto", "path": "/music/play/" },
@@ -39,6 +39,11 @@
       "action": "evalAssert",
       "label": "CW-1 alignment: after wrapping, every chord character still sits in the SAME COLUMN as the lyric character directly below it (sampled per wrapped row via 1-char Range rects - the chord line sits one line above its lyric line, but column x-position must match exactly)",
       "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)return false;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)return false;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>5;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pSheet.scrollLeft is 0 (no stale horizontal scroll clipping the left edge after a re-render)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
     },
     {
       "action": "screenshot",

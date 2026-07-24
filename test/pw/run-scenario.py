@@ -23,6 +23,10 @@ in scenarios):
   wait {ms}                            - settle time
   setOffline {on}                      - flip the browser context's network (true=offline;
                                          fetch() rejects + navigator.onLine false) - PWA tests
+  resize {width, height}               - change the page's viewport size mid-scenario (fires a
+                                         real 'resize' DOM event) - orientation-change / rotate
+                                         coverage; the top-level "viewport" key only sets the
+                                         INITIAL size
   tap {selector}                       - click first match
   tapText {text, scope?}               - click element whose exact trimmed text matches
   tapChord {name}                      - click the #buildGrid tile whose .chord-name == name
@@ -171,6 +175,13 @@ def run(scenario_path, base_url=None):
                         # request-level offline - fetch() rejects, navigator.onLine
                         # goes false). {"action":"setOffline","on":true|false}
                         ctx.set_offline(bool(step.get('on', True)))
+                    elif act == 'resize':
+                        # Orientation-change coverage: Playwright's set_viewport_size
+                        # fires a real browser 'resize' event, exercising the SAME
+                        # listener a phone rotation does (unlike editing CSS/JS state
+                        # directly, which wouldn't dispatch the event at all).
+                        page.set_viewport_size({'width': step['width'], 'height': step['height']})
+                        page.wait_for_timeout(step.get('settleMs', 200))
                     elif act == 'tap':
                         page.locator(step['selector']).first.click(timeout=4000)
                     elif act == 'dragReorder':

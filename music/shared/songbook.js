@@ -1752,7 +1752,13 @@
       pSheet.style.setProperty('--pscale', 1);            // measure at base size
       var availH = Math.max(80, pSheet.clientHeight - 112); // leave room for the nav bar
       var needH = inner.scrollHeight;
-      var availW = pSheet.clientWidth;
+      // CW-1 operator-UAT fix (defect 1): clientWidth includes padding-right,
+      // which is 120px in landscape (reserved for the absolutely-positioned
+      // nav-button column, not real content room) - fitting to the full
+      // clientWidth let the auto-scale grow content wide enough to render
+      // UNDER those buttons even when nothing needed to wrap. stageContentWidth
+      // is the SAME padding-aware width the wrap budget below uses.
+      var availW = stageContentWidth(pSheet);
       var needW = inner.scrollWidth; // an un-wrapped white-space:pre line - width must win
       var scale = fitScale(availH, needH, availW, needW);
       pSheet.style.setProperty('--pscale', scale.toFixed(3));
@@ -1767,6 +1773,26 @@
     // every character shares that width, which is what lets
     // wrapChordLyricPair's character-index cuts land in the same pixel column
     // for the chord row and the lyric row.
+    // CW-1 operator-UAT fix (defect 1): clientWidth INCLUDES the sheet's own
+    // horizontal padding, and that padding is NOT symmetric across
+    // orientations - portrait is ~4px total, but the landscape media query
+    // sets padding-right:120px to clear the absolutely-positioned nav-button
+    // column (see .pSheet rules in songbook.css). The USABLE content width -
+    // what a rendered row must fit inside to actually stay clear of the nav
+    // column, since a wide-enough `.pInner{width:max-content}` simply grows
+    // into the padding rather than being clipped by it - is clientWidth minus
+    // the REAL computed padding, not a flat guess. Shared by both the wrap
+    // BUDGET (perfWrapMaxChars, chars-based) and the fit CHECK (fitStageSheet,
+    // pixels-based) so the two can never drift into checking two different
+    // widths (that mismatch was itself a second bug: perfWrapMaxChars alone
+    // computing the right budget didn't help while fitStageSheet still judged
+    // "fits" against the full clientWidth, which the padding-right region is
+    // part of).
+    function stageContentWidth(sheetEl) {
+      var cs = getComputedStyle(sheetEl);
+      var hPad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      return sheetEl.clientWidth - hPad;
+    }
     function perfWrapMaxChars(sheetEl) {
       var probe = document.createElement('div');
       probe.className = 'lyrLine';
@@ -1776,19 +1802,107 @@
       var charW = probe.getBoundingClientRect().width / 10;
       sheetEl.removeChild(probe);
       if (!charW) return null;
-      var chars = Math.floor((sheetEl.clientWidth - 4) / charW); // small safety margin off the edge
+      var chars = Math.floor((stageContentWidth(sheetEl) - 2) / charW); // 2px safety margin off the edge
       return chars >= 12 ? chars : null; // below a sane floor, wrapping wouldn't help legibility - leave the scroll fallback
+    }
+    // CW-1 operator-UAT fix: "what song/view/speller is on stage right now" -
+    // showPerform's header-building needs it, and so does a resize/rotation
+    // re-fit (which has no song-navigation event to hand it the answer). One
+    // lookup, used by both, so a rotation re-wraps against the CURRENT song
+    // and view rather than duplicating (and risking drifting from) the same
+    // seq/key/speller derivation twice. Returns null when there's nothing
+    // performable on stage (no song, or a seq-less placeholder song).
+    function stageRenderContext() {
+      var s = songById(QUEUE.current());
+      if (!s || !hasChordSheet(s)) return null;
+      var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
+      var mrStage = null;
+      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
+      var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
+      var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
+      var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
+      return { s: s, seq: seq, stageDisp: stageDisp, view: view };
+    }
+    // CW-1 operator-UAT fix: renders the stage sheet HTML, auto-fits the
+    // scale, and if a line still overflows the stage viewport at the
+    // auto-fit floor, re-wraps at an explicit padding-aware character budget
+    // (perfWrapMaxChars) - RE-MEASURING and shrinking that budget if the
+    // wrap still overflows (defect 2: a bold chord label, .crd{font-weight:
+    // 700}, can render a touch wider per character than the plain-weight
+    // probe perfWrapMaxChars measures, so the FIRST wrap pass can still land
+    // a few px over budget when a chord sits near the cut column). Bounded
+    // retries so a pathological line can't spin forever; if it's still over
+    // at the legibility floor (12 chars), accept the remaining overflow (the
+    // .pSheet{overflow-x:auto} scroll fallback stays the last resort, same as
+    // before this fix).
+    // `preserveScroll` (defect 3): a resize/rotation re-fit must NOT jump the
+    // reader back to the top of the sheet the way a song-change legitimately
+    // does - capture scrollTop before the re-render and restore it after.
+    // Extracted out of showPerform so BOTH a song-change and a resize/
+    // orientation-change re-fit run through the identical path; previously
+    // only showPerform ran the wrap check, so rotating the phone kept
+    // whatever wrap+scale the PREVIOUS orientation had computed.
+    function fitStageSheet(ctx, preserveScroll) {
+      if (!pSheet || !ctx) return;
+      var savedTop = preserveScroll ? pSheet.scrollTop : 0;
+      var wrapChars; // undefined = unwrapped (renderSheet's default 5th-arg behavior)
+      for (var attempts = 0; attempts < 4; attempts++) {
+        pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars) + '</div>';
+        pSheet.scrollLeft = 0; // never leave a stale horizontal scroll clipping the left edge
+        pSheet.scrollTop = preserveScroll ? savedTop : 0;
+        applyPerfFont();
+        var stageInner = pSheet.firstElementChild;
+        var avail = stageContentWidth(pSheet); // padding-aware - see stageContentWidth's header comment
+        if (!stageInner || stageInner.scrollWidth <= avail + 1) return; // fits - the common case, done after one render
+        if (wrapChars === undefined) {
+          wrapChars = perfWrapMaxChars(pSheet); // first overflow: compute the initial padding-aware budget
+          if (!wrapChars) return; // below the legibility floor - leave the scroll fallback
+          continue; // render at the new budget before judging it
+        }
+        // Still over after an actual wrap pass. applyPerfFont() resets to
+        // scale 1 and picks a FRESH best-fit scale for whatever just
+        // rendered - shorter wrapped rows can legitimately earn a BIGGER
+        // auto-fit scale than the raw unwrapped line had, which inflates the
+        // rendered pixel width past what perfWrapMaxChars budgeted for at the
+        // PRE-wrap scale. A bold chord label (.crd{font-weight:700}) can also
+        // render a touch wider per character than the plain-weight probe.
+        // Either way, shrink the char budget PROPORTIONALLY to the measured
+        // overflow (not a fixed step) so this converges in a couple of passes
+        // regardless of the cause - re-measuring the REAL rendered pixels
+        // each time rather than trusting the char-count math alone.
+        var next = Math.floor(wrapChars * (avail / stageInner.scrollWidth) * 0.97);
+        if (next >= wrapChars) next = wrapChars - 1; // guarantee forward progress even on a 1-2px rounding overflow
+        if (next < 12) return; // below the legibility floor - accept the remaining overflow (scroll fallback)
+        wrapChars = next;
+      }
     }
     // Re-fit the stage sheet on orientation change / resize (operator UAT): a
     // phone rotated to landscape has a very different viewport, and without this
     // the auto-fit keeps the portrait scale so the sheet doesn't fill the wider
     // screen. Only while the stage is open AND in auto mode - a manual scale is
-    // the user's explicit pin, left alone. applyPerfFont is a cheap measure+set,
-    // so no debounce (same call the font buttons make). Guarded because the unit
-    // test mount-harness supplies a minimal window without addEventListener.
+    // the user's explicit pin, left alone.
+    // CW-1 operator-UAT fix (defect 3): this used to call ONLY applyPerfFont()
+    // (re-scale), never re-checking or re-wrapping - a wrap computed for one
+    // orientation's width (and its reserved padding, see perfWrapMaxChars)
+    // silently carried into the other, so a phone rotated back to portrait
+    // could keep landscape's wider wrap and overflow even at the auto-fit
+    // floor. Route through the SAME fitStageSheet() a song-change uses,
+    // preserving scroll position (a rotation shouldn't jump the reader back
+    // to the top). Debounced (~150ms) because 'resize' fires repeatedly
+    // through a rotation animation and this does a real DOM re-render
+    // (rebuild pInner) - unlike the old cheap applyPerfFont()-only call, this
+    // one isn't free to run on every intermediate frame. Guarded because the
+    // unit test mount-harness supplies a minimal window without
+    // addEventListener/setTimeout wired the same way.
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      var stageResizeTimer = null;
       window.addEventListener('resize', function () {
-        if (performEl && performEl.classList.contains('on') && STATE.fontMode === 'auto') applyPerfFont();
+        if (stageResizeTimer) clearTimeout(stageResizeTimer);
+        stageResizeTimer = setTimeout(function () {
+          if (!(performEl && performEl.classList.contains('on') && STATE.fontMode === 'auto')) return;
+          var ctx = stageRenderContext();
+          if (ctx) fitStageSheet(ctx, true); else applyPerfFont();
+        }, 150);
       });
     }
     function updateStageBtns() {
@@ -1831,38 +1945,26 @@
         if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
         return;
       }
-      var seq = s.seq.map(function (c) { return tpose(c, STATE.performTpose); });
       // S-UI-RECONCILE (Lane A): key-aware display speller for the Stage surface,
       // built the SAME way as the song screen - prefer the merged record's key,
       // else derive from the transposed seq (soloKeyFor is transpose-aware). Names
       // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
-      var mrStage = null;
-      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
-      var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
-      var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
-      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + stageDisp(seq[0]) + '  ·  ' : '') + seq.map(stageDisp).join('  ');
-      if (pSheet) {
-        var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
-        pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
-        pSheet.scrollTop = 0;
-        applyPerfFont();
-        // CW-1: a chord-over-lyric line never CSS-wraps (white-space:pre), and
-        // the auto-fit shrink above floors at 0.5x so it stays legible - a
-        // genuinely long line can still be wider than the stage viewport at
-        // that floor. Only THEN re-render with an explicit, column-synced
-        // wrap (see renderLyricLine/wrapChordLyricPair) instead of leaving it
-        // to hard-overflow / require a horizontal scroll gesture mid-song.
-        // Cheap no-op for the common case: nothing overflows, no re-render.
-        var stageInner = pSheet.firstElementChild;
-        if (stageInner && stageInner.scrollWidth > pSheet.clientWidth + 1) {
-          var wrapChars = perfWrapMaxChars(pSheet);
-          if (wrapChars) {
-            pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp, wrapChars) + '</div>';
-            pSheet.scrollTop = 0;
-            applyPerfFont();
-          }
-        }
-      }
+      // stageRenderContext() derives seq/stageDisp/view once - the SAME lookup
+      // a resize/rotation re-fit uses (fitStageSheet, above), so a song-change
+      // and an orientation-change render through one path instead of two that
+      // could drift apart.
+      var ctx = stageRenderContext();
+      if (el.pKeyLine) el.pKeyLine.textContent = ctx ? (STATE.performTpose !== 0 ? 'Key ' + ctx.stageDisp(ctx.seq[0]) + '  ·  ' : '') + ctx.seq.map(ctx.stageDisp).join('  ') : '';
+      // CW-1: a chord-over-lyric line never CSS-wraps (white-space:pre), and
+      // the auto-fit shrink floors at 0.5x so it stays legible - a genuinely
+      // long line can still be wider than the stage viewport at that floor.
+      // fitStageSheet renders, auto-fits, and only THEN re-wraps (re-measuring
+      // and shrinking the budget if a single wrap pass still overflows -
+      // operator-UAT defect 2) instead of leaving it to hard-overflow / require
+      // a horizontal scroll gesture mid-song. A song-change always scrolls to
+      // the top (preserveScroll=false) - only a resize/rotation re-fit keeps
+      // the reader's place.
+      fitStageSheet(ctx, false);
       updateStageBtns();
       if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
     }
