@@ -873,23 +873,24 @@
 (function () {
   'use strict';
   // a = accent, d = dim (borders), p = deep (tinted backgrounds)
-  // A curated bold jewel spectrum, 1-2 shades per hue, on the calm dark base
+  // A curated bold jewel spectrum, 1 shade per hue, on the calm dark base
   // (jewel accent, not a flood - the "one calm screen" principle holds). Style
   // only, no semantic color-coding. Tuner red/amber/green stay FIXED
   // (pitch-feedback trust) and are untouched by this list. d/p mix each accent
   // toward the #0d0f12 canvas (~29% / ~14%); Teal + Amethyst keep their heritage
   // hex so a saved pick carries over.
+  // Order (operator UAT 2026-07-22): Teal FIRST - it's the default (PALETTE[0],
+  // the fresh-install accent) - then the remaining chromatic swatches in rainbow
+  // order (Ruby->Ember->Gold->Azure->Amethyst), then the two neutrals last
+  // (achromatic, not part of the rainbow). Retired the near-duplicate hues
+  // (Emerald/Jade greens, Sapphire, Magenta) to keep one shade per hue.
   var PALETTE = [
     { n: 'Teal',     a: '#5eead4', d: '#244b45', p: '#16302c' },
     { n: 'Ruby',     a: '#fb3b5c', d: '#521c27', p: '#2e151c' },
     { n: 'Ember',    a: '#fb7a3c', d: '#522e1e', p: '#2e1e18' },
     { n: 'Gold',     a: '#f6c945', d: '#514521', p: '#2e2919' },
-    { n: 'Emerald',  a: '#34d399', d: '#184839', p: '#122a25' },
-    { n: 'Jade',     a: '#10b981', d: '#0e4032', p: '#0d2722' },
     { n: 'Azure',    a: '#38bdf8', d: '#194155', p: '#132732' },
-    { n: 'Sapphire', a: '#4f7cf6', d: '#202f54', p: '#161e32' },
     { n: 'Amethyst', a: '#a78bfa', d: '#3a2f63', p: '#221b3d' },
-    { n: 'Magenta',  a: '#ec4899', d: '#4e2039', p: '#2c1725' },
     { n: 'Silver',   a: '#cdd7e3', d: '#45494f', p: '#282b2f' },
     { n: 'Steel',    a: '#93a4b8', d: '#343a42', p: '#202429' }
   ];
