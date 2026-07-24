@@ -3,10 +3,12 @@
  * ---------------------------------------------------------------------
  * Turns a song's sheet model into HTML: HTML-escaping of user tokens, the
  * key-aware DISPLAY speller, chord-over-lyric line rendering, and the
- * chords-only / lyrics-only / both views. Sizing model is WRAP-FIRST
- * (operator-approved 2026-07-24): the font is a readable size the USER
- * controls; long lines WRAP at the caller's measured character budget.
- * There is deliberately NO fit-to-viewport auto-shrink in this layer.
+ * chords-only / lyrics-only / both views. Sizing model v3 is
+ * AUTO-FIT-THEN-WRAP (operator-refined 2026-07-24): the CALLER
+ * (songbook.js fitStageSheet) resolves the font scale (auto-fit to the
+ * viewport width, or the user's manual size) and passes a measured
+ * character budget in; this layer only WRAPS lines at that budget.
+ * There is deliberately NO fit/measure logic in this layer.
  * Renders chord NAMES only - no instrument knowledge. Builds on theory.js
  * for transposition; escaping delegates to esc.js.
  *
@@ -81,7 +83,12 @@
       last = re.lastIndex;
     }
     lyricRow += raw.slice(last);
-    if (!maxChars || lyricRow.length <= maxChars) return oneLyrLine(chordRow, lyricRow);
+    // Codex finding (PR #302, SHA 237a56c): key the no-wrap decision on the
+    // WIDER of the two rows, never lyricRow alone. Inside this builder the
+    // rows stay column-locked (the lyric reserves the label's width), but the
+    // contract must hold for ANY caller-supplied pair - and max() is what the
+    // split loop below keys on too, so decision and split can never disagree.
+    if (!maxChars || Math.max(chordRow.length, lyricRow.length) <= maxChars) return oneLyrLine(chordRow, lyricRow);
     return wrapChordLyricPair(chordRow, lyricRow, maxChars).map(function (r) {
       return oneLyrLine(r.chord, r.lyric);
     }).join('');
@@ -90,28 +97,41 @@
     return '<div class="lyrLine"><span class="crd">' + escHTML(chordRow) + '</span>\n' + escHTML(lyricRow) + '</div>';
   }
   // Splits a (chordRow, lyricRow) pair into synced chunks no wider than
-  // maxChars characters each. chordRow is always <= lyricRow.length (it stops
-  // after the last chord token; any lyric tail beyond that has no chord to
-  // align, which is correct - JS String#slice clamps past chordRow's end and
-  // yields '' for those columns). Every cut index is applied identically to
-  // BOTH rows, which is what keeps a wrapped chord glued to its lyric: since
-  // both rows are built column-for-column in lockstep (renderLyricLine above),
-  // slicing them at the same index can never desync a chord from its word.
-  // Prefers to cut at the last lyric-row SPACE within the window (never splits
-  // a sung word) and falls back to a hard character cut only when a single
-  // unbroken run (no space at all) exceeds maxChars on its own - the same
-  // last-resort every wrapping scheme (CSS overflow-wrap:anywhere included)
-  // has to take for an unbreakable token. Pure + Node-testable, no DOM - the
-  // DOM caller (songbook.js fitStageSheet/perfWrapMaxChars) measures the
-  // viewport and passes the character budget in.
+  // maxChars characters each. The loop keys on the WIDER of the two rows
+  // (codex finding, PR #302): a chord tail that runs past the lyric's end -
+  // a trailing chord, or any caller-built pair where chordRow is the longer
+  // row - must wrap exactly like a long lyric, or it overflows the stage
+  // sheet sideways. JS String#slice clamps past either row's end and yields
+  // '' for the missing columns, so the shorter row simply runs out. Every cut
+  // index is applied identically to BOTH rows, which is what keeps a wrapped
+  // chord glued to its lyric: since both rows are built column-for-column in
+  // lockstep (renderLyricLine above), slicing them at the same index can
+  // never desync a chord from its word.
+  // Prefers to cut at the last column that is a SPACE IN BOTH ROWS within the
+  // window (never splits a sung word or a chord label; a lyric-side space can
+  // be a chord label's reservation column, so lyric-only spaces don't
+  // qualify) and falls back to a hard character cut when no such column
+  // exists - the same last-resort every wrapping scheme (CSS
+  // overflow-wrap:anywhere included) has to take for an unbreakable token.
+  // The boundary space is dropped only when BOTH rows hold a space there;
+  // dropping a lyric-side-only space used to EAT the chord character sharing
+  // that column (Gmaj7add13sus4 wrapped to Gmaj7a|d13sus4 - one d lost).
+  // Pure + Node-testable, no DOM - the DOM caller (songbook.js
+  // fitStageSheet/perfWrapMaxChars) measures the viewport and passes the
+  // character budget in.
   function wrapChordLyricPair(chordRow, lyricRow, maxChars) {
-    var rows = [], start = 0, total = lyricRow.length;
+    function bothSpace(idx) {
+      var l = idx >= lyricRow.length || lyricRow[idx] === ' ';
+      var c = idx >= chordRow.length || chordRow[idx] === ' ';
+      return l && c;
+    }
+    var rows = [], start = 0, total = Math.max(chordRow.length, lyricRow.length);
     while (total - start > maxChars) {
       var limit = start + maxChars, cut = -1;
-      for (var i = limit; i > start; i--) { if (lyricRow[i] === ' ') { cut = i; break; } }
-      if (cut <= start) cut = limit; // no space in the window - hard cut (one long unbreakable token)
+      for (var i = limit; i > start; i--) { if (bothSpace(i)) { cut = i; break; } }
+      if (cut <= start) cut = limit; // no both-rows space in the window - hard cut (one long unbreakable run)
       rows.push({ chord: chordRow.slice(start, cut), lyric: lyricRow.slice(start, cut) });
-      start = (lyricRow[cut] === ' ') ? cut + 1 : cut; // drop the boundary space itself, don't waste a column on it
+      start = bothSpace(cut) ? cut + 1 : cut; // drop the boundary column only when it is blank in BOTH rows
     }
     rows.push({ chord: chordRow.slice(start), lyric: lyricRow.slice(start) });
     return rows;

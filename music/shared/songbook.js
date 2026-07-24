@@ -87,18 +87,37 @@
   var renderLyricsOnly = SR.renderLyricsOnly;
   var renderSheet = SR.renderSheet;
 
-  /* ---------- Perform sheet sizing: WRAP-FIRST (operator-approved 2026-07-24) ----------
-   * The stage font is a READABLE size the USER controls (buttons + pinch),
-   * persisted in perfprefs. It never auto-shrinks to fit: long lines WRAP,
-   * tall sheets SCROLL. The clamp below is the model's one hard constraint -
-   * FONT_MIN is a LEGIBILITY floor (0.8x of the 1.04rem base ~= 13.3px
-   * effective), replacing the old 0.5x auto-fit floor that rendered
-   * unreadably tiny "but fitting" sheets (regressed 4 times; see
-   * test/perform-sizing.test.js - the never-regress gate for this model). */
+  /* ---------- Perform sheet sizing v3: AUTO-FIT-THEN-WRAP (operator-refined 2026-07-24) ----------
+   * CORE INVARIANT: NO horizontal scroll on the Perform sheet, EVER. Every
+   * rendered row fits the sheet's content width at every size and viewport;
+   * .pSheet overflow-x is hidden. Width is absorbed by shrink-font-then-wrap,
+   * never a sideways scrollbar.
+   * The model: by default the font AUTO-FITS the viewport width - it EXPANDS
+   * to fill a wide viewport and SHRINKS on a narrow one, clamped to
+   * [FONT_MIN legibility floor (~13.3px effective at the 1.04rem base),
+   * FONT_MAX]. While the fitted size sits ABOVE the floor nothing wraps;
+   * only at the floor, when a line still overflows, does that line WRAP.
+   * A-/A+ and pinch step from the CURRENT EFFECTIVE applied scale into a
+   * MANUAL size (persisted); a manual size is respected - overflow at that
+   * size wraps - and any viewport change still re-fits + re-wraps.
+   * This supersedes both the v1 shrink-to-0.5x model (unreadably tiny "but
+   * fitting") and the same-day v2 wrap-first model (fixed user size, wrap
+   * everything) - the shrink-vs-wrap behavior regressed 4 times; see
+   * test/perform-sizing.test.js, the never-regress gate for this model. */
   var FONT_MIN = 0.8, FONT_MAX = 2.2;
   function clampFontScale(v) {
     if (typeof v !== 'number' || !isFinite(v)) return 1;
     return Math.max(FONT_MIN, Math.min(FONT_MAX, v));
+  }
+  // A-/A+ step math, pure + exported for the goalpost tests. Steps from the
+  // EFFECTIVE applied scale (what is actually on screen), never a stored
+  // value: stepping from a stale stored scale while auto-fit had applied a
+  // smaller one made A- render BIGGER than what the user was looking at (the
+  // A- bug this fixes). Monotonic by construction: from any effective scale,
+  // d<0 never yields a larger clamp result and d>0 never a smaller one.
+  function stepScaleFrom(eff, d) {
+    var base = (typeof eff === 'number' && isFinite(eff)) ? clampFontScale(eff) : 1;
+    return clampFontScale(+(base + d).toFixed(2));
   }
 
   /* ---------- song / track / setlist data model ----------
@@ -624,12 +643,13 @@
     // safeSet's console signal. See safeSet's header comment for the user-initiated
     // vs passive split this mission drew.
     function saveLast(id) { return safeSet(LAST_KEY, id); }
-    // perform-screen prefs (scroll speed + view + fontScale), remembered per
-    // device. fontScale persists (wrap-first model, operator interview
-    // 2026-07-24 - supersedes the old UAT-r3 "always reopen auto" rule, which
-    // died with the auto-fit mode): the size you set sticks across songs,
-    // stage opens, and reloads. Additive field on the v2 shape - old readers
-    // ignore it, old stored prefs simply lack it (falls back to 1).
+    // perform-screen prefs (scroll speed + view + fontScale + fontMode),
+    // remembered per device. Sizing model v3 (operator-refined 2026-07-24):
+    // fontMode 'auto' (the default - fit the viewport width) vs 'manual' (a
+    // user-stepped/pinched size). A manual fontScale persists across songs,
+    // stage opens, and reloads; auto stays auto. Both are ADDITIVE fields on
+    // the v2 shape - old readers ignore them, old stored prefs simply lack
+    // them (fontScale falls back to 1, fontMode to 'auto').
     // v2: view is the tri-state 'lyrics'|'chords'|'both'. v1's 'lyrics' rendered
     // chords-over-lyrics, which is now called 'both' - migrate it as such.
     var PERF_KEY = prefix + ".perfprefs.v2";
@@ -651,7 +671,7 @@
     // setlist Perform. (Assigned just after STATE is built, below.)
     var stageDefaultView;
     // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
-    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, fontScale: STATE.fontScale })); }
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, fontScale: STATE.fontScale, fontMode: STATE.fontMode })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -659,6 +679,11 @@
       setlist: [], performDim: false, performTpose: 0,
       performView: (_pp.view === 'chords' || _pp.view === 'lyrics' || _pp.view === 'both') ? _pp.view : 'both',
       fontScale: clampFontScale(typeof _pp.fontScale === 'number' ? _pp.fontScale : 1), ctrlsOpen: false,
+      // v3 sizing: fontMode 'auto' (fit the viewport width - the default) vs
+      // 'manual' (the persisted user size above). effScale mirrors the scale
+      // actually APPLIED to --pscale right now - the baseline A-/A+/pinch
+      // step from (never a stored value; see stepScaleFrom's header).
+      fontMode: (_pp.fontMode === 'manual') ? 'manual' : 'auto', effScale: 1,
       scrolling: false, scrollSpeed: (typeof _pp.speed === 'number' ? _pp.speed : 28), scrollRAF: null, wakeLock: null,
       // S-SET-INTEGRITY (UAT U22): one-shot "N removed song(s) skipped" line,
       // set by navQueue()/pPrev/pNext right before a re-render whenever
@@ -1738,24 +1763,28 @@
     if (el.pViewBoth) el.pViewBoth.onclick = function () { setPerformView('both'); };
     if (el.pFontDown) el.pFontDown.onclick = function () { stepFont(-0.1); };
     if (el.pFontUp) el.pFontUp.onclick = function () { stepFont(0.1); };
-    // Wrap-first model: with the auto-fit mode gone, the middle button is a
-    // reset back to the comfortable 1.0 base (markup label "Reset").
-    if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontScale = 1; refitStage(true); updateStageBtns(); savePerfPrefs(); };
+    // v3: the middle button returns to AUTO-FIT mode (markup label "Auto") -
+    // the mode, not a fixed 1.0 size, is the default worth restoring.
+    if (el.pFontAuto) el.pFontAuto.onclick = function () { STATE.fontMode = 'auto'; refitStage(true); updateStageBtns(); savePerfPrefs(); };
     function setPerformView(v) { STATE.performView = v; stageDefaultView = v; showPerform(); savePerfPrefs(); }
-    // A font step changes the character budget (bigger glyphs = fewer chars
-    // per row), so it MUST re-wrap via the shared refit path - a bare rescale
-    // of the stale wrap is the clipped-rows bug this model retired.
+    // A-/A+ (v3): step from the EFFECTIVE applied scale (stepScaleFrom's
+    // header carries the A- bug this kills) into MANUAL mode. A font step
+    // changes the character budget (bigger glyphs = fewer chars per row), so
+    // it MUST re-wrap via the shared refit path - a bare rescale of the
+    // stale wrap is the clipped-rows bug the v2 model retired.
     function stepFont(d) {
-      STATE.fontScale = clampFontScale(+(STATE.fontScale + d).toFixed(2));
+      STATE.fontScale = stepScaleFrom(STATE.effScale, d);
+      STATE.fontMode = 'manual';
       refitStage(true);
       updateStageBtns(); savePerfPrefs();
     }
-    // The one size knob: --pscale is exactly the user's fontScale. No
-    // measurement, no auto-shrink - wrapping (fitStageSheet) absorbs width,
-    // vertical scroll absorbs height.
-    function applyPerfFont() {
+    // The one write path for --pscale: whatever scale fitStageSheet resolves
+    // (auto-fitted or manual) is applied here AND mirrored into
+    // STATE.effScale so A-/A+/pinch always step from what is on screen.
+    function applyScale(v) {
       if (!pSheet) return;
-      pSheet.style.setProperty('--pscale', STATE.fontScale);
+      STATE.effScale = v;
+      pSheet.style.setProperty('--pscale', v);
     }
     // Re-render the CURRENT stage song through the same fit+wrap path a song
     // change uses. Every width-affecting change (font step, pinch end,
@@ -1763,7 +1792,8 @@
     // skipped by one of the callers drifting.
     function refitStage(preserveScroll) {
       var ctx = stageRenderContext();
-      if (ctx) fitStageSheet(ctx, preserveScroll); else applyPerfFont();
+      if (ctx) fitStageSheet(ctx, preserveScroll);
+      else applyScale(STATE.fontMode === 'manual' ? clampFontScale(STATE.fontScale) : clampFontScale(STATE.effScale));
     }
     // Char-width probe for the stage sheet - the WRAP BUDGET (wrap-first
     // model): how many characters fit one row at the CURRENT user-chosen
@@ -1802,9 +1832,13 @@
       sheetEl.appendChild(probe);
       var charW = probe.getBoundingClientRect().width / 10;
       sheetEl.removeChild(probe);
-      if (!charW) return null;
+      if (!charW) return null; // unmeasurable DOM (no layout) - nothing can be fitted at all
       var chars = Math.floor((stageContentWidth(sheetEl) - 2) / charW); // 2px safety margin off the edge
-      return chars >= 12 ? chars : null; // below a sane floor, wrapping wouldn't help legibility - leave the scroll fallback
+      // CORE INVARIANT (v3): the budget ALWAYS exists - the old "below 12
+      // chars return null" bail rendered UNWRAPPED rows that overflowed
+      // sideways, exactly the horizontal scroll the model forbids. A tiny
+      // budget on a pathological viewport is ugly but never scrolls.
+      return Math.max(1, chars);
     }
     // CW-1 operator-UAT fix: "what song/view/speller is on stage right now" -
     // showPerform's header-building needs it, and so does a resize/rotation
@@ -1824,49 +1858,84 @@
       var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
       return { s: s, seq: seq, stageDisp: stageDisp, view: view };
     }
-    // The one stage render path (wrap-first model): set the user's size, then
-    // WRAP to it. The character budget (perfWrapMaxChars, padding-aware, at
-    // the current --pscale) is computed BEFORE the first render - wrapping is
-    // the model, not an overflow reaction. The render is then re-MEASURED and
-    // the budget shrunk proportionally if a row still lands over (a bold
-    // chord label, .crd{font-weight:700}, renders a touch wider per character
-    // than the plain-weight probe, so the first pass can sit a few px over
-    // when a chord ends near the cut column). Bounded retries so a
-    // pathological line can't spin forever; below a 12-char budget the
-    // remaining overflow is accepted (the .pSheet{overflow-x:auto} scroll
-    // fallback stays the last resort for one unbreakable token on a tiny
-    // screen at max zoom).
+    // The one stage render path (v3: AUTO-FIT-THEN-WRAP). Resolve the scale
+    // by MODE first:
+    //   manual - the user's stepped/pinched size, applied as chosen.
+    //   auto   - PROBE: render once unwrapped at 1.0, measure the widest
+    //            unwrappable row (.lyrLine is white-space:pre; chords-view
+    //            .bar spans are the unbreakable unit), and scale it to fill
+    //            the padding-aware content width - EXPAND on a wide
+    //            viewport, SHRINK on a narrow one - clamped to
+    //            [FONT_MIN, FONT_MAX]. Monospace glyph advance scales
+    //            linearly with font-size, so one probe at 1.0 predicts every
+    //            scale; the 0.99 factor absorbs sub-pixel rounding so a
+    //            fitted line never wraps off a 1px overshoot (above the
+    //            floor NOTHING should wrap - wrap is the floor's last
+    //            resort, not a fitted render's rounding artifact).
+    // Then WRAP to the applied scale: the character budget
+    // (perfWrapMaxChars, padding-aware, at the applied --pscale) is computed
+    // BEFORE the wrapped render. The render is re-MEASURED and the budget
+    // shrunk proportionally if a row still lands over (a bold chord label,
+    // .crd{font-weight:700}, renders a touch wider per character than the
+    // plain-weight probe). Bounded retries so a pathological line can't spin
+    // forever - and the budget floors at 1 char, never an unwrapped render:
+    // .pSheet overflow-x is HIDDEN (the core invariant), there is no scroll
+    // fallback to fall back to.
     // `preserveScroll`: a resize/rotation/size-change re-fit must NOT jump
     // the reader back to the top of the sheet the way a song-change
     // legitimately does - capture scrollTop before the re-render and restore
     // it after. Shared by song changes, font steps, pinch ends, and
-    // resize/rotate (via refitStage) so every path wraps identically.
+    // resize/rotate (via refitStage) so every path fits + wraps identically.
     function fitStageSheet(ctx, preserveScroll) {
       if (!pSheet || !ctx) return;
       var savedTop = preserveScroll ? pSheet.scrollTop : 0;
-      applyPerfFont(); // size FIRST - the budget probe below measures at this --pscale
-      var wrapChars = perfWrapMaxChars(pSheet); // null = budget below the 12-char sanity floor -> render unwrapped, scroll fallback
-      for (var attempts = 0; attempts < 4; attempts++) {
+      var avail = stageContentWidth(pSheet); // padding-aware - see stageContentWidth's header comment
+      // chords-view rows (.chordOnly) wrap via inline flow at the sheet's
+      // content width - the CSS caps them at var(--pavail) so the
+      // width:max-content pInner can't stretch them into one long
+      // overflowing line (see .pSheet .chordOnly in songbook.css).
+      pSheet.style.setProperty('--pavail', avail + 'px');
+      var scale;
+      if (STATE.fontMode === 'manual') {
+        scale = clampFontScale(STATE.fontScale);
+      } else {
+        applyScale(1);
+        pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp) + '</div>';
+        var probeInner = pSheet.firstElementChild;
+        var w1 = 0, i;
+        var pre = probeInner ? probeInner.querySelectorAll('.lyrLine') : [];
+        for (i = 0; i < pre.length; i++) w1 = Math.max(w1, pre[i].scrollWidth);
+        if (!w1 && probeInner) { // chords view: the widest single bar is the unbreakable unit
+          var bars = probeInner.querySelectorAll('.chordOnly .bar');
+          for (i = 0; i < bars.length; i++) w1 = Math.max(w1, bars[i].getBoundingClientRect().width);
+        }
+        scale = clampFontScale(w1 > 0 ? ((avail - 2) / w1) * 0.99 : 1);
+      }
+      applyScale(scale); // size FIRST - the budget probe below measures at this --pscale
+      var wrapChars = perfWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
+      for (var attempts = 0; attempts < 6; attempts++) {
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars || undefined) + '</div>';
-        pSheet.scrollLeft = 0; // never leave a stale horizontal scroll clipping the left edge
+        pSheet.scrollLeft = 0; // belt-and-braces: overflow-x is hidden, but never leave a stale offset clipping the left edge
         pSheet.scrollTop = preserveScroll ? savedTop : 0;
         var stageInner = pSheet.firstElementChild;
-        var avail = stageContentWidth(pSheet); // padding-aware - see stageContentWidth's header comment
         if (!stageInner || stageInner.scrollWidth <= avail + 1) return; // fits - the common case, done after one render
-        if (!wrapChars) return; // unwrapped fallback render - nothing more to shrink
+        if (!wrapChars) return; // unmeasurable DOM - nothing to converge on
         var next = Math.floor(wrapChars * (avail / stageInner.scrollWidth) * 0.97);
         if (next >= wrapChars) next = wrapChars - 1; // guarantee forward progress even on a 1-2px rounding overflow
-        if (next < 12) return; // budget floor - accept the remaining overflow (scroll fallback)
+        if (next < 1) return; // absolute floor - a 1-char budget cannot shrink further
         wrapChars = next;
       }
     }
-    // Pinch-to-zoom on the sheet (wrap-first model): two fingers scale the
-    // SAME fontScale the A-/A+ buttons drive, clamped to the legibility
-    // floor / max. While the fingers move only the cheap --pscale updates
-    // (live feedback); the re-wrap + persist land once at gesture end -
-    // wrapping mid-gesture would re-render the DOM dozens of times per
-    // second. preventDefault on the 2-finger move keeps the browser from
-    // panning/zooming the page while the gesture is in flight.
+    // Pinch-to-zoom on the sheet (v3): two fingers drive the SAME size the
+    // A-/A+ buttons step, baselined off the EFFECTIVE applied scale (same
+    // stale-baseline bug class as A- - the gesture must grow/shrink what is
+    // actually on screen, including an auto-fitted size), clamped to the
+    // legibility floor / max. While the fingers move only the cheap --pscale
+    // updates (live feedback); the manual-mode flip, re-wrap + persist land
+    // once at gesture end - wrapping mid-gesture would re-render the DOM
+    // dozens of times per second. preventDefault on the 2-finger move keeps
+    // the browser from panning/zooming the page while the gesture is in
+    // flight.
     if (pSheet && typeof pSheet.addEventListener === 'function') {
       var pinchOn = false, pinchD0 = 0, pinchS0 = 1;
       var touchDist = function (t) {
@@ -1874,18 +1943,18 @@
         return Math.sqrt(dx * dx + dy * dy);
       };
       pSheet.addEventListener('touchstart', function (e) {
-        if (e.touches.length === 2) { pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = STATE.fontScale; }
+        if (e.touches.length === 2) { pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = clampFontScale(STATE.effScale); }
       }, { passive: true });
       pSheet.addEventListener('touchmove', function (e) {
         if (!pinchOn || e.touches.length !== 2 || !pinchD0) return;
         e.preventDefault();
-        STATE.fontScale = clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0));
-        applyPerfFont();
+        applyScale(clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0)));
       }, { passive: false });
       var pinchEnd = function (e) {
         if (!pinchOn || e.touches.length >= 2) return;
         pinchOn = false; pinchD0 = 0;
-        STATE.fontScale = clampFontScale(+STATE.fontScale.toFixed(2));
+        STATE.fontScale = clampFontScale(+(STATE.effScale).toFixed(2));
+        STATE.fontMode = 'manual';
         refitStage(true); updateStageBtns(); savePerfPrefs();
       };
       pSheet.addEventListener('touchend', pinchEnd);
@@ -1914,8 +1983,8 @@
       });
     }
     function updateStageBtns() {
-      // Reset button (the old Auto slot) highlights while at the 1.0 base.
-      if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontScale === 1);
+      // The middle size button highlights while auto-fit is driving the size.
+      if (el.pFontAuto) el.pFontAuto.classList.toggle('on', STATE.fontMode === 'auto');
       // Custom sheets force the chords renderer (showPerform); the segmented
       // control must SAY so - highlight Chords and disable the other views
       // instead of showing a Lyrics/Both highlight over a chords-only sheet.
@@ -5887,7 +5956,8 @@
     // action-ladder delete-button class contract - exposed for regression tests.
     chordSpeller: chordSpeller,
     deleteBtnClass: deleteBtnClass,
-    clampFontScale: clampFontScale, // wrap-first sizing model's legibility clamp (test/perform-sizing.test.js)
+    clampFontScale: clampFontScale, // v3 sizing model's legibility clamp (test/perform-sizing.test.js)
+    stepScaleFrom: stepScaleFrom, // v3 A-/A+ step math - monotonic from the EFFECTIVE scale (test/perform-sizing.test.js)
     soloKeyFor: soloKeyFor,
     isMine: isMine,
     hasChordSheet: hasChordSheet,

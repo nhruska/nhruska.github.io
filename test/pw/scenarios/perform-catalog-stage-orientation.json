@@ -1,6 +1,6 @@
 {
   "name": "perform-catalog-stage-orientation",
-  "note": "CW-1 regression guard (operator UAT fix-up, 3 defects): using REAL catalog songs (not the synthetic overflow-forcing seed in perform-long-line-wrap.json) with genuinely wide chord vocabularies - 'No Woman No Cry' (open C/G/Am/F) and 'Calluses' (Dm/Bb/F/C/Eb, several 5-letter+ chord-with-quality tokens) - confirms the padding-aware wrap budget + rotate re-fit didn't regress the COMMON case: normal-length catalog lines that may not even need to wrap still render with zero overflow and correct chord-over-lyric column alignment in both portrait and landscape. Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every song/orientation leg now also asserts the 0.8x/~13px legibility floor - the old shrink-to-fit model failed this on tall songs (Calluses landed ~0.64x in portrait).",
+  "note": "CW-1 regression guard (operator UAT fix-up, 3 defects): using REAL catalog songs (not the synthetic overflow-forcing seed in perform-long-line-wrap.json) with genuinely wide chord vocabularies - 'No Woman No Cry' (open C/G/Am/F) and 'Calluses' (Dm/Bb/F/C/Eb, several 5-letter+ chord-with-quality tokens) - confirms the padding-aware wrap budget + rotate re-fit didn't regress the COMMON case: normal-length catalog lines that may not even need to wrap still render with zero overflow and correct chord-over-lyric column alignment in both portrait and landscape. Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every song/orientation leg now also asserts the 0.8x/~13px legibility floor - the old shrink-to-fit model failed this on tall songs (Calluses landed ~0.64x in portrait). EXTENDED for sizing model v3 (operator-refined 2026-07-24): a 'Three Little Birds' block proves the auto-fit curve on a real catalog song - its ~59-char widest row FLOORS the scale (0.8) and WRAPS at 412px portrait, then a desktop-wide 1024px resize re-fits ABOVE the floor where NOTHING wraps (4 sheet lines = 4 rows) and the scale strictly GREW - fit-by-font first, wrap only at the floor.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -190,6 +190,71 @@
     {
       "action": "screenshot",
       "name": "calluses-landscape"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Three Little Birds\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "Three Little Birds (412 portrait, v3 auto-fit): the ~59-char widest row FLOORS the scale at 0.8 and WRAPS (more rows than the 4 sheet lines); no row overflows",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(Math.abs(sc-0.8)>=0.011)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!(lines.length>4))return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>avail+1)return false;}window.__tlbPortrait=sc;return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "three-little-birds-portrait-floor-wrapped"
+    },
+    {
+      "action": "resize",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "Three Little Birds (1024 desktop-wide resize): auto-fit re-fit ABOVE the floor - scale strictly GREW, NOTHING wraps any more (4 sheet lines = 4 rows), no overflow (fit-by-font first, wrap only at the floor)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>window.__tlbPortrait+0.1&&sc<=2.201))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(lines.length!==4)return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>avail+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Three Little Birds (1024): chord stays column-synced over its lyric at the expanded size",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)continue;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)continue;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "three-little-birds-desktop-expanded"
     }
   ]
 }

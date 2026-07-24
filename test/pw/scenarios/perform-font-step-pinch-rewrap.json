@@ -1,6 +1,6 @@
 {
   "name": "perform-font-step-pinch-rewrap",
-  "note": "Wrap-first sizing model (operator-approved 2026-07-24), goalposts 2+5: the user controls the size via the A-/A+ buttons AND a pinch gesture on the sheet, and EVERY size change re-computes the wrap (maxChars at the new size) - never a bare rescale of a stale wrap. Red-first vs the pre-model branch: (a) stepFont only rescaled (--pscale up, same wrap) so two A+ taps left rows clipping and the same chars/row; (b) no pinch handler existed at all, so the simulated two-finger spread left --pscale unchanged; (c) pinch-in had no 0.8x floor to clamp to. The seeded custom song carries one genuinely long chorus line so the wrap is guaranteed to engage at every size.",
+  "note": "Sizing model v3 AUTO-FIT-THEN-WRAP (operator-refined 2026-07-24): the A-/A+ buttons AND a pinch gesture step from the CURRENT EFFECTIVE scale into a manual size, and EVERY size change re-computes the wrap (maxChars at the new size) - never a bare rescale of a stale wrap. The seeded song carries one genuinely long chorus line, so auto-fit opens AT the 0.8 floor (wrapped) and every button/pinch assertion is baseline-relative off the recorded effective scale. Red-first history: (a) v1 stepFont only rescaled (--pscale up, same wrap) so two A+ taps left rows clipping; (b) no pinch handler existed; (c) pinch-in had no 0.8x floor to clamp to; (d) the v2 A- bug stepped from a stale stored value instead of the effective one.",
   "viewport": {
     "width": 412,
     "height": 915

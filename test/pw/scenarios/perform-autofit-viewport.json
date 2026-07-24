@@ -1,0 +1,96 @@
+{
+  "name": "perform-autofit-viewport",
+  "note": "Sizing model v3 AUTO-FIT-THEN-WRAP (operator-refined 2026-07-24), rule 1+2: the default font AUTO-FITS the viewport width - EXPANDS to fill a wide viewport (up to the 2.2 cap), SHRINKS on a narrow one (down to the 0.8 floor), and while the fitted size is ABOVE the floor nothing wraps (fit-by-font first; wrap only at the floor). A viewport WIDTH resize (not just rotation) re-fits via the debounced resize listener. The seeded song's widest row is ~31 chars, chosen so 412px fits ABOVE the floor (no wrap), a desktop width clamps at the 2.2 cap, and a narrow phone still fits above the floor - each viewport proves a different leg of the fit curve. Red-first vs the v2 wrap-first branch: the size was a fixed user scale (1.0 default) at EVERY viewport, so the wide-viewport EXPAND assertions below fail there.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"autofit1\",\"t\":\"Autofit Song\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]hello wide world [G]sing it loud\"],[\"Verse\",\"[C]a second line to [G]hold the tune\"]]}]"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Autofit Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "412px portrait: auto-fit EXPANDED past the neutral 1.0 to fill the width (strictly between floor and cap), NO wrap above the floor (2 seeded lines = 2 rows), no row overflows",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>1.05&&sc<2.19))return false;var rows=pSheet.querySelectorAll('.lyrLine');if(rows.length!==2)return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}window.__portrait=sc;return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "01-portrait-412-fitted"
+    },
+    {
+      "action": "resize",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "1024px desktop: the resize listener RE-FIT - the scale GREW past the portrait value toward/at the 2.2 cap, still no wrap, still no overflow",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>window.__portrait+0.1))return false;if(!(sc<=2.201))return false;var rows=pSheet.querySelectorAll('.lyrLine');if(rows.length!==2)return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}window.__wide=sc;return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "02-desktop-1024-expanded"
+    },
+    {
+      "action": "resize",
+      "width": 320,
+      "height": 740
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "320px narrow: re-fit SHRANK below the 412px scale (still at or above the 0.8 floor), no overflow - and with the fit still above the floor, STILL no wrap (fit-by-font first)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc<window.__portrait-0.05))return false;if(!(sc>=0.799))return false;var rows=pSheet.querySelectorAll('.lyrLine');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}return sc>0.81?rows.length===2:rows.length>=2;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "03-narrow-320-shrunk"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "back to 412px: the fit returns to the original portrait scale (deterministic re-fit, no drift), no overflow",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(Math.abs(sc-window.__portrait)>=0.03)return false;var rows=pSheet.querySelectorAll('.lyrLine');var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}return true;})()"
+    }
+  ]
+}
