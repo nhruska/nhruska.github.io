@@ -344,14 +344,25 @@
     // its <text>, then tints that text's immediately-preceding <path> (the wedge
     // renderWheel appends right before its own label) - no circle.js edit needed.
     // studioTheory now lives at module scope (exported for tests) - see above.
-    function buildWhy(box, th) {
+    function buildWhy(box, th, bundle) {
       var C = global.Circle;
-      var strip = th.notes.map(function (n, i) {
-        return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(th.degrees[i]) + '</span></div>';
+      // Bug #6: the notes STRIP + caption reflect the CURRENTLY selected solo
+      // scale (bundle), not the frozen key-mode (th). Without this the strip
+      // stayed on the key's home mode when you tapped Pent minor / Blues / etc.
+      // The circle WHEEL below stays keyed to the track's KEY center (th) - the
+      // solo-scale choice doesn't move the key on the circle of fifths. Falls
+      // back to th when no bundle is passed (the mode default before any tap).
+      var notes = (bundle && bundle.notes) || th.notes;
+      var degrees = (bundle && bundle.degrees) || th.degrees;
+      var strip = notes.map(function (n, i) {
+        return '<div class="cofDeg"><span class="nt">' + esc(n) + '</span><span class="dg">' + esc(degrees[i]) + '</span></div>';
       }).join('');
-      // player-facing key name: "A minor" reads better than "A Aeolian"; modal
-      // colours (dorian/mixolydian) read as their own names ("A dorian").
-      var keyName = th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase();
+      // player-facing scale name: a selected solo scale reads as its own label
+      // ("minor pentatonic", "blues"); the mode default reads "minor"/"major"
+      // (nicer than "Aeolian") or its own modal name ("A dorian").
+      var keyName = (bundle && bundle.label && bundle.label !== th.label)
+        ? bundle.label.toLowerCase()
+        : (th.scaleMode === 'aeolian' ? 'minor' : th.scaleMode === 'ionian' ? 'major' : th.label.toLowerCase());
       box.innerHTML = '<div class="cofScale">' + strip + '</div>'
         + '<div class="cofHint">The notes that sound "right" over this track, with their scale degrees - '
         + esc(dispKeyRoot(th.key, th.scaleMode)) + ' ' + esc(keyName) + '.</div><div class="bt-st-wheel"></div>';
@@ -1094,6 +1105,12 @@
           // M-GUIDE W3a: re-apply the active target (if any) against the NEW bundle,
           // and re-derive the Guide card for whichever solo scale is now on-screen.
           curBundle = bundle; curScaleId = scaleId;
+          // Bug #6: keep the "Why these notes?" note strip in sync with the
+          // selected scale while the panel is open - the same scale-reactive
+          // refresh the fretboard/guide/legend below get. whyBox is var-hoisted
+          // from further down in openStudio; undefined (falsy) on the initial
+          // select() before it's queried, so this no-ops until the panel exists.
+          if (whyBox && !whyBox.hidden) buildWhy(whyBox, th, bundle);
           renderGuide(scaleKeyFor(scaleId, th.scaleMode), bundle.notes);
           // M-TRACKLIB wave 1: the jam-discovery panel is scale-context-reactive
           // too - a chip switch re-derives its genre list + query LIVE (the spec's
@@ -1147,7 +1164,10 @@
       var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
       whyToggle.onclick = function () {
         var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
-        if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
+        // Bug #6: rebuild on each open (not a build-once latch) so the strip
+        // always reflects the CURRENT solo scale - a scale changed while the
+        // panel was closed would otherwise reopen showing the stale build.
+        if (show) buildWhy(whyBox, th, curBundle);
       };
       if (guideToggle && guideBox) guideToggle.onclick = function () {
         var show = guideBox.hidden; guideBox.hidden = !show;
