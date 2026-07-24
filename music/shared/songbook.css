@@ -71,6 +71,10 @@
   --stage-line:#333;--stage-line-soft:#444;
   --stage-ink:#f0ead8;--stage-ink-soft:#cfc9b8;--stage-ink-dim:#bbb;
   --stage-amber:#ffce6a;--stage-on-amber:#000;
+  /* Frosted scrim for a control that sits directly over scrolling stage
+     content (the dim-mode counterpart to --appbar-bg, which follows the app
+     theme and isn't legible against the fixed black stage). */
+  --stage-scrim:rgba(0,0,0,.55);
   --video-bg:#000;
   /* chord-diagram (diagram.js SVG) structural colors - flip per theme */
   --dg-grid:#3a4150;--dg-nut:#e8ebf0;--dg-base:#9aa3b2;
@@ -1351,7 +1355,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let
    it scroll rather than silently clip. */
-.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;}
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;}
 /* pInner shrink-wraps to its widest pre line so applyPerfFont's scrollWidth
    measurement sees the CONTENT width. As a plain block it would fill pSheet,
    pinning needW >= availW and silently blocking the short-song auto UPSCALE
@@ -1362,7 +1366,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}
-.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;}
+/* Explicit z-index (not left to DOM-order accident): .pSheet(1) < .pNav(5) <
+   .pSpeed(6). The nav must always paint above the scrolling lyric sheet
+   beneath it, and the settings popover must always paint above the nav if
+   their boxes ever touch - deterministic regardless of markup order. */
+.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;z-index:5;}
 .pNav .btn{padding:14px 10px;flex:1;}
 /* One-handed performance zoning. Advance (Next / finish) is the ONE control tapped
    constantly mid-song, so it becomes the dominant bottom-RIGHT target - the natural
@@ -1371,14 +1379,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    mid-performance) shrinks to a small left tab. Transpose is demoted OUT of the
    chrome entirely - it lives in the gear sheet's Key row. */
 .pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
-.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
+/* #pPrev is a ghost/secondary button (base .btn.ghost = fully transparent)
+   sitting directly over the scrolling lyric sheet - transparent disappears
+   into the text behind it (operator UAT: "back button transparent"). Give it
+   the same frosted-glass scrim as .appbar (var(--appbar-bg) + blur) so it
+   stays legible over any content while remaining visually secondary to the
+   filled #pNext. ID selector so it deterministically beats the shared
+   .btn.ghost rule regardless of source order. */
+.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;background:var(--appbar-bg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
 /* Settings popover sits ABOVE the nav bar with a clear gap. The old +74px let
    its bottom edge collide with the tall #pNext (~63px + 14px bottom = ~77px top)
    in portrait (operator UAT: "settings panel overlapping bottom controls");
    +92px clears it. Both share env(safe-area-inset-bottom), so the relative gap
    is stable across devices. */
-.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
+.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;z-index:6;}
 .pSpeed.on{display:flex;}
 .pSpeed .psRow{display:flex;align-items:center;gap:11px;}
 .pSpeed label{flex:0 0 42px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;}
@@ -1431,6 +1446,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .perform.dim .x,.perform.dim .pmini{color:var(--stage-ink);border-color:var(--stage-line);background:var(--stage-panel);}
 .perform.dim .btn{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 .perform.dim .btn.ghost{background:transparent;color:var(--stage-ink);border-color:var(--stage-line-soft);}
+/* Dim-mode #pPrev override: the fixed black teleprompter stage doesn't follow
+   --appbar-bg (which is theme-linked), so it needs its own translucent scrim
+   (--stage-scrim) to stay legible over scrolling stage content. ID selector
+   (specificity beats the .btn.ghost class rules above regardless of order) so
+   this deterministically wins over both the light-mode #pPrev rule and the
+   general dim ghost-button rule. */
+.perform.dim #pPrev{background:var(--stage-scrim);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .perform.dim .pSpeed{background:var(--stage-panel);border-color:var(--stage-line);}
 .perform.dim .pSpeed label{color:var(--stage-ink-dim);}
 .perform.dim .pSpeed .psBtn{background:var(--stage-panel-2);border-color:var(--stage-line);color:var(--stage-ink-soft);}
