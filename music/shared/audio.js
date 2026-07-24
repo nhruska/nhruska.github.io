@@ -216,12 +216,33 @@
     var n = Math.max(L + 1, Math.floor(sampleRate * dur));
     var out = new Float32Array(n);
 
-    // Longer, wound (low) strings ring longer than thin high ones - so decay
-    // rises toward 1 as frequency falls. Kept < 1 so the loop is always stable.
+    // Re-tuned 2026-07-24 (UAT: "chord tail still cuts off" even after the
+    // exponential-release fix below - diagnosed by RECONSTRUCTING the heard
+    // signal: the string barely decayed on its own, so it was still loud
+    // (~-13dB) when the release grabbed it at `dur` and yanked it to silence
+    // in ~0.5s - THAT fast drop from loud is what read as a cutoff, not the
+    // stop itself). Fix: make the string actually ring down to inaudible
+    // over a natural, musical time so it is already quiet by the time the
+    // release starts.
+    //
+    // Counter-intuitive but correct: `decay` (the loop's PER-CYCLE loss)
+    // must RISE toward 1 as frequency RISES, even though wound (low)
+    // strings still ring longer in real SECONDS than thin (high) ones. A
+    // low string completes far fewer cycles per second - e.g. low E
+    // (82Hz) does ~132 cycles in 1.6s where high E (659Hz) does ~1055 - so
+    // to reach the same real-time ring-out, the high string's per-cycle
+    // loss has to be much smaller (closer to 1) just to survive that many
+    // more cycles. `1 - K*freq^-P` is a power-law fit to a solved decay
+    // curve targeting ~-45..-50dB below peak by ~3-4s for the lowest
+    // strings and ~1.5-2.5s for the highest (audio-dsp-coach realistic
+    // range) - the "low rings longer in real time" law still holds (see
+    // test 'low (wound) strings ring longer than high strings'), it's just
+    // not decay-parameter direction that encodes it here. Kept < 1 so the
+    // loop is always stable.
     var decay = opts.decay;
-    if (decay == null) decay = 0.9995 - Math.min(0.008, freq * 0.0000085);
-    if (decay > 0.99995) decay = 0.99995;
-    if (decay < 0.985) decay = 0.985;
+    if (decay == null) decay = 1 - 0.3 * Math.pow(freq, -0.73);
+    if (decay > 0.99985) decay = 0.99985;
+    if (decay < 0.94) decay = 0.94;
 
     var bright = opts.brightness == null ? 0.5 : opts.brightness;
     if (bright < 0.05) bright = 0.05; if (bright > 0.95) bright = 0.95;

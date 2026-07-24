@@ -298,6 +298,96 @@ test('the heard signal (ksRender x releaseGain) is far quieter at the new stop p
   assert.ok(peak < 0.001, 'the 10ms window around the actual stop point must be near-silent, peaked at ' + peak.toFixed(5));
 });
 
+/* ---- decay re-tune (UAT re-diagnosis 2026-07-24: "still cuts off" AFTER the
+ * release-envelope fix above) --------------------------------------------
+ * Reconstructing the heard signal (ksRender x releaseGain) proved WHY the
+ * release fix alone wasn't enough: the KS string barely decays on its own
+ * (measured: low E only ~-16dB below peak at t=dur=1.6s, the OLD default
+ * decay), so it is still LOUD when the release grabs it at `dur` and yanks
+ * it to silence over releaseFor() - that fast drop FROM LOUD is what reads
+ * as a cutoff, independent of the release curve's own shape (already proven
+ * smooth above). The fix re-tunes ksRender's default `decay` so the string
+ * itself rings down to inaudible over a natural, musical time (per
+ * .claude/skills/audio-dsp-coach: ~3-4s for the lowest strings, ~1.5-2.5s
+ * for the highest) - so by the time the release starts, the note is
+ * already quiet, and the subsequent fade is imperceptible. */
+function dB(x) { return 20 * Math.log10(Math.max(1e-9, Math.abs(x))); }
+function rmsLevelAt(buf, seconds, sr) {
+  var win = Math.floor(sr * 0.01), c = Math.round(seconds * sr);
+  var a = Math.max(0, c - win), b = Math.min(buf.length, c + win);
+  var e = 0, n = 0;
+  for (var i = a; i < b; i++) { e += buf[i] * buf[i]; n++; }
+  return Math.sqrt(e / Math.max(1, n));
+}
+function peakLevel(buf, sr, uptoSeconds) {
+  var n = uptoSeconds ? Math.min(buf.length, Math.round(uptoSeconds * sr)) : buf.length;
+  var p = 0;
+  for (var i = 0; i < n; i++) p = Math.max(p, Math.abs(buf[i]));
+  return p;
+}
+
+test('decay re-tune: the string rings down to inaudible on its own, over a natural per-string time', function () {
+  // Low E (82.41Hz, longest-ringing open string in the profiles) must reach
+  // near-silence within ~4s; a high string (659.25Hz) within ~2.5s - the
+  // audio-dsp-coach "natural, musical time" bounds. This is RED against the
+  // pre-2026-07-24 default (which only reached ~-24dB by 4s for low E - a
+  // near-infinite sustain, not a natural ring-out).
+  [{ freq: 82.41, byT: 4.0, label: 'low E' }, { freq: 659.25, byT: 2.5, label: 'high string (E5)' }].forEach(function (c) {
+    var buf = ChordAudio.ksRender(SR, c.freq, c.byT + 0.1, { brightness: 0.4 });
+    var peak = peakLevel(buf, SR, 0.05);
+    var lvl = dB(rmsLevelAt(buf, c.byT, SR) / peak);
+    assert.ok(lvl <= -45, c.label + ' should have rung down to <= -45dB below peak by t=' + c.byT + 's, got ' + lvl.toFixed(1) + 'dB');
+  });
+});
+
+test('decay re-tune: no loud-then-slam - the string is already quiet BEFORE the release starts (t=dur)', function () {
+  // This is the direct regression guard for the diagnosis: previously the
+  // level at t=dur (the instant the release grabs the note) was still loud
+  // (~-13 to -16dB below peak) for a low string - RED here. After the
+  // re-tune it must already be well down (<= -25dB) so the exponential
+  // release that follows fades an already-quiet note instead of slamming a
+  // loud one to silence.
+  var dur = 1.6;
+  [{ freq: 82.41, label: 'low E' }, { freq: 659.25, label: 'high string (E5)' }].forEach(function (c) {
+    var buf = ChordAudio.ksRender(SR, c.freq, dur + 0.5, { brightness: 0.4 });
+    var peak = peakLevel(buf, SR, 0.05);
+    var atRelease = dB(rmsLevelAt(buf, dur, SR) / peak);
+    assert.ok(atRelease <= -25, c.label + ' should be <= -25dB below peak at release-start (t=' + dur + 's), got ' + atRelease.toFixed(1) + 'dB (still loud = the cutoff bug)');
+  });
+});
+
+test('decay re-tune: the heard envelope (raw x releaseGain) decreases across the release and is silent by the stop - worst case (low E)', function () {
+  // Low E is the slowest-decaying string, so the worst case for a lingering
+  // "cliff" at the very end. Walk the actual heard samples (RMS-windowed,
+  // to average out the string's own oscillation) from release-start through
+  // the stop point and assert: (a) no window is louder than the one before
+  // it by more than a hair (monotonic decrease, no re-loudening), and
+  // (b) the final window is inaudible.
+  var dur = 1.6, freq = 82.41, gain = 0.15;
+  var rel = ChordAudio.releaseFor(freq);
+  var raw = ChordAudio.ksRender(SR, freq, dur + rel + 0.1, { brightness: 0.4 });
+  var peak = peakLevel(raw, SR, 0.05);
+  function heardLevel(seconds) {
+    var win = Math.floor(SR * 0.01), c = Math.round(seconds * SR);
+    var a = Math.max(0, c - win), b = Math.min(raw.length, c + win);
+    var e = 0, n = 0;
+    for (var i = a; i < b; i++) {
+      var v = raw[i] * ChordAudio.releaseGain(i / SR, dur, freq, gain);
+      e += v * v; n++;
+    }
+    return Math.sqrt(e / Math.max(1, n));
+  }
+  var steps = 12, prev = heardLevel(dur);
+  for (var i = 1; i <= steps; i++) {
+    var t = dur + (rel * i / steps);
+    var v = heardLevel(t);
+    assert.ok(v <= prev + 1e-6, 'heard level must not increase during release (step ' + i + ': ' + v.toFixed(6) + ' > ' + prev.toFixed(6) + ')');
+    prev = v;
+  }
+  var atStop = dB(heardLevel(dur + rel) / peak);
+  assert.ok(atStop <= -70, 'heard level at the stop point must be near-silent (<= -70dB), got ' + atStop.toFixed(1) + 'dB');
+});
+
 test('low (wound) strings ring longer than high strings', function () {
   function sustain(f) {
     var b = ChordAudio.ksRender(SR, f, 2.0);
