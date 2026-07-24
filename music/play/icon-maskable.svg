@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Music">
-  <rect width="512" height="512" fill="#0d0f12"/>
-  <g fill="#5eead4" transform="translate(256 256) scale(0.74) translate(-256 -256)">
+  <rect width="512" height="512" fill="#ffffff"/>
+  <g fill="#0d9488" transform="translate(256 256) scale(0.74) translate(-256 -256)">
     <rect x="300" y="116" width="24" height="228" rx="9"/>
     <path d="M324 116 c66 14 99 60 80 122 c5 -45 -27 -77 -80 -90 z"/>
     <ellipse cx="276" cy="354" rx="62" ry="48"/>
