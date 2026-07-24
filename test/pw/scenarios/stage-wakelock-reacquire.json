@@ -1,0 +1,55 @@
+{
+  "name": "stage-wakelock-reacquire",
+  "description": "P1-1 (P0): the Wake Lock API auto-releases on ANY backgrounding (notification, call, app-switch) via the browser's own visibilitychange handling. Stage must re-acquire the lock when the tab becomes visible again while still performing - otherwise the screen can sleep mid-song with no warning.",
+  "persona": "intermediate",
+  "dismissNotables": ["composeintro", "transposetip", "backup"],
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "spy installed on navigator.wakeLock.request BEFORE Stage opens, so the entry call is counted too",
+      "js": "(function(){window.__wakeCalls=0;var stub={release:function(){return Promise.resolve();}};var request=function(){window.__wakeCalls++;return Promise.resolve(stub);};try{Object.defineProperty(navigator,'wakeLock',{value:{request:request},configurable:true});}catch(e){navigator.wakeLock={request:request};}return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "Stage entry requested the wake lock once",
+      "js": "window.__wakeCalls === 1"
+    },
+    {
+      "action": "evalAssert",
+      "label": "simulate backgrounding then returning to the foreground (visibilitychange hidden -> visible)",
+      "js": "(function(){Object.defineProperty(document,'visibilityState',{value:'hidden',configurable:true});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'visibilityState',{value:'visible',configurable:true});document.dispatchEvent(new Event('visibilitychange'));return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (P1-1): wake lock re-acquired a SECOND time after the tab becomes visible again while Stage is still open",
+      "js": "window.__wakeCalls === 2"
+    },
+    {
+      "action": "screenshot",
+      "name": "stage-wakelock-reacquire"
+    }
+  ]
+}
