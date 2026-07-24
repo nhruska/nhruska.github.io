@@ -201,6 +201,18 @@
       "ms": 600
     },
     {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords"
+    },
+    {
       "action": "tap",
       "selector": ".tabbar [data-tab=\"library\"]"
     },

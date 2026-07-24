@@ -62,6 +62,12 @@ import time
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 EVIDENCE = os.path.join(REPO, 'test', 'pw', 'evidence')
+# Per-click timeout. Default matches the historical hardcoded 4000ms; a BUSY
+# box (parallel sessions, background suites) can starve Chromium enough that
+# a legitimate tap needs longer - override via PW_TAP_TIMEOUT_MS rather than
+# misreading load-starved clicks as app failures (same env-override spirit as
+# PW_CHROME).
+TAP_TIMEOUT_MS = int(os.environ.get('PW_TAP_TIMEOUT_MS', '4000'))
 IGNORE_CONSOLE = re.compile(
     r'ERR_TUNNEL_CONNECTION_FAILED|ERR_CONNECTION_RESET|ERR_NAME_NOT_RESOLVED'
     r'|Failed to load resource|net::ERR_', re.I)
@@ -183,7 +189,7 @@ def run(scenario_path, base_url=None):
                         page.set_viewport_size({'width': step['width'], 'height': step['height']})
                         page.wait_for_timeout(step.get('settleMs', 200))
                     elif act == 'tap':
-                        page.locator(step['selector']).first.click(timeout=4000)
+                        page.locator(step['selector']).first.click(timeout=TAP_TIMEOUT_MS)
                     elif act == 'dragReorder':
                         # S-PROG-REORDER: pointer-drag `from` onto the far side
                         # of `to` (mouse pointerType -> movement-threshold lift,
@@ -212,7 +218,7 @@ def run(scenario_path, base_url=None):
                         page.locator(scope).locator(
                             'button, [role=button], a, .chip, .chordSegBtn',
                             has_text=re.compile(r'^\s*%s\s*$' % re.escape(step['text']))
-                        ).first.click(timeout=4000)
+                        ).first.click(timeout=TAP_TIMEOUT_MS)
                     elif act == 'tapIfVisible':
                         # best-effort tap (one-time asks, optional banners) - never fails
                         try:
