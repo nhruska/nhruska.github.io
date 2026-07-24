@@ -209,6 +209,9 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    overlay spans exactly the chip row (chevron stays vertically centred). */
 .chipScrollWrap{position:relative;margin-bottom:14px;}
 .chipScrollWrap > .chips{margin-bottom:0;}
+/* Tight variant: the scroller supplies its own spacing (e.g. the Compose
+   starter row inside #suggest) - the wrapper adds none. */
+.chipScrollWrap--tight{margin-bottom:0;}
 .chipScrollWrap:has(> .chips[hidden]){display:none;}
 /* Tappable: an active edge is a 44px hit target (a11y floor) that snap-scrolls
    the strip to that end - AND, by capturing the tap, shields the partially

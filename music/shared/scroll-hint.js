@@ -93,11 +93,20 @@
     upd();
   }
 
+  // Find each wrapper's scroller (its one child that isn't a .csh overlay) and
+  // wire it. Scroller-class-agnostic: .chips, .progPickRow, or any future
+  // horizontal strip works the same once wrapped in .chipScrollWrap.
   function autowire(root) {
     root = root || global.document;
     if (!root || !root.querySelectorAll) return;
-    var strips = root.querySelectorAll('.chipScrollWrap > .chips');
-    for (var i = 0; i < strips.length; i++) wire(strips[i]);
+    var wraps = root.querySelectorAll('.chipScrollWrap');
+    for (var i = 0; i < wraps.length; i++) {
+      var wrap = wraps[i], scroller = null;
+      for (var j = 0; j < wrap.children.length; j++) {
+        if (!wrap.children[j].classList.contains('csh')) { scroller = wrap.children[j]; break; }
+      }
+      if (scroller) wire(scroller);
+    }
   }
 
   var ScrollHint = { sides: sides, wire: wire, autowire: autowire };

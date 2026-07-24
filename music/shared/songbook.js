@@ -4039,7 +4039,15 @@
           b.onclick = function () { loadProgression(p); };
           row.appendChild(b);
         });
-        el.suggest.appendChild(row);
+        // Same horizontal-scroll affordance as the Library filter strips: wrap
+        // the starter row so its off-screen progressions get the edge fade +
+        // tappable snap-to-end chevron (scroll-hint.js). Tight variant keeps
+        // #suggest's own spacing (no added wrapper margin).
+        var progWrap = document.createElement('div');
+        progWrap.className = 'chipScrollWrap chipScrollWrap--tight';
+        progWrap.appendChild(row);
+        el.suggest.appendChild(progWrap);
+        if (global.ScrollHint) global.ScrollHint.autowire(el.suggest);
         return;
       }
       var tonic = labelTonic();

@@ -1873,7 +1873,7 @@ function findComposeBackdrop(m) {
 // empty-state suggestion row's first starter button, then taps Solo-over -
 // "never saved this session" -> openSoloChoiceRow(...).
 function startSoloChoice(m) {
-  var startRow = m.elMap.suggest.children[1]; // [0]=label, [1]=progPickRow
+  var startRow = m.elMap.suggest.children[1].children[0]; // [0]=label, [1]=chipScrollWrap -> [0]=progPickRow
   startRow.children[0].onclick(); // loadProgression(PROGRESSIONS[0])
   m.elMap.soloBackingBtn.onclick();
 }
@@ -1994,7 +1994,7 @@ function mountForProgWrapTests() {
 // above drives for its first entry) - lets these tests pick a KNOWN chord set
 // (with known romans) by name instead of depending on buildGrid's tile order.
 function loadStarterByName(m, name) {
-  var startRow = m.elMap.suggest.children[1]; // [0]=label, [1]=progPickRow
+  var startRow = m.elMap.suggest.children[1].children[0]; // [0]=label, [1]=chipScrollWrap -> [0]=progPickRow
   var idx = Songbook.PROGRESSIONS.map(function (p) { return p.name; }).indexOf(name);
   if (idx < 0) throw new Error('loadStarterByName: unknown starter "' + name + '"');
   startRow.children[idx].onclick();
