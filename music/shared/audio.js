@@ -45,11 +45,100 @@
   // genuinely moved on.
   var IDLE_RELEASE_MS = 20000;
   var idleTimer = null;
+
+  /* ---- keep-warm mode ----------------------------------------------------
+   * The 20s idle-release above is right for the BACKGROUND case (context
+   * left running after the last tap, then genuinely abandoned) but wrong for
+   * the moment a chord-interactive surface (Practice/Stage, Compose, the
+   * backing-track Studio) first OPENS: the very first tap on that surface
+   * still pays the ~0.5s resume() lag if the context happened to be
+   * suspended from a prior idle gap, and that first tap is exactly the one
+   * a musician judges immediacy by.
+   *
+   * keepWarm()/releaseWarm() suppress the idle-release entirely while such a
+   * surface is on screen (so `whenRunning` above always takes its
+   * SYNCHRONOUS zero-latency branch) and eagerly resume the context the
+   * moment the surface opens, rather than waiting for the first note. They
+   * are reference-counted so nested/overlapping surfaces (e.g. the Studio
+   * overlay opened while Practice is still technically "current") don't
+   * release focus until the LAST one closes.
+   *
+   * By design this holds audio focus (pauses background music) for the
+   * ENTIRE time such a surface stays open and visible, past any idle
+   * threshold - immediacy wins for as long as the user is actively on a
+   * chord screen (operator-confirmed, standing behavior - not a hedge).
+   * Focus is handed back ONLY on: the surface closing (after a short grace
+   * so an in-flight strum still rings out) or the tab backgrounding
+   * (immediately - the app isn't in the foreground to be heard anyway, so
+   * there's no reason to keep another app's audio paused).
+   */
+  var warmCount = 0;
+  // Grace after the LAST warm surface closes, before actually suspending:
+  // long enough that a strum triggered right as the surface closes still
+  // rings out (strum's default dur is 1.6s), short enough that it isn't the
+  // full 20s background-idle window - the user just told us, by navigating
+  // away, that they're done with chords for now.
+  var SURFACE_CLOSE_RELEASE_MS = 1800;
+
   function releaseWhenIdle(secondsFromNow) {
     if (idleTimer) clearTimeout(idleTimer);
+    if (warmCount > 0) return; // a surface is open: stay running, no idle-release
     idleTimer = setTimeout(function () {
       if (AC && AC.state === 'running') AC.suspend();
     }, secondsFromNow * 1000 + IDLE_RELEASE_MS);
+  }
+
+  // Call when a chord-interactive surface OPENS. Guarded so it's a harmless
+  // no-op in a non-browser environment (Node tests) - only the reference
+  // count itself needs to be pure/testable there.
+  function keepWarm() {
+    warmCount++;
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      var a = ctx();
+      if (a.state !== 'running') a.resume();
+    }
+  }
+  // Call when that surface CLOSES. Once the LAST opener releases (the exact
+  // 1->0 transition), re-arm a short grace-then-suspend rather than
+  // immediately cutting audio focus. A redundant call while already at 0 is
+  // a true no-op - it must NOT re-arm/extend the grace timer, or a stray
+  // extra close call would silently push the suspend deadline out forever.
+  function releaseWarm() {
+    if (warmCount === 0) return;
+    warmCount--;
+    if (warmCount === 0) {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () {
+        if (AC && AC.state === 'running') AC.suspend();
+      }, SURFACE_CLOSE_RELEASE_MS);
+    }
+  }
+  function isWarm() { return warmCount > 0; }
+  // Eagerly starts the resume() handshake the instant a finger LANDS on a
+  // chord control (pointerdown), rather than waiting for the click that
+  // actually schedules the note - covers the narrow window right after a
+  // surface opens (before keepWarm()'s own resume() has settled) and any tap
+  // that lands before keepWarm() ran at all. Idempotent/cheap: a no-op once
+  // already running.
+  function primeNow() {
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      var a = ctx();
+      if (a.state !== 'running') a.resume();
+    }
+  }
+  // Backgrounding the tab hard-releases immediately and unconditionally -
+  // regardless of warmCount - because the point of releasing focus is to
+  // hand it back to another app the instant this one isn't in the
+  // foreground to be heard, not to wait out a grace period.
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        warmCount = 0;
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        if (AC && AC.state === 'running') AC.suspend();
+      }
+    });
   }
 
   function freqForString(openFreq, fret) { return openFreq * Math.pow(2, fret / 12); }
@@ -385,6 +474,10 @@
     });
   }
 
-  global.ChordAudio = { tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender, scrapeRender: scrapeRender, VoiceCache: VoiceCache };
+  global.ChordAudio = {
+    tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender,
+    scrapeRender: scrapeRender, VoiceCache: VoiceCache,
+    keepWarm: keepWarm, releaseWarm: releaseWarm, isWarm: isWarm, primeNow: primeNow
+  };
 
 })(typeof window !== 'undefined' ? window : this);

@@ -5309,6 +5309,32 @@
     // Set once INIT resolves the first-shown screen (see below); drives the
     // screen/tab back-history wiring in switchTab.
     var currentTab = null;
+    // Audio-focus keep-warm (immediate chord taps): true while the CURRENTLY
+    // showing screen is chord-interactive (Practice/Stage or Compose) and we
+    // therefore hold ChordAudio warm for it. Tracked separately from
+    // currentTab so a same-screen re-entry (applyTab called again with the
+    // SAME chord-interactive name) never double-counts the keepWarm() call -
+    // ChordAudio.keepWarm()/releaseWarm() are reference-counted, so getting
+    // this edge-triggered right here is what keeps that count correct.
+    var chordScreenWarm = false;
+    var CHORD_INTERACTIVE_SCREENS = { practice: true, compose: true };
+    // Eagerly resumes the WebAudio context the instant a finger LANDS
+    // anywhere on a chord-interactive screen (pointerdown), rather than
+    // waiting for the click that actually schedules the note - see
+    // ChordAudio.primeNow()'s header comment. Delegated once per screen
+    // root (not per chord chip - chips are re-created on every render), so
+    // it keeps working across renderPractice()/renderProg() re-renders
+    // without needing to be re-wired at every chip. Idempotent + cheap
+    // (primeNow no-ops once already running), so no harm in firing on every
+    // tap anywhere in the screen, not just directly on a chord control.
+    var chordScreenPrimeWired = { practice: false, compose: false };
+    function wireChordScreenPrime(name) {
+      if (chordScreenPrimeWired[name] || !window.ChordAudio) return;
+      var root = document.getElementById('s-' + name);
+      if (!root) return;
+      root.addEventListener('pointerdown', function () { window.ChordAudio.primeNow(); }, { passive: true });
+      chordScreenPrimeWired[name] = true;
+    }
     // Renders the tab/screen switch WITHOUT touching the back-history stack.
     // Used by: the CLOSE side of a screen back-history entry (returning to the
     // previous screen - calling switchTab there would push a second entry),
@@ -5318,6 +5344,18 @@
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
+      // Keep the audio engine warm for the WHOLE time a chord-interactive
+      // screen is open (immediate taps - see audio.js keepWarm()); release
+      // the instant we leave it. applyTab is the single funnel every screen
+      // change runs through (tab-bar taps, opening Practice, hardware/gesture
+      // Back), so hooking it here covers all of them without touching each
+      // individual chord-tap call site.
+      var isChordScreen = !!CHORD_INTERACTIVE_SCREENS[name];
+      if (window.ChordAudio) {
+        if (isChordScreen && !chordScreenWarm) { window.ChordAudio.keepWarm(); wireChordScreenPrime(name); }
+        else if (!isChordScreen && chordScreenWarm) window.ChordAudio.releaseWarm();
+      }
+      chordScreenWarm = isChordScreen;
       if (name === 'practice') renderPractice();
       if (name === 'library') { renderFilterChips(); renderSongs(); }
       if (name === 'jam') renderSetlist();
