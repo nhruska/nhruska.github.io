@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v302';
+var CACHE = 'music-v302-2';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
