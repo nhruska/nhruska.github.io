@@ -182,7 +182,9 @@ test('renderBanner() applies an extra className when given', function () {
 test('PRIORITY exposes the M-GUIDANCE order: guidanceask first, then the graded journey, pre-existing 5 unchanged relative order', function () {
   assert.deepStrictEqual(Notables.PRIORITY, [
     'guidanceask',
-    'firstrun', 'tunefirst', 'savebasics',
+    // 'chordtap' (P3 UAT, PR #300): the tap-to-hear cue outranks the
+    // setlist/save nudges but sits behind the fresh-profile 'firstrun' greeting.
+    'firstrun', 'chordtap', 'tunefirst', 'savebasics',
     // S-PERSONA-COPY: studiofirst (beginner Studio orientation) sits beside its
     // studio siblings; disjoint LEVELS gate means it never actually contests them.
     'postprog', 'studiofirst', 'whynote', 'composeintro', 'pulljam', 'transposetip', 'scaletip',

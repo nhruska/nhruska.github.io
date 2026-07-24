@@ -76,9 +76,13 @@
   // FIRST - it must win the slot ahead of even 'firstrun' on a truly fresh
   // profile, since firstrun is itself level-gated (see LEVELS below) and
   // would otherwise never get a chance to show before the level exists.
+  // 'chordtap' (the "tap a chord to hear it" cue, P3 UAT / PR #300) sits
+  // right after 'firstrun' - discovering the sheet's core interaction (tap a
+  // chord, hear it) outranks the setlist/save nudges, but the fresh-profile
+  // Library greeting still goes first.
   var PRIORITY = [
     'guidanceask',
-    'firstrun', 'tunefirst', 'savebasics',
+    'firstrun', 'chordtap', 'tunefirst', 'savebasics',
     'postprog', 'studiofirst', 'whynote', 'composeintro', 'pulljam', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ];

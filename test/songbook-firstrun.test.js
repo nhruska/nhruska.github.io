@@ -3,7 +3,8 @@
  * finding F4): Songbook.firstrunShouldRender(Notables), the pure decision fn
  * behind the Library's fresh-profile guidance banner, PLUS M-GUIDANCE's
  * Songbook.savebasicsShouldRender(Notables) (the beginner-tier "save/set
- * basics" cue). Drives the REAL notables.js module (not a stub) via
+ * basics" cue) PLUS S-CHORDCHIP-A11Y's Songbook.chordtapShouldRender(Notables)
+ * (the level-UNRESTRICTED "tap a chord to hear it" cue, PR #300). Drives the REAL notables.js module (not a stub) via
  * test/helpers/local-storage-reset.js, same pattern as notables.test.js -
  * this is a consumer of that module's public API only, never its internals.
  *
@@ -134,6 +135,42 @@ test('savebasicsShouldRender: no Notables module -> false, never throws', functi
   assert.doesNotThrow(function () {
     assert.strictEqual(Songbook.savebasicsShouldRender(null), false);
     assert.strictEqual(Songbook.savebasicsShouldRender(undefined), false);
+  });
+});
+
+/* ---------------------------------------------------------------------
+ * S-CHORDCHIP-A11Y (P3 UAT, PR #300): Songbook.chordtapShouldRender(Notables)
+ * - the "tap a chord to hear it" one-shot cue that replaced the persistent
+ * .chordHint row. UNLIKE firstrun/savebasics, this is deliberately NOT in
+ * notables.js's LEVELS table, so - the whole point of the design - it must
+ * grant on an UNSET level too, not just 'beginner'.
+ * ------------------------------------------------------------------- */
+test('chordtapShouldRender: granted on a fresh, empty slot regardless of guidance level (unset/beginner/intermediate/advanced)', function () {
+  [null, 'beginner', 'intermediate', 'advanced'].forEach(function (lvl) {
+    resetLocalStorage();
+    if (lvl) GuidanceLevel.set(lvl);
+    Notables._resetArbitration();
+    assert.strictEqual(Songbook.chordtapShouldRender(Notables), true, String(lvl) + ' must grant chordtap (unrestricted)');
+  });
+});
+test('chordtapShouldRender: dismissed consumer never re-claims', function () {
+  resetLocalStorage();
+  Notables._resetArbitration();
+  assert.strictEqual(Songbook.chordtapShouldRender(Notables), true);
+  Notables.dismiss('chordtap');
+  assert.strictEqual(Songbook.chordtapShouldRender(Notables), false);
+});
+test('chordtapShouldRender: loses to a higher-priority live holder (firstrun, beginner) already on the slot', function () {
+  resetLocalStorage();
+  GuidanceLevel.set('beginner');
+  Notables._resetArbitration();
+  assert.strictEqual(Notables.claim('firstrun', undefined, 'beginner'), true); // firstrun claims first, outranks chordtap
+  assert.strictEqual(Songbook.chordtapShouldRender(Notables), false);
+});
+test('chordtapShouldRender: no Notables module -> false, never throws', function () {
+  assert.doesNotThrow(function () {
+    assert.strictEqual(Songbook.chordtapShouldRender(null), false);
+    assert.strictEqual(Songbook.chordtapShouldRender(undefined), false);
   });
 });
 
