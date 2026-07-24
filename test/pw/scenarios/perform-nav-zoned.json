@@ -1,21 +1,48 @@
 {
   "name": "perform-nav-zoned",
   "note": "S-PERFORM-ZONE (operator UAT 2026-07-17: 'make it easy for single hand usage while performing without having to pick a button in the middle'). In the fullscreen perform view the ADVANCE control (Next / finish) is the one button tapped constantly mid-song, so it must be the DOMINANT bottom-right thumb target, not an equal half. Assert #pNext is >= 2x the width of #pPrev. Setup: seed a saved custom song with a sheet, open it, tap the Stage button (#stageBtn) to enter the perform view. Red-first: pre-fix the two nav buttons were equal (flex:1 each) so the ratio assert FAILS.",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
     {
       "action": "evalAssert",
       "label": "seed a saved custom song with a two-section sheet so the perform view has content",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'perfZoneSong', t:'Perform Zone Song', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G','Am','F'], sheet:[['Verse','[C] a [G] b [Am] c [F] d'],['Chorus','[C] e [G] f [Am] g [F] h']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Perform Zone Song\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Perform Zone Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "the perform (stage) view is open",
@@ -33,16 +60,22 @@
     },
     {
       "action": "evalAssert",
-      "label": "RED GOALPOST (volley-1): #pPrev is a real, hittable target - >= 44px both axes, non-transparent background, and its own center point hit-tests to itself (catches a transparent or occluded back button, which width/order asserts cannot)",
-      "js": "(function(){var b=document.getElementById('pPrev');if(!b)return false;var r=b.getBoundingClientRect();if(r.width<1||r.height<1)return false;if(r.width<44||r.height<44)return false;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.99)return false;var m=/rgba?\\(([^)]+)\\)/.exec(cs.backgroundColor);if(!m)return false;var parts=m[1].split(',').map(parseFloat);var alpha=parts.length>3?parts[3]:1;if(alpha<0.5)return false;var hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!(hit&&(hit===b||b.contains(hit)));})()"
+      "label": "RED GOALPOST (volley-1): #pPrev is a real, hittable target - >= 44px both axes (offsetWidth/Height - the rect is the TRANSFORMED box, so an :active scale would fake a sub-floor read), non-transparent background, and its own center point hit-tests to itself (catches a transparent or occluded back button, which width/order asserts cannot)",
+      "js": "(function(){var b=document.getElementById('pPrev');if(!b)return false;if(b.offsetWidth<1||b.offsetHeight<1)return false;if(b.offsetWidth<44||b.offsetHeight<44)return false;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.99)return false;var m=/rgba?\\(([^)]+)\\)/.exec(cs.backgroundColor);if(!m)return false;var parts=m[1].split(',').map(parseFloat);var alpha=parts.length>3?parts[3]:1;if(alpha<0.5)return false;var r=b.getBoundingClientRect();var hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!(hit&&(hit===b||b.contains(hit)));})()"
     },
     {
       "action": "evalAssert",
       "label": "#pNext is not overlapped by #pPrev (deterministic stacking: the two nav boxes must not intersect)",
       "js": "(function(){var a=document.getElementById('pPrev').getBoundingClientRect(),b=document.getElementById('pNext').getBoundingClientRect();return a.right<=b.left+0.5||b.right<=a.left+0.5;})()"
     },
-    { "action": "tap", "selector": "#pCtrls" },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "the Stage settings popover is open (precondition - its buttons are zero-box while closed, and a zero box would fake-pass any geometry test)",
@@ -51,7 +84,7 @@
     {
       "action": "evalAssert",
       "label": "RED GOALPOST (volley-1): every VISIBLE .pSpeed .psBtn clears the 44px tap-target floor (measured 33px pre-fix at 412x915; zero-box buttons are skipped first so a hidden control cannot fake a pass)",
-      "js": "(function(){var bs=Array.prototype.slice.call(document.querySelectorAll('.pSpeed .psBtn'));var vis=bs.map(function(b){return {b:b,r:b.getBoundingClientRect()};}).filter(function(o){return o.r.width>0&&o.r.height>0;});if(!vis.length)return false;return vis.every(function(o){return o.r.height>=44&&o.r.width>=44;});})()"
+      "js": "(function(){var bs=Array.prototype.slice.call(document.querySelectorAll('.pSpeed .psBtn'));var vis=bs.filter(function(b){return b.offsetWidth>0&&b.offsetHeight>0;});if(!vis.length)return false;return vis.every(function(b){return b.offsetHeight>=44&&b.offsetWidth>=44;});})()"
     },
     {
       "action": "evalAssert",
@@ -63,6 +96,9 @@
       "label": "no horizontal overflow at 412px with the popover open",
       "js": "document.documentElement.scrollWidth <= window.innerWidth"
     },
-    { "action": "screenshot", "name": "perform-nav-zoned" }
+    {
+      "action": "screenshot",
+      "name": "perform-nav-zoned"
+    }
   ]
 }
