@@ -1400,7 +1400,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed input{flex:1;accent-color:var(--accent-ink);}
 .pSpeed .sv{font-family:'Space Mono';font-weight:700;font-size:.74rem;color:var(--accent-ink);width:30px;text-align:right;}
 .pSpeed .psBtns{flex:1;display:flex;gap:6px;}
-.pSpeed .psBtn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
+/* min-height is the 44px tap-target floor, not decoration: .78rem text with
+   8px vertical padding computes to a 33px box (measured at 412x915), which is
+   under the floor for every control in this popover. The floor comes out of
+   the popover's own height, never out of the button - per the space budget,
+   a tap target is the last thing that may shrink. */
+.pSpeed .psBtn{flex:1;min-height:44px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .pSpeed .psBtn:active{transform:scale(.94);}
 .pSpeed .psBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
