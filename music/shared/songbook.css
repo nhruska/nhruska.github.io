@@ -1346,7 +1346,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pHead{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:9px;row-gap:1px;flex:0 0 auto;margin-bottom:5px;}
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.12;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);}
-.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;}
+/* Same small-pill treatment as the Library's .li-capo badge (S-DS registry) -
+   the Stage never showed a track's capo (P1-5), so a capo'd-up performer had
+   no reminder while actually playing. */
+.pCapo{font-family:'Space Mono',monospace;font-weight:700;font-size:.72rem;color:var(--brass);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:1px 6px;border-radius:6px;flex:0 0 auto;}
+/* P1-6: the glance key line is the fastest thing a performer's eye checks
+   mid-song - it must read at LEAST as large as the artist line beneath the
+   title (previously .7rem, smaller than .pArtist's .8rem), with a 13px
+   absolute floor regardless of the root font size. */
+.pKey{font-family:'Space Mono',monospace;font-size:.85rem;color:var(--accent-ink);font-weight:700;}
 /* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let
@@ -1391,6 +1399,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
    disabled, matching the practice modeSwitch. */
 .pSpeed .psBtn:disabled{opacity:.35;cursor:default;}
+/* Key-transpose steppers are safety-critical (a mis-tap changes the performed
+   key mid-song, not just a view toggle) - give them their own >=44px tap
+   target instead of the shared flex:1 settings-row treatment; View/Size stay
+   on the shared .psBtn look untouched. */
+.pSpeed .psRowKey .psBtns{flex:0 0 auto;gap:10px;}
+.pSpeed .psRowKey .psBtn{flex:0 0 44px;width:44px;height:44px;font-size:1.2rem;padding:0;}
 /* Landscape only: collapse the Stage View+Size controls into a SINGLE row and
    shrink the header so the sheet keeps the vertical room. Landscape guarantees
    width > height, so the one row always has horizontal space; a narrow SHORT
@@ -1402,10 +1416,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pTop{margin-bottom:3px;}
   /* Landscape vertical space goes to the MUSIC. The header lines are flex items
      (blockified - inline can't merge them), so they TIGHTEN instead: smaller
-     title, zeroed margins, ~44px total for all three. */
+     title, zeroed margins, ~48px total for all three (pKey grew a few px for
+     the P1-6 legibility floor, still >= pArtist here too). */
   .pTitle{font-size:.95rem;line-height:1.1;}
   .pArtist{font-size:.72rem;margin:0;}
-  .pKey{font-size:.66rem;margin-bottom:2px;}
+  .pKey{font-size:.82rem;margin-bottom:2px;}
   /* ...and the nav becomes a RIGHT-EDGE thumb column below the top bar: Next
      dominant (Fitts's law, strap-grip thumb arc), Prev small beneath it. The
      sheet is padded clear of the column so chords can never run under the next
@@ -1419,6 +1434,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pSpeed .psRow{flex:1 1 30%;min-width:0;}
   .pSpeed .psBtns{min-width:0;}
   .pSpeed .psBtn{min-width:0;padding:8px 4px;font-size:.72rem;}
+  /* The 44px safety floor holds in landscape too - a key-change mis-tap is
+     just as costly with a wider viewport. */
+  .pSpeed .psRowKey{flex:0 0 auto;}
+  .pSpeed .psRowKey .psBtns{min-width:0;flex:0 0 auto;}
+  .pSpeed .psRowKey .psBtn{min-width:44px;width:44px;height:44px;font-size:1.1rem;padding:0;}
 }
 .perform.dim{background:var(--stage-bg);}
 .perform.dim .lyrLine{color:var(--stage-ink);}
@@ -1428,6 +1448,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .perform.dim .sect{color:var(--stage-amber);}
 .perform.dim .pTitle,.perform.dim .pArtist,.perform.dim .pos{color:var(--stage-ink);}
 .perform.dim .pKey{color:var(--stage-amber);}
+.perform.dim .pCapo{color:var(--stage-ink);background:var(--stage-panel);border-color:var(--stage-line);}
 .perform.dim .x,.perform.dim .pmini{color:var(--stage-ink);border-color:var(--stage-line);background:var(--stage-panel);}
 .perform.dim .btn{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 .perform.dim .btn.ghost{background:transparent;color:var(--stage-ink);border-color:var(--stage-line-soft);}

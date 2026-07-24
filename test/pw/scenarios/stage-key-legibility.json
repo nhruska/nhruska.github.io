@@ -1,0 +1,36 @@
+{
+  "name": "stage-key-legibility",
+  "note": "P1-6 (SDD persona goalpost): the Stage's glance key line (#pKeyLine, .pKey - the fastest thing a performer's eye checks mid-song) rendered SMALLER (.7rem/11.2px) than the artist line (.pArtist, .8rem/12.8px) beneath the title, inverting the visual hierarchy of what matters live. Fix: pKey >= pArtist's own size, with a 13px absolute floor. Red-first: pre-fix pKey computed font-size < pArtist's.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "seed a saved custom song with a chord sheet",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'keyLegibilitySong', t:'Key Legibility Song', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G','Am','F'], sheet:[['Verse','[C] a [G] b [Am] c [F] d']]}]));return true}catch(e){return false}})()"
+    },
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Key Legibility Song\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": "#stageBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the Stage is open with a live key line",
+      "js": "(function(){var p=document.getElementById('perform'),k=document.getElementById('pKeyLine');return !!p && p.classList.contains('on') && !!k && k.textContent.trim().length>0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "P0 (operator UAT): the key shows by DEFAULT at transpose 0, not only when transposed - pKeyLine must start with 'Key '",
+      "js": "(function(){var k=document.getElementById('pKeyLine');return /^Key\\s/.test(k.textContent.trim());})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pKey's computed font-size is >= pArtist's AND >= a 13px absolute floor (FAILS pre-fix: pKey .7rem/11.2px < pArtist .8rem/12.8px < 13px)",
+      "js": "(function(){var k=parseFloat(getComputedStyle(document.getElementById('pKeyLine')).fontSize),a=parseFloat(getComputedStyle(document.getElementById('pArtist')).fontSize);return k>=a && k>=13;})()"
+    },
+    { "action": "screenshot", "name": "stage-key-legibility" }
+  ]
+}

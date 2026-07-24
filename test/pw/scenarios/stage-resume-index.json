@@ -1,0 +1,49 @@
+{
+  "name": "stage-resume-index",
+  "note": "P1-4 (SDD persona goalpost): startPerform() from the setlist's Start button hardcoded index 0, so closing the Stage mid-setlist and reopening always threw the performer back to song 1 instead of where they left off. Fixture: a 3-song seeded setlist (catalog ids k0/k1/k2). Journey: Start -> Next -> Next (now on song 3 of 3) -> Close -> Start again -> assert the Stage reopens on song 3 of 3, not song 1. Red-first: pre-fix the reopen always lands on '1 / 3'.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "seed a 3-song setlist from the catalog",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.setlist.v1', JSON.stringify(['k0','k1','k2']));return true}catch(e){return false}})()"
+    },
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"jam\"]" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": "#performBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "Stage opens fresh on song 1 of 3",
+      "js": "(function(){var p=document.getElementById('pPos');return !!p && p.textContent.trim().indexOf('1 / 3')===0;})()"
+    },
+    { "action": "tap", "selector": "#pNext" },
+    { "action": "wait", "ms": 400 },
+    { "action": "tap", "selector": "#pNext" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "advanced to song 3 of 3 mid-set",
+      "js": "(function(){var p=document.getElementById('pPos');return !!p && p.textContent.trim().indexOf('3 / 3')===0;})()"
+    },
+    { "action": "tap", "selector": "#pClose" },
+    { "action": "wait", "ms": 500 },
+    {
+      "action": "evalAssert",
+      "label": "Stage closed",
+      "js": "(function(){var p=document.getElementById('perform');return !p || !p.classList.contains('on');})()"
+    },
+    { "action": "tap", "selector": "#performBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "re-opening Start resumes at song 3 of 3, not back at song 1 (FAILS pre-fix: startPerform(...,0) hardcodes index 0)",
+      "js": "(function(){var p=document.getElementById('pPos');return !!p && p.textContent.trim().indexOf('3 / 3')===0;})()"
+    },
+    { "action": "screenshot", "name": "stage-resume-index" }
+  ]
+}

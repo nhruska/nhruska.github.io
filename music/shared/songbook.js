@@ -637,7 +637,10 @@
     // auto on every open (UAT r3), so a cross-reload size would be dead. Manual
     // A-/A+ still holds in STATE within a Stage session (across prev/next).
     // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
-    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView })); }
+    // idx: the last position reached in a SETLIST-anchored Stage session (see
+    // lastSetSessionIdx below) - lets "Start" resume where the performer left
+    // off instead of always reopening on song 1 (P1-4).
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -655,6 +658,13 @@
     };
     STATE.setlist = loadSet();
     stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
+    // Last index reached in a setlist-anchored Stage session (P1-4) - persisted
+    // alongside the other perf prefs so the setlist's Start button resumes there
+    // instead of hardcoding song 1. Only ever moved by pPrev/pNext WHILE the
+    // active queue is anchored to STATE.setlist (see perfIsSetSession below) - a
+    // single-song Stage launch (song-screen "Stage" button) never touches it, so
+    // it can't leak an unrelated position into the next setlist Start.
+    var lastSetSessionIdx = (typeof _pp.idx === 'number' && _pp.idx >= 0) ? _pp.idx : 0;
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
     /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
@@ -1664,6 +1674,12 @@
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
+    // P1-4: true only while the active Stage queue IS STATE.setlist itself (a
+    // reference check - the setlist "Start" button passes STATE.setlist
+    // directly). A single-song Stage launch (song-screen "Stage" button) passes
+    // its own one-item array, so pPrev/pNext there never touch
+    // lastSetSessionIdx - the resume position is scoped to setlist performances.
+    var perfIsSetSession = false;
     function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
@@ -1675,6 +1691,7 @@
     // prev/next still reset to 0 per song, as before.
     function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
+      perfIsSetSession = (ids === STATE.setlist);
       QUEUE.set(ids, startIdx || 0);
       STATE.queueSkipNotice = null; // fresh launch - any stale notice from a prior Stage session doesn't carry over
       // Seed the CURRENT view for this launch only - never persisted here (that
@@ -1698,7 +1715,10 @@
       reqWake();
       if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
-    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
+    // P1-4: resume the last position reached in a setlist Stage session
+    // instead of always reopening on song 1 (lastSetSessionIdx defaults to 0
+    // for a device that has never performed the set - same as before).
+    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, lastSetSessionIdx, 0, stageDefaultView); };
     if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
     // S-SET-INTEGRITY (UAT U22): same defensive-nav step as the Practice
     // screen's navQueue() - stepResolvable(songById) walks past a dangling
@@ -1710,12 +1730,16 @@
       var r = QUEUE.stepResolvable(-1, songById);
       STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
       STATE.performTpose = 0; showPerform();
+      // P1-4: only a setlist-anchored session persists its position (see
+      // perfIsSetSession above).
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savePerfPrefs(); }
     };
     if (el.pNext) el.pNext.onclick = function () {
       if (QUEUE.atEnd()) { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return; }
       var r = QUEUE.stepResolvable(1, songById);
       STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
       STATE.performTpose = 0; showPerform();
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savePerfPrefs(); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -1799,6 +1823,19 @@
       if (el.pTitle) el.pTitle.textContent = s.t;
       // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
       if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
+      // Merged repertoire record - looked up BEFORE the no-chart early return so
+      // the capo indicator (P1-5) still shows for a seq-less track. Same lookup
+      // the key-aware speller below reuses (S-UI-RECONCILE Lane A).
+      var mrStage = null;
+      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
+      // P1-5: the Library shows a track's capo as a badge (.li-capo) but Stage
+      // never did - a performer capo'd up got no reminder while actually
+      // playing. Mirror that badge here; hidden when there's no capo (0/null).
+      if (el.pCapo) {
+        var capoN = mrStage && mrStage.capo;
+        el.pCapo.hidden = !capoN;
+        el.pCapo.textContent = capoN ? ('Capo ' + capoN) : '';
+      }
       // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
       // persisted before that guard could still hold one - render a gentle
       // placeholder instead of crashing on s.seq.map.
@@ -1814,11 +1851,11 @@
       // built the SAME way as the song screen - prefer the merged record's key,
       // else derive from the transposed seq (soloKeyFor is transpose-aware). Names
       // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
-      var mrStage = null;
-      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
       var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
       var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
-      if (el.pKeyLine) el.pKeyLine.textContent = (STATE.performTpose !== 0 ? 'Key ' + stageDisp(seq[0]) + '  ·  ' : '') + seq.map(stageDisp).join('  ');
+      // P0 (operator UAT): show the key by default, not only when transposed -
+      // the performer wants the key at a glance whether or not they've shifted it.
+      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(seq[0]) + '  ·  ' + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
