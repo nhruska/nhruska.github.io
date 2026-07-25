@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T11:14:51Z",
+  "generatedAt": "2026-07-25T10:47:59Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,72 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-23T11:22:02Z",
-    "sha": "c4c2112247e35c638968c9c23371b2e8aad68929",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/c4c2112247e35c638968c9c23371b2e8aad68929"
+    "date": "2026-07-25T08:45:17Z",
+    "sha": "63ace67b983d1e74970763c073f2f3a92551299e",
+    "subject": "perf(audio): keep chord playback context warm for immediate taps (#306)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/63ace67b983d1e74970763c073f2f3a92551299e"
   },
   "commits": [
+    {
+      "date": "2026-07-25T08:45:17Z",
+      "sha": "63ace67b983d1e74970763c073f2f3a92551299e",
+      "subject": "perf(audio): keep chord playback context warm for immediate taps (#306)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/63ace67b983d1e74970763c073f2f3a92551299e"
+    },
+    {
+      "date": "2026-07-25T08:43:26Z",
+      "sha": "f935650f32473d1241e0e21c63e08bb5c714e42b",
+      "subject": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3) (#303)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f935650f32473d1241e0e21c63e08bb5c714e42b"
+    },
+    {
+      "date": "2026-07-25T08:40:07Z",
+      "sha": "67c12bf939fd55e8f5aae280773c39057465d7cc",
+      "subject": "fix(perform): legible back button + deterministic nav z-index (UAT) (#305)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/67c12bf939fd55e8f5aae280773c39057465d7cc"
+    },
+    {
+      "date": "2026-07-25T06:58:32Z",
+      "sha": "d3cec25ff9c54d75755b4c703fff89116f4b9ebd",
+      "subject": "fix(perform): re-acquire wake lock on visibilitychange (P1-1) (#299)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d3cec25ff9c54d75755b4c703fff89116f4b9ebd"
+    },
+    {
+      "date": "2026-07-25T06:51:59Z",
+      "sha": "884042a02d26830bfd4a3c114614c67825eab715",
+      "subject": "fix(sw): CACHE is per asset-changing COMMIT, not per PR - and the guard now proves it (#310)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/884042a02d26830bfd4a3c114614c67825eab715"
+    },
+    {
+      "date": "2026-07-25T06:50:10Z",
+      "sha": "e469ba425ada76851aa34aae237e46525467c868",
+      "subject": "skills(ux-coach): wire in measured-evidence capture harness (#301)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e469ba425ada76851aa34aae237e46525467c868"
+    },
+    {
+      "date": "2026-07-24T21:45:23Z",
+      "sha": "0f34d88f58ab2c3ee25945fbdf16f78d4a9f6164",
+      "subject": "music: scroll affordance (edge fade + directional chevron) on chip strips (#307)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/0f34d88f58ab2c3ee25945fbdf16f78d4a9f6164"
+    },
+    {
+      "date": "2026-07-24T21:43:33Z",
+      "sha": "ac7527b4e8c20f1d00a7cae7a002ec65bfaf0c1a",
+      "subject": "music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3) (#298)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/ac7527b4e8c20f1d00a7cae7a002ec65bfaf0c1a"
+    },
+    {
+      "date": "2026-07-24T21:42:10Z",
+      "sha": "345a4f67910c36666413a3b3e230ca8f294e3573",
+      "subject": "music: white-circle app icon, rainbow accent palette, N5 double-undo fix (#297)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/345a4f67910c36666413a3b3e230ca8f294e3573"
+    },
+    {
+      "date": "2026-07-24T11:14:58Z",
+      "sha": "95f066816ccf469afda6c5793fb67e0b12243923",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/95f066816ccf469afda6c5793fb67e0b12243923"
+    },
     {
       "date": "2026-07-23T11:22:02Z",
       "sha": "c4c2112247e35c638968c9c23371b2e8aad68929",
@@ -30,74 +90,14 @@
       "sha": "2313235fd819a354d27d3addf3284bf6ca141a32",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/2313235fd819a354d27d3addf3284bf6ca141a32"
-    },
-    {
-      "date": "2026-07-22T05:19:20Z",
-      "sha": "068444638b1182181004aeba5581c086b321f301",
-      "subject": "music: Studio buttons + first-run callout fit + giant-? removal + skills-in-backup (#296)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/068444638b1182181004aeba5581c086b321f301"
-    },
-    {
-      "date": "2026-07-22T03:48:54Z",
-      "sha": "ba9e0238a992ed2737578e8365aa8449a185d9cf",
-      "subject": "music: setlist + perform + song-view UAT, toast/preview/clamp, diagram-toggle collapse (#295)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ba9e0238a992ed2737578e8365aa8449a185d9cf"
-    },
-    {
-      "date": "2026-07-22T03:45:54Z",
-      "sha": "07476de3a02bcdf12bbb7411584ebde809bc5d07",
-      "subject": "music: first-run per-tab callouts + single-panel welcome (#294)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/07476de3a02bcdf12bbb7411584ebde809bc5d07"
-    },
-    {
-      "date": "2026-07-22T03:42:54Z",
-      "sha": "627f3fa262644e55bd39250bbfacb92f81382b6c",
-      "subject": "music: split tracks.js - extract studio-theory.js (#293)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/627f3fa262644e55bd39250bbfacb92f81382b6c"
-    },
-    {
-      "date": "2026-07-21T11:21:03Z",
-      "sha": "c9e259ba55c6d6856ecee18d2c25bfd8b68493d4",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c9e259ba55c6d6856ecee18d2c25bfd8b68493d4"
-    },
-    {
-      "date": "2026-07-20T17:59:07Z",
-      "sha": "417a7ab42f61b07eb99ca119247b22e9be5f72a0",
-      "subject": "music: split tracks.js - extract tracks-model.js (finder data layer) (#292)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/417a7ab42f61b07eb99ca119247b22e9be5f72a0"
-    },
-    {
-      "date": "2026-07-20T17:23:30Z",
-      "sha": "dc64502f2fe3a53cc38b2e4e300953a2c3e35da3",
-      "subject": "music: engine split - extract theory/suggest-model/sheet-render/song-model from songbook.js (#291)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/dc64502f2fe3a53cc38b2e4e300953a2c3e35da3"
-    },
-    {
-      "date": "2026-07-20T16:09:55Z",
-      "sha": "0de882863677164428607ecf02ea2e1128e595cd",
-      "subject": "music: codebase readability sweep - standard + sw.js exemplar (#290)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0de882863677164428607ecf02ea2e1128e595cd"
-    },
-    {
-      "date": "2026-07-20T14:18:27Z",
-      "sha": "cd3831012166d94cf055881c3d32e9fbcbad1fe2",
-      "subject": "music(settings): render diagram/chart toggle previews from the SSOT (#289)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/cd3831012166d94cf055881c3d32e9fbcbad1fe2"
-    },
-    {
-      "date": "2026-07-20T14:14:17Z",
-      "sha": "e32954b9cdfa7dd99c216d2ab07ed7ba3cfba826",
-      "subject": "music(compose): progression draft chip + disable Save when empty (#288)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e32954b9cdfa7dd99c216d2ab07ed7ba3cfba826"
     }
   ],
   "openPRs": [
     {
-      "number": 306,
-      "title": "perf(audio): keep chord playback context warm for immediate taps",
-      "branch": "claude/audio-tap-immediacy",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/306",
+      "number": 312,
+      "title": "fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311)",
+      "branch": "claude/chip-tap-floor",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/312",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,22 +106,22 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30068772447/job/89404919479"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151741699/job/89663167213"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30068772468/job/89404919512"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151741706/job/89663167265"
         }
       ]
     },
     {
-      "number": 305,
-      "title": "fix(perform): legible back button + deterministic nav z-index (UAT)",
-      "branch": "claude/perform-nav-visibility",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/305",
+      "number": 309,
+      "title": "music: Studio PR1 - video minimized by default (audio-only) + video/jam on one row",
+      "branch": "claude/music-studio-space-reclaim",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/309",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -130,14 +130,38 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30068339363/job/89403630145"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30147134641/job/89651072052"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30068339367/job/89403630364"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30147134618/job/89651071922"
+        }
+      ]
+    },
+    {
+      "number": 308,
+      "title": "music: #6 - Studio \"Why these notes?\" strip follows the selected solo scale",
+      "branch": "claude/music-solo-mode-notes-sync",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/308",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151481659/job/89662484819"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151481661/job/89662484970"
         }
       ]
     },
@@ -154,38 +178,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30051035418/job/89352947016"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151740920/job/89663165269"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30051035364/job/89352946775"
-        }
-      ]
-    },
-    {
-      "number": 303,
-      "title": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3)",
-      "branch": "claude/theory-spelling",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/303",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30050776699/job/89352163158"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30050776712/job/89352163109"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151740921/job/89663165231"
         }
       ]
     },
@@ -202,38 +202,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30072619878/job/89416470230"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151740432/job/89663164002"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30072619887/job/89416470406"
-        }
-      ]
-    },
-    {
-      "number": 301,
-      "title": "skills(ux-coach): wire in measured-evidence capture harness",
-      "branch": "claude/ux-coach-capture",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/301",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30050325410/job/89350820982"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30050325372/job/89350820936"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151740411/job/89663163919"
         }
       ]
     },
@@ -250,86 +226,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30052848404/job/89358386516"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151739988/job/89663162776"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30052848378/job/89358386506"
-        }
-      ]
-    },
-    {
-      "number": 299,
-      "title": "fix(perform): re-acquire wake lock on visibilitychange (P1-1)",
-      "branch": "claude/p1-wakelock",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/299",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30049687388/job/89348845699"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30049687338/job/89348845827"
-        }
-      ]
-    },
-    {
-      "number": 298,
-      "title": "music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3)",
-      "branch": "claude/music-studio-uat2",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/298",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29897604750/job/88850982485"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29897604672/job/88850982399"
-        }
-      ]
-    },
-    {
-      "number": 297,
-      "title": "music: white-circle app icon, rainbow accent palette, N5 double-undo fix",
-      "branch": "claude/music-uat-round2",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/297",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29894152802/job/88840653733"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/29894152822/job/88840653910"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30151739972/job/89663162758"
         }
       ]
     },
@@ -344,6 +248,69 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-25T06:19:15Z",
+      "mergedAt": "2026-07-25T06:51:59Z",
+      "number": 310,
+      "title": "fix(sw): CACHE per asset-changing commit + guard that proves it (the #306 stale-preview root cause)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/310"
+    },
+    {
+      "createdAt": "2026-07-24T17:49:29Z",
+      "mergedAt": "2026-07-24T21:45:23Z",
+      "number": 307,
+      "title": "music: scroll affordance (edge fade + directional chevron) on chip strips",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/307"
+    },
+    {
+      "createdAt": "2026-07-24T05:11:00Z",
+      "mergedAt": "2026-07-25T08:45:17Z",
+      "number": 306,
+      "title": "perf(audio): keep chord playback context warm for immediate taps",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/306"
+    },
+    {
+      "createdAt": "2026-07-24T05:01:16Z",
+      "mergedAt": "2026-07-25T08:40:08Z",
+      "number": 305,
+      "title": "fix(perform): legible back button + deterministic nav z-index (UAT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/305"
+    },
+    {
+      "createdAt": "2026-07-23T22:41:09Z",
+      "mergedAt": "2026-07-25T08:43:26Z",
+      "number": 303,
+      "title": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/303"
+    },
+    {
+      "createdAt": "2026-07-23T22:34:03Z",
+      "mergedAt": "2026-07-25T06:50:10Z",
+      "number": 301,
+      "title": "skills(ux-coach): wire in measured-evidence capture harness",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/301"
+    },
+    {
+      "createdAt": "2026-07-23T22:22:28Z",
+      "mergedAt": "2026-07-25T06:58:32Z",
+      "number": 299,
+      "title": "fix(perform): re-acquire wake lock on visibilitychange (P1-1)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/299"
+    },
+    {
+      "createdAt": "2026-07-22T06:14:00Z",
+      "mergedAt": "2026-07-24T21:43:33Z",
+      "number": 298,
+      "title": "music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/298"
+    },
+    {
+      "createdAt": "2026-07-22T05:33:04Z",
+      "mergedAt": "2026-07-24T21:42:10Z",
+      "number": 297,
+      "title": "music: white-circle app icon, rainbow accent palette, N5 double-undo fix",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/297"
+    },
     {
       "createdAt": "2026-07-22T04:35:16Z",
       "mergedAt": "2026-07-22T05:19:20Z",
@@ -385,86 +352,23 @@
       "number": 291,
       "title": "music: engine split - extract theory / suggest-model / sheet-render / song-model from songbook.js",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/291"
-    },
-    {
-      "createdAt": "2026-07-20T14:34:26Z",
-      "mergedAt": "2026-07-20T16:09:56Z",
-      "number": 290,
-      "title": "music: codebase readability sweep - standard + sw.js exemplar",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/290"
-    },
-    {
-      "createdAt": "2026-07-20T14:01:38Z",
-      "mergedAt": "2026-07-20T14:18:27Z",
-      "number": 289,
-      "title": "music(settings): simplified visual previews under the diagram/chart toggles",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/289"
-    },
-    {
-      "createdAt": "2026-07-20T13:57:01Z",
-      "mergedAt": "2026-07-20T14:14:18Z",
-      "number": 288,
-      "title": "music(compose): progression draft chip + disable Save when empty",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/288"
-    },
-    {
-      "createdAt": "2026-07-20T07:29:46Z",
-      "mergedAt": "2026-07-20T14:12:43Z",
-      "number": 287,
-      "title": "music(appearance): bold jewel accent spectrum - launch color rebrand",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/287"
-    },
-    {
-      "createdAt": "2026-07-20T05:51:18Z",
-      "mergedAt": "2026-07-20T07:15:28Z",
-      "number": 286,
-      "title": "music(setlist): drag edge-auto-scrolls so off-screen rows are reachable",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/286"
-    },
-    {
-      "createdAt": "2026-07-20T05:40:41Z",
-      "mergedAt": "2026-07-20T07:13:49Z",
-      "number": 285,
-      "title": "music(compose): canvas suggestions use the song's home key + minor keys stay in-key",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/285"
-    },
-    {
-      "createdAt": "2026-07-20T05:04:15Z",
-      "mergedAt": "2026-07-20T05:22:07Z",
-      "number": 284,
-      "title": "music(compose): a labeled divider between the canvas section cards and the templates",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/284"
-    },
-    {
-      "createdAt": "2026-07-20T01:55:49Z",
-      "mergedAt": "2026-07-20T05:20:21Z",
-      "number": 283,
-      "title": "music(setlist): drag-to-reorder the setlist, matching the progression builder",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/283"
-    },
-    {
-      "createdAt": "2026-07-19T20:38:02Z",
-      "mergedAt": "2026-07-19T21:57:31Z",
-      "number": 282,
-      "title": "music(compose): draft chip - the song being edited announces itself, linked to open",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/282"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-24T11:14:46Z",
+    "runStartedAt": "2026-07-25T10:47:54Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30088899803",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30155106400",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 37,
+    "merged_count": 39,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 1.4,
+    "typical_merge_hours": 27.9,
     "weekly": null
   },
   "deploy": {
@@ -474,8 +378,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v296",
-    "localCacheVersion": "music-v296",
+    "liveCacheVersion": "music-v306-4",
+    "localCacheVersion": "music-v306-4",
     "cacheMatch": true
   },
   "missions": [
@@ -864,8 +768,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 51,
-    "testCaseCount": 2438,
+    "testFileCount": 56,
+    "testCaseCount": 3334,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
