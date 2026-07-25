@@ -364,7 +364,7 @@
    *     // setlist
    *     setBody, setBar, setCount, setClear, performBtn,
    *     // perform
-   *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
+   *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine, pCapo,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
@@ -686,7 +686,19 @@
     // setlist Perform. (Assigned just after STATE is built, below.)
     var stageDefaultView;
     // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
-    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, fontScale: STATE.fontScale, fontMode: STATE.fontMode })); }
+    // idx: the last position reached in a SETLIST-anchored Stage session (see
+    // lastSetSessionIdx below) - lets "Start" resume where the performer left
+    // off instead of always reopening on song 1 (P1-4).
+    // VOLLEY-1 (high): the resume index is a position in a SPECIFIC setlist, so
+    // it is persisted with a fingerprint of that setlist. Add, remove, reorder
+    // or clear, and the stored index now points at a different song - Start
+    // would silently open the wrong one. On load the index is honoured only
+    // when the fingerprint still matches; otherwise it resets to the top.
+    // fontScale/fontMode come from the v3 sizing model (#302, landed): the
+    // persisted user size and whether it was auto-fitted or set by hand. All
+    // four fields are independent - the merge keeps every one of them.
+    function setFingerprint(ids) { return (ids || []).join('|'); }
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx, setfp: setFingerprint(STATE.setlist), fontScale: STATE.fontScale, fontMode: STATE.fontMode })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -708,6 +720,18 @@
     };
     STATE.setlist = loadSet();
     stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
+    // Last index reached in a setlist-anchored Stage session (P1-4) - persisted
+    // alongside the other perf prefs so the setlist's Start button resumes there
+    // instead of hardcoding song 1. Only ever moved by pPrev/pNext WHILE the
+    // active queue is anchored to STATE.setlist (see perfIsSetSession below) - a
+    // single-song Stage launch (song-screen "Stage" button) never touches it, so
+    // it can't leak an unrelated position into the next setlist Start.
+    var lastSetSessionIdx = (typeof _pp.idx === 'number' && _pp.idx >= 0) ? _pp.idx : 0;
+    // The fingerprint the stored index belongs to (see savePerfPrefs). Checked
+    // at Start, not here: STATE.setlist is still empty at this point in boot.
+    // An older pref with no fingerprint is treated as not matching - resuming
+    // at the top once is the safe direction to be wrong in.
+    var savedSetFp = (typeof _pp.setfp === 'string') ? _pp.setfp : null;
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
     /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
@@ -1789,8 +1813,35 @@
       showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
     });
 
+    // Short mode labels - ONE copy, used by the narrow Compose ctrlBar readout
+    // (where a full label overflows the Save button) and by the Stage key line
+    // (where the header competes with capo + transpose + resume index).
+    // Operator ruling 2026-07-25: the Stage key line spells the mode, in the
+    // FEWEST characters that stay unambiguous - "Key A Min", not a bare
+    // "Key A" (which reads identically for A major and A minor) and not the
+    // full word. Church modes keep their own short form rather than collapsing
+    // to maj/min: a mixolydian song is not "major", and the list view is
+    // already mode-honest.
+    var MODE_SHORT = {
+      Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues',
+      ionian: 'Maj', aeolian: 'Min', lydian: 'Lyd', phrygian: 'Phr', locrian: 'Loc'
+    };
+    // canonMode normalizes case + aliases; an unknown/blank mode returns '' so
+    // the caller renders the key alone rather than inventing a mode.
+    function shortMode(mode) {
+      if (!mode) return '';
+      var c = canonMode(mode) || String(mode);
+      return MODE_SHORT[c] || MODE_SHORT[String(c).toLowerCase()] || String(c).slice(0, 4);
+    }
+
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
+    // P1-4: true only while the active Stage queue IS STATE.setlist itself (a
+    // reference check - the setlist "Start" button passes STATE.setlist
+    // directly). A single-song Stage launch (song-screen "Stage" button) passes
+    // its own one-item array, so pPrev/pNext there never touch
+    // lastSetSessionIdx - the resume position is scoped to setlist performances.
+    var perfIsSetSession = false;
     // The request is async: Stage can close (or a second request can land)
     // between the call and its resolution, so the sentinel is only KEPT if
     // Stage is still the live overlay - otherwise it is released on arrival.
@@ -1813,6 +1864,7 @@
     // prev/next still reset to 0 per song, as before.
     function startPerform(ids, startIdx, seedTpose, seedView) {
       if (!ids || !ids.length) return;
+      perfIsSetSession = (ids === STATE.setlist);
       QUEUE.set(ids, startIdx || 0);
       STATE.queueSkipNotice = null; // fresh launch - any stale notice from a prior Stage session doesn't carry over
       // Seed the CURRENT view for this launch only - never persisted here (that
@@ -1845,7 +1897,19 @@
       document.addEventListener('visibilitychange', onStageVisibility);
       if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
-    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
+    // P1-4: resume the last position reached in a setlist Stage session
+    // instead of always reopening on song 1 (lastSetSessionIdx defaults to 0
+    // for a device that has never performed the set - same as before).
+    if (el.performBtn) el.performBtn.onclick = function () {
+      // Resume only into the SAME setlist the index was recorded against, and
+      // only at a position that still exists. Any edit (add / remove / reorder
+      // / clear) changes the fingerprint, so the index is dropped rather than
+      // silently opening a different song (volley-1 high).
+      var sameSet = savedSetFp !== null && savedSetFp === setFingerprint(STATE.setlist);
+      var startAt = (sameSet && lastSetSessionIdx < STATE.setlist.length) ? lastSetSessionIdx : 0;
+      if (startAt !== lastSetSessionIdx) { lastSetSessionIdx = startAt; savePerfPrefs(); savedSetFp = setFingerprint(STATE.setlist); }
+      startPerform(STATE.setlist, startAt, 0, stageDefaultView);
+    };
     if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
     // S-SET-INTEGRITY (UAT U22): same defensive-nav step as the Practice
     // screen's navQueue() - stepResolvable(songById) walks past a dangling
@@ -1857,12 +1921,23 @@
       var r = QUEUE.stepResolvable(-1, songById);
       STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
       STATE.performTpose = 0; showPerform();
+      // P1-4: only a setlist-anchored session persists its position (see
+      // perfIsSetSession above).
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
     };
     if (el.pNext) el.pNext.onclick = function () {
-      if (QUEUE.atEnd()) { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return; }
+      if (QUEUE.atEnd()) {
+        // VOLLEY-1 (high): finishing the set left lastSetSessionIdx pointing at
+        // the LAST song, so the next Start reopened on the final song of a set
+        // the performer had already completed. A completed set resumes at the
+        // top; only an interrupted one resumes where it stopped.
+        if (perfIsSetSession) { lastSetSessionIdx = 0; savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
+        if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return;
+      }
       var r = QUEUE.stepResolvable(1, songById);
       STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
       STATE.performTpose = 0; showPerform();
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -1967,7 +2042,10 @@
       var stageKey = soloKeyFor((mrStage && mrStage.key && mrStage.mode) ? mrStage : s, seq, STATE.performTpose);
       var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
       var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
-      return { s: s, seq: seq, stageDisp: stageDisp, view: view };
+      // stageKey rides along so the header can NAME the key (and its mode)
+      // from the same derivation the speller used - deriving it twice is how
+      // the label and the spelling drift apart.
+      return { s: s, seq: seq, stageDisp: stageDisp, view: view, stageKey: stageKey };
     }
     // The one stage render path (v3: AUTO-FIT-THEN-WRAP). Resolve the scale
     // by MODE first:
@@ -2151,6 +2229,19 @@
       if (el.pTitle) el.pTitle.textContent = s.t;
       // Same empty-artist guard as the song-screen header (artist-mirrors-title fix).
       if (el.pArtist) el.pArtist.textContent = (s.a ? s.a + ' · ' : '') + s.y;
+      // Merged repertoire record - looked up BEFORE the no-chart early return so
+      // the capo indicator (P1-5) still shows for a seq-less track. Same lookup
+      // the key-aware speller below reuses (S-UI-RECONCILE Lane A).
+      var mrStage = null;
+      for (var psi = 0; psi < REPERTOIRE.length; psi++) { if (REPERTOIRE[psi].id === s.id) { mrStage = REPERTOIRE[psi]; break; } }
+      // P1-5: the Library shows a track's capo as a badge (.li-capo) but Stage
+      // never did - a performer capo'd up got no reminder while actually
+      // playing. Mirror that badge here; hidden when there's no capo (0/null).
+      if (el.pCapo) {
+        var capoN = mrStage && mrStage.capo;
+        el.pCapo.hidden = !capoN;
+        el.pCapo.textContent = capoN ? ('Capo ' + capoN) : '';
+      }
       // Defensive: canAdd blocks seq-less tracks from the setlist, but a setlist
       // persisted before that guard could still hold one - render a gentle
       // placeholder instead of crashing on s.seq.map.
@@ -2165,18 +2256,33 @@
       // built the SAME way as the song screen - prefer the merged record's key,
       // else derive from the transposed seq (soloKeyFor is transpose-aware). Names
       // respell (Bb, not A#); tokens/audio/storage stay canonical-sharp.
-      // stageRenderContext() derives seq/stageDisp/view once - the SAME lookup
-      // a resize/rotation re-fit uses (fitStageSheet, above), so a song-change
+      // stageRenderContext() derives seq/stageDisp/view/stageKey once - the SAME
+      // lookup a resize/rotation re-fit uses (fitStageSheet), so a song-change
       // and an orientation-change render through one path instead of two that
-      // could drift apart.
+      // could drift apart. That path is #302's v3 sizing model and is kept
+      // wholesale here; only the KEY LINE below is this PR's.
       var ctx = stageRenderContext();
-      if (el.pKeyLine) el.pKeyLine.textContent = ctx ? (STATE.performTpose !== 0 ? 'Key ' + ctx.stageDisp(ctx.seq[0]) + '  ·  ' : '') + ctx.seq.map(ctx.stageDisp).join('  ') : '';
+      // P0 (operator UAT): show the key by default, not only when transposed -
+      // the performer wants it at a glance whether or not they have shifted it.
+      // VOLLEY-1 (high): the label used to render `stageDisp(seq[0])` - the
+      // FIRST CHORD, not the key. They coincide only when a song opens on its
+      // tonic, which every fixture happened to do, so an Am song opening on F
+      // read "Key F".
+      // Operator ruling 2026-07-25: spell the mode, minimum characters
+      // ("Key A Min") - a bare "Key A" reads identically for A major and A
+      // minor, on the one line a performer glances at fastest.
+      if (el.pKeyLine) {
+        if (!ctx) { el.pKeyLine.textContent = ''; }
+        else {
+          var stageModeTxt = shortMode(ctx.stageKey && ctx.stageKey.mode);
+          el.pKeyLine.textContent = 'Key ' + ctx.stageDisp(ctx.stageKey.key)
+            + (stageModeTxt ? ' ' + stageModeTxt : '')
+            + '  ·  ' + ctx.seq.map(ctx.stageDisp).join('  ');
+        }
+      }
       // Wrap-first: a chord-over-lyric line never CSS-wraps (white-space:pre),
       // so fitStageSheet renders it at the user's size WRAPPED to the measured
-      // character budget (re-measuring and shrinking the budget if a bold
-      // chord overhang still lands a row over). A song-change always scrolls
-      // to the top (preserveScroll=false) - only a resize/size-change re-fit
-      // keeps the reader's place.
+      // character budget. A song-change always scrolls to the top.
       fitStageSheet(ctx, false);
       updateStageBtns();
       if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
@@ -3617,9 +3723,6 @@
       if (!el.progPicks) return;
       el.progPicks.innerHTML = '';
     }
-    // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
-    // Full labels are used everywhere else (key picker chip, key-view title).
-    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       // The song key/mode is now shown by the button-bar chip (#keyPickerCompact), which
