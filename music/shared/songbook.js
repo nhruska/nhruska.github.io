@@ -4076,7 +4076,15 @@
           b.onclick = function () { loadProgression(p); };
           row.appendChild(b);
         });
-        el.suggest.appendChild(row);
+        // Same horizontal-scroll affordance as the Library filter strips: wrap
+        // the starter row so its off-screen progressions get the edge fade +
+        // tappable snap-to-end chevron (scroll-hint.js). Tight variant keeps
+        // #suggest's own spacing (no added wrapper margin).
+        var progWrap = document.createElement('div');
+        progWrap.className = 'chipScrollWrap chipScrollWrap--tight';
+        progWrap.appendChild(row);
+        el.suggest.appendChild(progWrap);
+        if (global.ScrollHint) global.ScrollHint.autowire(el.suggest);
         return;
       }
       var tonic = labelTonic();
@@ -5240,6 +5248,7 @@
       hideComposeRow();        // dismiss an open save/solo dialog (don't strand it over an empty canvas)
       hideComposeToast();      // F31: a stale save-confirmation toast must not survive a Clear (Clear doesn't route through invalidateClearUndo)
       hideSaveDoneBanner();    // #265-C: same F31 contract for the saved-with-next-step banner
+      invalidateRemoveUndo();  // N5 (operator UAT): Clear wipes everything, so a pending "Removed <chord>" undo banner is moot - tear it down so the user never sees TWO stacked undo banners (remove + clear) at once. Clear bypasses invalidateClearUndo (above), which is where this normally happens.
       // S-CLEAR-INKEY (UAT 2026-07-10): a fresh canvas returns to the follow-the-key
       // view (In-key on the default key), not a stale 'All' pin from before the Clear -
       // matching the initial default (D-DEFAULT-C). Reset the pin, then always rebuild
