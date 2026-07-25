@@ -475,11 +475,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
-.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
+.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
 /* Compact bordered chord chip using the small-button radius (--r-btn-sm), same
    bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact control, not the
-   pill-shaped .chip family). */
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+   pill-shaped .chip family). Real <button>s now (S-CHORDCHIP-A11Y) - margin:0
+   resets the UA default button margin (Safari/iOS) so the flex gap stays exact. */
+/* touch-action:manipulation (S-CHORDCHIP-LAG, PR #300) drops the mobile
+   double-tap-zoom delay on every click path through this button too - the
+   pointerdown handler in songbook.js is what makes the FIRST tap instant;
+   this keeps any click-only path (mouse, some a11y tooling) equally snappy. */
+/* min-height/min-width are the 44px tap-target floor, not styling: as real
+   <button>s these measured 32-48 x 34 at 412x915 - under the floor on both
+   axes for a control whose whole purpose is being tapped to hear the chord.
+   inline-flex + centering keeps the glyph optically centred in the taller
+   box instead of riding the top edge. */
+.chordChips .c{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 /* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
@@ -1385,24 +1395,34 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* P1-6: the glance key line is the fastest thing a performer's eye checks
    mid-song - it must read at LEAST as large as the artist line beneath the
    title (previously .7rem, smaller than .pArtist's .8rem), with a 13px
-   absolute floor regardless of the root font size. */
-/* max(13px, .85rem) makes the floor the comment above already claimed REAL:
-   .85rem alone is 13.6px only at a 16px root - a smaller root (browser text
-   setting, an accessibility profile) silently dropped it under 13px and the
-   test, which runs at the default root, could never see it (volley-1). */
+   absolute floor regardless of the root font size.
+   max(13px, .85rem) makes that floor REAL: .85rem alone is 13.6px only at a
+   16px root - a smaller root (browser text setting, accessibility profile)
+   silently dropped it under 13px, and the test, which runs at the default
+   root, could never see it (volley-1). main still carried the pre-P1-6 .7rem
+   here; this PR's value wins, which is the whole point of P1-6. */
 .pKey{font-family:'Space Mono',monospace;font-size:max(13px, .85rem);color:var(--accent-ink);font-weight:700;}
-/* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
-   the sheet within the viewport width itself, but manual font-size steps (A+/A-)
-   can still push a long unwrapped (white-space:pre) lyric line past the edge - let
-   it scroll rather than silently clip. */
-.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;}
-/* pInner shrink-wraps to its widest pre line so applyPerfFont's scrollWidth
-   measurement sees the CONTENT width. As a plain block it would fill pSheet,
-   pinning needW >= availW and silently blocking the short-song auto UPSCALE
-   (only downscales could ever fire). */
+/* WRAP-FIRST sizing model (songbook.js fitStageSheet): the sheet renders at
+   the USER's size (--pscale, buttons + pinch, persisted) with long lines
+   wrapped to the measured character budget; overflow-y scrolls a tall sheet.
+   touch-action pan-y: one finger pans the sheet natively; the two-finger
+   pinch (font size) is handled in JS. */
+/* CORE INVARIANT (sizing model v3): the Perform sheet NEVER scrolls
+   horizontally - overflow-x is hidden and width is absorbed by
+   auto-fit-then-wrap. Landed in #302 and kept wholesale through this merge;
+   z-index:1 is #305's deterministic stacking. This PR changes neither. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;touch-action:pan-y;}
+/* pInner shrink-wraps to its widest pre line so fitStageSheet's scrollWidth
+   measurement sees the CONTENT width (a plain block would fill pSheet and
+   hide row overflow from the re-measure pass). */
 .pSheet .pInner{width:max-content;}
+/* Chords-view rows wrap their bars at the sheet's content width: --pavail is
+   set by fitStageSheet (padding-aware). Without the cap the width:max-content
+   pInner would stretch .chordOnly into ONE long unwrapped line - the exact
+   horizontal overflow the invariant above forbids. */
+.pSheet .chordOnly{max-width:var(--pavail,100%);}
 .pSheet::-webkit-scrollbar{width:0;}
-/* font-size scales with --pscale (perform Size control / auto-fit) */
+/* font-size scales with --pscale (perform Size control / pinch) */
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}

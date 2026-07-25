@@ -1,0 +1,124 @@
+{
+  "name": "perform-font-persist",
+  "note": "Sizing model v3 AUTO-FIT-THEN-WRAP (operator-refined 2026-07-24), persistence goalpost: the stage OPENS in auto-fit (scale derived from the viewport, clamped to [0.8, 2.2]); A+ steps from the CURRENT EFFECTIVE scale into a persisted MANUAL size that survives song changes AND a full reload (perfprefs fontScale + fontMode). Red-first history: v1 force-reset the size every open; the v2->v3 A- bug stepped from a stale stored value instead of the effective one. All size assertions here are BASELINE-RELATIVE (auto-fit means the opening scale depends on content + viewport, not a constant).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"pa\",\"t\":\"Persist Song A\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k1\",\"seq\":[\"C\",\"G\"],\"sheet\":[[\"Verse\",\"[C]sing a little line [G]here tonight\"]]},{\"id\":\"pb\",\"t\":\"Persist Song B\",\"a\":\"Me\",\"y\":2026,\"d\":\"Mine\",\"custom\":true,\"forkOf\":\"k2\",\"seq\":[\"Am\",\"F\"],\"sheet\":[[\"Verse\",\"[Am]another little line [F]for the night\"]]}]",
+    "roadcase-ukulele-gcea.setlist.v1": "[\"pa\",\"pb\"]",
+    "music.offlineReadyCued.v1": "1"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "stage open on Persist Song A in AUTO-FIT: --pscale sits in the clamp band [0.8, 2.2] and no row overflows - record the effective baseline",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var t=document.getElementById('pTitle');if(!t||t.textContent.indexOf('Persist Song A')===-1)return false;var pSheet=document.getElementById('pSheet');var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799&&sc<=2.201))return false;var cs=getComputedStyle(pSheet);var avail=pSheet.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);var rows=pSheet.querySelectorAll('.lyrLine');if(!rows.length)return false;for(var i=0;i<rows.length;i++){if(rows[i].scrollWidth>avail+1)return false;}window.__base=sc;return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "tap",
+      "selector": "#pFontUp"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "A+ x3 steps from the EFFECTIVE baseline: --pscale == min(2.2, baseline + 0.3), strictly larger than the baseline, and the manual size + mode are already persisted",
+      "js": "(function(){var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));var want=Math.min(2.2,window.__base+0.3);if(Math.abs(sc-want)>=0.021)return false;if(!(sc>window.__base+0.05))return false;var pp;try{pp=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.perfprefs.v2')||'{}');}catch(e){return false;}return typeof pp.fontScale==='number'&&Math.abs(pp.fontScale-sc)<0.011&&pp.fontMode==='manual';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#pNext"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "next song (Persist Song B): the manual size HOLDS across the song change (no auto re-fit stomps it)",
+      "js": "(function(){var t=document.getElementById('pTitle');if(!t||t.textContent.indexOf('Persist Song B')===-1)return false;var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));return Math.abs(sc-Math.min(2.2,window.__base+0.3))<0.021;})()"
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "SESSION PERSISTENCE: after a full reload the stage reopens in MANUAL mode at the exact persisted size (--pscale == perfprefs.fontScale, fontMode 'manual' restored - not the auto-fit value)",
+      "js": "(function(){var p=document.querySelector('.perform');if(!p||!p.classList.contains('on'))return false;var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));var pp;try{pp=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.perfprefs.v2')||'{}');}catch(e){return false;}return pp.fontMode==='manual'&&typeof pp.fontScale==='number'&&Math.abs(sc-pp.fontScale)<0.011;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and the Auto button returns to auto-fit: tapping it re-fits into the clamp band and persists fontMode 'auto'",
+      "js": "(function(){var b=document.getElementById('pFontAuto');if(!b)return false;b.click();var sc=parseFloat(getComputedStyle(document.getElementById('pSheet')).getPropertyValue('--pscale'));if(!(sc>=0.799&&sc<=2.201))return false;var pp;try{pp=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.perfprefs.v2')||'{}');}catch(e){return false;}return pp.fontMode==='auto';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "restored-manual-then-auto"
+    }
+  ]
+}

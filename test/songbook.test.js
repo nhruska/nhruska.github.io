@@ -343,31 +343,10 @@ test('completions bails on a borrowed chord and on an already-complete progressi
   assert.deepStrictEqual(Songbook.completions(['C', 'G', 'Am', 'F'], 'C', 'Major'), []); // 4-chord song done
 });
 
-/* ---------- Stage auto-fit scale (the "Ripple" clipping bug: height-only fit
- * let a short song scale up past its own width, clipping words off-screen) ---------- */
-test('fitScale: a short/narrow song scales up toward the height fit (no width constraint)', function () {
-  // needs 400 tall, 300 wide; screen is 800 tall, 600 wide -> height wins (2x), width has headroom (2x too)
-  assert.strictEqual(Songbook.fitScale(800, 400, 600, 300), 2);
-});
-test('fitScale: width caps the scale when height alone would clip the sheet off-screen', function () {
-  // "Ripple"-shaped case: short content (height fit would allow 2x) but the
-  // unwrapped (white-space:pre) content is already wide relative to the
-  // viewport -> width must win, not height
-  assert.strictEqual(Songbook.fitScale(800, 400, 600, 550), 600 / 550);
-  assert.ok(Songbook.fitScale(800, 400, 600, 550) < 2, 'width constraint must cap below the height-only scale');
-});
-test('fitScale: a long song shrinks toward the height fit (below 1x)', function () {
-  assert.strictEqual(Songbook.fitScale(400, 1600, 600, 300), 0.5); // 400/1600=0.25, clamped to the 0.5 floor
-});
-test('fitScale clamps to [0.5, 2.2] on either end', function () {
-  assert.strictEqual(Songbook.fitScale(4000, 100, 4000, 100), 2.2); // would be 40x uncapped
-  assert.strictEqual(Songbook.fitScale(100, 4000, 100, 4000), 0.5); // would be 0.025x uncapped
-});
-test('fitScale treats a zero/unknown dimension as unconstrained (falls through to the other axis)', function () {
-  assert.strictEqual(Songbook.fitScale(800, 0, 600, 300), 2);   // no height need -> width alone (2x)
-  assert.strictEqual(Songbook.fitScale(800, 400, 600, 0), 2);   // no width need -> height alone (2x)
-  assert.strictEqual(Songbook.fitScale(0, 0, 0, 0), 1);         // nothing measurable -> neutral 1x
-});
+/* fitScale is GONE (wrap-first sizing model, operator-approved 2026-07-24):
+ * the Perform sheet no longer auto-shrinks to fit - long lines wrap, tall
+ * sheets scroll, the user owns the size. test/perform-sizing.test.js is the
+ * never-regress gate that fails if any auto-fit shrink machinery returns. */
 
 /* ---------- soloKeyFor: the "Solo over it" Studio-bridge payload ---------- */
 var fakeRep = { deriveKey: function (rec) { var c = rec.seq && rec.seq[0]; return c ? { key: c.replace(/m$/, ''), mode: /m$/.test(c) ? 'minor' : 'major' } : { key: null, mode: null }; } };
