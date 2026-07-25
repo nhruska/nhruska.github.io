@@ -762,6 +762,13 @@
         + urlEditor
         + '</div>'
         + '<div class="bt-st-body">'
+        // Circle-of-fifths CROWN (operator: circle + fretboard share the top).
+        // Promoted from the retired bottom "Why these notes?" toggle to the top
+        // of the body as the orientation hero. Rendered wheel-only + eagerly
+        // (see renderCofHero below) - the scale-reactive note names live in the
+        // "Solo over it" label; the wheel stays keyed to the track's KEY center
+        // (unaffected by solo-scale chips), so it never goes stale.
+        + '<div class="bt-st-cofhero" data-cofhero></div>'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
         // (primary, 44px, was a 32px .soundToggle lost among the label text),
         // Speed (one compact cycling button, replaces the 3-button Slow/Med/
@@ -822,9 +829,10 @@
         // the neck →" / "Why these notes - the circle" - the long labels wrapped
         // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
         // just tighter so both fit on one line side by side.
-        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a>'
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes?</button></div>'
-        + '<div class="bt-st-why" data-why hidden></div>'
+        // "Why these notes?" toggle + its bottom wheel panel are RETIRED - the
+        // circle is now the top crown (data-cofhero). Only the neck-walk link
+        // remains on this row.
+        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
@@ -1210,11 +1218,21 @@
           };
         });
       })();
-      var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
-      whyToggle.onclick = function () {
-        var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
-        if (show && !whyBox.getAttribute('data-built')) { buildWhy(whyBox, th); whyBox.setAttribute('data-built', '1'); }
-      };
+      // Circle-of-fifths CROWN: render the tinted wheel eagerly at the top
+      // (data-cofhero), keyed to the track's key center. Wheel-only - kept in a
+      // .bt-st-wheel container so markWheelPc's sounding-pulse still finds it.
+      // (buildWhy is retained for its pinned respelling test but no longer the
+      // render path; the interactive onPick lands in a later increment.)
+      (function renderCofHero() {
+        var cofHero = elPlayer.querySelector('[data-cofhero]');
+        var C = global.Circle;
+        if (!cofHero || !C || !C.renderWheel) return;
+        var mode = normMode(th.scaleMode);
+        cofHero.innerHTML = '<div class="bt-st-wheel"></div>';
+        var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
+        try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF crown tint skipped:', e); }
+        cofHero.querySelector('.bt-st-wheel').appendChild(wheelEl);
+      })();
       if (guideToggle && guideBox) guideToggle.onclick = function () {
         var show = guideBox.hidden; guideBox.hidden = !show;
         guideToggle.classList.toggle('on', show);

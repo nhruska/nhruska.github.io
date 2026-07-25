@@ -245,6 +245,12 @@
   .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent-ink);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
+  /* Circle-of-fifths CROWN: the promoted top hero (co-hero with the fretboard).
+     Compact vs the old bottom-panel wheel so circle + board share the top of a
+     phone above the fold. */
+  .bt-st-cofhero{display:flex;justify-content:center;padding:4px 0 2px;flex:0 0 auto;}
+  .bt-st-cofhero .bt-st-wheel{margin-top:0;}
+  .bt-st-cofhero .cofWheel{width:188px;height:188px;max-width:56vw;}
   /* SHORT landscape (phone held sideways): two panes side by side - header + video
      pinned in the left ~44% pane, the scrollable theory (scale / chords / url editor
      / why) on the right - so the video isn't pushed off-screen when vertical space is
