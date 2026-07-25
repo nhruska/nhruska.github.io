@@ -1664,11 +1664,22 @@
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
-    function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
+    // The request is async: Stage can close (or a second request can land)
+    // between the call and its resolution, so the sentinel is only KEPT if
+    // Stage is still the live overlay - otherwise it is released on arrival.
+    // Without that recheck, relWake() runs while STATE.wakeLock is still null
+    // and the late sentinel holds the screen awake after Stage is gone.
+    function reqWake() { try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').then(function (w) { if (!w) return; if (!performEl || !performEl.classList.contains('on')) { try { w.release(); } catch (e) { } return; } if (STATE.wakeLock && STATE.wakeLock !== w) { try { STATE.wakeLock.release(); } catch (e) { } } STATE.wakeLock = w; }, function () { }); } } catch (e) { } }
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
+    // P1-1 (P0): the Wake Lock API auto-releases on ANY backgrounding
+    // (notification, incoming call, app-switch) - the browser does this on its
+    // own, silently. Without re-acquiring on return-to-foreground, the screen
+    // can sleep mid-song with no warning. Re-request only while Stage is still
+    // the active overlay (never on a stray visibilitychange after Stage closed).
+    function onStageVisibility() { if (document.visibilityState === 'visible' && performEl && performEl.classList.contains('on')) reqWake(); }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
     // NavHistory.dismiss (that's the button/back-button path, not this).
-    function rawCloseStage() { relWake(); stageReleaseWarm(); if (performEl) performEl.classList.remove('on'); }
+    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on'); }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -1701,6 +1712,10 @@
       // chord tap in Stage pays the ~0.5s resume lag the rest of this PR
       // exists to remove (volley-1 high).
       stageKeepWarm();
+      // Guard against duplicate listeners: remove-then-add is idempotent no
+      // matter how many times startPerform() re-enters while Stage is open.
+      document.removeEventListener('visibilitychange', onStageVisibility);
+      document.addEventListener('visibilitychange', onStageVisibility);
       if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
