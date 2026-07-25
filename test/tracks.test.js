@@ -975,4 +975,40 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
     'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
 });
 
+/* ---------------------------------------------------------------------
+ * S-COF-INTERACTIVE: the circle-crown retune seam. The wheel's onPick
+ * re-tunes every theory surface by REASSIGNING the shared `th` closure var
+ * and re-rendering the helpers IN PLACE - it must NEVER rebuild
+ * elPlayer.innerHTML (that would destroy the backing-track <iframe> and
+ * reload the video). renderCofHero must pass onPick so the wheel is live,
+ * and retuneTo must re-call renderCofHero so onPick survives the wheel
+ * DOM replacement. Source-lock (openStudio's live DOM is Playwright turf).
+ * ------------------------------------------------------------------- */
+test('S-COF-INTERACTIVE: retuneTo reassigns th via studioTheory and re-skins in place - never rebuilds elPlayer.innerHTML (video not reloaded)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function retuneTo\(newRoot, newMode\) \{/);
+  assert.ok(body, 'retuneTo(newRoot, newMode) not found in tracks.js');
+  assert.ok(/studioTheory\(newRoot, newMode\)/.test(body) && /\bth = nth\b/.test(body),
+    'retuneTo must REASSIGN the shared th from studioTheory(newRoot, newMode) so every closure reads the new key');
+  assert.ok(!/elPlayer\.innerHTML\s*=/.test(body),
+    'retuneTo must NOT rewrite elPlayer.innerHTML - that reloads the backing-track iframe (the whole point is in-place re-skin)');
+  assert.ok(/stopStudioSound\(\)/.test(body),
+    'retuneTo must stopStudioSound() first (dangling-audition-handle trap)');
+  assert.ok(/renderCofHero\(\)/.test(body),
+    'retuneTo must re-call renderCofHero() so the wheel re-renders WITH onPick re-attached');
+  assert.ok(/renderChordChips\(\)/.test(body) && /renderFretboard\(th, 'mode'\)/.test(body),
+    'retuneTo must re-render chords + fretboard against the new th');
+  assert.ok(/startAudition\(\)/.test(body),
+    'retuneTo must audition the new key scale');
+});
+test('S-COF-INTERACTIVE: renderCofHero passes onPick to renderWheel (the wheel is live), routing major/minor to ionian/aeolian', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderCofHero\(\) \{/);
+  assert.ok(body, 'renderCofHero() not found in tracks.js');
+  assert.ok(/onPick:\s*function\s*\(root, ring\)/.test(body),
+    'renderCofHero must pass an onPick to renderWheel so every wedge is a live key-explore tap');
+  assert.ok(/retuneTo\(root, ring === 'minor' \? 'aeolian' : 'ionian'\)/.test(body),
+    "onPick must route the ring ('major'/'minor') to the studioTheory scale mode (ionian/aeolian)");
+});
+
 run();

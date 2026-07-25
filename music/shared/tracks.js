@@ -394,13 +394,21 @@
       // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
       // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
       // textContent - keyLabel (escaped) still feeds the innerHTML meta line.
-      var dispKey = dispKeyRoot(th.key, th.scaleMode); // FORK-4 removal: display name
-      var keyLabelPlain = th.scaleMode === 'ionian' ? dispKey
-        : th.scaleMode === 'aeolian' ? dispKey + 'm'
-        : (dispKey + ' ' + th.label.toLowerCase());
-      var keyLabel = esc(keyLabelPlain);
-      var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
-        .filter(Boolean).join(' · ');
+      // S-COF-INTERACTIVE: keyLabel/meta are recomputed on a circle retune
+      // (retuneTo, below), so their derivation lives in helpers keyed to the
+      // LIVE bundle, not a one-shot. dispKey/keyLabelPlain/keyLabel stay derived
+      // per-bundle; only bpm/genre come from the (unchanging) track t.
+      function keyLabelPlainFor(b) {
+        var dk = dispKeyRoot(b.key, b.scaleMode); // FORK-4 removal: display name
+        return b.scaleMode === 'ionian' ? dk
+          : b.scaleMode === 'aeolian' ? dk + 'm'
+          : (dk + ' ' + b.label.toLowerCase());
+      }
+      function metaFor(b) {
+        return [esc(keyLabelPlainFor(b)), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
+          .filter(Boolean).join(' · ');
+      }
+      var meta = metaFor(th);
       // M-GUIDE W3a (section 2/3): chord-tone targeting + per-scale guidance card
       // state, scoped to this Studio open. scaleBoxWrap is the live boxWrap
       // returned by KeyExplorer.renderScale - toggling a target calls its
@@ -410,6 +418,14 @@
       // itself, or a soloBundle() chip-swap result) so a chord-target toggle can
       // re-derive tones against the RIGHT scale.
       var scaleBoxWrap = null, activeTargetChord = null, curBundle = th, curScaleId = 'mode';
+      // S-COF-INTERACTIVE: the song's own key center, captured before any circle
+      // retune, so "back to song key" restores exactly. soloKey/soloMode track
+      // whichever key the theory surfaces currently render - the SONG's on open,
+      // an EXPLORED key after a wheel tap (retuneTo). The scale-chip machinery
+      // reads soloKey/soloMode (not t.key/t.mode directly) so its bundles follow
+      // the explored key too; on the song key they are exactly t.key/t.mode.
+      var songRoot = th.key, songScaleMode = th.scaleMode;
+      var soloKey = t.key, soloMode = t.mode;
       // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
       // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
       // to the new scale's first genre whenever the active genre isn't in that
@@ -769,6 +785,10 @@
         // "Solo over it" label; the wheel stays keyed to the track's KEY center
         // (unaffected by solo-scale chips), so it never goes stale.
         + '<div class="bt-st-cofhero" data-cofhero></div>'
+        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
+        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
+        // song's own key). retuneTo toggles its [hidden]; wired once below.
+        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
         // (primary, 44px, was a 32px .soundToggle lost among the label text),
         // Speed (one compact cycling button, replaces the 3-button Slow/Med/
@@ -956,39 +976,94 @@
         setSoundToggle(false);
         clearSoundMarks();
       }
+      // The scale-audition play path, extracted so BOTH the Play toggle (below)
+      // and a circle retune (retuneTo, below) start the same loop against
+      // whatever curBundle currently is. Always reads curBundle.pcs LIVE on
+      // every tick (see the onNote comment) so a retarget/retune the loop is
+      // agnostic to. Caller must stopStudioSound() first if a loop is live.
+      function startAudition() {
+        if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
+        setSoundToggle(true);
+        studioSound = global.Sound.playScale(curBundle.pcs, {
+          // M-EAR wave 1.6 (U14): the currently-selected tempo control value -
+          // live tempo changes route through studioSound.setTempo() (the tempo
+          // toggle's own onclick, below), not a re-call here.
+          bpm: TEMPO_BPM[tempo],
+          // F17: continuous two-octave run with a dwell on every root hit,
+          // instead of stopping/restarting each single-octave pass.
+          octaves: SOLO_OCTAVES,
+          rootDwell: ROOT_DWELL,
+          // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not a
+          // value captured at play-start - after a chip-switch retarget OR a
+          // circle retune, curBundle already points at the NEW bundle, so the
+          // marker + fretboard light always match whichever scale is sounding.
+          onNote: function (i) {
+            var len = curBundle.pcs.length, idx = i % len;
+            clearSoundMarks();
+            markSoundingNote(idx, curBundle.pcs[idx]);
+          },
+          onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
+        });
+        // U16: the 'sounding' legend row joins/leaves as playback starts/stops
+        // (onStop above handles the leaving half).
+        renderLegend();
+      }
       if (soundToggleEl) {
         soundToggleEl.onclick = function () {
           if (studioSound) { stopStudioSound(); return; }
-          if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
-          setSoundToggle(true);
-          studioSound = global.Sound.playScale(curBundle.pcs, {
-            // M-EAR wave 1.6 (U14): the currently-selected tempo control
-            // value - live tempo changes route through studioSound.setTempo()
-            // (the tempo toggle's own onclick, below), not a re-call here.
-            bpm: TEMPO_BPM[tempo],
-            // F17: continuous two-octave run with a dwell on every root hit,
-            // instead of stopping/restarting each single-octave pass.
-            octaves: SOLO_OCTAVES,
-            rootDwell: ROOT_DWELL,
-            // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
-            // a value captured at play-start - after a chip-switch retarget,
-            // curBundle already points at the NEW bundle (select() updates it
-            // before calling retarget()), so the marker + fretboard light
-            // always match whichever scale is actually sounding right now,
-            // even across a differing note count (e.g. 7-note mode -> 5-note
-            // pentatonic).
-            onNote: function (i) {
-              var len = curBundle.pcs.length, idx = i % len;
-              clearSoundMarks();
-              markSoundingNote(idx, curBundle.pcs[idx]);
-            },
-            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
-          });
-          // U16: the 'sounding' legend row joins/leaves as playback starts/stops
-          // (onStop above handles the leaving half).
-          renderLegend();
+          startAudition();
         };
       }
+      // S-COF-INTERACTIVE: retune every theory surface to an EXPLORED key when a
+      // circle-crown wedge is tapped (onPick, wired in renderCofHero) - WITHOUT
+      // rebuilding elPlayer.innerHTML, so the backing-track <iframe> node is
+      // never destroyed and the video/audio keeps playing. The strategy is a
+      // single reassignment of the shared `th` closure var: every theory-render
+      // helper (renderFretboard/renderChordChips/renderCofHero/renderGuide/
+      // renderJamPanel/renderLegend + the notes label + meta line) reads `th`
+      // LIVE, so reassigning it and re-calling those helpers in place re-skins
+      // the whole harmony HUD. newMode is a mode string studioTheory accepts
+      // ('ionian'/'aeolian' from a wheel tap, or the song's own t.mode on reset).
+      function retuneTo(newRoot, newMode) {
+        // TRAP 1: kill any live audition FIRST - its onNote callback references
+        // DOM/bundle a re-skin replaces; a loop ticking against stale nodes is
+        // the dangling-handle trap. stopStudioSound() is the ONE genuine stop.
+        stopStudioSound();
+        var nth = studioTheory(newRoot, newMode);
+        if (!nth) return; // unresolvable key - keep the current surfaces on screen
+        th = nth; // REASSIGN the shared var - every closure now reads the new key
+        curBundle = th; curScaleId = 'mode'; activeTargetChord = null;
+        var onSong = (th.key === songRoot && th.scaleMode === songScaleMode);
+        // On the song key, restore the exact original soloKey/soloMode (raw
+        // t.key/t.mode) so the scale-chip machinery + any persistence match a
+        // fresh open; on an explored key, follow the explored key (no persist).
+        if (onSong) { soloKey = t.key; soloMode = t.mode; }
+        else { soloKey = newRoot; soloMode = newMode; }
+        // Re-skin each surface IN PLACE (never a full elPlayer-innerHTML rebuild):
+        var metaEl = elPlayer.querySelector('.bt-st-meta');
+        if (metaEl) metaEl.innerHTML = metaFor(th);
+        var notesEl = elPlayer.querySelector('[data-solonotes]');
+        if (notesEl) notesEl.innerHTML = renderNoteTokens(th.notes);
+        var neckEl = elPlayer.querySelector('.hsrMore');
+        if (neckEl) neckEl.setAttribute('href', inversionsHref(th));
+        // TRAP 2: renderCofHero replaces the wheel DOM, so it RE-ATTACHES onPick
+        // every call - an omitted onPick would leave the wheel inert after this
+        // first tap. renderCofHero owns that re-attach (see its body).
+        renderCofHero();
+        renderChordChips();            // th.chords -> the new key
+        wireScaleChips({ forceMode: true }); // rebuild chip set for new key, default 'mode'
+        renderFretboard(th, 'mode');   // th.rootPc (live) -> the new key
+        renderGuide(th.scaleMode, th.notes);
+        renderJamPanel('mode');
+        renderLegend();
+        var resetWrap = elPlayer.querySelector('[data-cofreset]');
+        if (resetWrap) resetWrap.hidden = onSong; // reset control only off-song
+        startAudition();               // audition the new key's scale on the synth
+      }
+      var cofResetBtn = elPlayer.querySelector('[data-cofresetbtn]');
+      // Reset re-tunes to the song's own key+mode; retuneTo detects onSong and
+      // re-hides this control, so no explicit hide needed here.
+      if (cofResetBtn) cofResetBtn.onclick = function () { retuneTo(t.key, t.mode); };
       // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
       // content it explains - built via the shared Notables banner (same
       // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
@@ -1074,7 +1149,15 @@
       // re-derives ONLY the solo bundle (notes line, framing caption,
       // fretboard) via soloBundle() - chords-in-key (already rendered below),
       // buildWhy, and whynote all stay keyed to `th`, untouched by any chip.
-      (function wireScaleChips() {
+      // S-COF-INTERACTIVE: a named function (was an IIFE) so a circle retune can
+      // rebuild the chip row for the EXPLORED key. opts.forceMode skips the
+      // stored/inferred song default and lands on 'mode' (retune always resets
+      // the solo scale). The bundles come from soloKey/soloMode (the CURRENT
+      // key, song or explored) - never t.key/t.mode directly - so a chip tap on
+      // an explored key gives that key's pent/blues scales, not the song's.
+      function wireScaleChips(opts) {
+        opts = opts || {};
+        var forceMode = !!opts.forceMode;
         var chipsEl = elPlayer.querySelector('[data-scalechips]');
         var frameEl = elPlayer.querySelector('[data-scaleframe]');
         if (!chipsEl) return;
@@ -1112,10 +1195,13 @@
         // that's no longer offered (e.g. the key's own mode changed) still falls
         // through to inference exactly like an inference-produced mismatch does below.
         var chipIds = CHIPS.map(function (c) { return c.id; });
-        var storedScaleId = readSoloScaleFor(t);
-        var curId = (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
-          ? storedScaleId
-          : inferSoloDefault(t.key, t.mode, t.seq);
+        // S-COF-INTERACTIVE: a retune forces 'mode' (no stored/inferred lookup -
+        // an explored key is not the song and has no persisted default).
+        var storedScaleId = forceMode ? null : readSoloScaleFor(t);
+        var curId = forceMode ? 'mode'
+          : (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
+            ? storedScaleId
+            : inferSoloDefault(t.key, t.mode, t.seq);
         if (chipIds.indexOf(curId) < 0) {
           curId = chipIds.indexOf('pentMajor') >= 0 ? 'pentMajor'
             : chipIds.indexOf('pentMinor') >= 0 ? 'pentMinor' : 'mode';
@@ -1134,7 +1220,9 @@
           });
         }
         function select(scaleId, persist) {
-          var bundle = soloBundle(t.key, t.mode, scaleId);
+          // S-COF-INTERACTIVE: bundle from the CURRENT key (soloKey/soloMode),
+          // so an explored-key chip tap gives that key's scales, not the song's.
+          var bundle = soloBundle(soloKey, soloMode, scaleId);
           if (!bundle) return;
           // M-EAR wave 1.5 (U11): a scale-chip switch WHILE auditioning
           // retargets the live loop at the next note boundary instead of
@@ -1144,7 +1232,10 @@
           var wasPlaying = !!studioSound;
           if (!wasPlaying) stopStudioSound();
           curId = scaleId;
-          if (persist) writeSoloScaleFor(t, scaleId);
+          // S-COF-INTERACTIVE: only persist a solo-scale choice while ON the
+          // song key - an explored key is not the track, so its chip taps must
+          // not overwrite the song's stored default.
+          if (persist && soloKey === t.key && soloMode === t.mode) writeSoloScaleFor(t, scaleId);
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
           // G5 S-WHYNOTE-SCALE: the whynote banner (if it won its slot and is
@@ -1193,7 +1284,8 @@
         // too - not just the chip highlight. 'mode'/blues keep the already-rendered
         // fretboard (line ~1289 renderFretboard(th,'mode')), so a bare render() there.
         if (curId !== 'mode') select(curId); else render();
-      })();
+      }
+      wireScaleChips();
       // F19 (operator UAT 2026-07-05): name-only chip row - no chord
       // diagrams, no roman numerals ("like others", e.g. the scale-chip row
       // above). Hand-rolled instead of KeyExplorer.renderChords: that
@@ -1201,7 +1293,8 @@
       // OWN use of renderChords (songbook.js) is untouched. Tap still plays
       // the chord (pack.playChord) AND toggles the fretboard chord-tone
       // target (toggleTarget) - only the visual weight changed.
-      (function renderChordChips() {
+      // S-COF-INTERACTIVE: named function (was an IIFE) so a circle retune re-runs it.
+      function renderChordChips() {
         var chordsEl = elPlayer.querySelector('[data-chords]');
         if (!chordsEl || !th.chords) return;
         chordsEl.innerHTML = th.chords.map(function (it) {
@@ -1217,22 +1310,33 @@
             toggleTarget(c, d);
           };
         });
-      })();
+      }
+      renderChordChips();
       // Circle-of-fifths CROWN: render the tinted wheel eagerly at the top
-      // (data-cofhero), keyed to the track's key center. Wheel-only - kept in a
-      // .bt-st-wheel container so markWheelPc's sounding-pulse still finds it.
-      // (buildWhy is retained for its pinned respelling test but no longer the
-      // render path; the interactive onPick lands in a later increment.)
-      (function renderCofHero() {
+      // (data-cofhero), keyed to the CURRENT key center (song on open, explored
+      // after a retune). Wheel-only - kept in a .bt-st-wheel container so
+      // markWheelPc's sounding-pulse still finds it.
+      // S-COF-INTERACTIVE: now interactive - every wedge is a live key-explore
+      // tap via onPick, and this is a named function (was an IIFE) so retuneTo
+      // can re-render the wheel with the new selection/tint.
+      function renderCofHero() {
         var cofHero = elPlayer.querySelector('[data-cofhero]');
         var C = global.Circle;
         if (!cofHero || !C || !C.renderWheel) return;
         var mode = normMode(th.scaleMode);
         cofHero.innerHTML = '<div class="bt-st-wheel"></div>';
-        var wheelEl = C.renderWheel({ selected: { root: th.key, mode: mode } });
+        // TRAP 2: renderWheel REPLACES the wheel DOM every call, so onPick MUST
+        // be re-passed here on every render (retuneTo re-calls renderCofHero) -
+        // an omitted onPick leaves the wheel inert after the first tap. ring is
+        // 'major'/'minor'; map to the studioTheory scale mode.
+        var wheelEl = C.renderWheel({
+          selected: { root: th.key, mode: mode },
+          onPick: function (root, ring) { retuneTo(root, ring === 'minor' ? 'aeolian' : 'ionian'); }
+        });
         try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF crown tint skipped:', e); }
         cofHero.querySelector('.bt-st-wheel').appendChild(wheelEl);
-      })();
+      }
+      renderCofHero();
       if (guideToggle && guideBox) guideToggle.onclick = function () {
         var show = guideBox.hidden; guideBox.hidden = !show;
         guideToggle.classList.toggle('on', show);

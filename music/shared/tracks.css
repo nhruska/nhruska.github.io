@@ -251,6 +251,17 @@
   .bt-st-cofhero{display:flex;justify-content:center;padding:4px 0 2px;flex:0 0 auto;}
   .bt-st-cofhero .bt-st-wheel{margin-top:0;}
   .bt-st-cofhero .cofWheel{width:188px;height:188px;max-width:56vw;}
+  /* S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle tap
+     has retuned the surfaces to an explored key (JS toggles [hidden]). Centered
+     accent-outline pill; >=44px tall per the a11y tap-target floor. */
+  .bt-st-cofreset{display:flex;justify-content:center;padding:0 0 4px;flex:0 0 auto;}
+  .bt-st-cofreset[hidden]{display:none;}
+  .bt-st-cofresetbtn{min-height:44px;padding:0 16px;border:1px solid var(--accent-ink);
+    background:transparent;color:var(--accent-ink);font-family:inherit;font-weight:700;
+    font-size:.78rem;border-radius:var(--r-chip-pill);cursor:pointer;
+    transition:transform .08s,background .15s,color .15s;}
+  .bt-st-cofresetbtn:active{transform:scale(.96);}
+  .bt-st-cofresetbtn:hover{background:var(--accent);color:var(--on-accent);}
   /* SHORT landscape (phone held sideways): two panes side by side - header + video
      pinned in the left ~44% pane, the scrollable theory (scale / chords / url editor
      / why) on the right - so the video isn't pushed off-screen when vertical space is
