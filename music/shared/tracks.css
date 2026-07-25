@@ -136,6 +136,15 @@
      height via overflow. NEVER display:none - that would stop the audio. */
   .bt-st-media{overflow:hidden;flex:0 0 auto;transition:max-height .2s ease;}
   .bt-st-media.min{max-height:0;}
+  /* Auto-collapse countdown: a draining progress bar (standard auto-dismiss
+     affordance) + a live caption. .done hides it once fired or cancelled. */
+  .bt-st-countdown{position:relative;padding:4px 12px 7px;flex:0 0 auto;font-family:'Space Mono',monospace;
+    font-size:.6rem;letter-spacing:.04em;color:var(--accent-ink);text-align:center;}
+  .bt-st-countdown.done{display:none;}
+  .bt-st-countdown > i{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--accent-ink);
+    transform-origin:left;animation:bt-cd-drain linear forwards;}
+  @media (prefers-reduced-motion:reduce){ .bt-st-countdown > i{animation:none;width:100%;} }
+  @keyframes bt-cd-drain{from{transform:scaleX(1);}to{transform:scaleX(0);}}
   /* Now-playing strip: play/pause + title + state, always visible so you know
      it's playing and whether there's a video (title present == a video). */
   .bt-st-np{display:flex;align-items:center;gap:9px;padding:6px 12px;flex:0 0 auto;border-bottom:1px solid var(--line);}

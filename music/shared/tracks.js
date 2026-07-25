@@ -676,6 +676,9 @@
         ? '<div class="bt-st-media" data-media>'
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-countdown" data-countdown role="status">'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>8</b>s - tap Hide/Show to keep control</span>'
+          + '<i></i></div>'
           + '<div class="bt-st-np" data-np>'
           + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
           + '<span class="bt-st-np-title">' + esc(t.title || '') + '</span>'
@@ -843,11 +846,14 @@
       // video re-expands; play/pause drives the YouTube embed over postMessage
       // (enablejsapi=1 on the embed URL). No YT API script needed.
       (function wireNowPlaying() {
-        var AUTOMIN_MS = 4000; // "show it when it starts, then collapse" - a few seconds
+        var AUTOMIN_MS = 8000; // show it a beat, then collapse (operator: 8s)
         var mediaEl = elPlayer.querySelector('[data-media]');
         var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
         var ppBtn = elPlayer.querySelector('[data-nppp]');
         var stateEl = elPlayer.querySelector('[data-npstate]');
+        var cdEl = elPlayer.querySelector('[data-countdown]');
+        var cdNum = elPlayer.querySelector('[data-cdnum]');
+        var cdFill = cdEl && cdEl.querySelector('i');
         var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
         function ytCmd(func) {
           var w = frameWin(); if (!w) return;
@@ -858,10 +864,21 @@
           mediaEl.classList.toggle('min', min);
           if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
-        if (vidToggle && mediaEl) vidToggle.onclick = function () { setMin(!mediaEl.classList.contains('min')); };
-        // Auto-collapse a few seconds after open (fixed delay). The isConnected
-        // guard makes a late fire on a closed Studio a harmless no-op.
-        setTimeout(function () { setMin(true); }, AUTOMIN_MS);
+        // Auto-collapse countdown. A visible progress bar drains over AUTOMIN_MS
+        // (standard auto-dismiss affordance); any manual video toggle cancels it
+        // so the user's choice always wins.
+        var autoTimer = 0, cdTick = 0;
+        function endCountdown() {
+          if (cdEl) cdEl.classList.add('done');
+          if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
+          if (cdTick) { clearInterval(cdTick); cdTick = 0; }
+        }
+        if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
+        var remain = Math.round(AUTOMIN_MS / 1000);
+        if (cdNum) cdNum.textContent = remain;
+        cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
+        autoTimer = setTimeout(function () { setMin(true); endCountdown(); }, AUTOMIN_MS);
+        if (vidToggle && mediaEl) vidToggle.onclick = function () { endCountdown(); setMin(!mediaEl.classList.contains('min')); };
         var paused = false;
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;
