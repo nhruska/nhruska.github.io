@@ -668,9 +668,24 @@
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
       var playerBlock = t.yt
-        ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+        // Video shows on open (see it start), then auto-collapses after a few
+        // seconds to a now-playing strip (play/pause + title + state). The
+        // iframe is only clipped by .bt-st-media.min, never removed, so audio
+        // keeps playing. Three actions - Show/Hide video, Find another jam,
+        // Edit - share one row below.
+        ? '<div class="bt-st-media" data-media>'
+          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-np" data-np>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          + '<span class="bt-st-np-title">' + esc(t.title || '') + '</span>'
+          + '<span class="bt-st-np-state" data-npstate>Playing</span>'
+          + '</div>'
+          + '<div class="bt-st-stagebtns">'
+          + '<button class="bt-st-editlink" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
           + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
+          + (opts.onEditRequest ? '<button class="bt-st-editlink" data-editrequest type="button">Edit</button>' : '')
+          + '</div>'
           + jamPanelHtml
         : '<div class="bt-st-search">'
           + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
@@ -697,9 +712,9 @@
       // job from finding one, so those stay always-visible, untouched.
       var urlEditor = t.custom
         ? (t.yt
-          ? (opts.onEditRequest
-            ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit</button></div>'
-            : '')
+          // Edit moved UP into the .bt-st-stagebtns row (video / jam / edit on
+          // one row); no separate url-editor card for the has-video custom case.
+          ? ''
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled-gated hidden>'
               + ((opts.onSetVideo && t.id)
@@ -822,6 +837,40 @@
       // itself is unchanged (still driven by renderJamPanel()), only its
       // trigger's location/label moved.
       var jamFindToggle = elPlayer.querySelector('[data-jamfindtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
+      // Now-playing strip + video minimize. The frame shows on open so you see
+      // it start, then auto-collapses after a few seconds to the strip (audio
+      // keeps playing - the iframe is only clipped, never removed). Show/Hide
+      // video re-expands; play/pause drives the YouTube embed over postMessage
+      // (enablejsapi=1 on the embed URL). No YT API script needed.
+      (function wireNowPlaying() {
+        var AUTOMIN_MS = 4000; // "show it when it starts, then collapse" - a few seconds
+        var mediaEl = elPlayer.querySelector('[data-media]');
+        var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
+        var ppBtn = elPlayer.querySelector('[data-nppp]');
+        var stateEl = elPlayer.querySelector('[data-npstate]');
+        var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
+        function ytCmd(func) {
+          var w = frameWin(); if (!w) return;
+          try { w.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), '*'); } catch (e) {}
+        }
+        function setMin(min) {
+          if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
+          mediaEl.classList.toggle('min', min);
+          if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
+        }
+        if (vidToggle && mediaEl) vidToggle.onclick = function () { setMin(!mediaEl.classList.contains('min')); };
+        // Auto-collapse a few seconds after open (fixed delay). The isConnected
+        // guard makes a late fire on a closed Studio a harmless no-op.
+        setTimeout(function () { setMin(true); }, AUTOMIN_MS);
+        var paused = false;
+        if (ppBtn) ppBtn.onclick = function () {
+          paused = !paused;
+          ytCmd(paused ? 'pauseVideo' : 'playVideo');
+          ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
+          ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+          if (stateEl) stateEl.textContent = paused ? 'Paused' : 'Playing';
+        };
+      })();
       // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
       // line it bounces a marker across (curBundle already tracks whichever
       // scale-chip is active - see the M-GUIDE W3a comment above).
