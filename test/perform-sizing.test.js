@@ -325,4 +325,46 @@ test('renderLyricsOnly wraps a long lyrics-only line at maxChars (no white-space
   assert.strictEqual((html1.match(/class="lyrLine"/g) || []).length, 1);
 });
 
+
+/* =====================================================================
+ * VOLLEY-2 (high): what this file can and cannot prove.
+ * ---------------------------------------------------------------------
+ * Everything above is a SOURCE-SHAPE check: it reads songbook.js as text
+ * and asserts the sizing model is wired the way the contract says. That is
+ * worth having - it catches a deleted mode split or an unclamped scale -
+ * but it is NOT a behavioural gate. fitStageSheet measures scrollWidth and
+ * getBoundingClientRect, so the "never scrolls horizontally at 412px"
+ * guarantee can only be proven in a real browser.
+ *
+ * Those proofs are the pw scenarios named below, and `node test/run-all.js`
+ * DOES NOT RUN THEM (they need Playwright; see test/pw/README.md). So CI
+ * green on this PR does not mean the overflow guarantee was re-checked.
+ * Stating that plainly is the point of this block.
+ *
+ * What IS enforced here: the evidence chain cannot silently rot. If one of
+ * those scenarios is deleted or renamed, or loses the assertion that
+ * carries the guarantee, this test fails - so the gap can never widen
+ * unnoticed while the source-shape checks stay green.
+ * ===================================================================== */
+var REAL_GATES = [
+  { file: 'perform-long-line-wrap.json', must: /scrollWidth/ },
+  { file: 'perform-autofit-viewport.json', must: /scrollWidth|clientWidth/ },
+  { file: 'perform-readable-floor.json', must: /fontSize|pscale/ },
+  { file: 'perform-font-step-pinch-rewrap.json', must: /pscale|fontSize/ },
+  { file: 'perform-stage-orientation-rewrap.json', must: /scrollWidth|clientWidth/ }
+];
+
+test('VOLLEY-2: the browser scenarios that actually gate 412px overflow still exist and still assert it', function () {
+  var fs = require('fs'), path = require('path');
+  var dir = path.join(__dirname, 'pw', 'scenarios');
+  REAL_GATES.forEach(function (g) {
+    var full = path.join(dir, g.file);
+    assert.ok(fs.existsSync(full),
+      'the real behavioural gate ' + g.file + ' is missing - this file only checks source shape, so its loss would otherwise be invisible');
+    var body = fs.readFileSync(full, 'utf8');
+    assert.ok(g.must.test(body),
+      g.file + ' no longer contains a ' + g.must + ' assertion - it may still pass while proving nothing about overflow');
+  });
+});
+
 run();

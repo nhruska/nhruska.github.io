@@ -134,10 +134,21 @@ test('renderLyricLine: wrapping still escapes hostile content per-chunk (no XSS 
   assert.ok(html.indexOf('&lt;script&gt;') >= 0);
 });
 
-test('renderSheet: threads maxChars through to the "both" view only (chords/lyrics views ignore it, unaffected)', function () {
+test('renderSheet: threads maxChars to BOTH the "both" and "lyrics" views; only "chords" ignores it', function () {
+  // VOLLEY-2 nit: the old title claimed the lyrics view ignored maxChars,
+  // contradicting renderSheet, which passes it into renderLyricsOnly. The
+  // lyrics view renders white-space:pre rows and has to wrap at the budget
+  // exactly like 'both' does - so the claim was not just mis-worded, it was
+  // an untested path described as a non-path.
   var song = { sheet: [['Verse', '[C]a very long line of words that will definitely need to wrap given a small maxChars budget here']] };
   var wrapped = SR.renderSheet(song, 0, 'both', null, 15);
-  assert.ok((wrapped.match(/class="lyrLine"/g) || []).length > 1);
+  assert.ok((wrapped.match(/class="lyrLine"/g) || []).length > 1, 'both view must wrap at the budget');
+  var lyricsView = SR.renderSheet(song, 0, 'lyrics', null, 15);
+  assert.ok((lyricsView.match(/class="lyrLine"/g) || []).length > 1,
+    'lyrics view must ALSO wrap at the budget - renderSheet threads maxChars into renderLyricsOnly');
+  var lyricsUnbudgeted = SR.renderSheet(song, 0, 'lyrics', null);
+  assert.strictEqual((lyricsUnbudgeted.match(/class="lyrLine"/g) || []).length, 1,
+    'with no budget the lyrics view renders one unbroken row - proving the wrap above came from maxChars');
   var chordsView = SR.renderSheet(song, 0, 'chords', null, 15);
   assert.strictEqual(chordsView.indexOf('lyrLine'), -1, 'chords view has no .lyrLine at all, maxChars is a no-op for it');
 });

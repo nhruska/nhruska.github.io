@@ -1726,7 +1726,9 @@
       // Stage open deliberately does NOT reset it (that reset is exactly what
       // made every open forget the size; operator interview 2026-07-24).
       STATE.performDim = false; STATE.performTpose = seedTpose || 0;
-      // show the overlay BEFORE rendering so auto-fit can measure a real height
+      // show the overlay BEFORE rendering so the sizing pass can MEASURE: it
+      // fits to the sheet's content WIDTH (and probes the wrap budget at the
+      // applied scale), which a display:none overlay reports as 0.
       if (performEl) { performEl.classList.remove('dim'); performEl.classList.add('on'); }
       STATE.ctrlsOpen = false; if (el.pSpeed) el.pSpeed.classList.remove('on');
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
