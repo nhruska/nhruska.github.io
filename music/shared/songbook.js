@@ -1768,7 +1768,7 @@
     function onStageVisibility() { if (document.visibilityState === 'visible' && performEl && performEl.classList.contains('on')) reqWake(); }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
     // NavHistory.dismiss (that's the button/back-button path, not this).
-    function rawCloseStage() { relWake(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on'); }
+    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on'); }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -1796,6 +1796,11 @@
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
+      // Stage is a chord-interactive surface that never routes through
+      // applyTab(), so it takes its own keep-warm lease - otherwise the first
+      // chord tap in Stage pays the ~0.5s resume lag the rest of this PR
+      // exists to remove (volley-1 high).
+      stageKeepWarm();
       // Guard against duplicate listeners: remove-then-add is idempotent no
       // matter how many times startPerform() re-enters while Stage is open.
       document.removeEventListener('visibilitychange', onStageVisibility);
@@ -3658,7 +3663,13 @@
         // All view honestly shows letter-only chips - never a roman guessed
         // vs progression[0] via labelRoman's labelTonic fallback (Volley 2
         // High #2; the goal spec's honest-omission rule).
-        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small'), c));
+        // P2-1 (2026-07-23): the diagram-tile (non-chip) branch was missing the
+        // displayName arg chipTile's `display: dispChordName(c)` already passes -
+        // a keyed All view showed the raw canonical-sharp TOKEN (A#) while the
+        // chip branch and the In-key view showed the key-aware Bb on the same
+        // screen. dispChordName no-ops (returns c unchanged) when no key is set,
+        // so this is safe for the keyless All-browse case too.
+        grid.appendChild(useChips ? chipTile(c) : wireTap(packDiagram(c, 'small', dispChordName(c)), c));
       });
       // UAT U6 (2026-07-04, operator Pixel walkthrough): tapping a quality filter
       // (Major/Minor/7th/Maj7/Min7) rebuilds #catTabRow + #buildGrid in place, but
@@ -5422,6 +5433,54 @@
     // Set once INIT resolves the first-shown screen (see below); drives the
     // screen/tab back-history wiring in switchTab.
     var currentTab = null;
+    // Audio-focus keep-warm (immediate chord taps): true while the CURRENTLY
+    // showing screen is chord-interactive (Practice/Stage or Compose) and we
+    // therefore hold ChordAudio warm for it. Tracked separately from
+    // currentTab so a same-screen re-entry (applyTab called again with the
+    // SAME chord-interactive name) never double-counts the keepWarm() call -
+    // ChordAudio.keepWarm()/releaseWarm() are reference-counted, so getting
+    // this edge-triggered right here is what keeps that count correct.
+    var chordScreenWarm = false;
+    // Stage is NOT in this map on purpose: it is an overlay opened by
+    // startPerform(), which does not route through applyTab(), so it holds
+    // its own keep-warm lease (see stageWarm below). The comment above used
+    // to claim Practice/Stage/Compose while the map covered only two of them
+    // and Stage got no lease at all (volley-1 high).
+    var CHORD_INTERACTIVE_SCREENS = { practice: true, compose: true };
+    // Stage's own edge-triggered lease. ChordAudio's count is a refcount, so
+    // Stage-over-Practice nests correctly; the flag is what keeps this
+    // edge-triggered (a re-entrant startPerform must not double-count).
+    var stageWarm = false;
+    function stageKeepWarm() {
+      if (stageWarm || !window.ChordAudio) return;
+      window.ChordAudio.keepWarm(); stageWarm = true;
+    }
+    function stageReleaseWarm() {
+      if (!stageWarm || !window.ChordAudio) return;
+      window.ChordAudio.releaseWarm(); stageWarm = false;
+    }
+    // Backgrounding zeroes ChordAudio's refcount; both local flags have to
+    // follow or the surfaces believe they still hold a lease they lost.
+    if (window.ChordAudio && window.ChordAudio.onHardRelease) {
+      window.ChordAudio.onHardRelease(function () { chordScreenWarm = false; stageWarm = false; });
+    }
+    // Eagerly resumes the WebAudio context the instant a finger LANDS
+    // anywhere on a chord-interactive screen (pointerdown), rather than
+    // waiting for the click that actually schedules the note - see
+    // ChordAudio.primeNow()'s header comment. Delegated once per screen
+    // root (not per chord chip - chips are re-created on every render), so
+    // it keeps working across renderPractice()/renderProg() re-renders
+    // without needing to be re-wired at every chip. Idempotent + cheap
+    // (primeNow no-ops once already running), so no harm in firing on every
+    // tap anywhere in the screen, not just directly on a chord control.
+    var chordScreenPrimeWired = { practice: false, compose: false };
+    function wireChordScreenPrime(name) {
+      if (chordScreenPrimeWired[name] || !window.ChordAudio) return;
+      var root = document.getElementById('s-' + name);
+      if (!root) return;
+      root.addEventListener('pointerdown', function () { window.ChordAudio.primeNow(); }, { passive: true });
+      chordScreenPrimeWired[name] = true;
+    }
     // Renders the tab/screen switch WITHOUT touching the back-history stack.
     // Used by: the CLOSE side of a screen back-history entry (returning to the
     // previous screen - calling switchTab there would push a second entry),
@@ -5431,6 +5490,23 @@
       try { localStorage.setItem(ACTIVE_TAB_KEY, name); } catch (e) {} // reopen where you left off
       document.querySelectorAll('.tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
       document.querySelectorAll('.screen').forEach(function (p) { p.classList.toggle('on', p.id === 's-' + name); });
+      // Keep the audio engine warm for the WHOLE time a chord-interactive
+      // screen is open (immediate taps - see audio.js keepWarm()); release
+      // the instant we leave it. applyTab is the single funnel every screen
+      // change runs through (tab-bar taps, opening Practice, hardware/gesture
+      // Back), so hooking it here covers all of them without touching each
+      // individual chord-tap call site.
+      var isChordScreen = !!CHORD_INTERACTIVE_SCREENS[name];
+      if (window.ChordAudio) {
+        // wireChordScreenPrime is idempotent PER SCREEN, so it must run on
+        // every chord-screen entry - not only the cold->chord edge. Gating it
+        // behind !chordScreenWarm meant practice->compose (warm on both sides)
+        // never wired Compose's pointerdown priming at all (volley-1 medium).
+        if (isChordScreen) wireChordScreenPrime(name);
+        if (isChordScreen && !chordScreenWarm) window.ChordAudio.keepWarm();
+        else if (!isChordScreen && chordScreenWarm) window.ChordAudio.releaseWarm();
+      }
+      chordScreenWarm = isChordScreen;
       if (name === 'practice') renderPractice();
       if (name === 'library') { renderFilterChips(); renderSongs(); }
       if (name === 'jam') renderSetlist();
