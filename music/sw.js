@@ -45,7 +45,7 @@ var CORE = [
   './shared/solo-guide.js',
   './shared/circle.js', './shared/key-explorer.js', './shared/queue.js', './shared/tracks-model.js', './shared/studio-theory.js', './shared/tracks.js', './shared/candidates.js',
   './shared/chord-pack-adapter.js', './shared/sugg.js',
-  './shared/list-item.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
+  './shared/list-item.js', './shared/scroll-hint.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
   './shared/skill-md.js', './shared/zip-store.js',
   './shared/repertoire-form.js',
   './shared/yt-info.js',
