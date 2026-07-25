@@ -60,7 +60,7 @@
   .bt-curate-bar{margin:6px 0 2px;}
   .bt-curate-bar:empty{display:none;}
   .bt-curate-btn{width:100%;background:transparent;border:1px solid var(--line);color:var(--txt-dim);
-    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;}
+    font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:var(--r-btn-sm);cursor:pointer;min-height:44px;}
   .bt-curate-btn:hover{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-curate-btn.on{color:var(--accent-ink);border-color:var(--line-strong);}
   .bt-queue[hidden]{display:none;}
