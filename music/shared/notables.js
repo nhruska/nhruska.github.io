@@ -76,9 +76,13 @@
   // FIRST - it must win the slot ahead of even 'firstrun' on a truly fresh
   // profile, since firstrun is itself level-gated (see LEVELS below) and
   // would otherwise never get a chance to show before the level exists.
+  // 'chordtap' (the "tap a chord to hear it" cue, P3 UAT / PR #300) sits
+  // right after 'firstrun' - discovering the sheet's core interaction (tap a
+  // chord, hear it) outranks the setlist/save nudges, but the fresh-profile
+  // Library greeting still goes first.
   var PRIORITY = [
     'guidanceask',
-    'firstrun', 'tunefirst', 'savebasics',
+    'firstrun', 'chordtap', 'tunefirst', 'savebasics',
     'postprog', 'studiofirst', 'whynote', 'composeintro', 'pulljam', 'transposetip', 'scaletip',
     'roman', 'diagrampref', 'backup'
   ];
@@ -88,8 +92,10 @@
   // a member of its array - an omitted/null/unset level never matches any
   // array (Array.indexOf(undefined) is always -1), so with no level set only
   // the ask may show and every other listed consumerId stays blocked until a
-  // real level exists. A consumerId NOT in this table (guidanceask, roman,
-  // diagrampref, backup) is unrestricted.
+  // real level exists. A consumerId NOT in this table (guidanceask, chordtap,
+  // roman, diagrampref, backup) is unrestricted - chordtap deliberately so:
+  // "tap a chord to hear it" is the sheet's core interaction, useful at every
+  // level, so it is NOT level-gated (PR #300).
   var LEVELS = {
     firstrun: ['beginner'],
     postprog: ['beginner'],
