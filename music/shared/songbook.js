@@ -317,7 +317,7 @@
    *     // setlist
    *     setBody, setBar, setCount, setClear, performBtn,
    *     // perform
-   *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine,
+   *     perform, pSheet, pPos, pTitle, pArtist, pKeyLine, pCapo,
    *     pPrev, pNext, pClose, pUp, pDown, pDimBtn,
    *     pSpeed, pCtrls,
    *     pFontDown, pFontAuto, pFontUp, pViewLyrics, pViewChords, pViewBoth,
@@ -640,7 +640,13 @@
     // idx: the last position reached in a SETLIST-anchored Stage session (see
     // lastSetSessionIdx below) - lets "Start" resume where the performer left
     // off instead of always reopening on song 1 (P1-4).
-    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx })); }
+    // VOLLEY-1 (high): the resume index is a position in a SPECIFIC setlist, so
+    // it is persisted with a fingerprint of that setlist. Add, remove, reorder
+    // or clear, and the stored index now points at a different song - Start
+    // would silently open the wrong one. On load the index is honoured only
+    // when the fingerprint still matches; otherwise it resets to the top.
+    function setFingerprint(ids) { return (ids || []).join('|'); }
+    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx, setfp: setFingerprint(STATE.setlist) })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -665,6 +671,11 @@
     // single-song Stage launch (song-screen "Stage" button) never touches it, so
     // it can't leak an unrelated position into the next setlist Start.
     var lastSetSessionIdx = (typeof _pp.idx === 'number' && _pp.idx >= 0) ? _pp.idx : 0;
+    // The fingerprint the stored index belongs to (see savePerfPrefs). Checked
+    // at Start, not here: STATE.setlist is still empty at this point in boot.
+    // An older pref with no fingerprint is treated as not matching - resuming
+    // at the top once is the safe direction to be wrong in.
+    var savedSetFp = (typeof _pp.setfp === 'string') ? _pp.setfp : null;
     function songById(id) { for (var i = 0; i < ALLSONGS.length; i++) if (ALLSONGS[i].id === id) return ALLSONGS[i]; return null; }
 
     /* ===================== LIBRARY (unified Repertoire; Set lives on the Jam tab) =====
@@ -1718,7 +1729,16 @@
     // P1-4: resume the last position reached in a setlist Stage session
     // instead of always reopening on song 1 (lastSetSessionIdx defaults to 0
     // for a device that has never performed the set - same as before).
-    if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, lastSetSessionIdx, 0, stageDefaultView); };
+    if (el.performBtn) el.performBtn.onclick = function () {
+      // Resume only into the SAME setlist the index was recorded against, and
+      // only at a position that still exists. Any edit (add / remove / reorder
+      // / clear) changes the fingerprint, so the index is dropped rather than
+      // silently opening a different song (volley-1 high).
+      var sameSet = savedSetFp !== null && savedSetFp === setFingerprint(STATE.setlist);
+      var startAt = (sameSet && lastSetSessionIdx < STATE.setlist.length) ? lastSetSessionIdx : 0;
+      if (startAt !== lastSetSessionIdx) { lastSetSessionIdx = startAt; savePerfPrefs(); savedSetFp = setFingerprint(STATE.setlist); }
+      startPerform(STATE.setlist, startAt, 0, stageDefaultView);
+    };
     if (el.pClose) el.pClose.onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); };
     // S-SET-INTEGRITY (UAT U22): same defensive-nav step as the Practice
     // screen's navQueue() - stepResolvable(songById) walks past a dangling
@@ -1732,14 +1752,21 @@
       STATE.performTpose = 0; showPerform();
       // P1-4: only a setlist-anchored session persists its position (see
       // perfIsSetSession above).
-      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savePerfPrefs(); }
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
     };
     if (el.pNext) el.pNext.onclick = function () {
-      if (QUEUE.atEnd()) { if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return; }
+      if (QUEUE.atEnd()) {
+        // VOLLEY-1 (high): finishing the set left lastSetSessionIdx pointing at
+        // the LAST song, so the next Start reopened on the final song of a set
+        // the performer had already completed. A completed set resumes at the
+        // top; only an interrupted one resumes where it stopped.
+        if (perfIsSetSession) { lastSetSessionIdx = 0; savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
+        if (window.NavHistory) NavHistory.dismiss(); else rawCloseStage(); return;
+      }
       var r = QUEUE.stepResolvable(1, songById);
       STATE.queueSkipNotice = r.skipped > 0 ? skipNoticeText(r.skipped) : null;
       STATE.performTpose = 0; showPerform();
-      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savePerfPrefs(); }
+      if (perfIsSetSession) { lastSetSessionIdx = QUEUE.index(); savedSetFp = setFingerprint(STATE.setlist); savePerfPrefs(); }
     };
     if (el.pDown) el.pDown.onclick = function () { perfShift(-1); };
     if (el.pUp) el.pUp.onclick = function () { perfShift(1); };
@@ -1855,7 +1882,12 @@
       var stageDisp = chordSpeller(stageKey.key, stageKey.mode);
       // P0 (operator UAT): show the key by default, not only when transposed -
       // the performer wants the key at a glance whether or not they've shifted it.
-      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(seq[0]) + '  ·  ' + seq.map(stageDisp).join('  ');
+      // VOLLEY-1 (high): this said `stageDisp(seq[0])` - the FIRST CHORD, not
+      // the key. They coincide only when a song starts on its tonic, which
+      // every fixture happened to do; an explicit-key song starting off-tonic
+      // (Am progression opening on F) rendered "Key F". The key is
+      // stageKey.key; stageDisp respells it to the key's own spelling.
+      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(stageKey.key) + '  ·  ' + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';

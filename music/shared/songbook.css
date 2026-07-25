@@ -1382,7 +1382,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    mid-song - it must read at LEAST as large as the artist line beneath the
    title (previously .7rem, smaller than .pArtist's .8rem), with a 13px
    absolute floor regardless of the root font size. */
-.pKey{font-family:'Space Mono',monospace;font-size:.85rem;color:var(--accent-ink);font-weight:700;}
+/* max(13px, .85rem) makes the floor the comment above already claimed REAL:
+   .85rem alone is 13.6px only at a 16px root - a smaller root (browser text
+   setting, an accessibility profile) silently dropped it under 13px and the
+   test, which runs at the default root, could never see it (volley-1). */
+.pKey{font-family:'Space Mono',monospace;font-size:max(13px, .85rem);color:var(--accent-ink);font-weight:700;}
 /* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
    the sheet within the viewport width itself, but manual font-size steps (A+/A-)
    can still push a long unwrapped (white-space:pre) lyric line past the edge - let
