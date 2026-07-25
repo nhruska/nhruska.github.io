@@ -959,13 +959,44 @@ function extractFunctionBody(src, signatureRe) {
 }
 test('buildWhy (C1): the "why these notes" hint respells th.key via dispKeyRoot, never the raw canonical-sharp th.key', function () {
   var src = readSrc('music/shared/tracks.js');
-  var body = extractFunctionBody(src, /function buildWhy\(box, th\) \{/);
-  assert.ok(body, 'buildWhy(box, th) not found in tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th, bundle\) \{/);
+  assert.ok(body, 'buildWhy(box, th, bundle) not found in tracks.js');
   assert.ok(/cofHint/.test(body), 'expected the cofHint prose block inside buildWhy');
   assert.ok(/dispKeyRoot\(th\.key, th\.scaleMode\)/.test(body),
     'buildWhy must call dispKeyRoot(th.key, th.scaleMode) to respell the key in the hint prose');
   assert.ok(!/esc\(th\.key\)/.test(body),
     'buildWhy must not emit the raw canonical-sharp th.key (e.g. "A#") beside the key-aware note names');
+});
+// Bug #6 regression: the Practice Studio's "Why these notes?" note strip must
+// track the SELECTED solo scale, not the frozen key-mode. Three source-level
+// locks (the Studio's nested overlay flow is flaky to drive headless, so pin
+// the cause-reversal structurally so it can't silently regress):
+test('buildWhy (#6): the note strip + caption derive from the selected bundle, not the frozen th', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th, bundle\) \{/);
+  assert.ok(body, 'buildWhy(box, th, bundle) not found');
+  assert.ok(/\(bundle && bundle\.notes\) \|\| th\.notes/.test(body),
+    'the strip NOTES must come from the selected bundle (fallback th) - not th.notes alone');
+  assert.ok(/\(bundle && bundle\.degrees\) \|\| th\.degrees/.test(body),
+    'the strip DEGREES must come from the selected bundle (fallback th)');
+  assert.ok(/bundle\.label/.test(body),
+    'the caption scale name must reflect the selected bundle label');
+});
+test('select (#6): a scale switch refreshes the "Why these notes?" panel while it is open', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function select\(scaleId, persist\) \{/);
+  assert.ok(body, 'select(scaleId, persist) not found');
+  assert.ok(/whyBox && !whyBox\.hidden.*buildWhy\(whyBox, th, bundle\)/s.test(body),
+    'select() must rebuild the why panel (buildWhy(whyBox, th, bundle)) when it is open, alongside the fretboard/guide/legend refresh');
+});
+test('why toggle (#6): the panel rebuilds on each open (no stale build-once latch)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  // The old data-built latch cached the first build, so a scale changed while
+  // the panel was closed reopened stale. It must be gone, and open must rebuild.
+  assert.ok(!/data-built/.test(src),
+    'the data-built build-once latch must be removed so a reopen never shows a stale scale');
+  assert.ok(/if \(show\) buildWhy\(whyBox, th, curBundle\)/.test(src),
+    'opening the why panel must rebuild it with the current bundle');
 });
 test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th.scaleMode) into JamQueries.jamQuery, never the raw th.key', function () {
   var src = readSrc('music/shared/tracks.js');
