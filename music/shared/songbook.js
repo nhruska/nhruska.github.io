@@ -1683,6 +1683,27 @@
       showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
     });
 
+    // Short mode labels - ONE copy, used by the narrow Compose ctrlBar readout
+    // (where a full label overflows the Save button) and by the Stage key line
+    // (where the header competes with capo + transpose + resume index).
+    // Operator ruling 2026-07-25: the Stage key line spells the mode, in the
+    // FEWEST characters that stay unambiguous - "Key A Min", not a bare
+    // "Key A" (which reads identically for A major and A minor) and not the
+    // full word. Church modes keep their own short form rather than collapsing
+    // to maj/min: a mixolydian song is not "major", and the list view is
+    // already mode-honest.
+    var MODE_SHORT = {
+      Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues',
+      ionian: 'Maj', aeolian: 'Min', lydian: 'Lyd', phrygian: 'Phr', locrian: 'Loc'
+    };
+    // canonMode normalizes case + aliases; an unknown/blank mode returns '' so
+    // the caller renders the key alone rather than inventing a mode.
+    function shortMode(mode) {
+      if (!mode) return '';
+      var c = canonMode(mode) || String(mode);
+      return MODE_SHORT[c] || MODE_SHORT[String(c).toLowerCase()] || String(c).slice(0, 4);
+    }
+
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
     // P1-4: true only while the active Stage queue IS STATE.setlist itself (a
@@ -1907,7 +1928,12 @@
       // every fixture happened to do; an explicit-key song starting off-tonic
       // (Am progression opening on F) rendered "Key F". The key is
       // stageKey.key; stageDisp respells it to the key's own spelling.
-      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(stageKey.key) + '  ·  ' + seq.map(stageDisp).join('  ');
+      // Operator ruling: spell the mode, minimum characters ("Key A Min"). A bare
+      // "Key A" reads identically for A major and A minor - ambiguous on the one
+      // line a performer glances at fastest, and inconsistent with the Library
+      // list, which spells the mode on every row.
+      var stageModeTxt = shortMode(stageKey.mode);
+      if (el.pKeyLine) el.pKeyLine.textContent = 'Key ' + stageDisp(stageKey.key) + (stageModeTxt ? ' ' + stageModeTxt : '') + '  ·  ' + seq.map(stageDisp).join('  ');
       if (pSheet) {
         var view = (s.custom && !s.forkOf) ? 'chords' : STATE.performView;
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(s, STATE.performTpose, view, stageDisp) + '</div>';
@@ -3353,9 +3379,6 @@
       if (!el.progPicks) return;
       el.progPicks.innerHTML = '';
     }
-    // Short mode labels for the narrow ctrlBar readout (prevents Save button overflow).
-    // Full labels are used everywhere else (key picker chip, key-view title).
-    var MODE_SHORT = { Major: 'Maj', Minor: 'Min', Mixolydian: 'Mixo', Dorian: 'Dor', Blues: 'Blues' };
     // transpose the whole progression together — the shape moves, the intervals stay (that's the lesson)
     function renderKey() {
       // The song key/mode is now shown by the button-bar chip (#keyPickerCompact), which

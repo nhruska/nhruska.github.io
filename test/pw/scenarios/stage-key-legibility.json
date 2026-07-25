@@ -1,6 +1,6 @@
 {
   "name": "stage-key-legibility",
-  "note": "P1-6 (SDD persona goalpost): the Stage's glance key line (#pKeyLine, .pKey - the fastest thing a performer's eye checks mid-song) rendered SMALLER (.7rem/11.2px) than the artist line (.pArtist, .8rem/12.8px) beneath the title, inverting the visual hierarchy of what matters live. Fix: pKey >= pArtist's own size, with a 13px absolute floor. Red-first: pre-fix pKey computed font-size < pArtist's. VOLLEY-1: the fixture now uses an explicit-key song that opens OFF its tonic (key Am, first chord F), because the previous tonic-first fixture made 'Key ' + firstChord and 'Key ' + key indistinguishable - the label bug was invisible to it.",
+  "note": "P1-6 (SDD persona goalpost): the Stage's glance key line (#pKeyLine, .pKey - the fastest thing a performer's eye checks mid-song) rendered SMALLER (.7rem/11.2px) than the artist line (.pArtist, .8rem/12.8px) beneath the title, inverting the visual hierarchy of what matters live. Fix: pKey >= pArtist's own size, with a 13px absolute floor. Red-first: pre-fix pKey computed font-size < pArtist's. VOLLEY-1: the fixture now uses an explicit-key song that opens OFF its tonic (key Am, first chord F), because the previous tonic-first fixture made 'Key ' + firstChord and 'Key ' + key indistinguishable - the label bug was invisible to it. Operator ruling 2026-07-25: the mode is SPELLED in minimum characters ('Key A Min') - a bare 'Key A' reads identically for A major and A minor.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -64,8 +64,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "RED GOALPOST (volley-1 high): the Key line names the KEY, not the first chord - song is in Am and opens on F, so 'Key F' is the bug",
-      "js": "(function(){var e=document.getElementById('pKeyLine');if(!e)return false;var txt=e.textContent||'';var m=/^Key\\s+(\\S+)/.exec(txt);if(!m)return false;return m[1]==='Am'||m[1]==='A';})()"
+      "label": "RED GOALPOST (volley-1 high + operator ruling 2026-07-25): the Key line names the KEY and SPELLS THE MODE in minimum characters - song is in A minor and opens on F, so 'Key F' is the old bug and a bare 'Key A' is the ambiguity the ruling fixed (A major and A minor would read identically)",
+      "js": "(function(){var e=document.getElementById('pKeyLine');if(!e)return false;var txt=(e.textContent||'').trim();var m=/^Key\\s+(\\S+)\\s+(\\S+)/.exec(txt);if(!m)return false;return (m[1]==='A') && /^min$/i.test(m[2]);})()"
     },
     {
       "action": "screenshot",
