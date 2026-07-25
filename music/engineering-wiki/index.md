@@ -44,7 +44,7 @@
 | [testing.md](workflows/testing.md) | Suite map; run-all; canon; localStorage reset helper; what green gates |
 | [data-curation.md](workflows/data-curation.md) | /song flow; songs.json editing rules; track curation; phone->laptop merge |
 | [roadmap-missions.md](workflows/roadmap-missions.md) | Tutor phases; mission/sprint record; wave-2 deferrals; backlog register |
-| [render-verification-traps.md](workflows/render-verification-traps.md) | How a render check lies: zero-box rects, display-vs-box, sticky-in-overflow, selectors that never match; the width x font-scale matrix rationale; prove-the-gate-red discipline |
+| [render-verification-traps.md](workflows/render-verification-traps.md) | How a render check lies: zero-box rects, display-vs-box, sticky binding the wrong scrollport, selectors that never match; the width x font-scale matrix rationale; prove-the-gate-red discipline |
 
 ## Routing table - "which page owns X"
 

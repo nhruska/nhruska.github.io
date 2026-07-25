@@ -4,7 +4,7 @@
 
 ## Purpose
 
-[dev-verify-ship.md](dev-verify-ship.md) says WHEN to render-verify and at what viewport. This page says HOW a render check lies to you. Each row is a way an assertion goes green while the UI is broken - and every one has cost a real defect, in this app or in the sibling internal app that reached the same 44px floor and the same 412x915 review viewport independently.
+[dev-verify-ship.md](dev-verify-ship.md) says WHEN to render-verify and at what viewport. This page says HOW a render check lies to you. Each row is a way an assertion goes green while the UI is broken - and every one has cost a real defect, in this app or in a sibling internal app that reached the same 44px floor and the same 412x915 review viewport independently. The sibling's specifics are related here as anecdote: they are not verifiable from this repo, and nothing in this page depends on them being exact.
 
 The human-factors half of mobile work is already owned here: [design-principles.md](../ux-philosophy/design-principles.md) (grip model, one-screen), [interaction-safety.md](../ux-philosophy/interaction-safety.md) (guard taxonomy, scroll-rail), [ui-primitives.md](../ux-philosophy/ui-primitives.md) (which shape to reach for). This page is the other half and does not repeat them.
 
@@ -20,10 +20,10 @@ Our own version of the same species is the U5/#96 chord-tile overlap ([layout-to
 
 | Trap | Reality |
 |---|---|
-| **Hidden elements return an all-zero rect** | So `top=0`, and a clip/fold test reports the SAME bogus number for every hidden row. Twenty-two identical numbers was the tell. **Skip zero-box elements FIRST**, before any geometry test. Relevant here for every collapsed notable, un-mounted tab pane, and `[hidden]` toast. |
+| **`display:none`, unmounted, or `[hidden]` elements return an all-zero rect** | (Not `visibility:hidden` / `opacity:0` - those keep a real box, which is the next row's problem.) So `top=0`, and a clip/fold test reports the SAME bogus number for every such row. Twenty-two identical numbers was the tell. **Skip zero-box elements FIRST**, before any geometry test. Relevant here for every collapsed notable, un-mounted tab pane, and `[hidden]` toast. |
 | `display` on the element lies about visibility | A child inside a collapsed group still computes its own `display:flex` - the ANCESTOR is what is `none`. Check the rendered BOX. |
 | `offsetParent !== null` | Catches ancestor `display:none`, misses `visibility:hidden` and `opacity:0` - which is exactly how the `.toast`/`.on` opacity-fade mechanic hides. The screenshot is the authority. |
-| `position:sticky` inside any `overflow:auto` ancestor | Fails silently. No error, no warning. It just scrolls away. Worth knowing given how many panes here scroll internally by design (`.scaleBox`, `#composeChords`, `.prog`). |
+| `position:sticky` inside a scrolling ancestor | Sticks to the NEAREST scrollport, not the one you meant - so it silently scrolls away with the inner pane. No error, no warning. Worth knowing given the panes that do scroll internally by design (`.scaleBox`, `#composeChords`). Note `.prog` is NOT one of them since D-PROG-WRAP - it is `overflow-x:hidden; overflow-y:visible`. |
 | A selector that never matches | Correct CSS that never applies looks right in review and does nothing. **Verify the selector MATCHES**, not that the declaration is present. |
 | Deriving the expected value from the code under test | Reading a constant out of the CSS and asserting the element sits at that constant proves only that CSS parses. **Measure the dependency.** `--dg-canvas-w` is a documentation anchor for exactly this reason - `diagram.js` cannot read it, so the check must measure the real SVG. |
 | CSS custom properties do NOT work in `@media` conditions | So a canonical breakpoint can never be a `var()`. It has to be a documented constant. |
@@ -41,7 +41,7 @@ Our own version of the same species is the U5/#96 chord-tile overlap ([layout-to
 | Profile | `guitar-standard` | Widest `SIZES.small` canvas, so it is the worst case for tile overlap. |
 | Breakpoints | both sides | The off-by-one is where regressions hide. |
 
-Plus `env(safe-area-inset-*)` in portrait AND landscape.
+**Two of these are NOT automated - do them by hand.** `layout-check.py` runs the width x font-scale grid only. It does not emulate `env(safe-area-inset-*)`, does not add breakpoint-adjacent widths, and has no phone-landscape / coarse-pointer case. Treat those three as manual checks (or as the script's next axes) - not as covered.
 
 ## Gate discipline [STABLE]
 
@@ -50,7 +50,7 @@ Plus `env(safe-area-inset-*)` in portrait AND landscape.
 - **Fixing a DETECTOR does not retract the false records it already wrote** - regenerate its baseline in the same change.
 - **Measure intermittent defects over >= 20 loads and report the tally.** Never "fix" a race with a delay.
 - **Report UNVERIFIED plainly.** On the no-toolchain surface ([dev-verify-ship.md](dev-verify-ship.md)) the honest output is a githack preview link plus a statement of what was not checked - never an implied pass.
-- **A known gap stays documented, not silently normalized.** `layout-tokens.md` carries the `.bt-st-chordcell` gap (same U5 bug class, out of that pass's scope) rather than a quiet one-line fix - that is the pattern to copy.
+- **A known gap stays documented, not silently normalized** - and gets RETIRED in writing when it goes away. `layout-tokens.md` carried the `.bt-st-chordcell` gap (same U5 bug class, out of that pass's scope) rather than taking a quiet one-line fix. F19 then removed that row's diagrams entirely - it renders name-only `.bt-st-chordchip` now, so there is no SVG left to spill and the gap is **moot, not open**. Both halves are the pattern: state a gap you are not fixing, and close it out loud when it stops existing.
 
 ## When the operator catches something anyway [STABLE]
 
