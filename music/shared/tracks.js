@@ -668,9 +668,18 @@
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
       var playerBlock = t.yt
-        ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
+        // Video minimized by DEFAULT (operator: "I just care about the sound").
+        // The iframe stays RENDERED - never `hidden`/display:none, which would
+        // stop autoplay/audio - just clipped to 0 height by .bt-st-media.min
+        // (overflow:hidden over the 16/9 frame). "Show video" expands it. Audio
+        // plays either way; the video pixels are opt-in.
+        ? '<div class="bt-st-media min" data-media>'
+          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-stagebtns">'
+          + '<button class="bt-st-editlink" data-vidtoggle type="button" aria-expanded="false">Show video</button>'
           + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
+          + '</div>'
           + jamPanelHtml
         : '<div class="bt-st-search">'
           + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
@@ -822,6 +831,15 @@
       // itself is unchanged (still driven by renderJamPanel()), only its
       // trigger's location/label moved.
       var jamFindToggle = elPlayer.querySelector('[data-jamfindtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
+      // Video minimize toggle: the media wrapper starts .min (clipped, audio
+      // still playing). "Show video" expands it; the iframe is never removed, so
+      // toggling never interrupts the audio.
+      var vidToggle = elPlayer.querySelector('[data-vidtoggle]'), mediaEl = elPlayer.querySelector('[data-media]');
+      if (vidToggle && mediaEl) vidToggle.onclick = function () {
+        var min = mediaEl.classList.toggle('min');
+        vidToggle.textContent = min ? 'Show video' : 'Hide video';
+        vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true');
+      };
       // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
       // line it bounces a marker across (curBundle already tracks whichever
       // scale-chip is active - see the M-GUIDE W3a comment above).

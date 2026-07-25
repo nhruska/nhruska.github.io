@@ -132,6 +132,14 @@
      Studio-specific overrides. */
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  /* Video minimize: .min clips the (still-rendered, still-playing) frame to 0
+     height via overflow. NEVER display:none - that would stop the audio. */
+  .bt-st-media{overflow:hidden;flex:0 0 auto;}
+  .bt-st-media.min{max-height:0;}
+  /* Stage action row: Show/Hide video + Find another jam, side by side to save
+     vertical space above the tools. */
+  .bt-st-stagebtns{display:flex;gap:8px;padding:8px 12px;flex:0 0 auto;}
+  .bt-st-stagebtns .bt-st-editlink{flex:1 1 0;min-width:0;text-align:center;justify-content:center;}
   /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact), the iframe
      slot becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
      harmony-teacher surface usable for every track regardless of curated IDs. */

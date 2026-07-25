@@ -974,5 +974,25 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
   assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
     'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
 });
+// Video-minimize audio-safety: the media wrapper must be COLLAPSED via a class
+// (.min -> overflow-clip), NEVER `hidden`/display:none - hiding the iframe stops
+// the backing-track AUDIO, which is the whole point of "I just want the sound".
+test('playerBlock (video-min): the video wrapper starts .min and is never hidden (audio keeps playing)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/class="bt-st-media min" data-media/.test(src),
+    'the video branch must render <div class="bt-st-media min" data-media> so the frame is clipped, not removed');
+  assert.ok(!/data-media[^>]*\bhidden\b/.test(src),
+    'the media wrapper must never carry hidden - that would stop the audio');
+  assert.ok(/data-vidtoggle/.test(src) && /bt-st-stagebtns/.test(src),
+    'a Show/Hide-video toggle must sit in the .bt-st-stagebtns row (video + jam side by side)');
+});
+// CSS contract: .min collapses by clip (overflow/max-height), not display:none.
+test('tracks.css (video-min): .bt-st-media.min clips via max-height, never display:none', function () {
+  var css = readSrc('music/shared/tracks.css');
+  assert.ok(/\.bt-st-media\.min\{[^}]*max-height:0/.test(css),
+    '.bt-st-media.min must collapse with max-height:0 over overflow:hidden');
+  assert.ok(!/\.bt-st-media\.min\{[^}]*display:none/.test(css),
+    '.bt-st-media.min must NOT use display:none (kills audio)');
+});
 
 run();
