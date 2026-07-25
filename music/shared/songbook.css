@@ -71,6 +71,10 @@
   --stage-line:#333;--stage-line-soft:#444;
   --stage-ink:#f0ead8;--stage-ink-soft:#cfc9b8;--stage-ink-dim:#bbb;
   --stage-amber:#ffce6a;--stage-on-amber:#000;
+  /* Frosted scrim for a control that sits directly over scrolling stage
+     content (the dim-mode counterpart to --appbar-bg, which follows the app
+     theme and isn't legible against the fixed black stage). */
+  --stage-scrim:rgba(0,0,0,.55);
   --video-bg:#000;
   /* chord-diagram (diagram.js SVG) structural colors - flip per theme */
   --dg-grid:#3a4150;--dg-nut:#e8ebf0;--dg-base:#9aa3b2;
@@ -1378,15 +1382,17 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* WRAP-FIRST sizing model (songbook.js fitStageSheet): the sheet renders at
    the USER's size (--pscale, buttons + pinch, persisted) with long lines
    wrapped to the measured character budget; overflow-y scrolls a tall sheet.
-   overflow-x is a last-resort escape hatch for one unbreakable token on a
-   tiny screen at max zoom - let it scroll rather than silently clip.
    touch-action pan-y: one finger pans the sheet natively; the two-finger
    pinch (font size) is handled in JS. */
 /* CORE INVARIANT (sizing model v3, operator-refined 2026-07-24): the Perform
    sheet NEVER scrolls horizontally - overflow-x is hidden, and width is
    absorbed by shrink-font-then-wrap (songbook.js fitStageSheet). Vertical
    scroll stays (a tall sheet at a readable size scrolls down, never shrinks). */
-.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;--pscale:1;touch-action:pan-y;}
+/* z-index:1 comes from #305 (deterministic stacking .pSheet(1) < .pNav(5) <
+   .pSpeed(6)) and is KEPT through this merge - the two changes are orthogonal:
+   #305 decides what paints above what, this PR decides how width is absorbed.
+   Dropping either half here would silently revert a landed fix. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;touch-action:pan-y;}
 /* pInner shrink-wraps to its widest pre line so fitStageSheet's scrollWidth
    measurement sees the CONTENT width (a plain block would fill pSheet and
    hide row overflow from the re-measure pass). */
@@ -1401,7 +1407,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}
-.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;}
+/* Explicit z-index (not left to DOM-order accident): .pSheet(1) < .pNav(5) <
+   .pSpeed(6). The nav must always paint above the scrolling lyric sheet
+   beneath it, and the settings popover must always paint above the nav if
+   their boxes ever touch - deterministic regardless of markup order. */
+.pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;z-index:5;}
 .pNav .btn{padding:14px 10px;flex:1;}
 /* One-handed performance zoning. Advance (Next / finish) is the ONE control tapped
    constantly mid-song, so it becomes the dominant bottom-RIGHT target - the natural
@@ -1410,14 +1420,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    mid-performance) shrinks to a small left tab. Transpose is demoted OUT of the
    chrome entirely - it lives in the gear sheet's Key row. */
 .pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
-.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;}
+/* #pPrev is a ghost/secondary button (base .btn.ghost = fully transparent)
+   sitting directly over the scrolling lyric sheet - transparent disappears
+   into the text behind it (operator UAT: "back button transparent"). Give it
+   the same frosted-glass scrim as .appbar (var(--appbar-bg) + blur) so it
+   stays legible over any content while remaining visually secondary to the
+   filled #pNext. ID selector so it deterministically beats the shared
+   .btn.ghost rule regardless of source order. */
+.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;background:var(--appbar-bg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
 /* Settings popover sits ABOVE the nav bar with a clear gap. The old +74px let
    its bottom edge collide with the tall #pNext (~63px + 14px bottom = ~77px top)
    in portrait (operator UAT: "settings panel overlapping bottom controls");
    +92px clears it. Both share env(safe-area-inset-bottom), so the relative gap
    is stable across devices. */
-.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;}
+.pSpeed{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);display:none;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px;z-index:6;}
 .pSpeed.on{display:flex;}
 .pSpeed .psRow{display:flex;align-items:center;gap:11px;}
 .pSpeed label{flex:0 0 42px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-dim);font-weight:700;}
@@ -1425,10 +1442,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pSpeed .sv{font-family:'Space Mono';font-weight:700;font-size:.74rem;color:var(--accent-ink);width:30px;text-align:right;}
 .pSpeed .psBtns{flex:1;display:flex;gap:6px;}
 /* min-height is the 44px tap-target floor, not decoration: .78rem text with
-   8px vertical padding computes to a 33px box (measured at 412x915). The
-   floor comes out of the popover's height, never out of the tap target.
-   NOTE: the identical fix is in #305 - whichever of these lands second
-   must not drop it in the merge. */
+   8px vertical padding computes to a 33px box (measured at 412x915), which is
+   under the floor for every control in this popover. The floor comes out of
+   the popover's own height, never out of the button - per the space budget,
+   a tap target is the last thing that may shrink. */
 .pSpeed .psBtn{flex:1;min-height:44px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.78rem;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s,transform .08s;}
 .pSpeed .psBtn:active{transform:scale(.94);}
 .pSpeed .psBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
@@ -1475,6 +1492,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .perform.dim .x,.perform.dim .pmini{color:var(--stage-ink);border-color:var(--stage-line);background:var(--stage-panel);}
 .perform.dim .btn{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 .perform.dim .btn.ghost{background:transparent;color:var(--stage-ink);border-color:var(--stage-line-soft);}
+/* Dim-mode #pPrev override: the fixed black teleprompter stage doesn't follow
+   --appbar-bg (which is theme-linked), so it needs its own translucent scrim
+   (--stage-scrim) to stay legible over scrolling stage content. ID selector
+   (specificity beats the .btn.ghost class rules above regardless of order) so
+   this deterministically wins over both the light-mode #pPrev rule and the
+   general dim ghost-button rule. */
+.perform.dim #pPrev{background:var(--stage-scrim);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .perform.dim .pSpeed{background:var(--stage-panel);border-color:var(--stage-line);}
 .perform.dim .pSpeed label{color:var(--stage-ink-dim);}
 .perform.dim .pSpeed .psBtn{background:var(--stage-panel-2);border-color:var(--stage-line);color:var(--stage-ink-soft);}
