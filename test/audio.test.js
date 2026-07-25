@@ -22,20 +22,26 @@
 var assert = require('assert');
 
 /* ---- fake WebAudio (state + call-counters only, no real DSP) ---------- */
-function fakeAudioParam() {
+// VOLLEY-1 (high): this double used to DISCARD every scheduled ramp, and
+// fakeNode's start/stop were empty functions. That is precisely the
+// information that distinguishes "rings out" from "hard stop" - so the tail
+// tests could not have failed if the release were removed. The double now
+// RECORDS what production scheduled; the tests assert against the record.
+function fakeAudioParam(log, name) {
   return {
     value: 0,
-    setValueAtTime: function () { return this; },
-    linearRampToValueAtTime: function () { return this; },
-    exponentialRampToValueAtTime: function () { return this; }
+    _log: log,
+    setValueAtTime: function (v, t) { if (log) log.push({ p: name, op: 'set', v: v, t: t }); return this; },
+    linearRampToValueAtTime: function (v, t) { if (log) log.push({ p: name, op: 'lin', v: v, t: t }); return this; },
+    exponentialRampToValueAtTime: function (v, t) { if (log) log.push({ p: name, op: 'exp', v: v, t: t }); return this; }
   };
 }
-function fakeNode() {
+function fakeNode(log) {
   var target = {
     connect: function () { return target; },
     disconnect: function () {},
-    start: function () {},
-    stop: function () {},
+    start: function (t) { if (log) log.push({ op: 'start', t: t }); },
+    stop: function (t) { if (log) log.push({ op: 'stop', t: t }); },
     type: '',
     buffer: null,
     normalize: true,
@@ -47,7 +53,7 @@ function fakeNode() {
   return new Proxy(target, {
     get: function (t, prop) {
       if (prop in t) return t[prop];
-      var p = fakeAudioParam();
+      var p = fakeAudioParam(log, prop);
       t[prop] = p;
       return p;
     },
@@ -64,12 +70,13 @@ function makeFakeAudioContext() {
     suspendCalls: 0,
     bufferSourcesCreated: 0,
     oscillatorsCreated: 0,
-    createOscillator: function () { self.oscillatorsCreated++; return fakeNode(); },
-    createGain: function () { return fakeNode(); },
-    createBiquadFilter: function () { return fakeNode(); },
-    createDynamicsCompressor: function () { return fakeNode(); },
-    createConvolver: function () { return fakeNode(); },
-    createBufferSource: function () { self.bufferSourcesCreated++; return fakeNode(); },
+    schedule: [],   // every start/stop/ramp production scheduled, in order
+    createOscillator: function () { self.oscillatorsCreated++; return fakeNode(self.schedule); },
+    createGain: function () { return fakeNode(self.schedule); },
+    createBiquadFilter: function () { return fakeNode(self.schedule); },
+    createDynamicsCompressor: function () { return fakeNode(self.schedule); },
+    createConvolver: function () { return fakeNode(self.schedule); },
+    createBufferSource: function () { self.bufferSourcesCreated++; return fakeNode(self.schedule); },
     createBuffer: function (channels, length, sampleRate) {
       var chans = [];
       for (var i = 0; i < channels; i++) chans.push(new Float32Array(length));
@@ -622,6 +629,111 @@ test('INVARIANT 4b (wiring): every chord-interactive surface primes on pointerdo
   assert.ok(/ChordAudio\.releaseWarm\(\)/.test(songbookSrc), 'songbook.js must call ChordAudio.releaseWarm() when that screen closes (code, not just a comment)');
   assert.ok(/ChordAudio\.keepWarm\(\)/.test(tracksSrc), 'tracks.js must call ChordAudio.keepWarm() when the Studio opens (code, not just a comment)');
   assert.ok(/ChordAudio\.releaseWarm\(\)/.test(tracksSrc), 'tracks.js must call ChordAudio.releaseWarm() when the Studio closes (code, not just a comment)');
+});
+
+
+/* =====================================================================
+ * VOLLEY-1 goalposts. Each of these fails against the code as it stood
+ * before the volley-1 fixes - that is the point of them.
+ * ===================================================================== */
+
+test('VOLLEY-1 (high): the close grace covers the FULL scheduled tail, so closing a surface cannot suspend mid-ring', function () {
+  resetFakeAudioForTest();
+  ChordAudio.keepWarm();
+  fakeCtx.currentTime = 0;
+  // A voice whose release finishes at t=2.25s - the real shape: strum's
+  // default dur 1.6 + releaseFor() up to 0.6 + the stop pad.
+  ChordAudio._noteTailEnd(2.25);
+  var delay = ChordAudio._suspendDelayMs();
+  assert.ok(delay >= 2250,
+    'suspend delay (' + delay + 'ms) must cover a tail ending at 2.25s - a 1800ms constant suspends the context mid-decay and re-creates the cutoff');
+  // And it must actually be USED: close the surface, advance to just before
+  // the tail ends, and the context must still be running.
+  ChordAudio.releaseWarm();
+  advanceClock(2000);
+  assert.strictEqual(fakeCtx.state, 'running', 'context suspended at 2.0s while a voice was still ringing until 2.25s');
+  advanceClock(1000);
+  assert.strictEqual(fakeCtx.state, 'suspended', 'context should suspend once the tail has finished');
+});
+
+test('VOLLEY-1 (high): the close grace floor still applies when nothing is ringing', function () {
+  resetFakeAudioForTest();
+  fakeCtx.currentTime = 100;          // well past any recorded tail
+  ChordAudio.keepWarm();
+  ChordAudio.releaseWarm();
+  advanceClock(1700);
+  assert.strictEqual(fakeCtx.state, 'running', 'must not suspend before the 1800ms close grace');
+  advanceClock(200);
+  assert.strictEqual(fakeCtx.state, 'suspended', 'must suspend once the close grace elapses');
+});
+
+test('VOLLEY-1 (high): strum schedules a RELEASE RAMP, not a hard stop (the double now records it)', function () {
+  resetFakeAudioForTest();
+  fakeCtx.state = 'running';
+  fakeCtx.currentTime = 0;
+  fakeCtx.schedule.length = 0;
+  ChordAudio.strum([0, 0, 0, 0], [261.6, 329.6, 392.0, 493.9], 1.6);
+  var ramps = fakeCtx.schedule.filter(function (e) { return e.op === 'exp'; });
+  assert.ok(ramps.length > 0,
+    'no exponential release ramp was scheduled - the chord would stop dead. THIS is what the old discard-everything double could not see');
+  var stops = fakeCtx.schedule.filter(function (e) { return e.op === 'stop'; });
+  assert.ok(stops.length > 0, 'expected the sources to be stopped');
+  // The STRING sources must outlive their release ramps - a source stopped
+  // before its fade completes is audibly a cutoff. Compared on the latest of
+  // each: the pick-scrape source also stops (~20ms in) and carries no ramp,
+  // so a per-event comparison would flag it as a false cutoff.
+  var lastRamp = Math.max.apply(null, ramps.map(function (r) { return r.t; }));
+  var lastStop = Math.max.apply(null, stops.map(function (r) { return r.t; }));
+  assert.ok(lastStop >= lastRamp,
+    'the last source stops at ' + lastStop + 's while a release ramp runs to ' + lastRamp + 's - that is the cutoff this PR exists to remove');
+});
+
+test('VOLLEY-1 (high): backgrounding notifies subscribers so a surface cannot believe it still holds a lease', function () {
+  resetFakeAudioForTest();
+  var notified = 0;
+  ChordAudio.onHardRelease(function () { notified++; });
+  ChordAudio.keepWarm();
+  assert.strictEqual(ChordAudio.isWarm(), true);
+  fakeDocument.hidden = true;
+  visibilityHandler();
+  assert.strictEqual(ChordAudio.isWarm(), false, 'backgrounding must zero the refcount');
+  assert.strictEqual(notified, 1, 'subscribers must be told, or their own warm flags desynchronise from the refcount');
+  fakeDocument.hidden = false;
+});
+
+test('VOLLEY-1 (high): tracks.js guards its keep-warm so an in-place Studio reopen cannot leak the refcount', function () {
+  var fs = require('fs'), path = require('path');
+  var tracksSrc = stripComments(fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8'));
+  assert.ok(/if\s*\(\s*window\.ChordAudio\s*&&\s*!studioAudioWarm\s*\)\s*\{\s*window\.ChordAudio\.keepWarm\(\)/.test(tracksSrc),
+    'openStudio() must only take a keep-warm lease when it does not already hold one - openStudio() is re-entered in place on url save/clear and video add, and each unguarded call leaked a count only one closePlayer() would release');
+});
+
+test('VOLLEY-1 (high): Stage takes its own keep-warm lease (it never routes through applyTab)', function () {
+  var fs = require('fs'), path = require('path');
+  var songbookSrc = stripComments(fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8'));
+  assert.ok(/function startPerform\([^)]*\)\s*\{[\s\S]{0,4000}?stageKeepWarm\(\)/.test(songbookSrc),
+    'startPerform() must take a keep-warm lease - Stage is chord-interactive but opens outside applyTab(), so the screen map never covered it');
+  assert.ok(/function rawCloseStage\(\)[^\n]*stageReleaseWarm\(\)/.test(songbookSrc),
+    'rawCloseStage() must release the Stage lease, or the refcount never returns to 0');
+});
+
+test('VOLLEY-1 (medium): compose priming is wired on EVERY chord-screen entry, not only the cold edge', function () {
+  var fs = require('fs'), path = require('path');
+  var songbookSrc = stripComments(fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8'));
+  assert.ok(/if\s*\(isChordScreen\)\s*wireChordScreenPrime\(name\);/.test(songbookSrc),
+    'wireChordScreenPrime must run on every chord-screen entry - gating it behind the cold->chord edge meant practice->compose never wired Compose priming');
+});
+
+test('VOLLEY-1 (medium): resume/suspend rejections are caught (autoplay policy must not surface as unhandled noise)', function () {
+  var fs = require('fs'), path = require('path');
+  var audioSrc = stripComments(fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'audio.js'), 'utf8'));
+  assert.ok(/function settle\(p\)/.test(audioSrc), 'expected a settle() helper that attaches a catch');
+  // Every resume() either goes through settle() or supplies its own rejection
+  // arm (whenRunning's, which must also decide what happens to the note).
+  var bare = audioSrc.match(/(?<!settle\()\ba\.resume\(\)(?!\.then\(function \(\) \{ play\(false\); \}, function \(\))/g) || [];
+  assert.strictEqual(bare.length, 0, 'every resume() must be settled or have a rejection arm: ' + bare.join(', '));
+  assert.ok(/AC\.suspend\(\)/.test(audioSrc) === false || /settle\(AC\.suspend\(\)\)/.test(audioSrc),
+    'every suspend() must go through settle()');
 });
 
 run();

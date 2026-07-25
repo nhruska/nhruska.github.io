@@ -1668,7 +1668,7 @@
     function relWake() { try { if (STATE.wakeLock) { STATE.wakeLock.release(); STATE.wakeLock = null; } } catch (e) { } }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
     // NavHistory.dismiss (that's the button/back-button path, not this).
-    function rawCloseStage() { relWake(); if (performEl) performEl.classList.remove('on'); }
+    function rawCloseStage() { relWake(); stageReleaseWarm(); if (performEl) performEl.classList.remove('on'); }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -1696,6 +1696,11 @@
       if (el.pSpeedR) { el.pSpeedR.value = STATE.scrollSpeed; if (el.pSpeedV) el.pSpeedV.textContent = STATE.scrollSpeed; }
       showPerform();
       reqWake();
+      // Stage is a chord-interactive surface that never routes through
+      // applyTab(), so it takes its own keep-warm lease - otherwise the first
+      // chord tap in Stage pays the ~0.5s resume lag the rest of this PR
+      // exists to remove (volley-1 high).
+      stageKeepWarm();
       if (window.NavHistory) NavHistory.open('stage', rawCloseStage);
     }
     if (el.performBtn) el.performBtn.onclick = function () { startPerform(STATE.setlist, 0, 0, stageDefaultView); };
@@ -5326,7 +5331,29 @@
     // ChordAudio.keepWarm()/releaseWarm() are reference-counted, so getting
     // this edge-triggered right here is what keeps that count correct.
     var chordScreenWarm = false;
+    // Stage is NOT in this map on purpose: it is an overlay opened by
+    // startPerform(), which does not route through applyTab(), so it holds
+    // its own keep-warm lease (see stageWarm below). The comment above used
+    // to claim Practice/Stage/Compose while the map covered only two of them
+    // and Stage got no lease at all (volley-1 high).
     var CHORD_INTERACTIVE_SCREENS = { practice: true, compose: true };
+    // Stage's own edge-triggered lease. ChordAudio's count is a refcount, so
+    // Stage-over-Practice nests correctly; the flag is what keeps this
+    // edge-triggered (a re-entrant startPerform must not double-count).
+    var stageWarm = false;
+    function stageKeepWarm() {
+      if (stageWarm || !window.ChordAudio) return;
+      window.ChordAudio.keepWarm(); stageWarm = true;
+    }
+    function stageReleaseWarm() {
+      if (!stageWarm || !window.ChordAudio) return;
+      window.ChordAudio.releaseWarm(); stageWarm = false;
+    }
+    // Backgrounding zeroes ChordAudio's refcount; both local flags have to
+    // follow or the surfaces believe they still hold a lease they lost.
+    if (window.ChordAudio && window.ChordAudio.onHardRelease) {
+      window.ChordAudio.onHardRelease(function () { chordScreenWarm = false; stageWarm = false; });
+    }
     // Eagerly resumes the WebAudio context the instant a finger LANDS
     // anywhere on a chord-interactive screen (pointerdown), rather than
     // waiting for the click that actually schedules the note - see
@@ -5361,7 +5388,12 @@
       // individual chord-tap call site.
       var isChordScreen = !!CHORD_INTERACTIVE_SCREENS[name];
       if (window.ChordAudio) {
-        if (isChordScreen && !chordScreenWarm) { window.ChordAudio.keepWarm(); wireChordScreenPrime(name); }
+        // wireChordScreenPrime is idempotent PER SCREEN, so it must run on
+        // every chord-screen entry - not only the cold->chord edge. Gating it
+        // behind !chordScreenWarm meant practice->compose (warm on both sides)
+        // never wired Compose's pointerdown priming at all (volley-1 medium).
+        if (isChordScreen) wireChordScreenPrime(name);
+        if (isChordScreen && !chordScreenWarm) window.ChordAudio.keepWarm();
         else if (!isChordScreen && chordScreenWarm) window.ChordAudio.releaseWarm();
       }
       chordScreenWarm = isChordScreen;

@@ -75,16 +75,48 @@
   var warmCount = 0;
   // Grace after the LAST warm surface closes, before actually suspending:
   // long enough that a strum triggered right as the surface closes still
-  // rings out (strum's default dur is 1.6s), short enough that it isn't the
-  // full 20s background-idle window - the user just told us, by navigating
-  // away, that they're done with chords for now.
+  // rings out, short enough that it isn't the full 20s background-idle
+  // window - the user just told us, by navigating away, that they're done
+  // with chords for now.
+  //
+  // VOLLEY-1 (high): this was a hardcoded 1800ms while the natural-decay
+  // work lengthened the tail to `dur` (1.6s default) + releaseFor(freq) (up
+  // to REL_MAX 0.6s) + the strum's own pick spread - over 2.2s. Closing the
+  // surface mid-tail suspended the context and CUT THE CHORD OFF: the exact
+  // symptom this PR exists to remove, arriving by a different route.
+  //
+  // The floor stays, but the actual wait is now derived from what was
+  // really scheduled: every voice reports the AudioContext time its release
+  // finishes, and the suspend waits for the latest of those. That holds for
+  // a non-default `dur` too, which a constant never could.
   var SURFACE_CLOSE_RELEASE_MS = 1800;
+  var TAIL_PAD_MS = 120;          // small cushion past the last scheduled release
+  var lastTailEndsAt = 0;         // AudioContext time (seconds) of the latest scheduled tail end
+
+  // Called by every voice with the AC time its release finishes.
+  function noteTailEnd(t) { if (t > lastTailEndsAt) lastTailEndsAt = t; }
+
+  // ms to wait before suspending: never less than the close grace, and never
+  // less than what is still ringing.
+  function suspendDelayMs() {
+    var remaining = 0;
+    if (AC && typeof AC.currentTime === 'number') {
+      remaining = Math.max(0, (lastTailEndsAt - AC.currentTime) * 1000 + TAIL_PAD_MS);
+    }
+    return Math.max(SURFACE_CLOSE_RELEASE_MS, remaining);
+  }
+
+  // resume()/suspend() return promises that REJECT under an autoplay policy
+  // (and on some engines when called in the wrong state). Unhandled, they
+  // surface as console noise and leave the caller believing the context is
+  // running. Always attach a no-op catch; callers re-check `state` anyway.
+  function settle(p) { if (p && typeof p.catch === 'function') p.catch(function () {}); return p; }
 
   function releaseWhenIdle(secondsFromNow) {
     if (idleTimer) clearTimeout(idleTimer);
     if (warmCount > 0) return; // a surface is open: stay running, no idle-release
     idleTimer = setTimeout(function () {
-      if (AC && AC.state === 'running') AC.suspend();
+      if (AC && AC.state === 'running') settle(AC.suspend());
     }, secondsFromNow * 1000 + IDLE_RELEASE_MS);
   }
 
@@ -96,7 +128,7 @@
     if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
     if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
       var a = ctx();
-      if (a.state !== 'running') a.resume();
+      if (a.state !== 'running') settle(a.resume());
     }
   }
   // Call when that surface CLOSES. Once the LAST opener releases (the exact
@@ -110,8 +142,8 @@
     if (warmCount === 0) {
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = setTimeout(function () {
-        if (AC && AC.state === 'running') AC.suspend();
-      }, SURFACE_CLOSE_RELEASE_MS);
+        if (AC && AC.state === 'running') settle(AC.suspend());
+      }, suspendDelayMs());
     }
   }
   function isWarm() { return warmCount > 0; }
@@ -124,19 +156,29 @@
   function primeNow() {
     if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
       var a = ctx();
-      if (a.state !== 'running') a.resume();
+      if (a.state !== 'running') settle(a.resume());
     }
   }
   // Backgrounding the tab hard-releases immediately and unconditionally -
   // regardless of warmCount - because the point of releasing focus is to
   // hand it back to another app the instant this one isn't in the
   // foreground to be heard, not to wait out a grace period.
+  //
+  // VOLLEY-1 (high): zeroing warmCount here desynchronised every CALLER's
+  // own boolean (songbook's chordScreenWarm, tracks' studioAudioWarm). On
+  // return to the foreground those still read "warm", so nothing re-armed
+  // the context and the later release decremented a count that was already
+  // 0 - a surface that looks active but is no longer idle-protected.
+  // Callers now subscribe and reconcile.
+  var hardReleaseSubs = [];
+  function onHardRelease(fn) { if (typeof fn === 'function') hardReleaseSubs.push(fn); }
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
         warmCount = 0;
         if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
-        if (AC && AC.state === 'running') AC.suspend();
+        if (AC && AC.state === 'running') settle(AC.suspend());
+        hardReleaseSubs.forEach(function (fn) { try { fn(); } catch (e) {} });
       }
     });
   }
@@ -152,7 +194,13 @@
   // the generous 20ms pad because its clock just unfroze.
   function whenRunning(a, play) {
     if (a.state === 'running') { play(true); return; }
-    a.resume().then(function () { play(false); });
+    // The rejection arm is not decoration: under an autoplay policy resume()
+    // REJECTS, and without a handler that surfaced as an unhandled rejection
+    // while the note silently never played (volley-1 medium). There is
+    // genuinely nothing to schedule in that case - the next real user gesture
+    // resumes the context - but it must fail quietly and deliberately, not by
+    // accident.
+    a.resume().then(function () { play(false); }, function () { /* context refused to resume - no note */ });
   }
 
   /* ---- voice cache -------------------------------------------------------
@@ -419,6 +467,7 @@
       g.gain.setValueAtTime(0.2, t + Math.max(0.04, dur - rel)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(g); o2.connect(g); g.connect(a.destination);
       o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
+      noteTailEnd(t + dur);
       releaseWhenIdle(dur);
     });
   }
@@ -464,6 +513,9 @@
     src.connect(g); g.connect(m.input);
     src.start(t);
     src.stop(relEnd + 0.05);                            // stop AFTER the fade - already silent, no click
+    // Tell the keep-warm layer when this voice actually goes silent, so
+    // closing the surface cannot suspend the context mid-tail (volley-1).
+    noteTailEnd(relEnd + 0.05);
     if (scrape && m.scrapeIn) {
       var sd = scrapeRender(a.sampleRate, 7, { level: 1 });
       var sb = a.createBuffer(1, sd.length, a.sampleRate);
@@ -547,7 +599,12 @@
     tone: tone, strum: strum, freqForString: freqForString, ksRender: ksRender,
     scrapeRender: scrapeRender, VoiceCache: VoiceCache,
     keepWarm: keepWarm, releaseWarm: releaseWarm, isWarm: isWarm, primeNow: primeNow,
-    releaseFor: releaseFor, releaseGain: releaseGain
+    onHardRelease: onHardRelease,
+    releaseFor: releaseFor, releaseGain: releaseGain,
+    // Exposed for the suite: the close-grace must cover the longest tail the
+    // envelope can schedule, which a hardcoded constant silently stopped
+    // doing when the decay was lengthened.
+    _suspendDelayMs: suspendDelayMs, _noteTailEnd: noteTailEnd
   };
 
 })(typeof window !== 'undefined' ? window : this);

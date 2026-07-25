@@ -286,6 +286,13 @@
     // closePlayer - shared by both the plain player and the Studio - only
     // releases when IT was the one that actually kept the context warm.
     var studioAudioWarm = false;
+    // Backgrounding the tab zeroes ChordAudio's refcount outright. Without
+    // this, studioAudioWarm stayed true, so returning to the foreground left
+    // the open Studio believing it held a warm context it no longer had -
+    // and closePlayer() then released against a zeroed count (volley-1 high).
+    if (window.ChordAudio && window.ChordAudio.onHardRelease) {
+      window.ChordAudio.onHardRelease(function () { studioAudioWarm = false; });
+    }
     function closePlayer() {
       if (global.Sound) global.Sound.stopAll();
       studioSound = null;
@@ -412,7 +419,12 @@
       // is definitely opening - hold the audio engine warm for as long as it
       // stays open, so every chord tap is immediate (see keepWarm() in
       // audio.js). closePlayer() (above) releases it.
-      if (window.ChordAudio) { window.ChordAudio.keepWarm(); studioAudioWarm = true; }
+      // Guarded: openStudio() is re-entered IN PLACE (save/clear a URL, add a
+      // video - see the rerender paths below) without closePlayer() running
+      // in between, so an unguarded keepWarm() incremented a refcount only
+      // one closePlayer() would ever release. That leak pinned audio focus
+      // (background music stays paused) until a reload (volley-1 high).
+      if (window.ChordAudio && !studioAudioWarm) { window.ChordAudio.keepWarm(); studioAudioWarm = true; }
       // Mode-honest key label: "A" (ionian), "Am" (aeolian), "A dorian" /
       // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
       // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
