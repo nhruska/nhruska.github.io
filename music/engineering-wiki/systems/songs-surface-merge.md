@@ -58,10 +58,27 @@ diverges. Measured at 412x915 on `3d7d4a3`:
 
 Row affordances derive from **setlist membership**, not from the active view:
 
-| Song state | Row shows |
-|---|---|
-| Not in setlist | `+` (or the seed/ghost variant per S-SETADD-EVIDENT) |
-| In setlist | position number, grip, remove `x` |
+| Song state | Row shows (ALL view) | Row shows (SETLIST view) |
+|---|---|---|
+| Not in setlist | `+` (or the seed/ghost variant per S-SETADD-EVIDENT) | n/a |
+| In setlist | position + the existing check-mark toggle | position, grip, remove `x` |
+
+**Amended during the phase-1 build (2026-07-26).** The first cut rendered
+in-set rows in the All view with the setlist's full grammar - position, grip
+AND the red remove handle - and `setadd-keyseed` failed against it. The test
+was right:
+
+- **The red `x` is wrong in the All view.** In a list of ALL songs it reads as
+  "delete this song", not "take it out of tonight's set". The same glyph means
+  different things depending on what the list IS. The existing check-mark
+  toggle already says it unambiguously.
+- **The grip is wrong there too.** A drag in a searched, sorted list would
+  reorder against an order that is not on screen - an affordance that lies.
+
+Only the POSITION is borrowed, which is the part that carries membership.
+`list-item.js` now renders a position whenever the caller passes one instead
+of gating it on the segment - position is a fact about membership, which is
+the whole principle.
 
 So an in-setlist song shows its position and grip **in the All view too**. "Is
 this in my set, and where?" becomes answerable without switching. One source of
@@ -141,8 +158,10 @@ consumed-and-removed. Same shape here, so it gets its own goalpost.
 
 **Phase 1**
 
-1. A song in the setlist shows position + grip in the **All** view - proves the
-   row is driven by membership, not by view.
+1. A song in the setlist shows its POSITION in the **All** view - proves the
+   row is driven by membership, not by view. (Amended from "position + grip":
+   see the row table above - the grip and the remove handle stay in the Setlist
+   view, where the order is the content and the x is unambiguous.)
 2. Switching segments does not re-order or re-filter the other view's state.
 3. `activeTab.v1 = 'jam'` restores to Songs/Setlist **once**; choosing All then
    reloading lands on All (the sticky-marker regression).
