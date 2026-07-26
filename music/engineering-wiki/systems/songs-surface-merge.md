@@ -159,7 +159,37 @@ consumed-and-removed. Same shape here, so it gets its own goalpost.
 9. `activeTab.v1 = 'compose'` restores to Progressions once, then stays where
    the user puts it.
 
-## Open question left
+## Naming: `Songs`, not `Library` (ruled 2026-07-26)
 
-**Naming of the merged surface:** `Songs` (used throughout this spec) or keep
-`Library`? The tab says Library today and the header reads "Music / Library".
+| Reason | |
+|---|---|
+| **A library does not have a setlist.** | Under `Songs`, the segments read "my songs -> the ones I am playing tonight". Under `Library`, a Setlist segment inside a *library* is a category error - the very incoherence the merge exists to remove. |
+| **Parallel with Progressions.** | The nav becomes two MATERIALS (Songs, Progressions) plus two ACTIONS (Compose, Tune). `Library` is a PLACE - a third kind of noun that makes the bar read as three unrelated ideas. |
+| **It makes the pipeline legible.** | Progressions are raw material; Compose turns them into songs; Songs is where they land and get played. `Library` hides that arc behind a filing metaphor. |
+| **Ownership.** | Once Compose is a first-class surface the collection is substantially the user's OWN work. "Library" quietly says your songs live in someone else's building. |
+
+### Copy that changes - and what was already owed
+
+The rename touches ~9 user-visible strings (`TAB_LABELS`, the tab pill, the tab
+button, the practice empty state, the practice back label, the setlist empty
+state, the `progsection` notable, the "Open Library" toast action, and
+repertoire-form's "Save to my Library").
+
+**Several were already going to change**, because they describe travelling
+between two places that stop being two places:
+
+- "Add songs from the Library with the + button" -> the setlist is a SEGMENT
+  now; there is nowhere to travel to.
+- "Open Library" (toast) -> "Show all songs" - a segment switch, not a trip.
+- "Choose a song from the Library to open it" -> "Choose a song to open it".
+
+So part of the rename cost is a debt the merge incurs regardless of the name.
+
+## Tab ORDER: unchanged (frequency, not narrative)
+
+The pipeline reads Progressions -> Compose -> Songs, which tempts a nav
+ordered that way. **Do not.** A bottom nav is hit dozens of times a session and
+should be ordered by what the thumb reaches for, not by the story the product
+wants to tell: opening the app to PLAY is far more common than opening it to
+write. `Songs` stays first, matching today's Library-first default, and the
+rename does not also move things under the user.
