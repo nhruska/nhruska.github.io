@@ -355,7 +355,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    browser doesn't claim the touch for scrolling, letting the pointer-drag lift.
    The two vertical-ellipsis glyphs tuck together into a 6-dot grip. */
 .listItem .li-grip{flex:0 0 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
-  cursor:grab;min-width:38px;min-height:44px;align-self:center;display:flex;align-items:center;justify-content:center;
+  cursor:grab;min-width:44px;min-height:44px;align-self:center;display:flex;align-items:center;justify-content:center;
   touch-action:none;-webkit-user-select:none;user-select:none;padding-right:2px;}
 .listItem .li-grip:active{cursor:grabbing;color:var(--txt-soft);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
@@ -465,8 +465,19 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * are for top-level surfaces). Only the count badge and the reorder-grip
  * suppression below are new.
  */
-.songsSeg{margin-bottom:11px;}
-.songsSeg button{flex:1;min-height:44px;border:none;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.82rem;border-radius:var(--r-btn-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s;}
+/* flex:0 0 auto is load-bearing, not tidiness: .screen is a flex column, and
+   in the Setlist view the two ALL-view blocks are hidden - so without this the
+   segment is the only growable child left and stretches to ~230px tall. The
+   tap-floor gate was perfectly green while it did (44px is a FLOOR); only the
+   screenshot showed it. */
+/* .modeSwitch.songsSeg, not .songsSeg: the base .modeSwitch rule sets flex:1
+   and sits AFTER this block at equal specificity, so a single-class selector
+   here silently loses. Measured, not guessed - the segment computed
+   `flex: 1 1 0%` and stretched to 238px in the Setlist view, where it is the
+   only growable child once the All-view blocks are hidden. Two classes win
+   regardless of source order. */
+.modeSwitch.songsSeg{flex:0 0 auto;margin-bottom:11px;}
+.modeSwitch.songsSeg button{flex:1;min-height:44px;align-self:stretch;border:none;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.82rem;border-radius:var(--r-btn-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s;}
 .songsSeg button.on{background:var(--accent);color:var(--on-accent);}
 /* The count answers "is there anything in my set?" without switching views. */
 .segCount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;font-weight:700;font-family:'Space Mono',monospace;}
@@ -478,6 +489,26 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    an order that is not on screen. Reorder belongs where the order IS the
    content. Position + remove stay; the grip is suppressed here only. */
 #songsList .li-grip{display:none;}
+/* `hidden` loses to a class rule that sets display (both are one selector, and
+   the author sheet wins over the UA sheet) - so .setHead{display:flex} kept the
+   setlist head row on screen in the All view even with [hidden] set. Caught by
+   LOOKING at the render, not by the gate: every automated check was green while
+   the wrong chrome was showing. These explicit rules restore what `hidden`
+   promises for the four blocks the segment swaps. */
+.setHead[hidden],.libSet[hidden],#segAllChrome[hidden],#libSongs[hidden]{display:none;}
+/* Landscape on a phone leaves ~412px of height, and the Songs chrome (segment +
+   search + two chip rows) plus the app bar and tab bar consumed essentially all
+   of it - the song list was pushed to zero height and became unreachable. The
+   merge added the segment, so the merge owns this.
+   Per the space budget the height comes out of the GAPS first, never off a tap
+   target: every stacked margin in this chrome drops to 4px in landscape. The
+   segment, the search box and the chips keep their 44px hit areas untouched. */
+@media (orientation:landscape) and (max-height:560px){
+  .modeSwitch.songsSeg{margin-bottom:4px;}
+  #segAllChrome .searchWrap,#segAllChrome .libSearchRow{margin-bottom:4px;}
+  #segAllChrome .chipScrollWrap,#segAllChrome .chips{margin-bottom:4px;}
+  .setHead{margin-bottom:4px;}
+}
 .modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:3px;}
 .modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}
@@ -539,7 +570,13 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* A full-width action button in the song-view .actions row (e.g. "Delete
    progression") composes .btn with .full instead of an inline flex-basis hack. */
 .actions .btn.full{flex-basis:100%;}
-.btn{flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
+/* min-height is the 44px tap floor at the PRIMITIVE (issue #311's lesson,
+   applied one level up). 12px padding + .85rem gives 42px - two short - and
+   the existing tap-floor gate could not see it: the one .btn it would have
+   measured (#performBtn) is display:none while the setlist is empty, and the
+   fixture never seeded a setlist. A control hidden in the fixture is a
+   control never measured; found by seeding one here. */
+.btn{min-height:44px;flex:1;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-family:inherit;font-weight:600;font-size:.85rem;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:transform .08s,background .15s,border-color .15s;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn.ghost{background:transparent;color:var(--txt-soft);}
 .btn.red{background:var(--accent);border-color:var(--accent-ink);color:var(--on-accent);}

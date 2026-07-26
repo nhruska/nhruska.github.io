@@ -202,7 +202,11 @@
     var sub = esc(item.artist || '');
     if (item.year != null) sub += ' · ' + esc(item.year);
 
-    var num = (seg === 'set' && opts.position != null)
+    // Position is a fact about MEMBERSHIP, not about which list you are looking
+    // at - so it renders wherever the caller knows one (SONGS-MERGE phase 1:
+    // the All view shows an in-set song's position too). The caller passes it
+    // only when there is one, so this needs no segment gate.
+    var num = (opts.position != null)
       ? '<div class="li-num">' + esc(opts.position) + '</div>' : '';
 
     var metaHtml = '';

@@ -955,11 +955,17 @@
         // that lies. #songsList hides it in CSS; the Setlist view keeps it.
         var setIdx = sid == null ? -1 : STATE.setlist.indexOf(sid);
         var node = global.ListItem.render(displayRecFor(rec), {
-          segment: setIdx >= 0 ? 'set' : 'library',
+          // Stays segment:'library' deliberately. An earlier cut rendered in-set
+          // rows here as 'set' rows - which gave them the setlist's red remove
+          // handle. In a list of ALL songs that reads as "delete this song",
+          // not "take it out of tonight's set": the same glyph means something
+          // different depending on what the list IS. The existing check-mark
+          // toggle already says "in set, tap to take it out" unambiguously, so
+          // only the POSITION is borrowed from the set view.
+          segment: 'library',
           position: setIdx >= 0 ? setIdx + 1 : null,
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
-          onRemove: setIdx >= 0 ? function () { removeFromSet(sid); } : null,
           onAdd: state === 'add' ? function () { toggleSet(sid); }
             : state === 'seed' ? function () { seedKeyChordAndAdd(rec); }
             : null,

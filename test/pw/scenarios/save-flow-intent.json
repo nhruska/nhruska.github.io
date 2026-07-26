@@ -1,6 +1,6 @@
 {
   "name": "save-flow-intent",
-  "note": "Issue #265 (operator UAT 2026-07-17), all three save-flow items in one pass. A: a FRESH progression save (no song structure touched) asks intent first - 'Save this progression, or build it into a song?'. B: the name row defaults to 'Original progression' (asset-type-aware, not 'Original track'). C: post-save shows the named-asset banner with a one-tap next step (Open Setlist when the opt-in was checked); tapping it lands on the Setlist with the saved item on top. Written red-first against main (no intent row, 'Original track' default, bare 'Saved to your Library' toast).",
+  "note": "Issue #265 (operator UAT 2026-07-17), all three save-flow items in one pass. A: a FRESH progression save (no song structure touched) asks intent first - 'Save this progression, or build it into a song?'. B: the name row defaults to 'Original progression' (asset-type-aware, not 'Original track'). C: post-save shows the named-asset banner with a one-tap next step (Show setlist when the opt-in was checked); tapping it lands on the Setlist with the saved item on top. Written red-first against main (no intent row, 'Original track' default, bare 'Saved to your Library' toast).",
   "viewport": {
     "width": 412,
     "height": 915
@@ -67,7 +67,7 @@
     {
       "action": "evalAssert",
       "label": "#265-C: the post-save banner names the saved asset and offers the Setlist as the one-tap next step",
-      "js": "(function(){var b=document.querySelector('.saveDone');if(!b||b.hidden)return false;var t=b.textContent;return t.indexOf('Saved Original progression')>=0 && t.indexOf('Open Setlist')>=0;})()"
+      "js": "(function(){var b=document.querySelector('.saveDone');if(!b||b.hidden)return false;var t=b.textContent;return t.indexOf('Saved Original progression')>=0 && t.indexOf('Show setlist')>=0;})()"
     },
     {
       "action": "screenshot",
@@ -75,7 +75,7 @@
     },
     {
       "action": "tapText",
-      "text": "Open Setlist"
+      "text": "Show setlist"
     },
     {
       "action": "wait",
@@ -83,8 +83,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "#265-C: the next-step tap lands on the Setlist with the saved progression on top",
-      "js": "(function(){var scr=document.getElementById('s-jam');if(!scr||!scr.classList.contains('on'))return false;var first=document.querySelector('#setBody .listItem .li-title');return !!first && /Original progression/.test(first.textContent);})()"
+      "label": "#265-C: the next-step tap lands on the Setlist SEGMENT with the saved progression on top (SONGS-MERGE: one surface, so this is a segment switch)",
+      "js": "(function(){var seg=document.getElementById('segSet');var body=document.getElementById('setBody');if(!seg||!seg.classList.contains('on'))return false;if(!body||body.offsetParent===null)return false;var first=body.querySelector('.listItem');return !!first && first.textContent.indexOf('Original progression')>=0;})()"
     },
     {
       "action": "screenshot",

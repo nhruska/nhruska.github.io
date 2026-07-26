@@ -1,0 +1,123 @@
+{
+  "name": "songs-surface-merge",
+  "note": "SONGS-MERGE phase 1 (decisions.md SONGS-MERGE; systems/songs-surface-merge.md). Library and Setlist were two bottom-nav tabs listing the same records, so nothing said which one was the truth about a song - the operator reported exactly that confusion. They are ONE 'Songs' surface now with an All | Setlist segmented switch, per component-conventions:65 (bottom nav = top-level surfaces ONLY; view switches are segmented). The load-bearing goalpost is #1: a row's affordances derive from setlist MEMBERSHIP, not from which view you are standing in, so an in-set song shows its position in the All view too. Red-first: every goalpost below fails on the pre-merge two-tab build.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\"]"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1100
+    },
+    {
+      "action": "evalAssert",
+      "label": "layout settle gate: fonts loaded before any geometry is measured",
+      "js": "document.fonts.ready.then(function(){ return true; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (structure): the bottom nav no longer carries a separate Setlist tab - one collection is one surface",
+      "js": "(function(){var tabs=Array.prototype.map.call(document.querySelectorAll('.tabbar button'),function(b){return b.dataset.tab;});return tabs.indexOf('jam')===-1 && tabs.indexOf('library')!==-1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Songs surface owns an All | Setlist segmented switch, and it opens on All (operator ruling: never a state-dependent landing)",
+      "js": "(function(){var a=document.getElementById('segAll'),s=document.getElementById('segSet');return !!a&&!!s&&a.classList.contains('on')&&!s.classList.contains('on');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Setlist segment carries a count badge, so 'is there anything in my set?' is answerable without switching",
+      "js": "(function(){var c=document.getElementById('segSetCount');return !!c && !c.hidden && c.textContent.trim()==='2';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 1 (the load-bearing one): an in-setlist song shows its POSITION in the ALL view - affordances derive from membership, not from which view you are standing in. Pre-merge this was only knowable by switching tabs",
+      "js": "(function(){var rows=document.querySelectorAll('#songsList .listItem');if(!rows.length)return false;var withNum=0;for(var i=0;i<rows.length;i++){var n=rows[i].querySelector('.li-num');if(n&&n.textContent.trim())withNum++;}return withNum===2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "an in-set row keeps the CHECK-MARK toggle in the All view - not the setlist's red remove handle. In a list of ALL songs a red x reads as 'delete this song', not 'take it out of tonight's set': the same glyph means different things depending on what the list IS. And no grip - a drag in a searched, sorted list would reorder against an order that is not on screen",
+      "js": "(function(){var row=null,rows=document.querySelectorAll('#songsList .listItem');for(var i=0;i<rows.length;i++){if(rows[i].querySelector('.li-num')){row=rows[i];break;}}if(!row)return false;var add=row.querySelector('.li-add');var grip=row.querySelector('.li-grip');var rm=row.querySelector('.li-rm');if(!add||add.offsetWidth===0)return false;if(rm&&rm.offsetWidth>0)return false;return !grip||grip.offsetWidth===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a song NOT in the setlist still offers the + (the two states are visibly different in one list)",
+      "js": "(function(){var rows=document.querySelectorAll('#songsList .listItem');for(var i=0;i<rows.length;i++){if(!rows[i].querySelector('.li-num')&&rows[i].querySelector('.li-add'))return true;}return false;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "songs-all-view"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 2: the Setlist segment swaps the CHROME wholesale - search and filters go (a setlist is hand-ordered, not searched), the set head row arrives",
+      "js": "(function(){var chrome=document.getElementById('segAllChrome'),head=document.getElementById('setHead'),body=document.getElementById('setBody');return !!chrome&&chrome.hidden===true&&!!head&&head.hidden===false&&!!body&&body.offsetParent!==null;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 4: Start performs the setlist from the Setlist segment header, where it has always been",
+      "js": "(function(){var b=document.getElementById('performBtn');return !!b&&b.offsetParent!==null&&b.offsetWidth>=44&&b.offsetHeight>=44;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the setlist rows keep their full grammar here - position, grip AND remove - because in this view the order IS the content",
+      "js": "(function(){var rows=document.querySelectorAll('#setBody .listItem');if(rows.length!==2)return false;for(var i=0;i<rows.length;i++){if(!rows[i].querySelector('.li-num'))return false;var g=rows[i].querySelector('.li-grip');if(!g||g.offsetWidth===0)return false;if(!rows[i].querySelector('.li-rm'))return false;}return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "songs-setlist-view"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 5: every visible control on the Setlist view clears the 44px tap floor (offset metrics - the rect is the transformed box and these controls carry :active scales)",
+      "js": "(function(){var bad=[];document.querySelectorAll('button,a,[role=\"button\"],input,select,textarea,label,[onclick]').forEach(function(el){if(el.offsetWidth===0||el.offsetHeight===0)return;var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.opacity==='0')return;if(el.offsetWidth<44||el.offsetHeight<44)bad.push(el);});return bad.length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 3: switching back does not disturb the other view's state - the set still has both songs, in order, and the All chrome is back",
+      "js": "(function(){var set=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');var chrome=document.getElementById('segAllChrome');return JSON.stringify(set)===JSON.stringify(['k0','k1']) && !!chrome && chrome.hidden===false;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "taking a song OUT of the set from the All view works through its check-mark toggle, and the badge follows without a view switch",
+      "js": "(function(){var rows=document.querySelectorAll('#songsList .listItem');for(var i=0;i<rows.length;i++){if(rows[i].querySelector('.li-num')){var a=rows[i].querySelector('.li-add');if(a){a.click();return true;}}}return false;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "the removal landed: one song left in the set, and the segment badge says so without a view switch",
+      "js": "(function(){var set=JSON.parse(localStorage.getItem('roadcase-ukulele-gcea.setlist.v1')||'[]');var c=document.getElementById('segSetCount');return set.length===1 && !!c && c.textContent.trim()==='1';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "songs-membership-edited-from-all"
+    }
+  ]
+}
