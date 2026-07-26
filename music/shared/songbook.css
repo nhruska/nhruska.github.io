@@ -459,6 +459,25 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
  * Ultra-narrow screens (<350px) give the segmented its own line rather than clip labels. */
 .practiceRow{display:flex;align-items:stretch;gap:6px;margin:10px 0 14px;}
 @media (max-width:349px){.practiceRow{flex-wrap:wrap;}.practiceRow .modeSwitch{flex-basis:100%;}}
+/* ---- SONGS-MERGE phase 1: the All | Setlist segment ---------------------
+ * Composes .modeSwitch (the app's ONE segmented-control grammar - see
+ * component-conventions: view switches within a surface are segmented, tabs
+ * are for top-level surfaces). Only the count badge and the reorder-grip
+ * suppression below are new.
+ */
+.songsSeg{margin-bottom:11px;}
+.songsSeg button{flex:1;min-height:44px;border:none;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.82rem;border-radius:var(--r-btn-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s;}
+.songsSeg button.on{background:var(--accent);color:var(--on-accent);}
+/* The count answers "is there anything in my set?" without switching views. */
+.segCount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface-2);color:var(--txt-soft);font-size:.72rem;font-weight:700;font-family:'Space Mono',monospace;}
+.songsSeg button.on .segCount{background:var(--on-accent);color:var(--accent-ink);}
+.segCount[hidden]{display:none;}
+/* An in-setlist row renders its set affordances in the ALL view too - that is
+   how membership stays visible without switching. But NOT the reorder grip:
+   the All list is searched and sorted, so a drag there would reorder against
+   an order that is not on screen. Reorder belongs where the order IS the
+   content. Position + remove stay; the grip is suppressed here only. */
+#songsList .li-grip{display:none;}
 .modeSwitch{display:flex;gap:2px;flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--r-btn);padding:3px;}
 .modeSwitch button{flex:1;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.72rem;color:var(--txt-dim);padding:10px 3px;border-radius:var(--r-btn-sm);cursor:pointer;transition:background .15s,color .15s,transform .08s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .modeSwitch button:active{transform:scale(.95);}

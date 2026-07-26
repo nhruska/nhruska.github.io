@@ -31,19 +31,19 @@
   var CONFIG = {
     library: {
       primary: { sel: '#songsList', text: 'Tap any song to hear it play' },
+      // SONGS-MERGE phase 1: the 'jam' tab entry retired with the tab. Its
+      // teaching job moves here, because the setlist is now a SEGMENT of this
+      // surface - and its old copy ("Save songs from Library - they line up
+      // here") described travelling between two screens that are now one.
+      //
+      // The #search secondary gives up its slot: a search box with the
+      // placeholder "Search a song or an artist..." teaches itself, while the
+      // segment is the genuinely new thing a returning user has to find. Teach
+      // the non-obvious one; three coach marks at once is already a crowded
+      // screen.
       secondary: [
         { sel: '#addBtn', text: 'Add saves a song to your setlist' },
-        { sel: '#search', text: 'Search by song or artist' }
-      ]
-    },
-    jam: {
-      // First visit = empty setlist, so Start + Edit are hidden; point at the
-      // always-present count line and let the (skipped-when-hidden) secondaries
-      // light up once songs exist and the user replays with '?'.
-      primary: { sel: '#setCount', text: 'Save songs from Library - they line up here to perform' },
-      secondary: [
-        { sel: '#performBtn', text: 'Start plays your setlist hands-free' },
-        { sel: '#setEdit', text: 'Edit to reorder or remove' }
+        { sel: '#segSet', text: 'Your setlist lives here - Start plays it hands-free' }
       ]
     },
     compose: {
@@ -63,7 +63,7 @@
     }
   };
 
-  var TABS = ['library', 'jam', 'compose', 'tune'];
+  var TABS = ['library', 'compose', 'tune'];
 
   /* ---------- pure: show-once store (additive) ----------
    * Bare `localStorage` (guarded) so this runs unmodified in the browser AND

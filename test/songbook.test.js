@@ -1165,7 +1165,7 @@ test('A1/#265-C: saveProgression on a healthy store shows the named-asset banner
   assert.ok(banner, 'expected the saveDone banner element');
   assert.strictEqual(banner.hidden, false, 'banner visible after a successful save');
   assert.strictEqual(banner.children[0].textContent, 'Saved Original progression.', '#265-B: the banner names the saved asset with the progression default');
-  assert.strictEqual(banner.children[1].textContent, 'Open Library', '#265-C: setlist opt-in was unchecked, so the next step is the Library');
+  assert.strictEqual(banner.children[1].textContent, 'Show all songs', '#265-C: setlist opt-in was unchecked, so the next step is the All view (one surface now - a segment switch, not a trip)');
   var toast = findComposeToast(m);
   assert.ok(!toast || toast.hidden || !hasClass(toast, 'err'), 'a successful save must not show an err toast');
 });
@@ -1335,7 +1335,7 @@ test('S-TOAST/U9: the Library "Added to setlist" toast still auto-hides on sched
   assert.strictEqual(libraryToast.textContent, 'Added to setlist');
   assert.ok(saveBanner, 'expected the Compose saveDone banner (#265-C: success feedback moved off composeToast)');
   assert.strictEqual(saveBanner.children[0].textContent, 'Saved Original progression.');
-  assert.strictEqual(saveBanner.children[1].textContent, 'Open Setlist', '#265-C: setlist opt-in stayed checked, so the next step is the Setlist');
+  assert.strictEqual(saveBanner.children[1].textContent, 'Show setlist', '#265-C: setlist opt-in stayed checked, so the next step is the Setlist segment');
   // buildAndSaveAddToSetlist also taps a chord tile twice on the way in, and
   // each tap schedules its OWN unrelated 220ms "sel" class-removal timer
   // (songbook.js's chord-tile tap animation, nothing to do with toasts) - so

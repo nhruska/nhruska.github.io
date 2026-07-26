@@ -21,7 +21,11 @@
     },
     {
       "action": "tap",
-      "selector": ".tabbar [data-tab=\"jam\"]"
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
     },
     {
       "action": "wait",
@@ -92,7 +96,11 @@
     },
     {
       "action": "tap",
-      "selector": ".tabbar [data-tab=\"jam\"]"
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
     },
     {
       "action": "wait",
