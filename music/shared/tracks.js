@@ -787,13 +787,18 @@
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
           + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>8</b>s - tap Hide/Show to keep control</span>'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>7</b>s - tap Hide/Show to keep control</span>'
           + '<i></i></div>'
           + '<div class="bt-st-np" data-np>'
           + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          + '<span class="bt-st-np-title">' + esc(t.title || '') + '</span>'
-          + '<span class="bt-st-np-state" data-npstate>Playing</span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#8943;</button>'
+          // Operator UAT (2026-07-26): drop the title text + "Playing" word - the
+          // pinned header above already names the track. Show a PLAYBACK PROGRESS
+          // BAR + total time instead (relative position read at a glance). Driven
+          // by YT infoDelivery time (see wireNowPlaying). Menu glyph is a hamburger
+          // to match the app's menu standard.
+          + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
+          + '<span class="bt-st-np-time" data-nptime></span>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
           // The fly-out is a CHILD of the strip (not a sibling) so its
           // position:absolute anchors to .bt-st-np (position:relative) - a sibling
           // would resolve top:100% against .bt-player and drop off-screen.
@@ -823,7 +828,7 @@
         : '<div class="bt-st-np">'
           + '<span class="bt-st-np-title">No backing track</span>'
           + '<span class="bt-st-np-state">Optional</span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#8943;</button>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
@@ -952,7 +957,7 @@
       // video re-expands; play/pause drives the YouTube embed over postMessage
       // (enablejsapi=1 on the embed URL). No YT API script needed.
       (function wireNowPlaying() {
-        var AUTOMIN_MS = 8000; // show it a beat, then collapse (operator: 8s)
+        var AUTOMIN_MS = 7000; // show it a beat, then collapse (operator: 7s)
         var mediaEl = elPlayer.querySelector('[data-media]');
         var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
         var ppBtn = elPlayer.querySelector('[data-nppp]');
@@ -991,8 +996,42 @@
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
           ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
-          if (stateEl) stateEl.textContent = paused ? 'Paused' : 'Playing';
         };
+        // Now-playing PROGRESS BAR (operator UAT: title text dropped - the pinned
+        // header names the track; show playback position + total time at a glance
+        // instead). Real YT time via the embed's JS-API infoDelivery postMessages:
+        // send {event:'listening'} so the embed emits them, parse currentTime +
+        // duration, drive the bar + m:ss / m:ss label. Graceful: if YT never
+        // reports (headless / blocked egress), the bar stays at 0 and the
+        // play/pause icon still conveys state. The message listener + the poll
+        // both self-unbind once the strip leaves the DOM (no leak across opens).
+        var progEl = elPlayer.querySelector('[data-npprog]');
+        var progFill = elPlayer.querySelector('[data-npfill]');
+        var timeLbl = elPlayer.querySelector('[data-nptime]');
+        var ytDur = 0;
+        function fmtTime(s) { s = Math.max(0, Math.round(s || 0)); var m = Math.floor(s / 60), ss = s % 60; return m + ':' + (ss < 10 ? '0' : '') + ss; }
+        function onYtMessage(e) {
+          if (!progFill || !progFill.isConnected) { global.removeEventListener('message', onYtMessage); return; }
+          if (!e || typeof e.data !== 'string') return;
+          var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+          if (!d || d.event !== 'infoDelivery' || !d.info) return;
+          if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
+          if (typeof d.info.currentTime === 'number' && ytDur > 0) {
+            var frac = Math.max(0, Math.min(1, d.info.currentTime / ytDur));
+            progFill.style.width = (frac * 100).toFixed(1) + '%';
+            if (progEl) progEl.setAttribute('aria-valuenow', Math.round(frac * 100));
+            if (timeLbl) timeLbl.textContent = fmtTime(d.info.currentTime) + ' / ' + fmtTime(ytDur);
+          }
+        }
+        if (progFill) {
+          global.addEventListener('message', onYtMessage);
+          var listenTries = 0;
+          var listenIv = setInterval(function () {
+            if (!progFill.isConnected) { clearInterval(listenIv); return; }
+            var w = frameWin(); if (w) { try { w.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (x) {} }
+            if (++listenTries >= 8) clearInterval(listenIv);
+          }, 500);
+        }
       })();
       // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the `...` menu button
       // in the now-playing strip toggles the .bt-st-menu fly-out (Show/Hide video,

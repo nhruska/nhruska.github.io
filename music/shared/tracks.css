@@ -160,6 +160,14 @@
   .bt-st-np-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem;font-weight:600;}
   .bt-st-np-state{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.08em;
     text-transform:uppercase;color:var(--accent-ink);}
+  /* Operator UAT (2026-07-26): the video strip drops the title text for a
+     PLAYBACK PROGRESS BAR + total time (relative position at a glance). Fill
+     width is driven by YT infoDelivery time in wireNowPlaying. */
+  .bt-st-np-prog{flex:1;min-width:40px;height:6px;border-radius:3px;background:var(--surface);overflow:hidden;}
+  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
+  .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
+    color:var(--accent-ink);min-width:34px;text-align:right;}
+  .bt-st-np-time:empty{display:none;}
   /* The compact `...` menu button that opens the fly-out (replaces the old
      three-button .bt-st-stagebtns row). 44px touch-floor, visible on the
      accent-deep strip via the same surface-2 fill the play/pause button uses. */
