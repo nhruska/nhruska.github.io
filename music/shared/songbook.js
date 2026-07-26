@@ -1402,7 +1402,18 @@
     // a LONGER hold (you can't tap what's already gone); plain confirmations
     // keep the quick 1600ms.
     function showToast(msg, kind, action) {
-      if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+      if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast';
+        // A screen-reader user gets no announcement without this - the gap
+        // ui-primitives.md flagged at S-TOAST and nothing enforced until
+        // scripts/a11y-check.py A2s. polite, not assertive: a toast is an
+        // outcome cue, it must not interrupt what is being read.
+        toastEl.setAttribute('role', 'status');
+        toastEl.setAttribute('aria-live', 'polite');
+        // A screen-reader user gets no announcement without this - the gap
+        // ui-primitives.md flagged at S-TOAST and nothing enforced until
+        // scripts/a11y-check.py A2s. polite, not assertive: a toast is an
+        // outcome cue, it must not interrupt what is being read.
+        document.body.appendChild(toastEl); }
       var isErr = (kind === true || kind === 'err');
       var isWarn = (kind === 'warn');
       var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : (action ? 5200 : 1600);
@@ -4599,6 +4610,10 @@
       if (!composeToast) {
         composeToast = document.createElement('div');
         composeToast.className = 'composeToast';
+        // Same reason as the Library toast above: without a live region a
+        // screen-reader user is never told the Compose action landed.
+        composeToast.setAttribute('role', 'status');
+        composeToast.setAttribute('aria-live', 'polite');
         composeToast.hidden = true;
         el.prog.parentNode.insertBefore(composeToast, el.prog);
       }
