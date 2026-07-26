@@ -21,6 +21,8 @@
 | [interaction-safety.md](ux-philosophy/interaction-safety.md) | Destructive-guard taxonomy; scroll-rail rule; wireTap; undo contract; notables one-shot pattern |
 | [systems/onboarding-guidance.md](systems/onboarding-guidance.md) | Welcome tour (guards, ?welcome=1 replay), calm guidance (no inline asks, one tip/session), header tab pill + purpose line |
 | [systems/compose-jam-first.md](systems/compose-jam-first.md) | B+ Compose shape: pure jam surface, canvas doors, progression-first save, transaction tray, adaptive landing |
+| [systems/songs-surface-merge.md](systems/songs-surface-merge.md) | **PROPOSED** - phase 1 Songs merge (All\|Setlist segmented), phase 2 Progressions/Compose split; migration, blast radius, goalposts |
+| [ux-philosophy/four-verbs-four-surfaces.md](ux-philosophy/four-verbs-four-surfaces.md) | **PROPOSED** - the surface model: four verbs, four surfaces, one currency (the progression strip); naming rules; read before adding any tab or mode |
 | [expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) | Dots vs clean patterns; hand-position/fingering guidance; muscle-memory framing; S-DIAGRAM-PREF spec home |
 | [ui-primitives.md](ux-philosophy/ui-primitives.md) | TOAST vs NOTABLE vs MODAL vs CHIP/TOKEN taxonomy; toast.js primitive (S-TOAST/U9 fix); candidate toast placements |
 
