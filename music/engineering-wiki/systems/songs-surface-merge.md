@@ -1,160 +1,165 @@
-# Songs Surface Merge + Song Tab `[PROPOSED]`
+# Songs Merge + Progressions/Compose Split `[PROPOSED]`
 
-[Wiki](../index.md) > [Systems](../index.md) > Songs Surface Merge
+[Wiki](../index.md) > [Systems](../index.md) > Songs Merge + Progressions/Compose Split
 
-> **Status: PROPOSED - not built.** Operator interview 2026-07-25 settled the
-> shape; this page is the spec to approve before any code moves. It CHANGES a
-> ruled decision (JAMFIRST-1) - see "What this costs" below. Nothing here is
-> implemented.
+> **Status: PROPOSED - not built.** Operator interview 2026-07-25/26 settled
+> the shape; this is the spec to approve before code moves. It rests on
+> [ux-philosophy/four-verbs-four-surfaces.md](../ux-philosophy/four-verbs-four-surfaces.md),
+> which is the model - read that first. **Ships in two phases** (below); phase
+> 1 is self-contained and conflicts with nothing.
 
-## The problem, in the operator's words
+## The two confusions this fixes
 
-> "I've been confusing these two screens as being a single source of truth."
+| Operator | Cause |
+|---|---|
+| "I've been confusing these two screens as being a single source of truth" | Library + Setlist: **two surfaces, one verb** |
+| "is the song compose view not a coherent UX?" | Compose: **one surface, two verbs** (`composeMode = 'chords' \| 'song'`, songbook.js:2601) |
 
-Library and Setlist are two bottom-nav tabs that both list songs. Nothing tells
-you which one is the truth about a song, because both are - they are one
-collection seen two ways.
+## Target nav
 
-The row renderer is ALREADY one SSOT (`shared/list-item.js`,
-`ListItem.render(rec, { segment: 'library' | 'set' })`, whose own header says
-the segments should "look and behave like the same thing"). The divergence is
-at the SURFACE, measured at 412x915 on `3d7d4a3`:
+```
+NOW                       PROPOSED
+LIBRARY                   SONGS         (All | Setlist)
+SETLIST                   PROGRESSIONS  <- today's Compose, renamed to its verb
+COMPOSE  -> canvas mode   COMPOSE       <- the canvas, now the whole tab
+TUNE                      TUNE
+```
+
+Same tab COUNT. Nothing is added to the nav - one entry is freed by the merge
+and immediately spent making Compose honest.
+
+## Phase 1 - the Songs merge (self-contained, no decision conflict)
+
+Library + Setlist become one `Songs` surface with an `All | Setlist` segmented
+switch, per `component-conventions.md:65` ("bottom nav = top-level surfaces
+ONLY; segmented controls = view switches within a surface").
+
+The row renderer is **already one SSOT** - `list-item.js`, whose header says
+the segments should "look and behave like the same thing". Only the surface
+diverges. Measured at 412x915 on `3d7d4a3`:
 
 | | Library | Setlist |
 |---|---|---|
 | Chrome | search, +add, 5 genre chips, 14 key chips, Curate videos | Clear, Start |
-| Rows | 173, each with a `+` | 3, each with position, grip, remove |
+| Rows | 173, each with `+` | 3, each with position, grip, remove |
 | Order | filtered / sorted | hand-ordered, meaningful |
 
-## The convention this rests on
-
-`ux-philosophy/component-conventions.md:65`:
-
-> **Tabs:** bottom nav = top-level surfaces ONLY; segmented controls = view
-> switches within a surface.
-
-Two tabs assert two top-level things. One collection viewed two ways is a
-segmented control by our own rule. The merge is not a new opinion - it is
-applying the rule we already wrote.
-
-## Rulings (operator interview, 2026-07-25)
-
-| # | Ruling |
-|---|---|
-| 1 | **One surface, segmented.** Library + Setlist merge into `Songs` with an `All \| Setlist` segmented switch. |
-| 2 | **The freed slot goes to Song/Write.** The song canvas is promoted out of Compose to its own top-level tab. |
-| 3 | **Song and Compose are peers.** Song = sections, arrangement, save. Compose = build/explore a progression in a key. A progression moves into a song section explicitly. |
-| 4 | **Songs opens on All, always.** The Setlist segment carries a count badge; no state-dependent landing. |
-| 5 | **Start stays in the Setlist segment header**, beside Clear, exactly where it is today. |
-
-## What this costs: JAMFIRST-1 must be re-ruled
-
-`decisions.md` **JAMFIRST-1** (PR #279, 2026-07-19) rules:
-
-> Compose lands as a pure jam surface (B+ shape) - zero ambient song chrome;
-> canvas = the one song editor with moment-of-relevance doors.
-
-Ruling 2 contradicts it directly. A tab IS ambient presence: it is a
-permanently visible door, which is the thing that decision deliberately
-removed. The four existing canvas doors are all moment-of-relevance
-(`systems/compose-jam-first.md` "Canvas doors"); a tab adds a fifth that is
-always on screen.
-
-The registry's own rule is "propose changes explicitly instead of drifting",
-so this is the explicit proposal:
-
-- **JAMFIRST-1 narrows** to Compose only: *Compose* carries zero song chrome
-  (unchanged - the jam surface stays pure). It no longer implies the canvas
-  has no home of its own.
-- **The four moment-of-relevance doors stay.** They are how you get from a
-  progression to a song without a tab round-trip; the tab is an ADDITIONAL
-  entry for "I want to write", not a replacement.
-- What the operator gets that the ruling denied: writing a song is a
-  destination you can aim at, instead of a mode you have to discover from
-  inside another surface.
-
-**If that trade is wrong, ruling 2 is the one to drop** - the merge (rulings
-1, 4, 5) stands on its own and needs no change to JAMFIRST-1.
-
-## Target shape
-
-```
-NOW                          PROPOSED
-LIBRARY   SETLIST            SONGS (All | Setlist)
-COMPOSE  -> canvas nested    SONG     <- the canvas, promoted
-TUNE                         COMPOSE  <- pure jam surface (unchanged)
-                             TUNE
-```
-
-### Songs surface
+### Surface spec
 
 | Element | All view | Setlist view |
 |---|---|---|
-| Search + `+add` | yes | no - the setlist is hand-ordered, not searched |
+| Search + `+add` | yes | no - a setlist is hand-ordered, not searched |
 | Genre / key chips | yes | no |
 | Count line | `173 songs` | `3 songs - ready to play` |
-| Header actions | - | Clear, Start |
+| Header actions | - | Clear, **Start** (unchanged position) |
 | Row order | filtered / sorted | setlist order |
 
-### Row behaviour - derived from membership, not from which view you are in
+### The rule that removes the confusion
 
-This is the part that removes the confusion: a row looks the way it does
-because of what is TRUE about the song, not because of where you are standing.
+Row affordances derive from **setlist membership**, not from the active view:
 
 | Song state | Row shows |
 |---|---|
 | Not in setlist | `+` (or the seed/ghost variant per S-SETADD-EVIDENT) |
 | In setlist | position number, grip, remove `x` |
 
-In the All view an in-setlist song therefore already shows its position and
-grip. That is the point: the answer to "is this in my set, and where?" is
-visible without switching views.
+So an in-setlist song shows its position and grip **in the All view too**. "Is
+this in my set, and where?" becomes answerable without switching. One source of
+truth made *visible*, not merely claimed.
+
+### Landing
+
+`Songs` always opens on **All** (operator ruling). The Setlist segment carries
+a count badge. The segment choice is NOT persisted - no state-dependent landing.
+
+## Phase 2 - Progressions / Compose split
+
+Today's Compose surface is renamed **Progressions**; the song canvas stops
+being a mode inside it and becomes the **Compose** tab.
+
+| Surface | Owns | Never carries |
+|---|---|---|
+| Progressions | grid, In-key\|All, suggestions, key + transpose, the strip, Solo / backing video | ANY song machinery |
+| Compose | section cards, arrangement, templates, Save song; **eventually lyrics** | chord exploration |
+
+**One currency crosses them: the progression strip.** Progressions produces
+strips; Compose consumes them into sections. `compose-jam-first.md` already
+said this; the shared name is what made it invisible.
+
+### Why "Progressions" and not "Chords"
+
+`Lyrics | Chords | Both` is already a VIEW toggle inside a song - the same word
+at two scopes in one breath. `Progressions` has no collision, and
+`competency.js` already ships a skill by that exact name ("Progressions -
+assemble chord progressions that move").
+
+### JAMFIRST-1 is preserved by the rename
+
+An earlier draft of this spec proposed promoting the canvas to a "Song" tab,
+which contradicted JAMFIRST-1 ("zero ambient song chrome"). **This shape does
+not.** The pure jam surface survives intact - it is simply called
+`Progressions`. The ruling gets a **rename, not a re-ruling**; its substance is
+unchanged, and the four moment-of-relevance doors stay (the tab is an extra
+entry for "I want to write", not a replacement for "I just made something worth
+keeping").
+
+### Lyrics trajectory (ruled 2026-07-26, not scoped here)
+
+A section is `{ label, seq }` today - no words - while the sheet format is
+chords-over-lyrics (`[C] a [G] b`). **Compose grows lyric authoring as a GUIDED
+workflow**, not a free-text sheet editor. Recorded so the next session builds
+toward it rather than around it. See the model page.
 
 ## Migration - and the trap the last one hit
 
-`<prefix>.activeTab.v1` can hold `jam`. It must map to `library` + the Setlist
-segment, and the mapping must NOT become sticky.
+`<prefix>.activeTab.v1` can hold `jam` (setlist) and will need `compose` ->
+`progressions`. Both must be consumed ONCE and rewritten.
 
-`songbook.js` already carries the scar: the `libType.v1` migration had to be
-consumed ONCE and removed, or a migrated user who later chose Library was
-forced back to Jam on every reload. Same shape here.
+`songbook.js` carries the scar: the `libType.v1` migration forced a migrated
+user back to a tab they had left, on every reload, until it was
+consumed-and-removed. Same shape here, so it gets its own goalpost.
 
-- `activeTab.v1 === 'jam'` (or legacy `setlist` / `set`) -> tab `library`,
-  segment `setlist`, then **rewrite the key** to the modern value so the
-  migration cannot re-fire.
-- Segment choice is NOT persisted (ruling 4: always opens on All).
+- `activeTab.v1` `jam` / legacy `setlist` / `set` -> tab `library`, segment
+  `setlist`, **then rewrite the key**.
+- Phase 2: `compose` -> `progressions`, same consume-once discipline.
 
 ## Blast radius
 
-| Surface | Change |
-|---|---|
-| `play/index.html` | `#s-jam` section folds into `#s-library`; tabbar drops `jam`, gains `song` |
-| `songbook.js` | `switchTab` tab set + legacy remap; `renderSongs`/`renderSetlist` become one render with a segment arg; `ACTIVE_TAB_KEY` migration |
-| `callouts.js` | `CONFIG` is keyed per tab (`library`, `jam`, `compose`, `tune`) - `jam`'s coach mark must move to the Setlist segment or retire; a new `song` entry is needed |
-| `list-item.js` | no change - it already renders both segments |
-| Song canvas | `setComposeMode`/`rawSetMode` + the `songCanvas` NavHistory layer become a tab, not a pushed layer. **This is the riskiest edit** - the existing comment warns that popping that layer is "unsafe both ways" |
-| `test/pw/scenarios/` | **13 scenarios** reference `[data-tab="jam"]` |
-| `music/CLAUDE.md`, wiki | tab taxonomy, `compose-jam-first.md`, `decisions.md` (JAMFIRST-1 + a new row) |
+| Surface | Phase | Change |
+|---|---|---|
+| `play/index.html` | 1 | `#s-jam` folds into `#s-library`; tabbar drops `jam` |
+| `play/index.html` | 2 | tabbar `compose` -> `progressions`, new `compose` entry; canvas markup moves out of `#s-compose` |
+| `songbook.js` | 1 | `switchTab` set + remap; `renderSongs`/`renderSetlist` merge behind a segment arg; `ACTIVE_TAB_KEY` migration |
+| `songbook.js` | 2 | `setComposeMode`/`rawSetMode` + the `songCanvas` NavHistory layer become tab navigation. **Riskiest edit in the change** - the existing comment warns popping that layer is "unsafe both ways" |
+| `callouts.js` | 1+2 | `CONFIG` is keyed per tab (`library`/`jam`/`compose`/`tune`); `jam`'s coach mark moves to the segment or retires, and the compose entry splits |
+| `list-item.js` | - | **no change** - it already renders both segments |
+| `test/pw/scenarios/` | 1 | **13 scenarios** reference `[data-tab="jam"]` |
+| `test/pw/scenarios/` | 2 | every `[data-tab="compose"]` reference |
+| wiki + `music/CLAUDE.md` | 1+2 | tab taxonomy, `compose-jam-first.md`, `decisions.md` |
 
-## Goalposts (red-first, before any of it is called done)
+## Goalposts (red-first)
 
-1. A song in the setlist shows position + grip in the **All** view - proves
-   the row is driven by membership, not by view.
+**Phase 1**
+
+1. A song in the setlist shows position + grip in the **All** view - proves the
+   row is driven by membership, not by view.
 2. Switching segments does not re-order or re-filter the other view's state.
-3. `activeTab.v1 = 'jam'` restores to Songs/Setlist **once**, and choosing All
-   then reloading lands on All - the sticky-marker regression.
+3. `activeTab.v1 = 'jam'` restores to Songs/Setlist **once**; choosing All then
+   reloading lands on All (the sticky-marker regression).
 4. Start performs the setlist from the Setlist segment header.
-5. The Song tab opens the canvas with its sections intact from
-   `builderBuffer.v1`, and the four moment-of-relevance doors still work.
-6. Every control on both views clears the 44px floor at 412 and 360 (the
-   `tap-target-floor` gate already covers this; it must stay green with the
-   new segment).
+5. Every control on both views clears the 44px floor at 412 and 360 - the
+   existing `tap-target-floor` gate must stay green with the new segment.
 
-## Open questions for the operator
+**Phase 2**
 
-1. **Naming:** `Songs` or keep `Library`? The tab currently says Library and
-   the header says "Music / Library".
-2. **Song tab when empty:** first-run with no draft - does it show an empty
-   canvas, or a "start a song" prompt?
-3. **Does Compose keep its Save->canvas doors** once Song is a tab, or does
-   Save simply move the strip and let you switch tabs yourself?
+6. Progressions carries zero song chrome (JAMFIRST-1, asserted against the
+   renamed surface).
+7. Compose opens the canvas with sections intact from `builderBuffer.v1`.
+8. All four moment-of-relevance doors still reach the canvas.
+9. `activeTab.v1 = 'compose'` restores to Progressions once, then stays where
+   the user puts it.
+
+## Open question left
+
+**Naming of the merged surface:** `Songs` (used throughout this spec) or keep
+`Library`? The tab says Library today and the header reads "Music / Library".
