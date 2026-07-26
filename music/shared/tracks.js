@@ -805,9 +805,29 @@
           + '</div>'
           + '</div>'
           + jamPanelHtml
-        : '<div class="bt-st-search">'
-          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
+        // S-STUDIO-NOVID (operator device-test 2026-07-26): the no-video jam-finder
+        // used to be a big always-visible block (CTA + hint, then genre/feel chips on
+        // reveal) sitting at the TOP of the stage - it shoved the circle-of-fifths crown
+        // and the fretboard below the fold. But the Studio is for soloing/exploring over
+        // the progression: the circle + fretboard ARE the product; a backing YouTube
+        // track is OPTIONAL rehearsal support, not required, and must be a SEPARATE
+        // on-demand flow that does NOT compete with the COF + fretboard UI. It now
+        // mirrors the VIDEO track's slim accent strip + `...` fly-out (S-STUDIO-FLYOUT):
+        // a compact "No backing track" strip whose `...` opens the same .bt-st-menu
+        // fly-out, holding the guidance + the "Find a jam"/"Add a video" trigger. Tapping
+        // that trigger (a .bt-st-menu-item, so the fly-out auto-closes) reveals the
+        // genre/feel jam panel (data-jampanel) + the paste box (data-urled-gated) below -
+        // the EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
+        // handler untouched), only the trigger's DOM location moved. No static iframe
+        // space is reserved for a videoless track.
+        : '<div class="bt-st-np">'
+          + '<span class="bt-st-np-title">No backing track</span>'
+          + '<span class="bt-st-np-state">Optional</span>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#8943;</button>'
+          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
+          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
+          + '</div>'
           + '</div>'
           + jamPanelHtml;
       // .bt-st-stage wraps the pinned header + video: one column in portrait,

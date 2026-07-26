@@ -186,17 +186,20 @@
   /* The Curated-URL card sits flush inside the menu (its own margin would leave a
      gap above the flex-gap the menu already provides). */
   .bt-st-menu .bt-st-urled{margin:0;}
-  /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact), the iframe
-     slot becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
-     harmony-teacher surface usable for every track regardless of curated IDs. */
-  .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
+  /* S-STUDIO-NOVID: the guidance line at the top of the no-video fly-out (why a
+     backing track is optional + how to add one). Muted, wraps freely inside the
+     popover - not a tappable row, so no .bt-st-menu-item styling. */
+  .bt-st-menu-hint{font-size:.74rem;color:var(--txt-dim);line-height:1.45;padding:2px 4px 4px;}
+  /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact). The old
+     big .bt-st-search block (CTA + hint) that occupied the top is retired
+     (S-STUDIO-NOVID) - a videoless track now shows the slim .bt-st-np strip + `...`
+     fly-out instead, so the circle crown + fretboard lead. The still-used
+     .bt-st-ytlink primitive (the jam panel's "Search YouTube" leave-app link) stays. */
   .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
     font-weight:700;font-size:.92rem;color:var(--accent-ink);text-decoration:none;
     border:1px solid var(--accent-dim);background:var(--accent-deep);
     padding:10px 16px;border-radius:var(--r-btn-sm);min-height:44px;}
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:12px 12px 18px;display:flex;flex-direction:column;gap:12px;}
   /* .bt-st-body spaces flex children via `gap`, so the shared .notableBanner's own
