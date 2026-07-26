@@ -1,17 +1,14 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-07-25T10:47:59Z
+Generated: 2026-07-26T10:55:34Z
 Status: ok
 
 ## NOW
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #312 (CI green): fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311) - https://github.com/nhruska/nhruska.github.io/pull/312
-- Open draft PR #309 (CI green): music: Studio PR1 - video minimized by default (audio-only) + video/jam on one row - https://github.com/nhruska/nhruska.github.io/pull/309
-- Open draft PR #308 (CI green): music: #6 - Studio "Why these notes?" strip follows the selected solo scale - https://github.com/nhruska/nhruska.github.io/pull/308
-- Open draft PR #304 (CI green): fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6) - https://github.com/nhruska/nhruska.github.io/pull/304
-- Open draft PR #302 (CI green): fix(perform): wrap chord/lyric lines so they don't clip at 412px (CW-1) - https://github.com/nhruska/nhruska.github.io/pull/302
-- Open draft PR #300 (CI green): fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5) - https://github.com/nhruska/nhruska.github.io/pull/300
+- Open draft PR #316 (CI green): spec: one segmented Songs surface + Song canvas promoted to a tab (PROPOSED - changes JAMFIRST-1) - https://github.com/nhruska/nhruska.github.io/pull/316
+- Open PR #315 (CI green): a11y: add the gate, and close the ARIA gap it was built to find - https://github.com/nhruska/nhruska.github.io/pull/315
+- Open draft PR #313 (CI green): music: Practice Studio redesign - interactive circle crown + video show-then-collapse - https://github.com/nhruska/nhruska.github.io/pull/313
 - Open draft PR #274 (CI unknown): docs: rename suggested chords section to name the intent - https://github.com/nhruska/nhruska.github.io/pull/274
 
 ## Open gaps / to-wire
@@ -20,14 +17,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #314 - wiki: record how a render check lies (verification traps) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/314
+- #312 - fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/312
 - #310 - fix(sw): CACHE per asset-changing commit + guard that proves it (the #306 stale-preview root cause) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/310
+- #308 - music: #6 - Studio "Why these notes?" strip follows the selected solo scale (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/308
 - #307 - music: scroll affordance (edge fade + directional chevron) on chip strips (2026-07-24) - https://github.com/nhruska/nhruska.github.io/pull/307
 - #306 - perf(audio): keep chord playback context warm for immediate taps (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/306
 - #305 - fix(perform): legible back button + deterministic nav z-index (UAT) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/305
-- #303 - fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/303
-- #301 - skills(ux-coach): wire in measured-evidence capture harness (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/301
-- #299 - fix(perform): re-acquire wake lock on visibilitychange (P1-1) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/299
-- #298 - music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3) (2026-07-24) - https://github.com/nhruska/nhruska.github.io/pull/298
+- #304 - fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/304
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -40,6 +37,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (3334 cases / 56 suites)
+- Suite: node test/run-all.js (3372 cases / 58 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
