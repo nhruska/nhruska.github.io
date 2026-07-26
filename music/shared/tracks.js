@@ -718,34 +718,6 @@
         // "below" pointed at empty space until you tapped. Point the hint at the
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
-      var playerBlock = t.yt
-        // Video shows on open (see it start), then auto-collapses after a few
-        // seconds to a now-playing strip (play/pause + title + state). The
-        // iframe is only clipped by .bt-st-media.min, never removed, so audio
-        // keeps playing. Three actions - Show/Hide video, Find another jam,
-        // Edit - share one row below.
-        ? '<div class="bt-st-media" data-media>'
-          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
-          + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>8</b>s - tap Hide/Show to keep control</span>'
-          + '<i></i></div>'
-          + '<div class="bt-st-np" data-np>'
-          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          + '<span class="bt-st-np-title">' + esc(t.title || '') + '</span>'
-          + '<span class="bt-st-np-state" data-npstate>Playing</span>'
-          + '</div>'
-          + '<div class="bt-st-stagebtns">'
-          + '<button class="bt-st-editlink" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
-          + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
-          + (opts.onEditRequest ? '<button class="bt-st-editlink" data-editrequest type="button">Edit</button>' : '')
-          + '</div>'
-          + jamPanelHtml
-        : '<div class="bt-st-search">'
-          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
-          + '</div>'
-          + jamPanelHtml;
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -764,10 +736,17 @@
       // with jamFindToggle/jamPanel above, not shown unconditionally. Managing
       // an EXISTING curated video (Edit / Curated video URL) is a different
       // job from finding one, so those stay always-visible, untouched.
+      //
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): urlEditor is computed
+      // BEFORE playerBlock now so the video-track header can fold the Curated-URL
+      // card INTO the `...` fly-out menu (see playerBlock's t.yt branch). For a
+      // VIDEO track it renders inside the menu; for a no-video track it stays at
+      // its old spot below the stage. The DOM/data-* attrs are unchanged so every
+      // existing handler (data-urled/-gated, data-vidin/-save) still binds.
       var urlEditor = t.custom
         ? (t.yt
-          // Edit moved UP into the .bt-st-stagebtns row (video / jam / edit on
-          // one row); no separate url-editor card for the has-video custom case.
+          // The has-video custom Edit lives in the fly-out menu (data-editrequest);
+          // no separate url-editor card for the has-video custom case.
           ? ''
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled-gated hidden>'
@@ -790,6 +769,47 @@
             + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
             + '</div></div>'
           : '');
+      var playerBlock = t.yt
+        // Video shows on open (see it start), then auto-collapses after a few
+        // seconds to a now-playing strip (play/pause + title + state + `...`
+        // menu). The iframe is only clipped by .bt-st-media.min, never removed,
+        // so audio keeps playing.
+        //
+        // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the old three-button
+        // .bt-st-stagebtns row (Show/Hide video, Find another jam, Edit) + the
+        // separate Curated-URL card ate the vertical space that kept the circle
+        // crown and the fretboard from BOTH fitting above the fold on a phone.
+        // They collapse into a single compact `...` button in the now-playing
+        // strip that opens a fly-out menu (.bt-st-menu) holding all four controls
+        // as full-width rows. Same data-* attrs, so the existing handlers bind
+        // unchanged - only the DOM location moved.
+        ? '<div class="bt-st-media" data-media>'
+          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-countdown" data-countdown role="status">'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>8</b>s - tap Hide/Show to keep control</span>'
+          + '<i></i></div>'
+          + '<div class="bt-st-np" data-np>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          + '<span class="bt-st-np-title">' + esc(t.title || '') + '</span>'
+          + '<span class="bt-st-np-state" data-npstate>Playing</span>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#8943;</button>'
+          // The fly-out is a CHILD of the strip (not a sibling) so its
+          // position:absolute anchors to .bt-st-np (position:relative) - a sibling
+          // would resolve top:100% against .bt-player and drop off-screen.
+          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
+          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
+          + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
+          + urlEditor
+          + '</div>'
+          + '</div>'
+          + jamPanelHtml
+        : '<div class="bt-st-search">'
+          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
+          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
+          + '</div>'
+          + jamPanelHtml;
       // .bt-st-stage wraps the pinned header + video: one column in portrait,
       // the left pane in the landscape two-pane split (CSS). Practice content
       // (scale, chords) leads the scrollable body; the url-curation editor sits
@@ -809,8 +829,11 @@
         + playerBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
         // return to a videoless track the "add a video" control is immediately at
-        // hand (was buried below the scale + chords).
-        + urlEditor
+        // hand (was buried below the scale + chords). S-STUDIO-FLYOUT: for a VIDEO
+        // track the urlEditor already renders INSIDE the `...` fly-out menu (see
+        // playerBlock), so it must NOT render a second time here - only the
+        // no-video path keeps the stage-level card.
+        + (t.yt ? '' : urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
         // Circle-of-fifths CROWN (operator: circle + fretboard share the top).
@@ -950,6 +973,35 @@
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
           if (stateEl) stateEl.textContent = paused ? 'Paused' : 'Playing';
         };
+      })();
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the `...` menu button
+      // in the now-playing strip toggles the .bt-st-menu fly-out (Show/Hide video,
+      // Find another jam, Edit, Curated-URL card). Tapping a menu ACTION row or
+      // anywhere outside the menu closes it; the URL input/Save inside stay open
+      // (they carry their own classes, not .bt-st-menu-item, so the delegated
+      // action-close never fires on them). The document listener self-removes once
+      // the panel leaves the DOM (Studio close/re-render), so no listener leaks.
+      (function wireStudioMenu() {
+        var menuBtn = elPlayer.querySelector('[data-stmenu]');
+        var menuPanel = elPlayer.querySelector('[data-stmenu-panel]');
+        if (!menuBtn || !menuPanel) return;
+        function setOpen(open) {
+          menuPanel.hidden = !open;
+          menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        menuBtn.onclick = function (e) { e.stopPropagation(); setOpen(menuPanel.hidden); };
+        // Close when a menu ACTION row is tapped (not the URL input/Save, which
+        // reopen the Studio on their own and carry different classes).
+        menuPanel.addEventListener('click', function (e) {
+          if (e.target.closest('.bt-st-menu-item')) setOpen(false);
+        });
+        function onDocClick(e) {
+          if (!menuPanel.isConnected) { document.removeEventListener('click', onDocClick); return; }
+          if (menuPanel.hidden) return;
+          if (menuBtn.contains(e.target) || menuPanel.contains(e.target)) return;
+          setOpen(false);
+        }
+        document.addEventListener('click', onDocClick);
       })();
       // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
       // line it bounces a marker across (curBundle already tracks whichever
