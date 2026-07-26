@@ -1,0 +1,31 @@
+{
+  "name": "stage-capo-indicator",
+  "note": "P1-5 (SDD persona goalpost): a track's capo shows as a badge on the Library row (.li-capo) but was never surfaced on the Stage header, so a performer capo'd up gets no reminder while actually playing. Fixture: a saved custom song carrying capo:2 directly (repertoire.js's mergeRec/build passthrough keeps a song's own capo field when no matching track overrides it - no separate backing-track record needed). Red-first: pre-fix the Stage header has no capo indicator at all.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "seed a saved custom song with capo:2",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'capoSong', t:'Capo Song', a:'Me', y:2026, d:'Mine', custom:true, capo:2, seq:['C','G','Am','F'], sheet:[['Verse','[C] a [G] b [Am] c [F] d']]}]));return true}catch(e){return false}})()"
+    },
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Capo Song\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": "#stageBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the Stage is open on the capo'd song",
+      "js": "(function(){var p=document.getElementById('perform'),t=document.getElementById('pTitle');return !!p && p.classList.contains('on') && !!t && t.textContent.trim()==='Capo Song';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Stage header shows a capo indicator (FAILS pre-fix: no capo element exists on Stage at all)",
+      "js": "(function(){var c=document.getElementById('pCapo');return !!c && c.offsetParent!==null && /2/.test(c.textContent);})()"
+    },
+    { "action": "screenshot", "name": "stage-capo-indicator" }
+  ]
+}

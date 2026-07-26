@@ -959,13 +959,51 @@ function extractFunctionBody(src, signatureRe) {
 }
 test('buildWhy (C1): the "why these notes" hint respells th.key via dispKeyRoot, never the raw canonical-sharp th.key', function () {
   var src = readSrc('music/shared/tracks.js');
-  var body = extractFunctionBody(src, /function buildWhy\(box, th\) \{/);
-  assert.ok(body, 'buildWhy(box, th) not found in tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th, bundle\) \{/);
+  assert.ok(body, 'buildWhy(box, th, bundle) not found in tracks.js');
   assert.ok(/cofHint/.test(body), 'expected the cofHint prose block inside buildWhy');
   assert.ok(/dispKeyRoot\(th\.key, th\.scaleMode\)/.test(body),
     'buildWhy must call dispKeyRoot(th.key, th.scaleMode) to respell the key in the hint prose');
   assert.ok(!/esc\(th\.key\)/.test(body),
     'buildWhy must not emit the raw canonical-sharp th.key (e.g. "A#") beside the key-aware note names');
+});
+// Bug #6 regression: the Practice Studio's "Why these notes?" note strip must
+// track the SELECTED solo scale, not the frozen key-mode. Three source-level
+// locks (the Studio's nested overlay flow is flaky to drive headless, so pin
+// the cause-reversal structurally so it can't silently regress):
+test('buildWhy (#6): the note strip + caption derive from the selected bundle, not the frozen th', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function buildWhy\(box, th, bundle\) \{/);
+  assert.ok(body, 'buildWhy(box, th, bundle) not found');
+  assert.ok(/\(bundle && bundle\.notes\) \|\| th\.notes/.test(body),
+    'the strip NOTES must come from the selected bundle (fallback th) - not th.notes alone');
+  assert.ok(/\(bundle && bundle\.degrees\) \|\| th\.degrees/.test(body),
+    'the strip DEGREES must come from the selected bundle (fallback th)');
+  assert.ok(/bundle\.label/.test(body),
+    'the caption scale name must reflect the selected bundle label');
+});
+test('select (#6): a scale switch refreshes the scale-reactive notes label (circle-hero retired the "Why these notes?" panel for the crown)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function select\(scaleId, persist\) \{/);
+  assert.ok(body, 'select(scaleId, persist) not found');
+  // #6 concern (notes must follow the SELECTED solo scale) is preserved, on the
+  // always-visible "Solo over it" label (data-solonotes) - the circle-hero
+  // redesign retired the bottom "Why these notes?" panel, so select() syncs the
+  // label instead of a buildWhy(whyBox,...) panel rebuild.
+  assert.ok(/notesLineEl\.innerHTML = renderNoteTokens\(bundle\.notes\)/.test(body),
+    'select() must refresh the "Solo over it" notes label to the selected bundle (the #6 scale-reactive-notes concern, now on the label not the retired panel)');
+});
+test('#6 (circle-hero): the "Why these notes?" toggle panel is retired - the interactive crown replaces it', function () {
+  var src = readSrc('music/shared/tracks.js');
+  // The bottom why-panel + its data-built build-once latch + the whyToggle are
+  // gone; the interactive circle crown (data-cofhero) is the orientation surface
+  // and the notes label (asserted above) carries the #6 scale-reactive sync.
+  assert.ok(!/data-built/.test(src),
+    'the data-built build-once latch must be removed');
+  assert.ok(!/data-whytoggle/.test(src),
+    'the retired why-panel toggle must not exist on the circle-hero redesign');
+  assert.ok(/data-cofhero/.test(src),
+    'the interactive crown wheel (data-cofhero) replaces the retired why panel');
 });
 test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th.scaleMode) into JamQueries.jamQuery, never the raw th.key', function () {
   var src = readSrc('music/shared/tracks.js');

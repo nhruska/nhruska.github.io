@@ -172,7 +172,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    [hidden] wins the display cascade. */
 .offlinePill[hidden]{display:none;}
 .offlinePill{align-self:flex-start;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:1px 6px;}
-.ab-btn{width:40px;height:40px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.25rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
+/* 44px, not 40 (issue #311): this is a real control in the app bar and the
+   floor applies to it like any other. The 4px comes out of the bar's own
+   padding, never off the target. */
+.ab-btn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn);font-size:1.25rem;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,background .15s,border-color .15s;}
 .ab-btn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
@@ -231,7 +234,15 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .csh-l::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22' viewBox='0 0 14 22'%3E%3Cpath d='M11 3l-5 8 5 8M7 3l-5 8 5 8' fill='none' stroke='%23808a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
 .csh-r::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22' viewBox='0 0 14 22'%3E%3Cpath d='M3 3l5 8-5 8M7 3l5 8-5 8' fill='none' stroke='%23808a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
 .chipScrollWrap.can-l .csh-l,.chipScrollWrap.can-r .csh-r{opacity:1;pointer-events:auto;cursor:pointer;}
-.chip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:var(--r-chip-pill);cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
+/* The 44px tap-target floor lives on the PRIMITIVE (issue #311). It used to
+   be applied surface by surface (.keyModes, .keySoloScale, #catChips each
+   carried their own copy), so any chip row nobody remembered - the Library
+   key and genre filters - shipped at 30px. Measured 37-58 x 30 at 412x915;
+   the narrowest (E, F at 37x30) missed on both axes. Putting the floor here
+   fixes every chip surface at once and makes the next one correct by
+   default. inline-flex + centering keeps the label optically centred in the
+   taller box. */
+.chip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.74rem;padding:7px 14px;border-radius:var(--r-chip-pill);cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s,transform .08s;}
 .chip:active{transform:scale(.94);}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* Library head row: search (flex) + the +Add entry point, one row. */
@@ -297,7 +308,10 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .listItem .li-meta .dot{width:4px;height:4px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
 /* Action is a real padded target + box/underline so Video vs Search isn't colour-only.
  * Movement-cancel (in JS) is the scroll-grab guard; the padded box is the hit area. */
-.listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;}
+/* .li-act is role="button" + tabindex=0 with its own activation handler -
+   a control, not a decoration - so it carries the floor too (issue #311;
+   measured 70x29). inline-flex centres the glyph+label in the taller box. */
+.listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;min-height:44px;}
 .listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
 .listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
 /* Emphasis ladder: the resting + is a per-row SECONDARY affordance repeated down
@@ -475,11 +489,21 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .campfireSheet .chordOnly{font-size:1.7rem;line-height:1.95;}
 .campfireSheet .chordOnly .bar{padding:9px 15px;margin:5px;}
 .campfireSheet .sect{font-size:.78rem;margin-top:18px;}
-.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
+.chordChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
 /* Compact bordered chord chip using the small-button radius (--r-btn-sm), same
    bucket as .chordOnly .bar / .cofNbChip (a chip-shaped compact control, not the
-   pill-shaped .chip family). */
-.chordChips .c{font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;border-radius:var(--r-btn-sm);cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+   pill-shaped .chip family). Real <button>s now (S-CHORDCHIP-A11Y) - margin:0
+   resets the UA default button margin (Safari/iOS) so the flex gap stays exact. */
+/* touch-action:manipulation (S-CHORDCHIP-LAG, PR #300) drops the mobile
+   double-tap-zoom delay on every click path through this button too - the
+   pointerdown handler in songbook.js is what makes the FIRST tap instant;
+   this keeps any click-only path (mouse, some a11y tooling) equally snappy. */
+/* min-height/min-width are the 44px tap-target floor, not styling: as real
+   <button>s these measured 32-48 x 34 at 412x915 - under the floor on both
+   axes for a control whose whole purpose is being tapped to hear the chord.
+   inline-flex + centering keeps the glyph optically centred in the taller
+   box instead of riding the top edge. */
+.chordChips .c{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-family:'Space Mono',monospace;font-weight:700;font-size:.82rem;background:var(--surface-2);color:var(--accent-ink);border:1px solid var(--line-strong);padding:6px 11px;margin:0;border-radius:var(--r-btn-sm);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
 .chordChips .c:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 /* The practice-sheet card surface hosting the chord/lyric grid (--r-card). */
 .sheet{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:15px 13px;font-family:'Space Mono',monospace;overflow-x:auto;}
@@ -1065,7 +1089,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    it when transposed off the built-in key. 88px, not 80px, because Blues is NOT
    abbreviated (MODE_SHORT.Blues = 'Blues', full word), so "G# Blues" needs the
    extra width to clear the chip-clip fold gate. */
-.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:88px;min-width:88px;max-width:88px;height:42px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
+.keyPickerCompact{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:88px;min-width:88px;max-width:88px;height:44px;padding:0 5px;border-radius:13px;border:1px solid var(--accent-dim);background:var(--surface-2);color:var(--accent-ink);font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;flex:0 0 auto;transition:transform .08s,background .15s,border-color .15s,color .15s;}
 .keyPickerCompact:active{background:var(--accent-deep);border-color:var(--accent-ink);transform:scale(.95);}
 .keyPickerCompact[hidden]{display:none;}
 .keyPickerCompact.shifted{color:var(--on-accent);background:var(--accent);border-color:var(--accent-ink);}
@@ -1303,11 +1327,16 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    flexes to push Save right but collapses to 0 first when space is tight, so
    nothing overflows. */
 .ctrlBar{display:flex;align-items:center;gap:3px;margin-bottom:9px;flex-wrap:nowrap;}
-/* Compact the icon buttons inside the bar so all five controls + Clear/Save fit one row. */
-/* Compact icon buttons use the small-button radius (--r-btn-sm). */
-.ctrlBar .iconBtn{width:36px;height:42px;font-size:.98rem;border-radius:var(--r-btn-sm);}
+/* This override used to shrink .iconBtn to 36x42 "so all five controls +
+   Clear/Save fit one row" - i.e. it bought horizontal room out of the TAP
+   TARGET, which is the one place the space budget never takes it from. It is
+   also no longer true: measured at 360px the bar has 71px of .ctrlSpacer slack
+   with 36px buttons, so restoring the primitive's 44px costs 24px of slack and
+   still leaves 47px. The row keeps its compact type size and small radius; only
+   the hit area comes back (issue #311). */
+.ctrlBar .iconBtn{font-size:.98rem;border-radius:var(--r-btn-sm);}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
-.ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:42px;flex:0 0 auto;}
+.ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:44px;flex:0 0 auto;}
 /* Visual-only resequence (DOM/tab order unchanged - this app is touch-first; see
    composeWireTap/wireTap for the actual tap-safety layer). */
 .ctrlBar #cClear{order:-1;}
@@ -1330,15 +1359,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    of source order. */
 .composeWrap.maxed .prog .suggChip{opacity:1;pointer-events:auto;}
 /* mode toggle chips are primary controls -> 44px thumb floor (touch target) */
-.keyModes .chip{display:inline-flex;align-items:center;min-height:44px;}
 /* solo-scale preview chips - same 44px thumb floor */
-.keySoloScale .chip{display:inline-flex;align-items:center;min-height:44px;}
 /* keyboard focus ring. No border-radius here: the outline follows each element's
    own radius; setting it would square off pill chips/buttons when focused. */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .search:focus-visible{outline:2px solid var(--accent);outline-offset:0;}
 /* keep the "All chords" category chips on the same 44px touch floor as the key controls */
-#catChips .chip{display:inline-flex;align-items:center;min-height:44px;}
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
 .maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
@@ -1378,19 +1404,41 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .pHead{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:9px;row-gap:1px;flex:0 0 auto;margin-bottom:5px;}
 .pTitle{font-weight:800;font-size:1.2rem;line-height:1.12;letter-spacing:-.02em;}
 .pArtist{font-size:.8rem;color:var(--txt-dim);}
-.pKey{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent-ink);font-weight:700;}
-/* overflow-x is a last-resort escape hatch: auto-fit (fitScale, songbook.js) keeps
-   the sheet within the viewport width itself, but manual font-size steps (A+/A-)
-   can still push a long unwrapped (white-space:pre) lyric line past the edge - let
-   it scroll rather than silently clip. */
-.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:auto;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;}
-/* pInner shrink-wraps to its widest pre line so applyPerfFont's scrollWidth
-   measurement sees the CONTENT width. As a plain block it would fill pSheet,
-   pinning needW >= availW and silently blocking the short-song auto UPSCALE
-   (only downscales could ever fire). */
+/* Same small-pill treatment as the Library's .li-capo badge (S-DS registry) -
+   the Stage never showed a track's capo (P1-5), so a capo'd-up performer had
+   no reminder while actually playing. */
+.pCapo{font-family:'Space Mono',monospace;font-weight:700;font-size:.72rem;color:var(--brass);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:1px 6px;border-radius:6px;flex:0 0 auto;}
+/* P1-6: the glance key line is the fastest thing a performer's eye checks
+   mid-song - it must read at LEAST as large as the artist line beneath the
+   title (previously .7rem, smaller than .pArtist's .8rem), with a 13px
+   absolute floor regardless of the root font size.
+   max(13px, .85rem) makes that floor REAL: .85rem alone is 13.6px only at a
+   16px root - a smaller root (browser text setting, accessibility profile)
+   silently dropped it under 13px, and the test, which runs at the default
+   root, could never see it (volley-1). main still carried the pre-P1-6 .7rem
+   here; this PR's value wins, which is the whole point of P1-6. */
+.pKey{font-family:'Space Mono',monospace;font-size:max(13px, .85rem);color:var(--accent-ink);font-weight:700;}
+/* WRAP-FIRST sizing model (songbook.js fitStageSheet): the sheet renders at
+   the USER's size (--pscale, buttons + pinch, persisted) with long lines
+   wrapped to the measured character budget; overflow-y scrolls a tall sheet.
+   touch-action pan-y: one finger pans the sheet natively; the two-finger
+   pinch (font size) is handled in JS. */
+/* CORE INVARIANT (sizing model v3): the Perform sheet NEVER scrolls
+   horizontally - overflow-x is hidden and width is absorbed by
+   auto-fit-then-wrap. Landed in #302 and kept wholesale through this merge;
+   z-index:1 is #305's deterministic stacking. This PR changes neither. */
+.pSheet{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:4px 2px 100px;font-family:'Space Mono',monospace;position:relative;z-index:1;--pscale:1;touch-action:pan-y;}
+/* pInner shrink-wraps to its widest pre line so fitStageSheet's scrollWidth
+   measurement sees the CONTENT width (a plain block would fill pSheet and
+   hide row overflow from the re-measure pass). */
 .pSheet .pInner{width:max-content;}
+/* Chords-view rows wrap their bars at the sheet's content width: --pavail is
+   set by fitStageSheet (padding-aware). Without the cap the width:max-content
+   pInner would stretch .chordOnly into ONE long unwrapped line - the exact
+   horizontal overflow the invariant above forbids. */
+.pSheet .chordOnly{max-width:var(--pavail,100%);}
 .pSheet::-webkit-scrollbar{width:0;}
-/* font-size scales with --pscale (perform Size control / auto-fit) */
+/* font-size scales with --pscale (perform Size control / pinch) */
 .pSheet .lyrLine{font-size:calc(1.04rem * var(--pscale));line-height:1.35;margin-bottom:11px;}
 .pSheet .chordOnly{font-size:calc(1.35rem * var(--pscale));line-height:1.85;}
 .pSheet .sect{font-size:calc(.82rem * var(--pscale));margin:17px 0 8px;}
@@ -1439,6 +1487,12 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* a disabled Stage view button (Lyrics/Both on a chord-only sheet) must LOOK
    disabled, matching the practice modeSwitch. */
 .pSpeed .psBtn:disabled{opacity:.35;cursor:default;}
+/* Key-transpose steppers are safety-critical (a mis-tap changes the performed
+   key mid-song, not just a view toggle) - give them their own >=44px tap
+   target instead of the shared flex:1 settings-row treatment; View/Size stay
+   on the shared .psBtn look untouched. */
+.pSpeed .psRowKey .psBtns{flex:0 0 auto;gap:10px;}
+.pSpeed .psRowKey .psBtn{flex:0 0 44px;width:44px;height:44px;font-size:1.2rem;padding:0;}
 /* Landscape only: collapse the Stage View+Size controls into a SINGLE row and
    shrink the header so the sheet keeps the vertical room. Landscape guarantees
    width > height, so the one row always has horizontal space; a narrow SHORT
@@ -1450,10 +1504,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pTop{margin-bottom:3px;}
   /* Landscape vertical space goes to the MUSIC. The header lines are flex items
      (blockified - inline can't merge them), so they TIGHTEN instead: smaller
-     title, zeroed margins, ~44px total for all three. */
+     title, zeroed margins, ~48px total for all three (pKey grew a few px for
+     the P1-6 legibility floor, still >= pArtist here too). */
   .pTitle{font-size:.95rem;line-height:1.1;}
   .pArtist{font-size:.72rem;margin:0;}
-  .pKey{font-size:.66rem;margin-bottom:2px;}
+  .pKey{font-size:.82rem;margin-bottom:2px;}
   /* ...and the nav becomes a RIGHT-EDGE thumb column below the top bar: Next
      dominant (Fitts's law, strap-grip thumb arc), Prev small beneath it. The
      sheet is padded clear of the column so chords can never run under the next
@@ -1467,6 +1522,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
   .pSpeed .psRow{flex:1 1 30%;min-width:0;}
   .pSpeed .psBtns{min-width:0;}
   .pSpeed .psBtn{min-width:0;padding:8px 4px;font-size:.72rem;}
+  /* The 44px safety floor holds in landscape too - a key-change mis-tap is
+     just as costly with a wider viewport. */
+  .pSpeed .psRowKey{flex:0 0 auto;}
+  .pSpeed .psRowKey .psBtns{min-width:0;flex:0 0 auto;}
+  .pSpeed .psRowKey .psBtn{min-width:44px;width:44px;height:44px;font-size:1.1rem;padding:0;}
 }
 .perform.dim{background:var(--stage-bg);}
 .perform.dim .lyrLine{color:var(--stage-ink);}
@@ -1476,6 +1536,7 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .perform.dim .sect{color:var(--stage-amber);}
 .perform.dim .pTitle,.perform.dim .pArtist,.perform.dim .pos{color:var(--stage-ink);}
 .perform.dim .pKey{color:var(--stage-amber);}
+.perform.dim .pCapo{color:var(--stage-ink);background:var(--stage-panel);border-color:var(--stage-line);}
 .perform.dim .x,.perform.dim .pmini{color:var(--stage-ink);border-color:var(--stage-line);background:var(--stage-panel);}
 .perform.dim .btn{background:var(--stage-amber);color:var(--stage-on-amber);border-color:var(--stage-amber);}
 .perform.dim .btn.ghost{background:transparent;color:var(--stage-ink);border-color:var(--stage-line-soft);}

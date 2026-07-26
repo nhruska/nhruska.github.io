@@ -1,0 +1,85 @@
+{
+  "name": "tap-target-floor",
+  "note": "Issue #311: every interactive control on every tab must clear the 44px tap-target floor at the phone viewport. The Library key/genre filter chips shipped at 30px because the floor was applied surface-by-surface (.keyModes, .keySoloScale, #catChips each carried a copy) while the .chip PRIMITIVE had none - so any chip row nobody remembered was under it. Compose's control bar separately SHRANK .iconBtn to 36x42 to buy horizontal room, which is the one budget line a tap target never funds. Red-first: pre-fix this fails on the Library tab with 24 sub-floor chips. MEASURED WITH offsetWidth/offsetHeight, NOT getBoundingClientRect - the rect is the transformed box and .chip:active carries scale(.94), so a compliant 44px chip reads 41.4px mid-press and the gate would cry wolf (see rules/mobile-ui-lessons.md reflex 9).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1100
+    },
+    {
+      "action": "evalAssert",
+      "label": "layout settle gate: fonts loaded before any geometry is measured",
+      "js": "document.fonts.ready.then(function(){ return true; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (#311): every VISIBLE interactive control on LIBRARY clears 44px on both axes (pre-fix: 24 filter chips at 30px tall, the narrowest 37x30)",
+      "js": "(function(){var sel='button,a,[role=\"button\"],input,select,textarea,label,[onclick]';var bad=[];Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){if(el.offsetWidth===0||el.offsetHeight===0)return;var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.opacity==='0')return;if(el.offsetWidth<44||el.offsetHeight<44)bad.push(el);});return bad.length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no horizontal overflow at 412px with the taller chips",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth + 1"
+    },
+    {
+      "action": "screenshot",
+      "name": "tap-floor-library"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"jam\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (#311): every VISIBLE interactive control on SETLIST clears 44px",
+      "js": "(function(){var sel='button,a,[role=\"button\"],input,select,textarea,label,[onclick]';var bad=[];Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){if(el.offsetWidth===0||el.offsetHeight===0)return;var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.opacity==='0')return;if(el.offsetWidth<44||el.offsetHeight<44)bad.push(el);});return bad.length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (#311): every VISIBLE interactive control on COMPOSE clears 44px (pre-fix: .ctrlBar shrank .iconBtn to 36x42 to fit one row)",
+      "js": "(function(){var sel='button,a,[role=\"button\"],input,select,textarea,label,[onclick]';var bad=[];Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){if(el.offsetWidth===0||el.offsetHeight===0)return;var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.opacity==='0')return;if(el.offsetWidth<44||el.offsetHeight<44)bad.push(el);});return bad.length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Compose control bar still fits ONE row after the hit areas came back - the shrink it replaced was justified by fitting, so that justification has to survive. Zero-HEIGHT children (.ctrlSpacer) are excluded: a 0px-tall flex spacer centres to a different offsetTop and would fake a second row",
+      "js": "(function(){var bar=document.querySelector('.ctrlBar');if(!bar)return false;var used=0,tops={},n=0;Array.prototype.forEach.call(bar.children,function(el){used+=el.offsetWidth;if(el.offsetHeight===0)return;tops[el.offsetTop]=1;n++;});return n>0 && used<=bar.offsetWidth && Object.keys(tops).length===1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "tap-floor-compose"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"tune\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST (#311): every VISIBLE interactive control on TUNE clears 44px",
+      "js": "(function(){var sel='button,a,[role=\"button\"],input,select,textarea,label,[onclick]';var bad=[];Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){if(el.offsetWidth===0||el.offsetHeight===0)return;var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.opacity==='0')return;if(el.offsetWidth<44||el.offsetHeight<44)bad.push(el);});return bad.length===0;})()"
+    }
+  ]
+}

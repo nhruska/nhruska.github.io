@@ -1,0 +1,124 @@
+{
+  "name": "perform-stage-orientation-rewrap",
+  "note": "CW-1 follow-up (3 defects found in operator UAT on top of the original portrait fix in perform-long-line-wrap.json): (1) perfWrapMaxChars' budget used a flat '-4' fudge instead of the sheet's REAL computed horizontal padding, so it under-accounted for landscape's padding-right:120px (reserved for the absolutely-positioned nav-button column) and wrapped rows ran under the buttons; (2) a bold chord label (.crd{font-weight:700}) can render a touch wider per character than the plain-weight measuring probe, so a single wrap pass could still land a few px over budget - the fix re-measures and shrinks the char budget until it actually fits; (3) the resize listener only called applyPerfFont() (re-scale), never re-checked/re-wrapped, so a wrap computed for one orientation's width silently carried into the other. Red-first repro (verified empirically before writing this assertion): open the Stage view with the phone ALREADY in landscape (defect 1 - the fresh wrap uses the too-generous landscape budget, right edge of every .lyrLine lands at 888px while the nav column starts at 799px, a clear overlap) then rotate to portrait WITHOUT closing the stage (defect 3 - pre-fix the landscape wrap (long rows) is never rebuilt for the narrower portrait frame: observed scrollWidth 870px inside a 380px-wide pSheet even at the auto-fit floor scale 0.500, a hard overflow). Rotating back to landscape must also re-wrap cleanly (not just rescale a stale portrait wrap). Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every orientation step now also asserts the 0.8x/~13px legibility floor - a tiny-but-fitting render fails; wrapping plus vertical scroll, never sub-readable shrink, is what absorbs each orientation's width.",
+  "viewport": { "width": 915, "height": 412 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 700 },
+    {
+      "action": "evalAssert",
+      "label": "seed a saved custom song with one very long chorus line so the perform view has content that overflows in EITHER orientation",
+      "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'longLineSong', t:'Long Line Song', a:'Me', y:2026, d:'Mine', custom:true, forkOf:'k1', seq:['C','G','Am','F'], sheet:[['Verse','[C] a short intro line [G] here'],['Chorus','[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too and [Am]still I keep on singing this [F]same old song about the [C]rain that never seems to [G]stop no matter what I do']]}]));return true}catch(e){return false}})()"
+    },
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 800 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Long Line Song\")" },
+    { "action": "wait", "ms": 500 },
+    { "action": "tap", "selector": "#stageBtn" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the perform (stage) view is open",
+      "js": "(function(){var p=document.querySelector('.perform');return !!p && p.classList.contains('on');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "01-opened-in-landscape"
+    },
+    {
+      "action": "evalAssert",
+      "label": "defect 1 (landscape padding-aware wrap budget): opening the stage FRESH in landscape must not run any .lyrLine under the .pNav button column - .pSheet reserves padding-right:120px there, and a wrap budget that measures only clientWidth (not the real computed padding) wraps too generously and clips under the buttons (FAILS pre-fix: right edge ~888px vs nav starting ~799px)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var nav=document.querySelector('.pNav');if(!pSheet||!nav)return false;var navBox=nav.getBoundingClientRect();var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){var b=lines[i].getBoundingClientRect();var overlaps=!(b.right<=navBox.left||b.left>=navBox.right||b.bottom<=navBox.top||b.top>=navBox.bottom);if(overlaps)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape-open: no .lyrLine overflows its own content box (scrollWidth <= pSheet.clientWidth) - also the general invariant defect 2's re-measure/shrink loop must hold",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape-open: chord stays column-synced over its lyric",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)return false;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)return false;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>5;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape-open: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape-open: pSheet.scrollLeft is 0",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "prep: scroll the stage sheet down a little before rotating, so the next check can prove the rotate re-fit PRESERVES the reader's place instead of jumping back to the top",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return true;pSheet.scrollTop=Math.max(0, Math.min(30, pSheet.scrollHeight-pSheet.clientHeight));return true;})()"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "screenshot",
+      "name": "02-rotated-to-portrait"
+    },
+    {
+      "action": "evalAssert",
+      "label": "defect 3 (rotate re-wrap): after landscape -> portrait, no .lyrLine overflows - proves the resize handler re-ran the fit+WRAP (not just applyPerfFont's scale). FAILS pre-fix: the landscape wrap's rows carry over unwrapped-for-portrait and overflow even at the auto-fit floor (observed scrollWidth 870px inside a 380px pSheet)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated-to-portrait: chord stays column-synced over its lyric",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;var checked=0;for(var i=0;i<lines.length;i++){var crd=lines[i].querySelector('.crd');if(!crd)return false;var crdNode=crd.firstChild;if(!crdNode||crdNode.nodeType!==3)continue;var lyricNode=null;for(var n=crd.nextSibling;n;n=n.nextSibling){if(n.nodeType===3){lyricNode=n;break;}}if(!lyricNode)return false;var lyricFull=lyricNode.textContent;var lyricStart=lyricFull.indexOf('\\n')+1;var crdLen=crdNode.textContent.length;var lyricLen=lyricFull.length-lyricStart;var sampleLen=Math.min(crdLen,lyricLen);if(sampleLen<1)continue;var step=Math.max(1,Math.floor(sampleLen/6));for(var c=0;c<sampleLen;c+=step){var r1=document.createRange();r1.setStart(crdNode,c);r1.setEnd(crdNode,c+1);var r2=document.createRange();r2.setStart(lyricNode,lyricStart+c);r2.setEnd(lyricNode,lyricStart+c+1);var b1=r1.getBoundingClientRect(),b2=r2.getBoundingClientRect();if(Math.abs(b1.left-b2.left)>2)return false;checked++;}}return checked>5;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated-to-portrait: the re-fit PRESERVES the reader's scroll position instead of resetting to the top on every rotation - only asserted when the re-wrapped portrait content actually has scrollable overflow to preserve (a re-wrap can change row count/height, so an exact px match isn't meaningful; not-reset-to-0 is)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var max=pSheet.scrollHeight-pSheet.clientHeight;if(max<=5)return true;return pSheet.scrollTop>0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated-to-portrait: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective (a rotate must re-WRAP for the narrower frame, never shrink below readable)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated-to-portrait: pSheet.scrollLeft is 0",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "screenshot",
+      "name": "03-rotated-back-to-landscape"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated back to landscape: still no .lyrLine under the .pNav column (the SAME defect-1 check, now via a resize-driven re-wrap rather than a fresh stage open - proves fitStageSheet, not just showPerform's initial render, applies the padding-aware budget)",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');var nav=document.querySelector('.pNav');if(!pSheet||!nav)return false;var navBox=nav.getBoundingClientRect();var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){var b=lines[i].getBoundingClientRect();var overlaps=!(b.right<=navBox.left||b.left>=navBox.right||b.bottom<=navBox.top||b.top>=navBox.bottom);if(overlaps)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated back to landscape: no .lyrLine overflows",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(lines[i].scrollWidth>pSheet.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated back to landscape: LEGIBILITY FLOOR (wrap-first model) - --pscale >= 0.8, every .lyrLine >= 13px effective",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');if(!pSheet)return false;var sc=parseFloat(getComputedStyle(pSheet).getPropertyValue('--pscale'));if(!(sc>=0.799))return false;var lines=pSheet.querySelectorAll('.lyrLine');if(!lines.length)return false;for(var i=0;i<lines.length;i++){if(parseFloat(getComputedStyle(lines[i]).fontSize)<13)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "rotated back to landscape: pSheet.scrollLeft is 0",
+      "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
+    }
+  ]
+}
