@@ -440,13 +440,21 @@
       // "G mixolydian" (modal). th.label is the mode name from circle.js. Plain
       // (unescaped) form kept alongside for the M-GUIDE W3a target caption's
       // textContent - keyLabel (escaped) still feeds the innerHTML meta line.
-      var dispKey = dispKeyRoot(th.key, th.scaleMode); // FORK-4 removal: display name
-      var keyLabelPlain = th.scaleMode === 'ionian' ? dispKey
-        : th.scaleMode === 'aeolian' ? dispKey + 'm'
-        : (dispKey + ' ' + th.label.toLowerCase());
-      var keyLabel = esc(keyLabelPlain);
-      var meta = [keyLabel, t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
-        .filter(Boolean).join(' · ');
+      // S-COF-INTERACTIVE: keyLabel/meta are recomputed on a circle retune
+      // (retuneTo, below), so their derivation lives in helpers keyed to the
+      // LIVE bundle, not a one-shot. dispKey/keyLabelPlain/keyLabel stay derived
+      // per-bundle; only bpm/genre come from the (unchanging) track t.
+      function keyLabelPlainFor(b) {
+        var dk = dispKeyRoot(b.key, b.scaleMode); // FORK-4 removal: display name
+        return b.scaleMode === 'ionian' ? dk
+          : b.scaleMode === 'aeolian' ? dk + 'm'
+          : (dk + ' ' + b.label.toLowerCase());
+      }
+      function metaFor(b) {
+        return [esc(keyLabelPlainFor(b)), t.bpm ? t.bpm + ' bpm' : '', esc(t.genre || '')]
+          .filter(Boolean).join(' · ');
+      }
+      var meta = metaFor(th);
       // M-GUIDE W3a (section 2/3): chord-tone targeting + per-scale guidance card
       // state, scoped to this Studio open. scaleBoxWrap is the live boxWrap
       // returned by KeyExplorer.renderScale - toggling a target calls its
@@ -456,6 +464,14 @@
       // itself, or a soloBundle() chip-swap result) so a chord-target toggle can
       // re-derive tones against the RIGHT scale.
       var scaleBoxWrap = null, activeTargetChord = null, curBundle = th, curScaleId = 'mode';
+      // S-COF-INTERACTIVE: the song's own key center, captured before any circle
+      // retune, so "back to song key" restores exactly. soloKey/soloMode track
+      // whichever key the theory surfaces currently render - the SONG's on open,
+      // an EXPLORED key after a wheel tap (retuneTo). The scale-chip machinery
+      // reads soloKey/soloMode (not t.key/t.mode directly) so its bundles follow
+      // the explored key too; on the song key they are exactly t.key/t.mode.
+      var songRoot = th.key, songScaleMode = th.scaleMode;
+      var soloKey = t.key, soloMode = t.mode;
       // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
       // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
       // to the new scale's first genre whenever the active genre isn't in that
@@ -713,16 +729,6 @@
         // "below" pointed at empty space until you tapped. Point the hint at the
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
-      var playerBlock = t.yt
-        ? '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
-          + '<button class="bt-st-editlink" data-jamfindtoggle type="button">Find another jam</button>'
-          + jamPanelHtml
-        : '<div class="bt-st-search">'
-          + '<button class="bt-st-ytlink" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '<div class="bt-st-search-hint">' + noVideoHint + '</div>'
-          + '</div>'
-          + jamPanelHtml;
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -741,11 +747,18 @@
       // with jamFindToggle/jamPanel above, not shown unconditionally. Managing
       // an EXISTING curated video (Edit / Curated video URL) is a different
       // job from finding one, so those stay always-visible, untouched.
+      //
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): urlEditor is computed
+      // BEFORE playerBlock now so the video-track header can fold the Curated-URL
+      // card INTO the `...` fly-out menu (see playerBlock's t.yt branch). For a
+      // VIDEO track it renders inside the menu; for a no-video track it stays at
+      // its old spot below the stage. The DOM/data-* attrs are unchanged so every
+      // existing handler (data-urled/-gated, data-vidin/-save) still binds.
       var urlEditor = t.custom
         ? (t.yt
-          ? (opts.onEditRequest
-            ? '<div class="bt-st-urled" data-urled><button class="bt-st-editlink" data-editrequest type="button">Edit</button></div>'
-            : '')
+          // The has-video custom Edit lives in the fly-out menu (data-editrequest);
+          // no separate url-editor card for the has-video custom case.
+          ? ''
           : ((opts.onSetVideo && t.id) || opts.onEditRequest
             ? '<div class="bt-st-urled" data-urled-gated hidden>'
               + ((opts.onSetVideo && t.id)
@@ -767,6 +780,68 @@
             + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
             + '</div></div>'
           : '');
+      // S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): the pinned header row and
+      // the now-playing strip named the SAME track on two stacked rows, eating the
+      // vertical space that kept the circle crown + fretboard + chords from all
+      // fitting above the fold on a phone. They MERGE into one header row:
+      //   [back] [title/key] [play/pause] [progress] [time] [hamburger]   (video)
+      //   [back] [title/key] [Optional] [hamburger]                       (no video)
+      // headStrip holds the strip's controls, concatenated INTO .bt-st-head (which
+      // is now position:relative so the .bt-st-menu fly-out still anchors under it -
+      // see tracks.css). The video iframe + countdown drop to mediaBlock, rendered
+      // BELOW the merged header. Same data-* attrs, so wireNowPlaying/wireStudioMenu
+      // bind unchanged - only the DOM location moved (relocation, not rebuild).
+      //
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact `...`
+      // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
+      // another jam, Edit, and the Curated-URL card as full-width rows - same
+      // data-* attrs, so the existing handlers bind unchanged.
+      var headStrip = t.yt
+        ? '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          // Operator UAT (2026-07-26): no title text in the strip - the merged
+          // header already names the track. A PLAYBACK PROGRESS BAR + total time
+          // shows relative position at a glance (driven by YT infoDelivery time,
+          // see wireNowPlaying). Menu glyph is a hamburger (app menu standard).
+          + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
+          + '<span class="bt-st-np-time" data-nptime></span>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
+          // The fly-out is a CHILD of the header (not a sibling) so its
+          // position:absolute anchors to .bt-st-head (position:relative) - a sibling
+          // would resolve top:100% against .bt-player and drop off-screen.
+          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
+          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
+          + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
+          + urlEditor
+          + '</div>'
+        // S-STUDIO-NOVID (operator device-test 2026-07-26): a videoless track is
+        // for soloing/exploring over the progression - the circle + fretboard ARE
+        // the product; a backing YouTube track is OPTIONAL rehearsal support. The
+        // merged header shows a slim "Optional" tag + `...` fly-out holding the
+        // guidance + the "Find a jam"/"Add a video" trigger. Tapping that trigger
+        // (a .bt-st-menu-item, so the fly-out auto-closes) reveals the genre/feel
+        // jam panel (data-jampanel) + the paste box (data-urled-gated) below - the
+        // EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
+        // handler untouched), only the trigger's DOM location moved.
+        : '<span class="bt-st-np-state">Optional</span>'
+          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
+          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
+          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
+          + '</div>';
+      // The video iframe shows on open (see it start), then auto-collapses after a
+      // few seconds to audio-only (.bt-st-media.min clips it, never removes it, so
+      // audio keeps playing). Countdown caption + the jam panel follow. For a
+      // videoless track no static iframe space is reserved - just the jam panel.
+      var mediaBlock = t.yt
+        ? '<div class="bt-st-media" data-media>'
+          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-countdown" data-countdown role="status">'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>7</b>s - tap Hide/Show to keep control</span>'
+          + '<i></i></div>'
+          + jamPanelHtml
+        : jamPanelHtml;
       // .bt-st-stage wraps the pinned header + video: one column in portrait,
       // the left pane in the landscape two-pane split (CSS). Practice content
       // (scale, chords) leads the scrollable body; the url-curation editor sits
@@ -782,14 +857,34 @@
         + '<div class="bt-st-stage">'
         + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
         + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div></div>'
-        + playerBlock
+        + '<span class="bt-st-meta">' + meta + '</span></div>'
+        // S-STUDIO-HEADERMERGE: the now-playing strip controls live INSIDE the
+        // header row now (play/pause + progress + time + hamburger, or the no-video
+        // Optional tag + hamburger), so the track's header and its transport are
+        // ONE row, not two.
+        + headStrip
+        + '</div>'
+        + mediaBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
         // return to a videoless track the "add a video" control is immediately at
-        // hand (was buried below the scale + chords).
-        + urlEditor
+        // hand (was buried below the scale + chords). S-STUDIO-FLYOUT: for a VIDEO
+        // track the urlEditor already renders INSIDE the `...` fly-out menu (see
+        // playerBlock), so it must NOT render a second time here - only the
+        // no-video path keeps the stage-level card.
+        + (t.yt ? '' : urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
+        // Circle-of-fifths CROWN (operator: circle + fretboard share the top).
+        // Promoted from the retired bottom "Why these notes?" toggle to the top
+        // of the body as the orientation hero. Rendered wheel-only + eagerly
+        // (see renderCofHero below) - the scale-reactive note names live in the
+        // "Solo over it" label; the wheel stays keyed to the track's KEY center
+        // (unaffected by solo-scale chips), so it never goes stale.
+        + '<div class="bt-st-cofhero" data-cofhero></div>'
+        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
+        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
+        // song's own key). retuneTo toggles its [hidden]; wired once below.
+        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
         // (primary, 44px, was a 32px .soundToggle lost among the label text),
         // Speed (one compact cycling button, replaces the 3-button Slow/Med/
@@ -812,27 +907,36 @@
         // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
-        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
         // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
         // retired - the fretboard always spans frets 0-12 now (see
         // scaleRenderOpts above), so there is nothing left to toggle.
         + '<div class="bt-st-scale" data-scale></div>'
+        // S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the scale-DESCRIPTION
+        // (data-scaleframe) and the fretboard LEGEND (data-legend) used to sit in
+        // the always-visible inline flow (between chips and fretboard, and below
+        // it), eating the vertical space that kept the chords-in-key below the
+        // fold. They now live inside ONE on-demand container (data-guidewrap) with
+        // the per-scale mentor card (data-guide), hidden by default and revealed
+        // TOGETHER by the `?` guide toggle in the controls row above. So the inline
+        // flow is free of them; tapping `?` shows description + legend + guide.
+        // Each still re-derives on Studio open + every chip switch (select() writes
+        // data-scaleframe, renderLegend writes data-legend, renderGuide writes
+        // data-guide) regardless of the wrapper's hidden state, so content is never
+        // stale when the toggle opens. data-scaleframe keeps its own [hidden]
+        // (framing-text-present) toggle inside the wrapper - no framing == no empty
+        // description row even when the wrapper is open.
+        + '<div class="bt-st-guidewrap" data-guidewrap hidden>'
         // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js) - dot-
-        // swatch + label rows. No wrapping class/hidden attr needed: an empty
-        // container (Legend.render() returned null) is already invisible,
-        // and Legend.render()'s own returned element carries its own
-        // `.legend` styling.
+        // swatch + label rows. An empty container (Legend.render() returned null)
+        // is already invisible; Legend.render()'s element carries its own .legend
+        // styling.
+        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
         + '<div data-legend></div>'
-        // M-GUIDE W3a, relocated (F18, operator UAT 2026-07-05): the per-
-        // scale mentor card (SoloGuide) used to sit ABOVE the fretboard,
-        // right after the scale chips, competing with the primary practice
-        // flow for attention. It now renders BELOW the fretboard + legend,
-        // collapsed by default, opened via the `?` icon in the controls row
-        // above (not a one-shot Notable dismiss - the card content is scale-
-        // dependent and re-derives on every chip switch, so a permanent
-        // dismiss would hide a genuinely reusable re-orientation aid; the `?`
-        // itself is the cheap re-open affordance).
-        + '<div class="bt-st-why" data-guide hidden></div>'
+        // M-GUIDE W3a: the per-scale mentor card (SoloGuide). Re-derives on every
+        // chip switch, so the `?` is a cheap re-open affordance (not a one-shot
+        // dismiss). No [hidden] here - the wrapper owns the show/hide now.
+        + '<div class="bt-st-why" data-guide></div>'
+        + '</div>'
         + '</div>'
         // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
         // + roman numeral - name-only chips (like the scale-chip row above),
@@ -850,9 +954,10 @@
         // the neck →" / "Why these notes - the circle" - the long labels wrapped
         // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
         // just tighter so both fit on one line side by side.
-        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a>'
-        + '<button class="bt-st-why-toggle" data-whytoggle type="button">Why these notes?</button></div>'
-        + '<div class="bt-st-why" data-why hidden></div>'
+        // "Why these notes?" toggle + its bottom wheel panel are RETIRED - the
+        // circle is now the top crown (data-cofhero). Only the neck-walk link
+        // remains on this row.
+        + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
@@ -868,6 +973,117 @@
       // itself is unchanged (still driven by renderJamPanel()), only its
       // trigger's location/label moved.
       var jamFindToggle = elPlayer.querySelector('[data-jamfindtoggle]'), jamPanel = elPlayer.querySelector('[data-jampanel]');
+      // Now-playing strip + video minimize. The frame shows on open so you see
+      // it start, then auto-collapses after a few seconds to the strip (audio
+      // keeps playing - the iframe is only clipped, never removed). Show/Hide
+      // video re-expands; play/pause drives the YouTube embed over postMessage
+      // (enablejsapi=1 on the embed URL). No YT API script needed.
+      (function wireNowPlaying() {
+        var AUTOMIN_MS = 7000; // show it a beat, then collapse (operator: 7s)
+        var mediaEl = elPlayer.querySelector('[data-media]');
+        var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
+        var ppBtn = elPlayer.querySelector('[data-nppp]');
+        var stateEl = elPlayer.querySelector('[data-npstate]');
+        var cdEl = elPlayer.querySelector('[data-countdown]');
+        var cdNum = elPlayer.querySelector('[data-cdnum]');
+        var cdFill = cdEl && cdEl.querySelector('i');
+        var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
+        function ytCmd(func) {
+          var w = frameWin(); if (!w) return;
+          try { w.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), '*'); } catch (e) {}
+        }
+        function setMin(min) {
+          if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
+          mediaEl.classList.toggle('min', min);
+          if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
+        }
+        // Auto-collapse countdown. A visible progress bar drains over AUTOMIN_MS
+        // (standard auto-dismiss affordance); any manual video toggle cancels it
+        // so the user's choice always wins.
+        var autoTimer = 0, cdTick = 0;
+        function endCountdown() {
+          if (cdEl) cdEl.classList.add('done');
+          if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
+          if (cdTick) { clearInterval(cdTick); cdTick = 0; }
+        }
+        if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
+        var remain = Math.round(AUTOMIN_MS / 1000);
+        if (cdNum) cdNum.textContent = remain;
+        cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
+        autoTimer = setTimeout(function () { setMin(true); endCountdown(); }, AUTOMIN_MS);
+        if (vidToggle && mediaEl) vidToggle.onclick = function () { endCountdown(); setMin(!mediaEl.classList.contains('min')); };
+        var paused = false;
+        if (ppBtn) ppBtn.onclick = function () {
+          paused = !paused;
+          ytCmd(paused ? 'pauseVideo' : 'playVideo');
+          ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
+          ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+        };
+        // Now-playing PROGRESS BAR (operator UAT: title text dropped - the pinned
+        // header names the track; show playback position + total time at a glance
+        // instead). Real YT time via the embed's JS-API infoDelivery postMessages:
+        // send {event:'listening'} so the embed emits them, parse currentTime +
+        // duration, drive the bar + m:ss / m:ss label. Graceful: if YT never
+        // reports (headless / blocked egress), the bar stays at 0 and the
+        // play/pause icon still conveys state. The message listener + the poll
+        // both self-unbind once the strip leaves the DOM (no leak across opens).
+        var progEl = elPlayer.querySelector('[data-npprog]');
+        var progFill = elPlayer.querySelector('[data-npfill]');
+        var timeLbl = elPlayer.querySelector('[data-nptime]');
+        var ytDur = 0;
+        function fmtTime(s) { s = Math.max(0, Math.round(s || 0)); var m = Math.floor(s / 60), ss = s % 60; return m + ':' + (ss < 10 ? '0' : '') + ss; }
+        function onYtMessage(e) {
+          if (!progFill || !progFill.isConnected) { global.removeEventListener('message', onYtMessage); return; }
+          if (!e || typeof e.data !== 'string') return;
+          var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+          if (!d || d.event !== 'infoDelivery' || !d.info) return;
+          if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
+          if (typeof d.info.currentTime === 'number' && ytDur > 0) {
+            var frac = Math.max(0, Math.min(1, d.info.currentTime / ytDur));
+            progFill.style.width = (frac * 100).toFixed(1) + '%';
+            if (progEl) progEl.setAttribute('aria-valuenow', Math.round(frac * 100));
+            if (timeLbl) timeLbl.textContent = fmtTime(d.info.currentTime) + ' / ' + fmtTime(ytDur);
+          }
+        }
+        if (progFill) {
+          global.addEventListener('message', onYtMessage);
+          var listenTries = 0;
+          var listenIv = setInterval(function () {
+            if (!progFill.isConnected) { clearInterval(listenIv); return; }
+            var w = frameWin(); if (w) { try { w.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (x) {} }
+            if (++listenTries >= 8) clearInterval(listenIv);
+          }, 500);
+        }
+      })();
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the `...` menu button
+      // in the now-playing strip toggles the .bt-st-menu fly-out (Show/Hide video,
+      // Find another jam, Edit, Curated-URL card). Tapping a menu ACTION row or
+      // anywhere outside the menu closes it; the URL input/Save inside stay open
+      // (they carry their own classes, not .bt-st-menu-item, so the delegated
+      // action-close never fires on them). The document listener self-removes once
+      // the panel leaves the DOM (Studio close/re-render), so no listener leaks.
+      (function wireStudioMenu() {
+        var menuBtn = elPlayer.querySelector('[data-stmenu]');
+        var menuPanel = elPlayer.querySelector('[data-stmenu-panel]');
+        if (!menuBtn || !menuPanel) return;
+        function setOpen(open) {
+          menuPanel.hidden = !open;
+          menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        menuBtn.onclick = function (e) { e.stopPropagation(); setOpen(menuPanel.hidden); };
+        // Close when a menu ACTION row is tapped (not the URL input/Save, which
+        // reopen the Studio on their own and carry different classes).
+        menuPanel.addEventListener('click', function (e) {
+          if (e.target.closest('.bt-st-menu-item')) setOpen(false);
+        });
+        function onDocClick(e) {
+          if (!menuPanel.isConnected) { document.removeEventListener('click', onDocClick); return; }
+          if (menuPanel.hidden) return;
+          if (menuBtn.contains(e.target) || menuPanel.contains(e.target)) return;
+          setOpen(false);
+        }
+        document.addEventListener('click', onDocClick);
+      })();
       // M-EAR wave 1: the play/stop scale-audition toggle + the notes token
       // line it bounces a marker across (curBundle already tracks whichever
       // scale-chip is active - see the M-GUIDE W3a comment above).
@@ -928,39 +1144,94 @@
         setSoundToggle(false);
         clearSoundMarks();
       }
+      // The scale-audition play path, extracted so BOTH the Play toggle (below)
+      // and a circle retune (retuneTo, below) start the same loop against
+      // whatever curBundle currently is. Always reads curBundle.pcs LIVE on
+      // every tick (see the onNote comment) so a retarget/retune the loop is
+      // agnostic to. Caller must stopStudioSound() first if a loop is live.
+      function startAudition() {
+        if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
+        setSoundToggle(true);
+        studioSound = global.Sound.playScale(curBundle.pcs, {
+          // M-EAR wave 1.6 (U14): the currently-selected tempo control value -
+          // live tempo changes route through studioSound.setTempo() (the tempo
+          // toggle's own onclick, below), not a re-call here.
+          bpm: TEMPO_BPM[tempo],
+          // F17: continuous two-octave run with a dwell on every root hit,
+          // instead of stopping/restarting each single-octave pass.
+          octaves: SOLO_OCTAVES,
+          rootDwell: ROOT_DWELL,
+          // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not a
+          // value captured at play-start - after a chip-switch retarget OR a
+          // circle retune, curBundle already points at the NEW bundle, so the
+          // marker + fretboard light always match whichever scale is sounding.
+          onNote: function (i) {
+            var len = curBundle.pcs.length, idx = i % len;
+            clearSoundMarks();
+            markSoundingNote(idx, curBundle.pcs[idx]);
+          },
+          onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
+        });
+        // U16: the 'sounding' legend row joins/leaves as playback starts/stops
+        // (onStop above handles the leaving half).
+        renderLegend();
+      }
       if (soundToggleEl) {
         soundToggleEl.onclick = function () {
           if (studioSound) { stopStudioSound(); return; }
-          if (!global.Sound || !curBundle || !curBundle.pcs || !curBundle.pcs.length) return;
-          setSoundToggle(true);
-          studioSound = global.Sound.playScale(curBundle.pcs, {
-            // M-EAR wave 1.6 (U14): the currently-selected tempo control
-            // value - live tempo changes route through studioSound.setTempo()
-            // (the tempo toggle's own onclick, below), not a re-call here.
-            bpm: TEMPO_BPM[tempo],
-            // F17: continuous two-octave run with a dwell on every root hit,
-            // instead of stopping/restarting each single-octave pass.
-            octaves: SOLO_OCTAVES,
-            rootDwell: ROOT_DWELL,
-            // M-EAR wave 1.5 (U11): read curBundle.pcs LIVE on every tick, not
-            // a value captured at play-start - after a chip-switch retarget,
-            // curBundle already points at the NEW bundle (select() updates it
-            // before calling retarget()), so the marker + fretboard light
-            // always match whichever scale is actually sounding right now,
-            // even across a differing note count (e.g. 7-note mode -> 5-note
-            // pentatonic).
-            onNote: function (i) {
-              var len = curBundle.pcs.length, idx = i % len;
-              clearSoundMarks();
-              markSoundingNote(idx, curBundle.pcs[idx]);
-            },
-            onStop: function () { studioSound = null; setSoundToggle(false); clearSoundMarks(); renderLegend(); }
-          });
-          // U16: the 'sounding' legend row joins/leaves as playback starts/stops
-          // (onStop above handles the leaving half).
-          renderLegend();
+          startAudition();
         };
       }
+      // S-COF-INTERACTIVE: retune every theory surface to an EXPLORED key when a
+      // circle-crown wedge is tapped (onPick, wired in renderCofHero) - WITHOUT
+      // rebuilding elPlayer.innerHTML, so the backing-track <iframe> node is
+      // never destroyed and the video/audio keeps playing. The strategy is a
+      // single reassignment of the shared `th` closure var: every theory-render
+      // helper (renderFretboard/renderChordChips/renderCofHero/renderGuide/
+      // renderJamPanel/renderLegend + the notes label + meta line) reads `th`
+      // LIVE, so reassigning it and re-calling those helpers in place re-skins
+      // the whole harmony HUD. newMode is a mode string studioTheory accepts
+      // ('ionian'/'aeolian' from a wheel tap, or the song's own t.mode on reset).
+      function retuneTo(newRoot, newMode) {
+        // TRAP 1: kill any live audition FIRST - its onNote callback references
+        // DOM/bundle a re-skin replaces; a loop ticking against stale nodes is
+        // the dangling-handle trap. stopStudioSound() is the ONE genuine stop.
+        stopStudioSound();
+        var nth = studioTheory(newRoot, newMode);
+        if (!nth) return; // unresolvable key - keep the current surfaces on screen
+        th = nth; // REASSIGN the shared var - every closure now reads the new key
+        curBundle = th; curScaleId = 'mode'; activeTargetChord = null;
+        var onSong = (th.key === songRoot && th.scaleMode === songScaleMode);
+        // On the song key, restore the exact original soloKey/soloMode (raw
+        // t.key/t.mode) so the scale-chip machinery + any persistence match a
+        // fresh open; on an explored key, follow the explored key (no persist).
+        if (onSong) { soloKey = t.key; soloMode = t.mode; }
+        else { soloKey = newRoot; soloMode = newMode; }
+        // Re-skin each surface IN PLACE (never a full elPlayer-innerHTML rebuild):
+        var metaEl = elPlayer.querySelector('.bt-st-meta');
+        if (metaEl) metaEl.innerHTML = metaFor(th);
+        var notesEl = elPlayer.querySelector('[data-solonotes]');
+        if (notesEl) notesEl.innerHTML = renderNoteTokens(th.notes);
+        var neckEl = elPlayer.querySelector('.hsrMore');
+        if (neckEl) neckEl.setAttribute('href', inversionsHref(th));
+        // TRAP 2: renderCofHero replaces the wheel DOM, so it RE-ATTACHES onPick
+        // every call - an omitted onPick would leave the wheel inert after this
+        // first tap. renderCofHero owns that re-attach (see its body).
+        renderCofHero();
+        renderChordChips();            // th.chords -> the new key
+        wireScaleChips({ forceMode: true }); // rebuild chip set for new key, default 'mode'
+        renderFretboard(th, 'mode');   // th.rootPc (live) -> the new key
+        renderGuide(th.scaleMode, th.notes);
+        renderJamPanel('mode');
+        renderLegend();
+        var resetWrap = elPlayer.querySelector('[data-cofreset]');
+        if (resetWrap) resetWrap.hidden = onSong; // reset control only off-song
+        startAudition();               // audition the new key's scale on the synth
+      }
+      var cofResetBtn = elPlayer.querySelector('[data-cofresetbtn]');
+      // Reset re-tunes to the song's own key+mode; retuneTo detects onSong and
+      // re-hides this control, so no explicit hide needed here.
+      if (cofResetBtn) cofResetBtn.onclick = function () { retuneTo(t.key, t.mode); };
       // S-WHYNOTE: one-shot JIT "why" banner, prepended above the scale/chords
       // content it explains - built via the shared Notables banner (same
       // accent-card + dismiss wiring every consumer reuses), never hand-rolled.
@@ -1046,7 +1317,15 @@
       // re-derives ONLY the solo bundle (notes line, framing caption,
       // fretboard) via soloBundle() - chords-in-key (already rendered below),
       // buildWhy, and whynote all stay keyed to `th`, untouched by any chip.
-      (function wireScaleChips() {
+      // S-COF-INTERACTIVE: a named function (was an IIFE) so a circle retune can
+      // rebuild the chip row for the EXPLORED key. opts.forceMode skips the
+      // stored/inferred song default and lands on 'mode' (retune always resets
+      // the solo scale). The bundles come from soloKey/soloMode (the CURRENT
+      // key, song or explored) - never t.key/t.mode directly - so a chip tap on
+      // an explored key gives that key's pent/blues scales, not the song's.
+      function wireScaleChips(opts) {
+        opts = opts || {};
+        var forceMode = !!opts.forceMode;
         var chipsEl = elPlayer.querySelector('[data-scalechips]');
         var frameEl = elPlayer.querySelector('[data-scaleframe]');
         if (!chipsEl) return;
@@ -1084,10 +1363,13 @@
         // that's no longer offered (e.g. the key's own mode changed) still falls
         // through to inference exactly like an inference-produced mismatch does below.
         var chipIds = CHIPS.map(function (c) { return c.id; });
-        var storedScaleId = readSoloScaleFor(t);
-        var curId = (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
-          ? storedScaleId
-          : inferSoloDefault(t.key, t.mode, t.seq);
+        // S-COF-INTERACTIVE: a retune forces 'mode' (no stored/inferred lookup -
+        // an explored key is not the song and has no persisted default).
+        var storedScaleId = forceMode ? null : readSoloScaleFor(t);
+        var curId = forceMode ? 'mode'
+          : (storedScaleId != null && chipIds.indexOf(storedScaleId) >= 0)
+            ? storedScaleId
+            : inferSoloDefault(t.key, t.mode, t.seq);
         if (chipIds.indexOf(curId) < 0) {
           curId = chipIds.indexOf('pentMajor') >= 0 ? 'pentMajor'
             : chipIds.indexOf('pentMinor') >= 0 ? 'pentMinor' : 'mode';
@@ -1106,7 +1388,9 @@
           });
         }
         function select(scaleId, persist) {
-          var bundle = soloBundle(t.key, t.mode, scaleId);
+          // S-COF-INTERACTIVE: bundle from the CURRENT key (soloKey/soloMode),
+          // so an explored-key chip tap gives that key's scales, not the song's.
+          var bundle = soloBundle(soloKey, soloMode, scaleId);
           if (!bundle) return;
           // M-EAR wave 1.5 (U11): a scale-chip switch WHILE auditioning
           // retargets the live loop at the next note boundary instead of
@@ -1116,7 +1400,10 @@
           var wasPlaying = !!studioSound;
           if (!wasPlaying) stopStudioSound();
           curId = scaleId;
-          if (persist) writeSoloScaleFor(t, scaleId);
+          // S-COF-INTERACTIVE: only persist a solo-scale choice while ON the
+          // song key - an explored key is not the track, so its chip taps must
+          // not overwrite the song's stored default.
+          if (persist && soloKey === t.key && soloMode === t.mode) writeSoloScaleFor(t, scaleId);
           render();
           if (notesLineEl) notesLineEl.innerHTML = renderNoteTokens(bundle.notes);
           // G5 S-WHYNOTE-SCALE: the whynote banner (if it won its slot and is
@@ -1140,12 +1427,12 @@
           // M-GUIDE W3a: re-apply the active target (if any) against the NEW bundle,
           // and re-derive the Guide card for whichever solo scale is now on-screen.
           curBundle = bundle; curScaleId = scaleId;
-          // Bug #6: keep the "Why these notes?" note strip in sync with the
-          // selected scale while the panel is open - the same scale-reactive
-          // refresh the fretboard/guide/legend below get. whyBox is var-hoisted
-          // from further down in openStudio; undefined (falsy) on the initial
-          // select() before it's queried, so this no-ops until the panel exists.
-          if (whyBox && !whyBox.hidden) buildWhy(whyBox, th, bundle);
+          // (Bug #6's "Why these notes?" note-strip refresh lived here on main.
+          // That bottom panel is RETIRED on the circle-hero redesign - the crown
+          // wheel is the orientation surface now, keyed to the key center, and the
+          // scale-reactive note names live in the "Solo over it" label. There is
+          // no whyBox to sync, so the #6 refresh is moot here and removed to avoid
+          // a dangling reference to the deleted panel.)
           renderGuide(scaleKeyFor(scaleId, th.scaleMode), bundle.notes);
           // M-TRACKLIB wave 1: the jam-discovery panel is scale-context-reactive
           // too - a chip switch re-derives its genre list + query LIVE (the spec's
@@ -1171,7 +1458,8 @@
         // too - not just the chip highlight. 'mode'/blues keep the already-rendered
         // fretboard (line ~1289 renderFretboard(th,'mode')), so a bare render() there.
         if (curId !== 'mode') select(curId); else render();
-      })();
+      }
+      wireScaleChips();
       // F19 (operator UAT 2026-07-05): name-only chip row - no chord
       // diagrams, no roman numerals ("like others", e.g. the scale-chip row
       // above). Hand-rolled instead of KeyExplorer.renderChords: that
@@ -1179,7 +1467,8 @@
       // OWN use of renderChords (songbook.js) is untouched. Tap still plays
       // the chord (pack.playChord) AND toggles the fretboard chord-tone
       // target (toggleTarget) - only the visual weight changed.
-      (function renderChordChips() {
+      // S-COF-INTERACTIVE: named function (was an IIFE) so a circle retune re-runs it.
+      function renderChordChips() {
         var chordsEl = elPlayer.querySelector('[data-chords]');
         if (!chordsEl || !th.chords) return;
         chordsEl.innerHTML = th.chords.map(function (it) {
@@ -1195,17 +1484,41 @@
             toggleTarget(c, d);
           };
         });
-      })();
-      var whyToggle = elPlayer.querySelector('[data-whytoggle]'), whyBox = elPlayer.querySelector('[data-why]');
-      whyToggle.onclick = function () {
-        var show = whyBox.hidden; whyBox.hidden = !show; whyToggle.classList.toggle('on', show);
-        // Bug #6: rebuild on each open (not a build-once latch) so the strip
-        // always reflects the CURRENT solo scale - a scale changed while the
-        // panel was closed would otherwise reopen showing the stale build.
-        if (show) buildWhy(whyBox, th, curBundle);
-      };
-      if (guideToggle && guideBox) guideToggle.onclick = function () {
-        var show = guideBox.hidden; guideBox.hidden = !show;
+      }
+      renderChordChips();
+      // Circle-of-fifths CROWN: render the tinted wheel eagerly at the top
+      // (data-cofhero), keyed to the CURRENT key center (song on open, explored
+      // after a retune). Wheel-only - kept in a .bt-st-wheel container so
+      // markWheelPc's sounding-pulse still finds it.
+      // S-COF-INTERACTIVE: now interactive - every wedge is a live key-explore
+      // tap via onPick, and this is a named function (was an IIFE) so retuneTo
+      // can re-render the wheel with the new selection/tint.
+      function renderCofHero() {
+        var cofHero = elPlayer.querySelector('[data-cofhero]');
+        var C = global.Circle;
+        if (!cofHero || !C || !C.renderWheel) return;
+        var mode = normMode(th.scaleMode);
+        cofHero.innerHTML = '<div class="bt-st-wheel"></div>';
+        // TRAP 2: renderWheel REPLACES the wheel DOM every call, so onPick MUST
+        // be re-passed here on every render (retuneTo re-calls renderCofHero) -
+        // an omitted onPick leaves the wheel inert after the first tap. ring is
+        // 'major'/'minor'; map to the studioTheory scale mode.
+        var wheelEl = C.renderWheel({
+          selected: { root: th.key, mode: mode },
+          onPick: function (root, ring) { retuneTo(root, ring === 'minor' ? 'aeolian' : 'ionian'); }
+        });
+        try { tintWheel(wheelEl, C, th.key, mode); } catch (e) { if (global.console && console.warn) console.warn('COF crown tint skipped:', e); }
+        cofHero.querySelector('.bt-st-wheel').appendChild(wheelEl);
+      }
+      renderCofHero();
+      // S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the `?` now toggles the whole
+      // on-demand wrapper (data-guidewrap) - description + legend + guide card
+      // together - not just the guide box. guideBox keeps its own ref (renderGuide
+      // writes into it regardless of the wrapper's hidden state, so content is
+      // ready when the wrapper opens).
+      var guideWrap = elPlayer.querySelector('[data-guidewrap]');
+      if (guideToggle && guideWrap) guideToggle.onclick = function () {
+        var show = guideWrap.hidden; guideWrap.hidden = !show;
         guideToggle.classList.toggle('on', show);
         guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
       };

@@ -982,21 +982,28 @@ test('buildWhy (#6): the note strip + caption derive from the selected bundle, n
   assert.ok(/bundle\.label/.test(body),
     'the caption scale name must reflect the selected bundle label');
 });
-test('select (#6): a scale switch refreshes the "Why these notes?" panel while it is open', function () {
+test('select (#6): a scale switch refreshes the scale-reactive notes label (circle-hero retired the "Why these notes?" panel for the crown)', function () {
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function select\(scaleId, persist\) \{/);
   assert.ok(body, 'select(scaleId, persist) not found');
-  assert.ok(/whyBox && !whyBox\.hidden.*buildWhy\(whyBox, th, bundle\)/s.test(body),
-    'select() must rebuild the why panel (buildWhy(whyBox, th, bundle)) when it is open, alongside the fretboard/guide/legend refresh');
+  // #6 concern (notes must follow the SELECTED solo scale) is preserved, on the
+  // always-visible "Solo over it" label (data-solonotes) - the circle-hero
+  // redesign retired the bottom "Why these notes?" panel, so select() syncs the
+  // label instead of a buildWhy(whyBox,...) panel rebuild.
+  assert.ok(/notesLineEl\.innerHTML = renderNoteTokens\(bundle\.notes\)/.test(body),
+    'select() must refresh the "Solo over it" notes label to the selected bundle (the #6 scale-reactive-notes concern, now on the label not the retired panel)');
 });
-test('why toggle (#6): the panel rebuilds on each open (no stale build-once latch)', function () {
+test('#6 (circle-hero): the "Why these notes?" toggle panel is retired - the interactive crown replaces it', function () {
   var src = readSrc('music/shared/tracks.js');
-  // The old data-built latch cached the first build, so a scale changed while
-  // the panel was closed reopened stale. It must be gone, and open must rebuild.
+  // The bottom why-panel + its data-built build-once latch + the whyToggle are
+  // gone; the interactive circle crown (data-cofhero) is the orientation surface
+  // and the notes label (asserted above) carries the #6 scale-reactive sync.
   assert.ok(!/data-built/.test(src),
-    'the data-built build-once latch must be removed so a reopen never shows a stale scale');
-  assert.ok(/if \(show\) buildWhy\(whyBox, th, curBundle\)/.test(src),
-    'opening the why panel must rebuild it with the current bundle');
+    'the data-built build-once latch must be removed');
+  assert.ok(!/data-whytoggle/.test(src),
+    'the retired why-panel toggle must not exist on the circle-hero redesign');
+  assert.ok(/data-cofhero/.test(src),
+    'the interactive crown wheel (data-cofhero) replaces the retired why panel');
 });
 test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th.scaleMode) into JamQueries.jamQuery, never the raw th.key', function () {
   var src = readSrc('music/shared/tracks.js');
@@ -1004,6 +1011,42 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
   assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
   assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
     'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
+});
+
+/* ---------------------------------------------------------------------
+ * S-COF-INTERACTIVE: the circle-crown retune seam. The wheel's onPick
+ * re-tunes every theory surface by REASSIGNING the shared `th` closure var
+ * and re-rendering the helpers IN PLACE - it must NEVER rebuild
+ * elPlayer.innerHTML (that would destroy the backing-track <iframe> and
+ * reload the video). renderCofHero must pass onPick so the wheel is live,
+ * and retuneTo must re-call renderCofHero so onPick survives the wheel
+ * DOM replacement. Source-lock (openStudio's live DOM is Playwright turf).
+ * ------------------------------------------------------------------- */
+test('S-COF-INTERACTIVE: retuneTo reassigns th via studioTheory and re-skins in place - never rebuilds elPlayer.innerHTML (video not reloaded)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function retuneTo\(newRoot, newMode\) \{/);
+  assert.ok(body, 'retuneTo(newRoot, newMode) not found in tracks.js');
+  assert.ok(/studioTheory\(newRoot, newMode\)/.test(body) && /\bth = nth\b/.test(body),
+    'retuneTo must REASSIGN the shared th from studioTheory(newRoot, newMode) so every closure reads the new key');
+  assert.ok(!/elPlayer\.innerHTML\s*=/.test(body),
+    'retuneTo must NOT rewrite elPlayer.innerHTML - that reloads the backing-track iframe (the whole point is in-place re-skin)');
+  assert.ok(/stopStudioSound\(\)/.test(body),
+    'retuneTo must stopStudioSound() first (dangling-audition-handle trap)');
+  assert.ok(/renderCofHero\(\)/.test(body),
+    'retuneTo must re-call renderCofHero() so the wheel re-renders WITH onPick re-attached');
+  assert.ok(/renderChordChips\(\)/.test(body) && /renderFretboard\(th, 'mode'\)/.test(body),
+    'retuneTo must re-render chords + fretboard against the new th');
+  assert.ok(/startAudition\(\)/.test(body),
+    'retuneTo must audition the new key scale');
+});
+test('S-COF-INTERACTIVE: renderCofHero passes onPick to renderWheel (the wheel is live), routing major/minor to ionian/aeolian', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderCofHero\(\) \{/);
+  assert.ok(body, 'renderCofHero() not found in tracks.js');
+  assert.ok(/onPick:\s*function\s*\(root, ring\)/.test(body),
+    'renderCofHero must pass an onPick to renderWheel so every wedge is a live key-explore tap');
+  assert.ok(/retuneTo\(root, ring === 'minor' \? 'aeolian' : 'ionian'\)/.test(body),
+    "onPick must route the ring ('major'/'minor') to the studioTheory scale mode (ionian/aeolian)");
 });
 
 run();
