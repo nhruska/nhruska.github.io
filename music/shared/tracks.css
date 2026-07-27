@@ -121,9 +121,18 @@
   /* Header + video pane. Portrait: a normal top-pinned column (head + frame stack,
      body scrolls below). Landscape: the fixed left pane of the two-pane split. */
   .bt-st-stage{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;}
-  .bt-st-head{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:0 0 auto;
-    border-bottom:1px solid var(--line-strong);}
-  .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
+  /* S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): the header row and the
+     now-playing strip merged into ONE row - [back] [title/key] [play/pause]
+     [progress] [time] [hamburger] (video) or [back] [title/key] [Optional]
+     [hamburger] (no video). position:relative anchors the .bt-st-menu fly-out
+     (now a header child) under the header's bottom-right. flex-wrap:nowrap keeps
+     it one line; gap trimmed to 8px to fit the extra controls at 412px. */
+  .bt-st-head{display:flex;align-items:center;gap:8px;padding:8px 12px;flex:0 0 auto;
+    position:relative;flex-wrap:nowrap;border-bottom:1px solid var(--line-strong);}
+  /* The id block (title stacked over key) and the progress bar share the row's
+     flexible space; the id gets the larger share (flex:2) so the title stays
+     readable, the progress bar the smaller (its own flex:1, below). */
+  .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:2 1 0;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
   /* The dismiss control is the standard back affordance the rest of the app uses
@@ -145,25 +154,21 @@
     transform-origin:left;animation:bt-cd-drain linear forwards;}
   @media (prefers-reduced-motion:reduce){ .bt-st-countdown > i{animation:none;width:100%;} }
   @keyframes bt-cd-drain{from{transform:scaleX(1);}to{transform:scaleX(0);}}
-  /* Now-playing strip: play/pause + title + state, always visible so you know
-     it's playing and whether there's a video (title present == a video). */
-  /* S-STUDIO-FLYOUT (operator device-test 2026-07-25): the strip wears the same
-     SELECTED-surface look as a Library song in a set (.listItem.inSet:
-     background:var(--accent-deep);border-color:var(--accent-dim)) so the track
-     you're practicing reads as "selected". position:relative anchors the `...`
-     fly-out below it. */
-  .bt-st-np{display:flex;align-items:center;gap:9px;padding:6px 12px;flex:0 0 auto;position:relative;
-    background:var(--accent-deep);border:1px solid var(--accent-dim);}
+  /* Now-playing controls, S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): these
+     used to live in a separate .bt-st-np strip BELOW the header; they now sit
+     INSIDE .bt-st-head as one merged row (the strip wrapper + its "No backing
+     track" title are retired). The play/pause + hamburger keep their surface-2
+     fill so they read on the plain header surface. */
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
     color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;
     display:flex;align-items:center;justify-content:center;}
-  .bt-st-np-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem;font-weight:600;}
   .bt-st-np-state{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.08em;
     text-transform:uppercase;color:var(--accent-ink);}
-  /* Operator UAT (2026-07-26): the video strip drops the title text for a
-     PLAYBACK PROGRESS BAR + total time (relative position at a glance). Fill
-     width is driven by YT infoDelivery time in wireNowPlaying. */
-  .bt-st-np-prog{flex:1;min-width:40px;height:6px;border-radius:3px;background:var(--surface);overflow:hidden;}
+  /* Operator UAT (2026-07-26): a PLAYBACK PROGRESS BAR + total time (relative
+     position at a glance), fill driven by YT infoDelivery time in wireNowPlaying.
+     In the merged header it takes the smaller share of the flexible space (the id
+     block wins at flex:2, above) so the title stays readable at 412px. */
+  .bt-st-np-prog{flex:1 1 0;min-width:40px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
   .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
   .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
     color:var(--accent-ink);min-width:34px;text-align:right;}
@@ -233,15 +238,25 @@
   .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   /* Studio-only scale-chip row (mode scale default + pent major/minor + blues), solo
      layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below) so the chip
-     visual language reads consistently, but wraps instead of horizontal-scrolling:
-     4 short labels fit one row at 412px, wrap is the safety net. */
-  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
+     visual language reads consistently. S-STUDIO-SCALESCROLL (operator UAT
+     2026-07-27): ONE horizontal-scroll row (was flex-wrap:wrap -> two rows once the
+     mixolydian/dorian context chips joined the set) - matches the app's shared
+     .chips / .cofModes scrolling strip (flex-wrap:nowrap;overflow-x:auto), so 6+
+     chips stay on one line and the fretboard/chords stay above the fold. */
+  .bt-st-scalechips{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 0 6px;
+    padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
+  .bt-st-scalechips::-webkit-scrollbar{display:none;}
   /* Pill-shaped chip on the .chip family's canonical radius (songbook.css). */
   .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
-    transition:background .12s,color .12s,border-color .12s;}
+    white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
   .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
+  /* S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the on-demand wrapper the `?`
+     toggle reveals - scale description + fretboard legend + guide card, stacked.
+     Hidden by default so none take inline space; the whole group shows on `?`. */
+  .bt-st-guidewrap{display:flex;flex-direction:column;gap:8px;}
+  .bt-st-guidewrap[hidden]{display:none;}
+  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0;}
   .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
   /* Chords-in-key: name-only chips (like the scale-chip row above), all 7 fit one

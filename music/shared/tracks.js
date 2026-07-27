@@ -780,38 +780,33 @@
             + (t.ytSource === 'overlay' ? '<button data-urlclear class="bt-st-urled-clear" type="button">Clear</button>' : '')
             + '</div></div>'
           : '');
-      var playerBlock = t.yt
-        // Video shows on open (see it start), then auto-collapses after a few
-        // seconds to a now-playing strip (play/pause + title + state + `...`
-        // menu). The iframe is only clipped by .bt-st-media.min, never removed,
-        // so audio keeps playing.
-        //
-        // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the old three-button
-        // .bt-st-stagebtns row (Show/Hide video, Find another jam, Edit) + the
-        // separate Curated-URL card ate the vertical space that kept the circle
-        // crown and the fretboard from BOTH fitting above the fold on a phone.
-        // They collapse into a single compact `...` button in the now-playing
-        // strip that opens a fly-out menu (.bt-st-menu) holding all four controls
-        // as full-width rows. Same data-* attrs, so the existing handlers bind
-        // unchanged - only the DOM location moved.
-        ? '<div class="bt-st-media" data-media>'
-          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
-          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
-          + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>7</b>s - tap Hide/Show to keep control</span>'
-          + '<i></i></div>'
-          + '<div class="bt-st-np" data-np>'
-          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          // Operator UAT (2026-07-26): drop the title text + "Playing" word - the
-          // pinned header above already names the track. Show a PLAYBACK PROGRESS
-          // BAR + total time instead (relative position read at a glance). Driven
-          // by YT infoDelivery time (see wireNowPlaying). Menu glyph is a hamburger
-          // to match the app's menu standard.
+      // S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): the pinned header row and
+      // the now-playing strip named the SAME track on two stacked rows, eating the
+      // vertical space that kept the circle crown + fretboard + chords from all
+      // fitting above the fold on a phone. They MERGE into one header row:
+      //   [back] [title/key] [play/pause] [progress] [time] [hamburger]   (video)
+      //   [back] [title/key] [Optional] [hamburger]                       (no video)
+      // headStrip holds the strip's controls, concatenated INTO .bt-st-head (which
+      // is now position:relative so the .bt-st-menu fly-out still anchors under it -
+      // see tracks.css). The video iframe + countdown drop to mediaBlock, rendered
+      // BELOW the merged header. Same data-* attrs, so wireNowPlaying/wireStudioMenu
+      // bind unchanged - only the DOM location moved (relocation, not rebuild).
+      //
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact `...`
+      // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
+      // another jam, Edit, and the Curated-URL card as full-width rows - same
+      // data-* attrs, so the existing handlers bind unchanged.
+      var headStrip = t.yt
+        ? '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          // Operator UAT (2026-07-26): no title text in the strip - the merged
+          // header already names the track. A PLAYBACK PROGRESS BAR + total time
+          // shows relative position at a glance (driven by YT infoDelivery time,
+          // see wireNowPlaying). Menu glyph is a hamburger (app menu standard).
           + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
           + '<span class="bt-st-np-time" data-nptime></span>'
           + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
-          // The fly-out is a CHILD of the strip (not a sibling) so its
-          // position:absolute anchors to .bt-st-np (position:relative) - a sibling
+          // The fly-out is a CHILD of the header (not a sibling) so its
+          // position:absolute anchors to .bt-st-head (position:relative) - a sibling
           // would resolve top:100% against .bt-player and drop off-screen.
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
@@ -819,33 +814,34 @@
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
-          + '</div>'
-          + jamPanelHtml
-        // S-STUDIO-NOVID (operator device-test 2026-07-26): the no-video jam-finder
-        // used to be a big always-visible block (CTA + hint, then genre/feel chips on
-        // reveal) sitting at the TOP of the stage - it shoved the circle-of-fifths crown
-        // and the fretboard below the fold. But the Studio is for soloing/exploring over
-        // the progression: the circle + fretboard ARE the product; a backing YouTube
-        // track is OPTIONAL rehearsal support, not required, and must be a SEPARATE
-        // on-demand flow that does NOT compete with the COF + fretboard UI. It now
-        // mirrors the VIDEO track's slim accent strip + `...` fly-out (S-STUDIO-FLYOUT):
-        // a compact "No backing track" strip whose `...` opens the same .bt-st-menu
-        // fly-out, holding the guidance + the "Find a jam"/"Add a video" trigger. Tapping
-        // that trigger (a .bt-st-menu-item, so the fly-out auto-closes) reveals the
-        // genre/feel jam panel (data-jampanel) + the paste box (data-urled-gated) below -
-        // the EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
-        // handler untouched), only the trigger's DOM location moved. No static iframe
-        // space is reserved for a videoless track.
-        : '<div class="bt-st-np">'
-          + '<span class="bt-st-np-title">No backing track</span>'
-          + '<span class="bt-st-np-state">Optional</span>'
+        // S-STUDIO-NOVID (operator device-test 2026-07-26): a videoless track is
+        // for soloing/exploring over the progression - the circle + fretboard ARE
+        // the product; a backing YouTube track is OPTIONAL rehearsal support. The
+        // merged header shows a slim "Optional" tag + `...` fly-out holding the
+        // guidance + the "Find a jam"/"Add a video" trigger. Tapping that trigger
+        // (a .bt-st-menu-item, so the fly-out auto-closes) reveals the genre/feel
+        // jam panel (data-jampanel) + the paste box (data-urled-gated) below - the
+        // EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
+        // handler untouched), only the trigger's DOM location moved.
+        : '<span class="bt-st-np-state">Optional</span>'
           + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '</div>'
-          + '</div>'
-          + jamPanelHtml;
+          + '</div>';
+      // The video iframe shows on open (see it start), then auto-collapses after a
+      // few seconds to audio-only (.bt-st-media.min clips it, never removes it, so
+      // audio keeps playing). Countdown caption + the jam panel follow. For a
+      // videoless track no static iframe space is reserved - just the jam panel.
+      var mediaBlock = t.yt
+        ? '<div class="bt-st-media" data-media>'
+          + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
+          + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          + '<div class="bt-st-countdown" data-countdown role="status">'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>7</b>s - tap Hide/Show to keep control</span>'
+          + '<i></i></div>'
+          + jamPanelHtml
+        : jamPanelHtml;
       // .bt-st-stage wraps the pinned header + video: one column in portrait,
       // the left pane in the landscape two-pane split (CSS). Practice content
       // (scale, chords) leads the scrollable body; the url-curation editor sits
@@ -861,8 +857,14 @@
         + '<div class="bt-st-stage">'
         + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
         + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div></div>'
-        + playerBlock
+        + '<span class="bt-st-meta">' + meta + '</span></div>'
+        // S-STUDIO-HEADERMERGE: the now-playing strip controls live INSIDE the
+        // header row now (play/pause + progress + time + hamburger, or the no-video
+        // Optional tag + hamburger), so the track's header and its transport are
+        // ONE row, not two.
+        + headStrip
+        + '</div>'
+        + mediaBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
         // return to a videoless track the "add a video" control is immediately at
         // hand (was buried below the scale + chords). S-STUDIO-FLYOUT: for a VIDEO
@@ -905,27 +907,36 @@
         // S-BLUES: mode scale (default, unchanged) + pent major/minor + blues.
         // Solo layer only - swapping a chip here never touches chords-in-key below.
         + '<div class="bt-st-scalechips" data-scalechips></div>'
-        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
         // F16 (operator UAT 2026-07-05): the Window|Full-neck view toggle is
         // retired - the fretboard always spans frets 0-12 now (see
         // scaleRenderOpts above), so there is nothing left to toggle.
         + '<div class="bt-st-scale" data-scale></div>'
+        // S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the scale-DESCRIPTION
+        // (data-scaleframe) and the fretboard LEGEND (data-legend) used to sit in
+        // the always-visible inline flow (between chips and fretboard, and below
+        // it), eating the vertical space that kept the chords-in-key below the
+        // fold. They now live inside ONE on-demand container (data-guidewrap) with
+        // the per-scale mentor card (data-guide), hidden by default and revealed
+        // TOGETHER by the `?` guide toggle in the controls row above. So the inline
+        // flow is free of them; tapping `?` shows description + legend + guide.
+        // Each still re-derives on Studio open + every chip switch (select() writes
+        // data-scaleframe, renderLegend writes data-legend, renderGuide writes
+        // data-guide) regardless of the wrapper's hidden state, so content is never
+        // stale when the toggle opens. data-scaleframe keeps its own [hidden]
+        // (framing-text-present) toggle inside the wrapper - no framing == no empty
+        // description row even when the wrapper is open.
+        + '<div class="bt-st-guidewrap" data-guidewrap hidden>'
         // M-EAR wave 1.6 (U16): the Legend primitive (shared/legend.js) - dot-
-        // swatch + label rows. No wrapping class/hidden attr needed: an empty
-        // container (Legend.render() returned null) is already invisible,
-        // and Legend.render()'s own returned element carries its own
-        // `.legend` styling.
+        // swatch + label rows. An empty container (Legend.render() returned null)
+        // is already invisible; Legend.render()'s element carries its own .legend
+        // styling.
+        + '<div class="bt-st-scaleframe" data-scaleframe hidden></div>'
         + '<div data-legend></div>'
-        // M-GUIDE W3a, relocated (F18, operator UAT 2026-07-05): the per-
-        // scale mentor card (SoloGuide) used to sit ABOVE the fretboard,
-        // right after the scale chips, competing with the primary practice
-        // flow for attention. It now renders BELOW the fretboard + legend,
-        // collapsed by default, opened via the `?` icon in the controls row
-        // above (not a one-shot Notable dismiss - the card content is scale-
-        // dependent and re-derives on every chip switch, so a permanent
-        // dismiss would hide a genuinely reusable re-orientation aid; the `?`
-        // itself is the cheap re-open affordance).
-        + '<div class="bt-st-why" data-guide hidden></div>'
+        // M-GUIDE W3a: the per-scale mentor card (SoloGuide). Re-derives on every
+        // chip switch, so the `?` is a cheap re-open affordance (not a one-shot
+        // dismiss). No [hidden] here - the wrapper owns the show/hide now.
+        + '<div class="bt-st-why" data-guide></div>'
+        + '</div>'
         + '</div>'
         // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
         // + roman numeral - name-only chips (like the scale-chip row above),
@@ -1500,8 +1511,14 @@
         cofHero.querySelector('.bt-st-wheel').appendChild(wheelEl);
       }
       renderCofHero();
-      if (guideToggle && guideBox) guideToggle.onclick = function () {
-        var show = guideBox.hidden; guideBox.hidden = !show;
+      // S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the `?` now toggles the whole
+      // on-demand wrapper (data-guidewrap) - description + legend + guide card
+      // together - not just the guide box. guideBox keeps its own ref (renderGuide
+      // writes into it regardless of the wrapper's hidden state, so content is
+      // ready when the wrapper opens).
+      var guideWrap = elPlayer.querySelector('[data-guidewrap]');
+      if (guideToggle && guideWrap) guideToggle.onclick = function () {
+        var show = guideWrap.hidden; guideWrap.hidden = !show;
         guideToggle.classList.toggle('on', show);
         guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
       };
