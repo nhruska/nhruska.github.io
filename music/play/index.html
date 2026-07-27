@@ -85,12 +85,30 @@
       <!-- ALL-view chrome. A setlist is hand-ordered, not searched or filtered,
            so none of this belongs to the Setlist view. -->
       <div id="segAllChrome">
-      <div class="libSearchRow">
-        <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
-        <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
-      </div>
-      <div class="chipScrollWrap"><div class="chips" id="genreChips"></div></div>
-      <div class="chipScrollWrap"><div class="chips" id="keyChips"></div></div>
+        <!-- Operator UAT 2026-07-26: "lost too much vertical space for the
+             scrolling song list". The search row + two chip strips cost 177px of
+             a 915px screen, leaving the list 503px. They collapse into ONE 44px
+             control that opens a sheet; the control itself reports the active
+             search/filter so the state is never hidden by being collapsed. -->
+        <div class="filterBar">
+          <button class="filterBtn" id="filterBtn" type="button" aria-haspopup="dialog" aria-expanded="false">
+            <span class="filterBtnIcon" aria-hidden="true">⌕</span>
+            <span class="filterBtnLabel" id="filterLabel">Search &amp; filter</span>
+          </button>
+          <button class="iconBtn filterClear" id="filterClear" type="button" title="Clear search and filters" aria-label="Clear search and filters" hidden>✕</button>
+          <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
+        </div>
+        <!-- The sheet. Dropdowns rather than chip strips (operator: "filters can
+             be drop down to stack side by side") - two native selects share one
+             row, which is what makes the whole block fit in a sheet at all. -->
+        <div class="filterSheet" id="filterSheet" hidden role="dialog" aria-modal="true" aria-label="Search and filter">
+          <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
+          <div class="filterRow">
+            <label class="filterField"><span class="filterFieldLbl">Genre</span><select class="filterSel" id="genreSel"></select></label>
+            <label class="filterField"><span class="filterFieldLbl">Key</span><select class="filterSel" id="keySel"></select></label>
+          </div>
+          <button class="btn red" id="filterDone" type="button">Done</button>
+        </div>
       </div>
       <!-- SETLIST-view chrome: the count, the destructive Clear (arm-to-red) and
            Start. Unmoved from the old Jam surface - operator ruling: Start stays
@@ -769,7 +787,7 @@
       // Fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
-        songsList: el('songsList'), genreChips: el('genreChips'), keyChips: el('keyChips'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
+        songsList: el('songsList'), genreSel: el('genreSel'), keySel: el('keySel'), filterBtn: el('filterBtn'), filterLabel: el('filterLabel'), filterClear: el('filterClear'), filterSheet: el('filterSheet'), filterDone: el('filterDone'), search: el('search'), searchClear: el('searchClear'), libCount: el('libCount'),
         addBtn: el('addBtn'), searchWrap: el('searchWrap'), libSongs: el('libSongs'), libTracks: el('s-tracks'), libSet: el('libSet'),
         practiceEmpty: el('practiceEmpty'), practiceBody: el('practiceBody'),
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),

@@ -770,38 +770,71 @@
     }
     // Unified facet bar: Genre + Key chips derived from the current repertoire.
     // (Search is the text input; these replace the old decade chips.)
+    // Populate the two filter dropdowns + the collapsed bar's readout.
+    // Named renderFilterChips still because every caller says that; it now
+    // renders SELECTS (operator UAT 2026-07-26: the two chip strips cost 177px
+    // of vertical space that the song list needed back).
     function renderFilterChips() {
       buildRepertoire();
       // Heal a dead-end facet: deleting the last custom item while filtered to
-      // Mine would drop the chip but leave the (now-invisible) filter active,
-      // showing an empty Library with nothing selected.
+      // Mine would drop the option but leave the (now-invisible) filter active,
+      // showing an empty list with nothing selected.
       if (STATE.mineOnly && !REPERTOIRE.some(isMine)) STATE.mineOnly = false;
-      if (el.genreChips) {
-        el.genreChips.innerHTML = '';
-        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all' && !STATE.mineOnly,
-          function () { STATE.genre = 'all'; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
-        // Mine: the user's own saved/added items. An ownership facet pinned ahead
-        // of the data-derived genres; shown only when a custom item exists (facet
-        // chips reflect what is actually in the repertoire).
-        if (REPERTOIRE.some(isMine)) {
-          el.genreChips.appendChild(chipBtn('mine', STATE.mineOnly,
-            function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
-        }
+
+      if (el.genreSel) {
+        var gsel = el.genreSel;
+        gsel.innerHTML = '';
+        gsel.appendChild(new Option('All genres', 'all'));
+        // Mine is an OWNERSHIP facet, not a genre - it sits first, and only when
+        // the user actually has something of their own (the options reflect what
+        // is in the repertoire, same contract the chips had).
+        if (REPERTOIRE.some(isMine)) gsel.appendChild(new Option('Mine', '__mine'));
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
-          el.genreChips.appendChild(chipBtn(g, STATE.genre === g && !STATE.mineOnly,
-            function () { STATE.genre = g; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
+          gsel.appendChild(new Option(g, g));
         });
+        gsel.value = STATE.mineOnly ? '__mine' : STATE.genre;
       }
-      if (el.keyChips) {
-        el.keyChips.innerHTML = '';
-        el.keyChips.appendChild(chipBtn('Any key', STATE.key === 'all',
-          function () { STATE.key = 'all'; renderFilterChips(); renderSongs(); }));
-        global.Repertoire.keys(REPERTOIRE).forEach(function (k) {
-          el.keyChips.appendChild(chipBtn(k, STATE.key === k,
-            function () { STATE.key = k; renderFilterChips(); renderSongs(); }));
-        });
+      if (el.keySel) {
+        var ksel = el.keySel;
+        ksel.innerHTML = '';
+        ksel.appendChild(new Option('Any key', 'all'));
+        global.Repertoire.keys(REPERTOIRE).forEach(function (k) { ksel.appendChild(new Option(k, k)); });
+        ksel.value = STATE.key;
       }
+      renderFilterSummary();
     }
+
+    // The collapsed control has to SAY what is filtering, or collapsing it would
+    // hide state - which is worse than the space it costs. Reads as the active
+    // facets, or the resting invitation when nothing is on.
+    function filterIsActive() {
+      return !!(STATE.search || STATE.mineOnly || (STATE.genre && STATE.genre !== 'all') || (STATE.key && STATE.key !== 'all'));
+    }
+    function renderFilterSummary() {
+      if (!el.filterLabel) return;
+      var bits = [];
+      if (STATE.mineOnly) bits.push('Mine');
+      else if (STATE.genre && STATE.genre !== 'all') bits.push(STATE.genre);
+      if (STATE.key && STATE.key !== 'all') bits.push('Key ' + STATE.key);
+      if (STATE.search) bits.push('"' + STATE.search + '"');
+      var on = bits.length > 0;
+      el.filterLabel.textContent = on ? bits.join(' · ') : 'Search & filter';
+      if (el.filterBtn) el.filterBtn.classList.toggle('on', on);
+      if (el.filterClear) el.filterClear.hidden = !on;
+    }
+    function clearAllFilters() {
+      STATE.search = ''; STATE.genre = 'all'; STATE.key = 'all'; STATE.mineOnly = false;
+      if (el.search) el.search.value = '';
+      if (el.searchClear) el.searchClear.hidden = true;
+      renderFilterChips(); renderSongs();
+    }
+    function openFilterSheet(open) {
+      if (!el.filterSheet) return;
+      el.filterSheet.hidden = !open;
+      if (el.filterBtn) el.filterBtn.setAttribute('aria-expanded', String(!!open));
+      if (open && el.search) { try { el.search.focus({ preventScroll: true }); } catch (e) { el.search.focus(); } }
+    }
+
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
       window.open(ytSearchURL(s), '_blank', 'noopener');
@@ -999,7 +1032,19 @@
       }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
-    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
+    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); renderFilterSummary(); };
+    // The collapsed control + its sheet (operator UAT 2026-07-26).
+    if (el.filterBtn) el.filterBtn.onclick = function () { openFilterSheet(el.filterSheet && el.filterSheet.hidden); };
+    if (el.filterDone) el.filterDone.onclick = function () { openFilterSheet(false); };
+    if (el.filterClear) el.filterClear.onclick = function () { clearAllFilters(); openFilterSheet(false); };
+    if (el.genreSel) el.genreSel.onchange = function () {
+      var v = el.genreSel.value;
+      // Mine and a genre are mutually exclusive - the same contract the chips had.
+      if (v === '__mine') { STATE.mineOnly = true; STATE.genre = 'all'; }
+      else { STATE.mineOnly = false; STATE.genre = v; }
+      renderFilterChips(); renderSongs();
+    };
+    if (el.keySel) el.keySel.onchange = function () { STATE.key = el.keySel.value; renderFilterChips(); renderSongs(); };
     if (el.searchClear) el.searchClear.onclick = function () {
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };

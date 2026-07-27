@@ -311,7 +311,11 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 /* .li-act is role="button" + tabindex=0 with its own activation handler -
    a control, not a decoration - so it carries the floor too (issue #311;
    measured 70x29). inline-flex centres the glyph+label in the taller box. */
-.listItem .li-act{margin-left:auto;font-weight:700;cursor:pointer;white-space:nowrap;padding:7px 10px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;min-height:44px;}
+/* Trailing-rail action (moved out of .li-meta - see list-item.js). Square-ish
+   44px like its neighbour the + button, so it sets no extra row height. The
+   text label moved to aria-label: the glyph carries it visually and the rail
+   has no room for words. */
+.listItem .li-act{flex:0 0 auto;align-self:center;font-weight:700;cursor:pointer;white-space:nowrap;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;font-size:1.05rem;margin-left:4px;}
 .listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
 .listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
 /* Emphasis ladder: the resting + is a per-row SECONDARY affordance repeated down
@@ -489,13 +493,29 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    an order that is not on screen. Reorder belongs where the order IS the
    content. Position + remove stay; the grip is suppressed here only. */
 #songsList .li-grip{display:none;}
-/* `hidden` loses to a class rule that sets display (both are one selector, and
-   the author sheet wins over the UA sheet) - so .setHead{display:flex} kept the
-   setlist head row on screen in the All view even with [hidden] set. Caught by
-   LOOKING at the render, not by the gate: every automated check was green while
-   the wrong chrome was showing. These explicit rules restore what `hidden`
-   promises for the four blocks the segment swaps. */
-.setHead[hidden],.libSet[hidden],#segAllChrome[hidden],#libSongs[hidden]{display:none;}
+/* ---- collapsed search+filter control (operator UAT 2026-07-26) -----------
+ * The search row and two chip strips cost 177px of a 915px screen. They
+ * collapse into ONE 44px bar; the bar REPORTS the active search/filter, so
+ * collapsing hides space, never state. `.on` is the active look.
+ */
+.filterBar{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.filterBtn{flex:1 1 auto;min-width:0;min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 14px;border:1px solid var(--line-strong);background:var(--surface);color:var(--txt-dim);font-family:inherit;font-size:.92rem;border-radius:12px;cursor:pointer;text-align:left;transition:border-color .15s,color .15s,background .15s;}
+.filterBtn.on{color:var(--accent-ink);border-color:var(--accent-dim);background:var(--accent-deep);font-weight:600;}
+.filterBtnIcon{flex:0 0 auto;font-size:1.05rem;}
+/* The summary is the one thing allowed to ellipsise - it is a readout, and the
+   full state is one tap away in the sheet. */
+.filterBtnLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.filterClear{color:var(--bad);}
+/* The sheet. Sits inline under the bar (not a modal overlay): the list stays
+   visible behind it, so you can see the result of a filter while choosing it. */
+.filterSheet{border:1px solid var(--line-strong);border-radius:12px;background:var(--bg-2);padding:11px;margin-bottom:11px;}
+.filterSheet[hidden]{display:none;}
+.filterSheet .searchWrap{margin-bottom:9px;}
+/* Two dropdowns share one row - this is what lets the whole block collapse. */
+.filterRow{display:flex;gap:8px;margin-bottom:9px;}
+.filterField{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.filterFieldLbl{font-size:.72rem;color:var(--txt-dim);font-weight:600;letter-spacing:.02em;}
+.filterSel{width:100%;min-height:44px;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;color:var(--txt);font-family:inherit;font-size:.9rem;padding:0 10px;cursor:pointer;}
 /* Landscape on a phone leaves ~412px of height, and the Songs chrome (segment +
    search + two chip rows) plus the app bar and tab bar consumed essentially all
    of it - the song list was pushed to zero height and became unreachable. The
@@ -1897,3 +1917,19 @@ footer{display:none;}
 .setBtns .btn{flex:1;}
 .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* =====================================================================
+ * `hidden` means hidden - the last word in this stylesheet.
+ * ---------------------------------------------------------------------
+ * The UA sheet's [hidden]{display:none} is a single-selector rule, so ANY
+ * component rule here that sets `display` beats it - .setHead{display:flex},
+ * .iconBtn{display:flex}, and so on. That bit twice in one session: the
+ * setlist head row stayed on screen in the All view, and the filter-clear
+ * button showed with nothing filtered. Both times every automated check was
+ * green and only the screenshot showed it.
+ *
+ * Placed LAST rather than as !important: equal specificity, so it wins over
+ * the component rules above by source order, while a genuinely more specific
+ * rule or an inline style can still override it deliberately.
+ * ===================================================================== */
+[hidden]{display:none;}

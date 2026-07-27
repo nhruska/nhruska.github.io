@@ -1,6 +1,6 @@
 {
   "name": "songs-surface-merge",
-  "note": "SONGS-MERGE phase 1 (decisions.md SONGS-MERGE; systems/songs-surface-merge.md). Library and Setlist were two bottom-nav tabs listing the same records, so nothing said which one was the truth about a song - the operator reported exactly that confusion. They are ONE 'Songs' surface now with an All | Setlist segmented switch, per component-conventions:65 (bottom nav = top-level surfaces ONLY; view switches are segmented). The load-bearing goalpost is #1: a row's affordances derive from setlist MEMBERSHIP, not from which view you are standing in, so an in-set song shows its position in the All view too. Red-first: every goalpost below fails on the pre-merge two-tab build.",
+  "note": "SONGS-MERGE phase 1 (decisions.md SONGS-MERGE; systems/songs-surface-merge.md). Library and Setlist were two bottom-nav tabs listing the same records, so nothing said which one was the truth about a song - the operator reported exactly that confusion. They are ONE 'Songs' surface now with an All | Setlist segmented switch, per component-conventions:65 (bottom nav = top-level surfaces ONLY; view switches are segmented). The load-bearing goalpost is #1: a row's affordances derive from setlist MEMBERSHIP, not from which view you are standing in, so an in-set song shows its position in the All view too. Red-first: every goalpost below fails on the pre-merge two-tab build. Operator UAT 2026-07-26 added the space budget: the search row and two chip strips cost 177px of a 915px screen, so they collapse into ONE 44px control that opens a sheet, and the video action moved out of the meta line into the trailing rail. Goalposts 6-8 below hold that space open.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -21,6 +21,35 @@
       "action": "evalAssert",
       "label": "layout settle gate: fonts loaded before any geometry is measured",
       "js": "document.fonts.ready.then(function(){ return true; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 6 (space): the All-view chrome above the list is ONE control, not three rows - <=70px, down from 177",
+      "js": "(function(){var c=document.getElementById('segAllChrome');if(!c||c.hidden)return false;return Math.round(c.getBoundingClientRect().height)<=70;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 7 (space): the song list gets MOST of the screen - at least 600px of 915, up from 503",
+      "js": "(function(){var l=document.getElementById('libSongs');if(!l)return false;return Math.round(l.getBoundingClientRect().height)>=600;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST 8 (uniform rows): a row with a video action is no taller than a comparable row without one - the badge used to add 50px by inflating the meta line",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var withV=[],without=[];rows.forEach(function(r){var t=r.querySelector('.li-title');var oneLine=t&&t.getBoundingClientRect().height<30;if(!oneLine)return;(r.querySelector('.li-act')?withV:without).push(Math.round(r.getBoundingClientRect().height));});if(!withV.length||!without.length)return true;return Math.max.apply(null,withV)<=Math.max.apply(null,without)+2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the collapsed control reports an active filter rather than hiding it",
+      "js": "(function(){var g=document.getElementById('genreSel');if(!g||g.options.length<2)return false;g.value=g.options[g.options.length-1].value;g.dispatchEvent(new Event('change',{bubbles:true}));var l=document.getElementById('filterLabel');return !!l&&l.textContent.trim()!=='Search & filter';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "clear it again so the rest of the run starts from a known state",
+      "js": "(function(){var c=document.getElementById('filterClear');if(c&&!c.hidden){c.click();}return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "evalAssert",
