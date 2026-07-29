@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T11:30:59Z",
+  "generatedAt": "2026-07-29T11:36:01Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-27T12:39:18Z",
-    "sha": "f33bb636c4e61971a5e847ae231b4af132ba565c",
+    "date": "2026-07-28T11:31:05Z",
+    "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/f33bb636c4e61971a5e847ae231b4af132ba565c"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
   },
   "commits": [
+    {
+      "date": "2026-07-28T11:31:05Z",
+      "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
+    },
     {
       "date": "2026-07-27T12:39:18Z",
       "sha": "f33bb636c4e61971a5e847ae231b4af132ba565c",
@@ -84,12 +90,6 @@
       "sha": "2d5dca320241495be8f184df8f9211c74a16b800",
       "subject": "music: #6 - Studio \"Why these notes?\" strip follows the selected solo scale (#308)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/2d5dca320241495be8f184df8f9211c74a16b800"
-    },
-    {
-      "date": "2026-07-25T10:48:07Z",
-      "sha": "24f865fa954898a741c94e77090133867cae65f4",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/24f865fa954898a741c94e77090133867cae65f4"
     }
   ],
   "openPRs": [
@@ -262,9 +262,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-28T11:30:47Z",
-    "durationSeconds": 10,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30355084602",
+    "runStartedAt": "2026-07-29T11:35:50Z",
+    "durationSeconds": 9,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30448178556",
     "headBranch": "main"
   },
   "velocity": {
