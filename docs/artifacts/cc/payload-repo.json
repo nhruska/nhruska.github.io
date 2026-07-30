@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T11:36:01Z",
+  "generatedAt": "2026-07-30T11:24:14Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-28T11:31:05Z",
-    "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
+    "date": "2026-07-29T11:36:09Z",
+    "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
   },
   "commits": [
+    {
+      "date": "2026-07-29T11:36:09Z",
+      "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
+    },
     {
       "date": "2026-07-28T11:31:05Z",
       "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
@@ -84,12 +90,6 @@
       "sha": "a8298d07c982e4080bec220b51ee57f82bad0e98",
       "subject": "fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5) (#300)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/a8298d07c982e4080bec220b51ee57f82bad0e98"
-    },
-    {
-      "date": "2026-07-25T21:59:10Z",
-      "sha": "2d5dca320241495be8f184df8f9211c74a16b800",
-      "subject": "music: #6 - Studio \"Why these notes?\" strip follows the selected solo scale (#308)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/2d5dca320241495be8f184df8f9211c74a16b800"
     }
   ],
   "openPRs": [
@@ -262,14 +262,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-29T11:35:50Z",
-    "durationSeconds": 9,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30448178556",
+    "runStartedAt": "2026-07-30T11:24:09Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30538407486",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 22,
+    "merged_count": 18,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 27.57,
