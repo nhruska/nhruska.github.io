@@ -838,7 +838,11 @@
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
           + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>7</b>s - tap Hide/Show to keep control</span>'
+          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>15</b>s</span>'
+          + '<span class="bt-st-cd-actions">'
+          + '<button class="bt-st-cd-btn bt-st-cd-keep" data-keepopen type="button">Keep open</button>'
+          + '<button class="bt-st-cd-btn bt-st-cd-min" data-minnow type="button">Minimize now</button>'
+          + '</span>'
           + '<i></i></div>'
           + jamPanelHtml
         : jamPanelHtml;
@@ -979,7 +983,13 @@
       // video re-expands; play/pause drives the YouTube embed over postMessage
       // (enablejsapi=1 on the embed URL). No YT API script needed.
       (function wireNowPlaying() {
-        var AUTOMIN_MS = 7000; // show it a beat, then collapse (operator: 7s)
+        // Operator UAT 2026-07-31: a 7s wall-clock auto-collapse clipped the iframe
+        // right as YouTube's "Skip Ads" button (appears ~5s into a skippable pre-roll)
+        // needed a tap - trapping the user in the ad. The cross-origin skip click / ad
+        // state is undetectable, so the fix is NOT to guess the ad boundary: give a
+        // longer window (15s), ANCHOR it to actual playback start (not load), and add
+        // explicit "Keep open" / "Minimize now" controls so the user always has agency.
+        var AUTOMIN_MS = 15000;
         var mediaEl = elPlayer.querySelector('[data-media]');
         var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
         var ppBtn = elPlayer.querySelector('[data-nppp]');
@@ -997,21 +1007,39 @@
           mediaEl.classList.toggle('min', min);
           if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
-        // Auto-collapse countdown. A visible progress bar drains over AUTOMIN_MS
-        // (standard auto-dismiss affordance); any manual video toggle cancels it
-        // so the user's choice always wins.
-        var autoTimer = 0, cdTick = 0;
+        // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
+        // begin only once the embed reports it is actually playing (startCountdown,
+        // fired from the YT infoDelivery handler below) so a slow ad-load never eats
+        // the window; a 4s fallback starts it anyway if the embed never reports
+        // (headless / blocked egress / no JS-API). Any manual video toggle, "Keep
+        // open", or "Minimize now" cancels it so the user's choice always wins.
+        var autoTimer = 0, cdTick = 0, cdFallback = 0, cdStarted = false;
         function endCountdown() {
           if (cdEl) cdEl.classList.add('done');
           if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
           if (cdTick) { clearInterval(cdTick); cdTick = 0; }
+          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
         }
-        if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
-        var remain = Math.round(AUTOMIN_MS / 1000);
-        if (cdNum) cdNum.textContent = remain;
-        cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
-        autoTimer = setTimeout(function () { setMin(true); endCountdown(); }, AUTOMIN_MS);
+        function startCountdown() {
+          if (cdStarted || !cdEl || cdEl.classList.contains('done')) return;
+          cdStarted = true;
+          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
+          if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
+          if (cdEl) cdEl.classList.add('running'); // gates the drain animation (CSS)
+          var remain = Math.round(AUTOMIN_MS / 1000);
+          if (cdNum) cdNum.textContent = remain;
+          cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
+          autoTimer = setTimeout(function () { setMin(true); endCountdown(); }, AUTOMIN_MS);
+        }
+        cdFallback = setTimeout(startCountdown, 4000);
         if (vidToggle && mediaEl) vidToggle.onclick = function () { endCountdown(); setMin(!mediaEl.classList.contains('min')); };
+        // "Keep open" cancels the auto-collapse but leaves the video EXPANDED, so the
+        // user can tap YouTube's Skip on the iframe. "Minimize now" collapses early
+        // (once they've skipped and want the space back).
+        var keepBtn = elPlayer.querySelector('[data-keepopen]');
+        var minNowBtn = elPlayer.querySelector('[data-minnow]');
+        if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
+        if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setMin(true); endCountdown(); };
         var paused = false;
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;
@@ -1037,6 +1065,7 @@
           if (!e || typeof e.data !== 'string') return;
           var d; try { d = JSON.parse(e.data); } catch (x) { return; }
           if (!d || d.event !== 'infoDelivery' || !d.info) return;
+          startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {
             var frac = Math.max(0, Math.min(1, d.info.currentTime / ytDur));

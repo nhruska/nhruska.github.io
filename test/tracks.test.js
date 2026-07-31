@@ -1012,6 +1012,32 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
   assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
     'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
 });
+test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a longer, playback-anchored window with explicit Keep-open / Minimize-now controls', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
+  assert.ok(body, 'wireNowPlaying() not found in tracks.js');
+  // 7s wall-clock collapse clipped the iframe mid-reach for YouTube's Skip Ads
+  // button, trapping the user in the ad. The window is now 15s AND anchored to
+  // playback start (startCountdown fires from the YT infoDelivery handler), never
+  // wall-clock, so a slow ad-load can't eat the skip window.
+  assert.ok(/AUTOMIN_MS = 15000/.test(body),
+    'the auto-minimize window must be 15s (was 7s - too short to see + tap Skip Ads)');
+  assert.ok(/function startCountdown\(\)/.test(body) && /cdStarted/.test(body),
+    'the countdown must be a guarded startCountdown() so it fires once, anchored to playback');
+  assert.ok(/if \(!d \|\| d\.event !== 'infoDelivery' \|\| !d\.info\) return;\s*\n\s*startCountdown\(\);/.test(body),
+    'startCountdown() must fire from the YT infoDelivery handler (playback-anchored, not at render)');
+  // Explicit user agency: "Keep open" cancels the auto-collapse so Skip stays
+  // tappable on the iframe; "Minimize now" collapses early.
+  assert.ok(/\[data-keepopen\]/.test(body) && /\[data-minnow\]/.test(body),
+    'both the Keep-open and Minimize-now controls must be wired');
+});
+test('Studio countdown markup (skip-ads UAT): the collapse controls + 15s default ship in the rendered countdown', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/data-keepopen[\s\S]*?Keep open/.test(src) && /data-minnow[\s\S]*?Minimize now/.test(src),
+    'the countdown must render the Keep-open and Minimize-now buttons');
+  assert.ok(/<b data-cdnum>15<\/b>s/.test(src),
+    'the countdown caption must default to 15s (matches AUTOMIN_MS)');
+});
 
 /* ---------------------------------------------------------------------
  * S-COF-INTERACTIVE: the circle-crown retune seam. The wheel's onPick
