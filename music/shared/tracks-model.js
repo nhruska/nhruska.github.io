@@ -136,7 +136,9 @@
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
   }
   function embedUrl(id) {
-    return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+    // enablejsapi=1 lets the Studio's now-playing strip drive play/pause via
+    // postMessage (YouTube IFrame API) without loading the full API script.
+    return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&enablejsapi=1';
   }
   function parseYouTubeId(url) {
     url = String(url || '').trim();

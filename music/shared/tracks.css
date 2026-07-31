@@ -121,9 +121,18 @@
   /* Header + video pane. Portrait: a normal top-pinned column (head + frame stack,
      body scrolls below). Landscape: the fixed left pane of the two-pane split. */
   .bt-st-stage{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;}
-  .bt-st-head{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:0 0 auto;
-    border-bottom:1px solid var(--line-strong);}
-  .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:1;}
+  /* S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): the header row and the
+     now-playing strip merged into ONE row - [back] [title/key] [play/pause]
+     [progress] [time] [hamburger] (video) or [back] [title/key] [Optional]
+     [hamburger] (no video). position:relative anchors the .bt-st-menu fly-out
+     (now a header child) under the header's bottom-right. flex-wrap:nowrap keeps
+     it one line; gap trimmed to 8px to fit the extra controls at 412px. */
+  .bt-st-head{display:flex;align-items:center;gap:8px;padding:8px 12px;flex:0 0 auto;
+    position:relative;flex-wrap:nowrap;border-bottom:1px solid var(--line-strong);}
+  /* The id block (title stacked over key) and the progress bar share the row's
+     flexible space; the id gets the larger share (flex:2) so the title stays
+     readable, the progress bar the smaller (its own flex:1, below). */
+  .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:2 1 0;}
   .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
   /* The dismiss control is the standard back affordance the rest of the app uses
@@ -132,17 +141,78 @@
      Studio-specific overrides. */
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-  /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact), the iframe
-     slot becomes a tap-to-search card that opens YouTube in a new tab. Keeps the
-     harmony-teacher surface usable for every track regardless of curated IDs. */
-  .bt-st-search{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:8px;padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);flex:0 0 auto;}
+  /* Video minimize: .min clips the (still-rendered, still-playing) frame to 0
+     height via overflow. NEVER display:none - that would stop the audio. */
+  .bt-st-media{overflow:hidden;flex:0 0 auto;transition:max-height .2s ease;}
+  .bt-st-media.min{max-height:0;}
+  /* Auto-collapse countdown: a draining progress bar (standard auto-dismiss
+     affordance) + a live caption. .done hides it once fired or cancelled. */
+  .bt-st-countdown{position:relative;padding:4px 12px 7px;flex:0 0 auto;font-family:'Space Mono',monospace;
+    font-size:.6rem;letter-spacing:.04em;color:var(--accent-ink);text-align:center;}
+  .bt-st-countdown.done{display:none;}
+  .bt-st-countdown > i{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--accent-ink);
+    transform-origin:left;animation:bt-cd-drain linear forwards;}
+  @media (prefers-reduced-motion:reduce){ .bt-st-countdown > i{animation:none;width:100%;} }
+  @keyframes bt-cd-drain{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+  /* Now-playing controls, S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): these
+     used to live in a separate .bt-st-np strip BELOW the header; they now sit
+     INSIDE .bt-st-head as one merged row (the strip wrapper + its "No backing
+     track" title are retired). The play/pause + hamburger keep their surface-2
+     fill so they read on the plain header surface. */
+  .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
+    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;
+    display:flex;align-items:center;justify-content:center;}
+  .bt-st-np-state{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent-ink);}
+  /* Operator UAT (2026-07-26): a PLAYBACK PROGRESS BAR + total time (relative
+     position at a glance), fill driven by YT infoDelivery time in wireNowPlaying.
+     In the merged header it takes the smaller share of the flexible space (the id
+     block wins at flex:2, above) so the title stays readable at 412px. */
+  .bt-st-np-prog{flex:1 1 0;min-width:40px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
+  .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
+    color:var(--accent-ink);min-width:34px;text-align:right;}
+  .bt-st-np-time:empty{display:none;}
+  /* The compact `...` menu button that opens the fly-out (replaces the old
+     three-button .bt-st-stagebtns row). 44px touch-floor, visible on the
+     accent-deep strip via the same surface-2 fill the play/pause button uses. */
+  .bt-st-np-menu{flex:0 0 auto;min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
+    font-size:1.15rem;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .bt-st-np-menu:active{transform:scale(.94);}
+  /* The fly-out itself: a popover anchored under the strip's right edge, holding
+     Show/Hide video, Find another jam, Edit, and the Curated-URL card as
+     full-width tappable rows. Absolute so it overlays the body instead of
+     pushing the circle/fretboard down (the whole point - keep both above the
+     fold). Hidden by default via the [hidden] attr JS toggles. */
+  .bt-st-menu{position:absolute;top:100%;right:8px;z-index:30;margin-top:4px;
+    min-width:min(280px,calc(100vw - 32px));max-width:calc(100vw - 24px);
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-card);
+    box-shadow:0 10px 28px rgba(0,0,0,.4);padding:8px;display:flex;flex-direction:column;gap:6px;}
+  .bt-st-menu[hidden]{display:none;}
+  .bt-st-menu-item{display:flex;align-items:center;width:100%;min-height:44px;padding:0 12px;text-align:left;
+    border:1px solid var(--line);background:var(--surface-2);color:var(--txt);border-radius:var(--r-btn-sm);
+    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;}
+  .bt-st-menu-item:active{transform:scale(.98);}
+  .bt-st-menu-item:hover,.bt-st-menu-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .bt-st-menu-item.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  /* The Curated-URL card sits flush inside the menu (its own margin would leave a
+     gap above the flex-gap the menu already provides). */
+  .bt-st-menu .bt-st-urled{margin:0;}
+  /* S-STUDIO-NOVID: the guidance line at the top of the no-video fly-out (why a
+     backing track is optional + how to add one). Muted, wraps freely inside the
+     popover - not a tappable row, so no .bt-st-menu-item styling. */
+  .bt-st-menu-hint{font-size:.74rem;color:var(--txt-dim);line-height:1.45;padding:2px 4px 4px;}
+  /* No-YouTube-ID fallback: the Practice Studio still loads (HUD intact). The old
+     big .bt-st-search block (CTA + hint) that occupied the top is retired
+     (S-STUDIO-NOVID) - a videoless track now shows the slim .bt-st-np strip + `...`
+     fly-out instead, so the circle crown + fretboard lead. The still-used
+     .bt-st-ytlink primitive (the jam panel's "Search YouTube" leave-app link) stays. */
   .bt-st-ytlink{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;
     font-weight:700;font-size:.92rem;color:var(--accent-ink);text-decoration:none;
     border:1px solid var(--accent-dim);background:var(--accent-deep);
     padding:10px 16px;border-radius:var(--r-btn-sm);min-height:44px;}
   .bt-st-ytlink:hover,.bt-st-ytlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .bt-st-search-hint{color:var(--txt-dim);font-size:.74rem;text-align:center;line-height:1.5;max-width:32ch;}
   .bt-st-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:12px 12px 18px;display:flex;flex-direction:column;gap:12px;}
   /* .bt-st-body spaces flex children via `gap`, so the shared .notableBanner's own
@@ -168,15 +238,25 @@
   .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   /* Studio-only scale-chip row (mode scale default + pent major/minor + blues), solo
      layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below) so the chip
-     visual language reads consistently, but wraps instead of horizontal-scrolling:
-     4 short labels fit one row at 412px, wrap is the safety net. */
-  .bt-st-scalechips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
+     visual language reads consistently. S-STUDIO-SCALESCROLL (operator UAT
+     2026-07-27): ONE horizontal-scroll row (was flex-wrap:wrap -> two rows once the
+     mixolydian/dorian context chips joined the set) - matches the app's shared
+     .chips / .cofModes scrolling strip (flex-wrap:nowrap;overflow-x:auto), so 6+
+     chips stay on one line and the fretboard/chords stay above the fold. */
+  .bt-st-scalechips{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 0 6px;
+    padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
+  .bt-st-scalechips::-webkit-scrollbar{display:none;}
   /* Pill-shaped chip on the .chip family's canonical radius (songbook.css). */
   .bt-st-scalechip{flex:0 0 auto;border:1px solid var(--line-strong);background:transparent;color:var(--txt-soft);
     font-family:inherit;font-weight:600;font-size:.7rem;padding:5px 11px;border-radius:var(--r-chip-pill);cursor:pointer;
-    transition:background .12s,color .12s,border-color .12s;}
+    white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
   .bt-st-scalechip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0 0 8px;}
+  /* S-STUDIO-GUIDEFOLD (operator UAT 2026-07-27): the on-demand wrapper the `?`
+     toggle reveals - scale description + fretboard legend + guide card, stacked.
+     Hidden by default so none take inline space; the whole group shows on `?`. */
+  .bt-st-guidewrap{display:flex;flex-direction:column;gap:8px;}
+  .bt-st-guidewrap[hidden]{display:none;}
+  .bt-st-scaleframe{font-size:.72rem;color:var(--txt-soft);line-height:1.5;margin:0;}
   .bt-st-scaleframe[hidden]{display:none;}
   .bt-st-scale{display:flex;justify-content:center;}
   /* Chords-in-key: name-only chips (like the scale-chip row above), all 7 fit one
@@ -220,6 +300,23 @@
   .bt-st-why-toggle:hover,.bt-st-why-toggle.on{text-decoration-color:var(--accent-ink);}
   .bt-st-why{padding-top:4px;}
   .bt-st-wheel{display:flex;justify-content:center;margin-top:14px;}
+  /* Circle-of-fifths CROWN: the promoted top hero (co-hero with the fretboard).
+     Compact vs the old bottom-panel wheel so circle + board share the top of a
+     phone above the fold. */
+  .bt-st-cofhero{display:flex;justify-content:center;padding:4px 0 2px;flex:0 0 auto;}
+  .bt-st-cofhero .bt-st-wheel{margin-top:0;}
+  .bt-st-cofhero .cofWheel{width:188px;height:188px;max-width:56vw;}
+  /* S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle tap
+     has retuned the surfaces to an explored key (JS toggles [hidden]). Centered
+     accent-outline pill; >=44px tall per the a11y tap-target floor. */
+  .bt-st-cofreset{display:flex;justify-content:center;padding:0 0 4px;flex:0 0 auto;}
+  .bt-st-cofreset[hidden]{display:none;}
+  .bt-st-cofresetbtn{min-height:44px;padding:0 16px;border:1px solid var(--accent-ink);
+    background:transparent;color:var(--accent-ink);font-family:inherit;font-weight:700;
+    font-size:.78rem;border-radius:var(--r-chip-pill);cursor:pointer;
+    transition:transform .08s,background .15s,color .15s;}
+  .bt-st-cofresetbtn:active{transform:scale(.96);}
+  .bt-st-cofresetbtn:hover{background:var(--accent);color:var(--on-accent);}
   /* SHORT landscape (phone held sideways): two panes side by side - header + video
      pinned in the left ~44% pane, the scrollable theory (scale / chords / url editor
      / why) on the right - so the video isn't pushed off-screen when vertical space is

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T10:55:34Z",
+  "generatedAt": "2026-07-30T11:24:14Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,54 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-25T23:39:22Z",
-    "sha": "e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70",
-    "subject": "wiki: record how a render check lies (verification traps) (#314)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70"
+    "date": "2026-07-29T11:36:09Z",
+    "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
   },
   "commits": [
+    {
+      "date": "2026-07-29T11:36:09Z",
+      "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
+    },
+    {
+      "date": "2026-07-28T11:31:05Z",
+      "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
+    },
+    {
+      "date": "2026-07-27T12:39:18Z",
+      "sha": "f33bb636c4e61971a5e847ae231b4af132ba565c",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f33bb636c4e61971a5e847ae231b4af132ba565c"
+    },
+    {
+      "date": "2026-07-27T02:48:35Z",
+      "sha": "df95d297d8601ff268d3e6df0ce62831f72e80ff",
+      "subject": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse (#313)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/df95d297d8601ff268d3e6df0ce62831f72e80ff"
+    },
+    {
+      "date": "2026-07-26T18:14:23Z",
+      "sha": "bde4ca38a1b40ce12bb339427697295f2b65608b",
+      "subject": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2) (#316)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/bde4ca38a1b40ce12bb339427697295f2b65608b"
+    },
+    {
+      "date": "2026-07-26T17:28:37Z",
+      "sha": "85bfff01510803bae120398c60b8405e1648da9c",
+      "subject": "a11y: add the gate, and close the ARIA gap it was built to find (#315)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/85bfff01510803bae120398c60b8405e1648da9c"
+    },
+    {
+      "date": "2026-07-26T10:55:40Z",
+      "sha": "a1d67c1d68ac94bfa3c4afb8dc634b32d6f55b33",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a1d67c1d68ac94bfa3c4afb8dc634b32d6f55b33"
+    },
     {
       "date": "2026-07-25T23:39:22Z",
       "sha": "e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70",
@@ -48,56 +90,14 @@
       "sha": "a8298d07c982e4080bec220b51ee57f82bad0e98",
       "subject": "fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5) (#300)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/a8298d07c982e4080bec220b51ee57f82bad0e98"
-    },
-    {
-      "date": "2026-07-25T21:59:10Z",
-      "sha": "2d5dca320241495be8f184df8f9211c74a16b800",
-      "subject": "music: #6 - Studio \"Why these notes?\" strip follows the selected solo scale (#308)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/2d5dca320241495be8f184df8f9211c74a16b800"
-    },
-    {
-      "date": "2026-07-25T10:48:07Z",
-      "sha": "24f865fa954898a741c94e77090133867cae65f4",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/24f865fa954898a741c94e77090133867cae65f4"
-    },
-    {
-      "date": "2026-07-25T08:45:17Z",
-      "sha": "63ace67b983d1e74970763c073f2f3a92551299e",
-      "subject": "perf(audio): keep chord playback context warm for immediate taps (#306)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/63ace67b983d1e74970763c073f2f3a92551299e"
-    },
-    {
-      "date": "2026-07-25T08:43:26Z",
-      "sha": "f935650f32473d1241e0e21c63e08bb5c714e42b",
-      "subject": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3) (#303)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f935650f32473d1241e0e21c63e08bb5c714e42b"
-    },
-    {
-      "date": "2026-07-25T08:40:07Z",
-      "sha": "67c12bf939fd55e8f5aae280773c39057465d7cc",
-      "subject": "fix(perform): legible back button + deterministic nav z-index (UAT) (#305)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/67c12bf939fd55e8f5aae280773c39057465d7cc"
-    },
-    {
-      "date": "2026-07-25T06:58:32Z",
-      "sha": "d3cec25ff9c54d75755b4c703fff89116f4b9ebd",
-      "subject": "fix(perform): re-acquire wake lock on visibilitychange (P1-1) (#299)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d3cec25ff9c54d75755b4c703fff89116f4b9ebd"
-    },
-    {
-      "date": "2026-07-25T06:51:59Z",
-      "sha": "884042a02d26830bfd4a3c114614c67825eab715",
-      "subject": "fix(sw): CACHE is per asset-changing COMMIT, not per PR - and the guard now proves it (#310)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/884042a02d26830bfd4a3c114614c67825eab715"
     }
   ],
   "openPRs": [
     {
-      "number": 316,
-      "title": "spec: one segmented Songs surface + Song canvas promoted to a tab (PROPOSED - changes JAMFIRST-1)",
-      "branch": "claude/songs-surface-spec",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/316",
+      "number": 319,
+      "title": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316)",
+      "branch": "claude/songs-merge-phase1",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/319",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,46 +106,22 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30179918383/job/89734648824"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30228239704/job/89862126160"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30179918381/job/89734648831"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30228239702/job/89862126145"
         }
       ]
     },
     {
-      "number": 315,
-      "title": "a11y: add the gate, and close the ARIA gap it was built to find",
-      "branch": "claude/a11y-gate",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/315",
-      "draft": false,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30179752423/job/89734235396"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30179752461/job/89734235395"
-        }
-      ]
-    },
-    {
-      "number": 313,
-      "title": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse",
-      "branch": "claude/music-studio-circle-hero",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/313",
+      "number": 318,
+      "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
+      "branch": "claude/prototype-harvest-ruling",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/318",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -154,14 +130,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30173424150/job/89718205367"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30220745693/job/89842643781"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30173424147/job/89718205186"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30220745709/job/89842643833"
         }
       ]
     },
@@ -177,11 +153,32 @@
   ],
   "recentMerges": [
     {
+      "createdAt": "2026-07-25T23:43:38Z",
+      "mergedAt": "2026-07-26T18:14:23Z",
+      "number": 316,
+      "title": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/316"
+    },
+    {
+      "createdAt": "2026-07-25T23:37:57Z",
+      "mergedAt": "2026-07-26T17:28:38Z",
+      "number": 315,
+      "title": "a11y: add the gate, and close the ARIA gap it was built to find",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/315"
+    },
+    {
       "createdAt": "2026-07-25T23:07:55Z",
       "mergedAt": "2026-07-25T23:39:22Z",
       "number": 314,
       "title": "wiki: record how a render check lies (verification traps)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/314"
+    },
+    {
+      "createdAt": "2026-07-25T20:21:12Z",
+      "mergedAt": "2026-07-27T02:48:36Z",
+      "number": 313,
+      "title": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/313"
     },
     {
       "createdAt": "2026-07-25T07:15:18Z",
@@ -259,44 +256,23 @@
       "number": 300,
       "title": "fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/300"
-    },
-    {
-      "createdAt": "2026-07-23T22:22:28Z",
-      "mergedAt": "2026-07-25T06:58:32Z",
-      "number": 299,
-      "title": "fix(perform): re-acquire wake lock on visibilitychange (P1-1)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/299"
-    },
-    {
-      "createdAt": "2026-07-22T06:14:00Z",
-      "mergedAt": "2026-07-24T21:43:33Z",
-      "number": 298,
-      "title": "music: Studio jam-finder - honest hint pointer (#2) + wider per-scale genres (#3)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/298"
-    },
-    {
-      "createdAt": "2026-07-22T05:33:04Z",
-      "mergedAt": "2026-07-24T21:42:10Z",
-      "number": 297,
-      "title": "music: white-circle app icon, rainbow accent palette, N5 double-undo fix",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/297"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-26T10:55:29Z",
-    "durationSeconds": 2,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30199151301",
+    "runStartedAt": "2026-07-30T11:24:09Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30538407486",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 34,
+    "merged_count": 18,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 32.27,
+    "typical_merge_hours": 27.57,
     "weekly": null
   },
   "deploy": {
@@ -306,8 +282,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v312",
-    "localCacheVersion": "music-v312",
+    "liveCacheVersion": "music-v313-5",
+    "localCacheVersion": "music-v313-5",
     "cacheMatch": true
   },
   "missions": [
@@ -697,7 +673,7 @@
   },
   "suite": {
     "testFileCount": 58,
-    "testCaseCount": 3372,
+    "testCaseCount": 3374,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

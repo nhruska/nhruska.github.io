@@ -104,6 +104,30 @@ not a free-text sheet editor. The guided shape matters: it is what keeps
 Compose a composing surface rather than a text editor, and it is consistent
 with how the rest of the app teaches (suggestions, in-key barriers, notables).
 
+### The guided mechanic already exists - harvest it, do not rebuild it
+
+Closed PR #70 (`claude/ai-tutor-prototype-kz5ix1`, 2026-07-02) carries a
+working, tested song-builder prototype whose **16 tests still pass against
+today's `music/shared/*`** - verified 2026-07-26. Its idea is the answer to
+"what does guided mean here?":
+
+> A song is 3 sections. The tutor walks you through each one's progression,
+> then presents **3 keys for the NEXT section, each pre-labelled with WHY it
+> is a pleasing transition** (dominant / subdominant / relative / pivot
+> chord) - so the choice itself teaches the theory.
+
+**The options carry their own why.** That mechanic is the reusable part, and
+it generalises past keys to any guided choice, lyrics included.
+
+Ruled (PROTO-HARVEST): harvest at phase 2 rather than rebuild - lift
+`song-builder.js` into `music/shared/`, derive the per-section key via
+`soloKeyFor` (the prototype's section carries its own key; the real one is
+`{label, seq}`), keep its 16 tests as the regression net. PR #70 stays
+closed: reopening drags three unrelated waves with it. Detail: issue #317.
+
+One thing the prototype does NOT give us: lyrics. It is chords and keys
+only, so it answers the GUIDED half of this direction, not the lyrics half.
+
 Not scoped here. Recorded so the next session builds toward it instead of
 around it.
 
