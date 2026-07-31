@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T11:24:14Z",
+  "generatedAt": "2026-07-31T11:36:28Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,36 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-29T11:36:09Z",
-    "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
+    "date": "2026-07-31T01:23:25Z",
+    "sha": "bb0b85e90c127d1eda347c359c6b4eb0201548a5",
+    "subject": "music(studio): give users time to skip YouTube ads before the video auto-minimizes (#321)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/bb0b85e90c127d1eda347c359c6b4eb0201548a5"
   },
   "commits": [
+    {
+      "date": "2026-07-31T01:23:25Z",
+      "sha": "bb0b85e90c127d1eda347c359c6b4eb0201548a5",
+      "subject": "music(studio): give users time to skip YouTube ads before the video auto-minimizes (#321)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/bb0b85e90c127d1eda347c359c6b4eb0201548a5"
+    },
+    {
+      "date": "2026-07-31T01:20:51Z",
+      "sha": "e1145d23207b51bced559d3764dfd4c4bccb97d1",
+      "subject": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316) (#319)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e1145d23207b51bced559d3764dfd4c4bccb97d1"
+    },
+    {
+      "date": "2026-07-30T21:40:08Z",
+      "sha": "2ad877915c22e3e49851580e475e8d6a407256af",
+      "subject": "decision: harvest the guided song-builder from closed PR #70, do not rebuild it (#318)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2ad877915c22e3e49851580e475e8d6a407256af"
+    },
+    {
+      "date": "2026-07-30T11:24:23Z",
+      "sha": "5cba98552b56c96be1a1be5f9586ed58cb77c2c6",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5cba98552b56c96be1a1be5f9586ed58cb77c2c6"
+    },
     {
       "date": "2026-07-29T11:36:09Z",
       "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
@@ -66,81 +90,9 @@
       "sha": "e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70",
       "subject": "wiki: record how a render check lies (verification traps) (#314)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70"
-    },
-    {
-      "date": "2026-07-25T22:28:00Z",
-      "sha": "3d7d4a3a8b64bab86cb8cfa1f109ee999b2da30b",
-      "subject": "fix(a11y): the 44px tap floor moves to the chip primitive - 28 -> 0 sub-floor targets (#312)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/3d7d4a3a8b64bab86cb8cfa1f109ee999b2da30b"
-    },
-    {
-      "date": "2026-07-25T22:21:51Z",
-      "sha": "95a2bacd6882aba3ddc361d3a72c709da4fc51f3",
-      "subject": "fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6) (#304)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/95a2bacd6882aba3ddc361d3a72c709da4fc51f3"
-    },
-    {
-      "date": "2026-07-25T22:17:07Z",
-      "sha": "9253cd253c6d4c711ea6cc90610267eb32c9a04d",
-      "subject": "fix(perform): wrap chord/lyric lines so they don't clip at 412px (CW-1) (#302)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9253cd253c6d4c711ea6cc90610267eb32c9a04d"
-    },
-    {
-      "date": "2026-07-25T22:15:08Z",
-      "sha": "a8298d07c982e4080bec220b51ee57f82bad0e98",
-      "subject": "fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5) (#300)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/a8298d07c982e4080bec220b51ee57f82bad0e98"
     }
   ],
   "openPRs": [
-    {
-      "number": 319,
-      "title": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316)",
-      "branch": "claude/songs-merge-phase1",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/319",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30228239704/job/89862126160"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30228239702/job/89862126145"
-        }
-      ]
-    },
-    {
-      "number": 318,
-      "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
-      "branch": "claude/prototype-harvest-ruling",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/318",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30220745693/job/89842643781"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30220745709/job/89842643833"
-        }
-      ]
-    },
     {
       "number": 274,
       "title": "docs: rename suggested chords section to name the intent",
@@ -152,6 +104,27 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-07-31T00:40:18Z",
+      "mergedAt": "2026-07-31T01:23:25Z",
+      "number": 321,
+      "title": "music(studio): give users time to skip YouTube ads before the video auto-minimizes",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/321"
+    },
+    {
+      "createdAt": "2026-07-26T21:18:44Z",
+      "mergedAt": "2026-07-31T01:20:51Z",
+      "number": 319,
+      "title": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/319"
+    },
+    {
+      "createdAt": "2026-07-26T21:16:49Z",
+      "mergedAt": "2026-07-30T21:40:08Z",
+      "number": 318,
+      "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/318"
+    },
     {
       "createdAt": "2026-07-25T23:43:38Z",
       "mergedAt": "2026-07-26T18:14:23Z",
@@ -235,44 +208,23 @@
       "number": 303,
       "title": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/303"
-    },
-    {
-      "createdAt": "2026-07-23T22:41:08Z",
-      "mergedAt": "2026-07-25T22:17:07Z",
-      "number": 302,
-      "title": "fix(perform): wrap chord/lyric lines so they don't clip at 412px (CW-1)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/302"
-    },
-    {
-      "createdAt": "2026-07-23T22:34:03Z",
-      "mergedAt": "2026-07-25T06:50:10Z",
-      "number": 301,
-      "title": "skills(ux-coach): wire in measured-evidence capture harness",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/301"
-    },
-    {
-      "createdAt": "2026-07-23T22:25:45Z",
-      "mergedAt": "2026-07-25T22:15:09Z",
-      "number": 300,
-      "title": "fix(a11y): chord chips as accessible buttons with tap-to-hear cue (P3-2/P3-5)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/300"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-30T11:24:09Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30538407486",
+    "runStartedAt": "2026-07-31T11:36:16Z",
+    "durationSeconds": 9,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30627608074",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 18,
+    "merged_count": 21,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 27.57,
+    "typical_merge_hours": 23.87,
     "weekly": null
   },
   "deploy": {
@@ -282,8 +234,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v313-5",
-    "localCacheVersion": "music-v313-5",
+    "liveCacheVersion": "music-v321",
+    "localCacheVersion": "music-v321",
     "cacheMatch": true
   },
   "missions": [
@@ -673,7 +625,7 @@
   },
   "suite": {
     "testFileCount": 58,
-    "testCaseCount": 3374,
+    "testCaseCount": 3378,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
