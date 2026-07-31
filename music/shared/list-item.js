@@ -202,7 +202,11 @@
     var sub = esc(item.artist || '');
     if (item.year != null) sub += ' · ' + esc(item.year);
 
-    var num = (seg === 'set' && opts.position != null)
+    // Position is a fact about MEMBERSHIP, not about which list you are looking
+    // at - so it renders wherever the caller knows one (SONGS-MERGE phase 1:
+    // the All view shows an in-set song's position too). The caller passes it
+    // only when there is one, so this needs no segment gate.
+    var num = (opts.position != null)
       ? '<div class="li-num">' + esc(opts.position) + '</div>' : '';
 
     var metaHtml = '';
@@ -213,11 +217,17 @@
     // so it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
     // act is null for a no-video row - skip the element entirely rather than
     // render an empty/dangling action span.
-    if (act) {
-      metaHtml += '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
-        + (act.external ? ' title="Opens YouTube"' : '') + '>'
-        + esc(act.glyph) + ' ' + esc(act.label) + '</span>';
-    }
+    // The action USED to live here, inside .li-meta. Once it took the 44px tap
+    // floor (#312) it inflated the whole meta line and a row with a video
+    // measured 139px against 89px for one without - a 56% taller row for one
+    // badge. It moves to the trailing rail below, where a 44px control (the +)
+    // already sets the row height, so the floor costs nothing.
+    var actHtml = act
+      ? '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
+        + (act.external ? ' title="Opens YouTube"' : '')
+        + ' aria-label="' + esc(act.label) + '">'
+        + esc(act.glyph) + '</span>'
+      : '';
 
     // Trailing affordances. A set row is ALWAYS reorderable + removable now
     // (operator UAT: no Edit round-trip, drag anytime). Reorder is a dedicated
@@ -251,7 +261,7 @@
       + (opts.note ? '<div class="li-note">' + esc(opts.note) + '</div>' : '')
       + '<div class="li-meta">' + metaHtml + '</div>'
       + '</div>'
-      + editBtn + ctrl;
+      + actHtml + editBtn + ctrl;
 
     // Movement-cancelled taps everywhere (scroll-grab safety). Buttons live outside
     // .li-body so they don't bubble to the body activate.

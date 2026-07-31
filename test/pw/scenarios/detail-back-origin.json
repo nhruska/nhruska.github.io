@@ -1,6 +1,6 @@
 {
   "name": "detail-back-origin",
-  "note": "S-BACK-ORIGIN (operator UAT 2026-07-17: 'when I'm in the setlist and open a song then hit back, I expect to return to the setlist - I always end up at the library'). The song-detail back button returns to the ORIGIN tab: setlist entries -> Setlist, library entries -> Library. Real flow: save a progression to the setlist, open it FROM the setlist, back -> assert the Setlist screen; then open a song FROM the library, back -> assert the Library screen. Red-first: pre-fix #backLib hard-coded switchTab('library').",
+  "note": "S-BACK-ORIGIN (operator UAT 2026-07-17: 'when I'm in the setlist and open a song then hit back, I expect to return to the setlist - I always end up at the library'). The song-detail back button returns to the ORIGIN tab: setlist entries -> Setlist, library entries -> Library. Real flow: save a progression to the setlist, open it FROM the setlist, back -> assert the Setlist screen; then open a song FROM the library, back -> assert the Library screen. Red-first: pre-fix #backLib hard-coded switchTab('library'). SONGS-MERGE phase 1: 'origin' is now a SEGMENT of the Songs surface, not a tab. Back from a setlist-opened song restores the Setlist SEGMENT (and the button says 'Setlist'); reaching the full list from there is a segment switch, not a tab trip - which is why #segAll is tapped before the All-list row.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -52,7 +52,11 @@
     },
     {
       "action": "tap",
-      "selector": ".tabbar [data-tab=\"jam\"]"
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
     },
     {
       "action": "wait",
@@ -81,12 +85,20 @@
     },
     {
       "action": "evalAssert",
-      "label": "back from a SETLIST-opened song returns to the SETLIST (pre-fix: always the library)",
-      "js": "(function(){var jam=document.querySelector('.tabbar [data-tab=\"jam\"]');var set=document.getElementById('setBody');return !!jam && jam.classList.contains('on') === false ? (set && set.offsetParent!==null) : (set && set.offsetParent!==null);})()"
+      "label": "back from a SETLIST-opened song returns to the SETLIST (pre-fix: always the library) (SONGS-MERGE: the setlist is a SEGMENT now - assert the segment is selected and its body is on screen, not that a retired tab button is active)",
+      "js": "(function(){var set=document.getElementById('setBody');var seg=document.getElementById('segSet');return !!set && set.offsetParent!==null && !!seg && seg.classList.contains('on');})()"
     },
     {
       "action": "tap",
       "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "wait",

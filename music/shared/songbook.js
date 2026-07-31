@@ -738,7 +738,7 @@
      * The old Songs|Tracks split is dissolved: a song and its curated backing track
      * are ONE item in a single Repertoire (repertoire.js merges + dedups). The old
      * Repertoire|Set top toggle (#typeToggle) is retired too - the Set / Perform
-     * surface is its own main tab now ("Jam", #s-jam), so the Library screen is
+     * surface is a SEGMENT of the Songs screen now (SONGS-MERGE phase 1), so the screen is
      * ALWAYS the repertoire: search + the Genre/Key facet chips over the merged
      * list. The finder tab is retired; its Practice Studio (solo scale + chords +
      * circle) stays reachable by tapping a playable item (openStudioCb), and
@@ -770,38 +770,71 @@
     }
     // Unified facet bar: Genre + Key chips derived from the current repertoire.
     // (Search is the text input; these replace the old decade chips.)
+    // Populate the two filter dropdowns + the collapsed bar's readout.
+    // Named renderFilterChips still because every caller says that; it now
+    // renders SELECTS (operator UAT 2026-07-26: the two chip strips cost 177px
+    // of vertical space that the song list needed back).
     function renderFilterChips() {
       buildRepertoire();
       // Heal a dead-end facet: deleting the last custom item while filtered to
-      // Mine would drop the chip but leave the (now-invisible) filter active,
-      // showing an empty Library with nothing selected.
+      // Mine would drop the option but leave the (now-invisible) filter active,
+      // showing an empty list with nothing selected.
       if (STATE.mineOnly && !REPERTOIRE.some(isMine)) STATE.mineOnly = false;
-      if (el.genreChips) {
-        el.genreChips.innerHTML = '';
-        el.genreChips.appendChild(chipBtn('All genres', STATE.genre === 'all' && !STATE.mineOnly,
-          function () { STATE.genre = 'all'; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
-        // Mine: the user's own saved/added items. An ownership facet pinned ahead
-        // of the data-derived genres; shown only when a custom item exists (facet
-        // chips reflect what is actually in the repertoire).
-        if (REPERTOIRE.some(isMine)) {
-          el.genreChips.appendChild(chipBtn('mine', STATE.mineOnly,
-            function () { STATE.mineOnly = true; STATE.genre = 'all'; renderFilterChips(); renderSongs(); }));
-        }
+
+      if (el.genreSel) {
+        var gsel = el.genreSel;
+        gsel.innerHTML = '';
+        gsel.appendChild(new Option('All genres', 'all'));
+        // Mine is an OWNERSHIP facet, not a genre - it sits first, and only when
+        // the user actually has something of their own (the options reflect what
+        // is in the repertoire, same contract the chips had).
+        if (REPERTOIRE.some(isMine)) gsel.appendChild(new Option('Mine', '__mine'));
         global.Repertoire.genres(REPERTOIRE).forEach(function (g) {
-          el.genreChips.appendChild(chipBtn(g, STATE.genre === g && !STATE.mineOnly,
-            function () { STATE.genre = g; STATE.mineOnly = false; renderFilterChips(); renderSongs(); }));
+          gsel.appendChild(new Option(g, g));
         });
+        gsel.value = STATE.mineOnly ? '__mine' : STATE.genre;
       }
-      if (el.keyChips) {
-        el.keyChips.innerHTML = '';
-        el.keyChips.appendChild(chipBtn('Any key', STATE.key === 'all',
-          function () { STATE.key = 'all'; renderFilterChips(); renderSongs(); }));
-        global.Repertoire.keys(REPERTOIRE).forEach(function (k) {
-          el.keyChips.appendChild(chipBtn(k, STATE.key === k,
-            function () { STATE.key = k; renderFilterChips(); renderSongs(); }));
-        });
+      if (el.keySel) {
+        var ksel = el.keySel;
+        ksel.innerHTML = '';
+        ksel.appendChild(new Option('Any key', 'all'));
+        global.Repertoire.keys(REPERTOIRE).forEach(function (k) { ksel.appendChild(new Option(k, k)); });
+        ksel.value = STATE.key;
       }
+      renderFilterSummary();
     }
+
+    // The collapsed control has to SAY what is filtering, or collapsing it would
+    // hide state - which is worse than the space it costs. Reads as the active
+    // facets, or the resting invitation when nothing is on.
+    function filterIsActive() {
+      return !!(STATE.search || STATE.mineOnly || (STATE.genre && STATE.genre !== 'all') || (STATE.key && STATE.key !== 'all'));
+    }
+    function renderFilterSummary() {
+      if (!el.filterLabel) return;
+      var bits = [];
+      if (STATE.mineOnly) bits.push('Mine');
+      else if (STATE.genre && STATE.genre !== 'all') bits.push(STATE.genre);
+      if (STATE.key && STATE.key !== 'all') bits.push('Key ' + STATE.key);
+      if (STATE.search) bits.push('"' + STATE.search + '"');
+      var on = bits.length > 0;
+      el.filterLabel.textContent = on ? bits.join(' · ') : 'Search & filter';
+      if (el.filterBtn) el.filterBtn.classList.toggle('on', on);
+      if (el.filterClear) el.filterClear.hidden = !on;
+    }
+    function clearAllFilters() {
+      STATE.search = ''; STATE.genre = 'all'; STATE.key = 'all'; STATE.mineOnly = false;
+      if (el.search) el.search.value = '';
+      if (el.searchClear) el.searchClear.hidden = true;
+      renderFilterChips(); renderSongs();
+    }
+    function openFilterSheet(open) {
+      if (!el.filterSheet) return;
+      el.filterSheet.hidden = !open;
+      if (el.filterBtn) el.filterBtn.setAttribute('aria-expanded', String(!!open));
+      if (open && el.search) { try { el.search.focus({ preventScroll: true }); } catch (e) { el.search.focus(); } }
+    }
+
     // Action-ladder fallback for an item with no curated video: find one on YouTube.
     function ytSearch(s) {
       window.open(ytSearchURL(s), '_blank', 'noopener');
@@ -858,6 +891,42 @@
       firstrunBannerEl = banner;
       el.libSongs.insertBefore(banner, el.songsList);
     }
+    /* ---- SONGS-MERGE phase 1: the All | Setlist segment ------------------
+     * Library and Setlist were two tabs listing the same records, so nothing
+     * said which one was the truth about a song. They are ONE surface now and
+     * the setlist is a VIEW of it.
+     *
+     * The segment is NOT persisted (operator ruling): Songs always opens on
+     * All, so the app never changes shape depending on state - which is the
+     * class of surprise the merge exists to remove.
+     */
+    var songsSeg = 'all';
+    function applySongsSeg() {
+      var isSet = songsSeg === 'set';
+      if (el.segAll) { el.segAll.classList.toggle('on', !isSet); el.segAll.setAttribute('aria-selected', String(!isSet)); }
+      if (el.segSet) { el.segSet.classList.toggle('on', isSet); el.segSet.setAttribute('aria-selected', String(isSet)); }
+      // Chrome swaps wholesale: a setlist is hand-ordered, not searched.
+      if (el.segAllChrome) el.segAllChrome.hidden = isSet;
+      if (el.libSongs) el.libSongs.hidden = isSet;
+      if (el.libSet) el.libSet.hidden = !isSet;
+      // The setlist head row (count + Clear + Start) belongs to the Setlist
+      // view only; renderSetlist decides whether its buttons show at all.
+      if (el.setHead) el.setHead.hidden = !isSet;
+      // The count badge answers "is there anything in there?" without switching.
+      if (el.segSetCount) {
+        var n = STATE.setlist.length;
+        el.segSetCount.textContent = n ? String(n) : '';
+        el.segSetCount.hidden = !n;
+      }
+    }
+    function setSongsSeg(seg) {
+      if (seg !== 'all' && seg !== 'set') return;
+      if (seg === songsSeg) { applySongsSeg(); return; }
+      songsSeg = seg;
+      applySongsSeg();
+      if (seg === 'set') renderSetlist(); else renderSongs();
+    }
+
     function renderSongs() {
       if (!el.songsList) return;
       // Compose calling this right after a save happens while the Library
@@ -906,8 +975,28 @@
         var canAdd = state !== 'blocked';
         var inSet = state === 'add' && STATE.setlist.indexOf(sid) >= 0;
         // SSOT: one shared renderer for every Repertoire / Set item (shared/list-item.js).
+        // SONGS-MERGE phase 1, the rule that removes the confusion: a row's
+        // affordances derive from what is TRUE of the song (is it in the set,
+        // and where), NOT from which view you happen to be standing in. So an
+        // in-setlist song shows its POSITION and its remove handle here in the
+        // All view too - "is this in my set, and where?" stops requiring a
+        // trip to another screen.
+        //
+        // Deliberately NOT the grip: reorder is only meaningful where the
+        // order is the content. In a searched/filtered list a drag handle
+        // would reorder against an order that isn't on screen - an affordance
+        // that lies. #songsList hides it in CSS; the Setlist view keeps it.
+        var setIdx = sid == null ? -1 : STATE.setlist.indexOf(sid);
         var node = global.ListItem.render(displayRecFor(rec), {
+          // Stays segment:'library' deliberately. An earlier cut rendered in-set
+          // rows here as 'set' rows - which gave them the setlist's red remove
+          // handle. In a list of ALL songs that reads as "delete this song",
+          // not "take it out of tonight's set": the same glyph means something
+          // different depending on what the list IS. The existing check-mark
+          // toggle already says "in set, tap to take it out" unambiguously, so
+          // only the POSITION is borrowed from the set view.
           segment: 'library',
+          position: setIdx >= 0 ? setIdx + 1 : null,
           inSet: inSet,
           onActivate: function () { openRepertoireItem(rec); },
           onAdd: state === 'add' ? function () { toggleSet(sid); }
@@ -943,7 +1032,19 @@
       }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
-    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); };
+    if (el.search) el.search.oninput = function () { STATE.search = el.search.value; syncSearchClear(); renderSongs(); renderFilterSummary(); };
+    // The collapsed control + its sheet (operator UAT 2026-07-26).
+    if (el.filterBtn) el.filterBtn.onclick = function () { openFilterSheet(el.filterSheet && el.filterSheet.hidden); };
+    if (el.filterDone) el.filterDone.onclick = function () { openFilterSheet(false); };
+    if (el.filterClear) el.filterClear.onclick = function () { clearAllFilters(); openFilterSheet(false); };
+    if (el.genreSel) el.genreSel.onchange = function () {
+      var v = el.genreSel.value;
+      // Mine and a genre are mutually exclusive - the same contract the chips had.
+      if (v === '__mine') { STATE.mineOnly = true; STATE.genre = 'all'; }
+      else { STATE.mineOnly = false; STATE.genre = v; }
+      renderFilterChips(); renderSongs();
+    };
+    if (el.keySel) el.keySel.onchange = function () { STATE.key = el.keySel.value; renderFilterChips(); renderSongs(); };
     if (el.searchClear) el.searchClear.onclick = function () {
       el.search.value = ''; STATE.search = ''; syncSearchClear(); renderSongs(); el.search.focus();
     };
@@ -971,14 +1072,20 @@
 
     // open a song in the song screen. queueIds (optional) sets the running order:
     // opening from the Setlist passes the whole set so prev/next walks it; opening
-    // a lone song from the Library passes nothing → a one-song (inactive) queue.
-    var practiceOrigin = 'library'; // where the open song detail returns to on back
+    // a lone song from Songs passes nothing → a one-song (inactive) queue.
+    // Where the open song detail returns to on Back. SONGS-MERGE phase 1: the
+    // origin is now a SEGMENT of one surface ('all' | 'set'), not a tab. Back
+    // must land you where you actually were - returning a setlist-opened song
+    // to the All view would lose your place in the set, and labelling the
+    // button "Songs" when it lands on the setlist would be a small lie on a
+    // control whose whole job is telling you where you are going.
+    var practiceOrigin = 'all';
     function openPractice(id, queueIds) {
       // Operator UAT 2026-07-17: back from the song detail returns WHERE YOU
       // CAME FROM - setlist entries go back to the Setlist, library entries to
       // the Library (it always went to Library before). Capture the origin tab
       // at open time; queue-nav re-renders (openCurrent) never overwrite it.
-      practiceOrigin = (currentTab === 'jam') ? 'jam' : 'library';
+      practiceOrigin = (currentTab === 'library' && songsSeg === 'set') ? 'set' : 'all';
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
       STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
@@ -998,7 +1105,7 @@
     // dangling setlist ref (a set member deleted elsewhere) - steps past any
     // unresolvable entry via QUEUE.stepResolvable(songById) instead of
     // landing on it (which used to null out STATE.current and fall to the
-    // "Choose a song from the Library" empty state - the U22 repro). Sets a
+    // "Choose a song" empty state - the U22 repro). Sets a
     // one-shot notice for renderPractice's queue-nav counter when anything
     // was actually skipped; clears it on a normal skip-free move.
     function navQueue(dir) {
@@ -1140,7 +1247,7 @@
       // Header: a prominent ARROW-ONLY Back (top-left) - the likeliest next tap, so
       // it wears the accent; a labeled "Back" was squashing the title into 2-3
       // wrapped lines (operator UAT). Then the setlist toggle + the overflow (⋯).
-      var backLabel = practiceOrigin === 'jam' ? 'Setlist' : 'Library';
+      var backLabel = practiceOrigin === 'set' ? 'Setlist' : 'Songs';
       var head = '<div class="detailHead">'
         + '<button class="iconBtn backArrowBtn" id="backLib" title="Back to ' + backLabel + '" aria-label="Back to ' + backLabel + '"><span aria-hidden="true">←</span></button>'
         // Artist-mirrors-title fix (S5): a Compose-saved song stores an empty
@@ -1264,7 +1371,11 @@
         };
       });
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
-      el.practiceBody.querySelector('#backLib').onclick = function () { switchTab(practiceOrigin || 'library'); };
+      el.practiceBody.querySelector('#backLib').onclick = function () {
+        // Restore the SEGMENT as well as the surface - see practiceOrigin.
+        songsSeg = (practiceOrigin === 'set') ? 'set' : 'all';
+        switchTab('library');
+      };
       // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The
       // dismiss listener is attached only WHILE open and removes itself, so no
       // per-render leak (renderPractice runs on every open / view change). Stage
@@ -1739,6 +1850,25 @@
         window.addEventListener('pointercancel', onUp);
       });
     }
+    // ONE removal path for both views (SONGS-MERGE phase 1). It used to live
+    // inline in renderSetlist's onRemove; the All view can now remove a song
+    // from the set too, and two copies of "splice, re-queue, re-render, offer
+    // undo" is exactly how the two surfaces drifted apart in the first place.
+    // Takes the id, not the index, because the All view's row order is the
+    // FILTERED order - an index from there would remove the wrong song.
+    function removeFromSet(sid) {
+      var i = STATE.setlist.indexOf(sid);
+      if (i < 0) return;
+      var wasOpen = STATE.current && STATE.current.id === sid;
+      STATE.lastRemoved = { sid: sid, index: i }; // enable undo
+      STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
+      // keep the live queue + the (maybe hidden) song screen in step with the edit
+      if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
+      else syncQueueToSetlist();
+      renderSetlist(); renderSongs();
+      showSetUndoBanner(sid, i); // S-TOAST+ACTION: after the repaint, so the stable banner sits above the fresh list
+    }
+
     function renderSetlist() {
       if (!el.setBody) return;
       var body = el.setBody, bar = el.setBar, count = el.setCount;
@@ -1756,8 +1886,13 @@
       // arm-to-delete (wired below), NOT a one-tap wipe, so it is safe resting.
       if (el.setClear) el.setClear.style.display = STATE.setlist.length ? '' : 'none';
       if (el.performBtn) el.performBtn.style.display = STATE.setlist.length ? '' : 'none';
+      // The count badge on the segment tracks the set from wherever it changes.
+      if (el.segSetCount) {
+        el.segSetCount.textContent = STATE.setlist.length ? String(STATE.setlist.length) : '';
+        el.segSetCount.hidden = !STATE.setlist.length;
+      }
       if (STATE.setlist.length === 0) {
-        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from the Library with the + button.</div>';
+        body.innerHTML = '<div class="setEmpty">Your setlist is empty.<br>Add songs from All with the + button.</div>';
         if (bar) bar.style.display = 'none';
         if (count) count.textContent = 'No songs yet';
         dismissSetUndo(); STATE.lastRemoved = null;
@@ -1780,16 +1915,7 @@
           onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
-          onRemove: function () {
-            var wasOpen = STATE.current && STATE.current.id === sid;
-            STATE.lastRemoved = { sid: sid, index: i }; // enable undo
-            STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
-            // keep the live queue + the (maybe hidden) song screen in step with the edit
-            if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
-            else syncQueueToSetlist();
-            renderSetlist(); renderSongs();
-            showSetUndoBanner(sid, i); // S-TOAST+ACTION: after the repaint, so the stable banner sits above the fresh list
-          },
+          onRemove: function () { removeFromSet(sid); },
           onAction: function () { ytSearch(s); }
         });
         body.appendChild(setRow);
@@ -3491,7 +3617,7 @@
       if (!global.Notables.claim('pulljam', undefined, GL && GL.get ? GL.get() : null)) return;
       var banner = global.Notables.renderBanner({
         consumerId: 'pulljam',
-        text: 'A saved progression can become a section - open it from the Library, then Add to song.',
+        text: 'A saved progression can become a section - open it from Songs, then Add to song.',
         onDismiss: function () { slot.innerHTML = ''; }
       });
       if (banner) slot.appendChild(banner);
@@ -4686,7 +4812,7 @@
       msg.textContent = 'Saved ' + cs.t + '.';
       var goBtn = document.createElement('button');
       goBtn.type = 'button'; goBtn.className = 'btn ghost';
-      goBtn.textContent = addedToSet ? 'Open Setlist' : 'Open Library';
+      goBtn.textContent = addedToSet ? 'Show setlist' : 'Show all songs';
       goBtn.onclick = function () {
         hideSaveDoneBanner();
         switchTab(addedToSet ? 'jam' : 'library');
@@ -5870,8 +5996,13 @@
       }
       chordScreenWarm = isChordScreen;
       if (name === 'practice') renderPractice();
-      if (name === 'library') { renderFilterChips(); renderSongs(); }
-      if (name === 'jam') renderSetlist();
+      if (name === 'library') {
+        renderFilterChips();
+        applySongsSeg();
+        // Render whichever view the segment is on - a legacy 'jam' entry lands
+        // here with songsSeg already set to 'set'.
+        if (songsSeg === 'set') renderSetlist(); else renderSongs();
+      }
       // leaving the Tune tab: let the chord pack stop any tuner audio
       if (name !== 'tune' && pack && typeof pack.onLeaveTuner === 'function') pack.onLeaveTuner();
       // S-CLEARGUARD (A3): the Clear-undo banner is route-local - leaving Compose
@@ -5898,7 +6029,11 @@
       // old internal callers + deep links still land in the right place. Runs
       // BEFORE computing `from` / calling applyTab so both compare the
       // normalized name.
-      if (name === 'setlist' || name === 'set') name = 'jam';
+      // SONGS-MERGE phase 1: 'jam' stopped being a tab. Every legacy name that
+      // meant "the set/perform surface" now resolves to the Songs TAB with its
+      // Setlist SEGMENT selected, so old internal callers and deep links land
+      // where the user expects instead of falling through to a dead tab.
+      if (name === 'jam' || name === 'setlist' || name === 'set') { name = 'library'; songsSeg = 'set'; }
       else if (name === 'tracks' || name === 'repertoire') name = 'library';
       var from = currentTab;
       applyTab(name);
@@ -5908,6 +6043,13 @@
       currentTab = name;
     }
     document.querySelectorAll('.tabbar button').forEach(function (b) { b.onclick = function () { switchTab(b.dataset.tab); }; });
+    // The All | Setlist segment. A view switch inside a surface, so it pushes
+    // no back-history layer - unlike a tab change, which does.
+    if (el.songsSeg) {
+      el.songsSeg.querySelectorAll('button[data-seg]').forEach(function (b) {
+        b.onclick = function () { setSongsSeg(b.dataset.seg); };
+      });
+    }
 
     /* ===================== INIT ===================== */
     rebuildAll();
@@ -5960,11 +6102,24 @@
     // so only switch when the saved tab is something else and its button actually exists).
     try {
       var savedTab = localStorage.getItem(ACTIVE_TAB_KEY), tabExists = false;
+      var migratedToSetSegment = false;
       // Normalize a legacy saved tab through the SAME mapping switchTab applies,
       // so an old activeTab.v1 written before the Jam rename ('setlist'/'set' ->
       // Jam, 'tracks'/'repertoire' -> Library) restores to the right modern tab
       // instead of failing the tabExists check and falling back to Library.
-      if (savedTab === 'setlist' || savedTab === 'set') savedTab = 'jam';
+      // SONGS-MERGE phase 1: 'jam' stopped being a tab - the setlist is a SEGMENT
+      // of Songs now. A saved 'jam' restores to Songs with the Setlist segment
+      // selected, and the key is REWRITTEN so the migration fires exactly once.
+      //
+      // Rewriting is not tidiness, it is the bug fix. The libType.v1 migration
+      // below is the scar: it kept re-deriving on every load, so a migrated user
+      // who later chose Library was forced back to Jam forever. A migration that
+      // is not consumed is a sticky marker.
+      if (savedTab === 'jam' || savedTab === 'setlist' || savedTab === 'set') {
+        savedTab = 'library';
+        migratedToSetSegment = true;
+        try { localStorage.setItem(ACTIVE_TAB_KEY, 'library'); } catch (e) {}
+      }
       else if (savedTab === 'tracks' || savedTab === 'repertoire') savedTab = 'library';
       // Pre-Jam versions kept Set/Perform as a Library SUBVIEW under libType.v1
       // (never written by this version). Consume it ONCE: migrate to Jam and
@@ -5973,11 +6128,15 @@
       // bug), since libType.v1 would keep overriding the real saved tab.
       if (localStorage.getItem(prefix + '.libType.v1') === 'set') {
         try { localStorage.removeItem(prefix + '.libType.v1'); } catch (e) {}
-        if (!savedTab || savedTab === 'library') savedTab = 'jam';
+        if (!savedTab || savedTab === 'library') { savedTab = 'library'; migratedToSetSegment = true; }
       }
       // match by iterating buttons (not a built selector) so a malformed stored value can't
       // throw a selector SyntaxError and abort the restore.
       document.querySelectorAll('.tabbar button').forEach(function (b) { if (b.dataset.tab === savedTab) tabExists = true; });
+      // A migrated setlist user lands on Songs with the Setlist segment showing.
+      // The segment itself is never persisted (Songs always opens on All), so
+      // this is a one-time courtesy for the tab they used to have, not state.
+      if (migratedToSetSegment) songsSeg = 'set';
       if (savedTab && savedTab !== 'library' && tabExists) {
         switchTab(savedTab); // from=null (currentTab unset yet) -> no history push, just sets currentTab
       }
