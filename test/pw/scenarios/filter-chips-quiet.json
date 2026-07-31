@@ -4,40 +4,62 @@
   "settleMs": 1200,
   "steps": [
     {
-      "action": "tapIfVisible",
-      "text": "I know some chords"
-    },
-    {
-      "action": "tap",
-      "selector": ".tabbar [data-tab=\"library\"]"
-    },
-    {
-      "action": "waitFor",
-      "selector": "#genreChips .chip"
-    },
-    {
-      "action": "tapText",
-      "text": "Rock",
-      "scope": "#genreChips"
+      "action": "goto",
+      "path": "/music/play/"
     },
     {
       "action": "wait",
-      "ms": 300
+      "ms": 1200
     },
     {
       "action": "evalAssert",
-      "js": "(function(){var c=document.querySelector('#genreChips .chip.on'); if(!c) return 'no selected chip'; var bg=getComputedStyle(c).backgroundColor; return (bg==='rgba(0, 0, 0, 0)'||bg==='transparent')})()",
-      "label": "G3: selected library FILTER chip is outline-quiet, not accent-filled"
+      "label": "at rest the control invites rather than reports, and offers no clear",
+      "js": "(function(){var l=document.getElementById('filterLabel'),c=document.getElementById('filterClear'),b=document.getElementById('filterBtn');return !!l&&l.textContent.trim()==='Search & filter'&&!!c&&c.hidden===true&&!!b&&!b.classList.contains('on');})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#filterBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "evalAssert",
-      "js": "(function(){var c=document.querySelector('#genreChips .chip.on'); var bc=getComputedStyle(c).borderColor; var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent-ink').trim(); return bc.length>0})()",
-      "label": "selected filter chip keeps a visible border (outline grammar)"
+      "label": "the sheet carries the search box and BOTH filters as dropdowns on one row",
+      "js": "(function(){var sh=document.getElementById('filterSheet');if(!sh||sh.hidden)return false;var g=document.getElementById('genreSel'),k=document.getElementById('keySel'),s=document.getElementById('search');if(!g||!k||!s)return false;var gr=g.getBoundingClientRect(),kr=k.getBoundingClientRect();return Math.abs(gr.top-kr.top)<8;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pick a genre through the dropdown",
+      "js": "(function(){var g=document.getElementById('genreSel');if(!g||g.options.length<3)return false;g.value=g.options[g.options.length-1].value;g.dispatchEvent(new Event('change',{bubbles:true}));return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "RED GOALPOST: an active filter is REPORTED on the collapsed control, with a one-tap clear - collapsing hides space, never state",
+      "js": "(function(){var l=document.getElementById('filterLabel'),c=document.getElementById('filterClear'),b=document.getElementById('filterBtn');if(!l||!c||!b)return false;return l.textContent.trim()!=='Search & filter'&&c.hidden===false&&b.classList.contains('on');})()"
     },
     {
       "action": "screenshot",
-      "name": "quiet-filter-selected"
+      "name": "filter-active-readout"
+    },
+    {
+      "action": "tap",
+      "selector": "#filterClear"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "one tap clears everything and the control returns to its resting invitation",
+      "js": "(function(){var l=document.getElementById('filterLabel'),c=document.getElementById('filterClear');return !!l&&l.textContent.trim()==='Search & filter'&&!!c&&c.hidden===true;})()"
     }
   ],
-  "note": "GENRE-CI (2026-07-19): chips display Title-case, identity case-insensitive."
+  "note": "REWRITTEN 2026-07-26 (SONGS-MERGE): this asserted the library filter CHIP's selected-state grammar (outline-quiet, not accent-filled). The two chip strips are gone - they cost 177px of vertical space the song list needed - and the filter now lives in a sheet behind ONE collapsed bar. The intent survives and is what this now asserts: an active filter must be LEGIBLE on the collapsed control, because collapsing may hide space but must never hide state."
 }

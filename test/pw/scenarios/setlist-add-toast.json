@@ -51,8 +51,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "the action lands on the Setlist tab with the just-added song in the set",
-      "js": "(function(){var s=document.getElementById('s-jam');var body=document.getElementById('setBody');return !!s && s.classList.contains('on') && !!body && body.children.length>=1;})()"
+      "label": "the action lands on the Setlist SEGMENT of Songs with the just-added song in the set (SONGS-MERGE: a segment switch, not a tab trip)",
+      "js": "(function(){var seg=document.getElementById('segSet');var body=document.getElementById('setBody');return !!seg && seg.classList.contains('on') && !!body && body.offsetParent!==null && body.querySelectorAll('.listItem').length>0;})()"
     },
     {
       "action": "screenshot",

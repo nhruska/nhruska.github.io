@@ -18,8 +18,22 @@ var Callouts = require('../music/shared/callouts.js');
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
 
-test('exposes the four real tabs, in order', function () {
-  assert.deepStrictEqual(Callouts.TABS, ['library', 'jam', 'compose', 'tune']);
+test('exposes the three real tabs, in order (jam retired with SONGS-MERGE phase 1)', function () {
+  // 'jam' stopped being a tab: the setlist is a SEGMENT of the Songs surface,
+  // so its coach mark moved onto #segSet inside the library entry. A stale
+  // 'jam' here would ask Callouts to teach a tab that no longer exists.
+  assert.deepStrictEqual(Callouts.TABS, ['library', 'compose', 'tune']);
+});
+
+test('the retired jam coach mark left no orphan config behind', function () {
+  assert.strictEqual(Callouts.CONFIG.jam, undefined, 'jam config should be gone, not merely unlisted');
+});
+
+test('the setlist segment is taught on the Songs surface (the job jam used to do)', function () {
+  var lib = Callouts.configFor('library');
+  var sels = lib.secondary.map(function (x) { return x.sel; });
+  assert.ok(sels.indexOf('#segSet') !== -1,
+    'the segment is the genuinely new thing on this surface - if nothing points at it, a returning user has to find their setlist by accident');
 });
 
 test('every tab has a primary target with a selector + non-empty text', function () {
