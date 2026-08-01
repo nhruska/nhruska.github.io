@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-31T11:36:28Z",
+  "generatedAt": "2026-08-01T10:52:42Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-07-31T01:23:25Z",
-    "sha": "bb0b85e90c127d1eda347c359c6b4eb0201548a5",
-    "subject": "music(studio): give users time to skip YouTube ads before the video auto-minimizes (#321)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/bb0b85e90c127d1eda347c359c6b4eb0201548a5"
+    "date": "2026-07-31T11:36:36Z",
+    "sha": "8b76969766f17e24d1577b8ac228b461df56ec84",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/8b76969766f17e24d1577b8ac228b461df56ec84"
   },
   "commits": [
+    {
+      "date": "2026-07-31T11:36:36Z",
+      "sha": "8b76969766f17e24d1577b8ac228b461df56ec84",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/8b76969766f17e24d1577b8ac228b461df56ec84"
+    },
     {
       "date": "2026-07-31T01:23:25Z",
       "sha": "bb0b85e90c127d1eda347c359c6b4eb0201548a5",
@@ -84,12 +90,6 @@
       "sha": "a1d67c1d68ac94bfa3c4afb8dc634b32d6f55b33",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/a1d67c1d68ac94bfa3c4afb8dc634b32d6f55b33"
-    },
-    {
-      "date": "2026-07-25T23:39:22Z",
-      "sha": "e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70",
-      "subject": "wiki: record how a render check lies (verification traps) (#314)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e4b8d82f3fd2de39c1ec272ac41cff44cb3d7c70"
     }
   ],
   "openPRs": [
@@ -214,14 +214,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-07-31T11:36:16Z",
-    "durationSeconds": 9,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30627608074",
+    "runStartedAt": "2026-08-01T10:52:36Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30696565033",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 21,
+    "merged_count": 18,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
@@ -625,7 +625,7 @@
   },
   "suite": {
     "testFileCount": 58,
-    "testCaseCount": 3378,
+    "testCaseCount": 1631,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
