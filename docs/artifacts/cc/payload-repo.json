@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T10:53:32Z",
+  "generatedAt": "2026-08-03T12:38:24Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-01T10:52:49Z",
-    "sha": "44113e2a6b9e4f2ef7845ae46e8d50a93aff2124",
+    "date": "2026-08-02T10:53:38Z",
+    "sha": "b006fedf94480d1dac1e53c5bef540aadd405ee4",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/44113e2a6b9e4f2ef7845ae46e8d50a93aff2124"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/b006fedf94480d1dac1e53c5bef540aadd405ee4"
   },
   "commits": [
+    {
+      "date": "2026-08-02T10:53:38Z",
+      "sha": "b006fedf94480d1dac1e53c5bef540aadd405ee4",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b006fedf94480d1dac1e53c5bef540aadd405ee4"
+    },
     {
       "date": "2026-08-01T10:52:49Z",
       "sha": "44113e2a6b9e4f2ef7845ae46e8d50a93aff2124",
@@ -84,12 +90,6 @@
       "sha": "bde4ca38a1b40ce12bb339427697295f2b65608b",
       "subject": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2) (#316)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/bde4ca38a1b40ce12bb339427697295f2b65608b"
-    },
-    {
-      "date": "2026-07-26T17:28:37Z",
-      "sha": "85bfff01510803bae120398c60b8405e1648da9c",
-      "subject": "a11y: add the gate, and close the ARIA gap it was built to find (#315)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/85bfff01510803bae120398c60b8405e1648da9c"
     }
   ],
   "openPRs": [
@@ -214,14 +214,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-02T10:53:27Z",
+    "runStartedAt": "2026-08-03T12:38:19Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30744633477",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30814405267",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 6,
+    "merged_count": 4,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
