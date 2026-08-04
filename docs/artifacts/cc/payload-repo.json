@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-03T12:38:24Z",
+  "generatedAt": "2026-08-04T11:36:03Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-02T10:53:38Z",
-    "sha": "b006fedf94480d1dac1e53c5bef540aadd405ee4",
+    "date": "2026-08-03T12:38:31Z",
+    "sha": "fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/b006fedf94480d1dac1e53c5bef540aadd405ee4"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9"
   },
   "commits": [
+    {
+      "date": "2026-08-03T12:38:31Z",
+      "sha": "fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9"
+    },
     {
       "date": "2026-08-02T10:53:38Z",
       "sha": "b006fedf94480d1dac1e53c5bef540aadd405ee4",
@@ -84,12 +90,6 @@
       "sha": "df95d297d8601ff268d3e6df0ce62831f72e80ff",
       "subject": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse (#313)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/df95d297d8601ff268d3e6df0ce62831f72e80ff"
-    },
-    {
-      "date": "2026-07-26T18:14:23Z",
-      "sha": "bde4ca38a1b40ce12bb339427697295f2b65608b",
-      "subject": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2) (#316)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/bde4ca38a1b40ce12bb339427697295f2b65608b"
     }
   ],
   "openPRs": [
@@ -214,14 +214,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-03T12:38:19Z",
+    "runStartedAt": "2026-08-04T11:35:58Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30814405267",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/30905470185",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 4,
+    "merged_count": 3,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
