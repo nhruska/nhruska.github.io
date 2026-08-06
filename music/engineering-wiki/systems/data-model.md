@@ -22,7 +22,9 @@ Edit discipline: surgical diffs, 2-space formatting preserved; validate JSON.par
 
 ## tracks.json + trackKey identity [STABLE]
 
-Track records: `{ title, artist, genre, key (canonical sharp), mode, bpm?, capo?, yt?|null, tags? }`. When yt is null, a deterministic YouTube search query substitutes.
+Track records carry exactly 9 keys: `{ yt|null, title, artist, genre, key, mode, bpm|null, capo, tags[] }` - enforced by `test/tracks-catalog.test.js` (the catalog's schema gate, shipped with the sync pipeline per ship-the-linter-with-the-tokens). When yt is null, a deterministic YouTube search query substitutes. Since the 2026-08-06 playlist bake (PR #322) the catalog is majority yt-backed (19 of 54 entries).
+
+**Key STORAGE spelling = the preferred tonic name** (`Eb`, `Bb` - not `D#`, `A#`): FORK-4 sharp-normalization is retired, display respells key-aware via `Circle.preferredTonicName` regardless of storage, and identity folds spellings (`TracksModel.normRoot`, tracks-model.js:19-26, runs inside `trackKey`) so `Eb` and `D#` produce the same trackKey. Stored JSON reads the way a musician writes it. Mode `blues` is first-class (own trackKey identity, blues-scale Studio palette via studio-theory.js). Genre vocabulary: reggae/rock/jam/blues/pop/funk/jazz - chips derive from the data (`TracksModel.uniqueGenres`), so a new genre value needs no code change.
 
 **trackKey** (tracks.js ~150): `[title, artist, key, mode].join('|').toLowerCase().trim()` - the stable identity for the curated-URL overlay; cosmetic case/whitespace changes cannot orphan a curated video. **LEGACY_TRACKKEYS** (tracks.js ~305-315): migration map remapping keys stored under old mode-coarsening rules (modal seeds once filed under 'major').
 

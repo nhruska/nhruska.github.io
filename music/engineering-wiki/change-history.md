@@ -260,4 +260,11 @@ S-AUDIO-REALFEEL (#88, re-staggered past the 2026-07-18 morning train):
 audio.js KS strum engine. v187 sits above main's v186 (#270/#271/#272).
 S-AUDIO-PICK-TRANSIENT (#273, re-staggered past #275/#276): audio.js pick
 scrape + (from main) voice cache/latency. v191 sits above main's v190.
+M-LIB-BAKE (2026-08-06, PR #322): v321->v322 - music/backing-tracks/
+tracks.json +15 curated playlist entries (39->54, yt-backed 4->19; keys
+store preferred tonic names per D-KEY-STORE-PREF) + build-stamp pair. New
+non-CORE: scripts/playlist-sync.js (keyless fetch/bake pipeline),
+.github/workflows/playlist-sync.yml, test/tracks-catalog.test.js (catalog
+schema gate); test/candidates.test.js modal-bucket filter narrowed to
+url-less tracks (a yt-backed modal track needs no candidates). [#322]
 ```
