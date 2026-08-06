@@ -534,5 +534,208 @@
       "modal",
       "jam"
     ]
+  },
+  {
+    "yt": "y9jm5L6g3ng",
+    "title": "Time Jam - Pink Floyd Style",
+    "artist": "",
+    "genre": "rock",
+    "key": "F#",
+    "mode": "minor",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "ballad",
+      "jam"
+    ]
+  },
+  {
+    "yt": "4q7h2SwIyLg",
+    "title": "Guitar backing track in C Major - Pop style",
+    "artist": "",
+    "genre": "pop",
+    "key": "C",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": "LJeCVSiteNU",
+    "title": "Guitar backing track in G Major - Pop style",
+    "artist": "",
+    "genre": "pop",
+    "key": "G",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jam"
+    ]
+  },
+  {
+    "yt": "3stpZKNF_jQ",
+    "title": "Rock Pop Backing Track G Major 70 BPM",
+    "artist": "",
+    "genre": "rock",
+    "key": "G",
+    "mode": "major",
+    "bpm": 70,
+    "capo": 0,
+    "tags": [
+      "pop",
+      "jam"
+    ]
+  },
+  {
+    "yt": "MJIMlr8tI2s",
+    "title": "Funky Jam Backing Track [Fm]",
+    "artist": "",
+    "genre": "funk",
+    "key": "F",
+    "mode": "minor",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "groove"
+    ]
+  },
+  {
+    "yt": "FWbdZSBW9Vo",
+    "title": "Pop Rock Acoustic Ballad in G 66bpm",
+    "artist": "",
+    "genre": "rock",
+    "key": "G",
+    "mode": "major",
+    "bpm": 66,
+    "capo": 0,
+    "tags": [
+      "acoustic",
+      "ballad"
+    ]
+  },
+  {
+    "yt": "nbtHwKTRUcg",
+    "title": "Slow Rock Ballad in C/Am 64bpm",
+    "artist": "",
+    "genre": "rock",
+    "key": "C",
+    "mode": "major",
+    "bpm": 64,
+    "capo": 0,
+    "tags": [
+      "ballad",
+      "slow"
+    ]
+  },
+  {
+    "yt": "go2NlmO5pzM",
+    "title": "Peaceful Mellow in E Minor",
+    "artist": "",
+    "genre": "jam",
+    "key": "E",
+    "mode": "minor",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "mellow"
+    ]
+  },
+  {
+    "yt": "4cs1NwbZp2w",
+    "title": "Funky Blues in C - John Mayer style",
+    "artist": "",
+    "genre": "blues",
+    "key": "C",
+    "mode": "blues",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "funk"
+    ]
+  },
+  {
+    "yt": "YzuMzRhRTPE",
+    "title": "Blues in F (jazz)",
+    "artist": "",
+    "genre": "blues",
+    "key": "F",
+    "mode": "blues",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jazz"
+    ]
+  },
+  {
+    "yt": "wKbg6iDSXJQ",
+    "title": "Rock Pop Backing Track F Major 70 BPM",
+    "artist": "",
+    "genre": "rock",
+    "key": "F",
+    "mode": "major",
+    "bpm": 70,
+    "capo": 0,
+    "tags": [
+      "pop",
+      "jam"
+    ]
+  },
+  {
+    "yt": "gfx5wHi_4cE",
+    "title": "II-V-I Jazz Play-along - F Major",
+    "artist": "",
+    "genre": "jazz",
+    "key": "F",
+    "mode": "major",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "ii-V-I"
+    ]
+  },
+  {
+    "yt": "XsDru5g676M",
+    "title": "Jazz Blues Backing Track - Eb 120bpm",
+    "artist": "",
+    "genre": "blues",
+    "key": "Eb",
+    "mode": "blues",
+    "bpm": 120,
+    "capo": 0,
+    "tags": [
+      "jazz",
+      "swing"
+    ]
+  },
+  {
+    "yt": "WJ63FZfCzM8",
+    "title": "Harry Hood (Jam)",
+    "artist": "Phish",
+    "genre": "jam",
+    "key": "D",
+    "mode": "mixolydian",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "mixolydian"
+    ]
+  },
+  {
+    "yt": "36X3wecT2z8",
+    "title": "Blues in E 90bpm",
+    "artist": "",
+    "genre": "blues",
+    "key": "E",
+    "mode": "blues",
+    "bpm": 90,
+    "capo": 0,
+    "tags": [
+      "12-bar"
+    ]
   }
 ]
