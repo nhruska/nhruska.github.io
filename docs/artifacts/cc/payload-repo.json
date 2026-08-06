@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-05T11:33:07Z",
+  "generatedAt": "2026-08-06T11:36:27Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-04T11:36:10Z",
-    "sha": "b9be8205e6df209170ec1c6f5fdbfd5a41f590ae",
+    "date": "2026-08-05T11:33:13Z",
+    "sha": "778a0302cf362b766c5a67a26c493199b3637414",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/b9be8205e6df209170ec1c6f5fdbfd5a41f590ae"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/778a0302cf362b766c5a67a26c493199b3637414"
   },
   "commits": [
+    {
+      "date": "2026-08-05T11:33:13Z",
+      "sha": "778a0302cf362b766c5a67a26c493199b3637414",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/778a0302cf362b766c5a67a26c493199b3637414"
+    },
     {
       "date": "2026-08-04T11:36:10Z",
       "sha": "b9be8205e6df209170ec1c6f5fdbfd5a41f590ae",
@@ -84,12 +90,6 @@
       "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
-    },
-    {
-      "date": "2026-07-27T12:39:18Z",
-      "sha": "f33bb636c4e61971a5e847ae231b4af132ba565c",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f33bb636c4e61971a5e847ae231b4af132ba565c"
     }
   ],
   "openPRs": [
@@ -214,9 +214,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-05T11:32:57Z",
-    "durationSeconds": 8,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31001898900",
+    "runStartedAt": "2026-08-06T11:36:22Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31097935657",
     "headBranch": "main"
   },
   "velocity": {
@@ -625,7 +625,7 @@
   },
   "suite": {
     "testFileCount": 58,
-    "testCaseCount": 1631,
+    "testCaseCount": 3378,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
