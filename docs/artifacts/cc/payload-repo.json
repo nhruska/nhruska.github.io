@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-06T11:36:27Z",
+  "generatedAt": "2026-08-07T10:15:21Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-05T11:33:13Z",
-    "sha": "778a0302cf362b766c5a67a26c493199b3637414",
+    "date": "2026-08-06T11:36:34Z",
+    "sha": "ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/778a0302cf362b766c5a67a26c493199b3637414"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0"
   },
   "commits": [
+    {
+      "date": "2026-08-06T11:36:34Z",
+      "sha": "ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0"
+    },
     {
       "date": "2026-08-05T11:33:13Z",
       "sha": "778a0302cf362b766c5a67a26c493199b3637414",
@@ -84,21 +90,24 @@
       "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
-    },
-    {
-      "date": "2026-07-28T11:31:05Z",
-      "sha": "e2c352166b109d34b2c7fc0ccd8eaf76521103d6",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e2c352166b109d34b2c7fc0ccd8eaf76521103d6"
     }
   ],
   "openPRs": [
+    {
+      "number": 322,
+      "title": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline",
+      "branch": "claude/nh-pages-music-extraction-pzn1rg",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/322",
+      "draft": true,
+      "ciState": "unknown",
+      "checks": []
+    },
     {
       "number": 274,
       "title": "docs: rename suggested chords section to name the intent",
       "branch": "claude/suggested-chords-rename",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/274",
-      "draft": true,
+      "draft": false,
       "ciState": "unknown",
       "checks": []
     }
@@ -214,14 +223,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-06T11:36:22Z",
+    "runStartedAt": "2026-08-07T10:15:17Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31097935657",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31169319462",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 3,
+    "merged_count": 2,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
@@ -229,7 +238,7 @@
   },
   "deploy": {
     "pages": {
-      "status": "built",
+      "status": "errored",
       "htmlUrl": "https://nhruska.github.io/",
       "sourceBranch": "main",
       "buildType": "legacy"
