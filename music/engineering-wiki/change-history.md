@@ -321,4 +321,15 @@ copy .bt-st-tx2 + 48px gap, linear infinite ~22px/s), replacing the v4
 shuttle. Scenario asserts upgraded to hit-tests (band resolves to the
 sheet, tabbar center resolves to the tabbar) - z-raise drop
 mutation-proven red. No new/removed CORE paths. [#323]
+M-PLAYER-FEEL v6 (2026-08-08, PR #323 UAT batch 6): v323-6->v323-7 -
+transport + queue: songbook playablePool/playNeighbor (the queue IS the
+current view - All/Jams pool or the setlist order; wired via
+Tracks.mount({advance})); track-end detection (onStateChange 0 +
+duration fallback) with auto-advance or an honest ended-state;
+prev/next bar buttons (data-npprev/npnext); shuffle toggle on the
+sheet topbar (music.shuffle.v1, additive); accent-bordered 8px
+progress track; bar gap 4px; sub-380 hides the time label. tracks
+.test.js countdown regex updated for the split guard (same anchored
+contract). New scenario test/pw/scenarios/uat-batch6.json (34 steps,
+synthesized end-event auto-advance mutation-proven). [#323]
 ```

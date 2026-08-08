@@ -775,7 +775,12 @@
       onEditRequest: function (t) { if (songbookCtl && songbookCtl.openEditOrAdd) songbookCtl.openEditOrAdd(t); },
       // Attach a video to a custom song inline from the Studio (returns the updated
       // studio-shaped record so the Studio can re-render with the embed).
-      onSetVideo: function (id, yt) { return (songbookCtl && songbookCtl.setCustomVideo) ? songbookCtl.setCustomVideo(id, yt) : null; }
+      onSetVideo: function (id, yt) { return (songbookCtl && songbookCtl.setCustomVideo) ? songbookCtl.setCustomVideo(id, yt) : null; },
+      // PLAYER-FEEL v6: prev/next/auto-advance walk the CURRENT view's playable
+      // pool (All / Jams / Setlist) - songbook owns "what's next", the player
+      // owns "when". Same closure indirection as onEditRequest (songbookCtl is
+      // built just below).
+      advance: function (dir, shuffle, key) { return (songbookCtl && songbookCtl.playNeighbor) ? songbookCtl.playNeighbor(dir, shuffle, key) : false; }
     }) : null;
     songbookCtl = window.Songbook.mount({
       songs: songs,

@@ -1024,7 +1024,10 @@ test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a lon
     'the auto-minimize window must be 15s (was 7s - too short to see + tap Skip Ads)');
   assert.ok(/function startCountdown\(\)/.test(body) && /cdStarted/.test(body),
     'the countdown must be a guarded startCountdown() so it fires once, anchored to playback');
-  assert.ok(/if \(!d \|\| d\.event !== 'infoDelivery' \|\| !d\.info\) return;\s*\n\s*startCountdown\(\);/.test(body),
+  // v6 split the guard (an onStateChange ended-check now precedes it) - the
+  // anchored contract is unchanged: startCountdown() fires immediately after
+  // the infoDelivery guard, never at render.
+  assert.ok(/if \(d\.event !== 'infoDelivery' \|\| !d\.info\) return;\s*\n\s*startCountdown\(\);/.test(body),
     'startCountdown() must fire from the YT infoDelivery handler (playback-anchored, not at render)');
   // Explicit user agency: "Keep open" cancels the auto-collapse so Skip stays
   // tappable on the iframe; "Minimize now" collapses early.

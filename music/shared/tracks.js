@@ -315,6 +315,20 @@
      * minimize/expand - the one Studio DOM just changes shape via CSS. */
     var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
     var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
+    // PLAYER-FEEL v6: prev/next/auto-advance walk the current view's playable
+    // pool - songbook owns the pool (opts.advance -> playNeighbor), the player
+    // owns the trigger (buttons + track-end detection in wireNowPlaying).
+    var advanceCb = opts.advance || null;
+    // Shuffle is a persisted player mode (additive localStorage key - defensive
+    // read, no schema impact). The topbar button reflects it (.on/aria-pressed).
+    var shuffleOn = false;
+    try { shuffleOn = localStorage.getItem('music.shuffle.v1') === '1'; } catch (e) {}
+    function setShuffle(on) {
+      shuffleOn = !!on;
+      try { localStorage.setItem('music.shuffle.v1', shuffleOn ? '1' : '0'); } catch (e) {}
+      var b = elPlayer.querySelector('[data-shuffle]');
+      if (b) { b.classList.toggle('on', shuffleOn); b.setAttribute('aria-pressed', shuffleOn ? 'true' : 'false'); }
+    }
     function dispatchNowPlaying() {
       // UAT batch 4: the bar's live-state classes ride the SAME dispatch that
       // feeds the rows, so bar and rows can never disagree. npLive gates the
@@ -386,7 +400,7 @@
       // keep their own handlers (excluded here so a control tap never expands).
       elPlayer.onclick = function (e) {
         if (!elPlayer.classList.contains('mini')) return;
-        if (e.target.closest('[data-nppp],[data-minix],[data-npprog]')) return;
+        if (e.target.closest('[data-nppp],[data-minix],[data-npprog],[data-npprev],[data-npnext]')) return;
         expandStudio();
       };
       dispatchNowPlaying();
@@ -954,11 +968,18 @@
       var barStrip = t.yt
         ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
           + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
+          // UAT batch 6 ("would like next. and back buttons. it's like a music
+          // player"): prev/next flank the pp - they walk the current view's
+          // playable pool (opts.advance). They stay visible in the vidopen
+          // state too (YouTube's own controls can't do playlist-next).
+          + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">&#10072;&#9668;</button>'
           + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">&#9658;&#10072;</button>'
           // Operator UAT (2026-07-26): no title text in the strip - the id block
           // already names the track. A PLAYBACK PROGRESS BAR + total time
           // shows relative position at a glance (driven by YT infoDelivery time,
-          // see wireNowPlaying).
+          // see wireNowPlaying). UAT batch 6: the TRACK carries an accent
+          // border so the total extent reads at a glance (CSS).
           + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
           + '<span class="bt-st-np-time" data-nptime></span>'
         : '';
@@ -1014,6 +1035,9 @@
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
         + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        // UAT batch 6: the shuffle mode toggle - the expanded-player home for
+        // it (the Spotify grammar). Persisted; .on/aria-pressed reflect state.
+        + (t.yt ? '<button class="bt-st-shuffle' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">&#8646;</button>' : '')
         + menuBlock
         + '</div>'
         + mediaBlock
@@ -1216,6 +1240,24 @@
         var vidMinBtn = elPlayer.querySelector('[data-vidmin]');
         if (vidMinBtn && mediaEl) vidMinBtn.onclick = function () { endCountdown(); setMin(true); };
         var paused = false;
+        // UAT batch 6 ("when track ends... shows at the last time code and
+        // indicates now playing"): detect the embed's END - the onStateChange
+        // ended event (info 0) plus a currentTime>=duration fallback - and
+        // either AUTO-ADVANCE to the next playable in the current view
+        // (opts.advance; the new open rebuilds everything fresh) or, with
+        // nothing to advance to, show the honest ENDED state: bar flips to ►,
+        // equalizers freeze. One-shot per open (endedFired); a rebuild resets
+        // it. Headless/blocked egress never reports, so this only fires where
+        // playback is real.
+        var endedFired = false;
+        function onTrackEnd() {
+          if (endedFired || !nowPlaying) return;
+          endedFired = true;
+          if (advanceCb && advanceCb('next', shuffleOn, trackKey(nowPlaying))) return;
+          paused = true; userPaused = true;
+          if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+          dispatchNowPlaying();
+        }
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
@@ -1244,7 +1286,10 @@
           if (!progFill || !progFill.isConnected) { global.removeEventListener('message', onYtMessage); return; }
           if (!e || typeof e.data !== 'string') return;
           var d; try { d = JSON.parse(e.data); } catch (x) { return; }
-          if (!d || d.event !== 'infoDelivery' || !d.info) return;
+          if (!d) return;
+          // UAT batch 6: the embed's ended event (YT player state 0).
+          if (d.event === 'onStateChange' && d.info === 0) { onTrackEnd(); return; }
+          if (d.event !== 'infoDelivery' || !d.info) return;
           startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {
@@ -1252,6 +1297,9 @@
             progFill.style.width = (frac * 100).toFixed(1) + '%';
             if (progEl) progEl.setAttribute('aria-valuenow', Math.round(frac * 100));
             if (timeLbl) timeLbl.textContent = fmtTime(d.info.currentTime) + ' / ' + fmtTime(ytDur);
+            // Fallback end detection when the ended event is missed: the clock
+            // reaching the (real, >3s) duration is the end.
+            if (ytDur > 3 && d.info.currentTime >= ytDur - 0.4) onTrackEnd();
           }
         }
         if (progFill) {
@@ -1804,6 +1852,19 @@
           closePlayer();
         }
       };
+      // UAT batch 6: prev/next walk the current view's playable pool via
+      // opts.advance (songbook playNeighbor - expanded stays expanded, mini
+      // stays the bar). stopPropagation keeps a step tap from expanding the
+      // mini bar. A false return (nothing to advance to) is a quiet no-op.
+      var prevBtn = elPlayer.querySelector('[data-npprev]');
+      var nextBtn = elPlayer.querySelector('[data-npnext]');
+      function stepTrack(dir) {
+        if (advanceCb && nowPlaying) advanceCb(dir, shuffleOn, trackKey(nowPlaying));
+      }
+      if (prevBtn) prevBtn.onclick = function (e) { e.stopPropagation(); stepTrack('prev'); };
+      if (nextBtn) nextBtn.onclick = function (e) { e.stopPropagation(); stepTrack('next'); };
+      var shufBtn = elPlayer.querySelector('[data-shuffle]');
+      if (shufBtn) shufBtn.onclick = function (e) { e.stopPropagation(); setShuffle(!shuffleOn); };
       if (o.startMini && nowPlaying) {
         minimizeStudio();
       } else {

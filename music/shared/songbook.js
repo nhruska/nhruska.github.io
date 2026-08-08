@@ -890,6 +890,44 @@
       }
       ytSearch(rec);
     }
+    // PLAYER-FEEL v6 (UAT batch 6, "keep playing to the next song in the
+    // currently selected list filter"): the player's QUEUE is the current
+    // view's playable pool, re-derived from STATE at advance time (not a
+    // snapshot) - All and Jams share one pool (the playable filter IS the
+    // Jams filter), the Setlist segment walks the set in its hand order.
+    // Search/genre/key filters apply exactly as rendered.
+    function playablePool() {
+      var recs;
+      if (songsSeg === 'set') {
+        recs = STATE.setlist.map(songById).filter(Boolean);
+      } else {
+        buildRepertoire();
+        recs = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
+      }
+      return recs.filter(function (r) { return npKeyFor(r) != null; });
+    }
+    // dir 'next'|'prev'; shuffle picks a random OTHER pool member. Returns
+    // true if it started something (the player uses false to fall back to an
+    // honest end-state). Keeps the caller's surface: expanded stays expanded,
+    // mini stays the bar.
+    function playNeighbor(dir, shuffle, currentKey) {
+      if (!openStudioCb) return false;
+      var pool = playablePool();
+      if (!pool.length) return false;
+      var idx = -1;
+      for (var i = 0; i < pool.length; i++) { if (npKeyFor(pool[i]) === currentKey) { idx = i; break; } }
+      var rec;
+      if (shuffle && pool.length > 1) {
+        do { rec = pool[Math.floor(Math.random() * pool.length)]; } while (npKeyFor(rec) === currentKey);
+      } else if (pool.length === 1 && idx === 0) {
+        return false; // the only playable IS the current one - nothing to advance to
+      } else {
+        rec = pool[((idx < 0 ? 0 : idx + (dir === 'prev' ? -1 : 1)) + pool.length) % pool.length];
+      }
+      var keepExpanded = !!(getStudioExpandedCb && getStudioExpandedCb());
+      openStudioCb(studioTarget(rec), { startMini: !keepExpanded });
+      return true;
+    }
     // PLAYER-FEEL: live now-playing row state as a CLASS SWEEP over the rows
     // already in the DOM (rows carry data-npkey; list-item.js renders both the
     // ▶ glyph and the equalizer, classes flip which shows). Deliberately not a
@@ -6484,6 +6522,9 @@
       // compose mutation. Both callees no-op safely when Compose isn't wired
       // (buildGrid checks el.catChips/el.buildGrid, renderProg checks el.prog).
       refreshCompose: function () { buildGrid(); renderProg(); },
+      // PLAYER-FEEL v6: the player's prev/next/auto-advance entry (see
+      // playablePool/playNeighbor above; wired via Tracks.mount's `advance`).
+      playNeighbor: playNeighbor,
       // M2: opens the Add/Edit form for an existing custom item by id. Exposed on
       // the controller so tracks.js's Studio "Edit this track" link (wired via
       // Tracks.mount's onEditRequest) can reach it without a circular require.
