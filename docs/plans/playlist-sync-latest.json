@@ -1,0 +1,135 @@
+{
+  "fetchedAt": "2026-08-06T20:55:00Z",
+  "playlistId": "PLeqWgsYsf6p7gpIKkoHKCmfHNJ1_Lr7XW",
+  "source": "hand-seeded from the 2026-07-05 keyless draft read (docs/plans/playlist-bake-draft-20260705.md) - the dev container's egress proxy blocks youtube.com and branch workflow_dispatch 404s until playlist-sync.yml reaches main. The 17th playlist item (added after the July read) is NOT in this payload; the first post-merge workflow run picks it up.",
+  "entries": [
+    {
+      "yt": "y9jm5L6g3ng",
+      "title": "Time Jam - Pink Floyd Style",
+      "author": "",
+      "proposed": { "yt": "y9jm5L6g3ng", "title": "Time Jam - Pink Floyd Style", "artist": "", "genre": "rock", "key": "F#", "mode": "minor", "bpm": null, "capo": 0, "tags": ["ballad", "jam"] },
+      "status": "new",
+      "note": "Floyd feel; solo-friendly"
+    },
+    {
+      "yt": "yTr-RFBekuY",
+      "title": "A SIMPLE Practice Method To Memorize Major Scales",
+      "author": "",
+      "proposed": null,
+      "status": "skip",
+      "note": "lesson video, not a backing track - skipped (no lessons shelf in scope)"
+    },
+    {
+      "yt": "4q7h2SwIyLg",
+      "title": "Guitar backing track in C Major - Pop style",
+      "author": "",
+      "proposed": { "yt": "4q7h2SwIyLg", "title": "Guitar backing track in C Major - Pop style", "artist": "", "genre": "pop", "key": "C", "mode": "major", "bpm": null, "capo": 0, "tags": ["jam"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "LJeCVSiteNU",
+      "title": "Guitar backing track in G Major - Pop style",
+      "author": "",
+      "proposed": { "yt": "LJeCVSiteNU", "title": "Guitar backing track in G Major - Pop style", "artist": "", "genre": "pop", "key": "G", "mode": "major", "bpm": null, "capo": 0, "tags": ["jam"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "3stpZKNF_jQ",
+      "title": "Rock Pop Backing Track G Major 70 BPM",
+      "author": "",
+      "proposed": { "yt": "3stpZKNF_jQ", "title": "Rock Pop Backing Track G Major 70 BPM", "artist": "", "genre": "rock", "key": "G", "mode": "major", "bpm": 70, "capo": 0, "tags": ["pop", "jam"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "MJIMlr8tI2s",
+      "title": "Funky Jam Backing Track [Fm]",
+      "author": "",
+      "proposed": { "yt": "MJIMlr8tI2s", "title": "Funky Jam Backing Track [Fm]", "artist": "", "genre": "funk", "key": "F", "mode": "minor", "bpm": null, "capo": 0, "tags": ["jam", "groove"] },
+      "status": "new",
+      "note": "dorian candidate for solos"
+    },
+    {
+      "yt": "FWbdZSBW9Vo",
+      "title": "Pop Rock Acoustic Ballad in G 66bpm",
+      "author": "",
+      "proposed": { "yt": "FWbdZSBW9Vo", "title": "Pop Rock Acoustic Ballad in G 66bpm", "artist": "", "genre": "rock", "key": "G", "mode": "major", "bpm": 66, "capo": 0, "tags": ["acoustic", "ballad"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "nbtHwKTRUcg",
+      "title": "Slow Rock Ballad in C/Am 64bpm",
+      "author": "",
+      "proposed": { "yt": "nbtHwKTRUcg", "title": "Slow Rock Ballad in C/Am 64bpm", "artist": "", "genre": "rock", "key": "C", "mode": "major", "bpm": 64, "capo": 0, "tags": ["ballad", "slow"] },
+      "status": "new",
+      "note": "title says C/Am (relative pair) - baked C major; VETO to A minor if that is how you jam it"
+    },
+    {
+      "yt": "go2NlmO5pzM",
+      "title": "Peaceful Mellow in E Minor",
+      "author": "",
+      "proposed": { "yt": "go2NlmO5pzM", "title": "Peaceful Mellow in E Minor", "artist": "", "genre": "jam", "key": "E", "mode": "minor", "bpm": null, "capo": 0, "tags": ["mellow"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "4cs1NwbZp2w",
+      "title": "Funky Blues in C - John Mayer style",
+      "author": "",
+      "proposed": { "yt": "4cs1NwbZp2w", "title": "Funky Blues in C - John Mayer style", "artist": "", "genre": "blues", "key": "C", "mode": "blues", "bpm": null, "capo": 0, "tags": ["funk"] },
+      "status": "new",
+      "note": "blues mode (I7-IV7-V7 Studio palette)"
+    },
+    {
+      "yt": "YzuMzRhRTPE",
+      "title": "Blues in F (jazz)",
+      "author": "",
+      "proposed": { "yt": "YzuMzRhRTPE", "title": "Blues in F (jazz)", "artist": "", "genre": "blues", "key": "F", "mode": "blues", "bpm": null, "capo": 0, "tags": ["jazz"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "wKbg6iDSXJQ",
+      "title": "Rock Pop Backing Track F Major 70 BPM",
+      "author": "",
+      "proposed": { "yt": "wKbg6iDSXJQ", "title": "Rock Pop Backing Track F Major 70 BPM", "artist": "", "genre": "rock", "key": "F", "mode": "major", "bpm": 70, "capo": 0, "tags": ["pop", "jam"] },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "gfx5wHi_4cE",
+      "title": "II-V-I Jazz Play-along - F Major",
+      "author": "",
+      "proposed": { "yt": "gfx5wHi_4cE", "title": "II-V-I Jazz Play-along - F Major", "artist": "", "genre": "jazz", "key": "F", "mode": "major", "bpm": null, "capo": 0, "tags": ["ii-V-I"] },
+      "status": "new",
+      "note": "ii-V-I; dorian/mixo teaching gold"
+    },
+    {
+      "yt": "XsDru5g676M",
+      "title": "Jazz Blues Backing Track - Eb 120bpm",
+      "author": "",
+      "proposed": { "yt": "XsDru5g676M", "title": "Jazz Blues Backing Track - Eb 120bpm", "artist": "", "genre": "blues", "key": "Eb", "mode": "blues", "bpm": 120, "capo": 0, "tags": ["jazz", "swing"] },
+      "status": "new",
+      "note": "stored Eb (preferred tonic name - FORK-4 retired; identity folds spellings)"
+    },
+    {
+      "yt": "WJ63FZfCzM8",
+      "title": "Harry Hood (Jam)",
+      "author": "Phish",
+      "proposed": { "yt": "WJ63FZfCzM8", "title": "Harry Hood (Jam)", "artist": "Phish", "genre": "jam", "key": "D", "mode": "mixolydian", "bpm": null, "capo": 0, "tags": ["jam", "mixolydian"] },
+      "status": "new",
+      "note": "UNCONFIRMED key/mode - theory-coach default (the Hood jam's D center, mixolydian); operator to confirm or veto"
+    },
+    {
+      "yt": "36X3wecT2z8",
+      "title": "Blues in E 90bpm",
+      "author": "",
+      "proposed": { "yt": "36X3wecT2z8", "title": "Blues in E 90bpm", "artist": "", "genre": "blues", "key": "E", "mode": "blues", "bpm": 90, "capo": 0, "tags": ["12-bar"] },
+      "status": "new",
+      "note": "the RSS-windowed 16th, recovered by page parse in the July read"
+    }
+  ]
+}

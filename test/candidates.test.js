@@ -47,7 +47,10 @@ test('every url-less seed track has at least one candidate (full curation covera
 });
 
 test('modal seed tracks keep their true-mode bucket (the coarsened-to-major regression)', function () {
-  seed.filter(function (t) { return t.mode === 'dorian' || t.mode === 'mixolydian'; }).forEach(function (t) {
+  // url-less only: the invariant guards curation-candidate coverage for the
+  // six modal SEED tracks; a yt-backed modal track (e.g. the baked Harry
+  // Hood) needs no candidates bucket - it already has its video.
+  seed.filter(function (t) { return !t.yt && (t.mode === 'dorian' || t.mode === 'mixolydian'); }).forEach(function (t) {
     var k = T.trackKey(t);
     assert.ok(/\|(dorian|mixolydian)$/.test(k), 'modal track serialized without its mode: ' + k);
     assert.ok(C.CANDIDATES[k], 'modal track lost its candidates bucket: ' + k);

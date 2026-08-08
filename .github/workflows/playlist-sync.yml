@@ -1,0 +1,43 @@
+# Operator playlist sync (keyless - RSS + page parse + oEmbed, NO API key).
+# The dev container's egress proxy blocks youtube.com, so the fetch half of
+# scripts/playlist-sync.js runs HERE (Actions runners have full egress) and
+# commits the refreshed payload + veto table back to the invoking branch.
+# The bake half stays offline/manual: an agent (or the operator) reviews the
+# veto table, then runs `--bake` locally so catalog changes always ride a
+# reviewed PR - this workflow never touches tracks.json itself.
+#
+# NOTE: like tests.yml/pr-preview.yml, workflow_dispatch only becomes
+# API-triggerable once this file reaches the default branch. Until then,
+# dispatch attempts 404 - hand-seed the payload instead (documented in
+# scripts/playlist-sync.js and the PR that introduced this).
+name: playlist-sync
+on:
+  workflow_dispatch:
+    inputs:
+      playlist:
+        description: 'YouTube playlist id'
+        required: false
+        default: 'PLeqWgsYsf6p7gpIKkoHKCmfHNJ1_Lr7XW'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch playlist (keyless)
+        run: node scripts/playlist-sync.js --playlist "${{ github.event.inputs.playlist || 'PLeqWgsYsf6p7gpIKkoHKCmfHNJ1_Lr7XW' }}"
+      - name: Commit payload if changed
+        run: |
+          git config user.name "playlist-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/plans/playlist-sync-latest.json docs/plans/playlist-veto-latest.md
+          if ! git diff --cached --quiet; then
+            git commit -m "playlist-sync: refresh payload + veto table"
+            git push
+          else
+            echo "no change"
+          fi
