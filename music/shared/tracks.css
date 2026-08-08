@@ -175,8 +175,9 @@
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
     color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;
     display:flex;align-items:center;justify-content:center;}
-  .bt-st-np-state{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--accent-ink);}
+  /* .bt-st-np-state (the no-video "Optional" pill) retired - UAT 2026-08-08:
+     it occupied the transport slot and read as noise; the hamburger menu's
+     hint carries the meaning now. */
   /* Operator UAT (2026-07-26): a PLAYBACK PROGRESS BAR + total time (relative
      position at a glance), fill driven by YT infoDelivery time in wireNowPlaying.
      In the merged header it takes the smaller share of the flexible space (the id

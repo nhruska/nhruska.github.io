@@ -547,6 +547,12 @@
       // scale's list (renderJamPanel below); jamFeel persists across scale-chip
       // switches (a "slow" preference likely holds across modes).
       var jamGenre = null, jamFeel = 'mid';
+      // UAT 2026-08-08: until the user touches a genre/feel chip, the jam
+      // panel's search targets THIS SONG by name ("<title> <artist> backing
+      // track") - the generic key/genre query lost the song identity ("YouTube
+      // search term misses the song name"). First chip tap switches to the
+      // generic explorer query (that is what the chips are for).
+      var jamTouched = false;
       // scaleId 'mode' resolves to th.scaleMode (one of the 5 SoloGuide-known
       // modal keys, incl. 'blues'); any other scaleId (pentMajor/pentMinor/blues
       // chip) IS the SoloGuide key directly.
@@ -708,7 +714,15 @@
         // the current scale never offered.
         if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
         var feelBands = JQ.feels();
-        var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
+        // Song-first default (UAT 2026-08-08): a titled track searches for its
+        // OWN backing track until a chip is tapped; 'search' is the url-less
+        // artist sentinel, never a real name.
+        var songQuery = t.title
+          ? t.title + (t.artist && t.artist !== 'search' ? ' ' + t.artist : '') + ' backing track'
+          : null;
+        var query = (!jamTouched && songQuery)
+          ? songQuery
+          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
         jamPanel.innerHTML =
           '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
             return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
@@ -731,10 +745,10 @@
           + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
           + '</div>';
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
-          b.onclick = function () { jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+          b.onclick = function () { jamTouched = true; jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
         });
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
-          b.onclick = function () { jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
+          b.onclick = function () { jamTouched = true; jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
         });
         var jamAddBtn = jamPanel.querySelector('[data-jamadd]');
         if (jamAddBtn) jamAddBtn.onclick = function () {
@@ -896,8 +910,12 @@
         // jam panel (data-jampanel) + the paste box (data-urled-gated) below - the
         // EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
         // handler untouched), only the trigger's DOM location moved.
-        : '<span class="bt-st-np-state">Optional</span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
+        // UAT 2026-08-08: the "Optional" pill retired - it sat in the slot
+        // where transport (pp/progress/time) lives for video tracks and read
+        // as noise ("says optional where time codes are"). The hamburger menu
+        // still carries the find-a-jam guidance (noVideoHint) - the meaning
+        // lives where the affordance is.
+        : '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
