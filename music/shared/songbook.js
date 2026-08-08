@@ -948,7 +948,12 @@
     var songsSeg = 'all';
     function applySongsSeg() {
       var isSet = songsSeg === 'set';
-      if (el.segAll) { el.segAll.classList.toggle('on', !isSet); el.segAll.setAttribute('aria-selected', String(!isSet)); }
+      // UAT 2026-08-08: Jams = the playable subset ("they can be played! it's
+      // like the ones that can't are broken"). A VIEW of the All list (same
+      // search/filter chrome), not a new surface - only the setlist swaps chrome.
+      var isJams = songsSeg === 'jams';
+      if (el.segAll) { el.segAll.classList.toggle('on', songsSeg === 'all'); el.segAll.setAttribute('aria-selected', String(songsSeg === 'all')); }
+      if (el.segJams) { el.segJams.classList.toggle('on', isJams); el.segJams.setAttribute('aria-selected', String(isJams)); }
       if (el.segSet) { el.segSet.classList.toggle('on', isSet); el.segSet.setAttribute('aria-selected', String(isSet)); }
       // Chrome swaps wholesale: a setlist is hand-ordered, not searched.
       if (el.segAllChrome) el.segAllChrome.hidden = isSet;
@@ -965,7 +970,7 @@
       }
     }
     function setSongsSeg(seg) {
-      if (seg !== 'all' && seg !== 'set') return;
+      if (seg !== 'all' && seg !== 'jams' && seg !== 'set') return;
       if (seg === songsSeg) { applySongsSeg(); return; }
       songsSeg = seg;
       applySongsSeg();
@@ -985,11 +990,19 @@
       renderFirstrunNotable();
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
+      // UAT 2026-08-08: the Jams segment keeps ONLY playable rows - npKeyFor is
+      // the same predicate that decides whether a row can light up as
+      // now-playing (studio target with a video), so "in Jams" and "can play"
+      // can never drift apart.
+      if (songsSeg === 'jams') filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
         var box = document.createElement('div');
         box.className = 'empty';
-        box.appendChild(document.createTextNode(es.message));
+        box.appendChild(document.createTextNode(
+          songsSeg === 'jams'
+            ? 'No playable tracks match. Add a YouTube video to a song and it joins Jams.'
+            : es.message));
         if (es.clearKey) {
           var clr = document.createElement('button');
           clr.type = 'button';
@@ -1135,7 +1148,7 @@
       // CAME FROM - setlist entries go back to the Setlist, library entries to
       // the Library (it always went to Library before). Capture the origin tab
       // at open time; queue-nav re-renders (openCurrent) never overwrite it.
-      practiceOrigin = (currentTab === 'library' && songsSeg === 'set') ? 'set' : 'all';
+      practiceOrigin = (currentTab === 'library' && (songsSeg === 'set' || songsSeg === 'jams')) ? songsSeg : 'all';
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
       STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
@@ -1423,7 +1436,7 @@
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () {
         // Restore the SEGMENT as well as the surface - see practiceOrigin.
-        songsSeg = (practiceOrigin === 'set') ? 'set' : 'all';
+        songsSeg = (practiceOrigin === 'set' || practiceOrigin === 'jams') ? practiceOrigin : 'all';
         switchTab('library');
       };
       // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The

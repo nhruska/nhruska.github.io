@@ -298,7 +298,7 @@
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
-      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
+      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.innerHTML = '';
       exitMini();
       nowPlaying = null; userPaused = false;
       dispatchNowPlaying();
@@ -880,7 +880,17 @@
       // another jam, Edit, and the Curated-URL card as full-width rows - same
       // data-* attrs, so the existing handlers bind unchanged.
       var headStrip = t.yt
-        ? '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+        // UAT 2026-08-08 (one-transport-owner): while the video is EXPANDED,
+        // YouTube's own controls own play/pause - the strip's pp/progress/time
+        // would be a duplicate transport ("I see three play buttons"). That
+        // slot instead carries the CTA the user actually wants next: Hide
+        // video. CSS swaps the two off .bt-player.vidopen (setMin keeps the
+        // class honest); hiding the video HANDS transport to the bar. The pp
+        // stays in the DOM while hidden, so togglePlay()'s programmatic
+        // .click() route works in every state.
+        ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
+          + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
           // Operator UAT (2026-07-26): no title text in the strip - the merged
           // header already names the track. A PLAYBACK PROGRESS BAR + total time
           // shows relative position at a glance (driven by YT infoDelivery time,
@@ -1055,6 +1065,11 @@
         + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
         + '</div></div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      // UAT 2026-08-08: .vidopen mirrors "the video panel is expanded" (a video
+      // track opens with the frame showing). setMin() below is the single
+      // authority that keeps it honest through toggle/auto-collapse; CSS keys
+      // the strip's pp-vs-Hide-video swap off it (one transport owner).
+      elPlayer.classList.toggle('vidopen', !!t.yt);
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
       // elPlayer.innerHTML lands) - guideToggle now lives in the controls
@@ -1096,6 +1111,7 @@
         function setMin(min) {
           if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
           mediaEl.classList.toggle('min', min);
+          elPlayer.classList.toggle('vidopen', !min); // strip swaps Hide-video CTA <-> pp/progress (one transport owner)
           if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
@@ -1131,6 +1147,10 @@
         var minNowBtn = elPlayer.querySelector('[data-minnow]');
         if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
         if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setMin(true); endCountdown(); };
+        // The strip's Hide-video CTA (visible only while the video is expanded,
+        // see .vidopen CSS) - same collapse path as the menu's Hide video row.
+        var vidMinBtn = elPlayer.querySelector('[data-vidmin]');
+        if (vidMinBtn && mediaEl) vidMinBtn.onclick = function () { endCountdown(); setMin(true); };
         var paused = false;
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;

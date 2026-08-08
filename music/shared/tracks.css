@@ -353,6 +353,12 @@
     .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
     .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
+    /* PLAYER-FEEL v2: the bottom transport bar spans BOTH panes (full-width
+       bottom bar, the landscape music-player convention), so each scrollable
+       pane needs its own clearance. The .bt-st-body clearance comes from the
+       higher-specificity portrait rule below the mini block; the stage (which
+       only scrolls in this split) gets its own here. Mini is exempt. */
+    .bt-player.studio:not(.mini) .bt-st-stage{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px));}
   }
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
@@ -627,3 +633,37 @@
     width:44px;height:44px;flex:0 0 auto;border:0;background:transparent;color:var(--txt-soft);
     font-size:1.15rem;line-height:1;cursor:pointer;font-family:inherit;}
   .bt-player.mini .bt-st-minix:hover{color:var(--accent-ink);}
+
+  /* ---- PLAYER-FEEL v2 (UAT 2026-08-08): the transport strip is a BOTTOM bar in
+     the EXPANDED Studio too ("we want to remain consistently placed") - one bar,
+     one place, across mini and full. Absolute against .bt-studio (no DOM moves,
+     the mini contract at .bt-player.mini above is untouched): the head leaves the
+     stage flow so the video leads the screen, and the strip pins to the overlay's
+     bottom edge with safe-area padding. The scrollable body clears it via
+     padding-bottom; the menu fly-out anchors UPWARD (top:100% would drop it
+     off-screen below the bar). */
+  .bt-player.studio:not(.mini) .bt-studio{position:relative;}
+  .bt-player.studio:not(.mini) .bt-st-head{position:absolute;left:0;right:0;bottom:0;z-index:20;
+    background:var(--surface);border-bottom:0;border-top:1px solid var(--line-strong);
+    padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+  .bt-player.studio:not(.mini) .bt-st-body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
+  .bt-player.studio:not(.mini) .bt-st-menu{top:auto;bottom:100%;margin-top:0;margin-bottom:4px;}
+
+  /* One-transport-owner (UAT 2026-08-08, "three play buttons"): while the video
+     is EXPANDED (.vidopen, kept honest by setMin), YouTube's own controls own
+     transport - the strip's pp/progress/time hide and the freed slot carries
+     the Hide-video CTA. Hiding the video hands transport (back) to the bar.
+     Mini is exempt (:not(.mini)): the bar ALWAYS owns transport when the video
+     surface is off-screen. */
+  .bt-st-vidmin{display:none;}
+  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp,
+  .bt-player.studio.vidopen:not(.mini) .bt-st-np-prog,
+  .bt-player.studio.vidopen:not(.mini) .bt-st-np-time{display:none;}
+  .bt-player.studio.vidopen:not(.mini) .bt-st-vidmin{display:inline-flex;align-items:center;gap:7px;
+    min-height:44px;padding:0 14px;flex:0 0 auto;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
+    font-family:inherit;font-size:.78rem;font-weight:600;line-height:1;}
+  .bt-st-vidmin:active{transform:scale(.96);}
+  .bt-st-vidmin-gl{font-size:1.05rem;line-height:1;}
+  /* Sub-380px phones: icon-only (aria-label carries the name). */
+  @media (max-width:379px){ .bt-st-vidmin-lbl{display:none;} }

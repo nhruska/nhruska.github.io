@@ -277,4 +277,14 @@ repertoireAction transport/startMini), shared/songbook.css (.li-eq,
 isPlaying outline, body.miniplayer space), play/index.html (controller
 pass-through). No new/removed CORE paths. D-PLAYER-FEEL + D-NO-RASTER.
 New scenario test/pw/scenarios/mini-player.json (mutation-proven). [#323]
+M-PLAYER-FEEL v2 (2026-08-08, PR #323 UAT batch 2): v323-2->v323-3 -
+the transport strip is a BOTTOM bar in the expanded Studio too
+(tracks.css absolute-bottom head, panes clear it, menu opens upward);
+one-transport-owner: while the video is expanded (.vidopen, setMin-
+honest) the strip pp/progress hide behind a visible Hide-video CTA
+(.bt-st-vidmin/data-vidmin, tracks.js headStrip + wire); the Jams
+segment (All | Jams | Setlist) filters the library to playable rows
+via npKeyFor (songbook.js + play/index.html segJams), practiceOrigin
+remembers it. No new/removed CORE paths. New scenario
+test/pw/scenarios/uat-batch2.json (36 steps, mutation-proven). [#323]
 ```
