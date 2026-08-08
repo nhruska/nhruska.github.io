@@ -80,6 +80,11 @@
            bottom nav = top-level surfaces ONLY; view switches are segmented). -->
       <div class="modeSwitch songsSeg" id="songsSeg" role="tablist" aria-label="Songs view">
         <button type="button" class="on" id="segAll" data-seg="all" role="tab" aria-selected="true">All</button>
+        <!-- UAT 2026-08-08: playable (video-backed) rows are the premium content
+             ("they can be played! it's like the ones that can't are broken") -
+             a Jams view collapses the gulf to the play action. Same filtered
+             All-view chrome (search/filters apply); only the setlist swaps chrome. -->
+        <button type="button" id="segJams" data-seg="jams" role="tab" aria-selected="false">Jams</button>
         <button type="button" id="segSet" data-seg="set" role="tab" aria-selected="false">Setlist<span class="segCount" id="segSetCount" hidden></span></button>
       </div>
       <!-- ALL-view chrome. A setlist is hand-ordered, not searched or filtered,
@@ -783,7 +788,14 @@
       // custom) from tracks.js, and opens the Practice Studio for a track /
       // composed key.
       getTracks: function () { return tracksCtl ? tracksCtl.getTracks() : []; },
-      openStudio: function (t) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t); },
+      openStudio: function (t, o) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t, o); },
+      // PLAYER-FEEL: now-playing state + transport for the list rows (play-from-
+      // row toggle + the equalizer row state) - see tracks.js mini-player seam.
+      getNowPlaying: function () { return (tracksCtl && tracksCtl.nowPlaying) ? tracksCtl.nowPlaying() : null; },
+      togglePlay: function () { if (tracksCtl && tracksCtl.togglePlay) tracksCtl.togglePlay(); },
+      // PLAYER-FEEL v3: tab taps collapse the expanded Studio sheet first.
+      getStudioExpanded: function () { return !!(tracksCtl && tracksCtl.studioExpanded && tracksCtl.studioExpanded()); },
+      collapseStudioRaw: function () { if (tracksCtl && tracksCtl.collapseStudioRaw) tracksCtl.collapseStudioRaw(); },
       // Fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {
@@ -793,7 +805,7 @@
         setBody: el('setBody'), setBar: el('setBar'), setCount: el('setCount'), setClear: el('setClear'), performBtn: el('performBtn'),
         // SONGS-MERGE phase 1: the segmented All|Setlist switch and the two
         // chrome blocks it swaps (search+filters vs the setlist head row).
-        songsSeg: el('songsSeg'), segAll: el('segAll'), segSet: el('segSet'), segSetCount: el('segSetCount'),
+        songsSeg: el('songsSeg'), segAll: el('segAll'), segJams: el('segJams'), segSet: el('segSet'), segSetCount: el('segSetCount'),
         segAllChrome: el('segAllChrome'), setHead: el('setHead'), libSet: el('libSet'), libSongs: el('libSongs'),
         perform: el('perform'), pSheet: el('pSheet'), pPos: el('pPos'), pTitle: el('pTitle'), pArtist: el('pArtist'), pCapo: el('pCapo'), pKeyLine: el('pKeyLine'),
         pPrev: el('pPrev'), pNext: el('pNext'), pClose: el('pClose'), pUp: el('pUp'), pDown: el('pDown'), pDimBtn: el('pDimBtn'),

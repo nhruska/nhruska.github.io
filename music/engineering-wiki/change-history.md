@@ -267,4 +267,48 @@ non-CORE: scripts/playlist-sync.js (keyless fetch/bake pipeline),
 .github/workflows/playlist-sync.yml, test/tracks-catalog.test.js (catalog
 schema gate); test/candidates.test.js modal-bucket filter narrowed to
 url-less tracks (a yt-backed modal track needs no candidates). [#322]
+M-PLAYER-FEEL (2026-08-08, PR #323): v322->v323 - shared/tracks.js
+(minimizeStudio/expandStudio/dismissStudio seam, openStudio startMini,
+nowPlaying/togglePlay controller, music:nowplaying event), shared/
+tracks.css (.bt-player.mini bar + .bt-st-minix + landscape guard),
+shared/list-item.js (glyph+equalizer pair, isPlaying/isPaused),
+shared/songbook.js (npKeyFor, data-npkey, refreshNowPlaying class sweep,
+repertoireAction transport/startMini), shared/songbook.css (.li-eq,
+isPlaying outline, body.miniplayer space), play/index.html (controller
+pass-through). No new/removed CORE paths. D-PLAYER-FEEL + D-NO-RASTER.
+New scenario test/pw/scenarios/mini-player.json (mutation-proven). [#323]
+M-PLAYER-FEEL v2 (2026-08-08, PR #323 UAT batch 2): v323-2->v323-3 -
+the transport strip is a BOTTOM bar in the expanded Studio too
+(tracks.css absolute-bottom head, panes clear it, menu opens upward);
+one-transport-owner: while the video is expanded (.vidopen, setMin-
+honest) the strip pp/progress hide behind a visible Hide-video CTA
+(.bt-st-vidmin/data-vidmin, tracks.js headStrip + wire); the Jams
+segment (All | Jams | Setlist) filters the library to playable rows
+via npKeyFor (songbook.js + play/index.html segJams), practiceOrigin
+remembers it. No new/removed CORE paths. New scenario
+test/pw/scenarios/uat-batch2.json (36 steps, mutation-proven). [#323]
+M-PLAYER-FEEL v3 (2026-08-08, PR #323 UAT batch 3): v323-3->v323-4 -
+the standing player model ("same now playing element, SSOT, don't hide
+tabs, don't move it"): ONE fixed bar above the tabbar in every state
+(tracks.css .bt-st-head position:fixed one-slot card), the Studio is a
+SHEET with a raised bottom inset (tabs stay visible + LIVE - a tab tap
+collapses the sheet via NavHistory.settleAfter, songbook tabbar wiring
++ tracks.js studioExpanded/collapseStudioRaw exports), back+hamburger
+move to the sheet's .bt-st-topbar, bar x settles the nav slot when
+expanded. Supersedes v2's absolute bottom-bar mechanism. No new/removed
+CORE paths. New scenario test/pw/scenarios/uat-batch3.json (26 steps,
+don't-move rect proof mutation-proven); mini-player + uat-batch2
+scenario geometry retargeted to the bar. [#323]
+M-PLAYER-FEEL v4 (2026-08-08, PR #323 UAT batch 4): v323-4->v323-5 -
+row body tap PLAYS playable rows (repertoireAction, now guarded on the
+studio target = the npKeyFor predicate); leading .li-lead details chip
+on every row (fixed width, holds the setlist .li-num nested - no row
+reflow; list-item.js + songbook.css); openStudio idempotent on the
+already-playing track (expand, never rebuild/restart); bar npLive
+accent pop + .bt-st-bareq equalizer (composes the .li-eq primitive) +
+npPaused freeze riding dispatchNowPlaying; refreshMarquee shuttle for
+overflowing bar titles (.bt-st-tx). No new/removed CORE paths. New
+scenario test/pw/scenarios/uat-batch4.json (28 steps, mutation-proven).
+Pre-existing noted: persona-firsttimer #wNext flake fails on
+origin/main identically (base-worktree verified). [#323]
 ```

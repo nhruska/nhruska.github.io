@@ -1,0 +1,171 @@
+{
+  "name": "uat-batch2",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "#segJams",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-3: the Jams view lists ONLY playable rows (every row carries data-npkey), and is non-empty",
+      "js": "(function(){var rows=document.querySelectorAll('#songsList .listItem');if(!rows.length)return false;for(var i=0;i<rows.length;i++){if(!rows[i].hasAttribute('data-npkey'))return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-3b: Jams is a strict subset - the All view has rows Jams excludes (the filter really filters)",
+      "js": "(function(){var jams=document.querySelectorAll('#songsList .listItem').length;document.getElementById('segAll').click();var all=document.querySelectorAll('#songsList .listItem').length;document.getElementById('segJams').click();return all>jams&&jams>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "jams-view"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-act"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "Keep open"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-5/v3: the bar sits in its ONE slot above the tabbar, the sheet ends above it, tabs stay visible",
+      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var p=document.querySelector('.bt-player.studio');var tab=document.querySelector('.tabbar');if(!h||!p||!tab)return false;var r=h.getBoundingClientRect(),pr=p.getBoundingClientRect(),tr=tab.getBoundingClientRect();return r.bottom<=tr.top+1&&r.top>=pr.bottom-1&&tr.top<window.innerHeight&&tab.offsetParent!==null;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4: video expanded -> ONE transport owner: Hide-video CTA visible, strip pp/progress hidden",
+      "js": "(function(){var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');var pr=document.querySelector('.bt-player [data-npprog]');return !!v&&v.offsetParent!==null&&!!pp&&pp.offsetParent===null&&!!pr&&pr.offsetParent===null;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "expanded-bottom-bar"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-stmenu]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "v3: the hamburger fly-out anchors under the sheet's TOPBAR and drops down over the media",
+      "js": "(function(){var p=document.querySelector('[data-stmenu-panel]');var tb=document.querySelector('.bt-st-topbar');if(!p||p.hidden||!tb)return false;var pr=p.getBoundingClientRect(),tr=tb.getBoundingClientRect();return pr.top>=tr.bottom-2&&pr.height>40;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-stmenu]"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-vidmin]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4b: Hide video hands transport to the bar - media clipped (.min), pp+progress visible, CTA gone",
+      "js": "(function(){var m=document.querySelector('[data-media]');var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');return !!m&&m.classList.contains('min')&&!!pp&&pp.offsetParent!==null&&!!v&&v.offsetParent===null;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "audio-only-bottom-bar"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "assertVisible",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape: the bar keeps its ONE slot above the tabbar (centered 540 card, sheet above it)",
+      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var tab=document.querySelector('.tabbar');if(!h||!tab)return false;var r=h.getBoundingClientRect(),tr=tab.getBoundingClientRect();return r.bottom<=tr.top+1&&r.height>=44&&r.width<=542;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "landscape-bottom-bar"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-minix]"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player .bt-st-head",
+      "state": "hidden",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "teardown clears every player class including vidopen",
+      "js": "(function(){var p=document.querySelector('.bt-player');return !p.classList.contains('on')&&!p.classList.contains('vidopen')&&p.innerHTML==='';})()"
+    }
+  ]
+}

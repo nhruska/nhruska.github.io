@@ -550,6 +550,27 @@
     // the Practice Studio (solo scale + chords + circle) for a track or a composed key.
     var getTracks = opts.getTracks || function () { return []; };
     var openStudioCb = opts.openStudio || null;
+    // PLAYER-FEEL: now-playing state + transport from the tracks controller.
+    // getNowPlayingCb() -> {key: trackKey, paused} | null; togglePlayCb() routes
+    // through the Studio strip's real pp button. Both optional - rows render
+    // exactly as before when the host doesn't wire them.
+    var getNowPlayingCb = opts.getNowPlaying || null;
+    var togglePlayCb = opts.togglePlay || null;
+    // PLAYER-FEEL v3: the tabbar stays visible + live under the expanded Studio
+    // sheet. These two let a tab tap collapse the sheet first (see the tabbar
+    // wiring) - getStudioExpanded() -> bool, collapseStudioRaw() = the raw
+    // dismiss (minimize yt-backed / close videoless), NavHistory-free.
+    var getStudioExpandedCb = opts.getStudioExpanded || null;
+    var collapseStudioRawCb = opts.collapseStudioRaw || null;
+    // The stable identity a row shares with the Studio's now-playing track:
+    // trackKey of the row's OWN studio target. Null for rows that can't be the
+    // player's content (no video), so they never light up.
+    function npKeyFor(rec) {
+      if (!global.Tracks || !global.Tracks.trackKey) return null;
+      var t = studioTarget(rec);
+      if (!t || !(t.yt || t.video)) return null;
+      return global.Tracks.trackKey(t);
+    }
     // M2: the unified Add/Edit form (repertoire-form.js) - one mounted overlay reused
     // for create + edit of custom ("Mine") songs/tracks. Absent (no-op guarded below)
     // if the script didn't load, so the rest of the app still works.
@@ -848,12 +869,47 @@
       if (openStudioCb && (p.studio || rec._track)) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
-    // The ▶/↗ action button: a curated video opens the Studio (video + solo HUD);
-    // otherwise it's a YouTube search for a backing track.
+    // The ▶/↗ action button - play-from-row (PLAYER-FEEL): if this row IS the
+    // track in the player, the tap is transport (toggle play/pause in place);
+    // otherwise it starts the track with the Studio auto-minimized to the
+    // bottom bar (startMini), so play feels like a music player - the list
+    // stays put. A body tap still opens the full Studio/practice view
+    // (openRepertoireItem, unchanged). No video -> YouTube search, as before.
     function repertoireAction(rec) {
-      if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
+      // Guard on the STUDIO TARGET (not rec.yt directly) so "can play" here is
+      // the exact npKeyFor predicate that lights the row - a song whose video
+      // lives on its linked track plays like any other playable row (batch 4:
+      // the setlist path hands raw song records straight in).
+      var t = studioTarget(rec);
+      if (t && (t.yt || t.video) && openStudioCb) {
+        var np = getNowPlayingCb ? getNowPlayingCb() : null;
+        var nk = npKeyFor(rec);
+        if (np && nk && np.key === nk && togglePlayCb) { togglePlayCb(); return; }
+        openStudioCb(t, { startMini: true });
+        return;
+      }
       ytSearch(rec);
     }
+    // PLAYER-FEEL: live now-playing row state as a CLASS SWEEP over the rows
+    // already in the DOM (rows carry data-npkey; list-item.js renders both the
+    // ▶ glyph and the equalizer, classes flip which shows). Deliberately not a
+    // re-render: rebuilding the list on every play/pause would jump the scroll
+    // under the user's thumb.
+    function refreshNowPlaying(detail) {
+      var key = detail && detail.key;
+      var paused = !!(detail && detail.paused);
+      [el.songsList, el.setBody].forEach(function (host) {
+        if (!host) return;
+        host.querySelectorAll('[data-npkey]').forEach(function (row) {
+          var on = !!key && row.getAttribute('data-npkey') === key;
+          row.classList.toggle('isPlaying', on);
+          row.classList.toggle('isPaused', on && paused);
+          var actEl = row.querySelector('.li-act');
+          if (actEl) actEl.setAttribute('aria-label', on ? (paused ? 'Paused - tap to play' : 'Playing - tap to pause') : 'Video');
+        });
+      });
+    }
+    document.addEventListener('music:nowplaying', function (e) { refreshNowPlaying(e.detail || {}); });
     // Display-only record override shared by EVERY ListItem render site (library
     // + setlist - codex #91 caught the setlist rendering raw records):
     // - artist sentinel 'search' (tracks.json placeholder = "resolve via search")
@@ -903,7 +959,12 @@
     var songsSeg = 'all';
     function applySongsSeg() {
       var isSet = songsSeg === 'set';
-      if (el.segAll) { el.segAll.classList.toggle('on', !isSet); el.segAll.setAttribute('aria-selected', String(!isSet)); }
+      // UAT 2026-08-08: Jams = the playable subset ("they can be played! it's
+      // like the ones that can't are broken"). A VIEW of the All list (same
+      // search/filter chrome), not a new surface - only the setlist swaps chrome.
+      var isJams = songsSeg === 'jams';
+      if (el.segAll) { el.segAll.classList.toggle('on', songsSeg === 'all'); el.segAll.setAttribute('aria-selected', String(songsSeg === 'all')); }
+      if (el.segJams) { el.segJams.classList.toggle('on', isJams); el.segJams.setAttribute('aria-selected', String(isJams)); }
       if (el.segSet) { el.segSet.classList.toggle('on', isSet); el.segSet.setAttribute('aria-selected', String(isSet)); }
       // Chrome swaps wholesale: a setlist is hand-ordered, not searched.
       if (el.segAllChrome) el.segAllChrome.hidden = isSet;
@@ -920,7 +981,7 @@
       }
     }
     function setSongsSeg(seg) {
-      if (seg !== 'all' && seg !== 'set') return;
+      if (seg !== 'all' && seg !== 'jams' && seg !== 'set') return;
       if (seg === songsSeg) { applySongsSeg(); return; }
       songsSeg = seg;
       applySongsSeg();
@@ -940,11 +1001,19 @@
       renderFirstrunNotable();
       buildRepertoire();
       var filtered = libraryFilter(global.Repertoire, REPERTOIRE, { q: STATE.search, genre: STATE.genre, key: STATE.key, mine: STATE.mineOnly });
+      // UAT 2026-08-08: the Jams segment keeps ONLY playable rows - npKeyFor is
+      // the same predicate that decides whether a row can light up as
+      // now-playing (studio target with a video), so "in Jams" and "can play"
+      // can never drift apart.
+      if (songsSeg === 'jams') filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
         var box = document.createElement('div');
         box.className = 'empty';
-        box.appendChild(document.createTextNode(es.message));
+        box.appendChild(document.createTextNode(
+          songsSeg === 'jams'
+            ? 'No playable tracks match. Add a YouTube video to a song and it joins Jams.'
+            : es.message));
         if (es.clearKey) {
           var clr = document.createElement('button');
           clr.type = 'button';
@@ -987,6 +1056,8 @@
         // would reorder against an order that isn't on screen - an affordance
         // that lies. #songsList hides it in CSS; the Setlist view keeps it.
         var setIdx = sid == null ? -1 : STATE.setlist.indexOf(sid);
+        var npNow = getNowPlayingCb ? getNowPlayingCb() : null;
+        var npKey = npKeyFor(rec);
         var node = global.ListItem.render(displayRecFor(rec), {
           // Stays segment:'library' deliberately. An earlier cut rendered in-set
           // rows here as 'set' rows - which gave them the setlist's red remove
@@ -998,7 +1069,14 @@
           segment: 'library',
           position: setIdx >= 0 ? setIdx + 1 : null,
           inSet: inSet,
-          onActivate: function () { openRepertoireItem(rec); },
+          // UAT 2026-08-08 (batch 4, "make row tap anywhere play"): a body tap
+          // PLAYS a playable row (same transport/startMini routing as the ▶
+          // glyph); the leading chip is the details door. Videoless rows keep
+          // body = details (there is nothing to play).
+          onActivate: npKey != null
+            ? function () { repertoireAction(rec); }
+            : function () { openRepertoireItem(rec); },
+          onLead: function () { openRepertoireItem(rec); },
           onAdd: state === 'add' ? function () { toggleSet(sid); }
             : state === 'seed' ? function () { seedKeyChordAndAdd(rec); }
             : null,
@@ -1010,8 +1088,11 @@
           onAddBlocked: canAdd ? null : function () {
             showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
           },
-          onAction: function () { repertoireAction(rec); }
+          onAction: function () { repertoireAction(rec); },
+          nowPlaying: npNow != null && npKey != null && npNow.key === npKey,
+          nowPaused: !!(npNow && npNow.paused)
         });
+        if (npKey) node.setAttribute('data-npkey', npKey);
         el.songsList.appendChild(node);
         if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
       });
@@ -1085,7 +1166,7 @@
       // CAME FROM - setlist entries go back to the Setlist, library entries to
       // the Library (it always went to Library before). Capture the origin tab
       // at open time; queue-nav re-renders (openCurrent) never overwrite it.
-      practiceOrigin = (currentTab === 'library' && songsSeg === 'set') ? 'set' : 'all';
+      practiceOrigin = (currentTab === 'library' && (songsSeg === 'set' || songsSeg === 'jams')) ? songsSeg : 'all';
       if (queueIds && queueIds.length > 1 && queueIds.indexOf(id) >= 0) QUEUE.set(queueIds, queueIds.indexOf(id));
       else QUEUE.set([id]);
       STATE.queueSkipNotice = null; // fresh open - any stale notice from a prior practice session doesn't carry over
@@ -1373,7 +1454,7 @@
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () {
         // Restore the SEGMENT as well as the surface - see practiceOrigin.
-        songsSeg = (practiceOrigin === 'set') ? 'set' : 'all';
+        songsSeg = (practiceOrigin === 'set' || practiceOrigin === 'jams') ? practiceOrigin : 'all';
         switchTab('library');
       };
       // Overflow (Stage/Solo) menu: toggle open, dismiss on an outside tap. The
@@ -1904,20 +1985,29 @@
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode - always reorderable
         // (grip) + removable (arm-red x); a body tap always plays.
+        var npNowS = getNowPlayingCb ? getNowPlayingCb() : null;
+        var npKeyS = npKeyFor(s);
         var setRow = global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
-          // A body tap always plays - reorder (grip) and remove (arm-red x) are
-          // their own dedicated handles, off the body, so a tap can't mis-fire
-          // either. No Edit mode to disable opening.
-          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          nowPlaying: npNowS != null && npKeyS != null && npNowS.key === npKeyS,
+          nowPaused: !!(npNowS && npNowS.paused),
+          // UAT 2026-08-08 (batch 4): a body tap PLAYS a playable row (music-
+          // player behavior); the leading # chip opens the song into the
+          // setlist queue (details). Videoless rows keep body = details.
+          // Reorder (grip) and remove (arm-red x) stay their own handles.
+          onActivate: npKeyS != null
+            ? function () { repertoireAction(s); }
+            : function () { openPractice(sid, STATE.setlist); },
+          onLead: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () { removeFromSet(sid); },
           onAction: function () { ytSearch(s); }
         });
+        if (npKeyS) setRow.setAttribute('data-npkey', npKeyS);
         body.appendChild(setRow);
         // Drag-to-reorder is always available now, initiated from the row's grip.
         wireSetlistDrag(setRow, i);
@@ -6042,7 +6132,20 @@
       }
       currentTab = name;
     }
-    document.querySelectorAll('.tabbar button').forEach(function (b) { b.onclick = function () { switchTab(b.dataset.tab); }; });
+    // PLAYER-FEEL v3: tabs stay live under the expanded Studio sheet - a tab
+    // tap collapses the sheet to the bar first (real-player behavior), THEN
+    // navigates. NavHistory.settleAfter pairs the sheet's raw close with the
+    // tab's own layer swap synchronously (replaceState, no back/push race);
+    // with no sheet open (or no NavHistory) it is a plain switch.
+    document.querySelectorAll('.tabbar button').forEach(function (b) {
+      b.onclick = function () {
+        if (getStudioExpandedCb && getStudioExpandedCb() && collapseStudioRawCb && window.NavHistory) {
+          NavHistory.settleAfter(collapseStudioRawCb, function () { switchTab(b.dataset.tab); });
+        } else {
+          switchTab(b.dataset.tab);
+        }
+      };
+    });
     // The All | Setlist segment. A view switch inside a surface, so it pushes
     // no back-history layer - unlike a tab change, which does.
     if (el.songsSeg) {

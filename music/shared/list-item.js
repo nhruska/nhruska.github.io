@@ -169,7 +169,10 @@
    *   position  1-based number           (set only -> shows .li-num)
    *   inSet     bool                      (library -> add btn shows ✓ vs +)
    *   first/last bool                     (set -> disable up/down)
-   *   onActivate(rec)  tap the body       (open studio / details)
+   *   onActivate(rec)  tap the body       (callers: PLAY for playable rows,
+   *                                        details otherwise - batch 4)
+   *   onLead(rec)      tap the leading chip (song details - the details door
+   *                                        now that a body tap plays)
    *   onAction(rec)    tap Play/Search
    *   onAdd(rec)       + add to set       (library)
    *   addBlockedReason string             (library, no onAdd -> renders a GHOST +
@@ -188,7 +191,10 @@
     var cells = metaCells(item);
 
     var root = (global.document).createElement('div');
-    root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '');
+    root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '')
+      // PLAYER-FEEL initial state; live updates arrive as a class sweep from the
+      // caller's music:nowplaying listener (songbook.js refreshNowPlaying).
+      + (opts.nowPlaying ? ' isPlaying' : '') + (opts.nowPlaying && opts.nowPaused ? ' isPaused' : '');
 
     // Right tag is KEY-FIRST and never silently a year: the accent key-slot is
     // where a player's eye reads "the key". Unknown -> a quiet "Key?" badge
@@ -202,12 +208,19 @@
     var sub = esc(item.artist || '');
     if (item.year != null) sub += ' · ' + esc(item.year);
 
-    // Position is a fact about MEMBERSHIP, not about which list you are looking
-    // at - so it renders wherever the caller knows one (SONGS-MERGE phase 1:
-    // the All view shows an in-set song's position too). The caller passes it
-    // only when there is one, so this needs no segment gate.
-    var num = (opts.position != null)
-      ? '<div class="li-num">' + esc(opts.position) + '</div>' : '';
+    // UAT 2026-08-08 (batch 4): the row's LEADING element is a fixed-width tap
+    // target - the "song details" door, now that a body tap PLAYS (see the
+    // callers). It holds the setlist position when the row has one (position is
+    // a fact about MEMBERSHIP - SONGS-MERGE phase 1) and an info glyph when it
+    // doesn't, so joining/leaving the set swaps the chip's CONTENT, never the
+    // row's layout ("show setlist # within to prevent row UI reflow").
+    // .li-num stays the number's class (nested) so its look and every existing
+    // check keep working.
+    var num = '<button class="li-lead" type="button" data-act="lead" aria-label="Song details" title="Song details">'
+      + ((opts.position != null)
+        ? '<span class="li-num">' + esc(opts.position) + '</span>'
+        : '<span class="li-lead-gl" aria-hidden="true">&#9432;</span>')
+      + '</button>';
 
     var metaHtml = '';
     cells.forEach(function (c, i) {
@@ -222,11 +235,18 @@
     // measured 139px against 89px for one without - a 56% taller row for one
     // badge. It moves to the trailing rail below, where a 44px control (the +)
     // already sets the row height, so the floor costs nothing.
+    // PLAYER-FEEL: the play action always renders BOTH the ▶ glyph and a 3-bar
+    // equalizer; .isPlaying on the row flips which one shows (CSS), so live
+    // now-playing updates are a class sweep on existing rows - no re-render,
+    // no scroll jump. isPaused freezes the bars (still the equalizer - the row
+    // stays "the one in the player" while paused).
     var actHtml = act
       ? '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
         + (act.external ? ' title="Opens YouTube"' : '')
         + ' aria-label="' + esc(act.label) + '">'
-        + esc(act.glyph) + '</span>'
+        + '<span class="li-glyph">' + esc(act.glyph) + '</span>'
+        + (act.kind === 'play' ? '<span class="li-eq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
+        + '</span>'
       : '';
 
     // Trailing affordances. A set row is ALWAYS reorderable + removable now
@@ -270,7 +290,8 @@
     root.querySelectorAll('[data-act]').forEach(function (b) {
       var a = b.getAttribute('data-act');
       wireTap(b, function () {
-        if (a === 'add' && opts.onAdd) opts.onAdd(rec);
+        if (a === 'lead' && opts.onLead) opts.onLead(rec);
+        else if (a === 'add' && opts.onAdd) opts.onAdd(rec);
         else if (a === 'addblocked' && opts.onAddBlocked) opts.onAddBlocked(rec);
         else if (a === 'up' && opts.onUp) opts.onUp(rec);
         else if (a === 'dn' && opts.onDn) opts.onDn(rec);

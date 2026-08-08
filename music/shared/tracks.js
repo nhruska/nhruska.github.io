@@ -298,7 +298,98 @@
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
-      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
+      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.innerHTML = '';
+      exitMini();
+      nowPlaying = null; userPaused = false;
+      dispatchNowPlaying();
+    }
+
+    /* ---- global mini-player (PLAYER-FEEL): playback survives Studio close ----
+     * The Studio overlay gains a SECOND collapse level on elPlayer itself:
+     * .bt-player.mini re-lays the merged header strip as a persistent bottom
+     * bar (title + play/pause + progress + x) while the iframe stays mounted
+     * (clipped, still audible - the same never-remove contract as
+     * .bt-st-media.min). Dismissing a video-backed Studio MINIMIZES it
+     * (dismissStudio below replaces closePlayer as the NavHistory close fn);
+     * the bar's x is the real teardown. No DOM is rebuilt or reparented on
+     * minimize/expand - the one Studio DOM just changes shape via CSS. */
+    var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
+    var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
+    function dispatchNowPlaying() {
+      // UAT batch 4: the bar's live-state classes ride the SAME dispatch that
+      // feeds the rows, so bar and rows can never disagree. npLive gates the
+      // accent pop + equalizer (a videoless Studio's bar stays quiet - nothing
+      // is playing); npPaused freezes the bar equalizer exactly like a row's
+      // isPaused.
+      elPlayer.classList.toggle('npLive', !!nowPlaying);
+      elPlayer.classList.toggle('npPaused', !!(nowPlaying && userPaused));
+      refreshMarquee();
+      try {
+        document.dispatchEvent(new CustomEvent('music:nowplaying', {
+          detail: nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : { key: null, paused: false }
+        }));
+      } catch (e) { /* CustomEvent guaranteed on every target browser; belt only */ }
+    }
+    // UAT batch 4 ("show full song name or scroll animated"): when the bar
+    // title overflows its box, shuttle-scroll it (CSS animation off --mq);
+    // otherwise plain ellipsis. Re-measured on every dispatch + setMin (the
+    // vidopen strip swap changes the title's share of the bar) + resize.
+    // Reduced-motion falls back to the static ellipsis (CSS).
+    function refreshMarquee() {
+      var tEl = elPlayer.querySelector('.bt-st-t');
+      if (!tEl || !tEl.isConnected) return;
+      tEl.classList.remove('mq'); // measure the natural overflow, not a mid-animation state
+      var over = tEl.scrollWidth - tEl.clientWidth;
+      if (over > 4) {
+        tEl.style.setProperty('--mq', '-' + (over + 12) + 'px');
+        tEl.style.setProperty('--mqd', Math.max(6, Math.round((over + 60) / 25)) + 's');
+        tEl.classList.add('mq');
+      } else {
+        tEl.style.removeProperty('--mq');
+        tEl.style.removeProperty('--mqd');
+      }
+    }
+    global.addEventListener('resize', function () { refreshMarquee(); });
+    function exitMini() {
+      elPlayer.classList.remove('mini');
+      document.body.classList.remove('miniplayer');
+      elPlayer.onclick = null;
+    }
+    function minimizeStudio() {
+      if (!nowPlaying) { closePlayer(); return; }
+      if (global.Sound) global.Sound.stopAll();       // synth audition stops; the YT iframe keeps playing
+      studioSound = null;
+      if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
+      studioAudioWarm = false;
+      elPlayer.classList.add('mini');
+      document.body.classList.add('miniplayer');
+      // Bar-body tap expands back to the full Studio; the pp button and the x
+      // keep their own handlers (excluded here so a control tap never expands).
+      elPlayer.onclick = function (e) {
+        if (!elPlayer.classList.contains('mini')) return;
+        if (e.target.closest('[data-nppp],[data-minix],[data-npprog]')) return;
+        expandStudio();
+      };
+      dispatchNowPlaying();
+    }
+    function expandStudio() {
+      exitMini();
+      if (window.NavHistory) window.NavHistory.open('studio', dismissStudio);
+      dispatchNowPlaying();
+    }
+    // The registered close fn for a Studio open: a video-backed Studio
+    // minimizes on back/dismiss (playback survives); a videoless Studio closes
+    // fully as before. The history slot pops either way - the mini bar is
+    // non-modal and re-registers a slot only on expand.
+    function dismissStudio() {
+      if (nowPlaying && elPlayer.classList.contains('studio')) minimizeStudio();
+      else closePlayer();
+    }
+    // Controller-facing transport: routes through the strip's real pp button so
+    // icon, paused-intent, and the nowplaying event stay in one code path.
+    function togglePlayCtl() {
+      var b = elPlayer.querySelector('[data-nppp]');
+      if (b) b.click();
     }
 
     /* ---- the Practice Studio: the track playing + the theory to solo over it ----
@@ -415,7 +506,24 @@
         return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
       }).join(' ');
     }
-    function openStudio(t) {
+    function openStudio(t, o) {
+      // o.startMini (PLAYER-FEEL): build + wire the full Studio, then minimize
+      // to the bottom bar in the same call - the play-from-row path starts
+      // playback (autoplay=1 rides the row-tap's user activation) without
+      // covering the list. Any open first leaves a previous mini state.
+      o = o || {};
+      // UAT batch 4 (idempotent open): opening the track that is ALREADY the
+      // now-playing Studio must not rebuild the DOM - a rebuild remounts the
+      // iframe and restarts the audio. The details path (row lead chip /
+      // openRepertoireItem) just EXPANDS the existing Studio instead. Same yt
+      // required: the curated-url save path re-opens the same trackKey with a
+      // NEW video id and genuinely needs the rebuild.
+      if (nowPlaying && t && elPlayer.classList.contains('studio')
+          && trackKey(t) === trackKey(nowPlaying) && (t.yt || null) === (nowPlaying.yt || null)) {
+        if (!o.startMini && elPlayer.classList.contains('mini')) expandStudio();
+        return;
+      }
+      exitMini();
       // Rehydrate from the merged track list BEFORE rendering: a bridge payload
       // (songbook's "Solo over it") carries only the song record's yt, so a
       // curated overlay url saved for the SAME track would be silently ignored
@@ -478,6 +586,12 @@
       // scale's list (renderJamPanel below); jamFeel persists across scale-chip
       // switches (a "slow" preference likely holds across modes).
       var jamGenre = null, jamFeel = 'mid';
+      // UAT 2026-08-08: until the user touches a genre/feel chip, the jam
+      // panel's search targets THIS SONG by name ("<title> <artist> backing
+      // track") - the generic key/genre query lost the song identity ("YouTube
+      // search term misses the song name"). First chip tap switches to the
+      // generic explorer query (that is what the chips are for).
+      var jamTouched = false;
       // scaleId 'mode' resolves to th.scaleMode (one of the 5 SoloGuide-known
       // modal keys, incl. 'blues'); any other scaleId (pentMajor/pentMinor/blues
       // chip) IS the SoloGuide key directly.
@@ -639,7 +753,15 @@
         // the current scale never offered.
         if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
         var feelBands = JQ.feels();
-        var query = JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
+        // Song-first default (UAT 2026-08-08): a titled track searches for its
+        // OWN backing track until a chip is tapped; 'search' is the url-less
+        // artist sentinel, never a real name.
+        var songQuery = t.title
+          ? t.title + (t.artist && t.artist !== 'search' ? ' ' + t.artist : '') + ' backing track'
+          : null;
+        var query = (!jamTouched && songQuery)
+          ? songQuery
+          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
         jamPanel.innerHTML =
           '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
             return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
@@ -662,10 +784,10 @@
           + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
           + '</div>';
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
-          b.onclick = function () { jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+          b.onclick = function () { jamTouched = true; jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
         });
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
-          b.onclick = function () { jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
+          b.onclick = function () { jamTouched = true; jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
         });
         var jamAddBtn = jamPanel.querySelector('[data-jamadd]');
         if (jamAddBtn) jamAddBtn.onclick = function () {
@@ -796,35 +918,47 @@
       // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
       // another jam, Edit, and the Curated-URL card as full-width rows - same
       // data-* attrs, so the existing handlers bind unchanged.
-      var headStrip = t.yt
-        ? '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          // Operator UAT (2026-07-26): no title text in the strip - the merged
-          // header already names the track. A PLAYBACK PROGRESS BAR + total time
+      // PLAYER-FEEL v3 (UAT 2026-08-08, "the same now playing element... don't
+      // move it"): the transport strip and the sheet chrome SPLIT. The bar
+      // (.bt-st-head, below) is ONE SSOT-rendered element - [title/meta]
+      // [pp|Hide-video] [progress] [time] [x] - position:fixed in ONE slot
+      // above the tabbar in EVERY state; the back + hamburger move to a slim
+      // .bt-st-topbar at the top of the SHEET (the Spotify grammar: collapse
+      // top-left, menu top-right). menuBlock = the hamburger + fly-out
+      // (anchors under the topbar); barStrip = the bar's transport controls.
+      //
+      // One-transport-owner (UAT batch 2) still holds: while the video panel
+      // is expanded (.vidopen, setMin keeps it honest), YouTube's own controls
+      // own play/pause - the bar's pp/progress/time hide behind the Hide-video
+      // CTA. The pp stays in the DOM while hidden, so togglePlay()'s
+      // programmatic .click() route works in every state.
+      var barStrip = t.yt
+        ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
+          + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
+          // Operator UAT (2026-07-26): no title text in the strip - the id block
+          // already names the track. A PLAYBACK PROGRESS BAR + total time
           // shows relative position at a glance (driven by YT infoDelivery time,
-          // see wireNowPlaying). Menu glyph is a hamburger (app menu standard).
+          // see wireNowPlaying).
           + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
           + '<span class="bt-st-np-time" data-nptime></span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
-          // The fly-out is a CHILD of the header (not a sibling) so its
-          // position:absolute anchors to .bt-st-head (position:relative) - a sibling
-          // would resolve top:100% against .bt-player and drop off-screen.
+        : '';
+      // S-STUDIO-FLYOUT: the hamburger + fly-out menu (Show/Hide video, Find
+      // another jam, Edit, Curated-URL card - or the no-video guidance). Now a
+      // child of .bt-st-topbar (position:relative) so the panel anchors under
+      // the sheet's top row and drops DOWN over the media/body.
+      // S-STUDIO-NOVID: a videoless track is for soloing/exploring - the
+      // "Optional" pill stays retired (UAT batch 1); the menu's hint carries
+      // the find-a-jam guidance.
+      var menuBlock = t.yt
+        ? '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
-        // S-STUDIO-NOVID (operator device-test 2026-07-26): a videoless track is
-        // for soloing/exploring over the progression - the circle + fretboard ARE
-        // the product; a backing YouTube track is OPTIONAL rehearsal support. The
-        // merged header shows a slim "Optional" tag + `...` fly-out holding the
-        // guidance + the "Find a jam"/"Add a video" trigger. Tapping that trigger
-        // (a .bt-st-menu-item, so the fly-out auto-closes) reveals the genre/feel
-        // jam panel (data-jampanel) + the paste box (data-urled-gated) below - the
-        // EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
-        // handler untouched), only the trigger's DOM location moved.
-        : '<span class="bt-st-np-state">Optional</span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
+        : '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
@@ -846,27 +980,22 @@
           + '<i></i></div>'
           + jamPanelHtml
         : jamPanelHtml;
-      // .bt-st-stage wraps the pinned header + video: one column in portrait,
-      // the left pane in the landscape two-pane split (CSS). Practice content
-      // (scale, chords) leads the scrollable body; the url-curation editor sits
-      // last, just above the "why" toggle - plumbing after the practice.
-      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (matches
-      // the song view's #backLib "iconBtn ←", leading the header, not a trailing
-      // "close" text pill) - "the Solo Studio close beats against brand standards
-      // - we have a back button and we're looking at the song view." Same
-      // NavHistory.dismiss()/closePlayer() wiring as before, just retargeted to
-      // the new .bt-st-back selector below (bt-st-x removed - see tracks.css).
+      // .bt-st-stage wraps the sheet's top chrome + video: one column in
+      // portrait, the left pane in the landscape two-pane split (CSS). Practice
+      // content (scale, chords) leads the scrollable body; the url-curation
+      // editor sits last - plumbing after the practice.
+      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (the
+      // song view's #backLib "iconBtn ←", leading the SHEET's top row - the
+      // Spotify collapse-top-left grammar). Same NavHistory.dismiss() wiring.
+      // PLAYER-FEEL v3: the bar (.bt-st-head) renders LAST, as a direct child
+      // of .bt-studio - it is position:fixed (one slot above the tabbar in
+      // every state), so DOM order is for the mini CSS (hide the sheet, keep
+      // the bar + clipped media), not layout.
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
-        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div>'
-        // S-STUDIO-HEADERMERGE: the now-playing strip controls live INSIDE the
-        // header row now (play/pause + progress + time + hamburger, or the no-video
-        // Optional tag + hamburger), so the track's header and its transport are
-        // ONE row, not two.
-        + headStrip
+        + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + menuBlock
         + '</div>'
         + mediaBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
@@ -962,8 +1091,29 @@
         // circle is now the top crown (data-cofhero). Only the neck-walk link
         // remains on this row.
         + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
-        + '</div></div>';
+        + '</div>'
+        // PLAYER-FEEL v3: the ONE now-playing bar - SSOT rendering, identical
+        // in mini and expanded (position:fixed above the tabbar, never moves).
+        // The x is the real teardown in every state.
+        // UAT batch 4: a yt bar leads with the SAME 3-bar equalizer primitive
+        // the rows use (.li-eq - one equalizer, Element Consistency), animated
+        // while playing / frozen while paused (.npPaused off dispatch), as the
+        // "actively playing" signal; the title marquees when it overflows
+        // (refreshMarquee below).
+        + '<div class="bt-st-head">'
+        + (t.yt ? '<span class="li-eq bt-st-bareq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
+        + '<div class="bt-st-id"><span class="bt-st-t"><span class="bt-st-tx">' + esc(t.title || '') + '</span></span>'
+        + '<span class="bt-st-meta">' + meta + '</span></div>'
+        + barStrip
+        + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
+        + '</div>'
+        + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
+      // UAT 2026-08-08: .vidopen mirrors "the video panel is expanded" (a video
+      // track opens with the frame showing). setMin() below is the single
+      // authority that keeps it honest through toggle/auto-collapse; CSS keys
+      // the strip's pp-vs-Hide-video swap off it (one transport owner).
+      elPlayer.classList.toggle('vidopen', !!t.yt);
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
       // elPlayer.innerHTML lands) - guideToggle now lives in the controls
@@ -1005,6 +1155,8 @@
         function setMin(min) {
           if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
           mediaEl.classList.toggle('min', min);
+          elPlayer.classList.toggle('vidopen', !min); // strip swaps Hide-video CTA <-> pp/progress (one transport owner)
+          refreshMarquee(); // the swap changes the title's share of the bar
           if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
@@ -1040,12 +1192,21 @@
         var minNowBtn = elPlayer.querySelector('[data-minnow]');
         if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
         if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setMin(true); endCountdown(); };
+        // The strip's Hide-video CTA (visible only while the video is expanded,
+        // see .vidopen CSS) - same collapse path as the menu's Hide video row.
+        var vidMinBtn = elPlayer.querySelector('[data-vidmin]');
+        if (vidMinBtn && mediaEl) vidMinBtn.onclick = function () { endCountdown(); setMin(true); };
         var paused = false;
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
           ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+          // PLAYER-FEEL: the strip's pp is the one honest play-state authority
+          // (YT never reports under blocked egress) - mirror it to the
+          // mount-scope intent + tell the list rows.
+          userPaused = paused;
+          dispatchNowPlaying();
         };
         // Now-playing PROGRESS BAR (operator UAT: title text dropped - the pinned
         // header names the track; show playback position + total time at a glance
@@ -1604,8 +1765,32 @@
         var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
-      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
-      if (window.NavHistory) window.NavHistory.open('studio', closePlayer);
+      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
+      // PLAYER-FEEL: a yt-backed Studio is the app's now-playing surface - track
+      // it, and register dismissStudio (minimize, not teardown) as the close fn
+      // so back/dismiss keeps the music going as the bottom bar. A videoless
+      // Studio dismisses to a full close exactly as before (dismissStudio picks).
+      nowPlaying = t.yt ? t : null;
+      userPaused = false;
+      var miniX = elPlayer.querySelector('[data-minix]');
+      // PLAYER-FEEL v3: the x lives on the ONE bar, visible in BOTH states.
+      // Expanded: the Studio holds a NavHistory slot - settle it during the
+      // teardown so a later Back never spends a press on a dead layer. Mini
+      // holds no slot (the bar is non-modal) - plain teardown.
+      if (miniX) miniX.onclick = function (e) {
+        e.stopPropagation();
+        if (!elPlayer.classList.contains('mini') && window.NavHistory && window.NavHistory.depth() > 0) {
+          window.NavHistory.settleAfter(closePlayer, null);
+        } else {
+          closePlayer();
+        }
+      };
+      if (o.startMini && nowPlaying) {
+        minimizeStudio();
+      } else {
+        if (window.NavHistory) window.NavHistory.open('studio', dismissStudio);
+        dispatchNowPlaying();
+      }
     }
 
     // The harmony-teacher HUD (scale + chords-in-key + circle) is the point - the
@@ -1909,8 +2094,19 @@
     // merged repertoire is built from.
     return {
       seedKey: seedKey,
-      openStudio: function (t) { openStudio(t); },
-      getTracks: function () { return state.tracks.slice(); }
+      openStudio: function (t, o) { openStudio(t, o); },
+      getTracks: function () { return state.tracks.slice(); },
+      // PLAYER-FEEL controller surface: the list rows key their now-playing
+      // state off this ({key: trackKey, paused} | null) and toggle transport
+      // without opening the overlay.
+      nowPlaying: function () { return nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : null; },
+      togglePlay: togglePlayCtl,
+      // PLAYER-FEEL v3: the tabbar stays live under the expanded Studio sheet.
+      // A tab tap collapses the sheet (NavHistory.settleAfter in songbook's
+      // tab wiring pairs THIS raw close with the tab's own layer swap - the
+      // synchronous modal->modal path, no back/push race).
+      studioExpanded: function () { return elPlayer.classList.contains('studio') && !elPlayer.classList.contains('mini'); },
+      collapseStudioRaw: function () { dismissStudio(); }
     };
   }
 
