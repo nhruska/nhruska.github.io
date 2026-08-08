@@ -287,4 +287,16 @@ segment (All | Jams | Setlist) filters the library to playable rows
 via npKeyFor (songbook.js + play/index.html segJams), practiceOrigin
 remembers it. No new/removed CORE paths. New scenario
 test/pw/scenarios/uat-batch2.json (36 steps, mutation-proven). [#323]
+M-PLAYER-FEEL v3 (2026-08-08, PR #323 UAT batch 3): v323-3->v323-4 -
+the standing player model ("same now playing element, SSOT, don't hide
+tabs, don't move it"): ONE fixed bar above the tabbar in every state
+(tracks.css .bt-st-head position:fixed one-slot card), the Studio is a
+SHEET with a raised bottom inset (tabs stay visible + LIVE - a tab tap
+collapses the sheet via NavHistory.settleAfter, songbook tabbar wiring
++ tracks.js studioExpanded/collapseStudioRaw exports), back+hamburger
+move to the sheet's .bt-st-topbar, bar x settles the nav slot when
+expanded. Supersedes v2's absolute bottom-bar mechanism. No new/removed
+CORE paths. New scenario test/pw/scenarios/uat-batch3.json (26 steps,
+don't-move rect proof mutation-proven); mini-player + uat-batch2
+scenario geometry retargeted to the bar. [#323]
 ```

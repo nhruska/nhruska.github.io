@@ -793,6 +793,9 @@
       // row toggle + the equalizer row state) - see tracks.js mini-player seam.
       getNowPlaying: function () { return (tracksCtl && tracksCtl.nowPlaying) ? tracksCtl.nowPlaying() : null; },
       togglePlay: function () { if (tracksCtl && tracksCtl.togglePlay) tracksCtl.togglePlay(); },
+      // PLAYER-FEEL v3: tab taps collapse the expanded Studio sheet first.
+      getStudioExpanded: function () { return !!(tracksCtl && tracksCtl.studioExpanded && tracksCtl.studioExpanded()); },
+      collapseStudioRaw: function () { if (tracksCtl && tracksCtl.collapseStudioRaw) tracksCtl.collapseStudioRaw(); },
       // Fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {

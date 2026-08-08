@@ -24,7 +24,7 @@
     },
     {
       "action": "waitFor",
-      "selector": ".bt-player.mini",
+      "selector": ".bt-player.mini .bt-st-head",
       "timeoutMs": 6000
     },
     {
@@ -52,7 +52,7 @@
     {
       "action": "evalAssert",
       "label": "the mini bar clears the tabbar and the last list rows stay reachable (body.miniplayer padding)",
-      "js": "(function(){if(!document.body.classList.contains('miniplayer'))return false;var bar=document.querySelector('.bt-player.mini .bt-studio');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44;})()"
+      "js": "(function(){if(!document.body.classList.contains('miniplayer'))return false;var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44;})()"
     },
     {
       "action": "resize",
@@ -61,8 +61,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "landscape: the two-pane split does NOT leak into the bar (stage spans the bar, no 44% clamp)",
-      "js": "(function(){var st=document.querySelector('.bt-player.mini .bt-st-stage');var bar=document.querySelector('.bt-player.mini .bt-studio');if(!st||!bar)return false;return st.getBoundingClientRect().width>bar.getBoundingClientRect().width*0.8;})()"
+      "label": "landscape: the bar keeps its one slot (bottom-pinned card, no two-pane leak)",
+      "js": "(function(){var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44&&bb.width>=300;})()"
     },
     {
       "action": "screenshot",
@@ -101,7 +101,7 @@
     },
     {
       "action": "waitFor",
-      "selector": ".bt-player.mini",
+      "selector": ".bt-player.mini .bt-st-head",
       "timeoutMs": 6000
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "action": "waitFor",
-      "selector": ".bt-player.mini",
+      "selector": ".bt-player .bt-st-head",
       "state": "hidden",
       "timeoutMs": 6000
     },

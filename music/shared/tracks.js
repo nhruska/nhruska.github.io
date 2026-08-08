@@ -879,52 +879,46 @@
       // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
       // another jam, Edit, and the Curated-URL card as full-width rows - same
       // data-* attrs, so the existing handlers bind unchanged.
-      var headStrip = t.yt
-        // UAT 2026-08-08 (one-transport-owner): while the video is EXPANDED,
-        // YouTube's own controls own play/pause - the strip's pp/progress/time
-        // would be a duplicate transport ("I see three play buttons"). That
-        // slot instead carries the CTA the user actually wants next: Hide
-        // video. CSS swaps the two off .bt-player.vidopen (setMin keeps the
-        // class honest); hiding the video HANDS transport to the bar. The pp
-        // stays in the DOM while hidden, so togglePlay()'s programmatic
-        // .click() route works in every state.
+      // PLAYER-FEEL v3 (UAT 2026-08-08, "the same now playing element... don't
+      // move it"): the transport strip and the sheet chrome SPLIT. The bar
+      // (.bt-st-head, below) is ONE SSOT-rendered element - [title/meta]
+      // [pp|Hide-video] [progress] [time] [x] - position:fixed in ONE slot
+      // above the tabbar in EVERY state; the back + hamburger move to a slim
+      // .bt-st-topbar at the top of the SHEET (the Spotify grammar: collapse
+      // top-left, menu top-right). menuBlock = the hamburger + fly-out
+      // (anchors under the topbar); barStrip = the bar's transport controls.
+      //
+      // One-transport-owner (UAT batch 2) still holds: while the video panel
+      // is expanded (.vidopen, setMin keeps it honest), YouTube's own controls
+      // own play/pause - the bar's pp/progress/time hide behind the Hide-video
+      // CTA. The pp stays in the DOM while hidden, so togglePlay()'s
+      // programmatic .click() route works in every state.
+      var barStrip = t.yt
         ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
           + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
           + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          // Operator UAT (2026-07-26): no title text in the strip - the merged
-          // header already names the track. A PLAYBACK PROGRESS BAR + total time
+          // Operator UAT (2026-07-26): no title text in the strip - the id block
+          // already names the track. A PLAYBACK PROGRESS BAR + total time
           // shows relative position at a glance (driven by YT infoDelivery time,
-          // see wireNowPlaying). Menu glyph is a hamburger (app menu standard).
+          // see wireNowPlaying).
           + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
           + '<span class="bt-st-np-time" data-nptime></span>'
-          + '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
-          // The fly-out is a CHILD of the header (not a sibling) so its
-          // position:absolute anchors to .bt-st-head (position:relative) - a sibling
-          // would resolve top:100% against .bt-player and drop off-screen.
+        : '';
+      // S-STUDIO-FLYOUT: the hamburger + fly-out menu (Show/Hide video, Find
+      // another jam, Edit, Curated-URL card - or the no-video guidance). Now a
+      // child of .bt-st-topbar (position:relative) so the panel anchors under
+      // the sheet's top row and drops DOWN over the media/body.
+      // S-STUDIO-NOVID: a videoless track is for soloing/exploring - the
+      // "Optional" pill stays retired (UAT batch 1); the menu's hint carries
+      // the find-a-jam guidance.
+      var menuBlock = t.yt
+        ? '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
-          // PLAYER-FEEL: the mini bar's real teardown. CSS-hidden except in
-          // .bt-player.mini (no [hidden] attr - an author display rule would
-          // override it, the D-TOAST-HOST class of bug).
-          + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
-        // S-STUDIO-NOVID (operator device-test 2026-07-26): a videoless track is
-        // for soloing/exploring over the progression - the circle + fretboard ARE
-        // the product; a backing YouTube track is OPTIONAL rehearsal support. The
-        // merged header shows a slim "Optional" tag + `...` fly-out holding the
-        // guidance + the "Find a jam"/"Add a video" trigger. Tapping that trigger
-        // (a .bt-st-menu-item, so the fly-out auto-closes) reveals the genre/feel
-        // jam panel (data-jampanel) + the paste box (data-urled-gated) below - the
-        // EXACT same data-jamfindtoggle -> reveal wiring as before (jamFindToggle
-        // handler untouched), only the trigger's DOM location moved.
-        // UAT 2026-08-08: the "Optional" pill retired - it sat in the slot
-        // where transport (pp/progress/time) lives for video tracks and read
-        // as noise ("says optional where time codes are"). The hamburger menu
-        // still carries the find-a-jam guidance (noVideoHint) - the meaning
-        // lives where the affordance is.
         : '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
@@ -947,27 +941,22 @@
           + '<i></i></div>'
           + jamPanelHtml
         : jamPanelHtml;
-      // .bt-st-stage wraps the pinned header + video: one column in portrait,
-      // the left pane in the landscape two-pane split (CSS). Practice content
-      // (scale, chords) leads the scrollable body; the url-curation editor sits
-      // last, just above the "why" toggle - plumbing after the practice.
-      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (matches
-      // the song view's #backLib "iconBtn ←", leading the header, not a trailing
-      // "close" text pill) - "the Solo Studio close beats against brand standards
-      // - we have a back button and we're looking at the song view." Same
-      // NavHistory.dismiss()/closePlayer() wiring as before, just retargeted to
-      // the new .bt-st-back selector below (bt-st-x removed - see tracks.css).
+      // .bt-st-stage wraps the sheet's top chrome + video: one column in
+      // portrait, the left pane in the landscape two-pane split (CSS). Practice
+      // content (scale, chords) leads the scrollable body; the url-curation
+      // editor sits last - plumbing after the practice.
+      // F32 (UI-std UAT): dismiss is the app's STANDARD back affordance (the
+      // song view's #backLib "iconBtn ←", leading the SHEET's top row - the
+      // Spotify collapse-top-left grammar). Same NavHistory.dismiss() wiring.
+      // PLAYER-FEEL v3: the bar (.bt-st-head) renders LAST, as a direct child
+      // of .bt-studio - it is position:fixed (one slot above the tabbar in
+      // every state), so DOM order is for the mini CSS (hide the sheet, keep
+      // the bar + clipped media), not layout.
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-head"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
-        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
-        + '<span class="bt-st-meta">' + meta + '</span></div>'
-        // S-STUDIO-HEADERMERGE: the now-playing strip controls live INSIDE the
-        // header row now (play/pause + progress + time + hamburger, or the no-video
-        // Optional tag + hamburger), so the track's header and its transport are
-        // ONE row, not two.
-        + headStrip
+        + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + menuBlock
         + '</div>'
         + mediaBlock
         // Curation lives in the top panel next to Watch-on-YouTube, so when you
@@ -1063,7 +1052,17 @@
         // circle is now the top crown (data-cofhero). Only the neck-walk link
         // remains on this row.
         + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
-        + '</div></div>';
+        + '</div>'
+        // PLAYER-FEEL v3: the ONE now-playing bar - SSOT rendering, identical
+        // in mini and expanded (position:fixed above the tabbar, never moves).
+        // The x is the real teardown in every state.
+        + '<div class="bt-st-head">'
+        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
+        + '<span class="bt-st-meta">' + meta + '</span></div>'
+        + barStrip
+        + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
+        + '</div>'
+        + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
       // UAT 2026-08-08: .vidopen mirrors "the video panel is expanded" (a video
       // track opens with the frame showing). setMin() below is the single
@@ -1728,7 +1727,18 @@
       nowPlaying = t.yt ? t : null;
       userPaused = false;
       var miniX = elPlayer.querySelector('[data-minix]');
-      if (miniX) miniX.onclick = function (e) { e.stopPropagation(); closePlayer(); };
+      // PLAYER-FEEL v3: the x lives on the ONE bar, visible in BOTH states.
+      // Expanded: the Studio holds a NavHistory slot - settle it during the
+      // teardown so a later Back never spends a press on a dead layer. Mini
+      // holds no slot (the bar is non-modal) - plain teardown.
+      if (miniX) miniX.onclick = function (e) {
+        e.stopPropagation();
+        if (!elPlayer.classList.contains('mini') && window.NavHistory && window.NavHistory.depth() > 0) {
+          window.NavHistory.settleAfter(closePlayer, null);
+        } else {
+          closePlayer();
+        }
+      };
       if (o.startMini && nowPlaying) {
         minimizeStudio();
       } else {
@@ -2044,7 +2054,13 @@
       // state off this ({key: trackKey, paused} | null) and toggle transport
       // without opening the overlay.
       nowPlaying: function () { return nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : null; },
-      togglePlay: togglePlayCtl
+      togglePlay: togglePlayCtl,
+      // PLAYER-FEEL v3: the tabbar stays live under the expanded Studio sheet.
+      // A tab tap collapses the sheet (NavHistory.settleAfter in songbook's
+      // tab wiring pairs THIS raw close with the tab's own layer swap - the
+      // synchronous modal->modal path, no back/push race).
+      studioExpanded: function () { return elPlayer.classList.contains('studio') && !elPlayer.classList.contains('mini'); },
+      collapseStudioRaw: function () { dismissStudio(); }
     };
   }
 

@@ -556,6 +556,12 @@
     // exactly as before when the host doesn't wire them.
     var getNowPlayingCb = opts.getNowPlaying || null;
     var togglePlayCb = opts.togglePlay || null;
+    // PLAYER-FEEL v3: the tabbar stays visible + live under the expanded Studio
+    // sheet. These two let a tab tap collapse the sheet first (see the tabbar
+    // wiring) - getStudioExpanded() -> bool, collapseStudioRaw() = the raw
+    // dismiss (minimize yt-backed / close videoless), NavHistory-free.
+    var getStudioExpandedCb = opts.getStudioExpanded || null;
+    var collapseStudioRawCb = opts.collapseStudioRaw || null;
     // The stable identity a row shares with the Studio's now-playing track:
     // trackKey of the row's OWN studio target. Null for rows that can't be the
     // player's content (no video), so they never light up.
@@ -6110,7 +6116,20 @@
       }
       currentTab = name;
     }
-    document.querySelectorAll('.tabbar button').forEach(function (b) { b.onclick = function () { switchTab(b.dataset.tab); }; });
+    // PLAYER-FEEL v3: tabs stay live under the expanded Studio sheet - a tab
+    // tap collapses the sheet to the bar first (real-player behavior), THEN
+    // navigates. NavHistory.settleAfter pairs the sheet's raw close with the
+    // tab's own layer swap synchronously (replaceState, no back/push race);
+    // with no sheet open (or no NavHistory) it is a plain switch.
+    document.querySelectorAll('.tabbar button').forEach(function (b) {
+      b.onclick = function () {
+        if (getStudioExpandedCb && getStudioExpandedCb() && collapseStudioRawCb && window.NavHistory) {
+          NavHistory.settleAfter(collapseStudioRawCb, function () { switchTab(b.dataset.tab); });
+        } else {
+          switchTab(b.dataset.tab);
+        }
+      };
+    });
     // The All | Setlist segment. A view switch inside a surface, so it pushes
     // no back-history layer - unlike a tab change, which does.
     if (el.songsSeg) {
