@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-07T10:15:21Z",
+  "generatedAt": "2026-08-08T09:58:16Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,30 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-06T11:36:34Z",
-    "sha": "ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0"
+    "date": "2026-08-08T00:40:35Z",
+    "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
+    "subject": "playlist-sync: refresh payload + veto table",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
   },
   "commits": [
+    {
+      "date": "2026-08-08T00:40:35Z",
+      "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
+      "subject": "playlist-sync: refresh payload + veto table",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
+    },
+    {
+      "date": "2026-08-08T00:39:26Z",
+      "sha": "fe3519e0ae239344fed0cf50bca1d673e23c2073",
+      "subject": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline (#322)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fe3519e0ae239344fed0cf50bca1d673e23c2073"
+    },
+    {
+      "date": "2026-08-07T10:15:27Z",
+      "sha": "e143e05171d936b7f8eecddf923383301ad66b6d",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e143e05171d936b7f8eecddf923383301ad66b6d"
+    },
     {
       "date": "2026-08-06T11:36:34Z",
       "sha": "ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0",
@@ -72,35 +90,32 @@
       "sha": "e1145d23207b51bced559d3764dfd4c4bccb97d1",
       "subject": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316) (#319)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e1145d23207b51bced559d3764dfd4c4bccb97d1"
-    },
-    {
-      "date": "2026-07-30T21:40:08Z",
-      "sha": "2ad877915c22e3e49851580e475e8d6a407256af",
-      "subject": "decision: harvest the guided song-builder from closed PR #70, do not rebuild it (#318)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/2ad877915c22e3e49851580e475e8d6a407256af"
-    },
-    {
-      "date": "2026-07-30T11:24:23Z",
-      "sha": "5cba98552b56c96be1a1be5f9586ed58cb77c2c6",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5cba98552b56c96be1a1be5f9586ed58cb77c2c6"
-    },
-    {
-      "date": "2026-07-29T11:36:09Z",
-      "sha": "171a7f88969914f4c03fe2de25367b22a89c8e93",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/171a7f88969914f4c03fe2de25367b22a89c8e93"
     }
   ],
   "openPRs": [
     {
-      "number": 322,
-      "title": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline",
+      "number": 323,
+      "title": "Player-feel: global mini-player bar + now-playing rows + play-from-row",
       "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/322",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/323",
       "draft": true,
-      "ciState": "unknown",
-      "checks": []
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31236501913/job/93049836278"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31236501909/job/93049836289"
+        }
+      ]
     },
     {
       "number": 274,
@@ -113,6 +128,13 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-08-06T20:51:44Z",
+      "mergedAt": "2026-08-08T00:39:26Z",
+      "number": 322,
+      "title": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/322"
+    },
     {
       "createdAt": "2026-07-31T00:40:18Z",
       "mergedAt": "2026-07-31T01:23:25Z",
@@ -210,27 +232,20 @@
       "number": 304,
       "title": "fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/304"
-    },
-    {
-      "createdAt": "2026-07-23T22:41:09Z",
-      "mergedAt": "2026-07-25T08:43:26Z",
-      "number": 303,
-      "title": "fix(theory): key-aware spelling in Compose All view + 12x4 spelling regression net (P2-1/P2-3)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/303"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-07T10:15:17Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31169319462",
+    "runStartedAt": "2026-08-08T09:58:06Z",
+    "durationSeconds": 8,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31251738047",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 2,
+    "merged_count": 1,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
@@ -238,13 +253,13 @@
   },
   "deploy": {
     "pages": {
-      "status": "errored",
+      "status": "built",
       "htmlUrl": "https://nhruska.github.io/",
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v321",
-    "localCacheVersion": "music-v321",
+    "liveCacheVersion": "music-v322",
+    "localCacheVersion": "music-v322",
     "cacheMatch": true
   },
   "missions": [
@@ -306,6 +321,11 @@
   ],
   "queue": {
     "NOW": [
+      {
+        "Mission": "**M-LIB-BAKE: playlist extraction + player-feel**",
+        "State": "**PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) OPEN (draft, v322) 2026-08-06**: 15 curated playlist entries baked (39->54, yt-backed 4->19), keyless sync pipeline (playlist-sync.js + Actions workflow) committed, catalog schema gate shipped. Veto table in the PR body - merge = red-pen (flags: #8 C-vs-Am, Harry Hood D-mixo UNCONFIRMED). The 17th playlist item + artist enrichment = first post-merge sync run. PR-B (player-feel: global mini-player + now-playing row + play-from-row, no raster imagery ever) builds after PR-A merges - single mission branch.",
+        "Spec": "[goal spec](goal-playlist-extraction-20260806.md)"
+      },
       {
         "Mission": "**S-SDD-PILOT: \"Calluses\" (F Mixo/Dm)**",
         "State": "**STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> \"store it\" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel",
@@ -633,8 +653,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 58,
-    "testCaseCount": 3378,
+    "testFileCount": 59,
+    "testCaseCount": 1641,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

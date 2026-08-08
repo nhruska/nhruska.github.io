@@ -1,12 +1,13 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-08-07T10:15:21Z
+Generated: 2026-08-08T09:58:16Z
 Status: ok
 
 ## NOW
+- Queue NOW: **PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) OPEN (draft, v322) 2026-08-06**: 15 curated playlist entries baked (39->54, yt-backed 4->19), keyless sync pipeline (playlist-sync.js + Actions workflow) committed, catalog schema gate shipped. Veto table in the PR body - merge = red-pen (flags: #8 C-vs-Am, Harry Hood D-mixo UNCONFIRMED). The 17th playlist item + artist enrichment = first post-merge sync run. PR-B (player-feel: global mini-player + now-playing row + play-from-row, no raster imagery ever) builds after PR-A merges - single mission branch.
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #322 (CI unknown): Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline - https://github.com/nhruska/nhruska.github.io/pull/322
+- Open draft PR #323 (CI green): Player-feel: global mini-player bar + now-playing rows + play-from-row - https://github.com/nhruska/nhruska.github.io/pull/323
 - Open PR #274 (CI unknown): docs: rename suggested chords section to name the intent - https://github.com/nhruska/nhruska.github.io/pull/274
 
 ## Open gaps / to-wire
@@ -15,6 +16,7 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #322 - Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline (2026-08-08) - https://github.com/nhruska/nhruska.github.io/pull/322
 - #321 - music(studio): give users time to skip YouTube ads before the video auto-minimizes (2026-07-31) - https://github.com/nhruska/nhruska.github.io/pull/321
 - #319 - feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316) (2026-07-31) - https://github.com/nhruska/nhruska.github.io/pull/319
 - #318 - decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST) (2026-07-30) - https://github.com/nhruska/nhruska.github.io/pull/318
@@ -22,7 +24,6 @@ Status: ok
 - #315 - a11y: add the gate, and close the ARIA gap it was built to find (2026-07-26) - https://github.com/nhruska/nhruska.github.io/pull/315
 - #314 - wiki: record how a render check lies (verification traps) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/314
 - #313 - music: Practice Studio redesign - interactive circle crown + video show-then-collapse (2026-07-27) - https://github.com/nhruska/nhruska.github.io/pull/313
-- #312 - fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/312
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -35,6 +36,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (3378 cases / 58 suites)
+- Suite: node test/run-all.js (1641 cases / 59 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
