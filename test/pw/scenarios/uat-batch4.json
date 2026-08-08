@@ -31,8 +31,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-4.4: the long title MARQUEES in the bar (overflow measured, .mq armed with a real distance)",
-      "js": "(function(){var t=document.querySelector('.bt-st-t');if(!t)return false;var over=t.scrollWidth-t.clientWidth>4;var mq=t.classList.contains('mq');if(over!==mq)return false;if(mq){var v=t.style.getPropertyValue('--mq');return !!v&&parseInt(v,10)<0;}return true;})()"
+      "label": "UAT-4.4/v5: the long title LOOP-marquees left-only (second copy present, negative travel, linear + infinite - never a shuttle)",
+      "js": "(function(){var t=document.querySelector('.bt-st-t');if(!t)return false;var tx=t.querySelector('.bt-st-tx');if(!tx)return false;var mq=t.classList.contains('mq');if(!mq)return false;var clone=tx.querySelector('.bt-st-tx2');if(!clone)return false;var v=parseInt(t.style.getPropertyValue('--mq'),10);if(!(v<0))return false;var cs=getComputedStyle(tx);return cs.animationIterationCount==='infinite'&&cs.animationTimingFunction==='linear';})()"
     },
     { "action": "screenshot", "name": "live-bar-eq" },
     { "action": "tap", "selector": ".bt-player.mini [data-nppp]" },

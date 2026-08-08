@@ -65,8 +65,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "tabs never hidden: the tabbar is visible and fully below the sheet",
-      "js": "(function(){var tab=document.querySelector('.tabbar');var p=document.querySelector('.bt-player.studio');if(!tab||!p)return false;var tr=tab.getBoundingClientRect(),pr=p.getBoundingClientRect();return tab.offsetParent!==null&&tr.top>=pr.bottom-1&&tr.top<window.innerHeight;})()"
+      "label": "tabs never hidden: the tabbar PAINTS above the full-inset sheet (hit-test at its center) and sits on-screen",
+      "js": "(function(){var tab=document.querySelector('.tabbar');if(!tab||tab.offsetParent===null)return false;var tr=tab.getBoundingClientRect();if(!(tr.top<window.innerHeight))return false;var tc=document.elementFromPoint(tr.left+tr.width/2, tr.top+tr.height/2);return !!tc&&!!tc.closest('.tabbar');})()"
     },
     {
       "action": "evalAssert",

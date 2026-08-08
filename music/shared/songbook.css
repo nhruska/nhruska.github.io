@@ -180,6 +180,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{--tabbar-pb:calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);flex:0 0 auto;display:flex;gap:2px;padding:6px 6px var(--tabbar-pb);background:var(--bg-2);border-top:1px solid var(--line);}
+/* PLAYER-FEEL v5 (UAT 2026-08-08, "can see rows behind above now playing"):
+   while the Studio SHEET is expanded (body.studioopen, tracks.js dispatch),
+   the sheet is FULL-inset (nothing leaks through around the bar) and the
+   tabbar paints ABOVE it instead - z-55 sits over the sheet (50) and under
+   every real modal (perform 60, invModal 70, edit form 75), so tabs stay
+   visible + tappable exactly as before and full-screen modals still cover
+   them. Scoped to the body class - the app's normal stacking is untouched. */
+body.studioopen .tabbar{position:relative;z-index:55;}
 .tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:var(--r-btn-sm);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
 /* Active tab highlight reclaims ONLY the safe-area slack below it, so the pill

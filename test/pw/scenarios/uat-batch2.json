@@ -69,8 +69,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-5/v3: the bar sits in its ONE slot above the tabbar, the sheet ends above it, tabs stay visible",
-      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var p=document.querySelector('.bt-player.studio');var tab=document.querySelector('.tabbar');if(!h||!p||!tab)return false;var r=h.getBoundingClientRect(),pr=p.getBoundingClientRect(),tr=tab.getBoundingClientRect();return r.bottom<=tr.top+1&&r.top>=pr.bottom-1&&tr.top<window.innerHeight&&tab.offsetParent!==null;})()"
+      "label": "UAT-5/v5: bar in its ONE slot above the tabbar; the sheet is OPAQUE behind it (no rows leak through the band); tabs painted above the sheet",
+      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var tab=document.querySelector('.tabbar');if(!h||!tab)return false;var r=h.getBoundingClientRect(),tr=tab.getBoundingClientRect();if(!(r.bottom<=tr.top+1))return false;var band=document.elementFromPoint(window.innerWidth/2, r.top-4);if(!band||!band.closest('.bt-player'))return false;var tc=document.elementFromPoint(tr.left+tr.width/2, tr.top+tr.height/2);return !!tc&&!!tc.closest('.tabbar');})()"
     },
     {
       "action": "evalAssert",

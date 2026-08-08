@@ -113,14 +113,16 @@
      The overlay fills the viewport; head + frame are fixed, the body scrolls so the
      iframe keeps playing while you explore the theory. */
   .bt-player.studio{padding:0;align-items:stretch;justify-content:stretch;}
-  /* PLAYER-FEEL v3: the EXPANDED Studio is a SHEET above the bar - the
-     overlay's bottom edge stops above the bar's slot, leaving the bar band AND
-     the tabbar visible + LIVE below ("don't hide bottom tabs"). 128 = 64 (the
-     bar slot's tab offset) + 56 (bar) + 8 (gap); the max() term mirrors the
-     bar's own safe-area handling so sheet and bar stay aligned on notched
-     devices. Tab taps collapse the sheet first (songbook tabbar wiring). */
-  .bt-player.studio:not(.mini){inset:0 0 calc(max(env(safe-area-inset-bottom,0px), 8px) + 128px) 0;}
-  .bt-player.studio:not(.mini) .bt-studio{border-bottom:1px solid var(--line-strong);}
+  /* PLAYER-FEEL v3 -> v5 (UAT batch 5, "can see rows behind above now
+     playing"): the EXPANDED Studio sheet is FULL-inset - nothing behind it can
+     leak through the band around the bar. The tabbar stays visible + LIVE by
+     painting ABOVE the sheet instead: body.studioopen raises it to z-55
+     (songbook.css) - above the sheet's z-50, below every real modal (perform
+     60, invModal/maxOv 70, edit form 75). The bar (fixed, above) floats over
+     the sheet's lower region; the scrollable panes clear it via
+     padding-bottom (bar top = safe+120; +16 breathing). */
+  .bt-player.studio:not(.mini){inset:0;}
+  .bt-player.studio:not(.mini) .bt-st-body{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 136px);}
   /* Default = single centered column matching the app shell width (540px) so the
      Studio reads like the rest of the app on desktop/large browsers. The
      landscape-phone two-pane split (short-height media query below) overrides this. */
@@ -370,6 +372,9 @@
     .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
     .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
+    /* PLAYER-FEEL v5: the stage pane scrolls in this split - it needs its own
+       bar clearance (the full-inset sheet runs under the fixed bar). */
+    .bt-player.studio:not(.mini) .bt-st-stage{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 136px);}
   }
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
@@ -676,12 +681,20 @@
   .bt-player.npLive:not(.npPaused) .bt-st-bareq i:nth-child(3){animation-delay:.44s;}
   @media (prefers-reduced-motion:reduce){ .bt-st-bareq i{animation:none !important;} }
 
-  /* ---- UAT batch 4: marquee the full title when it overflows ----
-     JS (refreshMarquee) measures the overflow and sets --mq/--mqd; the shuttle
-     pauses at each end so both ends are readable. Reduced-motion keeps the
-     static ellipsis. */
-  .bt-st-tx{display:inline-block;}
+  /* ---- UAT batch 4 -> 5: LOOP marquee for overflowing bar titles ----
+     The real music-player marquee ("slowly left only and wrap around... no
+     switching direction"): refreshMarquee appends a second copy of the title
+     (.bt-st-tx2, 48px wrap gap) and slides the pair left by exactly one
+     copy+gap, linear + infinite - the wrap point is invisible. A short initial
+     delay leaves the title readable before the first slide. Reduced-motion:
+     static ellipsis, clone hidden. */
+  .bt-st-tx{display:inline-block;white-space:nowrap;}
+  .bt-st-tx2{display:inline-block;padding-left:48px;}
   .bt-st-t.mq{text-overflow:clip;}
-  .bt-st-t.mq .bt-st-tx{animation:btMq var(--mqd,8s) ease-in-out infinite;}
-  @keyframes btMq{0%,12%{transform:translateX(0);}44%,56%{transform:translateX(var(--mq,0px));}88%,100%{transform:translateX(0);}}
-  @media (prefers-reduced-motion:reduce){ .bt-st-t.mq .bt-st-tx{animation:none;} .bt-st-t.mq{text-overflow:ellipsis;} }
+  .bt-st-t.mq .bt-st-tx{animation:btMq var(--mqd,10s) linear infinite;animation-delay:1.2s;}
+  @keyframes btMq{from{transform:translateX(0);}to{transform:translateX(var(--mq,0px));}}
+  @media (prefers-reduced-motion:reduce){
+    .bt-st-t.mq .bt-st-tx{animation:none;}
+    .bt-st-t.mq{text-overflow:ellipsis;}
+    .bt-st-tx2{display:none;}
+  }

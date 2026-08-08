@@ -323,6 +323,12 @@
       // isPaused.
       elPlayer.classList.toggle('npLive', !!nowPlaying);
       elPlayer.classList.toggle('npPaused', !!(nowPlaying && userPaused));
+      // UAT batch 5: body.studioopen = "the SHEET is expanded" - songbook.css
+      // z-raises the tabbar above the full-inset sheet off this class. Every
+      // sheet transition (open/expand/minimize/close, video or not) funnels
+      // through this dispatch, so the class can never go stale.
+      document.body.classList.toggle('studioopen',
+        elPlayer.classList.contains('on') && elPlayer.classList.contains('studio') && !elPlayer.classList.contains('mini'));
       refreshMarquee();
       try {
         document.dispatchEvent(new CustomEvent('music:nowplaying', {
@@ -330,19 +336,32 @@
         }));
       } catch (e) { /* CustomEvent guaranteed on every target browser; belt only */ }
     }
-    // UAT batch 4 ("show full song name or scroll animated"): when the bar
-    // title overflows its box, shuttle-scroll it (CSS animation off --mq);
-    // otherwise plain ellipsis. Re-measured on every dispatch + setMin (the
-    // vidopen strip swap changes the title's share of the bar) + resize.
-    // Reduced-motion falls back to the static ellipsis (CSS).
+    // UAT batch 4 -> 5 ("scroll... slowly left only and wrap around like music
+    // players marquee"): when the bar title overflows its box, LOOP it - a
+    // second copy of the title (.bt-st-tx2, 48px wrap gap) is appended and the
+    // pair slides left by exactly one copy+gap (CSS, linear infinite), so the
+    // wrap point is seamless. Re-measured on every dispatch + setMin (the
+    // vidopen strip swap changes the title's share of the bar) + resize;
+    // the reset drops the clone first so the measure is the natural
+    // single-copy overflow. Reduced-motion: static ellipsis (CSS hides the
+    // clone and the animation).
     function refreshMarquee() {
       var tEl = elPlayer.querySelector('.bt-st-t');
       if (!tEl || !tEl.isConnected) return;
-      tEl.classList.remove('mq'); // measure the natural overflow, not a mid-animation state
-      var over = tEl.scrollWidth - tEl.clientWidth;
-      if (over > 4) {
-        tEl.style.setProperty('--mq', '-' + (over + 12) + 'px');
-        tEl.style.setProperty('--mqd', Math.max(6, Math.round((over + 60) / 25)) + 's');
+      var tx = tEl.querySelector('.bt-st-tx');
+      if (!tx) return;
+      var old = tx.querySelector('.bt-st-tx2');
+      if (old) old.remove();
+      tEl.classList.remove('mq');
+      var w = tx.scrollWidth; // single-copy width
+      if (w - tEl.clientWidth > 4) {
+        var c = document.createElement('span');
+        c.className = 'bt-st-tx2';
+        c.setAttribute('aria-hidden', 'true');
+        c.textContent = tx.textContent;
+        tx.appendChild(c);
+        tEl.style.setProperty('--mq', '-' + (w + 48) + 'px'); // one copy + the wrap gap
+        tEl.style.setProperty('--mqd', Math.max(8, Math.round((w + 48) / 22)) + 's'); // ~22px/s, slow
         tEl.classList.add('mq');
       } else {
         tEl.style.removeProperty('--mq');

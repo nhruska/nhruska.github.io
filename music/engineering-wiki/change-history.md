@@ -311,4 +311,14 @@ overflowing bar titles (.bt-st-tx). No new/removed CORE paths. New
 scenario test/pw/scenarios/uat-batch4.json (28 steps, mutation-proven).
 Pre-existing noted: persona-firsttimer #wNext flake fails on
 origin/main identically (base-worktree verified). [#323]
+M-PLAYER-FEEL v5 (2026-08-08, PR #323 UAT batch 5): v323-5->v323-6 -
+opaque full-inset sheet (rows can no longer leak through the band
+around the bar) with the tabbar z-raised above it while open
+(body.studioopen via dispatchNowPlaying; songbook.css z-55 between
+sheet 50 and perform 60); bar clearance moves to .bt-st-body + the
+landscape stage. Loop marquee: leftward-only wrap-around (second title
+copy .bt-st-tx2 + 48px gap, linear infinite ~22px/s), replacing the v4
+shuttle. Scenario asserts upgraded to hit-tests (band resolves to the
+sheet, tabbar center resolves to the tabbar) - z-raise drop
+mutation-proven red. No new/removed CORE paths. [#323]
 ```
