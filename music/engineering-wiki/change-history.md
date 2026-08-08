@@ -267,4 +267,14 @@ non-CORE: scripts/playlist-sync.js (keyless fetch/bake pipeline),
 .github/workflows/playlist-sync.yml, test/tracks-catalog.test.js (catalog
 schema gate); test/candidates.test.js modal-bucket filter narrowed to
 url-less tracks (a yt-backed modal track needs no candidates). [#322]
+M-PLAYER-FEEL (2026-08-08, PR #323): v322->v323 - shared/tracks.js
+(minimizeStudio/expandStudio/dismissStudio seam, openStudio startMini,
+nowPlaying/togglePlay controller, music:nowplaying event), shared/
+tracks.css (.bt-player.mini bar + .bt-st-minix + landscape guard),
+shared/list-item.js (glyph+equalizer pair, isPlaying/isPaused),
+shared/songbook.js (npKeyFor, data-npkey, refreshNowPlaying class sweep,
+repertoireAction transport/startMini), shared/songbook.css (.li-eq,
+isPlaying outline, body.miniplayer space), play/index.html (controller
+pass-through). No new/removed CORE paths. D-PLAYER-FEEL + D-NO-RASTER.
+New scenario test/pw/scenarios/mini-player.json (mutation-proven). [#323]
 ```
