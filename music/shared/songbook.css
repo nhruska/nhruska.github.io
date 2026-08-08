@@ -283,7 +283,17 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    blocks interaction, never persists. */
 @keyframes justSavedPulse{from{box-shadow:0 0 0 2px var(--accent);}to{box-shadow:0 0 0 2px transparent;}}
 .listItem.justSaved{animation:justSavedPulse 2s ease-out;}
-.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;min-width:22px;line-height:1.3;}
+/* UAT 2026-08-08 (batch 4): the leading DETAILS chip - a clear fixed-width tap
+   target on every row now that a body tap PLAYS. Holds the setlist number
+   (.li-num, nested - same look) when the row has one, an info glyph when it
+   doesn't; fixed width means set-membership changes swap content, never
+   layout (no row reflow). 44px tap floor (a11y). */
+.listItem .li-lead{flex:0 0 auto;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0 4px;border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-btn-sm);
+  cursor:pointer;font-family:inherit;color:var(--txt-soft);}
+.listItem .li-lead:active{transform:scale(.95);}
+.li-lead-gl{font-size:1rem;line-height:1;color:var(--txt-soft);}
+.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
 /* Title sized for the arm's-length <1s glance; meta + artist on --txt-soft and

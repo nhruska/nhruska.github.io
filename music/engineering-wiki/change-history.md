@@ -299,4 +299,16 @@ expanded. Supersedes v2's absolute bottom-bar mechanism. No new/removed
 CORE paths. New scenario test/pw/scenarios/uat-batch3.json (26 steps,
 don't-move rect proof mutation-proven); mini-player + uat-batch2
 scenario geometry retargeted to the bar. [#323]
+M-PLAYER-FEEL v4 (2026-08-08, PR #323 UAT batch 4): v323-4->v323-5 -
+row body tap PLAYS playable rows (repertoireAction, now guarded on the
+studio target = the npKeyFor predicate); leading .li-lead details chip
+on every row (fixed width, holds the setlist .li-num nested - no row
+reflow; list-item.js + songbook.css); openStudio idempotent on the
+already-playing track (expand, never rebuild/restart); bar npLive
+accent pop + .bt-st-bareq equalizer (composes the .li-eq primitive) +
+npPaused freeze riding dispatchNowPlaying; refreshMarquee shuttle for
+overflowing bar titles (.bt-st-tx). No new/removed CORE paths. New
+scenario test/pw/scenarios/uat-batch4.json (28 steps, mutation-proven).
+Pre-existing noted: persona-firsttimer #wNext flake fails on
+origin/main identically (base-worktree verified). [#323]
 ```

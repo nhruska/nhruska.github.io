@@ -316,12 +316,40 @@
     var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
     var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
     function dispatchNowPlaying() {
+      // UAT batch 4: the bar's live-state classes ride the SAME dispatch that
+      // feeds the rows, so bar and rows can never disagree. npLive gates the
+      // accent pop + equalizer (a videoless Studio's bar stays quiet - nothing
+      // is playing); npPaused freezes the bar equalizer exactly like a row's
+      // isPaused.
+      elPlayer.classList.toggle('npLive', !!nowPlaying);
+      elPlayer.classList.toggle('npPaused', !!(nowPlaying && userPaused));
+      refreshMarquee();
       try {
         document.dispatchEvent(new CustomEvent('music:nowplaying', {
           detail: nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : { key: null, paused: false }
         }));
       } catch (e) { /* CustomEvent guaranteed on every target browser; belt only */ }
     }
+    // UAT batch 4 ("show full song name or scroll animated"): when the bar
+    // title overflows its box, shuttle-scroll it (CSS animation off --mq);
+    // otherwise plain ellipsis. Re-measured on every dispatch + setMin (the
+    // vidopen strip swap changes the title's share of the bar) + resize.
+    // Reduced-motion falls back to the static ellipsis (CSS).
+    function refreshMarquee() {
+      var tEl = elPlayer.querySelector('.bt-st-t');
+      if (!tEl || !tEl.isConnected) return;
+      tEl.classList.remove('mq'); // measure the natural overflow, not a mid-animation state
+      var over = tEl.scrollWidth - tEl.clientWidth;
+      if (over > 4) {
+        tEl.style.setProperty('--mq', '-' + (over + 12) + 'px');
+        tEl.style.setProperty('--mqd', Math.max(6, Math.round((over + 60) / 25)) + 's');
+        tEl.classList.add('mq');
+      } else {
+        tEl.style.removeProperty('--mq');
+        tEl.style.removeProperty('--mqd');
+      }
+    }
+    global.addEventListener('resize', function () { refreshMarquee(); });
     function exitMini() {
       elPlayer.classList.remove('mini');
       document.body.classList.remove('miniplayer');
@@ -484,6 +512,17 @@
       // playback (autoplay=1 rides the row-tap's user activation) without
       // covering the list. Any open first leaves a previous mini state.
       o = o || {};
+      // UAT batch 4 (idempotent open): opening the track that is ALREADY the
+      // now-playing Studio must not rebuild the DOM - a rebuild remounts the
+      // iframe and restarts the audio. The details path (row lead chip /
+      // openRepertoireItem) just EXPANDS the existing Studio instead. Same yt
+      // required: the curated-url save path re-opens the same trackKey with a
+      // NEW video id and genuinely needs the rebuild.
+      if (nowPlaying && t && elPlayer.classList.contains('studio')
+          && trackKey(t) === trackKey(nowPlaying) && (t.yt || null) === (nowPlaying.yt || null)) {
+        if (!o.startMini && elPlayer.classList.contains('mini')) expandStudio();
+        return;
+      }
       exitMini();
       // Rehydrate from the merged track list BEFORE rendering: a bridge payload
       // (songbook's "Solo over it") carries only the song record's yt, so a
@@ -1056,8 +1095,14 @@
         // PLAYER-FEEL v3: the ONE now-playing bar - SSOT rendering, identical
         // in mini and expanded (position:fixed above the tabbar, never moves).
         // The x is the real teardown in every state.
+        // UAT batch 4: a yt bar leads with the SAME 3-bar equalizer primitive
+        // the rows use (.li-eq - one equalizer, Element Consistency), animated
+        // while playing / frozen while paused (.npPaused off dispatch), as the
+        // "actively playing" signal; the title marquees when it overflows
+        // (refreshMarquee below).
         + '<div class="bt-st-head">'
-        + '<div class="bt-st-id"><span class="bt-st-t">' + esc(t.title || '') + '</span>'
+        + (t.yt ? '<span class="li-eq bt-st-bareq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
+        + '<div class="bt-st-id"><span class="bt-st-t"><span class="bt-st-tx">' + esc(t.title || '') + '</span></span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + barStrip
         + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
@@ -1111,6 +1156,7 @@
           if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
           mediaEl.classList.toggle('min', min);
           elPlayer.classList.toggle('vidopen', !min); // strip swaps Hide-video CTA <-> pp/progress (one transport owner)
+          refreshMarquee(); // the swap changes the title's share of the bar
           if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer

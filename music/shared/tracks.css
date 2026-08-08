@@ -655,3 +655,33 @@
   .bt-st-vidmin-gl{font-size:1.05rem;line-height:1;}
   /* Sub-380px phones: icon-only (aria-label carries the name). */
   @media (max-width:379px){ .bt-st-vidmin-lbl{display:none;} }
+
+  /* ---- UAT batch 4: the bar POPS while something is playing ----
+     npLive (set with the same dispatch that lights the rows) gates the accent
+     treatment - the row grammar's accent OUTLINE, plus a soft accent glow so
+     the bar reads as "the live element" at a glance. A videoless Studio's bar
+     stays on the quiet border (nothing is playing - the accent never lies). */
+  .bt-player.npLive .bt-st-head{border-color:var(--accent-ink);
+    box-shadow:0 8px 24px var(--shadow), 0 0 16px var(--accent-deep);}
+  /* The bar's equalizer: the SAME .li-eq primitive the rows render (one
+     equalizer, Element Consistency) - visible + animated while live, frozen
+     while paused (mirrors .isPlaying/.isPaused at the row). */
+  .bt-st-bareq{display:none;flex:0 0 auto;}
+  .bt-player.npLive .bt-st-bareq{display:inline-flex;align-items:flex-end;gap:2px;height:16px;}
+  .bt-st-bareq i{width:3px;height:8px;background:var(--accent-ink);border-radius:1px;transform-origin:50% 100%;}
+  .bt-st-bareq i:nth-child(2){height:14px;}
+  .bt-st-bareq i:nth-child(3){height:10px;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i{animation:liEq 1.1s ease-in-out infinite;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i:nth-child(2){animation-delay:.22s;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i:nth-child(3){animation-delay:.44s;}
+  @media (prefers-reduced-motion:reduce){ .bt-st-bareq i{animation:none !important;} }
+
+  /* ---- UAT batch 4: marquee the full title when it overflows ----
+     JS (refreshMarquee) measures the overflow and sets --mq/--mqd; the shuttle
+     pauses at each end so both ends are readable. Reduced-motion keeps the
+     static ellipsis. */
+  .bt-st-tx{display:inline-block;}
+  .bt-st-t.mq{text-overflow:clip;}
+  .bt-st-t.mq .bt-st-tx{animation:btMq var(--mqd,8s) ease-in-out infinite;}
+  @keyframes btMq{0%,12%{transform:translateX(0);}44%,56%{transform:translateX(var(--mq,0px));}88%,100%{transform:translateX(0);}}
+  @media (prefers-reduced-motion:reduce){ .bt-st-t.mq .bt-st-tx{animation:none;} .bt-st-t.mq{text-overflow:ellipsis;} }

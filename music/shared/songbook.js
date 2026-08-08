@@ -876,11 +876,16 @@
     // stays put. A body tap still opens the full Studio/practice view
     // (openRepertoireItem, unchanged). No video -> YouTube search, as before.
     function repertoireAction(rec) {
-      if ((rec.yt || rec.video) && openStudioCb) {
+      // Guard on the STUDIO TARGET (not rec.yt directly) so "can play" here is
+      // the exact npKeyFor predicate that lights the row - a song whose video
+      // lives on its linked track plays like any other playable row (batch 4:
+      // the setlist path hands raw song records straight in).
+      var t = studioTarget(rec);
+      if (t && (t.yt || t.video) && openStudioCb) {
         var np = getNowPlayingCb ? getNowPlayingCb() : null;
         var nk = npKeyFor(rec);
         if (np && nk && np.key === nk && togglePlayCb) { togglePlayCb(); return; }
-        openStudioCb(studioTarget(rec), { startMini: true });
+        openStudioCb(t, { startMini: true });
         return;
       }
       ytSearch(rec);
@@ -1064,7 +1069,14 @@
           segment: 'library',
           position: setIdx >= 0 ? setIdx + 1 : null,
           inSet: inSet,
-          onActivate: function () { openRepertoireItem(rec); },
+          // UAT 2026-08-08 (batch 4, "make row tap anywhere play"): a body tap
+          // PLAYS a playable row (same transport/startMini routing as the ▶
+          // glyph); the leading chip is the details door. Videoless rows keep
+          // body = details (there is nothing to play).
+          onActivate: npKey != null
+            ? function () { repertoireAction(rec); }
+            : function () { openRepertoireItem(rec); },
+          onLead: function () { openRepertoireItem(rec); },
           onAdd: state === 'add' ? function () { toggleSet(sid); }
             : state === 'seed' ? function () { seedKeyChordAndAdd(rec); }
             : null,
@@ -1982,10 +1994,14 @@
           last: i === STATE.setlist.length - 1,
           nowPlaying: npNowS != null && npKeyS != null && npNowS.key === npKeyS,
           nowPaused: !!(npNowS && npNowS.paused),
-          // A body tap always plays - reorder (grip) and remove (arm-red x) are
-          // their own dedicated handles, off the body, so a tap can't mis-fire
-          // either. No Edit mode to disable opening.
-          onActivate: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
+          // UAT 2026-08-08 (batch 4): a body tap PLAYS a playable row (music-
+          // player behavior); the leading # chip opens the song into the
+          // setlist queue (details). Videoless rows keep body = details.
+          // Reorder (grip) and remove (arm-red x) stay their own handles.
+          onActivate: npKeyS != null
+            ? function () { repertoireAction(s); }
+            : function () { openPractice(sid, STATE.setlist); },
+          onLead: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onRemove: function () { removeFromSet(sid); },
