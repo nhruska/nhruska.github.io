@@ -783,7 +783,11 @@
       // custom) from tracks.js, and opens the Practice Studio for a track /
       // composed key.
       getTracks: function () { return tracksCtl ? tracksCtl.getTracks() : []; },
-      openStudio: function (t) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t); },
+      openStudio: function (t, o) { if (tracksCtl && tracksCtl.openStudio) tracksCtl.openStudio(t, o); },
+      // PLAYER-FEEL: now-playing state + transport for the list rows (play-from-
+      // row toggle + the equalizer row state) - see tracks.js mini-player seam.
+      getNowPlaying: function () { return (tracksCtl && tracksCtl.nowPlaying) ? tracksCtl.nowPlaying() : null; },
+      togglePlay: function () { if (tracksCtl && tracksCtl.togglePlay) tracksCtl.togglePlay(); },
       // Fallback (no-op when openStudio is wired): seed the finder with a built key.
       seedBackingKey: function (root, mode) { if (tracksCtl && tracksCtl.seedKey) tracksCtl.seedKey(root, mode); },
       el: {

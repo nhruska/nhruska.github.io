@@ -550,6 +550,21 @@
     // the Practice Studio (solo scale + chords + circle) for a track or a composed key.
     var getTracks = opts.getTracks || function () { return []; };
     var openStudioCb = opts.openStudio || null;
+    // PLAYER-FEEL: now-playing state + transport from the tracks controller.
+    // getNowPlayingCb() -> {key: trackKey, paused} | null; togglePlayCb() routes
+    // through the Studio strip's real pp button. Both optional - rows render
+    // exactly as before when the host doesn't wire them.
+    var getNowPlayingCb = opts.getNowPlaying || null;
+    var togglePlayCb = opts.togglePlay || null;
+    // The stable identity a row shares with the Studio's now-playing track:
+    // trackKey of the row's OWN studio target. Null for rows that can't be the
+    // player's content (no video), so they never light up.
+    function npKeyFor(rec) {
+      if (!global.Tracks || !global.Tracks.trackKey) return null;
+      var t = studioTarget(rec);
+      if (!t || !(t.yt || t.video)) return null;
+      return global.Tracks.trackKey(t);
+    }
     // M2: the unified Add/Edit form (repertoire-form.js) - one mounted overlay reused
     // for create + edit of custom ("Mine") songs/tracks. Absent (no-op guarded below)
     // if the script didn't load, so the rest of the app still works.
@@ -848,12 +863,42 @@
       if (openStudioCb && (p.studio || rec._track)) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
-    // The ▶/↗ action button: a curated video opens the Studio (video + solo HUD);
-    // otherwise it's a YouTube search for a backing track.
+    // The ▶/↗ action button - play-from-row (PLAYER-FEEL): if this row IS the
+    // track in the player, the tap is transport (toggle play/pause in place);
+    // otherwise it starts the track with the Studio auto-minimized to the
+    // bottom bar (startMini), so play feels like a music player - the list
+    // stays put. A body tap still opens the full Studio/practice view
+    // (openRepertoireItem, unchanged). No video -> YouTube search, as before.
     function repertoireAction(rec) {
-      if ((rec.yt || rec.video) && openStudioCb) { openStudioCb(studioTarget(rec)); return; }
+      if ((rec.yt || rec.video) && openStudioCb) {
+        var np = getNowPlayingCb ? getNowPlayingCb() : null;
+        var nk = npKeyFor(rec);
+        if (np && nk && np.key === nk && togglePlayCb) { togglePlayCb(); return; }
+        openStudioCb(studioTarget(rec), { startMini: true });
+        return;
+      }
       ytSearch(rec);
     }
+    // PLAYER-FEEL: live now-playing row state as a CLASS SWEEP over the rows
+    // already in the DOM (rows carry data-npkey; list-item.js renders both the
+    // ▶ glyph and the equalizer, classes flip which shows). Deliberately not a
+    // re-render: rebuilding the list on every play/pause would jump the scroll
+    // under the user's thumb.
+    function refreshNowPlaying(detail) {
+      var key = detail && detail.key;
+      var paused = !!(detail && detail.paused);
+      [el.songsList, el.setBody].forEach(function (host) {
+        if (!host) return;
+        host.querySelectorAll('[data-npkey]').forEach(function (row) {
+          var on = !!key && row.getAttribute('data-npkey') === key;
+          row.classList.toggle('isPlaying', on);
+          row.classList.toggle('isPaused', on && paused);
+          var actEl = row.querySelector('.li-act');
+          if (actEl) actEl.setAttribute('aria-label', on ? (paused ? 'Paused - tap to play' : 'Playing - tap to pause') : 'Video');
+        });
+      });
+    }
+    document.addEventListener('music:nowplaying', function (e) { refreshNowPlaying(e.detail || {}); });
     // Display-only record override shared by EVERY ListItem render site (library
     // + setlist - codex #91 caught the setlist rendering raw records):
     // - artist sentinel 'search' (tracks.json placeholder = "resolve via search")
@@ -987,6 +1032,8 @@
         // would reorder against an order that isn't on screen - an affordance
         // that lies. #songsList hides it in CSS; the Setlist view keeps it.
         var setIdx = sid == null ? -1 : STATE.setlist.indexOf(sid);
+        var npNow = getNowPlayingCb ? getNowPlayingCb() : null;
+        var npKey = npKeyFor(rec);
         var node = global.ListItem.render(displayRecFor(rec), {
           // Stays segment:'library' deliberately. An earlier cut rendered in-set
           // rows here as 'set' rows - which gave them the setlist's red remove
@@ -1010,8 +1057,11 @@
           onAddBlocked: canAdd ? null : function () {
             showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
           },
-          onAction: function () { repertoireAction(rec); }
+          onAction: function () { repertoireAction(rec); },
+          nowPlaying: npNow != null && npKey != null && npNow.key === npKey,
+          nowPaused: !!(npNow && npNow.paused)
         });
+        if (npKey) node.setAttribute('data-npkey', npKey);
         el.songsList.appendChild(node);
         if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
       });
@@ -1904,11 +1954,15 @@
         var s = songById(sid); if (!s) return;
         // SSOT: same renderer as Songs/Tracks, in 'set' mode - always reorderable
         // (grip) + removable (arm-red x); a body tap always plays.
+        var npNowS = getNowPlayingCb ? getNowPlayingCb() : null;
+        var npKeyS = npKeyFor(s);
         var setRow = global.ListItem.render(displayRecFor(s), {
           segment: 'set',
           position: i + 1,
           first: i === 0,
           last: i === STATE.setlist.length - 1,
+          nowPlaying: npNowS != null && npKeyS != null && npNowS.key === npKeyS,
+          nowPaused: !!(npNowS && npNowS.paused),
           // A body tap always plays - reorder (grip) and remove (arm-red x) are
           // their own dedicated handles, off the body, so a tap can't mis-fire
           // either. No Edit mode to disable opening.
@@ -1918,6 +1972,7 @@
           onRemove: function () { removeFromSet(sid); },
           onAction: function () { ytSearch(s); }
         });
+        if (npKeyS) setRow.setAttribute('data-npkey', npKeyS);
         body.appendChild(setRow);
         // Drag-to-reorder is always available now, initiated from the row's grip.
         wireSetlistDrag(setRow, i);

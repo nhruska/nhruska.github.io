@@ -299,6 +299,69 @@
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.innerHTML = '';
+      exitMini();
+      nowPlaying = null; userPaused = false;
+      dispatchNowPlaying();
+    }
+
+    /* ---- global mini-player (PLAYER-FEEL): playback survives Studio close ----
+     * The Studio overlay gains a SECOND collapse level on elPlayer itself:
+     * .bt-player.mini re-lays the merged header strip as a persistent bottom
+     * bar (title + play/pause + progress + x) while the iframe stays mounted
+     * (clipped, still audible - the same never-remove contract as
+     * .bt-st-media.min). Dismissing a video-backed Studio MINIMIZES it
+     * (dismissStudio below replaces closePlayer as the NavHistory close fn);
+     * the bar's x is the real teardown. No DOM is rebuilt or reparented on
+     * minimize/expand - the one Studio DOM just changes shape via CSS. */
+    var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
+    var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
+    function dispatchNowPlaying() {
+      try {
+        document.dispatchEvent(new CustomEvent('music:nowplaying', {
+          detail: nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : { key: null, paused: false }
+        }));
+      } catch (e) { /* CustomEvent guaranteed on every target browser; belt only */ }
+    }
+    function exitMini() {
+      elPlayer.classList.remove('mini');
+      document.body.classList.remove('miniplayer');
+      elPlayer.onclick = null;
+    }
+    function minimizeStudio() {
+      if (!nowPlaying) { closePlayer(); return; }
+      if (global.Sound) global.Sound.stopAll();       // synth audition stops; the YT iframe keeps playing
+      studioSound = null;
+      if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
+      studioAudioWarm = false;
+      elPlayer.classList.add('mini');
+      document.body.classList.add('miniplayer');
+      // Bar-body tap expands back to the full Studio; the pp button and the x
+      // keep their own handlers (excluded here so a control tap never expands).
+      elPlayer.onclick = function (e) {
+        if (!elPlayer.classList.contains('mini')) return;
+        if (e.target.closest('[data-nppp],[data-minix],[data-npprog]')) return;
+        expandStudio();
+      };
+      dispatchNowPlaying();
+    }
+    function expandStudio() {
+      exitMini();
+      if (window.NavHistory) window.NavHistory.open('studio', dismissStudio);
+      dispatchNowPlaying();
+    }
+    // The registered close fn for a Studio open: a video-backed Studio
+    // minimizes on back/dismiss (playback survives); a videoless Studio closes
+    // fully as before. The history slot pops either way - the mini bar is
+    // non-modal and re-registers a slot only on expand.
+    function dismissStudio() {
+      if (nowPlaying && elPlayer.classList.contains('studio')) minimizeStudio();
+      else closePlayer();
+    }
+    // Controller-facing transport: routes through the strip's real pp button so
+    // icon, paused-intent, and the nowplaying event stay in one code path.
+    function togglePlayCtl() {
+      var b = elPlayer.querySelector('[data-nppp]');
+      if (b) b.click();
     }
 
     /* ---- the Practice Studio: the track playing + the theory to solo over it ----
@@ -415,7 +478,13 @@
         return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
       }).join(' ');
     }
-    function openStudio(t) {
+    function openStudio(t, o) {
+      // o.startMini (PLAYER-FEEL): build + wire the full Studio, then minimize
+      // to the bottom bar in the same call - the play-from-row path starts
+      // playback (autoplay=1 rides the row-tap's user activation) without
+      // covering the list. Any open first leaves a previous mini state.
+      o = o || {};
+      exitMini();
       // Rehydrate from the merged track list BEFORE rendering: a bridge payload
       // (songbook's "Solo over it") carries only the song record's yt, so a
       // curated overlay url saved for the SAME track would be silently ignored
@@ -814,6 +883,10 @@
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
+          // PLAYER-FEEL: the mini bar's real teardown. CSS-hidden except in
+          // .bt-player.mini (no [hidden] attr - an author display rule would
+          // override it, the D-TOAST-HOST class of bug).
+          + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
         // S-STUDIO-NOVID (operator device-test 2026-07-26): a videoless track is
         // for soloing/exploring over the progression - the circle + fretboard ARE
         // the product; a backing YouTube track is OPTIONAL rehearsal support. The
@@ -1046,6 +1119,11 @@
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
           ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+          // PLAYER-FEEL: the strip's pp is the one honest play-state authority
+          // (YT never reports under blocked egress) - mirror it to the
+          // mount-scope intent + tell the list rows.
+          userPaused = paused;
+          dispatchNowPlaying();
         };
         // Now-playing PROGRESS BAR (operator UAT: title text dropped - the pinned
         // header names the track; show playback position + total time at a glance
@@ -1604,8 +1682,21 @@
         var updated = opts.onSetVideo ? opts.onSetVideo(t.id, id) : null;
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
-      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else closePlayer(); };
-      if (window.NavHistory) window.NavHistory.open('studio', closePlayer);
+      elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
+      // PLAYER-FEEL: a yt-backed Studio is the app's now-playing surface - track
+      // it, and register dismissStudio (minimize, not teardown) as the close fn
+      // so back/dismiss keeps the music going as the bottom bar. A videoless
+      // Studio dismisses to a full close exactly as before (dismissStudio picks).
+      nowPlaying = t.yt ? t : null;
+      userPaused = false;
+      var miniX = elPlayer.querySelector('[data-minix]');
+      if (miniX) miniX.onclick = function (e) { e.stopPropagation(); closePlayer(); };
+      if (o.startMini && nowPlaying) {
+        minimizeStudio();
+      } else {
+        if (window.NavHistory) window.NavHistory.open('studio', dismissStudio);
+        dispatchNowPlaying();
+      }
     }
 
     // The harmony-teacher HUD (scale + chords-in-key + circle) is the point - the
@@ -1909,8 +2000,13 @@
     // merged repertoire is built from.
     return {
       seedKey: seedKey,
-      openStudio: function (t) { openStudio(t); },
-      getTracks: function () { return state.tracks.slice(); }
+      openStudio: function (t, o) { openStudio(t, o); },
+      getTracks: function () { return state.tracks.slice(); },
+      // PLAYER-FEEL controller surface: the list rows key their now-playing
+      // state off this ({key: trackKey, paused} | null) and toggle transport
+      // without opening the overlay.
+      nowPlaying: function () { return nowPlaying ? { key: trackKey(nowPlaying), paused: userPaused } : null; },
+      togglePlay: togglePlayCtl
     };
   }
 

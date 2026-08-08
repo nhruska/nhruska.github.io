@@ -188,7 +188,10 @@
     var cells = metaCells(item);
 
     var root = (global.document).createElement('div');
-    root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '');
+    root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '')
+      // PLAYER-FEEL initial state; live updates arrive as a class sweep from the
+      // caller's music:nowplaying listener (songbook.js refreshNowPlaying).
+      + (opts.nowPlaying ? ' isPlaying' : '') + (opts.nowPlaying && opts.nowPaused ? ' isPaused' : '');
 
     // Right tag is KEY-FIRST and never silently a year: the accent key-slot is
     // where a player's eye reads "the key". Unknown -> a quiet "Key?" badge
@@ -222,11 +225,18 @@
     // measured 139px against 89px for one without - a 56% taller row for one
     // badge. It moves to the trailing rail below, where a 44px control (the +)
     // already sets the row height, so the floor costs nothing.
+    // PLAYER-FEEL: the play action always renders BOTH the ▶ glyph and a 3-bar
+    // equalizer; .isPlaying on the row flips which one shows (CSS), so live
+    // now-playing updates are a class sweep on existing rows - no re-render,
+    // no scroll jump. isPaused freezes the bars (still the equalizer - the row
+    // stays "the one in the player" while paused).
     var actHtml = act
       ? '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
         + (act.external ? ' title="Opens YouTube"' : '')
         + ' aria-label="' + esc(act.label) + '">'
-        + esc(act.glyph) + '</span>'
+        + '<span class="li-glyph">' + esc(act.glyph) + '</span>'
+        + (act.kind === 'play' ? '<span class="li-eq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
+        + '</span>'
       : '';
 
     // Trailing affordances. A set row is ALWAYS reorderable + removable now
