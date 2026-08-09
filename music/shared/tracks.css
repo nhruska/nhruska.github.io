@@ -113,6 +113,16 @@
      The overlay fills the viewport; head + frame are fixed, the body scrolls so the
      iframe keeps playing while you explore the theory. */
   .bt-player.studio{padding:0;align-items:stretch;justify-content:stretch;}
+  /* PLAYER-FEEL v3 -> v5 (UAT batch 5, "can see rows behind above now
+     playing"): the EXPANDED Studio sheet is FULL-inset - nothing behind it can
+     leak through the band around the bar. The tabbar stays visible + LIVE by
+     painting ABOVE the sheet instead: body.studioopen raises it to z-55
+     (songbook.css) - above the sheet's z-50, below every real modal (perform
+     60, invModal/maxOv 70, edit form 75). The bar (fixed, above) floats over
+     the sheet's lower region; the scrollable panes clear it via
+     padding-bottom (bar top = safe+120; +16 breathing). */
+  .bt-player.studio:not(.mini){inset:0;}
+  .bt-player.studio:not(.mini) .bt-st-body{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 152px);}
   /* Default = single centered column matching the app shell width (540px) so the
      Studio reads like the rest of the app on desktop/large browsers. The
      landscape-phone two-pane split (short-height media query below) overrides this. */
@@ -121,20 +131,48 @@
   /* Header + video pane. Portrait: a normal top-pinned column (head + frame stack,
      body scrolls below). Landscape: the fixed left pane of the two-pane split. */
   .bt-st-stage{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;}
-  /* S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): the header row and the
-     now-playing strip merged into ONE row - [back] [title/key] [play/pause]
-     [progress] [time] [hamburger] (video) or [back] [title/key] [Optional]
-     [hamburger] (no video). position:relative anchors the .bt-st-menu fly-out
-     (now a header child) under the header's bottom-right. flex-wrap:nowrap keeps
-     it one line; gap trimmed to 8px to fit the extra controls at 412px. */
-  .bt-st-head{display:flex;align-items:center;gap:8px;padding:8px 12px;flex:0 0 auto;
-    position:relative;flex-wrap:nowrap;border-bottom:1px solid var(--line-strong);}
-  /* The id block (title stacked over key) and the progress bar share the row's
+  /* PLAYER-FEEL v3 (UAT 2026-08-08, "the same now playing element... don't
+     move it"): ONE now-playing bar, SSOT-rendered - [title/meta] [pp|Hide-video]
+     [progress] [time] [x] - position:fixed in ONE slot above the tabbar in
+     EVERY state (mini and expanded). The Studio is a SHEET that opens above it
+     (raised bottom inset on .bt-player.studio:not(.mini), below); the bar
+     itself never relocates, re-renders, or changes shape between states. Slot,
+     margins, and radius are the old mini bar's - the mini look IS the look. */
+  /* UAT batch 7 ("stack progress bar and time codes to recover horiz space"):
+     the bar is TWO stacked rows - controls (barrow) over progress+time
+     (progrow) - so the title keeps its width beside the transport. Height goes
+     auto (min 56); the slot's BOTTOM never moves. */
+  .bt-st-head{position:fixed;left:0;right:0;bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 64px);
+    z-index:60;height:auto;min-height:56px;margin:0 auto;width:calc(100% - 20px);max-width:540px;box-sizing:border-box;
+    display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:5px 10px 7px;pointer-events:auto;
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;
+    box-shadow:0 8px 24px var(--shadow);}
+  .bt-st-barrow{display:flex;align-items:center;gap:4px;min-height:44px;flex-wrap:nowrap;}
+  .bt-st-progrow{display:flex;align-items:center;gap:8px;}
+  /* The progrow stays in EVERY state (don't-move: hiding it under vidopen made
+     the bar shorter there - the SSOT bar must keep one constant shape; a
+     redundant progress readout is harmless, a morphing bar is not). */
+  /* The sheet's slim top row (S-STUDIO-HEADERMERGE evolved): back leading (F32,
+     the app's standard back affordance - the Spotify collapse-top-left grammar)
+     + the hamburger trailing. position:relative anchors the .bt-st-menu fly-out
+     under it, dropping DOWN over the media/body. */
+  .bt-st-topbar{display:flex;align-items:center;gap:8px;
+    padding:4px 8px;flex:0 0 auto;position:relative;border-bottom:1px solid var(--line-strong);}
+  /* Right-cluster via auto margins (v6): the first right-side control takes
+     margin-left:auto - shuffle when present, else the hamburger. */
+  .bt-st-topbar .bt-st-np-menu{margin-left:auto;}
+  .bt-st-shuffle{margin-left:auto;flex:0 0 auto;min-width:44px;min-height:44px;
+    border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);
+    border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;font-family:inherit;}
+  .bt-st-shuffle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  .bt-st-shuffle ~ .bt-st-np-menu{margin-left:0;}
+  /* The id block (title stacked over key) and the progress bar share the bar's
      flexible space; the id gets the larger share (flex:2) so the title stays
      readable, the progress bar the smaller (its own flex:1, below). */
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:2 1 0;}
-  .bt-st-t{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .bt-st-meta{font-size:.78rem;color:var(--accent-ink);margin-top:1px;}
+  .bt-st-t{font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bt-st-meta{font-size:.72rem;color:var(--accent-ink);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   /* The dismiss control is the standard back affordance the rest of the app uses
      (song view's #backLib "iconBtn"): .bt-st-back composes the shared .iconBtn base
      (songbook.css: 44x44, --r-btn-sm radius, accent-ink glyph) with no
@@ -167,22 +205,33 @@
     padding:6px 14px;border-radius:999px;font-family:inherit;font-size:.66rem;letter-spacing:.03em;
     line-height:1;cursor:pointer;border:1px solid var(--accent-ink);background:transparent;color:var(--accent-ink);}
   .bt-st-cd-btn.bt-st-cd-keep{font-weight:600;}
-  /* Now-playing controls, S-STUDIO-HEADERMERGE (operator UAT 2026-07-27): these
-     used to live in a separate .bt-st-np strip BELOW the header; they now sit
-     INSIDE .bt-st-head as one merged row (the strip wrapper + its "No backing
-     track" title are retired). The play/pause + hamburger keep their surface-2
-     fill so they read on the plain header surface. */
+  /* Now-playing controls (S-STUDIO-HEADERMERGE -> PLAYER-FEEL v3): pp/progress/
+     time live on the ONE fixed bar (.bt-st-head); the hamburger lives on the
+     sheet's .bt-st-topbar. Both keep their surface-2 fill so they read on
+     their plain surfaces. */
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
-    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;
+    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1rem;
     display:flex;align-items:center;justify-content:center;}
-  .bt-st-np-state{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--accent-ink);}
+  /* .bt-st-np-state (the no-video "Optional" pill) retired - UAT 2026-08-08:
+     it occupied the transport slot and read as noise; the hamburger menu's
+     hint carries the meaning now. */
   /* Operator UAT (2026-07-26): a PLAYBACK PROGRESS BAR + total time (relative
      position at a glance), fill driven by YT infoDelivery time in wireNowPlaying.
      In the merged header it takes the smaller share of the flexible space (the id
      block wins at flex:2, above) so the title stays readable at 412px. */
-  .bt-st-np-prog{flex:1 1 0;min-width:40px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+  /* UAT batch 6 ("can't see the total length... at a glance"): the TRACK
+     carries an accent border so the bar's full extent reads even while the
+     unplayed portion is empty. box-sizing keeps the 8px total height. */
+  .bt-st-np-prog{flex:1 1 0;min-width:36px;height:8px;border-radius:4px;background:var(--surface-2);
+    border:1px solid var(--accent-dim);box-sizing:border-box;overflow:hidden;}
   .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
+  /* prev/next (UAT batch 6): compact steps flanking the pp, same surface-2
+     control grammar. 44px floor both axes. */
+  .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
+    font-size:.9rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
+  .bt-st-np-step:active{transform:scale(.94);}
+
   .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
     color:var(--accent-ink);min-width:34px;text-align:right;}
   .bt-st-np-time:empty{display:none;}
@@ -352,6 +401,9 @@
     .bt-st-stage{flex:0 0 44%;max-width:44%;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:1px solid var(--line-strong);}
     .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
+    /* PLAYER-FEEL v5: the stage pane scrolls in this split - it needs its own
+       bar clearance (the full-inset sheet runs under the fixed bar). */
+    .bt-player.studio:not(.mini) .bt-st-stage{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 152px);}
   }
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
@@ -595,3 +647,81 @@
   .legendSwatch{flex:0 0 auto;display:flex;}
   .legendDot{display:block;}
   .legendLbl{font-size:.72rem;color:var(--txt-soft);line-height:1.3;}
+
+  /* ---- PLAYER-FEEL v3: mini = the SHEET is gone, the bar remains ----
+     The bar (.bt-st-head, position:fixed above) is already in its one slot and
+     needs nothing here. Mini just removes the sheet: zero-footprint overlay,
+     hidden topbar/body/stage chrome, media CLIPPED (never removed - the audio
+     keeps playing, the proven .bt-st-media.min contract). The x on the bar is
+     the real teardown in EVERY state (wired in openStudio); bar-body tap
+     expands only in mini (cursor cue below). */
+  .bt-st-minix{display:inline-flex;align-items:center;justify-content:center;
+    width:44px;height:44px;flex:0 0 auto;border:0;background:transparent;color:var(--txt-soft);
+    font-size:1.15rem;line-height:1;cursor:pointer;font-family:inherit;}
+  .bt-st-minix:hover{color:var(--accent-ink);}
+  .bt-player.mini{inset:auto 0 0 0;height:0;padding:0;background:transparent;display:block;
+    overflow:visible;pointer-events:none;}
+  .bt-player.mini .bt-st-head{pointer-events:auto;cursor:pointer;}
+  .bt-player.mini .bt-studio{height:auto;max-width:none;margin:0;background:transparent;border:0;}
+  .bt-player.mini .bt-st-topbar{display:none;}
+  .bt-player.mini .bt-st-body{display:none;}
+  /* flex/max-width/border/overflow neutralize the landscape two-pane split
+     rules leaking into the (invisible) stage shell. */
+  .bt-player.mini .bt-st-stage{flex:0 0 auto;min-width:0;max-width:none;border-right:0;overflow:visible;}
+  .bt-player.mini .bt-st-stage > :not(.bt-st-media){display:none;}
+  .bt-player.mini .bt-st-media{max-height:0;overflow:hidden;}
+
+  /* One-transport-owner (UAT 2026-08-08, "three play buttons"): while the video
+     is EXPANDED (.vidopen, kept honest by setMin), YouTube's own controls own
+     transport - the bar's pp/progress/time hide and the freed slot carries
+     the Hide-video CTA. Hiding the video hands transport (back) to the bar.
+     Mini is exempt (:not(.mini)): the bar ALWAYS owns transport when the video
+     surface is off-screen. */
+  .bt-st-vidmin{display:none;}
+  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp{display:none;}
+  .bt-player.studio.vidopen:not(.mini) .bt-st-vidmin{display:inline-flex;align-items:center;gap:7px;
+    min-height:44px;padding:0 14px;flex:0 0 auto;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
+    font-family:inherit;font-size:.78rem;font-weight:600;line-height:1;}
+  .bt-st-vidmin:active{transform:scale(.96);}
+  .bt-st-vidmin-gl{font-size:1.05rem;line-height:1;}
+  /* Sub-380px phones: icon-only (aria-label carries the name). */
+  @media (max-width:379px){ .bt-st-vidmin-lbl{display:none;} }
+
+  /* ---- UAT batch 4: the bar POPS while something is playing ----
+     npLive (set with the same dispatch that lights the rows) gates the accent
+     treatment - the row grammar's accent OUTLINE, plus a soft accent glow so
+     the bar reads as "the live element" at a glance. A videoless Studio's bar
+     stays on the quiet border (nothing is playing - the accent never lies). */
+  .bt-player.npLive .bt-st-head{border-color:var(--accent-ink);
+    box-shadow:0 8px 24px var(--shadow), 0 0 16px var(--accent-deep);}
+  /* The bar's equalizer: the SAME .li-eq primitive the rows render (one
+     equalizer, Element Consistency) - visible + animated while live, frozen
+     while paused (mirrors .isPlaying/.isPaused at the row). */
+  .bt-st-bareq{display:none;flex:0 0 auto;}
+  .bt-player.npLive .bt-st-bareq{display:inline-flex;align-items:flex-end;gap:2px;height:16px;}
+  .bt-st-bareq i{width:3px;height:8px;background:var(--accent-ink);border-radius:1px;transform-origin:50% 100%;}
+  .bt-st-bareq i:nth-child(2){height:14px;}
+  .bt-st-bareq i:nth-child(3){height:10px;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i{animation:liEq 1.1s ease-in-out infinite;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i:nth-child(2){animation-delay:.22s;}
+  .bt-player.npLive:not(.npPaused) .bt-st-bareq i:nth-child(3){animation-delay:.44s;}
+  @media (prefers-reduced-motion:reduce){ .bt-st-bareq i{animation:none !important;} }
+
+  /* ---- UAT batch 4 -> 5: LOOP marquee for overflowing bar titles ----
+     The real music-player marquee ("slowly left only and wrap around... no
+     switching direction"): refreshMarquee appends a second copy of the title
+     (.bt-st-tx2, 48px wrap gap) and slides the pair left by exactly one
+     copy+gap, linear + infinite - the wrap point is invisible. A short initial
+     delay leaves the title readable before the first slide. Reduced-motion:
+     static ellipsis, clone hidden. */
+  .bt-st-tx{display:inline-block;white-space:nowrap;}
+  .bt-st-tx2{display:inline-block;padding-left:48px;}
+  .bt-st-t.mq{text-overflow:clip;}
+  .bt-st-t.mq .bt-st-tx{animation:btMq var(--mqd,10s) linear infinite;animation-delay:1.2s;}
+  @keyframes btMq{from{transform:translateX(0);}to{transform:translateX(var(--mq,0px));}}
+  @media (prefers-reduced-motion:reduce){
+    .bt-st-t.mq .bt-st-tx{animation:none;}
+    .bt-st-t.mq{text-overflow:ellipsis;}
+    .bt-st-tx2{display:none;}
+  }

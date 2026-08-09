@@ -1,0 +1,145 @@
+{
+  "name": "mini-player",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-act"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "assertVisible",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "assertVisible",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "assertVisible",
+      "selector": ".bt-player.mini [data-minix]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "play-from-row mounted THIS track's embed (mechanism fired, not a stray overlay)",
+      "js": "(function(){var f=document.querySelector('.bt-player iframe');return !!f&&f.src.indexOf('/embed/ifOUmWAQups')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the playing row lights up (isPlaying class + visible equalizer), no list re-render needed",
+      "js": "(function(){var r=document.querySelector('[data-npkey=\"reggae backing track in a major|petti music studios|A|major\"]');if(!r||!r.classList.contains('isPlaying'))return false;var eq=r.querySelector('.li-eq');if(!eq)return false;var b=eq.getBoundingClientRect();return b.width>0&&b.height>0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the mini bar clears the tabbar and the last list rows stay reachable (body.miniplayer padding)",
+      "js": "(function(){if(!document.body.classList.contains('miniplayer'))return false;var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44;})()"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape: the bar keeps its one slot (bottom-pinned card, no two-pane leak)",
+      "js": "(function(){var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44&&bb.width>=300;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mini-bar-landscape"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "screenshot",
+      "name": "mini-bar-412"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "bar tap re-expands the SAME Studio DOM (iframe survives - never rebuilt)",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('studio')&&!p.classList.contains('mini')&&!!p.querySelector('iframe');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "expanded-412"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "back MINIMIZES a video-backed Studio (playback survives dismissal - the player-feel contract)",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('mini')&&!!p.querySelector('iframe');})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "pp toggle from the bar freezes the row equalizer (isPaused rides the class sweep)",
+      "js": "(function(){var r=document.querySelector('[data-npkey=\"reggae backing track in a major|petti music studios|A|major\"]');return !!r&&r.classList.contains('isPlaying')&&r.classList.contains('isPaused');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "paused-412"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-minix]"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player .bt-st-head",
+      "state": "hidden",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "the bar's x is the real teardown: overlay empty, no row lit, page space returned",
+      "js": "(function(){var p=document.querySelector('.bt-player');return !p.classList.contains('on')&&p.innerHTML===''&&!document.querySelector('.listItem.isPlaying')&&!document.body.classList.contains('miniplayer');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "closed-412"
+    }
+  ]
+}

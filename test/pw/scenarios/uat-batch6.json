@@ -1,0 +1,84 @@
+{
+  "name": "uat-batch6",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "waitFor", "selector": "#segJams", "timeoutMs": 8000 },
+    { "action": "tap", "selector": "#segJams" },
+    { "action": "waitFor", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']", "timeoutMs": 8000 },
+    { "action": "tap", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body" },
+    { "action": "waitFor", "selector": ".bt-player.mini .bt-st-head", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.2: prev/next transport buttons live on the bar (44px floor)",
+      "js": "(function(){var p=document.querySelector('[data-npprev]');var n=document.querySelector('[data-npnext]');if(!p||!n||p.offsetParent===null||n.offsetParent===null)return false;var pr=p.getBoundingClientRect(),nr=n.getBoundingClientRect();return pr.width>=44&&pr.height>=44&&nr.width>=44&&nr.height>=44;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.5: the progress TRACK carries an accent border so total extent reads at a glance",
+      "js": "(function(){var pr=document.querySelector('[data-npprog]');if(!pr)return false;var cs=getComputedStyle(pr);return cs.borderTopWidth==='1px'&&cs.borderTopStyle==='solid'&&cs.height==='8px';})()"
+    },
+    { "action": "screenshot", "name": "transport-bar" },
+    { "action": "tap", "selector": "[data-npnext]" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.2b: NEXT advances to the next playable row in the current view (Mellow Reggae's embed mounts, its row lights)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');if(!f||f.src.indexOf('/embed/hg6kcvOH5I4')<0)return false;if(!p.classList.contains('mini'))return false;var r=document.querySelector('[data-npkey=\"mellow reggae jam in a major|subfunc jam tracks|A|major\"]');return !!r&&r.classList.contains('isPlaying');})()"
+    },
+    { "action": "tap", "selector": "[data-npprev]" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.2c: PREV steps back (Reggae's embed returns)",
+      "js": "(function(){var f=document.querySelector('.bt-player iframe');return !!f&&f.src.indexOf('/embed/ifOUmWAQups')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.1/6.4: a synthesized track-END auto-advances to the next playable in the current filter (the real end-event chain, not a button)",
+      "js": "(function(){window.postMessage(JSON.stringify({event:'onStateChange',info:0}),'*');return true;})()"
+    },
+    { "action": "wait", "ms": 800 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.4b: after the end event the NEXT track is mounted and lit - playback continued through the list",
+      "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');if(!f||f.src.indexOf('/embed/hg6kcvOH5I4')<0)return false;var r=document.querySelector('[data-npkey=\"mellow reggae jam in a major|subfunc jam tracks|A|major\"]');return !!r&&r.classList.contains('isPlaying')&&p.classList.contains('mini');})()"
+    },
+    { "action": "screenshot", "name": "auto-advanced" },
+    { "action": "tap", "selector": ".bt-player.mini .bt-st-t" },
+    { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.3: the shuffle toggle lives on the sheet topbar, off by default",
+      "js": "(function(){var s=document.querySelector('.bt-st-topbar [data-shuffle]');return !!s&&s.offsetParent!==null&&s.getAttribute('aria-pressed')==='false';})()"
+    },
+    { "action": "tap", "selector": "[data-shuffle]" },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.3b: shuffle ON - accent state + persisted",
+      "js": "(function(){var s=document.querySelector('[data-shuffle]');return !!s&&s.classList.contains('on')&&s.getAttribute('aria-pressed')==='true'&&localStorage.getItem('music.shuffle.v1')==='1';})()"
+    },
+    { "action": "screenshot", "name": "shuffle-on" },
+    { "action": "tap", "selector": "[data-npnext]" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-6.3c: NEXT under shuffle jumps to a DIFFERENT pool member (embed changed, still expanded)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');return !!f&&f.src.indexOf('/embed/hg6kcvOH5I4')<0&&f.src.indexOf('/embed/')>=0&&p.classList.contains('studio')&&!p.classList.contains('mini');})()"
+    },
+    { "action": "tap", "selector": "[data-shuffle]" },
+    {
+      "action": "evalAssert",
+      "label": "shuffle OFF again (persisted off)",
+      "js": "(function(){return localStorage.getItem('music.shuffle.v1')==='0';})()"
+    },
+    { "action": "tap", "selector": ".bt-player .bt-st-head [data-minix]" },
+    { "action": "waitFor", "selector": ".bt-player .bt-st-head", "state": "hidden", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "teardown clean",
+      "js": "(function(){var p=document.querySelector('.bt-player');return !p.classList.contains('on')&&p.innerHTML==='';})()"
+    }
+  ]
+}

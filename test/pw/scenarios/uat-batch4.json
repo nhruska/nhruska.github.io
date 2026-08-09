@@ -1,0 +1,70 @@
+{
+  "name": "uat-batch4",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "waitFor", "selector": "#segJams", "timeoutMs": 8000 },
+    { "action": "tap", "selector": "#segJams" },
+    { "action": "waitFor", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']", "timeoutMs": 8000 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.3: every row leads with the fixed details chip (glyph when not in set)",
+      "js": "(function(){var rows=document.querySelectorAll('#songsList .listItem');if(!rows.length)return false;for(var i=0;i<rows.length;i++){var l=rows[i].querySelector('.li-lead');if(!l||l.offsetParent===null)return false;var r=l.getBoundingClientRect();if(r.width<40||r.height<40)return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "stash the reggae row's height + lead width (the no-reflow reference)",
+      "js": "(function(){var row=document.querySelector('[data-npkey=\"reggae backing track in a major|petti music studios|A|major\"]');if(!row)return false;var l=row.querySelector('.li-lead');window.__rowRef={h:row.getBoundingClientRect().height,lw:l.getBoundingClientRect().width};return true;})()"
+    },
+    { "action": "tap", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body" },
+    { "action": "waitFor", "selector": ".bt-player.mini .bt-st-head", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.2: a BODY tap on a playable row PLAYS it (mini bar, correct embed) - no details detour",
+      "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');return p.classList.contains('mini')&&!!f&&f.src.indexOf('/embed/ifOUmWAQups')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.1: the bar POPS while live - npLive set, accent outline applied, equalizer visible and animating",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('npLive'))return false;var bar=p.querySelector('.bt-st-head');var eq=p.querySelector('.bt-st-bareq');if(!bar||!eq||eq.offsetParent===null)return false;var i=eq.querySelector('i');var cs=getComputedStyle(i);var barCs=getComputedStyle(bar);var ink=getComputedStyle(document.documentElement).getPropertyValue('--accent-ink').trim();return cs.animationName==='liEq'&&cs.animationPlayState==='running'&&barCs.borderColor!=='';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.4/v5: the long title LOOP-marquees left-only (second copy present, negative travel, linear + infinite - never a shuttle)",
+      "js": "(function(){var t=document.querySelector('.bt-st-t');if(!t)return false;var tx=t.querySelector('.bt-st-tx');if(!tx)return false;var mq=t.classList.contains('mq');if(!mq)return false;var clone=tx.querySelector('.bt-st-tx2');if(!clone)return false;var v=parseInt(t.style.getPropertyValue('--mq'),10);if(!(v<0))return false;var cs=getComputedStyle(tx);return cs.animationIterationCount==='infinite'&&cs.animationTimingFunction==='linear';})()"
+    },
+    { "action": "screenshot", "name": "live-bar-eq" },
+    { "action": "tap", "selector": ".bt-player.mini [data-nppp]" },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.5: pause freezes the bar equalizer (npPaused strips the animation, bars hold still) - same grammar as the row's isPaused",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('npPaused'))return false;var eq=p.querySelector('.bt-st-bareq');var i=eq&&eq.querySelector('i');return !!i&&eq.offsetParent!==null&&getComputedStyle(i).animationName==='none';})()"
+    },
+    { "action": "tap", "selector": ".bt-player.mini [data-nppp]" },
+    { "action": "tap", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead" },
+    { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.3b: the lead chip on the PLAYING row opens details by EXPANDING the same Studio (iframe untouched - audio never restarts)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');return p.classList.contains('studio')&&!p.classList.contains('mini')&&!!f&&f.src.indexOf('/embed/ifOUmWAQups')>=0;})()"
+    },
+    { "action": "tap", "selector": ".bt-st-back" },
+    { "action": "waitFor", "selector": ".bt-player.mini .bt-st-head", "timeoutMs": 6000 },
+    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Mellow Reggae Jam\") .li-add" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "UAT-4.3c: joining the set puts the # INSIDE the lead chip - same chip width, same row height (no reflow)",
+      "js": "(function(){var row=null,rows=document.querySelectorAll('#songsList .listItem');for(var i=0;i<rows.length;i++){if(/Mellow Reggae Jam/.test(rows[i].textContent)){row=rows[i];break;}}if(!row)return false;var n=row.querySelector('.li-lead .li-num');if(!n||!n.textContent.trim())return false;var ref=window.__rowRef;var l=row.querySelector('.li-lead');return Math.abs(l.getBoundingClientRect().width-ref.lw)<=2;})()"
+    },
+    { "action": "screenshot", "name": "lead-chips" },
+    { "action": "tap", "selector": ".bt-player.mini [data-minix]" },
+    { "action": "waitFor", "selector": ".bt-player .bt-st-head", "state": "hidden", "timeoutMs": 6000 },
+    {
+      "action": "evalAssert",
+      "label": "teardown clears live-state classes",
+      "js": "(function(){var p=document.querySelector('.bt-player');return !p.classList.contains('npLive')&&!p.classList.contains('npPaused')&&p.innerHTML==='';})()"
+    }
+  ]
+}

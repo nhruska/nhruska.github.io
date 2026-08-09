@@ -180,6 +180,14 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;scroll-behavior:smooth;}
 .view::-webkit-scrollbar{width:0;}
 .tabbar{--tabbar-pb:calc(max(env(safe-area-inset-bottom,0px), 8px) + 6px);flex:0 0 auto;display:flex;gap:2px;padding:6px 6px var(--tabbar-pb);background:var(--bg-2);border-top:1px solid var(--line);}
+/* PLAYER-FEEL v5 (UAT 2026-08-08, "can see rows behind above now playing"):
+   while the Studio SHEET is expanded (body.studioopen, tracks.js dispatch),
+   the sheet is FULL-inset (nothing leaks through around the bar) and the
+   tabbar paints ABOVE it instead - z-55 sits over the sheet (50) and under
+   every real modal (perform 60, invModal 70, edit form 75), so tabs stay
+   visible + tappable exactly as before and full-screen modals still cover
+   them. Scoped to the body class - the app's normal stacking is untouched. */
+body.studioopen .tabbar{position:relative;z-index:55;}
 .tabbar button{flex:1;border:none;background:transparent;cursor:pointer;padding:6px 4px;border-radius:var(--r-btn-sm);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--txt-dim);transition:color .15s,background .15s,transform .08s;}
 .tabbar button:active{transform:scale(.92);}
 /* Active tab highlight reclaims ONLY the safe-area slack below it, so the pill
@@ -283,7 +291,17 @@ body{font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);
    blocks interaction, never persists. */
 @keyframes justSavedPulse{from{box-shadow:0 0 0 2px var(--accent);}to{box-shadow:0 0 0 2px transparent;}}
 .listItem.justSaved{animation:justSavedPulse 2s ease-out;}
-.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;min-width:22px;line-height:1.3;}
+/* UAT 2026-08-08 (batch 4): the leading DETAILS chip - a clear fixed-width tap
+   target on every row now that a body tap PLAYS. Holds the setlist number
+   (.li-num, nested - same look) when the row has one, an info glyph when it
+   doesn't; fixed width means set-membership changes swap content, never
+   layout (no row reflow). 44px tap floor (a11y). */
+.listItem .li-lead{flex:0 0 auto;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0 4px;border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-btn-sm);
+  cursor:pointer;font-family:inherit;color:var(--txt-soft);}
+.listItem .li-lead:active{transform:scale(.95);}
+.li-lead-gl{font-size:1rem;line-height:1;color:var(--txt-soft);}
+.listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
 /* Title sized for the arm's-length <1s glance; meta + artist on --txt-soft and
@@ -1933,3 +1951,26 @@ footer{display:none;}
  * rule or an inline style can still override it deliberately.
  * ===================================================================== */
 [hidden]{display:none;}
+
+/* ---- PLAYER-FEEL (PR-B): now-playing row state + mini-player page space ----
+   The playing track's row swaps its play glyph for a 3-bar equalizer and takes
+   the accent as an OUTLINE (the fill->outline->neutral ladder - fill stays
+   reserved for primary actions, no new hue). Both glyph and equalizer are
+   always in the DOM (list-item.js); these classes flip which shows, so live
+   play/pause updates are a class sweep - never a list re-render. */
+.listItem .li-eq{display:none;align-items:flex-end;gap:2px;height:16px;}
+.listItem .li-eq i{width:3px;height:8px;background:var(--accent-ink);border-radius:1px;transform-origin:50% 100%;}
+.listItem .li-eq i:nth-child(2){height:14px;}
+.listItem .li-eq i:nth-child(3){height:10px;}
+.listItem.isPlaying{border-color:var(--accent-ink);}
+.listItem.isPlaying .li-glyph{display:none;}
+.listItem.isPlaying .li-eq{display:inline-flex;}
+.listItem.isPlaying:not(.isPaused) .li-eq i{animation:liEq 1.1s ease-in-out infinite;}
+.listItem.isPlaying:not(.isPaused) .li-eq i:nth-child(2){animation-delay:.22s;}
+.listItem.isPlaying:not(.isPaused) .li-eq i:nth-child(3){animation-delay:.44s;}
+@keyframes liEq{0%,100%{transform:scaleY(.45);}50%{transform:scaleY(1);}}
+@media (prefers-reduced-motion: reduce){.listItem.isPlaying .li-eq i{animation:none !important;}}
+/* While the mini bar is up, the scrollers keep their last rows reachable above
+   it, and the toast rides above the bar instead of colliding with it. */
+body.miniplayer .view{padding-bottom:104px;} /* two-row bar (batch 7) */
+body.miniplayer .toast{bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 132px);}

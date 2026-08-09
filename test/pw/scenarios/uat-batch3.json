@@ -1,0 +1,127 @@
+{
+  "name": "uat-batch3",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "#segJams",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-act"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "stash the MINI bar's rect (the reference slot for the don't-move proof)",
+      "js": "(function(){var h=document.querySelector('.bt-player .bt-st-head');if(!h)return false;var r=h.getBoundingClientRect();window.__miniBar={l:r.left,t:r.top,w:r.width,h:r.height};return r.height>=44;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mini-bar"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "Keep open"
+    },
+    {
+      "action": "evalAssert",
+      "label": "SSOT don't-move proof: the EXPANDED bar occupies the IDENTICAL rect as the mini bar",
+      "js": "(function(){var h=document.querySelector('.bt-player .bt-st-head');var m=window.__miniBar;if(!h||!m)return false;var r=h.getBoundingClientRect();return Math.abs(r.left-m.l)<=2&&Math.abs(r.top-m.t)<=2&&Math.abs(r.width-m.w)<=2&&Math.abs(r.height-m.h)<=2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "tabs never hidden: the tabbar PAINTS above the full-inset sheet (hit-test at its center) and sits on-screen",
+      "js": "(function(){var tab=document.querySelector('.tabbar');if(!tab||tab.offsetParent===null)return false;var tr=tab.getBoundingClientRect();if(!(tr.top<window.innerHeight))return false;var tc=document.elementFromPoint(tr.left+tr.width/2, tr.top+tr.height/2);return !!tc&&!!tc.closest('.tabbar');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "SSOT structure: the bar carries title+x in both states; back+menu live on the sheet topbar",
+      "js": "(function(){var bar=document.querySelector('.bt-player .bt-st-head');var tb=document.querySelector('.bt-st-topbar');if(!bar||!tb)return false;var x=bar.querySelector('[data-minix]');var t=bar.querySelector('.bt-st-t');var back=tb.querySelector('.bt-st-back');var menu=tb.querySelector('[data-stmenu]');return !!x&&x.offsetParent!==null&&!!t&&!!back&&back.offsetParent!==null&&!!menu&&menu.offsetParent!==null&&!bar.querySelector('.bt-st-back');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "sheet-with-tabs"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab='compose']"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "a tab tap under the open sheet COLLAPSES it to the bar and navigates (music keeps playing)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var compose=document.querySelector('#s-compose');return p.classList.contains('mini')&&!!p.querySelector('iframe')&&!!compose&&compose.classList.contains('on');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "compose-with-bar"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab='library']"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "bar survives tab hopping in its one slot",
+      "js": "(function(){var h=document.querySelector('.bt-player .bt-st-head');var m=window.__miniBar;if(!h||!m)return false;var r=h.getBoundingClientRect();return Math.abs(r.left-m.l)<=2&&Math.abs(r.top-m.t)<=2;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-minix]"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player .bt-st-head",
+      "state": "hidden",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "the bar's x tears down fully from the mini state",
+      "js": "(function(){var p=document.querySelector('.bt-player');return !p.classList.contains('on')&&p.innerHTML===''&&!document.body.classList.contains('miniplayer');})()"
+    }
+  ]
+}
