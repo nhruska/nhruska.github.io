@@ -343,4 +343,22 @@ Session metadata/handlers/playbackState (best-effort, cross-origin
 iframe honesty documented). Clearances: sheet 152px, miniplayer view
 104px. New scenario test/pw/scenarios/uat-batch7.json (25 steps,
 pause-sync mutation-proven). [#323]
+M-PLAYLIST-FOLLOWUP (2026-08-09, PR #324): v323-8->v324 - the deferred
+#322 follow-up: playlist item 17 baked (Sweet D Mixolydian, Quist,
+6y75xmcKZ8g - catalog 54->55) and the 14 empty-artist playlist entries
+enriched with their payload channel authors. Artist changes re-key
+trackKey, so 14 old->new LEGACY_TRACKKEYS remaps ship in the same
+commit (each NEW key mechanically verified equal to the enriched row's
+real trackKey; old keys verified dead). Harry Hood deliberately keeps
+'Phish' (payload author is the cover channel). #8 C-vs-Am veto stays
+open in the PR body. No new/removed CORE paths. [#324]
+M-STUDIO-LAYOUT (2026-08-09, PR #324 UAT): v324->v324-2 - the COF
+wheel moves BELOW the fretboard (operator: the fretboard is the
+practice surface, the wheel is between-phrase orientation; supersedes
+the top-crown placement - data-cofhero + data-cofreset relocate after
+the solo section, before chords-in-key; Play/Speed/? controls stay
+above the fretboard leading the body). Bar transport glyphs grow:
+pp 1rem->1.35rem, prev/next .9rem->1.2rem (44px boxes unchanged).
+Render-proven: offsetTop order asserts + phone screenshot, zero app
+pageerrors. No new/removed CORE paths. [#324]
 ```

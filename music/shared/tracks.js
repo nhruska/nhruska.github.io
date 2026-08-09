@@ -87,7 +87,24 @@
     'sweet mixolydian jam in d|search|D|major': 'sweet mixolydian jam in d|search|D|mixolydian',
     'santana dorian jam in e minor|search|E|major': 'santana dorian jam in e minor|search|E|dorian',
     'carlos style dorian jam in a|search|A|major': 'carlos style dorian jam in a|search|A|dorian',
-    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian'
+    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian',
+    // The 14 playlist-baked tracks shipped one release with artist '' before the
+    // artist enrichment landed - urls saved against the empty-artist identity
+    // re-key to the enriched one. (Key segment is normRoot output: Eb -> D#.)
+    'time jam - pink floyd style||F#|minor': 'time jam - pink floyd style|now you shred backing tracks|F#|minor',
+    'guitar backing track in c major - pop style||C|major': 'guitar backing track in c major - pop style|pier gonella jam|C|major',
+    'guitar backing track in g major - pop style||G|major': 'guitar backing track in g major - pop style|pier gonella jam|G|major',
+    'rock pop backing track g major 70 bpm||G|major': 'rock pop backing track g major 70 bpm|tguitar|G|major',
+    'funky jam backing track [fm]||F|minor': 'funky jam backing track [fm]|instrumental avenue|F|minor',
+    'pop rock acoustic ballad in g 66bpm||G|major': 'pop rock acoustic ballad in g 66bpm|jam tracks galaxy|G|major',
+    'slow rock ballad in c/am 64bpm||C|major': 'slow rock ballad in c/am 64bpm|jam tracks galaxy|C|major',
+    'peaceful mellow in e minor||E|minor': 'peaceful mellow in e minor|jam\'in backing tracks|E|minor',
+    'funky blues in c - john mayer style||C|blues': 'funky blues in c - john mayer style|freddie edwards|C|blues',
+    'blues in f (jazz)||F|blues': 'blues in f (jazz)|guitare improvisation|F|blues',
+    'rock pop backing track f major 70 bpm||F|major': 'rock pop backing track f major 70 bpm|tguitar|F|major',
+    'ii-v-i jazz play-along - f major||F|major': 'ii-v-i jazz play-along - f major|backing tracks channel|F|major',
+    'jazz blues backing track - eb 120bpm||D#|blues': 'jazz blues backing track - eb 120bpm|benys backing tracks|D#|blues',
+    'blues in e 90bpm||E|blues': 'blues in e 90bpm|guitare improvisation|E|blues'
   };
   function migrateUrls(o) {
     var changed = false;
@@ -1065,17 +1082,6 @@
         + (t.yt ? '' : urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
-        // Circle-of-fifths CROWN (operator: circle + fretboard share the top).
-        // Promoted from the retired bottom "Why these notes?" toggle to the top
-        // of the body as the orientation hero. Rendered wheel-only + eagerly
-        // (see renderCofHero below) - the scale-reactive note names live in the
-        // "Solo over it" label; the wheel stays keyed to the track's KEY center
-        // (unaffected by solo-scale chips), so it never goes stale.
-        + '<div class="bt-st-cofhero" data-cofhero></div>'
-        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
-        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
-        // song's own key). retuneTo toggles its [hidden]; wired once below.
-        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
         // (primary, 44px, was a 32px .soundToggle lost among the label text),
         // Speed (one compact cycling button, replaces the 3-button Slow/Med/
@@ -1129,6 +1135,19 @@
         + '<div class="bt-st-why" data-guide></div>'
         + '</div>'
         + '</div>'
+        // Circle-of-fifths wheel - BELOW the fretboard (operator UAT
+        // 2026-08-09; supersedes the v-crown placement). The fretboard is the
+        // practice surface you play against while the track runs, so it leads
+        // the body with the Play/Speed/? controls; the wheel is orientation
+        // reference, consulted between phrases. Rendered wheel-only + eagerly
+        // (see renderCofHero below) - the scale-reactive note names live in the
+        // "Solo over it" label; the wheel stays keyed to the track's KEY center
+        // (unaffected by solo-scale chips), so it never goes stale.
+        + '<div class="bt-st-cofhero" data-cofhero></div>'
+        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
+        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
+        // song's own key). retuneTo toggles its [hidden]; wired once below.
+        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
         // + roman numeral - name-only chips (like the scale-chip row above),
         // all 7 fit ONE row at 412px. Tap still plays + targets the fretboard
@@ -1146,8 +1165,8 @@
         // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
         // just tighter so both fit on one line side by side.
         // "Why these notes?" toggle + its bottom wheel panel are RETIRED - the
-        // circle is now the top crown (data-cofhero). Only the neck-walk link
-        // remains on this row.
+        // circle lives above as data-cofhero (below the fretboard since the
+        // 2026-08-09 UAT). Only the neck-walk link remains on this row.
         + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
         + '</div>'
         // PLAYER-FEEL v3: the ONE now-playing bar - SSOT rendering, identical

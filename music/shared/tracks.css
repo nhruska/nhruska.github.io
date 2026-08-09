@@ -209,8 +209,10 @@
      time live on the ONE fixed bar (.bt-st-head); the hamburger lives on the
      sheet's .bt-st-topbar. Both keep their surface-2 fill so they read on
      their plain surfaces. */
+  /* UAT 2026-08-09 ("increase icon size in rwd/play/ffd buttons"): glyphs up
+     from 1rem/.9rem - the 44px boxes stay, only the icon inside grows. */
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
-    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1rem;
+    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.35rem;
     display:flex;align-items:center;justify-content:center;}
   /* .bt-st-np-state (the no-video "Optional" pill) retired - UAT 2026-08-08:
      it occupied the transport slot and read as noise; the hamburger menu's
@@ -229,7 +231,7 @@
      control grammar. 44px floor both axes. */
   .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-size:.9rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
+    font-size:1.2rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
   .bt-st-np-step:active{transform:scale(.94);}
 
   .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
