@@ -994,7 +994,16 @@
       // CTA. The pp stays in the DOM while hidden, so togglePlay()'s
       // programmatic .click() route works in every state.
       var barStrip = t.yt
-        ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
+        // UAT 2026-08-09 ("move the shuffle button into the now playing"):
+        // shuffle LEADS the transport cluster on the ONE bar (the Spotify
+        // order: shuffle-prev-play-next), so it rides in mini AND expanded.
+        // Standard crossed-arrows glyph (inline SVG, the app's stroke-icon
+        // pattern) replaces the old &#8646; text glyph.
+        ? '<button class="bt-st-np-shuf' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">'
+          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+          + '<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>'
+          + '<polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>'
+        + '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
           + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
           // UAT batch 6 ("would like next. and back buttons. it's like a music
           // player"): prev/next flank the pp - they walk the current view's
@@ -1067,9 +1076,8 @@
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
         + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
-        // UAT batch 6: the shuffle mode toggle - the expanded-player home for
-        // it (the Spotify grammar). Persisted; .on/aria-pressed reflect state.
-        + (t.yt ? '<button class="bt-st-shuffle' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">&#8646;</button>' : '')
+        // (Shuffle moved to the now-playing bar's transport cluster - UAT
+        // 2026-08-09; the topbar keeps back + the hamburger only.)
         + menuBlock
         + '</div>'
         + mediaBlock

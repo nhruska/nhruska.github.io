@@ -398,16 +398,6 @@ is the curation path, real ids arrive via the operator's gap playlist
 + trackKey enrichment). Residual rare keys deliberately left for the
 operator's playlist. tracks.json is CORE-precached, hence the bump.
 [#327]
-M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
-vehicles bake with SEARCHED original keys (operator: "search for the
-keys - most or all are the original key from Phish"): Chalkdust E,
-Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
-A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
-2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
-Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
-sources; citations in the PR comment); m7-funk vamps take dorian per
-the Ghost citation's own precedent. Artist 'Phish' (curated identity,
-the Harry Hood rule). Catalog 93 -> 108. [#327]
 M-PLAYLIST-2 (2026-08-09, PR #327): v327->v327-2 - the operator's
 SECOND playlist (PLPn0Gj4u_mDk, 46 items) baked via the Actions
 sync run: 29 auto-keyed entries, 2 title-stated curations the
@@ -419,4 +409,23 @@ FIVE of the v327 search stubs retired - their slots gained REAL
 yt-backed tracks in this bake (Bm rock, G#m, Ab major, Cm, Em funk);
 7 stubs remain for still-unserved slots. Catalog 67 -> 93, yt-backed
 20 -> 51. [#327]
+M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
+vehicles bake with SEARCHED original keys (operator: "search for the
+keys - most or all are the original key from Phish"): Chalkdust E,
+Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
+A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
+2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
+Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
+sources; citations in the PR comment); m7-funk vamps take dorian per
+the Ghost citation's own precedent. Artist 'Phish' (curated identity,
+the Harry Hood rule). Catalog 93 -> 108. [#327]
+M-SHUF-BAR (2026-08-09, PR #328): v327-3->v328 - shuffle moves from
+the sheet topbar onto the now-playing bar's transport cluster (LEADS
+it: shuffle-prev-pp-next, the Spotify order - so it rides in mini AND
+expanded) with the standard crossed-arrows stroke SVG replacing the
+old text glyph. .bt-st-shuffle CSS retired, .bt-st-np-shuf added
+(step-button grammar + .on accent fill); data-shuffle wiring +
+music.shuffle.v1 persistence untouched. uat-batch6 UAT-6.3 amended
+(bar placement + SVG + topbar-empty), don't-move rect gate re-proven.
+No new/removed CORE paths. [#328]
 ```

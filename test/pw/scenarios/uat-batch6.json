@@ -50,8 +50,8 @@
     { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
     {
       "action": "evalAssert",
-      "label": "UAT-6.3: the shuffle toggle lives on the sheet topbar, off by default",
-      "js": "(function(){var s=document.querySelector('.bt-st-topbar [data-shuffle]');return !!s&&s.offsetParent!==null&&s.getAttribute('aria-pressed')==='false';})()"
+      "label": "UAT-6.3 (amended 2026-08-09: shuffle moved into the now-playing bar): the toggle lives on the bar's transport cluster with the crossed-arrows SVG, off by default - and NOT on the topbar anymore",
+      "js": "(function(){var s=document.querySelector('.bt-st-barrow [data-shuffle]');var old=document.querySelector('.bt-st-topbar [data-shuffle]');return !!s&&s.offsetParent!==null&&!!s.querySelector('svg')&&s.getAttribute('aria-pressed')==='false'&&!old;})()"
     },
     { "action": "tap", "selector": "[data-shuffle]" },
     {
