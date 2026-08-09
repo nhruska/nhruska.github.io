@@ -22,11 +22,11 @@ Edit discipline: surgical diffs, 2-space formatting preserved; validate JSON.par
 
 ## tracks.json + trackKey identity [STABLE]
 
-Track records carry exactly 9 keys: `{ yt|null, title, artist, genre, key, mode, bpm|null, capo, tags[] }` - enforced by `test/tracks-catalog.test.js` (the catalog's schema gate, shipped with the sync pipeline per ship-the-linter-with-the-tokens). When yt is null, a deterministic YouTube search query substitutes. Since the 2026-08-06 playlist bake (PR #322) the catalog is majority yt-backed (19 of 54 entries).
+Track records carry exactly 9 keys: `{ yt|null, title, artist, genre, key, mode, bpm|null, capo, tags[] }` - enforced by `test/tracks-catalog.test.js` (the catalog's schema gate, shipped with the sync pipeline per ship-the-linter-with-the-tokens). When yt is null, a deterministic YouTube search query substitutes. Since the 2026-08-06 playlist bake (PR #322) the catalog is majority yt-backed (20 of 55 yt entries after the 2026-08-09 follow-up baked playlist item 17 and enriched the 14 empty-artist playlist entries with their channel authors).
 
 **Key STORAGE spelling = the preferred tonic name** (`Eb`, `Bb` - not `D#`, `A#`): FORK-4 sharp-normalization is retired, display respells key-aware via `Circle.preferredTonicName` regardless of storage, and identity folds spellings (`TracksModel.normRoot`, tracks-model.js:19-26, runs inside `trackKey`) so `Eb` and `D#` produce the same trackKey. Stored JSON reads the way a musician writes it. Mode `blues` is first-class (own trackKey identity, blues-scale Studio palette via studio-theory.js). Genre vocabulary: reggae/rock/jam/blues/pop/funk/jazz - chips derive from the data (`TracksModel.uniqueGenres`), so a new genre value needs no code change.
 
-**trackKey** (tracks.js ~150): `[title, artist, key, mode].join('|').toLowerCase().trim()` - the stable identity for the curated-URL overlay; cosmetic case/whitespace changes cannot orphan a curated video. **LEGACY_TRACKKEYS** (tracks.js ~305-315): migration map remapping keys stored under old mode-coarsening rules (modal seeds once filed under 'major').
+**trackKey** (tracks.js ~150): `[title, artist, key, mode].join('|').toLowerCase().trim()` - the stable identity for the curated-URL overlay; cosmetic case/whitespace changes cannot orphan a curated video. **LEGACY_TRACKKEYS** (tracks.js ~81): migration map remapping keys stored under retired identities - the old mode-coarsening rules (modal seeds once filed under 'major') and the 2026-08-09 artist enrichment (the 14 playlist-baked tracks shipped one release with `artist: ''`, so urls saved against the empty-artist identity re-key to the enriched one).
 
 ## Merged repertoire [STABLE]
 
