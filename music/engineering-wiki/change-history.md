@@ -352,7 +352,6 @@ commit (each NEW key mechanically verified equal to the enriched row's
 real trackKey; old keys verified dead). Harry Hood deliberately keeps
 'Phish' (payload author is the cover channel). #8 C-vs-Am veto stays
 open in the PR body. No new/removed CORE paths. [#324]
-M-STUDIO-LAYOUT (2026-08-09, PR #324 UAT): v324->v324-2 - the COF
 wheel moves BELOW the fretboard (operator: the fretboard is the
 practice surface, the wheel is between-phrase orientation; supersedes
 the top-crown placement - data-cofhero + data-cofreset relocate after
@@ -361,4 +360,20 @@ above the fretboard leading the body). Bar transport glyphs grow:
 pp 1rem->1.35rem, prev/next .9rem->1.2rem (44px boxes unchanged).
 Render-proven: offsetTop order asserts + phone screenshot, zero app
 pageerrors. No new/removed CORE paths. [#324]
+COMMUNITY-274 (2026-08-09, PR #325 vehicle): v324-2->v274 - emre155's
+constant 'Suggested Chords' label (the app's first outside PR) merged
+via a conflict-resolving merge commit; cache takes the ORIGINAL PR's
+number per the version=PR convention. [#274]
+M-PLAYLIST-IMPORT (2026-08-09, PR #326): v274->v326 - user-facing
+"import your playlist": NEW CORE path shared/playlist-import.js
+(keyless iframe enumeration via the infoDelivery playlist array +
+noembed titles + the import key ladder - measured 14/16 exact on the
+operator's real playlist, no-key = honest skip); repertoire-form
+create-mode import panel (+ MODES gains 'blues' so imported blues
+jams round-trip edits - contract test updated deliberately); songbook
+createCustomItems batch creator (suffix-unique ids, one persist +
+rebuild) + toast split summary + studioTarget-based yt dedupe.
+Scenario test/pw/scenarios/playlist-import.json (16 steps, stubbed
+noembed + synthesized infoDelivery, mutation-proven red); unit
+test/playlist-import.test.js. [#326]
 ```

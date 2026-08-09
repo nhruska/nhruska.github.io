@@ -93,8 +93,15 @@ test('normFormMode round-trips the full 4-mode vocabulary', function () {
   assert.strictEqual(RF.normFormMode(null), 'major');
   assert.strictEqual(RF.normFormMode('locrian'), 'major'); // outside the form vocabulary -> safe default
 });
-test('MODES is the locked 4-mode vocabulary the select renders', function () {
-  assert.deepStrictEqual(RF.MODES, ['major', 'minor', 'dorian', 'mixolydian']);
+test('MODES is the locked 5-mode vocabulary the select renders', function () {
+  // 'blues' joined with the playlist import (M-PLAYLIST-IMPORT): imported
+  // blues jams carry mode:'blues' like the seed catalog, and without it in
+  // the select an EDIT would rewrite them to major via normFormMode.
+  assert.deepStrictEqual(RF.MODES, ['major', 'minor', 'dorian', 'mixolydian', 'blues']);
+});
+test('readFields round-trips a blues item without rewriting it to major', function () {
+  var f = RF.readFields(fakeForm({ title: 'Blues jam', artist: '', key: 'A', mode: 'blues', genre: 'blues', seq: '', url: '' }), fakeParseYouTubeId);
+  assert.strictEqual(f.mode, 'blues');
 });
 test('readFields round-trips a dorian item without rewriting it to major', function () {
   var f = RF.readFields(fakeForm({ title: 'Modal jam', artist: '', key: 'A', mode: 'dorian', genre: '', seq: 'Am D', url: '' }), fakeParseYouTubeId);

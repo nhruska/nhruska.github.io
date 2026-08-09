@@ -5713,6 +5713,25 @@
       customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
       return cs;
     }
+    // Batch create for the playlist import: createCustomItem in a loop would
+    // (a) collide ids ('m'+Date.now() is per-MILLISECOND - a 17-track import
+    // lands in one tick) and (b) re-save + full-rebuild + re-render per track.
+    // One suffix-unique id batch, one persist, one rebuild. Entries carry the
+    // import shape { title, artist, key, mode, genre, yt }.
+    function createCustomItems(list) {
+      var base = Date.now(), created = [];
+      (list || []).forEach(function (f, i) {
+        created.push({
+          id: 'm' + base + '-' + i, t: f.title || 'Untitled', a: f.artist || '',
+          y: new Date().getFullYear(), d: 'Mine', genre: f.genre || '', custom: true,
+          key: f.key || null, mode: f.mode || 'major', yt: f.yt || null
+        });
+      });
+      if (!created.length) return created;
+      created.forEach(function (cs) { customSongs.push(cs); });
+      saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      return created;
+    }
     // Apply an edit (title/artist/genre/key/mode/seq/yt) to an EXISTING custom item.
     function updateCustomItem(id, f) {
       var cs = null;
@@ -5847,8 +5866,48 @@
       if (!repForm) return;
       repForm.open({
         mode: 'create',
-        onSave: function (f) { createCustomItem(f); }
+        onSave: function (f) { createCustomItem(f); },
+        // Playlist import (M-PLAYLIST-IMPORT): the form's import panel hands
+        // back { entries, skipped, total }; entries batch-save through ONE
+        // persist+rebuild, and the toast reports the honest split - skipped
+        // tracks (duplicate / unreadable / no key in the title) are named as a
+        // count, never silently dropped.
+        onImport: function (result) {
+          var made = createCustomItems(result.entries);
+          var msg;
+          if (!made.length) {
+            msg = result.total
+              ? 'Nothing imported - ' + summarizeSkips(result.skipped)
+              : 'That playlist has no videos to import.';
+          } else {
+            msg = 'Imported ' + made.length + (made.length === 1 ? ' track' : ' tracks')
+              + (result.skipped.length ? ' - ' + summarizeSkips(result.skipped) : '');
+          }
+          showToast(msg, made.length ? '' : 'warn');
+        },
+        // Dedupe set: every yt id already reachable in the library (catalog,
+        // merged tracks, customs) via the canonical studioTarget resolver.
+        existingYt: function () {
+          var ids = [];
+          ALLSONGS.forEach(function (rec) {
+            var t = studioTarget(rec);
+            if (t && t.yt) ids.push(t.yt);
+          });
+          return ids;
+        }
       });
+    }
+    // "3 skipped: 2 had no key in the title, 1 already in your library"
+    function summarizeSkips(skipped) {
+      var n = skipped.length;
+      if (!n) return '';
+      var byReason = { 'no-key': 0, 'duplicate': 0, 'no-title': 0 };
+      skipped.forEach(function (s) { if (byReason[s.reason] != null) byReason[s.reason]++; });
+      var parts = [];
+      if (byReason['no-key']) parts.push(byReason['no-key'] + ' had no key in the title (add them with Edit)');
+      if (byReason['duplicate']) parts.push(byReason['duplicate'] + ' already in your library');
+      if (byReason['no-title']) parts.push(byReason['no-title'] + ' could not be read');
+      return n + ' skipped: ' + parts.join(', ');
     }
     // Attach/replace a custom song's video inline from the Studio's "add the video you
     // found" paste box: write cs.yt via updateCustomItem and return the studio-shaped

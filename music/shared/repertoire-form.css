@@ -44,3 +44,21 @@
   font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 12px;border-radius:var(--r-btn-sm);cursor:pointer;
   text-align:center;}
 .bt-st-editlink:hover{color:var(--accent);border-color:var(--accent);}
+/* Playlist import (M-PLAYLIST-IMPORT): create-mode toggle above the single-
+ * item fields + a compact panel. Toggle reuses the dashed edit-link grammar
+ * (a secondary path, not the primary action); panel reuses the rf-note
+ * bucket. The status line is aria-live in markup. */
+.rf-pli{margin:0 0 10px;}
+.rf-pli-toggle{width:100%;background:transparent;border:1px dashed var(--line-strong);color:var(--txt-soft);
+  font-family:inherit;font-weight:600;font-size:.82rem;padding:10px 12px;border-radius:var(--r-btn-sm);cursor:pointer;
+  text-align:center;}
+.rf-pli-toggle:hover{color:var(--accent);border-color:var(--accent);}
+.rf-pli-panel{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.rf-pli-panel[hidden]{display:none;}
+.rf-pli-row{display:flex;gap:10px;align-items:center;}
+.rf-pli-row .btn{flex:0 0 auto;min-width:96px;}
+.rf-pli-status{font-size:.8rem;color:var(--txt-soft);flex:1 1 auto;}
+/* The import's hidden enumeration iframe (playlist-import.js appends it to
+ * <body>): parked far offscreen, inert. Not display:none - some embeds stop
+ * initializing entirely inside a display:none frame. */
+.pli-frame{position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none;border:0;}

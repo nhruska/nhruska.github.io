@@ -461,6 +461,11 @@
      file), so its position here is only "near its consumer", not a hard
      dependency order. -->
 <script src="../shared/yt-info.js"></script>
+<!-- playlist-import.js: keyless "import your playlist" (M-PLAYLIST-IMPORT) -
+     iframe enumeration + noembed titles + the import key ladder, consumed by
+     repertoire-form.js's import panel. Resolves YtInfo/Circle/PlaylistImport
+     consumers at CALL time, so position is only "near its consumer". -->
+<script src="../shared/playlist-import.js"></script>
 <!-- solo-guide.js: SoloGuide (per-scale mentor cards + framing) - loads before
      songbook.js AND tracks.js so both the Studio and the Compose solo chips can
      call it. -->
