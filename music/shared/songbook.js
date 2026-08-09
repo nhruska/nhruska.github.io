@@ -1133,6 +1133,7 @@
         if (npKey) node.setAttribute('data-npkey', npKey);
         el.songsList.appendChild(node);
         if (pendingHighlightId != null && sid === pendingHighlightId) justSavedEl = node;
+        if (pendingHighlightExtra.length && sid != null && pendingHighlightExtra.indexOf(sid) >= 0) node.classList.add('justSaved');
       });
       if (el.libCount) el.libCount.textContent = filtered.length + ' of ' + REPERTOIRE.length;
       // Post-save discoverability (B3 pilot UAT: "after saving, it's hidden near
@@ -1148,6 +1149,7 @@
         if (typeof justSavedEl.scrollIntoView === 'function') justSavedEl.scrollIntoView({ block: 'center' });
         justSavedEl.classList.add('justSaved');
         pendingHighlightId = null;
+        pendingHighlightExtra = [];
       }
     }
     function syncSearchClear() { if (el.searchClear) el.searchClear.hidden = !el.search.value.length; }
@@ -4834,6 +4836,11 @@
     // will actually paint the new row, consumed (cleared) on the next
     // renderSongs() regardless of whether a matching row was found.
     var pendingHighlightId = null;
+    // Batch sibling (M-PLAYLIST-IMPORT, UAT "it wasn't clear where they
+    // went"): the ANCHOR row (pendingHighlightId) gets the scroll; every id
+    // in here gets the same .justSaved pulse so the whole imported set reads
+    // as "these just arrived". Consumed alongside the anchor.
+    var pendingHighlightExtra = [];
     function ensureComposeUI() {
       if (!el.prog || !el.prog.parentNode) return false;
       if (!composeModalBackdrop) {
@@ -5882,6 +5889,18 @@
           } else {
             msg = 'Imported ' + made.length + (made.length === 1 ? ' track' : ' tracks')
               + (result.skipped.length ? ' - ' + summarizeSkips(result.skipped) : '');
+            // UAT ("it wasn't clear where they went and I had to search"):
+            // the import LANDS the user on its results - scroll-to + pulse the
+            // first imported row (the existing post-save B3 primitive), pulse
+            // the rest, and escape anything that would hide them: the Setlist
+            // segment doesn't contain them, and an active search/filter can
+            // exclude them entirely (the silent keeps-waiting behavior is
+            // right for a single save, wrong after a bulk import).
+            pendingHighlightId = made[0].id;
+            pendingHighlightExtra = made.slice(1).map(function (cs) { return cs.id; });
+            if (songsSeg === 'set') setSongsSeg('all');
+            if (STATE.search || STATE.genre !== 'all' || STATE.key !== 'all' || STATE.mineOnly) clearAllFilters();
+            else renderSongs();
           }
           showToast(msg, made.length ? '' : 'warn');
         },

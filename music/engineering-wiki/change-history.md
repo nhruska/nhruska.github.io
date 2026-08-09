@@ -376,4 +376,15 @@ rebuild) + toast split summary + studioTarget-based yt dedupe.
 Scenario test/pw/scenarios/playlist-import.json (16 steps, stubbed
 noembed + synthesized infoDelivery, mutation-proven red); unit
 test/playlist-import.test.js. [#326]
+M-PLAYLIST-IMPORT UAT (2026-08-09, live-device pass "working. It
+wasn't clear where they went"): v326->v326-2 - the import LANDS the
+user on its results: first imported row scroll-to-center + the
+existing .justSaved pulse (B3 primitive, now batch-extended via
+pendingHighlightExtra so EVERY imported row pulses), Setlist segment
+escapes to All, active search/filters clear (keeps-waiting is right
+for a single save, wrong after a bulk import - without the landing
+the first import measured y=10442 in the scenario viewport, ten
+screens under the fold). Scenario grows to 19 steps incl. an
+assertInViewport gate, mutation-proven red; form-settle wait replaces
+the raced fixed sleep. [#326]
 ```
