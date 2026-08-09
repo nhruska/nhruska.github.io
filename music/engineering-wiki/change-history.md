@@ -398,4 +398,15 @@ is the curation path, real ids arrive via the operator's gap playlist
 + trackKey enrichment). Residual rare keys deliberately left for the
 operator's playlist. tracks.json is CORE-precached, hence the bump.
 [#327]
+M-PLAYLIST-2 (2026-08-09, PR #327): v327->v327-2 - the operator's
+SECOND playlist (PLPn0Gj4u_mDk, 46 items) baked via the Actions
+sync run: 29 auto-keyed entries, 2 title-stated curations the
+parser's word-order missed (C mixolydian 'Cool Mixolydian Jam Track
+in C', Eb blues 'HALF STEP DOWN Delta Blues in Eb'), 15 Phish jam
+vehicles held for operator keys (titles name no key center - the
+Harry Hood precedent, never invent one; veto table carries them).
+FIVE of the v327 search stubs retired - their slots gained REAL
+yt-backed tracks in this bake (Bm rock, G#m, Ab major, Cm, Em funk);
+7 stubs remain for still-unserved slots. Catalog 67 -> 93, yt-backed
+20 -> 51. [#327]
 ```
