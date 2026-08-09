@@ -1,17 +1,97 @@
 {
-  "fetchedAt": "2026-08-08T00:40:35.591Z",
-  "playlistId": "PLeqWgsYsf6p7gpIKkoHKCmfHNJ1_Lr7XW",
+  "fetchedAt": "2026-08-09T16:26:41.015Z",
+  "playlistId": "PLPn0Gj4u_mDk",
   "entries": [
     {
-      "yt": "y9jm5L6g3ng",
-      "title": "Time Jam | Pink Floyd Style Guitar Backing Track (F# Minor)",
+      "yt": "igpb3p8emMI",
+      "title": "Blues Backing Track in Bm | B.B King | 90 BPM",
+      "author": "Evergreen Jam Track",
+      "proposed": {
+        "yt": "igpb3p8emMI",
+        "title": "Blues Backing Track in Bm | B.B King | 90 BPM",
+        "artist": "Evergreen Jam Track",
+        "genre": "blues",
+        "key": "B",
+        "mode": "minor",
+        "bpm": 90,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "npH2V-M0QO0",
+      "title": "Dorian Funk Fusion Guitar Backing Track Jam in Dm | 108 BPM",
+      "author": "Alan Iarussi",
+      "proposed": {
+        "yt": "npH2V-M0QO0",
+        "title": "Dorian Funk Fusion Guitar Backing Track Jam in Dm | 108 BPM",
+        "artist": "Alan Iarussi",
+        "genre": "funk",
+        "key": "D",
+        "mode": "minor",
+        "bpm": 108,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "cC7LluQmtLw",
+      "title": "[BackingTrack] Bossanova 1-6-2-5 in G major",
+      "author": "Studio Closet",
+      "proposed": {
+        "yt": "cC7LluQmtLw",
+        "title": "[BackingTrack] Bossanova 1-6-2-5 in G major",
+        "artist": "Studio Closet",
+        "genre": "jam",
+        "key": "G",
+        "mode": "major",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "IeIHSm2DHyk",
+      "title": "Silky Funk Groove Guitar Backing Track Jam in Gm | 99 BPM",
+      "author": "Alan Iarussi",
+      "proposed": {
+        "yt": "IeIHSm2DHyk",
+        "title": "Silky Funk Groove Guitar Backing Track Jam in Gm | 99 BPM",
+        "artist": "Alan Iarussi",
+        "genre": "funk",
+        "key": "G",
+        "mode": "minor",
+        "bpm": 99,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "5j0sBFLM8Bg",
+      "title": "ATMOSPHERIC LATE PINK FLOYD JAM TRACK | Guitar Backing Track in B MINOR (OF COURSE)",
       "author": "Now YOU Shred Backing Tracks",
       "proposed": {
-        "yt": "y9jm5L6g3ng",
-        "title": "Time Jam | Pink Floyd Style Guitar Backing Track (F# Minor)",
+        "yt": "5j0sBFLM8Bg",
+        "title": "ATMOSPHERIC LATE PINK FLOYD JAM TRACK | Guitar Backing Track in B MINOR (OF COURSE)",
         "artist": "Now YOU Shred Backing Tracks",
         "genre": "jam",
-        "key": "F#",
+        "key": "B",
         "mode": "minor",
         "bpm": null,
         "capo": 0,
@@ -19,17 +99,17 @@
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "yTr-RFBekuY",
-      "title": "A SIMPLE Practice Method To Memorize Major Scales",
-      "author": "Piano From Scratch",
+      "yt": "D9dxJNRSOJY",
+      "title": "Cool Mixolydian Jam Track in C 🎸 Guitar Backing Track",
+      "author": "SubFunc Jam Tracks",
       "proposed": {
-        "yt": "yTr-RFBekuY",
-        "title": "A SIMPLE Practice Method To Memorize Major Scales",
-        "artist": "Piano From Scratch",
+        "yt": "D9dxJNRSOJY",
+        "title": "Cool Mixolydian Jam Track in C 🎸 Guitar Backing Track",
+        "artist": "SubFunc Jam Tracks",
         "genre": "jam",
         "key": null,
         "mode": null,
@@ -43,135 +123,55 @@
       "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
     },
     {
-      "yt": "4q7h2SwIyLg",
-      "title": "Guitar backing track in C Major  - Pop style",
-      "author": "Pier Gonella Jam",
+      "yt": "XB6g4L8MORM",
+      "title": "🎸 Saintly Grateful Dead Style E Mixolydian Jam | Guitar Backing Track",
+      "author": "Now YOU Shred Backing Tracks",
       "proposed": {
-        "yt": "4q7h2SwIyLg",
-        "title": "Guitar backing track in C Major  - Pop style",
-        "artist": "Pier Gonella Jam",
-        "genre": "pop",
-        "key": "C",
-        "mode": "major",
-        "bpm": null,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "LJeCVSiteNU",
-      "title": "Guitar backing track in G Major  - Pop style",
-      "author": "Pier Gonella Jam",
-      "proposed": {
-        "yt": "LJeCVSiteNU",
-        "title": "Guitar backing track in G Major  - Pop style",
-        "artist": "Pier Gonella Jam",
-        "genre": "pop",
-        "key": "G",
-        "mode": "major",
-        "bpm": null,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "3stpZKNF_jQ",
-      "title": "Rock Pop Backing Track G Major | 70 BPM | Guitar Backing Track",
-      "author": "TGuitar",
-      "proposed": {
-        "yt": "3stpZKNF_jQ",
-        "title": "Rock Pop Backing Track G Major | 70 BPM | Guitar Backing Track",
-        "artist": "TGuitar",
-        "genre": "rock",
-        "key": "G",
-        "mode": "major",
-        "bpm": 70,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "MJIMlr8tI2s",
-      "title": "Funky Jam Backing Track [Fm]",
-      "author": "Instrumental Avenue",
-      "proposed": {
-        "yt": "MJIMlr8tI2s",
-        "title": "Funky Jam Backing Track [Fm]",
-        "artist": "Instrumental Avenue",
-        "genre": "funk",
-        "key": "F",
-        "mode": "minor",
-        "bpm": null,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "FWbdZSBW9Vo",
-      "title": "POP ROCK ACOUSTIC GUITAR BALLAD Guitar Jam Backing Track/Type Beat in G (66 bpm)",
-      "author": "Jam Tracks Galaxy",
-      "proposed": {
-        "yt": "FWbdZSBW9Vo",
-        "title": "POP ROCK ACOUSTIC GUITAR BALLAD Guitar Jam Backing Track/Type Beat in G (66 bpm)",
-        "artist": "Jam Tracks Galaxy",
-        "genre": "rock",
-        "key": null,
-        "mode": null,
-        "bpm": 66,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "nbtHwKTRUcg",
-      "title": "SLOW ROCK BALLAD Backing Track in C/Am (64 bpm)",
-      "author": "Jam Tracks Galaxy",
-      "proposed": {
-        "yt": "nbtHwKTRUcg",
-        "title": "SLOW ROCK BALLAD Backing Track in C/Am (64 bpm)",
-        "artist": "Jam Tracks Galaxy",
-        "genre": "rock",
-        "key": "A",
-        "mode": "minor",
-        "bpm": 64,
-        "capo": 0,
-        "tags": [
-          "jam"
-        ]
-      },
-      "status": "existing",
-      "note": "yt id already in catalog"
-    },
-    {
-      "yt": "go2NlmO5pzM",
-      "title": "Peaceful Mellow Guitar Backing Track in E Minor",
-      "author": "Jam'in Backing Tracks",
-      "proposed": {
-        "yt": "go2NlmO5pzM",
-        "title": "Peaceful Mellow Guitar Backing Track in E Minor",
-        "artist": "Jam'in Backing Tracks",
+        "yt": "XB6g4L8MORM",
+        "title": "🎸 Saintly Grateful Dead Style E Mixolydian Jam | Guitar Backing Track",
+        "artist": "Now YOU Shred Backing Tracks",
         "genre": "jam",
         "key": "E",
+        "mode": "mixolydian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "sP3MaQZB7OA",
+      "title": "Dorian Jam Rock - ALTHEA GROOVE | Guitar Backing Track (B Dorian)",
+      "author": "Now YOU Shred Backing Tracks",
+      "proposed": {
+        "yt": "sP3MaQZB7OA",
+        "title": "Dorian Jam Rock - ALTHEA GROOVE | Guitar Backing Track (B Dorian)",
+        "artist": "Now YOU Shred Backing Tracks",
+        "genre": "rock",
+        "key": "B",
+        "mode": "dorian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "22mWUkAi0PI",
+      "title": "Blues in A minor Backing Track",
+      "author": "Gilad Perry",
+      "proposed": {
+        "yt": "22mWUkAi0PI",
+        "title": "Blues in A minor Backing Track",
+        "artist": "Gilad Perry",
+        "genre": "blues",
+        "key": "A",
         "mode": "minor",
         "bpm": null,
         "capo": 0,
@@ -179,79 +179,379 @@
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "4cs1NwbZp2w",
-      "title": "Funky Blues In C | Backing Track In The Style Of John Mayer",
-      "author": "Freddie Edwards",
+      "yt": "IYoQ9BD01RE",
+      "title": "Funk Groove Jam Track in F mixolydian \"Step It Up\" - BJT #3",
+      "author": "Ben's Jam Tracks",
       "proposed": {
-        "yt": "4cs1NwbZp2w",
-        "title": "Funky Blues In C | Backing Track In The Style Of John Mayer",
-        "artist": "Freddie Edwards",
-        "genre": "blues",
-        "key": null,
-        "mode": null,
+        "yt": "IYoQ9BD01RE",
+        "title": "Funk Groove Jam Track in F mixolydian \"Step It Up\" - BJT #3",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "F",
+        "mode": "mixolydian",
         "bpm": null,
         "capo": 0,
         "tags": [
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "YzuMzRhRTPE",
-      "title": "Blues in F (jazz) : Backing Track",
-      "author": "Guitare Improvisation",
+      "yt": "ZP6-uFer3EE",
+      "title": "Smooth Jazz Guitar Backing Track in Dm 95 BPM I Deep Groove Jam Track",
+      "author": "JamTracksChannel",
       "proposed": {
-        "yt": "YzuMzRhRTPE",
-        "title": "Blues in F (jazz) : Backing Track",
-        "artist": "Guitare Improvisation",
-        "genre": "blues",
-        "key": null,
-        "mode": null,
+        "yt": "ZP6-uFer3EE",
+        "title": "Smooth Jazz Guitar Backing Track in Dm 95 BPM I Deep Groove Jam Track",
+        "artist": "JamTracksChannel",
+        "genre": "jazz",
+        "key": "D",
+        "mode": "minor",
+        "bpm": 95,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "bBxgmzGcpug",
+      "title": "Smooth Jazz Funk Jam Track in A minor \"That Friday Feeling\" - BJT #10",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "bBxgmzGcpug",
+        "title": "Smooth Jazz Funk Jam Track in A minor \"That Friday Feeling\" - BJT #10",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "A",
+        "mode": "minor",
         "bpm": null,
         "capo": 0,
         "tags": [
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "wKbg6iDSXJQ",
-      "title": "Rock Pop Backing Track F Major | 70 BPM | Guitar Backing Track",
+      "yt": "O-JeedeAxaw",
+      "title": "Jazz Fusion Minor Blues Jam Track in C minor \"Right Angles\" - BJT #58",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "O-JeedeAxaw",
+        "title": "Jazz Fusion Minor Blues Jam Track in C minor \"Right Angles\" - BJT #58",
+        "artist": "Ben's Jam Tracks",
+        "genre": "blues",
+        "key": "C",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "jtGIVM3nz8g",
+      "title": "Rock Pop BACKING TRACK B Minor | Bm G D A | 70 BPM | Guitar Backing Track",
       "author": "TGuitar",
       "proposed": {
-        "yt": "wKbg6iDSXJQ",
-        "title": "Rock Pop Backing Track F Major | 70 BPM | Guitar Backing Track",
+        "yt": "jtGIVM3nz8g",
+        "title": "Rock Pop BACKING TRACK B Minor | Bm G D A | 70 BPM | Guitar Backing Track",
         "artist": "TGuitar",
         "genre": "rock",
-        "key": "F",
-        "mode": "major",
+        "key": "B",
+        "mode": "minor",
         "bpm": 70,
         "capo": 0,
         "tags": [
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "gfx5wHi_4cE",
-      "title": "II-V-I Jazz Play-along | F Major",
-      "author": "Backing Tracks Channel",
+      "yt": "imPQ4PCgrI4",
+      "title": "Modern Jazz Fusion Jam Track in C minor \"Supernova\" - BJT #38",
+      "author": "Ben's Jam Tracks",
       "proposed": {
-        "yt": "gfx5wHi_4cE",
-        "title": "II-V-I Jazz Play-along | F Major",
-        "artist": "Backing Tracks Channel",
+        "yt": "imPQ4PCgrI4",
+        "title": "Modern Jazz Fusion Jam Track in C minor \"Supernova\" - BJT #38",
+        "artist": "Ben's Jam Tracks",
         "genre": "jazz",
-        "key": "F",
+        "key": "C",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "45fyACZz8OI",
+      "title": "Miles Davis Style - Dorian Jazz Backing Track in Em (E Dorian) - BPM164↓Solo Start 0:54〜",
+      "author": "TK JAM TRACKS",
+      "proposed": {
+        "yt": "45fyACZz8OI",
+        "title": "Miles Davis Style - Dorian Jazz Backing Track in Em (E Dorian) - BPM164↓Solo Start 0:54〜",
+        "artist": "TK JAM TRACKS",
+        "genre": "jazz",
+        "key": "E",
+        "mode": "dorian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "-_RsqV7MsR0",
+      "title": "A Major Rock Blues Backing Track - 95 BPM - 4/4",
+      "author": "JamRoomBackingTracks",
+      "proposed": {
+        "yt": "-_RsqV7MsR0",
+        "title": "A Major Rock Blues Backing Track - 95 BPM - 4/4",
+        "artist": "JamRoomBackingTracks",
+        "genre": "blues",
+        "key": "A",
+        "mode": "major",
+        "bpm": 95,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "0KxEL4zIlFQ",
+      "title": "Neo Soul Groove Jam Track in Ab minor \"Cognition\" - BJT #59",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "0KxEL4zIlFQ",
+        "title": "Neo Soul Groove Jam Track in Ab minor \"Cognition\" - BJT #59",
+        "artist": "Ben's Jam Tracks",
+        "genre": "soul",
+        "key": "G#",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "W2di07GWDO4",
+      "title": "Ab Major Progressive Smooth Fusion Soul Backing Track - 101 BPM - 4/4",
+      "author": "JamRoomBackingTracks",
+      "proposed": {
+        "yt": "W2di07GWDO4",
+        "title": "Ab Major Progressive Smooth Fusion Soul Backing Track - 101 BPM - 4/4",
+        "artist": "JamRoomBackingTracks",
+        "genre": "soul",
+        "key": "Ab",
+        "mode": "major",
+        "bpm": 101,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "DxxsgM4zSzo",
+      "title": "Jazz Fusion Funk Jam Track in G minor \"A New Beginning\" - BJT #61",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "DxxsgM4zSzo",
+        "title": "Jazz Fusion Funk Jam Track in G minor \"A New Beginning\" - BJT #61",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "G",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "bUKMBezUMbM",
+      "title": "Power Funk Jam Track in B minor \"Power Up\" - BJT #62",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "bUKMBezUMbM",
+        "title": "Power Funk Jam Track in B minor \"Power Up\" - BJT #62",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "B",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "2YWdzio0yWQ",
+      "title": "Disco Funk Jam Track in G minor \"Down On The Dancefloor\" - BJT #76",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "2YWdzio0yWQ",
+        "title": "Disco Funk Jam Track in G minor \"Down On The Dancefloor\" - BJT #76",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "G",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "d3kaLiPr7Do",
+      "title": "Super Seductive Slow Blues in Ab minor | Guitar Backing Track",
+      "author": "AUsher Jam Tracks",
+      "proposed": {
+        "yt": "d3kaLiPr7Do",
+        "title": "Super Seductive Slow Blues in Ab minor | Guitar Backing Track",
+        "artist": "AUsher Jam Tracks",
+        "genre": "blues",
+        "key": "G#",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "1vBsK0_BEYU",
+      "title": "HALF STEP HEAVEN Slow Blues backing track - JAM in Eb minor",
+      "author": "Maran Guitar Jam Tracks",
+      "proposed": {
+        "yt": "1vBsK0_BEYU",
+        "title": "HALF STEP HEAVEN Slow Blues backing track - JAM in Eb minor",
+        "artist": "Maran Guitar Jam Tracks",
+        "genre": "blues",
+        "key": "D#",
+        "mode": "minor",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "6347qPo3p0g",
+      "title": "HALF STEP DOWN Mississipi Delta Blues backing track in Eb",
+      "author": "Maran Guitar Jam Tracks",
+      "proposed": {
+        "yt": "6347qPo3p0g",
+        "title": "HALF STEP DOWN Mississipi Delta Blues backing track in Eb",
+        "artist": "Maran Guitar Jam Tracks",
+        "genre": "blues",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "BrVKQ4iAu4k",
+      "title": "Miles Davis Style - Aranjuez Jazz Backing Track in Ebm (Eb Dorian)↓SOLOTIME (Solo Start 0:50~)",
+      "author": "TK JAM TRACKS",
+      "proposed": {
+        "yt": "BrVKQ4iAu4k",
+        "title": "Miles Davis Style - Aranjuez Jazz Backing Track in Ebm (Eb Dorian)↓SOLOTIME (Solo Start 0:50~)",
+        "artist": "TK JAM TRACKS",
+        "genre": "jazz",
+        "key": "Eb",
+        "mode": "dorian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "YizDCFgY72A",
+      "title": "Miles Davis Style - Space Jazz Backing Track in Gm ( G Dorian ) Solo Start 1:15〜",
+      "author": "TK JAM TRACKS",
+      "proposed": {
+        "yt": "YizDCFgY72A",
+        "title": "Miles Davis Style - Space Jazz Backing Track in Gm ( G Dorian ) Solo Start 1:15〜",
+        "artist": "TK JAM TRACKS",
+        "genre": "jazz",
+        "key": "G",
+        "mode": "dorian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "kv_EJpIt4jQ",
+      "title": "Smooth Acid Jazz Jam Track in D major \"Balcony View\" - BJT #14",
+      "author": "Ben's Jam Tracks",
+      "proposed": {
+        "yt": "kv_EJpIt4jQ",
+        "title": "Smooth Acid Jazz Jam Track in D major \"Balcony View\" - BJT #14",
+        "artist": "Ben's Jam Tracks",
+        "genre": "jazz",
+        "key": "D",
         "mode": "major",
         "bpm": null,
         "capo": 0,
@@ -259,36 +559,36 @@
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "XsDru5g676M",
-      "title": "Jazz Blues Backing Track - Eb 120 bpm",
-      "author": "Benys Backing Tracks",
+      "yt": "_3WbtMIsMTE",
+      "title": "Acid Jazz Funk Jam Track in D minor \"Prismic\" - BJT #28",
+      "author": "Ben's Jam Tracks",
       "proposed": {
-        "yt": "XsDru5g676M",
-        "title": "Jazz Blues Backing Track - Eb 120 bpm",
-        "artist": "Benys Backing Tracks",
-        "genre": "blues",
-        "key": null,
-        "mode": null,
-        "bpm": 120,
+        "yt": "_3WbtMIsMTE",
+        "title": "Acid Jazz Funk Jam Track in D minor \"Prismic\" - BJT #28",
+        "artist": "Ben's Jam Tracks",
+        "genre": "funk",
+        "key": "D",
+        "mode": "minor",
+        "bpm": null,
         "capo": 0,
         "tags": [
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "new",
+      "note": ""
     },
     {
-      "yt": "WJ63FZfCzM8",
-      "title": "Harry Hood (Jam) » Backing Track » Phish",
+      "yt": "-AhHhtgICw8",
+      "title": "Chalkdust Torture » Backing Track (Jam) » Phish",
       "author": "Jeff Williams Guitar",
       "proposed": {
-        "yt": "WJ63FZfCzM8",
-        "title": "Harry Hood (Jam) » Backing Track » Phish",
+        "yt": "-AhHhtgICw8",
+        "title": "Chalkdust Torture » Backing Track (Jam) » Phish",
         "artist": "Jeff Williams Guitar",
         "genre": "jam",
         "key": null,
@@ -299,39 +599,319 @@
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
     },
     {
-      "yt": "36X3wecT2z8",
-      "title": "Blues in E (90bpm) : Backing track",
-      "author": "Guitare Improvisation",
+      "yt": "xye-srApfYg",
+      "title": "Weekapaug Groove » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
       "proposed": {
-        "yt": "36X3wecT2z8",
-        "title": "Blues in E (90bpm) : Backing track",
-        "artist": "Guitare Improvisation",
-        "genre": "blues",
+        "yt": "xye-srApfYg",
+        "title": "Weekapaug Groove » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
         "key": null,
         "mode": null,
-        "bpm": 90,
+        "bpm": null,
         "capo": 0,
         "tags": [
           "jam"
         ]
       },
-      "status": "existing",
-      "note": "yt id already in catalog"
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
     },
     {
-      "yt": "6y75xmcKZ8g",
-      "title": "Sweet D Mixolydian Guitar Backing Track",
-      "author": "Quist",
+      "yt": "KzMcEo0iHws",
+      "title": "Sand » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
       "proposed": {
-        "yt": "6y75xmcKZ8g",
-        "title": "Sweet D Mixolydian Guitar Backing Track",
-        "artist": "Quist",
+        "yt": "KzMcEo0iHws",
+        "title": "Sand » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
         "genre": "jam",
-        "key": "D",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "p_YydXxb13Q",
+      "title": "Ghost » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "p_YydXxb13Q",
+        "title": "Ghost » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "Azwy5YNH_Zo",
+      "title": "Possum » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "Azwy5YNH_Zo",
+        "title": "Possum » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "XrQ8fZ1elAk",
+      "title": "Down With Disease (Jam) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "XrQ8fZ1elAk",
+        "title": "Down With Disease (Jam) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "zvS3jE7cVjg",
+      "title": "Julius (Jam) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "zvS3jE7cVjg",
+        "title": "Julius (Jam) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "KtgSI1MtAWg",
+      "title": "Tweezer (Jam) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "KtgSI1MtAWg",
+        "title": "Tweezer (Jam) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "H124VmglViE",
+      "title": "Slave To The Traffic Light » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "H124VmglViE",
+        "title": "Slave To The Traffic Light » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "xEiDBNWH4Bg",
+      "title": "You Enjoy Myself (JAM) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "xEiDBNWH4Bg",
+        "title": "You Enjoy Myself (JAM) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "X4pZPwf0GXQ",
+      "title": "2001 » Backing Track (5min version) » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "X4pZPwf0GXQ",
+        "title": "2001 » Backing Track (5min version) » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "GVfOpVacU0g",
+      "title": "Reba (Jam) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "GVfOpVacU0g",
+        "title": "Reba (Jam) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "QRtAE0J-VcA",
+      "title": "Stash (Jam) » Backing Track » Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "QRtAE0J-VcA",
+        "title": "Stash (Jam) » Backing Track » Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "TJYRu-jq3bs",
+      "title": "Tube - Backing Track - Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "TJYRu-jq3bs",
+        "title": "Tube - Backing Track - Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "3VZI7AV-GA0",
+      "title": "Mike's Song (Jam) - Backing Track - Phish",
+      "author": "Jeff Williams Guitar",
+      "proposed": {
+        "yt": "3VZI7AV-GA0",
+        "title": "Mike's Song (Jam) - Backing Track - Phish",
+        "artist": "Jeff Williams Guitar",
+        "genre": "jam",
+        "key": null,
+        "mode": null,
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "skip",
+      "note": "no key/mode parsed - not a keyed backing track? operator to confirm"
+    },
+    {
+      "yt": "vNyxo5i4Ge4",
+      "title": "John Coltrane Style - Dorian Jazz Backing Track in Em ( E dorian ) ↓Solo Time Detail",
+      "author": "TK JAM TRACKS",
+      "proposed": {
+        "yt": "vNyxo5i4Ge4",
+        "title": "John Coltrane Style - Dorian Jazz Backing Track in Em ( E dorian ) ↓Solo Time Detail",
+        "artist": "TK JAM TRACKS",
+        "genre": "jazz",
+        "key": "E",
+        "mode": "dorian",
+        "bpm": null,
+        "capo": 0,
+        "tags": [
+          "jam"
+        ]
+      },
+      "status": "new",
+      "note": ""
+    },
+    {
+      "yt": "L3bgwghr0pM",
+      "title": "Grateful Dead China Cat Sunflower Backing Track in G Mixolydian",
+      "author": "Petti Music Studios",
+      "proposed": {
+        "yt": "L3bgwghr0pM",
+        "title": "Grateful Dead China Cat Sunflower Backing Track in G Mixolydian",
+        "artist": "Petti Music Studios",
+        "genre": "jam",
+        "key": "G",
         "mode": "mixolydian",
         "bpm": null,
         "capo": 0,
