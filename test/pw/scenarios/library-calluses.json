@@ -16,6 +16,14 @@
       "selector": "#songsList"
     },
     {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
       "action": "assertText",
       "selector": "#songsList",
       "contains": "Calluses"

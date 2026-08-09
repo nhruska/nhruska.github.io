@@ -126,6 +126,14 @@
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>';
   var ICON_PREV = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5v14l-9.5-7z"/></svg>';
   var ICON_NEXT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5v14l9.5-7z"/></svg>';
+  // Shuffle: CURVED crossing arrows (UAT 2026-08-09 round 3 - the straight
+  // feather crossing read as an X, not the standard music-player shuffle).
+  // Two S-curves crossing at center, chevron arrowheads at the right ends.
+  var ICON_SHUFFLE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 6 C7.5 6 9.8 8.2 12 12 C14.2 15.8 16.5 18 21 18"/>'
+    + '<path d="M3 18 C7.5 18 9.8 15.8 12 12 C14.2 8.2 16.5 6 21 6"/>'
+    + '<polyline points="17.5 14.5 21 18 17.5 21.5"/>'
+    + '<polyline points="17.5 2.5 21 6 17.5 9.5"/></svg>';
   // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
   // TAPPED for a given track, so the next Studio open pre-selects it instead
   // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
@@ -1009,10 +1017,7 @@
         // order: shuffle-prev-play-next), so it rides in mini AND expanded.
         // Standard crossed-arrows glyph (inline SVG, the app's stroke-icon
         // pattern) replaces the old &#8646; text glyph.
-        ? '<button class="bt-st-np-shuf' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">'
-          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-          + '<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>'
-          + '<polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>'
+        ? '<button class="bt-st-np-shuf' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">' + ICON_SHUFFLE + '</button>'
         + '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
           + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
           // UAT batch 6 ("would like next. and back buttons. it's like a music

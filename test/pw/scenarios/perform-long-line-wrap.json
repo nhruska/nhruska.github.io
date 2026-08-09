@@ -1,21 +1,56 @@
 {
   "name": "perform-long-line-wrap",
   "note": "CW-1 (P0), bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): a long chord-over-lyric line must WRAP (never CSS-soft-wrap, never hard-clip) AND render at a READABLE size - the old assertion accepted any tiny-but-fitting render, which was the wrong bar (the shrink-to-fit model regressed 4 times behind it). Now: >1 wrapped .lyrLine row, no row wider than the stage viewport, chord glued over its lyric, AND --pscale/font-size at or above the 0.8x (~13px) legibility floor. Portrait guard - see perform-stage-orientation-rewrap.json for the orientation half.",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
     {
       "action": "evalAssert",
       "label": "seed a saved custom song with one very long chorus line so the perform view has content that overflows at 412px",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'longLineSong', t:'Long Line Song', a:'Me', y:2026, d:'Mine', custom:true, forkOf:'k1', seq:['C','G','Am','F'], sheet:[['Verse','[C] a short intro line [G] here'],['Chorus','[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Long Line Song\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Long Line Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "the perform (stage) view is open",

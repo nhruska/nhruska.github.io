@@ -1,28 +1,69 @@
 {
   "name": "stage-transpose-tap-target",
   "note": "P1-2 (SDD persona goalpost): the Stage's transpose steppers (#pDown/#pUp, the Key row inside the gear sheet #pSpeed) are a safety-critical control - a mis-tap changes the performed key mid-song. Prior UAT (F7, see persona-performer-setlist.json) already moved them OUT of the crowded top bar next to Close; this goalpost is the remaining gap - the steppers themselves render below the 44px tap-target floor once the gear sheet is opened. Red-first: pre-fix each stepper's own box is < 44x44 (the shared .psBtn settings-row treatment: ~8px padding + .78rem text).",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
     {
       "action": "evalAssert",
       "label": "seed a saved custom song with a chord sheet so Stage has content",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'transposeTapSong', t:'Transpose Tap Song', a:'Me', y:2026, d:'Mine', custom:true, seq:['C','G','Am','F'], sheet:[['Verse','[C] a [G] b [Am] c [F] d']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Transpose Tap Song\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Transpose Tap Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "the Stage is open",
       "js": "(function(){var p=document.getElementById('perform');return !!p && p.classList.contains('on');})()"
     },
-    { "action": "tap", "selector": "#pCtrls" },
-    { "action": "wait", "ms": 300 },
+    {
+      "action": "tap",
+      "selector": "#pCtrls"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
     {
       "action": "evalAssert",
       "label": "gear sheet is open and the Key row's steppers are visible",
@@ -43,6 +84,9 @@
       "label": "the two steppers keep >=8px of daylight between them so a Key-down/Key-up mis-tap can't slide from one into the other",
       "js": "(function(){var d=document.getElementById('pDown').getBoundingClientRect(),u=document.getElementById('pUp').getBoundingClientRect();return (u.left - d.right) >= 8;})()"
     },
-    { "action": "screenshot", "name": "stage-transpose-tap-target" }
+    {
+      "action": "screenshot",
+      "name": "stage-transpose-tap-target"
+    }
   ]
 }

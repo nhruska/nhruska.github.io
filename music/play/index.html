@@ -79,12 +79,15 @@
            surface now, and the setlist is a VIEW of it (component-conventions:65 -
            bottom nav = top-level surfaces ONLY; view switches are segmented). -->
       <div class="modeSwitch songsSeg" id="songsSeg" role="tablist" aria-label="Songs view">
-        <button type="button" class="on" id="segAll" data-seg="all" role="tab" aria-selected="true">All</button>
         <!-- UAT 2026-08-08: playable (video-backed) rows are the premium content
              ("they can be played! it's like the ones that can't are broken") -
              a Jams view collapses the gulf to the play action. Same filtered
-             All-view chrome (search/filters apply); only the setlist swaps chrome. -->
-        <button type="button" id="segJams" data-seg="jams" role="tab" aria-selected="false">Jams</button>
+             All-view chrome (search/filters apply); only the setlist swaps chrome.
+             UAT 2026-08-09: Jams LEADS and is the DEFAULT segment (songbook's
+             songsSeg boots 'jams') - the app opens on what you can PLAY; the
+             tour lands new users jamming a backing track immediately. -->
+        <button type="button" class="on" id="segJams" data-seg="jams" role="tab" aria-selected="true">Jams</button>
+        <button type="button" id="segAll" data-seg="all" role="tab" aria-selected="false">All</button>
         <button type="button" id="segSet" data-seg="set" role="tab" aria-selected="false">Setlist<span class="segCount" id="segSetCount" hidden></span></button>
       </div>
       <!-- ALL-view chrome. A setlist is hand-ordered, not searched or filtered,
@@ -300,6 +303,7 @@
         <p class="wLead"><b>What are you playing?</b></p>
         <div id="wInstList" role="radiogroup" aria-label="Instrument"></div>
         <p class="wLead">Each instrument keeps its own setlists and progressions - the song library is shared. A quick tip on each tab shows you around as you go.</p>
+        <p class="wLead">Tap <b>Start playing</b> and a backing track starts - grab your instrument and jam.</p>
       </section>
     </div>
     <div class="wFoot"><button class="btn red" id="wNext" type="button">Start playing</button></div>
@@ -397,7 +401,7 @@
           </a>
           <button class="listItem setRow" id="replayTourBtn" type="button">
             <span class="li-title">Replay the intro tour</span>
-            <span class="li-artist">The 3-panel welcome walkthrough, any time</span>
+            <span class="li-artist">The welcome intro, any time</span>
           </button>
           <!-- The build stamp lives ONCE, in the settings footer (quick-glance
                home) - don't repeat it here. -->
@@ -521,7 +525,7 @@
   // one orienting sentence (verb-first, name the action the user came to do).
   // The engine's contexts/ctxLine machinery renders it; the tour's map panel is
   // the long-form orientation.
-  var CONTEXTS_BASE = { library: 'Tap a song to play it - the + saves it to your setlist', compose: 'Build chord progressions and songs', tracks: 'Find a track in your key', practice: 'Now playing', jam: 'Your songs, show-ready - hit Start to perform' };
+  var CONTEXTS_BASE = { library: 'Tap a jam to play it - All has the whole songbook', compose: 'Build chord progressions and songs', tracks: 'Find a track in your key', practice: 'Now playing', jam: 'Your songs, show-ready - hit Start to perform' };
   var TAB_LABELS = { library: 'Songs', compose: 'Compose', tune: 'Tune', tracks: 'Tracks', practice: 'Playing' };
   window.addEventListener('music:tab-shown', function (ev) {
     var pill = document.getElementById('tabPill');
@@ -703,19 +707,40 @@
         if (window.songbookRefreshCompose) { try { songbookRefreshCompose(); } catch (e) {} }
       }
       ov.hidden = true;
+      // UAT 2026-08-09 ("users download the app and are jamming a backing
+      // track immediately after the tour"): the tour ENDS in a jam on EVERY
+      // path, via the one-shot music.welcomeJam.v1 intent flag consumed by
+      // openWelcomeJam() (defined at the tracksCtl mount).
       if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
+        // Instrument RELOAD path: this page is about to die, so set the flag
+        // FIRST - the new page's tracksCtl onReady re-enters openWelcomeJam()
+        // once the catalog loads. A page load is not a user gesture, so the
+        // jam opens there honestly unstarted (one tap on the big play starts
+        // sound - the bar's state sync keeps it truthful).
+        try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {}
         try { localStorage.setItem(PROFILE_KEY, chosenInst); } catch (e) {}
         location.search = '?p=' + encodeURIComponent(chosenInst);
-      } else if (window.Callouts) {
-        // No reload path: welcome is done + gone, so kick the landing tab's
-        // first-run callout now (the tab-shown listener skipped it while
-        // welcomeDone was unset). A reload path instead re-boots with
-        // welcomeDone set, so that listener fires the callout post-reload.
-        try {
-          var abtn = document.querySelector('.tabbar button.on');
-          var t = abtn && abtn.dataset.tab;
-          if (t) requestAnimationFrame(function () { try { Callouts.mount(t); } catch (e) {} });
-        } catch (e) {}
+      } else {
+        // Same-instrument path: the Start-playing TAP is a real user gesture,
+        // so the jam opens right here with autoplay allowed. The library
+        // callout defers (inside the helper) to the Studio's first leave -
+        // under the sheet it would burn its show-once unseen.
+        var jammed = false;
+        try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {}
+        try { jammed = !!openWelcomeJam(); } catch (e) {}
+        if (!jammed) {
+          // Not jammed: either the catalog is still fetching (flag survives -
+          // onReady finishes the jam when it lands) or no featured yt jam
+          // exists (flag consumed/cleared - restore the classic immediate
+          // callout so first-run orientation never silently vanishes).
+          var pending = false;
+          try { pending = !!localStorage.getItem('music.welcomeJam.v1'); } catch (e) {}
+          if (!pending && window.Callouts) {
+            var abtn = document.querySelector('.tabbar button.on');
+            var t = abtn && abtn.dataset.tab;
+            if (t) requestAnimationFrame(function () { try { Callouts.mount(t); } catch (e2) {} });
+          }
+        }
       }
     }
     function finish() {
@@ -767,13 +792,52 @@
     // tracks.js mounts (hidden) to power the Practice Studio + supply the track
     // catalog for the merged repertoire. onReady fires when tracks.json loads,
     // so the repertoire rebuilds once the track data is in.
+    // Welcome auto-jam (UAT 2026-08-09: "users download the app and are
+    // jamming a backing track immediately after the tour"). One-shot on the
+    // music.welcomeJam.v1 intent flag: the tour's Start-playing tap sets it
+    // and calls this directly (a real gesture - autoplay allowed); the
+    // instrument-RELOAD path re-enters here via tracksCtl's onReady after the
+    // new page boots, where the embed opens HONESTLY unstarted (a load is not
+    // a gesture) and one ► tap starts sound - the batch-7 state sync keeps
+    // the bar truthful either way. The library callout defers to the Studio's
+    // first leave (under the sheet it would burn its show-once unseen); a
+    // catalog with no featured jam clears the flag and gives up cleanly.
+    function openWelcomeJam() {
+      try {
+        if (!localStorage.getItem('music.welcomeJam.v1')) return false;
+        // tracksCtl is the hoisted closure var below (NOT on window - this
+        // whole script is an IIFE); undefined only if called pre-mount.
+        if (!(tracksCtl && tracksCtl.getTracks && tracksCtl.openStudio)) return false;
+        var pool = tracksCtl.getTracks() || [];
+        if (!pool.length) return false; // seed not fetched yet - onReady retries
+        localStorage.removeItem('music.welcomeJam.v1');
+        var ft = pool.filter(function (t) {
+          return t && t.yt && (t.tags || []).indexOf('featured') >= 0;
+        })[0];
+        if (!ft) return false;
+        tracksCtl.openStudio(ft);
+        // tracks.js dispatches music:nowplaying on DOCUMENT (non-bubbling) -
+        // a window listener would never hear it.
+        var armed = function () {
+          if (document.body.classList.contains('studioopen')) return;
+          document.removeEventListener('music:nowplaying', armed);
+          try { if (window.Callouts) Callouts.mount('library'); } catch (e2) {}
+        };
+        document.addEventListener('music:nowplaying', armed);
+        return true;
+      } catch (e) { return false; }
+    }
+    window.openWelcomeJam = openWelcomeJam;
     var tracksCtl = (tracksEl && window.Tracks) ? window.Tracks.mount({
       container: tracksEl, tracksUrl: '../backing-tracks/tracks.json', pack: pack,
       // reachability shim: the curate bar renders into a VISIBLE slot under the
       // repertoire list (the in-container bar lives inside the retired, permanently
       // -hidden finder tab, making the whole curation queue unreachable otherwise).
       curateBarEl: el('curateSlot'),
-      onReady: function () { if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild(); },
+      onReady: function () {
+        if (songbookCtl && songbookCtl.rebuild) songbookCtl.rebuild();
+        openWelcomeJam(); // post-reload (or slow-fetch) half of the welcome auto-jam
+      },
       // The Studio's "Edit this track to add a video" link (t.custom items only)
       // opens the Add/Edit form. songbookCtl doesn't exist yet at mount time
       // (built just below), so this indirects through the closure.
@@ -852,6 +916,11 @@
     requestAnimationFrame(function () {
       if (!window.Callouts) return;
       try { if (!localStorage.getItem('music.welcomeDone.v1')) return; } catch (e) { return; }
+      // Welcome auto-jam pending (post-"Start playing" reload): the Studio is
+      // about to open over this tab, so mounting now would burn the callout's
+      // show-once unseen under the sheet. openWelcomeJam owns the landing
+      // callout on that path (deferred to the Studio's first leave).
+      try { if (localStorage.getItem('music.welcomeJam.v1')) return; } catch (e) {}
       var wo = document.getElementById('welcomeOv'); if (wo && !wo.hidden) return;
       var abtn = document.querySelector('.tabbar button.on');
       var t = abtn && abtn.dataset && abtn.dataset.tab;

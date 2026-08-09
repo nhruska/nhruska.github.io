@@ -28,6 +28,14 @@
     },
     {
       "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
       "selector": "#songsList .listItem:has-text(\"No Woman No Cry\")"
     },
     {
@@ -125,6 +133,14 @@
     },
     {
       "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
       "selector": "#songsList .listItem:has-text(\"Calluses\")"
     },
     {
@@ -219,6 +235,14 @@
     {
       "action": "wait",
       "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
     },
     {
       "action": "tap",

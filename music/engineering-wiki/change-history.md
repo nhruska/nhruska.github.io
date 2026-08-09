@@ -436,4 +436,24 @@ paths on the Material 24-grid: ICON_PLAY/PAUSE/PREV/NEXT module
 constants in tracks.js, ONE source for the markup builder and all
 four pp state-swap sites. font-size/letter-spacing rules retired
 from .bt-st-np-step/.bt-st-np-pp. No new/removed CORE paths. [#328]
+M-JAMS-FIRST (2026-08-09, PR #328 UAT round 3): v328-2->v328-3 - the
+app lands on what you can PLAY: segment order swaps to Jams|All|Set
+with Jams the boot default (songsSeg boots 'jams'); 'featured'-tagged
+jams pin to row 1 (data-driven stable partition - Harry Hood carries
+the tag). ICON_SHUFFLE redrawn curved-AND-crossed (S-bend crossing
+paths + arrowheads). The welcome tour ends IN a jam: rawFinish sets a
+one-shot music.welcomeJam.v1 intent flag; same-instrument path opens
+the featured jam under the tap's gesture (autoplay allowed), the
+instrument-RELOAD path re-enters via tracksCtl onReady with an
+honestly-unstarted embed (a load is not a gesture). The library
+callout defers to the Studio's first leave (music:nowplaying on
+DOCUMENT - non-bubbling, a window listener never hears it) and the
+boot callout mount skips while the flag is pending, so show-once is
+never burned under the sheet. Guidance updated (library context line,
+callouts primary, welcome copy, timeless Settings replay row).
+welcome-tour + persona-firsttimer-journey rewritten for the
+single-panel auto-jam flow (retires the 3x #wNext flake); 21
+scenarios gain an explicit #segAll tap where they need chord-sheet
+rows (jams excludes video-less rows); songs-surface-merge's
+opens-on-All goalpost superseded. No new/removed CORE paths. [#328]
 ```

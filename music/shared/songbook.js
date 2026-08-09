@@ -994,7 +994,10 @@
      * All, so the app never changes shape depending on state - which is the
      * class of surprise the merge exists to remove.
      */
-    var songsSeg = 'all';
+    // UAT 2026-08-09: Jams is the DEFAULT view - the app opens on what you can
+    // PLAY (the music-player identity), All is one tap away. Pairs with the
+    // Jams-first segment order in play/index.html.
+    var songsSeg = 'jams';
     function applySongsSeg() {
       var isSet = songsSeg === 'set';
       // UAT 2026-08-08: Jams = the playable subset ("they can be played! it's
@@ -1043,7 +1046,18 @@
       // the same predicate that decides whether a row can light up as
       // now-playing (studio target with a video), so "in Jams" and "can play"
       // can never drift apart.
-      if (songsSeg === 'jams') filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
+      if (songsSeg === 'jams') {
+        filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
+        // UAT 2026-08-09: 'featured'-tagged jams lead the list (data-driven -
+        // the catalog marks them; today that is the original Harry Hood jam,
+        // the tour's landing track). Stable partition, no other reorder.
+        var feat = [], rest = [];
+        filtered.forEach(function (rec) {
+          var t = studioTarget(rec);
+          ((t && (t.tags || []).indexOf('featured') >= 0) ? feat : rest).push(rec);
+        });
+        filtered = feat.concat(rest);
+      }
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
         var box = document.createElement('div');
