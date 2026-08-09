@@ -37,10 +37,13 @@
     return String(raw || '').split(/[\s,]+/).map(function (s) { return s.trim(); }).filter(Boolean);
   }
   function seqToText(seq) { return (Array.isArray(seq) ? seq : []).join(' '); }
-  // The 4-mode vocabulary the Compose flow saves (locked interface). The form
+  // The 5-mode vocabulary custom items can carry (locked interface). The form
   // must round-trip ALL of them - don't narrow the Mode select to major/minor
-  // or dorian/mixolydian songs get rewritten to major on every edit.
-  var MODES = ['major', 'minor', 'dorian', 'mixolydian'];
+  // or dorian/mixolydian songs get rewritten to major on every edit. 'blues'
+  // joined with the playlist import (imported blues jams are mode:'blues',
+  // same as the seed catalog; without it here, EDITING one would silently
+  // rewrite it to major through normFormMode).
+  var MODES = ['major', 'minor', 'dorian', 'mixolydian', 'blues'];
   function normFormMode(v) {
     var m = String(v == null ? '' : v).trim().toLowerCase();
     return MODES.indexOf(m) >= 0 ? m : 'major';
@@ -231,6 +234,19 @@
         + '<div class="rf-head"><span class="rf-t">' + (fork ? 'Edit' : editing ? 'Edit' : 'Add a song or track') + '</span>'
         + '<button class="rf-x" type="button" data-close>close</button></div>'
         + '<div class="rf-body">'
+        // Playlist import (create mode only, host-enabled via opts.onImport):
+        // one compact toggle above the single-item fields - the whole-playlist
+        // path is the power move, the single add stays the default reading.
+        + (!editing && !fork && current.onImport
+          ? '<div class="rf-pli" data-pli>'
+            + '<button class="rf-pli-toggle" data-pli-toggle type="button">Import a whole playlist instead</button>'
+            + '<div class="rf-pli-panel" data-pli-panel hidden>'
+            + '<input data-pli-url class="bt-in" placeholder="Paste a YouTube playlist link" autocomplete="off" inputmode="url">'
+            + '<div class="rf-pli-row"><button class="btn red" data-pli-go type="button">Import</button>'
+            + '<span class="rf-pli-status" data-pli-status aria-live="polite"></span></div>'
+            + '<div class="rf-note">Public or unlisted playlists only. Keys are read from the video titles - fix any misses later with Edit.</div>'
+            + '</div></div>'
+          : '')
         + '<label class="rf-lbl">Title</label><input data-title class="bt-in" value="' + esc(title) + '" placeholder="Song or track title" autocomplete="off">'
         + '<label class="rf-lbl">Artist</label><input data-artist class="bt-in" value="' + esc(artist) + '" placeholder="Artist (optional)" autocomplete="off">'
         + '<div class="rf-grid">'
@@ -317,10 +333,54 @@
         };
       }
       wireYtSuggest(el);
+      wirePlaylistImport(el);
+    }
+
+    // Playlist-import panel wiring (create mode; markup gated on onImport in
+    // render). The heavy lifting - id extraction, iframe enumeration, noembed
+    // titles, the key ladder - lives in PlaylistImport (shared/playlist-
+    // import.js); this is just the glue: status line, disable-while-running,
+    // and the settleAfter close hand-off mirroring the Save path so the
+    // host's toast/render takes the form's history slot cleanly.
+    function wirePlaylistImport(root) {
+      var toggle = root.querySelector('[data-pli-toggle]');
+      if (!toggle) return;
+      var panel = root.querySelector('[data-pli-panel]');
+      var input = root.querySelector('[data-pli-url]');
+      var go = root.querySelector('[data-pli-go]');
+      var statusEl = root.querySelector('[data-pli-status]');
+      toggle.onclick = function () {
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }
+      };
+      go.onclick = function () {
+        if (!global.PlaylistImport) return;
+        var existing = [];
+        try { if (current.existingYt) existing = current.existingYt() || []; } catch (e) {}
+        go.disabled = true;
+        global.PlaylistImport.importPlaylist(input.value, {
+          existingYt: existing,
+          onStatus: function (t) { statusEl.textContent = t; },
+          onError: function (t) { statusEl.textContent = t; go.disabled = false; },
+          onDone: function (result) {
+            var onImport = current && current.onImport;
+            var doImport = function () { if (onImport) onImport(result); };
+            if (global.NavHistory) global.NavHistory.settleAfter(close, doImport);
+            else { doImport(); close(); }
+          }
+        });
+      };
     }
 
     function open(o) {
-      current = { mode: o.mode === 'edit' ? 'edit' : 'create', fork: !!o.fork, item: o.item || null, onSave: o.onSave || null, onDelete: o.onDelete || null };
+      current = {
+        mode: o.mode === 'edit' ? 'edit' : 'create', fork: !!o.fork, item: o.item || null,
+        onSave: o.onSave || null, onDelete: o.onDelete || null,
+        // Playlist import (create mode): onImport(result) receives
+        // { entries, skipped, total }; existingYt() returns the yt ids already
+        // in the library so duplicates never re-import.
+        onImport: o.onImport || null, existingYt: o.existingYt || null
+      };
       render();
       if (global.NavHistory) global.NavHistory.open('form', close);
     }

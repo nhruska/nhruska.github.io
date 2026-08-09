@@ -28,6 +28,8 @@ Track records carry exactly 9 keys: `{ yt|null, title, artist, genre, key, mode,
 
 **trackKey** (tracks.js ~150): `[title, artist, key, mode].join('|').toLowerCase().trim()` - the stable identity for the curated-URL overlay; cosmetic case/whitespace changes cannot orphan a curated video. **LEGACY_TRACKKEYS** (tracks.js ~81): migration map remapping keys stored under retired identities - the old mode-coarsening rules (modal seeds once filed under 'major') and the 2026-08-09 artist enrichment (the 14 playlist-baked tracks shipped one release with `artist: ''`, so urls saved against the empty-artist identity re-key to the enriched one).
 
+**User playlist import** (M-PLAYLIST-IMPORT): imported tracks are ordinary CUSTOM items (the songbook custom store, `d:'Mine'`, `custom:true`) created in batch by `createCustomItems` - not a new store, no schema bump (additive). They may carry `mode:'blues'` like the seed catalog; repertoire-form's MODES is the 5-mode vocabulary so edits round-trip it. Mechanism + key ladder: [practice-studio.md](practice-studio.md) "User playlist import".
+
 ## Merged repertoire [STABLE]
 
 Library = ONE list: songs merged with matching tracks (repertoire.js). Match on normalized title+artist; key as tiebreak among multiple candidates; consumed tracks marked _used; unmatched tracks become standalone items. Merged records keep the song shape + gain track fields (genre/bpm/yt/_track) so the Studio can open them.
