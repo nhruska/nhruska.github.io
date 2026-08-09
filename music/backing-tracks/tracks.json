@@ -750,5 +750,184 @@
     "tags": [
       "jam"
     ]
+  },
+  {
+    "yt": null,
+    "title": "Melancholy Rock Backing Track in B Minor",
+    "artist": "",
+    "genre": "rock",
+    "key": "B",
+    "mode": "minor",
+    "bpm": 80,
+    "capo": 0,
+    "tags": [
+      "ballad",
+      "jam",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Smooth Groove Backing Track in G# Minor",
+    "artist": "",
+    "genre": "funk",
+    "key": "G#",
+    "mode": "minor",
+    "bpm": 92,
+    "capo": 0,
+    "tags": [
+      "groove",
+      "jam",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Upbeat Pop Rock Backing Track in B Major",
+    "artist": "",
+    "genre": "pop",
+    "key": "B",
+    "mode": "major",
+    "bpm": 118,
+    "capo": 0,
+    "tags": [
+      "jam",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Soul Ballad Backing Track in Eb Major",
+    "artist": "",
+    "genre": "pop",
+    "key": "Eb",
+    "mode": "major",
+    "bpm": 68,
+    "capo": 0,
+    "tags": [
+      "ballad",
+      "slow",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Jazz Soul Backing Track in Ab Major",
+    "artist": "",
+    "genre": "jazz",
+    "key": "Ab",
+    "mode": "major",
+    "bpm": 75,
+    "capo": 0,
+    "tags": [
+      "soul",
+      "jam",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Slow Blues Backing Track in A",
+    "artist": "",
+    "genre": "blues",
+    "key": "A",
+    "mode": "blues",
+    "bpm": 60,
+    "capo": 0,
+    "tags": [
+      "12-bar",
+      "slow",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Texas Blues Shuffle Backing Track in G",
+    "artist": "",
+    "genre": "blues",
+    "key": "G",
+    "mode": "blues",
+    "bpm": 110,
+    "capo": 0,
+    "tags": [
+      "shuffle",
+      "12-bar",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Uptempo Blues Rock Backing Track in D",
+    "artist": "",
+    "genre": "blues",
+    "key": "D",
+    "mode": "blues",
+    "bpm": 132,
+    "capo": 0,
+    "tags": [
+      "blues-rock",
+      "fast",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Jazz Blues Backing Track in Bb",
+    "artist": "",
+    "genre": "blues",
+    "key": "Bb",
+    "mode": "blues",
+    "bpm": 120,
+    "capo": 0,
+    "tags": [
+      "jazz",
+      "swing",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Fast Punk Rock Backing Track in E Major",
+    "artist": "",
+    "genre": "rock",
+    "key": "E",
+    "mode": "major",
+    "bpm": 150,
+    "capo": 0,
+    "tags": [
+      "fast",
+      "punk",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Slow Burn Ballad Backing Track in C Minor",
+    "artist": "",
+    "genre": "rock",
+    "key": "C",
+    "mode": "minor",
+    "bpm": 58,
+    "capo": 0,
+    "tags": [
+      "ballad",
+      "slow",
+      "search-first"
+    ]
+  },
+  {
+    "yt": null,
+    "title": "Funky Groove Backing Track in E Minor",
+    "artist": "",
+    "genre": "funk",
+    "key": "E",
+    "mode": "minor",
+    "bpm": 100,
+    "capo": 0,
+    "tags": [
+      "groove",
+      "jam",
+      "search-first"
+    ]
   }
 ]

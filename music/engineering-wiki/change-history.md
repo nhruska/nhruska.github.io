@@ -387,4 +387,15 @@ the first import measured y=10442 in the scenario viewport, ten
 screens under the fold). Scenario grows to 19 steps incl. an
 assertInViewport gate, mutation-proven red; form-settle wait replaces
 the raced fixed sleep. [#326]
+M-VARIETY-FILL (2026-08-09, PR #327): v326-2->v327 - 12 curated
+yt:null search-first gap tracks driven by the measured matrix (Bm,
+G#m, B, Eb, Ab; A/G/D/Bb blues; tempo tails 3->6 slow 2->4 fast;
+funk/jazz/pop reinforced). Catalog 55->67. Every title dogfoods the
+import key ladder 12/12 exact. candidates.test.js full-coverage gate
+gains the explicit 'search-first' tag carve-out (pre-researched ids
+cannot be honestly authored offline; the deterministic search query
+is the curation path, real ids arrive via the operator's gap playlist
++ trackKey enrichment). Residual rare keys deliberately left for the
+operator's playlist. tracks.json is CORE-precached, hence the bump.
+[#327]
 ```
