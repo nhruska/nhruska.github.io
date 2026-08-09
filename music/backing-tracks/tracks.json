@@ -538,7 +538,7 @@
   {
     "yt": "y9jm5L6g3ng",
     "title": "Time Jam - Pink Floyd Style",
-    "artist": "",
+    "artist": "Now YOU Shred Backing Tracks",
     "genre": "rock",
     "key": "F#",
     "mode": "minor",
@@ -552,7 +552,7 @@
   {
     "yt": "4q7h2SwIyLg",
     "title": "Guitar backing track in C Major - Pop style",
-    "artist": "",
+    "artist": "Pier Gonella Jam",
     "genre": "pop",
     "key": "C",
     "mode": "major",
@@ -565,7 +565,7 @@
   {
     "yt": "LJeCVSiteNU",
     "title": "Guitar backing track in G Major - Pop style",
-    "artist": "",
+    "artist": "Pier Gonella Jam",
     "genre": "pop",
     "key": "G",
     "mode": "major",
@@ -578,7 +578,7 @@
   {
     "yt": "3stpZKNF_jQ",
     "title": "Rock Pop Backing Track G Major 70 BPM",
-    "artist": "",
+    "artist": "TGuitar",
     "genre": "rock",
     "key": "G",
     "mode": "major",
@@ -592,7 +592,7 @@
   {
     "yt": "MJIMlr8tI2s",
     "title": "Funky Jam Backing Track [Fm]",
-    "artist": "",
+    "artist": "Instrumental Avenue",
     "genre": "funk",
     "key": "F",
     "mode": "minor",
@@ -606,7 +606,7 @@
   {
     "yt": "FWbdZSBW9Vo",
     "title": "Pop Rock Acoustic Ballad in G 66bpm",
-    "artist": "",
+    "artist": "Jam Tracks Galaxy",
     "genre": "rock",
     "key": "G",
     "mode": "major",
@@ -620,7 +620,7 @@
   {
     "yt": "nbtHwKTRUcg",
     "title": "Slow Rock Ballad in C/Am 64bpm",
-    "artist": "",
+    "artist": "Jam Tracks Galaxy",
     "genre": "rock",
     "key": "C",
     "mode": "major",
@@ -634,7 +634,7 @@
   {
     "yt": "go2NlmO5pzM",
     "title": "Peaceful Mellow in E Minor",
-    "artist": "",
+    "artist": "Jam'in Backing Tracks",
     "genre": "jam",
     "key": "E",
     "mode": "minor",
@@ -647,7 +647,7 @@
   {
     "yt": "4cs1NwbZp2w",
     "title": "Funky Blues in C - John Mayer style",
-    "artist": "",
+    "artist": "Freddie Edwards",
     "genre": "blues",
     "key": "C",
     "mode": "blues",
@@ -660,7 +660,7 @@
   {
     "yt": "YzuMzRhRTPE",
     "title": "Blues in F (jazz)",
-    "artist": "",
+    "artist": "Guitare Improvisation",
     "genre": "blues",
     "key": "F",
     "mode": "blues",
@@ -673,7 +673,7 @@
   {
     "yt": "wKbg6iDSXJQ",
     "title": "Rock Pop Backing Track F Major 70 BPM",
-    "artist": "",
+    "artist": "TGuitar",
     "genre": "rock",
     "key": "F",
     "mode": "major",
@@ -687,7 +687,7 @@
   {
     "yt": "gfx5wHi_4cE",
     "title": "II-V-I Jazz Play-along - F Major",
-    "artist": "",
+    "artist": "Backing Tracks Channel",
     "genre": "jazz",
     "key": "F",
     "mode": "major",
@@ -700,7 +700,7 @@
   {
     "yt": "XsDru5g676M",
     "title": "Jazz Blues Backing Track - Eb 120bpm",
-    "artist": "",
+    "artist": "Benys Backing Tracks",
     "genre": "blues",
     "key": "Eb",
     "mode": "blues",
@@ -728,7 +728,7 @@
   {
     "yt": "36X3wecT2z8",
     "title": "Blues in E 90bpm",
-    "artist": "",
+    "artist": "Guitare Improvisation",
     "genre": "blues",
     "key": "E",
     "mode": "blues",
@@ -736,6 +736,19 @@
     "capo": 0,
     "tags": [
       "12-bar"
+    ]
+  },
+  {
+    "yt": "6y75xmcKZ8g",
+    "title": "Sweet D Mixolydian Guitar Backing Track",
+    "artist": "Quist",
+    "genre": "jam",
+    "key": "D",
+    "mode": "mixolydian",
+    "bpm": null,
+    "capo": 0,
+    "tags": [
+      "jam"
     ]
   }
 ]

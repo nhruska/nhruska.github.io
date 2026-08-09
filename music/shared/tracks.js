@@ -87,7 +87,24 @@
     'sweet mixolydian jam in d|search|D|major': 'sweet mixolydian jam in d|search|D|mixolydian',
     'santana dorian jam in e minor|search|E|major': 'santana dorian jam in e minor|search|E|dorian',
     'carlos style dorian jam in a|search|A|major': 'carlos style dorian jam in a|search|A|dorian',
-    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian'
+    'modal jam track in d dorian|search|D|major': 'modal jam track in d dorian|search|D|dorian',
+    // The 14 playlist-baked tracks shipped one release with artist '' before the
+    // artist enrichment landed - urls saved against the empty-artist identity
+    // re-key to the enriched one. (Key segment is normRoot output: Eb -> D#.)
+    'time jam - pink floyd style||F#|minor': 'time jam - pink floyd style|now you shred backing tracks|F#|minor',
+    'guitar backing track in c major - pop style||C|major': 'guitar backing track in c major - pop style|pier gonella jam|C|major',
+    'guitar backing track in g major - pop style||G|major': 'guitar backing track in g major - pop style|pier gonella jam|G|major',
+    'rock pop backing track g major 70 bpm||G|major': 'rock pop backing track g major 70 bpm|tguitar|G|major',
+    'funky jam backing track [fm]||F|minor': 'funky jam backing track [fm]|instrumental avenue|F|minor',
+    'pop rock acoustic ballad in g 66bpm||G|major': 'pop rock acoustic ballad in g 66bpm|jam tracks galaxy|G|major',
+    'slow rock ballad in c/am 64bpm||C|major': 'slow rock ballad in c/am 64bpm|jam tracks galaxy|C|major',
+    'peaceful mellow in e minor||E|minor': 'peaceful mellow in e minor|jam\'in backing tracks|E|minor',
+    'funky blues in c - john mayer style||C|blues': 'funky blues in c - john mayer style|freddie edwards|C|blues',
+    'blues in f (jazz)||F|blues': 'blues in f (jazz)|guitare improvisation|F|blues',
+    'rock pop backing track f major 70 bpm||F|major': 'rock pop backing track f major 70 bpm|tguitar|F|major',
+    'ii-v-i jazz play-along - f major||F|major': 'ii-v-i jazz play-along - f major|backing tracks channel|F|major',
+    'jazz blues backing track - eb 120bpm||D#|blues': 'jazz blues backing track - eb 120bpm|benys backing tracks|D#|blues',
+    'blues in e 90bpm||E|blues': 'blues in e 90bpm|guitare improvisation|E|blues'
   };
   function migrateUrls(o) {
     var changed = false;
