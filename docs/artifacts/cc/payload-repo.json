@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-08T09:58:16Z",
+  "generatedAt": "2026-08-09T10:00:04Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-08T00:40:35Z",
-    "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
-    "subject": "playlist-sync: refresh payload + veto table",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
+    "date": "2026-08-09T01:51:28Z",
+    "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
+    "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
   },
   "commits": [
+    {
+      "date": "2026-08-09T01:51:28Z",
+      "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
+      "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
+    },
+    {
+      "date": "2026-08-08T09:58:22Z",
+      "sha": "ff42c0a342a5ef0f2aedfb255eb3c67364037ebb",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/ff42c0a342a5ef0f2aedfb255eb3c67364037ebb"
+    },
     {
       "date": "2026-08-08T00:40:35Z",
       "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
@@ -78,26 +90,14 @@
       "sha": "8b76969766f17e24d1577b8ac228b461df56ec84",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/8b76969766f17e24d1577b8ac228b461df56ec84"
-    },
-    {
-      "date": "2026-07-31T01:23:25Z",
-      "sha": "bb0b85e90c127d1eda347c359c6b4eb0201548a5",
-      "subject": "music(studio): give users time to skip YouTube ads before the video auto-minimizes (#321)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/bb0b85e90c127d1eda347c359c6b4eb0201548a5"
-    },
-    {
-      "date": "2026-07-31T01:20:51Z",
-      "sha": "e1145d23207b51bced559d3764dfd4c4bccb97d1",
-      "subject": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316) (#319)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e1145d23207b51bced559d3764dfd4c4bccb97d1"
     }
   ],
   "openPRs": [
     {
-      "number": 323,
-      "title": "Player-feel: global mini-player bar + now-playing rows + play-from-row",
+      "number": 324,
+      "title": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps",
       "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/323",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/324",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31236501913/job/93049836278"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31296980846/job/93203589114"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31236501909/job/93049836289"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31296980836/job/93203588997"
         }
       ]
     },
@@ -128,6 +128,13 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-08-08T00:52:01Z",
+      "mergedAt": "2026-08-09T01:51:28Z",
+      "number": 323,
+      "title": "Player-feel: global mini-player bar + now-playing rows + play-from-row",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/323"
+    },
     {
       "createdAt": "2026-08-06T20:51:44Z",
       "mergedAt": "2026-08-08T00:39:26Z",
@@ -225,27 +232,20 @@
       "number": 305,
       "title": "fix(perform): legible back button + deterministic nav z-index (UAT)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/305"
-    },
-    {
-      "createdAt": "2026-07-23T22:46:00Z",
-      "mergedAt": "2026-07-25T22:21:51Z",
-      "number": 304,
-      "title": "fix(perform): stage-header redesign - 44px transpose, capo, resume index, key legibility (P1-2/4/5/6)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/304"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-08T09:58:06Z",
-    "durationSeconds": 8,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31251738047",
+    "runStartedAt": "2026-08-09T09:59:59Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31307254386",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 2,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 23.87,
@@ -258,8 +258,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v322",
-    "localCacheVersion": "music-v322",
+    "liveCacheVersion": "music-v323-8",
+    "localCacheVersion": "music-v323-8",
     "cacheMatch": true
   },
   "missions": [
@@ -323,7 +323,7 @@
     "NOW": [
       {
         "Mission": "**M-LIB-BAKE: playlist extraction + player-feel**",
-        "State": "**PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) OPEN (draft, v322) 2026-08-06**: 15 curated playlist entries baked (39->54, yt-backed 4->19), keyless sync pipeline (playlist-sync.js + Actions workflow) committed, catalog schema gate shipped. Veto table in the PR body - merge = red-pen (flags: #8 C-vs-Am, Harry Hood D-mixo UNCONFIRMED). The 17th playlist item + artist enrichment = first post-merge sync run. PR-B (player-feel: global mini-player + now-playing row + play-from-row, no raster imagery ever) builds after PR-A merges - single mission branch.",
+        "State": "**PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322) 2026-08-07** - the 15-entry bake + keyless sync pipeline + catalog schema gate are live. **PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) OPEN (draft, v323)**: player-feel - global mini-player bar (playback survives Studio close), now-playing row equalizer, play-from-row transport; D-PLAYER-FEEL + D-NO-RASTER registered; mini-player scenario mutation-proven. Post-merge follow-ups: bake item 17 + artist enrichment from the playlist-sync run (LEGACY_TRACKKEYS remaps); veto flags #8 C-vs-Am + Harry Hood D-mixo stand unvetoed (merged = approved).",
         "Spec": "[goal spec](goal-playlist-extraction-20260806.md)"
       },
       {
@@ -654,7 +654,7 @@
   },
   "suite": {
     "testFileCount": 59,
-    "testCaseCount": 1641,
+    "testCaseCount": 3388,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
