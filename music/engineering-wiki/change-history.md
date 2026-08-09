@@ -428,4 +428,12 @@ old text glyph. .bt-st-shuffle CSS retired, .bt-st-np-shuf added
 music.shuffle.v1 persistence untouched. uat-batch6 UAT-6.3 amended
 (bar placement + SVG + topbar-empty), don't-move rect gate re-proven.
 No new/removed CORE paths. [#328]
+M-SHUF-BAR v2 (2026-08-09, PR #328 UAT round 2 "light thin lines...
+spread apart, touching the edges"): v328->v328-2 - prev/pp/next drop
+their Unicode text glyphs (&#10072; is literally LIGHT VERTICAL BAR;
+two separate chars left spacing to the font) for solid filled SVG
+paths on the Material 24-grid: ICON_PLAY/PAUSE/PREV/NEXT module
+constants in tracks.js, ONE source for the markup builder and all
+four pp state-swap sites. font-size/letter-spacing rules retired
+from .bt-st-np-step/.bt-st-np-pp. No new/removed CORE paths. [#328]
 ```

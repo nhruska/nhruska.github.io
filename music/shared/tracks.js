@@ -116,6 +116,16 @@
     });
     return changed;
   }
+  // Solid SVG media glyphs for the now-playing bar transport (UAT 2026-08-09:
+  // the Unicode text glyphs rendered as thin, spread-apart hairlines pinned to
+  // the box edges - &#10072; is literally named LIGHT VERTICAL BAR, and two
+  // separate characters put the spacing at the font's mercy). Filled paths on
+  // the Material 24-grid, centered, tight. ONE constant per icon so the pp
+  // state swaps and the markup builder can never drift apart.
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>';
+  var ICON_PREV = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5v14l-9.5-7z"/></svg>';
+  var ICON_NEXT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5v14l9.5-7z"/></svg>';
   // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
   // TAPPED for a given track, so the next Studio open pre-selects it instead
   // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
@@ -1009,9 +1019,9 @@
           // player"): prev/next flank the pp - they walk the current view's
           // playable pool (opts.advance). They stay visible in the vidopen
           // state too (YouTube's own controls can't do playlist-next).
-          + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">&#10072;&#9668;</button>'
-          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">&#9658;&#10072;</button>'
+          + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">' + ICON_PREV + '</button>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">' + ICON_PAUSE + '</button>'
+          + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">' + ICON_NEXT + '</button>'
         : '';
       // UAT batch 7 ("stack progress bar and time codes to recover horiz
       // space"): progress + time live on their OWN row under the controls, so
@@ -1302,13 +1312,13 @@
           endedFired = true;
           if (advanceCb && advanceCb('next', shuffleOn, trackKey(nowPlaying))) return;
           paused = true; userPaused = true;
-          if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+          if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
           dispatchNowPlaying();
         }
         if (ppBtn) ppBtn.onclick = function () {
           paused = !paused;
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
-          ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
+          ppBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
           // PLAYER-FEEL: the strip's pp is the one honest play-state authority
           // (YT never reports under blocked egress) - mirror it to the
@@ -1344,11 +1354,11 @@
             if (d.info === 0) { onTrackEnd(); return; }
             if (d.info === 2 && !paused) {
               paused = true; userPaused = true;
-              if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+              if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
               dispatchNowPlaying();
             } else if (d.info === 1 && paused) {
               paused = false; userPaused = false; endedFired = false;
-              if (ppBtn) { ppBtn.innerHTML = '&#10073;&#10073;'; ppBtn.setAttribute('aria-label', 'Pause'); }
+              if (ppBtn) { ppBtn.innerHTML = ICON_PAUSE; ppBtn.setAttribute('aria-label', 'Pause'); }
               dispatchNowPlaying();
             }
             return;
