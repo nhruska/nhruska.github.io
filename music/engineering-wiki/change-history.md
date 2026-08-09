@@ -398,6 +398,16 @@ is the curation path, real ids arrive via the operator's gap playlist
 + trackKey enrichment). Residual rare keys deliberately left for the
 operator's playlist. tracks.json is CORE-precached, hence the bump.
 [#327]
+M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
+vehicles bake with SEARCHED original keys (operator: "search for the
+keys - most or all are the original key from Phish"): Chalkdust E,
+Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
+A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
+2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
+Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
+sources; citations in the PR comment); m7-funk vamps take dorian per
+the Ghost citation's own precedent. Artist 'Phish' (curated identity,
+the Harry Hood rule). Catalog 93 -> 108. [#327]
 M-PLAYLIST-2 (2026-08-09, PR #327): v327->v327-2 - the operator's
 SECOND playlist (PLPn0Gj4u_mDk, 46 items) baked via the Actions
 sync run: 29 auto-keyed entries, 2 title-stated curations the
