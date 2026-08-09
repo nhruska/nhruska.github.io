@@ -1082,17 +1082,6 @@
         + (t.yt ? '' : urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
-        // Circle-of-fifths CROWN (operator: circle + fretboard share the top).
-        // Promoted from the retired bottom "Why these notes?" toggle to the top
-        // of the body as the orientation hero. Rendered wheel-only + eagerly
-        // (see renderCofHero below) - the scale-reactive note names live in the
-        // "Solo over it" label; the wheel stays keyed to the track's KEY center
-        // (unaffected by solo-scale chips), so it never goes stale.
-        + '<div class="bt-st-cofhero" data-cofhero></div>'
-        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
-        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
-        // song's own key). retuneTo toggles its [hidden]; wired once below.
-        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
         // (primary, 44px, was a 32px .soundToggle lost among the label text),
         // Speed (one compact cycling button, replaces the 3-button Slow/Med/
@@ -1146,6 +1135,19 @@
         + '<div class="bt-st-why" data-guide></div>'
         + '</div>'
         + '</div>'
+        // Circle-of-fifths wheel - BELOW the fretboard (operator UAT
+        // 2026-08-09; supersedes the v-crown placement). The fretboard is the
+        // practice surface you play against while the track runs, so it leads
+        // the body with the Play/Speed/? controls; the wheel is orientation
+        // reference, consulted between phrases. Rendered wheel-only + eagerly
+        // (see renderCofHero below) - the scale-reactive note names live in the
+        // "Solo over it" label; the wheel stays keyed to the track's KEY center
+        // (unaffected by solo-scale chips), so it never goes stale.
+        + '<div class="bt-st-cofhero" data-cofhero></div>'
+        // S-COF-INTERACTIVE: "back to song key" reset - shown only while a circle
+        // tap has retuned the theory surfaces to an EXPLORED key (hidden on the
+        // song's own key). retuneTo toggles its [hidden]; wired once below.
+        + '<div class="bt-st-cofreset" data-cofreset hidden><button class="bt-st-cofresetbtn" data-cofresetbtn type="button">back to song key</button></div>'
         // F19 (operator UAT 2026-07-05): chords-in-key drops the SVG diagram
         // + roman numeral - name-only chips (like the scale-chip row above),
         // all 7 fit ONE row at 412px. Tap still plays + targets the fretboard
@@ -1163,8 +1165,8 @@
         // to 2 lines each in .bt-st-linkrow at 412px phone width; meaning preserved,
         // just tighter so both fit on one line side by side.
         // "Why these notes?" toggle + its bottom wheel panel are RETIRED - the
-        // circle is now the top crown (data-cofhero). Only the neck-walk link
-        // remains on this row.
+        // circle lives above as data-cofhero (below the fretboard since the
+        // 2026-08-09 UAT). Only the neck-walk link remains on this row.
         + '<div class="bt-st-linkrow"><a class="hsrMore" href="' + esc(inversionsHref(th)) + '">Neck walk →</a></div>'
         + '</div>'
         // PLAYER-FEEL v3: the ONE now-playing bar - SSOT rendering, identical
