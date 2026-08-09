@@ -116,7 +116,11 @@ test('KEY_ORDER is an internal canonical-sharp RANKING table (not the display sp
   R.KEY_ORDER.forEach(function (k) {
     assert.strictEqual(flats.indexOf(k), -1, 'KEY_ORDER should not contain flat name: ' + k);
   });
-  assert.deepStrictEqual(R.KEY_ORDER, ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']);
+  // UAT 2026-08-08 (batch 7): CHROMATIC from C (piano-octave scan), replacing
+  // the circle-of-fifths order - deliberate contract change (operator: "key
+  // filter unordered on song Search"); fifths stay right for theory surfaces,
+  // a select list is a scan.
+  assert.deepStrictEqual(R.KEY_ORDER, ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']);
 });
 
 /* ---- Regime-B key-aware facet display (2026-07-11 fix - FORK-4 leftover) ----
@@ -148,7 +152,7 @@ test('keys() facet shows each root under its own regime-B preferred name across 
     { title: 'C', artist: 'C', key: 'Eb', mode: 'major', genre: 'x' }    // D# major -> Eb
   ]);
   var ks = R.keys(list);
-  assert.deepStrictEqual(ks, ['Db', 'Eb', 'G#m'], 'ranked by canonical position (C#=7, D#=9, then minors last), displayed under their preferred flat/sharp spelling: ' + ks.join(','));
+  assert.deepStrictEqual(ks, ['Db', 'Eb', 'G#m'], 'ranked chromatically (C#=1, D#=3, then minors last), displayed under their preferred flat/sharp spelling: ' + ks.join(','));
   assert.strictEqual(R.filter(list, { key: 'Db' }).length, 1);
   assert.strictEqual(R.filter(list, { key: 'Eb' }).length, 1);
   assert.strictEqual(R.filter(list, { key: 'G#m' }).length, 1);

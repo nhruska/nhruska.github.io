@@ -204,13 +204,18 @@
     out.sort();
     return out;
   }
-  var KEY_ORDER = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
+  // UAT 2026-08-08 (batch 7, "key filter unordered on song Search"): the facet
+  // list sorts CHROMATICALLY from C (the piano-octave scan), majors then
+  // minors - the earlier circle-of-fifths order read as random in a vertical
+  // select. Fifths remain the right order for THEORY surfaces (the circle
+  // itself); a lookup list is a scan, not a modulation map.
+  var KEY_ORDER = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   function keyRank(label) {
     var minor = /m$/.test(label);
     var root = minor ? label.slice(0, -1) : label;
     // keyLabel() may display either enharmonic spelling; canonicalize a flat
-    // root back to its sharp identity (F2S) so the circle-of-fifths chip order
-    // is unaffected by which name is shown ("Bb" ranks where "A#" would).
+    // root back to its sharp identity (F2S) so the chromatic order is
+    // unaffected by which name is shown ("Eb" ranks where "D#" would).
     root = F2S[root] || root;
     var i = KEY_ORDER.indexOf(root);
     return (minor ? 100 : 0) + (i < 0 ? 50 : i);

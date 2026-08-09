@@ -332,4 +332,15 @@ progress track; bar gap 4px; sub-380 hides the time label. tracks
 .test.js countdown regex updated for the split guard (same anchored
 contract). New scenario test/pw/scenarios/uat-batch6.json (34 steps,
 synthesized end-event auto-advance mutation-proven). [#323]
+M-PLAYER-FEEL v7 (2026-08-08, PR #323 UAT batch 7): v323-7->v323-8 -
+two-row bar (barrow over progrow; progrow now renders in EVERY state -
+the vidopen hide broke the don't-move rect proof and the batch-3 gate
+caught it); bigger transport glyphs; KEY_ORDER chromatic-from-C
+(repertoire.js + repertoire.test.js contract updated - deliberate,
+operator taste); honest onStateChange 1/2 sync (fixes shows-playing-
+no-sound after backgrounding) + visibilitychange re-poke; Media
+Session metadata/handlers/playbackState (best-effort, cross-origin
+iframe honesty documented). Clearances: sheet 152px, miniplayer view
+104px. New scenario test/pw/scenarios/uat-batch7.json (25 steps,
+pause-sync mutation-proven). [#323]
 ```

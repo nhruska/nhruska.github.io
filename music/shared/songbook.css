@@ -1972,5 +1972,5 @@ footer{display:none;}
 @media (prefers-reduced-motion: reduce){.listItem.isPlaying .li-eq i{animation:none !important;}}
 /* While the mini bar is up, the scrollers keep their last rows reachable above
    it, and the toast rides above the bar instead of colliding with it. */
-body.miniplayer .view{padding-bottom:88px;}
+body.miniplayer .view{padding-bottom:104px;} /* two-row bar (batch 7) */
 body.miniplayer .toast{bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 132px);}

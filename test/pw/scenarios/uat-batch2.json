@@ -74,8 +74,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-4: video expanded -> ONE transport owner: Hide-video CTA visible, strip pp/progress hidden",
-      "js": "(function(){var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');var pr=document.querySelector('.bt-player [data-npprog]');return !!v&&v.offsetParent!==null&&!!pp&&pp.offsetParent===null&&!!pr&&pr.offsetParent===null;})()"
+      "label": "UAT-4/v7: video expanded -> the pp swaps for the Hide-video CTA; the progress ROW stays (the bar keeps ONE constant shape - don't-move)",
+      "js": "(function(){var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');var pr=document.querySelector('.bt-player [data-npprog]');return !!v&&v.offsetParent!==null&&!!pp&&pp.offsetParent===null&&!!pr&&pr.offsetParent!==null;})()"
     },
     {
       "action": "screenshot",

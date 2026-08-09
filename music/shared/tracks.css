@@ -122,7 +122,7 @@
      the sheet's lower region; the scrollable panes clear it via
      padding-bottom (bar top = safe+120; +16 breathing). */
   .bt-player.studio:not(.mini){inset:0;}
-  .bt-player.studio:not(.mini) .bt-st-body{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 136px);}
+  .bt-player.studio:not(.mini) .bt-st-body{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 152px);}
   /* Default = single centered column matching the app shell width (540px) so the
      Studio reads like the rest of the app on desktop/large browsers. The
      landscape-phone two-pane split (short-height media query below) overrides this. */
@@ -138,11 +138,20 @@
      (raised bottom inset on .bt-player.studio:not(.mini), below); the bar
      itself never relocates, re-renders, or changes shape between states. Slot,
      margins, and radius are the old mini bar's - the mini look IS the look. */
+  /* UAT batch 7 ("stack progress bar and time codes to recover horiz space"):
+     the bar is TWO stacked rows - controls (barrow) over progress+time
+     (progrow) - so the title keeps its width beside the transport. Height goes
+     auto (min 56); the slot's BOTTOM never moves. */
   .bt-st-head{position:fixed;left:0;right:0;bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 64px);
-    z-index:60;height:56px;margin:0 auto;width:calc(100% - 20px);max-width:540px;box-sizing:border-box;
-    display:flex;align-items:center;gap:4px;padding:6px 10px;flex-wrap:nowrap;pointer-events:auto;
+    z-index:60;height:auto;min-height:56px;margin:0 auto;width:calc(100% - 20px);max-width:540px;box-sizing:border-box;
+    display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:5px 10px 7px;pointer-events:auto;
     background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;
     box-shadow:0 8px 24px var(--shadow);}
+  .bt-st-barrow{display:flex;align-items:center;gap:4px;min-height:44px;flex-wrap:nowrap;}
+  .bt-st-progrow{display:flex;align-items:center;gap:8px;}
+  /* The progrow stays in EVERY state (don't-move: hiding it under vidopen made
+     the bar shorter there - the SSOT bar must keep one constant shape; a
+     redundant progress readout is harmless, a morphing bar is not). */
   /* The sheet's slim top row (S-STUDIO-HEADERMERGE evolved): back leading (F32,
      the app's standard back affordance - the Spotify collapse-top-left grammar)
      + the hamburger trailing. position:relative anchors the .bt-st-menu fly-out
@@ -201,7 +210,7 @@
      sheet's .bt-st-topbar. Both keep their surface-2 fill so they read on
      their plain surfaces. */
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
-    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;
+    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1rem;
     display:flex;align-items:center;justify-content:center;}
   /* .bt-st-np-state (the no-video "Optional" pill) retired - UAT 2026-08-08:
      it occupied the transport slot and read as noise; the hamburger menu's
@@ -220,11 +229,9 @@
      control grammar. 44px floor both axes. */
   .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-size:.66rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
+    font-size:.9rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
   .bt-st-np-step:active{transform:scale(.94);}
-  /* Sub-380px: the time label yields first (the bordered track still shows
-     extent; the numbers return on wider screens). */
-  @media (max-width:379px){ .bt-player .bt-st-np-time{display:none;} }
+
   .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
     color:var(--accent-ink);min-width:34px;text-align:right;}
   .bt-st-np-time:empty{display:none;}
@@ -396,7 +403,7 @@
     .bt-st-body{flex:1 1 auto;padding:10px 12px;gap:10px;}
     /* PLAYER-FEEL v5: the stage pane scrolls in this split - it needs its own
        bar clearance (the full-inset sheet runs under the fixed bar). */
-    .bt-player.studio:not(.mini) .bt-st-stage{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 136px);}
+    .bt-player.studio:not(.mini) .bt-st-stage{padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 152px);}
   }
   .bt-empty{text-align:center;color:var(--txt-dim);padding:34px 18px;line-height:1.7;}
   .bt-empty .sub{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.04em;color:var(--txt-dim);opacity:.8;}
@@ -671,9 +678,7 @@
      Mini is exempt (:not(.mini)): the bar ALWAYS owns transport when the video
      surface is off-screen. */
   .bt-st-vidmin{display:none;}
-  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp,
-  .bt-player.studio.vidopen:not(.mini) .bt-st-np-prog,
-  .bt-player.studio.vidopen:not(.mini) .bt-st-np-time{display:none;}
+  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp{display:none;}
   .bt-player.studio.vidopen:not(.mini) .bt-st-vidmin{display:inline-flex;align-items:center;gap:7px;
     min-height:44px;padding:0 14px;flex:0 0 auto;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;

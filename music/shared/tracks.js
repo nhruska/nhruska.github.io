@@ -301,6 +301,11 @@
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.innerHTML = '';
       exitMini();
       nowPlaying = null; userPaused = false;
+      // UAT batch 7: clear the Media Session so no stale lock-screen card
+      // outlives the player.
+      if ('mediaSession' in navigator) {
+        try { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; } catch (e) {}
+      }
       dispatchNowPlaying();
     }
 
@@ -343,6 +348,12 @@
       // through this dispatch, so the class can never go stale.
       document.body.classList.toggle('studioopen',
         elPlayer.classList.contains('on') && elPlayer.classList.contains('studio') && !elPlayer.classList.contains('mini'));
+      // UAT batch 7: mirror the honest play-state into the Media Session so a
+      // lock-screen/notification card (when the OS surfaces one) shows the
+      // right toggle.
+      if ('mediaSession' in navigator) {
+        try { navigator.mediaSession.playbackState = nowPlaying ? (userPaused ? 'paused' : 'playing') : 'none'; } catch (e) {}
+      }
       refreshMarquee();
       try {
         document.dispatchEvent(new CustomEvent('music:nowplaying', {
@@ -975,13 +986,17 @@
           + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">&#10072;&#9668;</button>'
           + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
           + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">&#9658;&#10072;</button>'
-          // Operator UAT (2026-07-26): no title text in the strip - the id block
-          // already names the track. A PLAYBACK PROGRESS BAR + total time
-          // shows relative position at a glance (driven by YT infoDelivery time,
-          // see wireNowPlaying). UAT batch 6: the TRACK carries an accent
-          // border so the total extent reads at a glance (CSS).
+        : '';
+      // UAT batch 7 ("stack progress bar and time codes to recover horiz
+      // space"): progress + time live on their OWN row under the controls, so
+      // the title keeps its width beside the transport. Accent-bordered track
+      // (batch 6) unchanged; the row hides with the rest of the transport in
+      // the vidopen state (CSS).
+      var progRow = t.yt
+        ? '<div class="bt-st-progrow">'
           + '<div class="bt-st-np-prog" data-npprog role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playback position"><i data-npfill></i></div>'
           + '<span class="bt-st-np-time" data-nptime></span>'
+          + '</div>'
         : '';
       // S-STUDIO-FLYOUT: the hamburger + fly-out menu (Show/Hide video, Find
       // another jam, Edit, Curated-URL card - or the no-video guidance). Now a
@@ -1144,11 +1159,16 @@
         // "actively playing" signal; the title marquees when it overflows
         // (refreshMarquee below).
         + '<div class="bt-st-head">'
+        // UAT batch 7: two stacked rows - controls up top, progress+time below
+        // (the title recovers the width the inline prog/time consumed).
+        + '<div class="bt-st-barrow">'
         + (t.yt ? '<span class="li-eq bt-st-bareq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
         + '<div class="bt-st-id"><span class="bt-st-t"><span class="bt-st-tx">' + esc(t.title || '') + '</span></span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + barStrip
         + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
+        + '</div>'
+        + progRow
         + '</div>'
         + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
@@ -1288,7 +1308,24 @@
           var d; try { d = JSON.parse(e.data); } catch (x) { return; }
           if (!d) return;
           // UAT batch 6: the embed's ended event (YT player state 0).
-          if (d.event === 'onStateChange' && d.info === 0) { onTrackEnd(); return; }
+          // UAT batch 7 ("when returning, it shows playing animations but no
+          // sound"): states 1/2 SYNC our honest UI with the embed's REAL
+          // state - covers pauses made on YouTube's own controls AND the
+          // mobile background-pause (YouTube stops non-Premium playback when
+          // the app hides; on return the bar must show ►, not a lie).
+          if (d.event === 'onStateChange') {
+            if (d.info === 0) { onTrackEnd(); return; }
+            if (d.info === 2 && !paused) {
+              paused = true; userPaused = true;
+              if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+              dispatchNowPlaying();
+            } else if (d.info === 1 && paused) {
+              paused = false; userPaused = false; endedFired = false;
+              if (ppBtn) { ppBtn.innerHTML = '&#10073;&#10073;'; ppBtn.setAttribute('aria-label', 'Pause'); }
+              dispatchNowPlaying();
+            }
+            return;
+          }
           if (d.event !== 'infoDelivery' || !d.info) return;
           startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
@@ -1310,6 +1347,16 @@
             var w = frameWin(); if (w) { try { w.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (x) {} }
             if (++listenTries >= 8) clearInterval(listenIv);
           }, 500);
+          // UAT batch 7: returning to the app re-pokes the embed's reporting
+          // channel (the initial pings stopped long ago), so the paused-by-
+          // background state and the clock resync promptly. Self-unbinds with
+          // the strip.
+          var onVis = function () {
+            if (!progFill.isConnected) { document.removeEventListener('visibilitychange', onVis); return; }
+            if (document.visibilityState !== 'visible') return;
+            var w = frameWin(); if (w) { try { w.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (x) {} }
+          };
+          document.addEventListener('visibilitychange', onVis);
         }
       })();
       // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the `...` menu button
@@ -1865,6 +1912,26 @@
       if (nextBtn) nextBtn.onclick = function (e) { e.stopPropagation(); stepTrack('next'); };
       var shufBtn = elPlayer.querySelector('[data-shuffle]');
       if (shufBtn) shufBtn.onclick = function (e) { e.stopPropagation(); setShuffle(!shuffleOn); };
+      // UAT batch 7 ("show media controls in phone notifications / on lock
+      // screen if possible"): Media Session metadata + handlers, routed to the
+      // SAME transport paths as the bar. Best-effort by design: the audio
+      // lives in a cross-origin YouTube iframe, so whether the OS surfaces
+      // OUR session (and whether audio may continue in the background at all -
+      // YouTube pauses non-Premium background playback in its own player) is
+      // outside the page's control. Everything here degrades to a no-op.
+      if (t.yt && ('mediaSession' in navigator)) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: t.title || 'Backing track',
+            artist: (t.artist && t.artist !== 'search') ? t.artist : 'Music',
+            album: 'Music'
+          });
+          navigator.mediaSession.setActionHandler('play', function () { togglePlayCtl(); });
+          navigator.mediaSession.setActionHandler('pause', function () { togglePlayCtl(); });
+          navigator.mediaSession.setActionHandler('previoustrack', function () { stepTrack('prev'); });
+          navigator.mediaSession.setActionHandler('nexttrack', function () { stepTrack('next'); });
+        } catch (e) { /* MediaMetadata absent or handler unsupported - fine */ }
+      }
       if (o.startMini && nowPlaying) {
         minimizeStudio();
       } else {
