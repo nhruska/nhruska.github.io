@@ -4809,9 +4809,11 @@
       // (component-conventions.md section-label convention).
       // Issue #264 (operator UAT 2026-07-17): lead with "Suggested" so the row
       // names its INTENT - the app is proposing coherent next chords, not
-      // demanding one - while the ordinal keeps the where-am-I scaffold.
+      // demanding one. PR #274 (community, emre155): one constant label at
+      // every progression length - the ordinal variants read as three
+      // different rows for one meaning.
       var lbl = document.createElement('div'); lbl.className = 'suggLbl';
-      lbl.textContent = n === 1 ? "Suggested 2nd chord:" : n === 2 ? "Suggested 3rd chord:" : n === 3 ? "Suggested 4th chord:" : "Suggested chords";
+      lbl.textContent = "Suggested Chords";
       el.suggest.appendChild(lbl);
       var row = document.createElement('div'); row.className = 'suggRow';
       // Interval label shows the ROLE (V, vi…); a completing chord gets the accent
