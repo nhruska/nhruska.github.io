@@ -1320,7 +1320,13 @@
           if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
           dispatchNowPlaying();
         }
-        if (ppBtn) ppBtn.onclick = function () {
+        if (ppBtn) ppBtn.onclick = function (e) {
+          // stopPropagation is LOAD-BEARING since the SVG glyphs (v328-2): the
+          // innerHTML swap below DETACHES the tapped svg mid-bubble, so the mini
+          // bar's body-tap exclusion (closest('[data-nppp]') on a now-parentless
+          // node) can't recognize the tap - without this, a mini pp tap
+          // re-expands the Studio.
+          e.stopPropagation();
           paused = !paused;
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
           ppBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;

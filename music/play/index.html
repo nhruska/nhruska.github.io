@@ -916,11 +916,15 @@
     requestAnimationFrame(function () {
       if (!window.Callouts) return;
       try { if (!localStorage.getItem('music.welcomeDone.v1')) return; } catch (e) { return; }
-      // Welcome auto-jam pending (post-"Start playing" reload): the Studio is
-      // about to open over this tab, so mounting now would burn the callout's
-      // show-once unseen under the sheet. openWelcomeJam owns the landing
-      // callout on that path (deferred to the Studio's first leave).
+      // Welcome auto-jam (post-"Start playing" reload): the Studio opens over
+      // this tab, so mounting now would burn the callout's show-once unseen
+      // under the sheet. openWelcomeJam owns the landing callout on that path
+      // (deferred to the Studio's first leave). BOTH guards are needed - the
+      // local tracks.json fetch can beat this rAF, in which case the flag is
+      // already consumed and the sheet already up (observed in the scenario
+      // run: the callout drew over the open Studio).
       try { if (localStorage.getItem('music.welcomeJam.v1')) return; } catch (e) {}
+      if (document.body.classList.contains('studioopen')) return;
       var wo = document.getElementById('welcomeOv'); if (wo && !wo.hidden) return;
       var abtn = document.querySelector('.tabbar button.on');
       var t = abtn && abtn.dataset && abtn.dataset.tab;

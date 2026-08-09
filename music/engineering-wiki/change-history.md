@@ -456,4 +456,15 @@ single-panel auto-jam flow (retires the 3x #wNext flake); 21
 scenarios gain an explicit #segAll tap where they need chord-sheet
 rows (jams excludes video-less rows); songs-surface-merge's
 opens-on-All goalpost superseded. No new/removed CORE paths. [#328]
+M-JAMS-FIRST v2 (2026-08-09, PR #328, scenario-caught fixes):
+v328-3->v328-4 - (1) the boot callout mount also skips while
+body.studioopen (the local tracks.json fetch can beat the boot rAF,
+so the welcomeJam flag is already consumed and the sheet already up -
+the callout drew OVER the open Studio in the scenario run); (2) the
+bar pp handler gains stopPropagation, LOAD-BEARING since the v328-2
+SVG glyphs: the innerHTML icon swap detaches the tapped svg
+mid-bubble, closest('[data-nppp]') fails on the parentless node, and
+a mini pp tap re-expanded the Studio (mini-player scenario caught
+it); (3) uat-batch7 UAT-7.2 re-anchored to the SVG era (measure the
+rendered svg box, not the retired font-size). [#328]
 ```
