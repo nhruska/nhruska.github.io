@@ -387,4 +387,36 @@ the first import measured y=10442 in the scenario viewport, ten
 screens under the fold). Scenario grows to 19 steps incl. an
 assertInViewport gate, mutation-proven red; form-settle wait replaces
 the raced fixed sleep. [#326]
+M-VARIETY-FILL (2026-08-09, PR #327): v326-2->v327 - 12 curated
+yt:null search-first gap tracks driven by the measured matrix (Bm,
+G#m, B, Eb, Ab; A/G/D/Bb blues; tempo tails 3->6 slow 2->4 fast;
+funk/jazz/pop reinforced). Catalog 55->67. Every title dogfoods the
+import key ladder 12/12 exact. candidates.test.js full-coverage gate
+gains the explicit 'search-first' tag carve-out (pre-researched ids
+cannot be honestly authored offline; the deterministic search query
+is the curation path, real ids arrive via the operator's gap playlist
++ trackKey enrichment). Residual rare keys deliberately left for the
+operator's playlist. tracks.json is CORE-precached, hence the bump.
+[#327]
+M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
+vehicles bake with SEARCHED original keys (operator: "search for the
+keys - most or all are the original key from Phish"): Chalkdust E,
+Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
+A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
+2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
+Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
+sources; citations in the PR comment); m7-funk vamps take dorian per
+the Ghost citation's own precedent. Artist 'Phish' (curated identity,
+the Harry Hood rule). Catalog 93 -> 108. [#327]
+M-PLAYLIST-2 (2026-08-09, PR #327): v327->v327-2 - the operator's
+SECOND playlist (PLPn0Gj4u_mDk, 46 items) baked via the Actions
+sync run: 29 auto-keyed entries, 2 title-stated curations the
+parser's word-order missed (C mixolydian 'Cool Mixolydian Jam Track
+in C', Eb blues 'HALF STEP DOWN Delta Blues in Eb'), 15 Phish jam
+vehicles held for operator keys (titles name no key center - the
+Harry Hood precedent, never invent one; veto table carries them).
+FIVE of the v327 search stubs retired - their slots gained REAL
+yt-backed tracks in this bake (Bm rock, G#m, Ab major, Cm, Em funk);
+7 stubs remain for still-unserved slots. Catalog 67 -> 93, yt-backed
+20 -> 51. [#327]
 ```

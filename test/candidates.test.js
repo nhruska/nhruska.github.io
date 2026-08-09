@@ -40,7 +40,13 @@ test('every candidates bucket keys a REAL seed track via Tracks.trackKey (no orp
 });
 
 test('every url-less seed track has at least one candidate (full curation coverage)', function () {
-  seed.filter(function (t) { return !t.yt; }).forEach(function (t) {
+  // 'search-first' carve-out (M-PLAYLIST-IMPORT variety fill, 2026-08-09):
+  // gap-filling search stubs ship WITHOUT pre-researched ids by design -
+  // their deterministic search query is the curation path, and real ids
+  // arrive later via the operator's gap playlist + trackKey enrichment.
+  // The tag is the explicit lifecycle marker; everything untagged stays
+  // under the full pre-research invariant.
+  seed.filter(function (t) { return !t.yt && (t.tags || []).indexOf('search-first') < 0; }).forEach(function (t) {
     var c = C.CANDIDATES[T.trackKey(t)] || [];
     assert.ok(c.length >= 1, 'no candidates for url-less seed track: ' + T.trackKey(t));
   });
