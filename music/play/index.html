@@ -1714,6 +1714,25 @@ if ('serviceWorker' in navigator) {
     }
     if (navigator.serviceWorker.controller) cueOnce();
     else navigator.serviceWorker.addEventListener('controllerchange', cueOnce);
+    // Update-ready cue (UAT 2026-08-09, PR #328 - the THIRD round lost to a
+    // stale cached build, after PR #306's two): sw.js skipWaiting+claims, so
+    // when a NEW build takes control mid-session the RENDERED page is the one
+    // stale artifact left. Cue it with a persistent tap-to-reload toast - no
+    // auto-hide (the page stays stale until acted on), no countdown. The
+    // hadController guard separates a real update from first-install control
+    // (where the page and cache are already the same build).
+    var hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController) { hadController = true; return; }
+      if (document.querySelector('.swUpdateToast')) return;
+      var t = document.createElement('button');
+      t.type = 'button';
+      t.className = 'toast swUpdateToast';
+      t.textContent = 'Updated - tap to load the new version';
+      t.onclick = function () { location.reload(); };
+      document.body.appendChild(t);
+      requestAnimationFrame(function () { t.classList.add('on'); });
+    });
   });
 }
 // Reflect connectivity in the appbar. navigator.onLine is the browser's own

@@ -1673,6 +1673,10 @@ footer{display:none;}
 .empty .btn{flex:0 1 auto;display:inline-block;margin-top:2px;}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+/* SW update-ready cue: a PERSISTENT tap-to-reload toast (the rendered page is
+   stale until acted on, so it never auto-hides). A real button - it accepts
+   the tap plain toasts pass through. Accent border marks it actionable. */
+.swUpdateToast{pointer-events:auto;cursor:pointer;border-color:var(--accent-dim);color:var(--accent-ink);font-family:inherit;}
 /* Action toast - a tappable follow-through button rides the toast ("Go to
    setlist"). Only action toasts accept pointer events; plain toasts stay
    tap-through. .toastGo (not .toastAction - that's the progress-bar variant

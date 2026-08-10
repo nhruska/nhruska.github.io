@@ -1,0 +1,63 @@
+{
+  "name": "sw-update-toast",
+  "note": "S-SW-UPDATE-CUE (UAT 2026-08-09, PR #328: the operator lost a THIRD review round to a stale cached build - 'I still see play buttons and squashed dwd' - after PR #306's two). sw.js skipWaiting+claims, so a new build takes control mid-session while the rendered page stays the old artifact. The fix: a persistent tap-to-reload toast on controllerchange WHEN a controller already existed (a real update); first-install control shows nothing (page and cache already match). Second goto = a controlled page (hadController true); a synthetic controllerchange then models the new build claiming. The toast never auto-hides and its tap reloads.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "wait",
+      "ms": 1600
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "arrange: this load is CONTROLLED by the worker (hadController true) and no update toast is up",
+      "js": "(function(){return !!navigator.serviceWorker.controller && !document.querySelector('.swUpdateToast');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "act: a new build takes control mid-session (synthetic controllerchange on the same listener surface)",
+      "js": "(function(){navigator.serviceWorker.dispatchEvent(new Event('controllerchange'));return true;})()"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".swUpdateToast.on",
+      "timeoutMs": 4000
+    },
+    {
+      "action": "wait",
+      "ms": 4500
+    },
+    {
+      "action": "evalAssert",
+      "label": "the cue PERSISTS (no auto-hide - the page stays stale until acted on) and repeats never stack",
+      "js": "(function(){navigator.serviceWorker.dispatchEvent(new Event('controllerchange'));return document.querySelectorAll('.swUpdateToast').length===1 && document.querySelector('.swUpdateToast').classList.contains('on');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "update-toast"
+    },
+    {
+      "action": "tap",
+      "selector": ".swUpdateToast"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "the tap RELOADED into a working app (toast gone, tabbar up)",
+      "js": "(function(){return !document.querySelector('.swUpdateToast') && !!document.querySelector('.tabbar');})()"
+    }
+  ]
+}

@@ -515,4 +515,14 @@ ui-icon-density gate (Library/Studio/Stage sweeps, mutation-proven
 red); li-lead info glyph -> 22px svg, np-menu/minix/soundToggle/
 notable-x floor-bumped. stage-dtap-zoom scenario proves both
 gestures via synthetic TouchEvents. [#328]
+M-SW-UPDATE-CUE (2026-08-10, PR #328: operator lost a THIRD review
+round to a stale cached build - "I still see play buttons and
+squashed dwd"): v328-7->v328-8 - sw.js skipWaiting+claims, so a new
+build takes control mid-session while the RENDERED page stays the
+old artifact; nothing cued it. Now controllerchange WITH a prior
+controller (a real update, never first-install) raises a PERSISTENT
+tap-to-reload toast (.swUpdateToast - no auto-hide, the page stays
+stale until acted on; accent border marks it actionable; repeats
+never stack). sw-update-toast scenario proves arm/persist/no-stack/
+reload via a synthetic controllerchange. [#328]
 ```
