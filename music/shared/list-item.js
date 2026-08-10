@@ -4,8 +4,7 @@
  * One element, one CSS class (.listItem), used by all 3 Library segments so
  * they look and behave like the same thing. It normalizes a song record
  * (t/a/y/seq) or a track record (title/artist/key/mode/genre/bpm/capo/yt) to a
- * common shape, shows the UNION of details we know, and differentiates by the
- * available action (Play > YouTube > Search). Presentation only: every action
+ * common shape and shows the UNION of details we know. Presentation only: every action
  * is a callback the caller wires (open studio, add to set, reorder, edit, ...).
  *
  * Pure functions are exported for Node tests; render() builds the DOM.
@@ -80,13 +79,11 @@
     };
   }
 
-  // The row's single action, labelled by consequence (not brand): a curated
-  // video plays IN-APP ("Video", the play glyph) and is the only action a row
-  // ever advertises. Distinct glyph + (in CSS) weight/colour so it doesn't rely
-  // on colour alone. A row with no in-app video advertises no action at all -
-  // returns null, and render() below skips the .li-act element entirely.
-  // Deliberately no leave-the-app fallback (e.g. an external YouTube search),
-  // which would pull a first-screen user out of the app.
+  // Playability predicate (pure, tested): a curated video plays IN-APP,
+  // anything else has no play action. Since round 5 (2026-08-09) nothing
+  // RENDERS from this - the body tap is the play control and the leading
+  // chip carries the playing indicator - but callers still key body-tap
+  // behavior off the same video-or-not distinction this names.
   function action(item) {
     return item.video
       ? { kind: 'play', label: 'Video', glyph: '▶', external: false }     // ▶ in-app
@@ -173,7 +170,6 @@
    *                                        details otherwise - batch 4)
    *   onLead(rec)      tap the leading chip (song details - the details door
    *                                        now that a body tap plays)
-   *   onAction(rec)    tap Play/Search
    *   onAdd(rec)       + add to set       (library)
    *   addBlockedReason string             (library, no onAdd -> renders a GHOST +
    *                                        so the missing affordance reads as a
@@ -186,7 +182,6 @@
     opts = opts || {};
     var item = normalize(rec);
     var seg = opts.segment || 'library';
-    var act = action(item);
     var kl = keyLabel(item);
     var cells = metaCells(item);
 
@@ -216,38 +211,28 @@
     // row's layout ("show setlist # within to prevent row UI reflow").
     // .li-num stays the number's class (nested) so its look and every existing
     // check keep working.
+    // The chip also HOSTS the now-playing equalizer (UAT 2026-08-09 round 5):
+    // .isPlaying on the row swaps the number/info glyph for the animated bars
+    // (CSS - a class sweep, no re-render), the Spotify-grammar "this row is
+    // the one in the player". Fixed-width chip, so the swap never reflows.
     var num = '<button class="li-lead" type="button" data-act="lead" aria-label="Song details" title="Song details">'
       + ((opts.position != null)
         ? '<span class="li-num">' + esc(opts.position) + '</span>'
-        : '<span class="li-lead-gl" aria-hidden="true">&#9432;</span>')
+        : '<span class="li-lead-gl" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></span>')
+      + '<span class="li-eq" aria-hidden="true"><i></i><i></i><i></i></span>'
       + '</button>';
 
     var metaHtml = '';
     cells.forEach(function (c, i) {
       metaHtml += (i ? '<span class="dot"></span>' : '') + '<span>' + esc(c) + '</span>';
     });
-    // Action: a real tappable target (CSS gives it >=44px + a box), glyph + label
-    // so it isn't colour-only, movement-cancelled so a scroll-grab can't fire it.
-    // act is null for a no-video row - skip the element entirely rather than
-    // render an empty/dangling action span.
-    // The action USED to live here, inside .li-meta. Once it took the 44px tap
-    // floor (#312) it inflated the whole meta line and a row with a video
-    // measured 139px against 89px for one without - a 56% taller row for one
-    // badge. It moves to the trailing rail below, where a 44px control (the +)
-    // already sets the row height, so the floor costs nothing.
-    // PLAYER-FEEL: the play action always renders BOTH the ▶ glyph and a 3-bar
-    // equalizer; .isPlaying on the row flips which one shows (CSS), so live
-    // now-playing updates are a class sweep on existing rows - no re-render,
-    // no scroll jump. isPaused freezes the bars (still the equalizer - the row
-    // stays "the one in the player" while paused).
-    var actHtml = act
-      ? '<span class="li-act li-act-' + act.kind + '" role="button" tabindex="0"'
-        + (act.external ? ' title="Opens YouTube"' : '')
-        + ' aria-label="' + esc(act.label) + '">'
-        + '<span class="li-glyph">' + esc(act.glyph) + '</span>'
-        + (act.kind === 'play' ? '<span class="li-eq" aria-hidden="true"><i></i><i></i><i></i></span>' : '')
-        + '</span>'
-      : '';
+    // NO per-row play button (UAT 2026-08-09 round 5, "tapping the row
+    // anywhere will already play"): the body tap IS the play control (batch
+    // 4), so a dedicated ▶ duplicated the same action at a 44px-slot cost -
+    // on a 412px phone that slot was exactly the width squeezing long titles
+    // into a one-word-per-line column. The playing indicator (equalizer)
+    // lives in the leading chip now; `act` still names whether the row is
+    // playable (the callers key body-tap behavior off the same predicate).
 
     // Trailing affordances. A set row is ALWAYS reorderable + removable now
     // (operator UAT: no Edit round-trip, drag anytime). Reorder is a dedicated
@@ -255,11 +240,13 @@
     // action, so it never opens the song). Remove is the arm-to-delete handle -
     // its red-arm IS the mis-tap guard, so both can live on the resting rail
     // without the old one-thumb-minefield risk. The up/dn arrows retired: drag
-    // replaces them.
+    // replaces them. Round 5: the grip STACKS UNDER the position chip in a
+    // narrow left rail (operator: "reorg the drag icon below the track
+    // number") so the horizontal budget goes to the title; only the arm-red x
+    // stays trailing.
     var ctrl = '';
     if (seg === 'set') {
-      ctrl = '<button class="li-grip" type="button" aria-label="Drag to reorder" title="Drag to reorder">&#8942;&#8942;</button>'
-        + btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
+      ctrl = btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
     } else if (seg !== 'set' && opts.onAdd) {
       ctrl = btn('li-add', opts.inSet ? '&#10003;' : '+', 'add', opts.inSet ? ' title="In set"' : ' title="Add to set"');
     } else if (seg !== 'set' && opts.addBlockedReason) {
@@ -272,7 +259,16 @@
     }
     var editBtn = opts.onEdit ? btn('li-edit', '&#9998;', 'edit', ' title="Edit details"') : '';
 
-    root.innerHTML = num
+    // Set rows lead with a RAIL (position chip stacked over the drag grip -
+    // one narrow column); library rows keep the bare chip. The grip is
+    // drag-only, full rail width, and grows with the row (flex-fill in CSS).
+    var lead = (seg === 'set')
+      ? '<div class="li-rail">' + num
+        + '<button class="li-grip" type="button" aria-label="Drag to reorder" title="Drag to reorder">&#8942;&#8942;</button>'
+        + '</div>'
+      : num;
+
+    root.innerHTML = lead
       + '<div class="li-body">'
       + '<div class="li-row1"><span class="li-title">' + esc(item.title) + '</span>'
       + '<span class="li-tags">' + capoHtml + tagHtml + '</span>'
@@ -281,7 +277,7 @@
       + (opts.note ? '<div class="li-note">' + esc(opts.note) + '</div>' : '')
       + '<div class="li-meta">' + metaHtml + '</div>'
       + '</div>'
-      + actHtml + editBtn + ctrl;
+      + editBtn + ctrl;
 
     // Movement-cancelled taps everywhere (scroll-grab safety). Buttons live outside
     // .li-body so they don't bubble to the body activate.
@@ -306,9 +302,6 @@
         else if (a === 'edit' && opts.onEdit) opts.onEdit(rec);
       });
     });
-    var actEl = root.querySelector('.li-act');
-    if (actEl && opts.onAction) wireTap(actEl, function () { opts.onAction(rec); });
-
     return root;
   }
 

@@ -865,7 +865,22 @@
     // chords + circle); otherwise a YouTube search.
     function openRepertoireItem(rec) {
       var p = global.Repertoire.playability(rec);
-      if (p.sheet && rec.id != null && songById(rec.id)) { openPractice(rec.id); return; }
+      // Round 8 (operator UAT: "clicking the I icon... goes directly to the
+      // solo view. I don't see how I get to the song edit view"): the details
+      // chip is the EDIT + CHORD door, never the Solo view. ANY real song
+      // routes to its practice detail - a saved compose progression has seq
+      // but no lyric sheet, and the old p.sheet gate bounced its details tap
+      // into the Studio with no path to Edit. Solo stays one tap away INSIDE
+      // the detail (the Solo row) and a body tap still plays. A chordless
+      // CUSTOM song has nothing to view yet - its detail IS the Add/Edit
+      // form. Catalog TRACKS (no song record) keep the Studio as their
+      // detail: the key/scale HUD is their content.
+      if (rec.id != null && songById(rec.id)) {
+        var s = songById(rec.id);
+        if (s.custom && (!s.seq || !s.seq.length)) { openEditForm(rec.id); return; }
+        openPractice(rec.id);
+        return;
+      }
       if (openStudioCb && (p.studio || rec._track)) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
@@ -942,8 +957,9 @@
           var on = !!key && row.getAttribute('data-npkey') === key;
           row.classList.toggle('isPlaying', on);
           row.classList.toggle('isPaused', on && paused);
-          var actEl = row.querySelector('.li-act');
-          if (actEl) actEl.setAttribute('aria-label', on ? (paused ? 'Paused - tap to play' : 'Playing - tap to pause') : 'Video');
+          // Round 5: no per-row play control - the state is announced on the
+          // row itself; the leading chip's equalizer is the visual (CSS swap).
+          if (on) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
         });
       });
     }
@@ -994,7 +1010,10 @@
      * All, so the app never changes shape depending on state - which is the
      * class of surprise the merge exists to remove.
      */
-    var songsSeg = 'all';
+    // UAT 2026-08-09: Jams is the DEFAULT view - the app opens on what you can
+    // PLAY (the music-player identity), All is one tap away. Pairs with the
+    // Jams-first segment order in play/index.html.
+    var songsSeg = 'jams';
     function applySongsSeg() {
       var isSet = songsSeg === 'set';
       // UAT 2026-08-08: Jams = the playable subset ("they can be played! it's
@@ -1043,7 +1062,20 @@
       // the same predicate that decides whether a row can light up as
       // now-playing (studio target with a video), so "in Jams" and "can play"
       // can never drift apart.
-      if (songsSeg === 'jams') filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
+      if (songsSeg === 'jams') {
+        filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
+        // UAT 2026-08-09 (round 5): the 'welcome' jam (the tour's landing
+        // track - the ad-free reggae original) leads the list, then
+        // 'featured' rows (Harry Hood), then the rest. Data-driven stable
+        // 3-bucket partition - move the tags in tracks.json to re-rank.
+        var lead = [], feat = [], rest = [];
+        filtered.forEach(function (rec) {
+          var t = studioTarget(rec);
+          var tags = (t && t.tags) || [];
+          (tags.indexOf('welcome') >= 0 ? lead : tags.indexOf('featured') >= 0 ? feat : rest).push(rec);
+        });
+        filtered = lead.concat(feat, rest);
+      }
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
         var box = document.createElement('div');
@@ -1126,7 +1158,6 @@
           onAddBlocked: canAdd ? null : function () {
             showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
           },
-          onAction: function () { repertoireAction(rec); },
           nowPlaying: npNow != null && npKey != null && npNow.key === npKey,
           nowPaused: !!(npNow && npNow.paused)
         });
@@ -2044,8 +2075,7 @@
           onLead: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
-          onRemove: function () { removeFromSet(sid); },
-          onAction: function () { ytSearch(s); }
+          onRemove: function () { removeFromSet(sid); }
         });
         if (npKeyS) setRow.setAttribute('data-npkey', npKeyS);
         body.appendChild(setRow);
@@ -2411,15 +2441,74 @@
         var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
         return Math.sqrt(dx * dx + dy * dy);
       };
+      // Round 6 ("allow default gestures to zoom on the stage view"): the
+      // familiar map-app zoom grammar, one-handed. The viewport pins native
+      // zoom (user-scalable=no), so the stage supplies it: a DOUBLE-TAP steps
+      // the text a comfortable notch up (and from the top wraps back to
+      // auto-fit - the "overview"); a double-tap-HOLD-DRAG zooms continuously
+      // (drag DOWN grows, UP shrinks - the Google Maps convention). Single
+      // taps stay inert on the sheet (no 300ms tax on anything), and a second
+      // finger cancels straight into the pinch path.
+      var dtLastT = 0, dtLastX = 0, dtLastY = 0;      // previous tap-up, for the double detect
+      var dtArmed = false, dtDrag = false, dtY0 = 0, dtS0 = 1, dtMoved = false;
+      var DT_MS = 350, DT_SLOP = 48;                  // tap pairing window / distance
       pSheet.addEventListener('touchstart', function (e) {
-        if (e.touches.length === 2) { pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = clampFontScale(STATE.effScale); }
+        if (e.touches.length === 2) {
+          dtArmed = false; dtDrag = false; // two fingers = pinch, never dtap
+          pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = clampFontScale(STATE.effScale);
+          return;
+        }
+        if (e.touches.length !== 1) return;
+        var t = e.touches[0];
+        // Second tap landing close (in time and space) to the last tap-up arms
+        // the gesture; buttons keep their own taps (never zoom from a control).
+        if (e.target && e.target.closest && e.target.closest('button')) { dtArmed = false; return; }
+        dtArmed = (Date.now() - dtLastT) < DT_MS
+          && Math.abs(t.clientX - dtLastX) < DT_SLOP && Math.abs(t.clientY - dtLastY) < DT_SLOP;
+        if (dtArmed) { dtY0 = t.clientY; dtS0 = clampFontScale(STATE.effScale); dtDrag = false; dtMoved = false; }
       }, { passive: true });
       pSheet.addEventListener('touchmove', function (e) {
-        if (!pinchOn || e.touches.length !== 2 || !pinchD0) return;
-        e.preventDefault();
-        applyScale(clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0)));
+        if (pinchOn && e.touches.length === 2 && pinchD0) {
+          e.preventDefault();
+          applyScale(clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0)));
+          return;
+        }
+        if (!dtArmed || e.touches.length !== 1) return;
+        var dy = e.touches[0].clientY - dtY0;
+        if (!dtDrag && Math.abs(dy) < 8) return;      // ignore jitter until a real drag
+        dtDrag = true; dtMoved = true;
+        e.preventDefault();                            // the drag zooms; it must not scroll
+        // Exponential feel: ~170px of drag doubles/halves - matches map apps.
+        applyScale(clampFontScale(dtS0 * Math.pow(2, dy / 170)));
       }, { passive: false });
       var pinchEnd = function (e) {
+        if (dtArmed && e.touches.length === 0) {
+          if (dtDrag) {
+            // tap-tap-drag: land the dragged size exactly like a pinch end.
+            STATE.fontScale = clampFontScale(+(STATE.effScale).toFixed(2));
+            STATE.fontMode = 'manual';
+            refitStage(true); updateStageBtns(); savePerfPrefs();
+          } else {
+            // clean double-tap: step up a notch; from the ceiling, back to auto-fit.
+            var cur = clampFontScale(STATE.effScale);
+            if (cur >= FONT_MAX - 0.05) {
+              STATE.fontMode = 'auto';
+              refitStage(true); updateStageBtns(); savePerfPrefs();
+            } else {
+              STATE.fontScale = clampFontScale(+(cur + 0.35).toFixed(2));
+              STATE.fontMode = 'manual';
+              refitStage(true); updateStageBtns(); savePerfPrefs();
+            }
+          }
+          dtArmed = false; dtDrag = false;
+          dtLastT = 0; // a completed gesture never seeds the NEXT double-tap
+          return;
+        }
+        if (e.touches.length === 0 && e.changedTouches && e.changedTouches.length === 1 && !pinchOn) {
+          // a plain single tap-up seeds the double-tap detector
+          var ct = e.changedTouches[0];
+          dtLastT = Date.now(); dtLastX = ct.clientX; dtLastY = ct.clientY;
+        }
         if (!pinchOn || e.touches.length >= 2) return;
         pinchOn = false; pinchD0 = 0;
         STATE.fontScale = clampFontScale(+(STATE.effScale).toFixed(2));
@@ -2516,7 +2605,7 @@
         if (el.pKeyLine) el.pKeyLine.textContent = '';
         if (pSheet) pSheet.innerHTML = '<div class="pInner"><div class="sect">No chord chart for this track</div></div>';
         updateStageBtns();
-        if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+        if (el.pNext) { el.pNext.innerHTML = QUEUE.atEnd() ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg>'; el.pNext.setAttribute('aria-label', QUEUE.atEnd() ? 'Finish' : 'Next'); }
         return;
       }
       // S-UI-RECONCILE (Lane A): key-aware display speller for the Stage surface,
@@ -2552,7 +2641,7 @@
       // character budget. A song-change always scrolls to the top.
       fitStageSheet(ctx, false);
       updateStageBtns();
-      if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+      if (el.pNext) { el.pNext.innerHTML = QUEUE.atEnd() ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg>'; el.pNext.setAttribute('aria-label', QUEUE.atEnd() ? 'Finish' : 'Next'); }
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };

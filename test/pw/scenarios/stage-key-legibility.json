@@ -29,6 +29,14 @@
     },
     {
       "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
       "selector": "#songsList .listItem:has-text(\"Key Legibility Song\")"
     },
     {

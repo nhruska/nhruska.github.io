@@ -300,7 +300,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
   padding:0 4px;border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-btn-sm);
   cursor:pointer;font-family:inherit;color:var(--txt-soft);}
 .listItem .li-lead:active{transform:scale(.95);}
-.li-lead-gl{font-size:1rem;line-height:1;color:var(--txt-soft);}
+.li-lead-gl{line-height:0;color:var(--txt-soft);}
 .listItem .li-num{font-family:'Space Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-ink);flex:0 0 auto;line-height:1.3;}
 .listItem .li-body{flex:1 1 auto;min-width:0;}
 .listItem .li-row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;}
@@ -311,31 +311,26 @@ body.studioopen .tabbar{position:relative;z-index:55;}
  * unbroken word) can exceed the row's available space for a long/unspaced title,
  * overflowing past the card and behind the + button instead of wrapping. .li-body
  * already carries flex:1 1 auto;min-width:0 (the row-level containment) - this is
- * the same fix one level deeper, on the title span itself. */
-.listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;min-width:0;overflow-wrap:break-word;}
+ * the same fix one level deeper, on the title span itself.
+ * Round 5 (operator: "prevent vertical height growth for longer songs"): the
+ * title CLAMPS at 2 lines with an ellipsis - a playlist-import title like
+ * "Down With Disease (Jam) >> Backing Track >> ..." caps the row instead of
+ * growing it; the full title lives one tap away in the details view. */
+.listItem .li-title{font-weight:700;font-size:1.12rem;line-height:1.16;letter-spacing:-.01em;min-width:0;overflow-wrap:break-word;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
 /* Setup pair (capo + key) live together, right of the title. Key is KEY-FIRST; an
  * unknown key shows a quiet "Key?" rather than a year (which read as the key). */
 .listItem .li-tags{display:flex;align-items:baseline;gap:6px;flex:0 0 auto;}
 .listItem .li-tag{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent-ink);font-size:.82rem;flex:0 0 auto;}
 .listItem .li-tag.isKeyUnknown{color:var(--txt-dim);font-weight:400;}
 .listItem .li-capo{font-family:'Space Mono',monospace;font-weight:700;font-size:.72rem;color:var(--brass);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:1px 6px;border-radius:6px;flex:0 0 auto;}
-.listItem .li-artist{font-size:.79rem;color:var(--txt-soft);margin-top:2px;}
+.listItem .li-artist{font-size:.79rem;color:var(--txt-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .listItem .li-note{display:inline-block;margin-top:6px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent-ink);background:var(--accent-deep);border:1px solid var(--accent-dim);padding:3px 7px;border-radius:6px;}
-.listItem .li-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--txt-soft);align-items:center;}
+.listItem .li-meta{display:flex;gap:8px;flex-wrap:nowrap;overflow:hidden;margin-top:8px;font-size:.78rem;color:var(--txt-soft);align-items:center;}
 .listItem .li-meta:empty{display:none;margin-top:0;}
 .listItem .li-meta .dot{width:4px;height:4px;background:var(--brass);border-radius:50%;flex:0 0 auto;}
-/* Action is a real padded target + box/underline so Video vs Search isn't colour-only.
- * Movement-cancel (in JS) is the scroll-grab guard; the padded box is the hit area. */
-/* .li-act is role="button" + tabindex=0 with its own activation handler -
-   a control, not a decoration - so it carries the floor too (issue #311;
-   measured 70x29). inline-flex centres the glyph+label in the taller box. */
-/* Trailing-rail action (moved out of .li-meta - see list-item.js). Square-ish
-   44px like its neighbour the + button, so it sets no extra row height. The
-   text label moved to aria-label: the glyph carries it visually and the rail
-   has no room for words. */
-.listItem .li-act{flex:0 0 auto;align-self:center;font-weight:700;cursor:pointer;white-space:nowrap;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;font-size:1.05rem;margin-left:4px;}
-.listItem .li-act-play{color:var(--accent-ink);background:var(--accent-deep);}
-.listItem .li-act-search{color:var(--txt-soft);text-decoration:underline;text-underline-offset:2px;}
+/* The per-row play action retired (round 5): a body tap plays, the leading
+   chip carries the equalizer - the 44px slot goes back to the title. */
 /* Emphasis ladder: the resting + is a per-row SECONDARY affordance repeated down
    the whole list, so its glyph is neutral (--txt-soft) - it stops the list reading
    as a column of accent circles competing with the song titles. Accent is reserved
@@ -373,12 +368,21 @@ body.studioopen .tabbar{position:relative;z-index:55;}
  * already-armed, so red-at-rest belongs only to labeled destructive BUTTONS
  * (.btn.danger), never an inline handle at rest. */
 .listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
+/* Set-row left RAIL (round 5, operator: "reorg the drag icon below the track
+   number"): the position chip stacks OVER the drag grip in one narrow column,
+   so the row spends ONE 44px-wide slot on the left instead of chip left +
+   grip right - the freed width goes to the title. */
+.listItem .li-rail{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;align-self:stretch;}
+.listItem .li-rail .li-lead{align-self:stretch;}
 /* Drag-to-reorder grip (set rows). Drag-only handle: touch-action:none so the
    browser doesn't claim the touch for scrolling, letting the pointer-drag lift.
-   The two vertical-ellipsis glyphs tuck together into a 6-dot grip. */
-.listItem .li-grip{flex:0 0 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
-  cursor:grab;min-width:44px;min-height:44px;align-self:center;display:flex;align-items:center;justify-content:center;
-  touch-action:none;-webkit-user-select:none;user-select:none;padding-right:2px;}
+   The two vertical-ellipsis glyphs tuck together into a 6-dot grip. In the
+   rail it FILLS the remaining row height (flex:1) - a taller row buys a
+   bigger drag target; min-height 36 is the floor a drag handle (press-and-
+   hold, more forgiving than a tap) can live with, full 44 width kept. */
+.listItem .li-grip{flex:1 1 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
+  cursor:grab;min-width:44px;min-height:36px;display:flex;align-items:center;justify-content:center;
+  touch-action:none;-webkit-user-select:none;user-select:none;}
 .listItem .li-grip:active{cursor:grabbing;color:var(--txt-soft);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
 /* Timed toast+action undo banner - shared skin for the setlist item-remove undo
@@ -454,7 +458,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    accent-fill selected grammar (same as .iconBtn.setBtn.on above) - "while
    playing" is a selected/active state. Compact so it fits inline beside the
    "Solo over it" label without pushing content below the fold. */
-.soundToggle{width:32px;height:32px;font-size:.85rem;}
+.soundToggle{width:32px;height:32px;font-size:1.05rem;}
 .soundToggle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* The per-note "currently sounding" marker, on both the notes line and the
    degrees line, on both surfaces (Studio + Compose). ONE primitive
@@ -1489,9 +1493,14 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .pTop .tools{display:flex;gap:6px;align-items:center;}
 /* Compact icon buttons use the small-button radius (--r-btn-sm). */
 /* Stage icons at 46px (arm's-length / strap-grip targets). */
-.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-family:'Space Mono';font-weight:700;font-size:1.15rem;cursor:pointer;}
+/* Icon standard (round 6, operator: "is 44px = 22px icon w 11px padding?"):
+   YES - icon ink ~50% of the control box (Material: 24dp in 48dp). These are
+   SVGs at 23-28px in 46px boxes; text glyphs under-render their font-size
+   (ink ~60-70% of it), which is why the stage icons moved OFF font glyphs. */
+.pTop .pmini{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+.pTop .pmini svg,.pTop .x svg,.pNav .btn svg{display:block;}
 .pTop .pmini:active{background:var(--accent);color:var(--on-accent);}
-.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);font-size:1.3rem;cursor:pointer;}
+.pTop .x{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);width:46px;height:46px;border-radius:var(--r-btn-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
 /* Title + artist + key flow inline on one row (wrap to a 2nd only if the title
    is long), baseline-aligned, to reclaim vertical space for the sheet - one row
    in landscape where width is ample (operator UAT). */
@@ -1541,14 +1550,14 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    beneath it, and the settings popover must always paint above the nav if
    their boxes ever touch - deterministic regardless of markup order. */
 .pNav{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:8px;align-items:stretch;z-index:5;}
-.pNav .btn{padding:14px 10px;flex:1;}
+.pNav .btn{padding:14px 10px;flex:1;display:inline-flex;align-items:center;justify-content:center;}
 /* One-handed performance zoning. Advance (Next / finish) is the ONE control tapped
    constantly mid-song, so it becomes the dominant bottom-RIGHT target - the natural
    thumb-arc resting spot for a one-handed grip - ~2.6x the width of Prev and taller
    (a big target you can hit without aiming, Fitts's law). Prev (rarely used
    mid-performance) shrinks to a small left tab. Transpose is demoted OUT of the
    chrome entirely - it lives in the gear sheet's Key row. */
-.pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;font-size:1.45rem;font-weight:800;}
+.pNav #pNext{flex:2.6;padding-top:19px;padding-bottom:19px;}
 /* #pPrev is a ghost/secondary button (base .btn.ghost = fully transparent)
    sitting directly over the scrolling lyric sheet - transparent disappears
    into the text behind it (operator UAT: "back button transparent"). Give it
@@ -1556,7 +1565,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    stays legible over any content while remaining visually secondary to the
    filled #pNext. ID selector so it deterministically beats the shared
    .btn.ghost rule regardless of source order. */
-.pNav #pPrev{flex:1;color:var(--txt-dim);font-size:1.2rem;background:var(--appbar-bg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.pNav #pPrev{flex:1;color:var(--txt-dim);background:var(--appbar-bg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .pNav .scrollBtn{flex:0 0 auto;width:60px;}
 /* Settings popover sits ABOVE the nav bar with a clear gap. The old +74px let
    its bottom edge collide with the tall #pNext (~63px + 14px bottom = ~77px top)
@@ -1664,6 +1673,10 @@ footer{display:none;}
 .empty .btn{flex:0 1 auto;display:inline-block;margin-top:2px;}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:translateX(-50%) translateY(8px);background:var(--surface-2);color:var(--txt);border:1px solid var(--line-strong);border-radius:11px;padding:9px 16px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px var(--shadow);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease,transform .2s ease;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+/* SW update-ready cue: a PERSISTENT tap-to-reload toast (the rendered page is
+   stale until acted on, so it never auto-hides). A real button - it accepts
+   the tap plain toasts pass through. Accent border marks it actionable. */
+.swUpdateToast{pointer-events:auto;cursor:pointer;border-color:var(--accent-dim);color:var(--accent-ink);font-family:inherit;}
 /* Action toast - a tappable follow-through button rides the toast ("Go to
    setlist"). Only action toasts accept pointer events; plain toasts stay
    tap-through. .toastGo (not .toastAction - that's the progress-bar variant
@@ -1728,7 +1741,7 @@ footer{display:none;}
  * stays shown-once-forever, not a scoped undo toast. */
 .notableBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--guide-bg);border:1px solid var(--guide-line);border-left:3px solid var(--brass);border-radius:11px;padding:10px 12px 10px 10px;margin-bottom:9px;font-size:.82rem;color:var(--txt-soft);}
 .notableBanner-body{flex:1;min-width:0;line-height:1.4;}
-.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--guide-line);background:transparent;color:var(--txt-soft);font-size:1.1rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
+.notableBanner-x{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--guide-line);background:transparent;color:var(--txt-soft);font-size:1.45rem;line-height:1;border-radius:9px;cursor:pointer;transition:transform .08s,background .15s,color .15s;}
 .notableBanner-x:active{transform:scale(.9);color:var(--txt);}
 
 /* =====================================================================
@@ -1963,7 +1976,7 @@ footer{display:none;}
 .listItem .li-eq i:nth-child(2){height:14px;}
 .listItem .li-eq i:nth-child(3){height:10px;}
 .listItem.isPlaying{border-color:var(--accent-ink);}
-.listItem.isPlaying .li-glyph{display:none;}
+.listItem.isPlaying .li-lead .li-num,.listItem.isPlaying .li-lead .li-lead-gl{display:none;}
 .listItem.isPlaying .li-eq{display:inline-flex;}
 .listItem.isPlaying:not(.isPaused) .li-eq i{animation:liEq 1.1s ease-in-out infinite;}
 .listItem.isPlaying:not(.isPaused) .li-eq i:nth-child(2){animation-delay:.22s;}

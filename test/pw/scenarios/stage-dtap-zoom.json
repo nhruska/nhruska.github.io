@@ -1,0 +1,71 @@
+{
+  "name": "stage-dtap-zoom",
+  "note": "S-STAGE-DTAP (operator UAT 2026-08-09 round 6: 'allow default gestures to zoom on the stage view - like double tap to zoom... or tap tap n drag up/down to zoom'). Native zoom is pinned app-wide (user-scalable=no), so the stage supplies the familiar map-app grammar on top of its existing pinch: a clean DOUBLE-TAP on the sheet steps the text scale up a notch (+0.35, manual mode; from the ceiling it wraps back to auto-fit); a double-tap-HOLD-DRAG zooms continuously (drag DOWN grows - the Google Maps convention) and suppresses scroll while active. Synthetic TouchEvents drive the same touchstart/move/end listeners a finger does; --pscale on .pSheet is the applied-scale readout (the one write path). Buttons never zoom (the gesture ignores taps landing on controls).",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Three Little Birds\") .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "arrange: stage open; record the applied scale and a touch synthesizer on window",
+      "js": "(function(){var sh=document.querySelector('.pSheet');if(!sh)return false;window.__ps=function(){return parseFloat(sh.style.getPropertyValue('--pscale'))||1;};window.__touch=function(type,pts){var touches=pts.map(function(p,i){return new Touch({identifier:i,target:sh,clientX:p[0],clientY:p[1]});});var ended=(type==='touchend');sh.dispatchEvent(new TouchEvent(type,{touches:ended?[]:touches,changedTouches:touches,bubbles:true,cancelable:true}));};window.__z0=window.__ps();return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "act: a clean DOUBLE-TAP on the sheet lyrics area",
+      "js": "(function(){var x=200,y=420;window.__touch('touchstart',[[x,y]]);window.__touch('touchend',[[x,y]]);window.__touch('touchstart',[[x+4,y+3]]);window.__touch('touchend',[[x+4,y+3]]);return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "double-tap STEPPED the text up (applied --pscale grew >= 0.2 over the starting fit)",
+      "js": "(function(){var z=window.__ps();window.__z1=z;return z >= window.__z0 + 0.2 - 0.001;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "act: TAP-TAP-DRAG DOWN (the maps one-hand zoom) - seed tap, then tap-hold and drag +120px",
+      "js": "(function(){var x=200,y=380;window.__touch('touchstart',[[x,y]]);window.__touch('touchend',[[x,y]]);window.__touch('touchstart',[[x,y]]);window.__touch('touchmove',[[x,y+40]]);window.__touch('touchmove',[[x,y+80]]);window.__touch('touchmove',[[x,y+120]]);window.__touch('touchend',[[x,y+120]]);return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the drag zoomed CONTINUOUSLY from the stepped size (grew again, clamped to the legibility max)",
+      "js": "(function(){var z=window.__ps();return z > window.__z1 + 0.1 - 0.001 || (window.__z1 >= 2.15 && z >= 2.15);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "stage-dtap-zoomed"
+    }
+  ]
+}

@@ -15,6 +15,14 @@
       "ms": 900
     },
     {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
       "action": "evalAssert",
       "label": "bring the target row into view FIRST (the user is looking at it), then snapshot the pre-tap world: full row-title order + scroll position",
       "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var r=rows.filter(function(x){return x.textContent.indexOf('Hendrix Style Jam')>=0;})[0];if(!r)return false;r.scrollIntoView({block:'center'});var sc=document.getElementById('libSongs');window.__preOrder=Array.prototype.map.call(document.querySelectorAll('#songsList .listItem .li-title'),function(t){return t.textContent.trim();});window.__preScroll=sc?sc.scrollTop:0;return window.__preOrder.length>10 && window.__preScroll>0;})()"

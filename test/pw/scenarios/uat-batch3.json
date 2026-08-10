@@ -29,7 +29,7 @@
     },
     {
       "action": "tap",
-      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-act"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
     },
     {
       "action": "waitFor",

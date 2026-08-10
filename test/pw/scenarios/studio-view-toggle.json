@@ -1,0 +1,125 @@
+{
+  "name": "studio-view-toggle",
+  "note": "Round 7 studio IA (operator UAT 2026-08-09, from live-site testing of a saved original): (1) 'need to toggle between COF and fretboard, leaving play/tempo always shown' - a Fretboard|Circle seg rides the pinned controls row, ONE theory visual at a time, choice persisted (music.studioView.v1); (2) the videoless burger is GONE ('only item in collapsed menu is find yt video... the menu takes the settings menu location causing confusion') - replaced by a slim always-visible Add-a-video row that toggles the same gated paste box; (3) 'highlight the chords used in the song if known' - chips the song's seq actually uses light with the accent outline (base-triad match, so Am7 lights Am). Path: compose C-G-Am-F, Solo, Save & open Studio - the saved payload carries seq.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "tapChord",
+      "name": "Am"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal .composeRowBtns button"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns button:nth-child(1)"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow .composeRowInput"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow .btn.red"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio .bt-st-body",
+      "timeoutMs": 10000
+    },
+    {
+      "action": "evalAssert",
+      "label": "FRETBOARD is the default view: seg present with Fretboard on, the scale visible, the circle hidden - and play/speed stay pinned beside the seg",
+      "js": "(function(){var seg=document.querySelector('[data-stviewseg]');if(!seg)return false;var on=seg.querySelector('[data-stview=\"fret\"]');if(!on||!on.classList.contains('on'))return false;var vis=function(sel){var e=document.querySelector(sel);if(!e)return false;var r=e.getBoundingClientRect();return r.width>0&&r.height>0;};return vis('[data-scale]') && !vis('[data-cofhero]') && vis('[data-soundtoggle]') && vis('[data-speedtoggle]');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "NO burger on a videoless Studio (it held one item over the Settings-gear position); the slim Add-a-video row stands in and the paste box stays collapsed",
+      "js": "(function(){if(document.querySelector('[data-stmenu]'))return false;var a=document.querySelector('.bt-st-addvid');if(!a)return false;var r=a.getBoundingClientRect();if(!(r.width>0&&r.height>0))return false;var g=document.querySelector('[data-urled-gated]');return !!g && g.hidden===true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the SONG'S OWN chords light up: C, G, Am, F carry .inSong; the other in-key chips (Dm, Em, Bdim) stay neutral",
+      "js": "(function(){var lit=Array.prototype.map.call(document.querySelectorAll('.bt-st-chordchip.inSong'),function(c){return c.getAttribute('data-chord');}).sort().join(',');var all=document.querySelectorAll('.bt-st-chordchip').length;return lit==='Am,C,F,G' && all>=7;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "studio-fret-default"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-stview=\"cof\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "Circle view swaps the visual (wheel visible, fretboard + scale chips + guide hidden), chords-in-key stays, and the choice persists",
+      "js": "(function(){var vis=function(sel){var e=document.querySelector(sel);if(!e)return false;var r=e.getBoundingClientRect();return r.width>0&&r.height>0;};if(!vis('[data-cofhero]')||vis('[data-scale]')||vis('[data-scalechips]'))return false;if(!vis('[data-chords]'))return false;var p=null;try{p=localStorage.getItem('music.studioView.v1');}catch(e){}return p==='cof';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "studio-cof-view"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-addvid"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Add-a-video row expands the gated paste box on demand (one affordance, collapsed by default)",
+      "js": "(function(){var g=document.querySelector('[data-urled-gated]');return !!g && g.hidden===false;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-stview=\"fret\"]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "and back: Fretboard returns, persisted",
+      "js": "(function(){var vis=function(sel){var e=document.querySelector(sel);if(!e)return false;var r=e.getBoundingClientRect();return r.width>0&&r.height>0;};var p=null;try{p=localStorage.getItem('music.studioView.v1');}catch(e){}return vis('[data-scale]') && !vis('[data-cofhero]') && p==='fret';})()"
+    }
+  ]
+}

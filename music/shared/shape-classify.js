@@ -12,7 +12,7 @@
  * and looks up its pattern in the chord-quality bucket.
  *
  * Scope: guitar-standard and ukulele-gcea only. Every other profile (banjo,
- * mandolin, mandola, cigar box, guitar-dropd/guitar-openg) returns null / [] -
+ * mandolin, mandola, guitar-dropd/guitar-openg) returns null / [] -
  * honest "not classified" beats a wrong label; the render layer shows no shape
  * text for those.
  *

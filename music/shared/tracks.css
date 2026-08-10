@@ -161,12 +161,15 @@
   /* Right-cluster via auto margins (v6): the first right-side control takes
      margin-left:auto - shuffle when present, else the hamburger. */
   .bt-st-topbar .bt-st-np-menu{margin-left:auto;}
-  .bt-st-shuffle{margin-left:auto;flex:0 0 auto;min-width:44px;min-height:44px;
-    border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);
-    border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.05rem;line-height:1;
-    display:inline-flex;align-items:center;justify-content:center;font-family:inherit;}
-  .bt-st-shuffle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-  .bt-st-shuffle ~ .bt-st-np-menu{margin-left:0;}
+  /* Shuffle - UAT 2026-08-09: moved from the sheet topbar onto the now-playing
+     bar's transport cluster (leads it, the Spotify order), same 44px
+     surface-2 control grammar as .bt-st-np-step; .on = engaged (accent fill).
+     The SVG inherits currentColor. */
+  .bt-st-np-shuf{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
+    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;}
+  .bt-st-np-shuf:active{transform:scale(.94);}
+  .bt-st-np-shuf.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
   /* The id block (title stacked over key) and the progress bar share the bar's
      flexible space; the id gets the larger share (flex:2) so the title stays
      readable, the progress bar the smaller (its own flex:1, below). */
@@ -209,11 +212,13 @@
      time live on the ONE fixed bar (.bt-st-head); the hamburger lives on the
      sheet's .bt-st-topbar. Both keep their surface-2 fill so they read on
      their plain surfaces. */
-  /* UAT 2026-08-09 ("increase icon size in rwd/play/ffd buttons"): glyphs up
-     from 1rem/.9rem - the 44px boxes stay, only the icon inside grows. */
+  /* UAT 2026-08-09 round 2 ("light thin lines... spread apart, touching the
+     edges"): transport glyphs are solid SVG paths now (ICON_* in tracks.js) -
+     centered, tight, DPI-crisp. The font-size/letter-spacing era is over. */
   .bt-st-np-pp{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);
-    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.35rem;
+    color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;padding:0;
     display:flex;align-items:center;justify-content:center;}
+  .bt-st-np-pp svg,.bt-st-np-step svg,.bt-st-np-shuf svg{display:block;}
   /* .bt-st-np-state (the no-video "Optional" pill) retired - UAT 2026-08-08:
      it occupied the transport slot and read as noise; the hamburger menu's
      hint carries the meaning now. */
@@ -231,7 +236,7 @@
      control grammar. 44px floor both axes. */
   .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-size:1.2rem;line-height:1;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;padding:0;}
+    display:flex;align-items:center;justify-content:center;padding:0;}
   .bt-st-np-step:active{transform:scale(.94);}
 
   .bt-st-np-time{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.03em;
@@ -242,7 +247,7 @@
      accent-deep strip via the same surface-2 fill the play/pause button uses. */
   .bt-st-np-menu{flex:0 0 auto;min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--line-strong);
     background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-size:1.15rem;line-height:1;display:flex;align-items:center;justify-content:center;}
+    font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;}
   .bt-st-np-menu:active{transform:scale(.94);}
   /* The fly-out itself: a popover anchored under the strip's right edge, holding
      Show/Hide video, Find another jam, Edit, and the Curated-URL card as
@@ -293,7 +298,7 @@
      icon whose content renders below the fretboard, see the .bt-st-guidebtn wiring).
      Sits ahead of the notes line so it reads as the section's primary controls. */
   .bt-st-ctrlrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.1rem;}
+  .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.5rem;}
   .bt-st-speedbtn{flex:0 0 auto;min-height:44px;min-width:64px;padding:0 14px;
     border:1px solid var(--line-strong);background:var(--surface-2);color:var(--accent-ink);
     font-family:inherit;font-weight:700;font-size:.78rem;border-radius:var(--r-btn-sm);cursor:pointer;
@@ -657,9 +662,27 @@
      keeps playing, the proven .bt-st-media.min contract). The x on the bar is
      the real teardown in EVERY state (wired in openStudio); bar-body tap
      expands only in mini (cursor cue below). */
+
+  /* Round 7: the Fretboard|Circle view seg on the pinned controls row - one
+     theory visual at a time on a phone. Same two-seg pill grammar as the
+     scale chips; pushed to the row's right edge. */
+  .bt-st-viewseg{margin-left:auto;display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);overflow:hidden;}
+  .bt-st-viewseg button{border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.8rem;font-weight:700;padding:0 12px;min-height:44px;cursor:pointer;}
+  .bt-st-viewseg button.on{background:var(--accent-deep);color:var(--accent-ink);}
+  .bt-studio.stview-cof [data-scale],.bt-studio.stview-cof [data-scalechips],.bt-studio.stview-cof [data-guidewrap],.bt-studio.stview-cof .bt-st-guidebtn{display:none;}
+  .bt-studio:not(.stview-cof) [data-cofhero],.bt-studio:not(.stview-cof) [data-cofreset]{display:none;}
+  /* Round 7: chips the SONG itself uses light with the accent OUTLINE (the
+     fill->outline->neutral ladder - fill stays reserved for selection). */
+  .bt-st-chordchip.inSong{border-color:var(--accent-dim);color:var(--accent-ink);}
+  /* Round 7: the videoless add-a-video affordance is ONE slim row (the burger
+     it replaces held a single item over the Settings-gear position). */
+  .bt-st-addvidrow{padding:0 12px;}
+  .bt-st-addvid{width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);border-radius:var(--r-btn-sm);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;}
+  .bt-st-addvid.on{border-style:solid;color:var(--accent-ink);border-color:var(--accent-dim);}
+
   .bt-st-minix{display:inline-flex;align-items:center;justify-content:center;
     width:44px;height:44px;flex:0 0 auto;border:0;background:transparent;color:var(--txt-soft);
-    font-size:1.15rem;line-height:1;cursor:pointer;font-family:inherit;}
+    font-size:1.4rem;line-height:1;cursor:pointer;font-family:inherit;}
   .bt-st-minix:hover{color:var(--accent-ink);}
   .bt-player.mini{inset:auto 0 0 0;height:0;padding:0;background:transparent;display:block;
     overflow:visible;pointer-events:none;}

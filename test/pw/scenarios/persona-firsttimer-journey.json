@@ -1,7 +1,7 @@
 {
   "name": "persona-firsttimer-journey",
   "firstRun": true,
-  "note": "S-COMPOSE-CALM slice 3, P1 First-Timer goalpost (design table: 'tour -> Library -> hears a song; Compose shows starters, 5 taps to sound'). A truly fresh device, and - unlike welcome-tour.json which picks a level - P1 SKIPS the level ask, so this scenario owns the SAFE-DEFAULT path: unset level must behave as beginner (starter cards present, nothing dense). Tap budget to first sound via Compose: Next, Next, Start playing (3) + Compose tab (4) + one starter card (5). The Library detour (tap a song, see the playable sheet) is the 'hears a song' half of the journey.",
+  "note": "P1 First-Timer goalpost, v2 (UAT 2026-08-09 single-panel tour + auto-jam). The old journey was 'tour -> Library -> hears a song' with a 5-tap budget to Compose sound; the tour now ENDS in the featured jam's Studio, so 'hears a song' is the tour's own payoff - sound is ONE tap away the moment the tour is over (honest unstarted embed post-reload). New tap budget: Start playing (1) -> jam on screen; back (2) -> Compose tab (3) -> one starter card (4) = compose sound in four. This scenario still owns the SAFE-DEFAULT path: the single-panel tour has NO level ask, so unset level must behave as beginner (starter cards present, nothing dense).",
   "viewport": {
     "width": 412,
     "height": 915
@@ -18,32 +18,21 @@
     },
     {
       "action": "wait",
-      "ms": 600
-    },
-    {
-      "action": "tap",
-      "selector": "#wNext"
-    },
-    {
-      "action": "wait",
-      "ms": 600
-    },
-    {
-      "action": "tap",
-      "selector": "#wNext"
-    },
-    {
-      "action": "wait",
       "ms": 1200
     },
     {
       "action": "waitFor",
-      "selector": "#songsList .listItem",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-head",
       "timeoutMs": 30000
     },
     {
       "action": "evalAssert",
-      "label": "level was SKIPPED and stays unset (the safe-default path this scenario owns)",
+      "label": "ONE tap ends the tour IN A JAM: the featured backing track's Studio is open with its embed mounted - sound is a single play-tap away",
+      "js": "(function(){var f=document.querySelector('.bt-player iframe');return !!f && /\\/embed\\//.test(f.src) && document.body.classList.contains('studioopen');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "level was never asked and stays unset (the safe-default path this scenario owns)",
       "js": "(function(){return localStorage.getItem('music.guidanceLevel.v1')===null;})()"
     },
     {
@@ -52,21 +41,17 @@
       "js": "(function(){return localStorage.getItem('music.welcomeDone.v1')==='1' && /p=guitar-standard/.test(location.search);})()"
     },
     {
-      "action": "tap",
-      "selector": "#songsList .listItem"
-    },
-    {
-      "action": "wait",
-      "ms": 600
-    },
-    {
-      "action": "evalAssert",
-      "label": "hears a song: the first Library tap opens a playable chord sheet (Practice), no browse maze",
-      "js": "(function(){var p=document.getElementById('s-practice');return !!p && p.classList.contains('on') && p.textContent.trim().length>0;})()"
-    },
-    {
       "action": "screenshot",
-      "name": "p1-first-song"
+      "name": "p1-tour-ends-in-jam"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 8000
     },
     {
       "action": "tap",
@@ -91,7 +76,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "5th tap = sound: one starter fills the strip with a playable progression",
+      "label": "4th tap = compose sound: one starter fills the strip with a playable progression",
       "js": "(function(){var pr=document.getElementById('prog');return !!pr && pr.children.length>=3;})()"
     },
     {
@@ -101,7 +86,7 @@
     },
     {
       "action": "screenshot",
-      "name": "p1-five-taps-to-sound"
+      "name": "p1-four-taps-to-compose"
     }
   ]
 }

@@ -15,6 +15,14 @@
       "ms": 900
     },
     {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
       "action": "waitFor",
       "selector": "#songsList .listItem"
     },

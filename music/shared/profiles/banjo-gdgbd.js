@@ -10,7 +10,7 @@
  * the engine's "low -> high pitch" convention but matches how every banjo
  * player reads chord shapes.
  *
- * Top 4 strings (D G B D) match the Open-G guitar top 4 / Cigar Box DGBD,
+ * Top 4 strings (D G B D) match the Open-G guitar top 4 (DGBD),
  * so the chord shapes for those 4 are identical (just shifted by one index
  * since the drone takes column 0). The drone rings open when the chord
  * contains a G (it's the chord tone) and is muted otherwise.
@@ -74,7 +74,7 @@
       B7: [-1, 4, 4, 4, 7],
       F7: [-1, 3, 2, 1, 1],
 
-      // Diminished (vii°). Dim7 voicings - the top 4 strings share the cigarbox
+      // Diminished (vii°). Dim7 voicings - the top 4 DGBD strings share the
       // pattern; the G drone (5th) rings open only when G is a chord tone
       // (family 2: C#/E/G/Bb). 3-fret-symmetric so 4 roots share each shape.
       Cdim: [-1, 1, 2, 1, 4], "D#dim": [-1, 1, 2, 1, 4], Ebdim: [-1, 1, 2, 1, 4], "F#dim": [-1, 1, 2, 1, 4], Gbdim: [-1, 1, 2, 1, 4], Adim: [-1, 1, 2, 1, 4],

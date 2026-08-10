@@ -150,6 +150,14 @@
       "timeoutMs": 30000
     },
     {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
       "action": "evalAssert",
       "label": "open the saved song from the Library (row text carries title + meta, so match by contains)",
       "js": "(function(){var items=document.querySelectorAll('#songsList .listItem');for(var i=0;i<items.length;i++){if(items[i].textContent.indexOf('Key Follow Jam')>=0){var b=items[i].querySelector('.li-body');if(!b)return 'no li-body';b.click();return true;}}return false;})()"

@@ -375,7 +375,6 @@ test('families(ukulele-gcea) includes every family actually produced by the name
 });
 test('families() on an unsupported profile returns an empty array, not null', function () {
   assert.deepStrictEqual(SC.families('banjo-gdgbd'), []);
-  assert.deepStrictEqual(SC.families('cigarbox-dgbd'), []);
   assert.deepStrictEqual(SC.families('mandolin-gdae'), []);
   assert.deepStrictEqual(SC.families('mandola-cgda'), []);
 });
@@ -415,14 +414,12 @@ test('label(null) returns an empty string, never throws', function () {
 
 test('classify() on an unsupported profile returns null', function () {
   assert.strictEqual(SC.classify('banjo-gdgbd', 'C', [0, 0, 0, 0, 0]), null);
-  assert.strictEqual(SC.classify('cigarbox-dgbd', 'C', [0, 0, 0]), null);
   assert.strictEqual(SC.classify('mandolin-gdae', 'G', [0, 0, 0, 0]), null);
   assert.strictEqual(SC.classify('mandola-cgda', 'C', [0, 0, 0, 0]), null);
   assert.strictEqual(SC.classify('guitar-dropd', 'D', [0, 0, 0, 0, 0, 0]), null);
 });
 test('classify() on a real Cdim voicing from an out-of-scope profile still returns null (S-DIM-SHAPES did not widen scope beyond guitar-standard/ukulele-gcea)', function () {
   assert.strictEqual(SC.classify('banjo-gdgbd', 'Cdim', [-1, 1, 2, 1, 4]), null);
-  assert.strictEqual(SC.classify('cigarbox-dgbd', 'Cdim', [1, 2, 1, 4]), null);
   assert.strictEqual(SC.classify('mandolin-gdae', 'Cdim', [2, 1, 3, 2]), null);
   assert.strictEqual(SC.classify('mandola-cgda', 'Cdim', [3, 2, 4, 3]), null);
 });

@@ -398,16 +398,6 @@ is the curation path, real ids arrive via the operator's gap playlist
 + trackKey enrichment). Residual rare keys deliberately left for the
 operator's playlist. tracks.json is CORE-precached, hence the bump.
 [#327]
-M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
-vehicles bake with SEARCHED original keys (operator: "search for the
-keys - most or all are the original key from Phish"): Chalkdust E,
-Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
-A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
-2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
-Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
-sources; citations in the PR comment); m7-funk vamps take dorian per
-the Ghost citation's own precedent. Artist 'Phish' (curated identity,
-the Harry Hood rule). Catalog 93 -> 108. [#327]
 M-PLAYLIST-2 (2026-08-09, PR #327): v327->v327-2 - the operator's
 SECOND playlist (PLPn0Gj4u_mDk, 46 items) baked via the Actions
 sync run: 29 auto-keyed entries, 2 title-stated curations the
@@ -419,4 +409,149 @@ FIVE of the v327 search stubs retired - their slots gained REAL
 yt-backed tracks in this bake (Bm rock, G#m, Ab major, Cm, Em funk);
 7 stubs remain for still-unserved slots. Catalog 67 -> 93, yt-backed
 20 -> 51. [#327]
+M-PHISH-KEYS (2026-08-09, PR #327): v327-2->v327-3 - the 15 Phish jam
+vehicles bake with SEARCHED original keys (operator: "search for the
+keys - most or all are the original key from Phish"): Chalkdust E,
+Weekapaug D, Sand Am, Ghost A-dorian, Possum E-blues, DWD D, Julius
+A-blues, Tweezer A-dorian, Slave A, YEM-jam G-dorian (Gm7/C7#9 vamp),
+2001 C-dorian (Cm7 vamp), Reba-jam Bb (Ebmaj7-F7 = IV-V), Stash Dm,
+Tube Am, Mike's F#m. Every key cited (tab sites + phish.net-adjacent
+sources; citations in the PR comment); m7-funk vamps take dorian per
+the Ghost citation's own precedent. Artist 'Phish' (curated identity,
+the Harry Hood rule). Catalog 93 -> 108. [#327]
+M-SHUF-BAR (2026-08-09, PR #328): v327-3->v328 - shuffle moves from
+the sheet topbar onto the now-playing bar's transport cluster (LEADS
+it: shuffle-prev-pp-next, the Spotify order - so it rides in mini AND
+expanded) with the standard crossed-arrows stroke SVG replacing the
+old text glyph. .bt-st-shuffle CSS retired, .bt-st-np-shuf added
+(step-button grammar + .on accent fill); data-shuffle wiring +
+music.shuffle.v1 persistence untouched. uat-batch6 UAT-6.3 amended
+(bar placement + SVG + topbar-empty), don't-move rect gate re-proven.
+No new/removed CORE paths. [#328]
+M-SHUF-BAR v2 (2026-08-09, PR #328 UAT round 2 "light thin lines...
+spread apart, touching the edges"): v328->v328-2 - prev/pp/next drop
+their Unicode text glyphs (&#10072; is literally LIGHT VERTICAL BAR;
+two separate chars left spacing to the font) for solid filled SVG
+paths on the Material 24-grid: ICON_PLAY/PAUSE/PREV/NEXT module
+constants in tracks.js, ONE source for the markup builder and all
+four pp state-swap sites. font-size/letter-spacing rules retired
+from .bt-st-np-step/.bt-st-np-pp. No new/removed CORE paths. [#328]
+M-JAMS-FIRST (2026-08-09, PR #328 UAT round 3): v328-2->v328-3 - the
+app lands on what you can PLAY: segment order swaps to Jams|All|Set
+with Jams the boot default (songsSeg boots 'jams'); 'featured'-tagged
+jams pin to row 1 (data-driven stable partition - Harry Hood carries
+the tag). ICON_SHUFFLE redrawn curved-AND-crossed (S-bend crossing
+paths + arrowheads). The welcome tour ends IN a jam: rawFinish sets a
+one-shot music.welcomeJam.v1 intent flag; same-instrument path opens
+the featured jam under the tap's gesture (autoplay allowed), the
+instrument-RELOAD path re-enters via tracksCtl onReady with an
+honestly-unstarted embed (a load is not a gesture). The library
+callout defers to the Studio's first leave (music:nowplaying on
+DOCUMENT - non-bubbling, a window listener never hears it) and the
+boot callout mount skips while the flag is pending, so show-once is
+never burned under the sheet. Guidance updated (library context line,
+callouts primary, welcome copy, timeless Settings replay row).
+welcome-tour + persona-firsttimer-journey rewritten for the
+single-panel auto-jam flow (retires the 3x #wNext flake); 21
+scenarios gain an explicit #segAll tap where they need chord-sheet
+rows (jams excludes video-less rows); songs-surface-merge's
+opens-on-All goalpost superseded. No new/removed CORE paths. [#328]
+M-JAMS-FIRST v2 (2026-08-09, PR #328, scenario-caught fixes):
+v328-3->v328-4 - (1) the boot callout mount also skips while
+body.studioopen (the local tracks.json fetch can beat the boot rAF,
+so the welcomeJam flag is already consumed and the sheet already up -
+the callout drew OVER the open Studio in the scenario run); (2) the
+bar pp handler gains stopPropagation, LOAD-BEARING since the v328-2
+SVG glyphs: the innerHTML icon swap detaches the tapped svg
+mid-bubble, closest('[data-nppp]') fails on the parentless node, and
+a mini pp tap re-expanded the Studio (mini-player scenario caught
+it); (3) uat-batch7 UAT-7.2 re-anchored to the SVG era (measure the
+rendered svg box, not the retired font-size). [#328]
+M-TOUR-FIT (2026-08-09, PR #328 UAT round 4): v328-4->v328-5 - the
+tour panel FITS 412x915 with no scroll: the "each instrument keeps
+its own setlists" paragraph cut, the offline line tightened, and
+Cigar Box DGBD retired EVERYWHERE (manifest entry, profile file,
+sw CORE, teaching copy in triad-inversions/comments, tests, wiki -
+D-CIGARBOX-RETIRED; stored cigarbox devices fall back via activeId
+manifest-order resolution). The tour's auto-jam now prefers a
+'welcome'-tagged ORIGINAL backing track (the reggae A-major jam)
+over 'featured': Content-ID-claimed material (the Phish jams) rolls
+ads that gut a brand-new user's first play ("can't play video
+because ads... for first play new users"); Harry Hood keeps
+'featured' and row 1. welcome-tour gains the no-scroll geometry
+assert + cigar-gone assert + the welcome-jam embed assert. [#328]
+M-ROW-ANATOMY (2026-08-09, PR #328 UAT round 5, operator screenshot:
+a setlist title wrapped one word per line): v328-5->v328-6 - the
+per-row play button (.li-act) is RETIRED at the ListItem primitive:
+a body tap already plays (batch 4), so the 44px slot was pure
+duplication and exactly the width crushing long titles. The playing
+indicator (equalizer) moves INTO the leading chip (Spotify grammar:
+.isPlaying swaps the number/info glyph for the bars - fixed-width
+chip, no reflow; aria-current on the row). Set rows lead with a
+RAIL: position chip stacked over the drag grip (grip fills the
+remaining rail height, min 36px, full 44 width; drag is press-and-
+hold so the sub-44 height is acceptable where a tap would not be),
+with only the arm-red x trailing. Titles CLAMP at 2 lines with
+ellipsis, artist + meta at 1 line each - a long imported title can
+never grow a row again. Jams pin order becomes welcome > featured >
+rest, so the reggae welcome jam is row 1 and Harry Hood row 2
+("put the reggae track as first in the list then"). Scenarios:
+li-act taps -> body taps (mini-player, uat-batch2/3), surface-merge
+goalpost 8 v2 = no .li-act exists, welcome-tour asserts the new pin
+order. [#328]
+M-STAGE-ZOOM+ICONS (2026-08-10, PR #328 UAT round 6): v328-6->v328-7
+- the stage gains the map-app zoom grammar on top of its pinch
+(native zoom is pinned by user-scalable=no): DOUBLE-TAP steps the
+text +0.35 (from the ceiling wraps back to auto-fit), double-tap-
+HOLD-DRAG zooms continuously (down grows - Maps convention),
+suppressing scroll only while active; buttons never zoom; a second
+finger cancels into the pinch. Stage tools/nav swap text glyphs for
+sized SVGs (menu/dim/close 23px in 46, prev 24, next 28 - incl. the
+RUNTIME pNext writers, which would have wiped a static svg on the
+first nav: '->'/'check' textContent writes become the same SVGs).
+Icon density standard encoded (ink ~50% of box; svg >= 18px + 40%,
+symbol text fs >= 20) in component-conventions + enforced by the new
+ui-icon-density gate (Library/Studio/Stage sweeps, mutation-proven
+red); li-lead info glyph -> 22px svg, np-menu/minix/soundToggle/
+notable-x floor-bumped. stage-dtap-zoom scenario proves both
+gestures via synthetic TouchEvents. [#328]
+M-SW-UPDATE-CUE (2026-08-10, PR #328: operator lost a THIRD review
+round to a stale cached build - "I still see play buttons and
+squashed dwd"): v328-7->v328-8 - sw.js skipWaiting+claims, so a new
+build takes control mid-session while the RENDERED page stays the
+old artifact; nothing cued it. Now controllerchange WITH a prior
+controller (a real update, never first-install) raises a PERSISTENT
+tap-to-reload toast (.swUpdateToast - no auto-hide, the page stays
+stale until acted on; accent border marks it actionable; repeats
+never stack). sw-update-toast scenario proves arm/persist/no-stack/
+reload via a synthetic controllerchange. [#328]
+M-STUDIO-IA (2026-08-10, PR #328 UAT round 7, from live-site testing
+of a saved original): v328-8->v328-9 - (1) Fretboard|Circle view seg
+on the pinned controls row (ONE theory visual at a time on a phone;
+play/speed always shown; choice persists as music.studioView.v1;
+the ? guide hides with the fretboard side it explains); (2) the
+videoless Studio burger is RETIRED ("only item in collapsed menu is
+find yt video... takes the settings menu location causing
+confusion") - a slim always-visible Add-a-video/Find-a-jam row
+toggles the same gated paste box, collapsed by default; (3) chips
+the SONG itself uses light with the accent outline in chords-in-key
+(base-triad match on t.seq - Am7 lights Am; saved-compose Solo
+payloads already carry seq); (4) Settings chart previews RETRY while
+MusicPreview mounts (operator screenshot: empty preview boxes -
+opening Settings early on a slow load found the renderer absent and
+never refilled). studio-view-toggle scenario (27 steps) proves the
+toggle/persist/no-burger/highlight surface. Tap-tempo + the ?
+guidance rethink parked as QUEUE S11/S12 spec seeds. [#328]
+M-LEAD-DETAIL (2026-08-10, PR #328 UAT round 8): v328-9->v328-10 -
+the details chip is the EDIT + CHORD door, never the Solo view
+(operator: "clicking the I icon... goes directly to the solo view.
+I don't see how I get to the song edit view - especially on a newly
+created progression"). openRepertoireItem drops the p.sheet gate:
+ANY real song routes to its practice detail (chords + Edit + the
+Solo row - a saved compose progression has seq but no lyric sheet
+and used to bounce into the Studio); a chordless CUSTOM opens the
+Add/Edit form directly (nothing to view yet); catalog TRACKS keep
+the Studio as their detail (the key/scale HUD is their content).
+Body tap still plays. lead-chip-detail scenario proves all three
+routes. [#328]
 ```

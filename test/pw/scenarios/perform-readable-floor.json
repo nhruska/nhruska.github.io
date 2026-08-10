@@ -1,17 +1,55 @@
 {
   "name": "perform-readable-floor",
   "note": "Wrap-first sizing model (operator-approved 2026-07-24): the Perform font is a READABLE size the user controls - it never auto-shrinks to fit. This is the goalpost that retires the old 'fits at ANY size' bar: a tall catalog song (Calluses, 30 sheet lines) that the old shrink-to-fit model rendered at ~0.64x (below the 0.8x legibility floor, tiny-but-fitting) must now render at >= 0.8x with every line WRAPPED to the content width and the overflow going to VERTICAL SCROLL, not to a smaller font. Red-first vs the shrink model: the floor assert fails (auto-fit computes ~0.64x for this song at 412x915) and the vertical-scroll assert fails (the whole point of the old model was to shrink until it fit the viewport height).",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tapIfVisible", "text": "I know some chords" },
-    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
-    { "action": "waitFor", "selector": "#songsList" },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Calluses\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Calluses\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "stage open",
@@ -42,6 +80,9 @@
       "label": "pSheet.scrollLeft is 0 (no stale horizontal scroll)",
       "js": "(function(){var pSheet=document.getElementById('pSheet');return !!pSheet && pSheet.scrollLeft===0;})()"
     },
-    { "action": "screenshot", "name": "calluses-readable-floor" }
+    {
+      "action": "screenshot",
+      "name": "calluses-readable-floor"
+    }
   ]
 }

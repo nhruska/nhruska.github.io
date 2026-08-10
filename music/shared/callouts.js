@@ -30,7 +30,9 @@
   // the eye should find, shown muted so the primary still leads.
   var CONFIG = {
     library: {
-      primary: { sel: '#songsList', text: 'Tap any song to hear it play' },
+      // UAT 2026-08-09: the Library opens on the JAMS view now (playable
+      // backing tracks, featured jam first) - the callout names that reality.
+      primary: { sel: '#songsList', text: 'Tap any jam to play it - All has every song' },
       // SONGS-MERGE phase 1: the 'jam' tab entry retired with the tab. Its
       // teaching job moves here, because the setlist is now a SEGMENT of this
       // surface - and its old copy ("Save songs from Library - they line up

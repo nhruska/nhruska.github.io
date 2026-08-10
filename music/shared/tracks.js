@@ -116,6 +116,24 @@
     });
     return changed;
   }
+  // Solid SVG media glyphs for the now-playing bar transport (UAT 2026-08-09:
+  // the Unicode text glyphs rendered as thin, spread-apart hairlines pinned to
+  // the box edges - &#10072; is literally named LIGHT VERTICAL BAR, and two
+  // separate characters put the spacing at the font's mercy). Filled paths on
+  // the Material 24-grid, centered, tight. ONE constant per icon so the pp
+  // state swaps and the markup builder can never drift apart.
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>';
+  var ICON_PREV = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5v14l-9.5-7z"/></svg>';
+  var ICON_NEXT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5v14l9.5-7z"/></svg>';
+  // Shuffle: CURVED crossing arrows (UAT 2026-08-09 round 3 - the straight
+  // feather crossing read as an X, not the standard music-player shuffle).
+  // Two S-curves crossing at center, chevron arrowheads at the right ends.
+  var ICON_SHUFFLE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 6 C7.5 6 9.8 8.2 12 12 C14.2 15.8 16.5 18 21 18"/>'
+    + '<path d="M3 18 C7.5 18 9.8 15.8 12 12 C14.2 8.2 16.5 6 21 6"/>'
+    + '<polyline points="17.5 14.5 21 18 17.5 21.5"/>'
+    + '<polyline points="17.5 2.5 21 6 17.5 9.5"/></svg>';
   // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
   // TAPPED for a given track, so the next Studio open pre-selects it instead
   // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
@@ -994,15 +1012,21 @@
       // CTA. The pp stays in the DOM while hidden, so togglePlay()'s
       // programmatic .click() route works in every state.
       var barStrip = t.yt
-        ? '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
+        // UAT 2026-08-09 ("move the shuffle button into the now playing"):
+        // shuffle LEADS the transport cluster on the ONE bar (the Spotify
+        // order: shuffle-prev-play-next), so it rides in mini AND expanded.
+        // Standard crossed-arrows glyph (inline SVG, the app's stroke-icon
+        // pattern) replaces the old &#8646; text glyph.
+        ? '<button class="bt-st-np-shuf' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">' + ICON_SHUFFLE + '</button>'
+        + '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
           + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
           // UAT batch 6 ("would like next. and back buttons. it's like a music
           // player"): prev/next flank the pp - they walk the current view's
           // playable pool (opts.advance). They stay visible in the vidopen
           // state too (YouTube's own controls can't do playlist-next).
-          + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">&#10072;&#9668;</button>'
-          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">&#10073;&#10073;</button>'
-          + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">&#9658;&#10072;</button>'
+          + '<button class="bt-st-np-step" data-npprev type="button" aria-label="Previous track">' + ICON_PREV + '</button>'
+          + '<button class="bt-st-np-pp" data-nppp type="button" aria-label="Pause">' + ICON_PAUSE + '</button>'
+          + '<button class="bt-st-np-step" data-npnext type="button" aria-label="Next track">' + ICON_NEXT + '</button>'
         : '';
       // UAT batch 7 ("stack progress bar and time codes to recover horiz
       // space"): progress + time live on their OWN row under the controls, so
@@ -1030,11 +1054,13 @@
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
-        : '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
-          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
-          + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
-          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '</div>';
+        // Round 7 (operator UAT 2026-08-09): a videoless track gets NO burger
+        // - it held ONE item and sat exactly where the app's Settings gear
+        // lives ("the menu takes the settings menu location causing
+        // confusion"). The affordance is a slim one-line stage row instead
+        // (collapsed by default - most originals will simply never have a
+        // video), toggling the same gated paste box + jam panel.
+        : '';
       // The video iframe shows on open (see it start), then auto-collapses after a
       // few seconds to audio-only (.bt-st-media.min clips it, never removes it, so
       // audio keeps playing). Countdown caption + the jam panel follow. For a
@@ -1067,9 +1093,8 @@
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
         + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
-        // UAT batch 6: the shuffle mode toggle - the expanded-player home for
-        // it (the Spotify grammar). Persisted; .on/aria-pressed reflect state.
-        + (t.yt ? '<button class="bt-st-shuffle' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">&#8646;</button>' : '')
+        // (Shuffle moved to the now-playing bar's transport cluster - UAT
+        // 2026-08-09; the topbar keeps back + the hamburger only.)
         + menuBlock
         + '</div>'
         + mediaBlock
@@ -1079,7 +1104,7 @@
         // track the urlEditor already renders INSIDE the `...` fly-out menu (see
         // playerBlock), so it must NOT render a second time here - only the
         // no-video path keeps the stage-level card.
-        + (t.yt ? '' : urlEditor)
+        + (t.yt ? '' : '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
@@ -1094,6 +1119,13 @@
         + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
         + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
         + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        // Round 7 ("need to toggle between COF and fretboard, leaving
+        // play/tempo always shown"): one theory visual at a time on a phone.
+        // The seg rides the pinned controls row; choice persists.
+        + '<div class="bt-st-viewseg" data-stviewseg role="tablist" aria-label="Theory view">'
+        + '<button data-stview="fret" role="tab" type="button">Fretboard</button>'
+        + '<button data-stview="cof" role="tab" type="button">Circle</button>'
+        + '</div>'
         + '</div>'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
@@ -1294,13 +1326,19 @@
           endedFired = true;
           if (advanceCb && advanceCb('next', shuffleOn, trackKey(nowPlaying))) return;
           paused = true; userPaused = true;
-          if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+          if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
           dispatchNowPlaying();
         }
-        if (ppBtn) ppBtn.onclick = function () {
+        if (ppBtn) ppBtn.onclick = function (e) {
+          // stopPropagation is LOAD-BEARING since the SVG glyphs (v328-2): the
+          // innerHTML swap below DETACHES the tapped svg mid-bubble, so the mini
+          // bar's body-tap exclusion (closest('[data-nppp]') on a now-parentless
+          // node) can't recognize the tap - without this, a mini pp tap
+          // re-expands the Studio.
+          e.stopPropagation();
           paused = !paused;
           ytCmd(paused ? 'pauseVideo' : 'playVideo');
-          ppBtn.innerHTML = paused ? '&#9658;' : '&#10073;&#10073;';
+          ppBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
           ppBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
           // PLAYER-FEEL: the strip's pp is the one honest play-state authority
           // (YT never reports under blocked egress) - mirror it to the
@@ -1336,11 +1374,11 @@
             if (d.info === 0) { onTrackEnd(); return; }
             if (d.info === 2 && !paused) {
               paused = true; userPaused = true;
-              if (ppBtn) { ppBtn.innerHTML = '&#9658;'; ppBtn.setAttribute('aria-label', 'Play'); }
+              if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
               dispatchNowPlaying();
             } else if (d.info === 1 && paused) {
               paused = false; userPaused = false; endedFired = false;
-              if (ppBtn) { ppBtn.innerHTML = '&#10073;&#10073;'; ppBtn.setAttribute('aria-label', 'Pause'); }
+              if (ppBtn) { ppBtn.innerHTML = ICON_PAUSE; ppBtn.setAttribute('aria-label', 'Pause'); }
               dispatchNowPlaying();
             }
             return;
@@ -1794,8 +1832,25 @@
       function renderChordChips() {
         var chordsEl = elPlayer.querySelector('[data-chords]');
         if (!chordsEl || !th.chords) return;
+        // Round 7 ("highlight the chords used in the song if known" - the
+        // operator taps chords to jam along): custom songs carry their seq
+        // through studioTarget, so mark the in-key chips the SONG actually
+        // uses. Match on base triad (normalized root + m/dim quality) so 'Am7'
+        // in the sheet lights the 'Am' chip; unknown/absent seq marks nothing.
+        var songTok = {};
+        (t.seq || t.chords || []).forEach(function (c) {
+          var m = /^([A-G][#b]?)(dim|m(?!aj))?/.exec(String(c));
+          if (m) songTok[normRoot(m[1]) + (m[2] || '')] = 1;
+        });
+        var inSong = function (c) {
+          var m = /^([A-G][#b]?)(dim|m(?!aj))?/.exec(String(c));
+          return !!(m && songTok[normRoot(m[1]) + (m[2] || '')]);
+        };
         chordsEl.innerHTML = th.chords.map(function (it) {
-          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
+          var mine = inSong(it.chord);
+          return '<button class="bt-st-chordchip' + (mine ? ' inSong' : '') + '" data-chord="' + esc(it.chord) + '" type="button"'
+            + (mine ? ' aria-label="' + esc(dispChord(it.chord, th.key, th.scaleMode)) + ' - in this song"' : '')
+            + '>' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
         }).join('');
         Array.prototype.forEach.call(chordsEl.querySelectorAll('.bt-st-chordchip'), function (d, idx) {
           var c = th.chords[idx].chord;
@@ -1809,6 +1864,33 @@
         });
       }
       renderChordChips();
+      // Round 7: ONE theory visual at a time (phone space). The class on
+      // .bt-studio drives CSS visibility of fretboard-side (scale + chips +
+      // guide) vs circle-side (cofhero + reset); play/speed stay pinned in
+      // the controls row. Both surfaces keep rendering eagerly, so switching
+      // is a class flip - never a re-derive.
+      (function wireStudioView() {
+        var seg = elPlayer.querySelector('[data-stviewseg]');
+        var sheet = elPlayer.querySelector('.bt-studio');
+        if (!seg || !sheet) return;
+        var VIEW_KEY = 'music.studioView.v1';
+        function applyView(v) {
+          v = (v === 'cof') ? 'cof' : 'fret';
+          sheet.classList.toggle('stview-cof', v === 'cof');
+          Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
+            var on = b.getAttribute('data-stview') === v;
+            b.classList.toggle('on', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+          try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+        }
+        Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
+          b.onclick = function () { applyView(b.getAttribute('data-stview')); };
+        });
+        var saved = null;
+        try { saved = localStorage.getItem(VIEW_KEY); } catch (e) {}
+        applyView(saved);
+      })();
       // Circle-of-fifths CROWN: render the tinted wheel eagerly at the top
       // (data-cofhero), keyed to the CURRENT key center (song on open, explored
       // after a retune). Wheel-only - kept in a .bt-st-wheel container so

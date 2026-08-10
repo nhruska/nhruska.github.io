@@ -73,7 +73,7 @@ Each `music/shared/profiles/<id>.js` self-registers into `window.MusicProfiles`:
 { id, label, instrument, tuning, strings: [{n, l, f}...], chords: { "C": [-1,3,2,0,1,0], ... } }
 ```
 
-Fret arrays are per-string (low->high display order): `-1` muted, `0` open, `N` fretted. `profiles/manifest.json` lists active profiles in load order. 8 profiles ship today: guitar standard/drop-D/open-G, ukulele GCEA, banjo gDGBD, mandolin GDAE, mandola CGDA, cigar box DGBD.
+Fret arrays are per-string (low->high display order): `-1` muted, `0` open, `N` fretted. `profiles/manifest.json` lists active profiles in load order. 5 ship in the manifest today: ukulele GCEA, guitar standard, banjo gDGBD, mandolin GDAE, mandola CGDA (drop-D/open-G are unlisted profile files; cigar box was retired 2026-08-09).
 
 **Consuming surfaces:** `Diagram.render(frets, opts)` (the chord SVG - a base-fret digit renders instead of the nut bar when a shape sits above fret 4; a reserved label pad keeps canvas size constant across open and offset shapes); `pack.playChord`/`playNote` (Web Audio); `pack.scaleDiagram(...)` with `supportsStart` (the fretboard scale map, position-walk capable).
 

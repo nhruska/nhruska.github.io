@@ -126,6 +126,27 @@ Declared: tracks.css (`--kx-chord`/`--kx-blue`, right after their literal-hex fa
 | Native `confirm()` elsewhere in songbook.js (delete a custom item, clear the whole setlist) and repertoire-form.js (delete confirmation) | LOW-MED (pre-existing, "backlog: SETX phase 2" per this page's Buttons/Modal sections before wave 2) | NOT fixed this wave - out of the U19 grant (backup/restore flow only); count pinned by [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js) so it can't silently grow |
 | Help-nature disclosure toggles (Guide / "Why these notes?" / "Find a jam") have no visual marker distinguishing them from a functional control | LOW | Convention DRAFTED this wave (`.helpIcon`, songbook.css) - not yet APPLIED; the toggles themselves live in tracks.js (M-EAR-1.6 grant), DEFERRED-TO-SIBLING |
 
+## Icon density standard (round 6, operator UAT 2026-08-09)
+
+An ICON-ONLY control's ink is **~50% of its box** - the Material ratio (24dp
+icon in a 48dp target); here 22-28px of ink in 44-56px boxes. The operator's
+framing ("is 44px = 22px icon w 11px padding to center?") IS the rule.
+Mechanics that matter:
+
+- **SVG icons render their stated size** - a 23px svg shows 23px of ink. This
+  is why icon buttons migrate to inline SVG (stage tools/nav, transport,
+  shuffle, the li-lead info glyph).
+- **Text glyphs under-render their font-size** (ink is ~60-70% of the em box,
+  font-dependent), so a symbol glyph needs font-size >= 20px to LOOK ~14-16px,
+  and can never be trusted at the 22px-ink standard. Remaining symbol-text
+  buttons (bar menu, mini x, sound toggle, banner x) are floor-bumped, not
+  standard-met - migrate them to SVG when touched.
+- **Gate:** [test/pw/scenarios/ui-icon-density.json](../../../test/pw/scenarios/ui-icon-density.json)
+  sweeps Library / Studio / Stage: visible-svg ink >= 18px AND >= 40% of
+  min(box, 56); symbol-text font-size >= 20px; alphanumeric labels (chord
+  chips, A+/Auto) exempt. Proven red (a 12px stage svg fails the sweep).
+  New icon buttons meet the standard or amend the gate with a named exception.
+
 ---
 
 **Anchors verified:** songbook.css :root tokens + component classes (~:14-520, incl. the M-DESIGN-ENFORCE `--guide-bg`/`--guide-line`/radius-token/`.toastAction`/`.toastBar`/`.helpIcon` blocks, wave 3's `.chordCtrlRow`/`.soloRowBtn`/`.btn.danger`); tracks.css kx ink vars + studio classes (wave 3: `.bt-st-back` composes `.iconBtn`, `.bt-st-x` removed); repertoire-form.css form classes; list-item.js action ladder + wireTap; play/index.html pre-paint theme script + picker + `showSettingsToast`/`openConfirmModal` + wave 3's `#chordCtrlRow`; decisions.md (D-SELECTED-ACCENT, D-LAYOUT-SSOT, D-TOAST-PRIMITIVE, D-ENFORCE-1, D-ENFORCE-2, U3/U4/U7 rows, D-EAR-1.6); ui-primitives.md (taxonomy, PR #145; TOAST+ACTION/HELP added wave 2); interaction-safety.md (RAIL, guard #3 amended wave 2); design-principles.md (GRIP); [test/consistency-lint.test.js](../../../test/consistency-lint.test.js) (E1/E2/E3 static guards, wave 3's `.bt-st-x` entry removed - now covered by the pre-existing `.iconBtn` row); shared/legend.js + [test/legend.test.js](../../../test/legend.test.js) (M-EAR wave 1.6, U16 - the Legend primitive + its no-raw-hex source lint); [test/toast-action.test.js](../../../test/toast-action.test.js), [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js) (wave 2 guards); wave 3 (M-UI-STD, F28-F33): songbook.js (`hideComposeToast`, `invalidateClearUndo` extension, `renderSuggest`'s always-on `.suggLbl`, song-view `soloRowBtn` in `.practiceRow`), tracks.js (`.bt-st-back` markup + click wiring), repertoire-form.js (`.rf-actions` reorder + `.btn.danger`), [test/songbook.test.js](../../../test/songbook.test.js) (F30/F31 tests, S-TOAST/U9 updated), [test/tracks.test.js](../../../test/tracks.test.js) (F32 source-pin), [test/repertoire-form.test.js](../../../test/repertoire-form.test.js) (F33 source-pin).

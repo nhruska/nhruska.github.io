@@ -1,7 +1,7 @@
 {
   "name": "welcome-tour",
   "firstRun": true,
-  "note": "S-WELCOME (operator interview 2026-07-18, supersedes the tab-intros strip): orientation lives in a FIRST-RUN TOUR ONLY - no persistent intro text anywhere. Fresh device -> 3-panel swipe/Next sheet: (1) welcome + instrument pick (guitar-standard preselected, the widest-audience default for skippers), (2) the SAME 'How far along are you?' level ask the in-app banner offers (same storage + ask-settling side effects), (3) a four-tab map - then land in the app. The appbar sheds the instrument picker (moved to Settings > Preferences, first row) so the always-on bar is brand + offline pill + gear. 'firstRun': true opts OUT of the runner's welcomeDone seeding - every other scenario models a returning user. Also keeps the setlist Library-scroll-model asserts from the retired tab-intros scenario. Written red-first against the pre-fix tree (0e25592).",
+  "note": "S-WELCOME v2 (UAT 2026-08-09, supersedes the 3-panel tour): orientation is ONE panel - instrument pick (guitar-standard preselected) + the promise that Start playing ends in a jam. Finishing sets the music.welcomeJam.v1 intent flag; the fresh-device path RELOADS into the chosen instrument (?p=guitar-standard), where tracksCtl onReady consumes the flag and opens the FEATURED jam's Studio honestly unstarted (a load is not a gesture - one tap starts sound). The library callout defers to the Studio's first leave so its show-once is never burned under the sheet. Landing is JAMS-first (segJams default, featured jam pinned to row 1). Settings replay copy is timeless (no panel-count). 'firstRun': true opts OUT of the runner's welcomeDone seeding - every other scenario models a returning user. Keeps the appbar-chrome, Preferences-first, About-last, and setlist scroll-model asserts from v1.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -14,8 +14,18 @@
     },
     {
       "action": "evalAssert",
-      "label": "guitar-standard is preselected on the instrument panel (skippers default to guitar, per interview)",
-      "js": "(function(){var on=document.querySelector('#wInstList .askOpt.on');return !!on && /guitar/i.test(on.textContent) && on.getAttribute('aria-checked')==='true';})()"
+      "label": "the tour is ONE panel, CTA is Start playing immediately, and it FITS: no vertical scroll at 412x915 (round-4 goalpost - prose trimmed + cigar box removed)",
+      "js": "(function(){if(document.querySelectorAll('#wPanels .wPanel').length!==1)return false;if(document.getElementById('wNext').textContent!=='Start playing')return false;if(document.getElementById('wDots')||document.getElementById('wLevelList'))return false;var card=document.querySelector('.welcomeCard');var pan=document.getElementById('wPanels');var r=card.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1&&pan.scrollHeight<=pan.clientHeight+2&&card.scrollHeight<=card.clientHeight+2;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar-standard is preselected, and Cigar Box is GONE from the instrument list (round 4: removed everywhere)",
+      "js": "(function(){var on=document.querySelector('#wInstList .askOpt.on');if(!on||!/guitar/i.test(on.textContent)||on.getAttribute('aria-checked')!=='true')return false;return !/cigar/i.test(document.getElementById('wInstList').textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the panel PROMISES the jam: Start playing is named and a backing track is the payoff",
+      "js": "(function(){var t=document.getElementById('wPanels').textContent;return /Start playing/.test(t) && /backing track/i.test(t);})()"
     },
     {
       "action": "evalAssert",
@@ -23,51 +33,8 @@
       "js": "(function(){var bar=document.querySelector('.appbar');return !!bar && !bar.querySelector('select') && !!bar.querySelector('#settingsBtn') && !!bar.querySelector('#offlinePill');})()"
     },
     {
-      "action": "evalAssert",
-      "label": "orientation chrome is the COMPACT header form only (r3): tab pill + one purpose line, never the .tabIntro strip",
-      "js": "(function(){return !document.querySelector('.tabIntro') && !!document.getElementById('tabPill') && !!document.getElementById('ctxLine');})()"
-    },
-    {
       "action": "screenshot",
-      "name": "welcome-panel1-instrument"
-    },
-    {
-      "action": "tap",
-      "selector": "#wNext"
-    },
-    {
-      "action": "wait",
-      "ms": 600
-    },
-    {
-      "action": "tap",
-      "selector": "#wLevelList .askOpt:nth-child(2)"
-    },
-    {
-      "action": "wait",
-      "ms": 250
-    },
-    {
-      "action": "evalAssert",
-      "label": "the level pick highlights via the shared .askOpt.on grammar (same primitive as the in-app ask)",
-      "js": "(function(){var on=document.querySelector('#wLevelList .askOpt.on');return !!on && /some chords/i.test(on.textContent);})()"
-    },
-    {
-      "action": "tap",
-      "selector": "#wNext"
-    },
-    {
-      "action": "wait",
-      "ms": 600
-    },
-    {
-      "action": "evalAssert",
-      "label": "panel 3 maps all four tabs and the CTA flips to Start playing",
-      "js": "(function(){var lis=document.querySelectorAll('.wMap li');if(lis.length!==4)return false;var t=document.querySelector('.wMap').textContent;return /Library/.test(t)&&/Setlist/.test(t)&&/Compose/.test(t)&&/Tune/.test(t)&&document.getElementById('wNext').textContent==='Start playing';})()"
-    },
-    {
-      "action": "screenshot",
-      "name": "welcome-panel3-map"
+      "name": "welcome-single-panel"
     },
     {
       "action": "tap",
@@ -79,18 +46,55 @@
     },
     {
       "action": "waitFor",
-      "selector": "#songsList .listItem",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-head",
       "timeoutMs": 30000
     },
     {
       "action": "evalAssert",
-      "label": "finishing lands on guitar-standard with the tour done-for-good and the level settled EXACTLY like the in-app ask (level stored + guidanceask dismissed)",
-      "js": "(function(){try{var ov=document.getElementById('welcomeOv');if(ov&&!ov.hidden)return false;if(localStorage.getItem('music.welcomeDone.v1')!=='1')return false;if(localStorage.getItem('music.guidanceLevel.v1')!=='intermediate')return false;var dm=JSON.parse(localStorage.getItem('music.notables.v1')||'{}');if(dm.guidanceask!==1)return false;if(localStorage.getItem('music.activeProfile.v1')!=='guitar-standard')return false;return /p=guitar-standard/.test(location.search);}catch(e){return false;}})()"
+      "label": "the tour ends IN A JAM: post-reload the 'welcome'-tagged ORIGINAL jam's Studio is open (ad-free reggae, not the Content-ID-claimed Phish video), flag consumed, guitar-standard landed, tour done for good",
+      "js": "(function(){try{var ov=document.getElementById('welcomeOv');if(ov&&!ov.hidden)return false;if(localStorage.getItem('music.welcomeDone.v1')!=='1')return false;if(localStorage.getItem('music.welcomeJam.v1')!==null)return false;if(localStorage.getItem('music.activeProfile.v1')!=='guitar-standard')return false;if(!/p=guitar-standard/.test(location.search))return false;var f=document.querySelector('.bt-player iframe');return !!f && /\\/embed\\/ifOUmWAQups/.test(f.src);}catch(e){return false;}})()"
     },
     {
       "action": "evalAssert",
-      "label": "the app is usable after the tour (tabbar up, Library populated)",
-      "js": "(function(){var tb=document.querySelector('.tabbar');var list=document.getElementById('songsList');return !!tb && tb.getBoundingClientRect().height>0 && !!list && list.children.length>3;})()"
+      "label": "the library callout has NOT fired under the sheet (show-once preserved for the Studio's first leave)",
+      "js": "(function(){return !document.querySelector('.coLayer') && !window.Callouts.shownFor('library');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "welcome-ends-in-jam"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "waitFor",
+      "selector": ".coLayer",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "evalAssert",
+      "label": "leaving the Studio for the first time fires the DEFERRED library callout (one-shot, now visible over the list)",
+      "js": "(function(){return !!document.querySelector('.coLayer') && window.Callouts.shownFor('library');})()"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "evalAssert",
+      "label": "the landing is JAMS-first with the pin order welcome > featured: Jams is the FIRST segment and active, the reggae welcome jam is row 1 and Harry Hood row 2 (round 5: 'put the reggae track as first in the list')",
+      "js": "(function(){var j=document.getElementById('segJams'),a=document.getElementById('segAll');if(!j||!a)return false;if(!j.classList.contains('on')||a.classList.contains('on'))return false;if(!(j.compareDocumentPosition(a)&Node.DOCUMENT_POSITION_FOLLOWING))return false;var t=document.querySelectorAll('#songsList .listItem .li-title');if(t.length<2)return false;return /reggae backing track/i.test(t[0].textContent) && /harry hood/i.test(t[1].textContent);})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "welcome-done-jams-first"
     },
     {
       "action": "tap",
@@ -102,6 +106,11 @@
     },
     {
       "action": "evalAssert",
+      "label": "the Settings replay row is TIMELESS copy - it names the welcome intro, never a panel count",
+      "js": "(function(){var b=document.getElementById('replayTourBtn');if(!b)return false;var t=b.textContent;return /welcome intro/i.test(t) && !/panel|three|3-/i.test(t);})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "Preferences is the FIRST Settings section and owns the relocated instrument picker (populated, out of the appbar)",
       "js": "(function(){var secs=document.querySelectorAll('#settingsBody .accSec');if(!secs.length||secs[0].getAttribute('data-acc')!=='prefs')return false;var pk=document.getElementById('profilePicker');return !!pk && !!pk.closest('#accBodyPrefs') && !pk.closest('.appbar') && pk.options.length>3;})()"
     },
@@ -109,18 +118,6 @@
       "action": "evalAssert",
       "label": "About stays the LAST section (rarely-needed content sinks to the bottom)",
       "js": "(function(){var secs=document.querySelectorAll('#settingsBody .accSec');return secs.length>0 && secs[secs.length-1].getAttribute('data-acc')==='about';})()"
-    },
-    {
-      "action": "tap",
-      "selector": "#accBtnPrefs"
-    },
-    {
-      "action": "wait",
-      "ms": 350
-    },
-    {
-      "action": "screenshot",
-      "name": "settings-prefs-picker"
     },
     {
       "action": "tap",

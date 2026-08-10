@@ -1,21 +1,56 @@
 {
   "name": "perform-stage-orientation-rewrap",
   "note": "CW-1 follow-up (3 defects found in operator UAT on top of the original portrait fix in perform-long-line-wrap.json): (1) perfWrapMaxChars' budget used a flat '-4' fudge instead of the sheet's REAL computed horizontal padding, so it under-accounted for landscape's padding-right:120px (reserved for the absolutely-positioned nav-button column) and wrapped rows ran under the buttons; (2) a bold chord label (.crd{font-weight:700}) can render a touch wider per character than the plain-weight measuring probe, so a single wrap pass could still land a few px over budget - the fix re-measures and shrinks the char budget until it actually fits; (3) the resize listener only called applyPerfFont() (re-scale), never re-checked/re-wrapped, so a wrap computed for one orientation's width silently carried into the other. Red-first repro (verified empirically before writing this assertion): open the Stage view with the phone ALREADY in landscape (defect 1 - the fresh wrap uses the too-generous landscape budget, right edge of every .lyrLine lands at 888px while the nav column starts at 799px, a clear overlap) then rotate to portrait WITHOUT closing the stage (defect 3 - pre-fix the landscape wrap (long rows) is never rebuilt for the narrower portrait frame: observed scrollWidth 870px inside a 380px-wide pSheet even at the auto-fit floor scale 0.500, a hard overflow). Rotating back to landscape must also re-wrap cleanly (not just rescale a stale portrait wrap). Bar TIGHTENED for the wrap-first sizing model (operator-approved 2026-07-24): every orientation step now also asserts the 0.8x/~13px legibility floor - a tiny-but-fitting render fails; wrapping plus vertical scroll, never sub-readable shrink, is what absorbs each orientation's width.",
-  "viewport": { "width": 915, "height": 412 },
+  "viewport": {
+    "width": 915,
+    "height": 412
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 700 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
     {
       "action": "evalAssert",
       "label": "seed a saved custom song with one very long chorus line so the perform view has content that overflows in EITHER orientation",
       "js": "(function(){try{localStorage.setItem('roadcase-ukulele-gcea.custom.v1', JSON.stringify([{id:'longLineSong', t:'Long Line Song', a:'Me', y:2026, d:'Mine', custom:true, forkOf:'k1', seq:['C','G','Am','F'], sheet:[['Verse','[C] a short intro line [G] here'],['Chorus','[C]Have you ever seen the [G]rain coming down on a [Am]sunny day watching it all [F]wash away every single one of my [C]dreams from yesterday and the [G]day before that too and [Am]still I keep on singing this [F]same old song about the [C]rain that never seems to [G]stop no matter what I do']]}]));return true}catch(e){return false}})()"
     },
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 800 },
-    { "action": "tap", "selector": "#songsList .listItem:has-text(\"Long Line Song\")" },
-    { "action": "wait", "ms": 500 },
-    { "action": "tap", "selector": "#stageBtn" },
-    { "action": "wait", "ms": 600 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Long Line Song\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
     {
       "action": "evalAssert",
       "label": "the perform (stage) view is open",
@@ -60,7 +95,10 @@
       "width": 412,
       "height": 915
     },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "screenshot",
       "name": "02-rotated-to-portrait"
@@ -95,7 +133,10 @@
       "width": 915,
       "height": 412
     },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "screenshot",
       "name": "03-rotated-back-to-landscape"

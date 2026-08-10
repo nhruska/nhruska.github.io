@@ -1,14 +1,41 @@
 {
   "name": "uat-batch7",
-  "viewport": { "width": 412, "height": 915 },
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
   "steps": [
-    { "action": "goto", "path": "/music/play/" },
-    { "action": "wait", "ms": 1200 },
-    { "action": "waitFor", "selector": "#segJams", "timeoutMs": 8000 },
-    { "action": "tap", "selector": "#segJams" },
-    { "action": "waitFor", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']", "timeoutMs": 8000 },
-    { "action": "tap", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body" },
-    { "action": "waitFor", "selector": ".bt-player.mini .bt-st-head", "timeoutMs": 6000 },
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "#segJams",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
     {
       "action": "evalAssert",
       "label": "UAT-7.1: the bar stacks TWO rows - progress+time sit BELOW the transport, and the title recovers real width",
@@ -16,24 +43,40 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-7.2: transport glyphs sized up (steps >=14px, pp >=15px)",
-      "js": "(function(){var s=document.querySelector('[data-npnext]');var pp=document.querySelector('[data-nppp]');if(!s||!pp)return false;return parseFloat(getComputedStyle(s).fontSize)>=14&&parseFloat(getComputedStyle(pp).fontSize)>=15;})()"
+      "label": "UAT-7.2: transport glyphs sized up - SVG era (v328-2): each step/pp button renders an svg glyph with a real box >= 15px (font-size retired with the text glyphs)",
+      "js": "(function(){var s=document.querySelector('[data-npnext] svg');var pp=document.querySelector('[data-nppp] svg');if(!s||!pp)return false;var rs=s.getBoundingClientRect(),rp=pp.getBoundingClientRect();return rs.width>=15&&rs.height>=15&&rp.width>=15&&rp.height>=15;})()"
     },
-    { "action": "screenshot", "name": "stacked-bar" },
-    { "action": "tap", "selector": "#filterBtn" },
-    { "action": "waitFor", "selector": "#keySel", "timeoutMs": 4000 },
+    {
+      "action": "screenshot",
+      "name": "stacked-bar"
+    },
+    {
+      "action": "tap",
+      "selector": "#filterBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keySel",
+      "timeoutMs": 4000
+    },
     {
       "action": "evalAssert",
       "label": "UAT-7.3: the key filter lists CHROMATICALLY from C, majors then minors (no more fifths jumble)",
       "js": "(function(){var R={C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};var opts=Array.prototype.slice.call(document.querySelectorAll('#keySel option')).map(function(o){return o.value;}).filter(function(v){return v!=='all';});if(opts.length<3)return false;var last=-1;for(var i=0;i<opts.length;i++){var m=/m$/.test(opts[i]);var root=m?opts[i].slice(0,-1):opts[i];if(!(root in R))return false;var rank=(m?100:0)+R[root];if(rank<last)return false;last=rank;}return true;})()"
     },
-    { "action": "tap", "selector": "#filterDone" },
+    {
+      "action": "tap",
+      "selector": "#filterDone"
+    },
     {
       "action": "evalAssert",
       "label": "UAT-7.4: a synthesized EMBED-PAUSE (state 2) syncs the honest UI - bar flips to play, eq freezes (the return-from-background fix)",
       "js": "(function(){window.postMessage(JSON.stringify({event:'onStateChange',info:2}),'*');return true;})()"
     },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "UAT-7.4b: npPaused set, pp shows play, the row equalizer froze",
@@ -44,7 +87,10 @@
       "label": "UAT-7.4c: a synthesized RESUME (state 1) syncs back to playing",
       "js": "(function(){window.postMessage(JSON.stringify({event:'onStateChange',info:1}),'*');return true;})()"
     },
-    { "action": "wait", "ms": 400 },
+    {
+      "action": "wait",
+      "ms": 400
+    },
     {
       "action": "evalAssert",
       "label": "UAT-7.4d: playing again - npPaused off, row eq animating",
@@ -55,9 +101,20 @@
       "label": "UAT-7.5: Media Session carries the track metadata and a live playbackState",
       "js": "(function(){if(!('mediaSession' in navigator))return true;var md=navigator.mediaSession.metadata;return !!md&&md.title==='Reggae Backing Track in A Major'&&navigator.mediaSession.playbackState==='playing';})()"
     },
-    { "action": "screenshot", "name": "batch7-final" },
-    { "action": "tap", "selector": ".bt-player.mini [data-minix]" },
-    { "action": "waitFor", "selector": ".bt-player .bt-st-head", "state": "hidden", "timeoutMs": 6000 },
+    {
+      "action": "screenshot",
+      "name": "batch7-final"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-minix]"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player .bt-st-head",
+      "state": "hidden",
+      "timeoutMs": 6000
+    },
     {
       "action": "evalAssert",
       "label": "teardown clears the Media Session card",
