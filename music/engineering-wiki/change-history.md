@@ -542,4 +542,16 @@ opening Settings early on a slow load found the renderer absent and
 never refilled). studio-view-toggle scenario (27 steps) proves the
 toggle/persist/no-burger/highlight surface. Tap-tempo + the ?
 guidance rethink parked as QUEUE S11/S12 spec seeds. [#328]
+M-LEAD-DETAIL (2026-08-10, PR #328 UAT round 8): v328-9->v328-10 -
+the details chip is the EDIT + CHORD door, never the Solo view
+(operator: "clicking the I icon... goes directly to the solo view.
+I don't see how I get to the song edit view - especially on a newly
+created progression"). openRepertoireItem drops the p.sheet gate:
+ANY real song routes to its practice detail (chords + Edit + the
+Solo row - a saved compose progression has seq but no lyric sheet
+and used to bounce into the Studio); a chordless CUSTOM opens the
+Add/Edit form directly (nothing to view yet); catalog TRACKS keep
+the Studio as their detail (the key/scale HUD is their content).
+Body tap still plays. lead-chip-detail scenario proves all three
+routes. [#328]
 ```

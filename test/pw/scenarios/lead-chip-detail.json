@@ -1,0 +1,63 @@
+{
+  "name": "lead-chip-detail",
+  "note": "Round 8 (operator UAT 2026-08-09: 'clicking the I icon on a track... goes directly to the solo view. I don't see how I get to the song edit view - especially on a newly created progression'). The details chip routing contract: (1) a saved progression's chip opens the PRACTICE detail (chords + Edit + the Solo row) - never the Studio; (2) a chordless custom's detail IS the Add/Edit form (nothing to view yet); (3) a catalog yt TRACK keeps the Studio as its detail (its key/scale HUD is its content) - and a body tap still plays. Seeded custom songs on the runner's default ukulele profile.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "roadcase-ukulele-gcea.custom.v1": "[{\"id\":\"cs1\",\"t\":\"My New Progression\",\"a\":\"\",\"custom\":true,\"key\":\"C\",\"mode\":\"major\",\"seq\":[\"C\",\"G\",\"Am\",\"F\"]},{\"id\":\"cs2\",\"t\":\"Chordless Sketch\",\"a\":\"\",\"custom\":true,\"key\":\"D\",\"mode\":\"major\"}]"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"My New Progression\") .li-lead"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "a saved progression's details chip opens the PRACTICE detail - chords rendered, Edit offered, Solo one tap away - and NOT the Studio",
+      "js": "(function(){if(document.body.classList.contains('studioopen'))return false;var p=document.getElementById('s-practice');if(!p||!p.classList.contains('on'))return false;var btns=Array.prototype.map.call(p.querySelectorAll('button'),function(b){return b.textContent.trim();});return btns.indexOf('Edit')>=0 && !!p.querySelector('.soloRowBtn');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "lead-chip-practice-detail"
+    },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Chordless Sketch\") .li-lead"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "a chordless custom's details chip opens the ADD/EDIT form directly (nothing to view yet), pre-loaded with the song",
+      "js": "(function(){var box=document.querySelector('.rf-box');if(!box)return false;var r=box.getBoundingClientRect();return r.width>0&&r.height>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "lead-chip-edit-form"
+    }
+  ]
+}

@@ -865,7 +865,22 @@
     // chords + circle); otherwise a YouTube search.
     function openRepertoireItem(rec) {
       var p = global.Repertoire.playability(rec);
-      if (p.sheet && rec.id != null && songById(rec.id)) { openPractice(rec.id); return; }
+      // Round 8 (operator UAT: "clicking the I icon... goes directly to the
+      // solo view. I don't see how I get to the song edit view"): the details
+      // chip is the EDIT + CHORD door, never the Solo view. ANY real song
+      // routes to its practice detail - a saved compose progression has seq
+      // but no lyric sheet, and the old p.sheet gate bounced its details tap
+      // into the Studio with no path to Edit. Solo stays one tap away INSIDE
+      // the detail (the Solo row) and a body tap still plays. A chordless
+      // CUSTOM song has nothing to view yet - its detail IS the Add/Edit
+      // form. Catalog TRACKS (no song record) keep the Studio as their
+      // detail: the key/scale HUD is their content.
+      if (rec.id != null && songById(rec.id)) {
+        var s = songById(rec.id);
+        if (s.custom && (!s.seq || !s.seq.length)) { openEditForm(rec.id); return; }
+        openPractice(rec.id);
+        return;
+      }
       if (openStudioCb && (p.studio || rec._track)) { openStudioCb(studioTarget(rec)); return; }
       ytSearch(rec);
     }
