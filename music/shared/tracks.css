@@ -662,6 +662,24 @@
      keeps playing, the proven .bt-st-media.min contract). The x on the bar is
      the real teardown in EVERY state (wired in openStudio); bar-body tap
      expands only in mini (cursor cue below). */
+
+  /* Round 7: the Fretboard|Circle view seg on the pinned controls row - one
+     theory visual at a time on a phone. Same two-seg pill grammar as the
+     scale chips; pushed to the row's right edge. */
+  .bt-st-viewseg{margin-left:auto;display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);overflow:hidden;}
+  .bt-st-viewseg button{border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-size:.8rem;font-weight:700;padding:0 12px;min-height:44px;cursor:pointer;}
+  .bt-st-viewseg button.on{background:var(--accent-deep);color:var(--accent-ink);}
+  .bt-studio.stview-cof [data-scale],.bt-studio.stview-cof [data-scalechips],.bt-studio.stview-cof [data-guidewrap],.bt-studio.stview-cof .bt-st-guidebtn{display:none;}
+  .bt-studio:not(.stview-cof) [data-cofhero],.bt-studio:not(.stview-cof) [data-cofreset]{display:none;}
+  /* Round 7: chips the SONG itself uses light with the accent OUTLINE (the
+     fill->outline->neutral ladder - fill stays reserved for selection). */
+  .bt-st-chordchip.inSong{border-color:var(--accent-dim);color:var(--accent-ink);}
+  /* Round 7: the videoless add-a-video affordance is ONE slim row (the burger
+     it replaces held a single item over the Settings-gear position). */
+  .bt-st-addvidrow{padding:0 12px;}
+  .bt-st-addvid{width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);border-radius:var(--r-btn-sm);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;}
+  .bt-st-addvid.on{border-style:solid;color:var(--accent-ink);border-color:var(--accent-dim);}
+
   .bt-st-minix{display:inline-flex;align-items:center;justify-content:center;
     width:44px;height:44px;flex:0 0 auto;border:0;background:transparent;color:var(--txt-soft);
     font-size:1.4rem;line-height:1;cursor:pointer;font-family:inherit;}

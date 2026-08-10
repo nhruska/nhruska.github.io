@@ -525,4 +525,21 @@ tap-to-reload toast (.swUpdateToast - no auto-hide, the page stays
 stale until acted on; accent border marks it actionable; repeats
 never stack). sw-update-toast scenario proves arm/persist/no-stack/
 reload via a synthetic controllerchange. [#328]
+M-STUDIO-IA (2026-08-10, PR #328 UAT round 7, from live-site testing
+of a saved original): v328-8->v328-9 - (1) Fretboard|Circle view seg
+on the pinned controls row (ONE theory visual at a time on a phone;
+play/speed always shown; choice persists as music.studioView.v1;
+the ? guide hides with the fretboard side it explains); (2) the
+videoless Studio burger is RETIRED ("only item in collapsed menu is
+find yt video... takes the settings menu location causing
+confusion") - a slim always-visible Add-a-video/Find-a-jam row
+toggles the same gated paste box, collapsed by default; (3) chips
+the SONG itself uses light with the accent outline in chords-in-key
+(base-triad match on t.seq - Am7 lights Am; saved-compose Solo
+payloads already carry seq); (4) Settings chart previews RETRY while
+MusicPreview mounts (operator screenshot: empty preview boxes -
+opening Settings early on a slow load found the renderer absent and
+never refilled). studio-view-toggle scenario (27 steps) proves the
+toggle/persist/no-burger/highlight surface. Tap-tempo + the ?
+guidance rethink parked as QUEUE S11/S12 spec seeds. [#328]
 ```

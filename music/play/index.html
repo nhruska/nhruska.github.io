@@ -1438,8 +1438,15 @@
     // the app's real renderers). Done on open (post-mount, current instrument);
     // the .prefEx.on highlight is owned by markDiagramPref/markChartsPref and
     // survives this innerHTML swap (it's on the cell, not its content).
-    function populatePrefPreviews() {
-      if (!window.MusicPreview) return;
+    function populatePrefPreviews(tries) {
+      // Round 7 (operator screenshot: EMPTY preview boxes): MusicPreview is
+      // installed by songbook's async mount - opening Settings early on a
+      // slow load found it absent and the fill silently never happened.
+      // Retry briefly instead of giving up (12 x 500ms covers a cold phone).
+      if (!window.MusicPreview) {
+        if ((tries || 0) < 12) setTimeout(function () { populatePrefPreviews((tries || 0) + 1); }, 500);
+        return;
+      }
       function fill(previewId, kind) {
         var pv = document.getElementById(previewId);
         if (!pv) return;

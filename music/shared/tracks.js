@@ -1054,11 +1054,13 @@
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
           + '</div>'
-        : '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="Add a backing track">&#9776;</button>'
-          + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
-          + '<div class="bt-st-menu-hint">' + noVideoHint + '</div>'
-          + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">' + noVideoLabel + '</button>'
-          + '</div>';
+        // Round 7 (operator UAT 2026-08-09): a videoless track gets NO burger
+        // - it held ONE item and sat exactly where the app's Settings gear
+        // lives ("the menu takes the settings menu location causing
+        // confusion"). The affordance is a slim one-line stage row instead
+        // (collapsed by default - most originals will simply never have a
+        // video), toggling the same gated paste box + jam panel.
+        : '';
       // The video iframe shows on open (see it start), then auto-collapses after a
       // few seconds to audio-only (.bt-st-media.min clips it, never removes it, so
       // audio keeps playing). Countdown caption + the jam panel follow. For a
@@ -1102,7 +1104,7 @@
         // track the urlEditor already renders INSIDE the `...` fly-out menu (see
         // playerBlock), so it must NOT render a second time here - only the
         // no-video path keeps the stage-level card.
-        + (t.yt ? '' : urlEditor)
+        + (t.yt ? '' : '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
@@ -1117,6 +1119,13 @@
         + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
         + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
         + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        // Round 7 ("need to toggle between COF and fretboard, leaving
+        // play/tempo always shown"): one theory visual at a time on a phone.
+        // The seg rides the pinned controls row; choice persists.
+        + '<div class="bt-st-viewseg" data-stviewseg role="tablist" aria-label="Theory view">'
+        + '<button data-stview="fret" role="tab" type="button">Fretboard</button>'
+        + '<button data-stview="cof" role="tab" type="button">Circle</button>'
+        + '</div>'
         + '</div>'
         // "Solo over it" is uppercased by .bt-st-lbl; the NOTE NAMES must NOT be, or
         // a flat "Bb" renders as "BB". Wrap them in a text-transform:none span.
@@ -1823,8 +1832,25 @@
       function renderChordChips() {
         var chordsEl = elPlayer.querySelector('[data-chords]');
         if (!chordsEl || !th.chords) return;
+        // Round 7 ("highlight the chords used in the song if known" - the
+        // operator taps chords to jam along): custom songs carry their seq
+        // through studioTarget, so mark the in-key chips the SONG actually
+        // uses. Match on base triad (normalized root + m/dim quality) so 'Am7'
+        // in the sheet lights the 'Am' chip; unknown/absent seq marks nothing.
+        var songTok = {};
+        (t.seq || t.chords || []).forEach(function (c) {
+          var m = /^([A-G][#b]?)(dim|m(?!aj))?/.exec(String(c));
+          if (m) songTok[normRoot(m[1]) + (m[2] || '')] = 1;
+        });
+        var inSong = function (c) {
+          var m = /^([A-G][#b]?)(dim|m(?!aj))?/.exec(String(c));
+          return !!(m && songTok[normRoot(m[1]) + (m[2] || '')]);
+        };
         chordsEl.innerHTML = th.chords.map(function (it) {
-          return '<button class="bt-st-chordchip" data-chord="' + esc(it.chord) + '" type="button">' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
+          var mine = inSong(it.chord);
+          return '<button class="bt-st-chordchip' + (mine ? ' inSong' : '') + '" data-chord="' + esc(it.chord) + '" type="button"'
+            + (mine ? ' aria-label="' + esc(dispChord(it.chord, th.key, th.scaleMode)) + ' - in this song"' : '')
+            + '>' + esc(dispChord(it.chord, th.key, th.scaleMode)) + '</button>';
         }).join('');
         Array.prototype.forEach.call(chordsEl.querySelectorAll('.bt-st-chordchip'), function (d, idx) {
           var c = th.chords[idx].chord;
@@ -1838,6 +1864,33 @@
         });
       }
       renderChordChips();
+      // Round 7: ONE theory visual at a time (phone space). The class on
+      // .bt-studio drives CSS visibility of fretboard-side (scale + chips +
+      // guide) vs circle-side (cofhero + reset); play/speed stay pinned in
+      // the controls row. Both surfaces keep rendering eagerly, so switching
+      // is a class flip - never a re-derive.
+      (function wireStudioView() {
+        var seg = elPlayer.querySelector('[data-stviewseg]');
+        var sheet = elPlayer.querySelector('.bt-studio');
+        if (!seg || !sheet) return;
+        var VIEW_KEY = 'music.studioView.v1';
+        function applyView(v) {
+          v = (v === 'cof') ? 'cof' : 'fret';
+          sheet.classList.toggle('stview-cof', v === 'cof');
+          Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
+            var on = b.getAttribute('data-stview') === v;
+            b.classList.toggle('on', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+          try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+        }
+        Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
+          b.onclick = function () { applyView(b.getAttribute('data-stview')); };
+        });
+        var saved = null;
+        try { saved = localStorage.getItem(VIEW_KEY); } catch (e) {}
+        applyView(saved);
+      })();
       // Circle-of-fifths CROWN: render the tinted wheel eagerly at the top
       // (data-cofhero), keyed to the CURRENT key center (song on open, explored
       // after a retune). Wheel-only - kept in a .bt-st-wheel container so
