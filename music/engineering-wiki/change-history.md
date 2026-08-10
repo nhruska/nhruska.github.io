@@ -499,4 +499,20 @@ rest, so the reggae welcome jam is row 1 and Harry Hood row 2
 li-act taps -> body taps (mini-player, uat-batch2/3), surface-merge
 goalpost 8 v2 = no .li-act exists, welcome-tour asserts the new pin
 order. [#328]
+M-STAGE-ZOOM+ICONS (2026-08-10, PR #328 UAT round 6): v328-6->v328-7
+- the stage gains the map-app zoom grammar on top of its pinch
+(native zoom is pinned by user-scalable=no): DOUBLE-TAP steps the
+text +0.35 (from the ceiling wraps back to auto-fit), double-tap-
+HOLD-DRAG zooms continuously (down grows - Maps convention),
+suppressing scroll only while active; buttons never zoom; a second
+finger cancels into the pinch. Stage tools/nav swap text glyphs for
+sized SVGs (menu/dim/close 23px in 46, prev 24, next 28 - incl. the
+RUNTIME pNext writers, which would have wiped a static svg on the
+first nav: '->'/'check' textContent writes become the same SVGs).
+Icon density standard encoded (ink ~50% of box; svg >= 18px + 40%,
+symbol text fs >= 20) in component-conventions + enforced by the new
+ui-icon-density gate (Library/Studio/Stage sweeps, mutation-proven
+red); li-lead info glyph -> 22px svg, np-menu/minix/soundToggle/
+notable-x floor-bumped. stage-dtap-zoom scenario proves both
+gestures via synthetic TouchEvents. [#328]
 ```

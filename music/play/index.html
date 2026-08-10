@@ -255,7 +255,7 @@
          overflow-menu convention is ⋯, a different glyph). Explicit aria-label
          since a glyph button's accessible name defaults to its text content,
          not its title. -->
-    <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls" aria-label="Stage controls">≡</button><button class="pmini" id="pDimBtn" title="Stage dim">◐</button><button class="x" id="pClose">✕</button></div></div>
+    <div class="tools"><button class="pmini" id="pCtrls" title="Stage controls" aria-label="Stage controls"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button class="pmini" id="pDimBtn" title="Stage dim" aria-label="Stage dim"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button><button class="x" id="pClose" aria-label="Close stage"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
   <!-- Title / artist / key flow inline (wrap to a 2nd row only if needed) to
        reclaim vertical space for the sheet - one row in landscape (operator UAT). -->
   <div class="pHead">
@@ -270,7 +270,7 @@
     <div class="psRow"><label>Size</label><div class="psBtns"><button class="psBtn" id="pFontDown">A−</button><button class="psBtn" id="pFontAuto" title="Fit text to the screen">Auto</button><button class="psBtn" id="pFontUp">A+</button></div></div>
     <div class="psRow psRowKey"><label>Key</label><div class="psBtns"><button class="psBtn" id="pDown" title="Key down">−</button><button class="psBtn" id="pUp" title="Key up">+</button></div></div>
   </div>
-  <div class="pNav"><button class="btn ghost" id="pPrev">←</button><button class="btn" id="pNext">→</button></div>
+  <div class="pNav"><button class="btn ghost" id="pPrev" aria-label="Previous"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg></button><button class="btn" id="pNext" aria-label="Next"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg></button></div>
 </div>
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
 <!-- Settings sheet: accent colour + whole-songbook backup/restore + which

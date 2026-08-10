@@ -2426,15 +2426,74 @@
         var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
         return Math.sqrt(dx * dx + dy * dy);
       };
+      // Round 6 ("allow default gestures to zoom on the stage view"): the
+      // familiar map-app zoom grammar, one-handed. The viewport pins native
+      // zoom (user-scalable=no), so the stage supplies it: a DOUBLE-TAP steps
+      // the text a comfortable notch up (and from the top wraps back to
+      // auto-fit - the "overview"); a double-tap-HOLD-DRAG zooms continuously
+      // (drag DOWN grows, UP shrinks - the Google Maps convention). Single
+      // taps stay inert on the sheet (no 300ms tax on anything), and a second
+      // finger cancels straight into the pinch path.
+      var dtLastT = 0, dtLastX = 0, dtLastY = 0;      // previous tap-up, for the double detect
+      var dtArmed = false, dtDrag = false, dtY0 = 0, dtS0 = 1, dtMoved = false;
+      var DT_MS = 350, DT_SLOP = 48;                  // tap pairing window / distance
       pSheet.addEventListener('touchstart', function (e) {
-        if (e.touches.length === 2) { pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = clampFontScale(STATE.effScale); }
+        if (e.touches.length === 2) {
+          dtArmed = false; dtDrag = false; // two fingers = pinch, never dtap
+          pinchOn = true; pinchD0 = touchDist(e.touches); pinchS0 = clampFontScale(STATE.effScale);
+          return;
+        }
+        if (e.touches.length !== 1) return;
+        var t = e.touches[0];
+        // Second tap landing close (in time and space) to the last tap-up arms
+        // the gesture; buttons keep their own taps (never zoom from a control).
+        if (e.target && e.target.closest && e.target.closest('button')) { dtArmed = false; return; }
+        dtArmed = (Date.now() - dtLastT) < DT_MS
+          && Math.abs(t.clientX - dtLastX) < DT_SLOP && Math.abs(t.clientY - dtLastY) < DT_SLOP;
+        if (dtArmed) { dtY0 = t.clientY; dtS0 = clampFontScale(STATE.effScale); dtDrag = false; dtMoved = false; }
       }, { passive: true });
       pSheet.addEventListener('touchmove', function (e) {
-        if (!pinchOn || e.touches.length !== 2 || !pinchD0) return;
-        e.preventDefault();
-        applyScale(clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0)));
+        if (pinchOn && e.touches.length === 2 && pinchD0) {
+          e.preventDefault();
+          applyScale(clampFontScale(pinchS0 * (touchDist(e.touches) / pinchD0)));
+          return;
+        }
+        if (!dtArmed || e.touches.length !== 1) return;
+        var dy = e.touches[0].clientY - dtY0;
+        if (!dtDrag && Math.abs(dy) < 8) return;      // ignore jitter until a real drag
+        dtDrag = true; dtMoved = true;
+        e.preventDefault();                            // the drag zooms; it must not scroll
+        // Exponential feel: ~170px of drag doubles/halves - matches map apps.
+        applyScale(clampFontScale(dtS0 * Math.pow(2, dy / 170)));
       }, { passive: false });
       var pinchEnd = function (e) {
+        if (dtArmed && e.touches.length === 0) {
+          if (dtDrag) {
+            // tap-tap-drag: land the dragged size exactly like a pinch end.
+            STATE.fontScale = clampFontScale(+(STATE.effScale).toFixed(2));
+            STATE.fontMode = 'manual';
+            refitStage(true); updateStageBtns(); savePerfPrefs();
+          } else {
+            // clean double-tap: step up a notch; from the ceiling, back to auto-fit.
+            var cur = clampFontScale(STATE.effScale);
+            if (cur >= FONT_MAX - 0.05) {
+              STATE.fontMode = 'auto';
+              refitStage(true); updateStageBtns(); savePerfPrefs();
+            } else {
+              STATE.fontScale = clampFontScale(+(cur + 0.35).toFixed(2));
+              STATE.fontMode = 'manual';
+              refitStage(true); updateStageBtns(); savePerfPrefs();
+            }
+          }
+          dtArmed = false; dtDrag = false;
+          dtLastT = 0; // a completed gesture never seeds the NEXT double-tap
+          return;
+        }
+        if (e.touches.length === 0 && e.changedTouches && e.changedTouches.length === 1 && !pinchOn) {
+          // a plain single tap-up seeds the double-tap detector
+          var ct = e.changedTouches[0];
+          dtLastT = Date.now(); dtLastX = ct.clientX; dtLastY = ct.clientY;
+        }
         if (!pinchOn || e.touches.length >= 2) return;
         pinchOn = false; pinchD0 = 0;
         STATE.fontScale = clampFontScale(+(STATE.effScale).toFixed(2));
@@ -2531,7 +2590,7 @@
         if (el.pKeyLine) el.pKeyLine.textContent = '';
         if (pSheet) pSheet.innerHTML = '<div class="pInner"><div class="sect">No chord chart for this track</div></div>';
         updateStageBtns();
-        if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+        if (el.pNext) { el.pNext.innerHTML = QUEUE.atEnd() ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg>'; el.pNext.setAttribute('aria-label', QUEUE.atEnd() ? 'Finish' : 'Next'); }
         return;
       }
       // S-UI-RECONCILE (Lane A): key-aware display speller for the Stage surface,
@@ -2567,7 +2626,7 @@
       // character budget. A song-change always scrolls to the top.
       fitStageSheet(ctx, false);
       updateStageBtns();
-      if (el.pNext) el.pNext.textContent = QUEUE.atEnd() ? '✓' : '→';
+      if (el.pNext) { el.pNext.innerHTML = QUEUE.atEnd() ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg>'; el.pNext.setAttribute('aria-label', QUEUE.atEnd() ? 'Finish' : 'Next'); }
     }
     /* auto-scroll */
     if (el.pSpeedR) el.pSpeedR.oninput = function () { STATE.scrollSpeed = +el.pSpeedR.value; if (el.pSpeedV) el.pSpeedV.textContent = el.pSpeedR.value; savePerfPrefs(); };

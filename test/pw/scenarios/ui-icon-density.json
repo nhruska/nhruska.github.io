@@ -1,0 +1,84 @@
+{
+  "name": "ui-icon-density",
+  "note": "S-ICON-DENSITY gate (operator UAT 2026-08-09 round 6: 'the icons on this page are also small... make a gate to check the sizing across all UI elements - is 44px equate to 22px icon w 11px padding?'). The standard, encoded: an ICON-ONLY control's ink is ~50% of its box (Material: 24dp in 48dp; here 22-28px in 44-56px). Measured floors: an SVG glyph renders >= 18px min-dimension AND >= 40% of min(box, 56); a symbol-text glyph (non-alphanumeric, 1-2 chars - x, arrows, menu) needs font-size >= 20px because font ink under-renders its em box. Text LABELS (chord chips 'A'/'Bm', 'Auto', 'A+') are not icons and are exempt by the alphanumeric test. Sweeps the three densest surfaces: Library (jams boot), the expanded Studio, and the Stage. Zero violators - new icon buttons must meet the standard or amend this gate with a named exception.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "LIBRARY sweep: every icon-only control meets the density standard (svg >= 18px and >= 40% of box; symbol text >= 20px font)",
+      "js": "(function(){var bad=[];document.querySelectorAll('button,[role=\"button\"]').forEach(function(b){if(b.offsetWidth===0||b.offsetHeight===0)return;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return;var svg=Array.prototype.find.call(b.querySelectorAll('svg'),function(s){var r=s.getBoundingClientRect();return r.width>0&&r.height>0;});var anySvg=b.querySelector('svg');var txt=(b.textContent||'').trim();var isSym=/^[^A-Za-z0-9\\s]{1,2}$/.test(txt);var iconOnly=anySvg?(txt.length===0&&!!svg):isSym;if(!iconOnly)return;var box=Math.min(b.offsetWidth,b.offsetHeight);if(box<34)return;if(svg){var r=svg.getBoundingClientRect();var ink=Math.min(r.width,r.height);if(ink<18||ink<0.4*Math.min(box,56))bad.push(b.id||b.className);}else{if(parseFloat(cs.fontSize)<20)bad.push(b.id||b.className);}});window.__iconBad=bad;return bad.length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "evalAssert",
+      "label": "STUDIO sweep: same standard with the sheet + bar up (menu, sound toggle, transport, x)",
+      "js": "(function(){var bad=[];document.querySelectorAll('button,[role=\"button\"]').forEach(function(b){if(b.offsetWidth===0||b.offsetHeight===0)return;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return;var svg=Array.prototype.find.call(b.querySelectorAll('svg'),function(s){var r=s.getBoundingClientRect();return r.width>0&&r.height>0;});var anySvg=b.querySelector('svg');var txt=(b.textContent||'').trim();var isSym=/^[^A-Za-z0-9\\s]{1,2}$/.test(txt);var iconOnly=anySvg?(txt.length===0&&!!svg):isSym;if(!iconOnly)return;var box=Math.min(b.offsetWidth,b.offsetHeight);if(box<34)return;if(svg){var r=svg.getBoundingClientRect();var ink=Math.min(r.width,r.height);if(ink<18||ink<0.4*Math.min(box,56))bad.push(b.id||b.className);}else{if(parseFloat(cs.fontSize)<20)bad.push(b.id||b.className);}});window.__iconBad=bad;return bad.length===0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Three Little Birds\") .li-body"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "tap",
+      "selector": "#stageBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "STAGE sweep: the round-6 SVG set (menu / dim / close 23px in 46px, prev 24px, next 28px in the dominant target) all clear the standard",
+      "js": "(function(){var bad=[];document.querySelectorAll('button,[role=\"button\"]').forEach(function(b){if(b.offsetWidth===0||b.offsetHeight===0)return;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return;var svg=Array.prototype.find.call(b.querySelectorAll('svg'),function(s){var r=s.getBoundingClientRect();return r.width>0&&r.height>0;});var anySvg=b.querySelector('svg');var txt=(b.textContent||'').trim();var isSym=/^[^A-Za-z0-9\\s]{1,2}$/.test(txt);var iconOnly=anySvg?(txt.length===0&&!!svg):isSym;if(!iconOnly)return;var box=Math.min(b.offsetWidth,b.offsetHeight);if(box<34)return;if(svg){var r=svg.getBoundingClientRect();var ink=Math.min(r.width,r.height);if(ink<18||ink<0.4*Math.min(box,56))bad.push(b.id||b.className);}else{if(parseFloat(cs.fontSize)<20)bad.push(b.id||b.className);}});window.__iconBad=bad;return bad.length===0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "stage-icons-standard"
+    }
+  ]
+}

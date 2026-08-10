@@ -218,7 +218,7 @@
     var num = '<button class="li-lead" type="button" data-act="lead" aria-label="Song details" title="Song details">'
       + ((opts.position != null)
         ? '<span class="li-num">' + esc(opts.position) + '</span>'
-        : '<span class="li-lead-gl" aria-hidden="true">&#9432;</span>')
+        : '<span class="li-lead-gl" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></span>')
       + '<span class="li-eq" aria-hidden="true"><i></i><i></i><i></i></span>'
       + '</button>';
 
