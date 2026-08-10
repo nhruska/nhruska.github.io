@@ -12,7 +12,7 @@ Each music/shared/profiles/<id>.js self-registers into window.MusicProfiles:
 
 `{ id, label, instrument, tuning, strings: [{n, l, f}...], chords: { "C": [-1,3,2,0,1,0], ... } }`
 
-Fret arrays are per-string (low->high display order): -1 muted, 0 open, N fretted. profiles/manifest.json lists active profiles in load order. 8 profiles ship today (guitar standard/drop-D/open-G, ukulele GCEA, banjo gDGBD, mandolin GDAE, mandola CGDA, cigar box DGBD).
+Fret arrays are per-string (low->high display order): -1 muted, 0 open, N fretted. profiles/manifest.json lists active profiles in load order. 5 ship in the manifest today (ukulele GCEA, guitar standard, banjo gDGBD, mandolin GDAE, mandola CGDA); guitar drop-D/open-G exist as profile files outside the manifest, and cigar box DGBD was retired entirely (D-CIGARBOX-RETIRED, 2026-08-09).
 
 ## Consuming surfaces [STABLE]
 

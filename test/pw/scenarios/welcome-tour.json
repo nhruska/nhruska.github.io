@@ -14,13 +14,13 @@
     },
     {
       "action": "evalAssert",
-      "label": "the tour is ONE panel and the CTA is Start playing immediately - no Next ladder, no dots",
-      "js": "(function(){return document.querySelectorAll('#wPanels .wPanel').length===1 && document.getElementById('wNext').textContent==='Start playing' && !document.getElementById('wDots') && !document.getElementById('wLevelList');})()"
+      "label": "the tour is ONE panel, CTA is Start playing immediately, and it FITS: no vertical scroll at 412x915 (round-4 goalpost - prose trimmed + cigar box removed)",
+      "js": "(function(){if(document.querySelectorAll('#wPanels .wPanel').length!==1)return false;if(document.getElementById('wNext').textContent!=='Start playing')return false;if(document.getElementById('wDots')||document.getElementById('wLevelList'))return false;var card=document.querySelector('.welcomeCard');var pan=document.getElementById('wPanels');var r=card.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1&&pan.scrollHeight<=pan.clientHeight+2&&card.scrollHeight<=card.clientHeight+2;})()"
     },
     {
       "action": "evalAssert",
-      "label": "guitar-standard is preselected on the instrument panel (skippers default to guitar, per interview)",
-      "js": "(function(){var on=document.querySelector('#wInstList .askOpt.on');return !!on && /guitar/i.test(on.textContent) && on.getAttribute('aria-checked')==='true';})()"
+      "label": "guitar-standard is preselected, and Cigar Box is GONE from the instrument list (round 4: removed everywhere)",
+      "js": "(function(){var on=document.querySelector('#wInstList .askOpt.on');if(!on||!/guitar/i.test(on.textContent)||on.getAttribute('aria-checked')!=='true')return false;return !/cigar/i.test(document.getElementById('wInstList').textContent);})()"
     },
     {
       "action": "evalAssert",
@@ -51,8 +51,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "the tour ends IN A JAM: post-reload the featured jam's Studio is open with its embed mounted, the intent flag consumed, guitar-standard landed, tour done for good",
-      "js": "(function(){try{var ov=document.getElementById('welcomeOv');if(ov&&!ov.hidden)return false;if(localStorage.getItem('music.welcomeDone.v1')!=='1')return false;if(localStorage.getItem('music.welcomeJam.v1')!==null)return false;if(localStorage.getItem('music.activeProfile.v1')!=='guitar-standard')return false;if(!/p=guitar-standard/.test(location.search))return false;var f=document.querySelector('.bt-player iframe');return !!f && /\\/embed\\/WJ63FZfCzM8/.test(f.src);}catch(e){return false;}})()"
+      "label": "the tour ends IN A JAM: post-reload the 'welcome'-tagged ORIGINAL jam's Studio is open (ad-free reggae, not the Content-ID-claimed Phish video), flag consumed, guitar-standard landed, tour done for good",
+      "js": "(function(){try{var ov=document.getElementById('welcomeOv');if(ov&&!ov.hidden)return false;if(localStorage.getItem('music.welcomeDone.v1')!=='1')return false;if(localStorage.getItem('music.welcomeJam.v1')!==null)return false;if(localStorage.getItem('music.activeProfile.v1')!=='guitar-standard')return false;if(!/p=guitar-standard/.test(location.search))return false;var f=document.querySelector('.bt-player iframe');return !!f && /\\/embed\\/ifOUmWAQups/.test(f.src);}catch(e){return false;}})()"
     },
     {
       "action": "evalAssert",

@@ -299,10 +299,9 @@
     <div class="wPanels" id="wPanels">
       <section class="wPanel">
         <h2>Welcome</h2>
-        <p class="wOffline"><span class="wOfflineDot" aria-hidden="true"></span>Works fully offline - your songs, chords and tuner all live on this device, no account needed.</p>
+        <p class="wOffline"><span class="wOfflineDot" aria-hidden="true"></span>Works fully offline - everything lives on this device, no account needed.</p>
         <p class="wLead"><b>What are you playing?</b></p>
         <div id="wInstList" role="radiogroup" aria-label="Instrument"></div>
-        <p class="wLead">Each instrument keeps its own setlists and progressions - the song library is shared. A quick tip on each tab shows you around as you go.</p>
         <p class="wLead">Tap <b>Start playing</b> and a backing track starts - grab your instrument and jam.</p>
       </section>
     </div>
@@ -811,9 +810,18 @@
         var pool = tracksCtl.getTracks() || [];
         if (!pool.length) return false; // seed not fetched yet - onReady retries
         localStorage.removeItem('music.welcomeJam.v1');
-        var ft = pool.filter(function (t) {
-          return t && t.yt && (t.tags || []).indexOf('featured') >= 0;
-        })[0];
+        // UAT 2026-08-09 round 4 ("can't play video because ads... for first
+        // play new users"): the tour's landing track is tagged 'welcome' - an
+        // ORIGINAL backing track, because Content-ID-claimed material (the
+        // Phish jams) carries ad rolls that gut a brand-new user's first
+        // play. 'featured' stays the list-pinning tag (Harry Hood keeps row
+        // 1) and remains the fallback if no 'welcome' jam exists.
+        var pick = function (tag) {
+          return pool.filter(function (t) {
+            return t && t.yt && (t.tags || []).indexOf(tag) >= 0;
+          })[0];
+        };
+        var ft = pick('welcome') || pick('featured');
         if (!ft) return false;
         tracksCtl.openStudio(ft);
         // tracks.js dispatches music:nowplaying on DOCUMENT (non-bubbling) -

@@ -467,4 +467,17 @@ mid-bubble, closest('[data-nppp]') fails on the parentless node, and
 a mini pp tap re-expanded the Studio (mini-player scenario caught
 it); (3) uat-batch7 UAT-7.2 re-anchored to the SVG era (measure the
 rendered svg box, not the retired font-size). [#328]
+M-TOUR-FIT (2026-08-09, PR #328 UAT round 4): v328-4->v328-5 - the
+tour panel FITS 412x915 with no scroll: the "each instrument keeps
+its own setlists" paragraph cut, the offline line tightened, and
+Cigar Box DGBD retired EVERYWHERE (manifest entry, profile file,
+sw CORE, teaching copy in triad-inversions/comments, tests, wiki -
+D-CIGARBOX-RETIRED; stored cigarbox devices fall back via activeId
+manifest-order resolution). The tour's auto-jam now prefers a
+'welcome'-tagged ORIGINAL backing track (the reggae A-major jam)
+over 'featured': Content-ID-claimed material (the Phish jams) rolls
+ads that gut a brand-new user's first play ("can't play video
+because ads... for first play new users"); Harry Hood keeps
+'featured' and row 1. welcome-tour gains the no-scroll geometry
+assert + cigar-gone assert + the welcome-jam embed assert. [#328]
 ```

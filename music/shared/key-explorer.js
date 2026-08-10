@@ -65,7 +65,7 @@
   }
 
   // Default fret-window depth per instrument. 4-string necks (uke/mandolin/
-  // mandola/cigar box) get a taller 12-fret window - a 7-fret open window
+  // mandola) get a taller 12-fret window - a 7-fret open window
   // covers less musical value per fret on 4 strings than on 6+. Banjo(5) and
   // guitars keep the classic 7-fret window. Exported for direct testing.
   function defaultFrets(pack) {

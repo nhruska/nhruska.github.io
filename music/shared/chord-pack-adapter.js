@@ -97,7 +97,7 @@
   // Injecting these makes the fallback pick the LOWEST-fret triad voicing,
   // which keeps the palette low (F# shows an F-shape barre at fret 1, not an
   // E-shape at fret 6) and gives the I-IV-V chain a consistent hand shape.
-  // Restricted to ukulele: cigar box and banjo have their own intentional
+  // Restricted to ukulele: banjo has its own intentional
   // 4-string ring-bar profile that must NOT be overridden.
   function augmentTriadShapes(profile, templates) {
     if (!profile || profile.instrument !== 'ukulele') return false;
@@ -159,7 +159,7 @@
     // On triad-shape instruments (uke with the injected C-shape/F-shape barre
     // templates), triadChainVoicings builds the whole chain deterministically
     // so I + IV + V share one adjacent-inversion mechanic across every key.
-    // On other instruments (cigar box, banjo, guitar) those templates are NOT
+    // On other instruments (banjo, guitar) those templates are NOT
     // injected: I uses the profile's preferred voicing (often open), IV/V use
     // the closed/movable family.
     function chainVoicings(names) {

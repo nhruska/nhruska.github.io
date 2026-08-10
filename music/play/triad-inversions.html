@@ -336,7 +336,7 @@ function freqPc(f) {
 // indices for strings 4, 3, 2 (the artifact's three played strings). Different
 // profiles have different mappings:
 //   uke (4 strings, GCEA): "4th"=0, "3rd"=1, "2nd"=2
-//   cigarbox (4 strings, DGBD): "4th"=0, "3rd"=1, "2nd"=2
+//   banjo top-4 (DGBD): "4th"=0, "3rd"=1, "2nd"=2
 //   banjo (5 strings, gDGBD with drone on left): "4th"=1, "3rd"=2, "2nd"=3
 //   guitar (6 strings, EADGBE): "4th"=2, "3rd"=3, "2nd"=4
 function findStringIndices(profile) {
@@ -829,12 +829,12 @@ function renderIncompatibleFallback(root) {
 function renderCrossInst(profile) {
   const body = document.getElementById('crossInstBody');
   const isUke = profile.instrument === 'ukulele';
-  const isGuitarFamily = ['guitar','cigarbox','banjo'].includes(profile.instrument);
+  const isGuitarFamily = ['guitar','banjo'].includes(profile.instrument);
   const isFifths = ['mandolin','mandola'].includes(profile.instrument);
   body.innerHTML = `
     <p>You're seeing this on <strong>${esc(profile.label)}</strong> (${esc(profile.tuning)}). The interval geometry is what transfers - the same shape positions sound the same chord progression on every instrument with a [P4, M3] interval pattern on strings 4-3-2.</p>
     <div class="inst ${isUke ? 'cur' : ''}"><strong>Ukulele G-C-E-A</strong> - strings 4-3-2 = G-C-E. Mute string 1 (A) for the artifact's pure three-string voicing, or let it ring for added colour.</div>
-    <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Cigar Box / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major, uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
+    <div class="inst ${isGuitarFamily ? 'cur' : ''}"><strong>Guitar / Banjo D-G-B</strong> - strings 4-3-2 = D-G-B. Identical interval pattern. The exact fret positions sound a different chord (D-G-B at fret 0 = G major, uke G-C-E at fret 0 = C major), but the cycle math is the same. CAGED is the full-neck extension.</div>
     <div class="inst ${isFifths ? 'cur' : ''}"><strong>Mandolin / Mandola (all-fifths)</strong> - the artifact's shape vocabulary doesn't directly map. Different fingerings needed - the IV-to-V slide-up-2 still holds but the I and IV shapes are different families.</div>
   `;
 }

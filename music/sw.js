@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v328-4';
+var CACHE = 'music-v328-5';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -63,7 +63,7 @@ var CORE = [
   './shared/songbook.css', './shared/tracks.css', './shared/songs.json',
   './shared/profiles/manifest.json',
   './shared/profiles/ukulele-gcea.js', './shared/profiles/guitar-standard.js',
-  './shared/profiles/cigarbox-dgbd.js', './shared/profiles/banjo-gdgbd.js',
+  './shared/profiles/banjo-gdgbd.js',
   './shared/profiles/mandolin-gdae.js', './shared/profiles/mandola-cgda.js'
 ];
 
