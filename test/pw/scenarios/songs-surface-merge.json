@@ -42,8 +42,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "RED GOALPOST 8 (uniform rows): a row with a video action is no taller than a comparable row without one - the badge used to add 50px by inflating the meta line",
-      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#songsList .listItem'));var withV=[],without=[];rows.forEach(function(r){var t=r.querySelector('.li-title');var oneLine=t&&t.getBoundingClientRect().height<30;if(!oneLine)return;(r.querySelector('.li-act')?withV:without).push(Math.round(r.getBoundingClientRect().height));});if(!withV.length||!without.length)return true;return Math.max.apply(null,withV)<=Math.max.apply(null,without)+2;})()"
+      "label": "RED GOALPOST 8 v2 (round 5): rows are uniform BY CONSTRUCTION - no per-row play button exists anywhere (.li-act retired; a body tap plays), so a video row cannot outgrow a videoless one",
+      "js": "(function(){return document.querySelectorAll('.listItem .li-act').length===0 && document.querySelectorAll('#songsList .listItem').length>0;})()"
     },
     {
       "action": "evalAssert",

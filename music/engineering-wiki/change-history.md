@@ -480,4 +480,23 @@ ads that gut a brand-new user's first play ("can't play video
 because ads... for first play new users"); Harry Hood keeps
 'featured' and row 1. welcome-tour gains the no-scroll geometry
 assert + cigar-gone assert + the welcome-jam embed assert. [#328]
+M-ROW-ANATOMY (2026-08-09, PR #328 UAT round 5, operator screenshot:
+a setlist title wrapped one word per line): v328-5->v328-6 - the
+per-row play button (.li-act) is RETIRED at the ListItem primitive:
+a body tap already plays (batch 4), so the 44px slot was pure
+duplication and exactly the width crushing long titles. The playing
+indicator (equalizer) moves INTO the leading chip (Spotify grammar:
+.isPlaying swaps the number/info glyph for the bars - fixed-width
+chip, no reflow; aria-current on the row). Set rows lead with a
+RAIL: position chip stacked over the drag grip (grip fills the
+remaining rail height, min 36px, full 44 width; drag is press-and-
+hold so the sub-44 height is acceptable where a tap would not be),
+with only the arm-red x trailing. Titles CLAMP at 2 lines with
+ellipsis, artist + meta at 1 line each - a long imported title can
+never grow a row again. Jams pin order becomes welcome > featured >
+rest, so the reggae welcome jam is row 1 and Harry Hood row 2
+("put the reggae track as first in the list then"). Scenarios:
+li-act taps -> body taps (mini-player, uat-batch2/3), surface-merge
+goalpost 8 v2 = no .li-act exists, welcome-tour asserts the new pin
+order. [#328]
 ```

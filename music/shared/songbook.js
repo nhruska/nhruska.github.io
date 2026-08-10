@@ -942,8 +942,9 @@
           var on = !!key && row.getAttribute('data-npkey') === key;
           row.classList.toggle('isPlaying', on);
           row.classList.toggle('isPaused', on && paused);
-          var actEl = row.querySelector('.li-act');
-          if (actEl) actEl.setAttribute('aria-label', on ? (paused ? 'Paused - tap to play' : 'Playing - tap to pause') : 'Video');
+          // Round 5: no per-row play control - the state is announced on the
+          // row itself; the leading chip's equalizer is the visual (CSS swap).
+          if (on) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
         });
       });
     }
@@ -1048,15 +1049,17 @@
       // can never drift apart.
       if (songsSeg === 'jams') {
         filtered = filtered.filter(function (rec) { return npKeyFor(rec) != null; });
-        // UAT 2026-08-09: 'featured'-tagged jams lead the list (data-driven -
-        // the catalog marks them; today that is the original Harry Hood jam,
-        // the tour's landing track). Stable partition, no other reorder.
-        var feat = [], rest = [];
+        // UAT 2026-08-09 (round 5): the 'welcome' jam (the tour's landing
+        // track - the ad-free reggae original) leads the list, then
+        // 'featured' rows (Harry Hood), then the rest. Data-driven stable
+        // 3-bucket partition - move the tags in tracks.json to re-rank.
+        var lead = [], feat = [], rest = [];
         filtered.forEach(function (rec) {
           var t = studioTarget(rec);
-          ((t && (t.tags || []).indexOf('featured') >= 0) ? feat : rest).push(rec);
+          var tags = (t && t.tags) || [];
+          (tags.indexOf('welcome') >= 0 ? lead : tags.indexOf('featured') >= 0 ? feat : rest).push(rec);
         });
-        filtered = feat.concat(rest);
+        filtered = lead.concat(feat, rest);
       }
       if (filtered.length === 0) {
         var es = libraryEmptyState({ key: STATE.key });
@@ -1140,7 +1143,6 @@
           onAddBlocked: canAdd ? null : function () {
             showToast('No chords on this track yet - edit it and add a progression to use it in a setlist.');
           },
-          onAction: function () { repertoireAction(rec); },
           nowPlaying: npNow != null && npKey != null && npNow.key === npKey,
           nowPaused: !!(npNow && npNow.paused)
         });
@@ -2058,8 +2060,7 @@
           onLead: function () { openPractice(sid, STATE.setlist); }, // open into the setlist queue
           onUp: function () { if (i > 0) { var a = STATE.setlist[i - 1]; STATE.setlist[i - 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
           onDn: function () { if (i < STATE.setlist.length - 1) { var a = STATE.setlist[i + 1]; STATE.setlist[i + 1] = STATE.setlist[i]; STATE.setlist[i] = a; saveSet(); syncQueueToSetlist(); renderSetlist(); } },
-          onRemove: function () { removeFromSet(sid); },
-          onAction: function () { ytSearch(s); }
+          onRemove: function () { removeFromSet(sid); }
         });
         if (npKeyS) setRow.setAttribute('data-npkey', npKeyS);
         body.appendChild(setRow);

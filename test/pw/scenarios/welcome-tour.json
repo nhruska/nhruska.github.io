@@ -89,8 +89,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "the landing is JAMS-first: Jams is the FIRST segment and the active one, and the featured Harry Hood jam is row 1",
-      "js": "(function(){var j=document.getElementById('segJams'),a=document.getElementById('segAll');if(!j||!a)return false;if(!j.classList.contains('on')||a.classList.contains('on'))return false;if(!(j.compareDocumentPosition(a)&Node.DOCUMENT_POSITION_FOLLOWING))return false;var first=document.querySelector('#songsList .listItem .li-title');return !!first && /harry hood/i.test(first.textContent);})()"
+      "label": "the landing is JAMS-first with the pin order welcome > featured: Jams is the FIRST segment and active, the reggae welcome jam is row 1 and Harry Hood row 2 (round 5: 'put the reggae track as first in the list')",
+      "js": "(function(){var j=document.getElementById('segJams'),a=document.getElementById('segAll');if(!j||!a)return false;if(!j.classList.contains('on')||a.classList.contains('on'))return false;if(!(j.compareDocumentPosition(a)&Node.DOCUMENT_POSITION_FOLLOWING))return false;var t=document.querySelectorAll('#songsList .listItem .li-title');if(t.length<2)return false;return /reggae backing track/i.test(t[0].textContent) && /harry hood/i.test(t[1].textContent);})()"
     },
     {
       "action": "screenshot",
