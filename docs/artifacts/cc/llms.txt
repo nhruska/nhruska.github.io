@@ -1,14 +1,13 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-08-09T10:00:04Z
+Generated: 2026-08-10T10:39:05Z
 Status: ok
 
 ## NOW
-- Queue NOW: **PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322) 2026-08-07** - the 15-entry bake + keyless sync pipeline + catalog schema gate are live. **PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) OPEN (draft, v323)**: player-feel - global mini-player bar (playback survives Studio close), now-playing row equalizer, play-from-row transport; D-PLAYER-FEEL + D-NO-RASTER registered; mini-player scenario mutation-proven. Post-merge follow-ups: bake item 17 + artist enrichment from the playlist-sync run (LEGACY_TRACKKEYS remaps); veto flags #8 C-vs-Am + Harry Hood D-mixo stand unvetoed (merged = approved).
+- Queue NOW: **PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322); PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) MERGED (v323-8) 2026-08-09** after 7 phone-UAT batches - the app now behaves as a real music player (SSOT bar, sheet+live tabs, Jams filter, queue + prev/next/shuffle, honest state sync, Media Session). **PR-C [#324](https://github.com/nhruska/nhruska.github.io/pull/324) MERGED (v324) 2026-08-09**: item 17 + 14 artists enriched. **PR [#328](https://github.com/nhruska/nhruska.github.io/pull/328) OPEN (v328-5)**: shuffle-in-bar + solid SVG transport, jams-first landing + tour-ends-in-a-jam + no-scroll tour + cigar box retired + welcome-jam ad strategy (reggae original). Veto #8 C-vs-Am stands open.
+- Queue NOW: **Import MERGED 2026-08-09 (PR [#326](https://github.com/nhruska/nhruska.github.io/pull/326), v326-2)** after live-device UAT: keyless enumeration + key ladder + landing-on-results + repeat-URL dedupe all proven. **Variety fill MERGED 2026-08-09 (PR [#327](https://github.com/nhruska/nhruska.github.io/pull/327), v327-3; catalog 55->108 incl. the 46-item operator playlist + 15 searched Phish keys)**: 12 curated search-first gap fillers (Bm/G#m/B/Eb/Ab + A/G/D/Bb blues + tempo tails; ladder-dogfooded 12/12; candidates gate gains the explicit 'search-first' lifecycle carve-out). Residual gaps (C#/F# major, D#m/A#m, outer blues keys) deliberately left for the OPERATOR'S curated gap playlist - the pipeline bakes it + enriches ids onto the stubs via trackKey remaps when ready. Also 2026-08-09: community PR [#274](https://github.com/nhruska/nhruska.github.io/pull/274) (emre155, first outside contribution) merged via vehicle #325 (v274).
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #324 (CI green): Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps - https://github.com/nhruska/nhruska.github.io/pull/324
-- Open PR #274 (CI unknown): docs: rename suggested chords section to name the intent - https://github.com/nhruska/nhruska.github.io/pull/274
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -16,14 +15,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #328 - Player-feel UAT rounds 3-8: jams-first landing, tour ends in a jam, row anatomy, stage zoom + icon standard, studio IA (2026-08-10) - https://github.com/nhruska/nhruska.github.io/pull/328
+- #327 - Variety fill: 12 curated gap tracks across keys, genres, and tempo (2026-08-09) - https://github.com/nhruska/nhruska.github.io/pull/327
+- #326 - Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT) (2026-08-09) - https://github.com/nhruska/nhruska.github.io/pull/326
+- #325 - Land community PR #274: constant "Suggested Chords" label (2026-08-09) - https://github.com/nhruska/nhruska.github.io/pull/325
+- #324 - Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps (2026-08-09) - https://github.com/nhruska/nhruska.github.io/pull/324
 - #323 - Player-feel: global mini-player bar + now-playing rows + play-from-row (2026-08-09) - https://github.com/nhruska/nhruska.github.io/pull/323
 - #322 - Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline (2026-08-08) - https://github.com/nhruska/nhruska.github.io/pull/322
 - #321 - music(studio): give users time to skip YouTube ads before the video auto-minimizes (2026-07-31) - https://github.com/nhruska/nhruska.github.io/pull/321
-- #319 - feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316) (2026-07-31) - https://github.com/nhruska/nhruska.github.io/pull/319
-- #318 - decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST) (2026-07-30) - https://github.com/nhruska/nhruska.github.io/pull/318
-- #316 - spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2) (2026-07-26) - https://github.com/nhruska/nhruska.github.io/pull/316
-- #315 - a11y: add the gate, and close the ARIA gap it was built to find (2026-07-26) - https://github.com/nhruska/nhruska.github.io/pull/315
-- #314 - wiki: record how a render check lies (verification traps) (2026-07-25) - https://github.com/nhruska/nhruska.github.io/pull/314
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -36,6 +35,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (3388 cases / 59 suites)
+- Suite: node test/run-all.js (3389 cases / 60 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T10:00:04Z",
+  "generatedAt": "2026-08-10T10:39:05Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,54 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-09T01:51:28Z",
-    "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
-    "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
+    "date": "2026-08-10T04:40:48Z",
+    "sha": "d9697c46e6cd5772fe3477c163aa04bbca322d9d",
+    "subject": "Player-feel UAT rounds 3-8: jams-first, tour auto-jam, row anatomy, stage zoom + icon gate, studio IA (#328)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/d9697c46e6cd5772fe3477c163aa04bbca322d9d"
   },
   "commits": [
+    {
+      "date": "2026-08-10T04:40:48Z",
+      "sha": "d9697c46e6cd5772fe3477c163aa04bbca322d9d",
+      "subject": "Player-feel UAT rounds 3-8: jams-first, tour auto-jam, row anatomy, stage zoom + icon gate, studio IA (#328)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d9697c46e6cd5772fe3477c163aa04bbca322d9d"
+    },
+    {
+      "date": "2026-08-09T17:11:27Z",
+      "sha": "5e96b8c968ad471fedf84b98e25d89c05a7bda86",
+      "subject": "Variety fill + second playlist + Phish keys: catalog 55 -> 108 (#327)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e96b8c968ad471fedf84b98e25d89c05a7bda86"
+    },
+    {
+      "date": "2026-08-09T15:47:46Z",
+      "sha": "fb559f6c30ab76b985434463fe92ace1af81e644",
+      "subject": "Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT) (#326)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fb559f6c30ab76b985434463fe92ace1af81e644"
+    },
+    {
+      "date": "2026-08-09T14:15:42Z",
+      "sha": "3f444d57624871ef415c8d1782325204e9dfb038",
+      "subject": "Land community PR #274: constant \"Suggested Chords\" label (#325)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/3f444d57624871ef415c8d1782325204e9dfb038"
+    },
+    {
+      "date": "2026-08-09T14:15:15Z",
+      "sha": "16cebfd19f2f792ad2d497fa115a8bb9c48aae9d",
+      "subject": "Merge PR #274: constant 'Suggested Chords' label (community contribution)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/16cebfd19f2f792ad2d497fa115a8bb9c48aae9d"
+    },
+    {
+      "date": "2026-08-09T14:08:19Z",
+      "sha": "bbe8ec0a125c6582b3d280b83ff5a544acf1b95d",
+      "subject": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps (#324)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/bbe8ec0a125c6582b3d280b83ff5a544acf1b95d"
+    },
+    {
+      "date": "2026-08-09T10:00:09Z",
+      "sha": "422dbcb1c567cb49c1b7edb143a3d07b64ecf430",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/422dbcb1c567cb49c1b7edb143a3d07b64ecf430"
+    },
     {
       "date": "2026-08-09T01:51:28Z",
       "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
@@ -48,86 +90,45 @@
       "sha": "e143e05171d936b7f8eecddf923383301ad66b6d",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/e143e05171d936b7f8eecddf923383301ad66b6d"
-    },
-    {
-      "date": "2026-08-06T11:36:34Z",
-      "sha": "ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ac0d5f39252cf9d531042ee8bc0ac1688e2d49d0"
-    },
-    {
-      "date": "2026-08-05T11:33:13Z",
-      "sha": "778a0302cf362b766c5a67a26c493199b3637414",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/778a0302cf362b766c5a67a26c493199b3637414"
-    },
-    {
-      "date": "2026-08-04T11:36:10Z",
-      "sha": "b9be8205e6df209170ec1c6f5fdbfd5a41f590ae",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/b9be8205e6df209170ec1c6f5fdbfd5a41f590ae"
-    },
-    {
-      "date": "2026-08-03T12:38:31Z",
-      "sha": "fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/fff93c8a67d3778ed8c9c8a568b4f78e69d88aa9"
-    },
-    {
-      "date": "2026-08-02T10:53:38Z",
-      "sha": "b006fedf94480d1dac1e53c5bef540aadd405ee4",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/b006fedf94480d1dac1e53c5bef540aadd405ee4"
-    },
-    {
-      "date": "2026-08-01T10:52:49Z",
-      "sha": "44113e2a6b9e4f2ef7845ae46e8d50a93aff2124",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/44113e2a6b9e4f2ef7845ae46e8d50a93aff2124"
-    },
-    {
-      "date": "2026-07-31T11:36:36Z",
-      "sha": "8b76969766f17e24d1577b8ac228b461df56ec84",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/8b76969766f17e24d1577b8ac228b461df56ec84"
     }
   ],
-  "openPRs": [
+  "openPRs": [],
+  "recentMerges": [
     {
+      "createdAt": "2026-08-09T17:27:02Z",
+      "mergedAt": "2026-08-10T04:40:49Z",
+      "number": 328,
+      "title": "Player-feel UAT rounds 3-8: jams-first landing, tour ends in a jam, row anatomy, stage zoom + icon standard, studio IA",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/328"
+    },
+    {
+      "createdAt": "2026-08-09T15:51:37Z",
+      "mergedAt": "2026-08-09T17:11:28Z",
+      "number": 327,
+      "title": "Variety fill: 12 curated gap tracks across keys, genres, and tempo",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/327"
+    },
+    {
+      "createdAt": "2026-08-09T14:28:15Z",
+      "mergedAt": "2026-08-09T15:47:46Z",
+      "number": 326,
+      "title": "Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/326"
+    },
+    {
+      "createdAt": "2026-08-09T14:15:32Z",
+      "mergedAt": "2026-08-09T14:15:42Z",
+      "number": 325,
+      "title": "Land community PR #274: constant \"Suggested Chords\" label",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/325"
+    },
+    {
+      "createdAt": "2026-08-09T01:58:48Z",
+      "mergedAt": "2026-08-09T14:08:19Z",
       "number": 324,
       "title": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps",
-      "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/324",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31296980846/job/93203589114"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31296980836/job/93203588997"
-        }
-      ]
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/324"
     },
-    {
-      "number": 274,
-      "title": "docs: rename suggested chords section to name the intent",
-      "branch": "claude/suggested-chords-rename",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/274",
-      "draft": false,
-      "ciState": "unknown",
-      "checks": []
-    }
-  ],
-  "recentMerges": [
     {
       "createdAt": "2026-08-08T00:52:01Z",
       "mergedAt": "2026-08-09T01:51:28Z",
@@ -197,58 +198,23 @@
       "number": 312,
       "title": "fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/312"
-    },
-    {
-      "createdAt": "2026-07-25T06:19:15Z",
-      "mergedAt": "2026-07-25T06:51:59Z",
-      "number": 310,
-      "title": "fix(sw): CACHE per asset-changing commit + guard that proves it (the #306 stale-preview root cause)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/310"
-    },
-    {
-      "createdAt": "2026-07-24T22:06:43Z",
-      "mergedAt": "2026-07-25T21:59:11Z",
-      "number": 308,
-      "title": "music: #6 - Studio \"Why these notes?\" strip follows the selected solo scale",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/308"
-    },
-    {
-      "createdAt": "2026-07-24T17:49:29Z",
-      "mergedAt": "2026-07-24T21:45:23Z",
-      "number": 307,
-      "title": "music: scroll affordance (edge fade + directional chevron) on chip strips",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/307"
-    },
-    {
-      "createdAt": "2026-07-24T05:11:00Z",
-      "mergedAt": "2026-07-25T08:45:17Z",
-      "number": 306,
-      "title": "perf(audio): keep chord playback context warm for immediate taps",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/306"
-    },
-    {
-      "createdAt": "2026-07-24T05:01:16Z",
-      "mergedAt": "2026-07-25T08:40:08Z",
-      "number": 305,
-      "title": "fix(perform): legible back button + deterministic nav z-index (UAT)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/305"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-09T09:59:59Z",
+    "runStartedAt": "2026-08-10T10:39:00Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31307254386",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31380048056",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 2,
+    "merged_count": 8,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 23.87,
+    "typical_merge_hours": 15.21,
     "weekly": null
   },
   "deploy": {
@@ -258,8 +224,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v323-8",
-    "localCacheVersion": "music-v323-8",
+    "liveCacheVersion": "music-v328-10",
+    "localCacheVersion": "music-v328-10",
     "cacheMatch": true
   },
   "missions": [
@@ -323,8 +289,13 @@
     "NOW": [
       {
         "Mission": "**M-LIB-BAKE: playlist extraction + player-feel**",
-        "State": "**PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322) 2026-08-07** - the 15-entry bake + keyless sync pipeline + catalog schema gate are live. **PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) OPEN (draft, v323)**: player-feel - global mini-player bar (playback survives Studio close), now-playing row equalizer, play-from-row transport; D-PLAYER-FEEL + D-NO-RASTER registered; mini-player scenario mutation-proven. Post-merge follow-ups: bake item 17 + artist enrichment from the playlist-sync run (LEGACY_TRACKKEYS remaps); veto flags #8 C-vs-Am + Harry Hood D-mixo stand unvetoed (merged = approved).",
+        "State": "**PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322); PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) MERGED (v323-8) 2026-08-09** after 7 phone-UAT batches - the app now behaves as a real music player (SSOT bar, sheet+live tabs, Jams filter, queue + prev/next/shuffle, honest state sync, Media Session). **PR-C [#324](https://github.com/nhruska/nhruska.github.io/pull/324) MERGED (v324) 2026-08-09**: item 17 + 14 artists enriched. **PR [#328](https://github.com/nhruska/nhruska.github.io/pull/328) OPEN (v328-5)**: shuffle-in-bar + solid SVG transport, jams-first landing + tour-ends-in-a-jam + no-scroll tour + cigar box retired + welcome-jam ad strategy (reggae original). Veto #8 C-vs-Am stands open.",
         "Spec": "[goal spec](goal-playlist-extraction-20260806.md)"
+      },
+      {
+        "Mission": "**M-PLAYLIST-IMPORT: user-facing \"import your playlist\" + variety fill**",
+        "State": "**Import MERGED 2026-08-09 (PR [#326](https://github.com/nhruska/nhruska.github.io/pull/326), v326-2)** after live-device UAT: keyless enumeration + key ladder + landing-on-results + repeat-URL dedupe all proven. **Variety fill MERGED 2026-08-09 (PR [#327](https://github.com/nhruska/nhruska.github.io/pull/327), v327-3; catalog 55->108 incl. the 46-item operator playlist + 15 searched Phish keys)**: 12 curated search-first gap fillers (Bm/G#m/B/Eb/Ab + A/G/D/Bb blues + tempo tails; ladder-dogfooded 12/12; candidates gate gains the explicit 'search-first' lifecycle carve-out). Residual gaps (C#/F# major, D#m/A#m, outer blues keys) deliberately left for the OPERATOR'S curated gap playlist - the pipeline bakes it + enriches ids onto the stubs via trackKey remaps when ready. Also 2026-08-09: community PR [#274](https://github.com/nhruska/nhruska.github.io/pull/274) (emre155, first outside contribution) merged via vehicle #325 (v274).",
+        "Spec": "[goal spec](goal-playlist-import-20260809.md)"
       },
       {
         "Mission": "**S-SDD-PILOT: \"Calluses\" (F Mixo/Dm)**",
@@ -395,6 +366,24 @@
         "Mission": "S-CHIPS-PLUS: P5 enhancement asks - Dom7-arpeggio or Mixolydian chip in the Blues-key Compose preview + degrees line under the preview notes; evaluate bar-by-bar target emphasis (3rd/b7/root) remainder after ghost dots",
         "Trigger / launch condition": "**go chips-plus**",
         "Spec state": "Spec = P5 W3 verdict items (fold doc); ghost dots + card rewrites already folded in-mission"
+      },
+      {
+        "#": "S10",
+        "Mission": "S-LOCAL-JAM: fully-owned first-jam audio - operator records a 60-90s ORIGINAL jam loop (guitar/uke, ~1MB mp3); app gains a local-audio track type (t.audio, <audio>-backed Studio transport, SW-cached, honest state we fully control); the welcome jam swaps to it for an offline + ad-free-forever first play. Downloading/bundling YouTube media was considered and REJECTED (public repo = redistribution + YT ToS).",
+        "Trigger / launch condition": "Operator records the loop, then **go local-jam** (2026-08-09 round-4 fork: \"keep YouTube, reggae stays welcome\" chosen for now)",
+        "Spec state": "This QUEUE row is the spec seed"
+      },
+      {
+        "#": "S11",
+        "Mission": "S-TAP-TEMPO: match the synth loop's tempo to the playing backing track - a TAP-TEMPO control (tap 4+ beats on a button, median inter-tap interval sets the loop bpm; stretch: align loop phase to the last tap so downbeats land together). Operator round 7: \"can we try to match tempo of playing song?? we used to have a tap to sync feature... would be better than default settings\". Route through audio-dsp-coach for the timing math; replaces nothing (Slow/Med/Fast stays the fallback).",
+        "Trigger / launch condition": "**go tap-tempo**",
+        "Spec state": "This QUEUE row is the spec seed"
+      },
+      {
+        "#": "S12",
+        "Mission": "S-GUIDE-CONTEXT: rethink the ? guidance CTA - operator round 7: \"I want the guidance, but it's not a good CTA and could be guidance elsewhere or served individually based on the song/scale\". Direction: per-song/per-scale guidance served contextually (e.g. a one-line mentor hint under the scale that deepens on tap) instead of a generic ? icon; composes the existing SoloGuide/mentor-card content, pedagogy-coach owns the grading.",
+        "Trigger / launch condition": "Operator picks the direction, then **go guide-context**",
+        "Spec state": "This QUEUE row is the spec seed"
       },
       {
         "#": "S-NAVHIST",
@@ -653,8 +642,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 59,
-    "testCaseCount": 3388,
+    "testFileCount": 60,
+    "testCaseCount": 3389,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
