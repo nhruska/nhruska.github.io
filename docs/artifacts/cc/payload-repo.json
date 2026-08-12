@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-11T10:14:30Z",
+  "generatedAt": "2026-08-12T10:30:45Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-10T10:39:11Z",
-    "sha": "004f810a412fd366924b5eea89b18ef21af32001",
+    "date": "2026-08-11T10:14:37Z",
+    "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/004f810a412fd366924b5eea89b18ef21af32001"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
   },
   "commits": [
+    {
+      "date": "2026-08-11T10:14:37Z",
+      "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
+    },
     {
       "date": "2026-08-10T10:39:11Z",
       "sha": "004f810a412fd366924b5eea89b18ef21af32001",
@@ -84,15 +90,34 @@
       "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
       "subject": "playlist-sync: refresh payload + veto table",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
-    },
-    {
-      "date": "2026-08-08T00:39:26Z",
-      "sha": "fe3519e0ae239344fed0cf50bca1d673e23c2073",
-      "subject": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline (#322)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/fe3519e0ae239344fed0cf50bca1d673e23c2073"
     }
   ],
-  "openPRs": [],
+  "openPRs": [
+    {
+      "number": 329,
+      "title": "Round 9: video PIP overlay + progress scrub + refocus pause honesty",
+      "branch": "claude/nh-pages-music-extraction-pzn1rg",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/329",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133252/job/94024192055"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133264/job/94024192175"
+        }
+      ]
+    }
+  ],
   "recentMerges": [
     {
       "createdAt": "2026-08-09T17:27:02Z",
@@ -204,9 +229,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-11T10:14:24Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31481320768",
+    "runStartedAt": "2026-08-12T10:30:39Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31587735885",
     "headBranch": "main"
   },
   "velocity": {
