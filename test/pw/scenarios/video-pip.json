@@ -1,6 +1,6 @@
 {
   "name": "video-pip",
-  "note": "Round 9 (operator UAT 2026-08-10): (1) 'minimize the video INTO the now playing - use PIP overlay - Minimize is the CTA when open': the bar CTA reads Minimize; minimizing flips the SAME .bt-st-media element to a fixed PIP docked above the bar (iframe never remounts - audio never dies), tap the PIP to expand, and the PIP survives the whole Studio minimizing to the bar. Native requestPictureInPicture is unreachable for a cross-origin YT iframe, so the PIP is a CSS overlay by design. (2) 'support scrub on progress bar': pointer-drag seeks (seekTo command) with the fill tracking the finger optimistically - proven via a synthesized infoDelivery duration. (3) friction 'changing apps stops music... shows active with no sound': on visibility return the bar presumes PAUSED (backgrounding always pauses a non-Premium embed) - proven via a synthetic visibilitychange.",
+  "note": "Rounds 9+10 (operator UAT 2026-08-10/12). THREE video states, ONE element, the iframe never remounts (audio never dies): THEATER - floating card overlay, never document flow ('rather not have video embedded in page'), taps reach the embed (YouTube's Skip lives there); PIP - docked 152x86 above the bar, tap expands to theater, with the park HANDLE stuck to its LEFT edge ('hide video CTA stuck to left of pip'); HID - parked INTO the bar title ('collapses pip into the song name'), zero-size clip with audio alive, the title wears a cue and a bar tap un-parks first ('click song name to bring back pip'). Row-tap play shows the PIP immediately; the park is session-sticky. Plus round 9's scrub (synthesized infoDelivery) and refocus honesty (synthetic visibilitychange). Native requestPictureInPicture is unreachable for a cross-origin YT iframe - the PIP is a CSS overlay by design.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -16,6 +16,45 @@
       "timeoutMs": 15000
     },
     {
+      "action": "evalAssert",
+      "label": "ROW-TAP PLAY -> the PIP shows immediately over the library (min, fixed, docked above the bar) with the park handle stuck to its LEFT edge; iframe fingerprinted for the never-remounts proof",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;if(getComputedStyle(m).position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>60))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();if(!(r.bottom<=bar.top+2))return false;var h=document.querySelector('[data-piphide]');if(!h)return false;var hr=h.getBoundingClientRect();if(!(hr.width>=24&&hr.height>=44))return false;if(!(hr.right<=r.left&&r.left-hr.right<14))return false;var f=m.querySelector('iframe');if(!f)return false;window.__pipFrame=f;return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-on-play"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-piphide]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "PARK: the handle collapses the PIP INTO the bar title - media zero-size but the SAME iframe stays connected (audio alive), player wears .vidhid, the handle is gone, and the title grows the video cue (::before chip)",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(r.width<2&&r.height<2))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid'))return false;var h=document.querySelector('[data-piphide]');if(h&&h.getBoundingClientRect().width>0)return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;return cue&&cue!=='none';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "video-parked"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "UN-PARK: the first bar tap brings the PIP back (min, visible, same iframe) WITHOUT expanding the Studio - the bar was the video's collapsed form",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('mini'))return false;if(p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();return r.width>130&&r.height>60&&m.querySelector('iframe')===window.__pipFrame;})()"
+    },
+    {
       "action": "tap",
       "selector": ".bt-player.mini .bt-st-t"
     },
@@ -26,25 +65,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "arrange: video open (vidopen), the bar CTA reads Minimize, and the iframe node is fingerprinted for the never-remounts proof",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen'))return false;var l=document.querySelector('.bt-st-vidmin-lbl');if(!l||l.textContent.trim()!=='Minimize')return false;var f=document.querySelector('.bt-st-media iframe');if(!f)return false;window.__pipFrame=f;return true;})()"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-vidmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 350
-    },
-    {
-      "action": "evalAssert",
-      "label": "MINIMIZE -> PIP: the media is position:fixed, ~152px wide, floating ABOVE the bar, the SAME iframe node still connected (audio alive), and the menu now offers Expand video",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var cs=getComputedStyle(m);if(cs.position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>60))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();if(!(r.bottom<=bar.top+2))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;var vt=document.querySelector('[data-vidtoggle]');return !!vt && vt.textContent.trim()==='Expand video';})()"
-    },
-    {
-      "action": "screenshot",
-      "name": "pip-over-studio"
+      "label": "the NEXT bar tap expands the Studio as always - the PIP rides along intact (still min, same iframe), and the menu offers Expand video; also cancel the auto-minimize countdown so the theater asserts below are deterministic",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Expand video')return false;var k=document.querySelector('[data-keepopen]');if(k)k.click();return true;})()"
     },
     {
       "action": "evalAssert",
@@ -66,8 +88,12 @@
     },
     {
       "action": "evalAssert",
-      "label": "tap the PIP -> the video EXPANDS back in place (vidopen, no .min), iframe still the same node",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min'))return false;if(!document.querySelector('.bt-player').classList.contains('vidopen'))return false;return m.querySelector('iframe')===window.__pipFrame;})()"
+      "label": "THEATER: tapping the PIP expands to the floating card - fixed overlay (never document flow), centered at min(100vw-20px,540px) wide, NO click-catcher (taps reach the embed - Skip is tappable HERE), same iframe, bar CTA reads Minimize, menu reads Minimize video, countdown chip (if still live) sits fully BELOW the card",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;var cs=getComputedStyle(m);if(cs.position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<3&&r.top>40&&r.top<120))return false;if(getComputedStyle(m,'::after').content!=='none')return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var l=document.querySelector('.bt-st-vidmin-lbl');if(!l||l.textContent.trim()!=='Minimize')return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Minimize video')return false;var cd=document.querySelector('[data-countdown]');if(cd&&!cd.classList.contains('done')){var cr=cd.getBoundingClientRect();if(cr.top<r.bottom-2)return false;}return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-over-studio"
     },
     {
       "action": "tap",
@@ -76,6 +102,11 @@
     {
       "action": "wait",
       "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "Minimize returns the theater to the PIP (min, docked, handle back)",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var h=document.querySelector('[data-piphide]');return !!h&&h.getBoundingClientRect().width>0&&m.querySelector('iframe')===window.__pipFrame;})()"
     },
     {
       "action": "tap",

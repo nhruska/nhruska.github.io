@@ -25,8 +25,8 @@
   'use strict';
 
   // Both lines move together with sw.js's CACHE bump - see the header.
-  var VERSION = 'music-v329';
-  var UPDATED_ISO = '2026-08-12T03:50:18Z';
+  var VERSION = 'music-v329-2';
+  var UPDATED_ISO = '2026-08-12T05:54:12Z';
 
   // ISO -> the reader's locale, e.g. "Jul 5, 2026, 10:07 AM" (en-US, EDT).
   // toLocaleString renders in the DEVICE's locale + timezone - the stamp is

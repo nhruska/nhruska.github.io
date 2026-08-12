@@ -333,7 +333,7 @@
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
-      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.innerHTML = '';
+      elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.classList.remove('vidhid'); elPlayer._setVid = null; elPlayer.innerHTML = '';
       exitMini();
       nowPlaying = null; userPaused = false;
       // UAT batch 7: clear the Media Session so no stale lock-screen card
@@ -400,7 +400,7 @@
     // players marquee"): when the bar title overflows its box, LOOP it - a
     // second copy of the title (.bt-st-tx2, 48px wrap gap) is appended and the
     // pair slides left by exactly one copy+gap (CSS, linear infinite), so the
-    // wrap point is seamless. Re-measured on every dispatch + setMin (the
+    // wrap point is seamless. Re-measured on every dispatch + setVid (the
     // vidopen strip swap changes the title's share of the bar) + resize;
     // the reset drops the clone first so the measure is the natural
     // single-copy overflow. Reduced-motion: static ellipsis (CSS hides the
@@ -434,19 +434,31 @@
       document.body.classList.remove('miniplayer');
       elPlayer.onclick = null;
     }
+    // Round 10: session-sticky video preference - 'hid' after an explicit park
+    // (the PIP hide handle), cleared by an explicit un-park (bar-title tap /
+    // menu "Show video"). Auto-advance and studio-minimize respect it, so a
+    // parked video never pops back on its own.
+    var vidPref = null;
     function minimizeStudio() {
       if (!nowPlaying) { closePlayer(); return; }
       if (global.Sound) global.Sound.stopAll();       // synth audition stops; the YT iframe keeps playing
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
+      // Round 10: a THEATER video follows the Studio down as the PIP (or stays
+      // parked) - it never audio-clips out from under the user mid-watch.
+      if (elPlayer.classList.contains('vidopen') && elPlayer._setVid) elPlayer._setVid(vidPref === 'hid' ? 'hid' : 'pip');
       elPlayer.classList.add('mini');
       document.body.classList.add('miniplayer');
       // Bar-body tap expands back to the full Studio; the pp button and the x
       // keep their own handlers (excluded here so a control tap never expands).
       elPlayer.onclick = function (e) {
         if (!elPlayer.classList.contains('mini')) return;
-        if (e.target.closest('[data-nppp],[data-minix],[data-npprog],[data-npprev],[data-npnext]')) return;
+        if (e.target.closest('[data-nppp],[data-minix],[data-npprog],[data-npprev],[data-npnext],[data-piphide]')) return;
+        // Round 10 ("click song name to bring back pip"): while the video is
+        // parked, the bar IS its collapsed form - the first tap un-parks the
+        // PIP; the next tap expands the Studio as always.
+        if (elPlayer.classList.contains('vidhid') && elPlayer._setVid) { vidPref = 'pip'; elPlayer._setVid('pip'); return; }
         expandStudio();
       };
       dispatchNowPlaying();
@@ -1007,7 +1019,7 @@
       // (anchors under the topbar); barStrip = the bar's transport controls.
       //
       // One-transport-owner (UAT batch 2) still holds: while the video panel
-      // is expanded (.vidopen, setMin keeps it honest), YouTube's own controls
+      // is expanded (.vidopen, setVid keeps it honest), YouTube's own controls
       // own play/pause - the bar's pp/progress/time hide behind the Hide-video
       // CTA. The pp stays in the DOM while hidden, so togglePlay()'s
       // programmatic .click() route works in every state.
@@ -1069,6 +1081,9 @@
         ? '<div class="bt-st-media" data-media>'
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
+          // Round 10 ("hide video CTA stuck to left of pip"): the park handle,
+          // a slim tab on the PIP's left edge (CSS shows it only while .min).
+          + '<button class="bt-st-piphide" data-piphide type="button" aria-label="Hide video - audio keeps playing"><span aria-hidden="true">&#8964;</span></button>'
           + '<div class="bt-st-countdown" data-countdown role="status">'
           + '<span class="bt-st-countdown-lbl">Minimizing in <b data-cdnum>15</b>s</span>'
           + '<span class="bt-st-cd-actions">'
@@ -1223,10 +1238,11 @@
         + '</div>'
         + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
-      // UAT 2026-08-08: .vidopen mirrors "the video panel is expanded" (a video
-      // track opens with the frame showing). setMin() below is the single
-      // authority that keeps it honest through toggle/auto-collapse; CSS keys
-      // the strip's pp-vs-Hide-video swap off it (one transport owner).
+      // UAT 2026-08-08 / round 10: .vidopen mirrors "the video is in THEATER"
+      // (a video track opens with the floating card showing). setVid() below
+      // is the single authority that keeps it honest through toggle /
+      // auto-collapse / park; CSS keys the strip's pp-vs-Minimize swap off it
+      // (one transport owner).
       elPlayer.classList.toggle('vidopen', !!t.yt);
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
@@ -1266,17 +1282,32 @@
           var w = frameWin(); if (!w) return;
           try { w.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) {}
         }
-        function setMin(min) {
+        // Round 10: THREE video states, one element, the iframe never remounts.
+        // 'theater' - floating card overlay (taps reach the embed - YouTube's
+        // Skip/controls live there); 'pip' - the docked mini video above the
+        // bar; 'hid' - parked INTO the bar title (zero-size clip, NEVER
+        // display:none - audio keeps playing).
+        function setVid(state) {
           if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
-          mediaEl.classList.toggle('min', min);
-          elPlayer.classList.toggle('vidopen', !min); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
+          mediaEl.classList.toggle('min', state === 'pip');
+          mediaEl.classList.toggle('hid', state === 'hid');
+          elPlayer.classList.toggle('vidopen', state === 'theater'); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
+          elPlayer.classList.toggle('vidhid', state === 'hid'); // the bar title wears the restore cue (CSS)
           refreshMarquee(); // the swap changes the title's share of the bar
-          if (vidToggle) { vidToggle.textContent = min ? 'Expand video' : 'Minimize video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
+          if (vidToggle) {
+            vidToggle.textContent = state === 'theater' ? 'Minimize video' : (state === 'hid' ? 'Show video' : 'Expand video');
+            vidToggle.setAttribute('aria-expanded', state === 'theater' ? 'true' : 'false');
+          }
         }
-        // Round 9: the PIP itself is the expand affordance - the ::after
-        // click-catcher (CSS) keeps the embed from eating the tap.
+        // Stashed for the outer closure: minimizeStudio demotes theater->PIP
+        // (the video follows the Studio down instead of audio-clipping) and
+        // the mini bar's title tap un-parks a hidden video.
+        elPlayer._setVid = setVid;
+        // The PIP itself is the expand affordance - the ::after click-catcher
+        // (CSS) keeps the embed from eating the tap. Expansion goes to the
+        // THEATER card, where taps DO reach the embed.
         if (mediaEl) mediaEl.addEventListener('click', function () {
-          if (mediaEl.classList.contains('min')) setMin(false);
+          if (mediaEl.classList.contains('min')) setVid('theater');
         });
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
         // begin only once the embed reports it is actually playing (startCountdown,
@@ -1300,21 +1331,38 @@
           var remain = Math.round(AUTOMIN_MS / 1000);
           if (cdNum) cdNum.textContent = remain;
           cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
-          autoTimer = setTimeout(function () { setMin(true); endCountdown(); }, AUTOMIN_MS);
+          // Demote only from THEATER - the timer must never un-park a hidden
+          // video or touch one already in the PIP.
+          autoTimer = setTimeout(function () { if (elPlayer.classList.contains('vidopen')) setVid('pip'); endCountdown(); }, AUTOMIN_MS);
         }
         cdFallback = setTimeout(startCountdown, 4000);
-        if (vidToggle && mediaEl) vidToggle.onclick = function () { endCountdown(); setMin(!mediaEl.classList.contains('min')); };
+        if (vidToggle && mediaEl) vidToggle.onclick = function () {
+          endCountdown();
+          if (mediaEl.classList.contains('min')) setVid('theater'); // "Expand video"
+          else if (mediaEl.classList.contains('hid')) { vidPref = 'pip'; setVid('pip'); } // "Show video" - explicit un-park
+          else setVid('pip'); // "Minimize video"
+        };
         // "Keep open" cancels the auto-collapse but leaves the video EXPANDED, so the
         // user can tap YouTube's Skip on the iframe. "Minimize now" collapses early
         // (once they've skipped and want the space back).
         var keepBtn = elPlayer.querySelector('[data-keepopen]');
         var minNowBtn = elPlayer.querySelector('[data-minnow]');
         if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
-        if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setMin(true); endCountdown(); };
-        // The strip's Hide-video CTA (visible only while the video is expanded,
-        // see .vidopen CSS) - same collapse path as the menu's Hide video row.
+        if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setVid('pip'); endCountdown(); };
+        // The strip's Minimize CTA (visible only in theater, see .vidopen CSS)
+        // - same demote path as the menu's Minimize-video row.
         var vidMinBtn = elPlayer.querySelector('[data-vidmin]');
-        if (vidMinBtn && mediaEl) vidMinBtn.onclick = function () { endCountdown(); setMin(true); };
+        if (vidMinBtn && mediaEl) vidMinBtn.onclick = function () { endCountdown(); setVid('pip'); };
+        // Round 10 ("hide video CTA stuck to left of pip... collapses pip INTO
+        // the song name"): the edge handle parks the video - audio keeps
+        // playing, the bar title wears the cue, and the park is remembered for
+        // the session so auto-advance never pops it back unasked.
+        var pipHideBtn = elPlayer.querySelector('[data-piphide]');
+        if (pipHideBtn && mediaEl) pipHideBtn.onclick = function (e) {
+          e.stopPropagation(); // in mini, a stage tap would otherwise expand the Studio
+          endCountdown(); vidPref = 'hid'; setVid('hid');
+        };
+        if (vidPref === 'hid') { setVid('hid'); endCountdown(); } // this session parked the video - keep it parked across opens
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
         // indicates now playing"): detect the embed's END - the onStateChange

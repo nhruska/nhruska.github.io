@@ -64,6 +64,14 @@
       "timeoutMs": 6000
     },
     {
+      "action": "tap",
+      "selector": ".bt-st-media"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
       "action": "tapIfVisible",
       "text": "Keep open"
     },

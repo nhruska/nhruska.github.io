@@ -577,4 +577,34 @@ PAUSED (play glyph, userPaused) - honest state, one tap resumes; a
 genuine playing report (state 1) flips it back. video-pip scenario
 (20 steps) proves PIP geometry/same-node/survival, synthesized-
 infoDelivery scrub, and synthetic-visibilitychange refocus. [#329]
+M-VIDEO-STATES (2026-08-12, PR #329 round 10): v329->v329-2 - the
+operator liked the PIP and pushed it to its full form: THREE video
+states, one element, iframe never remounts. (1) THEATER replaces the
+embedded video ("rather not have video embedded in page"): the
+expanded video is a floating fixed card (min(100vw-20px,540px),
+16:9, below the topbar) that never sits in document flow - the
+theory content keeps its layout in every video state (zero reflow on
+minimize), and taps in theater REACH the embed (no click-catcher) -
+that is where YouTube's Skip/controls are tappable, one tap from the
+PIP. Auto-min demotes theater->PIP only (never un-parks). The
+fly-out menu z-bumps above the card. (2) The park HANDLE ("hide
+video CTA stuck to left of pip"): a slim 30x86 tab on the PIP's left
+edge collapses the video INTO the bar title - .hid is a zero-size
+clip (NEVER display:none, audio keeps playing), the bar title wears
+a small video chip cue, and the park is SESSION-STICKY (auto-advance
+and studio-minimize respect it - a parked video never pops back
+unasked). (3) "click song name to bring back pip": while parked, the
+first bar tap un-parks the PIP; the next tap expands the Studio as
+always. (4) Row-tap play now shows the PIP immediately (the video
+finally has an affordance without opening the Studio), and
+minimizing the Studio demotes a theater video to the PIP instead of
+audio-clipping it. Alternative considered and declined: video as a
+third Fretboard|Circle seg view - the seg is one-theory-visual-at-a-
+time, and a video view would HIDE the video whenever you look at the
+fretboard, killing exactly the simultaneity the PIP creates.
+video-pip scenario rewritten (27 steps) covering all three states +
+scrub + refocus; uat-batch2 updated to enter theater explicitly.
+Handle needed pointer-events:auto (the mini player container
+disables pointer events broadly - the PIP rule carries the same).
+[#329]
 ```
