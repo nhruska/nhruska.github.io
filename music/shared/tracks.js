@@ -1018,8 +1018,8 @@
         // Standard crossed-arrows glyph (inline SVG, the app's stroke-icon
         // pattern) replaces the old &#8646; text glyph.
         ? '<button class="bt-st-np-shuf' + (shuffleOn ? ' on' : '') + '" data-shuffle type="button" aria-label="Shuffle" aria-pressed="' + (shuffleOn ? 'true' : 'false') + '">' + ICON_SHUFFLE + '</button>'
-        + '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Hide video">'
-          + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Hide video</span></button>'
+        + '<button class="bt-st-vidmin" data-vidmin type="button" aria-label="Minimize video">'
+          + '<span class="bt-st-vidmin-gl" aria-hidden="true">&#8964;</span><span class="bt-st-vidmin-lbl">Minimize</span></button>'
           // UAT batch 6 ("would like next. and back buttons. it's like a music
           // player"): prev/next flank the pp - they walk the current view's
           // playable pool (opts.advance). They stay visible in the vidopen
@@ -1049,7 +1049,7 @@
       var menuBlock = t.yt
         ? '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
-          + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Hide video</button>'
+          + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Minimize video</button>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
           + urlEditor
@@ -1070,7 +1070,7 @@
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div></div>'
           + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing to audio in <b data-cdnum>15</b>s</span>'
+          + '<span class="bt-st-countdown-lbl">Minimizing in <b data-cdnum>15</b>s</span>'
           + '<span class="bt-st-cd-actions">'
           + '<button class="bt-st-cd-btn bt-st-cd-keep" data-keepopen type="button">Keep open</button>'
           + '<button class="bt-st-cd-btn bt-st-cd-min" data-minnow type="button">Minimize now</button>'
@@ -1262,17 +1262,22 @@
         var cdNum = elPlayer.querySelector('[data-cdnum]');
         var cdFill = cdEl && cdEl.querySelector('i');
         var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
-        function ytCmd(func) {
+        function ytCmd(func, args) {
           var w = frameWin(); if (!w) return;
-          try { w.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), '*'); } catch (e) {}
+          try { w.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) {}
         }
         function setMin(min) {
           if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
           mediaEl.classList.toggle('min', min);
-          elPlayer.classList.toggle('vidopen', !min); // strip swaps Hide-video CTA <-> pp/progress (one transport owner)
+          elPlayer.classList.toggle('vidopen', !min); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
           refreshMarquee(); // the swap changes the title's share of the bar
-          if (vidToggle) { vidToggle.textContent = min ? 'Show video' : 'Hide video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
+          if (vidToggle) { vidToggle.textContent = min ? 'Expand video' : 'Minimize video'; vidToggle.setAttribute('aria-expanded', min ? 'false' : 'true'); }
         }
+        // Round 9: the PIP itself is the expand affordance - the ::after
+        // click-catcher (CSS) keeps the embed from eating the tap.
+        if (mediaEl) mediaEl.addEventListener('click', function () {
+          if (mediaEl.classList.contains('min')) setMin(false);
+        });
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
         // begin only once the embed reports it is actually playing (startCountdown,
         // fired from the YT infoDelivery handler below) so a slow ad-load never eats
@@ -1358,6 +1363,44 @@
         var progFill = elPlayer.querySelector('[data-npfill]');
         var timeLbl = elPlayer.querySelector('[data-nptime]');
         var ytDur = 0;
+        // Round 9 ("support scrub on progress bar"): pointer-drag (or tap)
+        // seeks. The fill tracks the finger OPTIMISTICALLY during the drag
+        // (infoDelivery updates pause while scrubbing so the bar never fights
+        // the finger); release sends ONE seekTo. Honest under blocked egress:
+        // no reported duration = nothing to seek into, the gesture no-ops.
+        var scrubbing = false;
+        if (progEl) (function wireScrub() {
+          function fracAt(e) {
+            var r = progEl.getBoundingClientRect();
+            if (!r.width) return 0;
+            return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+          }
+          function paint(frac) {
+            if (progFill) progFill.style.width = (frac * 100).toFixed(1) + '%';
+            progEl.setAttribute('aria-valuenow', Math.round(frac * 100));
+            if (timeLbl && ytDur > 0) timeLbl.textContent = fmtTime(frac * ytDur) + ' / ' + fmtTime(ytDur);
+          }
+          progEl.addEventListener('pointerdown', function (e) {
+            if (!(ytDur > 0)) return;
+            scrubbing = true;
+            try { progEl.setPointerCapture(e.pointerId); } catch (x) {}
+            e.preventDefault();
+            paint(fracAt(e));
+          });
+          progEl.addEventListener('pointermove', function (e) {
+            if (!scrubbing) return;
+            paint(fracAt(e));
+          });
+          function scrubEnd(e) {
+            if (!scrubbing) return;
+            scrubbing = false;
+            var frac = fracAt(e);
+            paint(frac);
+            ytCmd('seekTo', [frac * ytDur, true]);
+          }
+          progEl.addEventListener('pointerup', scrubEnd);
+          progEl.addEventListener('pointercancel', function () { scrubbing = false; });
+        })();
         function fmtTime(s) { s = Math.max(0, Math.round(s || 0)); var m = Math.floor(s / 60), ss = s % 60; return m + ':' + (ss < 10 ? '0' : '') + ss; }
         function onYtMessage(e) {
           if (!progFill || !progFill.isConnected) { global.removeEventListener('message', onYtMessage); return; }
@@ -1387,6 +1430,7 @@
           startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {
+            if (scrubbing) return; // the finger owns the fill until release
             var frac = Math.max(0, Math.min(1, d.info.currentTime / ytDur));
             progFill.style.width = (frac * 100).toFixed(1) + '%';
             if (progEl) progEl.setAttribute('aria-valuenow', Math.round(frac * 100));
@@ -1408,9 +1452,23 @@
           // channel (the initial pings stopped long ago), so the paused-by-
           // background state and the clock resync promptly. Self-unbinds with
           // the strip.
+          // Round 9 (operator friction: "changing apps stops music - when
+          // returning the play button shows active with no sound until I hit
+          // play again"): backgrounding ALWAYS pauses a non-Premium YT embed,
+          // so on refocus the honest default is PAUSED - flip the bar to the
+          // play glyph immediately instead of waiting on a state report that
+          // may never come. The re-poke below still runs; in the rare case
+          // playback genuinely survived, the embed's state-1 report flips the
+          // bar right back through the existing sync. One tap resumes either
+          // way - the bar just never lies about it.
           var onVis = function () {
             if (!progFill.isConnected) { document.removeEventListener('visibilitychange', onVis); return; }
             if (document.visibilityState !== 'visible') return;
+            if (nowPlaying && !paused) {
+              paused = true; userPaused = true;
+              if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
+              dispatchNowPlaying();
+            }
             var w = frameWin(); if (w) { try { w.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (x) {} }
           };
           document.addEventListener('visibilitychange', onVis);

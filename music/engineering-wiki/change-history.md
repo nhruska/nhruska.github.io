@@ -554,4 +554,27 @@ Add/Edit form directly (nothing to view yet); catalog TRACKS keep
 the Studio as their detail (the key/scale HUD is their content).
 Body tap still plays. lead-chip-detail scenario proves all three
 routes. [#328]
+M-VIDEO-PIP (2026-08-12, PR #329 round 9): v328-10->v329 - three operator
+bursts. (1) "minimize the video INTO the now playing - use PIP
+overlay - Minimize is the CTA when open": .bt-st-media.min flips the
+SAME element to position:fixed (152x86, docked right, above the bar
+- the iframe NEVER remounts so audio never dies; native
+requestPictureInPicture is unreachable for a cross-origin YT iframe,
+so the PIP is a CSS overlay by design). Tap the PIP to expand
+(::after click-catcher keeps the embed from eating the tap); the PIP
+survives the Studio minimizing to the bar. CTA copy: Minimize /
+Expand video. The PIP anchor is +150px above safe-area bottom - the
+bar grows ~3px taller once the time label renders (duration known),
+and the first anchor (+138px) overlapped it by 5px (caught by the
+video-pip scenario's geometry assert, fixed at the anchor, never the
+assert). (2) "support scrub on progress bar": pointer-drag on
+[data-npprog] paints the fill optimistically (the finger owns the
+fill until release - infoDelivery clock yields while scrubbing),
+release sends seekTo. (3) friction "changing apps stops music...
+show as active with no sound": backgrounding ALWAYS pauses a
+non-Premium embed, so on visibilitychange->visible the bar presumes
+PAUSED (play glyph, userPaused) - honest state, one tap resumes; a
+genuine playing report (state 1) flips it back. video-pip scenario
+(20 steps) proves PIP geometry/same-node/survival, synthesized-
+infoDelivery scrub, and synthetic-visibilitychange refocus. [#329]
 ```
