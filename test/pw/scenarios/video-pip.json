@@ -1,0 +1,99 @@
+{
+  "name": "video-pip",
+  "note": "Round 9 (operator UAT 2026-08-10): (1) 'minimize the video INTO the now playing - use PIP overlay - Minimize is the CTA when open': the bar CTA reads Minimize; minimizing flips the SAME .bt-st-media element to a fixed PIP docked above the bar (iframe never remounts - audio never dies), tap the PIP to expand, and the PIP survives the whole Studio minimizing to the bar. Native requestPictureInPicture is unreachable for a cross-origin YT iframe, so the PIP is a CSS overlay by design. (2) 'support scrub on progress bar': pointer-drag seeks (seekTo command) with the fill tracking the finger optimistically - proven via a synthesized infoDelivery duration. (3) friction 'changing apps stops music... shows active with no sound': on visibility return the bar presumes PAUSED (backgrounding always pauses a non-Premium embed) - proven via a synthetic visibilitychange.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-body",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "evalAssert",
+      "label": "arrange: video open (vidopen), the bar CTA reads Minimize, and the iframe node is fingerprinted for the never-remounts proof",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen'))return false;var l=document.querySelector('.bt-st-vidmin-lbl');if(!l||l.textContent.trim()!=='Minimize')return false;var f=document.querySelector('.bt-st-media iframe');if(!f)return false;window.__pipFrame=f;return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-vidmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "MINIMIZE -> PIP: the media is position:fixed, ~152px wide, floating ABOVE the bar, the SAME iframe node still connected (audio alive), and the menu now offers Expand video",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var cs=getComputedStyle(m);if(cs.position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>60))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();if(!(r.bottom<=bar.top+2))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;var vt=document.querySelector('[data-vidtoggle]');return !!vt && vt.textContent.trim()==='Expand video';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-over-studio"
+    },
+    {
+      "action": "evalAssert",
+      "label": "SCRUB: synthesize the embed's duration report, then pointer-drag the progress bar to ~60% - the fill tracks the finger and lands at 60, same iframe untouched",
+      "js": "(function(){window.dispatchEvent(new MessageEvent('message',{data:JSON.stringify({event:'infoDelivery',info:{duration:100,currentTime:10}})}));var p=document.querySelector('[data-npprog]');if(!p)return false;var r=p.getBoundingClientRect();if(!(r.width>0))return false;var x0=r.left+r.width*0.2,x1=r.left+r.width*0.6,y=r.top+r.height/2;function ev(type,x){p.dispatchEvent(new PointerEvent(type,{pointerId:7,clientX:x,clientY:y,bubbles:true,cancelable:true}));}ev('pointerdown',x0);ev('pointermove',x1);ev('pointerup',x1);var now=parseInt(p.getAttribute('aria-valuenow'),10);var w=parseFloat(document.querySelector('[data-npfill]').style.width);return now===60 && Math.abs(w-60)<2 && document.querySelector('.bt-st-media iframe')===window.__pipFrame;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "REFOCUS HONESTY: a visibility return while marked playing flips the bar to PAUSED (play glyph, npPaused class) - backgrounding always pauses the embed, the bar must never lie",
+      "js": "(function(){var pp=document.querySelector('[data-nppp]');if(!pp||pp.getAttribute('aria-label')!=='Pause')return false;document.dispatchEvent(new Event('visibilitychange'));var flipped=pp.getAttribute('aria-label')==='Play';var cls=document.querySelector('.bt-player').classList.contains('npPaused');return flipped&&cls;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-media"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap the PIP -> the video EXPANDS back in place (vidopen, no .min), iframe still the same node",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min'))return false;if(!document.querySelector('.bt-player').classList.contains('vidopen'))return false;return m.querySelector('iframe')===window.__pipFrame;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-vidmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "evalAssert",
+      "label": "the PIP SURVIVES the whole Studio minimizing to the bar - still fixed, still visible above the now-playing bar, over the library list",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.height>60))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();return r.bottom<=bar.top+2 && m.querySelector('iframe')===window.__pipFrame;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-over-library"
+    }
+  ]
+}
