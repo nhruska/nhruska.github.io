@@ -434,20 +434,17 @@
       document.body.classList.remove('miniplayer');
       elPlayer.onclick = null;
     }
-    // Round 10: session-sticky video preference - 'hid' after an explicit park
-    // (the PIP hide handle), cleared by an explicit un-park (bar-title tap /
-    // menu "Show video"). Auto-advance and studio-minimize respect it, so a
-    // parked video never pops back on its own.
-    var vidPref = null;
+    // Round 15 (operator purpose statement: "to be able to skip when needed
+    // and not show the video any other time"): PARKED is the only default -
+    // every open starts hidden, and the video layer is screen-independent
+    // (round 12), so studio-minimize no longer touches it. The old
+    // session-sticky preference dissolved into that one law.
     function minimizeStudio() {
       if (!nowPlaying) { closePlayer(); return; }
       if (global.Sound) global.Sound.stopAll();       // synth audition stops; the YT iframe keeps playing
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
-      // Round 10: a THEATER video follows the Studio down as the PIP (or stays
-      // parked) - it never audio-clips out from under the user mid-watch.
-      if (elPlayer.classList.contains('vidopen') && elPlayer._setVid) elPlayer._setVid(vidPref === 'hid' ? 'hid' : 'pip');
       elPlayer.classList.add('mini');
       document.body.classList.add('miniplayer');
       // Bar-body tap expands back to the full Studio; the pp button and the x
@@ -1095,7 +1092,10 @@
           // Round 11 ("include a button to minimize that is stuck to the PIP
           // overlay"): the theater card's OWN minimize handle - a bottom bar
           // on the card (sheet-handle grammar), shown only in theater (CSS).
-          + '<button class="bt-st-thmin" data-thmin type="button" aria-label="Minimize video"><span aria-hidden="true">&#8964;</span></button>'
+          + '<button class="bt-st-thmin" data-thmin type="button" aria-label="Hide video - audio keeps playing"><span aria-hidden="true">&#8964;</span></button>'
+          // Round 15: the docked mini video is OPT-IN now - the strip's corner
+          // dock chip is its only entry (the theater handle parks outright).
+          + '<button class="bt-st-thdock" data-thdock type="button" aria-label="Dock video small"><span aria-hidden="true">&#10064;</span></button>'
           + '</div>'
           // Round 10 ("hide video CTA stuck to left of pip"): the park handle,
           // a slim tab on the PIP's left edge (CSS shows it only while .min).
@@ -1254,12 +1254,11 @@
         + '</div>'
         + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
-      // UAT 2026-08-08 / round 10: .vidopen mirrors "the video is in THEATER"
-      // (a video track opens with the floating card showing). setVid() below
-      // is the single authority that keeps it honest through toggle /
-      // auto-collapse / park; CSS keys the strip's pp-vs-Minimize swap off it
-      // (one transport owner).
-      elPlayer.classList.toggle('vidopen', !!t.yt);
+      // .vidopen mirrors "the video is in THEATER"; setVid() below is the
+      // single authority. Round 15: a video track OPENS PARKED (the wiring's
+      // final setVid('hid') sets the real state) - vidopen is only ever set
+      // by an explicit show.
+      elPlayer.classList.remove('vidopen');
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
       // elPlayer.innerHTML lands) - guideToggle now lives in the controls
@@ -1311,7 +1310,7 @@
           elPlayer.classList.toggle('vidhid', state === 'hid'); // the bar title wears the restore cue (CSS)
           refreshMarquee(); // the swap changes the title's share of the bar
           if (vidToggle) {
-            vidToggle.textContent = state === 'theater' ? 'Minimize video' : (state === 'hid' ? 'Show video' : 'Expand video');
+            vidToggle.textContent = state === 'theater' ? 'Hide video' : (state === 'hid' ? 'Show video' : 'Expand video');
             vidToggle.setAttribute('aria-expanded', state === 'theater' ? 'true' : 'false');
           }
         }
@@ -1359,11 +1358,15 @@
           autoTimer = setTimeout(function () { if (elPlayer.classList.contains('vidopen')) setVid('pip'); endCountdown(); }, AUTOMIN_MS);
         }
         cdFallback = setTimeout(startCountdown, 4000);
+        // Round 15: the menu mirrors the parked<->theater loop - Show video
+        // goes straight to the theater (the only reason to show it is to see
+        // or skip it), Hide video parks it. Expand (from a docked PIP) still
+        // goes to theater.
         if (vidToggle && mediaEl) vidToggle.onclick = function () {
           endCountdown();
           if (mediaEl.classList.contains('min')) setVid('theater'); // "Expand video"
-          else if (mediaEl.classList.contains('hid')) { vidPref = 'pip'; setVid('pip'); } // "Show video" - explicit un-park
-          else setVid('pip'); // "Minimize video"
+          else if (mediaEl.classList.contains('hid')) setVid('theater'); // "Show video"
+          else setVid('hid'); // "Hide video"
         };
         // "Keep open" cancels the auto-collapse but leaves the video EXPANDED, so the
         // user can tap YouTube's Skip on the iframe. "Minimize now" collapses early
@@ -1372,11 +1375,17 @@
         var minNowBtn = elPlayer.querySelector('[data-minnow]');
         if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
         if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setVid('pip'); endCountdown(); };
-        // Round 11 ("include a button to minimize that is stuck to the PIP
-        // overlay"): the theater card's own bottom handle demotes to the PIP -
-        // the bar carries no video CTA in any state.
+        // Round 15 ("clicking the down arrow from a theater size view should
+        // dismiss it and not cause an intermediate step to the small docked
+        // pip"): the theater's bottom handle PARKS the video outright. The
+        // docked PIP is opt-in via the strip's corner dock chip instead.
         var thMinBtn = elPlayer.querySelector('[data-thmin]');
         if (thMinBtn && mediaEl) thMinBtn.onclick = function (e) {
+          e.stopPropagation();
+          endCountdown(); setVid('hid');
+        };
+        var thDockBtn = elPlayer.querySelector('[data-thdock]');
+        if (thDockBtn && mediaEl) thDockBtn.onclick = function (e) {
           e.stopPropagation();
           endCountdown(); setVid('pip');
         };
@@ -1387,28 +1396,30 @@
         var pipHideBtn = elPlayer.querySelector('[data-piphide]');
         if (pipHideBtn && mediaEl) pipHideBtn.onclick = function (e) {
           e.stopPropagation(); // in mini, a stage tap would otherwise expand the Studio
-          endCountdown(); vidPref = 'hid'; setVid('hid');
+          endCountdown(); setVid('hid');
         };
-        // Round 11 ("clicking the song name or even the whole left part of the
-        // now playing element to show and hide the small docked pip"): the
-        // bar's left zone (equalizer + title/meta) is the PIP toggle - parked
-        // -> show the dock; showing (pip OR theater) -> park. Explicit both
-        // ways, so the choice is session-sticky. Videoless tracks return
+        // Round 15 refinement of the round-11 left-zone toggle: showing the
+        // video means THEATER now, not the docked PIP - the operator shows
+        // the video for exactly one reason (see it / skip an ad), and the
+        // small dock can do neither. Parked <-> theater, one tap each way; a
+        // showing video (theater OR docked) parks. Videoless tracks return
         // early WITHOUT stopping propagation, so their bar tap still expands
-        // the Studio (there is no PIP to toggle).
+        // the Studio (there is no video to toggle).
         function toggleDock(e) {
           if (!mediaEl || !mediaEl.isConnected) return;
           e.stopPropagation();
           endCountdown();
-          var hidden = mediaEl.classList.contains('hid');
-          vidPref = hidden ? 'pip' : 'hid';
-          setVid(hidden ? 'pip' : 'hid');
+          setVid(mediaEl.classList.contains('hid') ? 'theater' : 'hid');
         }
         var idEl = elPlayer.querySelector('.bt-st-id');
         var eqEl = elPlayer.querySelector('.bt-st-bareq');
         if (idEl) idEl.addEventListener('click', toggleDock);
         if (eqEl) eqEl.addEventListener('click', toggleDock);
-        if (vidPref === 'hid') { setVid('hid'); endCountdown(); } // this session parked the video - keep it parked across opens
+        // Round 15 ("not show the video any other time"): EVERY open starts
+        // PARKED - audio-first, the bar title wears the cue, and the
+        // auto-minimize countdown is silenced for good (nothing auto-shows,
+        // so nothing needs auto-hiding).
+        setVid('hid'); endCountdown();
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
         // indicates now playing"): detect the embed's END - the onStateChange
@@ -1512,20 +1523,27 @@
           // state - covers pauses made on YouTube's own controls AND the
           // mobile background-pause (YouTube stops non-Premium playback when
           // the app hides; on return the bar must show ►, not a lie).
-          if (d.event === 'onStateChange') {
-            if (d.info === 0) { onTrackEnd(); return; }
-            if (d.info === 2 && !paused) {
+          // Round 15 ("when I pause in the small or theater size pip, the now
+          // playing still indicates the song is playing"): one sync path for
+          // BOTH the onStateChange delta events AND the playerState field that
+          // rides every infoDelivery tick. Deltas can be missed (the listening
+          // handshake races the widget boot; ads swallow events) - the
+          // per-tick field makes the bar self-healing within a second.
+          function syncState(s) {
+            if (s === 0) { onTrackEnd(); return; }
+            if (s === 2 && !paused) {
               paused = true; userPaused = true;
               if (ppBtn) { ppBtn.innerHTML = ICON_PLAY; ppBtn.setAttribute('aria-label', 'Play'); }
               dispatchNowPlaying();
-            } else if (d.info === 1 && paused) {
+            } else if (s === 1 && paused) {
               paused = false; userPaused = false; endedFired = false;
               if (ppBtn) { ppBtn.innerHTML = ICON_PAUSE; ppBtn.setAttribute('aria-label', 'Pause'); }
               dispatchNowPlaying();
             }
-            return;
           }
+          if (d.event === 'onStateChange') { syncState(d.info); return; }
           if (d.event !== 'infoDelivery' || !d.info) return;
+          if (typeof d.info.playerState === 'number') syncState(d.info.playerState);
           startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {

@@ -689,4 +689,30 @@ compose ctrlBar's symbol glyphs (flat/sharp/maximize) were .98rem
 ui-icon-density gate never swept Compose - it now does (22 steps),
 and the new sweep was mutation-proven RED against the old .98rem
 sizing before the fix was trusted. [#329]
+M-VIDEO-QUIET (2026-08-13, PR #330 round 15): v329-6->v330 - the
+operator's governing purpose, verbatim from live UAT: "My purpose is
+to be able to skip when needed and not show the video any other
+time." (1) PARKED is the ONLY default: every open ends the wiring
+setVid('hid')+endCountdown() (audio-first, title cue, the auto-min
+countdown machinery silenced for good - nothing auto-shows). The
+left zone toggles parked<->THEATER directly (the docked PIP could
+neither show nor skip - it is out of the main loop); the theater's
+down-arrow DISMISSES to parked with no docked intermediate; the
+dock is opt-in via the strip's corner chip [data-thdock]. Studio-
+minimize no longer touches the video layer (it is screen-independent
+since round 12); the session-sticky vidPref dissolved into the one
+default. Menu labels: Show video (->theater) / Hide video / Expand
+video. (2) "when I pause in the small or theater size pip, the now
+playing still indicates the song is playing": the onStateChange
+DELTA events can be missed (listening handshake races the widget
+boot; ads swallow events) - the playerState field that rides EVERY
+infoDelivery tick now routes through the same syncState path, so
+the bar self-heals within a second. (3) "it only moves a little
+bit": the scrub drag was killed mid-gesture by the browser
+reclaiming the touch for page panning (pointercancel) -
+touch-action:none on the track is the LOAD-BEARING fix; capture
+holds to release. tracks.test.js re-pinned (open-parked + syncState
+invariants; countdown anchor check tolerates the sync line).
+video-pip rewritten (40 steps). Root README rewritten same PR
+(retired auto-regen story, dead /music/ukulele/ URL). [#330]
 ```
