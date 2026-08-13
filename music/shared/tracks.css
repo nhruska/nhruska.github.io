@@ -263,9 +263,12 @@
 .bt-st-piphide{display:none;}
 .bt-st-media.min + .bt-st-piphide{
   display:flex;align-items:center;justify-content:center;
-  position:fixed;right:168px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);
+  position:fixed;right:162px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);
   width:30px;height:110px;z-index:95;padding:0;pointer-events:auto;
-  border:1px solid var(--accent-ink);border-radius:10px;
+  /* Round 14 ("no space between video"): FLUSH against the PIP's left edge -
+     right = PIP right (10px) + PIP width (152px), no gap; the PIP's own left
+     border is the seam, so this tab drops its right border and right radii. */
+  border:1px solid var(--accent-ink);border-right:0;border-radius:10px 0 0 10px;
   background:var(--surface-2);color:var(--accent-ink);cursor:pointer;
   font-size:18px;line-height:1;
 }
@@ -319,10 +322,23 @@
      block wins at flex:2, above) so the title stays readable at 412px. */
   /* UAT batch 6 ("can't see the total length... at a glance"): the TRACK
      carries an accent border so the bar's full extent reads even while the
-     unplayed portion is empty. box-sizing keeps the 8px total height. */
+     unplayed portion is empty. box-sizing keeps the 8px total height.
+     Round 14 ("scrubber needs to pop out a handle to drag... maybe 22"):
+     overflow is VISIBLE now so the thumb can ride the fill's end; the
+     ::before extends the touch target to ~22px (biased downward - the
+     transport buttons live above), and .scrubbing (JS) kills the width
+     transition so the fill tracks the finger 1:1 instead of chasing it. */
   .bt-st-np-prog{flex:1 1 0;min-width:36px;height:8px;border-radius:4px;background:var(--surface-2);
-    border:1px solid var(--accent-dim);box-sizing:border-box;overflow:hidden;}
-  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
+    border:1px solid var(--accent-dim);box-sizing:border-box;position:relative;}
+  .bt-st-np-prog::before{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-10px;}
+  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);
+    border-radius:3px 0 0 3px;transition:width .3s linear;position:relative;}
+  .bt-st-np-prog.scrubbing > i{transition:none;}
+  /* the drag thumb - a 14px knob capping the fill's end, ringed with the
+     surface color so it pops off both the filled and empty track */
+  .bt-st-np-prog > i::after{content:'';position:absolute;right:-7px;top:50%;
+    transform:translateY(-50%);width:14px;height:14px;border-radius:50%;
+    background:var(--accent-ink);border:2px solid var(--surface);box-sizing:border-box;}
   /* prev/next (UAT batch 6): compact steps flanking the pp, same surface-2
      control grammar. 44px floor both axes. */
   .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);

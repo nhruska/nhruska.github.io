@@ -670,4 +670,23 @@ as a control on any backdrop. Chevron glyphs unified at 18px across
 all three handles (were 16/20/20); both attached strips unified at
 24px tall (PIP box 106->110; countdown top calc re-paired). CSS
 only. [#329]
+M-SCRUB-FEEL (2026-08-13, PR #329 round 14): v329-5->v329-6 - three
+operator bursts. (1) "handles need to all be no space between
+video": the park handle sits FLUSH against the PIP's left edge
+(right 168->162, right border dropped, left-only radii - the PIP's
+own border is the seam); top/bottom strips were already attached.
+(2) "scrubber needs to pop out a handle to drag - can't seem to grab
+it... prob can be smaller than 44px - maybe 22": three-part fix -
+a visible 14px thumb knob capping the fill's end (fill ::after,
+surface-ringed; track overflow un-hidden to let it ride), a ~22px
+touch target via the track's ::before extender (biased DOWNWARD -
+the transport buttons live above), and the real accuracy culprit
+KILLED: the fill's .3s width transition was CHASING the finger -
+.scrubbing (JS pointerdown/up/cancel) suspends it so paint is 1:1.
+(3) "the icons on compose are too small (sharp, flat, etc": the
+compose ctrlBar's symbol glyphs (flat/sharp/maximize) were .98rem
+(~15.7px) - now 22px per the icon standard. ROOT CAUSE: the
+ui-icon-density gate never swept Compose - it now does (22 steps),
+and the new sweep was mutation-proven RED against the old .98rem
+sizing before the fix was trusted. [#329]
 ```

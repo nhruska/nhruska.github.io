@@ -1432,7 +1432,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    with 36px buttons, so restoring the primitive's 44px costs 24px of slack and
    still leaves 47px. The row keeps its compact type size and small radius; only
    the hit area comes back (issue #311). */
-.ctrlBar .iconBtn{font-size:.98rem;border-radius:var(--r-btn-sm);}
+/* Round 14 ("the icons on compose are too small (sharp, flat, etc"): symbol
+   glyphs meet the app icon standard (symbol-text >= 20px in a 44px box) -
+   .98rem (~15.7px) read as decoration, not controls. Gate: ui-icon-density
+   now sweeps Compose too. */
+.ctrlBar .iconBtn{font-size:22px;border-radius:var(--r-btn-sm);}
 .ctrlSpacer{flex:1 1 0;min-width:0;}
 .ctrlBtn{padding:8px 9px;font-size:.78rem;min-height:44px;flex:0 0 auto;}
 /* Visual-only resequence (DOM/tab order unchanged - this app is touch-first; see

@@ -1477,6 +1477,10 @@
           progEl.addEventListener('pointerdown', function (e) {
             if (!(ytDur > 0)) return;
             scrubbing = true;
+            // Round 14 ("can't seem to grab it... not easy/accurate"): the
+            // fill's .3s width transition was CHASING the finger - kill it
+            // for the drag (CSS keys off .scrubbing) so paint is 1:1.
+            progEl.classList.add('scrubbing');
             try { progEl.setPointerCapture(e.pointerId); } catch (x) {}
             e.preventDefault();
             paint(fracAt(e));
@@ -1488,12 +1492,13 @@
           function scrubEnd(e) {
             if (!scrubbing) return;
             scrubbing = false;
+            progEl.classList.remove('scrubbing');
             var frac = fracAt(e);
             paint(frac);
             ytCmd('seekTo', [frac * ytDur, true]);
           }
           progEl.addEventListener('pointerup', scrubEnd);
-          progEl.addEventListener('pointercancel', function () { scrubbing = false; });
+          progEl.addEventListener('pointercancel', function () { scrubbing = false; progEl.classList.remove('scrubbing'); });
         })();
         function fmtTime(s) { s = Math.max(0, Math.round(s || 0)); var m = Math.floor(s / 60), ss = s % 60; return m + ':' + (ss < 10 ? '0' : '') + ss; }
         function onYtMessage(e) {
