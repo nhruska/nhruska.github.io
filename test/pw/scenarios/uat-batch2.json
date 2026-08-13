@@ -56,12 +56,20 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-media"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
       "action": "waitFor",
       "selector": ".bt-player.studio:not(.mini) .bt-st-body",
       "timeoutMs": 6000
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-media"
+    },
+    {
+      "action": "wait",
+      "ms": 350
     },
     {
       "action": "tapIfVisible",
@@ -127,7 +135,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-media"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
       "action": "waitFor",

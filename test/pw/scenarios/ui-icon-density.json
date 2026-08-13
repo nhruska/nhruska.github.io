@@ -26,20 +26,12 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-media"
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-lead"
     },
     {
       "action": "waitFor",
       "selector": ".bt-player.studio:not(.mini) .bt-st-body",
       "timeoutMs": 8000
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 250
     },
     {
       "action": "evalAssert",

@@ -632,4 +632,31 @@ ui-icon-density). Theater width gains a (100vh - 260px)*16/9 budget
 term so card + handle + countdown clear the fixed bar in landscape.
 video-pip now 29 steps (toggle-both-ways + thmin-at-card-bottom + no
 [data-vidmin] anywhere asserts). [#329]
+M-VIDEO-LAYER (2026-08-13, PR #329 round 12): v329-3->v329-4 - the
+video layer is fully DECOUPLED from the Studio (operator: "I don't
+want to switch to the solo view"). (1) The theater loses its
+.studio:not(.mini) gate - the card floats over WHATEVER screen you
+are on (library, Studio, anywhere); expanding the PIP never opens
+the Studio, and minimizing returns you exactly where you were. The
+media click handler stops propagation (the bubble used to reach the
+mini bar's expand) and cancels the countdown (an expanding user owns
+the video - the auto-min must not yank a theater they just asked
+for). (2) The PIP wears a visible MAXIMIZE bar on top ("a button on
+top to maximize to theater view because clicking the skip after an
+ad won't be possible in a small pip") - a 20px top strip mirroring
+the theater's bottom handle (chevron UP = grow), z-raised above the
+::after catcher, no handler (its tap bubbles into the same expand
+path). PIP box 86->106 (bar + video); park handle height paired.
+(3) The Studio door for a video track is the playing row's DETAILS
+CHIP - openStudio was already idempotent for the now-playing track
+(UAT batch 4: expands, never rebuilds - the iframe survives), so the
+chip is a safe re-entry; five scenarios migrated their expand taps
+to it. GOTCHA (third occurrence - now a pattern): ANY new fixed
+element in the video layer MUST carry pointer-events:auto - the mini
+player container disables pointer events broadly, and the theater
+card was tap-dead over the library (Skip included) until the rule
+gained it (caught by the scenario runner's actionability check,
+like the park handle before it). video-pip now 38 steps incl.
+theater-over-library with still-mini assert + maximize-bar geometry.
+[#329]
 ```

@@ -452,11 +452,12 @@
       document.body.classList.add('miniplayer');
       // Bar-body tap expands back to the full Studio; the pp button and the x
       // keep their own handlers (excluded here so a control tap never expands).
-      // Round 11: the LEFT zone (eq + title/meta) is the PIP toggle and stops
-      // propagation itself (toggleDock, wired at build); what reaches here is
-      // the remaining bar body - which still expands. For a yt track the
-      // primary expand affordance is the PIP itself (its tap bubbles here
-      // after promoting to theater, opening the Studio behind the card).
+      // Round 11/12: the LEFT zone (eq + title/meta) is the PIP toggle and the
+      // PIP's own taps are video-layer acts - both stop propagation, so what
+      // reaches here is the remaining bar body, which still expands. The
+      // designed Studio door for a video track is the row's details chip
+      // (openStudio is idempotent for the playing track - it expands, never
+      // rebuilds).
       elPlayer.onclick = function (e) {
         if (!elPlayer.classList.contains('mini')) return;
         if (e.target.closest('[data-nppp],[data-minix],[data-npprog],[data-npprev],[data-npnext],[data-piphide]')) return;
@@ -1082,6 +1083,13 @@
       // videoless track no static iframe space is reserved - just the jam panel.
       var mediaBlock = t.yt
         ? '<div class="bt-st-media" data-media>'
+          // Round 12 ("the pip I can have a button on top to maximize to
+          // theater view because clicking the skip after an ad won't be
+          // possible in a small pip"): the PIP's visible maximize bar - a top
+          // strip mirroring the theater's bottom handle (chevron UP = grow).
+          // No handler: its tap bubbles to the media click below, same as a
+          // body tap - the button exists to make the affordance visible.
+          + '<button class="bt-st-thmax" data-thmax type="button" aria-label="Expand video - the Skip button is tappable in the large view"><span aria-hidden="true">&#8963;</span></button>'
           + '<div class="bt-st-frame"><iframe src="' + esc(embedUrl(t.yt)) + '" title="' + esc(t.title || '') + '" '
           + 'allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe></div>'
           // Round 11 ("include a button to minimize that is stuck to the PIP
@@ -1311,11 +1319,18 @@
         // (the video follows the Studio down instead of audio-clipping) and
         // the mini bar's title tap un-parks a hidden video.
         elPlayer._setVid = setVid;
-        // The PIP itself is the expand affordance - the ::after click-catcher
-        // (CSS) keeps the embed from eating the tap. Expansion goes to the
-        // THEATER card, where taps DO reach the embed.
-        if (mediaEl) mediaEl.addEventListener('click', function () {
-          if (mediaEl.classList.contains('min')) setVid('theater');
+        // The PIP body (and its top maximize bar) expand to the THEATER card,
+        // where taps DO reach the embed - the ::after click-catcher (CSS)
+        // keeps the embed from eating the tap. Round 12 ("I don't want to
+        // switch to the solo view"): expanding the video is a VIDEO-LAYER act
+        // - stopPropagation keeps it from also opening the Studio (the card
+        // floats over whatever screen you are on), and endCountdown keeps the
+        // auto-min from yanking a theater the user just asked for.
+        if (mediaEl) mediaEl.addEventListener('click', function (e) {
+          if (!mediaEl.classList.contains('min')) return;
+          e.stopPropagation();
+          endCountdown();
+          setVid('theater');
         });
         // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
         // begin only once the embed reports it is actually playing (startCountdown,

@@ -190,26 +190,49 @@
    to position:fixed, so the iframe never remounts and audio never dies.
    The ::after click-catcher sits over the iframe so a tap expands (the
    embed would otherwise eat it); wired in JS. */
-.bt-st-media.min{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:152px;height:86px;max-height:86px;z-index:95;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px var(--shadow);cursor:pointer;pointer-events:auto;background:#000;transition:none;}
-.bt-st-media.min .bt-st-frame{height:100%;padding:0;}
+.bt-st-media.min{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:152px;height:106px;max-height:106px;z-index:95;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px var(--shadow);cursor:pointer;pointer-events:auto;background:#000;transition:none;display:flex;flex-direction:column;}
+.bt-st-media.min .bt-st-frame{height:auto;flex:1;min-height:0;aspect-ratio:auto;padding:0;}
 .bt-st-media.min iframe{width:100%;height:100%;}
 .bt-st-media.min::after{content:'';position:absolute;inset:0;}
+/* Round 12 ("a button on top to maximize to theater view... clicking the skip
+   after an ad won't be possible in a small pip"): the PIP's visible maximize
+   bar - top strip, chevron UP, z-raised above the ::after catcher so it reads
+   as a button (its tap takes the same expand path). The 106px PIP box = this
+   20px bar + the 86px video. */
+.bt-st-thmax{display:none;}
+.bt-st-media.min .bt-st-thmax{
+  display:flex;align-items:center;justify-content:center;height:20px;flex:0 0 auto;
+  position:relative;z-index:1;border:0;border-bottom:1px solid var(--line-strong);
+  background:var(--surface-2);color:var(--accent-ink);cursor:pointer;padding:0;
+  font-size:16px;line-height:1;
+}
 /* Round 10 ("rather not have video embedded in page"): the EXPANDED video is a
    floating THEATER card, never document flow - the theory content keeps its
    layout in every video state (zero reflow on minimize), and taps in theater
    reach the embed directly (YouTube's Skip/controls live there; the ::after
    click-catcher applies only to .min). Width caps with the bar's 540px. */
-.bt-player.studio.vidopen:not(.mini) .bt-st-media:not(.min):not(.hid){
+/* Round 12 ("I don't want to switch to the solo view"): the theater is
+   decoupled from the Studio sheet - .vidopen alone (no .studio:not(.mini)
+   gate), so the card floats over WHATEVER screen you are on (library, Studio,
+   anywhere) and minimizing returns you exactly where you were. */
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid){
   position:fixed;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 58px);
   width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
   border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;
   background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
+  display:flex;flex-direction:column;
+  /* pointer-events:auto is LOAD-BEARING in mini: the mini player container
+     disables pointer events broadly (same trap the PIP + park handle hit) -
+     without it the whole theater card is tap-dead over the library, Skip
+     included. */
+  pointer-events:auto;
 }
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-frame{aspect-ratio:16/9;flex:0 0 auto;}
 /* Round 11: the card's own minimize handle - a full-width bottom bar on the
    theater card (sheet-handle grammar, chevron down toward the PIP dock).
    Hidden in every other state. */
-.bt-player.studio.vidopen:not(.mini) .bt-st-media:not(.min):not(.hid) .bt-st-thmin{
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thmin{
   display:flex;align-items:center;justify-content:center;width:100%;height:26px;
   border:0;border-top:1px solid var(--line-strong);background:var(--surface-2);
   color:var(--accent-ink);cursor:pointer;padding:0;font-size:20px;line-height:1;
@@ -237,7 +260,7 @@
 .bt-st-media.min + .bt-st-piphide{
   display:flex;align-items:center;justify-content:center;
   position:fixed;right:168px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);
-  width:30px;height:86px;z-index:95;padding:0;pointer-events:auto;
+  width:30px;height:106px;z-index:95;padding:0;pointer-events:auto;
   border:1px solid var(--line-strong);border-radius:10px;
   background:var(--surface-2);color:var(--accent-ink);cursor:pointer;
   font-size:20px;line-height:1;
@@ -763,7 +786,7 @@
   /* An EXPANDED video still collapses to clipped audio when the whole Studio
    minimizes (unchanged); a PIP'd video keeps its fixed overlay - the :not
    scope keeps the old clip off it. */
-.bt-player.mini .bt-st-media:not(.min){max-height:0;overflow:hidden;}
+.bt-player.mini:not(.vidopen) .bt-st-media:not(.min){max-height:0;overflow:hidden;}
 
   /* Round 11 ("remove the minimize button from the now playing element"): the
      old one-transport-owner swap (vidopen hid the pp and seated a Minimize CTA)

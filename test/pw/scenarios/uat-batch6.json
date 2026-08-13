@@ -46,10 +46,8 @@
       "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');if(!f||f.src.indexOf('/embed/hg6kcvOH5I4')<0)return false;var r=document.querySelector('[data-npkey=\"mellow reggae jam in a major|subfunc jam tracks|A|major\"]');return !!r&&r.classList.contains('isPlaying')&&p.classList.contains('mini');})()"
     },
     { "action": "screenshot", "name": "auto-advanced" },
-    { "action": "tap", "selector": ".bt-player.mini .bt-st-media" },
+    { "action": "tap", "selector": "[data-npkey='mellow reggae jam in a major|subfunc jam tracks|A|major'] .li-lead" },
     { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
-    { "action": "tap", "selector": "[data-thmin]" },
-    { "action": "wait", "ms": 250 },
     {
       "action": "evalAssert",
       "label": "UAT-6.3 (amended 2026-08-09: shuffle moved into the now-playing bar): the toggle lives on the bar's transport cluster with the crossed-arrows SVG, off by default - and NOT on the topbar anymore",

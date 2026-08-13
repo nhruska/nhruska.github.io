@@ -47,7 +47,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-media"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
       "action": "waitFor",
@@ -57,14 +57,6 @@
     {
       "action": "tapIfVisible",
       "text": "Keep open"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 250
     },
     {
       "action": "evalAssert",
