@@ -554,4 +554,139 @@ Add/Edit form directly (nothing to view yet); catalog TRACKS keep
 the Studio as their detail (the key/scale HUD is their content).
 Body tap still plays. lead-chip-detail scenario proves all three
 routes. [#328]
+M-VIDEO-PIP (2026-08-12, PR #329 round 9): v328-10->v329 - three operator
+bursts. (1) "minimize the video INTO the now playing - use PIP
+overlay - Minimize is the CTA when open": .bt-st-media.min flips the
+SAME element to position:fixed (152x86, docked right, above the bar
+- the iframe NEVER remounts so audio never dies; native
+requestPictureInPicture is unreachable for a cross-origin YT iframe,
+so the PIP is a CSS overlay by design). Tap the PIP to expand
+(::after click-catcher keeps the embed from eating the tap); the PIP
+survives the Studio minimizing to the bar. CTA copy: Minimize /
+Expand video. The PIP anchor is +150px above safe-area bottom - the
+bar grows ~3px taller once the time label renders (duration known),
+and the first anchor (+138px) overlapped it by 5px (caught by the
+video-pip scenario's geometry assert, fixed at the anchor, never the
+assert). (2) "support scrub on progress bar": pointer-drag on
+[data-npprog] paints the fill optimistically (the finger owns the
+fill until release - infoDelivery clock yields while scrubbing),
+release sends seekTo. (3) friction "changing apps stops music...
+show as active with no sound": backgrounding ALWAYS pauses a
+non-Premium embed, so on visibilitychange->visible the bar presumes
+PAUSED (play glyph, userPaused) - honest state, one tap resumes; a
+genuine playing report (state 1) flips it back. video-pip scenario
+(20 steps) proves PIP geometry/same-node/survival, synthesized-
+infoDelivery scrub, and synthetic-visibilitychange refocus. [#329]
+M-VIDEO-STATES (2026-08-12, PR #329 round 10): v329->v329-2 - the
+operator liked the PIP and pushed it to its full form: THREE video
+states, one element, iframe never remounts. (1) THEATER replaces the
+embedded video ("rather not have video embedded in page"): the
+expanded video is a floating fixed card (min(100vw-20px,540px),
+16:9, below the topbar) that never sits in document flow - the
+theory content keeps its layout in every video state (zero reflow on
+minimize), and taps in theater REACH the embed (no click-catcher) -
+that is where YouTube's Skip/controls are tappable, one tap from the
+PIP. Auto-min demotes theater->PIP only (never un-parks). The
+fly-out menu z-bumps above the card. (2) The park HANDLE ("hide
+video CTA stuck to left of pip"): a slim 30x86 tab on the PIP's left
+edge collapses the video INTO the bar title - .hid is a zero-size
+clip (NEVER display:none, audio keeps playing), the bar title wears
+a small video chip cue, and the park is SESSION-STICKY (auto-advance
+and studio-minimize respect it - a parked video never pops back
+unasked). (3) "click song name to bring back pip": while parked, the
+first bar tap un-parks the PIP; the next tap expands the Studio as
+always. (4) Row-tap play now shows the PIP immediately (the video
+finally has an affordance without opening the Studio), and
+minimizing the Studio demotes a theater video to the PIP instead of
+audio-clipping it. Alternative considered and declined: video as a
+third Fretboard|Circle seg view - the seg is one-theory-visual-at-a-
+time, and a video view would HIDE the video whenever you look at the
+fretboard, killing exactly the simultaneity the PIP creates.
+video-pip scenario rewritten (27 steps) covering all three states +
+scrub + refocus; uat-batch2 updated to enter theater explicitly.
+Handle needed pointer-events:auto (the mini player container
+disables pointer events broadly - the PIP rule carries the same).
+[#329]
+M-BAR-CONSTANT (2026-08-13, PR #329 round 11): v329-2->v329-3 - two
+operator bursts. (1) "remove the minimize button from the now
+playing element. include a button to minimize that is stuck to the
+PIP overlay": the bar's vidopen CTA swap is RETIRED entirely
+([data-vidmin] gone; the vidopen pp-hide rule gone) - the bar keeps
+ONE constant shape (eq/title/shuffle/prev/pp/next/x + progress/time)
+in every state, and the theater card carries its OWN minimize handle
+[data-thmin]: a full-width 26px bottom bar on the card (sheet-handle
+grammar, chevron down toward the PIP dock). In theater the bar pp
+and the embed's controls are both live - the bar is the app's
+transport. (2) "clicking the song name or even the whole left part
+of the now playing element to show and hide the small docked pip":
+the bar's LEFT zone (equalizer + title/meta, .bt-st-bareq +
+.bt-st-id) is now the PIP TOGGLE both ways - parked -> show, showing
+(pip or theater) -> park - session-sticky in both directions.
+Videoless tracks fall through (no stopPropagation) so their bar tap
+still expands the Studio. CONTRACT CHANGE: the bar title no longer
+expands the Studio for video tracks - the PIP itself is the expand
+affordance (its tap promotes to theater and the bubble opens the
+Studio behind the card); five scenarios migrated from title-tap-
+expands to media-tap-expands (mini-player, uat-batch2/3/6,
+ui-icon-density). Theater width gains a (100vh - 260px)*16/9 budget
+term so card + handle + countdown clear the fixed bar in landscape.
+video-pip now 29 steps (toggle-both-ways + thmin-at-card-bottom + no
+[data-vidmin] anywhere asserts). [#329]
+M-VIDEO-LAYER (2026-08-13, PR #329 round 12): v329-3->v329-4 - the
+video layer is fully DECOUPLED from the Studio (operator: "I don't
+want to switch to the solo view"). (1) The theater loses its
+.studio:not(.mini) gate - the card floats over WHATEVER screen you
+are on (library, Studio, anywhere); expanding the PIP never opens
+the Studio, and minimizing returns you exactly where you were. The
+media click handler stops propagation (the bubble used to reach the
+mini bar's expand) and cancels the countdown (an expanding user owns
+the video - the auto-min must not yank a theater they just asked
+for). (2) The PIP wears a visible MAXIMIZE bar on top ("a button on
+top to maximize to theater view because clicking the skip after an
+ad won't be possible in a small pip") - a 20px top strip mirroring
+the theater's bottom handle (chevron UP = grow), z-raised above the
+::after catcher, no handler (its tap bubbles into the same expand
+path). PIP box 86->106 (bar + video); park handle height paired.
+(3) The Studio door for a video track is the playing row's DETAILS
+CHIP - openStudio was already idempotent for the now-playing track
+(UAT batch 4: expands, never rebuilds - the iframe survives), so the
+chip is a safe re-entry; five scenarios migrated their expand taps
+to it. GOTCHA (third occurrence - now a pattern): ANY new fixed
+element in the video layer MUST carry pointer-events:auto - the mini
+player container disables pointer events broadly, and the theater
+card was tap-dead over the library (Skip included) until the rule
+gained it (caught by the scenario runner's actionability check,
+like the park handle before it). video-pip now 38 steps incl.
+theater-over-library with still-mini assert + maximize-bar geometry.
+[#329]
+M-VIDEO-CTA (2026-08-13, PR #329 round 13): v329-4->v329-5 - CTA
+pass on the video handles (operator: "the buttons on top and side
+(and bottom) of the video screen blend in to the background. need an
+outline or something to CTA. also the arrow icons are different
+sizes"). The video layer's containers (PIP box, park handle, theater
+card) and the handle separators wear the accent-ink outline - the
+SAME live-element grammar as the npLive bar - so every handle reads
+as a control on any backdrop. Chevron glyphs unified at 18px across
+all three handles (were 16/20/20); both attached strips unified at
+24px tall (PIP box 106->110; countdown top calc re-paired). CSS
+only. [#329]
+M-SCRUB-FEEL (2026-08-13, PR #329 round 14): v329-5->v329-6 - three
+operator bursts. (1) "handles need to all be no space between
+video": the park handle sits FLUSH against the PIP's left edge
+(right 168->162, right border dropped, left-only radii - the PIP's
+own border is the seam); top/bottom strips were already attached.
+(2) "scrubber needs to pop out a handle to drag - can't seem to grab
+it... prob can be smaller than 44px - maybe 22": three-part fix -
+a visible 14px thumb knob capping the fill's end (fill ::after,
+surface-ringed; track overflow un-hidden to let it ride), a ~22px
+touch target via the track's ::before extender (biased DOWNWARD -
+the transport buttons live above), and the real accuracy culprit
+KILLED: the fill's .3s width transition was CHASING the finger -
+.scrubbing (JS pointerdown/up/cancel) suspends it so paint is 1:1.
+(3) "the icons on compose are too small (sharp, flat, etc": the
+compose ctrlBar's symbol glyphs (flat/sharp/maximize) were .98rem
+(~15.7px) - now 22px per the icon standard. ROOT CAUSE: the
+ui-icon-density gate never swept Compose - it now does (22 steps),
+and the new sweep was mutation-proven RED against the old .98rem
+sizing before the fix was trusted. [#329]
 ```

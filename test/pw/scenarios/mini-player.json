@@ -79,7 +79,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
       "action": "waitFor",
@@ -88,7 +88,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "bar tap re-expands the SAME Studio DOM (iframe survives - never rebuilt)",
+      "label": "the playing row's details chip re-expands the SAME Studio DOM (idempotent open - iframe survives, never rebuilt); round 12 made the chip the Studio door (bar title = PIP toggle, PIP tap = theater only)",
       "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('studio')&&!p.classList.contains('mini')&&!!p.querySelector('iframe');})()"
     },
     {

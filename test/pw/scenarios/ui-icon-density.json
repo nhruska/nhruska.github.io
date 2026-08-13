@@ -26,7 +26,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-lead"
     },
     {
       "action": "waitFor",
@@ -79,6 +79,29 @@
     {
       "action": "screenshot",
       "name": "stage-icons-standard"
+    },
+    {
+      "action": "evalAssert",
+      "label": "leave the stage (Escape-equivalent: NavHistory dismiss) so the tabbar is reachable",
+      "js": "(function(){if(window.NavHistory){window.NavHistory.dismiss();}return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "act: navigate to the Compose tab for the sweep (round 14 - the compose ctrlBar's sharp/flat/expand glyphs shipped at ~15.7px because this gate never swept Compose)",
+      "js": "(function(){var t=document.querySelector('.tabbar [data-tab=\"compose\"]');if(!t)return false;t.click();return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "COMPOSE sweep: same standard (transpose flat/sharp, maximize, and any other icon-only control on the compose surface)",
+      "js": "(function(){var bad=[];document.querySelectorAll('button,[role=\"button\"]').forEach(function(b){if(b.offsetWidth===0||b.offsetHeight===0)return;var cs=getComputedStyle(b);if(cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return;var svg=Array.prototype.find.call(b.querySelectorAll('svg'),function(s){var r=s.getBoundingClientRect();return r.width>0&&r.height>0;});var anySvg=b.querySelector('svg');var txt=(b.textContent||'').trim();var isSym=/^[^A-Za-z0-9\\s]{1,2}$/.test(txt);var iconOnly=anySvg?(txt.length===0&&!!svg):isSym;if(!iconOnly)return;var box=Math.min(b.offsetWidth,b.offsetHeight);if(box<34)return;if(svg){var r=svg.getBoundingClientRect();var ink=Math.min(r.width,r.height);if(ink<18||ink<0.4*Math.min(box,56))bad.push(b.id||b.className);}else{if(parseFloat(cs.fontSize)<20)bad.push(b.id||b.className);}});window.__iconBad=bad;return bad.length===0;})()"
     }
   ]
 }

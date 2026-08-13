@@ -185,7 +185,101 @@
   /* Video minimize: .min clips the (still-rendered, still-playing) frame to 0
      height via overflow. NEVER display:none - that would stop the audio. */
   .bt-st-media{overflow:hidden;flex:0 0 auto;transition:max-height .2s ease;}
-  .bt-st-media.min{max-height:0;}
+  /* Round 9 ("minimize the video INTO the now playing - use PIP overlay"):
+   the minimized video is a PIP docked above the bar - SAME element flipped
+   to position:fixed, so the iframe never remounts and audio never dies.
+   The ::after click-catcher sits over the iframe so a tap expands (the
+   embed would otherwise eat it); wired in JS. */
+/* Round 13 CTA pass (operator: handles "blend into the background - need an
+   outline"): the video layer's containers wear the accent-ink outline - the
+   SAME live-element grammar as the npLive bar - so every handle reads as a
+   control. Chevron glyphs unified at 18px across all three handles. */
+.bt-st-media.min{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:152px;height:110px;max-height:110px;z-index:95;border:1px solid var(--accent-ink);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px var(--shadow);cursor:pointer;pointer-events:auto;background:#000;transition:none;display:flex;flex-direction:column;}
+.bt-st-media.min .bt-st-frame{height:auto;flex:1;min-height:0;aspect-ratio:auto;padding:0;}
+.bt-st-media.min iframe{width:100%;height:100%;}
+.bt-st-media.min::after{content:'';position:absolute;inset:0;}
+/* Round 12 ("a button on top to maximize to theater view... clicking the skip
+   after an ad won't be possible in a small pip"): the PIP's visible maximize
+   bar - top strip, chevron UP, z-raised above the ::after catcher so it reads
+   as a button (its tap takes the same expand path). The 106px PIP box = this
+   20px bar + the 86px video. */
+.bt-st-thmax{display:none;}
+.bt-st-media.min .bt-st-thmax{
+  display:flex;align-items:center;justify-content:center;height:24px;flex:0 0 auto;
+  position:relative;z-index:1;border:0;border-bottom:1px solid var(--accent-ink);
+  background:var(--surface-2);color:var(--accent-ink);cursor:pointer;padding:0;
+  font-size:18px;line-height:1;
+}
+/* Round 10 ("rather not have video embedded in page"): the EXPANDED video is a
+   floating THEATER card, never document flow - the theory content keeps its
+   layout in every video state (zero reflow on minimize), and taps in theater
+   reach the embed directly (YouTube's Skip/controls live there; the ::after
+   click-catcher applies only to .min). Width caps with the bar's 540px. */
+/* Round 12 ("I don't want to switch to the solo view"): the theater is
+   decoupled from the Studio sheet - .vidopen alone (no .studio:not(.mini)
+   gate), so the card floats over WHATEVER screen you are on (library, Studio,
+   anywhere) and minimizing returns you exactly where you were. */
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid){
+  position:fixed;left:50%;transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top,0px) + 58px);
+  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
+  border:1px solid var(--accent-ink);border-radius:12px;overflow:hidden;
+  background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
+  display:flex;flex-direction:column;
+  /* pointer-events:auto is LOAD-BEARING in mini: the mini player container
+     disables pointer events broadly (same trap the PIP + park handle hit) -
+     without it the whole theater card is tap-dead over the library, Skip
+     included. */
+  pointer-events:auto;
+}
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-frame{aspect-ratio:16/9;flex:0 0 auto;}
+/* Round 11: the card's own minimize handle - a full-width bottom bar on the
+   theater card (sheet-handle grammar, chevron down toward the PIP dock).
+   Hidden in every other state. */
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thmin{
+  display:flex;align-items:center;justify-content:center;width:100%;height:24px;
+  border:0;border-top:1px solid var(--accent-ink);background:var(--surface-2);
+  color:var(--accent-ink);cursor:pointer;padding:0;font-size:18px;line-height:1;
+}
+.bt-st-thmin{display:none;}
+/* The countdown chip rides directly UNDER the theater card (same fixed layer)
+   so Keep open / Minimize now stay tappable. GEOMETRY PAIR with the card
+   above: same width min(); top = card top (58px) + 16:9 height (*0.5625) +
+   the 24px handle + 6px gap. The (100vh - 260px) term budgets landscape:
+   card + handle + countdown must clear the fixed bar. Move all together. */
+.bt-player.studio.vidopen:not(.mini) .bt-st-countdown:not(.done){
+  position:fixed;left:50%;transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px, (100vh - 260px)*1.7778)*0.5625 + 30px);
+  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;box-sizing:border-box;
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;
+}
+/* Round 10 .hid: the video parked INTO the bar title - a zero-size clip (NEVER
+   display:none, audio must keep playing), untouchable until restored. */
+.bt-st-media.hid{position:fixed;width:0;height:0;max-height:0;border:0;box-shadow:none;pointer-events:none;overflow:hidden;}
+/* Round 10: the park handle stuck to the PIP's LEFT edge (operator ask) - a
+   slim vertical tab, chevron pointing down INTO the bar. GEOMETRY PAIR with
+   .bt-st-media.min above: right = PIP right (10px) + PIP width (152px) + 6px
+   gap; bottom matches the PIP anchor. Move them together. */
+.bt-st-piphide{display:none;}
+.bt-st-media.min + .bt-st-piphide{
+  display:flex;align-items:center;justify-content:center;
+  position:fixed;right:162px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);
+  width:30px;height:110px;z-index:95;padding:0;pointer-events:auto;
+  /* Round 14 ("no space between video"): FLUSH against the PIP's left edge -
+     right = PIP right (10px) + PIP width (152px), no gap; the PIP's own left
+     border is the seam, so this tab drops its right border and right radii. */
+  border:1px solid var(--accent-ink);border-right:0;border-radius:10px 0 0 10px;
+  background:var(--surface-2);color:var(--accent-ink);cursor:pointer;
+  font-size:18px;line-height:1;
+}
+.bt-st-media.min + .bt-st-piphide:active{transform:scale(.94);}
+/* Round 10: while the video is parked (.vidhid on the player), the bar title
+   wears a small video chip - the cue that a tap here brings the PIP back. */
+.bt-player.vidhid .bt-st-t::before{
+  content:'\25B8';display:inline-block;margin-right:6px;padding:0 4px;
+  border:1px solid var(--accent-ink);border-radius:4px;color:var(--accent-ink);
+  font-size:.7em;line-height:1.5;vertical-align:1px;
+}
   /* Auto-collapse countdown: a draining progress bar (standard auto-dismiss
      affordance) + a live caption. .done hides it once fired or cancelled. */
   .bt-st-countdown{position:relative;padding:6px 12px 8px;flex:0 0 auto;font-family:'Space Mono',monospace;
@@ -228,10 +322,23 @@
      block wins at flex:2, above) so the title stays readable at 412px. */
   /* UAT batch 6 ("can't see the total length... at a glance"): the TRACK
      carries an accent border so the bar's full extent reads even while the
-     unplayed portion is empty. box-sizing keeps the 8px total height. */
+     unplayed portion is empty. box-sizing keeps the 8px total height.
+     Round 14 ("scrubber needs to pop out a handle to drag... maybe 22"):
+     overflow is VISIBLE now so the thumb can ride the fill's end; the
+     ::before extends the touch target to ~22px (biased downward - the
+     transport buttons live above), and .scrubbing (JS) kills the width
+     transition so the fill tracks the finger 1:1 instead of chasing it. */
   .bt-st-np-prog{flex:1 1 0;min-width:36px;height:8px;border-radius:4px;background:var(--surface-2);
-    border:1px solid var(--accent-dim);box-sizing:border-box;overflow:hidden;}
-  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);transition:width .3s linear;}
+    border:1px solid var(--accent-dim);box-sizing:border-box;position:relative;}
+  .bt-st-np-prog::before{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-10px;}
+  .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);
+    border-radius:3px 0 0 3px;transition:width .3s linear;position:relative;}
+  .bt-st-np-prog.scrubbing > i{transition:none;}
+  /* the drag thumb - a 14px knob capping the fill's end, ringed with the
+     surface color so it pops off both the filled and empty track */
+  .bt-st-np-prog > i::after{content:'';position:absolute;right:-7px;top:50%;
+    transform:translateY(-50%);width:14px;height:14px;border-radius:50%;
+    background:var(--accent-ink);border:2px solid var(--surface);box-sizing:border-box;}
   /* prev/next (UAT batch 6): compact steps flanking the pp, same surface-2
      control grammar. 44px floor both axes. */
   .bt-st-np-step{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line-strong);
@@ -254,7 +361,9 @@
      full-width tappable rows. Absolute so it overlays the body instead of
      pushing the circle/fretboard down (the whole point - keep both above the
      fold). Hidden by default via the [hidden] attr JS toggles. */
-  .bt-st-menu{position:absolute;top:100%;right:8px;z-index:30;margin-top:4px;
+  /* z 97: the fly-out must paint over the THEATER card (z 96) - the burger sits
+     in the topbar directly above where the card floats (round 10). */
+  .bt-st-menu{position:absolute;top:100%;right:8px;z-index:97;margin-top:4px;
     min-width:min(280px,calc(100vw - 32px));max-width:calc(100vw - 24px);
     background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-card);
     box-shadow:0 10px 28px rgba(0,0,0,.4);padding:8px;display:flex;flex-direction:column;gap:6px;}
@@ -693,25 +802,18 @@
   /* flex/max-width/border/overflow neutralize the landscape two-pane split
      rules leaking into the (invisible) stage shell. */
   .bt-player.mini .bt-st-stage{flex:0 0 auto;min-width:0;max-width:none;border-right:0;overflow:visible;}
-  .bt-player.mini .bt-st-stage > :not(.bt-st-media){display:none;}
-  .bt-player.mini .bt-st-media{max-height:0;overflow:hidden;}
+  .bt-player.mini .bt-st-stage > :not(.bt-st-media):not(.bt-st-piphide){display:none;}
+  /* An EXPANDED video still collapses to clipped audio when the whole Studio
+   minimizes (unchanged); a PIP'd video keeps its fixed overlay - the :not
+   scope keeps the old clip off it. */
+.bt-player.mini:not(.vidopen) .bt-st-media:not(.min){max-height:0;overflow:hidden;}
 
-  /* One-transport-owner (UAT 2026-08-08, "three play buttons"): while the video
-     is EXPANDED (.vidopen, kept honest by setMin), YouTube's own controls own
-     transport - the bar's pp/progress/time hide and the freed slot carries
-     the Hide-video CTA. Hiding the video hands transport (back) to the bar.
-     Mini is exempt (:not(.mini)): the bar ALWAYS owns transport when the video
-     surface is off-screen. */
-  .bt-st-vidmin{display:none;}
-  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp{display:none;}
-  .bt-player.studio.vidopen:not(.mini) .bt-st-vidmin{display:inline-flex;align-items:center;gap:7px;
-    min-height:44px;padding:0 14px;flex:0 0 auto;border:1px solid var(--line-strong);
-    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-family:inherit;font-size:.78rem;font-weight:600;line-height:1;}
-  .bt-st-vidmin:active{transform:scale(.96);}
-  .bt-st-vidmin-gl{font-size:1.05rem;line-height:1;}
-  /* Sub-380px phones: icon-only (aria-label carries the name). */
-  @media (max-width:379px){ .bt-st-vidmin-lbl{display:none;} }
+  /* Round 11 ("remove the minimize button from the now playing element"): the
+     old one-transport-owner swap (vidopen hid the pp and seated a Minimize CTA)
+     is retired - the bar keeps its ONE constant shape (pp/progress/time) in
+     EVERY state, and the theater card carries its own minimize handle
+     (.bt-st-thmin, defined with the media states above). In theater the
+     embed's own controls are also live - the bar remains the app's transport. */
 
   /* ---- UAT batch 4: the bar POPS while something is playing ----
      npLive (set with the same dispatch that lights the rows) gates the accent

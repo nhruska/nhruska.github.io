@@ -47,7 +47,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
       "action": "waitFor",

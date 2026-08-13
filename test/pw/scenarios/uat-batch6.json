@@ -46,7 +46,7 @@
       "js": "(function(){var p=document.querySelector('.bt-player');var f=p.querySelector('iframe');if(!f||f.src.indexOf('/embed/hg6kcvOH5I4')<0)return false;var r=document.querySelector('[data-npkey=\"mellow reggae jam in a major|subfunc jam tracks|A|major\"]');return !!r&&r.classList.contains('isPlaying')&&p.classList.contains('mini');})()"
     },
     { "action": "screenshot", "name": "auto-advanced" },
-    { "action": "tap", "selector": ".bt-player.mini .bt-st-t" },
+    { "action": "tap", "selector": "[data-npkey='mellow reggae jam in a major|subfunc jam tracks|A|major'] .li-lead" },
     { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
     {
       "action": "evalAssert",
