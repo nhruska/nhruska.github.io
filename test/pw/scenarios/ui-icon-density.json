@@ -26,12 +26,20 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": ".bt-player.mini .bt-st-media"
     },
     {
       "action": "waitFor",
       "selector": ".bt-player.studio:not(.mini) .bt-st-body",
       "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
     },
     {
       "action": "evalAssert",

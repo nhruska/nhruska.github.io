@@ -56,20 +56,12 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": ".bt-player.mini .bt-st-media"
     },
     {
       "action": "waitFor",
       "selector": ".bt-player.studio:not(.mini) .bt-st-body",
       "timeoutMs": 6000
-    },
-    {
-      "action": "tap",
-      "selector": ".bt-st-media"
-    },
-    {
-      "action": "wait",
-      "ms": 350
     },
     {
       "action": "tapIfVisible",
@@ -82,8 +74,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-4/v7: video expanded -> the pp swaps for the Hide-video CTA; the progress ROW stays (the bar keeps ONE constant shape - don't-move)",
-      "js": "(function(){var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');var pr=document.querySelector('.bt-player [data-npprog]');return !!v&&v.offsetParent!==null&&!!pp&&pp.offsetParent===null&&!!pr&&pr.offsetParent!==null;})()"
+      "label": "UAT-4/v7 (round 11): video expanded -> the bar keeps its ONE constant shape - pp AND progress stay visible, NO bar video CTA exists in any state, and the theater card carries its own minimize handle",
+      "js": "(function(){if(document.querySelector('[data-vidmin]'))return false;var pp=document.querySelector('.bt-player [data-nppp]');var pr=document.querySelector('.bt-player [data-npprog]');if(!pp||pp.offsetParent===null||!pr||pr.offsetParent===null)return false;var h=document.querySelector('[data-thmin]');return !!h&&h.getBoundingClientRect().height>0;})()"
     },
     {
       "action": "screenshot",
@@ -104,12 +96,12 @@
     },
     {
       "action": "tap",
-      "selector": "[data-vidmin]"
+      "selector": "[data-thmin]"
     },
     {
       "action": "evalAssert",
-      "label": "UAT-4b: Hide video hands transport to the bar - media clipped (.min), pp+progress visible, CTA gone",
-      "js": "(function(){var m=document.querySelector('[data-media]');var v=document.querySelector('[data-vidmin]');var pp=document.querySelector('.bt-player [data-nppp]');return !!m&&m.classList.contains('min')&&!!pp&&pp.offsetParent!==null&&!!v&&v.offsetParent===null;})()"
+      "label": "UAT-4b (round 11): the card's own handle minimizes to the PIP - media .min, pp+progress still visible (constant bar), the handle gone with the theater",
+      "js": "(function(){var m=document.querySelector('[data-media]');var pp=document.querySelector('.bt-player [data-nppp]');var h=document.querySelector('[data-thmin]');return !!m&&m.classList.contains('min')&&!!pp&&pp.offsetParent!==null&&!!h&&h.getBoundingClientRect().height===0;})()"
     },
     {
       "action": "screenshot",
@@ -135,7 +127,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": ".bt-player.mini .bt-st-media"
     },
     {
       "action": "waitFor",

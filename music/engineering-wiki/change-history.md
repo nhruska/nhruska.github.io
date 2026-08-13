@@ -607,4 +607,29 @@ scrub + refocus; uat-batch2 updated to enter theater explicitly.
 Handle needed pointer-events:auto (the mini player container
 disables pointer events broadly - the PIP rule carries the same).
 [#329]
+M-BAR-CONSTANT (2026-08-13, PR #329 round 11): v329-2->v329-3 - two
+operator bursts. (1) "remove the minimize button from the now
+playing element. include a button to minimize that is stuck to the
+PIP overlay": the bar's vidopen CTA swap is RETIRED entirely
+([data-vidmin] gone; the vidopen pp-hide rule gone) - the bar keeps
+ONE constant shape (eq/title/shuffle/prev/pp/next/x + progress/time)
+in every state, and the theater card carries its OWN minimize handle
+[data-thmin]: a full-width 26px bottom bar on the card (sheet-handle
+grammar, chevron down toward the PIP dock). In theater the bar pp
+and the embed's controls are both live - the bar is the app's
+transport. (2) "clicking the song name or even the whole left part
+of the now playing element to show and hide the small docked pip":
+the bar's LEFT zone (equalizer + title/meta, .bt-st-bareq +
+.bt-st-id) is now the PIP TOGGLE both ways - parked -> show, showing
+(pip or theater) -> park - session-sticky in both directions.
+Videoless tracks fall through (no stopPropagation) so their bar tap
+still expands the Studio. CONTRACT CHANGE: the bar title no longer
+expands the Studio for video tracks - the PIP itself is the expand
+affordance (its tap promotes to theater and the bubble opens the
+Studio behind the card); five scenarios migrated from title-tap-
+expands to media-tap-expands (mini-player, uat-batch2/3/6,
+ui-icon-density). Theater width gains a (100vh - 260px)*16/9 budget
+term so card + handle + countdown clear the fixed bar in landscape.
+video-pip now 29 steps (toggle-both-ways + thmin-at-card-bottom + no
+[data-vidmin] anywhere asserts). [#329]
 ```

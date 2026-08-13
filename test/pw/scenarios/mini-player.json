@@ -79,7 +79,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": ".bt-player.mini .bt-st-media"
     },
     {
       "action": "waitFor",
@@ -88,7 +88,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "bar tap re-expands the SAME Studio DOM (iframe survives - never rebuilt)",
+      "label": "PIP tap re-expands the SAME Studio DOM (iframe survives - never rebuilt); round 11 moved the expand from the bar title (now the PIP toggle) to the video itself",
       "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('studio')&&!p.classList.contains('mini')&&!!p.querySelector('iframe');})()"
     },
     {

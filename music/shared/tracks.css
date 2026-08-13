@@ -202,16 +202,28 @@
 .bt-player.studio.vidopen:not(.mini) .bt-st-media:not(.min):not(.hid){
   position:fixed;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 58px);
-  width:min(100vw - 20px, 540px);z-index:96;
+  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
   border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;
   background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
 }
+/* Round 11: the card's own minimize handle - a full-width bottom bar on the
+   theater card (sheet-handle grammar, chevron down toward the PIP dock).
+   Hidden in every other state. */
+.bt-player.studio.vidopen:not(.mini) .bt-st-media:not(.min):not(.hid) .bt-st-thmin{
+  display:flex;align-items:center;justify-content:center;width:100%;height:26px;
+  border:0;border-top:1px solid var(--line-strong);background:var(--surface-2);
+  color:var(--accent-ink);cursor:pointer;padding:0;font-size:20px;line-height:1;
+}
+.bt-st-thmin{display:none;}
 /* The countdown chip rides directly UNDER the theater card (same fixed layer)
-   so Keep open / Minimize now stay tappable - top = card top + 16:9 height. */
+   so Keep open / Minimize now stay tappable. GEOMETRY PAIR with the card
+   above: same width min(); top = card top (58px) + 16:9 height (*0.5625) +
+   the 26px handle + 6px gap. The (100vh - 260px) term budgets landscape:
+   card + handle + countdown must clear the fixed bar. Move all together. */
 .bt-player.studio.vidopen:not(.mini) .bt-st-countdown:not(.done){
   position:fixed;left:50%;transform:translateX(-50%);
-  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px)*0.5625 + 6px);
-  width:min(100vw - 20px, 540px);z-index:96;box-sizing:border-box;
+  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px, (100vh - 260px)*1.7778)*0.5625 + 32px);
+  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;box-sizing:border-box;
   background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;
 }
 /* Round 10 .hid: the video parked INTO the bar title - a zero-size clip (NEVER
@@ -753,22 +765,12 @@
    scope keeps the old clip off it. */
 .bt-player.mini .bt-st-media:not(.min){max-height:0;overflow:hidden;}
 
-  /* One-transport-owner (UAT 2026-08-08, "three play buttons"): while the video
-     is EXPANDED (.vidopen, kept honest by setMin), YouTube's own controls own
-     transport - the bar's pp/progress/time hide and the freed slot carries
-     the Hide-video CTA. Hiding the video hands transport (back) to the bar.
-     Mini is exempt (:not(.mini)): the bar ALWAYS owns transport when the video
-     surface is off-screen. */
-  .bt-st-vidmin{display:none;}
-  .bt-player.studio.vidopen:not(.mini) .bt-st-np-pp{display:none;}
-  .bt-player.studio.vidopen:not(.mini) .bt-st-vidmin{display:inline-flex;align-items:center;gap:7px;
-    min-height:44px;padding:0 14px;flex:0 0 auto;border:1px solid var(--line-strong);
-    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-family:inherit;font-size:.78rem;font-weight:600;line-height:1;}
-  .bt-st-vidmin:active{transform:scale(.96);}
-  .bt-st-vidmin-gl{font-size:1.05rem;line-height:1;}
-  /* Sub-380px phones: icon-only (aria-label carries the name). */
-  @media (max-width:379px){ .bt-st-vidmin-lbl{display:none;} }
+  /* Round 11 ("remove the minimize button from the now playing element"): the
+     old one-transport-owner swap (vidopen hid the pp and seated a Minimize CTA)
+     is retired - the bar keeps its ONE constant shape (pp/progress/time) in
+     EVERY state, and the theater card carries its own minimize handle
+     (.bt-st-thmin, defined with the media states above). In theater the
+     embed's own controls are also live - the bar remains the app's transport. */
 
   /* ---- UAT batch 4: the bar POPS while something is playing ----
      npLive (set with the same dispatch that lights the rows) gates the accent

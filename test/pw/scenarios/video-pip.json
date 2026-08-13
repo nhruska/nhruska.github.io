@@ -1,6 +1,6 @@
 {
   "name": "video-pip",
-  "note": "Rounds 9+10 (operator UAT 2026-08-10/12). THREE video states, ONE element, the iframe never remounts (audio never dies): THEATER - floating card overlay, never document flow ('rather not have video embedded in page'), taps reach the embed (YouTube's Skip lives there); PIP - docked 152x86 above the bar, tap expands to theater, with the park HANDLE stuck to its LEFT edge ('hide video CTA stuck to left of pip'); HID - parked INTO the bar title ('collapses pip into the song name'), zero-size clip with audio alive, the title wears a cue and a bar tap un-parks first ('click song name to bring back pip'). Row-tap play shows the PIP immediately; the park is session-sticky. Plus round 9's scrub (synthesized infoDelivery) and refocus honesty (synthetic visibilitychange). Native requestPictureInPicture is unreachable for a cross-origin YT iframe - the PIP is a CSS overlay by design.",
+  "note": "Rounds 9-11 (operator UAT 2026-08-10/12). THREE video states, ONE element, the iframe never remounts (audio never dies): THEATER - floating card overlay, never document flow ('rather not have video embedded in page'), taps reach the embed (YouTube's Skip lives there), and the card carries its OWN minimize handle ('include a button to minimize that is stuck to the PIP overlay' - the bar has NO video CTA in any state, its shape is constant); PIP - docked 152x86 above the bar, tap expands to theater (opening the Studio behind it - the primary expand affordance since the title became the toggle), with the park HANDLE stuck to its LEFT edge; HID - parked INTO the bar title, zero-size clip with audio alive. The bar's LEFT zone (eq + title/meta) TOGGLES the dock both ways ('clicking the song name or even the whole left part... to show and hide the small docked pip'), session-sticky. Plus round 9's scrub (synthesized infoDelivery) and refocus honesty (synthetic visibilitychange). Native requestPictureInPicture is unreachable for a cross-origin YT iframe - the PIP is a CSS overlay by design.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -51,12 +51,33 @@
     },
     {
       "action": "evalAssert",
-      "label": "UN-PARK: the first bar tap brings the PIP back (min, visible, same iframe) WITHOUT expanding the Studio - the bar was the video's collapsed form",
+      "label": "UN-PARK: a left-zone tap brings the PIP back (min, visible, same iframe) WITHOUT expanding the Studio - the bar is the video's collapsed form",
       "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('mini'))return false;if(p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();return r.width>130&&r.height>60&&m.querySelector('iframe')===window.__pipFrame;})()"
     },
     {
       "action": "tap",
       "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "TOGGLE both ways: the same left-zone tap PARKS the showing PIP again (round 11 - 'show and hide the small docked pip'), still mini, audio-alive iframe untouched",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('mini'))return false;if(!p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;return m.querySelector('iframe')===window.__pipFrame&&window.__pipFrame.isConnected;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-media"
     },
     {
       "action": "waitFor",
@@ -65,12 +86,16 @@
     },
     {
       "action": "evalAssert",
-      "label": "the NEXT bar tap expands the Studio as always - the PIP rides along intact (still min, same iframe), and the menu offers Expand video; also cancel the auto-minimize countdown so the theater asserts below are deterministic",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Expand video')return false;var k=document.querySelector('[data-keepopen]');if(k)k.click();return true;})()"
+      "label": "PIP tap = the expand affordance: one tap opens the Studio AND promotes the video to THEATER - fixed floating card (never document flow), NO click-catcher (taps reach the embed - Skip is tappable HERE), same iframe, the card's OWN minimize handle at its bottom, the bar keeps pp visible (constant shape - no bar video CTA exists), menu reads Minimize video, countdown (if live) fully BELOW the card; countdown cancelled for determinism",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||p.classList.contains('mini'))return false;if(document.querySelector('[data-vidmin]'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;if(getComputedStyle(m).position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<3&&r.top>40&&r.top<120))return false;if(getComputedStyle(m,'::after').content!=='none')return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var h=document.querySelector('[data-thmin]');if(!h)return false;var hr=h.getBoundingClientRect();if(!(hr.height>20&&Math.abs(hr.bottom-r.bottom)<3&&hr.width>300))return false;var pp=document.querySelector('.bt-player [data-nppp]');if(!pp||pp.offsetParent===null)return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Minimize video')return false;var cd=document.querySelector('[data-countdown]');if(cd&&!cd.classList.contains('done')){var cr=cd.getBoundingClientRect();if(cr.top<r.bottom-2)return false;}var k=document.querySelector('[data-keepopen]');if(k)k.click();return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-over-studio"
     },
     {
       "action": "evalAssert",
-      "label": "SCRUB: synthesize the embed's duration report, then pointer-drag the progress bar to ~60% - the fill tracks the finger and lands at 60, same iframe untouched",
+      "label": "SCRUB (in theater - the bar transport stays live): synthesize the embed's duration report, then pointer-drag the progress bar to ~60% - the fill tracks the finger and lands at 60, same iframe untouched",
       "js": "(function(){window.dispatchEvent(new MessageEvent('message',{data:JSON.stringify({event:'infoDelivery',info:{duration:100,currentTime:10}})}));var p=document.querySelector('[data-npprog]');if(!p)return false;var r=p.getBoundingClientRect();if(!(r.width>0))return false;var x0=r.left+r.width*0.2,x1=r.left+r.width*0.6,y=r.top+r.height/2;function ev(type,x){p.dispatchEvent(new PointerEvent(type,{pointerId:7,clientX:x,clientY:y,bubbles:true,cancelable:true}));}ev('pointerdown',x0);ev('pointermove',x1);ev('pointerup',x1);var now=parseInt(p.getAttribute('aria-valuenow'),10);var w=parseFloat(document.querySelector('[data-npfill]').style.width);return now===60 && Math.abs(w-60)<2 && document.querySelector('.bt-st-media iframe')===window.__pipFrame;})()"
     },
     {
@@ -80,24 +105,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-st-media"
-    },
-    {
-      "action": "wait",
-      "ms": 350
-    },
-    {
-      "action": "evalAssert",
-      "label": "THEATER: tapping the PIP expands to the floating card - fixed overlay (never document flow), centered at min(100vw-20px,540px) wide, NO click-catcher (taps reach the embed - Skip is tappable HERE), same iframe, bar CTA reads Minimize, menu reads Minimize video, countdown chip (if still live) sits fully BELOW the card",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;var cs=getComputedStyle(m);if(cs.position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<3&&r.top>40&&r.top<120))return false;if(getComputedStyle(m,'::after').content!=='none')return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var l=document.querySelector('.bt-st-vidmin-lbl');if(!l||l.textContent.trim()!=='Minimize')return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Minimize video')return false;var cd=document.querySelector('[data-countdown]');if(cd&&!cd.classList.contains('done')){var cr=cd.getBoundingClientRect();if(cr.top<r.bottom-2)return false;}return true;})()"
-    },
-    {
-      "action": "screenshot",
-      "name": "theater-over-studio"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-vidmin]"
+      "selector": "[data-thmin]"
     },
     {
       "action": "wait",
@@ -105,7 +113,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "Minimize returns the theater to the PIP (min, docked, handle back)",
+      "label": "the card's own handle minimizes the theater to the PIP (min, docked, park handle back) - the bar never carried the CTA",
       "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var h=document.querySelector('[data-piphide]');return !!h&&h.getBoundingClientRect().width>0&&m.querySelector('iframe')===window.__pipFrame;})()"
     },
     {
