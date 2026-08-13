@@ -190,7 +190,11 @@
    to position:fixed, so the iframe never remounts and audio never dies.
    The ::after click-catcher sits over the iframe so a tap expands (the
    embed would otherwise eat it); wired in JS. */
-.bt-st-media.min{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:152px;height:106px;max-height:106px;z-index:95;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px var(--shadow);cursor:pointer;pointer-events:auto;background:#000;transition:none;display:flex;flex-direction:column;}
+/* Round 13 CTA pass (operator: handles "blend into the background - need an
+   outline"): the video layer's containers wear the accent-ink outline - the
+   SAME live-element grammar as the npLive bar - so every handle reads as a
+   control. Chevron glyphs unified at 18px across all three handles. */
+.bt-st-media.min{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:152px;height:110px;max-height:110px;z-index:95;border:1px solid var(--accent-ink);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px var(--shadow);cursor:pointer;pointer-events:auto;background:#000;transition:none;display:flex;flex-direction:column;}
 .bt-st-media.min .bt-st-frame{height:auto;flex:1;min-height:0;aspect-ratio:auto;padding:0;}
 .bt-st-media.min iframe{width:100%;height:100%;}
 .bt-st-media.min::after{content:'';position:absolute;inset:0;}
@@ -201,10 +205,10 @@
    20px bar + the 86px video. */
 .bt-st-thmax{display:none;}
 .bt-st-media.min .bt-st-thmax{
-  display:flex;align-items:center;justify-content:center;height:20px;flex:0 0 auto;
-  position:relative;z-index:1;border:0;border-bottom:1px solid var(--line-strong);
+  display:flex;align-items:center;justify-content:center;height:24px;flex:0 0 auto;
+  position:relative;z-index:1;border:0;border-bottom:1px solid var(--accent-ink);
   background:var(--surface-2);color:var(--accent-ink);cursor:pointer;padding:0;
-  font-size:16px;line-height:1;
+  font-size:18px;line-height:1;
 }
 /* Round 10 ("rather not have video embedded in page"): the EXPANDED video is a
    floating THEATER card, never document flow - the theory content keeps its
@@ -219,7 +223,7 @@
   position:fixed;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 58px);
   width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
-  border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;
+  border:1px solid var(--accent-ink);border-radius:12px;overflow:hidden;
   background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
   display:flex;flex-direction:column;
   /* pointer-events:auto is LOAD-BEARING in mini: the mini player container
@@ -233,19 +237,19 @@
    theater card (sheet-handle grammar, chevron down toward the PIP dock).
    Hidden in every other state. */
 .bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thmin{
-  display:flex;align-items:center;justify-content:center;width:100%;height:26px;
-  border:0;border-top:1px solid var(--line-strong);background:var(--surface-2);
-  color:var(--accent-ink);cursor:pointer;padding:0;font-size:20px;line-height:1;
+  display:flex;align-items:center;justify-content:center;width:100%;height:24px;
+  border:0;border-top:1px solid var(--accent-ink);background:var(--surface-2);
+  color:var(--accent-ink);cursor:pointer;padding:0;font-size:18px;line-height:1;
 }
 .bt-st-thmin{display:none;}
 /* The countdown chip rides directly UNDER the theater card (same fixed layer)
    so Keep open / Minimize now stay tappable. GEOMETRY PAIR with the card
    above: same width min(); top = card top (58px) + 16:9 height (*0.5625) +
-   the 26px handle + 6px gap. The (100vh - 260px) term budgets landscape:
+   the 24px handle + 6px gap. The (100vh - 260px) term budgets landscape:
    card + handle + countdown must clear the fixed bar. Move all together. */
 .bt-player.studio.vidopen:not(.mini) .bt-st-countdown:not(.done){
   position:fixed;left:50%;transform:translateX(-50%);
-  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px, (100vh - 260px)*1.7778)*0.5625 + 32px);
+  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px, (100vh - 260px)*1.7778)*0.5625 + 30px);
   width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;box-sizing:border-box;
   background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;
 }
@@ -260,10 +264,10 @@
 .bt-st-media.min + .bt-st-piphide{
   display:flex;align-items:center;justify-content:center;
   position:fixed;right:168px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);
-  width:30px;height:106px;z-index:95;padding:0;pointer-events:auto;
-  border:1px solid var(--line-strong);border-radius:10px;
+  width:30px;height:110px;z-index:95;padding:0;pointer-events:auto;
+  border:1px solid var(--accent-ink);border-radius:10px;
   background:var(--surface-2);color:var(--accent-ink);cursor:pointer;
-  font-size:20px;line-height:1;
+  font-size:18px;line-height:1;
 }
 .bt-st-media.min + .bt-st-piphide:active{transform:scale(.94);}
 /* Round 10: while the video is parked (.vidhid on the player), the bar title

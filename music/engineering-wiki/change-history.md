@@ -659,4 +659,15 @@ gained it (caught by the scenario runner's actionability check,
 like the park handle before it). video-pip now 38 steps incl.
 theater-over-library with still-mini assert + maximize-bar geometry.
 [#329]
+M-VIDEO-CTA (2026-08-13, PR #329 round 13): v329-4->v329-5 - CTA
+pass on the video handles (operator: "the buttons on top and side
+(and bottom) of the video screen blend in to the background. need an
+outline or something to CTA. also the arrow icons are different
+sizes"). The video layer's containers (PIP box, park handle, theater
+card) and the handle separators wear the accent-ink outline - the
+SAME live-element grammar as the npLive bar - so every handle reads
+as a control on any backdrop. Chevron glyphs unified at 18px across
+all three handles (were 16/20/20); both attached strips unified at
+24px tall (PIP box 106->110; countdown top calc re-paired). CSS
+only. [#329]
 ```
