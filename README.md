@@ -1,59 +1,70 @@
 # nhruska.github.io
 
-Personal site for Nik Hruska, served at https://nhruska.github.io/.
+Personal site for Nik Hruska, served by GitHub Pages from `main` at https://nhruska.github.io/.
 
-The **root** is a Problem Solutions brand portfolio (dark mode). Personal builds live in their own sections, each a self-contained single-file app - no build step.
+Two parts live here: a portfolio landing page at the root, and the **Music app** - the real product - under `music/`.
 
-The root `index.html` is **generated** (git-scraping style, after Simon Willison): a daily GitHub Action regenerates it from a template + curated data + the live GitHub API, then commits the result back to `main`. The music section stays hand-authored.
+| Page | URL |
+|---|---|
+| Portfolio | https://nhruska.github.io/ |
+| Music launcher | https://nhruska.github.io/music/ |
+| Music app | https://nhruska.github.io/music/play/ |
 
 ## Structure
 
 ```
 /
-├── index.html              # GENERATED portfolio (Problem Solutions brand, dark) — do not hand-edit
-├── scripts/
-│   ├── template.html       # the PS-brand page template (injection slots)
-│   ├── data.json           # curated content: hero text, featured Music build, Elsewhere links
-│   └── generate.py         # stdlib-only builder: template + data + GitHub API -> index.html
-└── music/
-    ├── index.html          # music hub (instrument-grouped: Ukulele · Guitar)
-    └── ukulele/
-        ├── index.html      # Ukulele performance kit (tuner + composer + songbook + perform)
+├── index.html               # portfolio landing (Problem Solutions brand, dark)
+├── scripts/                 # site tooling (portfolio generator, validators, ops)
+│   ├── template.html        #   portfolio page template
+│   ├── data.json            #   curated portfolio content
+│   └── generate.py          #   stdlib-only builder: template + data + GitHub API -> index.html
+├── music/
+│   ├── index.html           # launcher (cards -> the app)
+│   ├── play/                # the app shell (tabs: Songs / Compose / Tune)
+│   ├── shared/              # instrument-agnostic runtime: songbook, tracks/Studio,
+│   │                        #   tuner, theory, diagrams, audio, CSS, per-instrument profiles
+│   ├── backing-tracks/      # curated YouTube backing-track catalog (tracks.json)
+│   ├── sw.js                # service worker: offline + installable PWA
+│   ├── engineering-wiki/    # canonical system knowledge for the app
+│   └── CLAUDE.md            # app conventions (cache-bump law, note spelling, testing)
+└── test/                    # node unit suite + declarative Playwright scenarios (test/pw/)
 ```
 
-URLs:
+## The Music app
 
-| Page | URL |
-|---|---|
-| Portfolio | https://nhruska.github.io/ |
-| Music hub | https://nhruska.github.io/music/ |
-| Music app | https://nhruska.github.io/music/ukulele/ |
+A static, no-build-step PWA: classic script tags, vanilla JS, external CSS. It works offline once visited (service-worker cached), installs to a phone home screen, and supports multiple instruments via profiles (ukulele, guitar, banjo, mandolin, mandola) - switch with the `?p=` query, e.g. `music/play/?p=guitar-standard`.
 
-## Add a build
+What it does: a harmony teacher wrapped in a music player. Tap a jam to play its backing track, solo over it with the key-aware fretboard and circle-of-fifths Studio, build and save chord progressions, keep a setlist, tune with the mic. YouTube embeds stay behind an explicit tap and the video hides by default - audio-first.
 
-1. Drop the app folder where it belongs (a new instrument under `music/`, or a new top-level section).
-2. Add one entry to the data source:
-   - Portfolio "Builds" section -> `builds` array in `scripts/data.json`, then run `python scripts/generate.py` (or let the daily Action do it).
-   - Music tool -> `PROJECTS` array in `music/index.html`.
-3. Commit / push. The card renders itself - tile, filters, search and counts are automatic.
+The build stamp in Settings (e.g. `v329-6`) names the exact PR that produced the deployed build.
 
-## Regenerate the portfolio
+## Development
+
+There is no build step - edit, test, push. Conventions that bite live in [music/CLAUDE.md](music/CLAUDE.md) (service-worker cache-bump pairing, key-aware note spelling, storage schema rules) and the [engineering wiki](music/engineering-wiki/) is canonical for system knowledge.
+
+Tests:
 
 ```
-python scripts/generate.py     # writes ./index.html ; stdlib only, no deps
+node test/run-all.js                                   # unit suite (runs in CI on PRs)
+python3 test/pw/run-scenario.py test/pw/scenarios/<name>.json   # one Playwright usage flow
 ```
 
-- The **Open source** section is built from `https://api.github.com/users/nhruska/repos` (public, non-fork, non-archived, freshest first). It runs unauthenticated locally (rate-limited) and authenticated in CI via the built-in `GITHUB_TOKEN`.
-- If the API is unreachable, the build reuses the last-good repo list embedded in the current `index.html` (or falls back to a profile-link card) — it never ships a broken page.
-- `.github/workflows/build.yml` runs `generate.py` on a daily schedule, on `workflow_dispatch`, and on pushes that touch `scripts/**`, then commits the regenerated `index.html` back to `main` with `[skip ci]`.
+Workflows: `tests.yml` (unit suite on PRs), `pr-preview.yml` (posts tappable githack preview links on PRs), `playlist-sync.yml` (manual playlist-to-catalog sync), `cc-nightly.yml` (command-center snapshot), `retry-pages-deploy.yml` (Pages deploy retry).
+
+## The portfolio page
+
+The root `index.html` is built by `scripts/generate.py` (stdlib only) from `scripts/template.html` + `scripts/data.json` + the public GitHub API. The old daily auto-regeneration workflow is retired (`build.yml.disabled`) - regenerate manually when the portfolio content changes:
+
+```
+python scripts/generate.py     # writes ./index.html
+```
+
+If the GitHub API is unreachable it reuses the last-good repo list embedded in the current page, so it never ships a broken section.
 
 ## Conventions
 
-- **Single-file apps.** Each tool is one `index.html` (inline CSS + JS). No dependencies, no build.
-- **Two registers.** The root portfolio uses the Problem Solutions brand (sky `#29AAE1`, Poppins, the PROBLEM SOLUTIONS wordmark). The music section keeps its own dark-teal aesthetic (`#5eead4`, Inter + Space Mono).
-- **https unlocks the mic.** The music app's microphone auto-tuner needs https (works on GitHub Pages, blocked on local `file://`).
-- **Lyrics / IP.** Music tools show only short chord-over-lyric snippets and link out to licensed full lyrics - never full lyrics.
-
-## Deploy
-
-GitHub Pages, deploy from `main` `/(root)`. https enforced.
+- **No build step, no dependencies.** Everything is served as authored.
+- **Two registers.** The root portfolio uses the Problem Solutions brand; the Music app has its own theme with a user-selectable accent.
+- **https unlocks the mic.** The tuner needs https (fine on Pages, blocked on `file://`).
+- **Lyrics / IP.** The songbook shows only short chord-over-lyric snippets and links out for full lyrics; no copyrighted media is bundled.
