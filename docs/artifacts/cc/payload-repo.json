@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-12T10:30:45Z",
+  "generatedAt": "2026-08-13T10:31:39Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-11T10:14:37Z",
-    "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
+    "date": "2026-08-13T04:30:34Z",
+    "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
+    "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
   },
   "commits": [
+    {
+      "date": "2026-08-13T04:30:34Z",
+      "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
+      "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
+    },
+    {
+      "date": "2026-08-12T10:30:52Z",
+      "sha": "d88b3c289c247e69e95d5b52e6e3bc1c9d170bab",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d88b3c289c247e69e95d5b52e6e3bc1c9d170bab"
+    },
     {
       "date": "2026-08-11T10:14:37Z",
       "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
@@ -78,47 +90,17 @@
       "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
       "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
-    },
-    {
-      "date": "2026-08-08T09:58:22Z",
-      "sha": "ff42c0a342a5ef0f2aedfb255eb3c67364037ebb",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ff42c0a342a5ef0f2aedfb255eb3c67364037ebb"
-    },
-    {
-      "date": "2026-08-08T00:40:35Z",
-      "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
-      "subject": "playlist-sync: refresh payload + veto table",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
     }
   ],
-  "openPRs": [
+  "openPRs": [],
+  "recentMerges": [
     {
+      "createdAt": "2026-08-12T03:50:10Z",
+      "mergedAt": "2026-08-13T04:30:35Z",
       "number": 329,
       "title": "Round 9: video PIP overlay + progress scrub + refocus pause honesty",
-      "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/329",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133252/job/94024192055"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133264/job/94024192175"
-        }
-      ]
-    }
-  ],
-  "recentMerges": [
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/329"
+    },
     {
       "createdAt": "2026-08-09T17:27:02Z",
       "mergedAt": "2026-08-10T04:40:49Z",
@@ -216,30 +198,23 @@
       "number": 313,
       "title": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/313"
-    },
-    {
-      "createdAt": "2026-07-25T07:15:18Z",
-      "mergedAt": "2026-07-25T22:28:00Z",
-      "number": 312,
-      "title": "fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/312"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-12T10:30:39Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31587735885",
+    "runStartedAt": "2026-08-13T10:31:34Z",
+    "durationSeconds": 2,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31691469378",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 8,
+    "merged_count": 9,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 15.21,
+    "typical_merge_hours": 17.84,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +224,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v328-10",
-    "localCacheVersion": "music-v328-10",
+    "liveCacheVersion": "music-v329-6",
+    "localCacheVersion": "music-v329-6",
     "cacheMatch": true
   },
   "missions": [
