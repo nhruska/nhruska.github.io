@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-13T10:31:39Z",
+  "generatedAt": "2026-08-14T10:27:41Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-13T04:30:34Z",
-    "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
-    "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
+    "date": "2026-08-13T10:31:45Z",
+    "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c2d09f24d506c2ceb33d66f5e4e38c58f00b937b"
   },
   "commits": [
+    {
+      "date": "2026-08-13T10:31:45Z",
+      "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c2d09f24d506c2ceb33d66f5e4e38c58f00b937b"
+    },
     {
       "date": "2026-08-13T04:30:34Z",
       "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
@@ -84,15 +90,34 @@
       "sha": "422dbcb1c567cb49c1b7edb143a3d07b64ecf430",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/422dbcb1c567cb49c1b7edb143a3d07b64ecf430"
-    },
-    {
-      "date": "2026-08-09T01:51:28Z",
-      "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
-      "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
     }
   ],
-  "openPRs": [],
+  "openPRs": [
+    {
+      "number": 330,
+      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
+      "branch": "claude/nh-pages-music-extraction-pzn1rg",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/330",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288882/job/94601516016"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288885/job/94601515859"
+        }
+      ]
+    }
+  ],
   "recentMerges": [
     {
       "createdAt": "2026-08-12T03:50:10Z",
@@ -204,9 +229,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-13T10:31:34Z",
-    "durationSeconds": 2,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31691469378",
+    "runStartedAt": "2026-08-14T10:27:36Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31792299247",
     "headBranch": "main"
   },
   "velocity": {
