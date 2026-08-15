@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-14T10:27:41Z",
+  "generatedAt": "2026-08-15T09:45:01Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-13T10:31:45Z",
-    "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
+    "date": "2026-08-14T10:27:48Z",
+    "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/c2d09f24d506c2ceb33d66f5e4e38c58f00b937b"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
   },
   "commits": [
+    {
+      "date": "2026-08-14T10:27:48Z",
+      "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
+    },
     {
       "date": "2026-08-13T10:31:45Z",
       "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
@@ -84,12 +90,6 @@
       "sha": "bbe8ec0a125c6582b3d280b83ff5a544acf1b95d",
       "subject": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps (#324)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/bbe8ec0a125c6582b3d280b83ff5a544acf1b95d"
-    },
-    {
-      "date": "2026-08-09T10:00:09Z",
-      "sha": "422dbcb1c567cb49c1b7edb143a3d07b64ecf430",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/422dbcb1c567cb49c1b7edb143a3d07b64ecf430"
     }
   ],
   "openPRs": [
@@ -229,9 +229,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-14T10:27:36Z",
+    "runStartedAt": "2026-08-15T09:44:56Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31792299247",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31877780046",
     "headBranch": "main"
   },
   "velocity": {
