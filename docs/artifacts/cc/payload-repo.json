@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T09:45:01Z",
+  "generatedAt": "2026-08-16T09:46:15Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-14T10:27:48Z",
-    "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
+    "date": "2026-08-15T09:45:08Z",
+    "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/d59bdffa61ebca0b1f9d6983445ae38bd21f0a60"
   },
   "commits": [
+    {
+      "date": "2026-08-15T09:45:08Z",
+      "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d59bdffa61ebca0b1f9d6983445ae38bd21f0a60"
+    },
     {
       "date": "2026-08-14T10:27:48Z",
       "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
@@ -84,12 +90,6 @@
       "sha": "16cebfd19f2f792ad2d497fa115a8bb9c48aae9d",
       "subject": "Merge PR #274: constant 'Suggested Chords' label (community contribution)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/16cebfd19f2f792ad2d497fa115a8bb9c48aae9d"
-    },
-    {
-      "date": "2026-08-09T14:08:19Z",
-      "sha": "bbe8ec0a125c6582b3d280b83ff5a544acf1b95d",
-      "subject": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps (#324)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/bbe8ec0a125c6582b3d280b83ff5a544acf1b95d"
     }
   ],
   "openPRs": [
@@ -229,14 +229,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-15T09:44:56Z",
+    "runStartedAt": "2026-08-16T09:46:09Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31877780046",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31939913607",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 9,
+    "merged_count": 8,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 17.84,
