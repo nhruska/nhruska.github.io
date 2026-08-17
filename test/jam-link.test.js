@@ -4,12 +4,20 @@
  * canonical-sharp, key tonic is NOT re-spelled, yt accepts id or URL, any
  * invalid chord token drops the whole jam (never a partial groove), and
  * parse() never throws.
+ *
+ * S15 (re-home into the Practice Studio) adds coverage for the Studio
+ * hand-off: TracksModel.jamTrackFromSetup(setup, deriveKey) - the pure
+ * mapping from a parsed setup to the ephemeral track object
+ * Tracks.openStudio() opens (music/play/index.html's openJamLink wires the
+ * live deriveKey callback via SongbookModel.soloKeyFor/Repertoire.deriveKey;
+ * these tests inject a stub so the mapping stays independently verifiable).
  * Run: node test/jam-link.test.js
  * ===================================================================== */
 'use strict';
 var assert = require('assert');
 
 var JamLink = require('../music/shared/jam-link.js');
+var TracksModel = require('../music/shared/tracks-model.js');
 
 var passed = 0, failed = 0, cases = [];
 function test(name, fn) { cases.push([name, fn]); }
@@ -141,6 +149,61 @@ test('a full realistic deep link (all four params)', function () {
     yt: 'dQw4w9WgXcQ',
     name: 'ii-V-I in C'
   });
+});
+
+/* ---- S15: Studio hand-off (TracksModel.jamTrackFromSetup) ---- */
+
+test('hand-off: explicit key -> ephemeral track shape, custom:true, no .id', function () {
+  var qs = '?jam=' + encodeURIComponent('Am,F,C,G') + '&key=Am&yt=dQw4w9WgXcQ&name=' + encodeURIComponent('My jam');
+  var setup = JamLink.parse(qs).setup;
+  var t = TracksModel.jamTrackFromSetup(setup);
+  assert.deepStrictEqual(t, {
+    title: 'My jam', key: 'A', mode: 'minor',
+    seq: ['Am', 'F', 'C', 'G'], yt: 'dQw4w9WgXcQ', custom: true
+  });
+  assert.strictEqual(t.id, undefined);
+});
+
+test('hand-off: a flat explicit key tonic normalizes to canonical-sharp (the Add/Edit form\'s Key <select> is sharp-only)', function () {
+  var setup = JamLink.parse('?jam=C&key=Bbm').setup;
+  var t = TracksModel.jamTrackFromSetup(setup);
+  assert.strictEqual(t.key, 'A#');
+  assert.strictEqual(t.mode, 'minor');
+});
+
+test('hand-off: no key -> the deriveKey callback is consulted with the chord seq', function () {
+  var setup = JamLink.parse('?jam=C,F,G').setup;
+  var seen = null;
+  var t = TracksModel.jamTrackFromSetup(setup, function (seq) { seen = seq; return { key: 'C', mode: 'major' }; });
+  assert.deepStrictEqual(seen, ['C', 'F', 'G']);
+  assert.strictEqual(t.key, 'C');
+  assert.strictEqual(t.mode, 'major');
+});
+
+test('hand-off: no key, no chords -> deriveKey is never called, key/mode stay null (Studio degrades gracefully)', function () {
+  var setup = JamLink.parse('?yt=dQw4w9WgXcQ').setup;
+  var called = false;
+  var t = TracksModel.jamTrackFromSetup(setup, function () { called = true; return { key: 'C', mode: 'major' }; });
+  assert.strictEqual(called, false);
+  assert.strictEqual(t.key, null);
+  assert.strictEqual(t.mode, null);
+});
+
+test('hand-off: deriveKey returns nothing usable -> key/mode stay null, never throws', function () {
+  var setup = JamLink.parse('?jam=C,F,G').setup;
+  var t = TracksModel.jamTrackFromSetup(setup, function () { return { key: null, mode: null }; });
+  assert.strictEqual(t.key, null);
+  assert.strictEqual(t.mode, null);
+});
+
+test('hand-off: absent name -> a plain fallback title, never blank', function () {
+  var t = TracksModel.jamTrackFromSetup(JamLink.parse('?jam=C').setup);
+  assert.strictEqual(t.title, 'Shared jam');
+});
+
+test('hand-off: absent yt -> null, not undefined (openStudio/urlEditor branch on strict falsy)', function () {
+  var t = TracksModel.jamTrackFromSetup(JamLink.parse('?jam=C&key=C').setup);
+  assert.strictEqual(t.yt, null);
 });
 
 run();
