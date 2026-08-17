@@ -25,6 +25,8 @@
 | Where do agent instructions live? | Bundled INSIDE the export (self-describing), mirrored at a static site path | Offline/no-server law: instructions must travel with the data |
 | New storage schema? | None - reuse `skill-competency-profile/v1`, backup envelope v1, SKILL.md interchange | All three exist and are tested; additive beats new |
 | Is this a new app mode? | No - it is a contract on the EXISTING export/import seams | "Change is cheap given a strong spec-driven SSOT"; smallest diff that ships the capability |
+| Can agents stand up app state (jam setups)? | Yes, as ephemeral proposals via deep link / setup doc; Save is a user act through existing forms | Operator burst 2026-08-17 ("progression to jam over, yt video immediately w option to save"); safety: no writer on load |
+| YT in agent setups? | Video ids/URLs + embed only - keyless forever | PLAYLIST-KEYLESS decision; playlist-import.js precedent |
 
 ---
 
@@ -91,6 +93,55 @@ deterministic and owns graduation; agent assessments are one more evidence SOURC
 override channel. The merge stays authoritative so a hallucinated level cannot silently
 rewrite mastery state.
 
+## 4b. Agent-actionable setups - suggest AND stand it up (operator burst 2026-08-17)
+
+Reading and grading is half the value. The other half: an agent's suggestion should be
+one tap from BEING the app state - "here is a ii-V-I in G to jam over, with this backing
+video" arrives as something that opens ready to play, with an option to save.
+
+Two transports, same offline law:
+
+| Transport | Shape | For |
+|---|---|---|
+| **Deep link** (primary - "immediately") | `music/play/?jam=<progression>&key=<tonic>&yt=<videoId>` - extends the existing `?p=` URL-param seam (play/index.html ~576). App parses, stands up the jam on load, offers Save | One-tap setups: a progression, a key, one optional backing video |
+| **Setup doc** `music-setup/v1` (fallback + batch) | Additive portable JSON (schema string + typed payload: progression / track link / practice plan), imported via the same file-picker pattern | Payloads too big or too many for a URL; agent bundles them next to the SKILL.md files |
+
+Contract rules (both transports):
+- Chord tokens are CANONICAL-SHARP (storage regime); key names use the preferred tonic
+  (KEY-STORE-PREF). Display respelling stays the app's job - agents never pre-respell.
+- YT stays KEYLESS (PLAYLIST-KEYLESS decision): video ids/URLs only, embed playback, no
+  API key ever. No key found for a suggested track -> the agent must state the key or
+  omit the track - the app never invents a key (playlist-import ladder rule 3).
+- **Setup is a PROPOSAL rendered live, saved only by the user.** The deep link stands up
+  ephemeral state; Save routes through the existing repertoire/progression forms and
+  their validators. Nothing writes storage on load.
+- Unknown params / unknown doc types are IGNORED by older builds (defensive-reader law) -
+  a stale cached PWA degrades to opening the app, never to an error.
+- Offline: the link itself is local and server-free; the YT embed needs network and
+  degrades to progression-only jam over the app's own audio engine.
+
+## 4c. The coach bench, instantiated - plugin packaging
+
+The repo already ships the coaching expertise as public skills
+(`.claude/skills/`: music-theory-coach, pedagogy-coach, songwriting-coach, ux/audio/
+a11y/copy coaches). Packaging them WITH this contract makes any Claude Code / Cowork
+session a personal music coach - "it could all be a plugin":
+
+- **Plugin = coach skills + the interchange AGENTS.md + capabilities.json + commands**
+  (e.g. `/music:assess` - read exports, grade vs targets; `/music:practice-plan` -
+  evidence-based plan from the profile; `/music:jam` - emit a section-4b deep link).
+- The plugin's agents operate ONLY through this contract: read exports, propose profile
+  docs, emit deep links / setup docs. No new writers, no server - the plugin is static
+  files in a public repo, installable from git.
+- This is the demo shape: **learning apps using skills for content (songs, frameworks),
+  coaching (the bench), and competency records (profile docs) - portable skill artifacts
+  absorbing what an LMS would otherwise own** (content library, coach, gradebook), with
+  the app as the deterministic practice surface and the agent as the adaptive layer.
+
+Adjacent (SEPARATE session, operator-flagged): the personal-skills second-brain skill
+(knowledge map for skills) likely joins this graph - the music profiles becoming nodes in
+a cross-discipline competency map. Noted here as a pointer only; not this mission.
+
 ## 5. The instruction surface (new work - the heart of this mission)
 
 **A. Self-describing exports.** The skills zip (and, later, the backup download) gains a
@@ -152,9 +203,14 @@ absent, the feature quietly is not offered (defensive-reader rule), never broken
 | A4 | Agent round-trip node test: author a profile doc as an agent would (provenance append, evidence bump), run importProfile, assert merge semantics + rejection of malformed docs | S | The executable form of section 4 |
 | A5 | Settings copy: import result surfaces provenance ("includes updates from agent:claude-code") | S | copy-coach pass |
 | A6 (later) | L1 File System Access re-read; L3 share-target | M | Only after L0 proves out in use |
+| A7 | `?jam=` deep-link contract (section 4b): parse -> ephemeral jam setup -> Save via existing forms; node tests for the parser, PW scenario for the flow | M | Touches play shell + sw CORE -> cache bump; canonical-sharp + keyless laws enforced in tests |
+| A8 | `music-setup/v1` setup-doc import (batch fallback for A7 payloads) | S-M | Same one-validator discipline; additive schema |
+| A9 | Plugin packaging (section 4c): coach skills + AGENTS.md + capabilities.json + `/music:assess` `/music:practice-plan` `/music:jam` commands as an installable plugin | M | Depends on A1+A2 (the artifacts it bundles) + A7 (the setup transport it emits) |
 
-A1+A2+A4 are one clean PR; A3+A5 a second. No SW `CORE` file changes in A1/A3/A4/A5
-(no cache bump); A2 touches sw.js so it carries the `music-v<PR#>` bump per convention.
+A1+A2+A4 are one clean PR; A3+A5 a second; A7 its own PR (app-shell change, PW scenario,
+cache bump); A8+A9 follow once A7's transport exists. No SW `CORE` file changes in
+A1/A3/A4/A5 (no cache bump); A2 and A7 touch sw.js/CORE so each carries the
+`music-v<PR#>` bump per convention.
 
 ## 9. What this deliberately is NOT
 
