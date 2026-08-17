@@ -39,9 +39,11 @@
 
 | S13 | ~~S-AGENT-FLOOR~~ **SHIPPED 2026-08-17** (#332, music-v332): bundled AGENTS.md in the skills zip, `music/agent/` manifest + consistency gate, round-trip test | done - swarm wave 1 | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
 | S14 | ~~S-JAM-LINK~~ **SHIPPED 2026-08-17** (#332, music-v332): `?jam=` deep link, ephemeral overlay + Save handoff | done - swarm wave 1; Studio re-home follows as S15 | [goal-agent-interaction](goal-agent-interaction-20260817.md) section 4b |
-| S15 | S-JAM-STUDIO: re-home the `?jam=` destination INTO the practice Studio (operator taste 2026-08-17: "jam screen should feel like the existing Studio. pref it IS the studio") - deep link constructs an ephemeral (unsaved) track/progression and opens the Studio's own surface (transport, chord row, embed); the bespoke overlay retires. Element Consistency Law alignment: compose the primitive, don't keep a parallel look | **LAUNCHED with wave 2** | [agent-capability-patterns](agent-capability-patterns-20260817.md) routing |
-| S16 | S-PLUGIN: A9 extended - installable plugin (skills + commands `/music:assess` `/music:practice-plan` `/music:jam` + AGENT PROFILES `music-coach`/`jam-dj`) built on the shipped contract; source-sync gate vs `.claude/skills` copies | **LAUNCHED with wave 2** | spec section 4c + patterns doc |
-| S17 | S-SETUP-DOC: A8 - `music-setup/v1` batch import via the Skills file picker (the non-URL fallback transport) | **LAUNCHED with wave 2** | spec section 4b |
+| S15 | ~~S-JAM-STUDIO~~ **SHIPPED 2026-08-17** (#333, music-v333-2): jam links open the real Studio (ephemeral track via jamTrackFromSetup); bespoke overlay retired; shared links now survive a fresh device's welcome tour (param carry + NavHistory-unwind defer) | done - wave 2 | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
+| S16 | ~~S-PLUGIN~~ **SHIPPED 2026-08-17** (#333): plugin/music-coach - 4 skills, 3 commands, agent profiles music-coach/jam-dj, mutation-tested sync gate | done - wave 2 | spec section 4c |
+| S17 | ~~S-SETUP-DOC~~ **SHIPPED 2026-08-17** (#333): music-setup/v1 import, JamLink.parse reused as the one validator | done - wave 2 | spec section 4b |
+| S18 | S-ANALYTICS-ARTIFACT: delivery-shape P3 - `/music:report` plugin command + `music-report` skill: agent renders a SELF-CONTAINED HTML analytics page (competency levels vs targets, evidence recency, repertoire growth) from a user's backup; no server, no external deps, phone-hand-off friendly | **LAUNCHED wave 3 (operator digits 1-4, 2026-08-17)** | [agent-capability-patterns](agent-capability-patterns-20260817.md) catalyst table |
+| S19 | S-SW-XORIGIN-DEADLINE: fix F-SW-XORIGIN-DEADLINE - apply the same NET_DEADLINE race to sw.js's cross-origin branch so a hanging (not rejecting) font/icon fetch can never block a render-blocking link past ~3.5s | **LAUNCHED wave 3** | QUEUE finding F-SW-XORIGIN-DEADLINE |
 
 ### Newly queued (findings)
 
