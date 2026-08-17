@@ -180,6 +180,36 @@
       return copy;
     });
   }
+  // S15 (agent-interaction ?jam= re-home into the Practice Studio, operator
+  // taste: "jam screen should feel like the existing Studio. pref it is the
+  // studio"): build the EPHEMERAL (never persisted) track object
+  // Tracks.openStudio() opens for a parsed jam-link setup (shared/jam-link.js
+  // JamLink.parse().setup) - the SAME surface every other track opens
+  // (fretboard, scale chips, chords-in-key highlighting via seq, transport,
+  // the Studio's own Edit/"Or edit song details" Save affordance), not a
+  // parallel look (Element Consistency Law). Pure: an optional deriveKey(seq)
+  // callback resolves a key when the link carried none (the caller wires the
+  // app's own SongbookModel.soloKeyFor/Repertoire.deriveKey chain - this
+  // module stays dependency-free, never re-derives that theory itself).
+  // key is normalized to canonical-sharp (normRoot) so it round-trips
+  // straight into the Add/Edit form's Key <select> (its options are
+  // canonical-sharp only, per repertoire-form.js - a flat value there
+  // pre-selects nothing, same trap jam-link.js's own FLAT_TO_SHARP table
+  // exists to avoid for chord tokens). custom:true unlocks the Studio's
+  // EXISTING Edit/"Or edit song details" affordance (opts.onEditRequest) -
+  // the object carries no .id, so openEditOrAdd's create branch fires,
+  // exactly like any brand-new song; never writes storage itself.
+  function jamTrackFromSetup(setup, deriveKey) {
+    setup = setup || {};
+    var seq = Array.isArray(setup.chords) ? setup.chords : [];
+    var key = setup.key ? normRoot(setup.key.tonic) : null;
+    var mode = setup.key ? (setup.key.minor ? 'minor' : 'major') : null;
+    if (!key && seq.length && typeof deriveKey === 'function') {
+      var derived = deriveKey(seq);
+      if (derived && derived.key) { key = normRoot(derived.key); mode = derived.mode || 'major'; }
+    }
+    return { title: setup.name || 'Shared jam', key: key, mode: mode, seq: seq, yt: setup.yt || null, custom: true };
+  }
   // note name -> chromatic pitch class (0-11), parsed generically from the letter
   // + any accidentals. Unlike rootIndex (12 sharps + 5 common flats only), this
   // handles every enharmonic spelling — E#, B#, Cb, Fb and double accidentals.
@@ -227,6 +257,7 @@
     mergeTracks: mergeTracks,
     trackKey: trackKey,
     applyUrlOverlay: applyUrlOverlay,
+    jamTrackFromSetup: jamTrackFromSetup,
     LETTER_PC: LETTER_PC,
     noteToPc: noteToPc,
     notesToPcs: notesToPcs,

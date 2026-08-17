@@ -273,24 +273,6 @@
   <div class="pNav"><button class="btn ghost" id="pPrev" aria-label="Previous"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg></button><button class="btn" id="pNext" aria-label="Next"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg></button></div>
 </div>
 <div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose">✕</button><div class="maxGrid" id="maxGrid"></div></div>
-<!-- S14 (agent-interaction spec 4b): the `?jam=` deep-link overlay. An
-     EPHEMERAL jam setup (shared/jam-link.js parses the URL) - nothing here
-     writes storage; Save routes through the existing add/progression form.
-     Same overlay family as #maxOv; the chord grid reuses .maxGrid/.bigC
-     verbatim (Element Consistency Law). Hidden by default; play/index.html's
-     boot script shows it only when JamLink.parse() finds a usable setup. -->
-<div class="jamOv" id="jamOv" hidden>
-  <div class="jamHead">
-    <div class="jamHeadTx"><span class="jamTitle" id="jamTitle">Jam setup</span><span class="jamSub" id="jamSub"></span></div>
-    <button class="maxClose" id="jamClose" type="button" aria-label="Close">✕</button>
-  </div>
-  <div class="jamVideoWrap" id="jamVideoWrap" hidden></div>
-  <div class="maxGrid" id="jamGrid"></div>
-  <div class="jamActions">
-    <button class="btn ghost" id="jamDismiss" type="button">Not now</button>
-    <button class="btn red" id="jamSave" type="button">Save this jam</button>
-  </div>
-</div>
 <!-- Settings sheet: accent colour + whole-songbook backup/restore + which
      offline build is running. Opened by the appbar gear (#settingsBtn). -->
 <!-- Sections are a ONE-AT-A-TIME accordion (shared/accordion.js + the
@@ -480,9 +462,15 @@
 <script src="../shared/agent-readme.js"></script>
 <!-- jam-link.js: pure parser for the `?jam=` agent-interaction deep link
      (spec section 4b) - no DOM, no storage. Consumed by the boot script's
-     start() below (after songbookCtl/pack exist) to stand up an ephemeral
-     jam overlay whose Save button hands off to repertoire-form.js. -->
+     start() below (after tracksCtl/songbookCtl/pack exist): the parsed setup
+     becomes an ephemeral track (TracksModel.jamTrackFromSetup) and opens the
+     existing Practice Studio (S15 re-home) - Save hands off to
+     repertoire-form.js exactly like any other track's Edit tap. -->
 <script src="../shared/jam-link.js"></script>
+<!-- setup-doc.js: pure parser for music-setup/v1 batch setup docs (spec A8) -
+     the Skills file picker dispatches on the JSON schema string; entries land
+     as prefills through the existing forms, never direct storage writes. -->
+<script src="../shared/setup-doc.js"></script>
 <script src="../shared/zip-store.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
@@ -737,15 +725,43 @@
       // track immediately after the tour"): the tour ENDS in a jam on EVERY
       // path, via the one-shot music.welcomeJam.v1 intent flag consumed by
       // openWelcomeJam() (defined at the tracksCtl mount).
+      // A shared `?jam=` link IS the tour-ending jam: without this check the
+      // rewrite below dropped every non-p param, so a first-visit device lost
+      // the very jam the link was sent to open (the link's whole point).
+      var jamLinked = null;
+      try { jamLinked = window.JamLink ? JamLink.parse(location.search) : null; } catch (e) {}
+      var hasJamLink = !!(jamLinked && jamLinked.ok);
       if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
         // Instrument RELOAD path: this page is about to die, so set the flag
         // FIRST - the new page's tracksCtl onReady re-enters openWelcomeJam()
         // once the catalog loads. A page load is not a user gesture, so the
         // jam opens there honestly unstarted (one tap on the big play starts
         // sound - the bar's state sync keeps it truthful).
-        try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {}
+        if (!hasJamLink) { try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {} }
         try { localStorage.setItem(PROFILE_KEY, chosenInst); } catch (e) {}
-        location.search = '?p=' + encodeURIComponent(chosenInst);
+        if (hasJamLink) {
+          // Carry the link's params through the reload; welcome is now seen,
+          // so the new page's boot check opens the LINK's jam, not the
+          // generic featured one.
+          var qs = new URLSearchParams(location.search);
+          qs.set('p', chosenInst);
+          location.search = '?' + qs.toString();
+        } else {
+          location.search = '?p=' + encodeURIComponent(chosenInst);
+        }
+      } else if (hasJamLink) {
+        // Same instrument + a jam link: open the LINK's jam, skip the generic
+        // welcome jam. Deferred past the overlay's NavHistory unwind - the
+        // dismiss's async popstate is still in flight here, and a Studio layer
+        // pushed synchronously inside the unwind gets popped right back off
+        // (observed: the sync call runs clean yet the Studio never survives).
+        // Like the reload path, the jam opens honestly unstarted - one tap
+        // starts sound.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamLinked.setup); } catch (e) {}
+          });
+        });
       } else {
         // Same-instrument path: the Start-playing TAP is a real user gesture,
         // so the jam opens right here with autoplay allowed. The library
@@ -941,113 +957,60 @@
       if (songbookCtl && songbookCtl.refreshCompose) songbookCtl.refreshCompose();
     };
 
-    /* ===================== S14 - agent-interaction ?jam= deep link =====================
-     * Section 4b of docs/plans/goal-agent-interaction-20260817.md: a
-     * `?jam=<progression>&key=<tonic>&yt=<videoId>&name=<label>` link (shared/
-     * jam-link.js parses it) stands up an EPHEMERAL jam - chord diagrams big
-     * enough to read + play, an optional backing video, and a Save button.
-     * Nothing here writes localStorage on its own; Save hands off to the
-     * EXISTING add/progression form (repertoire-form.js via songbookCtl.
-     * openEditOrAdd) so the app's own validators decide what actually saves.
-     * A lightweight standalone overlay (NOT wired into Compose's progression/
-     * songKey state machine, NOT the Practice Studio) - see the mission's
-     * scope-control note: those are deep integrations this link doesn't need. */
-    var jamSetup = null; // the setup currently shown, for the Save handoff
-    function closeJamLink() {
-      var ov = el('jamOv'); if (!ov || ov.hidden) return;
-      ov.hidden = true;
-      var vw = el('jamVideoWrap'); if (vw) { vw.hidden = true; vw.innerHTML = ''; }
-    }
+    /* ===================== S15 - agent-interaction ?jam= deep link =====================
+     * Section 4b of docs/plans/goal-agent-interaction-20260817.md, re-homed
+     * into the existing Practice Studio (S15, operator taste directive: "jam
+     * screen should feel like the existing Studio. pref it is the studio"):
+     * a `?jam=<progression>&key=<tonic>&yt=<videoId>&name=<label>` link
+     * (shared/jam-link.js parses it) builds an EPHEMERAL (never persisted)
+     * track object and opens Tracks.openStudio() on it - the SAME surface
+     * every other track opens (scale chips, fretboard, chords-in-key
+     * highlighting the jam's own progression via t.seq, the transport bar,
+     * an optional backing video, and the Studio's own Edit/"Or edit song
+     * details" Save affordance) - Element Consistency Law: compose the
+     * existing primitive, never a parallel look. Nothing here writes
+     * localStorage on load; Save hands off to the EXISTING add/progression
+     * form (repertoire-form.js via songbookCtl.openEditOrAdd, wired as
+     * onEditRequest at Tracks.mount below) exactly like any other track's
+     * Edit tap - tracks.js's own editRequest handler prefills the Chords
+     * field from t.seq for the no-id (ephemeral) case, the same way a
+     * user's own typing would. */
     function openJamLink(setup) {
-      var ov = el('jamOv'), grid = el('jamGrid'); if (!ov || !grid) return;
-      jamSetup = setup;
-      var keyRoot = setup.key ? setup.key.tonic : null;
-      var keyMode = setup.key ? (setup.key.minor ? 'minor' : 'major') : null;
-      grid.innerHTML = '';
-      (setup.chords || []).forEach(function (token) {
-        // Key-aware DISPLAY name (Bb, not A#, inside a stated flat key) via the
-        // same pure path songbook.js's own dispChordName uses - the token
-        // itself (passed to pack.diagram/playChord) stays canonical-sharp.
-        var disp = (keyRoot && window.SongbookTheory && window.SongbookTheory.dispChordNameInKey)
-          ? window.SongbookTheory.dispChordNameInKey(token, keyRoot, keyMode) : token;
-        var tile = (pack && typeof pack.diagram === 'function') ? pack.diagram(token, 'big') : null;
-        if (!tile) {
-          tile = document.createElement('div'); tile.className = 'bigC';
-          var nm = document.createElement('span'); nm.className = 'nm'; tile.appendChild(nm);
-        }
-        var lbl = tile.querySelector && tile.querySelector('.chord-name, .nm');
-        if (lbl) lbl.textContent = disp;
-        tile.onclick = function () { if (pack && typeof pack.playChord === 'function') pack.playChord(token); };
-        grid.appendChild(tile);
-      });
-      var titleEl = el('jamTitle'), subEl = el('jamSub');
-      if (titleEl) titleEl.textContent = setup.name || 'Jam setup';
-      if (subEl) {
-        var bits = [];
-        if (setup.key) {
-          var kdisp = (window.Circle && window.Circle.preferredTonicName)
-            ? window.Circle.preferredTonicName(setup.key.tonic, keyMode) : setup.key.tonic;
-          bits.push('Key of ' + kdisp + (setup.key.minor ? ' minor' : ''));
-        }
-        if (setup.chords && setup.chords.length) bits.push(setup.chords.length + (setup.chords.length === 1 ? ' chord' : ' chords'));
-        subEl.textContent = bits.length ? bits.join(' - ') : 'Shared from an agent';
-      }
-      var vw = el('jamVideoWrap');
-      if (vw) {
-        if (setup.yt && window.TracksModel && window.TracksModel.embedUrl) {
-          vw.innerHTML = '<iframe src="' + esc(window.TracksModel.embedUrl(setup.yt)) + '" title="Backing track" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>';
-          vw.hidden = false;
-        } else { vw.hidden = true; vw.innerHTML = ''; }
-      }
-      ov.hidden = false;
-      if (window.NavHistory) NavHistory.open('jamLink', closeJamLink);
+      if (!tracksCtl || !tracksCtl.openStudio || !window.TracksModel || !window.TracksModel.jamTrackFromSetup) return;
+      // No explicit key: derive one from the chord sequence via the app's
+      // own key-inference (the same seam openForkForm/soloKeyFor already use
+      // for a record with no stored key) - never a second theory derivation.
+      var deriveKey = (window.SongbookModel && window.SongbookModel.soloKeyFor)
+        ? function (seq) { return window.SongbookModel.soloKeyFor({}, seq, 0, window.Repertoire); }
+        : null;
+      tracksCtl.openStudio(window.TracksModel.jamTrackFromSetup(setup, deriveKey));
     }
-    // Save: hand off to the EXISTING add/progression form. openEditOrAdd's
-    // item shape (title/key/mode/yt/genre) doesn't carry a chord seq, so the
-    // Chords field is prefilled the same way a user's typing would - the
-    // form's own public [data-seq] textarea, synchronous with repForm.open()
-    // (render() runs inline, per repertoire-form.js) - never a private
-    // songbook.js internal.
-    function openJamSaveForm(setup) {
-      if (!songbookCtl || !songbookCtl.openEditOrAdd) return;
-      var mode = (setup.key && setup.key.minor) ? 'minor' : 'major';
-      // The Key <select>'s option VALUES are canonical-sharp (SongbookTheory.
-      // ROOTS) - the dropdown's LABEL respells to the preferred name
-      // independently, but the underlying value must match a ROOTS entry or
-      // nothing gets pre-selected. setup.key.tonic is deliberately NOT
-      // re-spelled by jam-link.js (display flavor, per the locked contract),
-      // so normalize it here at the one call site that needs the raw value -
-      // via the app's own splitChord (theory.js), not a second F2S table.
-      var keyVal = (setup.key && setup.key.tonic) || '';
-      if (keyVal && window.SongbookTheory && window.SongbookTheory.splitChord) {
-        var sp = window.SongbookTheory.splitChord(keyVal);
-        if (sp) keyVal = sp.root;
-      }
-      songbookCtl.openEditOrAdd({
-        title: setup.name || '', key: keyVal,
-        mode: mode, yt: setup.yt || null
-      });
-      if (setup.chords && setup.chords.length) {
-        var seqEl = document.querySelector('.rf-ov.on [data-seq]');
-        if (seqEl) seqEl.value = setup.chords.join(' ');
-      }
-    }
-    if (el('jamClose')) el('jamClose').onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else closeJamLink(); };
-    if (el('jamDismiss')) el('jamDismiss').onclick = function () { if (window.NavHistory) NavHistory.dismiss(); else closeJamLink(); };
-    if (el('jamSave')) el('jamSave').onclick = function () {
-      var setup = jamSetup; if (!setup) return;
-      if (window.NavHistory) NavHistory.settleAfter(closeJamLink, function () { openJamSaveForm(setup); });
-      else { closeJamLink(); openJamSaveForm(setup); }
-    };
-    // Parse on load. A fresh device mid-first-run-tour skips the auto-open
-    // (the welcome overlay already owns the screen) rather than stacking a
-    // second full-screen layer over it - the link degrades to "opens
-    // normally" for that rare edge, same defensive-reader spirit as an
-    // unrecognized param. Never throws: a malformed link must never break boot.
+    // Narrow window seam (same pattern as openWelcomeJam): the welcome
+    // handler lives in a separate <script> closure and needs to open the
+    // LINK's jam when the tour's Start-playing tap fires on a same-instrument
+    // exit - one capability exported, nothing else leaks.
+    window.openJamLink = openJamLink;
+    // Parse on load. A fresh device mid-first-run-tour defers to the welcome
+    // overlay (it owns the screen) instead of stacking a second full-screen
+    // layer - the welcome handler's exit paths then open the LINK's jam:
+    // same-instrument via the seam above, instrument-reload by carrying the
+    // jam params through the ?p= rewrite. Never throws: a malformed link
+    // must never break boot.
     try {
       var wOv = document.getElementById('welcomeOv');
       var jamParsed = window.JamLink && window.JamLink.parse ? window.JamLink.parse(location.search) : { ok: false };
-      if (jamParsed.ok && !(wOv && !wOv.hidden)) openJamLink(jamParsed.setup);
+      if (jamParsed.ok && !(wOv && !wOv.hidden)) {
+        // Deferred past NavHistory's boot reconciliation: arriving via the
+        // welcome tour's ?p= rewrite, the old page's overlay pushState rides
+        // into this load's history, and a Studio layer opened synchronously
+        // here gets popped right back off during that unwind (same failure
+        // as the same-instrument exit above - one cause, two doors).
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamParsed.setup); } catch (e2) {}
+          });
+        });
+      }
     } catch (e) { /* a malformed deep link degrades to opening normally */ }
 
     // Landing-tab first-run callout. The INITIAL tab render does not emit
