@@ -32,9 +32,11 @@ coaches for.
 | `skills/music-theory-coach/SKILL.md` | Theory-correct defaults (scale/mode/chord choices) - copied from the app's own coach bench. |
 | `skills/pedagogy-coach/SKILL.md` | Learning-design rules (one-thing-at-a-time, spacing, recall-first) - copied from the app's own coach bench. |
 | `skills/songwriting-coach/SKILL.md` | Proven progression families per genre/section, lyric-craft rules - copied byte-for-byte from the app's own coach bench (no links needed adjusting). |
+| `skills/music-report/SKILL.md` + `template.html` | Renders the assessed export as ONE self-contained HTML analytics page (competency bars, evidence recency, repertoire) - zero server, zero external requests, inline SVG/CSS only. |
 | `commands/assess.md` | `/music-coach:assess <export>` - competency gap read, evidence staleness, repertoire summary. |
 | `commands/practice-plan.md` | `/music-coach:practice-plan <export>` - an evidence-based, pedagogy-sequenced plan. |
 | `commands/jam.md` | `/music-coach:jam <goal>` - a proven progression + a one-tap jam deep link. |
+| `commands/report.md` | `/music-coach:report <export>` - the same assessed data as `/music-coach:assess`, rendered as a shareable HTML page. |
 | `agents/music-coach.md` | The assess+plan persona - reads exports, proposes profile docs, never writes app storage. |
 | `agents/jam-dj.md` | A narrow agent that only composes progressions and emits jam deep links. |
 
