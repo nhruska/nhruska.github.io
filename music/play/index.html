@@ -474,6 +474,10 @@
      panel's open-skills-format export/import (consumes competency.js's
      exportProfile output). -->
 <script src="../shared/skill-md.js"></script>
+<!-- agent-readme.js: the bundled AGENTS.md text for self-describing skills
+     exports (spec section 5A) - songbook.js's downloadBundle appends it to
+     the zip when present (guarded, defensive-reader law). -->
+<script src="../shared/agent-readme.js"></script>
 <!-- jam-link.js: pure parser for the `?jam=` agent-interaction deep link
      (spec section 4b) - no DOM, no storage. Consumed by the boot script's
      start() below (after songbookCtl/pack exist) to stand up an ephemeral
