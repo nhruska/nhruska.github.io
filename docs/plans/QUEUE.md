@@ -42,8 +42,8 @@
 | S15 | ~~S-JAM-STUDIO~~ **SHIPPED 2026-08-17** (#333, music-v333-2): jam links open the real Studio (ephemeral track via jamTrackFromSetup); bespoke overlay retired; shared links now survive a fresh device's welcome tour (param carry + NavHistory-unwind defer) | done - wave 2 | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
 | S16 | ~~S-PLUGIN~~ **SHIPPED 2026-08-17** (#333): plugin/music-coach - 4 skills, 3 commands, agent profiles music-coach/jam-dj, mutation-tested sync gate | done - wave 2 | spec section 4c |
 | S17 | ~~S-SETUP-DOC~~ **SHIPPED 2026-08-17** (#333): music-setup/v1 import, JamLink.parse reused as the one validator | done - wave 2 | spec section 4b |
-| S18 | S-ANALYTICS-ARTIFACT: delivery-shape P3 - `/music:report` plugin command + `music-report` skill: agent renders a SELF-CONTAINED HTML analytics page (competency levels vs targets, evidence recency, repertoire growth) from a user's backup; no server, no external deps, phone-hand-off friendly | **LAUNCHED wave 3 (operator digits 1-4, 2026-08-17)** | [agent-capability-patterns](agent-capability-patterns-20260817.md) catalyst table |
-| S19 | S-SW-XORIGIN-DEADLINE: fix F-SW-XORIGIN-DEADLINE - apply the same NET_DEADLINE race to sw.js's cross-origin branch so a hanging (not rejecting) font/icon fetch can never block a render-blocking link past ~3.5s | **LAUNCHED wave 3** | QUEUE finding F-SW-XORIGIN-DEADLINE |
+| S18 | ~~S-ANALYTICS-ARTIFACT~~ **SHIPPED 2026-08-17** (#334, music-v334): `/music-coach:report` + slot template + gate; [sample artifact](../artifacts/music-report-sample-20260817.html) | done - wave 3 | [m-agent-arc](m-agent-arc-20260817.md) |
+| S19 | ~~S-SW-XORIGIN-DEADLINE~~ **SHIPPED 2026-08-17** (#334): cross-origin fetches race NET_DEADLINE_MS; parser can never freeze on a hung font | done - wave 3 | [m-agent-arc](m-agent-arc-20260817.md) |
 
 ### Newly queued (findings)
 
