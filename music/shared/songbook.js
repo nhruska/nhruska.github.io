@@ -6494,18 +6494,95 @@
       // document AND a SKILL.md rendered by skill-md.js - a .md file's
       // embedded ```json block is the same document (lossless round-trip),
       // so competency.js's importProfile stays the ONE validator for both.
+      // S17 (agent-interaction spec 4b, A8): the SAME picker also accepts a
+      // `music-setup/v1` batch doc - a sibling JSON schema, disambiguated by
+      // peeking `.schema` BEFORE dispatching (never by file extension - both
+      // transports are plain .json). A non-setup .json falls through to the
+      // existing profile-import path unchanged.
       var fileInput = document.createElement('input');
       fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
       fileInput.accept = 'application/json,.json,text/markdown,.md'; fileInput.hidden = true;
       sec.appendChild(fileInput);
+      // Cheap schema peek - never throws, false on anything that isn't a
+      // music-setup/v1 object (malformed JSON, a profile doc, garbage).
+      function looksLikeSetupDoc(text) {
+        try {
+          var obj = JSON.parse(text);
+          return !!(obj && typeof obj === 'object' && global.SetupDoc && obj.schema === global.SetupDoc.SCHEMA);
+        } catch (e) { return false; }
+      }
+      // Canonical-sharp the tonic for the Key <select> (its option VALUES are
+      // canonical-sharp tokens - see repertoire-form.js rootOptionsHtml). A
+      // jam entry's key.tonic is deliberately un-respelled by jam-link's
+      // grammar (display flavor, not identity), so this is the one call site
+      // that needs the raw value - same fix play/index.html's openJamSaveForm
+      // applies to the `?jam=` deep link, via the same splitChord (theory.js).
+      function normalizeKeyTonic(tonic) {
+        if (!tonic) return '';
+        var sp = splitChord ? splitChord(tonic) : null;
+        return (sp && sp.root) || tonic;
+      }
+      // Prefill the add form from ONE validated setup-doc entry. A jam entry
+      // seeds Chords (item.seq - repertoire-form.js already renders it as
+      // prefill text, no DOM hack needed) + Key/Mode/Video; a track entry
+      // seeds Title/Key/Mode/Video only (no chords - it's a video-only save,
+      // same shape songbook.js's own openEditOrAdd produces). Nothing writes
+      // storage here - Save is the user's own action, through the existing
+      // createCustomItem validator (S17's "proposal, not a write" invariant).
+      function openSetupEntry(entry) {
+        if (!repForm || !entry) return;
+        if (entry.type === 'jam') {
+          repForm.open({
+            mode: 'create',
+            item: {
+              t: entry.name || '', key: normalizeKeyTonic(entry.key && entry.key.tonic),
+              mode: (entry.key && entry.key.minor) ? 'minor' : 'major',
+              yt: entry.yt || null, seq: entry.chords || []
+            },
+            onSave: function (f) { createCustomItem(f); }
+          });
+        } else if (entry.type === 'track') {
+          repForm.open({
+            mode: 'create',
+            item: { t: entry.name || '', key: normalizeKeyTonic(entry.key), mode: entry.mode || 'major', yt: entry.yt || null },
+            onSave: function (f) { createCustomItem(f); }
+          });
+        }
+      }
+      // A batch doc can carry many entries; the minimal, user-driven UX is:
+      // toast the count (+ how many were skipped, if any), then open the
+      // FIRST entry's form for the user to review and Save - one entry at a
+      // time, same as any other add. The rest stay in the file to re-import
+      // after the first is handled (no queue/carousel - simplest correct).
+      function applySetupDocFile(text) {
+        var res;
+        try { res = global.SetupDoc.parse(text); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+        if (!res || !res.ok) {
+          showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true);
+          return;
+        }
+        var entries = res.doc.entries, first = entries[0], extra = entries.length - 1;
+        var bits = [entries.length + (entries.length === 1 ? ' setup' : ' setups') + ' found'];
+        if (extra) bits.push('opening the first - ' + (first.name || (first.type === 'jam' ? 'a jam' : 'a track')));
+        if (res.skipped) bits.push(res.skipped + ' skipped');
+        showToast(bits.join(' - '));
+        openSetupEntry(first);
+      }
       fileInput.onchange = function () {
         var f = fileInput.files && fileInput.files[0];
         if (!f) return;
         var rdr = new FileReader();
         rdr.onload = function () {
-          var res, text = String(rdr.result);
+          var text = String(rdr.result);
+          var isMd = /\.md$/i.test(f.name || '');
+          if (!isMd && looksLikeSetupDoc(text)) {
+            applySetupDocFile(text);
+            fileInput.value = '';
+            return;
+          }
+          var res;
           try {
-            if (/\.md$/i.test(f.name || '') && global.SkillMd && typeof global.SkillMd.parse === 'function') {
+            if (isMd && global.SkillMd && typeof global.SkillMd.parse === 'function') {
               var md = global.SkillMd.parse(text);
               res = md.ok ? C.importProfile(md.doc) : { ok: false, reason: md.reason };
             } else {
