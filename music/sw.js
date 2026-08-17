@@ -47,7 +47,7 @@ var CORE = [
   './shared/chord-pack-adapter.js', './shared/sugg.js',
   './shared/list-item.js', './shared/scroll-hint.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
   './shared/skill-md.js', './shared/zip-store.js',
-  './shared/agent-readme.js', './shared/jam-link.js',
+  './shared/agent-readme.js', './shared/jam-link.js', './shared/setup-doc.js',
   './agent/AGENTS.md', './agent/capabilities.json',
   './shared/repertoire-form.js',
   './shared/yt-info.js',

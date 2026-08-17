@@ -45,6 +45,10 @@
 
 ### Newly queued (findings)
 
+| # | Finding | Source |
+|---|---|---|
+| F-SW-XORIGIN-DEADLINE | sw.js cross-origin branch (fonts/icons) has NO network deadline: a cache-miss + a hanging (not rejecting) network - bars-with-no-data, or a stalling proxy - blocks a render-blocking `<link>` and freezes page parse indefinitely. Same-origin got the NET_DEADLINE_MS fix for exactly this class; cross-origin never did. Pre-existing (not a wave-2 regression); surfaced during wave-2 render-verify when the container proxy hung the Google Fonts fetch under SW control. Fix shape: apply the same deadline race (serve cached-or-error past ~3.5s) to the cross-origin branch | wave-2 integration verify 2026-08-17 |
+
 | S-ENFORCE-2B | Registered feedback debt: 3 remaining confirm() calls (songbook delete-item + clear-setlist, repertoire-form) -> modal standard; apply .helpIcon convention to tracks.js help toggles (grants now free) | PR #170 inventory |
 
 | # | Item | Source |

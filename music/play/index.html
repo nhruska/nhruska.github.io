@@ -467,6 +467,10 @@
      existing Practice Studio (S15 re-home) - Save hands off to
      repertoire-form.js exactly like any other track's Edit tap. -->
 <script src="../shared/jam-link.js"></script>
+<!-- setup-doc.js: pure parser for music-setup/v1 batch setup docs (spec A8) -
+     the Skills file picker dispatches on the JSON schema string; entries land
+     as prefills through the existing forms, never direct storage writes. -->
+<script src="../shared/setup-doc.js"></script>
 <script src="../shared/zip-store.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
@@ -721,15 +725,43 @@
       // track immediately after the tour"): the tour ENDS in a jam on EVERY
       // path, via the one-shot music.welcomeJam.v1 intent flag consumed by
       // openWelcomeJam() (defined at the tracksCtl mount).
+      // A shared `?jam=` link IS the tour-ending jam: without this check the
+      // rewrite below dropped every non-p param, so a first-visit device lost
+      // the very jam the link was sent to open (the link's whole point).
+      var jamLinked = null;
+      try { jamLinked = window.JamLink ? JamLink.parse(location.search) : null; } catch (e) {}
+      var hasJamLink = !!(jamLinked && jamLinked.ok);
       if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
         // Instrument RELOAD path: this page is about to die, so set the flag
         // FIRST - the new page's tracksCtl onReady re-enters openWelcomeJam()
         // once the catalog loads. A page load is not a user gesture, so the
         // jam opens there honestly unstarted (one tap on the big play starts
         // sound - the bar's state sync keeps it truthful).
-        try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {}
+        if (!hasJamLink) { try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {} }
         try { localStorage.setItem(PROFILE_KEY, chosenInst); } catch (e) {}
-        location.search = '?p=' + encodeURIComponent(chosenInst);
+        if (hasJamLink) {
+          // Carry the link's params through the reload; welcome is now seen,
+          // so the new page's boot check opens the LINK's jam, not the
+          // generic featured one.
+          var qs = new URLSearchParams(location.search);
+          qs.set('p', chosenInst);
+          location.search = '?' + qs.toString();
+        } else {
+          location.search = '?p=' + encodeURIComponent(chosenInst);
+        }
+      } else if (hasJamLink) {
+        // Same instrument + a jam link: open the LINK's jam, skip the generic
+        // welcome jam. Deferred past the overlay's NavHistory unwind - the
+        // dismiss's async popstate is still in flight here, and a Studio layer
+        // pushed synchronously inside the unwind gets popped right back off
+        // (observed: the sync call runs clean yet the Studio never survives).
+        // Like the reload path, the jam opens honestly unstarted - one tap
+        // starts sound.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamLinked.setup); } catch (e) {}
+          });
+        });
       } else {
         // Same-instrument path: the Start-playing TAP is a real user gesture,
         // so the jam opens right here with autoplay allowed. The library
@@ -953,15 +985,32 @@
         : null;
       tracksCtl.openStudio(window.TracksModel.jamTrackFromSetup(setup, deriveKey));
     }
-    // Parse on load. A fresh device mid-first-run-tour skips the auto-open
-    // (the welcome overlay already owns the screen) rather than stacking a
-    // second full-screen layer over it - the link degrades to "opens
-    // normally" for that rare edge, same defensive-reader spirit as an
-    // unrecognized param. Never throws: a malformed link must never break boot.
+    // Narrow window seam (same pattern as openWelcomeJam): the welcome
+    // handler lives in a separate <script> closure and needs to open the
+    // LINK's jam when the tour's Start-playing tap fires on a same-instrument
+    // exit - one capability exported, nothing else leaks.
+    window.openJamLink = openJamLink;
+    // Parse on load. A fresh device mid-first-run-tour defers to the welcome
+    // overlay (it owns the screen) instead of stacking a second full-screen
+    // layer - the welcome handler's exit paths then open the LINK's jam:
+    // same-instrument via the seam above, instrument-reload by carrying the
+    // jam params through the ?p= rewrite. Never throws: a malformed link
+    // must never break boot.
     try {
       var wOv = document.getElementById('welcomeOv');
       var jamParsed = window.JamLink && window.JamLink.parse ? window.JamLink.parse(location.search) : { ok: false };
-      if (jamParsed.ok && !(wOv && !wOv.hidden)) openJamLink(jamParsed.setup);
+      if (jamParsed.ok && !(wOv && !wOv.hidden)) {
+        // Deferred past NavHistory's boot reconciliation: arriving via the
+        // welcome tour's ?p= rewrite, the old page's overlay pushState rides
+        // into this load's history, and a Studio layer opened synchronously
+        // here gets popped right back off during that unwind (same failure
+        // as the same-instrument exit above - one cause, two doors).
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamParsed.setup); } catch (e2) {}
+          });
+        });
+      }
     } catch (e) { /* a malformed deep link degrades to opening normally */ }
 
     // Landing-tab first-run callout. The INITIAL tab render does not emit
