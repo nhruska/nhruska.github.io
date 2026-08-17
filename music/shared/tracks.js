@@ -2123,8 +2123,24 @@
         // Transition Studio -> Edit form: close the studio DOM + let the form take over
         // its history slot (no stale studio layer left under the form). settleAfter does
         // the replace; falls back to the raw sequence without NavHistory.
-        if (window.NavHistory) NavHistory.settleAfter(closePlayer, function () { opts.onEditRequest(t); });
-        else { closePlayer(); opts.onEditRequest(t); }
+        function doEdit() {
+          opts.onEditRequest(t);
+          // S15 (agent-interaction ?jam= re-home): an EPHEMERAL track (no
+          // t.id - a jam-link hand-off, or any other no-id Edit request that
+          // carries a chord seq) hands its progression to the form the same
+          // way a user's own typing would - the form's own public [data-seq]
+          // textarea, synchronous with repForm.open() (repertoire-form.js
+          // renders inline, per openEditOrAdd's create branch) - never a
+          // private songbook.js internal. Gated on t.id == null so an
+          // EXISTING custom song's own saved seq is never clobbered here
+          // (its Edit always takes the real edit-existing branch instead).
+          if (t.id == null && t.seq && t.seq.length) {
+            var seqEl = document.querySelector('.rf-ov.on [data-seq]');
+            if (seqEl) seqEl.value = t.seq.join(' ');
+          }
+        }
+        if (window.NavHistory) NavHistory.settleAfter(closePlayer, doEdit);
+        else { closePlayer(); doEdit(); }
       };
       // Inline "add the video you found" for a custom song with no video yet: parse the
       // pasted URL, write it via the host (cs.yt), and re-open the Studio so the embed
