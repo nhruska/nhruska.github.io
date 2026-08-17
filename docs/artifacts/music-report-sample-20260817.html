@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music practice report</title>
+<style>
+  :root{
+    --bg:#eef1f4;--surface:#ffffff;
+    --line:#d6dce3;
+    --txt:#161b22;--txt-soft:#3f4854;--txt-dim:#5f6875;
+    --accent:#0f9d8e;
+    --warn:#b9750a;--bad:#c0392b;--good:#0f9d8e;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d0f12;--surface:#181b21;
+      --line:#262b34;
+      --txt:#e8ebf0;--txt-soft:#b6bcc6;--txt-dim:#8a92a0;
+      --accent:#5eead4;
+      --warn:#fbbf24;--bad:#f87171;--good:#5eead4;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--txt);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  h1{font-size:20px;margin:0 0 2px}
+  .meta{color:var(--txt-dim);font-size:13px;margin:0 0 20px}
+  section{background:var(--surface);border:1px solid var(--line);
+           border-radius:var(--radius);padding:14px 16px;margin:0 0 16px}
+  h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;
+     color:var(--txt-soft);margin:0 0 12px}
+  .skill-block{margin:0 0 16px}
+  .skill-block:last-child{margin-bottom:0}
+  .skill-block h3{font-size:15px;margin:0 0 8px;color:var(--txt)}
+  .comp-row{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+  .comp-row:last-child{margin-bottom:0}
+  .comp-label{flex:0 0 128px;font-size:12px;color:var(--txt-soft);
+              overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .comp-bar{flex:1 1 auto;height:22px;max-width:340px}
+  .comp-bar .track{fill:var(--line)}
+  .comp-bar .fill{fill:var(--accent)}
+  .comp-bar .target{stroke:var(--warn);stroke-width:2}
+  .comp-bar .val{fill:var(--txt-dim);font-size:11px}
+  .recency{display:flex;height:22px;border-radius:11px;overflow:hidden;
+           border:1px solid var(--line)}
+  .recency > div{display:flex;align-items:center;justify-content:center;
+                 font-size:11px;color:var(--surface);min-width:0}
+  .recency .fresh{background:var(--good)}
+  .recency .aging{background:var(--warn)}
+  .recency .stale{background:var(--bad)}
+  .recency-legend{display:flex;gap:14px;margin-top:8px;font-size:11px;
+                   color:var(--txt-dim)}
+  .recency-legend span::before{content:"";display:inline-block;width:8px;
+                                height:8px;border-radius:50%;margin-right:4px;
+                                vertical-align:middle}
+  .legend-fresh::before{background:var(--good)}
+  .legend-aging::before{background:var(--warn)}
+  .legend-stale::before{background:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+  th{color:var(--txt-dim);font-weight:500;font-size:11px;text-transform:uppercase}
+  .empty{color:var(--txt-dim);font-size:13px;font-style:italic;margin:0}
+  footer{color:var(--txt-dim);font-size:11px;margin:20px 0 0}
+</style>
+</head>
+<body>
+  <h1>Ukulele + Stringed instrument</h1>
+  <p class="meta">Generated Mon, 17 Aug 2026 07:45:00 GMT - source: backup envelope + skills bundle</p>
+
+  <section>
+    <h2>Competency levels vs targets</h2>
+    <div class="skill-block"><h3>ukulele</h3>
+<div class="comp-row"><div class="comp-label">Open chords</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Open chords: level 47 of target 90">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="141" height="10" rx="5"/>
+<line class="target" x1="270" y1="2" x2="270" y2="20"/>
+<text class="val" x="304" y="15">47/90</text></svg></div>
+<div class="comp-row"><div class="comp-label">Strum patterns</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Strum patterns: level 33 of target 85">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="99" height="10" rx="5"/>
+<line class="target" x1="255" y1="2" x2="255" y2="20"/>
+<text class="val" x="304" y="15">33/85</text></svg></div>
+<div class="comp-row"><div class="comp-label">Chunking</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Chunking: level 13 of target 75">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="39" height="10" rx="5"/>
+<line class="target" x1="225" y1="2" x2="225" y2="20"/>
+<text class="val" x="304" y="15">13/75</text></svg></div>
+<div class="comp-row"><div class="comp-label">Fingerpicking</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Fingerpicking: level 4 of target 70">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="12" height="10" rx="5"/>
+<line class="target" x1="210" y1="2" x2="210" y2="20"/>
+<text class="val" x="304" y="15">4/70</text></svg></div>
+<div class="comp-row"><div class="comp-label">Repertoire</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Repertoire: level 25 of target 80">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="75" height="10" rx="5"/>
+<line class="target" x1="240" y1="2" x2="240" y2="20"/>
+<text class="val" x="304" y="15">25/80</text></svg></div>
+</div>
+<div class="skill-block"><h3>stringed-instrument</h3>
+<div class="comp-row"><div class="comp-label">Fretboard map</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Fretboard map: level 0 of target 80">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="0" height="10" rx="5"/>
+<line class="target" x1="240" y1="2" x2="240" y2="20"/>
+<text class="val" x="304" y="15">0/80</text></svg></div>
+<div class="comp-row"><div class="comp-label">Chord shapes</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Chord shapes: level 39 of target 85">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="117" height="10" rx="5"/>
+<line class="target" x1="255" y1="2" x2="255" y2="20"/>
+<text class="val" x="304" y="15">39/85</text></svg></div>
+<div class="comp-row"><div class="comp-label">Chord changes</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Chord changes: level 30 of target 85">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="90" height="10" rx="5"/>
+<line class="target" x1="255" y1="2" x2="255" y2="20"/>
+<text class="val" x="304" y="15">30/85</text></svg></div>
+<div class="comp-row"><div class="comp-label">Keeping time</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Keeping time: level 22 of target 80">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="66" height="10" rx="5"/>
+<line class="target" x1="240" y1="2" x2="240" y2="20"/>
+<text class="val" x="304" y="15">22/80</text></svg></div>
+<div class="comp-row"><div class="comp-label">Tuning by ear</div>
+<svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Tuning by ear: level 17 of target 75">
+<rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
+<rect class="fill" x="0" y="6" width="51" height="10" rx="5"/>
+<line class="target" x1="225" y1="2" x2="225" y2="20"/>
+<text class="val" x="304" y="15">17/75</text></svg></div>
+</div>
+  </section>
+
+  <section>
+    <h2>Evidence recency</h2>
+    <div class="recency"><div class="seg fresh" style="width:90%">9 fresh</div><div class="seg stale" style="width:10%"></div></div><div class="recency-legend"><span class="legend-fresh">9 fresh</span><span class="legend-aging">0 aging</span><span class="legend-stale">1 stale</span></div>
+  </section>
+
+  <section>
+    <h2>Repertoire</h2>
+    <table><tbody>
+    <tr><td>ukulele-gcea</td><td>3 songs</td></tr>
+
+    </tbody></table>
+  </section>
+
+  <footer>
+    Rendered by claude-live-run at 2026-08-17T08:45:13.700Z. This page is read-only - to
+    update your levels in the app, propose a skill-competency-profile/v1 doc
+    and import it from Settings -&gt; Skills.
+  </footer>
+</body>
+</html>

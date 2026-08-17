@@ -77,6 +77,12 @@ test('a hand-picked AGENTS.md fed to the real competency import path is rejected
 test('exposes the constants agent-manifest.test.js cross-checks against the real modules', function () {
   assert.strictEqual(AgentReadme.COMPETENCY_SCHEMA, Competency.SCHEMA);
   assert.strictEqual(typeof AgentReadme.BACKUP_APP, 'string');
+
+  // Live-run eval finding (2026-08-17): a raw # in a jam link truncates the
+  // URL as a fragment and can load a VALID but WRONG jam. The bundled
+  // instructions must carry the percent-encoding rule so agents following
+  // ONLY the readme never emit that link shape.
+  assert.ok(AgentReadme.text().indexOf('%23') >= 0, 'readme must state the # -> %23 encoding rule');
 });
 
 run();
