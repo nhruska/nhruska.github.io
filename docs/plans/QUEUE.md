@@ -37,6 +37,9 @@
 | S11 | S-TAP-TEMPO: match the synth loop's tempo to the playing backing track - a TAP-TEMPO control (tap 4+ beats on a button, median inter-tap interval sets the loop bpm; stretch: align loop phase to the last tap so downbeats land together). Operator round 7: "can we try to match tempo of playing song?? we used to have a tap to sync feature... would be better than default settings". Route through audio-dsp-coach for the timing math; replaces nothing (Slow/Med/Fast stays the fallback). | **go tap-tempo** | This QUEUE row is the spec seed |
 | S12 | S-GUIDE-CONTEXT: rethink the ? guidance CTA - operator round 7: "I want the guidance, but it's not a good CTA and could be guidance elsewhere or served individually based on the song/scale". Direction: per-song/per-scale guidance served contextually (e.g. a one-line mentor hint under the scale that deepens on tap) instead of a generic ? icon; composes the existing SoloGuide/mentor-card content, pedagogy-coach owns the grading. | Operator picks the direction, then **go guide-context** | This QUEUE row is the spec seed |
 
+| S13 | S-AGENT-FLOOR: M-AGENT missions A1+A2+A4 (bundled AGENTS.md in the skills zip export, `music/agent/` capability manifest + consistency gate, agent round-trip node test) | **PROMOTED 2026-08-17 (operator digit `1` on the M-AGENT gate)** - launched same session as a cheap-tier swarm | [goal-agent-interaction](goal-agent-interaction-20260817.md) sections 5 + 8 |
+| S14 | S-JAM-LINK: M-AGENT mission A7 - `?jam=<chords>&key=<tonic>&yt=<id>&name=<label>` deep link renders an ephemeral jam on load, Save through existing forms; THE mobile-seamless transport (agent emits a tappable link, phone opens it - no files, no import) | **PROMOTED 2026-08-17 with S13** - same swarm | [goal-agent-interaction](goal-agent-interaction-20260817.md) section 4b |
+
 ### Newly queued (findings)
 
 | S-ENFORCE-2B | Registered feedback debt: 3 remaining confirm() calls (songbook delete-item + clear-setlist, repertoire-form) -> modal standard; apply .helpIcon convention to tracks.js help toggles (grants now free) | PR #170 inventory |
@@ -107,6 +110,7 @@
 
 ## LONG (ideas - need a vision interview before anything)
 
+- KNOWLEDGE SPHERE for competencies (operator 2026-08-17): node-graph viewer over the competency map (skills as spheres, evidence as edges) + explore/exploit analytics - "which competencies have served me best -> adjacent ways to explore/exploit". Composes M-AGENT profile docs as the data source; adjacent to the personal-skills second-brain graph (separate session, operator-flagged)
 - Practice-tracking / streaks (accountability loop per tutor north star)
 - Setlist sharing / export for bandmates
 - More instrument profiles + per-instrument voicing depth (operator signal: "huge toolset for guitarists AND OTHERS")
