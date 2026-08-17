@@ -6560,10 +6560,18 @@
           if (md) files.push({ path: global.SkillMd.bundlePath(fw.id), text: md });
         });
         if (!files.length) { showToast("Nothing to export yet", true); return; }
+        var skillCount = files.length;
+        // AGENTS.md: self-describing agent instructions bundled at the zip root
+        // (S13 A1) so a user-side coding agent handed only this folder can
+        // orient with zero app code. Guarded (agent-readme.js not wired yet on
+        // an older cached build) - the skills bundle still exports without it.
+        if (global.AgentReadme && typeof global.AgentReadme.text === 'function') {
+          files.push({ path: 'AGENTS.md', text: global.AgentReadme.text() });
+        }
         try {
           var bytes = global.ZipStore.build(files);
           downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'music-skills.zip',
-            'Exported all skills (' + files.length + ')');
+            'Exported all skills (' + skillCount + ')');
         } catch (e) { showToast("Couldn't export on this device", true); }
       }
 
