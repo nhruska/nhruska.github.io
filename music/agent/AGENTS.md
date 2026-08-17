@@ -32,7 +32,9 @@ account is required to read or propose updates.
   rules below), saved as `<skill-id>/SKILL.md` for the user to import.
 - Emit a one-tap jam setup as a deep link: `music/play/?jam=<chords>&key=<tonic>
   &yt=<videoId>&name=<label>`. `jam` is comma-separated canonical-sharp chord
-  tokens (e.g. `jam=Am,F,C,G`); `key` is a tonic name plus optional `m` for
+  tokens (e.g. `jam=Am,F,C,G`) - percent-encode every `#` (`F#m` -> `F%23m`;
+  a raw # truncates the URL and can load a VALID but WRONG jam - decode your
+  final URL and confirm every chord survived); `key` is a tonic name plus optional `m` for
   minor (e.g. `key=Am`); `yt` is an 11-char YouTube video id or a watch/
   youtu.be URL; `name` labels the Save form. All four are optional. The link
   opens an EPHEMERAL jam - nothing is written until the user taps Save.

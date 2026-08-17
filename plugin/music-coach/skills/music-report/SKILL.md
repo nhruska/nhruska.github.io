@@ -53,7 +53,7 @@ surrounding CSS and structure untouched:
 | `<!--SLOT:report-date-->` | the export's `exportedAt`, human-formatted |
 | `<!--SLOT:source-note-->` | which files were read (backup envelope / skills bundle / both) |
 | `<!--SLOT:competency-rows-->` | one `<div class="skill-block">` per skill found, each holding one bar row per competency (below) |
-| `<!--SLOT:recency-strip-->` | the fresh/aging/stale counts as three proportional `<div>` segments, or the honest no-data sentence |
+| `<!--SLOT:recency-strip-->` | the proportional `<div class="recency">` segment bar (`seg fresh` / `aging` / `stale` classes) followed by a `<div class="recency-legend">` whose spans carry the counts (`<span class="legend-fresh">9 fresh</span>` ...). OMIT zero-count segments entirely, and put NO text inside any segment narrower than ~15% - tiny segments clip their own labels into overlap (caught on the first live render); the legend is the always-legible copy of the numbers. Or the honest no-data sentence |
 | `<!--SLOT:repertoire-rows-->` | one table row per instrument found (name + setlist length), or "no backup provided" |
 | `<!--SLOT:generating-agent-->` | your tool name + the generation timestamp |
 
@@ -62,7 +62,7 @@ surrounding CSS and structure untouched:
 ```html
 <div class="comp-row">
   <div class="comp-label">Chord shapes</div>
-  <svg class="comp-bar" viewBox="0 0 300 22" role="img" aria-label="Chord shapes: level 62 of target 85">
+  <svg class="comp-bar" viewBox="0 0 360 22" role="img" aria-label="Chord shapes: level 62 of target 85">
     <rect class="track" x="0" y="6" width="300" height="10" rx="5"/>
     <rect class="fill"  x="0" y="6" width="186" height="10" rx="5"/>
     <line class="target" x1="255" y1="2" x2="255" y2="20"/>
@@ -72,7 +72,10 @@ surrounding CSS and structure untouched:
 ```
 
 `fill` width = `round(level/100*300)`. `target` line `x1`/`x2` =
-`round(target/100*300)` (both 0-300 since level/target are 0-100). Keep the
+`round(target/100*300)` (both 0-300 since level/target are 0-100). The
+viewBox is 360 wide on purpose: the bar spans 0-300 and the `x="304"` value
+label lives in the remaining 56 units - a 300-wide viewBox CLIPS the label
+invisible (caught on the first live render). Keep the
 `<text>` element as-is - its size comes from the stylesheet's `.val` rule
 (already >=10px); don't add a `font-size` attribute that could undercut it.
 

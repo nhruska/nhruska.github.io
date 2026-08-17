@@ -18,9 +18,15 @@ code, a network call, or a server. Full contract: `music/agent/AGENTS.md`
 | `<skill-id>/SKILL.md` (skills bundle) | Open-skills-format file; the fenced ```` ```json ```` block under "## Profile data" is the exact `skill-competency-profile/v1` doc - the table above it is presentation only | One skill's competency + preferences |
 | `skill-competency-profile/v1` (embedded doc) | `{ schema, skill, discipline:"music", updated, provenance:[{source,at}], competencies:[{id,name,desc,level,target,evidence_count,last_evidence}], preferences?:[{id,statement,evidence_count,last_evidence}] }` | Levels vs targets (gaps), evidence recency (staleness), taste statements |
 
-Evaluate gaps as `target - level` per competency; flag any competency whose
-`last_evidence` predates the user's most recent practice session as stale.
-Repertoire size per instrument lives at `roadcase-<id>.setlist.v1`.
+Evaluate gaps as `target - level` per competency. Staleness is computed
+against the envelope's own `exportedAt` (the only clock the export carries):
+`last_evidence` null = never evidenced; within 7 days of `exportedAt` = fresh;
+within 30 = aging; older = stale. Repertoire size per instrument lives at
+`roadcase-<id>.setlist.v1`.
+
+When the envelope and a skills-bundle SKILL.md both carry the same skill's
+doc, the one with the newer `updated` wins; on a tie, the envelope wins (it
+is the byte-faithful whole-app snapshot).
 
 ## Proposing a profile update (the ONLY write seam)
 
@@ -30,8 +36,11 @@ is byte-faithful and would bypass validation). Edit or author a
 
 1. Append a provenance entry `{ source: "agent:<your-tool-name>", at: "<ISO>" }`
    - never rewrite or delete an existing entry.
-2. Any level change carries evidence: bump `evidence_count`, set
-   `last_evidence` to a short human-readable reason.
+2. Any level change carries evidence: bump `evidence_count` and set
+   `last_evidence` to the ISO 8601 time of the evidence - the app writes
+   ONLY timestamps there (competency.js `recordEvidence`), never prose.
+   Human-readable reasons go in `preferences[]` statements or your
+   accompanying report, not in `last_evidence`.
 3. Unknown competency ids may ride along (additive-tolerant); the app grades
    only ids its shipped frameworks know.
 4. `preferences[]` is the additive slot for taste statements you learn.
@@ -50,7 +59,7 @@ until the user taps Save.
 
 | Param | Value | Rule |
 |---|---|---|
-| `jam` | comma-separated chord tokens (`jam=Am,F,C,G`) | CANONICAL-SHARP only - never pre-respell. One invalid token drops the whole param. |
+| `jam` | comma-separated chord tokens (`jam=Am,F,C,G`) | CANONICAL-SHARP only - never pre-respell. One invalid token drops the whole param. **`#` MUST be percent-encoded** (`F#m` -> `F%23m`): a raw `#` truncates the URL as a fragment, and the surviving prefix can be a VALID but WRONG jam (`jam=A,F#m,D,E` loads a two-chord A-F jam with no key). Encode every param value; before emitting, decode your final URL and confirm every chord survived. |
 | `key` | tonic name + optional `m` (`key=Am`) | Not re-spelled here either. |
 | `yt` | 11-char YouTube video id, or a watch/youtu.be/embed URL | KEYLESS forever - no API key, ever. Can't state the key for a track? Omit it; never invent one. |
 | `name` | URL-encoded label for the Save form | - |

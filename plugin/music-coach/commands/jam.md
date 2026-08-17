@@ -13,7 +13,7 @@ progression). Confirm chord choices and any modal color against
 Then emit the deep link per the `music-interchange` skill's "Emitting a jam
 deep link" rules:
 
-- `jam=` the progression as comma-separated CANONICAL-SHARP tokens.
+- `jam=` the progression as comma-separated CANONICAL-SHARP tokens, with every `#` percent-encoded (`F#m` -> `F%23m` - a raw `#` truncates the URL and can load a wrong jam). Decode your final URL and confirm every chord survived before emitting.
 - `key=` the tonic, unrespelled.
 - `yt=` only if you can state a real video id/URL for a genuinely matching
   backing track AND its key - never invent one; omit the param otherwise.

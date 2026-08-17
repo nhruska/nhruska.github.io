@@ -63,7 +63,9 @@
     L.push('  rules below), saved as `<skill-id>/SKILL.md` for the user to import.');
     L.push('- Emit a one-tap jam setup as a deep link: `music/play/?jam=<chords>&key=<tonic>');
     L.push('  &yt=<videoId>&name=<label>`. `jam` is comma-separated canonical-sharp chord');
-    L.push('  tokens (e.g. `jam=Am,F,C,G`); `key` is a tonic name plus optional `m` for');
+    L.push('  tokens (e.g. `jam=Am,F,C,G`) - percent-encode every `#` (`F#m` -> `F%23m`;');
+    L.push('  a raw # truncates the URL and can load a VALID but WRONG jam - decode your');
+    L.push('  final URL and confirm every chord survived); `key` is a tonic name plus optional `m` for');
     L.push('  minor (e.g. `key=Am`); `yt` is an 11-char YouTube video id or a watch/');
     L.push('  youtu.be URL; `name` labels the Save form. All four are optional. The link');
     L.push('  opens an EPHEMERAL jam - nothing is written until the user taps Save.');
