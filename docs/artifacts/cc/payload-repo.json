@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T09:46:15Z",
+  "generatedAt": "2026-08-17T10:01:10Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,42 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-15T09:45:08Z",
-    "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/d59bdffa61ebca0b1f9d6983445ae38bd21f0a60"
+    "date": "2026-08-17T09:12:54Z",
+    "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
+    "subject": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (#334)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/81ef17326955e7ef6628a0cb91f1e164cd06e1b5"
   },
   "commits": [
+    {
+      "date": "2026-08-17T09:12:54Z",
+      "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
+      "subject": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (#334)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/81ef17326955e7ef6628a0cb91f1e164cd06e1b5"
+    },
+    {
+      "date": "2026-08-17T07:41:41Z",
+      "sha": "1d566ba7381abc5f349f223f580c55e640110443",
+      "subject": "S15+S16+S17: jam links open the real Studio, music-coach plugin, setup-doc import (M-AGENT wave 2) (#333)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/1d566ba7381abc5f349f223f580c55e640110443"
+    },
+    {
+      "date": "2026-08-17T05:40:34Z",
+      "sha": "54bf03131619f48bbc72edb6afdede16c4ac44cd",
+      "subject": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (#332)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/54bf03131619f48bbc72edb6afdede16c4ac44cd"
+    },
+    {
+      "date": "2026-08-17T05:04:15Z",
+      "sha": "9430db5a8377d9053d8bd57506cde51889ffccb0",
+      "subject": "docs: coding-agent interaction spec for the Music app (M-AGENT) (#331)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9430db5a8377d9053d8bd57506cde51889ffccb0"
+    },
+    {
+      "date": "2026-08-16T09:46:21Z",
+      "sha": "43759e59f806be8077195f2678eb52c8bd469815",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/43759e59f806be8077195f2678eb52c8bd469815"
+    },
     {
       "date": "2026-08-15T09:45:08Z",
       "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
@@ -60,39 +90,33 @@
       "sha": "004f810a412fd366924b5eea89b18ef21af32001",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/004f810a412fd366924b5eea89b18ef21af32001"
-    },
-    {
-      "date": "2026-08-10T04:40:48Z",
-      "sha": "d9697c46e6cd5772fe3477c163aa04bbca322d9d",
-      "subject": "Player-feel UAT rounds 3-8: jams-first, tour auto-jam, row anatomy, stage zoom + icon gate, studio IA (#328)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d9697c46e6cd5772fe3477c163aa04bbca322d9d"
-    },
-    {
-      "date": "2026-08-09T17:11:27Z",
-      "sha": "5e96b8c968ad471fedf84b98e25d89c05a7bda86",
-      "subject": "Variety fill + second playlist + Phish keys: catalog 55 -> 108 (#327)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e96b8c968ad471fedf84b98e25d89c05a7bda86"
-    },
-    {
-      "date": "2026-08-09T15:47:46Z",
-      "sha": "fb559f6c30ab76b985434463fe92ace1af81e644",
-      "subject": "Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT) (#326)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/fb559f6c30ab76b985434463fe92ace1af81e644"
-    },
-    {
-      "date": "2026-08-09T14:15:42Z",
-      "sha": "3f444d57624871ef415c8d1782325204e9dfb038",
-      "subject": "Land community PR #274: constant \"Suggested Chords\" label (#325)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/3f444d57624871ef415c8d1782325204e9dfb038"
-    },
-    {
-      "date": "2026-08-09T14:15:15Z",
-      "sha": "16cebfd19f2f792ad2d497fa115a8bb9c48aae9d",
-      "subject": "Merge PR #274: constant 'Suggested Chords' label (community contribution)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/16cebfd19f2f792ad2d497fa115a8bb9c48aae9d"
     }
   ],
   "openPRs": [
+    {
+      "number": 335,
+      "title": "docs: M-AGENT arc record + queue reconcile (session save)",
+      "branch": "claude/music-app-agent-spec-qf7vif",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/335",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32017362867/job/95349593563"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32017362884/job/95349593694"
+        }
+      ]
+    },
     {
       "number": 330,
       "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
@@ -119,6 +143,34 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-08-17T08:46:06Z",
+      "mergedAt": "2026-08-17T09:12:54Z",
+      "number": 334,
+      "title": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/334"
+    },
+    {
+      "createdAt": "2026-08-17T06:27:09Z",
+      "mergedAt": "2026-08-17T07:41:41Z",
+      "number": 333,
+      "title": "S15+S16+S17: jam links open the real Studio, music-coach plugin with agent profiles, setup-doc import (M-AGENT wave 2)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/333"
+    },
+    {
+      "createdAt": "2026-08-17T05:37:54Z",
+      "mergedAt": "2026-08-17T05:40:34Z",
+      "number": 332,
+      "title": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/332"
+    },
+    {
+      "createdAt": "2026-08-17T04:31:49Z",
+      "mergedAt": "2026-08-17T05:04:15Z",
+      "number": 331,
+      "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
+    },
     {
       "createdAt": "2026-08-12T03:50:10Z",
       "mergedAt": "2026-08-13T04:30:35Z",
@@ -195,51 +247,23 @@
       "number": 318,
       "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/318"
-    },
-    {
-      "createdAt": "2026-07-25T23:43:38Z",
-      "mergedAt": "2026-07-26T18:14:23Z",
-      "number": 316,
-      "title": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/316"
-    },
-    {
-      "createdAt": "2026-07-25T23:37:57Z",
-      "mergedAt": "2026-07-26T17:28:38Z",
-      "number": 315,
-      "title": "a11y: add the gate, and close the ARIA gap it was built to find",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/315"
-    },
-    {
-      "createdAt": "2026-07-25T23:07:55Z",
-      "mergedAt": "2026-07-25T23:39:22Z",
-      "number": 314,
-      "title": "wiki: record how a render check lies (verification traps)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/314"
-    },
-    {
-      "createdAt": "2026-07-25T20:21:12Z",
-      "mergedAt": "2026-07-27T02:48:36Z",
-      "number": 313,
-      "title": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/313"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-16T09:46:09Z",
+    "runStartedAt": "2026-08-17T10:01:03Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31939913607",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32018094868",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 8,
+    "merged_count": 6,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 17.84,
+    "typical_merge_hours": 1.33,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +273,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v329-6",
-    "localCacheVersion": "music-v329-6",
+    "liveCacheVersion": "music-v334",
+    "localCacheVersion": "music-v334",
     "cacheMatch": true
   },
   "missions": [
@@ -411,6 +435,11 @@
         "Spec state": "This QUEUE row is the spec seed"
       },
       {
+        "#": "F-SW-XORIGIN-DEADLINE",
+        "Finding": "sw.js cross-origin branch (fonts/icons) has NO network deadline: a cache-miss + a hanging (not rejecting) network - bars-with-no-data, or a stalling proxy - blocks a render-blocking `<link>` and freezes page parse indefinitely. Same-origin got the NET_DEADLINE_MS fix for exactly this class; cross-origin never did. Pre-existing (not a wave-2 regression); surfaced during wave-2 render-verify when the container proxy hung the Google Fonts fetch under SW control. Fix shape: apply the same deadline race (serve cached-or-error past ~3.5s) to the cross-origin branch",
+        "Source": "wave-2 integration verify 2026-08-17 - FIX SHIPPED wave 3"
+      },
+      {
         "#": "S-NAVHIST",
         "Item": "**CLEARED-STALE 2026-07-10 (swarm, zero code)**: the double-pop fix already shipped inside #197's settleAfter + deferred-deliver machinery; solo-skip + solo-cancel scenarios both green",
         "Source": "PR #144 finding, evidence in swarm audit"
@@ -568,6 +597,11 @@
     ],
     "MID": [
       {
+        "#": "M-AGENT",
+        "Candidate": "**AGENT INTERCHANGE (spec drafted 2026-08-17, extended same day)**: coding-agent interaction contract - self-describing exports (bundled AGENTS.md in the skills zip), static `music/agent/` capability manifest + consistency gate, agent round-trip node test, provenance-surfacing import copy, PLUS agent-actionable setups (`?jam=` deep link: progression + key + keyless yt, ephemeral until user Save) and plugin packaging (coach bench + contract + `/music:*` commands installable in CC/Cowork). L0 file-interchange is the floor (offline, no server); L1-L3 degrade to it. Missions A1-A9 sized in the spec; operator gate to promote A1+A2+A4 (then A7) to SHORT. Demo framing: skills absorb the LMS (content, coaching, competency records as portable skill artifacts). Adjacent pointer, separate session: personal-skills second-brain graph",
+        "Vision source": "[goal-agent-interaction](goal-agent-interaction-20260817.md)"
+      },
+      {
         "#": "M-0",
         "Candidate": "**DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE",
         "Vision source": "[vision-tutor-deterministic](vision-tutor-deterministic-20260705.md)"
@@ -667,8 +701,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 60,
-    "testCaseCount": 3389,
+    "testFileCount": 67,
+    "testCaseCount": 3481,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
