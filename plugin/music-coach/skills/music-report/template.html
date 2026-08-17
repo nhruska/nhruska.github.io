@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music practice report</title>
+<style>
+  :root{
+    --bg:#eef1f4;--surface:#ffffff;
+    --line:#d6dce3;
+    --txt:#161b22;--txt-soft:#3f4854;--txt-dim:#5f6875;
+    --accent:#0f9d8e;
+    --warn:#b9750a;--bad:#c0392b;--good:#0f9d8e;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d0f12;--surface:#181b21;
+      --line:#262b34;
+      --txt:#e8ebf0;--txt-soft:#b6bcc6;--txt-dim:#8a92a0;
+      --accent:#5eead4;
+      --warn:#fbbf24;--bad:#f87171;--good:#5eead4;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--txt);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  h1{font-size:20px;margin:0 0 2px}
+  .meta{color:var(--txt-dim);font-size:13px;margin:0 0 20px}
+  section{background:var(--surface);border:1px solid var(--line);
+           border-radius:var(--radius);padding:14px 16px;margin:0 0 16px}
+  h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;
+     color:var(--txt-soft);margin:0 0 12px}
+  .skill-block{margin:0 0 16px}
+  .skill-block:last-child{margin-bottom:0}
+  .skill-block h3{font-size:15px;margin:0 0 8px;color:var(--txt)}
+  .comp-row{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+  .comp-row:last-child{margin-bottom:0}
+  .comp-label{flex:0 0 128px;font-size:12px;color:var(--txt-soft);
+              overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .comp-bar{flex:1 1 auto;height:22px;max-width:340px}
+  .comp-bar .track{fill:var(--line)}
+  .comp-bar .fill{fill:var(--accent)}
+  .comp-bar .target{stroke:var(--warn);stroke-width:2}
+  .comp-bar .val{fill:var(--txt-dim);font-size:11px}
+  .recency{display:flex;height:22px;border-radius:11px;overflow:hidden;
+           border:1px solid var(--line)}
+  .recency > div{display:flex;align-items:center;justify-content:center;
+                 font-size:11px;color:var(--surface);min-width:0}
+  .recency .fresh{background:var(--good)}
+  .recency .aging{background:var(--warn)}
+  .recency .stale{background:var(--bad)}
+  .recency-legend{display:flex;gap:14px;margin-top:8px;font-size:11px;
+                   color:var(--txt-dim)}
+  .recency-legend span::before{content:"";display:inline-block;width:8px;
+                                height:8px;border-radius:50%;margin-right:4px;
+                                vertical-align:middle}
+  .legend-fresh::before{background:var(--good)}
+  .legend-aging::before{background:var(--warn)}
+  .legend-stale::before{background:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+  th{color:var(--txt-dim);font-weight:500;font-size:11px;text-transform:uppercase}
+  .empty{color:var(--txt-dim);font-size:13px;font-style:italic;margin:0}
+  footer{color:var(--txt-dim);font-size:11px;margin:20px 0 0}
+</style>
+</head>
+<body>
+  <h1><!--SLOT:profile-name--></h1>
+  <p class="meta">Generated <!--SLOT:report-date--> - source: <!--SLOT:source-note--></p>
+
+  <section>
+    <h2>Competency levels vs targets</h2>
+    <!--SLOT:competency-rows-->
+  </section>
+
+  <section>
+    <h2>Evidence recency</h2>
+    <!--SLOT:recency-strip-->
+  </section>
+
+  <section>
+    <h2>Repertoire</h2>
+    <!--SLOT:repertoire-rows-->
+  </section>
+
+  <footer>
+    Rendered by <!--SLOT:generating-agent-->. This page is read-only - to
+    update your levels in the app, propose a skill-competency-profile/v1 doc
+    and import it from Settings -&gt; Skills.
+  </footer>
+</body>
+</html>
