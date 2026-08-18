@@ -37,7 +37,19 @@
 | S11 | S-TAP-TEMPO: match the synth loop's tempo to the playing backing track - a TAP-TEMPO control (tap 4+ beats on a button, median inter-tap interval sets the loop bpm; stretch: align loop phase to the last tap so downbeats land together). Operator round 7: "can we try to match tempo of playing song?? we used to have a tap to sync feature... would be better than default settings". Route through audio-dsp-coach for the timing math; replaces nothing (Slow/Med/Fast stays the fallback). | **go tap-tempo** | This QUEUE row is the spec seed |
 | S12 | S-GUIDE-CONTEXT: rethink the ? guidance CTA - operator round 7: "I want the guidance, but it's not a good CTA and could be guidance elsewhere or served individually based on the song/scale". Direction: per-song/per-scale guidance served contextually (e.g. a one-line mentor hint under the scale that deepens on tap) instead of a generic ? icon; composes the existing SoloGuide/mentor-card content, pedagogy-coach owns the grading. | Operator picks the direction, then **go guide-context** | This QUEUE row is the spec seed |
 
+| S13 | ~~S-AGENT-FLOOR~~ **SHIPPED 2026-08-17** (#332, music-v332): bundled AGENTS.md in the skills zip, `music/agent/` manifest + consistency gate, round-trip test | done - swarm wave 1 | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
+| S14 | ~~S-JAM-LINK~~ **SHIPPED 2026-08-17** (#332, music-v332): `?jam=` deep link, ephemeral overlay + Save handoff | done - swarm wave 1; Studio re-home follows as S15 | [goal-agent-interaction](goal-agent-interaction-20260817.md) section 4b |
+| S15 | ~~S-JAM-STUDIO~~ **SHIPPED 2026-08-17** (#333, music-v333-2): jam links open the real Studio (ephemeral track via jamTrackFromSetup); bespoke overlay retired; shared links now survive a fresh device's welcome tour (param carry + NavHistory-unwind defer) | done - wave 2 | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
+| S16 | ~~S-PLUGIN~~ **SHIPPED 2026-08-17** (#333): plugin/music-coach - 4 skills, 3 commands, agent profiles music-coach/jam-dj, mutation-tested sync gate | done - wave 2 | spec section 4c |
+| S17 | ~~S-SETUP-DOC~~ **SHIPPED 2026-08-17** (#333): music-setup/v1 import, JamLink.parse reused as the one validator | done - wave 2 | spec section 4b |
+| S18 | ~~S-ANALYTICS-ARTIFACT~~ **SHIPPED 2026-08-17** (#334, music-v334): `/music-coach:report` + slot template + gate; [sample artifact](../artifacts/music-report-sample-20260817.html) | done - wave 3 | [m-agent-arc](m-agent-arc-20260817.md) |
+| S19 | ~~S-SW-XORIGIN-DEADLINE~~ **SHIPPED 2026-08-17** (#334): cross-origin fetches race NET_DEADLINE_MS; parser can never freeze on a hung font | done - wave 3 | [m-agent-arc](m-agent-arc-20260817.md) |
+
 ### Newly queued (findings)
+
+| # | Finding | Source |
+|---|---|---|
+| F-SW-XORIGIN-DEADLINE | sw.js cross-origin branch (fonts/icons) has NO network deadline: a cache-miss + a hanging (not rejecting) network - bars-with-no-data, or a stalling proxy - blocks a render-blocking `<link>` and freezes page parse indefinitely. Same-origin got the NET_DEADLINE_MS fix for exactly this class; cross-origin never did. Pre-existing (not a wave-2 regression); surfaced during wave-2 render-verify when the container proxy hung the Google Fonts fetch under SW control. Fix shape: apply the same deadline race (serve cached-or-error past ~3.5s) to the cross-origin branch | wave-2 integration verify 2026-08-17 - FIX SHIPPED wave 3 |
 
 | S-ENFORCE-2B | Registered feedback debt: 3 remaining confirm() calls (songbook delete-item + clear-setlist, repertoire-form) -> modal standard; apply .helpIcon convention to tracks.js help toggles (grants now free) | PR #170 inventory |
 
@@ -79,6 +91,7 @@
 
 | # | Candidate | Vision source |
 |---|---|---|
+| M-AGENT | **AGENT INTERCHANGE (spec drafted 2026-08-17, extended same day)**: coding-agent interaction contract - self-describing exports (bundled AGENTS.md in the skills zip), static `music/agent/` capability manifest + consistency gate, agent round-trip node test, provenance-surfacing import copy, PLUS agent-actionable setups (`?jam=` deep link: progression + key + keyless yt, ephemeral until user Save) and plugin packaging (coach bench + contract + `/music:*` commands installable in CC/Cowork). L0 file-interchange is the floor (offline, no server); L1-L3 degrade to it. Missions A1-A9 sized in the spec; operator gate to promote A1+A2+A4 (then A7) to SHORT. Demo framing: skills absorb the LMS (content, coaching, competency records as portable skill artifacts). Adjacent pointer, separate session: personal-skills second-brain graph | [goal-agent-interaction](goal-agent-interaction-20260817.md) |
 | M-0 | **DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE | [vision-tutor-deterministic](vision-tutor-deterministic-20260705.md) |
 | M-1 | Tutor Phase 4 complete: decoupled solo-scale selector over a FIXED progression (relative/parallel demos in place) | [TUTOR-ROADMAP](../../music/TUTOR-ROADMAP.md) Phase 4 (PARTIAL) |
 | M-2 | Tutor Phase 5: song-form coaching (AABA, sections -> whole songs) | TUTOR-ROADMAP Phase 5 (PLANNED); operator Q5 2026-07-04: M-CONSTRUCT is a SEPARATE mission (with future-features intel) - P5 stays teaching-focused, M-CONSTRUCT is builder-focused |
@@ -106,6 +119,7 @@
 
 ## LONG (ideas - need a vision interview before anything)
 
+- KNOWLEDGE SPHERE for competencies (operator 2026-08-17): node-graph viewer over the competency map (skills as spheres, evidence as edges) + explore/exploit analytics - "which competencies have served me best -> adjacent ways to explore/exploit". Composes M-AGENT profile docs as the data source; adjacent to the personal-skills second-brain graph (separate session, operator-flagged)
 - Practice-tracking / streaks (accountability loop per tutor north star)
 - Setlist sharing / export for bandmates
 - More instrument profiles + per-instrument voicing depth (operator signal: "huge toolset for guitarists AND OTHERS")

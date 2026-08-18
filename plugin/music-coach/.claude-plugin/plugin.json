@@ -1,0 +1,10 @@
+{
+  "name": "music-coach",
+  "description": "Personal music-learning coach for the nhruska.github.io Music app - reads a user's exported skill/backup files, evaluates competency vs targets, proposes evidence-mediated profile updates, and emits one-tap jam deep links. Bundles the app's own coach bench (theory, pedagogy, songwriting) plus the interchange contract, so any Claude Code or Cowork session becomes the coach without touching app code, a network, or a server.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Nikolaus Hruska"
+  },
+  "homepage": "https://github.com/nhruska/nhruska.github.io",
+  "license": "MIT"
+}

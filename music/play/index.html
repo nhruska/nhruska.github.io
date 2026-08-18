@@ -456,6 +456,21 @@
      panel's open-skills-format export/import (consumes competency.js's
      exportProfile output). -->
 <script src="../shared/skill-md.js"></script>
+<!-- agent-readme.js: the bundled AGENTS.md text for self-describing skills
+     exports (spec section 5A) - songbook.js's downloadBundle appends it to
+     the zip when present (guarded, defensive-reader law). -->
+<script src="../shared/agent-readme.js"></script>
+<!-- jam-link.js: pure parser for the `?jam=` agent-interaction deep link
+     (spec section 4b) - no DOM, no storage. Consumed by the boot script's
+     start() below (after tracksCtl/songbookCtl/pack exist): the parsed setup
+     becomes an ephemeral track (TracksModel.jamTrackFromSetup) and opens the
+     existing Practice Studio (S15 re-home) - Save hands off to
+     repertoire-form.js exactly like any other track's Edit tap. -->
+<script src="../shared/jam-link.js"></script>
+<!-- setup-doc.js: pure parser for music-setup/v1 batch setup docs (spec A8) -
+     the Skills file picker dispatches on the JSON schema string; entries land
+     as prefills through the existing forms, never direct storage writes. -->
+<script src="../shared/setup-doc.js"></script>
 <script src="../shared/zip-store.js"></script>
 <script src="../shared/repertoire-form.js"></script>
 <!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
@@ -710,15 +725,43 @@
       // track immediately after the tour"): the tour ENDS in a jam on EVERY
       // path, via the one-shot music.welcomeJam.v1 intent flag consumed by
       // openWelcomeJam() (defined at the tracksCtl mount).
+      // A shared `?jam=` link IS the tour-ending jam: without this check the
+      // rewrite below dropped every non-p param, so a first-visit device lost
+      // the very jam the link was sent to open (the link's whole point).
+      var jamLinked = null;
+      try { jamLinked = window.JamLink ? JamLink.parse(location.search) : null; } catch (e) {}
+      var hasJamLink = !!(jamLinked && jamLinked.ok);
       if (chosenInst && chosenInst !== activeKey && profiles[chosenInst]) {
         // Instrument RELOAD path: this page is about to die, so set the flag
         // FIRST - the new page's tracksCtl onReady re-enters openWelcomeJam()
         // once the catalog loads. A page load is not a user gesture, so the
         // jam opens there honestly unstarted (one tap on the big play starts
         // sound - the bar's state sync keeps it truthful).
-        try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {}
+        if (!hasJamLink) { try { localStorage.setItem('music.welcomeJam.v1', '1'); } catch (e) {} }
         try { localStorage.setItem(PROFILE_KEY, chosenInst); } catch (e) {}
-        location.search = '?p=' + encodeURIComponent(chosenInst);
+        if (hasJamLink) {
+          // Carry the link's params through the reload; welcome is now seen,
+          // so the new page's boot check opens the LINK's jam, not the
+          // generic featured one.
+          var qs = new URLSearchParams(location.search);
+          qs.set('p', chosenInst);
+          location.search = '?' + qs.toString();
+        } else {
+          location.search = '?p=' + encodeURIComponent(chosenInst);
+        }
+      } else if (hasJamLink) {
+        // Same instrument + a jam link: open the LINK's jam, skip the generic
+        // welcome jam. Deferred past the overlay's NavHistory unwind - the
+        // dismiss's async popstate is still in flight here, and a Studio layer
+        // pushed synchronously inside the unwind gets popped right back off
+        // (observed: the sync call runs clean yet the Studio never survives).
+        // Like the reload path, the jam opens honestly unstarted - one tap
+        // starts sound.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamLinked.setup); } catch (e) {}
+          });
+        });
       } else {
         // Same-instrument path: the Start-playing TAP is a real user gesture,
         // so the jam opens right here with autoplay allowed. The library
@@ -913,6 +956,63 @@
     window.songbookRefreshCompose = function () {
       if (songbookCtl && songbookCtl.refreshCompose) songbookCtl.refreshCompose();
     };
+
+    /* ===================== S15 - agent-interaction ?jam= deep link =====================
+     * Section 4b of docs/plans/goal-agent-interaction-20260817.md, re-homed
+     * into the existing Practice Studio (S15, operator taste directive: "jam
+     * screen should feel like the existing Studio. pref it is the studio"):
+     * a `?jam=<progression>&key=<tonic>&yt=<videoId>&name=<label>` link
+     * (shared/jam-link.js parses it) builds an EPHEMERAL (never persisted)
+     * track object and opens Tracks.openStudio() on it - the SAME surface
+     * every other track opens (scale chips, fretboard, chords-in-key
+     * highlighting the jam's own progression via t.seq, the transport bar,
+     * an optional backing video, and the Studio's own Edit/"Or edit song
+     * details" Save affordance) - Element Consistency Law: compose the
+     * existing primitive, never a parallel look. Nothing here writes
+     * localStorage on load; Save hands off to the EXISTING add/progression
+     * form (repertoire-form.js via songbookCtl.openEditOrAdd, wired as
+     * onEditRequest at Tracks.mount below) exactly like any other track's
+     * Edit tap - tracks.js's own editRequest handler prefills the Chords
+     * field from t.seq for the no-id (ephemeral) case, the same way a
+     * user's own typing would. */
+    function openJamLink(setup) {
+      if (!tracksCtl || !tracksCtl.openStudio || !window.TracksModel || !window.TracksModel.jamTrackFromSetup) return;
+      // No explicit key: derive one from the chord sequence via the app's
+      // own key-inference (the same seam openForkForm/soloKeyFor already use
+      // for a record with no stored key) - never a second theory derivation.
+      var deriveKey = (window.SongbookModel && window.SongbookModel.soloKeyFor)
+        ? function (seq) { return window.SongbookModel.soloKeyFor({}, seq, 0, window.Repertoire); }
+        : null;
+      tracksCtl.openStudio(window.TracksModel.jamTrackFromSetup(setup, deriveKey));
+    }
+    // Narrow window seam (same pattern as openWelcomeJam): the welcome
+    // handler lives in a separate <script> closure and needs to open the
+    // LINK's jam when the tour's Start-playing tap fires on a same-instrument
+    // exit - one capability exported, nothing else leaks.
+    window.openJamLink = openJamLink;
+    // Parse on load. A fresh device mid-first-run-tour defers to the welcome
+    // overlay (it owns the screen) instead of stacking a second full-screen
+    // layer - the welcome handler's exit paths then open the LINK's jam:
+    // same-instrument via the seam above, instrument-reload by carrying the
+    // jam params through the ?p= rewrite. Never throws: a malformed link
+    // must never break boot.
+    try {
+      var wOv = document.getElementById('welcomeOv');
+      var jamParsed = window.JamLink && window.JamLink.parse ? window.JamLink.parse(location.search) : { ok: false };
+      if (jamParsed.ok && !(wOv && !wOv.hidden)) {
+        // Deferred past NavHistory's boot reconciliation: arriving via the
+        // welcome tour's ?p= rewrite, the old page's overlay pushState rides
+        // into this load's history, and a Studio layer opened synchronously
+        // here gets popped right back off during that unwind (same failure
+        // as the same-instrument exit above - one cause, two doors).
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            try { openJamLink(jamParsed.setup); } catch (e2) {}
+          });
+        });
+      }
+    } catch (e) { /* a malformed deep link degrades to opening normally */ }
+
     // Landing-tab first-run callout. The INITIAL tab render does not emit
     // music:tab-shown (only later switches do), so the tab-shown listener never
     // fires for the tab the app boots on - kick it once here. Guarded like that

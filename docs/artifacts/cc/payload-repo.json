@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-12T10:30:45Z",
+  "generatedAt": "2026-08-18T09:52:47Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,91 +13,91 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-11T10:14:37Z",
-    "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
+    "date": "2026-08-18T03:23:14Z",
+    "sha": "046092fd5fca4a574368862de825710e374b467e",
+    "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
   },
   "commits": [
     {
-      "date": "2026-08-11T10:14:37Z",
-      "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
+      "date": "2026-08-18T03:23:14Z",
+      "sha": "046092fd5fca4a574368862de825710e374b467e",
+      "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
+    },
+    {
+      "date": "2026-08-17T13:22:03Z",
+      "sha": "051f5f4b60534611f2f8a6208a272b7744268389",
+      "subject": "docs: M-AGENT arc record (spec -> 3 waves -> live, one session) + queue reconcile (#335)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/051f5f4b60534611f2f8a6208a272b7744268389"
+    },
+    {
+      "date": "2026-08-17T10:01:17Z",
+      "sha": "76eb154e475d0bef0bdb57155727d29b150d2d5b",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/76eb154e475d0bef0bdb57155727d29b150d2d5b"
     },
     {
-      "date": "2026-08-10T10:39:11Z",
-      "sha": "004f810a412fd366924b5eea89b18ef21af32001",
+      "date": "2026-08-17T09:12:54Z",
+      "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
+      "subject": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (#334)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/81ef17326955e7ef6628a0cb91f1e164cd06e1b5"
+    },
+    {
+      "date": "2026-08-17T07:41:41Z",
+      "sha": "1d566ba7381abc5f349f223f580c55e640110443",
+      "subject": "S15+S16+S17: jam links open the real Studio, music-coach plugin, setup-doc import (M-AGENT wave 2) (#333)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/1d566ba7381abc5f349f223f580c55e640110443"
+    },
+    {
+      "date": "2026-08-17T05:40:34Z",
+      "sha": "54bf03131619f48bbc72edb6afdede16c4ac44cd",
+      "subject": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (#332)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/54bf03131619f48bbc72edb6afdede16c4ac44cd"
+    },
+    {
+      "date": "2026-08-17T05:04:15Z",
+      "sha": "9430db5a8377d9053d8bd57506cde51889ffccb0",
+      "subject": "docs: coding-agent interaction spec for the Music app (M-AGENT) (#331)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9430db5a8377d9053d8bd57506cde51889ffccb0"
+    },
+    {
+      "date": "2026-08-16T09:46:21Z",
+      "sha": "43759e59f806be8077195f2678eb52c8bd469815",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/004f810a412fd366924b5eea89b18ef21af32001"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/43759e59f806be8077195f2678eb52c8bd469815"
     },
     {
-      "date": "2026-08-10T04:40:48Z",
-      "sha": "d9697c46e6cd5772fe3477c163aa04bbca322d9d",
-      "subject": "Player-feel UAT rounds 3-8: jams-first, tour auto-jam, row anatomy, stage zoom + icon gate, studio IA (#328)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d9697c46e6cd5772fe3477c163aa04bbca322d9d"
-    },
-    {
-      "date": "2026-08-09T17:11:27Z",
-      "sha": "5e96b8c968ad471fedf84b98e25d89c05a7bda86",
-      "subject": "Variety fill + second playlist + Phish keys: catalog 55 -> 108 (#327)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e96b8c968ad471fedf84b98e25d89c05a7bda86"
-    },
-    {
-      "date": "2026-08-09T15:47:46Z",
-      "sha": "fb559f6c30ab76b985434463fe92ace1af81e644",
-      "subject": "Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT) (#326)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/fb559f6c30ab76b985434463fe92ace1af81e644"
-    },
-    {
-      "date": "2026-08-09T14:15:42Z",
-      "sha": "3f444d57624871ef415c8d1782325204e9dfb038",
-      "subject": "Land community PR #274: constant \"Suggested Chords\" label (#325)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/3f444d57624871ef415c8d1782325204e9dfb038"
-    },
-    {
-      "date": "2026-08-09T14:15:15Z",
-      "sha": "16cebfd19f2f792ad2d497fa115a8bb9c48aae9d",
-      "subject": "Merge PR #274: constant 'Suggested Chords' label (community contribution)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/16cebfd19f2f792ad2d497fa115a8bb9c48aae9d"
-    },
-    {
-      "date": "2026-08-09T14:08:19Z",
-      "sha": "bbe8ec0a125c6582b3d280b83ff5a544acf1b95d",
-      "subject": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps (#324)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/bbe8ec0a125c6582b3d280b83ff5a544acf1b95d"
-    },
-    {
-      "date": "2026-08-09T10:00:09Z",
-      "sha": "422dbcb1c567cb49c1b7edb143a3d07b64ecf430",
+      "date": "2026-08-15T09:45:08Z",
+      "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/422dbcb1c567cb49c1b7edb143a3d07b64ecf430"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d59bdffa61ebca0b1f9d6983445ae38bd21f0a60"
     },
     {
-      "date": "2026-08-09T01:51:28Z",
-      "sha": "0cf9121ae34217b1af722482072c9c9b9586ccb4",
-      "subject": "Player-feel: global mini-player bar + now-playing rows + play-from-row (#323)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/0cf9121ae34217b1af722482072c9c9b9586ccb4"
-    },
-    {
-      "date": "2026-08-08T09:58:22Z",
-      "sha": "ff42c0a342a5ef0f2aedfb255eb3c67364037ebb",
+      "date": "2026-08-14T10:27:48Z",
+      "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/ff42c0a342a5ef0f2aedfb255eb3c67364037ebb"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
     },
     {
-      "date": "2026-08-08T00:40:35Z",
-      "sha": "89afe7cd9c979109638463699bff0ce0df55d367",
-      "subject": "playlist-sync: refresh payload + veto table",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/89afe7cd9c979109638463699bff0ce0df55d367"
+      "date": "2026-08-13T10:31:45Z",
+      "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c2d09f24d506c2ceb33d66f5e4e38c58f00b937b"
+    },
+    {
+      "date": "2026-08-13T04:30:34Z",
+      "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
+      "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
     }
   ],
   "openPRs": [
     {
-      "number": 329,
-      "title": "Round 9: video PIP overlay + progress scrub + refocus pause honesty",
+      "number": 330,
+      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
       "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/329",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/330",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,19 +106,68 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133252/job/94024192055"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288882/job/94601516016"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31568133264/job/94024192175"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288885/job/94601515859"
         }
       ]
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-08-18T01:35:40Z",
+      "mergedAt": "2026-08-18T03:23:15Z",
+      "number": 336,
+      "title": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/336"
+    },
+    {
+      "createdAt": "2026-08-17T09:52:04Z",
+      "mergedAt": "2026-08-17T13:22:04Z",
+      "number": 335,
+      "title": "docs: M-AGENT arc record + queue reconcile (session save)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/335"
+    },
+    {
+      "createdAt": "2026-08-17T08:46:06Z",
+      "mergedAt": "2026-08-17T09:12:54Z",
+      "number": 334,
+      "title": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/334"
+    },
+    {
+      "createdAt": "2026-08-17T06:27:09Z",
+      "mergedAt": "2026-08-17T07:41:41Z",
+      "number": 333,
+      "title": "S15+S16+S17: jam links open the real Studio, music-coach plugin with agent profiles, setup-doc import (M-AGENT wave 2)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/333"
+    },
+    {
+      "createdAt": "2026-08-17T05:37:54Z",
+      "mergedAt": "2026-08-17T05:40:34Z",
+      "number": 332,
+      "title": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/332"
+    },
+    {
+      "createdAt": "2026-08-17T04:31:49Z",
+      "mergedAt": "2026-08-17T05:04:15Z",
+      "number": 331,
+      "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
+    },
+    {
+      "createdAt": "2026-08-12T03:50:10Z",
+      "mergedAt": "2026-08-13T04:30:35Z",
+      "number": 329,
+      "title": "Round 9: video PIP overlay + progress scrub + refocus pause honesty",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/329"
+    },
     {
       "createdAt": "2026-08-09T17:27:02Z",
       "mergedAt": "2026-08-10T04:40:49Z",
@@ -174,72 +223,23 @@
       "number": 321,
       "title": "music(studio): give users time to skip YouTube ads before the video auto-minimizes",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/321"
-    },
-    {
-      "createdAt": "2026-07-26T21:18:44Z",
-      "mergedAt": "2026-07-31T01:20:51Z",
-      "number": 319,
-      "title": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/319"
-    },
-    {
-      "createdAt": "2026-07-26T21:16:49Z",
-      "mergedAt": "2026-07-30T21:40:08Z",
-      "number": 318,
-      "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/318"
-    },
-    {
-      "createdAt": "2026-07-25T23:43:38Z",
-      "mergedAt": "2026-07-26T18:14:23Z",
-      "number": 316,
-      "title": "spec: four-verbs surface model + Songs merge (phase 1) and Progressions/Compose split (phase 2)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/316"
-    },
-    {
-      "createdAt": "2026-07-25T23:37:57Z",
-      "mergedAt": "2026-07-26T17:28:38Z",
-      "number": 315,
-      "title": "a11y: add the gate, and close the ARIA gap it was built to find",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/315"
-    },
-    {
-      "createdAt": "2026-07-25T23:07:55Z",
-      "mergedAt": "2026-07-25T23:39:22Z",
-      "number": 314,
-      "title": "wiki: record how a render check lies (verification traps)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/314"
-    },
-    {
-      "createdAt": "2026-07-25T20:21:12Z",
-      "mergedAt": "2026-07-27T02:48:36Z",
-      "number": 313,
-      "title": "music: Practice Studio redesign - interactive circle crown + video show-then-collapse",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/313"
-    },
-    {
-      "createdAt": "2026-07-25T07:15:18Z",
-      "mergedAt": "2026-07-25T22:28:00Z",
-      "number": 312,
-      "title": "fix(a11y): 44px tap floor on the chip primitive - 28 -> 0 sub-floor targets (closes #311)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/312"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-12T10:30:39Z",
+    "runStartedAt": "2026-08-18T09:52:41Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31587735885",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32123887794",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 8,
+    "merged_count": 7,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 15.21,
+    "typical_merge_hours": 1.33,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +249,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v328-10",
-    "localCacheVersion": "music-v328-10",
+    "liveCacheVersion": "music-v334",
+    "localCacheVersion": "music-v334",
     "cacheMatch": true
   },
   "missions": [
@@ -411,6 +411,11 @@
         "Spec state": "This QUEUE row is the spec seed"
       },
       {
+        "#": "F-SW-XORIGIN-DEADLINE",
+        "Finding": "sw.js cross-origin branch (fonts/icons) has NO network deadline: a cache-miss + a hanging (not rejecting) network - bars-with-no-data, or a stalling proxy - blocks a render-blocking `<link>` and freezes page parse indefinitely. Same-origin got the NET_DEADLINE_MS fix for exactly this class; cross-origin never did. Pre-existing (not a wave-2 regression); surfaced during wave-2 render-verify when the container proxy hung the Google Fonts fetch under SW control. Fix shape: apply the same deadline race (serve cached-or-error past ~3.5s) to the cross-origin branch",
+        "Source": "wave-2 integration verify 2026-08-17 - FIX SHIPPED wave 3"
+      },
+      {
         "#": "S-NAVHIST",
         "Item": "**CLEARED-STALE 2026-07-10 (swarm, zero code)**: the double-pop fix already shipped inside #197's settleAfter + deferred-deliver machinery; solo-skip + solo-cancel scenarios both green",
         "Source": "PR #144 finding, evidence in swarm audit"
@@ -568,6 +573,11 @@
     ],
     "MID": [
       {
+        "#": "M-AGENT",
+        "Candidate": "**AGENT INTERCHANGE (spec drafted 2026-08-17, extended same day)**: coding-agent interaction contract - self-describing exports (bundled AGENTS.md in the skills zip), static `music/agent/` capability manifest + consistency gate, agent round-trip node test, provenance-surfacing import copy, PLUS agent-actionable setups (`?jam=` deep link: progression + key + keyless yt, ephemeral until user Save) and plugin packaging (coach bench + contract + `/music:*` commands installable in CC/Cowork). L0 file-interchange is the floor (offline, no server); L1-L3 degrade to it. Missions A1-A9 sized in the spec; operator gate to promote A1+A2+A4 (then A7) to SHORT. Demo framing: skills absorb the LMS (content, coaching, competency records as portable skill artifacts). Adjacent pointer, separate session: personal-skills second-brain graph",
+        "Vision source": "[goal-agent-interaction](goal-agent-interaction-20260817.md)"
+      },
+      {
         "#": "M-0",
         "Candidate": "**DETERMINISTIC TUTOR (vision captured 2026-07-05)**: skill ladder + progressive disclosure + ear-training/pitch/recognition drills + spaced repetition - ALL no-LLM on shipped machinery; the Tier-2 sitting centerpiece merging #84 + P4/P5 + M-CONSTRUCT/M-PHRASE",
         "Vision source": "[vision-tutor-deterministic](vision-tutor-deterministic-20260705.md)"
@@ -667,8 +677,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 60,
-    "testCaseCount": 3389,
+    "testFileCount": 68,
+    "testCaseCount": 3481,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

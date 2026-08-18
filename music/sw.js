@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v330';
+var CACHE = 'music-v330-2';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -47,6 +47,8 @@ var CORE = [
   './shared/chord-pack-adapter.js', './shared/sugg.js',
   './shared/list-item.js', './shared/scroll-hint.js', './shared/repertoire.js', './shared/song-templates.js', './shared/competency.js',
   './shared/skill-md.js', './shared/zip-store.js',
+  './shared/agent-readme.js', './shared/jam-link.js', './shared/setup-doc.js',
+  './agent/AGENTS.md', './agent/capabilities.json',
   './shared/repertoire-form.js',
   './shared/yt-info.js',
   './shared/playlist-import.js',
@@ -90,9 +92,11 @@ self.addEventListener('message', function (e) {
   }
 });
 
-// The bars-but-no-data deadline (see the same-origin handler below). 3.5s is
-// generous for a healthy connection's HTML/JS answer and short enough that a
-// dead one never strands the user on a spinner.
+// The bars-but-no-data deadline, shared by BOTH fetch handlers below
+// (same-origin network-first, cross-origin cache-first-on-miss). 3.5s is
+// generous for a healthy connection's HTML/JS/font answer and short enough
+// that a dead one never strands the user on a spinner or freezes a
+// render-blocking <link>.
 var NET_DEADLINE_MS = 3500;
 self.addEventListener('fetch', function (e) {
   var req = e.request;
@@ -134,13 +138,30 @@ self.addEventListener('fetch', function (e) {
       })
     );
   } else {
-    // cross-origin (fonts/icons): cache-first, they rarely change
+    // cross-origin (fonts/icons): cache-first, they rarely change. A HIT
+    // resolves straight from cache with no network touch at all - so it can
+    // never hang, and needs no deadline race. A MISS still has to reach the
+    // network, and that is exactly where the same class of bug as the
+    // same-origin handler above lives: a cross-origin fetch that HANGS
+    // (rather than rejects) - a dead font CDN, a stalling proxy - never
+    // settles, and an un-timeboxed cache-miss fetch blocks a render-blocking
+    // <link> and freezes page parse indefinitely. Race the fetch against
+    // NET_DEADLINE_MS; past the deadline, resolve to a failed response so
+    // the parser moves on (a missing font/icon is cosmetic, a frozen parse
+    // is not) while the fetch stays alive via waitUntil so a late answer
+    // still lands in the cache for next time.
     e.respondWith(
       caches.match(req).then(function (cached) {
-        return cached || fetch(req).then(function (res) {
+        if (cached) return cached;
+        var netP = fetch(req).then(function (res) {
           if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
-        }).catch(function () { return cached; });
+        }).catch(function () { return Response.error(); });
+        e.waitUntil(netP.catch(function () {}));
+        return Promise.race([
+          netP,
+          new Promise(function (resolve) { setTimeout(function () { resolve(Response.error()); }, NET_DEADLINE_MS); })
+        ]);
       })
     );
   }
