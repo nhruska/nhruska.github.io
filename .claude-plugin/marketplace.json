@@ -1,0 +1,25 @@
+{
+  "name": "nhruska-music",
+  "owner": {
+    "name": "Nikolaus Hruska",
+    "url": "https://github.com/nhruska"
+  },
+  "metadata": {
+    "description": "Plugins for the nhruska.github.io Music app - agent-side capabilities built on the app's file-interchange contract (offline-first, no server).",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "music-coach",
+      "source": "./plugin/music-coach",
+      "description": "Personal music-learning coach: assess exported skill profiles, build practice plans, emit one-tap jam deep links, and render analytics reports - via the app's self-describing exports. Skills, commands, and agent personas included.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Nikolaus Hruska"
+      },
+      "homepage": "https://github.com/nhruska/nhruska.github.io/tree/main/plugin/music-coach",
+      "license": "MIT",
+      "keywords": ["music", "coaching", "competency", "ukulele", "guitar", "learning"]
+    }
+  ]
+}
