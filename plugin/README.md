@@ -17,9 +17,13 @@ This plugin lives inside the `nhruska.github.io` repo at
 1. **Copy the directory.** Copy `plugin/music-coach/` into your own
    `~/.claude/plugins/` (or a project's `.claude/plugins/`) directory. Claude
    Code picks up its commands, skills, and agents automatically.
-2. **Add this repo as a marketplace source** once a marketplace manifest
-   exists at the repo root (not shipped yet - see "Not yet built" below), then
-   install `music-coach` by name.
+2. **Install by name via the marketplace manifest** (shipped at the repo
+   root, `.claude-plugin/marketplace.json`): in Claude Code, add this repo as
+   a marketplace source (`/plugin marketplace add nhruska/nhruska.github.io`),
+   then install `music-coach` from it (`/plugin install music-coach`). The
+   manifest's source points at this directory, so both paths install the same
+   files - `test/plugin-marketplace.test.js` gates the manifest against
+   `plugin.json` so they cannot drift.
 
 No build step, no dependencies - it is markdown + JSON, same as the app it
 coaches for.
@@ -67,8 +71,6 @@ actually lands.
 
 ## Not yet built
 
-- A marketplace manifest at the repo root for one-command install by name
-  (today: copy the directory).
 - `L1`/`L3` transports from the interchange contract (live folder watch,
   share-target) - this plugin only uses the always-available `L0` file
   interchange.
