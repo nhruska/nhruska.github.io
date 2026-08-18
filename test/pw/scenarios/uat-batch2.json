@@ -65,7 +65,7 @@
     },
     {
       "action": "tap",
-      "selector": ".bt-st-media"
+      "selector": ".bt-player .bt-st-t"
     },
     {
       "action": "wait",
@@ -108,8 +108,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "UAT-4b (round 11): the card's own handle minimizes to the PIP - media .min, pp+progress still visible (constant bar), the handle gone with the theater",
-      "js": "(function(){var m=document.querySelector('[data-media]');var pp=document.querySelector('.bt-player [data-nppp]');var h=document.querySelector('[data-thmin]');return !!m&&m.classList.contains('min')&&!!pp&&pp.offsetParent!==null&&!!h&&h.getBoundingClientRect().height===0;})()"
+      "label": "UAT-4b (round 15): the card's handle DISMISSES to parked - no intermediate docked step - pp+progress still visible (constant bar), the handle gone with the theater",
+      "js": "(function(){var m=document.querySelector('[data-media]');var pp=document.querySelector('.bt-player [data-nppp]');var h=document.querySelector('[data-thmin]');return !!m&&m.classList.contains('hid')&&!!pp&&pp.offsetParent!==null&&!!h&&h.getBoundingClientRect().height===0;})()"
     },
     {
       "action": "screenshot",

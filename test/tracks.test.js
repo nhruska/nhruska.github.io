@@ -1024,11 +1024,23 @@ test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a lon
     'the auto-minimize window must be 15s (was 7s - too short to see + tap Skip Ads)');
   assert.ok(/function startCountdown\(\)/.test(body) && /cdStarted/.test(body),
     'the countdown must be a guarded startCountdown() so it fires once, anchored to playback');
-  // v6 split the guard (an onStateChange ended-check now precedes it) - the
-  // anchored contract is unchanged: startCountdown() fires immediately after
-  // the infoDelivery guard, never at render.
-  assert.ok(/if \(d\.event !== 'infoDelivery' \|\| !d\.info\) return;\s*\n\s*startCountdown\(\);/.test(body),
+  // v6 split the guard (an onStateChange ended-check now precedes it); round 15
+  // slid the per-tick playerState sync between the guard and the countdown call
+  // - the anchored contract is unchanged: startCountdown() fires from the
+  // infoDelivery handler, never at render. (The countdown is DORMANT since
+  // round 15 - every open parks the video and endCountdown()s - but the
+  // machinery stays anchored correctly for any future re-enable.)
+  assert.ok(/if \(d\.event !== 'infoDelivery' \|\| !d\.info\) return;[\s\S]{0,220}startCountdown\(\);/.test(body),
     'startCountdown() must fire from the YT infoDelivery handler (playback-anchored, not at render)');
+  // Round 15 ("skip when needed, not show the video any other time"): every
+  // open ends the wiring PARKED with the countdown silenced...
+  assert.ok(/setVid\('hid'\); endCountdown\(\);/.test(body),
+    'every open must end parked (setVid hid) with the countdown silenced (endCountdown)');
+  // ...and the playerState field that rides every infoDelivery tick syncs the
+  // bar (pausing inside the embed must flip the bar even when the
+  // onStateChange delta was missed).
+  assert.ok(/playerState/.test(body) && /function syncState\(/.test(body),
+    'the per-tick playerState field must route through the same syncState path as onStateChange');
   // Explicit user agency: "Keep open" cancels the auto-collapse so Skip stays
   // tappable on the iframe; "Minimize now" collapses early.
   assert.ok(/\[data-keepopen\]/.test(body) && /\[data-minnow\]/.test(body),

@@ -242,6 +242,18 @@
   color:var(--accent-ink);cursor:pointer;padding:0;font-size:18px;line-height:1;
 }
 .bt-st-thmin{display:none;}
+/* Round 15: the opt-in dock chip - rides the RIGHT end of the theater's
+   bottom strip (absolute over the full-width thmin bar; z-raised). The
+   theater handle itself parks outright, so this chip is the only way into
+   the small docked video. */
+.bt-st-thdock{display:none;}
+.bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thdock{
+  display:flex;align-items:center;justify-content:center;
+  position:absolute;right:0;bottom:0;width:44px;height:24px;z-index:1;
+  border:0;border-top:1px solid var(--accent-ink);border-left:1px solid var(--accent-ink);
+  background:var(--surface-2);color:var(--accent-ink);cursor:pointer;padding:0;
+  font-size:14px;line-height:1;
+}
 /* The countdown chip rides directly UNDER the theater card (same fixed layer)
    so Keep open / Minimize now stay tappable. GEOMETRY PAIR with the card
    above: same width min(); top = card top (58px) + 16:9 height (*0.5625) +
@@ -328,8 +340,13 @@
      ::before extends the touch target to ~22px (biased downward - the
      transport buttons live above), and .scrubbing (JS) kills the width
      transition so the fill tracks the finger 1:1 instead of chasing it. */
+  /* touch-action:none is LOAD-BEARING (round 15 "it only moves a little
+     bit"): without it the browser reclaims the touch for page panning a few
+     px into the drag and fires pointercancel - the scrub dies mid-gesture.
+     None = the track owns every touch that starts on it, capture holds to
+     release. */
   .bt-st-np-prog{flex:1 1 0;min-width:36px;height:8px;border-radius:4px;background:var(--surface-2);
-    border:1px solid var(--accent-dim);box-sizing:border-box;position:relative;}
+    border:1px solid var(--accent-dim);box-sizing:border-box;position:relative;touch-action:none;}
   .bt-st-np-prog::before{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-10px;}
   .bt-st-np-prog > i{display:block;height:100%;width:0;background:var(--accent-ink);
     border-radius:3px 0 0 3px;transition:width .3s linear;position:relative;}
