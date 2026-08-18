@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-17T10:01:10Z",
+  "generatedAt": "2026-08-18T09:52:47Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,30 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-17T09:12:54Z",
-    "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
-    "subject": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (#334)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/81ef17326955e7ef6628a0cb91f1e164cd06e1b5"
+    "date": "2026-08-18T03:23:14Z",
+    "sha": "046092fd5fca4a574368862de825710e374b467e",
+    "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
   },
   "commits": [
+    {
+      "date": "2026-08-18T03:23:14Z",
+      "sha": "046092fd5fca4a574368862de825710e374b467e",
+      "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
+    },
+    {
+      "date": "2026-08-17T13:22:03Z",
+      "sha": "051f5f4b60534611f2f8a6208a272b7744268389",
+      "subject": "docs: M-AGENT arc record (spec -> 3 waves -> live, one session) + queue reconcile (#335)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/051f5f4b60534611f2f8a6208a272b7744268389"
+    },
+    {
+      "date": "2026-08-17T10:01:17Z",
+      "sha": "76eb154e475d0bef0bdb57155727d29b150d2d5b",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/76eb154e475d0bef0bdb57155727d29b150d2d5b"
+    },
     {
       "date": "2026-08-17T09:12:54Z",
       "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
@@ -72,51 +90,9 @@
       "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
       "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
-    },
-    {
-      "date": "2026-08-12T10:30:52Z",
-      "sha": "d88b3c289c247e69e95d5b52e6e3bc1c9d170bab",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d88b3c289c247e69e95d5b52e6e3bc1c9d170bab"
-    },
-    {
-      "date": "2026-08-11T10:14:37Z",
-      "sha": "20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/20c1ad0b92f7111a9a36a0f78a2742dd138f3bc1"
-    },
-    {
-      "date": "2026-08-10T10:39:11Z",
-      "sha": "004f810a412fd366924b5eea89b18ef21af32001",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/004f810a412fd366924b5eea89b18ef21af32001"
     }
   ],
   "openPRs": [
-    {
-      "number": 335,
-      "title": "docs: M-AGENT arc record + queue reconcile (session save)",
-      "branch": "claude/music-app-agent-spec-qf7vif",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/335",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32017362867/job/95349593563"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32017362884/job/95349593694"
-        }
-      ]
-    },
     {
       "number": 330,
       "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
@@ -143,6 +119,20 @@
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-08-18T01:35:40Z",
+      "mergedAt": "2026-08-18T03:23:15Z",
+      "number": 336,
+      "title": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/336"
+    },
+    {
+      "createdAt": "2026-08-17T09:52:04Z",
+      "mergedAt": "2026-08-17T13:22:04Z",
+      "number": 335,
+      "title": "docs: M-AGENT arc record + queue reconcile (session save)",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/335"
+    },
     {
       "createdAt": "2026-08-17T08:46:06Z",
       "mergedAt": "2026-08-17T09:12:54Z",
@@ -233,34 +223,20 @@
       "number": 321,
       "title": "music(studio): give users time to skip YouTube ads before the video auto-minimizes",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/321"
-    },
-    {
-      "createdAt": "2026-07-26T21:18:44Z",
-      "mergedAt": "2026-07-31T01:20:51Z",
-      "number": 319,
-      "title": "feat(songs): Library + Setlist become one segmented Songs surface (phase 1 of #316)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/319"
-    },
-    {
-      "createdAt": "2026-07-26T21:16:49Z",
-      "mergedAt": "2026-07-30T21:40:08Z",
-      "number": 318,
-      "title": "decision: harvest the guided song-builder from closed PR #70 (PROTO-HARVEST)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/318"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-17T10:01:03Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32018094868",
+    "runStartedAt": "2026-08-18T09:52:41Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32123887794",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 6,
+    "merged_count": 7,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.33,
@@ -701,7 +677,7 @@
     ]
   },
   "suite": {
-    "testFileCount": 67,
+    "testFileCount": 68,
     "testCaseCount": 3481,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
