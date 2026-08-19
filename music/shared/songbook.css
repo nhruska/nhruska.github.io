@@ -1915,6 +1915,13 @@ footer{display:none;}
   text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
 .aboutLink svg{flex:0 0 auto;}
 .aboutStamp{margin:10px 0 0;}
+/* AI Agent section (round 16): the copy buttons ride one row under the live
+   doc links; the URI hint beneath them shows WHERE the docs live (SSOT -
+   resolved from location at boot, so previews and localhost tell their own
+   truth). Reuses .btn.ghost + .setHint - no new visual language. */
+.agentCopyRow{display:flex;gap:11px;flex-wrap:wrap;margin:4px 0 10px;}
+.agentCopyRow .btn{min-height:44px;}
+#agentUriHint{word-break:break-all;margin-bottom:4px;}
 .setLbl{font-weight:600;margin-bottom:11px;}
 .setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
 .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}

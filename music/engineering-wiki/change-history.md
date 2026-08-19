@@ -715,4 +715,24 @@ holds to release. tracks.test.js re-pinned (open-parked + syncState
 invariants; countdown anchor check tolerates the sync line).
 video-pip rewritten (40 steps). Root README rewritten same PR
 (retired auto-regen story, dead /music/ukulele/ URL). [#330]
+M-AGENT-SETTINGS (2026-08-19, PR #337 round 16): v330-2->v337 - new
+Settings accordion "AI Agent" (operator: "SSOT for users - points
+agent apps at URL/uri that's live on the app - transparent to users
+on how it works"). The section explains the agent surface in two
+plain-language paragraphs (agents only READ; nothing writes until a
+Skills import or a jam-link Save), links the LIVE artifacts -
+agent/AGENTS.md + agent/capabilities.json - resolved from location
+at boot (live site / preview / localhost each show their own truth),
+shows the serving URI in a hint line, and offers Copy-doc-links +
+Copy-starter-prompt buttons (clipboard guarded; toast says so when
+https is missing). SSOT discipline held: the section restates
+NOTHING the artifacts own - and the settings-agent scenario's proof
+is the real machine-SSOT check (fetches the live static AGENTS.md,
+asserts byte-equal to AgentReadme.text()+'\n', the one renderer that
+also feeds the skills-export bundle). The Skills panel's injection
+anchor moved from About to the agent section so the agent family
+reads together (Skills above AI Agent, About last); the anchor falls
+back to About so a markup revert cannot strand the panel. New CSS:
+.agentCopyRow (reuses .btn.ghost + .setHint - no new visual
+language). [#337]
 ```

@@ -6484,10 +6484,11 @@
       pane.hidden = true;
       sec.appendChild(btn); sec.appendChild(pane);
       // S-WELCOME (operator 2026-07-18): About stays the LAST Settings section
-      // - rarely-needed content sinks to the bottom. Inject Skills above it,
-      // not appended after (append was landing Skills below About).
-      var aboutSec = body.querySelector('.accSec[data-acc="about"]');
-      if (aboutSec) body.insertBefore(sec, aboutSec); else body.appendChild(sec);
+      // - rarely-needed content sinks to the bottom. Round 16: anchor on the
+      // AI Agent section first so the agent family reads together (Skills
+      // right above the section that explains the agent surface), About last.
+      var anchorSec = body.querySelector('.accSec[data-acc="agent"]') || body.querySelector('.accSec[data-acc="about"]');
+      if (anchorSec) body.insertBefore(sec, anchorSec); else body.appendChild(sec);
 
       // Hidden file input for import (shared by the first-start lead + the row).
       // S-SKILLS-PORTABLE (operator UAT 2026-07-16): accepts BOTH the v1 JSON
