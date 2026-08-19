@@ -748,4 +748,25 @@ IS what you are looking at, and a differing worker tag reads
 build ... active". Red-first source pin added to
 test/build-stamp.test.js (proven failing against the old line
 before the fix). [#338]
+M-AGENT-BUNDLE (2026-08-19, round 18): v338-><PAIR> - one export =
+one conversation starter (operator friction: "I had to export my
+skills in a separate zip after I started the coaching
+conversation... to make a single export I can start a new
+conversation with - has the instructions for agents as well as my
+skills... pulling it from the app on my phone so I have all of my
+latest information"). downloadBundle now ships the FULL backup
+envelope (Backup.snapshot -> music-songbook-<date>.json, the exact
+name AGENTS.md documents) alongside AGENTS.md + the SKILL.mds; the
+zip is music-agent-bundle.zip and the toast says what rode along.
+Guarded like AGENTS.md (older cached backup.js: skills-only bundle
+still exports; a snapshot throw never sinks the zip). AGENTS.md
+prose updated - the envelope is "included in this bundle when
+exported from Settings" (static file regenerated; byte-equal gate
+holds) - so an agent handed the zip KNOWS to look for the data
+file. The AI Agent settings section now LEADS with an Export-agent-
+bundle row wired to the same downloadBundle (one code path,
+injected from the skills mount closure, guarded for older shells).
+Red-first pins in agent-manifest.test.js (proven failing before the
+change); settings-agent scenario asserts the row leads the section.
+[#PR]
 ```
