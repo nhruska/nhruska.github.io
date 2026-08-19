@@ -735,4 +735,17 @@ reads together (Skills above AI Agent, About last); the anchor falls
 back to About so a markup revert cannot strand the panel. New CSS:
 .agentCopyRow (reuses .btn.ghost + .setHint - no new visual
 language). [#337]
+M-STAMP-CLARITY (2026-08-19, PR #338 round 17): v337->v338 - the Settings
+meta line's worker-mismatch suffix, from a live-device report
+("offline build vv337 active - there is 'vv' and its confusing - I
+just want to see what I have"). Two fixes in showVersion
+(play/index.html): (1) the vv bug - the SW CACHE tag already
+carries its v ('music-v337'); the display replace substituted
+'music-' with 'v' instead of stripping it bare, rendering vv337;
+(2) the copy now leads with the ACTION: the stamp before the dash
+IS what you are looking at, and a differing worker tag reads
+"reload to update to v337" instead of the taxonomy line "offline
+build ... active". Red-first source pin added to
+test/build-stamp.test.js (proven failing against the old line
+before the fix). [#338]
 ```

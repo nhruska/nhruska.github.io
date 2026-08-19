@@ -1592,7 +1592,14 @@
         mc.port1.onmessage = function (ev) {
           if (!(ev.data && ev.data.version)) return;
           if (window.BuildStamp && ev.data.version === BuildStamp.VERSION) return; // page and worker agree - the positive line above stands
-          el.textContent = base + ' - offline build ' + String(ev.data.version).replace(/^music-/, 'v') + ' active';
+          // Round 17 (operator, live device: "there is 'vv' and its
+          // confusing - I just want to see what I have"): the CACHE tag
+          // already carries its v ('music-v337') - strip 'music-' BARE,
+          // never substitute a letter (the old '-> v' replace rendered
+          // vv337). And lead with the action, not taxonomy: the stamp
+          // before the dash IS what you are looking at; a differing
+          // worker tag just means a reload gets you the newer build.
+          el.textContent = base + ' - reload to update to ' + String(ev.data.version).replace(/^music-/, '');
         };
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
       } catch (e) {}

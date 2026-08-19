@@ -72,4 +72,24 @@ test('renderInto() sets textContent to text(), and no-ops on null', function () 
   BuildStamp.renderInto(null); // must not throw
 });
 
+/* ---------- the Settings meta line's worker-mismatch suffix (round 17) ----------
+ * Operator, live device: "v330-2 ... offline build vv337 active - there is
+ * 'vv' and its confusing - I just want to see what I have." Two pins:
+ * (1) the SW CACHE tag ('music-v337') already CARRIES its v - the display
+ *     strip removes 'music-' and must never inject another letter
+ *     (replace 'music-' -> 'v' produced the vv); and
+ * (2) the mismatch copy leads with the ACTION, not taxonomy: the page build
+ *     is what you are looking at (the stamp), the differing worker tag means
+ *     a reload updates you - say exactly that. */
+test('showVersion (play/index.html): worker tag strips music- cleanly (no vv) and the mismatch line says reload-to-update', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'play', 'index.html'), 'utf8');
+  assert.ok(src.indexOf("replace(/^music-/, 'v')") === -1,
+    "the vv bug: the version already carries its v - strip 'music-' only, never substitute a letter");
+  assert.ok(src.indexOf("replace(/^music-/, '')") !== -1,
+    "the mismatch branch must strip the 'music-' prefix bare");
+  assert.ok(src.indexOf('reload to update to') !== -1,
+    'the mismatch copy must lead with the action: "reload to update to <tag>"');
+});
+
 run();
