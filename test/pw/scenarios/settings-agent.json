@@ -1,0 +1,55 @@
+{
+  "name": "settings-agent",
+  "note": "Round 16 (operator: 'add short description/details in the settings menu on new accordion slot AI Agent - with link to details... SSOT for users - points agent apps at URL/uri that's live on the app - transparent to users on how it works'). The section explains the agent surface in plain words, links the LIVE artifacts (AGENTS.md + capabilities.json) resolved from the serving origin, and offers copy buttons for handing the URIs to an agent chat. The SSOT proof is REAL: the scenario fetches the live static AGENTS.md and asserts it byte-equals window.AgentReadme.text() - the one renderer that also feeds the skills-export bundle - and that capabilities.json parses with its schema id. Section order: the Skills panel self-injects ABOVE the agent section (the agent family reads together), About stays last.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#accBtnAgent",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "evalAssert",
+      "label": "section ORDER: Skills injects above AI Agent so the agent family reads together, About last",
+      "js": "(function(){var order=Array.prototype.map.call(document.querySelectorAll('#settingsBody .accSec'),function(s){return s.getAttribute('data-acc');});return order.join(',')==='prefs,appearance,backup,skills,agent,about';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnAgent"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "the section is transparent and SSOT-shaped: two plain-words hints, both live-doc links resolved to THIS serving origin (/music/agent/...), the URI hint showing the live address, and both copy buttons wired at 44px",
+      "js": "(function(){var body=document.getElementById('accBodyAgent');if(!body||body.hidden)return false;var hints=body.querySelectorAll('.setHint');if(hints.length<3)return false;if(!(hints[0].textContent.length>60&&hints[1].textContent.length>60))return false;var rd=document.getElementById('agentReadmeLink'),cp=document.getElementById('agentCapsLink');if(!rd||!cp)return false;var o=location.origin;if(rd.href!==o+'/music/agent/AGENTS.md')return false;if(cp.href!==o+'/music/agent/capabilities.json')return false;var hint=document.getElementById('agentUriHint');if(!hint||hint.textContent.indexOf(rd.href)<0)return false;var b1=document.getElementById('agentCopyLinks'),b2=document.getElementById('agentCopyPrompt');if(!b1||!b2)return false;if(typeof b1.onclick!=='function'||typeof b2.onclick!=='function')return false;var r1=b1.getBoundingClientRect(),r2=b2.getBoundingClientRect();return r1.height>=44&&r2.height>=44;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "act: fetch the LIVE artifacts from the serving origin (kick off, results land on window)",
+      "js": "(function(){window.__agentDoc=null;window.__agentCaps=null;fetch(document.getElementById('agentReadmeLink').href).then(function(r){if(r.status!==200)throw 0;return r.text();}).then(function(t){window.__agentDoc={ok:true,match:!!(window.AgentReadme&&t===window.AgentReadme.text()+'\\n')};}).catch(function(){window.__agentDoc={ok:false};});fetch(document.getElementById('agentCapsLink').href).then(function(r){if(r.status!==200)throw 0;return r.json();}).then(function(j){window.__agentCaps=j&&j.schema;}).catch(function(){window.__agentCaps='ERR';});return true;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "evalAssert",
+      "label": "SSOT proof, the real one: the live static AGENTS.md byte-equals window.AgentReadme.text() (one renderer, two destinations - what agents fetch IS what the app bundles), and capabilities.json serves 200 with its schema id",
+      "js": "(function(){return !!(window.__agentDoc&&window.__agentDoc.ok&&window.__agentDoc.match)&&window.__agentCaps==='music-app-capabilities/v1';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "settings-agent-section"
+    }
+  ]
+}
