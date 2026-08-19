@@ -41,7 +41,7 @@
     L.push('  skill. The human-readable table is presentation; the fenced ' + COMPETENCY_SCHEMA);
     L.push('  block under "## Profile data" is the exact interchange doc - read/write THAT,');
     L.push('  never the table.');
-    L.push('- **Backup envelope** `music-songbook-<date>.json` (if the user also shared one)');
+    L.push('- **Backup envelope** `music-songbook-<date>.json` (included in this bundle when exported from Settings; may be absent from a hand-assembled folder)');
     L.push('  - `{ app:"' + BACKUP_APP + '", schema, exportedAt, data:{key:rawString} }`, a byte-faithful');
     L.push('  snapshot of every owned localStorage key. It is the FULL profile: repertoire,');
     L.push('  setlists, progressions, preferences, skill progress. Values in `data` are raw');

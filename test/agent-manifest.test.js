@@ -108,4 +108,29 @@ test('the bundled agent-readme.js constants match the real module constants (no 
   assert.strictEqual(AgentReadme.BACKUP_APP, 'music');
 });
 
+/* ---- Round 18 (operator friction: "I had to export my skills in a separate
+ * zip after I started the coaching conversation... to make a single export I
+ * can start a new conversation with"): the skills export IS the complete
+ * conversation starter - AGENTS.md + SKILL.mds + the FULL backup envelope in
+ * one zip. Pins: */
+test('downloadBundle ships the backup envelope in the bundle (one export = instructions + skills + latest data)', function () {
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var i = src.indexOf('function downloadBundle');
+  assert.ok(i !== -1, 'downloadBundle not found');
+  var body = src.slice(i, src.indexOf('\n      }', i));
+  assert.ok(/Backup\.snapshot/.test(body),
+    'the bundle must snapshot the full backup envelope (guarded on window.Backup)');
+  assert.ok(/music-songbook-/.test(body),
+    "the envelope must land at the AGENTS.md-documented name: music-songbook-<date>.json");
+  assert.ok(/music-agent-bundle\.zip/.test(body),
+    'the download is the agent bundle now, not a skills-only zip');
+});
+test("AGENTS.md tells agents the envelope is IN the bundle (not 'if the user also shared one')", function () {
+  var t = AgentReadme.text();
+  assert.ok(t.indexOf('if the user also shared one') === -1,
+    'stale conditional phrasing - the envelope ships in every Settings export now');
+  assert.ok(/included in this bundle/.test(t),
+    "the envelope line must say it is included in this bundle");
+});
+
 run();

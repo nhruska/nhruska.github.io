@@ -10,7 +10,7 @@ account is required to read or propose updates.
   skill. The human-readable table is presentation; the fenced skill-competency-profile/v1
   block under "## Profile data" is the exact interchange doc - read/write THAT,
   never the table.
-- **Backup envelope** `music-songbook-<date>.json` (if the user also shared one)
+- **Backup envelope** `music-songbook-<date>.json` (included in this bundle when exported from Settings; may be absent from a hand-assembled folder)
   - `{ app:"music", schema, exportedAt, data:{key:rawString} }`, a byte-faithful
   snapshot of every owned localStorage key. It is the FULL profile: repertoire,
   setlists, progressions, preferences, skill progress. Values in `data` are raw

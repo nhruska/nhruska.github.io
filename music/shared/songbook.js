@@ -6646,10 +6646,24 @@
         if (global.AgentReadme && typeof global.AgentReadme.text === 'function') {
           files.push({ path: 'AGENTS.md', text: global.AgentReadme.text() });
         }
+        // Round 18 (operator friction: "I had to export my skills in a
+        // separate zip after I started the coaching conversation... a single
+        // export I can start a new conversation with"): the FULL backup
+        // envelope rides in the same zip, at the exact name AGENTS.md
+        // documents - one export from the phone is the complete conversation
+        // starter: instructions + skills + the user's latest data. Guarded
+        // like AGENTS.md (an older cached backup.js still exports the rest),
+        // and a snapshot failure never sinks the bundle.
+        if (global.Backup && typeof global.Backup.snapshot === 'function') {
+          try {
+            var env = global.Backup.snapshot(localStorage, new Date().toISOString());
+            files.push({ path: 'music-songbook-' + env.exportedAt.slice(0, 10) + '.json', text: JSON.stringify(env, null, 2) });
+          } catch (e) { /* storage blocked - ship without the envelope */ }
+        }
         try {
           var bytes = global.ZipStore.build(files);
-          downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'music-skills.zip',
-            'Exported all skills (' + skillCount + ')');
+          downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'music-agent-bundle.zip',
+            'Exported the agent bundle (' + skillCount + ' skills + your data)');
         } catch (e) { showToast("Couldn't export on this device", true); }
       }
 
@@ -6760,6 +6774,23 @@
           btn.setAttribute('aria-expanded', open ? 'true' : 'false');
           if (open) renderSkillsPanel();
         };
+      }
+      // Round 18: the AI Agent section (play/index.html) leads with the
+      // one-tap bundle export - the SAME downloadBundle the Skills row uses
+      // (one code path, injected here because the function lives in this
+      // closure). Guarded for an older cached shell without the section.
+      var agentBody = document.getElementById('accBodyAgent');
+      if (agentBody && !document.getElementById('agentBundleRow')) {
+        var abRow = document.createElement('button');
+        abRow.className = 'listItem setRow'; abRow.type = 'button'; abRow.id = 'agentBundleRow';
+        var abB = document.createElement('span'); abB.className = 'li-body';
+        var abT = document.createElement('span'); abT.className = 'li-title'; abT.textContent = 'Export agent bundle';
+        var abA = document.createElement('span'); abA.className = 'li-artist';
+        abA.textContent = 'One file to start a coaching conversation: agent instructions, your skills, and your latest data.';
+        abB.appendChild(abT); abB.appendChild(abA); abRow.appendChild(abB);
+        abRow.onclick = downloadBundle;
+        var firstLink = document.getElementById('agentReadmeLink');
+        if (firstLink) agentBody.insertBefore(abRow, firstLink); else agentBody.appendChild(abRow);
       }
     }
     try { mountSkillsPanel(); } catch (e) { /* the Settings Skills panel is non-critical - never block mount */ }
