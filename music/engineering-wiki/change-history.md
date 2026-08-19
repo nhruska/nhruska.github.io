@@ -748,7 +748,7 @@ IS what you are looking at, and a differing worker tag reads
 build ... active". Red-first source pin added to
 test/build-stamp.test.js (proven failing against the old line
 before the fix). [#338]
-M-AGENT-BUNDLE (2026-08-19, round 18): v338-><PAIR> - one export =
+M-AGENT-BUNDLE (2026-08-19, PR #339 round 18): v338->v339 - one export =
 one conversation starter (operator friction: "I had to export my
 skills in a separate zip after I started the coaching
 conversation... to make a single export I can start a new
@@ -768,5 +768,5 @@ bundle row wired to the same downloadBundle (one code path,
 injected from the skills mount closure, guarded for older shells).
 Red-first pins in agent-manifest.test.js (proven failing before the
 change); settings-agent scenario asserts the row leads the section.
-[#PR]
+[#339]
 ```
