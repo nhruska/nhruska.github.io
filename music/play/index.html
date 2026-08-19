@@ -382,6 +382,35 @@
           <input type="file" id="restoreFile" accept="application/json,.json" hidden>
         </div>
       </section>
+      <!-- AI Agent (round 16): the USER-facing window onto the app's live
+           agent surface. SSOT discipline: this section never restates what
+           the artifacts say - it explains what the surface IS in three
+           sentences, then points at the LIVE docs (AGENTS.md +
+           capabilities.json, resolved from location at open so the same
+           markup is truthful on the live site, a preview, or localhost).
+           The Skills panel self-injects ABOVE this section (songbook.js
+           anchors on data-acc="agent") so the agent family reads together,
+           with About last. Copy buttons are wired beside the accordion JS. -->
+      <section class="accSec" data-acc="agent">
+        <button class="accBtn" id="accBtnAgent" type="button" aria-expanded="false" aria-controls="accBodyAgent">AI Agent</button>
+        <div class="accBody" id="accBodyAgent" role="region" aria-labelledby="accBtnAgent" hidden>
+          <p class="setHint">This app publishes live, machine-readable docs about itself. Point any AI agent (Claude, ChatGPT, a coding agent) at them and it can read your exported skills, coach your practice, and hand back one-tap jam links and setup files.</p>
+          <p class="setHint">How it works, plainly: agents only READ these docs - nothing they propose touches your data until you import a file through Skills or tap Save on a jam link. Everything lives at public URLs on this app, so what an agent sees is exactly what you see below.</p>
+          <a class="aboutLink" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
+            <span>Agent instructions (AGENTS.md) - the exact doc agents read</span>
+          </a>
+          <a class="aboutLink" id="agentCapsLink" href="../agent/capabilities.json" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4.72 3.22a.75.75 0 0 1 1.06 1.06L2.06 8l3.72 3.72a.75.75 0 1 1-1.06 1.06L.47 8.53a.75.75 0 0 1 0-1.06Zm6.56 0a.75.75 0 1 0-1.06 1.06L13.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06Z"/></svg>
+            <span>Capabilities (capabilities.json) - what the app can do, as data</span>
+          </a>
+          <div class="agentCopyRow">
+            <button class="btn ghost" id="agentCopyLinks" type="button">Copy doc links</button>
+            <button class="btn ghost" id="agentCopyPrompt" type="button">Copy starter prompt</button>
+          </div>
+          <p class="setHint" id="agentUriHint"></p>
+        </div>
+      </section>
       <!-- About: attribution + open-source funnel. Icons are INLINE SVGs (GitHub
            mark + octicons; fill=currentColor so they take the link ink) - this
            is an offline-capable PWA, no external asset fetches. Links use the
@@ -1452,6 +1481,40 @@
     // instead of running a parallel accordion - one exclusivity state for the
     // whole sheet.
     var settingsAcc = (window.Accordion && accSections.length) ? Accordion.init(accSections, { name: 'settings' }) : null;
+
+    // AI Agent section (round 16): resolve the LIVE absolute URIs from where
+    // the app is actually being served (SSOT - live site, preview, and
+    // localhost each show their own truth), surface them in the hint line,
+    // and wire the two copy buttons. Clipboard needs https/localhost; on
+    // failure the toast says so instead of pretending.
+    (function wireAgentSection() {
+      var readmeA = document.getElementById('agentReadmeLink');
+      var capsA = document.getElementById('agentCapsLink');
+      if (!readmeA || !capsA) return;
+      var readmeUrl = readmeA.href, capsUrl = capsA.href; // absolutized by the browser
+      var hint = document.getElementById('agentUriHint');
+      if (hint) hint.textContent = 'Live at: ' + readmeUrl;
+      function copy(text, okMsg) {
+        if (!(navigator.clipboard && navigator.clipboard.writeText)) {
+          if (window.Toast) Toast.show('Copy needs https - long-press a link instead'); return;
+        }
+        navigator.clipboard.writeText(text).then(function () {
+          if (window.Toast) Toast.show(okMsg);
+        }, function () {
+          if (window.Toast) Toast.show('Copy failed - long-press a link instead');
+        });
+      }
+      var copyLinks = document.getElementById('agentCopyLinks');
+      if (copyLinks) copyLinks.onclick = function () {
+        copy(readmeUrl + '\n' + capsUrl, 'Doc links copied');
+      };
+      var copyPrompt = document.getElementById('agentCopyPrompt');
+      if (copyPrompt) copyPrompt.onclick = function () {
+        copy('Read ' + readmeUrl + ' and ' + capsUrl + ' - they describe a music practice app I use. '
+          + 'Then help me practice: you can read my exported skills, suggest what to work on, and give me '
+          + 'one-tap jam links in the deep-link format AGENTS.md documents.', 'Starter prompt copied');
+      };
+    })();
 
     // Replay the intro tour on demand. Reuses the
     // ?welcome=1 force path (current instrument preselected there, so a
