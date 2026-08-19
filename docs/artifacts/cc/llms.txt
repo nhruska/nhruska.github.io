@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-08-18T09:52:47Z
+Generated: 2026-08-19T09:53:11Z
 Status: ok
 
 ## NOW
@@ -8,7 +8,7 @@ Status: ok
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #330 (CI green): Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass - https://github.com/nhruska/nhruska.github.io/pull/330
+- Open draft PR #337 (CI green): Round 16: "AI Agent" settings section - the user-facing window onto the live agent surface - https://github.com/nhruska/nhruska.github.io/pull/337
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -22,8 +22,8 @@ Status: ok
 - #333 - S15+S16+S17: jam links open the real Studio, music-coach plugin with agent profiles, setup-doc import (M-AGENT wave 2) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/333
 - #332 - S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/332
 - #331 - docs: coding-agent interaction spec for the Music app (M-AGENT) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/331
+- #330 - Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass (2026-08-18) - https://github.com/nhruska/nhruska.github.io/pull/330
 - #329 - Round 9: video PIP overlay + progress scrub + refocus pause honesty (2026-08-13) - https://github.com/nhruska/nhruska.github.io/pull/329
-- #328 - Player-feel UAT rounds 3-8: jams-first landing, tour ends in a jam, row anatomy, stage zoom + icon standard, studio IA (2026-08-10) - https://github.com/nhruska/nhruska.github.io/pull/328
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html

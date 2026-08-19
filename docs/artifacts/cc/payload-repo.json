@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-18T09:52:47Z",
+  "generatedAt": "2026-08-19T09:53:11Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-18T03:23:14Z",
-    "sha": "046092fd5fca4a574368862de825710e374b467e",
-    "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
+    "date": "2026-08-18T19:26:31Z",
+    "sha": "94fb4ac83d8627060de72fdda869b2d91e538974",
+    "subject": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass (#330)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/94fb4ac83d8627060de72fdda869b2d91e538974"
   },
   "commits": [
+    {
+      "date": "2026-08-18T19:26:31Z",
+      "sha": "94fb4ac83d8627060de72fdda869b2d91e538974",
+      "subject": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass (#330)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/94fb4ac83d8627060de72fdda869b2d91e538974"
+    },
+    {
+      "date": "2026-08-18T09:52:54Z",
+      "sha": "9cf7aa09e95b2ea10d497e0b3b56d0483d901a03",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/9cf7aa09e95b2ea10d497e0b3b56d0483d901a03"
+    },
     {
       "date": "2026-08-18T03:23:14Z",
       "sha": "046092fd5fca4a574368862de825710e374b467e",
@@ -78,26 +90,14 @@
       "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
-    },
-    {
-      "date": "2026-08-13T10:31:45Z",
-      "sha": "c2d09f24d506c2ceb33d66f5e4e38c58f00b937b",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c2d09f24d506c2ceb33d66f5e4e38c58f00b937b"
-    },
-    {
-      "date": "2026-08-13T04:30:34Z",
-      "sha": "a7606a8775f6c1cea4a55e17659d706f228e9fde",
-      "subject": "Video layer UAT rounds 9-14: PIP + theater + park, scrub thumb, refocus honesty, constant bar, icon polish (#329)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/a7606a8775f6c1cea4a55e17659d706f228e9fde"
     }
   ],
   "openPRs": [
     {
-      "number": 330,
-      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
+      "number": 337,
+      "title": "Round 16: \"AI Agent\" settings section - the user-facing window onto the live agent surface",
       "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/330",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/337",
       "draft": true,
       "ciState": "green",
       "checks": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288882/job/94601516016"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32223162721/job/95977471210"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/31746288885/job/94601515859"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32223162724/job/95977471430"
         }
       ]
     }
@@ -160,6 +160,13 @@
       "number": 331,
       "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
+    },
+    {
+      "createdAt": "2026-08-13T21:34:02Z",
+      "mergedAt": "2026-08-18T19:26:32Z",
+      "number": 330,
+      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/330"
     },
     {
       "createdAt": "2026-08-12T03:50:10Z",
@@ -216,30 +223,23 @@
       "number": 322,
       "title": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/322"
-    },
-    {
-      "createdAt": "2026-07-31T00:40:18Z",
-      "mergedAt": "2026-07-31T01:23:25Z",
-      "number": 321,
-      "title": "music(studio): give users time to skip YouTube ads before the video auto-minimizes",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/321"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-18T09:52:41Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32123887794",
+    "runStartedAt": "2026-08-19T09:53:05Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32239887387",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 7,
+    "merged_count": 8,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 1.33,
+    "typical_merge_hours": 1.79,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +249,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v334",
-    "localCacheVersion": "music-v334",
+    "liveCacheVersion": "music-v330-2",
+    "localCacheVersion": "music-v330-2",
     "cacheMatch": true
   },
   "missions": [
