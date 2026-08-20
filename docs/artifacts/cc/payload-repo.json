@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-19T09:53:11Z",
+  "generatedAt": "2026-08-20T09:53:44Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,36 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-18T19:26:31Z",
-    "sha": "94fb4ac83d8627060de72fdda869b2d91e538974",
-    "subject": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass (#330)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/94fb4ac83d8627060de72fdda869b2d91e538974"
+    "date": "2026-08-19T18:39:55Z",
+    "sha": "2701441471dd5d9656fbe5c365a84101b87f9598",
+    "subject": "Round 18: one-tap agent bundle - instructions + skills + latest data in one zip (#339)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/2701441471dd5d9656fbe5c365a84101b87f9598"
   },
   "commits": [
+    {
+      "date": "2026-08-19T18:39:55Z",
+      "sha": "2701441471dd5d9656fbe5c365a84101b87f9598",
+      "subject": "Round 18: one-tap agent bundle - instructions + skills + latest data in one zip (#339)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2701441471dd5d9656fbe5c365a84101b87f9598"
+    },
+    {
+      "date": "2026-08-19T16:54:17Z",
+      "sha": "98dd79b3c0e08072454e5bd753f5200643ff1975",
+      "subject": "Settings stamp says what you have: vv bug fixed, mismatch line leads with the action (#338)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/98dd79b3c0e08072454e5bd753f5200643ff1975"
+    },
+    {
+      "date": "2026-08-19T15:38:29Z",
+      "sha": "cf8a28dac848b1727e25e6d50659f30c63a18e77",
+      "subject": "AI Agent settings section: the user-facing window onto the live agent surface (#337)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/cf8a28dac848b1727e25e6d50659f30c63a18e77"
+    },
+    {
+      "date": "2026-08-19T09:53:17Z",
+      "sha": "3efd9d9f4dc4c8516455d4829aa4d6b5d0c9e549",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/3efd9d9f4dc4c8516455d4829aa4d6b5d0c9e549"
+    },
     {
       "date": "2026-08-18T19:26:31Z",
       "sha": "94fb4ac83d8627060de72fdda869b2d91e538974",
@@ -66,59 +90,31 @@
       "sha": "54bf03131619f48bbc72edb6afdede16c4ac44cd",
       "subject": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (#332)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/54bf03131619f48bbc72edb6afdede16c4ac44cd"
-    },
-    {
-      "date": "2026-08-17T05:04:15Z",
-      "sha": "9430db5a8377d9053d8bd57506cde51889ffccb0",
-      "subject": "docs: coding-agent interaction spec for the Music app (M-AGENT) (#331)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9430db5a8377d9053d8bd57506cde51889ffccb0"
-    },
-    {
-      "date": "2026-08-16T09:46:21Z",
-      "sha": "43759e59f806be8077195f2678eb52c8bd469815",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/43759e59f806be8077195f2678eb52c8bd469815"
-    },
-    {
-      "date": "2026-08-15T09:45:08Z",
-      "sha": "d59bdffa61ebca0b1f9d6983445ae38bd21f0a60",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d59bdffa61ebca0b1f9d6983445ae38bd21f0a60"
-    },
-    {
-      "date": "2026-08-14T10:27:48Z",
-      "sha": "31b6a94234420e9f2cea9e7f3f28b07b646646a1",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/31b6a94234420e9f2cea9e7f3f28b07b646646a1"
     }
   ],
-  "openPRs": [
+  "openPRs": [],
+  "recentMerges": [
     {
+      "createdAt": "2026-08-19T17:28:17Z",
+      "mergedAt": "2026-08-19T18:39:55Z",
+      "number": 339,
+      "title": "Round 18: one export, one conversation starter - the agent bundle carries your data too",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/339"
+    },
+    {
+      "createdAt": "2026-08-19T15:49:24Z",
+      "mergedAt": "2026-08-19T16:54:17Z",
+      "number": 338,
+      "title": "Round 17: settings stamp says what you have - vv bug fixed, mismatch line leads with the action",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/338"
+    },
+    {
+      "createdAt": "2026-08-19T06:21:54Z",
+      "mergedAt": "2026-08-19T15:38:29Z",
       "number": 337,
       "title": "Round 16: \"AI Agent\" settings section - the user-facing window onto the live agent surface",
-      "branch": "claude/nh-pages-music-extraction-pzn1rg",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/337",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32223162721/job/95977471210"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32223162724/job/95977471430"
-        }
-      ]
-    }
-  ],
-  "recentMerges": [
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/337"
+    },
     {
       "createdAt": "2026-08-18T01:35:40Z",
       "mergedAt": "2026-08-18T03:23:15Z",
@@ -202,44 +198,23 @@
       "number": 325,
       "title": "Land community PR #274: constant \"Suggested Chords\" label",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/325"
-    },
-    {
-      "createdAt": "2026-08-09T01:58:48Z",
-      "mergedAt": "2026-08-09T14:08:19Z",
-      "number": 324,
-      "title": "Playlist follow-up: bake item 17 (Quist) + artist enrichment with trackKey remaps",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/324"
-    },
-    {
-      "createdAt": "2026-08-08T00:52:01Z",
-      "mergedAt": "2026-08-09T01:51:28Z",
-      "number": 323,
-      "title": "Player-feel: global mini-player bar + now-playing rows + play-from-row",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/323"
-    },
-    {
-      "createdAt": "2026-08-06T20:51:44Z",
-      "mergedAt": "2026-08-08T00:39:26Z",
-      "number": 322,
-      "title": "Library: bake the operator playlist (15 curated tracks) + keyless sync pipeline",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/322"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-19T09:53:05Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32239887387",
+    "runStartedAt": "2026-08-20T09:53:38Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32356194519",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 8,
+    "merged_count": 11,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 1.79,
+    "typical_merge_hours": 1.33,
     "weekly": null
   },
   "deploy": {
@@ -249,8 +224,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v330-2",
-    "localCacheVersion": "music-v330-2",
+    "liveCacheVersion": "music-v339",
+    "localCacheVersion": "music-v339",
     "cacheMatch": true
   },
   "missions": [
@@ -678,7 +653,7 @@
   },
   "suite": {
     "testFileCount": 68,
-    "testCaseCount": 3481,
+    "testCaseCount": 3484,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
