@@ -26,6 +26,7 @@ var path = require('path');
 var Backup = require('../music/shared/backup.js');
 var Competency = require('../music/shared/competency.js');
 var AgentReadme = require('../music/shared/agent-readme.js');
+var Capabilities = require('../music/shared/capabilities.js');
 
 var CAPS_PATH = path.join(__dirname, '..', 'music', 'agent', 'capabilities.json');
 var AGENTS_MD_PATH = path.join(__dirname, '..', 'music', 'agent', 'AGENTS.md');
@@ -96,6 +97,27 @@ test('jam-deep-link capability documents exactly the locked params (jam, key, yt
 
 test('music/agent/AGENTS.md is byte-for-byte AgentReadme.text() (ONE source, two destinations)', function () {
   assert.strictEqual(agentsMd, AgentReadme.text() + '\n');
+});
+
+test('music/agent/capabilities.json is byte-for-byte Capabilities.json() (ONE source, two destinations)', function () {
+  var staticRaw = fs.readFileSync(CAPS_PATH, 'utf8');
+  assert.strictEqual(staticRaw, Capabilities.json() + '\n');
+});
+
+test('downloadBundle ships capabilities.json at the zip root (guarded on window.Capabilities)', function () {
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var i = src.indexOf('function downloadBundle');
+  assert.ok(i !== -1, 'downloadBundle not found');
+  var body = src.slice(i, src.indexOf('\n      }', i));
+  assert.ok(/global\.Capabilities/.test(body),
+    'the bundle must push the capability manifest (guarded on window.Capabilities)');
+  assert.ok(/'capabilities\.json'/.test(body),
+    'the manifest must land at the AGENTS.md-documented zip-root name: capabilities.json');
+});
+
+test('AGENTS.md names capabilities.json as a bundle member', function () {
+  assert.ok(/capabilities\.json/.test(AgentReadme.text()),
+    'AGENTS.md must tell agents the capability manifest is in the bundle');
 });
 
 test('AGENTS.md never contains a literal fenced ```json block (would false-parse via SkillMd.parse)', function () {
