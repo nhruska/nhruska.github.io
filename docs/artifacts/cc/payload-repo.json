@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-20T09:53:44Z",
+  "generatedAt": "2026-08-21T09:54:55Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-19T18:39:55Z",
-    "sha": "2701441471dd5d9656fbe5c365a84101b87f9598",
-    "subject": "Round 18: one-tap agent bundle - instructions + skills + latest data in one zip (#339)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/2701441471dd5d9656fbe5c365a84101b87f9598"
+    "date": "2026-08-20T09:53:51Z",
+    "sha": "1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48"
   },
   "commits": [
+    {
+      "date": "2026-08-20T09:53:51Z",
+      "sha": "1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48"
+    },
     {
       "date": "2026-08-19T18:39:55Z",
       "sha": "2701441471dd5d9656fbe5c365a84101b87f9598",
@@ -84,15 +90,34 @@
       "sha": "1d566ba7381abc5f349f223f580c55e640110443",
       "subject": "S15+S16+S17: jam links open the real Studio, music-coach plugin, setup-doc import (M-AGENT wave 2) (#333)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/1d566ba7381abc5f349f223f580c55e640110443"
-    },
-    {
-      "date": "2026-08-17T05:40:34Z",
-      "sha": "54bf03131619f48bbc72edb6afdede16c4ac44cd",
-      "subject": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (#332)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/54bf03131619f48bbc72edb6afdede16c4ac44cd"
     }
   ],
-  "openPRs": [],
+  "openPRs": [
+    {
+      "number": 341,
+      "title": "Bundle capabilities.json into the agent-bundle export",
+      "branch": "claude/bundle-capabilities",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/341",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32440488610/job/96650056860"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32440488599/job/96650056857"
+        }
+      ]
+    }
+  ],
   "recentMerges": [
     {
       "createdAt": "2026-08-19T17:28:17Z",
@@ -204,14 +229,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-20T09:53:38Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32356194519",
+    "runStartedAt": "2026-08-21T09:54:51Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32470149897",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 11,
+    "merged_count": 10,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.33,
