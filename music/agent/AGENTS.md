@@ -15,6 +15,10 @@ account is required to read or propose updates.
   snapshot of every owned localStorage key. It is the FULL profile: repertoire,
   setlists, progressions, preferences, skill progress. Values in `data` are raw
   strings - JSON.parse each key you need.
+- **`capabilities.json`** (this bundle; also served at `music/agent/capabilities.json`)
+  - the app's capability manifest as data: every capability's surfaces, owned
+  localStorage keys, and interchange contract. Read it to know what the app can
+  do without reading app code or touching the network.
 - **Profile doc** `skill-competency-profile/v1` - the schema embedded in each SKILL.md:
   ```
   { schema, skill, discipline:"music", updated,

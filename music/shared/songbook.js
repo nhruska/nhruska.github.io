@@ -6646,6 +6646,14 @@
         if (global.AgentReadme && typeof global.AgentReadme.text === 'function') {
           files.push({ path: 'AGENTS.md', text: global.AgentReadme.text() });
         }
+        // capabilities.json: the app capability manifest at the zip root, so
+        // the bundle alone tells an agent what the app can do (surfaces, data
+        // keys, interchange contracts) - zero network, per AGENTS.md's own
+        // "no app code, network, or account required" promise. Guarded like
+        // AGENTS.md (capabilities.js not wired yet on an older cached build).
+        if (global.Capabilities && typeof global.Capabilities.json === 'function') {
+          files.push({ path: 'capabilities.json', text: global.Capabilities.json() });
+        }
         // Round 18 (operator friction: "I had to export my skills in a
         // separate zip after I started the coaching conversation... a single
         // export I can start a new conversation with"): the FULL backup

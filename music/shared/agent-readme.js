@@ -46,6 +46,10 @@
     L.push('  snapshot of every owned localStorage key. It is the FULL profile: repertoire,');
     L.push('  setlists, progressions, preferences, skill progress. Values in `data` are raw');
     L.push('  strings - JSON.parse each key you need.');
+    L.push('- **`capabilities.json`** (this bundle; also served at `music/agent/capabilities.json`)');
+    L.push('  - the app\'s capability manifest as data: every capability\'s surfaces, owned');
+    L.push('  localStorage keys, and interchange contract. Read it to know what the app can');
+    L.push('  do without reading app code or touching the network.');
     L.push('- **Profile doc** `' + COMPETENCY_SCHEMA + '` - the schema embedded in each SKILL.md:');
     L.push('  ' + FENCE_TAG);
     L.push('  { schema, skill, discipline:"music", updated,');
