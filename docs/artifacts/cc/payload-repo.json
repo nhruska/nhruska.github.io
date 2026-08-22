@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T09:54:55Z",
+  "generatedAt": "2026-08-22T09:46:29Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-20T09:53:51Z",
-    "sha": "1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48"
+    "date": "2026-08-21T22:54:47Z",
+    "sha": "c6912b05030e764d89d6cb31de60c991d07f8cdc",
+    "subject": "Bundle capabilities.json into the agent-bundle export (#341)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c6912b05030e764d89d6cb31de60c991d07f8cdc"
   },
   "commits": [
+    {
+      "date": "2026-08-21T22:54:47Z",
+      "sha": "c6912b05030e764d89d6cb31de60c991d07f8cdc",
+      "subject": "Bundle capabilities.json into the agent-bundle export (#341)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c6912b05030e764d89d6cb31de60c991d07f8cdc"
+    },
+    {
+      "date": "2026-08-21T09:55:01Z",
+      "sha": "895941712e3c3dc4e14ae056c47055587072c6e9",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/895941712e3c3dc4e14ae056c47055587072c6e9"
+    },
     {
       "date": "2026-08-20T09:53:51Z",
       "sha": "1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48",
@@ -78,47 +90,17 @@
       "sha": "76eb154e475d0bef0bdb57155727d29b150d2d5b",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/76eb154e475d0bef0bdb57155727d29b150d2d5b"
-    },
-    {
-      "date": "2026-08-17T09:12:54Z",
-      "sha": "81ef17326955e7ef6628a0cb91f1e164cd06e1b5",
-      "subject": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (#334)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/81ef17326955e7ef6628a0cb91f1e164cd06e1b5"
-    },
-    {
-      "date": "2026-08-17T07:41:41Z",
-      "sha": "1d566ba7381abc5f349f223f580c55e640110443",
-      "subject": "S15+S16+S17: jam links open the real Studio, music-coach plugin, setup-doc import (M-AGENT wave 2) (#333)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/1d566ba7381abc5f349f223f580c55e640110443"
     }
   ],
-  "openPRs": [
+  "openPRs": [],
+  "recentMerges": [
     {
+      "createdAt": "2026-08-21T02:36:45Z",
+      "mergedAt": "2026-08-21T22:54:47Z",
       "number": 341,
       "title": "Bundle capabilities.json into the agent-bundle export",
-      "branch": "claude/bundle-capabilities",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/341",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32440488610/job/96650056860"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32440488599/job/96650056857"
-        }
-      ]
-    }
-  ],
-  "recentMerges": [
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/341"
+    },
     {
       "createdAt": "2026-08-19T17:28:17Z",
       "mergedAt": "2026-08-19T18:39:55Z",
@@ -216,27 +198,20 @@
       "number": 326,
       "title": "Import your playlist: keyless in-app YouTube playlist import (M-PLAYLIST-IMPORT)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/326"
-    },
-    {
-      "createdAt": "2026-08-09T14:15:32Z",
-      "mergedAt": "2026-08-09T14:15:42Z",
-      "number": 325,
-      "title": "Land community PR #274: constant \"Suggested Chords\" label",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/325"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-21T09:54:51Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32470149897",
+    "runStartedAt": "2026-08-22T09:46:23Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32565840252",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 10,
+    "merged_count": 11,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.33,
@@ -249,8 +224,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v339",
-    "localCacheVersion": "music-v339",
+    "liveCacheVersion": "music-v341",
+    "localCacheVersion": "music-v341",
     "cacheMatch": true
   },
   "missions": [
@@ -678,7 +653,7 @@
   },
   "suite": {
     "testFileCount": 68,
-    "testCaseCount": 3484,
+    "testCaseCount": 3488,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

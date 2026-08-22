@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-08-21T09:54:55Z
+Generated: 2026-08-22T09:46:29Z
 Status: ok
 
 ## NOW
@@ -8,7 +8,6 @@ Status: ok
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #341 (CI green): Bundle capabilities.json into the agent-bundle export - https://github.com/nhruska/nhruska.github.io/pull/341
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -16,6 +15,7 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #341 - Bundle capabilities.json into the agent-bundle export (2026-08-21) - https://github.com/nhruska/nhruska.github.io/pull/341
 - #339 - Round 18: one export, one conversation starter - the agent bundle carries your data too (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/339
 - #338 - Round 17: settings stamp says what you have - vv bug fixed, mismatch line leads with the action (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/338
 - #337 - Round 16: "AI Agent" settings section - the user-facing window onto the live agent surface (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/337
@@ -23,7 +23,6 @@ Status: ok
 - #335 - docs: M-AGENT arc record + queue reconcile (session save) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/335
 - #334 - S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/334
 - #333 - S15+S16+S17: jam links open the real Studio, music-coach plugin with agent profiles, setup-doc import (M-AGENT wave 2) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/333
-- #332 - S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1) (2026-08-17) - https://github.com/nhruska/nhruska.github.io/pull/332
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -36,6 +35,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (3484 cases / 68 suites)
+- Suite: node test/run-all.js (3488 cases / 68 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
