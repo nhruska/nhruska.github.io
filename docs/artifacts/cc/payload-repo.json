@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T09:47:22Z",
+  "generatedAt": "2026-08-24T10:07:36Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-22T09:46:38Z",
-    "sha": "824249d856ad3b96ebc91cccde202e7edeb9cc37",
+    "date": "2026-08-23T09:47:32Z",
+    "sha": "5457544734e11ed5ca89de2ce042ab3e9951bfd3",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/824249d856ad3b96ebc91cccde202e7edeb9cc37"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/5457544734e11ed5ca89de2ce042ab3e9951bfd3"
   },
   "commits": [
+    {
+      "date": "2026-08-23T09:47:32Z",
+      "sha": "5457544734e11ed5ca89de2ce042ab3e9951bfd3",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5457544734e11ed5ca89de2ce042ab3e9951bfd3"
+    },
     {
       "date": "2026-08-22T09:46:38Z",
       "sha": "824249d856ad3b96ebc91cccde202e7edeb9cc37",
@@ -84,12 +90,6 @@
       "sha": "046092fd5fca4a574368862de825710e374b467e",
       "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
-    },
-    {
-      "date": "2026-08-17T13:22:03Z",
-      "sha": "051f5f4b60534611f2f8a6208a272b7744268389",
-      "subject": "docs: M-AGENT arc record (spec -> 3 waves -> live, one session) + queue reconcile (#335)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/051f5f4b60534611f2f8a6208a272b7744268389"
     }
   ],
   "openPRs": [],
@@ -204,9 +204,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-23T09:47:15Z",
-    "durationSeconds": 5,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32631968320",
+    "runStartedAt": "2026-08-24T10:07:30Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32715162360",
     "headBranch": "main"
   },
   "velocity": {
