@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T10:07:36Z",
+  "generatedAt": "2026-08-25T09:55:07Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-23T09:47:32Z",
-    "sha": "5457544734e11ed5ca89de2ce042ab3e9951bfd3",
+    "date": "2026-08-24T10:07:46Z",
+    "sha": "8fff3cb9f77b0bc94db8a518574b47da38dc5c9b",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/5457544734e11ed5ca89de2ce042ab3e9951bfd3"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/8fff3cb9f77b0bc94db8a518574b47da38dc5c9b"
   },
   "commits": [
+    {
+      "date": "2026-08-24T10:07:46Z",
+      "sha": "8fff3cb9f77b0bc94db8a518574b47da38dc5c9b",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/8fff3cb9f77b0bc94db8a518574b47da38dc5c9b"
+    },
     {
       "date": "2026-08-23T09:47:32Z",
       "sha": "5457544734e11ed5ca89de2ce042ab3e9951bfd3",
@@ -84,12 +90,6 @@
       "sha": "9cf7aa09e95b2ea10d497e0b3b56d0483d901a03",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/9cf7aa09e95b2ea10d497e0b3b56d0483d901a03"
-    },
-    {
-      "date": "2026-08-18T03:23:14Z",
-      "sha": "046092fd5fca4a574368862de825710e374b467e",
-      "subject": "wave 4: marketplace manifest (install music-coach by name) + demo script (M-AGENT) (#336)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/046092fd5fca4a574368862de825710e374b467e"
     }
   ],
   "openPRs": [],
@@ -204,14 +204,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-24T10:07:30Z",
+    "runStartedAt": "2026-08-25T09:55:01Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32715162360",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/32834492911",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 11,
+    "merged_count": 6,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.33,
