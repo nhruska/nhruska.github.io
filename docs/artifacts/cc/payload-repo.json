@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-28T20:56:34Z",
+  "generatedAt": "2026-08-29T14:33:47Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-27T19:53:19Z",
-    "sha": "b0ce50e87b9175f3f97fe9e46606ffa57834b5e7",
+    "date": "2026-08-28T20:56:41Z",
+    "sha": "4dfc83f6738690cc384ac7f55922281430bc4783",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/b0ce50e87b9175f3f97fe9e46606ffa57834b5e7"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/4dfc83f6738690cc384ac7f55922281430bc4783"
   },
   "commits": [
+    {
+      "date": "2026-08-28T20:56:41Z",
+      "sha": "4dfc83f6738690cc384ac7f55922281430bc4783",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4dfc83f6738690cc384ac7f55922281430bc4783"
+    },
     {
       "date": "2026-08-27T19:53:19Z",
       "sha": "b0ce50e87b9175f3f97fe9e46606ffa57834b5e7",
@@ -84,12 +90,6 @@
       "sha": "98dd79b3c0e08072454e5bd753f5200643ff1975",
       "subject": "Settings stamp says what you have: vv bug fixed, mismatch line leads with the action (#338)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/98dd79b3c0e08072454e5bd753f5200643ff1975"
-    },
-    {
-      "date": "2026-08-19T15:38:29Z",
-      "sha": "cf8a28dac848b1727e25e6d50659f30c63a18e77",
-      "subject": "AI Agent settings section: the user-facing window onto the live agent surface (#337)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/cf8a28dac848b1727e25e6d50659f30c63a18e77"
     }
   ],
   "openPRs": [],
@@ -204,14 +204,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-28T20:56:29Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33210376531",
+    "runStartedAt": "2026-08-29T14:33:38Z",
+    "durationSeconds": 5,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33257925566",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 0,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.33,
@@ -653,7 +653,7 @@
   },
   "suite": {
     "testFileCount": 68,
-    "testCaseCount": 3488,
+    "testCaseCount": 1741,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
