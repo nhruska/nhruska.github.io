@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-29T14:33:47Z",
+  "generatedAt": "2026-08-30T14:26:55Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-28T20:56:41Z",
-    "sha": "4dfc83f6738690cc384ac7f55922281430bc4783",
+    "date": "2026-08-29T14:33:53Z",
+    "sha": "b37839e3622f1a65f317217b3dba0cbb5a6daf33",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/4dfc83f6738690cc384ac7f55922281430bc4783"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/b37839e3622f1a65f317217b3dba0cbb5a6daf33"
   },
   "commits": [
+    {
+      "date": "2026-08-29T14:33:53Z",
+      "sha": "b37839e3622f1a65f317217b3dba0cbb5a6daf33",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b37839e3622f1a65f317217b3dba0cbb5a6daf33"
+    },
     {
       "date": "2026-08-28T20:56:41Z",
       "sha": "4dfc83f6738690cc384ac7f55922281430bc4783",
@@ -84,12 +90,6 @@
       "sha": "2701441471dd5d9656fbe5c365a84101b87f9598",
       "subject": "Round 18: one-tap agent bundle - instructions + skills + latest data in one zip (#339)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/2701441471dd5d9656fbe5c365a84101b87f9598"
-    },
-    {
-      "date": "2026-08-19T16:54:17Z",
-      "sha": "98dd79b3c0e08072454e5bd753f5200643ff1975",
-      "subject": "Settings stamp says what you have: vv bug fixed, mismatch line leads with the action (#338)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/98dd79b3c0e08072454e5bd753f5200643ff1975"
     }
   ],
   "openPRs": [],
@@ -204,9 +204,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-29T14:33:38Z",
-    "durationSeconds": 5,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33257925566",
+    "runStartedAt": "2026-08-30T14:26:49Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33316884963",
     "headBranch": "main"
   },
   "velocity": {
@@ -653,7 +653,7 @@
   },
   "suite": {
     "testFileCount": 68,
-    "testCaseCount": 1741,
+    "testCaseCount": 3488,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
