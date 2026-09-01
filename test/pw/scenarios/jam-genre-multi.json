@@ -1,0 +1,102 @@
+{
+  "name": "jam-genre-multi",
+  "description": "M-JAM-MULTI (2026-09-01): the Studio's Find-a-jam genre chips are MULTI-SELECT - build a plain C-F-G progression, Solo -> Just practice lands the no-video Studio, switch to the Pent minor scale chip (carries the operator-directed jazz/smooth jazz/funk/disco genres), open Find a jam, tap a SECOND genre chip (funk, alongside the pre-selected rock). Both chips must carry .on simultaneously, and the generated search-phrase line must contain both genre words - proving chips compose into one query instead of replacing each other.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "G"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#soloBackingBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal"
+    },
+    {
+      "action": "tapText",
+      "text": "Just practice",
+      "scope": ".composeRow"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-scalechips]"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-scaleid=\"pentMinor\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-jamfindtoggle]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-jamgenres] [data-jamgenre]"
+    },
+    {
+      "action": "evalAssert",
+      "js": "document.querySelector('[data-jamgenre=\"rock\"]').classList.contains('on')",
+      "label": "before any chip tap, the scale's first genre (rock, pent minor) is pre-selected"
+    },
+    {
+      "action": "evalAssert",
+      "js": "!document.querySelector('[data-jamgenre=\"funk\"]').classList.contains('on')",
+      "label": "funk starts unselected"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-jamgenre=\"funk\"]"
+    },
+    {
+      "action": "evalAssert",
+      "js": "document.querySelector('[data-jamgenre=\"rock\"]').classList.contains('on') && document.querySelector('[data-jamgenre=\"funk\"]').classList.contains('on')",
+      "label": "M-JAM-MULTI: tapping a second genre chip ADDS to the selection - both rock and funk carry .on simultaneously (multi-select, not a single-choice replace)"
+    },
+    {
+      "action": "evalAssert",
+      "js": "document.querySelector('.bt-st-jamquery').textContent.indexOf('rock') > -1 && document.querySelector('.bt-st-jamquery').textContent.indexOf('funk') > -1",
+      "label": "the generated search-phrase line contains BOTH selected genre words"
+    },
+    {
+      "action": "screenshot",
+      "name": "jam-genre-multi-selected"
+    }
+  ]
+}

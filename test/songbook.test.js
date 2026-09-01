@@ -135,11 +135,28 @@ test('chordsFromDegrees keeps every degree incl. the diminished vii (unlike the 
  * section 4.5): the pure chord-mapping extracted out of convertToMode so both the
  * explicit-key path AND the keyless mode-change handler share one implementation.
  * No songKey mutation, no DOM - chords in, chords out. ---------- */
-test('Major -> Minor re-qualify: roots hold, degree qualities flip, a non-scale root stays unchanged', function () {
-  // C major I V vi IV (C G Am F) -> C minor: i and v and iv re-qualify minor;
-  // Am's root (offset 9) is not a degree of natural minor -> borrowed, left alone.
+test('Major -> Minor re-qualify: degree INDEX maps root+quality together (F-MODEFLIP-DEGREES, PR #342)', function () {
+  // C major I V vi IV (C G Am F) -> C minor: each chord re-roots to the SAME
+  // degree index of the target mode, not merely re-qualified at its old pitch.
+  // vi (Am, offset 9, Major.steps index 5) lands on VI of C minor (Minor.steps
+  // index 5 = offset 8 = G#/Ab) - the operator-flagged "stranding" this PR fixes;
+  // it is a diatonic vi degree in the SOURCE mode, not a chromatic/borrowed root.
   var out = Songbook.convertProgressionQualities(['C', 'G', 'Am', 'F'], 'Minor', 'C', 'Major');
-  assert.deepStrictEqual(out, ['Cm', 'Gm', 'Am', 'Fm']);
+  assert.deepStrictEqual(out, ['Cm', 'Gm', 'G#', 'Fm']);
+});
+test('degree-index mapping round-trips: converting back lands on the original chords', function () {
+  var out = Songbook.convertProgressionQualities(['Cm', 'Gm', 'G#', 'Fm'], 'Major', 'C', 'Minor');
+  assert.deepStrictEqual(out, ['C', 'G', 'Am', 'F']);
+});
+test('degree-index mapping: iii of C major (Em) lands on III of C minor (D#), not a stranded Em', function () {
+  var out = Songbook.convertProgressionQualities(['Em'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['D#']);
+});
+test('degree-index mapping: a root genuinely chromatic IN THE SOURCE mode still passes through unchanged (D3)', function () {
+  // Eb (offset 3) is not a Major-scale degree of C, so it is left alone on a
+  // Major -> Minor flip even though flat spellings otherwise normalize via rootPc.
+  var out = Songbook.convertProgressionQualities(['Eb'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['Eb']);
 });
 test('borrowed/chromatic root (no degree at that offset in the target mode) is left unchanged', function () {
   var out = Songbook.convertProgressionQualities(['F#', 'G'], 'Major', 'C', 'Minor');
@@ -162,9 +179,17 @@ test('extension re-base: a dominant 7 landing on a minor degree becomes a minor 
   assert.deepStrictEqual(out, ['Gm7']);
 });
 test('extension re-base: any 7th-type extension landing on a dim degree collapses to the bare dim triad', function () {
-  // Bm7 -> C major: B (offset 11) is the vii° (dim) degree - the m7 extension
-  // never survives onto a dim degree (Bdim, not Bdim7/Bm7).
-  var out = Songbook.convertProgressionQualities(['Bm7'], 'Major', 'C', 'Minor');
+  // A#m7 -> C major, source Minor: A# (offset 10) is the VII degree of C minor
+  // (Minor.steps index 6, a major triad there) - degree-index mapping re-roots
+  // it to the SAME index of C major (offset 11 = B), which IS the vii° (dim)
+  // degree - the m7 extension never survives onto a dim degree (Bdim, not
+  // Bdim7/Bm7). Updated from a literal 'Bm7' input (PR #342): under the OLD
+  // offset-based membership check B (offset 11) happened to sit on Major's own
+  // vii° directly, but under degree-index mapping B is not itself a degree of
+  // the SOURCE (Minor) mode, so a literal 'Bm7' now passes through unchanged
+  // (D3) - this test instead exercises the dim-degree collapse rule with a
+  // root that IS diatonic in the source.
+  var out = Songbook.convertProgressionQualities(['A#m7'], 'Major', 'C', 'Minor');
   assert.deepStrictEqual(out, ['Bdim']);
 });
 test('defensive no-ops: empty chords, unknown target mode, and unresolvable tonic all degrade to unchanged input (never throw)', function () {

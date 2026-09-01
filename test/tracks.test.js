@@ -1009,8 +1009,39 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
   assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
-  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
-    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
+  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenres, jamFeel\)/.test(body),
+    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key, and jamGenres (the multi-select array) as the genre argument');
+});
+test('renderJamPanel (M-JAM-MULTI): re-filters jamGenres to the surviving intersection with the new scale\'s list, falling back to that scale\'s first genre when nothing survives', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres == null/.test(body), 'expected a first-render null-sentinel check for jamGenres');
+  assert.ok(/jamGenres = \[genres\[0\]\]/.test(body), 'expected a fallback seed of [genres[0]] on first render / when nothing survives');
+  assert.ok(/jamGenres\.filter\(/.test(body), 'expected jamGenres to be re-filtered against the new scale\'s genre list on every render');
+});
+test('renderJamPanel chip row (M-JAM-MULTI): every genre chip carries .on independently via jamGenres.indexOf(...) >= 0 (multi-select, not a single === comparison)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres\.indexOf\(g\) >= 0/.test(body),
+    'genre chip .on class must test jamGenres.indexOf(g) >= 0, not a single-value === comparison');
+});
+test('renderJamPanel genre-chip click handler (M-JAM-MULTI): toggles membership and refuses to drop the last selected genre (min 1 selected)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres\.indexOf\(g\)/.test(body), 'expected the click handler to look up the tapped genre in jamGenres');
+  assert.ok(/jamGenres\.length > 1\)\s*jamGenres\.splice\(idx, 1\)/.test(body),
+    'expected the toggle-off branch to be guarded on jamGenres.length > 1 before splicing out the tapped genre');
+  assert.ok(/jamGenres\.push\(g\)/.test(body), 'expected the toggle-on branch to push the tapped genre into jamGenres');
+});
+test('renderJamPanel "Add to library" seed (M-JAM-MULTI): genre is jamGenres.join(\' / \') when multiple are selected, the bare genre when one is', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/genre: jamGenres\.length > 1 \? jamGenres\.join\(' \/ '\) : jamGenres\[0\]/.test(body),
+    'the onEditRequest seed object must join multiple selected genres with " / ", or pass the bare single genre');
 });
 test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a longer, playback-anchored window with explicit Keep-open / Minimize-now controls', function () {
   var src = readSrc('music/shared/tracks.js');

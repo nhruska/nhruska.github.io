@@ -124,4 +124,50 @@ test('jamQuery: every blues genre entry contains "blues" (the scale-word-omissio
   });
 });
 
+/* ---------------------------------------------------------------------
+ * M-JAM-MULTI (2026-09-01): new genres (operator directive) + multi-select
+ * jamQuery array support.
+ * ------------------------------------------------------------------- */
+test('genresFor("pentMinor") contains all four operator-directed genres: jazz, smooth jazz, funk, disco', function () {
+  var g = JamQueries.genresFor('pentMinor');
+  ['jazz', 'smooth jazz', 'funk', 'disco'].forEach(function (want) {
+    assert.ok(g.indexOf(want) >= 0, 'expected pentMinor to include "' + want + '", got ' + JSON.stringify(g));
+  });
+});
+test('genresFor: no scale list exceeds 12 entries', function () {
+  JamQueries.SCALE_IDS.forEach(function (scaleId) {
+    var g = JamQueries.genresFor(scaleId);
+    assert.ok(g.length <= 12, scaleId + ' has ' + g.length + ' genres, expected <= 12');
+  });
+});
+test('genresFor: no scale list contains a duplicate genre string', function () {
+  JamQueries.SCALE_IDS.forEach(function (scaleId) {
+    var g = JamQueries.genresFor(scaleId);
+    var unique = g.filter(function (v, i) { return g.indexOf(v) === i; });
+    assert.deepStrictEqual(unique, g, scaleId + ' has a duplicate genre entry: ' + JSON.stringify(g));
+  });
+});
+test('jamQuery: a plain string genre behaves exactly as before (back-compat lock)', function () {
+  assert.strictEqual(JamQueries.jamQuery('A', 'dorian', 'funk', 'slow'), 'A dorian funk backing track slow');
+});
+test('jamQuery: an array genre joins with single spaces, in selection order, into the search phrase', function () {
+  var q = JamQueries.jamQuery('A', 'pentMinor', ['smooth jazz', 'funk'], 'mid');
+  assert.strictEqual(q, 'A minor pentatonic smooth jazz funk backing track mid');
+});
+test('jamQuery: a single-element array is byte-identical to the equivalent plain string call', function () {
+  var arr = JamQueries.jamQuery('A', 'dorian', ['funk'], 'slow');
+  var str = JamQueries.jamQuery('A', 'dorian', 'funk', 'slow');
+  assert.strictEqual(arr, str);
+});
+test('jamQuery: an empty array behaves like an empty/missing genre (omitted, never "undefined")', function () {
+  var q = JamQueries.jamQuery('A', 'dorian', [], 'slow');
+  assert.strictEqual(q, 'A dorian backing track slow');
+});
+test('jamQuery: array-genre order is preserved (not sorted/reordered)', function () {
+  var q1 = JamQueries.jamQuery('A', 'pentMinor', ['disco', 'jazz'], 'up');
+  var q2 = JamQueries.jamQuery('A', 'pentMinor', ['jazz', 'disco'], 'up');
+  assert.ok(q1.indexOf('disco jazz') >= 0, 'expected "disco jazz" order, got: ' + q1);
+  assert.ok(q2.indexOf('jazz disco') >= 0, 'expected "jazz disco" order, got: ' + q2);
+});
+
 run();

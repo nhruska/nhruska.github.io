@@ -707,11 +707,22 @@
       var songRoot = th.key, songScaleMode = th.scaleMode;
       var soloKey = t.key, soloMode = t.mode;
       // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
-      // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
-      // to the new scale's first genre whenever the active genre isn't in that
-      // scale's list (renderJamPanel below); jamFeel persists across scale-chip
-      // switches (a "slow" preference likely holds across modes).
-      var jamGenre = null, jamFeel = 'mid';
+      // (no persistence, matching the Guide/scale-chip pattern). jamFeel
+      // persists across scale-chip switches (a "slow" preference likely
+      // holds across modes).
+      //
+      // M-JAM-MULTI (2026-09-01): jamGenres is a MULTI-SELECT array (was a
+      // single jamGenre string) - a genre chip tap TOGGLES membership so
+      // several genres can compose into one search phrase ("smooth jazz funk
+      // backing track"). null is the "never rendered yet" sentinel;
+      // renderJamPanel below both seeds it on first render and re-filters it
+      // on every scale-chip switch: selections that no longer exist in the
+      // new scale's list are dropped, keeping whatever intersection survives
+      // (or falling back to that scale's own first genre when nothing does).
+      // At least one genre stays selected at all times - the toggle handler
+      // refuses to remove the last one, so the query builder always has a
+      // genre term.
+      var jamGenres = null, jamFeel = 'mid';
       // UAT 2026-08-08: until the user touches a genre/feel chip, the jam
       // panel's search targets THIS SONG by name ("<title> <artist> backing
       // track") - the generic key/genre query lost the song identity ("YouTube
@@ -873,11 +884,18 @@
         var scaleKey = scaleKeyFor(scaleId, th.scaleMode);
         var genres = JQ.genresFor(scaleKey);
         if (!genres.length) { jamPanel.innerHTML = ''; return; }
-        // A genre carried over from a different scale's list (or the first-ever
-        // render) resets to that scale's own first genre - the list itself is
-        // scale-specific, so a stale selection would silently point at a genre
-        // the current scale never offered.
-        if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
+        // First-ever render seeds a single-genre selection from this scale's
+        // own first genre. A scale-chip switch re-filters the CURRENT
+        // selection down to whatever still exists in the new list (a stale
+        // selection would silently point at a genre the current scale never
+        // offered) - keep the surviving intersection, or fall back to the
+        // scale's own first genre when nothing survives.
+        if (jamGenres == null) {
+          jamGenres = [genres[0]];
+        } else {
+          var keptGenres = jamGenres.filter(function (g) { return genres.indexOf(g) >= 0; });
+          jamGenres = keptGenres.length ? keptGenres : [genres[0]];
+        }
         var feelBands = JQ.feels();
         // Song-first default (UAT 2026-08-08): a titled track searches for its
         // OWN backing track until a chip is tapped; 'search' is the url-less
@@ -887,10 +905,10 @@
           : null;
         var query = (!jamTouched && songQuery)
           ? songQuery
-          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
+          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenres, jamFeel);
         jamPanel.innerHTML =
           '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
-            return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
+            return '<button class="chip' + (jamGenres.indexOf(g) >= 0 ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
           }).join('') + '</div>'
           + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
             return '<button class="chip' + (f.id === jamFeel ? ' on' : '') + '" data-jamfeel="' + esc(f.id) + '" type="button">' + esc(f.label) + '</button>';
@@ -910,7 +928,20 @@
           + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
           + '</div>';
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
-          b.onclick = function () { jamTouched = true; jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+          b.onclick = function () {
+            jamTouched = true;
+            var g = b.getAttribute('data-jamgenre');
+            var idx = jamGenres.indexOf(g);
+            if (idx >= 0) {
+              // Toggle off - but the last selected chip can't untoggle to
+              // empty (min 1 selected, so the query builder always has a
+              // genre term). Re-tapping the sole selection is a no-op.
+              if (jamGenres.length > 1) jamGenres.splice(idx, 1);
+            } else {
+              jamGenres.push(g);
+            }
+            renderJamPanel(scaleId);
+          };
         });
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
           b.onclick = function () { jamTouched = true; jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
@@ -919,7 +950,7 @@
         if (jamAddBtn) jamAddBtn.onclick = function () {
           opts.onEditRequest({
             key: th.key, mode: SCALEMODE_TO_FORMMODE[th.scaleMode] || 'major',
-            title: '', artist: '', genre: jamGenre, yt: null
+            title: '', artist: '', genre: jamGenres.length > 1 ? jamGenres.join(' / ') : jamGenres[0], yt: null
           });
         };
       }
