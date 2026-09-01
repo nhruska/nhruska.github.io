@@ -2121,6 +2121,15 @@
             b.setAttribute('aria-selected', on ? 'true' : 'false');
           });
           try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+          // The beginner studiofirst tip's where-to-look clause must match the
+          // ACTIVE view (a persisted Circle pin renders it wrong from the very
+          // first paint otherwise). Same live textContent swap as the whynote
+          // per-scale re-derive (G5) - never a re-render/re-claim. sfEl closes
+          // over openStudio's scope; null when the tip never rendered.
+          if (sfEl) {
+            var sfBodyEl = sfEl.querySelector('.notableBanner-body');
+            if (sfBodyEl) sfBodyEl.textContent = studioFirstText(v);
+          }
         }
         Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
           b.onclick = function () { applyView(b.getAttribute('data-stview')); };

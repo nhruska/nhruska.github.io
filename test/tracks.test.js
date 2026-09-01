@@ -1171,4 +1171,26 @@ test('G4: the Studio guide toggle carries the app-wide .helpIcon convention (son
     'the aria-label must survive the glyph swap (screen readers never read the visible ::before content)');
 });
 
+/* =======================================================================
+ * Studiofirst tip is VIEW-AWARE (operator UAT 2026-09-01): the beginner
+ * orientation copy's where-to-look clause must match the active theory
+ * view - a persisted Circle pin otherwise renders a tip pointing at a
+ * fretboard that is not on screen.
+ * ===================================================================== */
+test('studiofirst copy: Fretboard view points at the neck, Circle view at the wheel - action clause identical', function () {
+  var ST = require('../music/shared/studio-theory.js');
+  var fret = ST.studioFirstText();
+  var cof = ST.studioFirstText('cof');
+  assert.ok(/neck/.test(fret) && !/wheel/.test(fret), 'default (fretboard) copy points at the neck');
+  assert.ok(/wheel/.test(cof) && !/neck/.test(cof), 'circle copy points at the wheel, never the neck');
+  assert.strictEqual(fret.split(' - ')[0], cof.split(' - ')[0], 'the action clause ("Tap a chord below to hear it") is identical in both views');
+});
+test('studiofirst tip re-derives on view toggle (applyView swaps the live banner body, G5 pattern)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function applyView\(v\) \{/);
+  assert.ok(body, 'applyView(v) not found in tracks.js');
+  assert.ok(/sfBodyEl\.textContent = studioFirstText\(v\)/.test(body),
+    'applyView must swap the studiofirst banner body to studioFirstText(v) - the persisted-Circle-pin first paint AND live toggles both route through applyView');
+});
+
 run();
