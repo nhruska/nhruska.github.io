@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T17:06:59Z",
+  "generatedAt": "2026-09-01T14:11:33Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-08-30T14:27:01Z",
-    "sha": "e03ecd8f0b4cc2c19c95aade3192f62a76a65374",
+    "date": "2026-08-31T17:07:08Z",
+    "sha": "a7a3cf14088e275b347ad9f4c8295f4a4bd3703d",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e03ecd8f0b4cc2c19c95aade3192f62a76a65374"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/a7a3cf14088e275b347ad9f4c8295f4a4bd3703d"
   },
   "commits": [
+    {
+      "date": "2026-08-31T17:07:08Z",
+      "sha": "a7a3cf14088e275b347ad9f4c8295f4a4bd3703d",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/a7a3cf14088e275b347ad9f4c8295f4a4bd3703d"
+    },
     {
       "date": "2026-08-30T14:27:01Z",
       "sha": "e03ecd8f0b4cc2c19c95aade3192f62a76a65374",
@@ -84,15 +90,34 @@
       "sha": "895941712e3c3dc4e14ae056c47055587072c6e9",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/895941712e3c3dc4e14ae056c47055587072c6e9"
-    },
-    {
-      "date": "2026-08-20T09:53:51Z",
-      "sha": "1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/1db5b2ea1edcbc0e20cf03cd539fe3e6e649df48"
     }
   ],
-  "openPRs": [],
+  "openPRs": [
+    {
+      "number": 342,
+      "title": "UX/UI polish sprint: jam-starter, confirm() retirement, sugg emphasis, CE3, mode-flip degrees, genre multi-select",
+      "branch": "claude/music-app-ux-ui-polish-47k2rc",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/342",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33473741556/job/99748568657"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33473741665/job/99748569169"
+        }
+      ]
+    }
+  ],
   "recentMerges": [
     {
       "createdAt": "2026-08-21T02:36:45Z",
@@ -204,9 +229,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-08-31T17:06:53Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33417801537",
+    "runStartedAt": "2026-09-01T14:11:28Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33517965646",
     "headBranch": "main"
   },
   "velocity": {
