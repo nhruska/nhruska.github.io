@@ -197,7 +197,26 @@
     document.body.appendChild(el);
     var current = null; // { mode, item, onSave, onDelete }
 
-    function close() { el.classList.remove('on'); el.innerHTML = ''; current = null; }
+    // Delete/Revert is arm-to-delete, not a blocking confirm() - mirrors the
+    // app's own grammar (list-item.js li-rm RM_ARM_MS=1600, .prog .rm.armed):
+    // first tap ARMS (red, DEL_ARM_MS auto-disarm), second tap on the SAME
+    // armed button performs the delete. A re-render (open() rebuilds el.innerHTML)
+    // detaches the old button, so a stale armed ref just fails the identity
+    // check on next tap - same as list-item.js's note on this pattern.
+    var DEL_ARM_MS = 1600;
+    var armedDelBtn = null, armedDelTimer = null;
+    function disarmDelBtn() {
+      if (armedDelTimer) { clearTimeout(armedDelTimer); armedDelTimer = null; }
+      if (armedDelBtn) { try { armedDelBtn.classList.remove('armed'); } catch (e) { } armedDelBtn = null; }
+    }
+    function armDelBtn(btn) {
+      disarmDelBtn();
+      armedDelBtn = btn;
+      try { btn.classList.add('armed'); } catch (e) { }
+      armedDelTimer = setTimeout(disarmDelBtn, DEL_ARM_MS);
+    }
+
+    function close() { disarmDelBtn(); el.classList.remove('on'); el.innerHTML = ''; current = null; }
     // User-initiated close: route through NavHistory.dismiss() so the pushed
     // history entry pops in step with the DOM close (single close path via
     // popstate -> close). Falls back to the raw close() if no layer is open.
@@ -319,18 +338,25 @@
       };
       if (current.onDelete) {
         var delBtn = el.querySelector('[data-delete]');
-        if (delBtn) delBtn.onclick = function () {
-          var msg = fork ? 'Revert to the original song? Your edits and video will be removed.'
+        if (delBtn) {
+          // Consequence text lives in the title tooltip (supplementary - the
+          // button's own label "Delete"/"Revert to original" already carries
+          // the primary meaning); the arm-red color is the visible guard now.
+          delBtn.title = fork ? 'Revert to the original song? Your edits and video will be removed.'
             : 'Delete this ' + (it.seq && it.seq.length ? 'song' : 'track') + '?';
-          if (confirm(msg)) {
+          delBtn.onclick = function () {
+            // First tap ARMS (red, DEL_ARM_MS auto-disarm); second tap on the
+            // SAME armed button deletes. Gate lives here at the primitive.
+            if (armedDelBtn !== delBtn) { armDelBtn(delBtn); return; }
+            disarmDelBtn();
             // Delete navigates (switchTab('library')): same transition hand-off as save.
             // Capture onDelete FIRST (close() nulls current before runNext runs).
             var onDelete = current.onDelete;
             var doDelete = function () { if (onDelete) onDelete(); };
             if (global.NavHistory) global.NavHistory.settleAfter(close, doDelete);
             else { doDelete(); close(); }
-          }
-        };
+          };
+        }
       }
       wireYtSuggest(el);
       wirePlaylistImport(el);

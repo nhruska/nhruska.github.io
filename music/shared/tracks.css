@@ -420,9 +420,10 @@
   .bt-st-notes{text-transform:none;letter-spacing:0;}
   /* The controls row: Play (primary; 44px override below - the shared .soundToggle
      is 32px, right for Compose's compact inline preview but too small for the
-     Studio's primary control), Speed (one compact cycling button), and Guide (a `?`
-     icon whose content renders below the fretboard, see the .bt-st-guidebtn wiring).
-     Sits ahead of the notes line so it reads as the section's primary controls. */
+     Studio's primary control), Speed (one compact cycling button), and Guide (the
+     app-wide .helpIcon glyph, G4 - was a bespoke `?`; content renders below the
+     fretboard, see the .bt-st-guidebtn wiring). Sits ahead of the notes line so
+     it reads as the section's primary controls. */
   .bt-st-ctrlrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .bt-studio .bt-st-ctrlrow .soundToggle{width:44px;height:44px;font-size:1.5rem;}
   .bt-st-speedbtn{flex:0 0 auto;min-height:44px;min-width:64px;padding:0 14px;
@@ -431,6 +432,11 @@
     transition:transform .08s,background .15s,color .15s,border-color .15s;}
   .bt-st-speedbtn:active{transform:scale(.96);}
   .bt-st-guidebtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+  /* .helpIcon (songbook.css) reserves a right margin for the LABEL TEXT that
+     normally follows its glyph - .bt-st-guidebtn has no label (icon-only, 44px
+     square, flex-centered), so that margin would push the glyph off-center.
+     Zero it here, scoped to this one placement. */
+  .bt-st-guidebtn.helpIcon::before{margin-right:0;}
   /* Studio-only scale-chip row (mode scale default + pent major/minor + blues), solo
      layer only. Mirrors .cofModes/.cofModeChip (Compose tab, below) so the chip
      visual language reads consistently. S-STUDIO-SCALESCROLL (operator UAT
@@ -803,8 +809,26 @@
   /* Round 7: the videoless add-a-video affordance is ONE slim row (the burger
      it replaces held a single item over the Settings-gear position). */
   .bt-st-addvidrow{padding:0 12px;}
+  /* G4 S-JAM-STARTER: the starter-CTA row and the Find-a-jam row are two
+     stacked .bt-st-addvidrow instances (.bt-st-stage is a bare flex column,
+     no gap) - space the second one off the first so they don't touch. */
+  .bt-st-addvidrow + .bt-st-addvidrow{margin-top:8px;}
   .bt-st-addvid{width:100%;min-height:44px;border:1px dashed var(--line-strong);background:transparent;color:var(--txt-soft);border-radius:var(--r-btn-sm);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;}
   .bt-st-addvid.on{border-style:solid;color:var(--accent-ink);border-color:var(--accent-dim);}
+  /* G4 S-JAM-STARTER: the fast-path CTA ABOVE the "Find a jam" disclosure row -
+     one already-playable curated track for the current key, one tap away. It is
+     the PRIMARY action in this empty state (solid accent), so it must outrank
+     the secondary .bt-st-addvid dashed-outline toggle below it visually, not
+     just in DOM order. Sized/shaped like .bt-st-ytlink (the app's existing
+     accent-filled jam-panel CTA) so the "get a jam playing" family reads as one
+     look wherever it appears (Element Consistency Law) - full-width here since
+     it leads its own row, unlike the inline-flex .bt-st-ytlink link. */
+  .bt-jam-starter{width:100%;min-height:44px;border:1px solid var(--accent-dim);
+    background:var(--accent-deep);color:var(--accent-ink);border-radius:var(--r-btn-sm);
+    font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer;
+    transition:transform .08s,background .15s;}
+  .bt-jam-starter:active{transform:scale(.98);}
+  .bt-jam-starter:hover,.bt-jam-starter:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   .bt-st-minix{display:inline-flex;align-items:center;justify-content:center;
     width:44px;height:44px;flex:0 0 auto;border:0;background:transparent;color:var(--txt-soft);

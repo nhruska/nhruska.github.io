@@ -941,6 +941,27 @@
         // "below" pointed at empty space until you tapped. Point the hint at the
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
+      // G4 S-JAM-STARTER (2026-09-01): the no-video empty state used to have NO
+      // tappable action of its own - "Find a jam" only OPENS the genre/feel
+      // disclosure (F21 above), so a beginner still has to pick a genre, pick a
+      // feel, then leave the app to search YouTube before anything plays. This
+      // resolves ONE curated, already-playable candidate for the CURRENT key
+      // up front, via the SAME resolution the finder's own result cards use
+      // (filterTracks -> rank 0 = "your key", tracks-model.js) so "does this
+      // track fit my key" is answered in exactly one place, never duplicated.
+      // Deterministic: filterTracks's rank sort plus a stable Array#sort keeps
+      // ties in tracks.json's own catalog order - no randomness. Any genre is
+      // eligible (a beginner in, say, Eb minor has few tracks to choose from;
+      // narrowing by genre too would starve the chip for most keys), and only
+      // a track that ALREADY has a real video (r.track.yt) counts - the whole
+      // point is a jam that plays on this one tap, not another search.
+      var jamStarterRows = filterTracks(state.tracks, 'all', th.key, normMode(th.scaleMode));
+      var jamStarterCandidate = jamStarterRows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0] || null;
+      var jamStarterHtml = jamStarterCandidate
+        ? '<div class="bt-st-addvidrow"><button class="bt-jam-starter" data-jamstarter type="button">'
+          + 'Play a ' + esc(jamStarterCandidate.track.genre || 'jam') + ' jam in ' + esc(keyLabelFor(th.key, th.scaleMode))
+          + '</button></div>'
+        : '';
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -1135,7 +1156,7 @@
         // track the urlEditor already renders INSIDE the `...` fly-out menu (see
         // playerBlock), so it must NOT render a second time here - only the
         // no-video path keeps the stage-level card.
-        + (t.yt ? '' : '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
+        + (t.yt ? '' : jamStarterHtml + '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
@@ -1149,7 +1170,11 @@
         + '<div class="bt-st-sec"><div class="bt-st-ctrlrow" data-ctrlrow>'
         + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
         + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
-        + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        // G4: the app-wide help-icon convention (songbook.css .helpIcon, an
+        // (i)-style glyph prefix) replaces the ad-hoc "?" text - one explainer
+        // glyph for the whole app instead of a bespoke one just for the Studio.
+        // aria-label is unchanged (screen readers never read the visible glyph).
+        + '<button class="iconBtn bt-st-guidebtn helpIcon" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false"></button>'
         // Round 7 ("need to toggle between COF and fretboard, leaving
         // play/tempo always shown"): one theory visual at a time on a phone.
         // The seg rides the pinned controls row; choice persists.
@@ -2102,6 +2127,13 @@
         guideToggle.classList.toggle('on', show);
         guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
       };
+      // G4 S-JAM-STARTER: tap = load the resolved candidate via activate(), the
+      // SAME function every finder result card uses (studio when key+mode
+      // resolve, else the bare player) - no duplicate loader. jamStarterCandidate
+      // is only non-null when jamStarterHtml actually rendered the button above,
+      // so this ref is null exactly when there's nothing to wire.
+      var jamStarterBtn = elPlayer.querySelector('[data-jamstarter]');
+      if (jamStarterBtn && jamStarterCandidate) jamStarterBtn.onclick = function () { activate(jamStarterCandidate.track); };
       // F21: same disclosure toggle behavior the old solo-section "Find a
       // jam" button used - collapsed by default, per-open state only (no
       // persistence) - just relocated to the stage (see jamPanelHtml, above).

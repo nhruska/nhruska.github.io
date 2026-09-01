@@ -1,0 +1,99 @@
+{
+  "name": "first-session",
+  "firstRun": true,
+  "note": "CE3 north-star goalpost: a beginner on a COLD device (cleared storage, the runner's fresh browser context - first-run tour has never completed) reaches a strummable chord AND HEARS it (real production audio path invoked, not a mention) within <=5 taps. Enumerated tap path (verified against play/index.html + songbook.js - the tour has no bypass, S-WELCOME 2026-08-09 note: 'the tour ENDS in a jam on EVERY path', Skip and Start-playing share one finish() handler): TAP 1 #wNext (Start playing) - picks guitar-standard, sets the one-shot music.welcomeJam.v1 flag, reloads into the featured backing-track's Studio (jam, not yet playing - honest unstarted embed, a page load is not a gesture). TAP 2 .bt-st-back - leaves the jam Studio back to the mini player / Library. TAP 3 .tabbar[data-tab=compose] - lands on Compose; unset guidance level renders the beginner-safe default (#suggest .progPick starter cards, no dense chord palette). TAP 4 #suggest .progPick (first starter, '4-chord song') - loadProgression() fills #prog with a playable progression SILENTLY (renderProg/renderKey only, no packPlayChord call) - this is CE-point (a), a strummable chord affordance now on screen: each #prog .slot renders a diagram/token whose onclick is packPlayChord(c) (songbook.js renderProg, both the 'full' <=4-chord diagram-card branch and the compact-token branch wire the same handler). TAP 5 the first #prog chord card/token - fires packPlayChord -> pack.playChord (chord-pack-adapter.js) -> window.ChordAudio.strum/tone, the SAME production Karplus-Strong synthesis entrypoint chord-chips-accessible.json's MOCK-INTEGRITY GUARD proves exists - this is CE-point (b), audio actually fired. Audio-fired assertion follows this suite's own established pattern (chord-chips-accessible.json): wrap the REAL window.ChordAudio.strum/.tone with a call-through counter immediately before the tap (so production behavior is unchanged - the wrap is instrumentation, not a stub standing in for deleted audio), assert the counter incremented from a REAL trusted click on the REAL DOM node, then restore the originals. No app-level 'played' flag/class exists for a single Compose chip tap (competency.js only records evidence for a whole composed SONG) so the production audio call IS the app's real artifact here - there is nothing else to assert against. CE-point (c), tap count <=5: exactly 5 'tap' steps below (wNext, back, compose-tab, progPick, chord-card) - verify by grep -c '\"action\": \"tap\"' on this file if the count ever needs re-proving.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "evalAssert",
+      "label": "cold device: the tour has not yet been completed and greets before anything else (index.html boot unconditionally persists a resolved profile key on EVERY load, tour-shown or not, so welcomeDone - not activeProfile - is the fresh-device signal, per welcome-tour.json/persona-firsttimer-journey.json)",
+      "js": "(function(){var ov=document.getElementById('welcomeOv');return !localStorage.getItem('music.welcomeDone.v1')&&!!ov&&!ov.hidden;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#wNext"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio:not(.mini) .bt-st-head",
+      "timeoutMs": 30000
+    },
+    {
+      "action": "evalAssert",
+      "label": "tap 1 lands the beginner IN a jam (the tour's own payoff) - Studio open, embed mounted, honestly unstarted",
+      "js": "(function(){var f=document.querySelector('.bt-player iframe');return !!f && /\\/embed\\//.test(f.src) && document.body.classList.contains('studioopen');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "cs-01-tour-ends-in-jam"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-back"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "unset level (no ask fired yet) renders the beginner-safe landing: one-tap starter progressions, not a dense chord palette",
+      "js": "(function(){return localStorage.getItem('music.guidanceLevel.v1')===null && document.querySelectorAll('#suggest .progPick').length>0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#suggest .progPick"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "CE3 (a): a strummable chord is now on screen - the starter filled #prog with playable chord cards/tokens, each wired to packPlayChord (tap-to-hear)",
+      "js": "(function(){var pr=document.getElementById('prog');if(!pr||pr.children.length<1)return false;return document.querySelectorAll('#prog .slot .chord, #prog .slot .suggChip').length>0;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "cs-02-strummable-chord-on-screen"
+    },
+    {
+      "action": "evalAssert",
+      "label": "install the audio-fire probe: wrap the REAL ChordAudio.strum/.tone with a call-through counter (production behavior unchanged) immediately before the strum tap, per the chord-chips-accessible.json MOCK-INTEGRITY convention",
+      "js": "(function(){if(!window.ChordAudio||typeof window.ChordAudio.strum!=='function'||typeof window.ChordAudio.tone!=='function')return false;window.__ceProbe={calls:0};window.__ceProbeOrigStrum=window.ChordAudio.strum;window.__ceProbeOrigTone=window.ChordAudio.tone;window.ChordAudio.strum=function(){window.__ceProbe.calls++;return window.__ceProbeOrigStrum.apply(this,arguments);};window.ChordAudio.tone=function(){window.__ceProbe.calls++;return window.__ceProbeOrigTone.apply(this,arguments);};return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#prog .slot .chord, #prog .slot .suggChip"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "CE3 (b): audio actually fired - the real production ChordAudio entrypoint was invoked by the real tap (not a mention, not a mock standing in for deleted audio); restore the originals",
+      "js": "(function(){var n=(window.__ceProbe&&window.__ceProbe.calls)||0;if(window.ChordAudio){if(window.__ceProbeOrigStrum)window.ChordAudio.strum=window.__ceProbeOrigStrum;if(window.__ceProbeOrigTone)window.ChordAudio.tone=window.__ceProbeOrigTone;}return n>=1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "cs-03-chord-heard"
+    }
+  ]
+}

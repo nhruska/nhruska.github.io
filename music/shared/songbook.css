@@ -440,6 +440,10 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    apart from the neutral navigation items. */
 .moreItemDanger{color:var(--bad);}
 .moreItemDanger:active{background:var(--bad);color:var(--on-danger);}
+/* Arm-to-delete (S-DELCONFIRM-ARM): first tap fills solid red, matching
+   li-rm.armed / setDelete.armed - the same "armed" signal wherever a delete
+   lives. No native confirm popup; a second tap while armed performs the action. */
+.moreItemDanger.armed{background:var(--bad);color:var(--on-danger);}
 /* Key-actions row (Full screen + Solo) kept VISIBLE under the view toggle
    (operator UAT: these are primary, not overflow). Full-width split so both are
    easy thumb targets. */
@@ -1070,16 +1074,30 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
+/* S-SUGG-DIFFERENTIATE: the ranked "Suggested Chords" row carries a small
+   recommended-marker dot (top-right) so the recommendation reads apart from
+   the browse palette by SHAPE too, not color alone - a shape-blind reader
+   still sees it. .complete (above) already wins visually when both apply. */
+.suggChip.sugg-reco{position:relative;}
+.suggChip.sugg-reco::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.suggChip.sugg-reco.complete::after{background:var(--accent-ink);}
 /* Advanced guidance level: the Compose palettes render the SAME suggChip token in
    a dense auto-fill grid (.ccChips = the in-key lead's wrapper; .chordGrid.ccMode
    = #buildGrid re-tracked while chips are on). width:100% + min-width:0 mirrors
    the .prog fill-row/grid6 carve-out so chips fill their track instead of
    centering at 58px. The 56px track floor keeps ~6 columns at a 412px viewport.
-   min-height comes from .suggChip (48px >= the 44px tap floor). */
-.ccChips{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;touch-action:pan-y;}
-.chordGrid.ccMode{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));}
+   min-height comes from .suggChip (48px >= the 44px tap floor).
+   S-SUGG-DIFFERENTIATE: this is the browse palette (chord-collapse.js's
+   .ccChip), so it stays QUIET/neutral instead of sharing the ranked row's
+   accent-deep/accent-ink tint - the recommended chips (sugg-reco, above) are
+   the only ones that read "recommended". Active state still flashes toward
+   accent-ink (matches .progPick's tap feedback) so a tap here still confirms. */
 .ccChips .suggChip,
-.chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;}
+.chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;background:var(--surface-2);border-color:var(--line-strong);}
+.ccChips .suggChip .scName,
+.chordGrid.ccMode .suggChip .scName{color:var(--txt);}
+.ccChips .suggChip:active,
+.chordGrid.ccMode .suggChip:active{background:var(--surface-2);border-color:var(--accent-ink);}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}

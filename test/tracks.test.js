@@ -1090,4 +1090,69 @@ test('S-COF-INTERACTIVE: renderCofHero passes onPick to renderWheel (the wheel i
     "onPick must route the ring ('major'/'minor') to the studioTheory scale mode (ionian/aeolian)");
 });
 
+/* =======================================================================
+ * G4 S-JAM-STARTER: the no-video empty state's one-tap starter chip. The
+ * RESOLUTION algorithm (filterTracks -> rank 0 + a real yt) is pure and
+ * already exercised end to end below against the real catalog; the DOM
+ * wiring (openStudio's markup/gating/click-handler) is source-locked, same
+ * discipline as the other openStudio internals above (its DOM surface is
+ * Playwright turf, not jsdom-stubbable).
+ * ===================================================================== */
+var REAL_TRACKS = require('../music/backing-tracks/tracks.json');
+test('G4: filterTracks resolves a real, already-playable curated candidate for a sample key (A major)', function () {
+  var rows = T.filterTracks(REAL_TRACKS, 'all', 'A', T.normMode('major'));
+  var candidate = rows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.ok(candidate, 'expected at least one rank-0 (exact key), real-video candidate for A major in the shipped catalog');
+  assert.strictEqual(candidate.track.key, 'A');
+  assert.ok(candidate.track.yt, 'the resolved candidate must carry a real yt id - the whole point is one tap TO PLAYING, not to another search');
+});
+test('G4: the same resolution is deterministic across repeated calls (no randomness) - same catalog, same key, same candidate', function () {
+  var a = T.filterTracks(REAL_TRACKS, 'all', 'G', T.normMode('minor')).filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  var b = T.filterTracks(REAL_TRACKS, 'all', 'G', T.normMode('minor')).filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.strictEqual(a ? a.track.yt : null, b ? b.track.yt : null);
+});
+test('G4: a key with no exact-match curated video resolves to no candidate (graceful degrade, not a wrong-key fallback)', function () {
+  // C# major has zero seed tracks in that exact key (verified against the shipped
+  // catalog) - the chip must not appear rather than silently suggest a related key.
+  var rows = T.filterTracks(REAL_TRACKS, 'all', 'C#', T.normMode('major'));
+  var candidate = rows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.strictEqual(candidate, undefined, 'expected no rank-0+yt candidate for C# major in the shipped catalog');
+});
+test('G4: openStudio resolves jamStarterCandidate via filterTracks(state.tracks, \'all\', th.key, normMode(th.scaleMode)) - the SAME resolution the finder\'s own result cards use, not a duplicate', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function openStudio\(t, o\) \{/);
+  assert.ok(body, 'openStudio(t, o) not found in tracks.js');
+  assert.ok(/filterTracks\(state\.tracks, 'all', th\.key, normMode\(th\.scaleMode\)\)/.test(body),
+    'jamStarterRows must resolve via filterTracks against state.tracks (the merged seed+overlay+custom list) for the CURRENT key, any genre');
+  assert.ok(/\.filter\(function \(r\) \{ return r\.rank === 0 && r\.track\.yt; \}\)\[0\] \|\| null/.test(body),
+    'jamStarterCandidate must be the first exact-key ("your key") row that already carries a real video, or null');
+  assert.ok(/keyLabelFor\(th\.key, th\.scaleMode\)/.test(body),
+    'the chip label must use keyLabelFor (mode-honest: A / Am / A dorian) for the current key, not a raw root letter');
+});
+test('G4: the starter chip renders ONLY in the no-video branch and never replaces the existing Find-a-jam disclosure row', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/\(t\.yt \? '' : jamStarterHtml \+ '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle/.test(src),
+    'jamStarterHtml must render ahead of (not instead of) the existing no-video addvidrow, and only when t.yt is falsy');
+  assert.ok(/data-jamstarter/.test(src), 'the starter button must carry a data-jamstarter hook');
+});
+test('G4: tapping the starter chip loads the candidate via activate() - the same function every finder result card uses, no duplicate loader', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/jamStarterBtn\.onclick = function \(\) \{ activate\(jamStarterCandidate\.track\); \}/.test(src),
+    'the starter button must call activate(jamStarterCandidate.track), the same dispatcher cardEl()\'s onActivate uses');
+});
+test('G4: the no-candidate case wires nothing (jamStarterBtn is only truthy when jamStarterCandidate is truthy)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/if \(jamStarterBtn && jamStarterCandidate\) jamStarterBtn\.onclick/.test(src),
+    'the click handler must be guarded on jamStarterCandidate - jamStarterHtml is empty (no button in the DOM) when there is no candidate');
+});
+test('G4: the Studio guide toggle carries the app-wide .helpIcon convention (songbook.css) instead of a bespoke "?" glyph', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/class="iconBtn bt-st-guidebtn helpIcon" data-guidetoggle/.test(src),
+    'the guide toggle button must carry helpIcon alongside its own classes, per the app-wide convention (songbook.css .helpIcon::before)');
+  assert.ok(!/bt-st-guidebtn" data-guidetoggle[^>]*>\?</.test(src),
+    'the bespoke literal "?" text content must be removed now that .helpIcon supplies the glyph via ::before');
+  assert.ok(/aria-label="Show the scale guide"/.test(src),
+    'the aria-label must survive the glyph swap (screen readers never read the visible ::before content)');
+});
+
 run();

@@ -28,6 +28,11 @@ var Repertoire = require('../music/shared/repertoire.js');
 // M-GUIDE W3a merged: solo-guide.js now exists (see the soloChipCaption tests below).
 var SoloGuide = require('../music/shared/solo-guide.js');
 require('../music/shared/queue.js'); // sets global.Queue - mount()'s QUEUE = global.Queue.createQueue()
+// S-SUGG-DIFFERENTIATE: buildGrid()'s chipTile() calls global.ChordCollapse.chip()
+// directly at the ADVANCED-guidance chip-mode fork - required so the browse-
+// palette-vs-ranked-suggestion tests below can force that fork (via the
+// music.chordCharts.v1='chips' pref) without a GuidanceLevel module.
+require('../music/shared/chord-collapse.js');
 var lsReset = require('./helpers/local-storage-reset.js');
 
 var passed = 0, failed = 0, cases = [];
@@ -2975,6 +2980,152 @@ test('UAT r2: teaching cues are dismissible one-shot tips - a dismissal persists
   var t2 = songTrayNodes(m2);
   var tile2 = m2.elMap.buildGrid.children[0]; tile2.onclick(); // progression exists again
   assert.strictEqual(t2.tray.children[0].hidden, true, 'a dismissed cue never returns after reload');
+});
+
+/* =====================================================================
+ * S-DELCONFIRM-ARM (T2 songbook polish): retire the LAST native confirm()
+ * in songbook.js (the overflow Delete/Revert item, #delSongBtn) into the
+ * SAME arm-to-delete grammar already proven for the setlist Clear button
+ * (setClear, see the 'setClear wiring' test above) and the per-chord/
+ * section remove handles (M-13's 'arm-to-remove' test above): first tap
+ * arms (red + relabels "Tap again to..."), second tap performs the action.
+ *
+ * delSong lives inside renderPractice(), whose markup is built as an HTML
+ * STRING and injected via el.practiceBody.innerHTML - unlike el.prog/
+ * el.suggest/el.buildGrid (built via real document.createElement calls),
+ * a browser parses that string into real, queryable elements; this repo's
+ * dependency-free Node stub (makeStubEl, above) has no HTML parser, so
+ * el.practiceBody.querySelector('#delSongBtn') can't be driven live here.
+ * The structural assertions below are the same technique the setClear test
+ * above already uses for this exact problem shape: prove the WIRING (no
+ * native confirm, no raw onclick=, wireTapCancel) AND prove the CONTROL
+ * FLOW shape (the arm branch RETURNS before ever reaching deleteCustomItem
+ * - so a first tap structurally cannot delete; only a second tap, past
+ * that return, reaches it).
+ * ===================================================================== */
+// Matches an actual confirm( CALL, not the word appearing in a code comment
+// (this file is full of "replaces the old confirm()" / "confirm() dialog"
+// prose after the arm-to-delete migrations - mirrors the same real-call-vs-
+// mention discipline test/no-native-dialog-lint.test.js's realCallSites()
+// uses for this exact file). A real call always starts a real argument
+// (a quote, a variable, an object); a prose mention reads confirm() with
+// empty parens, or confirm() followed by a word - never confirm(<arg>.
+function realConfirmCallSites(src) {
+  var re = /confirm\(\s*[^)]/g;
+  var out = [];
+  var m;
+  while ((m = re.exec(src))) {
+    var lineNo = src.slice(0, m.index).split('\n').length;
+    var line = src.split('\n')[lineNo - 1].trim();
+    if (/^\/\//.test(line) || /^\*/.test(line)) continue; // prose comment line
+    out.push(line);
+  }
+  return out;
+}
+
+test('delSongBtn wiring: the LAST native confirm() in songbook.js is retired for arm-to-delete (S-DELCONFIRM-ARM)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.deepStrictEqual(realConfirmCallSites(src), [], 'no native confirm() CALL should remain anywhere in songbook.js (S-DELCONFIRM-ARM retired the last one)');
+  assert.ok(/wireTapCancel\(delSong,/.test(src), 'delSong must be wired via wireTapCancel(), not a raw onclick=');
+  assert.ok(!/\bdelSong\.onclick\s*=/.test(src), 'a raw delSong.onclick= would bypass the movement-cancel guard');
+  assert.ok(/delSong\.classList\.add\('armed'\)/.test(src), 'first tap must arm the item red (arm-to-delete)');
+  assert.ok(/delSong\.textContent = delArmLabel/.test(src), 'first tap must relabel the item ("Tap again to...") - a text menu item has no icon to carry the arm signal alone');
+});
+
+test('delSongBtn: first activation ARMS only (structurally cannot delete); second activation is the only path to deleteCustomItem', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var wired = src.match(/wireTapCancel\(delSong, function \(\) \{[\s\S]*?\n\s*\}\);/);
+  assert.ok(wired, 'expected to locate the delSong wireTapCancel(delSong, function () { ... }); callback body');
+  var body = wired[0];
+  var armGuardIdx = body.indexOf('if (!delArmed)');
+  var armIdx = body.indexOf('delArmed = true', armGuardIdx);
+  var armReturnIdx = body.indexOf('return;', armIdx);
+  var deleteIdx = body.indexOf('deleteCustomItem(s.id)');
+  var switchTabIdx = body.indexOf("switchTab('library')");
+  assert.ok(armGuardIdx >= 0, 'expected the "if (!delArmed)" first-activation guard');
+  assert.ok(armIdx > armGuardIdx, 'the guard must set delArmed = true on the first activation');
+  assert.ok(armReturnIdx > armIdx, 'the first-activation branch must return before falling through');
+  assert.ok(deleteIdx > armReturnIdx, 'deleteCustomItem must sit AFTER the first-activation return - unreachable on tap 1, only reachable on tap 2');
+  assert.ok(switchTabIdx > deleteIdx, "switchTab('library') must follow the delete, matching the pre-existing confirm()-gated effect");
+  // The delete branch must disarm before mutating (matches setClear's
+  // disarmSetClear(); ...mutate... ordering) so a stale armed class never
+  // survives past the action.
+  var disarmIdx = body.indexOf('disarmDel();');
+  assert.ok(disarmIdx > armReturnIdx && disarmIdx < deleteIdx, 'the second-activation branch must disarm before deleting');
+});
+
+/* =====================================================================
+ * S-SUGG-DIFFERENTIATE (T2 songbook polish): the theory-ranked "Suggested
+ * Chords" row (renderSuggest -> suggChip()) must read apart from the full
+ * browse palette (In key / All at chip-mode, chord-collapse.js's ccChip) -
+ * EMPHASIS + ORDER, never a new hue (songbook.css). Display only: this does
+ * not touch suggestNext/mergeSuggestionRow's ranking.
+ * Forces chip-mode via the music.chordCharts.v1='chips' explicit pref
+ * (chipsEffective()) rather than GuidanceLevel='advanced', so this suite
+ * doesn't need to load/mock guidance-level.js - chord-collapse.js's
+ * chipTile() is driven directly either way once required (see the require
+ * block at the top of this file).
+ * ===================================================================== */
+function mountForSuggDifferentiateTests() {
+  global.localStorage = lsReset.fakeStore({ 'music.chordCharts.v1': 'chips' });
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'suggdifftest', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+// buildGrid() lands the browse palette in one of TWO places depending on
+// whether a key is already set at mount (In-key palette chips live inside
+// composeChords -> .inKeyLead -> .ccChips, an All-view browse renders
+// straight into #buildGrid) - search both roots recursively rather than
+// assuming which view is default, so this test doesn't depend on that
+// unrelated behavior.
+function collectByClass(roots, cls) {
+  var out = [];
+  roots.forEach(function (root) {
+    (function walk(n) {
+      (n.children || []).forEach(function (c) {
+        var list = (c.className || '').split(' ');
+        if (list.indexOf(cls) >= 0) out.push(c);
+        walk(c);
+      });
+    })(root);
+  });
+  return out;
+}
+
+test('S-SUGG-DIFFERENTIATE: the browse-palette chip (ccChip) does NOT carry the ranked-suggestion marker class', function () {
+  var m = mountForSuggDifferentiateTests();
+  var paletteChips = collectByClass([m.elMap.buildGrid, m.elMap.composeChords], 'ccChip');
+  assert.ok(paletteChips.length > 0, 'expected the browse palette to render at least one chip in chip-mode');
+  paletteChips.forEach(function (paletteChip) {
+    assert.ok(/\bsuggChip\b/.test(paletteChip.className), 'the browse palette reuses the shared suggChip primitive (chord-collapse.js)');
+    assert.ok(!/\bsugg-reco\b/.test(paletteChip.className), 'the browse palette chip must NOT carry the recommended-chip marker class');
+  });
+});
+
+test('S-SUGG-DIFFERENTIATE: ranked "Suggested Chords" chips carry sugg-reco (not ccChip), in the ranked order suggestNext/mergeSuggestionRow computed', function () {
+  var m = mountForSuggDifferentiateTests();
+  var paletteChip = collectByClass([m.elMap.buildGrid, m.elMap.composeChords], 'ccChip')[0];
+  assert.ok(paletteChip, 'expected at least one browse-palette chip to tap');
+  paletteChip.onclick(); // add + play a palette chord -> addChord -> renderProg -> renderSuggest
+  var suggRow = null;
+  m.elMap.suggest.children.forEach(function (c) { if (c.className === 'suggRow') suggRow = c; });
+  assert.ok(suggRow, 'expected the "Suggested Chords" row to render once a progression exists');
+  assert.ok(suggRow.children.length > 0, 'expected at least one ranked suggestion chip');
+  // Order: renderSuggest appends picks in the array order suggestNext/
+  // mergeSuggestionRow already ranked them - this test asserts the class
+  // marker on every chip in that DOM order (display only; ranking itself
+  // is sugg.test.js / the mergeSuggestionRow unit coverage's job, not this
+  // suite's - no ranking logic was touched).
+  suggRow.children.forEach(function (chip, i) {
+    assert.ok(/\bsuggChip\b/.test(chip.className), 'a ranked suggestion is still a suggChip');
+    assert.ok(/\bsugg-reco\b/.test(chip.className), 'every ranked suggestion chip must carry the sugg-reco marker class - chip #' + i);
+    assert.ok(!/\bccChip\b/.test(chip.className), 'a ranked suggestion chip must not carry the browse-palette ccChip class');
+  });
 });
 
 run();

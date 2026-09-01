@@ -1545,15 +1545,40 @@
         };
         setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
       };
-      // Overflow Delete / Revert (custom songs only). Same confirm + effect as the
-      // old ladder button - a fork REVERTS to the catalog original, a real custom
-      // song is DELETED. Closes the menu on tap (it navigates away anyway).
+      // Overflow Delete / Revert (custom songs only) - a fork REVERTS to the
+      // catalog original, a real custom song is DELETED. S-DELCONFIRM-ARM:
+      // retires the LAST native confirm() in this file (operator directive -
+      // no native dialogs) by reusing the arm-to-delete grammar already proven
+      // for the setlist Clear button (setClear above) and the per-chord/section
+      // remove handles: first tap ARMS the item (red fill + relabel to "Tap
+      // again to delete/revert", auto-disarms after 1.6s); a second tap while
+      // armed performs the action. wireTapCancel so a scroll/drag through the
+      // open menu never arms it. The menu item stays mounted between the two
+      // taps (neither tap re-renders Practice), so the armed state survives.
       var delSong = el.practiceBody.querySelector('#delSongBtn');
-      if (delSong) delSong.onclick = function () {
+      if (delSong) {
         var isFork = !!s.forkOf;
-        var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
-        if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
-      };
+        var delIdleLabel = delSong.textContent;
+        var delArmLabel = isFork ? 'Tap again to revert' : 'Tap again to delete';
+        var delArmed = false, delArmTimer = null;
+        var disarmDel = function () {
+          delArmed = false;
+          if (delArmTimer) { clearTimeout(delArmTimer); delArmTimer = null; }
+          delSong.classList.remove('armed');
+          delSong.textContent = delIdleLabel;
+        };
+        wireTapCancel(delSong, function () {
+          if (!delArmed) {
+            delArmed = true;
+            delSong.classList.add('armed');
+            delSong.textContent = delArmLabel;
+            delArmTimer = setTimeout(disarmDel, 1600);
+            return;
+          }
+          disarmDel();
+          deleteCustomItem(s.id); switchTab('library');
+        });
+      }
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -4819,7 +4844,15 @@
     function suggChip(c, tonic, completes) {
       var chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'suggChip' + (completes ? ' complete' : '');
+      // S-SUGG-DIFFERENTIATE: sugg-reco marks this as one of the app's
+      // theory-ranked "Suggested Chords" - the ONLY caller of suggChip() is
+      // renderSuggest's picks loop below, so every chip built here is a
+      // ranked recommendation, never a browse-palette tile. CSS (songbook.css)
+      // gives it a small marker dot on the existing accent tint and tones the
+      // browse palette (.ccChip, chord-collapse.js) neutral instead - emphasis
+      // on the recommendation, never a new hue. Display only: ranking/order
+      // stay whatever suggestNext/mergeSuggestionRow computed.
+      chip.className = 'suggChip sugg-reco' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
       var html = '<span class="scName">' + escHTML(dispChordName(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
