@@ -204,15 +204,29 @@
     // detaches the old button, so a stale armed ref just fails the identity
     // check on next tap - same as list-item.js's note on this pattern.
     var DEL_ARM_MS = 1600;
-    var armedDelBtn = null, armedDelTimer = null;
+    var armedDelBtn = null, armedDelTimer = null, armedDelIdleText = null;
     function disarmDelBtn() {
       if (armedDelTimer) { clearTimeout(armedDelTimer); armedDelTimer = null; }
-      if (armedDelBtn) { try { armedDelBtn.classList.remove('armed'); } catch (e) { } armedDelBtn = null; }
+      if (armedDelBtn) {
+        try {
+          armedDelBtn.classList.remove('armed');
+          if (armedDelIdleText != null) armedDelBtn.textContent = armedDelIdleText;
+        } catch (e) { }
+        armedDelBtn = null; armedDelIdleText = null;
+      }
     }
-    function armDelBtn(btn) {
+    // Arm signal is red fill + a RELABEL ("Tap again to ...") - never color
+    // alone: the tooltip consequence text doesn't show on touch, and a
+    // color-only state change is invisible to colorblind users (songbook's
+    // #delSongBtn arm, the grammar this mirrors, relabels for the same reason).
+    function armDelBtn(btn, armLabel) {
       disarmDelBtn();
       armedDelBtn = btn;
-      try { btn.classList.add('armed'); } catch (e) { }
+      try {
+        armedDelIdleText = btn.textContent;
+        if (armLabel) btn.textContent = armLabel;
+        btn.classList.add('armed');
+      } catch (e) { }
       armedDelTimer = setTimeout(disarmDelBtn, DEL_ARM_MS);
     }
 
@@ -347,7 +361,7 @@
           delBtn.onclick = function () {
             // First tap ARMS (red, DEL_ARM_MS auto-disarm); second tap on the
             // SAME armed button deletes. Gate lives here at the primitive.
-            if (armedDelBtn !== delBtn) { armDelBtn(delBtn); return; }
+            if (armedDelBtn !== delBtn) { armDelBtn(delBtn, fork ? 'Tap again to revert' : 'Tap again to delete'); return; }
             disarmDelBtn();
             // Delete navigates (switchTab('library')): same transition hand-off as save.
             // Capture onDelete FIRST (close() nulls current before runNext runs).

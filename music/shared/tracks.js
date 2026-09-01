@@ -596,6 +596,42 @@
         return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
       }).join(' ');
     }
+    // G4 jam-starter resolution + row markup, shared by openStudio's render
+    // and the late fill below (the catalog loads async - see injectJamStarterLate).
+    function resolveJamStarter(th) {
+      var jamStarterRows = filterTracks(state.tracks, 'all', th.key, normMode(th.scaleMode));
+      return jamStarterRows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0] || null;
+    }
+    function jamStarterRowHtml(cand) {
+      var g = cand.track.genre ? esc(cand.track.genre) + ' jam' : 'jam';
+      return '<div class="bt-st-addvidrow"><button class="bt-jam-starter" data-jamstarter type="button">'
+        + 'Play a ' + g + ' in ' + esc(keyLabelFor(cand.track.key, cand.track.mode))
+        + '</button></div>';
+    }
+    // G4 late fill: a no-video Studio opened BEFORE the tracks.json fetch
+    // resolved rendered without the starter chip (state.tracks was [] at
+    // openStudio time - the deep-link/fast-open race soloOver already
+    // documents), and openStudio's idempotent-open guard blocks a plain
+    // re-open (same trackKey, same null yt). Patch the standing DOM instead:
+    // resolve now, insert the row above the Find-a-jam row, wire through the
+    // same activate() path the render-time button uses.
+    function injectJamStarterLate() {
+      if (!nowPlaying || nowPlaying.yt) return;
+      if (!elPlayer.classList.contains('studio')) return;
+      if (elPlayer.querySelector('[data-jamstarter]')) return;
+      var findBtn = elPlayer.querySelector('[data-jamfindtoggle]');
+      if (!findBtn || !findBtn.parentNode || !findBtn.parentNode.parentNode) return;
+      var th = studioTheory(nowPlaying.key, nowPlaying.mode);
+      if (!th) return;
+      var cand = resolveJamStarter(th);
+      if (!cand) return;
+      var holder = document.createElement('div');
+      holder.innerHTML = jamStarterRowHtml(cand);
+      var row = holder.firstChild;
+      var btn = row.querySelector('[data-jamstarter]');
+      if (btn) btn.onclick = function () { activate(cand.track); };
+      findBtn.parentNode.parentNode.insertBefore(row, findBtn.parentNode);
+    }
     function openStudio(t, o) {
       // o.startMini (PLAYER-FEEL): build + wire the full Studio, then minimize
       // to the bottom bar in the same call - the play-from-row path starts
@@ -955,13 +991,15 @@
       // narrowing by genre too would starve the chip for most keys), and only
       // a track that ALREADY has a real video (r.track.yt) counts - the whole
       // point is a jam that plays on this one tap, not another search.
-      var jamStarterRows = filterTracks(state.tracks, 'all', th.key, normMode(th.scaleMode));
-      var jamStarterCandidate = jamStarterRows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0] || null;
-      var jamStarterHtml = jamStarterCandidate
-        ? '<div class="bt-st-addvidrow"><button class="bt-jam-starter" data-jamstarter type="button">'
-          + 'Play a ' + esc(jamStarterCandidate.track.genre || 'jam') + ' jam in ' + esc(keyLabelFor(th.key, th.scaleMode))
-          + '</button></div>'
-        : '';
+      // Resolved only for the no-video state (the chip can never render when
+      // t.yt is set - don't pay the catalog filter/sort on every has-video
+      // re-entry of openStudio). Label reads off the CANDIDATE track itself:
+      // its own genre ("Play a jam in C" when blank - never "jam jam") and its
+      // own key/mode - a blues/modal theory key coarsens to a major/minor
+      // family match (normMode), so labeling the chip with th's "C blues"
+      // would promise a specificity the resolution doesn't perform.
+      var jamStarterCandidate = t.yt ? null : resolveJamStarter(th);
+      var jamStarterHtml = jamStarterCandidate ? jamStarterRowHtml(jamStarterCandidate) : '';
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -2536,9 +2574,11 @@
     fetch(tracksUrl).then(function (r) { return r.json(); }).then(function (data) {
       state.seed = Array.isArray(data) ? data : [];
       remerge(); rerender();
+      injectJamStarterLate();  // G4: fill a starter-less no-video Studio opened pre-fetch
       if (opts.onReady) opts.onReady();  // M3: tracks loaded -> let the repertoire owner rebuild
     }).catch(function () {
       remerge(); rerender();
+      injectJamStarterLate();  // custom tracks alone can still yield a candidate
       if (!state.tracks.length) elResults.innerHTML = '<div class="bt-empty">Could not load tracks.</div>';
       if (opts.onReady) opts.onReady();
     });

@@ -1112,22 +1112,38 @@ test('G4: the same resolution is deterministic across repeated calls (no randomn
   assert.strictEqual(a ? a.track.yt : null, b ? b.track.yt : null);
 });
 test('G4: a key with no exact-match curated video resolves to no candidate (graceful degrade, not a wrong-key fallback)', function () {
-  // C# major has zero seed tracks in that exact key (verified against the shipped
-  // catalog) - the chip must not appear rather than silently suggest a related key.
-  var rows = T.filterTracks(REAL_TRACKS, 'all', 'C#', T.normMode('major'));
+  // SYNTHETIC catalog, deliberately not the shipped one: the shipped C#/F#
+  // gaps are RESERVED for the operator's curated gap playlist (QUEUE), so
+  // pinning "C# has zero tracks" would rot red the day those land - the same
+  // content-pinned-rot class the persona scenarios fixed four times over.
+  // The absence property under test belongs to the ALGORITHM, so a fixture
+  // with a known gap proves it durably.
+  var cat = [
+    { yt: 'dQw4w9WgXcQ', title: 'A jam', artist: 'x', genre: 'rock', key: 'A', mode: 'major', bpm: 100, capo: 0, tags: [] },
+    { yt: 'dQw4w9WgXcR', title: 'E jam', artist: 'x', genre: 'blues', key: 'E', mode: 'major', bpm: 90, capo: 0, tags: [] }
+  ];
+  var rows = T.filterTracks(cat, 'all', 'C#', T.normMode('major'));
   var candidate = rows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
-  assert.strictEqual(candidate, undefined, 'expected no rank-0+yt candidate for C# major in the shipped catalog');
+  assert.strictEqual(candidate, undefined, 'expected no rank-0+yt candidate for a key the catalog does not carry');
 });
 test('G4: openStudio resolves jamStarterCandidate via filterTracks(state.tracks, \'all\', th.key, normMode(th.scaleMode)) - the SAME resolution the finder\'s own result cards use, not a duplicate', function () {
   var src = readSrc('music/shared/tracks.js');
-  var body = extractFunctionBody(src, /function openStudio\(t, o\) \{/);
-  assert.ok(body, 'openStudio(t, o) not found in tracks.js');
+  // Resolution + markup live in resolveJamStarter/jamStarterRowHtml (shared
+  // with the async-catalog late fill, injectJamStarterLate) - pin them there.
+  var body = extractFunctionBody(src, /function resolveJamStarter\(th\) \{/);
+  assert.ok(body, 'resolveJamStarter(th) not found in tracks.js');
   assert.ok(/filterTracks\(state\.tracks, 'all', th\.key, normMode\(th\.scaleMode\)\)/.test(body),
     'jamStarterRows must resolve via filterTracks against state.tracks (the merged seed+overlay+custom list) for the CURRENT key, any genre');
   assert.ok(/\.filter\(function \(r\) \{ return r\.rank === 0 && r\.track\.yt; \}\)\[0\] \|\| null/.test(body),
     'jamStarterCandidate must be the first exact-key ("your key") row that already carries a real video, or null');
-  assert.ok(/keyLabelFor\(th\.key, th\.scaleMode\)/.test(body),
-    'the chip label must use keyLabelFor (mode-honest: A / Am / A dorian) for the current key, not a raw root letter');
+  var rowFn = extractFunctionBody(src, /function jamStarterRowHtml\(cand\) \{/);
+  assert.ok(rowFn, 'jamStarterRowHtml(cand) not found in tracks.js');
+  assert.ok(/keyLabelFor\(cand\.track\.key, cand\.track\.mode\)/.test(rowFn),
+    'the chip label must read the CANDIDATE track\'s own key/mode (a blues/modal theory key coarsens to a family match - labeling with th would overpromise)');
+  assert.ok(/cand\.track\.genre \? esc\(cand\.track\.genre\) \+ ' jam' : 'jam'/.test(rowFn),
+    'a genre-less candidate must read "Play a jam in ..." - never the "jam jam" stutter of genre-fallback + literal " jam"');
+  assert.ok(/injectJamStarterLate\(\);/.test(src) && /function injectJamStarterLate\(\) \{/.test(src),
+    'the tracks.json fetch handlers must late-fill a starter-less no-video Studio opened before the catalog resolved (openStudio\'s idempotent guard blocks a plain re-open)');
 });
 test('G4: the starter chip renders ONLY in the no-video branch and never replaces the existing Find-a-jam disclosure row', function () {
   var src = readSrc('music/shared/tracks.js');

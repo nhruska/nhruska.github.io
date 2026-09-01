@@ -63,14 +63,14 @@
       "selector": ".bt-jam-starter"
     },
     {
-      "action": "assertText",
-      "selector": ".bt-jam-starter",
-      "contains": "pop"
+      "action": "evalAssert",
+      "js": "/^Play a (\\S.* )?jam in \\S+/.test(document.querySelector('.bt-jam-starter').textContent.trim())",
+      "label": "starter label matches the SHAPE 'Play a [genre ]jam in <key>' - never pinned to the catalog's current first candidate (content-pinned rot)"
     },
     {
-      "action": "assertText",
-      "selector": ".bt-jam-starter",
-      "contains": "in C"
+      "action": "evalAssert",
+      "js": "document.querySelector('.bt-jam-starter').textContent.indexOf(' in C') > -1",
+      "label": "starter key matches the progression's C-major context (candidate's own key label)"
     },
     {
       "action": "screenshot",

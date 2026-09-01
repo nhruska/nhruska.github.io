@@ -243,19 +243,19 @@ test('delete/revert: no native confirm() dialog remains (arm-to-delete replaces 
 });
 test('delete/revert: first activation ARMS and returns without deleting (does not call onDelete)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
-  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,700}?\n          \};/.exec(src);
+  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,1000}?\n          \};/.exec(src);
   assert.ok(onclickBlock, 'expected delBtn.onclick handler body');
   var body = onclickBlock[0];
   // The arm-gate must be the FIRST statement and must `return` before any
   // onDelete/settleAfter call - i.e. a first tap on an unarmed button cannot
   // reach the delete path at all.
-  var gate = /if \(armedDelBtn !== delBtn\) \{ armDelBtn\(delBtn\); return; \}/.exec(body);
-  assert.ok(gate, 'expected the arm gate "if (armedDelBtn !== delBtn) { armDelBtn(delBtn); return; }" as the first line of the handler: ' + body);
+  var gate = /if \(armedDelBtn !== delBtn\) \{ armDelBtn\(delBtn, fork \? 'Tap again to revert' : 'Tap again to delete'\); return; \}/.exec(body);
+  assert.ok(gate, 'expected the arm gate "if (armedDelBtn !== delBtn) { armDelBtn(delBtn, <fork-aware arm label>); return; }" as the first line of the handler: ' + body);
   assert.ok(body.indexOf(gate[0]) < body.indexOf('doDelete'), 'the arm-and-return gate must precede the delete call, so a first (unarmed) tap never reaches onDelete');
 });
 test('delete/revert: second activation (already armed) disarms and proceeds to delete', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
-  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,700}?\n          \};/.exec(src)[0];
+  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,1000}?\n          \};/.exec(src)[0];
   var disarmIdx = onclickBlock.indexOf('disarmDelBtn();');
   var doDeleteIdx = onclickBlock.indexOf('var doDelete');
   assert.ok(disarmIdx >= 0, 'expected disarmDelBtn() to run once the button is already armed');
@@ -266,17 +266,25 @@ test('delete/revert: arm auto-disarms after DEL_ARM_MS (1600ms, matches list-ite
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
   assert.ok(/var DEL_ARM_MS = 1600;/.test(src), 'expected DEL_ARM_MS = 1600, matching list-item.js\'s RM_ARM_MS timing');
   assert.ok(/armedDelTimer = setTimeout\(disarmDelBtn, DEL_ARM_MS\);/.test(src), 'armDelBtn must schedule an auto-disarm via setTimeout(disarmDelBtn, DEL_ARM_MS)');
-  var disarmFn = /function disarmDelBtn\(\) \{[\s\S]{0,300}?\n    \}/.exec(src);
+  var disarmFn = /function disarmDelBtn\(\) \{[\s\S]{0,600}?\n    \}/.exec(src);
   assert.ok(disarmFn, 'expected a disarmDelBtn() function');
   assert.ok(/clearTimeout\(armedDelTimer\)/.test(disarmFn[0]), 'disarmDelBtn must clear the pending timer (so re-arming or a real disarm never double-fires)');
   assert.ok(/armedDelBtn\.classList\.remove\('armed'\)/.test(disarmFn[0]), 'disarmDelBtn must remove the .armed class (the visible red-arm signal)');
 });
-test('delete/revert: armDelBtn adds the .armed class (the visible arm signal, mirrors list-item.js .li-rm.armed)', function () {
+test('delete/revert: armDelBtn adds the .armed class AND relabels (arm signal is never color-only)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
-  var armFn = /function armDelBtn\(btn\) \{[\s\S]{0,300}?\n    \}/.exec(src);
-  assert.ok(armFn, 'expected an armDelBtn(btn) function');
+  var armFn = /function armDelBtn\(btn, armLabel\) \{[\s\S]{0,600}?\n    \}/.exec(src);
+  assert.ok(armFn, 'expected an armDelBtn(btn, armLabel) function');
   assert.ok(/disarmDelBtn\(\);/.test(armFn[0]), 'armDelBtn must disarm any previously-armed button first (module-scope single-armed invariant, mirrors list-item.js)');
   assert.ok(/btn\.classList\.add\('armed'\)/.test(armFn[0]), 'armDelBtn must add the .armed class to the tapped button');
+  // Color-only arm signals are invisible on touch (no tooltip) and to
+  // colorblind users - the relabel is the accessible half of the signal,
+  // mirroring songbook's #delSongBtn "Tap again to ..." grammar.
+  assert.ok(/armedDelIdleText = btn\.textContent/.test(armFn[0]), 'armDelBtn must snapshot the idle label so disarm can restore it');
+  assert.ok(/if \(armLabel\) btn\.textContent = armLabel/.test(armFn[0]), 'armDelBtn must relabel the armed button (textContent), never rely on color alone');
+  assert.ok(/armDelBtn\(delBtn, fork \? 'Tap again to revert' : 'Tap again to delete'\)/.test(src), 'the wiring must pass the fork-aware arm label');
+  var disarmFn = /function disarmDelBtn\(\) \{[\s\S]{0,600}?\n    \}/.exec(src);
+  assert.ok(/armedDelBtn\.textContent = armedDelIdleText/.test(disarmFn[0]), 'disarmDelBtn must restore the idle label');
 });
 test('delete/revert: closing the form disarms the pending timer (no leaked setTimeout referencing a detached button)', function () {
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');

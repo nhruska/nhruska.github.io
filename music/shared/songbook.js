@@ -1536,11 +1536,16 @@
       var moreMenu = el.practiceBody.querySelector('#moreMenu');
       if (moreBtn && moreMenu) moreBtn.onclick = function (e) {
         e.stopPropagation();
-        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); return; }
+        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); if (typeof disarmDel === 'function') disarmDel(); return; }
         moreMenu.hidden = false; moreBtn.setAttribute('aria-expanded', 'true');
         var closer = function (ev) {
           if (moreMenu.contains(ev.target) || ev.target === moreBtn) return;
           moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+          // Dismissing the menu is a CANCEL gesture: a still-armed Delete/Revert
+          // must not survive it, or reopening within the 1.6s window presents a
+          // one-tap destructive action the user never armed on purpose.
+          // (disarmDel is a hoisted var, assigned below only when the item exists.)
+          if (typeof disarmDel === 'function') disarmDel();
           document.removeEventListener('pointerdown', closer, true);
         };
         setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
