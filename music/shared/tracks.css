@@ -255,16 +255,8 @@
   font-size:14px;line-height:1;
 }
 /* The countdown chip rides directly UNDER the theater card (same fixed layer)
-   so Keep open / Minimize now stay tappable. GEOMETRY PAIR with the card
-   above: same width min(); top = card top (58px) + 16:9 height (*0.5625) +
-   the 24px handle + 6px gap. The (100vh - 260px) term budgets landscape:
-   card + handle + countdown must clear the fixed bar. Move all together. */
-.bt-player.studio.vidopen:not(.mini) .bt-st-countdown:not(.done){
-  position:fixed;left:50%;transform:translateX(-50%);
-  top:calc(env(safe-area-inset-top,0px) + 58px + min(100vw - 20px, 540px, (100vh - 260px)*1.7778)*0.5625 + 30px);
-  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;box-sizing:border-box;
-  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;
-}
+   (Round 16: the auto-collapse countdown is gone - nothing hides the video on
+   a timer, so there is no countdown card to position under the theater.) */
 /* Round 10 .hid: the video parked INTO the bar title - a zero-size clip (NEVER
    display:none, audio must keep playing), untouchable until restored. */
 .bt-st-media.hid{position:fixed;width:0;height:0;max-height:0;border:0;box-shadow:none;pointer-events:none;overflow:hidden;}
@@ -292,28 +284,6 @@
   border:1px solid var(--accent-ink);border-radius:4px;color:var(--accent-ink);
   font-size:.7em;line-height:1.5;vertical-align:1px;
 }
-  /* Auto-collapse countdown: a draining progress bar (standard auto-dismiss
-     affordance) + a live caption. .done hides it once fired or cancelled. */
-  .bt-st-countdown{position:relative;padding:6px 12px 8px;flex:0 0 auto;font-family:'Space Mono',monospace;
-    font-size:.6rem;letter-spacing:.04em;color:var(--accent-ink);text-align:center;
-    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 10px;}
-  .bt-st-countdown.done{display:none;}
-  /* The drain animation is gated on .running so it begins with playback (JS adds
-     .running in startCountdown), not at render - the window is anchored to the
-     video actually starting, so a slow ad-load never eats the skip-the-ad time. */
-  .bt-st-countdown > i{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--accent-ink);
-    transform-origin:left;}
-  .bt-st-countdown.running > i{animation:bt-cd-drain linear forwards;}
-  @media (prefers-reduced-motion:reduce){ .bt-st-countdown.running > i{animation:none;width:100%;} }
-  @keyframes bt-cd-drain{from{transform:scaleX(1);}to{transform:scaleX(0);}}
-  /* Explicit collapse controls: "Keep open" cancels the auto-minimize so the user
-     can tap YouTube's Skip on the iframe; "Minimize now" collapses early. 44px tap
-     floor (a11y). Both outline for guaranteed legibility on the accent surface. */
-  .bt-st-cd-actions{display:inline-flex;gap:8px;}
-  .bt-st-cd-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;
-    padding:6px 14px;border-radius:999px;font-family:inherit;font-size:.66rem;letter-spacing:.03em;
-    line-height:1;cursor:pointer;border:1px solid var(--accent-ink);background:transparent;color:var(--accent-ink);}
-  .bt-st-cd-btn.bt-st-cd-keep{font-weight:600;}
   /* Now-playing controls (S-STUDIO-HEADERMERGE -> PLAYER-FEEL v3): pp/progress/
      time live on the ONE fixed bar (.bt-st-head); the hamburger lives on the
      sheet's .bt-st-topbar. Both keep their surface-2 fill so they read on

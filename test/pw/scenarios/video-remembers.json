@@ -1,0 +1,82 @@
+{
+  "name": "video-remembers",
+  "note": "ROUND 16 (operator UAT 2026-09-02, verbatim: \"don't auto hide yt video. I keep having to open it to skip after ads\"). The law: the video's visibility is the USER'S, never the app's. A fresh device opens the video VISIBLE so a pre-roll ad's Skip button needs no tap; parking it once makes every LATER open parked (music.vidPref.v1 - additive key, no SCHEMA_VERSION bump), until the user shows it again. This is what keeps round 15's intent (\"not show the video any other time\") reachable without re-parking on every track. Red-first: against the pre-round-16 build step 2 fails, because every open was hardcoded to setVid('hid').",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=library]"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "evalAssert",
+      "label": "FRESH DEVICE (no stored preference) -> the video opens VISIBLE, so the ad Skip surface is already on screen",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&!p.classList.contains('vidhid');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and nothing has been written to the preference yet - restoring a default must not masquerade as a user choice",
+      "js": "(function(){return localStorage.getItem('music.vidPref.v1')===null;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "PARKING IS A USER ACT -> it is remembered ('hid'), and the player wears the parked class",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&localStorage.getItem('music.vidPref.v1')==='hid';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player .bt-st-minix"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "evalAssert",
+      "label": "THE NEXT OPEN HONORS IT - parked stays parked with no re-tap (round 15's quiet state, now owned by the user instead of hardcoded)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var m=document.querySelector('.bt-st-media');return p.classList.contains('vidhid')&&!p.classList.contains('vidopen')&&!!m&&m.classList.contains('hid');})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "SHOWING IT AGAIN IS ALSO REMEMBERED - the preference flips back to theater, so the pendulum swings both ways",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&localStorage.getItem('music.vidPref.v1')==='theater';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "remembered-visible"
+    }
+  ]
+}

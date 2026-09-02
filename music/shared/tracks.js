@@ -1190,13 +1190,10 @@
           // Round 10 ("hide video CTA stuck to left of pip"): the park handle,
           // a slim tab on the PIP's left edge (CSS shows it only while .min).
           + '<button class="bt-st-piphide" data-piphide type="button" aria-label="Hide video - audio keeps playing"><span aria-hidden="true">&#8964;</span></button>'
-          + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing in <b data-cdnum>15</b>s</span>'
-          + '<span class="bt-st-cd-actions">'
-          + '<button class="bt-st-cd-btn bt-st-cd-keep" data-keepopen type="button">Keep open</button>'
-          + '<button class="bt-st-cd-btn bt-st-cd-min" data-minnow type="button">Minimize now</button>'
-          + '</span>'
-          + '<i></i></div>'
+          // Round 16 (operator UAT 2026-09-02, "don't auto hide yt video. I keep
+          // having to open it to skip after ads"): the auto-minimize countdown +
+          // its Keep-open / Minimize-now controls are GONE. Nothing hides the
+          // video on a timer any more, so there is no window to narrate.
           + jamPanelHtml
         : jamPanelHtml;
       // .bt-st-stage wraps the sheet's top chrome + video: one column in
@@ -1349,9 +1346,10 @@
         + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
       // .vidopen mirrors "the video is in THEATER"; setVid() below is the
-      // single authority. Round 15: a video track OPENS PARKED (the wiring's
-      // final setVid('hid') sets the real state) - vidopen is only ever set
-      // by an explicit show.
+      // single authority. Round 16: a video track OPENS on the REMEMBERED
+      // choice, visible by default (the wiring's final setVid(readVidPref(),
+      // true) sets the real state) - this class is cleared here so the render
+      // never asserts a state setVid has not resolved yet.
       elPlayer.classList.remove('vidopen');
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
@@ -1372,20 +1370,37 @@
       // video re-expands; play/pause drives the YouTube embed over postMessage
       // (enablejsapi=1 on the embed URL). No YT API script needed.
       (function wireNowPlaying() {
-        // Operator UAT 2026-07-31: a 7s wall-clock auto-collapse clipped the iframe
-        // right as YouTube's "Skip Ads" button (appears ~5s into a skippable pre-roll)
-        // needed a tap - trapping the user in the ad. The cross-origin skip click / ad
-        // state is undetectable, so the fix is NOT to guess the ad boundary: give a
-        // longer window (15s), ANCHOR it to actual playback start (not load), and add
-        // explicit "Keep open" / "Minimize now" controls so the user always has agency.
-        var AUTOMIN_MS = 15000;
+        // THE VIDEO'S VISIBILITY IS THE USER'S, NEVER THE APP'S (round 16,
+        // operator UAT 2026-09-02: "don't auto hide yt video. I keep having to
+        // open it to skip after ads").
+        //
+        // Twice now an automatic hide has trapped the operator inside a YouTube
+        // ad: first a 7s wall-clock auto-collapse (UAT 2026-07-31, mitigated to
+        // a 15s playback-anchored window), then round 15's open-PARKED default,
+        // which silently undid that mitigation - a pre-roll now ran with no
+        // video on screen at all, so reaching "Skip Ads" cost a manual open
+        // EVERY time. The ad boundary is undetectable cross-origin, so no timer
+        // can ever be tuned safely around it. The durable fix is to stop
+        // guessing: the app never hides the video on its own.
+        //
+        // Round 15's intent ("not show the video any other time") survives as a
+        // REMEMBERED CHOICE - park it once and it opens parked from then on, on
+        // every track, until you show it again. Fresh state opens VISIBLE, so
+        // the Skip button is always reachable without a tap.
+        var VID_PREF_KEY = 'music.vidPref.v1'; // additive key - no SCHEMA_VERSION bump (backup.js contract)
+        function readVidPref() {
+          try {
+            var v = localStorage.getItem(VID_PREF_KEY);
+            return (v === 'hid' || v === 'pip' || v === 'theater') ? v : 'theater';
+          } catch (e) { return 'theater'; } // private mode / blocked storage -> the visible default
+        }
+        function writeVidPref(state) {
+          try { localStorage.setItem(VID_PREF_KEY, state); } catch (e) {}
+        }
         var mediaEl = elPlayer.querySelector('[data-media]');
         var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
         var ppBtn = elPlayer.querySelector('[data-nppp]');
         var stateEl = elPlayer.querySelector('[data-npstate]');
-        var cdEl = elPlayer.querySelector('[data-countdown]');
-        var cdNum = elPlayer.querySelector('[data-cdnum]');
-        var cdFill = cdEl && cdEl.querySelector('i');
         var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
         function ytCmd(func, args) {
           var w = frameWin(); if (!w) return;
@@ -1396,8 +1411,13 @@
         // Skip/controls live there); 'pip' - the docked mini video above the
         // bar; 'hid' - parked INTO the bar title (zero-size clip, NEVER
         // display:none - audio keeps playing).
-        function setVid(state) {
-          if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
+        // fromOpen=true is the initial restore (it REPLAYS a remembered choice,
+        // so it must not re-write it). Every other call is a user act on the
+        // video layer, and the app remembers it - there is no automatic caller
+        // left to pollute the preference.
+        function setVid(state, fromOpen) {
+          if (!mediaEl || !mediaEl.isConnected) return; // stale call after the Studio closed/re-opened
+          if (!fromOpen) writeVidPref(state);
           mediaEl.classList.toggle('min', state === 'pip');
           mediaEl.classList.toggle('hid', state === 'hid');
           elPlayer.classList.toggle('vidopen', state === 'theater'); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
@@ -1417,47 +1437,18 @@
         // keeps the embed from eating the tap. Round 12 ("I don't want to
         // switch to the solo view"): expanding the video is a VIDEO-LAYER act
         // - stopPropagation keeps it from also opening the Studio (the card
-        // floats over whatever screen you are on), and endCountdown keeps the
-        // auto-min from yanking a theater the user just asked for.
+        // floats over whatever screen you are on). Round 16: nothing can yank a
+        // theater the user asked for - there is no auto-min left to cancel.
         if (mediaEl) mediaEl.addEventListener('click', function (e) {
           if (!mediaEl.classList.contains('min')) return;
           e.stopPropagation();
-          endCountdown();
           setVid('theater');
         });
-        // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
-        // begin only once the embed reports it is actually playing (startCountdown,
-        // fired from the YT infoDelivery handler below) so a slow ad-load never eats
-        // the window; a 4s fallback starts it anyway if the embed never reports
-        // (headless / blocked egress / no JS-API). Any manual video toggle, "Keep
-        // open", or "Minimize now" cancels it so the user's choice always wins.
-        var autoTimer = 0, cdTick = 0, cdFallback = 0, cdStarted = false;
-        function endCountdown() {
-          if (cdEl) cdEl.classList.add('done');
-          if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
-          if (cdTick) { clearInterval(cdTick); cdTick = 0; }
-          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
-        }
-        function startCountdown() {
-          if (cdStarted || !cdEl || cdEl.classList.contains('done')) return;
-          cdStarted = true;
-          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
-          if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
-          if (cdEl) cdEl.classList.add('running'); // gates the drain animation (CSS)
-          var remain = Math.round(AUTOMIN_MS / 1000);
-          if (cdNum) cdNum.textContent = remain;
-          cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
-          // Demote only from THEATER - the timer must never un-park a hidden
-          // video or touch one already in the PIP.
-          autoTimer = setTimeout(function () { if (elPlayer.classList.contains('vidopen')) setVid('pip'); endCountdown(); }, AUTOMIN_MS);
-        }
-        cdFallback = setTimeout(startCountdown, 4000);
         // Round 15: the menu mirrors the parked<->theater loop - Show video
         // goes straight to the theater (the only reason to show it is to see
         // or skip it), Hide video parks it. Expand (from a docked PIP) still
         // goes to theater.
         if (vidToggle && mediaEl) vidToggle.onclick = function () {
-          endCountdown();
           if (mediaEl.classList.contains('min')) setVid('theater'); // "Expand video"
           else if (mediaEl.classList.contains('hid')) setVid('theater'); // "Show video"
           else setVid('hid'); // "Hide video"
@@ -1465,10 +1456,6 @@
         // "Keep open" cancels the auto-collapse but leaves the video EXPANDED, so the
         // user can tap YouTube's Skip on the iframe. "Minimize now" collapses early
         // (once they've skipped and want the space back).
-        var keepBtn = elPlayer.querySelector('[data-keepopen]');
-        var minNowBtn = elPlayer.querySelector('[data-minnow]');
-        if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
-        if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setVid('pip'); endCountdown(); };
         // Round 15 ("clicking the down arrow from a theater size view should
         // dismiss it and not cause an intermediate step to the small docked
         // pip"): the theater's bottom handle PARKS the video outright. The
@@ -1476,12 +1463,12 @@
         var thMinBtn = elPlayer.querySelector('[data-thmin]');
         if (thMinBtn && mediaEl) thMinBtn.onclick = function (e) {
           e.stopPropagation();
-          endCountdown(); setVid('hid');
+          setVid('hid');
         };
         var thDockBtn = elPlayer.querySelector('[data-thdock]');
         if (thDockBtn && mediaEl) thDockBtn.onclick = function (e) {
           e.stopPropagation();
-          endCountdown(); setVid('pip');
+          setVid('pip');
         };
         // Round 10 ("hide video CTA stuck to left of pip... collapses pip INTO
         // the song name"): the edge handle parks the video - audio keeps
@@ -1490,7 +1477,7 @@
         var pipHideBtn = elPlayer.querySelector('[data-piphide]');
         if (pipHideBtn && mediaEl) pipHideBtn.onclick = function (e) {
           e.stopPropagation(); // in mini, a stage tap would otherwise expand the Studio
-          endCountdown(); setVid('hid');
+          setVid('hid');
         };
         // Round 15 refinement of the round-11 left-zone toggle: showing the
         // video means THEATER now, not the docked PIP - the operator shows
@@ -1502,18 +1489,18 @@
         function toggleDock(e) {
           if (!mediaEl || !mediaEl.isConnected) return;
           e.stopPropagation();
-          endCountdown();
           setVid(mediaEl.classList.contains('hid') ? 'theater' : 'hid');
         }
         var idEl = elPlayer.querySelector('.bt-st-id');
         var eqEl = elPlayer.querySelector('.bt-st-bareq');
         if (idEl) idEl.addEventListener('click', toggleDock);
         if (eqEl) eqEl.addEventListener('click', toggleDock);
-        // Round 15 ("not show the video any other time"): EVERY open starts
-        // PARKED - audio-first, the bar title wears the cue, and the
-        // auto-minimize countdown is silenced for good (nothing auto-shows,
-        // so nothing needs auto-hiding).
-        setVid('hid'); endCountdown();
+        // Round 16 ("don't auto hide yt video"): an open RESTORES the remembered
+        // choice, defaulting to the VISIBLE theater so a pre-roll ad's Skip
+        // button is on screen without a tap. Supersedes round 15's
+        // always-PARKED open, which is what put the ad behind a manual open.
+        // fromOpen=true: replaying the stored choice must not re-store it.
+        setVid(readVidPref(), true);
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
         // indicates now playing"): detect the embed's END - the onStateChange
@@ -1638,7 +1625,6 @@
           if (d.event === 'onStateChange') { syncState(d.info); return; }
           if (d.event !== 'infoDelivery' || !d.info) return;
           if (typeof d.info.playerState === 'number') syncState(d.info.playerState);
-          startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {
             if (scrubbing) return; // the finger owns the fill until release

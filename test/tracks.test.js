@@ -1043,46 +1043,49 @@ test('renderJamPanel "Add to library" seed (M-JAM-MULTI): genre is jamGenres.joi
   assert.ok(/genre: jamGenres\.length > 1 \? jamGenres\.join\(' \/ '\) : jamGenres\[0\]/.test(body),
     'the onEditRequest seed object must join multiple selected genres with " / ", or pass the bare single genre');
 });
-test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a longer, playback-anchored window with explicit Keep-open / Minimize-now controls', function () {
+test('wireNowPlaying (round 16, skip-ads UAT 2026-09-02): NOTHING auto-hides the video - no timer, no countdown, no parked-open', function () {
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
   assert.ok(body, 'wireNowPlaying() not found in tracks.js');
-  // 7s wall-clock collapse clipped the iframe mid-reach for YouTube's Skip Ads
-  // button, trapping the user in the ad. The window is now 15s AND anchored to
-  // playback start (startCountdown fires from the YT infoDelivery handler), never
-  // wall-clock, so a slow ad-load can't eat the skip window.
-  assert.ok(/AUTOMIN_MS = 15000/.test(body),
-    'the auto-minimize window must be 15s (was 7s - too short to see + tap Skip Ads)');
-  assert.ok(/function startCountdown\(\)/.test(body) && /cdStarted/.test(body),
-    'the countdown must be a guarded startCountdown() so it fires once, anchored to playback');
-  // v6 split the guard (an onStateChange ended-check now precedes it); round 15
-  // slid the per-tick playerState sync between the guard and the countdown call
-  // - the anchored contract is unchanged: startCountdown() fires from the
-  // infoDelivery handler, never at render. (The countdown is DORMANT since
-  // round 15 - every open parks the video and endCountdown()s - but the
-  // machinery stays anchored correctly for any future re-enable.)
-  assert.ok(/if \(d\.event !== 'infoDelivery' \|\| !d\.info\) return;[\s\S]{0,220}startCountdown\(\);/.test(body),
-    'startCountdown() must fire from the YT infoDelivery handler (playback-anchored, not at render)');
-  // Round 15 ("skip when needed, not show the video any other time"): every
-  // open ends the wiring PARKED with the countdown silenced...
-  assert.ok(/setVid\('hid'\); endCountdown\(\);/.test(body),
-    'every open must end parked (setVid hid) with the countdown silenced (endCountdown)');
-  // ...and the playerState field that rides every infoDelivery tick syncs the
+  // TWICE an automatic hide trapped the operator inside a YouTube ad: a 7s
+  // wall-clock collapse (UAT 2026-07-31, mitigated to a 15s playback-anchored
+  // window), then round 15's open-PARKED default, which silently undid that
+  // mitigation - the pre-roll ran with no video on screen, so reaching "Skip
+  // Ads" cost a manual open EVERY time. The ad boundary is undetectable
+  // cross-origin, so no timer can be tuned safely around it. The law is now:
+  // the app never hides the video on its own.
+  assert.ok(!/AUTOMIN_MS/.test(body), 'no auto-minimize window may exist (round 16: nothing auto-hides)');
+  assert.ok(!/startCountdown|endCountdown|cdStarted|autoTimer/.test(body),
+    'the auto-collapse countdown machinery must be gone entirely, not merely dormant');
+  assert.ok(!/setTimeout\([\s\S]{0,40}setVid\(/.test(body), 'no timer may drive setVid');
+  assert.ok(!/\[data-keepopen\]/.test(body) && !/\[data-minnow\]/.test(body),
+    'the Keep-open / Minimize-now controls narrated a window that no longer exists');
+  // The playerState field that rides every infoDelivery tick still syncs the
   // bar (pausing inside the embed must flip the bar even when the
-  // onStateChange delta was missed).
+  // onStateChange delta was missed) - untouched by the round-16 removal.
   assert.ok(/playerState/.test(body) && /function syncState\(/.test(body),
     'the per-tick playerState field must route through the same syncState path as onStateChange');
-  // Explicit user agency: "Keep open" cancels the auto-collapse so Skip stays
-  // tappable on the iframe; "Minimize now" collapses early.
-  assert.ok(/\[data-keepopen\]/.test(body) && /\[data-minnow\]/.test(body),
-    'both the Keep-open and Minimize-now controls must be wired');
 });
-test('Studio countdown markup (skip-ads UAT): the collapse controls + 15s default ship in the rendered countdown', function () {
+test('round 16: an open RESTORES the remembered video choice, defaulting VISIBLE so an ad Skip needs no tap', function () {
   var src = readSrc('music/shared/tracks.js');
-  assert.ok(/data-keepopen[\s\S]*?Keep open/.test(src) && /data-minnow[\s\S]*?Minimize now/.test(src),
-    'the countdown must render the Keep-open and Minimize-now buttons');
-  assert.ok(/<b data-cdnum>15<\/b>s/.test(src),
-    'the countdown caption must default to 15s (matches AUTOMIN_MS)');
+  var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
+  assert.ok(/setVid\(readVidPref\(\), true\);/.test(body),
+    'every open must restore the remembered choice via setVid(readVidPref(), true) - never a hardcoded park');
+  var read = extractFunctionBody(src, /function readVidPref\(\) \{/);
+  assert.ok(read, 'readVidPref() not found');
+  assert.ok(/'theater'/.test(read) && /catch/.test(read),
+    "unset OR unreadable storage must fall back to the VISIBLE 'theater' - a blocked-storage phone must not silently re-park the video");
+  assert.ok(/v === 'hid' \|\| v === 'pip' \|\| v === 'theater'/.test(read),
+    'only the three known states may be restored (a junk value falls back to visible)');
+});
+test('round 16: the video preference is written by USER acts only, never by the open that replays it', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/);
+  assert.ok(body, 'setVid(state, fromOpen) not found');
+  assert.ok(/if \(!fromOpen\) writeVidPref\(state\);/.test(body),
+    'setVid must persist every non-open (i.e. user) transition, and must NOT re-write on the restoring open');
+  // Additive localStorage key -> no SCHEMA_VERSION bump needed (backup.js contract).
+  assert.ok(/VID_PREF_KEY = 'music\.vidPref\.v1'/.test(src), 'the pref key must be the namespaced additive music.vidPref.v1');
 });
 
 /* ---------------------------------------------------------------------
