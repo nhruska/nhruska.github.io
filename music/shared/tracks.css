@@ -176,10 +176,10 @@
   .bt-st-id{display:flex;flex-direction:column;min-width:0;flex:2 1 0;}
   .bt-st-t{font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bt-st-meta{font-size:.72rem;color:var(--accent-ink);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  /* The dismiss control is the standard back affordance the rest of the app uses
-     (song view's #backLib "iconBtn"): .bt-st-back composes the shared .iconBtn base
-     (songbook.css: 44x44, --r-btn-sm radius, accent-ink glyph) with no
-     Studio-specific overrides. */
+  /* The dismiss control is the standard back affordance the rest of the app uses:
+     .bt-st-back composes .iconBtn.backArrowBtn (songbook.css) - the SAME primitive
+     the song view's #backLib wears, so both screens show one accent-filled 44px
+     arrow in the same slot. No Studio-specific overrides. */
   .bt-st-frame{position:relative;width:100%;aspect-ratio:16/9;background:var(--video-bg);flex:0 0 auto;}
   .bt-st-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   /* Video minimize: .min clips the (still-rendered, still-playing) frame to 0
@@ -339,10 +339,13 @@
   /* The compact `...` menu button that opens the fly-out (replaces the old
      three-button .bt-st-stagebtns row). 44px touch-floor, visible on the
      accent-deep strip via the same surface-2 fill the play/pause button uses. */
-  .bt-st-np-menu{flex:0 0 auto;min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--line-strong);
-    background:var(--surface-2);color:var(--accent-ink);border-radius:var(--r-btn-sm);cursor:pointer;
-    font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;}
-  .bt-st-np-menu:active{transform:scale(.94);}
+  /* UAT batch 3 item 4: the trigger used to be a hamburger sitting exactly where
+     the app's Settings gear lives, so it read as app settings on a screen that
+     covers the appbar. It composes .iconBtn.moreBtn (songbook.css) now - the
+     SAME overflow control the song view wears - so this rule carries LAYOUT
+     only. Adding box properties back here would silently override the
+     primitive (tracks.css loads after songbook.css at equal specificity). */
+  .bt-st-np-menu{flex:0 0 auto;}
   /* The fly-out itself: a popover anchored under the strip's right edge, holding
      Show/Hide video, Find another jam, Edit, and the Curated-URL card as
      full-width tappable rows. Absolute so it overlays the body instead of

@@ -1105,17 +1105,17 @@
       // BELOW the merged header. Same data-* attrs, so wireNowPlaying/wireStudioMenu
       // bind unchanged - only the DOM location moved (relocation, not rebuild).
       //
-      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact `...`
-      // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact overflow
+      // trigger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
       // another jam, Edit, and the Curated-URL card as full-width rows - same
       // data-* attrs, so the existing handlers bind unchanged.
       // PLAYER-FEEL v3 (UAT 2026-08-08, "the same now playing element... don't
       // move it"): the transport strip and the sheet chrome SPLIT. The bar
       // (.bt-st-head, below) is ONE SSOT-rendered element - [title/meta]
       // [pp|Hide-video] [progress] [time] [x] - position:fixed in ONE slot
-      // above the tabbar in EVERY state; the back + hamburger move to a slim
+      // above the tabbar in EVERY state; the back + overflow move to a slim
       // .bt-st-topbar at the top of the SHEET (the Spotify grammar: collapse
-      // top-left, menu top-right). menuBlock = the hamburger + fly-out
+      // top-left, menu top-right). menuBlock = the overflow trigger + fly-out
       // (anchors under the topbar); barStrip = the bar's transport controls.
       //
       // One-transport-owner (UAT batch 2) still holds: while the video panel
@@ -1161,8 +1161,9 @@
       // "Optional" pill stays retired (UAT batch 1); the menu's hint carries
       // the find-a-jam guidance.
       var menuBlock = t.yt
-        ? '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
+        ? '<button class="iconBtn moreBtn bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options"><span aria-hidden="true">⋯</span></button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<button class="bt-st-menu-item" data-stcollapse type="button">Collapse player - keeps playing</button>'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Minimize video</button>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
@@ -1221,7 +1222,7 @@
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + '<div class="bt-st-topbar"><button class="iconBtn backArrowBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
         // (Shuffle moved to the now-playing bar's transport cluster - UAT
         // 2026-08-09; the topbar keeps back + the hamburger only.)
         + menuBlock
@@ -2294,6 +2295,14 @@
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
       elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
+      // UAT batch 3 item 4: Back is the app's standard leave-this-screen control
+      // (same primitive, same slot, same glyph as the song view's #backLib) and it
+      // MINIMIZES rather than tears down, so the music survives. That behaviour was
+      // only reachable through an arrow labelled 'Back' - true, but unnamed. The
+      // fly-out's first row now SAYS it, without adding a second top-level button
+      // that would duplicate Back's destination.
+      var stCollapse = elPlayer.querySelector('[data-stcollapse]');
+      if (stCollapse) stCollapse.onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
       // PLAYER-FEEL: a yt-backed Studio is the app's now-playing surface - track
       // it, and register dismissStudio (minimize, not teardown) as the close fn
       // so back/dismiss keeps the music going as the bottom bar. A videoless

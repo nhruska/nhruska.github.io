@@ -443,8 +443,6 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    bare neutral arrow was too weak). Resolution: arrow glyph, accent-FILLED so it
    reads as the likeliest next tap without stealing title width. flex:0 0 auto so
    it holds its 44px and the title (min-width:0) keeps the rest. */
-.detailHead .backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
-.detailHead .backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .detailHead .ti{flex:1;min-width:0;}
 /* Title sized to breathe next to the arrow-only Back + the two header buttons
    (1.42->1.24rem), AND clamped to 2 lines with an ellipsis (operator UAT: even
@@ -487,6 +485,15 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.25rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* BACK - the app-wide leave-this-screen primitive (UAT batch 3 item 4: "same
+   back button SSOT behavior and location"). It is NOT scoped to .detailHead any
+   more: the song view (#backLib) and the Practice Studio's sheet topbar
+   (.bt-st-back) compose the SAME class, so the arrow that leaves a screen wears
+   one look everywhere - accent-filled, top-left, 44px. Declared AFTER .iconBtn
+   and at .iconBtn.backArrowBtn specificity so the accent fill wins over the base
+   surface-2 fill regardless of which stylesheet loads later. */
+.iconBtn.backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
+.iconBtn.backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* The scale-audition play/stop toggle - ONE primitive, composed by both the
    Studio scale panel (tracks.js) and the Compose key preview (songbook.js).
    Base = .iconBtn (44x44 icon button); the sticky on/playing state reuses the
@@ -640,7 +647,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
 /* Compact bordered chord tile (--r-btn-sm), same bucket as .chordChips .c;
    .campfireSheet .chordOnly .bar inherits this radius (no override of its own). */
-.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
+.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);
+  font:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
+/* Same press feedback as .chordChips .c - one tap-to-hear grammar for every
+   chord chip in the app (UAT batch 3 item 6). */
+.chordOnly .bar:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 /* A full-width action button in the song-view .actions row (e.g. "Delete
    progression") composes .btn with .full instead of an inline flex-basis hack. */

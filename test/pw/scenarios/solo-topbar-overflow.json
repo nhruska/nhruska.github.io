@@ -1,0 +1,42 @@
+{
+  "name": "solo-topbar-overflow",
+  "note": "UAT batch 3 item 4, video half. RED-FIRST vs main: the Studio's fly-out trigger was a hamburger glyph on a bespoke .bt-st-np-menu box, sitting exactly where the app Settings gear lives - and the Studio is a fullscreen overlay that COVERS the appbar, so it read as app settings. The operator flagged that slot twice (2026-08-09 for videoless tracks, again in this batch for video tracks). It is now the song view's own overflow primitive (.iconBtn.moreBtn, the same glyph), and the collapse that Back performs silently is spelled out as the fly-out's first row. Enters through the first-run tour because that is the app's one deterministic route into a yt-backed Studio (same entry first-session.json uses).",
+  "viewport": { "width": 412, "height": 915 },
+  "firstRun": true,
+  "steps": [
+    { "action": "wait", "ms": 600 },
+    { "action": "tap", "selector": "#wNext" },
+    { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-head", "timeoutMs": 30000 },
+    { "action": "wait", "ms": 1200 },
+
+    { "action": "evalAssert",
+      "label": "the trigger is the song view's overflow primitive, not a hamburger: .iconBtn.moreBtn, the same three-dot glyph",
+      "js": "(function(){var m=document.querySelector('[data-stmenu]');if(!m)return false;return m.classList.contains('iconBtn')&&m.classList.contains('moreBtn')&&m.textContent.trim()==='⋯'&&m.textContent.indexOf('\\u2630')<0;})()" },
+    { "action": "evalAssert",
+      "label": "it wears the primitive's box (44x44) - tracks.css loads AFTER songbook.css at equal specificity, so a re-declared box property here would silently override .iconBtn and the two overflow buttons would drift apart again",
+      "js": "(function(){var m=document.querySelector('[data-stmenu]');return !!m&&m.offsetWidth===44&&m.offsetHeight===44;})()" },
+    { "action": "evalAssert",
+      "label": "it trails its own header row (header-relative, so the gate does not encode either surface's padding)",
+      "js": "(function(){var m=document.querySelector('[data-stmenu]'),h=document.querySelector('.bt-st-topbar');if(!m||!h)return false;return (h.getBoundingClientRect().right-m.getBoundingClientRect().right)<=8;})()" },
+    { "action": "evalAssert",
+      "label": "the topbar carries exactly TWO controls - back and overflow. A third would be the duplicate-of-Back this design deliberately avoided by putting collapse in the menu instead",
+      "js": "document.querySelectorAll('.bt-st-topbar > button').length === 2" },
+    { "action": "screenshot", "name": "sto-01-topbar" },
+
+    { "action": "tap", "selector": "[data-stmenu]" },
+    { "action": "waitFor", "selector": "[data-stcollapse]" },
+    { "action": "evalAssert",
+      "label": "collapse LEADS the fly-out and says what it does in words - the behaviour existed before but was reachable only through an arrow labelled Back",
+      "js": "(function(){var p=document.querySelector('[data-stmenu-panel]');if(!p||p.hidden)return false;var rows=p.querySelectorAll('.bt-st-menu-item');return rows.length>0&&rows[0].hasAttribute('data-stcollapse')&&/collapse/i.test(rows[0].textContent)&&/keeps playing/i.test(rows[0].textContent);})()" },
+    { "action": "evalAssert",
+      "label": "the row clears the 44px tap floor",
+      "js": "(function(){var r=document.querySelector('[data-stcollapse]');return !!r&&r.offsetHeight>=44&&r.offsetWidth>=44;})()" },
+    { "action": "screenshot", "name": "sto-02-flyout" },
+
+    { "action": "tap", "selector": "[data-stcollapse]" },
+    { "action": "waitFor", "selector": ".bt-player.mini .bt-st-head", "timeoutMs": 8000 },
+    { "action": "evalAssert",
+      "label": "collapse MINIMIZES - it is not a close. The iframe must still be mounted, because tearing it down is what would kill the audio the row promises keeps playing",
+      "js": "(function(){var f=document.querySelector('.bt-player iframe');return !!f&&/\\/embed\\//.test(f.src)&&document.querySelectorAll('.bt-player.mini').length===1;})()" }
+  ]
+}

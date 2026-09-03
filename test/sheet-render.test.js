@@ -153,4 +153,43 @@ test('renderSheet: threads maxChars to BOTH the "both" and "lyrics" views; only 
   assert.strictEqual(chordsView.indexOf('lyrLine'), -1, 'chords view has no .lyrLine at all, maxChars is a no-op for it');
 });
 
+/* ---- UAT batch 3 item 6: the large sheet chord chips are real, playable ----
+ * "large chord chips on song details view - make them clickable like all
+ * others". They used to be inert <span class="bar">DISPLAY</span> - the display
+ * name only, so nothing downstream could even know WHICH chord to play. The
+ * contract that makes them wirable is the same one .chordChips .c already uses:
+ * a <button> carrying the CANONICAL, already-transposed token in data-c, and
+ * the key-aware name as its text/aria-label.
+ * --------------------------------------------------------------------- */
+test('chords view emits a real button per chord, not an inert span', function () {
+  var song = { sheet: [['Verse', '[C]hello [G]world']] };
+  var out = SR.renderSheet(song, 0, 'chords', null);
+  assert.strictEqual(out.indexOf('<span class="bar"'), -1, 'the inert span form must be gone entirely');
+  assert.ok(/<button type="button" class="bar" data-c="C" aria-label="Play C">C<\/button>/.test(out), 'C renders as a typed button carrying its token');
+  assert.strictEqual((out.match(/class="bar"/g) || []).length, 2, 'one chip per chord token on the line');
+});
+
+test('data-c carries the CANONICAL token while the label carries the key-aware name', function () {
+  // The discriminating fixture: a display map that CHANGES the name. If data-c
+  // were built from the label (or the label from the token), one of the two
+  // assertions below is impossible to satisfy - which is the whole point.
+  var song = { sheet: [['Verse', '[A#]one']] };
+  var out = SR.renderSheet(song, 0, 'chords', function (c) { return c === 'A#' ? 'Bb' : c; });
+  assert.ok(/data-c="A#"/.test(out), 'audio/storage side gets the canonical sharp token');
+  assert.ok(/aria-label="Play Bb">Bb</.test(out), 'the human-visible side gets the key-aware spelling');
+});
+
+test('data-c is the TRANSPOSED token - what actually sounds, not the source chord', function () {
+  var song = { sheet: [['Verse', '[C]one']] };
+  var out = SR.renderSheet(song, 2, 'chords', null);
+  assert.ok(/data-c="D"/.test(out), 'C transposed +2 stores D, so a tap plays what the screen shows');
+  assert.strictEqual(out.indexOf('data-c="C"'), -1, 'the untransposed token must not survive into the chip');
+});
+
+test('a hostile chord token cannot break out of the data-c attribute', function () {
+  var song = { sheet: [['Verse', '[C" onclick="x]one']] };
+  var out = SR.renderSheet(song, 0, 'chords', null);
+  assert.strictEqual(out.indexOf('" onclick="x'), -1, 'the raw quote+handler must be escaped, never emitted live');
+});
+
 run();

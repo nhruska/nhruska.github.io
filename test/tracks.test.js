@@ -782,7 +782,12 @@ test('F32: Studio dismiss is .bt-st-back (iconBtn, "<-" glyph, title=Back) - the
   // fine to keep and should not fail this test.
   assert.ok(!/class="bt-st-x"/.test(src), 'the old close-pill class must not appear in any rendered markup');
   assert.ok(!/querySelector\('\.bt-st-x'\)/.test(src), 'no selector may still target the old close-pill class');
-  assert.ok(/class="iconBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose the shared .iconBtn convention (matches #backLib elsewhere)');
+  // UAT batch 3 item 4 ("same back button SSOT behavior and location"): the class
+  // list is no longer just .iconBtn - it composes .backArrowBtn too, the primitive
+  // the song view's #backLib wears, so both screens show ONE accent-filled arrow.
+  assert.ok(/class="iconBtn backArrowBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose .iconBtn.backArrowBtn - the SAME primitive as #backLib');
+  var sb = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/class="iconBtn backArrowBtn" id="backLib"/.test(sb), 'the song view back button is the other half of that SSOT - if it stops composing .backArrowBtn the two screens have silently diverged again');
   assert.ok(/title="Back" aria-label="Back"/.test(src), 'the dismiss control must carry the standard Back label/aria-label, not "close"');
   assert.ok(/elPlayer\.querySelector\('\.bt-st-back'\)\.onclick/.test(src), 'the NavHistory.dismiss()/closePlayer() wiring must target the new .bt-st-back selector');
 });
@@ -1275,6 +1280,49 @@ test('studiofirst tip re-derives on view toggle (applyView swaps the live banner
   assert.ok(body, 'applyView(v) not found in tracks.js');
   assert.ok(/sfBodyEl\.textContent = studioFirstText\(v\)/.test(body),
     'applyView must swap the studiofirst banner body to studioFirstText(v) - the persisted-Circle-pin first paint AND live toggles both route through applyView');
+});
+
+/* ---- UAT batch 3 item 4: the Solo topbar stops impersonating app Settings ---
+ * "app settings icon is replaced with a collapse button menu on Solo view. song
+ * details has ... button fly out menu - use consistently on Solo view."
+ * The Studio is a fullscreen overlay that COVERS the appbar, so its trailing
+ * hamburger landed exactly where the Settings gear normally sits. The operator
+ * has now flagged that slot twice - the first time (2026-08-09, videoless
+ * tracks) it was answered by deleting the burger for that one case, which left
+ * the video case still wearing it. This pins the general fix.
+ * --------------------------------------------------------------------- */
+test('the Studio fly-out trigger is the song view\'s overflow primitive, not a hamburger in the Settings slot', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  assert.strictEqual(src.indexOf('aria-label="More options">&#9776;'), -1, 'the hamburger glyph must be gone from the rendered trigger');
+  assert.ok(/class="iconBtn moreBtn bt-st-np-menu" data-stmenu/.test(src), 'the trigger composes .iconBtn.moreBtn - the same control the song view wears');
+  assert.ok(/data-stmenu[^>]*><span aria-hidden="true">⋯<\/span>/.test(src), 'and carries the same overflow glyph');
+  var sb = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/class="iconBtn moreBtn" id="moreBtn"/.test(sb), 'the song view is the other half of that SSOT - a rename there must fail here, not diverge silently');
+});
+
+test('the Studio menu button carries LAYOUT only in tracks.css - the primitive owns its box', function () {
+  var css = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.css'), 'utf8');
+  var rule = css.match(/\n\s*\.bt-st-np-menu\{([^}]*)\}/);
+  assert.ok(rule, 'the rule still exists');
+  // tracks.css loads AFTER songbook.css at equal specificity, so any box
+  // property re-declared here silently overrides .iconBtn and the two overflow
+  // buttons drift apart again - exactly the divergence this task closed.
+  ['background', 'border:', 'border-radius', 'font-size', 'min-width', 'min-height', 'padding']
+    .forEach(function (prop) {
+      assert.strictEqual(rule[1].indexOf(prop), -1, 'the box property "' + prop + '" belongs to .iconBtn, not to this override');
+    });
+});
+
+test('collapse is a NAMED row in the fly-out, wired to the same dismiss path as Back', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  assert.ok(/class="bt-st-menu-item" data-stcollapse type="button">Collapse player - keeps playing</.test(src),
+    'the collapse action is spelled out in words, not left implicit behind an arrow glyph');
+  assert.ok(/stCollapse\.onclick = function \(\) \{ if \(window\.NavHistory\) window\.NavHistory\.dismiss\(\); else dismissStudio\(\); \}/.test(src),
+    'it routes through the SAME dismiss path Back uses - one destination, so the two can never disagree');
+  // It is a MENU row on purpose: a second top-level button would land next to
+  // Back and do exactly what Back does, which is the duplicate control this
+  // design avoids.
+  assert.strictEqual(src.indexOf('class="iconBtn bt-st-collapse"'), -1, 'no second top-level control duplicating Back');
 });
 
 run();

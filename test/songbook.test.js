@@ -3227,4 +3227,46 @@ test('S-SETLIST-GESTURES: a lone song (setlist.length===1) still allows swipe-de
     'the mouse vertical-movement branch must gate reorder the same way');
 });
 
+/* ---- UAT batch 3 item 6: ONE tap-to-hear wiring for both chip sizes -------
+ * The small .chordChips row and the large sheet .chordOnly chips are the same
+ * control at two sizes. Before this, only the small row had a handler and it
+ * was written INLINE in renderPractice - so wiring the large chips meant
+ * copying the pointerdown-immediacy contract (S-CHORDCHIP-LAG) to a second
+ * site, where it would drift. These pin the extraction, not the copy.
+ * ----------------------------------------------------------------------- */
+test('chord taps go through ONE shared wiring, used by both the compact row and the sheet chips', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/function wireChordTaps\(root, selector\)/.test(src), 'the shared wiring exists as a named function');
+  assert.ok(/wireChordTaps\(el\.practiceBody, '\.chordChips \.c'\)/.test(src), 'the compact chip row is wired through it');
+  assert.ok(/wireChordTaps\(el\.practiceBody, '\.sheet \.chordOnly \.bar'\)/.test(src), 'the large sheet chips are wired through it too');
+  // The immediacy contract must live in exactly ONE place - a second copy is
+  // the drift this extraction exists to prevent.
+  assert.strictEqual((src.match(/packPlayChord\(elc\.dataset\.c\)/g) || []).length, 2,
+    'the two packPlayChord calls (pointerdown + click echo-guard) belong to the single shared wiring - a third or fourth means a handler was copied');
+});
+
+test('the pointerdown immediacy + echo guard survive the extraction', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var body = src.slice(src.indexOf('function wireChordTaps'), src.indexOf('function wireChordTaps') + 1400);
+  assert.ok(/addEventListener\('pointerdown'/.test(body), 'pointerdown is what beats the ~300ms mobile click delay (S-CHORDCHIP-LAG)');
+  assert.ok(/e\.button > 0 \|\| e\.isPrimary === false/.test(body), 'a right-click or a second multitouch finger must not sound a chord');
+  assert.ok(/Date\.now\(\) - lastPtr < 600/.test(body), 'the follow-up click for the same tap must not replay the chord');
+  assert.ok(/if \(!elc\.dataset\.c\) return;/.test(body), 'a chip with no canonical token has nothing to play - skip it rather than play undefined');
+});
+
+test('Stage chord chips are disabled, not silently inert - no lying affordance on the perform surface', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/function inertStageChords\(\)/.test(src), 'Stage neutralizes the shared renderer\'s buttons explicitly');
+  assert.ok(/b\.disabled = true;/.test(src), 'disabled is the honest signal: unclickable AND out of the tab order');
+  // The fit-to-width loop re-renders the sheet, so EVERY render site must
+  // re-apply it - one missed site ships tappable-looking dead buttons on stage.
+  assert.strictEqual((src.match(/inertStageChords\(\);/g) || []).length, 2,
+    'both pSheet.innerHTML render sites re-apply it (the fit loop replaces the DOM)');
+  // Count only the sites that render THROUGH renderSheet (the ones that can emit
+  // chips). The third pSheet.innerHTML site is the "No chord chart" empty state -
+  // it has no .bar to neutralize, so including it would make this tripwire lie.
+  assert.strictEqual((src.match(/pSheet\.innerHTML = '<div class="pInner">' \+ renderSheet/g) || []).length, 2,
+    'if a third renderSheet-backed stage render site appears, it needs the same call - this count is the tripwire');
+});
+
 run();

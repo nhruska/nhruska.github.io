@@ -613,6 +613,41 @@
     /* ---- chord-pack capability helpers (graceful no-op if absent) ---- */
     function packHasChord(name) { return pack && typeof pack.hasChord === 'function' ? pack.hasChord(name) : false; }
     function packPlayChord(name) { if (pack && typeof pack.playChord === 'function') pack.playChord(name); }
+    // ONE tap-to-hear wiring for EVERY chord chip in the app (Element Consistency:
+    // the small .chordChips .c row and the large sheet .chordOnly .bar chips are
+    // the same control at two sizes, so they must not grow two handlers that
+    // drift). Extracted from renderPractice - the immediacy contract below is
+    // load-bearing and was previously reachable from one call site only.
+    //
+    // S-CHORDCHIP-LAG (P3 UAT regression, PR #300): a plain click listener on a
+    // real <button> is subject to the mobile browser's ~300ms tap-to-click delay,
+    // so the chord did not sound the instant a finger landed. pointerdown fires
+    // on contact, before any click is synthesized; click stays wired so keyboard
+    // Enter/Space (which fires click with NO preceding pointerdown) still plays.
+    // The lastPtr guard suppresses only the browser's follow-up click for the
+    // SAME tap, never a keyboard-only click.
+    //
+    // Volley-1 (medium): pointerdown fires on ANY press, so a right-click or a
+    // second multitouch finger would sound the chord - constrain to the PRIMARY
+    // pointer's primary button. Deliberate residual: a press that turns into a
+    // scroll drag still plays, because deferring to pointerup to detect the drag
+    // is exactly the latency this fixed.
+    function wireChordTaps(root, selector) {
+      if (!root) return;
+      root.querySelectorAll(selector).forEach(function (elc) {
+        if (!elc.dataset.c) return; // a chip with no canonical token has nothing to play
+        var lastPtr = 0;
+        elc.addEventListener('pointerdown', function (e) {
+          if (e && (e.button > 0 || e.isPrimary === false)) return;
+          lastPtr = Date.now(); packPlayChord(elc.dataset.c);
+        });
+        elc.onclick = function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
+          packPlayChord(elc.dataset.c);
+        };
+      });
+    }
     function packPlayNote(name) {
       if (pack && typeof pack.playNote === 'function') { pack.playNote(name); return; }
       if (pack && typeof pack.playFreq === 'function') { pack.playFreq(chordRootFreq(name), 1.1); }
@@ -1494,34 +1529,11 @@
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
-      // S-CHORDCHIP-LAG (P3 UAT regression, PR #300): the chips became real
-      // <button>s for a11y (S-CHORDCHIP-A11Y above), which re-subjects a
-      // plain click listener to the mobile browser's ~300ms tap-to-click
-      // delay - the chord no longer sounded the instant a finger landed.
-      // pointerdown fires immediately on touch/mouse contact, before any
-      // click is synthesized, so play from there for true immediacy; click
-      // stays wired too so keyboard Enter/Space (which fires click directly,
-      // with NO preceding pointerdown) still plays. The `lastPtr` guard
-      // stops the browser's own follow-up click from replaying the SAME tap
-      // a second time - it only suppresses a click that arrives shortly
-      // after a pointerdown on the same chip, never a keyboard-only click.
-      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) {
-        var lastPtr = 0;
-        // Volley-1 (medium): pointerdown fires on ANY press, so a right-click
-        // or a second multitouch finger would sound the chord. Constrain to
-        // the PRIMARY pointer's primary button - the touch/left-click case
-        // immediacy was actually asked for. Deliberate residual: a press that
-        // turns into a scroll drag still plays, because deferring to pointerup
-        // to detect the drag is exactly the tap-to-hear latency this fixed.
-        elc.addEventListener('pointerdown', function (e) {
-          if (e && (e.button > 0 || e.isPrimary === false)) return;
-          lastPtr = Date.now(); packPlayChord(elc.dataset.c);
-        });
-        elc.onclick = function () {
-          if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
-          packPlayChord(elc.dataset.c);
-        };
-      });
+      // Tap-to-hear for BOTH chip sizes through the one shared wiring (see
+      // wireChordTaps): the compact row, and the large sheet chips in the
+      // Chords/Both views (UAT batch 3 item 6 - they used to be inert <span>s).
+      wireChordTaps(el.practiceBody, '.chordChips .c');
+      wireChordTaps(el.practiceBody, '.sheet .chordOnly .bar');
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () {
         // Restore the SEGMENT as well as the surface - see practiceOrigin.
@@ -2238,6 +2250,18 @@
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
+    // Stage renders through the SAME sheet renderer as the song view, so its
+    // chord chips arrive as real <button>s (UAT batch 3 item 6). Stage is a
+    // PERFORM surface though - pinched, scrolled and read at arm's length, never
+    // tapped for audio - and its sheet re-renders up to 6 times inside the
+    // fit-to-width loop, so a per-render tap wiring would be both wrong and
+    // wasteful. `disabled` is the honest signal: not clickable, out of the tab
+    // order, no lying affordance - and the look is untouched because
+    // .chordOnly .bar sets its own color/background explicitly.
+    function inertStageChords() {
+      if (!pSheet) return;
+      pSheet.querySelectorAll('.chordOnly .bar').forEach(function (b) { b.disabled = true; });
+    }
     // P1-4: true only while the active Stage queue IS STATE.setlist itself (a
     // reference check - the setlist "Start" button passes STATE.setlist
     // directly). A single-song Stage launch (song-screen "Stage" button) passes
@@ -2492,6 +2516,7 @@
       } else {
         applyScale(1);
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp) + '</div>';
+        inertStageChords();
         var probeInner = pSheet.firstElementChild;
         var w1 = 0, i;
         var pre = probeInner ? probeInner.querySelectorAll('.lyrLine') : [];
@@ -2506,6 +2531,7 @@
       var wrapChars = perfWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
       for (var attempts = 0; attempts < 6; attempts++) {
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars || undefined) + '</div>';
+        inertStageChords();
         pSheet.scrollLeft = 0; // belt-and-braces: overflow-x is hidden, but never leave a stale offset clipping the left edge
         pSheet.scrollTop = preserveScroll ? savedTop : 0;
         var stageInner = pSheet.firstElementChild;
