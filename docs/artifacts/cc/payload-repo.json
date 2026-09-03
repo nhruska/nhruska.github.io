@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T13:43:40Z",
+  "generatedAt": "2026-09-03T13:39:05Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-01T14:11:42Z",
-    "sha": "d3e1a340e312e388c3d75085996cf0adb0e27276",
+    "date": "2026-09-02T13:43:47Z",
+    "sha": "2ff207cc63ff761383a2c7524b23e5fcd346b8be",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/d3e1a340e312e388c3d75085996cf0adb0e27276"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/2ff207cc63ff761383a2c7524b23e5fcd346b8be"
   },
   "commits": [
+    {
+      "date": "2026-09-02T13:43:47Z",
+      "sha": "2ff207cc63ff761383a2c7524b23e5fcd346b8be",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/2ff207cc63ff761383a2c7524b23e5fcd346b8be"
+    },
     {
       "date": "2026-09-01T14:11:42Z",
       "sha": "d3e1a340e312e388c3d75085996cf0adb0e27276",
@@ -84,18 +90,12 @@
       "sha": "824249d856ad3b96ebc91cccde202e7edeb9cc37",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/824249d856ad3b96ebc91cccde202e7edeb9cc37"
-    },
-    {
-      "date": "2026-08-21T22:54:47Z",
-      "sha": "c6912b05030e764d89d6cb31de60c991d07f8cdc",
-      "subject": "Bundle capabilities.json into the agent-bundle export (#341)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c6912b05030e764d89d6cb31de60c991d07f8cdc"
     }
   ],
   "openPRs": [
     {
       "number": 342,
-      "title": "UX/UI polish sprint: jam-starter, confirm() retirement, sugg emphasis, CE3, mode-flip degrees, genre multi-select",
+      "title": "UX/UI polish sprint: SDD goalposts + four rounds of operator UAT",
       "branch": "claude/music-app-ux-ui-polish-47k2rc",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/342",
       "draft": true,
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33537798791/job/99956283450"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33752975874/job/100640585432"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33537798797/job/99956283922"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33752975970/job/100640585844"
         }
       ]
     }
@@ -229,9 +229,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-02T13:43:33Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33637489126",
+    "runStartedAt": "2026-09-03T13:39:00Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33762318654",
     "headBranch": "main"
   },
   "velocity": {
