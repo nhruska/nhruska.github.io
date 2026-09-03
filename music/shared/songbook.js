@@ -6819,7 +6819,7 @@
       function renderSkillsPanel() {
         pane.textContent = '';
         var hint = document.createElement('p'); hint.className = 'setHint';
-        hint.textContent = 'Your skills grow as you use the app. Everything here stays on this device - export a profile to carry it to another, or import one to personalize.';
+        hint.textContent = 'Your musician profile - what you can play, so Claude or ChatGPT can coach you at your level. Stays on this device - export it to carry it across.';
         pane.appendChild(hint);
 
         var has = C.hasData();

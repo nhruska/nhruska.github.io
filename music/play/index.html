@@ -341,7 +341,7 @@
             <div class="prefEx" data-m="charts"></div>
             <div class="prefEx" data-m="chips"></div>
           </div>
-          <p class="setHint">Full charts while you're learning shapes, or compact chord names once you know them. Follows your guidance level until you pick one here.</p>
+          <p class="setHint">Full charts while you learn the shapes, compact names once you know them. Follows your guidance level until you pick.</p>
           <!-- The standard Settings setter pair, .setLbl + .themeSeg segmented
                control, mirroring Theme / Fretboard diagrams above. Storage:
                music.guidanceLevel.v1. -->
@@ -355,7 +355,6 @@
         <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
           <div class="setLbl">Theme</div>
           <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
-          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
           <div class="setLbl">Accent color</div>
           <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
         </div>
@@ -363,7 +362,7 @@
       <section class="accSec" data-acc="backup">
         <button class="accBtn" id="accBtnBackup" type="button" aria-expanded="false" aria-controls="accBodyBackup">Backup &amp; Restore</button>
         <div class="accBody" id="accBodyBackup" role="region" aria-labelledby="accBtnBackup" hidden>
-          <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+          <p class="setHint">Your songs and settings live only on this device. Back up writes one file - keep it in Drive or Files - and Restore reads it on a new phone. Restore adds and overwrites. It never deletes.</p>
           <div class="setSummary" id="dataSummary" aria-live="polite"></div>
           <button class="listItem setRow" id="btnBackup" type="button">
             <span class="li-body">
@@ -394,8 +393,8 @@
       <section class="accSec" data-acc="agent">
         <button class="accBtn" id="accBtnAgent" type="button" aria-expanded="false" aria-controls="accBodyAgent">AI Agent</button>
         <div class="accBody" id="accBodyAgent" role="region" aria-labelledby="accBtnAgent" hidden>
-          <p class="setHint">This app publishes live, machine-readable docs about itself. Point any AI agent (Claude, ChatGPT, a coding agent) at them and it can read your exported skills, coach your practice, and hand back one-tap jam links and setup files.</p>
-          <p class="setHint">How it works, plainly: agents only READ these docs - nothing they propose touches your data until you import a file through Skills or tap Save on a jam link. Everything lives at public URLs on this app, so what an agent sees is exactly what you see below.</p>
+          <p class="setHint">Live docs this app publishes about itself. Point Claude or ChatGPT at them and it can read your exported profile, coach your practice, and hand back one-tap jam links.</p>
+          <p class="setHint">Agents only read. Nothing changes on this device until you import a file or tap Save on a jam link.</p>
           <a class="aboutLink" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
             <span>Agent instructions (AGENTS.md) - the exact doc agents read</span>
