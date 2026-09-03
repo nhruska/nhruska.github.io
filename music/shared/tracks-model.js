@@ -147,6 +147,23 @@
     if (/^[A-Za-z0-9_-]{11}$/.test(url)) return url;
     return null;
   }
+  // ROUND 17 - "is a YouTube pre-roll likely on THIS open?" (operator UAT
+  // 2026-09-02: "detect not playing anything -> playing (first load or idle
+  // time) and show the yt video - most likely to have ads. not between every
+  // song tho"). An ad fires when a listening SESSION starts - a fresh embed
+  // after the app loads, or after a real gap - not on each queue advance. Pure
+  // so the rule is checkable without a browser: the caller supplies the state.
+  //   wasPlaying        - was a track already playing when this open began
+  //   hasPlayedThisLoad - has any yt Studio opened since page load
+  //   lastStopAt / now  - ms timestamps; idleMs - the "came back to it" gap
+  function adLikelyOpen(o) {
+    o = o || {};
+    if (o.wasPlaying) return false;          // the queue advanced / he switched rows mid-session
+    if (!o.hasPlayedThisLoad) return true;   // first play of this app load
+    var now = typeof o.now === 'number' ? o.now : Date.now();
+    var idle = typeof o.idleMs === 'number' ? o.idleMs : 0;
+    return (now - (o.lastStopAt || 0)) >= idle; // back after a real gap
+  }
   function mergeTracks(seed, custom) {
     return (Array.isArray(seed) ? seed : []).concat(Array.isArray(custom) ? custom : []);
   }
@@ -264,7 +281,8 @@
     esc: esc,
     focusNoJump: focusNoJump,
     familyMode: familyMode,
-    normMode: normMode
+    normMode: normMode,
+    adLikelyOpen: adLikelyOpen
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.TracksModel;
 

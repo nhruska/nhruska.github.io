@@ -1066,17 +1066,67 @@ test('wireNowPlaying (round 16, skip-ads UAT 2026-09-02): NOTHING auto-hides the
   assert.ok(/playerState/.test(body) && /function syncState\(/.test(body),
     'the per-tick playerState field must route through the same syncState path as onStateChange');
 });
-test('round 16: an open RESTORES the remembered video choice, defaulting VISIBLE so an ad Skip needs no tap', function () {
+test('round 17 (BEHAVIOR): adLikelyOpen answers "is a pre-roll likely on this open?" across all four states', function () {
+  var TM = require('../music/shared/tracks-model.js'); // the PURE model - T above is tracks.js (the DOM module)
+  var M = 10 * 60 * 1000, now = 1e12;
+  // Mid-session: the queue advanced or he tapped another row while one played.
+  // An ad is unlikely AND a video jumping up between songs is the friction the
+  // operator explicitly ruled out ("not between every song tho").
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: true, hasPlayedThisLoad: true, lastStopAt: 0, now: now, idleMs: M }), false,
+    'anything already playing means mid-session - never ad-likely, whatever the clock says');
+  // Session start, the dominant case: app loads, he hits play, YouTube pre-rolls.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: false, now: now, idleMs: M }), true,
+    'the first play of an app load is the canonical ad moment');
+  // Stopped and immediately restarted - still one continuous session.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - 20000, now: now, idleMs: M }), false,
+    'a 20s gap is song-to-song, not a new session - the video must not pop up');
+  // Put the phone down, came back: a fresh embed, ads likely again.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - 30 * 60000, now: now, idleMs: M }), true,
+    'past the idle gap it is a new session again');
+  // Boundary: exactly at the gap counts as a new session (>=, not >).
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - M, now: now, idleMs: M }), true,
+    'the idle threshold is inclusive');
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - M + 1, now: now, idleMs: M }), false,
+    'one ms under the gap is still the same session');
+});
+test('round 17: the video shows itself exactly where ADS ARE LIKELY - session start, not every song', function () {
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
-  assert.ok(/setVid\(readVidPref\(\), true\);/.test(body),
-    'every open must restore the remembered choice via setVid(readVidPref(), true) - never a hardcoded park');
+  // Operator: "detect not playing anything -> playing (first load or idle time)
+  // and show the yt video - most likely to have ads. not between every song tho".
+  // A YouTube pre-roll fires when a listening SESSION starts (a fresh embed after
+  // load or after a real gap), not on each queue advance.
+  assert.ok(/var wasPlaying = !!nowPlaying;/.test(body),
+    'the open must read nowPlaying BEFORE it is reassigned - that is the "was anything already playing" signal');
+  assert.ok(/var adLikely = adLikelyOpen\(\{ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS \}\);/.test(body),
+    'the open must decide via the PURE adLikelyOpen predicate (behaviour-tested above), not an inline expression only a browser could exercise');
+  assert.ok(/setVid\(adLikely \? 'theater' : \(vidState \|\| readVidPref\(\)\), true\);/.test(body),
+    'ad-likely opens SHOW the video; every other open CARRIES the state the user left it in (never a jump, never a yank)');
+  assert.ok(/hasPlayedThisLoad = true;/.test(body), 'the open must mark the load as having played');
+  // The carry var is what makes a mid-session open honest - it tracks every transition.
+  assert.ok(/vidState = state;/.test(extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/)),
+    'setVid must keep the carry var current so the next open can continue the state');
+  // Round 16 still stands underneath: nothing hides it on a timer.
+  assert.ok(!/AUTOMIN|startCountdown/.test(body), 'round 16 stands - no auto-hide machinery may return');
+});
+test('round 17: the idle clock starts on a REAL stop, and the signals are module-scoped', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var close = extractFunctionBody(src, /function closePlayer\(\) \{/);
+  assert.ok(/if \(nowPlaying\) lastStopAt = Date\.now\(\);/.test(close),
+    'closePlayer must stamp lastStopAt only when something was actually playing');
+  assert.ok(/var hasPlayedThisLoad = false;/.test(src) && /var lastStopAt = 0;/.test(src) && /var vidState = null;/.test(src),
+    'the three session signals must live at module scope (they outlive any single Studio open)');
+  assert.ok(/VID_IDLE_MS = 10 \* 60 \* 1000;/.test(src), 'the idle gap must be one named, tunable constant');
+});
+test('round 16 (still standing): the pref is written by USER acts only, never by the open that replays it', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/);
+  assert.ok(/if \(!fromOpen\) writeVidPref\(state\);/.test(body),
+    'setVid must persist every non-open (user) transition, and must NOT re-write on a restoring open');
   var read = extractFunctionBody(src, /function readVidPref\(\) \{/);
-  assert.ok(read, 'readVidPref() not found');
   assert.ok(/'theater'/.test(read) && /catch/.test(read),
-    "unset OR unreadable storage must fall back to the VISIBLE 'theater' - a blocked-storage phone must not silently re-park the video");
-  assert.ok(/v === 'hid' \|\| v === 'pip' \|\| v === 'theater'/.test(read),
-    'only the three known states may be restored (a junk value falls back to visible)');
+    'unset OR unreadable storage falls back to the VISIBLE theater');
+  assert.ok(/VID_PREF_KEY = 'music\.vidPref\.v1'/.test(src), 'the pref key stays the namespaced additive music.vidPref.v1');
 });
 test('round 16: the video preference is written by USER acts only, never by the open that replays it', function () {
   var src = readSrc('music/shared/tracks.js');

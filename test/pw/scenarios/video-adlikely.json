@@ -1,6 +1,6 @@
 {
-  "name": "video-remembers",
-  "note": "ROUND 16 (operator UAT 2026-09-02, verbatim: \"don't auto hide yt video. I keep having to open it to skip after ads\"). The law: the video's visibility is the USER'S, never the app's. A fresh device opens the video VISIBLE so a pre-roll ad's Skip button needs no tap; parking it once makes every LATER open parked (music.vidPref.v1 - additive key, no SCHEMA_VERSION bump), until the user shows it again. This is what keeps round 15's intent (\"not show the video any other time\") reachable without re-parking on every track. Red-first: against the pre-round-16 build step 2 fails, because every open was hardcoded to setVid('hid').",
+  "name": "video-adlikely",
+  "note": "ROUND 17 (operator UAT 2026-09-02, verbatim: \"can we detect not playing anything -> playing (first load or idle time) and show the yt video - most likely to have ads. not between every song tho\"). A YouTube pre-roll fires when a listening SESSION starts - a fresh embed after the app loads or after a real gap - not on each queue advance. So an AD-LIKELY open (nothing was playing AND first-play-this-load, or the last stop was over VID_IDLE_MS ago) SHOWS the video, and every other open CARRIES the state the user left it in. Round 16 still stands underneath: the app never HIDES the video on its own, and an explicit park is remembered (music.vidPref.v1, additive). Red-first: against the pre-round-16 build step 3 fails (every open was hardcoded setVid('hid')); the mid-session carry asserts are what round 17 adds on top.",
   "url": "/music/play/",
   "steps": [
     {
@@ -73,6 +73,32 @@
       "action": "evalAssert",
       "label": "SHOWING IT AGAIN IS ALSO REMEMBERED - the preference flips back to theater, so the pendulum swings both ways",
       "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&localStorage.getItem('music.vidPref.v1')==='theater';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "park it again mid-session (a user act, so it is remembered)",
+      "js": "(function(){return document.querySelector('.bt-player').classList.contains('vidhid')&&localStorage.getItem('music.vidPref.v1')==='hid';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player [data-npnext]"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "ROUND 17 - QUEUE ADVANCE WHILE PLAYING IS MID-SESSION: the next song CARRIES the parked state - the video must not jump up between songs (ads are unlikely here, and a jumping video is the friction this rule exists to avoid)",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&!p.classList.contains('vidopen');})()"
     },
     {
       "action": "screenshot",

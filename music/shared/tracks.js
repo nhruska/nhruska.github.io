@@ -43,6 +43,7 @@
   var focusNoJump = TM.focusNoJump;
   var familyMode = TM.familyMode;
   var normMode = TM.normMode;
+  var adLikelyOpen = TM.adLikelyOpen;
 
   /* ---------- Practice Studio theory + solo-guide + JIT text ----------
    * Extracted to studio-theory.js (loaded before this file). Rebind as
@@ -335,6 +336,7 @@
       studioAudioWarm = false;
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.classList.remove('vidhid'); elPlayer._setVid = null; elPlayer.innerHTML = '';
       exitMini();
+      if (nowPlaying) lastStopAt = Date.now(); // round 17: a real stop starts the idle clock
       nowPlaying = null; userPaused = false;
       // UAT batch 7: clear the Media Session so no stale lock-screen card
       // outlives the player.
@@ -354,6 +356,15 @@
      * the bar's x is the real teardown. No DOM is rebuilt or reparented on
      * minimize/expand - the one Studio DOM just changes shape via CSS. */
     var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
+    // ROUND 17 ad-likelihood signals (operator UAT 2026-09-02: "can we detect not
+    // playing anything -> playing (first load or idle time) and show the yt video -
+    // most likely to have ads. not between every song tho"). A YouTube pre-roll
+    // fires when a session STARTS, not on every track, so the video shows itself
+    // exactly there and stays out of the way song-to-song.
+    var hasPlayedThisLoad = false;  // has any yt-backed Studio opened since page load
+    var lastStopAt = 0;             // when playback last really STOPPED (closePlayer)
+    var vidState = null;            // last video state (theater|pip|hid) - carried across an open
+    var VID_IDLE_MS = 10 * 60 * 1000; // "came back to it" gap. Judgment call, not measured - one constant to tune.
     var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
     // PLAYER-FEEL v6: prev/next/auto-advance walk the current view's playable
     // pool - songbook owns the pool (opts.advance -> playNeighbor), the player
@@ -1417,6 +1428,7 @@
         // left to pollute the preference.
         function setVid(state, fromOpen) {
           if (!mediaEl || !mediaEl.isConnected) return; // stale call after the Studio closed/re-opened
+          vidState = state;            // round 17: what the NEXT open carries forward
           if (!fromOpen) writeVidPref(state);
           mediaEl.classList.toggle('min', state === 'pip');
           mediaEl.classList.toggle('hid', state === 'hid');
@@ -1495,12 +1507,26 @@
         var eqEl = elPlayer.querySelector('.bt-st-bareq');
         if (idEl) idEl.addEventListener('click', toggleDock);
         if (eqEl) eqEl.addEventListener('click', toggleDock);
-        // Round 16 ("don't auto hide yt video"): an open RESTORES the remembered
-        // choice, defaulting to the VISIBLE theater so a pre-roll ad's Skip
-        // button is on screen without a tap. Supersedes round 15's
-        // always-PARKED open, which is what put the ad behind a manual open.
-        // fromOpen=true: replaying the stored choice must not re-store it.
-        setVid(readVidPref(), true);
+        // ROUND 17 - WHERE THE VIDEO SHOWS ITSELF (operator UAT 2026-09-02):
+        // "detect not playing anything -> playing (first load or idle time) and
+        // show the yt video - most likely to have ads. not between every song
+        // tho". A pre-roll fires when a listening session STARTS - a fresh embed
+        // after the app loads or after a real gap - not on each queue advance.
+        // So:
+        //   AD-LIKELY open (nothing was playing AND it is the first play of this
+        //     load, or the last stop was over VID_IDLE_MS ago) -> SHOW it, so
+        //     Skip is on screen without a tap. This is the whole point, so it
+        //     beats a stale stored preference (round 16 shipped the memory; the
+        //     operator has now twice asked to SEE the video when ads are likely).
+        //   MID-SESSION open (the queue advanced, or he tapped another row while
+        //     one played) -> CARRY the state he left it in. The video neither
+        //     jumps up between songs nor gets yanked away (round 16 stands: the
+        //     app never hides it).
+        // fromOpen=true: replaying a state must not re-store it as a user choice.
+        var wasPlaying = !!nowPlaying; // nowPlaying is still the PREVIOUS track here (set after this wiring)
+        var adLikely = adLikelyOpen({ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS });
+        setVid(adLikely ? 'theater' : (vidState || readVidPref()), true);
+        hasPlayedThisLoad = true;
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
         // indicates now playing"): detect the embed's END - the onStateChange
