@@ -456,6 +456,29 @@
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
+      // S-FIRSTSESSION-TAP-BLOCKED (found 2026-09-03 by regressing the CE3
+      // cold-start scenario): collapse a THEATER video when the sheet collapses.
+      // The class `vidopen` means "the video is in theater" - but nothing cleared
+      // it on the way down, so a minimized player kept it, the CSS guard
+      // `.bt-player.mini:not(.vidopen) .bt-st-media:not(.min){max-height:0}` never
+      // matched, and a 245px position:fixed z-96 iframe stayed pinned at y=58
+      // across EVERY tab. Measured: after the first-run tour a new user backs out
+      // of the jam and the top ~300px of the app silently eats taps - which is
+      // what the scenario was tripping over. setVid's own stash comment already
+      // said minimize demotes the theater to PIP; no code ever did it.
+      //
+      // PIP, not parked: round 16 wants the video VISIBLE on a mini player so the
+      // ad's Skip button is reachable. The theater card's placement is sized for
+      // an OPEN sheet; the PIP dock is 152x110 in the corner, still tappable
+      // (it carries its own maximize bar), and covers no page content.
+      //
+      // fromOpen=true on purpose: this skips writeVidPref, so collapsing the
+      // theater does NOT overwrite the user's remembered video choice for the
+      // next open (rounds 16/17). Parked and already-PIP states are left alone -
+      // only a theater is impossible once the sheet is down.
+      if (typeof elPlayer._setVid === 'function' && elPlayer.classList.contains('vidopen')) {
+        elPlayer._setVid('pip', true);
+      }
       elPlayer.classList.add('mini');
       document.body.classList.add('miniplayer');
       // Bar-body tap expands back to the full Studio; the pp button and the x
