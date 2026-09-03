@@ -57,7 +57,12 @@ function extractCore(src) {
 // play/index.html, normalized to the same './shared/X.js' shape CORE uses.
 function extractSharedScriptTags(src) {
   var out = [];
-  var re = /<script src="\.\.\/shared\/([^"]+\.js)"><\/script>/g, mm;
+  // The `?v=<VERSION>` cache-buster (scripts/stamp-asset-versions.py, added
+  // 2026-09-03 to kill the mixed-build bug) is NOT part of the resource
+  // identity - CORE precaches bare paths, so strip the query before comparing.
+  // Matching `[^"?]+` rather than `[^"]+` is what keeps this test asserting the
+  // precache correspondence instead of silently extracting zero tags.
+  var re = /<script src="\.\.\/shared\/([^"?]+\.js)(?:\?v=[^"]*)?"><\/script>/g, mm;
   while ((mm = re.exec(src))) out.push('./shared/' + mm[1]);
   return out;
 }

@@ -200,5 +200,27 @@ if [ "$WARNED" -eq 1 ]; then
   echo "check-cache-bump: (warnings above are historical - the branch tip is clean)" >&2
 fi
 
-echo "check-cache-bump: OK - CACHE bumped ($BASE_CACHE -> $HEAD_CACHE) alongside the music/shared|play diff vs $BASE; build-stamp pair verified (VERSION $HEAD_STAMP_VER, UPDATED_ISO $HEAD_STAMP_ISO); the tip does not reuse a version an earlier commit already shipped."
+# The version is a TRIPLE, not a pair, since 2026-09-03: sw.js CACHE +
+# build-stamp VERSION + the ?v= on every local asset URL. The first two only
+# govern the service worker, which is network-first and was never the problem -
+# it was HTTP/CDN caches keyed on URLs that never changed, which served a new
+# index.html alongside an old songbook.css AND an old build-stamp.js, so the
+# stamp itself misreported the build. Check the third leg here, at the moment an
+# author bumps, rather than letting them find out from a phone.
+# Gate this leg on the app HTML actually being present: check-cache-bump.test.js
+# exercises the script inside synthetic fixture repos that hold only sw.js and
+# build-stamp.js, where there are no asset URLs to stamp and the companion
+# script is not copied in. Skipping there keeps those fixtures meaningful.
+# Deleting the stamper from the REAL repo does not slip through - it is spawned
+# directly by test/asset-version-lint.test.js, which fails loudly.
+STAMPER="$(dirname "$0")/stamp-asset-versions.py"
+if [ -f "music/play/index.html" ] && [ -f "$STAMPER" ]; then
+  if ! python3 "$STAMPER" --check; then
+    echo "check-cache-bump: FAIL - the asset URLs do not carry $HEAD_STAMP_VER." >&2
+    echo "Run: python3 scripts/stamp-asset-versions.py   (then re-stage)" >&2
+    exit 1
+  fi
+fi
+
+echo "check-cache-bump: OK - CACHE bumped ($BASE_CACHE -> $HEAD_CACHE) alongside the music/shared|play diff vs $BASE; build-stamp pair verified (VERSION $HEAD_STAMP_VER, UPDATED_ISO $HEAD_STAMP_ISO); asset URLs stamped; the tip does not reuse a version an earlier commit already shipped."
 exit 0

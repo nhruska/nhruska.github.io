@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v342-10';
+var CACHE = 'music-v342-11';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -117,7 +117,12 @@ self.addEventListener('fetch', function (e) {
     // not be time-boxed. Fresh-when-online is preserved: a healthy network
     // answers well inside the deadline.
     e.respondWith(
-      caches.match(req).then(function (cached) {
+      // ignoreSearch: the `?v=<VERSION>` the HTML carries on every local asset
+      // (scripts/stamp-asset-versions.py) is a cache-buster, NOT part of the
+      // resource identity - CORE precaches the bare paths, so an offline lookup
+      // for `songbook.css?v=music-v342-11` must still resolve to `songbook.css`.
+      // Online this branch is network-first anyway, so the fresh bytes win.
+      caches.match(req, { ignoreSearch: true }).then(function (cached) {
         var netP = fetch(req).then(function (res) {
           if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
