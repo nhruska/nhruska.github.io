@@ -2010,6 +2010,25 @@ footer{display:none;}
    "does something here" without needing a sentence to say so. */
 .setAction.saExt{color:var(--brass);}
 .setAction.saExt .saGo{color:var(--brass);}
+
+/* DISCLOSURE - "for those interested" content that must never become a step
+   (UAT batch 6: "the agent interactions and instructions and prompts should be
+   visible and viewable so they know what we're doing with their system IF THEY
+   SHOULD CHOOSE"). A <details> whose summary composes the same .setAction row,
+   so the app has one row look whether the row acts or reveals. The marker is
+   replaced by the accordion's own chevron for the same reason: one disclosure
+   language app-wide, not a native triangle beside our drawn chevrons. */
+.agentDisclose{margin-top:8px;}
+.agentDisclose > summary{list-style:none;cursor:pointer;}
+.agentDisclose > summary::-webkit-details-marker{display:none;}
+.agentDisclose > summary::after{content:'';flex:0 0 auto;width:11px;height:11px;margin:-4px 2px 0 0;
+  border-right:2px solid var(--accent-ink);border-bottom:2px solid var(--accent-ink);
+  transform:rotate(45deg);transform-origin:center;transition:transform .18s;}
+.agentDisclose[open] > summary::after{transform:rotate(-135deg);margin:4px 2px 0 0;}
+/* The revealed rows sit slightly inset so they read as belonging to the summary
+   rather than as peers of Export/Import above it. */
+.agentDisclose > :not(summary){margin-left:10px;}
+.agentDisclose .setHint{margin:10px 0 6px 10px;}
 /* About section link rows: external-link ink (--brass, the Links convention) +
    inline-SVG icon taking currentColor; 44px touch floor. */
 /* AI Agent section (round 16): the copy buttons ride one row under the live

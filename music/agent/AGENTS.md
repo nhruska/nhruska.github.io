@@ -71,6 +71,22 @@ Save your proposed doc as `<skill-id>/SKILL.md` (render it in the same shape as
 the file you read - frontmatter + table + the fenced JSON block) and tell the
 user: import it from Settings -> Skills in the app, on any device, offline.
 
+The SAME hand-back covers all three update cases - there is no separate
+procedure for any of them:
+
+1. **One competency moved.** A practice session raised (or lowered) a level.
+   Change that entry's `level`, bump its `evidence_count`, set `last_evidence`.
+   Leave every other entry byte-identical.
+2. **Porting an outside profile in.** The user already tracks skills elsewhere.
+   Map them onto the competency ids you find in the file; anything with no
+   equivalent is dropped rather than invented. Keep the schema exactly.
+3. **Correcting a fresh install.** The profile is at defaults and a conversation
+   established the real levels. Set them, and record where they came from in
+   `provenance` so the next agent knows they were self-reported, not measured.
+
+In every case the import MERGES - it adds and overwrites, never deletes - so a
+partial doc is safe. Do not pad a file with entries you did not actually assess.
+
 ## Privacy
 
 This app's repo is public and ships frameworks only - no personal data. The

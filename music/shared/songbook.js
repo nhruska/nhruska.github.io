@@ -6626,7 +6626,7 @@
       // - rarely-needed content sinks to the bottom. Round 16: anchor on the
       // AI Agent section first so the agent family reads together (Skills
       // right above the section that explains the agent surface), About last.
-      var anchorSec = body.querySelector('.accSec[data-acc="agent"]') || body.querySelector('.accSec[data-acc="about"]');
+      var anchorSec = body.querySelector('.accSec[data-acc="about"]');
       if (anchorSec) body.insertBefore(sec, anchorSec); else body.appendChild(sec);
 
       // Hidden file input for import (shared by the first-start lead + the row).
@@ -6785,6 +6785,15 @@
         if (global.AgentReadme && typeof global.AgentReadme.text === 'function') {
           files.push({ path: 'AGENTS.md', text: global.AgentReadme.text() });
         }
+        // README.md: the zip's front door (UAT batch 6, "should describe itself
+        // without any additional prompting just by uploading the zip file").
+        // AGENTS.md already carried the whole contract, but nothing was NAMED the
+        // file a person or an agent opens first in an unfamiliar folder - so the
+        // bundle was self-describing to anyone who already knew where to look.
+        // Guarded like the rest: an older cached agent-readme.js has no readme().
+        if (global.AgentReadme && typeof global.AgentReadme.readme === 'function') {
+          files.push({ path: 'README.md', text: global.AgentReadme.readme() });
+        }
         // capabilities.json: the app capability manifest at the zip root, so
         // the bundle alone tells an agent what the app can do (surfaces, data
         // keys, interchange contracts) - zero network, per AGENTS.md's own
@@ -6892,12 +6901,24 @@
         if (has) {
           var exportAllRow = document.createElement('button');
           exportAllRow.className = 'setAction skillsExportAllRow'; exportAllRow.type = 'button';
-          var et = document.createElement('span'); et.className = 'saLbl'; et.textContent = 'Export all skills';
+          var et = document.createElement('span'); et.className = 'saLbl'; et.textContent = 'Export for my AI';
           exportAllRow.appendChild(et);
           exportAllRow.onclick = downloadBundle;
           pane.appendChild(exportAllRow);
         }
         if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
+
+        // UAT batch 6: the AI Agent accordion is merged in here. Its markup lives
+        // in play/index.html as #agentBlock (a plain div, deliberately outside the
+        // .accSec scan - see the comment there) and is ADOPTED into this pane, so
+        // the ids survive and index.html's wireAgentSection() keeps binding them.
+        // Appended last: Export and Import are the job, the docs are a disclosure.
+        // MUST live inside renderSkillsPanel, not mountSkillsPanel: this function
+        // clears the pane with textContent='' on every open, so an adoption done
+        // once at mount is wiped by the first render (it was, and only the live
+        // render caught it - the node suite passed the whole time).
+        var agentBlock = document.getElementById('agentBlock');
+        if (agentBlock) { agentBlock.hidden = false; pane.appendChild(agentBlock); }
       }
 
       // S-SETTINGS-UAT (operator UAT 2026-07-16): JOIN the page's 'settings'
@@ -6919,21 +6940,13 @@
           if (open) renderSkillsPanel();
         };
       }
-      // Round 18: the AI Agent section (play/index.html) leads with the
-      // one-tap bundle export - the SAME downloadBundle the Skills row uses
-      // (one code path, injected here because the function lives in this
-      // closure). Guarded for an older cached shell without the section.
-      var agentBody = document.getElementById('accBodyAgent');
-      if (agentBody && !document.getElementById('agentBundleRow')) {
-        var abRow = document.createElement('button');
-        abRow.className = 'setAction'; abRow.type = 'button'; abRow.id = 'agentBundleRow';
-        var abT = document.createElement('span'); abT.className = 'saLbl'; abT.textContent = 'Export agent bundle';
-        abRow.appendChild(abT);
-        abRow.onclick = downloadBundle;
-        var firstLink = document.getElementById('agentReadmeLink');
-        if (firstLink) agentBody.insertBefore(abRow, firstLink); else agentBody.appendChild(abRow);
-      }
+      // UAT batch 6 ("can't we merge skills and agent accordion?"): the injected
+      // 'Export agent bundle' row is GONE. It called the identical downloadBundle
+      // as the Skills section's own 'Export all skills' - one zip, two names, two
+      // accordions. Two buttons that differ only in label is what made the user
+      // believe there were two different exports to reason about.
     }
+
     try { mountSkillsPanel(); } catch (e) { /* the Settings Skills panel is non-critical - never block mount */ }
 
     /* ---- controller ---- */
