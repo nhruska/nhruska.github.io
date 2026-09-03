@@ -3153,4 +3153,78 @@ test('S-SUGG-DIFFERENTIATE: ranked "Suggested Chords" chips carry sugg-reco (not
   });
 });
 
+/* ---------- S-SETLIST-GESTURES (operator UAT 2026-09-03: "change drag to
+ * press and hold on song on setlist" + "change setlist delete to slide
+ * swipe... like outlook and Gmail mobile. both directions are delete") ----------
+ * wireSetlistDrag is closure-bound (no exported handle to fire a real
+ * PointerEvent through, same as wireSectionDrag before it - see the
+ * prog-reorder / song-builder-drag-reorder pw scenarios for the behavioral
+ * proof of that sibling feature). Source-pinned per the same convention this
+ * repo already uses for closure-bound gesture code: the CONTRACT points from
+ * the mission brief, each asserted against the real source text so a
+ * regression that quietly drops one fails here, not just on a phone. */
+test('S-SETLIST-GESTURES: the grip is fully retired - no consumer queries or renders .li-grip any more', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(!/li-grip/.test(src), 'songbook.js must not reference .li-grip - the row itself is the gesture surface now');
+});
+test('S-SETLIST-GESTURES: the row-level gesture never starts on a <button> (li-lead / the a11y up-dn-rm controls keep their own tap)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n    \}/);
+  assert.ok(fn, 'expected a wireSetlistDrag(row, index) function');
+  assert.ok(/e\.target[\s\S]{0,40}closest[\s\S]{0,20}'button'[\s\S]{0,20}\) return;/.test(fn[0]),
+    'pointerdown must bail out early when the target is inside a <button>');
+});
+test('S-SETLIST-GESTURES: reorder keeps the SAME timing constants as wireSectionDrag (300ms touch hold, 6-8px slop), matched not reinvented', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/HOLD_MS = 300/.test(fn[0]), 'the touch long-press must stay 300ms (matches wireSectionDrag)');
+  assert.ok(/MOVE_CANCEL_PX = 8/.test(fn[0]), 'the touch pre-hold cancel threshold must stay 8px (matches the old grip/section-drag "moved > 8")');
+  assert.ok(/LIFT_SLOP_PX = 6/.test(fn[0]), 'the mouse lift slop must stay 6px (matches wireSectionDrag\'s "moved > 6")');
+});
+test('S-SETLIST-GESTURES: directional lock decides swipe vs a genuine scroll (touch) and swipe vs reorder (mouse) from |dx| vs |dy|, never movement alone', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  var lockCount = (fn[0].match(/Math\.abs\(dx\) > Math\.abs\(dy\)/g) || []).length;
+  assert.strictEqual(lockCount, 2, 'the |dx|>|dy| axis check must appear once for touch and once for mouse - one directional lock, two entry points');
+  // Vertical touch movement before the hold fires must cancel outright (never
+  // lift, never translate) - the design contract's "the row must never move" line.
+  assert.ok(/else \{ cleanup\(\); return; \}/.test(fn[0]), 'a vertical touch move before the hold fires must cancel, not swipe or reorder');
+});
+test('S-SETLIST-GESTURES: swipe-delete commits at >=25% of row width, through the SAME removeFromSet+undo entry point every other remove uses', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/SWIPE_COMMIT_FRAC = 0\.25/.test(fn[0]), 'the swipe-delete threshold must be 25% of row width');
+  assert.ok(/removeFromSet\(sid\)/.test(fn[0]), 'a committed swipe must call the SAME removeFromSet(sid) every .li-rm consumer uses - never a second remove path');
+  assert.ok(!/STATE\.setlist\.splice\(index, 1\)\[0\][\s\S]{0,80}removeFromSet/.test(fn[0]), 'the swipe path must not re-implement splice-based removal itself');
+});
+test('S-SETLIST-GESTURES: a swipe (either mode reached) always swallows the trailing click - tap-to-play never fires off a swipe release', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  var onUp = fn[0].match(/function onUp\(ev\) \{[\s\S]*?\n        \}/);
+  assert.ok(onUp, 'expected an onUp(ev) handler');
+  var swipeBranch = onUp[0].match(/\} else if \(mode === 'swipe'\) \{([\s\S]*?)\n          \}/);
+  assert.ok(swipeBranch, 'expected an else-if (mode === \'swipe\') branch in onUp');
+  assert.ok(/swallowClick\(\);/.test(swipeBranch[1]), 'the swipe branch of onUp must call swallowClick() unconditionally (commit or spring-back alike)');
+  assert.ok(!/if \(!?commit/.test(swipeBranch[1]), 'swallowClick must not be gated behind a commit check - both outcomes swallow the trailing click');
+});
+test('S-SETLIST-GESTURES: an interrupted gesture (pointercancel) never commits a delete', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/ev\.type !== 'pointercancel'/.test(fn[0]), 'the swipe commit decision must exclude pointercancel - a destructive action only fires from a deliberate release');
+});
+test('S-SETLIST-GESTURES: a lone song (setlist.length===1) still allows swipe-delete but never arms reorder', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/if \(isTouch && STATE\.setlist\.length >= 2\) holdTimer = setTimeout\(beginReorder, HOLD_MS\);/.test(fn[0]),
+    'the touch long-press timer must be gated on setlist.length >= 2 (a single-song set has nothing to reorder)');
+  assert.ok(/else if \(STATE\.setlist\.length >= 2\) beginReorder\(\);/.test(fn[0]),
+    'the mouse vertical-movement branch must gate reorder the same way');
+});
+
 run();

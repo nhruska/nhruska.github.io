@@ -1,0 +1,133 @@
+{
+  "name": "setlist-gestures",
+  "note": "S-SETLIST-GESTURES (operator UAT 2026-09-03: 'change drag to press and hold on song on setlist' + 'change setlist delete to slide swipe... like outlook and Gmail mobile. both directions are delete'). Replaces the grip-drag (setlist-remove-arm's old two-tap arm-x is retired too - see that scenario's own note). Proves: (1) the grip and the always-on arm-x are gone from a set row's resting look; (2) a real Playwright mouse drag (dragReorder, the SAME verb S-PROG-REORDER already proved reorder with) started from the ROW BODY - no dedicated handle any more - reorders the set; (3) a synthetic PointerEvent sequence dispatched from inside the page (no runner change - dragSwipe is not an existing verb and run-scenario.py is out of this mission's scope) proves a >=25% horizontal drag commits a delete through the SAME removeFromSet+undo path every other remove uses, and a <25% drag springs back without removing anything.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(1) .li-add" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(2) .li-add" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(3) .li-add" },
+    { "action": "wait", "ms": 250 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
+    { "action": "tap", "selector": "#segSet" },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "3 set rows, none carry the old grip handle or an always-visible remove x - the row itself is the gesture surface now",
+      "js": "(function(){var rows=document.querySelectorAll('#setBody .listItem');if(rows.length!==3)return false;if(document.querySelectorAll('#setBody .li-grip').length)return false;var vis=Array.from(document.querySelectorAll('#setBody .li-rm')).some(function(b){return b.getBoundingClientRect().width>2});return !vis})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "every set row wraps its content in .li-inner behind a .li-swipe-bg danger underlay carrying both direction glyphs",
+      "js": "Array.from(document.querySelectorAll('#setBody .listItem')).every(function(r){return r.classList.contains('swipeable') && r.querySelector('.li-inner') && r.querySelectorAll('.li-swipe-ico').length===2})"
+    },
+    { "action": "screenshot", "name": "three-songs" },
+    {
+      "action": "evalAssert",
+      "label": "WCAG 2.5.1 a11y fallback: li-up is invisible at rest (a11y-only, not a new tap surface) but reveals to its real size on keyboard focus",
+      "js": "(function(){var up=document.querySelector('#setBody .listItem:nth-of-type(2) .li-up');if(!up)return 'no li-up';var restW=up.getBoundingClientRect().width;up.focus();var focusW=up.getBoundingClientRect().width;up.blur();return restW<=1 && focusW>=20})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the a11y li-up control ACTUALLY reorders (same onUp handler the row gesture drives) - row 2 swaps with row 1, no gesture involved",
+      "js": "(function(){var titlesBefore=Array.from(document.querySelectorAll('#setBody .li-title')).map(function(e){return e.textContent.trim()});var up=document.querySelector('#setBody .listItem:nth-of-type(2) .li-up');if(!up)return 'no li-up';up.click();var titlesAfter=Array.from(document.querySelectorAll('#setBody .li-title')).map(function(e){return e.textContent.trim()});return titlesAfter.length===3 && titlesAfter[0]===titlesBefore[1] && titlesAfter[1]===titlesBefore[0] && titlesAfter[2]===titlesBefore[2]})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the a11y li-rm control still runs the SAME arm-then-confirm gate as ever - one click only ARMS, it must not remove yet",
+      "js": "(function(){var rm=document.querySelector('#setBody .listItem:nth-of-type(1) .li-rm');if(!rm)return 'no li-rm';rm.click();return document.querySelectorAll('#setBody .listItem').length===3 && rm.classList.contains('armed')})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a second click on the now-armed a11y li-rm removes - through the exact same list-item.js dispatch gate, keyboard-operable end to end",
+      "js": "(function(){var rm=document.querySelector('#setBody .listItem:nth-of-type(1) .li-rm');if(!rm)return 'no li-rm';rm.click();return document.querySelectorAll('#setBody .listItem').length===2})()"
+    },
+    { "action": "wait", "ms": 250 },
+    {
+      "action": "evalAssert",
+      "label": "back to 3 songs for the gesture proofs below - undo the a11y-path remove",
+      "js": "(function(){var btn=document.querySelector('.setUndo button');if(!btn)return 'no undo button';btn.click();return true})()"
+    },
+    { "action": "wait", "ms": 250 },
+    {
+      "action": "evalAssert",
+      "label": "undo restored all 3 songs",
+      "js": "document.querySelectorAll('#setBody .listItem').length === 3"
+    },
+    {
+      "action": "evalAssert",
+      "label": "capture the starting title order for the reorder proof below",
+      "js": "(function(){window.__s1titles=Array.from(document.querySelectorAll('#setBody .li-title')).map(function(e){return e.textContent.trim()});return window.__s1titles.length===3})()"
+    },
+    {
+      "action": "dragReorder",
+      "from": "#setBody .listItem:nth-of-type(1)",
+      "to": "#setBody .listItem:nth-of-type(3)",
+      "side": "below"
+    },
+    { "action": "wait", "ms": 400 },
+    {
+      "action": "evalAssert",
+      "label": "press-and-hold reorder (mouse: movement-lift from the ROW body, no grip) moved song 1 to the end - order [2,3,1]",
+      "js": "(function(){var t=window.__s1titles;var now=Array.from(document.querySelectorAll('#setBody .li-title')).map(function(e){return e.textContent.trim()});return now.length===3 && now[0]===t[1] && now[1]===t[2] && now[2]===t[0]})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "nothing deleted by the reorder - still 3 rows",
+      "js": "document.querySelectorAll('#setBody .listItem').length === 3"
+    },
+    { "action": "screenshot", "name": "reordered" },
+    {
+      "action": "evalAssert",
+      "label": "a SMALL swipe (10% of row width, mouse pointerType, dispatched from inside the page - no runner verb exists for an in-place horizontal drag) springs back: row count unchanged and the swipe classes/custom-property are cleaned up",
+      "js": "(function(){var row=document.querySelector('#setBody .listItem:nth-of-type(1)');if(!row)return 'no row';var r=row.getBoundingClientRect();var y=r.top+r.height/2,x0=r.left+r.width/2,dx=r.width*0.10;function fire(type,x){row.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:501,pointerType:'mouse',clientX:x,clientY:y,button:0}))}fire('pointerdown',x0);fire('pointermove',x0+dx*0.5);fire('pointermove',x0+dx);fire('pointerup',x0+dx);window.__springRow=row;return true})()"
+    },
+    { "action": "wait", "ms": 260 },
+    {
+      "action": "evalAssert",
+      "label": "spring-back settled: 3 rows still, no swipe classes left, --swipe-x cleared",
+      "js": "(function(){if(document.querySelectorAll('#setBody .listItem').length!==3)return false;var row=window.__springRow;if(!row||!row.isConnected)return false;if(row.classList.contains('swiping')||row.classList.contains('swipe-anim')||row.classList.contains('swipe-commit'))return false;return row.style.getPropertyValue('--swipe-x')===''})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a swipe under threshold never fires tap-to-play either (the trailing-click swallow) - the Practice screen (s-practice) never activated, still on Library",
+      "js": "(function(){var pr=document.getElementById('s-practice');return (!pr || !pr.classList.contains('on')) && document.getElementById('s-library').classList.contains('on')})()"
+    },
+    { "action": "screenshot", "name": "spring-back" },
+    {
+      "action": "evalAssert",
+      "label": "a BIG swipe (40% of row width, past the 25% commit threshold, direction RIGHT) removes the row",
+      "js": "(function(){var row=document.querySelector('#setBody .listItem:nth-of-type(1)');if(!row)return 'no row';var r=row.getBoundingClientRect();var y=r.top+r.height/2,x0=r.left+r.width/2,dx=r.width*0.40;function fire(type,x){row.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:502,pointerType:'mouse',clientX:x,clientY:y,button:0}))}fire('pointerdown',x0);fire('pointermove',x0+dx*0.4);fire('pointermove',x0+dx*0.8);fire('pointermove',x0+dx);fire('pointerup',x0+dx);return true})()"
+    },
+    { "action": "wait", "ms": 350 },
+    {
+      "action": "evalAssert",
+      "label": "commit settled: down to 2 rows - the SAME removeFromSet path fired (not a bespoke swipe-only remove)",
+      "js": "document.querySelectorAll('#setBody .listItem').length === 2"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the undo banner offered after the swipe-commit remove - same as any other setlist remove",
+      "js": "(function(){var u=document.querySelector('.setUndo');return !!u && !u.hidden})()"
+    },
+    { "action": "screenshot", "name": "swiped-away-with-undo" },
+    {
+      "action": "evalAssert",
+      "label": "swiping the OTHER direction (LEFT, negative dx, past threshold) also deletes - both directions delete",
+      "js": "(function(){var row=document.querySelector('#setBody .listItem:nth-of-type(1)');if(!row)return 'no row';var r=row.getBoundingClientRect();var y=r.top+r.height/2,x0=r.left+r.width/2,dx=-r.width*0.40;function fire(type,x){row.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:503,pointerType:'mouse',clientX:x,clientY:y,button:0}))}fire('pointerdown',x0);fire('pointermove',x0+dx*0.4);fire('pointermove',x0+dx*0.8);fire('pointermove',x0+dx);fire('pointerup',x0+dx);return true})()"
+    },
+    { "action": "wait", "ms": 350 },
+    {
+      "action": "evalAssert",
+      "label": "leftward swipe-commit removed too - down to 1 row",
+      "js": "document.querySelectorAll('#setBody .listItem').length === 1"
+    },
+    { "action": "screenshot", "name": "both-directions-delete" }
+  ]
+}

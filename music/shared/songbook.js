@@ -1914,42 +1914,55 @@
       });
       setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
-    // Operator 2026-07-19 ("drag and drop [at] all places where we have up and
-    // down arrows to reorder - we already support it for the progression
-    // builder"): the setlist rows were the last arrow-only reorder surface.
-    // This is the VERTICAL mirror of wireSectionDrag (the canvas section cards):
-    // same lift grammar (300ms long-press on touch, 6px slop on mouse), same
-    // insertion-edge marker + trailing-click swallow, but targeting is by Y
-    // (a vertical list) and it drives STATE.setlist. Gated to Edit mode by the
-    // render loop below (matching the up/dn arrows it joins, and keeping drag
-    // off the RESTING scroll rail). The arrows stay as the a11y/keyboard path.
+    // S-SETLIST-GESTURES (operator UAT 2026-09-03: "change drag to press and
+    // hold on song on setlist" + "change setlist delete to slide swipe...
+    // like outlook and Gmail mobile. both directions are delete"). Replaces
+    // the 2026-07-19 dedicated-grip drag AND the two-tap arm-x remove: the
+    // ROW ITSELF is now the gesture surface, mirroring wireSectionDrag's
+    // lift grammar (300ms long-press on touch, slop-based lift on mouse) for
+    // reorder, with a directional lock deciding reorder-hold vs swipe-delete
+    // vs "just a scroll" from the first few px of movement - a body tap with
+    // no meaningful movement falls through untouched to .li-body's own
+    // wireTap (tap-to-play is unchanged). Gestures alone fail WCAG 2.5.1, so
+    // list-item.js still renders the up/dn/remove controls (a11y-coach +
+    // ux-coach consulted - see its S-SETLIST-GESTURES comment); this
+    // function only ever adds classes/inline the swipe TRANSLATE needs (a
+    // continuous drag value no static class can express - same pattern as
+    // the accent-theme custom properties, not a violation of the app's
+    // "all CSS external" rule, which targets STATIC style rules).
     var setlistDragSwallowClick = false, setlistSwallowWired = false;
     function wireSetlistDrag(row, index) {
-      // Drag initiates from the dedicated grip handle ONLY - a body tap plays the
-      // song, so there is no scroll-vs-drag ambiguity and no Edit-mode gate. The
-      // grip is drag-only (no tap action), so we lift on pointerdown immediately.
-      var grip = row.querySelector('.li-grip');
-      if (!grip) return;
-      grip.addEventListener('pointerdown', function (e) {
-        if (STATE.setlist.length < 2) return;
-        e.preventDefault(); // grip is drag-only: never a scroll-start or a tap
+      var HOLD_MS = 300, MOVE_CANCEL_PX = 8, LIFT_SLOP_PX = 6, SWIPE_COMMIT_FRAC = 0.25;
+      row.addEventListener('pointerdown', function (e) {
+        // .li-lead (song details) and the a11y up/dn/rm controls own their
+        // own tap/click - a gesture never starts on a <button>.
+        if (e.target && e.target.closest && e.target.closest('button')) return;
         var id = e.pointerId, startX = e.clientX, startY = e.clientY;
         var isTouch = e.pointerType === 'touch';
-        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        var mode = null; // null -> 'reorder' | 'swipe' - decided once, never reverts
+        var holdTimer = null, dropAt = null, marked = null, scrollRAF = null;
+        var lastY = startY, rowW = 0;
         // Edge-auto-scroll (UAT 2026-07-20 "can't drag setlist from 10 to
         // anything less than 7"): a lifted drag blocks native scroll and only
         // sees rows in the DOM viewport, so a long setlist's off-screen rows
         // were unreachable. While the finger holds near #setBody's top/bottom
         // we scroll the rail and re-paint the marker as rows slide in.
-        var lastY = startY, scrollRAF = null;
         var EDGE = 48, MAX_SPEED = 16; // px trigger zone / max px per frame
         function rowsNow() { return Array.prototype.slice.call(el.setBody.children); }
         function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
         function blockScroll(ev) { ev.preventDefault(); }
-        function lift() {
-          holdTimer = null; lifted = true;
+        function swallowClick() {
+          // The drop/swipe-settle never ALSO fires the row's onActivate / up
+          // / dn / rm wireTap (reused for both gestures - S-SETLIST-GESTURES).
+          setlistDragSwallowClick = true;
+          setTimeout(function () { setlistDragSwallowClick = false; }, 150);
+        }
+        // ---- reorder half (unchanged grammar, now targeting the whole row) ----
+        function beginReorder() {
+          mode = 'reorder';
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
           row.classList.add('dragging');
-          try { grip.setPointerCapture(id); } catch (err) {}
+          try { row.setPointerCapture(id); } catch (err) {}
           document.addEventListener('touchmove', blockScroll, { passive: false });
         }
         // Nearest row to lastY; the insertion edge is top/bottom. Split out so
@@ -1971,7 +1984,7 @@
         }
         function autoScrollStep() {
           scrollRAF = null;
-          if (!lifted) return;
+          if (mode !== 'reorder') return;
           var box = el.setBody.getBoundingClientRect(), dy = 0;
           if (lastY < box.top + EDGE) dy = -Math.ceil(MAX_SPEED * Math.min(1, (box.top + EDGE - lastY) / EDGE));
           else if (lastY > box.bottom - EDGE) dy = Math.ceil(MAX_SPEED * Math.min(1, (lastY - (box.bottom - EDGE)) / EDGE));
@@ -1986,47 +1999,109 @@
           var box = el.setBody.getBoundingClientRect();
           if (lastY < box.top + EDGE || lastY > box.bottom - EDGE) scrollRAF = requestAnimationFrame(autoScrollStep);
         }
+        // ---- swipe-delete half (new) ----
+        function beginSwipe() {
+          mode = 'swipe';
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          rowW = row.getBoundingClientRect().width || 1;
+          row.classList.add('swiping');
+          try { row.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        // The live 1:1 finger-follow value: a CSS custom property is the one
+        // continuous number a static class can't express (same channel the
+        // accent theme already uses); the actual transform:translateX(...)
+        // RULE lives in songbook.css, not here.
+        function paintSwipe(dx) {
+          var clamped = Math.max(-rowW, Math.min(rowW, dx));
+          row.style.setProperty('--swipe-x', clamped + 'px');
+          row.classList.toggle('swipe-commit', Math.abs(dx) >= rowW * SWIPE_COMMIT_FRAC);
+        }
+        // Past the 25% threshold: animate fully off-screen, then remove
+        // through the SAME arm-then-confirm entry point (removeFromSet)
+        // every other .li-rm uses, so the undo banner still offers. Under
+        // threshold: spring back to rest. Neither path re-derives its own
+        // remove logic (point 4 of the mission: one remove path, period).
+        function settleSwipe(commit, dx) {
+          row.classList.add('swipe-anim');
+          if (commit) row.style.setProperty('--swipe-x', ((dx < 0 ? -1 : 1) * (rowW + 40)) + 'px');
+          else row.style.setProperty('--swipe-x', '0px');
+          setTimeout(function () {
+            if (commit) {
+              var sid = STATE.setlist[index];
+              if (sid != null) removeFromSet(sid);
+            } else {
+              row.classList.remove('swiping', 'swipe-anim', 'swipe-commit');
+              row.style.removeProperty('--swipe-x');
+            }
+          }, 190);
+        }
+        // ---- shared dispatch: decide the axis, then hand off to whichever
+        // half already claimed `mode` ----
         function onMove(ev) {
           if (ev.pointerId !== id) return;
-          if (!lifted) {
-            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
-            if (isTouch) { if (moved > 8) cleanup(); } // early move = a scroll, not a drag
-            else if (moved > 6) lift();
-            return;
+          var dx = ev.clientX - startX, dy = ev.clientY - startY;
+          if (mode === null) {
+            if (isTouch) {
+              if (Math.abs(dx) <= MOVE_CANCEL_PX && Math.abs(dy) <= MOVE_CANCEL_PX) return; // still holding still - the hold timer decides
+              // Directional lock: horizontal movement before the hold fires
+              // becomes a swipe; vertical movement is a genuine scroll and
+              // the row must never move for it (cancel outright).
+              if (Math.abs(dx) > Math.abs(dy)) beginSwipe(); else { cleanup(); return; }
+            } else {
+              if (Math.abs(dx) <= LIFT_SLOP_PX && Math.abs(dy) <= LIFT_SLOP_PX) return;
+              if (Math.abs(dx) > Math.abs(dy)) beginSwipe();
+              else if (STATE.setlist.length >= 2) beginReorder();
+              else return; // one song - nothing to reorder, and this wasn't horizontal
+            }
           }
-          if (ev.cancelable) ev.preventDefault();
-          lastY = ev.clientY;
-          paintDrop();
-          maybeAutoScroll();
+          if (mode === 'reorder') {
+            if (ev.cancelable) ev.preventDefault();
+            lastY = ev.clientY;
+            paintDrop();
+            maybeAutoScroll();
+          } else if (mode === 'swipe') {
+            if (ev.cancelable) ev.preventDefault();
+            paintSwipe(dx);
+          }
         }
         function onUp(ev) {
           if (ev.pointerId !== id) return;
-          var commit = lifted && dropAt != null;
-          var to = dropAt;
-          cleanup();
-          if (!commit) return;
-          // Swallow the click trailing this pointerup so the drop never ALSO
-          // fires the row's onActivate / up / dn / rm wireTap.
-          setlistDragSwallowClick = true;
-          setTimeout(function () { setlistDragSwallowClick = false; }, 150);
-          var insert = to > index ? to - 1 : to;
-          if (insert === index) return;
-          var moved = STATE.setlist.splice(index, 1)[0];
-          STATE.setlist.splice(insert, 0, moved);
-          saveSet(); syncQueueToSetlist(); renderSetlist();
+          if (mode === 'reorder') {
+            var commit = dropAt != null;
+            var to = dropAt;
+            cleanup();
+            if (!commit) return;
+            swallowClick();
+            var insert = to > index ? to - 1 : to;
+            if (insert === index) return;
+            var movedSong = STATE.setlist.splice(index, 1)[0];
+            STATE.setlist.splice(insert, 0, movedSong);
+            saveSet(); syncQueueToSetlist(); renderSetlist();
+          } else if (mode === 'swipe') {
+            // Never commit a delete from an interrupted gesture (pointercancel) -
+            // a destructive action only fires from a deliberate release.
+            var dx = ev.clientX - startX;
+            var commitDel = ev.type !== 'pointercancel' && Math.abs(dx) >= rowW * SWIPE_COMMIT_FRAC;
+            cleanup();
+            swallowClick();
+            settleSwipe(commitDel, dx);
+          } else {
+            cleanup();
+          }
         }
         function cleanup() {
           if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
           if (scrollRAF != null) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
           clearMark();
           row.classList.remove('dragging');
-          try { grip.releasePointerCapture(id); } catch (err) {}
+          try { row.releasePointerCapture(id); } catch (err) {}
           document.removeEventListener('touchmove', blockScroll);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
           window.removeEventListener('pointercancel', onUp);
         }
-        lift(); // dedicated grip - lift on pointerdown, no hold delay, no scroll race
+        if (isTouch && STATE.setlist.length >= 2) holdTimer = setTimeout(beginReorder, HOLD_MS);
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
         window.addEventListener('pointercancel', onUp);

@@ -1,0 +1,49 @@
+{
+  "name": "setlist-a11y-fallback",
+  "note": "SUPERSEDES setlist-remove-arm.json. Round 18 (operator UAT 2026-09-02) replaced the set row's two-tap arm-to-delete x with a SWIPE (either direction, >=25% of row width) and its grip-drag with PRESS-AND-HOLD on the row - see setlist-gestures.json for the gesture proofs. Both new gestures are pointer-only, so WCAG 2.5.1 (Pointer Gestures) requires a non-gesture equivalent: the up/down/remove buttons stay in the DOM on every set row, visually quiet at rest (.li-a11yctrl, the skip-link reveal-on-focus pattern) and revealed at full size on keyboard focus. THIS scenario is the proof that the fallback is real - it is the reason the old arm scenario could be retired rather than simply deleted. The remove fallback keeps the two-tap arm grammar (first activation arms, second removes), so a stray Enter never destroys a row.",
+  "url": "/music/play/",
+  "steps": [
+    { "action": "wait", "ms": 900 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(1) .li-add" },
+    { "action": "wait", "ms": 300 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(2) .li-add" },
+    { "action": "wait", "ms": 300 },
+    { "action": "tap", "selector": ".listItem:nth-of-type(3) .li-add" },
+    { "action": "wait", "ms": 300 },
+    { "action": "tap", "selector": ".tabbar [data-tab=\"library\"]" },
+    { "action": "tap", "selector": "#segSet" },
+    { "action": "wait", "ms": 600 },
+    {
+      "action": "evalAssert",
+      "label": "the a11y controls EXIST on every set row and are quiet at rest (1x1 clipped) - the sighted-pointer view stays clean now that the gestures own the row",
+      "js": "(function(){var rows=[].slice.call(document.querySelectorAll('#setBody .listItem'));if(rows.length<3)return false;return rows.every(function(r){var rm=r.querySelector('.li-rm.li-a11yctrl'),u=r.querySelector('.li-up.li-a11yctrl'),d=r.querySelector('.li-dn.li-a11yctrl');if(!rm||!u||!d)return false;var b=rm.getBoundingClientRect();return b.width<=2&&b.height<=2;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "REMOVE fallback is keyboard-reachable: focusable, tabbable, revealed to a full 44x44 target on focus, and carries a name that says WHICH song it removes",
+      "js": "(function(){var rm=document.querySelector('#setBody .listItem .li-rm');if(!rm||rm.disabled||rm.tabIndex<0)return false;rm.focus();if(document.activeElement!==rm)return false;var b=rm.getBoundingClientRect();var label=rm.getAttribute('aria-label')||rm.getAttribute('title')||'';return b.width>=44&&b.height>=44&&/remove/i.test(label)&&label.length>8;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the remove fallback KEEPS the two-tap arm grammar - one activation arms, it does NOT destroy a row (a stray Enter must never delete)",
+      "js": "(function(){window.__n0=document.querySelectorAll('#setBody .listItem').length;var rm=document.querySelector('#setBody .listItem .li-rm');rm.focus();rm.click();return document.querySelectorAll('#setBody .listItem').length===window.__n0;})()"
+    },
+    { "action": "wait", "ms": 200 },
+    {
+      "action": "evalAssert",
+      "label": "the SECOND activation removes the row - the keyboard path reaches the same removeFromSet + undo the swipe uses",
+      "js": "(function(){var rm=document.querySelector('#setBody .listItem .li-rm');rm.focus();rm.click();return document.querySelectorAll('#setBody .listItem').length===window.__n0-1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "REORDER fallback works by keyboard: row 2's up-arrow focuses, reveals, and actually MOVES the row (press-and-hold is pointer-only, so this is the equivalent path)",
+      "js": "(function(){var rows=[].slice.call(document.querySelectorAll('#setBody .listItem'));if(rows.length<2)return false;var key=function(r){return r.getAttribute('data-npkey')||r.textContent.trim().slice(0,24);};var before=rows.map(key);var u=rows[1].querySelector('.li-up');if(!u||u.disabled)return false;u.focus();if(document.activeElement!==u)return false;var b=u.getBoundingClientRect();if(!(b.width>2&&b.height>2))return false;u.click();var after=[].slice.call(document.querySelectorAll('#setBody .listItem')).map(key);return after.length===before.length&&after[0]===before[1]&&after[1]===before[0];})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the FIRST row's up-arrow is correctly disabled (nothing above it) - a disabled control is honest, not a broken fallback",
+      "js": "(function(){var u=document.querySelector('#setBody .listItem .li-up');return !!u&&u.disabled===true;})()"
+    },
+    { "action": "screenshot", "name": "a11y-fallback-focused" }
+  ]
+}
