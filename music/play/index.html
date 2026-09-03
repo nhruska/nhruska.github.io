@@ -362,21 +362,15 @@
       <section class="accSec" data-acc="backup">
         <button class="accBtn" id="accBtnBackup" type="button" aria-expanded="false" aria-controls="accBodyBackup">Backup &amp; Restore</button>
         <div class="accBody" id="accBodyBackup" role="region" aria-labelledby="accBtnBackup" hidden>
-          <p class="setHint">Your songs and settings live only on this device. Back up writes one file - keep it in Drive or Files - and Restore reads it on a new phone. Restore adds and overwrites. It never deletes.</p>
+          <p class="setHint">Everything lives only on this device. Restore adds and overwrites - it never deletes.</p>
           <div class="setSummary" id="dataSummary" aria-live="polite"></div>
-          <button class="listItem setRow" id="btnBackup" type="button">
-            <span class="li-body">
-              <span class="li-title">Back up</span>
-              <span class="li-artist">Save everything on this device to a file.</span>
-              <span class="li-meta" id="lastBackupMeta">Last backup: never</span>
-            </span>
+          <button class="setAction" id="btnBackup" type="button">
+            <span class="saLbl">Back up</span>
+            <span class="saMeta" id="lastBackupMeta">never</span>
           </button>
-          <button class="listItem setRow" id="btnRestore" type="button">
-            <span class="li-body">
-              <span class="li-title">Restore</span>
-              <span class="li-artist">Read a backup file and bring everything across.</span>
-              <span class="li-meta" id="lastRestoreMeta">Last restore: never</span>
-            </span>
+          <button class="setAction" id="btnRestore" type="button">
+            <span class="saLbl">Restore</span>
+            <span class="saMeta" id="lastRestoreMeta">never</span>
           </button>
           <input type="file" id="restoreFile" accept="application/json,.json" hidden>
         </div>
@@ -393,21 +387,19 @@
       <section class="accSec" data-acc="agent">
         <button class="accBtn" id="accBtnAgent" type="button" aria-expanded="false" aria-controls="accBodyAgent">AI Agent</button>
         <div class="accBody" id="accBodyAgent" role="region" aria-labelledby="accBtnAgent" hidden>
-          <p class="setHint">Live docs this app publishes about itself. Point Claude or ChatGPT at them and it can read your exported profile, coach your practice, and hand back one-tap jam links.</p>
-          <p class="setHint">Agents only read. Nothing changes on this device until you import a file or tap Save on a jam link.</p>
-          <a class="aboutLink" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
+          <p class="setHint">Live docs this app publishes about itself. Point Claude or ChatGPT at them and it can coach your practice. Agents only read.</p>
+          <a class="setAction saExt" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
-            <span>Agent instructions (AGENTS.md) - the exact doc agents read</span>
+            <span class="saLbl">Open AGENTS.md</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <a class="aboutLink" id="agentCapsLink" href="../agent/capabilities.json" target="_blank" rel="noopener">
+          <a class="setAction saExt" id="agentCapsLink" href="../agent/capabilities.json" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4.72 3.22a.75.75 0 0 1 1.06 1.06L2.06 8l3.72 3.72a.75.75 0 1 1-1.06 1.06L.47 8.53a.75.75 0 0 1 0-1.06Zm6.56 0a.75.75 0 1 0-1.06 1.06L13.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06Z"/></svg>
-            <span>Capabilities (capabilities.json) - what the app can do, as data</span>
+            <span class="saLbl">Open capabilities.json</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <div class="agentCopyRow">
-            <button class="btn ghost" id="agentCopyLinks" type="button">Copy doc links</button>
-            <button class="btn ghost" id="agentCopyPrompt" type="button">Copy starter prompt</button>
-          </div>
-          <p class="setHint" id="agentUriHint"></p>
+          <button class="setAction" id="agentCopyLinks" type="button"><span class="saLbl">Copy doc links</span></button>
+          <button class="setAction" id="agentCopyPrompt" type="button"><span class="saLbl">Copy starter prompt</span></button>
         </div>
       </section>
       <!-- About: attribution + open-source funnel. Icons are INLINE SVGs (GitHub
@@ -418,18 +410,17 @@
         <button class="accBtn" id="accBtnAbout" type="button" aria-expanded="false" aria-controls="accBodyAbout">About</button>
         <div class="accBody" id="accBodyAbout" role="region" aria-labelledby="accBtnAbout" hidden>
           <p class="setHint">Built by Nikolaus Hruska. Free and open source.</p>
-          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
+          <a class="setAction saExt" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-            <span>View the source on GitHub</span>
+            <span class="saLbl">View the source</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
+          <a class="setAction saExt" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
-            <span>Report an issue or suggest an improvement</span>
+            <span class="saLbl">Report an issue</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <button class="listItem setRow" id="replayTourBtn" type="button">
-            <span class="li-title">Replay the intro tour</span>
-            <span class="li-artist">The welcome intro, any time</span>
-          </button>
+          <button class="setAction" id="replayTourBtn" type="button"><span class="saLbl">Replay the intro tour</span></button>
           <!-- The build stamp lives ONCE, in the settings footer (quick-glance
                home) - don't repeat it here. -->
         </div>
@@ -1222,10 +1213,10 @@
   // The Backup/Restore rows show a full locale date+time via BuildStamp.fmt()
   // (the ONE datetime formatter, so the rows and the footer stamp always read
   // the same way).
-  function lastRunText(prefix, iso) {
-    if (!iso) return prefix + ': never';
+  function lastRunText(iso) {
+    if (!iso) return 'never';
     var when = window.BuildStamp ? BuildStamp.fmt(iso) : '';
-    return prefix + ': ' + (when || String(iso).slice(0, 10)); // date-only fallback beats lying 'never'
+    return when || String(iso).slice(0, 10); // date-only fallback beats lying 'never'
   }
   function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -1495,8 +1486,6 @@
       var capsA = document.getElementById('agentCapsLink');
       if (!readmeA || !capsA) return;
       var readmeUrl = readmeA.href, capsUrl = capsA.href; // absolutized by the browser
-      var hint = document.getElementById('agentUriHint');
-      if (hint) hint.textContent = 'Live at: ' + readmeUrl;
       function copy(text, okMsg) {
         if (!(navigator.clipboard && navigator.clipboard.writeText)) {
           if (window.Toast) Toast.show('Copy needs https - long-press a link instead'); return;
@@ -1538,12 +1527,12 @@
     function renderLastBackup() {
       var el = document.getElementById('lastBackupMeta'); if (!el) return;
       var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
-      el.textContent = lastRunText('Last backup', iso);
+      el.textContent = lastRunText(iso);
     }
     function renderLastRestore() {
       var el = document.getElementById('lastRestoreMeta'); if (!el) return;
       var iso = null; try { iso = localStorage.getItem(LAST_RESTORE_KEY); } catch (e) {}
-      el.textContent = lastRunText('Last restore', iso);
+      el.textContent = lastRunText(iso);
     }
     // Live "what's on THIS device" summary, so the counts are visible before a
     // backup (and the origin/empty-storage case is obvious at a glance).

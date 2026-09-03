@@ -22,6 +22,25 @@ The app's design-system reference: canonical style/convention per element class,
 | Destructive (real delete) | .btn.danger (F33 UI-std UAT) | transparent bg + var(--bad) border/text at rest; var(--bad) fill + var(--on-danger) ink on `:active` (mirrors `.prog .slot .rm:active`). Red-at-rest is reserved for LABELED destructive buttons - INLINE remove handles (`.prog .slot .rm`, `.listItem .li-rm`) rest QUIET and wear red only when ARMED, per the S-DELETE-UNDO arm-to-delete grammar (S-SETRM-ARM 2026-07-11 retired the old `#setBody .li-rm` rest-red precedent). `.btn.red` is a MISNOMER (accent fill, not danger) - the full-strength destructive action (repertoire-form.js's real Delete) uses `.btn.danger`; the fork "Revert to original" is ALSO destructive (discards the fork's edits, confirm-gated) but deliberately stays `.btn.ghost` as a softer signal |
 | Compact row-companion CTA (Solo entry point) | .soloRowBtn (F28+F29 UI-std UAT) | accent-outlined pill, 44px floor (via the host row's `align-items:stretch`), radius var(--r-btn); shares ONE controls row with an adjacent segmented toggle instead of stacking a full-width CTA below it - Compose's `#chordCtrlRow` (beside the In-key\|All toggle, `#catChips`) and the song view's `.practiceRow` (beside Lyrics/Chords/Both + transpose + Stage). Compact label ("Solo"; a `title` attr carries the full phrase) so it fits the shared row at 375-412px. Entirely absent (not disabled) when there's nothing to solo over |
 
+## Action rows (settings-style panels)
+
+Operator, UAT batch 5 (2026-09-03): *"too cluttered w text. simplicity FTW. UI standard layout? for export etc buttons, min prose"*. Six rows doing the same job wore FOUR different looks - a bordered `.setRow` card with a stacked description, an `.aboutLink` with an icon and a wrapping sentence, a `.btn.ghost` pair, and a raw URL as body text. There was no convention, so each one was invented at its call site.
+
+**The rule: ONE ROW = ONE ACTION.**
+
+| Element | Class | Convention |
+|---|---|---|
+| The row | `.setAction` (`<button>` in-app, `<a>` external) | full width, 48px min, surface-2 + line-strong border, radius `--r-btn-sm`; `:active` presses to accent-deep. Sets its own surface, border AND color explicitly - a `<button>` inherits neither font nor color, and a background-less one falls back to the UA light grey (a washed-out bar on the dark theme) |
+| The label | `.saLbl` | ONE line, verb-first, `nowrap` + ellipsis. The ellipsis is a GUARD, not a feature: a label that truncates is too long and gets shortened at the source. Takes the row's slack |
+| Live state | `.saMeta` | the ONE sanctioned trailing extra, and only for state a user needs (a last-backup date). Value only - never repeat the row's own label in it |
+| Leaves the app | `.setAction.saExt` + `.saGo` (`↗`) | `--brass` external-link ink (the Links convention) so "opens a doc in a new tab" reads differently from "does something here" without a sentence saying so |
+
+**No descriptions on the row.** A group gets at most ONE `.setHint` caption above it. If a row needs a sentence to be understood, the label is wrong - fix the label. Consult [copy-coach](../../../.claude/skills/copy-coach/SKILL.md) before writing one: verb-first, outcome-named, inside the beginner vocabulary budget.
+
+**No raw URLs as body text.** The rows are the links; a copy button carries the text.
+
+Gated by [test/settings-action-row-lint.test.js](../../../test/settings-action-row-lint.test.js) - it fails on a description inside an action row, on a second caption in one accordion body, and on a reintroduced `.setRow`/`.aboutLink` lookalike.
+
 ## Labels
 
 | Kind | Class | Convention |

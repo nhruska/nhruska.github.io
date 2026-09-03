@@ -6825,12 +6825,12 @@
         var has = C.hasData();
         // First-start lead: no data yet -> import affordance first (never a modal).
         var importRow = document.createElement('button');
-        importRow.className = 'listItem setRow skillsImportRow'; importRow.type = 'button';
-        var ib = document.createElement('span'); ib.className = 'li-body';
-        var it = document.createElement('span'); it.className = 'li-title'; it.textContent = 'Import a profile';
-        var ia = document.createElement('span'); ia.className = 'li-artist';
-        ia.textContent = has ? 'Merge a profile file from another device.' : 'Have a profile? Import it to personalize.';
-        ib.appendChild(it); ib.appendChild(ia); importRow.appendChild(ib);
+        // UAT batch 5: the .setAction primitive - one row, one action, no prose.
+        // The old stacked description ("Merge a profile file from another
+        // device.") said what the verb already says.
+        importRow.className = 'setAction skillsImportRow'; importRow.type = 'button';
+        var it = document.createElement('span'); it.className = 'saLbl'; it.textContent = 'Import a profile';
+        importRow.appendChild(it);
         importRow.onclick = function () { fileInput.click(); };
         if (!has) pane.appendChild(importRow); // lead with import when empty
 
@@ -6891,12 +6891,9 @@
         // <skill-id>/SKILL.md in one zip (only when there is data to carry).
         if (has) {
           var exportAllRow = document.createElement('button');
-          exportAllRow.className = 'listItem setRow skillsExportAllRow'; exportAllRow.type = 'button';
-          var eb = document.createElement('span'); eb.className = 'li-body';
-          var et = document.createElement('span'); et.className = 'li-title'; et.textContent = 'Export all skills';
-          var ea = document.createElement('span'); ea.className = 'li-artist';
-          ea.textContent = 'One zip - every skill as skill-name/SKILL.md.';
-          eb.appendChild(et); eb.appendChild(ea); exportAllRow.appendChild(eb);
+          exportAllRow.className = 'setAction skillsExportAllRow'; exportAllRow.type = 'button';
+          var et = document.createElement('span'); et.className = 'saLbl'; et.textContent = 'Export all skills';
+          exportAllRow.appendChild(et);
           exportAllRow.onclick = downloadBundle;
           pane.appendChild(exportAllRow);
         }
@@ -6929,12 +6926,9 @@
       var agentBody = document.getElementById('accBodyAgent');
       if (agentBody && !document.getElementById('agentBundleRow')) {
         var abRow = document.createElement('button');
-        abRow.className = 'listItem setRow'; abRow.type = 'button'; abRow.id = 'agentBundleRow';
-        var abB = document.createElement('span'); abB.className = 'li-body';
-        var abT = document.createElement('span'); abT.className = 'li-title'; abT.textContent = 'Export agent bundle';
-        var abA = document.createElement('span'); abA.className = 'li-artist';
-        abA.textContent = 'One file to start a coaching conversation: agent instructions, your skills, and your latest data.';
-        abB.appendChild(abT); abB.appendChild(abA); abRow.appendChild(abB);
+        abRow.className = 'setAction'; abRow.type = 'button'; abRow.id = 'agentBundleRow';
+        var abT = document.createElement('span'); abT.className = 'saLbl'; abT.textContent = 'Export agent bundle';
+        abRow.appendChild(abT);
         abRow.onclick = downloadBundle;
         var firstLink = document.getElementById('agentReadmeLink');
         if (firstLink) agentBody.insertBefore(abRow, firstLink); else agentBody.appendChild(abRow);

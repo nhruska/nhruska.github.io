@@ -1970,35 +1970,52 @@ footer{display:none;}
 .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
   display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
-/* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive). .setRow
-   composes the shared .listItem card family as a <button> data row (Backup/Restore):
-   explicit color because button text does not inherit (music/CLAUDE.md gotcha),
-   full-width + left-aligned so it reads as a list row, not an action button. It also
-   needs an explicit dark surface + border + padding: a <button> with no background
-   falls back to the UA default (light grey), which on the dark theme renders as a
-   washed-out white bar with near-invisible --txt text. */
-.setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
-.setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
-/* Settings ACTION rows (Back up, Restore, the Skills import/export rows -
-   button.listItem.setRow) read as CTAs via the accent border - one rule for the
-   whole action-row class, never per instance. Plain display rows and the segmented
-   controls keep the neutral line. */
-#settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
-#settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
-.setRow .li-title{display:block;}
-.setRow .li-artist{display:block;}
+/* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive); every
+   "do a thing" row inside one is .setAction, below. The retired .setRow carried a
+   real gotcha worth keeping: a <button> with no background falls back to the UA
+   light grey, which on the dark theme renders as a washed-out bar with
+   near-invisible text - so an action row must always set its own surface, border
+   and color explicitly (button text inherits neither font nor color). */
+
+/* ACTION ROW - the ONE primitive for "do a thing" inside a settings-style panel
+   (UAT batch 5: "too cluttered w text. simplicity FTW. UI standard layout? for
+   export etc buttons, min prose"). Before this, six rows doing the same job wore
+   FOUR different looks - a bordered .setRow card with a stacked description, an
+   .aboutLink with an icon and a wrapping sentence, a pair of .btn.ghost, and a
+   raw URL as body text.
+
+   The rule, per component-conventions.md: ONE ROW = ONE ACTION. Leading icon
+   slot, a verb-first label on ONE line, and an optional trailing affordance.
+   Descriptions do NOT go on the row - a group gets at most one caption above it.
+   The label is nowrap+ellipsis on purpose: a label that would truncate is too
+   long and must be shortened at the source, not wrapped to buy itself a second
+   line. .saMeta is the ONE sanctioned trailing extra, and only for live STATE
+   (a last-backup timestamp), never for description. */
+.setAction{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin-top:8px;
+  padding:0 12px;background:var(--surface-2);border:1px solid var(--line-strong);
+  border-radius:var(--r-btn-sm);color:var(--txt);font-family:inherit;font-size:.92rem;
+  font-weight:600;text-align:left;cursor:pointer;text-decoration:none;
+  transition:transform .08s,background .15s,border-color .15s;}
+.setAction:active{transform:scale(.99);background:var(--accent-deep);border-color:var(--accent-dim);}
+.setAction:focus-visible{outline:2px solid var(--accent-dim);outline-offset:2px;}
+/* The label takes the slack; nowrap+ellipsis is the guard that keeps a row one line. */
+.setAction .saLbl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Live state only (last backup / last restore) - never a description. */
+.setAction .saMeta{flex:0 0 auto;font-size:.72rem;font-weight:600;color:var(--txt-dim);}
+/* Leading icon + trailing affordance glyph both hold their size. */
+.setAction svg{flex:0 0 auto;}
+.setAction .saGo{flex:0 0 auto;color:var(--accent-ink);font-weight:700;}
+/* An action row that LEAVES the app takes the external-link ink (the Links
+   convention), so "opens a doc in a new tab" still reads differently from
+   "does something here" without needing a sentence to say so. */
+.setAction.saExt{color:var(--brass);}
+.setAction.saExt .saGo{color:var(--brass);}
 /* About section link rows: external-link ink (--brass, the Links convention) +
    inline-SVG icon taking currentColor; 44px touch floor. */
-.aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
-  text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
-.aboutLink svg{flex:0 0 auto;}
-.aboutStamp{margin:10px 0 0;}
 /* AI Agent section (round 16): the copy buttons ride one row under the live
    doc links; the URI hint beneath them shows WHERE the docs live (SSOT -
    resolved from location at boot, so previews and localhost tell their own
    truth). Reuses .btn.ghost + .setHint - no new visual language. */
-.agentCopyRow{display:flex;gap:11px;flex-wrap:wrap;margin:4px 0 10px;}
-.agentCopyRow .btn{min-height:44px;}
 #agentUriHint{word-break:break-all;margin-bottom:4px;}
 /* UAT batch 4 ("settings text too similar to sections"): .setLbl sat at 600 /
    ~1rem against an .accBtn at 800 / 1.08rem - a step too small to read as a
