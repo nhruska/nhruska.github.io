@@ -143,6 +143,21 @@ assertions every time.</p>
 </table>
 </div>
 
+<h2>Why any of this can be checked at all</h2>
+<p>A scenario can only fail "for a real reason" if there's a written, deterministic
+statement of what correct means - a wiki, not tribal knowledge in one person's head.
+Without it, "looks right" is the only bar anyone can check against, and it moves
+depending on who's looking.</p>
+<p><strong>The wiki is the shared abstraction, not a document for one side of the
+loop.</strong> The human reads it to know what "correct" was supposed to mean; the
+agent reads the same page to know what to build and what to check. Same source, both
+readers - that symmetry is what makes the loop deterministic. Neither side is
+verifying the other against a private understanding; both are verifying against the
+one thing actually written down. The wiki-as-institutional-memory idea traces to
+<a href="https://gist.github.com/karpathy" target="_blank" rel="noopener">Andrej
+Karpathy's llm-wiki gist</a> - applied here to business rules instead of general
+knowledge, not reinvented.</p>
+
 <h2>The proof case: a song about friction, written by the loop testing itself</h2>
 <p>The pilot's sharpest artifact wasn't a bug fix - it was using the app's own music
 theory engine to co-write a real song about compound engineering, working through
