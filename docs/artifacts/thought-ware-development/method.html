@@ -109,6 +109,24 @@ or the assertion is too weak - the fix is a sharper assertion, never a lowered b
 This is TDD with one substitution: the unit under test is a person completing a use
 case, not a function returning a value.</p>
 
+<h2>The UAT loop - the human half, made just as verifiable</h2>
+<p>A PR triggers <code>.github/workflows/pr-preview.yml</code> on
+<code>opened</code>/<code>synchronize</code>/<code>reopened</code> - before any
+merge, not after. It posts a branch-tagged <a href="https://raw.githack.com"
+target="_blank" rel="noopener">raw.githack.com</a> preview URL as a PR comment: the
+exact commit, served live, over https (so the in-app mic-based tuner works on
+mobile too). The commit-pinned form is for isolated per-commit testing only - it
+404s once the branch is deleted - so the branch-form URL is the one that tracks
+the latest push and is the one actually handed to the operator.</p>
+<p>From there it is a guided tour, not a report. Server logs tail in the
+background before the first tap; each input is narrated back play-by-play, step
+by step, as it lands. The operator is never asked "run this and tell me what you
+see" - the agent watches the same evidence arrive in real time, on the same
+timeline. Fails and screenshots are accepted as the feedback itself, not
+transcribed into a bug report after the fact, and the next revision lands on the
+same PR. Deterministic on the machine side; verifiable, not just reported, on the
+human side too.</p>
+
 <h2>Personas are app states, not narratives</h2>
 <p>A persona here is <code>music.guidanceLevel.v1</code> plus an answered-ask
 notable, seeded before the script runs - not a description an LLM stays in character

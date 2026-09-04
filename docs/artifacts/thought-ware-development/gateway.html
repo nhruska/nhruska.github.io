@@ -117,6 +117,33 @@ a{color:var(--accent);}
 
 <section class="slide">
   <div class="inner">
+    <div class="eyebrow">The human half of the loop</div>
+    <h2 class="claim">Deterministic doesn't mean unattended. It means the human's
+    judgment is verifiable too.</h2>
+    <p class="big">A PR opens a real, branch-tagged preview - a githack link at that
+    exact commit, live before anything merges - and the operator gets it on their
+    phone. From there it's a guided tour, not a report: server logs tail in the
+    background while the operator taps through, and every input is narrated back
+    play-by-play, step by step, as it lands - not "run this and tell me what you
+    see," the agent watches the same evidence arrive in real time.</p>
+    <div class="loop">
+      <span class="step">PR opens</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Branch-tagged preview URL, live</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Logs tail; play-by-play narration</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Fails + screenshots, accepted as feedback</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Next revision, same PR</span>
+    </div>
+    <p>Screenshots and voice notes are the feedback, not a bug report written after
+    the fact - the loop closes on the same evidence both sides just watched happen.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
     <div class="eyebrow">Composing the right amount</div>
     <h2 class="claim">Too little generation and nothing new gets tried. Too much and
     nothing converges.</h2>
@@ -186,6 +213,9 @@ a{color:var(--accent);}
     is the only bar anyone can check against, and that bar moves depending on who's
     looking. With it, a persona's assertion traces back to a rule someone actually
     wrote down, and disagreements are a diff, not an argument.</p>
+    <p style="font-size:.85rem; color:var(--muted);">The wiki-as-institutional-memory
+    idea traces to <a href="https://gist.github.com/karpathy" target="_blank" rel="noopener">Andrej Karpathy's llm-wiki gist</a> - not reinvented here, just applied
+    to business rules instead of general knowledge.</p>
   </div>
 </section>
 
