@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thought-Ware Development - Nik Hruska</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
+<style>
+:root{
+  --bg:#faf8f4; --panel:#ffffff; --ink:#1c1c1a; --muted:#6b6a63;
+  --border:#e5e1d8; --accent:#1b3a3a; --accent2:#c98a3a; --code-bg:#f2efe7;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14181a; --panel:#1c2224; --ink:#ece8de; --muted:#a6a190;
+         --border:#2c3436; --accent:#7fb3ac; --accent2:#e6b970; --code-bg:#20282a; }
+}
+:root[data-theme="dark"]{ --bg:#14181a; --panel:#1c2224; --ink:#ece8de; --muted:#a6a190;
+         --border:#2c3436; --accent:#7fb3ac; --accent2:#e6b970; --code-bg:#20282a; }
+:root[data-theme="light"]{ --bg:#faf8f4; --panel:#ffffff; --ink:#1c1c1a; --muted:#6b6a63;
+         --border:#e5e1d8; --accent:#1b3a3a; --accent2:#c98a3a; --code-bg:#f2efe7; }
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; line-height:1.55;}
+.brand{position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px;
+  padding:14px 20px; background:var(--bg); border-bottom:1px solid var(--border);}
+.brand svg{width:28px; height:28px; flex:0 0 auto;}
+.brand .name{font-family:Georgia,serif; font-size:.92rem; letter-spacing:.1em; font-weight:600;
+  color:var(--accent); text-transform:uppercase;}
+.brand .name em{color:var(--accent2); font-style:italic;}
+.brand .prog{margin-left:auto; font-size:.75rem; color:var(--muted); letter-spacing:.05em;}
+
+section.slide{min-height:88vh; display:flex; flex-direction:column; justify-content:center;
+  padding:60px 24px; border-bottom:1px solid var(--border); scroll-margin-top:60px;}
+section.slide.hero{align-items:flex-start; background:linear-gradient(160deg, var(--panel), var(--bg));}
+.inner{max-width:680px; margin:0 auto; width:100%;}
+.eyebrow{font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent2);
+  font-weight:700; margin-bottom:.6em;}
+h1.title{font-family:Georgia,serif; font-size:2.4rem; line-height:1.15; margin:0 0 .3em; max-width:680px;}
+h2.claim{font-family:Georgia,serif; font-size:1.7rem; line-height:1.3; margin:0 0 .5em;}
+.sub{color:var(--muted); font-size:1.05rem; max-width:560px;}
+p{margin:.7em 0; max-width:640px;}
+p.big{font-size:1.15rem;}
+.pill{display:inline-block; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--accent2); border:1px solid var(--accent2); border-radius:4px; padding:2px 10px;
+  margin-bottom:1em;}
+.metaphor{background:var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:22px 24px; margin-top:1em;}
+.metaphor .line{font-family:Georgia,serif; font-style:italic; font-size:1.3rem; color:var(--accent);
+  line-height:1.4;}
+.tune-bar{display:flex; align-items:flex-end; gap:4px; height:60px; margin:1.2em 0;}
+.tune-bar span{display:block; width:8px; background:var(--accent2); border-radius:2px 2px 0 0;
+  opacity:.35;}
+.tune-bar span.hit{opacity:1; background:var(--accent);}
+.loop{display:flex; flex-wrap:wrap; gap:8px; margin:1.2em 0; font-size:.85rem;}
+.loop .step{background:var(--code-bg); border:1px solid var(--border); border-radius:20px;
+  padding:6px 14px; white-space:nowrap;}
+.loop .arrow{color:var(--muted); align-self:center;}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin:1em 0;}
+table{width:100%; border-collapse:collapse; font-size:.86rem;}
+th,td{padding:7px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top;}
+th{background:var(--code-bg); color:var(--muted); font-weight:600; text-transform:uppercase; font-size:.68rem;}
+code{background:var(--code-bg); padding:1px 5px; border-radius:4px; font-family:Menlo,Consolas,monospace; font-size:.85em;}
+.cta-row{display:flex; flex-wrap:wrap; gap:12px; margin-top:1.4em;}
+.cta{display:inline-block; border:1px solid var(--accent); border-radius:6px; padding:9px 18px;
+  font-size:.9rem; font-weight:600; text-decoration:none; color:var(--accent);}
+.cta.solid{background:var(--accent); color:var(--bg);}
+a{color:var(--accent);}
+.footer{padding:30px 24px 50px; text-align:center; color:var(--muted); font-size:.82rem;}
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="Nik Hruska">
+    <circle cx="24" cy="24" r="22" fill="var(--accent)"/>
+    <text x="24" y="33" font-family="Georgia,serif" font-size="26" fill="var(--accent2)" text-anchor="middle">N</text>
+  </svg>
+  <span class="name">Nik Hruska <em>/ nh-pages</em></span>
+  <span class="prog">Thought-Ware Development - gateway</span>
+</div>
+
+<section class="slide hero">
+  <div class="inner">
+    <span class="pill">Candidate for global promotion - pilot in progress</span>
+    <h1 class="title">Thought-Ware Development</h1>
+    <p class="sub">A method for steering agentic AI development with a wiki that
+    makes business rules deterministic - so an app built mostly by agents stays
+    verifiable, not just plausible.</p>
+    <div class="cta-row">
+      <a class="cta solid" href="#loop">Start here &darr;</a>
+      <a class="cta" href="method.html">Read the full method</a>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Who does which job</div>
+    <h2 class="claim">HiTL is not technical, and not a subject-matter expert.</h2>
+    <p class="big">A problem gets reported as a spoken phrase or fragment - speech-to-text,
+    not an implementation direction. "the studio thing is confusing when I'm playing" is
+    a valid, sufficient report. Nobody on the human side is expected to say which
+    component, which state, or which fix.</p>
+    <p class="big">The agents are the CTO and the subject-matter experts. A coach suite -
+    UX, accessibility, music theory - turns that fragment into a wiki entry written to
+    whatever level of detail the TDD/SDD/UAT loops actually need to run. The wiki is the
+    human-computer-interaction layer's spec, written by the SMEs, for a HiTL who never
+    has to speak their language.</p>
+  </div>
+</section>
+
+<section class="slide" id="loop">
+  <div class="inner">
+    <div class="eyebrow">The claim</div>
+    <h2 class="claim">Hallucination is upstream of the gate, never inside it.</h2>
+    <p class="big">The model is free to generate - guess at features, hallucinate task
+    ideas, propose whatever it wants. Nothing it generates ships until it survives a
+    deterministic loop that doesn't care what the model believes.</p>
+    <div class="loop">
+      <span class="step">Friction profile</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Goalpost -&gt; persona scenario</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Must FAIL first (red)</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Build to green</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Regression, forever</span>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">The human half of the loop</div>
+    <h2 class="claim">Deterministic doesn't mean unattended. It means the human's
+    judgment is verifiable too.</h2>
+    <p class="big">A PR opens a real, branch-tagged preview - a githack link at that
+    exact commit, live before anything merges - and the operator gets it on their
+    phone. From there it's a guided tour, not a report: server logs tail in the
+    background while the operator taps through, and every input is narrated back
+    play-by-play, step by step, as it lands - not "run this and tell me what you
+    see," the agent watches the same evidence arrive in real time.</p>
+    <div class="loop">
+      <span class="step">PR opens</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Branch-tagged preview URL, live</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Logs tail; play-by-play narration</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Fails + screenshots, accepted as feedback</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Next revision, same PR</span>
+    </div>
+    <p>Screenshots and voice notes are the feedback, not a bug report written after
+    the fact - the loop closes on the same evidence both sides just watched happen.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">What the operator actually does, per cycle</div>
+    <h2 class="claim">Tens of iterations. Hundreds, sometimes. One number typed, each
+    time.</h2>
+    <p class="big">Dev loops and UAT loops don't run once - they run 10s to 100s of
+    times across a working session. The loop still has to stop at a real breakpoint and
+    ask a human something, but the ask is a single numbered option: proceed to the next
+    goalpost, or don't. Minimal typing, by design - the human-factors cost of staying in
+    the loop has to stay near zero, or nobody stays in it for iteration 40.</p>
+    <p>It keeps stopping and asking, one number at a time, until there is no goalpost
+    left to advance to. Then the loop changes shape entirely - see below.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Composing the right amount</div>
+    <h2 class="claim">Too little generation and nothing new gets tried. Too much and
+    nothing converges.</h2>
+    <p class="big">Agentic engineering is composing the right amount of probabilistic
+    hallucination - of app, of personas, of scenarios - against a Playwright scenario
+    harness that scores each attempt. The generation stays loose; the scoring stays
+    exact. Iteration is what happens in between.</p>
+    <p>Every candidate feature is a guess about what a persona needs next. Most guesses
+    are wrong in some detail. That's fine - a wrong guess against a real scenario fails
+    for a specific, readable reason, and the next guess is better informed than the
+    last one. The harness is what makes "better informed" a fact, not a feeling.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">The metaphor, exact</div>
+    <h2 class="claim">It's like a harmonic getting in tune.</h2>
+    <div class="tune-bar" aria-hidden="true">
+      <span style="height:22%"></span><span style="height:38%"></span>
+      <span style="height:55%"></span><span style="height:70%"></span>
+      <span style="height:85%"></span><span class="hit" style="height:100%"></span>
+      <span style="height:82%"></span><span style="height:64%"></span>
+      <span style="height:46%"></span><span style="height:30%"></span>
+    </div>
+    <div class="metaphor">
+      <p class="line">You don't leap to the right pitch. You turn the peg, check the
+      distance, turn again - each pass smaller than the last, until the tuner reads
+      zero.</p>
+    </div>
+    <p class="big">That's the loop. A hallucinated candidate is a turn of the peg -
+    imprecise on its own, but checkable against something exact. The persona scenario
+    is the tuner: it doesn't hand you the right answer, it tells you how far off you
+    are and in which direction. Distance shrinks every pass. That's what "iterate" is
+    supposed to mean and usually doesn't.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">What gets built next</div>
+    <h2 class="claim">Prioritized by persona priority, not by backlog position.</h2>
+    <p class="big">A feature earns its place in the sprint by which persona's dismissal
+    trigger it closes - not by who asked loudest or what's next on a list. A fix that
+    protects the Conservatory Pianist from one wrong enharmonic spelling outranks a
+    dozen conveniences for a persona who was never going to leave over them.</p>
+    <div class="tbl-wrap">
+    <table>
+    <tr><th>Persona</th><th>Dismisses the app over</th></tr>
+    <tr><td>Sam - beginner</td><td>Jargon with no orientation, before a first win</td></tr>
+    <tr><td>Riley - intermediate</td><td>Ambiguity about what to do next</td></tr>
+    <tr><td>Jo - advanced</td><td>The app disagreeing with music theory it already knows</td></tr>
+    <tr><td>Conservatory Pianist</td><td>One wrong enharmonic spelling - permanent dismissal</td></tr>
+    </table>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Why any of this can be checked at all</div>
+    <h2 class="claim">A business-logic wiki, kept as the single source of truth, is
+    what makes the whole app verifiable.</h2>
+    <p class="big">A scenario can only fail "for a real reason" if there's a written,
+    deterministic statement of what correct means - a wiki the agents read before they
+    write code, not tribal knowledge in one person's head. Without it, "looks right"
+    is the only bar anyone can check against, and that bar moves depending on who's
+    looking. With it, a persona's assertion traces back to a rule someone actually
+    wrote down, and disagreements are a diff, not an argument.</p>
+    <p class="big"><strong>The wiki is the shared abstraction, not a document for one
+    side of the loop.</strong> The human reads it to know what "correct" was supposed
+    to mean; the agent reads the same page to know what to build and what to check.
+    Same source, both readers - which is exactly what makes the loop deterministic:
+    neither side is verifying the other against a private understanding, both are
+    verifying against the one thing that's actually written down.</p>
+    <p style="font-size:.85rem; color:var(--muted);">The wiki-as-institutional-memory
+    idea traces to <a href="https://gist.github.com/karpathy" target="_blank" rel="noopener">Andrej Karpathy's llm-wiki gist</a> - not reinvented here, just applied
+    to business rules instead of general knowledge.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">When there's no goalpost left</div>
+    <h2 class="claim">A different vendor's model gets to refuse every claim that
+    isn't proven.</h2>
+    <p class="big">Once every goalpost passes, the loop's shape changes: PR, then CI,
+    then an adversarial volley between two different vendors' models, not one model
+    checking its own work. The highest-thinking Claude tier writes; a skeptical Codex
+    pass reviews - and denies any claim that isn't backed by deterministic, TDD-proven
+    evidence. "It should work" and "it looks right" are not evidence. A passing
+    scenario is.</p>
+    <p>Only after that survives does a GitHub App bot identity file the formal
+    approve - a separate identity from the one that authored the PR, because a model
+    cannot credibly approve its own work under its own name. Merge, then back into the
+    TDD/UAT loop for the next cycle. The volley is a gate on the way out, not a
+    courtesy step.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">The proof case</div>
+    <h2 class="claim">A song about friction, written by the loop testing itself.</h2>
+    <p class="big">The pilot's sharpest artifact wasn't a bug fix - it was using the
+    app's own music theory engine to co-write a real song about compound engineering,
+    grounded in the engine's own output before a single lyric was written:</p>
+    <p><code>Circle.scaleInKey('F','mixolydian') -&gt; F G A Bb C D Eb</code><br>
+    <code>Circle.diatonicInKey('F','mixolydian') -&gt; ... Dm(vi) Eb(bVII)</code></p>
+    <p>Dm is the vi of F Mixolydian - one coherent palette, verified by the theory
+    engine before the words existed. The song is about the loop. The loop wrote the
+    song's harmony.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Go deeper</div>
+    <h2 class="claim">This is the pitch. The method has the receipts.</h2>
+    <p class="big">This is one pilot on one real app, not yet a portable methodology -
+    the skill that runs this loop says so itself. What follows is the full account:
+    the loop in detail, the actual persona roster, and the status, honestly stated.</p>
+    <p>Put plainly: this is what "user-centric development" means as a method, not a
+    slogan - the human reports in their own fragments and never learns the tooling's
+    language; the system is what bends. Same claim Problem Solutions' own mission
+    makes - human-centered emerging technology - built here first, at personal scale.</p>
+    <div class="cta-row">
+      <a class="cta solid" href="method.html">The full method &rarr;</a>
+      <a class="cta" href="../case-study-music-app.html">Origin case study (audited)</a>
+      <a class="cta" href="https://nhruska.github.io/music/play/">Live app</a>
+    </div>
+  </div>
+</section>
+
+<div class="footer">Nik Hruska - personal engineering practice.</div>
+
+</body>
+</html>
