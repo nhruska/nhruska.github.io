@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulation-Driven Development, in Depth - User-Centric Development - Nik Hruska</title>
+<meta name="description" content="User-Centric Development (working name: Thought-Ware Development) - the SDD deep-dive: personas as deterministic app states, friction profiles as the real input, hallucination as a permissible upstream feature, and persona priority as a Product Owner call that moves.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
+<style>
+:root{
+  --bg:#0d0f12; --bg-2:#14171c; --surface:#181b21; --surface-2:#1f232b;
+  --line:#262b34; --line-strong:#323a45;
+  --txt:#e8ebf0; --txt-soft:#b6bcc6; --txt-dim:#8a92a0; --txt-faint:#6b7280;
+  --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c; --accent-ink:var(--accent);
+  --bad:#f87171;
+}
+:root[data-theme="light"]{
+  --bg:#eef1f4; --bg-2:#e3e8ee; --surface:#ffffff; --surface-2:#f2f5f8;
+  --line:#d6dce3; --line-strong:#bcc5cf;
+  --txt:#161b22; --txt-soft:#3f4854; --txt-dim:#5f6875; --txt-faint:#8a93a0;
+  --accent-dim:#bfe6df; --accent-deep:#e7f6f2; --accent-ink:#0f766e;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--txt);
+  font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; line-height:1.6;}
+.wrap{max-width:760px; margin:0 auto; padding:0 20px 60px;}
+header.masthead{padding:28px 20px 20px; border-bottom:1px solid var(--line); margin-bottom:20px;}
+.brand{display:flex; align-items:center; gap:12px; max-width:760px; margin:0 auto;}
+.brand svg{width:34px; height:34px; flex:0 0 auto;}
+.brand .name{font-size:1rem; letter-spacing:.12em; font-weight:600; color:var(--accent-ink);
+  text-transform:uppercase;}
+.brand .name em{color:var(--accent-ink); font-style:italic;}
+h1{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:1.6rem; line-height:1.3;
+  margin:.6em 0 .1em; max-width:760px; margin-left:auto; margin-right:auto; padding:0 20px;}
+.tagline{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; color:var(--txt-dim);
+  font-size:.95rem; max-width:760px; margin:0 auto 1.6em; padding:0 20px;}
+h2{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:1.05rem; margin-top:2em;
+  color:var(--accent-ink); text-transform:uppercase; letter-spacing:.05em;}
+p{margin:.7em 0;}
+.callout{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent-ink);
+  border-radius:6px; padding:14px 16px; margin:1.2em 0; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;
+  font-size:.95rem;}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1em 0;}
+table{width:100%; border-collapse:collapse; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.86rem;}
+th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
+th{background:var(--surface-2); color:var(--txt-dim); font-weight:600; text-transform:uppercase; font-size:.7rem;}
+code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-family:'Space Mono','SF Mono',Menlo,monospace; font-size:.85em;}
+.status{display:inline-block; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.72rem;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--accent-ink); border:1px solid var(--accent-ink);
+  border-radius:4px; padding:2px 8px; margin-bottom:1em;}
+.footer{margin-top:2.5em; padding-top:1em; border-top:1px solid var(--line);
+  color:var(--txt-dim); font-size:.82rem; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;}
+a{color:var(--accent-ink);}
+.theme-toggle{margin-left:12px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--txt);
+  border-radius:8px; padding:4px 10px; font-size:.72rem; cursor:pointer; font-family:inherit;}
+.diagram{width:100%; height:auto; margin:1.2em 0 .4em; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  var KEY='music.theme.v1';
+  var mql=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;
+  function stored(){try{var v=localStorage.getItem(KEY);if(v==='light'||v==='dark'||v==='auto')return v;}catch(e){}return 'auto';}
+  function effective(v){return (v==='light'||v==='dark')?v:((mql&&mql.matches)?'light':'dark');}
+  function paint(){document.documentElement.setAttribute('data-theme', effective(stored()));}
+  paint();
+  if(mql){var onOS=function(){if(stored()==='auto')paint();};if(mql.addEventListener)mql.addEventListener('change',onOS);else if(mql.addListener)mql.addListener(onOS);}
+  window.__toggleTheme=function(){
+    var next=effective(stored())==='light'?'dark':'light';
+    try{localStorage.setItem(KEY,next);}catch(e){}
+    document.documentElement.setAttribute('data-theme', next);
+  };
+})();
+</script>
+<header class="masthead">
+  <div class="brand">
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="Nik Hruska">
+      <circle cx="24" cy="24" r="22" fill="var(--accent-deep)"/>
+      <text x="24" y="33" font-family="Inter,sans-serif" font-size="26" fill="var(--accent-ink)" text-anchor="middle">N</text>
+    </svg>
+    <span class="name">Nik Hruska <em>/ nh-pages</em></span>
+    <button class="theme-toggle" onclick="__toggleTheme()" aria-label="Toggle theme">Light/Dark</button>
+  </div>
+</header>
+
+<p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:.85rem;"><a href="method.html">&larr; The Method</a> &middot; <a href="gateway.html">User-Centric Development</a></p>
+<h1>Simulation-Driven Development, in Depth</h1>
+<p class="tagline">Personas as deterministic app states, friction profiles as the real
+input, hallucination as a permissible upstream feature, and persona priority as a
+Product Owner call that moves over time.</p>
+
+<div class="wrap">
+
+<span class="status">Candidate for global promotion - pilot in progress</span>
+
+<h2>A persona is a state, not a character</h2>
+<p>The tempting shortcut is asking the model to roleplay a user - "pretend you're a
+beginner and tell me what confuses you." That produces a plausible-sounding opinion,
+not a checkable fact, and it's a different opinion every time you ask. SDD (the
+running skill calls it USDD - User-Simulation-Driven Development) rejects that
+shortcut entirely: a persona here is <code>music.guidanceLevel.v1</code> plus an
+answered-ask notable, seeded into localStorage <strong>before</strong> the scenario
+runner taps a single button. The runner then drives the same taps a real user of
+that level would make and asserts what that user must - or must not - see.</p>
+<div class="tbl-wrap">
+<table>
+<tr><th>Persona level</th><th>Seeded state</th><th>What diverges (notables)</th></tr>
+<tr><td>Beginner</td><td><code>level=beginner</code>, ask answered</td><td>firstrun/tunefirst/savebasics tips; no whynote or scaletip theory prose</td></tr>
+<tr><td>Intermediate</td><td><code>level=intermediate</code>, ask answered</td><td>whynote, composeintro, transposetip</td></tr>
+<tr><td>Advanced</td><td><code>level=advanced</code>, ask answered</td><td>whynote, scaletip</td></tr>
+</table>
+</div>
+<p>Same taps, seeded state swapped, opposite assertions - both provably green. That's
+the whole trick: "run any app user on any task" becomes a replayable claim instead of
+an improvised performance, because the persona is data the runner seeds, not a
+character the model stays in.</p>
+
+<h2>Friction profiles are the real input</h2>
+<p>A friction profile is not a backlog someone invented at a whiteboard. It's built
+the same way every time: take a persona, list what actually went wrong for them in a
+real session, and cite the evidence - an operator quote, a scenario screenshot, a
+code trace - next to each one. Anything without evidence doesn't count as friction
+yet, it's a guess.</p>
+<div class="tbl-wrap">
+<table>
+<tr><th>Persona</th><th>#</th><th>Friction</th><th>Evidence</th></tr>
+<tr><td rowspan="2">Sam - beginner</td><td>B1</td><td>Solo modal copy assumes vocabulary the persona doesn't have yet</td><td>operator UAT: "not clear of my expected workflow as new user"</td></tr>
+<tr><td>B2</td><td>Studio gives no orientation on first sight - just a bare fretboard and jargon chips</td><td><code>persona-beginner-studio.json</code> run, screenshot: no guidance content at all</td></tr>
+<tr><td rowspan="2">Riley - intermediate</td><td>I1</td><td>After Save/Skip, no "what should I do next" cue</td><td>operator UAT, the flow's remaining half</td></tr>
+<tr><td>I2</td><td>Selected filter chip reads as a shouting CTA, not a quiet selection</td><td>operator UAT, decision deferred once already</td></tr>
+<tr><td rowspan="2">Jo - advanced</td><td>A1</td><td>Key picker still offers sharp-only names (Bb keys picked as A#)</td><td>FORK-4 wave-2 residue</td></tr>
+<tr><td>A2</td><td>Solo-scale choice resets every Studio open instead of persisting per song</td><td>code trace: derived fresh, never persisted</td></tr>
+</table>
+</div>
+<p>Each row above became a scored goalpost (Impact &times; Reach &times; Ease) before
+a line of code changed - the scoring record is a plan doc, not a memory. A friction
+profile is what makes "what should we build next" answerable from evidence instead of
+whoever's opinion was loudest that day.</p>
+
+<h2>Composing the right amount of hallucination</h2>
+<p>The model is free to hallucinate candidate features, candidate fixes, candidate
+copy - as many as it wants, as fast as it wants. That's not a risk to manage, it's the
+cheap half of the loop working as intended. What makes it safe is where the
+hallucination is allowed to live: upstream of the gate, generating guesses, never
+inside the gate, deciding whether a guess counts.</p>
+<svg class="diagram" viewBox="0 0 640 140" role="img" aria-labelledby="hallucDiagTitle" xmlns="http://www.w3.org/2000/svg">
+  <title id="hallucDiagTitle">The model generates cheap, imprecise candidates; a persona scenario scores each one exactly; the survivor is kept and the rest discarded, then the next candidate batch runs the same way.</title>
+  <defs>
+    <marker id="arrowH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
+    </marker>
+  </defs>
+  <line x1="200" y1="45" x2="220" y2="45" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrowH)"/>
+  <line x1="410" y1="45" x2="430" y2="45" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrowH)"/>
+  <rect x="10" y="20" width="190" height="50" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+  <text x="105" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="var(--txt)">GENERATE</text>
+  <text x="105" y="56" text-anchor="middle" font-size="9.5" fill="var(--txt-dim)">candidates - cheap, imprecise</text>
+  <rect x="220" y="20" width="190" height="50" rx="9" fill="var(--surface-2)" stroke="var(--accent-ink)"/>
+  <text x="315" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent-ink)">SCORE</text>
+  <text x="315" y="56" text-anchor="middle" font-size="9.5" fill="var(--txt-dim)">persona scenario - exact</text>
+  <rect x="430" y="20" width="190" height="50" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+  <text x="525" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="var(--txt)">CONVERGE</text>
+  <text x="525" y="56" text-anchor="middle" font-size="9.5" fill="var(--txt-dim)">keep survivor, discard rest</text>
+  <path d="M525,72 C525,110 105,110 105,72" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrowH)"/>
+  <text x="315" y="128" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next candidate batch, same scoring</text>
+</svg>
+<p>"Tight loop" doesn't mean the model is trusted more each round - it means every
+round produces a bounded, checkable outcome regardless of how the candidate was
+generated. A hallucinated guess that's wrong fails the persona scenario for a
+specific, readable reason; a hallucinated guess that's right passes the exact same
+gate a careful guess would have to clear. The loop can't be gamed by generating more
+confidently, only by generating something that actually survives the scenario.</p>
+
+<h2>Persona priority is a Product Owner call, and it moves</h2>
+<p>The wiki records what each persona needs; it doesn't decide which persona gets
+built for first. That's a product call, made by the Product Owner, re-scored as the
+product matures - not a fixed ranking baked into the spec forever.</p>
+<p>Concretely, on this app: the theory-literate personas came first. The
+Conservatory Pianist is described in the persona registry itself as "the most
+credibility-sensitive persona" - one wrong enharmonic spelling and that user is gone
+for good, no second chance. That's an asymmetric cost: getting theory wrong for an
+expert is catastrophic and permanent, while a rough edge in beginner onboarding is
+just a rough edge, fixable next sprint. So the credibility bar had to be earned
+first, deterministically, before beginner experience was worth investing in at all -
+a beginner win nobody trusts because the theory underneath is shaky isn't a win.</p>
+<svg class="diagram" viewBox="0 0 640 150" role="img" aria-labelledby="prioDiagTitle" xmlns="http://www.w3.org/2000/svg">
+  <title id="prioDiagTitle">Phase 1 prioritizes theory-literate personas because one wrong note loses them permanently; phase 2 prioritizes beginners and the first-run tour once the theory core was provably solid. The Product Owner re-scores this as the product matures.</title>
+  <defs>
+    <marker id="arrowP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
+    </marker>
+  </defs>
+  <text x="320" y="12" text-anchor="middle" font-size="11" fill="var(--txt-dim)">priority moves as the product matures</text>
+  <line x1="280" y1="66" x2="360" y2="66" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrowP)"/>
+  <rect x="20" y="28" width="260" height="76" rx="10" fill="var(--accent-deep)" stroke="var(--accent-ink)" stroke-width="1.5"/>
+  <text x="150" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent-ink)">PHASE 1 (first)</text>
+  <text x="150" y="70" text-anchor="middle" font-size="11" fill="var(--txt)">Theory-literate personas</text>
+  <text x="150" y="88" text-anchor="middle" font-size="10" fill="var(--txt-dim)">one wrong note = gone for good</text>
+  <rect x="360" y="28" width="260" height="76" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+  <text x="490" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="var(--txt)">PHASE 2 (next)</text>
+  <text x="490" y="70" text-anchor="middle" font-size="11" fill="var(--txt)">Beginners + first-run tour</text>
+  <text x="490" y="88" text-anchor="middle" font-size="10" fill="var(--txt-dim)">once the core was provably solid</text>
+</svg>
+<p>Once the deterministic theory canon was audited and green (see the theory-engine
+verification work the app already cites elsewhere), the highest-scored goalpost
+shifted: a persona-conditional beginner orientation scored 80 on Impact &times;
+Reach &times; Ease - the top item in the queue - precisely because it no longer
+risked the credibility bar the first phase had already secured. That's what "the
+priority moves" means in practice: not a mood change, a re-score triggered by what
+got proven in the phase before it.</p>
+<div class="callout">
+<strong>The wiki doesn't set the order; it records what's true once the order picks
+a persona.</strong> Priority is the Product Owner's call to make and remake - the
+friction profile and the persona registry are what that call gets checked against,
+not what makes it.
+</div>
+
+<div class="footer">Nik Hruska - personal engineering practice. Part of the
+<a href="gateway.html">User-Centric Development</a> pack - see
+<a href="method.html">the full method</a> for the loop and the volley this deep-dive
+sits inside of.</div>
+
+</div>
+</body>
+</html>

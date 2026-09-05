@@ -12,6 +12,7 @@
   --line:#262b34; --line-strong:#323a45;
   --txt:#e8ebf0; --txt-soft:#b6bcc6; --txt-dim:#8a92a0; --txt-faint:#6b7280;
   --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c; --accent-ink:var(--accent);
+  --bad:#f87171;
 }
 :root[data-theme="light"]{
   --bg:#eef1f4; --bg-2:#e3e8ee; --surface:#ffffff; --surface-2:#f2f5f8;
@@ -57,6 +58,7 @@ p.big{font-size:1.15rem;}
 .loop .step{background:var(--surface-2); border:1px solid var(--line); border-radius:20px;
   padding:6px 14px; white-space:nowrap;}
 .loop .arrow{color:var(--txt-dim); align-self:center;}
+.diagram{width:100%; height:auto; margin:1.2em 0 .4em; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;}
 .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1em 0;}
 table{width:100%; border-collapse:collapse; font-size:.86rem;}
 th,td{padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
@@ -130,6 +132,32 @@ a{color:var(--accent-ink);}
     whatever level of detail the TDD/SDD/UAT loops actually need to run. The wiki is the
     human-computer-interaction layer's spec, written by the SMEs, for a HiTL who never
     has to speak their language.</p>
+    <svg class="diagram" viewBox="0 0 640 240" role="img" aria-labelledby="wikiDiagTitle" xmlns="http://www.w3.org/2000/svg">
+      <title id="wikiDiagTitle">Human reports a spoken fragment to the agents; the agents author and check against the wiki; the wiki defines what "correct" means back to the human.</title>
+      <defs>
+        <marker id="arrow1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
+        </marker>
+        <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-ink)"/>
+        </marker>
+      </defs>
+      <line x1="200" y1="198" x2="432" y2="198" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow1)"/>
+      <text x="316" y="188" text-anchor="middle" font-size="12" fill="var(--txt-dim)">a spoken fragment</text>
+      <line x1="470" y1="168" x2="368" y2="84" stroke="var(--accent-ink)" stroke-width="2" marker-end="url(#arrowAccent)" marker-start="url(#arrowAccent)"/>
+      <text x="500" y="140" text-anchor="middle" font-size="12" fill="var(--accent-ink)">authors + checks</text>
+      <line x1="272" y1="84" x2="170" y2="168" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow1)"/>
+      <text x="145" y="140" text-anchor="middle" font-size="12" fill="var(--txt-dim)">defines &quot;correct&quot;</text>
+      <rect x="240" y="24" width="160" height="56" rx="10" fill="var(--accent-deep)" stroke="var(--accent-ink)" stroke-width="1.5"/>
+      <text x="320" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent-ink)">WIKI</text>
+      <text x="320" y="65" text-anchor="middle" font-size="11" fill="var(--accent-ink)">the shared spec</text>
+      <rect x="20" y="170" width="180" height="56" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <text x="110" y="193" text-anchor="middle" font-size="13" font-weight="700" fill="var(--txt)">HUMAN</text>
+      <text x="110" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">reports a fragment</text>
+      <rect x="432" y="170" width="188" height="56" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <text x="526" y="193" text-anchor="middle" font-size="13" font-weight="700" fill="var(--txt)">AGENTS</text>
+      <text x="526" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">CTO + SMEs</text>
+    </svg>
   </div>
 </section>
 
@@ -140,17 +168,30 @@ a{color:var(--accent-ink);}
     <p class="big">The model is free to generate - guess at features, hallucinate task
     ideas, propose whatever it wants. Nothing it generates ships until it survives a
     deterministic loop that doesn't care what the model believes.</p>
-    <div class="loop">
-      <span class="step">Friction profile</span>
-      <span class="arrow">&rarr;</span>
-      <span class="step">Goalpost -&gt; persona scenario</span>
-      <span class="arrow">&rarr;</span>
-      <span class="step">Must FAIL first (red)</span>
-      <span class="arrow">&rarr;</span>
-      <span class="step">Build to green</span>
-      <span class="arrow">&rarr;</span>
-      <span class="step">Regression, forever</span>
-    </div>
+    <svg class="diagram" viewBox="0 0 700 190" role="img" aria-labelledby="loopDiagTitle" xmlns="http://www.w3.org/2000/svg">
+      <title id="loopDiagTitle">Friction profile leads to a goalpost scenario, which must fail red, then is built to green, then kept as a regression forever - and the next friction profile restarts the cycle.</title>
+      <defs>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
+        </marker>
+      </defs>
+      <line x1="128" y1="42" x2="140" y2="42" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow2)"/>
+      <line x1="258" y1="42" x2="270" y2="42" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow2)"/>
+      <line x1="388" y1="42" x2="400" y2="42" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow2)"/>
+      <line x1="518" y1="42" x2="530" y2="42" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow2)"/>
+      <rect x="10" y="20" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="69" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Friction profile</text>
+      <rect x="140" y="20" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="199" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Goalpost</text>
+      <rect x="270" y="20" width="118" height="44" rx="9" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+      <text x="329" y="46" text-anchor="middle" font-size="11" fill="var(--bad)">RED - must fail</text>
+      <rect x="400" y="20" width="118" height="44" rx="9" fill="var(--surface-2)" stroke="var(--accent-ink)"/>
+      <text x="459" y="46" text-anchor="middle" font-size="11" fill="var(--accent-ink)">GREEN - build</text>
+      <rect x="530" y="20" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="589" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Regression, forever</text>
+      <path d="M589,66 C589,158 69,158 69,66" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow2)"/>
+      <text x="329" y="178" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next friction profile restarts the cycle</text>
+    </svg>
   </div>
 </section>
 
@@ -290,6 +331,40 @@ a{color:var(--accent-ink);}
     pass reviews - and denies any claim that isn't backed by deterministic, TDD-proven
     evidence. "It should work" and "it looks right" are not evidence. A passing
     scenario is.</p>
+    <svg class="diagram" viewBox="0 0 700 260" role="img" aria-labelledby="volleyDiagTitle" xmlns="http://www.w3.org/2000/svg">
+      <title id="volleyDiagTitle">Once every goalpost passes: PR opens, CI goes green, Claude and Codex volley until Codex stops refusing, a separate bot identity formally approves, the PR merges, and the next cycle begins.</title>
+      <defs>
+        <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
+        </marker>
+        <marker id="arrow3accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-ink)"/>
+        </marker>
+      </defs>
+      <rect x="270" y="30" width="118" height="108" rx="10" fill="none" stroke="var(--line-strong)" stroke-dasharray="4 4"/>
+      <text x="329" y="22" text-anchor="middle" font-size="11" fill="var(--txt-dim)">adversarial volley</text>
+      <line x1="128" y1="84" x2="140" y2="84" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow3)"/>
+      <line x1="258" y1="84" x2="270" y2="84" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow3)"/>
+      <line x1="388" y1="84" x2="400" y2="84" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow3)"/>
+      <line x1="518" y1="84" x2="530" y2="84" stroke="var(--txt-dim)" stroke-width="2" marker-end="url(#arrow3)"/>
+      <rect x="10" y="62" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="69" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">PR opens</text>
+      <rect x="140" y="62" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="199" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">CI green</text>
+      <rect x="278" y="36" width="102" height="40" rx="8" fill="var(--surface-2)" stroke="var(--accent-ink)"/>
+      <text x="329" y="52" text-anchor="middle" font-size="10" font-weight="700" fill="var(--accent-ink)">CLAUDE</text>
+      <text x="329" y="66" text-anchor="middle" font-size="9" fill="var(--txt-dim)">writes / revises</text>
+      <line x1="329" y1="76" x2="329" y2="94" stroke="var(--accent-ink)" stroke-width="2" marker-end="url(#arrow3accent)" marker-start="url(#arrow3accent)"/>
+      <rect x="278" y="94" width="102" height="40" rx="8" fill="var(--surface-2)" stroke="var(--bad)"/>
+      <text x="329" y="110" text-anchor="middle" font-size="10" font-weight="700" fill="var(--bad)">CODEX</text>
+      <text x="329" y="124" text-anchor="middle" font-size="9" fill="var(--txt-dim)">refuses unproven</text>
+      <rect x="400" y="62" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
+      <text x="459" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">Bot approves</text>
+      <rect x="530" y="62" width="118" height="44" rx="9" fill="var(--accent-deep)" stroke="var(--accent-ink)"/>
+      <text x="589" y="88" text-anchor="middle" font-size="11" fill="var(--accent-ink)">Merge</text>
+      <path d="M589,120 C589,210 69,210 69,120" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow3)"/>
+      <text x="329" y="230" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next cycle, back into the loop</text>
+    </svg>
     <p>Only after that survives does a GitHub App bot identity file the formal
     approve - a separate identity from the one that authored the PR, because a model
     cannot credibly approve its own work under its own name. Merge, then back into the
@@ -326,6 +401,7 @@ a{color:var(--accent-ink);}
     makes - human-centered emerging technology - built here first, at personal scale.</p>
     <div class="cta-row">
       <a class="cta solid" href="method.html">The full method &rarr;</a>
+      <a class="cta" href="sdd.html">SDD in depth</a>
       <a class="cta" href="../case-study-music-app.html">Origin case study (audited)</a>
       <a class="cta" href="https://nhruska.github.io/music/play/">Live app</a>
     </div>

@@ -37,6 +37,7 @@
 | [practice-studio.md](systems/practice-studio.md) | The Studio overlay: solo panel, position walk, buildWhy circle, curation loop, Compose bridge |
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
 | [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
+| [theme-tokens.md](systems/theme-tokens.md) | Light/dark token values + the `music.theme.v1` boot mechanism; the copy-don't-invent rule for any surface outside `music/` (artifact packs, case studies) |
 
 ## workflows/ - how we work on it
 
