@@ -94,6 +94,22 @@ a{color:var(--accent);}
   </div>
 </section>
 
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Who does which job</div>
+    <h2 class="claim">HiTL is not technical, and not a subject-matter expert.</h2>
+    <p class="big">A problem gets reported as a spoken phrase or fragment - speech-to-text,
+    not an implementation direction. "the studio thing is confusing when I'm playing" is
+    a valid, sufficient report. Nobody on the human side is expected to say which
+    component, which state, or which fix.</p>
+    <p class="big">The agents are the CTO and the subject-matter experts. A coach suite -
+    UX, accessibility, music theory - turns that fragment into a wiki entry written to
+    whatever level of detail the TDD/SDD/UAT loops actually need to run. The wiki is the
+    human-computer-interaction layer's spec, written by the SMEs, for a HiTL who never
+    has to speak their language.</p>
+  </div>
+</section>
+
 <section class="slide" id="loop">
   <div class="inner">
     <div class="eyebrow">The claim</div>
@@ -139,6 +155,21 @@ a{color:var(--accent);}
     </div>
     <p>Screenshots and voice notes are the feedback, not a bug report written after
     the fact - the loop closes on the same evidence both sides just watched happen.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">What the operator actually does, per cycle</div>
+    <h2 class="claim">Tens of iterations. Hundreds, sometimes. One number typed, each
+    time.</h2>
+    <p class="big">Dev loops and UAT loops don't run once - they run 10s to 100s of
+    times across a working session. The loop still has to stop at a real breakpoint and
+    ask a human something, but the ask is a single numbered option: proceed to the next
+    goalpost, or don't. Minimal typing, by design - the human-factors cost of staying in
+    the loop has to stay near zero, or nobody stays in it for iteration 40.</p>
+    <p>It keeps stopping and asking, one number at a time, until there is no goalpost
+    left to advance to. Then the loop changes shape entirely - see below.</p>
   </div>
 </section>
 
@@ -227,6 +258,25 @@ a{color:var(--accent);}
 
 <section class="slide">
   <div class="inner">
+    <div class="eyebrow">When there's no goalpost left</div>
+    <h2 class="claim">A different vendor's model gets to refuse every claim that
+    isn't proven.</h2>
+    <p class="big">Once every goalpost passes, the loop's shape changes: PR, then CI,
+    then an adversarial volley between two different vendors' models, not one model
+    checking its own work. The highest-thinking Claude tier writes; a skeptical Codex
+    pass reviews - and denies any claim that isn't backed by deterministic, TDD-proven
+    evidence. "It should work" and "it looks right" are not evidence. A passing
+    scenario is.</p>
+    <p>Only after that survives does a GitHub App bot identity file the formal
+    approve - a separate identity from the one that authored the PR, because a model
+    cannot credibly approve its own work under its own name. Merge, then back into the
+    TDD/UAT loop for the next cycle. The volley is a gate on the way out, not a
+    courtesy step.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
     <div class="eyebrow">The proof case</div>
     <h2 class="claim">A song about friction, written by the loop testing itself.</h2>
     <p class="big">The pilot's sharpest artifact wasn't a bug fix - it was using the
@@ -247,6 +297,10 @@ a{color:var(--accent);}
     <p class="big">This is one pilot on one real app, not yet a portable methodology -
     the skill that runs this loop says so itself. What follows is the full account:
     the loop in detail, the actual persona roster, and the status, honestly stated.</p>
+    <p>Put plainly: this is what "user-centric development" means as a method, not a
+    slogan - the human reports in their own fragments and never learns the tooling's
+    language; the system is what bends. Same claim Problem Solutions' own mission
+    makes - human-centered emerging technology - built here first, at personal scale.</p>
     <div class="cta-row">
       <a class="cta solid" href="method.html">The full method &rarr;</a>
       <a class="cta" href="../case-study-music-app.html">Origin case study (audited)</a>

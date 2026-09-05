@@ -78,6 +78,18 @@ deterministic - proven on a real app, against real users, with a music theory en
 
 <span class="status">Candidate for global promotion - pilot in progress</span>
 
+<h2>Who does which job</h2>
+<p>The human-in-the-loop is not technical, and not a subject-matter expert. A problem
+gets reported as a spoken phrase or fragment - speech-to-text, not an implementation
+direction. "the studio thing is confusing when I'm playing" is a valid, sufficient
+report; nobody on the human side has to say which component, which state, or which
+fix.</p>
+<p>The agents are the CTO and the subject-matter experts. This app runs a coach suite -
+UX, accessibility, music theory - whose job is turning that fragment into a wiki entry
+written to whatever level of detail the TDD/SDD/UAT loops actually need to run live.
+The wiki is the human-computer-interaction layer's spec, authored by the SMEs, for a
+HiTL who never has to speak their language.</p>
+
 <h2>The claim</h2>
 <p>Most "AI-assisted development" trusts the model's judgment on whether something
 works. This doesn't. The model is free to generate - guess at features, hallucinate
@@ -127,6 +139,15 @@ transcribed into a bug report after the fact, and the next revision lands on the
 same PR. Deterministic on the machine side; verifiable, not just reported, on the
 human side too.</p>
 
+<h2>What the operator actually does, per cycle</h2>
+<p>Dev loops and UAT loops don't run once - they run 10s to 100s of times across a
+working session. The loop still has to stop at a real breakpoint and ask a human
+something, but the ask is a single numbered option: proceed to the next goalpost, or
+don't. Minimal typing is not a nicety here - the human-factors cost of staying in the
+loop has to stay near zero, or nobody stays in it past the first dozen iterations.
+It keeps stopping and asking, one number at a time, until there is no goalpost left
+to advance to - at which point the loop changes shape entirely (see below).</p>
+
 <h2>Personas are app states, not narratives</h2>
 <p>A persona here is <code>music.guidanceLevel.v1</code> plus an answered-ask
 notable, seeded before the script runs - not a description an LLM stays in character
@@ -158,6 +179,17 @@ one thing actually written down. The wiki-as-institutional-memory idea traces to
 Karpathy's llm-wiki gist</a> - applied here to business rules instead of general
 knowledge, not reinvented.</p>
 
+<h2>When there's no goalpost left</h2>
+<p>Once every goalpost passes, the loop's shape changes: PR, then CI, then an
+adversarial volley between two different vendors' models, not one model checking its
+own work. The highest-thinking Claude tier writes; a skeptical Codex pass reviews -
+and denies any claim that isn't backed by deterministic, TDD-proven evidence. "It
+should work" and "it looks right" are not evidence. A passing scenario is.</p>
+<p>Only after that survives does a GitHub App bot identity file the formal approve -
+a separate identity from the one that authored the PR, because a model cannot
+credibly approve its own work under its own name. Merge, then back into the TDD/UAT
+loop for the next cycle. The volley is a gate on the way out, not a courtesy step.</p>
+
 <h2>The proof case: a song about friction, written by the loop testing itself</h2>
 <p>The pilot's sharpest artifact wasn't a bug fix - it was using the app's own music
 theory engine to co-write a real song about compound engineering, working through
@@ -175,6 +207,12 @@ for global promotion after the music-app pilot." A related discipline - simulati
 development on real deterministic tests, not just personas - has already crossed over
 into at least one other project's engineering rules. That crossover is the actual
 signal this is more than a one-app trick, not a claim made here in advance of it.</p>
+<p>Put plainly: this is what "user-centric development" means when it's a method and
+not a slogan - the human at the center reports in their own fragments, never learns
+the tooling's language, and the system is what bends to meet them. That's the same
+claim Problem Solutions' own stated mission makes - "competitive advantages through
+human-centered emerging technology" - built here first, at personal scale, before it
+ever has to be argued for at company scale.</p>
 
 <div class="footer">Nik Hruska - personal engineering practice. The nh-pages music app
 is the proof case; this page describes the method, not the app. Part of the
