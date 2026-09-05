@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
 <!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
-<script src="../shared/theme.js?v=music-v346"></script>
+<script src="../shared/theme.js?v=music-v347"></script>
 <!-- Versioned localStorage boot migration runner (shared/storage-migrate.js).
      Loaded first - before backup.js/songbook.js and every other shared/*.js
      consumer, and before the pre-paint read just below - so its self-run at
      load time completes before anything else reads persisted state. -->
-<script src="../shared/storage-migrate.js?v=music-v346"></script>
+<script src="../shared/storage-migrate.js?v=music-v347"></script>
 <script>
 /* Set theme + accent hue before first paint to avoid a flash. The full accent
    derivation runs in the Settings script below; the CSS light fallbacks
@@ -35,9 +35,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Music">
 <!-- Shared songbook styles (theme + all components). -->
-<link rel="stylesheet" href="../shared/songbook.css?v=music-v346">
-<link rel="stylesheet" href="../shared/tracks.css?v=music-v346">
-<link rel="stylesheet" href="../shared/repertoire-form.css?v=music-v346">
+<link rel="stylesheet" href="../shared/songbook.css?v=music-v347">
+<link rel="stylesheet" href="../shared/tracks.css?v=music-v347">
+<link rel="stylesheet" href="../shared/repertoire-form.css?v=music-v347">
 </head>
 <body>
 <div class="app">
@@ -457,116 +457,116 @@
 <!-- esc.js: the ONE HTML-escape util - loads first since
      list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
      tracks.js all delegate to it. -->
-<script src="../shared/esc.js?v=music-v346"></script>
+<script src="../shared/esc.js?v=music-v347"></script>
 <!-- toast.js: the shared per-host timer-isolation primitive both showToast()
      and showComposeToast() in songbook.js delegate to. Loads early, alongside
      esc.js, since any consumer could show a toast. -->
-<script src="../shared/toast.js?v=music-v346"></script>
+<script src="../shared/toast.js?v=music-v347"></script>
 <!-- build-stamp.js: the authored-at-change-time version + freshness stamp the
      Settings meta line renders (VERSION mirrors sw.js CACHE, guard-locked by
      scripts/check-cache-bump.sh). Dependency-free; also loaded by
      play/triad-inversions.html. -->
-<script src="../shared/build-stamp.js?v=music-v346"></script>
+<script src="../shared/build-stamp.js?v=music-v347"></script>
 <!-- accordion.js: the exclusive disclosure group primitive (one open section
      at a time), consumed by the Settings sheet sections below. Dependency-free. -->
-<script src="../shared/accordion.js?v=music-v346"></script>
-<script src="../shared/nav-history.js?v=music-v346"></script>
-<script src="../shared/queue.js?v=music-v346"></script>
-<script src="../shared/circle.js?v=music-v346"></script>
-<script src="../shared/key-explorer.js?v=music-v346"></script>
-<script src="../shared/list-item.js?v=music-v346"></script>
-<script src="../shared/scroll-hint.js?v=music-v346"></script>
-<script src="../shared/notables.js?v=music-v346"></script>
+<script src="../shared/accordion.js?v=music-v347"></script>
+<script src="../shared/nav-history.js?v=music-v347"></script>
+<script src="../shared/queue.js?v=music-v347"></script>
+<script src="../shared/circle.js?v=music-v347"></script>
+<script src="../shared/key-explorer.js?v=music-v347"></script>
+<script src="../shared/list-item.js?v=music-v347"></script>
+<script src="../shared/scroll-hint.js?v=music-v347"></script>
+<script src="../shared/notables.js?v=music-v347"></script>
 <!-- guidance-level.js: the beginner|intermediate|advanced experience level
      (music.guidanceLevel.v1) - loaded right after notables.js, which grades
      claims against it (see notables.js's LEVELS table). -->
-<script src="../shared/guidance-level.js?v=music-v346"></script>
-<script src="../shared/callouts.js?v=music-v346"></script>
+<script src="../shared/guidance-level.js?v=music-v347"></script>
+<script src="../shared/callouts.js?v=music-v347"></script>
 <!-- chord-collapse.js: advanced-level compact chord chips for the Compose
      palettes - reads guidance-level.js (above), consumed lazily by songbook.js
      (window.ChordCollapse, optional lookup). -->
-<script src="../shared/chord-collapse.js?v=music-v346"></script>
-<script src="../shared/repertoire.js?v=music-v346"></script>
-<script src="../shared/song-templates.js?v=music-v346"></script>
-<script src="../shared/competency.js?v=music-v346"></script>
+<script src="../shared/chord-collapse.js?v=music-v347"></script>
+<script src="../shared/repertoire.js?v=music-v347"></script>
+<script src="../shared/song-templates.js?v=music-v347"></script>
+<script src="../shared/competency.js?v=music-v347"></script>
 <!-- skill-md.js: SKILL.md render/parse + store-only zip writer - the Skills
      panel's open-skills-format export/import (consumes competency.js's
      exportProfile output). -->
-<script src="../shared/skill-md.js?v=music-v346"></script>
+<script src="../shared/skill-md.js?v=music-v347"></script>
 <!-- agent-readme.js: the bundled AGENTS.md text for self-describing skills
      exports (spec section 5A) - songbook.js's downloadBundle appends it to
      the zip when present (guarded, defensive-reader law). -->
-<script src="../shared/agent-readme.js?v=music-v346"></script>
+<script src="../shared/agent-readme.js?v=music-v347"></script>
 <!-- capabilities.js: the app capability manifest (SSOT for
      music/agent/capabilities.json) - songbook.js's downloadBundle appends it
      to the zip when present (guarded, defensive-reader law). -->
-<script src="../shared/capabilities.js?v=music-v346"></script>
+<script src="../shared/capabilities.js?v=music-v347"></script>
 <!-- jam-link.js: pure parser for the `?jam=` agent-interaction deep link
      (spec section 4b) - no DOM, no storage. Consumed by the boot script's
      start() below (after tracksCtl/songbookCtl/pack exist): the parsed setup
      becomes an ephemeral track (TracksModel.jamTrackFromSetup) and opens the
      existing Practice Studio (S15 re-home) - Save hands off to
      repertoire-form.js exactly like any other track's Edit tap. -->
-<script src="../shared/jam-link.js?v=music-v346"></script>
+<script src="../shared/jam-link.js?v=music-v347"></script>
 <!-- setup-doc.js: pure parser for music-setup/v1 batch setup docs (spec A8) -
      the Skills file picker dispatches on the JSON schema string; entries land
      as prefills through the existing forms, never direct storage writes. -->
-<script src="../shared/setup-doc.js?v=music-v346"></script>
-<script src="../shared/zip-store.js?v=music-v346"></script>
-<script src="../shared/repertoire-form.js?v=music-v346"></script>
+<script src="../shared/setup-doc.js?v=music-v347"></script>
+<script src="../shared/zip-store.js?v=music-v347"></script>
+<script src="../shared/repertoire-form.js?v=music-v347"></script>
 <!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
      consumed by repertoire-form.js's Video URL suggest row. Resolves
      Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both load later in this
      file), so its position here is only "near its consumer", not a hard
      dependency order. -->
-<script src="../shared/yt-info.js?v=music-v346"></script>
+<script src="../shared/yt-info.js?v=music-v347"></script>
 <!-- playlist-import.js: keyless "import your playlist" (M-PLAYLIST-IMPORT) -
      iframe enumeration + noembed titles + the import key ladder, consumed by
      repertoire-form.js's import panel. Resolves YtInfo/Circle/PlaylistImport
      consumers at CALL time, so position is only "near its consumer". -->
-<script src="../shared/playlist-import.js?v=music-v346"></script>
+<script src="../shared/playlist-import.js?v=music-v347"></script>
 <!-- solo-guide.js: SoloGuide (per-scale mentor cards + framing) - loads before
      songbook.js AND tracks.js so both the Studio and the Compose solo chips can
      call it. -->
-<script src="../shared/solo-guide.js?v=music-v346"></script>
-<script src="../shared/theory.js?v=music-v346"></script>
-<script src="../shared/suggest-model.js?v=music-v346"></script>
-<script src="../shared/sheet-render.js?v=music-v346"></script>
-<script src="../shared/song-model.js?v=music-v346"></script>
-<script src="../shared/songbook.js?v=music-v346"></script>
-<script src="../shared/tuner.js?v=music-v346"></script>
+<script src="../shared/solo-guide.js?v=music-v347"></script>
+<script src="../shared/theory.js?v=music-v347"></script>
+<script src="../shared/suggest-model.js?v=music-v347"></script>
+<script src="../shared/sheet-render.js?v=music-v347"></script>
+<script src="../shared/song-model.js?v=music-v347"></script>
+<script src="../shared/songbook.js?v=music-v347"></script>
+<script src="../shared/tuner.js?v=music-v347"></script>
 <!-- shape-classify.js: curated shape classifier (family/rootString/inversion/
      barreFret per voicing). Loaded before diagram.js. Dependency-free (no
      circle.js coupling) - see the module header for why. -->
-<script src="../shared/shape-classify.js?v=music-v346"></script>
+<script src="../shared/shape-classify.js?v=music-v347"></script>
 <!-- diagram-pref.js: the dots|patterns preference + the decision of what label
      (if any) 'patterns' mode shows - the ONE place that knows both "the pref key
      is music.diagram.pref.v1" and "ask ShapeClassify for a label." Loaded after
      shape-classify.js (consumes it), before diagram.js (which stays agnostic of
      both - see its own header). -->
-<script src="../shared/diagram-pref.js?v=music-v346"></script>
-<script src="../shared/diagram.js?v=music-v346"></script>
+<script src="../shared/diagram-pref.js?v=music-v347"></script>
+<script src="../shared/diagram.js?v=music-v347"></script>
 <!-- legend.js: the Legend primitive (dot-swatch + label rows) - loads after
      diagram.js (the fretboard-dot renderer whose kx-* classes it mirrors),
      before tracks.js's openStudio calls Legend.render(). -->
-<script src="../shared/legend.js?v=music-v346"></script>
-<script src="../shared/audio.js?v=music-v346"></script>
+<script src="../shared/legend.js?v=music-v347"></script>
+<script src="../shared/audio.js?v=music-v347"></script>
 <!-- sound.js: zero-dependency scale/mode audition (Sound.playScale) - loads
      after audio.js (the other shared audio primitive), before
      tracks.js/songbook.js's toggle wiring calls it. -->
-<script src="../shared/sound.js?v=music-v346"></script>
+<script src="../shared/sound.js?v=music-v347"></script>
 <!-- jam-queries.js: curated genre x feel jam-discovery query data - loads
      before tracks.js so the Studio's "Find a jam" panel can call it. -->
-<script src="../shared/jam-queries.js?v=music-v346"></script>
-<script src="../shared/tracks-model.js?v=music-v346"></script>
-<script src="../shared/studio-theory.js?v=music-v346"></script>
-<script src="../shared/tracks.js?v=music-v346"></script>
-<script src="../shared/candidates.js?v=music-v346"></script>
+<script src="../shared/jam-queries.js?v=music-v347"></script>
+<script src="../shared/tracks-model.js?v=music-v347"></script>
+<script src="../shared/studio-theory.js?v=music-v347"></script>
+<script src="../shared/tracks.js?v=music-v347"></script>
+<script src="../shared/candidates.js?v=music-v347"></script>
 <!-- chord-pack-adapter.js + sugg.js: the chord-pack adapter + the
      chord-suggestion map, extracted into shared modules so they're testable
      (not inline in the bootstrap script below). -->
-<script src="../shared/chord-pack-adapter.js?v=music-v346"></script>
-<script src="../shared/sugg.js?v=music-v346"></script>
+<script src="../shared/chord-pack-adapter.js?v=music-v347"></script>
+<script src="../shared/sugg.js?v=music-v347"></script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -1144,7 +1144,7 @@
 </script>
 <!-- Schema/versioned backup+restore engine (shared/backup.js). Loaded before
      the inline Settings script so runMigrations() can run at boot. -->
-<script src="../shared/backup.js?v=music-v346"></script>
+<script src="../shared/backup.js?v=music-v347"></script>
 <!-- Settings: accent colour + whole-songbook backup/restore + which offline
      build is running. The accent chooser re-skins the --accent family live
      (tuner red/amber/green status colours are left alone). Backup/Restore move
