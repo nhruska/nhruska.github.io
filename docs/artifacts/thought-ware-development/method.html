@@ -3,73 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Method - Thought-Ware Development - Nik Hruska</title>
+<title>The Method - User-Centric Development - Nik Hruska</title>
+<meta name="description" content="User-Centric Development (working name: Thought-Ware Development) - the full method: who does which job, SDD, the wiki as intermediate language, and the state machine in detail.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
 <style>
 :root{
-  --bg:#faf8f4; --panel:#ffffff; --ink:#1c1c1a; --muted:#6b6a63;
-  --border:#e5e1d8; --accent:#1b3a3a; --accent2:#c98a3a; --code-bg:#f2efe7;
+  --bg:#0d0f12; --bg-2:#14171c; --surface:#181b21; --surface-2:#1f232b;
+  --line:#262b34; --line-strong:#323a45;
+  --txt:#e8ebf0; --txt-soft:#b6bcc6; --txt-dim:#8a92a0; --txt-faint:#6b7280;
+  --accent:#5eead4; --accent-dim:#244b45; --accent-deep:#16302c; --accent-ink:var(--accent);
 }
-@media (prefers-color-scheme: dark){
-  :root{ --bg:#14181a; --panel:#1c2224; --ink:#ece8de; --muted:#a6a190;
-         --border:#2c3436; --accent:#7fb3ac; --accent2:#e6b970; --code-bg:#20282a; }
+:root[data-theme="light"]{
+  --bg:#eef1f4; --bg-2:#e3e8ee; --surface:#ffffff; --surface-2:#f2f5f8;
+  --line:#d6dce3; --line-strong:#bcc5cf;
+  --txt:#161b22; --txt-soft:#3f4854; --txt-dim:#5f6875; --txt-faint:#8a93a0;
+  --accent-dim:#bfe6df; --accent-deep:#e7f6f2; --accent-ink:#0f766e;
 }
-:root[data-theme="dark"]{ --bg:#14181a; --panel:#1c2224; --ink:#ece8de; --muted:#a6a190;
-         --border:#2c3436; --accent:#7fb3ac; --accent2:#e6b970; --code-bg:#20282a; }
-:root[data-theme="light"]{ --bg:#faf8f4; --panel:#ffffff; --ink:#1c1c1a; --muted:#6b6a63;
-         --border:#e5e1d8; --accent:#1b3a3a; --accent2:#c98a3a; --code-bg:#f2efe7; }
 *{box-sizing:border-box;}
-body{margin:0; background:var(--bg); color:var(--ink);
-  font-family:Georgia,'Iowan Old Style','Times New Roman',serif; line-height:1.6;}
+body{margin:0; background:var(--bg); color:var(--txt);
+  font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; line-height:1.6;}
 .wrap{max-width:760px; margin:0 auto; padding:0 20px 60px;}
-header.masthead{padding:28px 20px 20px; border-bottom:1px solid var(--border); margin-bottom:20px;}
+header.masthead{padding:28px 20px 20px; border-bottom:1px solid var(--line); margin-bottom:20px;}
 .brand{display:flex; align-items:center; gap:12px; max-width:760px; margin:0 auto;}
 .brand svg{width:34px; height:34px; flex:0 0 auto;}
-.brand .name{font-size:1rem; letter-spacing:.12em; font-weight:600; color:var(--accent);
+.brand .name{font-size:1rem; letter-spacing:.12em; font-weight:600; color:var(--accent-ink);
   text-transform:uppercase;}
-.brand .name em{color:var(--accent2); font-style:italic;}
-h1{font-family:-apple-system,Segoe UI,Roboto,sans-serif; font-size:1.6rem; line-height:1.3;
+.brand .name em{color:var(--accent-ink); font-style:italic;}
+h1{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:1.6rem; line-height:1.3;
   margin:.6em 0 .1em; max-width:760px; margin-left:auto; margin-right:auto; padding:0 20px;}
-.tagline{font-family:-apple-system,Segoe UI,Roboto,sans-serif; color:var(--muted);
+.tagline{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; color:var(--txt-dim);
   font-size:.95rem; max-width:760px; margin:0 auto 1.6em; padding:0 20px;}
-h2{font-family:-apple-system,Segoe UI,Roboto,sans-serif; font-size:1.05rem; margin-top:2em;
-  color:var(--accent); text-transform:uppercase; letter-spacing:.05em;}
+h2{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:1.05rem; margin-top:2em;
+  color:var(--accent-ink); text-transform:uppercase; letter-spacing:.05em;}
 p{margin:.7em 0;}
-.callout{background:var(--panel); border:1px solid var(--border); border-left:4px solid var(--accent2);
-  border-radius:6px; padding:14px 16px; margin:1.2em 0; font-family:-apple-system,Segoe UI,sans-serif;
+.callout{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent-ink);
+  border-radius:6px; padding:14px 16px; margin:1.2em 0; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;
   font-size:.95rem;}
-.loop{display:flex; flex-wrap:wrap; gap:8px; margin:1em 0; font-family:-apple-system,Segoe UI,sans-serif;
+.loop{display:flex; flex-wrap:wrap; gap:8px; margin:1em 0; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;
   font-size:.85rem;}
-.loop .step{background:var(--code-bg); border:1px solid var(--border); border-radius:20px;
+.loop .step{background:var(--surface-2); border:1px solid var(--line); border-radius:20px;
   padding:6px 14px; white-space:nowrap;}
-.loop .arrow{color:var(--muted); align-self:center;}
-.tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin:1em 0;}
-table{width:100%; border-collapse:collapse; font-family:-apple-system,Segoe UI,sans-serif; font-size:.88rem;}
-th,td{padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top;}
-th{background:var(--code-bg); color:var(--muted); font-weight:600; text-transform:uppercase; font-size:.72rem;}
-code{background:var(--code-bg); padding:1px 5px; border-radius:4px; font-family:Menlo,Consolas,monospace; font-size:.85em;}
-pre{background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:12px 14px;
-  overflow-x:auto; font-family:Menlo,Consolas,monospace; font-size:.82rem;}
-.status{display:inline-block; font-family:-apple-system,Segoe UI,sans-serif; font-size:.72rem;
-  letter-spacing:.06em; text-transform:uppercase; color:var(--accent2); border:1px solid var(--accent2);
+.loop .arrow{color:var(--txt-dim); align-self:center;}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1em 0;}
+table{width:100%; border-collapse:collapse; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.88rem;}
+th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
+th{background:var(--surface-2); color:var(--txt-dim); font-weight:600; text-transform:uppercase; font-size:.72rem;}
+code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-family:'Space Mono','SF Mono',Menlo,monospace; font-size:.85em;}
+pre{background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:12px 14px;
+  overflow-x:auto; font-family:'Space Mono','SF Mono',Menlo,monospace; font-size:.82rem;}
+.status{display:inline-block; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.72rem;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--accent-ink); border:1px solid var(--accent-ink);
   border-radius:4px; padding:2px 8px; margin-bottom:1em;}
-.footer{margin-top:2.5em; padding-top:1em; border-top:1px solid var(--border);
-  color:var(--muted); font-size:.82rem; font-family:-apple-system,Segoe UI,sans-serif;}
-a{color:var(--accent);}
+.footer{margin-top:2.5em; padding-top:1em; border-top:1px solid var(--line);
+  color:var(--txt-dim); font-size:.82rem; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;}
+a{color:var(--accent-ink);}
+.theme-toggle{margin-left:12px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--txt);
+  border-radius:8px; padding:4px 10px; font-size:.72rem; cursor:pointer; font-family:inherit;}
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var KEY='music.theme.v1';
+  var mql=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;
+  function stored(){try{var v=localStorage.getItem(KEY);if(v==='light'||v==='dark'||v==='auto')return v;}catch(e){}return 'auto';}
+  function effective(v){return (v==='light'||v==='dark')?v:((mql&&mql.matches)?'light':'dark');}
+  function paint(){document.documentElement.setAttribute('data-theme', effective(stored()));}
+  paint();
+  if(mql){var onOS=function(){if(stored()==='auto')paint();};if(mql.addEventListener)mql.addEventListener('change',onOS);else if(mql.addListener)mql.addListener(onOS);}
+  window.__toggleTheme=function(){
+    var next=effective(stored())==='light'?'dark':'light';
+    try{localStorage.setItem(KEY,next);}catch(e){}
+    document.documentElement.setAttribute('data-theme', next);
+  };
+})();
+</script>
 <header class="masthead">
   <div class="brand">
     <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="Nik Hruska">
-      <circle cx="24" cy="24" r="22" fill="var(--accent)"/>
-      <text x="24" y="33" font-family="Georgia,serif" font-size="26" fill="var(--accent2)" text-anchor="middle">N</text>
+      <circle cx="24" cy="24" r="22" fill="var(--accent-deep)"/>
+      <text x="24" y="33" font-family="Inter,sans-serif" font-size="26" fill="var(--accent-ink)" text-anchor="middle">N</text>
     </svg>
     <span class="name">Nik Hruska <em>/ nh-pages</em></span>
+    <button class="theme-toggle" onclick="__toggleTheme()" aria-label="Toggle theme">Light/Dark</button>
   </div>
 </header>
 
-<p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:-apple-system,Segoe UI,sans-serif;font-size:.85rem;"><a href="gateway.html">&larr; Thought-Ware Development</a></p>
+<p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:.85rem;"><a href="gateway.html">&larr; User-Centric Development</a></p>
 <h1>The Method, in Full</h1>
 <p class="tagline">Steering agentic AI development with a wiki that makes business rules
 deterministic - proven on a real app, against real users, with a music theory engine as the judge.</p>
@@ -216,7 +236,7 @@ ever has to be argued for at company scale.</p>
 
 <div class="footer">Nik Hruska - personal engineering practice. The nh-pages music app
 is the proof case; this page describes the method, not the app. Part of the
-<a href="gateway.html">Thought-Ware Development</a> pack - start there for
+<a href="gateway.html">User-Centric Development</a> pack - start there for
 the short version.</div>
 
 </div>
