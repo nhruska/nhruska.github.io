@@ -221,4 +221,74 @@ test('render() re-derives Key option labels on every Mode-select change (live re
   assert.ok(/rootOptionsHtml\(modeSel\.value, curKey\)/.test(modeChangeBlock[0]), 'the Mode-change handler must re-render Key labels via rootOptionsHtml against the NEW mode value: ' + modeChangeBlock[0]);
 });
 
+/* =====================================================================
+ * Delete/Revert is arm-to-delete, not a native confirm() (T3: retire the
+ * confirm() dialog into the app's arm-to-delete grammar). armDelBtn/
+ * disarmDelBtn/the delBtn.onclick handler are closures inside mount() - not
+ * reachable as standalone exports, and mount()/open() need a real document
+ * (this file's own header note: DOM-building is Playwright/live-check
+ * territory). Same source-regex-pin convention as songbook.js's "setClear
+ * wiring" test and this file's own F33/S-UI-RECONCILE tests above: read the
+ * real source and assert the state-machine shape, rather than hand-rolling a
+ * jsdom stand-in this codebase deliberately avoids.
+ * ===================================================================== */
+test('delete/revert: no native confirm() dialog remains (arm-to-delete replaces it)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  // Strip // line comments first (evidence-integrity: assert against a USE,
+  // not a mention - this file's own header comment now describes the retired
+  // confirm() call, which would false-positive a naive whole-source scan).
+  var codeOnly = src.split('\n').map(function (l) { return l.replace(/\/\/.*$/, ''); }).join('\n');
+  assert.ok(!/confirm\(msg\)/.test(codeOnly), 'the old confirm(msg) call must be gone');
+  assert.ok(!/\bconfirm\(/.test(codeOnly), 'no native confirm() call of any shape may remain in repertoire-form.js (comments excluded)');
+});
+test('delete/revert: first activation ARMS and returns without deleting (does not call onDelete)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,1000}?\n          \};/.exec(src);
+  assert.ok(onclickBlock, 'expected delBtn.onclick handler body');
+  var body = onclickBlock[0];
+  // The arm-gate must be the FIRST statement and must `return` before any
+  // onDelete/settleAfter call - i.e. a first tap on an unarmed button cannot
+  // reach the delete path at all.
+  var gate = /if \(armedDelBtn !== delBtn\) \{ armDelBtn\(delBtn, fork \? 'Tap again to revert' : 'Tap again to delete'\); return; \}/.exec(body);
+  assert.ok(gate, 'expected the arm gate "if (armedDelBtn !== delBtn) { armDelBtn(delBtn, <fork-aware arm label>); return; }" as the first line of the handler: ' + body);
+  assert.ok(body.indexOf(gate[0]) < body.indexOf('doDelete'), 'the arm-and-return gate must precede the delete call, so a first (unarmed) tap never reaches onDelete');
+});
+test('delete/revert: second activation (already armed) disarms and proceeds to delete', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  var onclickBlock = /delBtn\.onclick = function \(\) \{[\s\S]{0,1000}?\n          \};/.exec(src)[0];
+  var disarmIdx = onclickBlock.indexOf('disarmDelBtn();');
+  var doDeleteIdx = onclickBlock.indexOf('var doDelete');
+  assert.ok(disarmIdx >= 0, 'expected disarmDelBtn() to run once the button is already armed');
+  assert.ok(doDeleteIdx > disarmIdx, 'disarm must happen before the delete proceeds (armedDelBtn cleared so a stale ref never re-deletes)');
+  assert.ok(/if \(global\.NavHistory\) global\.NavHistory\.settleAfter\(close, doDelete\);/.test(onclickBlock), 'a second (armed) tap must still route the actual delete through the existing settleAfter/close hand-off, unchanged from the pre-arm behavior');
+});
+test('delete/revert: arm auto-disarms after DEL_ARM_MS (1600ms, matches list-item.js RM_ARM_MS)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  assert.ok(/var DEL_ARM_MS = 1600;/.test(src), 'expected DEL_ARM_MS = 1600, matching list-item.js\'s RM_ARM_MS timing');
+  assert.ok(/armedDelTimer = setTimeout\(disarmDelBtn, DEL_ARM_MS\);/.test(src), 'armDelBtn must schedule an auto-disarm via setTimeout(disarmDelBtn, DEL_ARM_MS)');
+  var disarmFn = /function disarmDelBtn\(\) \{[\s\S]{0,600}?\n    \}/.exec(src);
+  assert.ok(disarmFn, 'expected a disarmDelBtn() function');
+  assert.ok(/clearTimeout\(armedDelTimer\)/.test(disarmFn[0]), 'disarmDelBtn must clear the pending timer (so re-arming or a real disarm never double-fires)');
+  assert.ok(/armedDelBtn\.classList\.remove\('armed'\)/.test(disarmFn[0]), 'disarmDelBtn must remove the .armed class (the visible red-arm signal)');
+});
+test('delete/revert: armDelBtn adds the .armed class AND relabels (arm signal is never color-only)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  var armFn = /function armDelBtn\(btn, armLabel\) \{[\s\S]{0,600}?\n    \}/.exec(src);
+  assert.ok(armFn, 'expected an armDelBtn(btn, armLabel) function');
+  assert.ok(/disarmDelBtn\(\);/.test(armFn[0]), 'armDelBtn must disarm any previously-armed button first (module-scope single-armed invariant, mirrors list-item.js)');
+  assert.ok(/btn\.classList\.add\('armed'\)/.test(armFn[0]), 'armDelBtn must add the .armed class to the tapped button');
+  // Color-only arm signals are invisible on touch (no tooltip) and to
+  // colorblind users - the relabel is the accessible half of the signal,
+  // mirroring songbook's #delSongBtn "Tap again to ..." grammar.
+  assert.ok(/armedDelIdleText = btn\.textContent/.test(armFn[0]), 'armDelBtn must snapshot the idle label so disarm can restore it');
+  assert.ok(/if \(armLabel\) btn\.textContent = armLabel/.test(armFn[0]), 'armDelBtn must relabel the armed button (textContent), never rely on color alone');
+  assert.ok(/armDelBtn\(delBtn, fork \? 'Tap again to revert' : 'Tap again to delete'\)/.test(src), 'the wiring must pass the fork-aware arm label');
+  var disarmFn = /function disarmDelBtn\(\) \{[\s\S]{0,600}?\n    \}/.exec(src);
+  assert.ok(/armedDelBtn\.textContent = armedDelIdleText/.test(disarmFn[0]), 'disarmDelBtn must restore the idle label');
+});
+test('delete/revert: closing the form disarms the pending timer (no leaked setTimeout referencing a detached button)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'repertoire-form.js'), 'utf8');
+  assert.ok(/function close\(\) \{ disarmDelBtn\(\); el\.classList\.remove\('on'\); el\.innerHTML = ''; current = null; \}/.test(src), 'close() must call disarmDelBtn() before tearing down the DOM');
+});
+
 run();

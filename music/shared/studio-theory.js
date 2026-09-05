@@ -366,8 +366,16 @@
   // fretboard and jargon chips. ONE action-first line in the beginner
   // vocabulary budget, at the moment of relevance, show-once + dismissible
   // (the notables contract). Mirrors scaletipBanner's exact shape.
-  function studioFirstText() {
-    return 'Tap a chord below to hear it - the dots show where to play along on the neck.';
+  // View-aware (operator UAT 2026-09-01): the "dots on the neck" clause is
+  // only true in the Fretboard view - with the Circle view active (a
+  // persisted music.studioView.v1 pin, or a live toggle) the tip pointed at
+  // a fretboard that wasn't on screen. The ACTION clause stays identical;
+  // only the where-to-look clause swaps. Re-derived on view toggle via the
+  // G5 S-WHYNOTE-SCALE textContent-swap pattern (tracks.js applyView).
+  function studioFirstText(view) {
+    return view === 'cof'
+      ? 'Tap a chord below to hear it - the wheel lights up the chords in your key.'
+      : 'Tap a chord below to hear it - the dots show where to play along on the neck.';
   }
   function studioFirstBanner() {
     var N = notablesRef();

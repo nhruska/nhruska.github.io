@@ -1,0 +1,117 @@
+{
+  "name": "detail-solo-consistency",
+  "note": "UAT batch 3 items 4+6. RED-FIRST vs main: (a) the song view's back wore .backArrowBtn (accent-filled) while the Studio's wore a bare .iconBtn (surface-2) - two looks for one meaning, so the computed-background equality below fails; (b) the Studio's fly-out trigger was a hamburger sitting exactly where the app Settings gear lives, on a screen that COVERS the appbar (the operator flagged that slot twice); (c) the large sheet chord chips were inert <span>s, so the tagName/data-c asserts fail. Geometry is measured with offsetWidth/offsetHeight, never getBoundingClientRect, because the rect is the TRANSFORMED box and a chip's own :active scale(.9) makes a compliant 44px control read 39.6px.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".detailHead"
+    },
+    {
+      "action": "evalAssert",
+      "label": "song view back composes the shared primitive (.iconBtn.backArrowBtn), 44x44",
+      "js": "(function(){var b=document.getElementById('backLib');return !!b&&b.classList.contains('iconBtn')&&b.classList.contains('backArrowBtn')&&b.offsetWidth>=44&&b.offsetHeight>=44;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "record the song view's back look + its offset INSIDE its own header, so the Studio's is compared against a MEASURED value rather than a hardcoded colour that would rot with the accent theme",
+      "js": "(function(){var b=document.getElementById('backLib'),h=document.querySelector('.detailHead');var cs=getComputedStyle(b);window.__backRef={bg:cs.backgroundColor,color:cs.color,radius:cs.borderRadius,w:b.offsetWidth,h:b.offsetHeight,inset:Math.round(b.getBoundingClientRect().left-h.getBoundingClientRect().left),glyph:b.textContent.trim()};return !!window.__backRef.bg;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the overflow trigger is top-RIGHT on the song view - the slot the Studio must mirror",
+      "js": "(function(){var m=document.getElementById('moreBtn'),h=document.querySelector('.detailHead');if(!m||!h)return false;return m.classList.contains('moreBtn')&&m.textContent.trim()==='⋯'&&(h.getBoundingClientRect().right-m.getBoundingClientRect().right)<=4;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".modeSwitch button[data-v=\"chords\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".sheet .chordOnly .bar"
+    },
+    {
+      "action": "evalAssert",
+      "label": "layout settle gate: await document.fonts.ready before any geometry assert",
+      "js": "document.fonts.ready.then(function(){ return true; })"
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT item 6: every large sheet chord chip is a real, keyboard-focusable button (was an inert <span>)",
+      "js": "(function(){var cs=[].slice.call(document.querySelectorAll('.sheet .chordOnly .bar'));return cs.length>0&&cs.every(function(e){return e.tagName==='BUTTON'&&e.tabIndex>=0;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "each large chip carries the CANONICAL token to play plus an accessible name that states the chord it sounds",
+      "js": "(function(){var cs=[].slice.call(document.querySelectorAll('.sheet .chordOnly .bar'));return cs.length>0&&cs.every(function(e){var l=e.getAttribute('aria-label');return !!e.dataset.c&&!!l&&l.indexOf(e.textContent.trim())>=0;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the button box inherits the sheet's type scale - a <button> inherits NO font, so a missing font:inherit would drop these ~27px chips to the ~13px UA default and nothing else would complain",
+      "js": "(function(){var c=document.querySelector('.sheet .chordOnly .bar');if(!c)return false;return parseFloat(getComputedStyle(c).fontSize)>=20;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "visible large chips clear the 44px tap floor on BOTH axes (zero-box chips filtered FIRST so a hidden one cannot fake a pass)",
+      "js": "(function(){var cs=[].slice.call(document.querySelectorAll('.sheet .chordOnly .bar')).filter(function(c){return c.offsetWidth>0&&c.offsetHeight>0;});if(!cs.length)return false;return cs.every(function(c){return c.offsetWidth>=44&&c.offsetHeight>=44;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "turning the chips into buttons did not push the page into horizontal overflow",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth"
+    },
+    {
+      "action": "screenshot",
+      "name": "dsc-01-song-detail-chords"
+    },
+    {
+      "action": "tap",
+      "selector": "#soloOverBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.studio .bt-st-topbar",
+      "timeoutMs": 20000
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "evalAssert",
+      "label": "UAT item 4: the Studio's back is the SAME control - same classes, same computed fill/ink/radius, same 44x44 box, same glyph, and the same LEADING slot in its own header row. Position is compared header-relative, not viewport-relative: the song view's header sits inside a padded card and the Studio's is a full-bleed sheet, so an absolute-x gate would encode the card padding rather than the claim, and would fail on a design that is in fact consistent",
+      "js": "(function(){var b=document.querySelector('.bt-st-back'),h=document.querySelector('.bt-st-topbar'),r=window.__backRef;if(!b||!h||!r)return false;var cs=getComputedStyle(b);var inset=Math.round(b.getBoundingClientRect().left-h.getBoundingClientRect().left);return b.classList.contains('iconBtn')&&b.classList.contains('backArrowBtn')&&cs.backgroundColor===r.bg&&cs.color===r.color&&cs.borderRadius===r.radius&&b.offsetWidth===r.w&&b.offsetHeight===r.h&&b.textContent.trim()===r.glyph&&inset<=8;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "dsc-02-solo-topbar"
+    }
+  ]
+}

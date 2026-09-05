@@ -171,6 +171,47 @@ test('S-SETRM-ARM source lock: the rm dispatch is arm-gated (first tap can never
   assert.ok(/armRmBtn\(b\); return;/.test(rmBranch[1]), 'first tap must ARM and return - never fall through to onRemove');
 });
 
+/* ---------- S-SETLIST-GESTURES (operator UAT 2026-09-03) ----------
+ * render() itself needs a real `document` (jsdom) this suite doesn't carry -
+ * same reason every other structural assertion in this file is source-locked
+ * (S-SETRM-ARM / S-SETADD-EVIDENT above). These pin the render()-side half of
+ * the row-gesture contract; wireSetlistDrag's half is pinned in
+ * songbook.test.js next to the function it actually lives in. */
+test('S-SETLIST-GESTURES: the grip is retired from render() - a set row leads with the bare chip, same shape as a library row', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  assert.ok(!/li-grip/.test(src), 'list-item.js must not render .li-grip any more - the row itself is the reorder gesture surface');
+  assert.ok(!/li-rail/.test(src), 'list-item.js must not render .li-rail any more - it existed only to stack the grip under the position chip');
+  assert.ok(/var lead = num;/.test(src), 'lead must be the bare chip unconditionally now (no segment branch)');
+});
+test('S-SETLIST-GESTURES: set rows render up/dn/rm as .li-a11yctrl (visually quiet, keyboard/SR reachable) - the WCAG 2.5.1 fallback for a gesture-only row', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  var setBranch = src.match(/if \(seg === 'set'\) \{([\s\S]*?)\} else if/);
+  assert.ok(setBranch, 'expected the seg === \'set\' ctrl branch');
+  assert.ok(/li-up li-a11yctrl/.test(setBranch[1]), 'up must render with the li-a11yctrl class');
+  assert.ok(/li-dn li-a11yctrl/.test(setBranch[1]), 'dn must render with the li-a11yctrl class');
+  assert.ok(/li-rm li-a11yctrl/.test(setBranch[1]), 'rm must render with the li-a11yctrl class - the arm-to-delete path stays intact, just keyboard-only now');
+  assert.ok(/opts\.first \? ' disabled' : ''/.test(setBranch[1]), 'up must disable at the first position');
+  assert.ok(/opts\.last \? ' disabled' : ''/.test(setBranch[1]), 'dn must disable at the last position');
+  assert.ok(/aria-label="Move ' \+ esc\(item\.title\) \+ ' up in setlist"/.test(setBranch[1]), 'up must carry a title-specific aria-label');
+  assert.ok(/aria-label="Move ' \+ esc\(item\.title\) \+ ' down in setlist"/.test(setBranch[1]), 'dn must carry a title-specific aria-label');
+});
+test('S-SETLIST-GESTURES: RM_ARM_MS / armRmBtn / disarmRmBtn are untouched - the a11y-only rm button dispatches through the SAME arm-then-confirm gate', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  assert.ok(/RM_ARM_MS\s*=\s*1600/.test(src), 'RM_ARM_MS must stay 1600 - unchanged by S-SETLIST-GESTURES');
+  assert.ok(/function armRmBtn\(btn\)/.test(src) && /function disarmRmBtn\(\)/.test(src), 'armRmBtn/disarmRmBtn must stay defined, unchanged');
+});
+test('S-SETLIST-GESTURES: only a set row wraps its content in .li-inner behind a .li-swipe-bg danger underlay - a library row renders neither', function () {
+  var fs = require('fs'), path = require('path');
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');
+  assert.ok(/var swipeable = seg === 'set';/.test(src), 'swipeable must gate on segment === \'set\' only');
+  assert.ok(/root\.innerHTML = swipeable/.test(src), 'the swipe-underlay wrap must be conditional on swipeable, not unconditional');
+  assert.ok(/li-swipe-bg/.test(src) && /li-swipe-ico li-swipe-ico-l/.test(src) && /li-swipe-ico li-swipe-ico-r/.test(src),
+    'the underlay must carry both a left and a right delete glyph (both directions delete)');
+  assert.ok(/class="li-inner"/.test(src), 'the swipeable branch must wrap the real row content in .li-inner');
+});
 test('S-SETADD-EVIDENT source lock: blocked rows render a GHOST + with the stated reason (never an empty add slot), and its tap dispatches onAddBlocked - not onAdd', function () {
   var fs = require('fs'), path = require('path');
   var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'list-item.js'), 'utf8');

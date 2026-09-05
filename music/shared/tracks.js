@@ -43,6 +43,7 @@
   var focusNoJump = TM.focusNoJump;
   var familyMode = TM.familyMode;
   var normMode = TM.normMode;
+  var adLikelyOpen = TM.adLikelyOpen;
 
   /* ---------- Practice Studio theory + solo-guide + JIT text ----------
    * Extracted to studio-theory.js (loaded before this file). Rebind as
@@ -335,6 +336,7 @@
       studioAudioWarm = false;
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.classList.remove('vidhid'); elPlayer._setVid = null; elPlayer.innerHTML = '';
       exitMini();
+      if (nowPlaying) lastStopAt = Date.now(); // round 17: a real stop starts the idle clock
       nowPlaying = null; userPaused = false;
       // UAT batch 7: clear the Media Session so no stale lock-screen card
       // outlives the player.
@@ -354,6 +356,15 @@
      * the bar's x is the real teardown. No DOM is rebuilt or reparented on
      * minimize/expand - the one Studio DOM just changes shape via CSS. */
     var nowPlaying = null;   // the track whose iframe is mounted (yt-backed Studio opens only)
+    // ROUND 17 ad-likelihood signals (operator UAT 2026-09-02: "can we detect not
+    // playing anything -> playing (first load or idle time) and show the yt video -
+    // most likely to have ads. not between every song tho"). A YouTube pre-roll
+    // fires when a session STARTS, not on every track, so the video shows itself
+    // exactly there and stays out of the way song-to-song.
+    var hasPlayedThisLoad = false;  // has any yt-backed Studio opened since page load
+    var lastStopAt = 0;             // when playback last really STOPPED (closePlayer)
+    var vidState = null;            // last video state (theater|pip|hid) - carried across an open
+    var VID_IDLE_MS = 10 * 60 * 1000; // "came back to it" gap. Judgment call, not measured - one constant to tune.
     var userPaused = false;  // last user pp intent - honest state; YT never reports under blocked egress
     // PLAYER-FEEL v6: prev/next/auto-advance walk the current view's playable
     // pool - songbook owns the pool (opts.advance -> playNeighbor), the player
@@ -445,6 +456,29 @@
       studioSound = null;
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
+      // S-FIRSTSESSION-TAP-BLOCKED (found 2026-09-03 by regressing the CE3
+      // cold-start scenario): collapse a THEATER video when the sheet collapses.
+      // The class `vidopen` means "the video is in theater" - but nothing cleared
+      // it on the way down, so a minimized player kept it, the CSS guard
+      // `.bt-player.mini:not(.vidopen) .bt-st-media:not(.min){max-height:0}` never
+      // matched, and a 245px position:fixed z-96 iframe stayed pinned at y=58
+      // across EVERY tab. Measured: after the first-run tour a new user backs out
+      // of the jam and the top ~300px of the app silently eats taps - which is
+      // what the scenario was tripping over. setVid's own stash comment already
+      // said minimize demotes the theater to PIP; no code ever did it.
+      //
+      // PIP, not parked: round 16 wants the video VISIBLE on a mini player so the
+      // ad's Skip button is reachable. The theater card's placement is sized for
+      // an OPEN sheet; the PIP dock is 152x110 in the corner, still tappable
+      // (it carries its own maximize bar), and covers no page content.
+      //
+      // fromOpen=true on purpose: this skips writeVidPref, so collapsing the
+      // theater does NOT overwrite the user's remembered video choice for the
+      // next open (rounds 16/17). Parked and already-PIP states are left alone -
+      // only a theater is impossible once the sheet is down.
+      if (typeof elPlayer._setVid === 'function' && elPlayer.classList.contains('vidopen')) {
+        elPlayer._setVid('pip', true);
+      }
       elPlayer.classList.add('mini');
       document.body.classList.add('miniplayer');
       // Bar-body tap expands back to the full Studio; the pp button and the x
@@ -596,6 +630,42 @@
         return '<span class="soundNote" data-i="' + i + '">' + esc(n) + '</span>';
       }).join(' ');
     }
+    // G4 jam-starter resolution + row markup, shared by openStudio's render
+    // and the late fill below (the catalog loads async - see injectJamStarterLate).
+    function resolveJamStarter(th) {
+      var jamStarterRows = filterTracks(state.tracks, 'all', th.key, normMode(th.scaleMode));
+      return jamStarterRows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0] || null;
+    }
+    function jamStarterRowHtml(cand) {
+      var g = cand.track.genre ? esc(cand.track.genre) + ' jam' : 'jam';
+      return '<div class="bt-st-addvidrow"><button class="bt-jam-starter" data-jamstarter type="button">'
+        + 'Play a ' + g + ' in ' + esc(keyLabelFor(cand.track.key, cand.track.mode))
+        + '</button></div>';
+    }
+    // G4 late fill: a no-video Studio opened BEFORE the tracks.json fetch
+    // resolved rendered without the starter chip (state.tracks was [] at
+    // openStudio time - the deep-link/fast-open race soloOver already
+    // documents), and openStudio's idempotent-open guard blocks a plain
+    // re-open (same trackKey, same null yt). Patch the standing DOM instead:
+    // resolve now, insert the row above the Find-a-jam row, wire through the
+    // same activate() path the render-time button uses.
+    function injectJamStarterLate() {
+      if (!nowPlaying || nowPlaying.yt) return;
+      if (!elPlayer.classList.contains('studio')) return;
+      if (elPlayer.querySelector('[data-jamstarter]')) return;
+      var findBtn = elPlayer.querySelector('[data-jamfindtoggle]');
+      if (!findBtn || !findBtn.parentNode || !findBtn.parentNode.parentNode) return;
+      var th = studioTheory(nowPlaying.key, nowPlaying.mode);
+      if (!th) return;
+      var cand = resolveJamStarter(th);
+      if (!cand) return;
+      var holder = document.createElement('div');
+      holder.innerHTML = jamStarterRowHtml(cand);
+      var row = holder.firstChild;
+      var btn = row.querySelector('[data-jamstarter]');
+      if (btn) btn.onclick = function () { activate(cand.track); };
+      findBtn.parentNode.parentNode.insertBefore(row, findBtn.parentNode);
+    }
     function openStudio(t, o) {
       // o.startMini (PLAYER-FEEL): build + wire the full Studio, then minimize
       // to the bottom bar in the same call - the play-from-row path starts
@@ -671,11 +741,22 @@
       var songRoot = th.key, songScaleMode = th.scaleMode;
       var soloKey = t.key, soloMode = t.mode;
       // M-TRACKLIB wave 1: jam-discovery panel selection state - per-open only
-      // (no persistence, matching the Guide/scale-chip pattern). jamGenre resets
-      // to the new scale's first genre whenever the active genre isn't in that
-      // scale's list (renderJamPanel below); jamFeel persists across scale-chip
-      // switches (a "slow" preference likely holds across modes).
-      var jamGenre = null, jamFeel = 'mid';
+      // (no persistence, matching the Guide/scale-chip pattern). jamFeel
+      // persists across scale-chip switches (a "slow" preference likely
+      // holds across modes).
+      //
+      // M-JAM-MULTI (2026-09-01): jamGenres is a MULTI-SELECT array (was a
+      // single jamGenre string) - a genre chip tap TOGGLES membership so
+      // several genres can compose into one search phrase ("smooth jazz funk
+      // backing track"). null is the "never rendered yet" sentinel;
+      // renderJamPanel below both seeds it on first render and re-filters it
+      // on every scale-chip switch: selections that no longer exist in the
+      // new scale's list are dropped, keeping whatever intersection survives
+      // (or falling back to that scale's own first genre when nothing does).
+      // At least one genre stays selected at all times - the toggle handler
+      // refuses to remove the last one, so the query builder always has a
+      // genre term.
+      var jamGenres = null, jamFeel = 'mid';
       // UAT 2026-08-08: until the user touches a genre/feel chip, the jam
       // panel's search targets THIS SONG by name ("<title> <artist> backing
       // track") - the generic key/genre query lost the song identity ("YouTube
@@ -837,11 +918,18 @@
         var scaleKey = scaleKeyFor(scaleId, th.scaleMode);
         var genres = JQ.genresFor(scaleKey);
         if (!genres.length) { jamPanel.innerHTML = ''; return; }
-        // A genre carried over from a different scale's list (or the first-ever
-        // render) resets to that scale's own first genre - the list itself is
-        // scale-specific, so a stale selection would silently point at a genre
-        // the current scale never offered.
-        if (jamGenre == null || genres.indexOf(jamGenre) < 0) jamGenre = genres[0];
+        // First-ever render seeds a single-genre selection from this scale's
+        // own first genre. A scale-chip switch re-filters the CURRENT
+        // selection down to whatever still exists in the new list (a stale
+        // selection would silently point at a genre the current scale never
+        // offered) - keep the surviving intersection, or fall back to the
+        // scale's own first genre when nothing survives.
+        if (jamGenres == null) {
+          jamGenres = [genres[0]];
+        } else {
+          var keptGenres = jamGenres.filter(function (g) { return genres.indexOf(g) >= 0; });
+          jamGenres = keptGenres.length ? keptGenres : [genres[0]];
+        }
         var feelBands = JQ.feels();
         // Song-first default (UAT 2026-08-08): a titled track searches for its
         // OWN backing track until a chip is tapped; 'search' is the url-less
@@ -851,10 +939,10 @@
           : null;
         var query = (!jamTouched && songQuery)
           ? songQuery
-          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenre, jamFeel);
+          : JQ.jamQuery(dispKeyRoot(th.key, th.scaleMode), scaleKey, jamGenres, jamFeel);
         jamPanel.innerHTML =
           '<div class="bt-st-jamchips bt-st-jamchips-scroll" data-jamgenres>' + genres.map(function (g) {
-            return '<button class="chip' + (g === jamGenre ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
+            return '<button class="chip' + (jamGenres.indexOf(g) >= 0 ? ' on' : '') + '" data-jamgenre="' + esc(g) + '" type="button">' + esc(g) + '</button>';
           }).join('') + '</div>'
           + '<div class="bt-st-jamchips" data-jamfeels>' + feelBands.map(function (f) {
             return '<button class="chip' + (f.id === jamFeel ? ' on' : '') + '" data-jamfeel="' + esc(f.id) + '" type="button">' + esc(f.label) + '</button>';
@@ -874,7 +962,20 @@
           + (opts.onEditRequest ? '<button class="bt-st-editlink" data-jamadd type="button">Add to library</button>' : '')
           + '</div>';
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamgenre]'), function (b) {
-          b.onclick = function () { jamTouched = true; jamGenre = b.getAttribute('data-jamgenre'); renderJamPanel(scaleId); };
+          b.onclick = function () {
+            jamTouched = true;
+            var g = b.getAttribute('data-jamgenre');
+            var idx = jamGenres.indexOf(g);
+            if (idx >= 0) {
+              // Toggle off - but the last selected chip can't untoggle to
+              // empty (min 1 selected, so the query builder always has a
+              // genre term). Re-tapping the sole selection is a no-op.
+              if (jamGenres.length > 1) jamGenres.splice(idx, 1);
+            } else {
+              jamGenres.push(g);
+            }
+            renderJamPanel(scaleId);
+          };
         });
         Array.prototype.forEach.call(jamPanel.querySelectorAll('[data-jamfeel]'), function (b) {
           b.onclick = function () { jamTouched = true; jamFeel = b.getAttribute('data-jamfeel'); renderJamPanel(scaleId); };
@@ -883,7 +984,7 @@
         if (jamAddBtn) jamAddBtn.onclick = function () {
           opts.onEditRequest({
             key: th.key, mode: SCALEMODE_TO_FORMMODE[th.scaleMode] || 'major',
-            title: '', artist: '', genre: jamGenre, yt: null
+            title: '', artist: '', genre: jamGenres.length > 1 ? jamGenres.join(' / ') : jamGenres[0], yt: null
           });
         };
       }
@@ -941,6 +1042,29 @@
         // "below" pointed at empty space until you tapped. Point the hint at the
         // BUTTON instead, so the pointer matches where the controls actually are.
         : 'No curated video yet - tap Find a jam to pick a genre and feel for a backing track. The HUD below works either way.';
+      // G4 S-JAM-STARTER (2026-09-01): the no-video empty state used to have NO
+      // tappable action of its own - "Find a jam" only OPENS the genre/feel
+      // disclosure (F21 above), so a beginner still has to pick a genre, pick a
+      // feel, then leave the app to search YouTube before anything plays. This
+      // resolves ONE curated, already-playable candidate for the CURRENT key
+      // up front, via the SAME resolution the finder's own result cards use
+      // (filterTracks -> rank 0 = "your key", tracks-model.js) so "does this
+      // track fit my key" is answered in exactly one place, never duplicated.
+      // Deterministic: filterTracks's rank sort plus a stable Array#sort keeps
+      // ties in tracks.json's own catalog order - no randomness. Any genre is
+      // eligible (a beginner in, say, Eb minor has few tracks to choose from;
+      // narrowing by genre too would starve the chip for most keys), and only
+      // a track that ALREADY has a real video (r.track.yt) counts - the whole
+      // point is a jam that plays on this one tap, not another search.
+      // Resolved only for the no-video state (the chip can never render when
+      // t.yt is set - don't pay the catalog filter/sort on every has-video
+      // re-entry of openStudio). Label reads off the CANDIDATE track itself:
+      // its own genre ("Play a jam in C" when blank - never "jam jam") and its
+      // own key/mode - a blues/modal theory key coarsens to a major/minor
+      // family match (normMode), so labeling the chip with th's "C blues"
+      // would promise a specificity the resolution doesn't perform.
+      var jamStarterCandidate = t.yt ? null : resolveJamStarter(th);
+      var jamStarterHtml = jamStarterCandidate ? jamStarterRowHtml(jamStarterCandidate) : '';
       // Add/edit-video-URL affordance. A custom user song owns its yt id directly.
       // State-aware (operator UAT): the wording must never say "add a video" once one
       // exists. HAS a video -> a single plain "Edit" button (the Add/Edit form changes
@@ -1004,17 +1128,17 @@
       // BELOW the merged header. Same data-* attrs, so wireNowPlaying/wireStudioMenu
       // bind unchanged - only the DOM location moved (relocation, not rebuild).
       //
-      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact `...`
-      // hamburger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
+      // S-STUDIO-FLYOUT (operator device-test 2026-07-25): the compact overflow
+      // trigger opens a fly-out menu (.bt-st-menu) holding Show/Hide video, Find
       // another jam, Edit, and the Curated-URL card as full-width rows - same
       // data-* attrs, so the existing handlers bind unchanged.
       // PLAYER-FEEL v3 (UAT 2026-08-08, "the same now playing element... don't
       // move it"): the transport strip and the sheet chrome SPLIT. The bar
       // (.bt-st-head, below) is ONE SSOT-rendered element - [title/meta]
       // [pp|Hide-video] [progress] [time] [x] - position:fixed in ONE slot
-      // above the tabbar in EVERY state; the back + hamburger move to a slim
+      // above the tabbar in EVERY state; the back + overflow move to a slim
       // .bt-st-topbar at the top of the SHEET (the Spotify grammar: collapse
-      // top-left, menu top-right). menuBlock = the hamburger + fly-out
+      // top-left, menu top-right). menuBlock = the overflow trigger + fly-out
       // (anchors under the topbar); barStrip = the bar's transport controls.
       //
       // One-transport-owner (UAT batch 2) still holds: while the video panel
@@ -1060,8 +1184,9 @@
       // "Optional" pill stays retired (UAT batch 1); the menu's hint carries
       // the find-a-jam guidance.
       var menuBlock = t.yt
-        ? '<button class="bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">&#9776;</button>'
+        ? '<button class="iconBtn moreBtn bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options"><span aria-hidden="true">⋯</span></button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
+          + '<button class="bt-st-menu-item" data-stcollapse type="button">Collapse player - keeps playing</button>'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Minimize video</button>'
           + '<button class="bt-st-menu-item" data-jamfindtoggle type="button">Find another jam</button>'
           + (opts.onEditRequest ? '<button class="bt-st-menu-item" data-editrequest type="button">Edit</button>' : '')
@@ -1100,13 +1225,10 @@
           // Round 10 ("hide video CTA stuck to left of pip"): the park handle,
           // a slim tab on the PIP's left edge (CSS shows it only while .min).
           + '<button class="bt-st-piphide" data-piphide type="button" aria-label="Hide video - audio keeps playing"><span aria-hidden="true">&#8964;</span></button>'
-          + '<div class="bt-st-countdown" data-countdown role="status">'
-          + '<span class="bt-st-countdown-lbl">Minimizing in <b data-cdnum>15</b>s</span>'
-          + '<span class="bt-st-cd-actions">'
-          + '<button class="bt-st-cd-btn bt-st-cd-keep" data-keepopen type="button">Keep open</button>'
-          + '<button class="bt-st-cd-btn bt-st-cd-min" data-minnow type="button">Minimize now</button>'
-          + '</span>'
-          + '<i></i></div>'
+          // Round 16 (operator UAT 2026-09-02, "don't auto hide yt video. I keep
+          // having to open it to skip after ads"): the auto-minimize countdown +
+          // its Keep-open / Minimize-now controls are GONE. Nothing hides the
+          // video on a timer any more, so there is no window to narrate.
           + jamPanelHtml
         : jamPanelHtml;
       // .bt-st-stage wraps the sheet's top chrome + video: one column in
@@ -1123,7 +1245,7 @@
       elPlayer.innerHTML =
         '<div class="bt-studio" role="dialog" aria-label="Practice studio">'
         + '<div class="bt-st-stage">'
-        + '<div class="bt-st-topbar"><button class="iconBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
+        + '<div class="bt-st-topbar"><button class="iconBtn backArrowBtn bt-st-back" type="button" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>'
         // (Shuffle moved to the now-playing bar's transport cluster - UAT
         // 2026-08-09; the topbar keeps back + the hamburger only.)
         + menuBlock
@@ -1135,7 +1257,7 @@
         // track the urlEditor already renders INSIDE the `...` fly-out menu (see
         // playerBlock), so it must NOT render a second time here - only the
         // no-video path keeps the stage-level card.
-        + (t.yt ? '' : '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
+        + (t.yt ? '' : jamStarterHtml + '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle type="button" aria-expanded="false">' + noVideoLabel + '</button></div>' + urlEditor)
         + '</div>'
         + '<div class="bt-st-body">'
         // F12/F13/F15 (operator UAT 2026-07-05): the controls row - Play
@@ -1149,7 +1271,11 @@
         + '<div class="bt-st-sec"><div class="bt-st-ctrlrow" data-ctrlrow>'
         + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
         + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
-        + '<button class="iconBtn bt-st-guidebtn" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false">?</button>'
+        // G4: the app-wide help-icon convention (songbook.css .helpIcon, an
+        // (i)-style glyph prefix) replaces the ad-hoc "?" text - one explainer
+        // glyph for the whole app instead of a bespoke one just for the Studio.
+        // aria-label is unchanged (screen readers never read the visible glyph).
+        + '<button class="iconBtn bt-st-guidebtn helpIcon" data-guidetoggle type="button" aria-label="Show the scale guide" aria-pressed="false"></button>'
         // Round 7 ("need to toggle between COF and fretboard, leaving
         // play/tempo always shown"): one theory visual at a time on a phone.
         // The seg rides the pinned controls row; choice persists.
@@ -1255,9 +1381,10 @@
         + '</div>';
       elPlayer.classList.add('on'); elPlayer.classList.add('studio');
       // .vidopen mirrors "the video is in THEATER"; setVid() below is the
-      // single authority. Round 15: a video track OPENS PARKED (the wiring's
-      // final setVid('hid') sets the real state) - vidopen is only ever set
-      // by an explicit show.
+      // single authority. Round 16: a video track OPENS on the REMEMBERED
+      // choice, visible by default (the wiring's final setVid(readVidPref(),
+      // true) sets the real state) - this class is cleared here so the render
+      // never asserts a state setVid has not resolved yet.
       elPlayer.classList.remove('vidopen');
       // M-GUIDE W3a, relocated (F18): Guide toggle/box element refs (built
       // above in the template string, so they exist as soon as
@@ -1278,20 +1405,37 @@
       // video re-expands; play/pause drives the YouTube embed over postMessage
       // (enablejsapi=1 on the embed URL). No YT API script needed.
       (function wireNowPlaying() {
-        // Operator UAT 2026-07-31: a 7s wall-clock auto-collapse clipped the iframe
-        // right as YouTube's "Skip Ads" button (appears ~5s into a skippable pre-roll)
-        // needed a tap - trapping the user in the ad. The cross-origin skip click / ad
-        // state is undetectable, so the fix is NOT to guess the ad boundary: give a
-        // longer window (15s), ANCHOR it to actual playback start (not load), and add
-        // explicit "Keep open" / "Minimize now" controls so the user always has agency.
-        var AUTOMIN_MS = 15000;
+        // THE VIDEO'S VISIBILITY IS THE USER'S, NEVER THE APP'S (round 16,
+        // operator UAT 2026-09-02: "don't auto hide yt video. I keep having to
+        // open it to skip after ads").
+        //
+        // Twice now an automatic hide has trapped the operator inside a YouTube
+        // ad: first a 7s wall-clock auto-collapse (UAT 2026-07-31, mitigated to
+        // a 15s playback-anchored window), then round 15's open-PARKED default,
+        // which silently undid that mitigation - a pre-roll now ran with no
+        // video on screen at all, so reaching "Skip Ads" cost a manual open
+        // EVERY time. The ad boundary is undetectable cross-origin, so no timer
+        // can ever be tuned safely around it. The durable fix is to stop
+        // guessing: the app never hides the video on its own.
+        //
+        // Round 15's intent ("not show the video any other time") survives as a
+        // REMEMBERED CHOICE - park it once and it opens parked from then on, on
+        // every track, until you show it again. Fresh state opens VISIBLE, so
+        // the Skip button is always reachable without a tap.
+        var VID_PREF_KEY = 'music.vidPref.v1'; // additive key - no SCHEMA_VERSION bump (backup.js contract)
+        function readVidPref() {
+          try {
+            var v = localStorage.getItem(VID_PREF_KEY);
+            return (v === 'hid' || v === 'pip' || v === 'theater') ? v : 'theater';
+          } catch (e) { return 'theater'; } // private mode / blocked storage -> the visible default
+        }
+        function writeVidPref(state) {
+          try { localStorage.setItem(VID_PREF_KEY, state); } catch (e) {}
+        }
         var mediaEl = elPlayer.querySelector('[data-media]');
         var vidToggle = elPlayer.querySelector('[data-vidtoggle]');
         var ppBtn = elPlayer.querySelector('[data-nppp]');
         var stateEl = elPlayer.querySelector('[data-npstate]');
-        var cdEl = elPlayer.querySelector('[data-countdown]');
-        var cdNum = elPlayer.querySelector('[data-cdnum]');
-        var cdFill = cdEl && cdEl.querySelector('i');
         var frameWin = function () { var f = mediaEl && mediaEl.querySelector('iframe'); return f && f.contentWindow; };
         function ytCmd(func, args) {
           var w = frameWin(); if (!w) return;
@@ -1302,8 +1446,14 @@
         // Skip/controls live there); 'pip' - the docked mini video above the
         // bar; 'hid' - parked INTO the bar title (zero-size clip, NEVER
         // display:none - audio keeps playing).
-        function setVid(state) {
-          if (!mediaEl || !mediaEl.isConnected) return; // ignore a stale timer after the Studio closed/re-opened
+        // fromOpen=true is the initial restore (it REPLAYS a remembered choice,
+        // so it must not re-write it). Every other call is a user act on the
+        // video layer, and the app remembers it - there is no automatic caller
+        // left to pollute the preference.
+        function setVid(state, fromOpen) {
+          if (!mediaEl || !mediaEl.isConnected) return; // stale call after the Studio closed/re-opened
+          vidState = state;            // round 17: what the NEXT open carries forward
+          if (!fromOpen) writeVidPref(state);
           mediaEl.classList.toggle('min', state === 'pip');
           mediaEl.classList.toggle('hid', state === 'hid');
           elPlayer.classList.toggle('vidopen', state === 'theater'); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
@@ -1323,47 +1473,18 @@
         // keeps the embed from eating the tap. Round 12 ("I don't want to
         // switch to the solo view"): expanding the video is a VIDEO-LAYER act
         // - stopPropagation keeps it from also opening the Studio (the card
-        // floats over whatever screen you are on), and endCountdown keeps the
-        // auto-min from yanking a theater the user just asked for.
+        // floats over whatever screen you are on). Round 16: nothing can yank a
+        // theater the user asked for - there is no auto-min left to cancel.
         if (mediaEl) mediaEl.addEventListener('click', function (e) {
           if (!mediaEl.classList.contains('min')) return;
           e.stopPropagation();
-          endCountdown();
           setVid('theater');
         });
-        // Auto-collapse countdown, ANCHORED TO PLAYBACK START. The drain + timer
-        // begin only once the embed reports it is actually playing (startCountdown,
-        // fired from the YT infoDelivery handler below) so a slow ad-load never eats
-        // the window; a 4s fallback starts it anyway if the embed never reports
-        // (headless / blocked egress / no JS-API). Any manual video toggle, "Keep
-        // open", or "Minimize now" cancels it so the user's choice always wins.
-        var autoTimer = 0, cdTick = 0, cdFallback = 0, cdStarted = false;
-        function endCountdown() {
-          if (cdEl) cdEl.classList.add('done');
-          if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
-          if (cdTick) { clearInterval(cdTick); cdTick = 0; }
-          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
-        }
-        function startCountdown() {
-          if (cdStarted || !cdEl || cdEl.classList.contains('done')) return;
-          cdStarted = true;
-          if (cdFallback) { clearTimeout(cdFallback); cdFallback = 0; }
-          if (cdFill) cdFill.style.animationDuration = AUTOMIN_MS + 'ms';
-          if (cdEl) cdEl.classList.add('running'); // gates the drain animation (CSS)
-          var remain = Math.round(AUTOMIN_MS / 1000);
-          if (cdNum) cdNum.textContent = remain;
-          cdTick = setInterval(function () { remain--; if (cdNum) cdNum.textContent = Math.max(0, remain); if (remain <= 0) { clearInterval(cdTick); cdTick = 0; } }, 1000);
-          // Demote only from THEATER - the timer must never un-park a hidden
-          // video or touch one already in the PIP.
-          autoTimer = setTimeout(function () { if (elPlayer.classList.contains('vidopen')) setVid('pip'); endCountdown(); }, AUTOMIN_MS);
-        }
-        cdFallback = setTimeout(startCountdown, 4000);
         // Round 15: the menu mirrors the parked<->theater loop - Show video
         // goes straight to the theater (the only reason to show it is to see
         // or skip it), Hide video parks it. Expand (from a docked PIP) still
         // goes to theater.
         if (vidToggle && mediaEl) vidToggle.onclick = function () {
-          endCountdown();
           if (mediaEl.classList.contains('min')) setVid('theater'); // "Expand video"
           else if (mediaEl.classList.contains('hid')) setVid('theater'); // "Show video"
           else setVid('hid'); // "Hide video"
@@ -1371,10 +1492,6 @@
         // "Keep open" cancels the auto-collapse but leaves the video EXPANDED, so the
         // user can tap YouTube's Skip on the iframe. "Minimize now" collapses early
         // (once they've skipped and want the space back).
-        var keepBtn = elPlayer.querySelector('[data-keepopen]');
-        var minNowBtn = elPlayer.querySelector('[data-minnow]');
-        if (keepBtn) keepBtn.onclick = function () { endCountdown(); };
-        if (minNowBtn && mediaEl) minNowBtn.onclick = function () { setVid('pip'); endCountdown(); };
         // Round 15 ("clicking the down arrow from a theater size view should
         // dismiss it and not cause an intermediate step to the small docked
         // pip"): the theater's bottom handle PARKS the video outright. The
@@ -1382,12 +1499,12 @@
         var thMinBtn = elPlayer.querySelector('[data-thmin]');
         if (thMinBtn && mediaEl) thMinBtn.onclick = function (e) {
           e.stopPropagation();
-          endCountdown(); setVid('hid');
+          setVid('hid');
         };
         var thDockBtn = elPlayer.querySelector('[data-thdock]');
         if (thDockBtn && mediaEl) thDockBtn.onclick = function (e) {
           e.stopPropagation();
-          endCountdown(); setVid('pip');
+          setVid('pip');
         };
         // Round 10 ("hide video CTA stuck to left of pip... collapses pip INTO
         // the song name"): the edge handle parks the video - audio keeps
@@ -1396,7 +1513,7 @@
         var pipHideBtn = elPlayer.querySelector('[data-piphide]');
         if (pipHideBtn && mediaEl) pipHideBtn.onclick = function (e) {
           e.stopPropagation(); // in mini, a stage tap would otherwise expand the Studio
-          endCountdown(); setVid('hid');
+          setVid('hid');
         };
         // Round 15 refinement of the round-11 left-zone toggle: showing the
         // video means THEATER now, not the docked PIP - the operator shows
@@ -1408,18 +1525,32 @@
         function toggleDock(e) {
           if (!mediaEl || !mediaEl.isConnected) return;
           e.stopPropagation();
-          endCountdown();
           setVid(mediaEl.classList.contains('hid') ? 'theater' : 'hid');
         }
         var idEl = elPlayer.querySelector('.bt-st-id');
         var eqEl = elPlayer.querySelector('.bt-st-bareq');
         if (idEl) idEl.addEventListener('click', toggleDock);
         if (eqEl) eqEl.addEventListener('click', toggleDock);
-        // Round 15 ("not show the video any other time"): EVERY open starts
-        // PARKED - audio-first, the bar title wears the cue, and the
-        // auto-minimize countdown is silenced for good (nothing auto-shows,
-        // so nothing needs auto-hiding).
-        setVid('hid'); endCountdown();
+        // ROUND 17 - WHERE THE VIDEO SHOWS ITSELF (operator UAT 2026-09-02):
+        // "detect not playing anything -> playing (first load or idle time) and
+        // show the yt video - most likely to have ads. not between every song
+        // tho". A pre-roll fires when a listening session STARTS - a fresh embed
+        // after the app loads or after a real gap - not on each queue advance.
+        // So:
+        //   AD-LIKELY open (nothing was playing AND it is the first play of this
+        //     load, or the last stop was over VID_IDLE_MS ago) -> SHOW it, so
+        //     Skip is on screen without a tap. This is the whole point, so it
+        //     beats a stale stored preference (round 16 shipped the memory; the
+        //     operator has now twice asked to SEE the video when ads are likely).
+        //   MID-SESSION open (the queue advanced, or he tapped another row while
+        //     one played) -> CARRY the state he left it in. The video neither
+        //     jumps up between songs nor gets yanked away (round 16 stands: the
+        //     app never hides it).
+        // fromOpen=true: replaying a state must not re-store it as a user choice.
+        var wasPlaying = !!nowPlaying; // nowPlaying is still the PREVIOUS track here (set after this wiring)
+        var adLikely = adLikelyOpen({ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS });
+        setVid(adLikely ? 'theater' : (vidState || readVidPref()), true);
+        hasPlayedThisLoad = true;
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
         // indicates now playing"): detect the embed's END - the onStateChange
@@ -1544,7 +1675,6 @@
           if (d.event === 'onStateChange') { syncState(d.info); return; }
           if (d.event !== 'infoDelivery' || !d.info) return;
           if (typeof d.info.playerState === 'number') syncState(d.info.playerState);
-          startCountdown(); // playback is now reporting -> begin the anchored collapse window
           if (typeof d.info.duration === 'number' && d.info.duration > 0) ytDur = d.info.duration;
           if (typeof d.info.currentTime === 'number' && ytDur > 0) {
             if (scrubbing) return; // the finger owns the fill until release
@@ -2058,6 +2188,15 @@
             b.setAttribute('aria-selected', on ? 'true' : 'false');
           });
           try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+          // The beginner studiofirst tip's where-to-look clause must match the
+          // ACTIVE view (a persisted Circle pin renders it wrong from the very
+          // first paint otherwise). Same live textContent swap as the whynote
+          // per-scale re-derive (G5) - never a re-render/re-claim. sfEl closes
+          // over openStudio's scope; null when the tip never rendered.
+          if (sfEl) {
+            var sfBodyEl = sfEl.querySelector('.notableBanner-body');
+            if (sfBodyEl) sfBodyEl.textContent = studioFirstText(v);
+          }
         }
         Array.prototype.forEach.call(seg.querySelectorAll('[data-stview]'), function (b) {
           b.onclick = function () { applyView(b.getAttribute('data-stview')); };
@@ -2102,6 +2241,13 @@
         guideToggle.classList.toggle('on', show);
         guideToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
       };
+      // G4 S-JAM-STARTER: tap = load the resolved candidate via activate(), the
+      // SAME function every finder result card uses (studio when key+mode
+      // resolve, else the bare player) - no duplicate loader. jamStarterCandidate
+      // is only non-null when jamStarterHtml actually rendered the button above,
+      // so this ref is null exactly when there's nothing to wire.
+      var jamStarterBtn = elPlayer.querySelector('[data-jamstarter]');
+      if (jamStarterBtn && jamStarterCandidate) jamStarterBtn.onclick = function () { activate(jamStarterCandidate.track); };
       // F21: same disclosure toggle behavior the old solo-section "Find a
       // jam" button used - collapsed by default, per-open state only (no
       // persistence) - just relocated to the stage (see jamPanelHtml, above).
@@ -2172,6 +2318,14 @@
         openStudio(updated || Object.assign({}, t, { yt: id }));
       };
       elPlayer.querySelector('.bt-st-back').onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
+      // UAT batch 3 item 4: Back is the app's standard leave-this-screen control
+      // (same primitive, same slot, same glyph as the song view's #backLib) and it
+      // MINIMIZES rather than tears down, so the music survives. That behaviour was
+      // only reachable through an arrow labelled 'Back' - true, but unnamed. The
+      // fly-out's first row now SAYS it, without adding a second top-level button
+      // that would duplicate Back's destination.
+      var stCollapse = elPlayer.querySelector('[data-stcollapse]');
+      if (stCollapse) stCollapse.onclick = function () { if (window.NavHistory) window.NavHistory.dismiss(); else dismissStudio(); };
       // PLAYER-FEEL: a yt-backed Studio is the app's now-playing surface - track
       // it, and register dismissStudio (minimize, not teardown) as the close fn
       // so back/dismiss keeps the music going as the bottom bar. A videoless
@@ -2504,9 +2658,11 @@
     fetch(tracksUrl).then(function (r) { return r.json(); }).then(function (data) {
       state.seed = Array.isArray(data) ? data : [];
       remerge(); rerender();
+      injectJamStarterLate();  // G4: fill a starter-less no-video Studio opened pre-fetch
       if (opts.onReady) opts.onReady();  // M3: tracks loaded -> let the repertoire owner rebuild
     }).catch(function () {
       remerge(); rerender();
+      injectJamStarterLate();  // custom tracks alone can still yield a candidate
       if (!state.tracks.length) elResults.innerHTML = '<div class="bt-empty">Could not load tracks.</div>';
       if (opts.onReady) opts.onReady();
     });

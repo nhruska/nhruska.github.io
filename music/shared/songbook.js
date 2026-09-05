@@ -613,6 +613,41 @@
     /* ---- chord-pack capability helpers (graceful no-op if absent) ---- */
     function packHasChord(name) { return pack && typeof pack.hasChord === 'function' ? pack.hasChord(name) : false; }
     function packPlayChord(name) { if (pack && typeof pack.playChord === 'function') pack.playChord(name); }
+    // ONE tap-to-hear wiring for EVERY chord chip in the app (Element Consistency:
+    // the small .chordChips .c row and the large sheet .chordOnly .bar chips are
+    // the same control at two sizes, so they must not grow two handlers that
+    // drift). Extracted from renderPractice - the immediacy contract below is
+    // load-bearing and was previously reachable from one call site only.
+    //
+    // S-CHORDCHIP-LAG (P3 UAT regression, PR #300): a plain click listener on a
+    // real <button> is subject to the mobile browser's ~300ms tap-to-click delay,
+    // so the chord did not sound the instant a finger landed. pointerdown fires
+    // on contact, before any click is synthesized; click stays wired so keyboard
+    // Enter/Space (which fires click with NO preceding pointerdown) still plays.
+    // The lastPtr guard suppresses only the browser's follow-up click for the
+    // SAME tap, never a keyboard-only click.
+    //
+    // Volley-1 (medium): pointerdown fires on ANY press, so a right-click or a
+    // second multitouch finger would sound the chord - constrain to the PRIMARY
+    // pointer's primary button. Deliberate residual: a press that turns into a
+    // scroll drag still plays, because deferring to pointerup to detect the drag
+    // is exactly the latency this fixed.
+    function wireChordTaps(root, selector) {
+      if (!root) return;
+      root.querySelectorAll(selector).forEach(function (elc) {
+        if (!elc.dataset.c) return; // a chip with no canonical token has nothing to play
+        var lastPtr = 0;
+        elc.addEventListener('pointerdown', function (e) {
+          if (e && (e.button > 0 || e.isPrimary === false)) return;
+          lastPtr = Date.now(); packPlayChord(elc.dataset.c);
+        });
+        elc.onclick = function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
+          packPlayChord(elc.dataset.c);
+        };
+      });
+    }
     function packPlayNote(name) {
       if (pack && typeof pack.playNote === 'function') { pack.playNote(name); return; }
       if (pack && typeof pack.playFreq === 'function') { pack.playFreq(chordRootFreq(name), 1.1); }
@@ -1494,34 +1529,11 @@
       var stageBtn = el.practiceBody.querySelector('#stageBtn'); if (stageBtn) stageBtn.onclick = function () { setMode('stage'); };
       el.practiceBody.querySelector('#tDown').onclick = function () { shiftKey(-1); };
       el.practiceBody.querySelector('#tUp').onclick = function () { shiftKey(1); };
-      // S-CHORDCHIP-LAG (P3 UAT regression, PR #300): the chips became real
-      // <button>s for a11y (S-CHORDCHIP-A11Y above), which re-subjects a
-      // plain click listener to the mobile browser's ~300ms tap-to-click
-      // delay - the chord no longer sounded the instant a finger landed.
-      // pointerdown fires immediately on touch/mouse contact, before any
-      // click is synthesized, so play from there for true immediacy; click
-      // stays wired too so keyboard Enter/Space (which fires click directly,
-      // with NO preceding pointerdown) still plays. The `lastPtr` guard
-      // stops the browser's own follow-up click from replaying the SAME tap
-      // a second time - it only suppresses a click that arrives shortly
-      // after a pointerdown on the same chip, never a keyboard-only click.
-      el.practiceBody.querySelectorAll('.chordChips .c').forEach(function (elc) {
-        var lastPtr = 0;
-        // Volley-1 (medium): pointerdown fires on ANY press, so a right-click
-        // or a second multitouch finger would sound the chord. Constrain to
-        // the PRIMARY pointer's primary button - the touch/left-click case
-        // immediacy was actually asked for. Deliberate residual: a press that
-        // turns into a scroll drag still plays, because deferring to pointerup
-        // to detect the drag is exactly the tap-to-hear latency this fixed.
-        elc.addEventListener('pointerdown', function (e) {
-          if (e && (e.button > 0 || e.isPrimary === false)) return;
-          lastPtr = Date.now(); packPlayChord(elc.dataset.c);
-        });
-        elc.onclick = function () {
-          if (Date.now() - lastPtr < 600) return; // echo of the pointerdown that already played
-          packPlayChord(elc.dataset.c);
-        };
-      });
+      // Tap-to-hear for BOTH chip sizes through the one shared wiring (see
+      // wireChordTaps): the compact row, and the large sheet chips in the
+      // Chords/Both views (UAT batch 3 item 6 - they used to be inert <span>s).
+      wireChordTaps(el.practiceBody, '.chordChips .c');
+      wireChordTaps(el.practiceBody, '.sheet .chordOnly .bar');
       el.practiceBody.querySelector('#setToggle').onclick = function () { toggleSet(s.id); renderPractice(); renderSongs(); renderSetlist(); };
       el.practiceBody.querySelector('#backLib').onclick = function () {
         // Restore the SEGMENT as well as the surface - see practiceOrigin.
@@ -1536,24 +1548,54 @@
       var moreMenu = el.practiceBody.querySelector('#moreMenu');
       if (moreBtn && moreMenu) moreBtn.onclick = function (e) {
         e.stopPropagation();
-        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); return; }
+        if (!moreMenu.hidden) { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); if (typeof disarmDel === 'function') disarmDel(); return; }
         moreMenu.hidden = false; moreBtn.setAttribute('aria-expanded', 'true');
         var closer = function (ev) {
           if (moreMenu.contains(ev.target) || ev.target === moreBtn) return;
           moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+          // Dismissing the menu is a CANCEL gesture: a still-armed Delete/Revert
+          // must not survive it, or reopening within the 1.6s window presents a
+          // one-tap destructive action the user never armed on purpose.
+          // (disarmDel is a hoisted var, assigned below only when the item exists.)
+          if (typeof disarmDel === 'function') disarmDel();
           document.removeEventListener('pointerdown', closer, true);
         };
         setTimeout(function () { document.addEventListener('pointerdown', closer, true); }, 0);
       };
-      // Overflow Delete / Revert (custom songs only). Same confirm + effect as the
-      // old ladder button - a fork REVERTS to the catalog original, a real custom
-      // song is DELETED. Closes the menu on tap (it navigates away anyway).
+      // Overflow Delete / Revert (custom songs only) - a fork REVERTS to the
+      // catalog original, a real custom song is DELETED. S-DELCONFIRM-ARM:
+      // retires the LAST native confirm() in this file (operator directive -
+      // no native dialogs) by reusing the arm-to-delete grammar already proven
+      // for the setlist Clear button (setClear above) and the per-chord/section
+      // remove handles: first tap ARMS the item (red fill + relabel to "Tap
+      // again to delete/revert", auto-disarms after 1.6s); a second tap while
+      // armed performs the action. wireTapCancel so a scroll/drag through the
+      // open menu never arms it. The menu item stays mounted between the two
+      // taps (neither tap re-renders Practice), so the armed state survives.
       var delSong = el.practiceBody.querySelector('#delSongBtn');
-      if (delSong) delSong.onclick = function () {
+      if (delSong) {
         var isFork = !!s.forkOf;
-        var msg = isFork ? 'Revert to the original song? Your edits and video will be removed.' : 'Delete this progression?';
-        if (confirm(msg)) { deleteCustomItem(s.id); switchTab('library'); }
-      };
+        var delIdleLabel = delSong.textContent;
+        var delArmLabel = isFork ? 'Tap again to revert' : 'Tap again to delete';
+        var delArmed = false, delArmTimer = null;
+        var disarmDel = function () {
+          delArmed = false;
+          if (delArmTimer) { clearTimeout(delArmTimer); delArmTimer = null; }
+          delSong.classList.remove('armed');
+          delSong.textContent = delIdleLabel;
+        };
+        wireTapCancel(delSong, function () {
+          if (!delArmed) {
+            delArmed = true;
+            delSong.classList.add('armed');
+            delSong.textContent = delArmLabel;
+            delArmTimer = setTimeout(disarmDel, 1600);
+            return;
+          }
+          disarmDel();
+          deleteCustomItem(s.id); switchTab('library');
+        });
+      }
       var soloOver = el.practiceBody.querySelector('#soloOverBtn');
       if (soloOver) soloOver.onclick = function () {
         var csv = customById(s.id);
@@ -1884,42 +1926,55 @@
       });
       setUndoTeardown = global.Toast.wirePauseOnTouch(setUndoBanner, setUndoHandle);
     }
-    // Operator 2026-07-19 ("drag and drop [at] all places where we have up and
-    // down arrows to reorder - we already support it for the progression
-    // builder"): the setlist rows were the last arrow-only reorder surface.
-    // This is the VERTICAL mirror of wireSectionDrag (the canvas section cards):
-    // same lift grammar (300ms long-press on touch, 6px slop on mouse), same
-    // insertion-edge marker + trailing-click swallow, but targeting is by Y
-    // (a vertical list) and it drives STATE.setlist. Gated to Edit mode by the
-    // render loop below (matching the up/dn arrows it joins, and keeping drag
-    // off the RESTING scroll rail). The arrows stay as the a11y/keyboard path.
+    // S-SETLIST-GESTURES (operator UAT 2026-09-03: "change drag to press and
+    // hold on song on setlist" + "change setlist delete to slide swipe...
+    // like outlook and Gmail mobile. both directions are delete"). Replaces
+    // the 2026-07-19 dedicated-grip drag AND the two-tap arm-x remove: the
+    // ROW ITSELF is now the gesture surface, mirroring wireSectionDrag's
+    // lift grammar (300ms long-press on touch, slop-based lift on mouse) for
+    // reorder, with a directional lock deciding reorder-hold vs swipe-delete
+    // vs "just a scroll" from the first few px of movement - a body tap with
+    // no meaningful movement falls through untouched to .li-body's own
+    // wireTap (tap-to-play is unchanged). Gestures alone fail WCAG 2.5.1, so
+    // list-item.js still renders the up/dn/remove controls (a11y-coach +
+    // ux-coach consulted - see its S-SETLIST-GESTURES comment); this
+    // function only ever adds classes/inline the swipe TRANSLATE needs (a
+    // continuous drag value no static class can express - same pattern as
+    // the accent-theme custom properties, not a violation of the app's
+    // "all CSS external" rule, which targets STATIC style rules).
     var setlistDragSwallowClick = false, setlistSwallowWired = false;
     function wireSetlistDrag(row, index) {
-      // Drag initiates from the dedicated grip handle ONLY - a body tap plays the
-      // song, so there is no scroll-vs-drag ambiguity and no Edit-mode gate. The
-      // grip is drag-only (no tap action), so we lift on pointerdown immediately.
-      var grip = row.querySelector('.li-grip');
-      if (!grip) return;
-      grip.addEventListener('pointerdown', function (e) {
-        if (STATE.setlist.length < 2) return;
-        e.preventDefault(); // grip is drag-only: never a scroll-start or a tap
+      var HOLD_MS = 300, MOVE_CANCEL_PX = 8, LIFT_SLOP_PX = 6, SWIPE_COMMIT_FRAC = 0.25;
+      row.addEventListener('pointerdown', function (e) {
+        // .li-lead (song details) and the a11y up/dn/rm controls own their
+        // own tap/click - a gesture never starts on a <button>.
+        if (e.target && e.target.closest && e.target.closest('button')) return;
         var id = e.pointerId, startX = e.clientX, startY = e.clientY;
         var isTouch = e.pointerType === 'touch';
-        var lifted = false, dropAt = null, marked = null, holdTimer = null;
+        var mode = null; // null -> 'reorder' | 'swipe' - decided once, never reverts
+        var holdTimer = null, dropAt = null, marked = null, scrollRAF = null;
+        var lastY = startY, rowW = 0;
         // Edge-auto-scroll (UAT 2026-07-20 "can't drag setlist from 10 to
         // anything less than 7"): a lifted drag blocks native scroll and only
         // sees rows in the DOM viewport, so a long setlist's off-screen rows
         // were unreachable. While the finger holds near #setBody's top/bottom
         // we scroll the rail and re-paint the marker as rows slide in.
-        var lastY = startY, scrollRAF = null;
         var EDGE = 48, MAX_SPEED = 16; // px trigger zone / max px per frame
         function rowsNow() { return Array.prototype.slice.call(el.setBody.children); }
         function clearMark() { if (marked) { marked.classList.remove('dropBefore'); marked.classList.remove('dropAfter'); marked = null; } }
         function blockScroll(ev) { ev.preventDefault(); }
-        function lift() {
-          holdTimer = null; lifted = true;
+        function swallowClick() {
+          // The drop/swipe-settle never ALSO fires the row's onActivate / up
+          // / dn / rm wireTap (reused for both gestures - S-SETLIST-GESTURES).
+          setlistDragSwallowClick = true;
+          setTimeout(function () { setlistDragSwallowClick = false; }, 150);
+        }
+        // ---- reorder half (unchanged grammar, now targeting the whole row) ----
+        function beginReorder() {
+          mode = 'reorder';
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
           row.classList.add('dragging');
-          try { grip.setPointerCapture(id); } catch (err) {}
+          try { row.setPointerCapture(id); } catch (err) {}
           document.addEventListener('touchmove', blockScroll, { passive: false });
         }
         // Nearest row to lastY; the insertion edge is top/bottom. Split out so
@@ -1941,7 +1996,7 @@
         }
         function autoScrollStep() {
           scrollRAF = null;
-          if (!lifted) return;
+          if (mode !== 'reorder') return;
           var box = el.setBody.getBoundingClientRect(), dy = 0;
           if (lastY < box.top + EDGE) dy = -Math.ceil(MAX_SPEED * Math.min(1, (box.top + EDGE - lastY) / EDGE));
           else if (lastY > box.bottom - EDGE) dy = Math.ceil(MAX_SPEED * Math.min(1, (lastY - (box.bottom - EDGE)) / EDGE));
@@ -1956,47 +2011,109 @@
           var box = el.setBody.getBoundingClientRect();
           if (lastY < box.top + EDGE || lastY > box.bottom - EDGE) scrollRAF = requestAnimationFrame(autoScrollStep);
         }
+        // ---- swipe-delete half (new) ----
+        function beginSwipe() {
+          mode = 'swipe';
+          if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+          rowW = row.getBoundingClientRect().width || 1;
+          row.classList.add('swiping');
+          try { row.setPointerCapture(id); } catch (err) {}
+          document.addEventListener('touchmove', blockScroll, { passive: false });
+        }
+        // The live 1:1 finger-follow value: a CSS custom property is the one
+        // continuous number a static class can't express (same channel the
+        // accent theme already uses); the actual transform:translateX(...)
+        // RULE lives in songbook.css, not here.
+        function paintSwipe(dx) {
+          var clamped = Math.max(-rowW, Math.min(rowW, dx));
+          row.style.setProperty('--swipe-x', clamped + 'px');
+          row.classList.toggle('swipe-commit', Math.abs(dx) >= rowW * SWIPE_COMMIT_FRAC);
+        }
+        // Past the 25% threshold: animate fully off-screen, then remove
+        // through the SAME arm-then-confirm entry point (removeFromSet)
+        // every other .li-rm uses, so the undo banner still offers. Under
+        // threshold: spring back to rest. Neither path re-derives its own
+        // remove logic (point 4 of the mission: one remove path, period).
+        function settleSwipe(commit, dx) {
+          row.classList.add('swipe-anim');
+          if (commit) row.style.setProperty('--swipe-x', ((dx < 0 ? -1 : 1) * (rowW + 40)) + 'px');
+          else row.style.setProperty('--swipe-x', '0px');
+          setTimeout(function () {
+            if (commit) {
+              var sid = STATE.setlist[index];
+              if (sid != null) removeFromSet(sid);
+            } else {
+              row.classList.remove('swiping', 'swipe-anim', 'swipe-commit');
+              row.style.removeProperty('--swipe-x');
+            }
+          }, 190);
+        }
+        // ---- shared dispatch: decide the axis, then hand off to whichever
+        // half already claimed `mode` ----
         function onMove(ev) {
           if (ev.pointerId !== id) return;
-          if (!lifted) {
-            var moved = Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY);
-            if (isTouch) { if (moved > 8) cleanup(); } // early move = a scroll, not a drag
-            else if (moved > 6) lift();
-            return;
+          var dx = ev.clientX - startX, dy = ev.clientY - startY;
+          if (mode === null) {
+            if (isTouch) {
+              if (Math.abs(dx) <= MOVE_CANCEL_PX && Math.abs(dy) <= MOVE_CANCEL_PX) return; // still holding still - the hold timer decides
+              // Directional lock: horizontal movement before the hold fires
+              // becomes a swipe; vertical movement is a genuine scroll and
+              // the row must never move for it (cancel outright).
+              if (Math.abs(dx) > Math.abs(dy)) beginSwipe(); else { cleanup(); return; }
+            } else {
+              if (Math.abs(dx) <= LIFT_SLOP_PX && Math.abs(dy) <= LIFT_SLOP_PX) return;
+              if (Math.abs(dx) > Math.abs(dy)) beginSwipe();
+              else if (STATE.setlist.length >= 2) beginReorder();
+              else return; // one song - nothing to reorder, and this wasn't horizontal
+            }
           }
-          if (ev.cancelable) ev.preventDefault();
-          lastY = ev.clientY;
-          paintDrop();
-          maybeAutoScroll();
+          if (mode === 'reorder') {
+            if (ev.cancelable) ev.preventDefault();
+            lastY = ev.clientY;
+            paintDrop();
+            maybeAutoScroll();
+          } else if (mode === 'swipe') {
+            if (ev.cancelable) ev.preventDefault();
+            paintSwipe(dx);
+          }
         }
         function onUp(ev) {
           if (ev.pointerId !== id) return;
-          var commit = lifted && dropAt != null;
-          var to = dropAt;
-          cleanup();
-          if (!commit) return;
-          // Swallow the click trailing this pointerup so the drop never ALSO
-          // fires the row's onActivate / up / dn / rm wireTap.
-          setlistDragSwallowClick = true;
-          setTimeout(function () { setlistDragSwallowClick = false; }, 150);
-          var insert = to > index ? to - 1 : to;
-          if (insert === index) return;
-          var moved = STATE.setlist.splice(index, 1)[0];
-          STATE.setlist.splice(insert, 0, moved);
-          saveSet(); syncQueueToSetlist(); renderSetlist();
+          if (mode === 'reorder') {
+            var commit = dropAt != null;
+            var to = dropAt;
+            cleanup();
+            if (!commit) return;
+            swallowClick();
+            var insert = to > index ? to - 1 : to;
+            if (insert === index) return;
+            var movedSong = STATE.setlist.splice(index, 1)[0];
+            STATE.setlist.splice(insert, 0, movedSong);
+            saveSet(); syncQueueToSetlist(); renderSetlist();
+          } else if (mode === 'swipe') {
+            // Never commit a delete from an interrupted gesture (pointercancel) -
+            // a destructive action only fires from a deliberate release.
+            var dx = ev.clientX - startX;
+            var commitDel = ev.type !== 'pointercancel' && Math.abs(dx) >= rowW * SWIPE_COMMIT_FRAC;
+            cleanup();
+            swallowClick();
+            settleSwipe(commitDel, dx);
+          } else {
+            cleanup();
+          }
         }
         function cleanup() {
           if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
           if (scrollRAF != null) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
           clearMark();
           row.classList.remove('dragging');
-          try { grip.releasePointerCapture(id); } catch (err) {}
+          try { row.releasePointerCapture(id); } catch (err) {}
           document.removeEventListener('touchmove', blockScroll);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
           window.removeEventListener('pointercancel', onUp);
         }
-        lift(); // dedicated grip - lift on pointerdown, no hold delay, no scroll race
+        if (isTouch && STATE.setlist.length >= 2) holdTimer = setTimeout(beginReorder, HOLD_MS);
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
         window.addEventListener('pointercancel', onUp);
@@ -2133,6 +2250,18 @@
 
     /* ===================== PERFORM ===================== */
     var performEl = el.perform, pSheet = el.pSheet;
+    // Stage renders through the SAME sheet renderer as the song view, so its
+    // chord chips arrive as real <button>s (UAT batch 3 item 6). Stage is a
+    // PERFORM surface though - pinched, scrolled and read at arm's length, never
+    // tapped for audio - and its sheet re-renders up to 6 times inside the
+    // fit-to-width loop, so a per-render tap wiring would be both wrong and
+    // wasteful. `disabled` is the honest signal: not clickable, out of the tab
+    // order, no lying affordance - and the look is untouched because
+    // .chordOnly .bar sets its own color/background explicitly.
+    function inertStageChords() {
+      if (!pSheet) return;
+      pSheet.querySelectorAll('.chordOnly .bar').forEach(function (b) { b.disabled = true; });
+    }
     // P1-4: true only while the active Stage queue IS STATE.setlist itself (a
     // reference check - the setlist "Start" button passes STATE.setlist
     // directly). A single-song Stage launch (song-screen "Stage" button) passes
@@ -2387,6 +2516,7 @@
       } else {
         applyScale(1);
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp) + '</div>';
+        inertStageChords();
         var probeInner = pSheet.firstElementChild;
         var w1 = 0, i;
         var pre = probeInner ? probeInner.querySelectorAll('.lyrLine') : [];
@@ -2401,6 +2531,7 @@
       var wrapChars = perfWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
       for (var attempts = 0; attempts < 6; attempts++) {
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars || undefined) + '</div>';
+        inertStageChords();
         pSheet.scrollLeft = 0; // belt-and-braces: overflow-x is hidden, but never leave a stale offset clipping the left edge
         pSheet.scrollTop = preserveScroll ? savedTop : 0;
         var stageInner = pSheet.firstElementChild;
@@ -4819,7 +4950,15 @@
     function suggChip(c, tonic, completes) {
       var chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'suggChip' + (completes ? ' complete' : '');
+      // S-SUGG-DIFFERENTIATE: sugg-reco marks this as one of the app's
+      // theory-ranked "Suggested Chords" - the ONLY caller of suggChip() is
+      // renderSuggest's picks loop below, so every chip built here is a
+      // ranked recommendation, never a browse-palette tile. CSS (songbook.css)
+      // gives it a small marker dot on the existing accent tint and tones the
+      // browse palette (.ccChip, chord-collapse.js) neutral instead - emphasis
+      // on the recommendation, never a new hue. Display only: ranking/order
+      // stay whatever suggestNext/mergeSuggestionRow computed.
+      chip.className = 'suggChip sugg-reco' + (completes ? ' complete' : '');
       var rn = labelRoman(c);
       var html = '<span class="scName">' + escHTML(dispChordName(c)) + '</span>';
       if (rn) html += '<span class="scRn">' + escHTML(rn) + '</span>';
@@ -6487,7 +6626,7 @@
       // - rarely-needed content sinks to the bottom. Round 16: anchor on the
       // AI Agent section first so the agent family reads together (Skills
       // right above the section that explains the agent surface), About last.
-      var anchorSec = body.querySelector('.accSec[data-acc="agent"]') || body.querySelector('.accSec[data-acc="about"]');
+      var anchorSec = body.querySelector('.accSec[data-acc="about"]');
       if (anchorSec) body.insertBefore(sec, anchorSec); else body.appendChild(sec);
 
       // Hidden file input for import (shared by the first-start lead + the row).
@@ -6646,6 +6785,15 @@
         if (global.AgentReadme && typeof global.AgentReadme.text === 'function') {
           files.push({ path: 'AGENTS.md', text: global.AgentReadme.text() });
         }
+        // README.md: the zip's front door (UAT batch 6, "should describe itself
+        // without any additional prompting just by uploading the zip file").
+        // AGENTS.md already carried the whole contract, but nothing was NAMED the
+        // file a person or an agent opens first in an unfamiliar folder - so the
+        // bundle was self-describing to anyone who already knew where to look.
+        // Guarded like the rest: an older cached agent-readme.js has no readme().
+        if (global.AgentReadme && typeof global.AgentReadme.readme === 'function') {
+          files.push({ path: 'README.md', text: global.AgentReadme.readme() });
+        }
         // capabilities.json: the app capability manifest at the zip root, so
         // the bundle alone tells an agent what the app can do (surfaces, data
         // keys, interchange contracts) - zero network, per AGENTS.md's own
@@ -6680,18 +6828,18 @@
       function renderSkillsPanel() {
         pane.textContent = '';
         var hint = document.createElement('p'); hint.className = 'setHint';
-        hint.textContent = 'Your skills grow as you use the app. Everything here stays on this device - export a profile to carry it to another, or import one to personalize.';
+        hint.textContent = 'Your musician profile - what you can play, so Claude or ChatGPT can coach you at your level. Stays on this device - export it to carry it across.';
         pane.appendChild(hint);
 
         var has = C.hasData();
         // First-start lead: no data yet -> import affordance first (never a modal).
         var importRow = document.createElement('button');
-        importRow.className = 'listItem setRow skillsImportRow'; importRow.type = 'button';
-        var ib = document.createElement('span'); ib.className = 'li-body';
-        var it = document.createElement('span'); it.className = 'li-title'; it.textContent = 'Import a profile';
-        var ia = document.createElement('span'); ia.className = 'li-artist';
-        ia.textContent = has ? 'Merge a profile file from another device.' : 'Have a profile? Import it to personalize.';
-        ib.appendChild(it); ib.appendChild(ia); importRow.appendChild(ib);
+        // UAT batch 5: the .setAction primitive - one row, one action, no prose.
+        // The old stacked description ("Merge a profile file from another
+        // device.") said what the verb already says.
+        importRow.className = 'setAction skillsImportRow'; importRow.type = 'button';
+        var it = document.createElement('span'); it.className = 'saLbl'; it.textContent = 'Import a profile';
+        importRow.appendChild(it);
         importRow.onclick = function () { fileInput.click(); };
         if (!has) pane.appendChild(importRow); // lead with import when empty
 
@@ -6752,16 +6900,25 @@
         // <skill-id>/SKILL.md in one zip (only when there is data to carry).
         if (has) {
           var exportAllRow = document.createElement('button');
-          exportAllRow.className = 'listItem setRow skillsExportAllRow'; exportAllRow.type = 'button';
-          var eb = document.createElement('span'); eb.className = 'li-body';
-          var et = document.createElement('span'); et.className = 'li-title'; et.textContent = 'Export all skills';
-          var ea = document.createElement('span'); ea.className = 'li-artist';
-          ea.textContent = 'One zip - every skill as skill-name/SKILL.md.';
-          eb.appendChild(et); eb.appendChild(ea); exportAllRow.appendChild(eb);
+          exportAllRow.className = 'setAction skillsExportAllRow'; exportAllRow.type = 'button';
+          var et = document.createElement('span'); et.className = 'saLbl'; et.textContent = 'Export for my AI';
+          exportAllRow.appendChild(et);
           exportAllRow.onclick = downloadBundle;
           pane.appendChild(exportAllRow);
         }
         if (has) pane.appendChild(importRow); // populated view: import lives at the bottom
+
+        // UAT batch 6: the AI Agent accordion is merged in here. Its markup lives
+        // in play/index.html as #agentBlock (a plain div, deliberately outside the
+        // .accSec scan - see the comment there) and is ADOPTED into this pane, so
+        // the ids survive and index.html's wireAgentSection() keeps binding them.
+        // Appended last: Export and Import are the job, the docs are a disclosure.
+        // MUST live inside renderSkillsPanel, not mountSkillsPanel: this function
+        // clears the pane with textContent='' on every open, so an adoption done
+        // once at mount is wiped by the first render (it was, and only the live
+        // render caught it - the node suite passed the whole time).
+        var agentBlock = document.getElementById('agentBlock');
+        if (agentBlock) { agentBlock.hidden = false; pane.appendChild(agentBlock); }
       }
 
       // S-SETTINGS-UAT (operator UAT 2026-07-16): JOIN the page's 'settings'
@@ -6783,24 +6940,13 @@
           if (open) renderSkillsPanel();
         };
       }
-      // Round 18: the AI Agent section (play/index.html) leads with the
-      // one-tap bundle export - the SAME downloadBundle the Skills row uses
-      // (one code path, injected here because the function lives in this
-      // closure). Guarded for an older cached shell without the section.
-      var agentBody = document.getElementById('accBodyAgent');
-      if (agentBody && !document.getElementById('agentBundleRow')) {
-        var abRow = document.createElement('button');
-        abRow.className = 'listItem setRow'; abRow.type = 'button'; abRow.id = 'agentBundleRow';
-        var abB = document.createElement('span'); abB.className = 'li-body';
-        var abT = document.createElement('span'); abT.className = 'li-title'; abT.textContent = 'Export agent bundle';
-        var abA = document.createElement('span'); abA.className = 'li-artist';
-        abA.textContent = 'One file to start a coaching conversation: agent instructions, your skills, and your latest data.';
-        abB.appendChild(abT); abB.appendChild(abA); abRow.appendChild(abB);
-        abRow.onclick = downloadBundle;
-        var firstLink = document.getElementById('agentReadmeLink');
-        if (firstLink) agentBody.insertBefore(abRow, firstLink); else agentBody.appendChild(abRow);
-      }
+      // UAT batch 6 ("can't we merge skills and agent accordion?"): the injected
+      // 'Export agent bundle' row is GONE. It called the identical downloadBundle
+      // as the Skills section's own 'Export all skills' - one zip, two names, two
+      // accordions. Two buttons that differ only in label is what made the user
+      // believe there were two different exports to reason about.
     }
+
     try { mountSkillsPanel(); } catch (e) { /* the Settings Skills panel is non-critical - never block mount */ }
 
     /* ---- controller ---- */

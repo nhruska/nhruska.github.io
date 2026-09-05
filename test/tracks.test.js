@@ -782,7 +782,12 @@ test('F32: Studio dismiss is .bt-st-back (iconBtn, "<-" glyph, title=Back) - the
   // fine to keep and should not fail this test.
   assert.ok(!/class="bt-st-x"/.test(src), 'the old close-pill class must not appear in any rendered markup');
   assert.ok(!/querySelector\('\.bt-st-x'\)/.test(src), 'no selector may still target the old close-pill class');
-  assert.ok(/class="iconBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose the shared .iconBtn convention (matches #backLib elsewhere)');
+  // UAT batch 3 item 4 ("same back button SSOT behavior and location"): the class
+  // list is no longer just .iconBtn - it composes .backArrowBtn too, the primitive
+  // the song view's #backLib wears, so both screens show ONE accent-filled arrow.
+  assert.ok(/class="iconBtn backArrowBtn bt-st-back"/.test(src), 'the Studio dismiss control must compose .iconBtn.backArrowBtn - the SAME primitive as #backLib');
+  var sb = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/class="iconBtn backArrowBtn" id="backLib"/.test(sb), 'the song view back button is the other half of that SSOT - if it stops composing .backArrowBtn the two screens have silently diverged again');
   assert.ok(/title="Back" aria-label="Back"/.test(src), 'the dismiss control must carry the standard Back label/aria-label, not "close"');
   assert.ok(/elPlayer\.querySelector\('\.bt-st-back'\)\.onclick/.test(src), 'the NavHistory.dismiss()/closePlayer() wiring must target the new .bt-st-back selector');
 });
@@ -1009,49 +1014,133 @@ test('renderJamPanel (C2): the jam-discovery query passes dispKeyRoot(th.key, th
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
   assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
-  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenre, jamFeel\)/.test(body),
-    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key');
+  assert.ok(/JQ\.jamQuery\(dispKeyRoot\(th\.key, th\.scaleMode\), scaleKey, jamGenres, jamFeel\)/.test(body),
+    'jamQuery must be called with dispKeyRoot(th.key, th.scaleMode) as the key argument, not raw th.key, and jamGenres (the multi-select array) as the genre argument');
 });
-test('wireNowPlaying (skip-ads UAT 2026-07-31): the video auto-minimize is a longer, playback-anchored window with explicit Keep-open / Minimize-now controls', function () {
+test('renderJamPanel (M-JAM-MULTI): re-filters jamGenres to the surviving intersection with the new scale\'s list, falling back to that scale\'s first genre when nothing survives', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres == null/.test(body), 'expected a first-render null-sentinel check for jamGenres');
+  assert.ok(/jamGenres = \[genres\[0\]\]/.test(body), 'expected a fallback seed of [genres[0]] on first render / when nothing survives');
+  assert.ok(/jamGenres\.filter\(/.test(body), 'expected jamGenres to be re-filtered against the new scale\'s genre list on every render');
+});
+test('renderJamPanel chip row (M-JAM-MULTI): every genre chip carries .on independently via jamGenres.indexOf(...) >= 0 (multi-select, not a single === comparison)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres\.indexOf\(g\) >= 0/.test(body),
+    'genre chip .on class must test jamGenres.indexOf(g) >= 0, not a single-value === comparison');
+});
+test('renderJamPanel genre-chip click handler (M-JAM-MULTI): toggles membership and refuses to drop the last selected genre (min 1 selected)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/jamGenres\.indexOf\(g\)/.test(body), 'expected the click handler to look up the tapped genre in jamGenres');
+  assert.ok(/jamGenres\.length > 1\)\s*jamGenres\.splice\(idx, 1\)/.test(body),
+    'expected the toggle-off branch to be guarded on jamGenres.length > 1 before splicing out the tapped genre');
+  assert.ok(/jamGenres\.push\(g\)/.test(body), 'expected the toggle-on branch to push the tapped genre into jamGenres');
+});
+test('renderJamPanel "Add to library" seed (M-JAM-MULTI): genre is jamGenres.join(\' / \') when multiple are selected, the bare genre when one is', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function renderJamPanel\(scaleId\) \{/);
+  assert.ok(body, 'renderJamPanel(scaleId) not found in tracks.js');
+  assert.ok(/genre: jamGenres\.length > 1 \? jamGenres\.join\(' \/ '\) : jamGenres\[0\]/.test(body),
+    'the onEditRequest seed object must join multiple selected genres with " / ", or pass the bare single genre');
+});
+test('wireNowPlaying (round 16, skip-ads UAT 2026-09-02): NOTHING auto-hides the video - no timer, no countdown, no parked-open', function () {
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
   assert.ok(body, 'wireNowPlaying() not found in tracks.js');
-  // 7s wall-clock collapse clipped the iframe mid-reach for YouTube's Skip Ads
-  // button, trapping the user in the ad. The window is now 15s AND anchored to
-  // playback start (startCountdown fires from the YT infoDelivery handler), never
-  // wall-clock, so a slow ad-load can't eat the skip window.
-  assert.ok(/AUTOMIN_MS = 15000/.test(body),
-    'the auto-minimize window must be 15s (was 7s - too short to see + tap Skip Ads)');
-  assert.ok(/function startCountdown\(\)/.test(body) && /cdStarted/.test(body),
-    'the countdown must be a guarded startCountdown() so it fires once, anchored to playback');
-  // v6 split the guard (an onStateChange ended-check now precedes it); round 15
-  // slid the per-tick playerState sync between the guard and the countdown call
-  // - the anchored contract is unchanged: startCountdown() fires from the
-  // infoDelivery handler, never at render. (The countdown is DORMANT since
-  // round 15 - every open parks the video and endCountdown()s - but the
-  // machinery stays anchored correctly for any future re-enable.)
-  assert.ok(/if \(d\.event !== 'infoDelivery' \|\| !d\.info\) return;[\s\S]{0,220}startCountdown\(\);/.test(body),
-    'startCountdown() must fire from the YT infoDelivery handler (playback-anchored, not at render)');
-  // Round 15 ("skip when needed, not show the video any other time"): every
-  // open ends the wiring PARKED with the countdown silenced...
-  assert.ok(/setVid\('hid'\); endCountdown\(\);/.test(body),
-    'every open must end parked (setVid hid) with the countdown silenced (endCountdown)');
-  // ...and the playerState field that rides every infoDelivery tick syncs the
+  // TWICE an automatic hide trapped the operator inside a YouTube ad: a 7s
+  // wall-clock collapse (UAT 2026-07-31, mitigated to a 15s playback-anchored
+  // window), then round 15's open-PARKED default, which silently undid that
+  // mitigation - the pre-roll ran with no video on screen, so reaching "Skip
+  // Ads" cost a manual open EVERY time. The ad boundary is undetectable
+  // cross-origin, so no timer can be tuned safely around it. The law is now:
+  // the app never hides the video on its own.
+  assert.ok(!/AUTOMIN_MS/.test(body), 'no auto-minimize window may exist (round 16: nothing auto-hides)');
+  assert.ok(!/startCountdown|endCountdown|cdStarted|autoTimer/.test(body),
+    'the auto-collapse countdown machinery must be gone entirely, not merely dormant');
+  assert.ok(!/setTimeout\([\s\S]{0,40}setVid\(/.test(body), 'no timer may drive setVid');
+  assert.ok(!/\[data-keepopen\]/.test(body) && !/\[data-minnow\]/.test(body),
+    'the Keep-open / Minimize-now controls narrated a window that no longer exists');
+  // The playerState field that rides every infoDelivery tick still syncs the
   // bar (pausing inside the embed must flip the bar even when the
-  // onStateChange delta was missed).
+  // onStateChange delta was missed) - untouched by the round-16 removal.
   assert.ok(/playerState/.test(body) && /function syncState\(/.test(body),
     'the per-tick playerState field must route through the same syncState path as onStateChange');
-  // Explicit user agency: "Keep open" cancels the auto-collapse so Skip stays
-  // tappable on the iframe; "Minimize now" collapses early.
-  assert.ok(/\[data-keepopen\]/.test(body) && /\[data-minnow\]/.test(body),
-    'both the Keep-open and Minimize-now controls must be wired');
 });
-test('Studio countdown markup (skip-ads UAT): the collapse controls + 15s default ship in the rendered countdown', function () {
+test('round 17 (BEHAVIOR): adLikelyOpen answers "is a pre-roll likely on this open?" across all four states', function () {
+  var TM = require('../music/shared/tracks-model.js'); // the PURE model - T above is tracks.js (the DOM module)
+  var M = 10 * 60 * 1000, now = 1e12;
+  // Mid-session: the queue advanced or he tapped another row while one played.
+  // An ad is unlikely AND a video jumping up between songs is the friction the
+  // operator explicitly ruled out ("not between every song tho").
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: true, hasPlayedThisLoad: true, lastStopAt: 0, now: now, idleMs: M }), false,
+    'anything already playing means mid-session - never ad-likely, whatever the clock says');
+  // Session start, the dominant case: app loads, he hits play, YouTube pre-rolls.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: false, now: now, idleMs: M }), true,
+    'the first play of an app load is the canonical ad moment');
+  // Stopped and immediately restarted - still one continuous session.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - 20000, now: now, idleMs: M }), false,
+    'a 20s gap is song-to-song, not a new session - the video must not pop up');
+  // Put the phone down, came back: a fresh embed, ads likely again.
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - 30 * 60000, now: now, idleMs: M }), true,
+    'past the idle gap it is a new session again');
+  // Boundary: exactly at the gap counts as a new session (>=, not >).
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - M, now: now, idleMs: M }), true,
+    'the idle threshold is inclusive');
+  assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - M + 1, now: now, idleMs: M }), false,
+    'one ms under the gap is still the same session');
+});
+test('round 17: the video shows itself exactly where ADS ARE LIKELY - session start, not every song', function () {
   var src = readSrc('music/shared/tracks.js');
-  assert.ok(/data-keepopen[\s\S]*?Keep open/.test(src) && /data-minnow[\s\S]*?Minimize now/.test(src),
-    'the countdown must render the Keep-open and Minimize-now buttons');
-  assert.ok(/<b data-cdnum>15<\/b>s/.test(src),
-    'the countdown caption must default to 15s (matches AUTOMIN_MS)');
+  var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
+  // Operator: "detect not playing anything -> playing (first load or idle time)
+  // and show the yt video - most likely to have ads. not between every song tho".
+  // A YouTube pre-roll fires when a listening SESSION starts (a fresh embed after
+  // load or after a real gap), not on each queue advance.
+  assert.ok(/var wasPlaying = !!nowPlaying;/.test(body),
+    'the open must read nowPlaying BEFORE it is reassigned - that is the "was anything already playing" signal');
+  assert.ok(/var adLikely = adLikelyOpen\(\{ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS \}\);/.test(body),
+    'the open must decide via the PURE adLikelyOpen predicate (behaviour-tested above), not an inline expression only a browser could exercise');
+  assert.ok(/setVid\(adLikely \? 'theater' : \(vidState \|\| readVidPref\(\)\), true\);/.test(body),
+    'ad-likely opens SHOW the video; every other open CARRIES the state the user left it in (never a jump, never a yank)');
+  assert.ok(/hasPlayedThisLoad = true;/.test(body), 'the open must mark the load as having played');
+  // The carry var is what makes a mid-session open honest - it tracks every transition.
+  assert.ok(/vidState = state;/.test(extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/)),
+    'setVid must keep the carry var current so the next open can continue the state');
+  // Round 16 still stands underneath: nothing hides it on a timer.
+  assert.ok(!/AUTOMIN|startCountdown/.test(body), 'round 16 stands - no auto-hide machinery may return');
+});
+test('round 17: the idle clock starts on a REAL stop, and the signals are module-scoped', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var close = extractFunctionBody(src, /function closePlayer\(\) \{/);
+  assert.ok(/if \(nowPlaying\) lastStopAt = Date\.now\(\);/.test(close),
+    'closePlayer must stamp lastStopAt only when something was actually playing');
+  assert.ok(/var hasPlayedThisLoad = false;/.test(src) && /var lastStopAt = 0;/.test(src) && /var vidState = null;/.test(src),
+    'the three session signals must live at module scope (they outlive any single Studio open)');
+  assert.ok(/VID_IDLE_MS = 10 \* 60 \* 1000;/.test(src), 'the idle gap must be one named, tunable constant');
+});
+test('round 16 (still standing): the pref is written by USER acts only, never by the open that replays it', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/);
+  assert.ok(/if \(!fromOpen\) writeVidPref\(state\);/.test(body),
+    'setVid must persist every non-open (user) transition, and must NOT re-write on a restoring open');
+  var read = extractFunctionBody(src, /function readVidPref\(\) \{/);
+  assert.ok(/'theater'/.test(read) && /catch/.test(read),
+    'unset OR unreadable storage falls back to the VISIBLE theater');
+  assert.ok(/VID_PREF_KEY = 'music\.vidPref\.v1'/.test(src), 'the pref key stays the namespaced additive music.vidPref.v1');
+});
+test('round 16: the video preference is written by USER acts only, never by the open that replays it', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/);
+  assert.ok(body, 'setVid(state, fromOpen) not found');
+  assert.ok(/if \(!fromOpen\) writeVidPref\(state\);/.test(body),
+    'setVid must persist every non-open (i.e. user) transition, and must NOT re-write on the restoring open');
+  // Additive localStorage key -> no SCHEMA_VERSION bump needed (backup.js contract).
+  assert.ok(/VID_PREF_KEY = 'music\.vidPref\.v1'/.test(src), 'the pref key must be the namespaced additive music.vidPref.v1');
 });
 
 /* ---------------------------------------------------------------------
@@ -1088,6 +1177,152 @@ test('S-COF-INTERACTIVE: renderCofHero passes onPick to renderWheel (the wheel i
     'renderCofHero must pass an onPick to renderWheel so every wedge is a live key-explore tap');
   assert.ok(/retuneTo\(root, ring === 'minor' \? 'aeolian' : 'ionian'\)/.test(body),
     "onPick must route the ring ('major'/'minor') to the studioTheory scale mode (ionian/aeolian)");
+});
+
+/* =======================================================================
+ * G4 S-JAM-STARTER: the no-video empty state's one-tap starter chip. The
+ * RESOLUTION algorithm (filterTracks -> rank 0 + a real yt) is pure and
+ * already exercised end to end below against the real catalog; the DOM
+ * wiring (openStudio's markup/gating/click-handler) is source-locked, same
+ * discipline as the other openStudio internals above (its DOM surface is
+ * Playwright turf, not jsdom-stubbable).
+ * ===================================================================== */
+var REAL_TRACKS = require('../music/backing-tracks/tracks.json');
+test('G4: filterTracks resolves a real, already-playable curated candidate for a sample key (A major)', function () {
+  var rows = T.filterTracks(REAL_TRACKS, 'all', 'A', T.normMode('major'));
+  var candidate = rows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.ok(candidate, 'expected at least one rank-0 (exact key), real-video candidate for A major in the shipped catalog');
+  assert.strictEqual(candidate.track.key, 'A');
+  assert.ok(candidate.track.yt, 'the resolved candidate must carry a real yt id - the whole point is one tap TO PLAYING, not to another search');
+});
+test('G4: the same resolution is deterministic across repeated calls (no randomness) - same catalog, same key, same candidate', function () {
+  var a = T.filterTracks(REAL_TRACKS, 'all', 'G', T.normMode('minor')).filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  var b = T.filterTracks(REAL_TRACKS, 'all', 'G', T.normMode('minor')).filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.strictEqual(a ? a.track.yt : null, b ? b.track.yt : null);
+});
+test('G4: a key with no exact-match curated video resolves to no candidate (graceful degrade, not a wrong-key fallback)', function () {
+  // SYNTHETIC catalog, deliberately not the shipped one: the shipped C#/F#
+  // gaps are RESERVED for the operator's curated gap playlist (QUEUE), so
+  // pinning "C# has zero tracks" would rot red the day those land - the same
+  // content-pinned-rot class the persona scenarios fixed four times over.
+  // The absence property under test belongs to the ALGORITHM, so a fixture
+  // with a known gap proves it durably.
+  var cat = [
+    { yt: 'dQw4w9WgXcQ', title: 'A jam', artist: 'x', genre: 'rock', key: 'A', mode: 'major', bpm: 100, capo: 0, tags: [] },
+    { yt: 'dQw4w9WgXcR', title: 'E jam', artist: 'x', genre: 'blues', key: 'E', mode: 'major', bpm: 90, capo: 0, tags: [] }
+  ];
+  var rows = T.filterTracks(cat, 'all', 'C#', T.normMode('major'));
+  var candidate = rows.filter(function (r) { return r.rank === 0 && r.track.yt; })[0];
+  assert.strictEqual(candidate, undefined, 'expected no rank-0+yt candidate for a key the catalog does not carry');
+});
+test('G4: openStudio resolves jamStarterCandidate via filterTracks(state.tracks, \'all\', th.key, normMode(th.scaleMode)) - the SAME resolution the finder\'s own result cards use, not a duplicate', function () {
+  var src = readSrc('music/shared/tracks.js');
+  // Resolution + markup live in resolveJamStarter/jamStarterRowHtml (shared
+  // with the async-catalog late fill, injectJamStarterLate) - pin them there.
+  var body = extractFunctionBody(src, /function resolveJamStarter\(th\) \{/);
+  assert.ok(body, 'resolveJamStarter(th) not found in tracks.js');
+  assert.ok(/filterTracks\(state\.tracks, 'all', th\.key, normMode\(th\.scaleMode\)\)/.test(body),
+    'jamStarterRows must resolve via filterTracks against state.tracks (the merged seed+overlay+custom list) for the CURRENT key, any genre');
+  assert.ok(/\.filter\(function \(r\) \{ return r\.rank === 0 && r\.track\.yt; \}\)\[0\] \|\| null/.test(body),
+    'jamStarterCandidate must be the first exact-key ("your key") row that already carries a real video, or null');
+  var rowFn = extractFunctionBody(src, /function jamStarterRowHtml\(cand\) \{/);
+  assert.ok(rowFn, 'jamStarterRowHtml(cand) not found in tracks.js');
+  assert.ok(/keyLabelFor\(cand\.track\.key, cand\.track\.mode\)/.test(rowFn),
+    'the chip label must read the CANDIDATE track\'s own key/mode (a blues/modal theory key coarsens to a family match - labeling with th would overpromise)');
+  assert.ok(/cand\.track\.genre \? esc\(cand\.track\.genre\) \+ ' jam' : 'jam'/.test(rowFn),
+    'a genre-less candidate must read "Play a jam in ..." - never the "jam jam" stutter of genre-fallback + literal " jam"');
+  assert.ok(/injectJamStarterLate\(\);/.test(src) && /function injectJamStarterLate\(\) \{/.test(src),
+    'the tracks.json fetch handlers must late-fill a starter-less no-video Studio opened before the catalog resolved (openStudio\'s idempotent guard blocks a plain re-open)');
+});
+test('G4: the starter chip renders ONLY in the no-video branch and never replaces the existing Find-a-jam disclosure row', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/\(t\.yt \? '' : jamStarterHtml \+ '<div class="bt-st-addvidrow"><button class="bt-st-addvid" data-jamfindtoggle/.test(src),
+    'jamStarterHtml must render ahead of (not instead of) the existing no-video addvidrow, and only when t.yt is falsy');
+  assert.ok(/data-jamstarter/.test(src), 'the starter button must carry a data-jamstarter hook');
+});
+test('G4: tapping the starter chip loads the candidate via activate() - the same function every finder result card uses, no duplicate loader', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/jamStarterBtn\.onclick = function \(\) \{ activate\(jamStarterCandidate\.track\); \}/.test(src),
+    'the starter button must call activate(jamStarterCandidate.track), the same dispatcher cardEl()\'s onActivate uses');
+});
+test('G4: the no-candidate case wires nothing (jamStarterBtn is only truthy when jamStarterCandidate is truthy)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/if \(jamStarterBtn && jamStarterCandidate\) jamStarterBtn\.onclick/.test(src),
+    'the click handler must be guarded on jamStarterCandidate - jamStarterHtml is empty (no button in the DOM) when there is no candidate');
+});
+test('G4: the Studio guide toggle carries the app-wide .helpIcon convention (songbook.css) instead of a bespoke "?" glyph', function () {
+  var src = readSrc('music/shared/tracks.js');
+  assert.ok(/class="iconBtn bt-st-guidebtn helpIcon" data-guidetoggle/.test(src),
+    'the guide toggle button must carry helpIcon alongside its own classes, per the app-wide convention (songbook.css .helpIcon::before)');
+  assert.ok(!/bt-st-guidebtn" data-guidetoggle[^>]*>\?</.test(src),
+    'the bespoke literal "?" text content must be removed now that .helpIcon supplies the glyph via ::before');
+  assert.ok(/aria-label="Show the scale guide"/.test(src),
+    'the aria-label must survive the glyph swap (screen readers never read the visible ::before content)');
+});
+
+/* =======================================================================
+ * Studiofirst tip is VIEW-AWARE (operator UAT 2026-09-01): the beginner
+ * orientation copy's where-to-look clause must match the active theory
+ * view - a persisted Circle pin otherwise renders a tip pointing at a
+ * fretboard that is not on screen.
+ * ===================================================================== */
+test('studiofirst copy: Fretboard view points at the neck, Circle view at the wheel - action clause identical', function () {
+  var ST = require('../music/shared/studio-theory.js');
+  var fret = ST.studioFirstText();
+  var cof = ST.studioFirstText('cof');
+  assert.ok(/neck/.test(fret) && !/wheel/.test(fret), 'default (fretboard) copy points at the neck');
+  assert.ok(/wheel/.test(cof) && !/neck/.test(cof), 'circle copy points at the wheel, never the neck');
+  assert.strictEqual(fret.split(' - ')[0], cof.split(' - ')[0], 'the action clause ("Tap a chord below to hear it") is identical in both views');
+});
+test('studiofirst tip re-derives on view toggle (applyView swaps the live banner body, G5 pattern)', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var body = extractFunctionBody(src, /function applyView\(v\) \{/);
+  assert.ok(body, 'applyView(v) not found in tracks.js');
+  assert.ok(/sfBodyEl\.textContent = studioFirstText\(v\)/.test(body),
+    'applyView must swap the studiofirst banner body to studioFirstText(v) - the persisted-Circle-pin first paint AND live toggles both route through applyView');
+});
+
+/* ---- UAT batch 3 item 4: the Solo topbar stops impersonating app Settings ---
+ * "app settings icon is replaced with a collapse button menu on Solo view. song
+ * details has ... button fly out menu - use consistently on Solo view."
+ * The Studio is a fullscreen overlay that COVERS the appbar, so its trailing
+ * hamburger landed exactly where the Settings gear normally sits. The operator
+ * has now flagged that slot twice - the first time (2026-08-09, videoless
+ * tracks) it was answered by deleting the burger for that one case, which left
+ * the video case still wearing it. This pins the general fix.
+ * --------------------------------------------------------------------- */
+test('the Studio fly-out trigger is the song view\'s overflow primitive, not a hamburger in the Settings slot', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  assert.strictEqual(src.indexOf('aria-label="More options">&#9776;'), -1, 'the hamburger glyph must be gone from the rendered trigger');
+  assert.ok(/class="iconBtn moreBtn bt-st-np-menu" data-stmenu/.test(src), 'the trigger composes .iconBtn.moreBtn - the same control the song view wears');
+  assert.ok(/data-stmenu[^>]*><span aria-hidden="true">⋯<\/span>/.test(src), 'and carries the same overflow glyph');
+  var sb = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/class="iconBtn moreBtn" id="moreBtn"/.test(sb), 'the song view is the other half of that SSOT - a rename there must fail here, not diverge silently');
+});
+
+test('the Studio menu button carries LAYOUT only in tracks.css - the primitive owns its box', function () {
+  var css = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.css'), 'utf8');
+  var rule = css.match(/\n\s*\.bt-st-np-menu\{([^}]*)\}/);
+  assert.ok(rule, 'the rule still exists');
+  // tracks.css loads AFTER songbook.css at equal specificity, so any box
+  // property re-declared here silently overrides .iconBtn and the two overflow
+  // buttons drift apart again - exactly the divergence this task closed.
+  ['background', 'border:', 'border-radius', 'font-size', 'min-width', 'min-height', 'padding']
+    .forEach(function (prop) {
+      assert.strictEqual(rule[1].indexOf(prop), -1, 'the box property "' + prop + '" belongs to .iconBtn, not to this override');
+    });
+});
+
+test('collapse is a NAMED row in the fly-out, wired to the same dismiss path as Back', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
+  assert.ok(/class="bt-st-menu-item" data-stcollapse type="button">Collapse player - keeps playing</.test(src),
+    'the collapse action is spelled out in words, not left implicit behind an arrow glyph');
+  assert.ok(/stCollapse\.onclick = function \(\) \{ if \(window\.NavHistory\) window\.NavHistory\.dismiss\(\); else dismissStudio\(\); \}/.test(src),
+    'it routes through the SAME dismiss path Back uses - one destination, so the two can never disagree');
+  // It is a MENU row on purpose: a second top-level button would land next to
+  // Back and do exactly what Back does, which is the duplicate control this
+  // design avoids.
+  assert.strictEqual(src.indexOf('class="iconBtn bt-st-collapse"'), -1, 'no second top-level control duplicating Back');
 });
 
 run();

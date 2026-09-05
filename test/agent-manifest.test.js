@@ -155,4 +155,45 @@ test("AGENTS.md tells agents the envelope is IN the bundle (not 'if the user als
     "the envelope line must say it is included in this bundle");
 });
 
+/* ---- UAT batch 6: the zip is the interface -------------------------------
+ * "The Standalone skills package should describe itself without any additional
+ * prompting just by uploading the zip file to my AI agent."
+ * AGENTS.md already said everything, but nothing was NAMED the file a person or
+ * an agent opens first in an unfamiliar folder. These pin the front door and the
+ * three-case hand-back contract, so a future edit cannot quietly drop either.
+ * ----------------------------------------------------------------------- */
+test('README.md exists, states self-containment, and points at AGENTS.md', function () {
+  var r = AgentReadme.readme();
+  assert.ok(/^# Musician skill profile/.test(r), 'opens by naming what the folder IS');
+  assert.ok(/no network, no app\s*\ncode, no account/.test(r) || /no network/.test(r),
+    'states the folder needs no network - the whole point of bundling the docs');
+  assert.ok(/`AGENTS\.md`/.test(r), 'points at the full contract');
+  assert.ok(/## What to hand back/.test(r), 'says what to return, not just what to read');
+});
+
+test('README.md carries no tagged JSON fence - a mis-picked README must fail import cleanly', function () {
+  // Same trap AGENTS.md documents in its own header: skill-md.js parse() grabs
+  // the FIRST ```json block in any .md handed to the import picker. A doc that
+  // almost-parses is worse than one that plainly does not.
+  assert.strictEqual(AgentReadme.readme().indexOf('```json'), -1,
+    'README.md must not contain a ```json fence');
+});
+
+test('the hand-back procedure covers all THREE update cases the operator named', function () {
+  var t = AgentReadme.text();
+  var hb = t.slice(t.indexOf('## Hand-back procedure'));
+  assert.ok(/One competency moved/.test(hb), 'case 1: a practice session moved one level');
+  assert.ok(/Porting an outside profile/.test(hb), 'case 2: the user already tracks skills elsewhere');
+  assert.ok(/Correcting a fresh install/.test(hb), 'case 3: defaults corrected by a conversation');
+  assert.ok(/adds and overwrites, never deletes/.test(hb),
+    'the merge semantics must be stated - it is what makes a partial hand-back safe');
+});
+
+test('the bundle writes README.md alongside AGENTS.md', function () {
+  var src = require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/path: 'README\.md', text: global\.AgentReadme\.readme\(\)/.test(src),
+    'downloadBundle must write README.md from the ONE source, never a hand-authored copy');
+});
+
 run();

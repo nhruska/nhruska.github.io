@@ -74,16 +74,14 @@ test('play/index.html uses the app-styled Toast/Modal primitives for backup/rest
   assert.ok(/openConfirmModal\(\s*[\s\S]{0,40}'This backup'/.test(src), 'restore confirm must route through openConfirmModal');
 });
 
-test('songbook.js confirm() call sites are pinned to the KNOWN pre-existing debt (delete-item) - exactly 1, not grown', function () {
+test('songbook.js has ZERO native confirm() call sites (S-ENFORCE-2B: delete-item moved to arm-to-delete, PR #342)', function () {
   var src = read('music/shared/songbook.js');
   var confirms = realCallSites(src, 'confirm');
-  // Was 2 (delete-item + clear-setlist); the setlist Clear moved to an
-  // arm-to-delete pattern (operator UAT: tap-to-red, no popup), so only the
-  // delete-custom-item confirm() remains as pre-existing native-dialog debt.
-  assert.strictEqual(confirms.length, 1, 'expected exactly 1 pre-existing confirm() call site in songbook.js (delete custom item), found: ' + JSON.stringify(confirms));
-  var texts = confirms.map(function (c) { return c.text; });
-  assert.ok(texts.some(function (t) { return /confirm\(msg\)/.test(t); }), 'expected the delete-custom-item confirm(msg) call site');
-  assert.ok(!texts.some(function (t) { return /Clear your setlist/.test(t); }), 'the clear-setlist native confirm() must be gone (replaced by arm-to-delete)');
+  // Was 2 (delete-item + clear-setlist), then 1 (clear-setlist moved to
+  // arm-to-delete), now 0: the delete-custom-item confirm() joined the same
+  // arm grammar in the UX-polish sprint (PR #342). The debt register is CLOSED
+  // for this file - any new native confirm() is a regression, full stop.
+  assert.strictEqual(confirms.length, 0, 'songbook.js must have ZERO native confirm() call sites (all moved to arm-to-delete), found: ' + JSON.stringify(confirms));
 });
 
 test('songbook.js has ZERO native alert() call sites (already fully migrated to toast.js pre-U19)', function () {
@@ -92,10 +90,10 @@ test('songbook.js has ZERO native alert() call sites (already fully migrated to 
   assert.strictEqual(alerts.length, 0, 'found unexpected alert() call site(s) in songbook.js: ' + JSON.stringify(alerts));
 });
 
-test('repertoire-form.js confirm() call sites are pinned to the KNOWN pre-existing debt (delete confirmation) - exactly 1, not grown (sibling-owned file, out of this wave\'s grant)', function () {
+test('repertoire-form.js has ZERO native confirm() call sites (S-ENFORCE-2B: delete moved to arm-to-delete, PR #342)', function () {
   var src = read('music/shared/repertoire-form.js');
   var confirms = realCallSites(src, 'confirm');
-  assert.strictEqual(confirms.length, 1, 'expected exactly 1 pre-existing confirm() call site in repertoire-form.js, found: ' + JSON.stringify(confirms));
+  assert.strictEqual(confirms.length, 0, 'repertoire-form.js must have ZERO native confirm() call sites (delete uses arm-to-delete), found: ' + JSON.stringify(confirms));
 });
 
 run();

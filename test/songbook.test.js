@@ -28,6 +28,11 @@ var Repertoire = require('../music/shared/repertoire.js');
 // M-GUIDE W3a merged: solo-guide.js now exists (see the soloChipCaption tests below).
 var SoloGuide = require('../music/shared/solo-guide.js');
 require('../music/shared/queue.js'); // sets global.Queue - mount()'s QUEUE = global.Queue.createQueue()
+// S-SUGG-DIFFERENTIATE: buildGrid()'s chipTile() calls global.ChordCollapse.chip()
+// directly at the ADVANCED-guidance chip-mode fork - required so the browse-
+// palette-vs-ranked-suggestion tests below can force that fork (via the
+// music.chordCharts.v1='chips' pref) without a GuidanceLevel module.
+require('../music/shared/chord-collapse.js');
 var lsReset = require('./helpers/local-storage-reset.js');
 
 var passed = 0, failed = 0, cases = [];
@@ -130,11 +135,28 @@ test('chordsFromDegrees keeps every degree incl. the diminished vii (unlike the 
  * section 4.5): the pure chord-mapping extracted out of convertToMode so both the
  * explicit-key path AND the keyless mode-change handler share one implementation.
  * No songKey mutation, no DOM - chords in, chords out. ---------- */
-test('Major -> Minor re-qualify: roots hold, degree qualities flip, a non-scale root stays unchanged', function () {
-  // C major I V vi IV (C G Am F) -> C minor: i and v and iv re-qualify minor;
-  // Am's root (offset 9) is not a degree of natural minor -> borrowed, left alone.
+test('Major -> Minor re-qualify: degree INDEX maps root+quality together (F-MODEFLIP-DEGREES, PR #342)', function () {
+  // C major I V vi IV (C G Am F) -> C minor: each chord re-roots to the SAME
+  // degree index of the target mode, not merely re-qualified at its old pitch.
+  // vi (Am, offset 9, Major.steps index 5) lands on VI of C minor (Minor.steps
+  // index 5 = offset 8 = G#/Ab) - the operator-flagged "stranding" this PR fixes;
+  // it is a diatonic vi degree in the SOURCE mode, not a chromatic/borrowed root.
   var out = Songbook.convertProgressionQualities(['C', 'G', 'Am', 'F'], 'Minor', 'C', 'Major');
-  assert.deepStrictEqual(out, ['Cm', 'Gm', 'Am', 'Fm']);
+  assert.deepStrictEqual(out, ['Cm', 'Gm', 'G#', 'Fm']);
+});
+test('degree-index mapping round-trips: converting back lands on the original chords', function () {
+  var out = Songbook.convertProgressionQualities(['Cm', 'Gm', 'G#', 'Fm'], 'Major', 'C', 'Minor');
+  assert.deepStrictEqual(out, ['C', 'G', 'Am', 'F']);
+});
+test('degree-index mapping: iii of C major (Em) lands on III of C minor (D#), not a stranded Em', function () {
+  var out = Songbook.convertProgressionQualities(['Em'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['D#']);
+});
+test('degree-index mapping: a root genuinely chromatic IN THE SOURCE mode still passes through unchanged (D3)', function () {
+  // Eb (offset 3) is not a Major-scale degree of C, so it is left alone on a
+  // Major -> Minor flip even though flat spellings otherwise normalize via rootPc.
+  var out = Songbook.convertProgressionQualities(['Eb'], 'Minor', 'C', 'Major');
+  assert.deepStrictEqual(out, ['Eb']);
 });
 test('borrowed/chromatic root (no degree at that offset in the target mode) is left unchanged', function () {
   var out = Songbook.convertProgressionQualities(['F#', 'G'], 'Major', 'C', 'Minor');
@@ -157,9 +179,17 @@ test('extension re-base: a dominant 7 landing on a minor degree becomes a minor 
   assert.deepStrictEqual(out, ['Gm7']);
 });
 test('extension re-base: any 7th-type extension landing on a dim degree collapses to the bare dim triad', function () {
-  // Bm7 -> C major: B (offset 11) is the vii° (dim) degree - the m7 extension
-  // never survives onto a dim degree (Bdim, not Bdim7/Bm7).
-  var out = Songbook.convertProgressionQualities(['Bm7'], 'Major', 'C', 'Minor');
+  // A#m7 -> C major, source Minor: A# (offset 10) is the VII degree of C minor
+  // (Minor.steps index 6, a major triad there) - degree-index mapping re-roots
+  // it to the SAME index of C major (offset 11 = B), which IS the vii° (dim)
+  // degree - the m7 extension never survives onto a dim degree (Bdim, not
+  // Bdim7/Bm7). Updated from a literal 'Bm7' input (PR #342): under the OLD
+  // offset-based membership check B (offset 11) happened to sit on Major's own
+  // vii° directly, but under degree-index mapping B is not itself a degree of
+  // the SOURCE (Minor) mode, so a literal 'Bm7' now passes through unchanged
+  // (D3) - this test instead exercises the dim-degree collapse rule with a
+  // root that IS diatonic in the source.
+  var out = Songbook.convertProgressionQualities(['A#m7'], 'Major', 'C', 'Minor');
   assert.deepStrictEqual(out, ['Bdim']);
 });
 test('defensive no-ops: empty chords, unknown target mode, and unresolvable tonic all degrade to unchanged input (never throw)', function () {
@@ -2975,6 +3005,268 @@ test('UAT r2: teaching cues are dismissible one-shot tips - a dismissal persists
   var t2 = songTrayNodes(m2);
   var tile2 = m2.elMap.buildGrid.children[0]; tile2.onclick(); // progression exists again
   assert.strictEqual(t2.tray.children[0].hidden, true, 'a dismissed cue never returns after reload');
+});
+
+/* =====================================================================
+ * S-DELCONFIRM-ARM (T2 songbook polish): retire the LAST native confirm()
+ * in songbook.js (the overflow Delete/Revert item, #delSongBtn) into the
+ * SAME arm-to-delete grammar already proven for the setlist Clear button
+ * (setClear, see the 'setClear wiring' test above) and the per-chord/
+ * section remove handles (M-13's 'arm-to-remove' test above): first tap
+ * arms (red + relabels "Tap again to..."), second tap performs the action.
+ *
+ * delSong lives inside renderPractice(), whose markup is built as an HTML
+ * STRING and injected via el.practiceBody.innerHTML - unlike el.prog/
+ * el.suggest/el.buildGrid (built via real document.createElement calls),
+ * a browser parses that string into real, queryable elements; this repo's
+ * dependency-free Node stub (makeStubEl, above) has no HTML parser, so
+ * el.practiceBody.querySelector('#delSongBtn') can't be driven live here.
+ * The structural assertions below are the same technique the setClear test
+ * above already uses for this exact problem shape: prove the WIRING (no
+ * native confirm, no raw onclick=, wireTapCancel) AND prove the CONTROL
+ * FLOW shape (the arm branch RETURNS before ever reaching deleteCustomItem
+ * - so a first tap structurally cannot delete; only a second tap, past
+ * that return, reaches it).
+ * ===================================================================== */
+// Matches an actual confirm( CALL, not the word appearing in a code comment
+// (this file is full of "replaces the old confirm()" / "confirm() dialog"
+// prose after the arm-to-delete migrations - mirrors the same real-call-vs-
+// mention discipline test/no-native-dialog-lint.test.js's realCallSites()
+// uses for this exact file). A real call always starts a real argument
+// (a quote, a variable, an object); a prose mention reads confirm() with
+// empty parens, or confirm() followed by a word - never confirm(<arg>.
+function realConfirmCallSites(src) {
+  var re = /confirm\(\s*[^)]/g;
+  var out = [];
+  var m;
+  while ((m = re.exec(src))) {
+    var lineNo = src.slice(0, m.index).split('\n').length;
+    var line = src.split('\n')[lineNo - 1].trim();
+    if (/^\/\//.test(line) || /^\*/.test(line)) continue; // prose comment line
+    out.push(line);
+  }
+  return out;
+}
+
+test('delSongBtn wiring: the LAST native confirm() in songbook.js is retired for arm-to-delete (S-DELCONFIRM-ARM)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.deepStrictEqual(realConfirmCallSites(src), [], 'no native confirm() CALL should remain anywhere in songbook.js (S-DELCONFIRM-ARM retired the last one)');
+  assert.ok(/wireTapCancel\(delSong,/.test(src), 'delSong must be wired via wireTapCancel(), not a raw onclick=');
+  assert.ok(!/\bdelSong\.onclick\s*=/.test(src), 'a raw delSong.onclick= would bypass the movement-cancel guard');
+  assert.ok(/delSong\.classList\.add\('armed'\)/.test(src), 'first tap must arm the item red (arm-to-delete)');
+  assert.ok(/delSong\.textContent = delArmLabel/.test(src), 'first tap must relabel the item ("Tap again to...") - a text menu item has no icon to carry the arm signal alone');
+});
+
+test('delSongBtn: first activation ARMS only (structurally cannot delete); second activation is the only path to deleteCustomItem', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var wired = src.match(/wireTapCancel\(delSong, function \(\) \{[\s\S]*?\n\s*\}\);/);
+  assert.ok(wired, 'expected to locate the delSong wireTapCancel(delSong, function () { ... }); callback body');
+  var body = wired[0];
+  var armGuardIdx = body.indexOf('if (!delArmed)');
+  var armIdx = body.indexOf('delArmed = true', armGuardIdx);
+  var armReturnIdx = body.indexOf('return;', armIdx);
+  var deleteIdx = body.indexOf('deleteCustomItem(s.id)');
+  var switchTabIdx = body.indexOf("switchTab('library')");
+  assert.ok(armGuardIdx >= 0, 'expected the "if (!delArmed)" first-activation guard');
+  assert.ok(armIdx > armGuardIdx, 'the guard must set delArmed = true on the first activation');
+  assert.ok(armReturnIdx > armIdx, 'the first-activation branch must return before falling through');
+  assert.ok(deleteIdx > armReturnIdx, 'deleteCustomItem must sit AFTER the first-activation return - unreachable on tap 1, only reachable on tap 2');
+  assert.ok(switchTabIdx > deleteIdx, "switchTab('library') must follow the delete, matching the pre-existing confirm()-gated effect");
+  // The delete branch must disarm before mutating (matches setClear's
+  // disarmSetClear(); ...mutate... ordering) so a stale armed class never
+  // survives past the action.
+  var disarmIdx = body.indexOf('disarmDel();');
+  assert.ok(disarmIdx > armReturnIdx && disarmIdx < deleteIdx, 'the second-activation branch must disarm before deleting');
+});
+
+/* =====================================================================
+ * S-SUGG-DIFFERENTIATE (T2 songbook polish): the theory-ranked "Suggested
+ * Chords" row (renderSuggest -> suggChip()) must read apart from the full
+ * browse palette (In key / All at chip-mode, chord-collapse.js's ccChip) -
+ * EMPHASIS + ORDER, never a new hue (songbook.css). Display only: this does
+ * not touch suggestNext/mergeSuggestionRow's ranking.
+ * Forces chip-mode via the music.chordCharts.v1='chips' explicit pref
+ * (chipsEffective()) rather than GuidanceLevel='advanced', so this suite
+ * doesn't need to load/mock guidance-level.js - chord-collapse.js's
+ * chipTile() is driven directly either way once required (see the require
+ * block at the top of this file).
+ * ===================================================================== */
+function mountForSuggDifferentiateTests() {
+  global.localStorage = lsReset.fakeStore({ 'music.chordCharts.v1': 'chips' });
+  var progEl = makeStubEl('div'), wrapper = makeStubEl('div');
+  wrapper.appendChild(progEl);
+  var elMap = {
+    prog: progEl, catChips: makeStubEl('div'), buildGrid: makeStubEl('div'),
+    cSave: makeStubEl('button'), composeChords: makeStubEl('div'), suggest: makeStubEl('div')
+  };
+  var ctrl = Songbook.mount({ storagePrefix: 'suggdifftest', el: elMap });
+  return { ctrl: ctrl, elMap: elMap, wrapper: wrapper };
+}
+// buildGrid() lands the browse palette in one of TWO places depending on
+// whether a key is already set at mount (In-key palette chips live inside
+// composeChords -> .inKeyLead -> .ccChips, an All-view browse renders
+// straight into #buildGrid) - search both roots recursively rather than
+// assuming which view is default, so this test doesn't depend on that
+// unrelated behavior.
+function collectByClass(roots, cls) {
+  var out = [];
+  roots.forEach(function (root) {
+    (function walk(n) {
+      (n.children || []).forEach(function (c) {
+        var list = (c.className || '').split(' ');
+        if (list.indexOf(cls) >= 0) out.push(c);
+        walk(c);
+      });
+    })(root);
+  });
+  return out;
+}
+
+test('S-SUGG-DIFFERENTIATE: the browse-palette chip (ccChip) does NOT carry the ranked-suggestion marker class', function () {
+  var m = mountForSuggDifferentiateTests();
+  var paletteChips = collectByClass([m.elMap.buildGrid, m.elMap.composeChords], 'ccChip');
+  assert.ok(paletteChips.length > 0, 'expected the browse palette to render at least one chip in chip-mode');
+  paletteChips.forEach(function (paletteChip) {
+    assert.ok(/\bsuggChip\b/.test(paletteChip.className), 'the browse palette reuses the shared suggChip primitive (chord-collapse.js)');
+    assert.ok(!/\bsugg-reco\b/.test(paletteChip.className), 'the browse palette chip must NOT carry the recommended-chip marker class');
+  });
+});
+
+test('S-SUGG-DIFFERENTIATE: ranked "Suggested Chords" chips carry sugg-reco (not ccChip), in the ranked order suggestNext/mergeSuggestionRow computed', function () {
+  var m = mountForSuggDifferentiateTests();
+  var paletteChip = collectByClass([m.elMap.buildGrid, m.elMap.composeChords], 'ccChip')[0];
+  assert.ok(paletteChip, 'expected at least one browse-palette chip to tap');
+  paletteChip.onclick(); // add + play a palette chord -> addChord -> renderProg -> renderSuggest
+  var suggRow = null;
+  m.elMap.suggest.children.forEach(function (c) { if (c.className === 'suggRow') suggRow = c; });
+  assert.ok(suggRow, 'expected the "Suggested Chords" row to render once a progression exists');
+  assert.ok(suggRow.children.length > 0, 'expected at least one ranked suggestion chip');
+  // Order: renderSuggest appends picks in the array order suggestNext/
+  // mergeSuggestionRow already ranked them - this test asserts the class
+  // marker on every chip in that DOM order (display only; ranking itself
+  // is sugg.test.js / the mergeSuggestionRow unit coverage's job, not this
+  // suite's - no ranking logic was touched).
+  suggRow.children.forEach(function (chip, i) {
+    assert.ok(/\bsuggChip\b/.test(chip.className), 'a ranked suggestion is still a suggChip');
+    assert.ok(/\bsugg-reco\b/.test(chip.className), 'every ranked suggestion chip must carry the sugg-reco marker class - chip #' + i);
+    assert.ok(!/\bccChip\b/.test(chip.className), 'a ranked suggestion chip must not carry the browse-palette ccChip class');
+  });
+});
+
+/* ---------- S-SETLIST-GESTURES (operator UAT 2026-09-03: "change drag to
+ * press and hold on song on setlist" + "change setlist delete to slide
+ * swipe... like outlook and Gmail mobile. both directions are delete") ----------
+ * wireSetlistDrag is closure-bound (no exported handle to fire a real
+ * PointerEvent through, same as wireSectionDrag before it - see the
+ * prog-reorder / song-builder-drag-reorder pw scenarios for the behavioral
+ * proof of that sibling feature). Source-pinned per the same convention this
+ * repo already uses for closure-bound gesture code: the CONTRACT points from
+ * the mission brief, each asserted against the real source text so a
+ * regression that quietly drops one fails here, not just on a phone. */
+test('S-SETLIST-GESTURES: the grip is fully retired - no consumer queries or renders .li-grip any more', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(!/li-grip/.test(src), 'songbook.js must not reference .li-grip - the row itself is the gesture surface now');
+});
+test('S-SETLIST-GESTURES: the row-level gesture never starts on a <button> (li-lead / the a11y up-dn-rm controls keep their own tap)', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n    \}/);
+  assert.ok(fn, 'expected a wireSetlistDrag(row, index) function');
+  assert.ok(/e\.target[\s\S]{0,40}closest[\s\S]{0,20}'button'[\s\S]{0,20}\) return;/.test(fn[0]),
+    'pointerdown must bail out early when the target is inside a <button>');
+});
+test('S-SETLIST-GESTURES: reorder keeps the SAME timing constants as wireSectionDrag (300ms touch hold, 6-8px slop), matched not reinvented', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/HOLD_MS = 300/.test(fn[0]), 'the touch long-press must stay 300ms (matches wireSectionDrag)');
+  assert.ok(/MOVE_CANCEL_PX = 8/.test(fn[0]), 'the touch pre-hold cancel threshold must stay 8px (matches the old grip/section-drag "moved > 8")');
+  assert.ok(/LIFT_SLOP_PX = 6/.test(fn[0]), 'the mouse lift slop must stay 6px (matches wireSectionDrag\'s "moved > 6")');
+});
+test('S-SETLIST-GESTURES: directional lock decides swipe vs a genuine scroll (touch) and swipe vs reorder (mouse) from |dx| vs |dy|, never movement alone', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  var lockCount = (fn[0].match(/Math\.abs\(dx\) > Math\.abs\(dy\)/g) || []).length;
+  assert.strictEqual(lockCount, 2, 'the |dx|>|dy| axis check must appear once for touch and once for mouse - one directional lock, two entry points');
+  // Vertical touch movement before the hold fires must cancel outright (never
+  // lift, never translate) - the design contract's "the row must never move" line.
+  assert.ok(/else \{ cleanup\(\); return; \}/.test(fn[0]), 'a vertical touch move before the hold fires must cancel, not swipe or reorder');
+});
+test('S-SETLIST-GESTURES: swipe-delete commits at >=25% of row width, through the SAME removeFromSet+undo entry point every other remove uses', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/SWIPE_COMMIT_FRAC = 0\.25/.test(fn[0]), 'the swipe-delete threshold must be 25% of row width');
+  assert.ok(/removeFromSet\(sid\)/.test(fn[0]), 'a committed swipe must call the SAME removeFromSet(sid) every .li-rm consumer uses - never a second remove path');
+  assert.ok(!/STATE\.setlist\.splice\(index, 1\)\[0\][\s\S]{0,80}removeFromSet/.test(fn[0]), 'the swipe path must not re-implement splice-based removal itself');
+});
+test('S-SETLIST-GESTURES: a swipe (either mode reached) always swallows the trailing click - tap-to-play never fires off a swipe release', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  var onUp = fn[0].match(/function onUp\(ev\) \{[\s\S]*?\n        \}/);
+  assert.ok(onUp, 'expected an onUp(ev) handler');
+  var swipeBranch = onUp[0].match(/\} else if \(mode === 'swipe'\) \{([\s\S]*?)\n          \}/);
+  assert.ok(swipeBranch, 'expected an else-if (mode === \'swipe\') branch in onUp');
+  assert.ok(/swallowClick\(\);/.test(swipeBranch[1]), 'the swipe branch of onUp must call swallowClick() unconditionally (commit or spring-back alike)');
+  assert.ok(!/if \(!?commit/.test(swipeBranch[1]), 'swallowClick must not be gated behind a commit check - both outcomes swallow the trailing click');
+});
+test('S-SETLIST-GESTURES: an interrupted gesture (pointercancel) never commits a delete', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/ev\.type !== 'pointercancel'/.test(fn[0]), 'the swipe commit decision must exclude pointercancel - a destructive action only fires from a deliberate release');
+});
+test('S-SETLIST-GESTURES: a lone song (setlist.length===1) still allows swipe-delete but never arms reorder', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var fn = src.match(/function wireSetlistDrag\(row, index\) \{[\s\S]*?\n      \}\);\n    \}/);
+  assert.ok(fn, 'expected the full wireSetlistDrag body');
+  assert.ok(/if \(isTouch && STATE\.setlist\.length >= 2\) holdTimer = setTimeout\(beginReorder, HOLD_MS\);/.test(fn[0]),
+    'the touch long-press timer must be gated on setlist.length >= 2 (a single-song set has nothing to reorder)');
+  assert.ok(/else if \(STATE\.setlist\.length >= 2\) beginReorder\(\);/.test(fn[0]),
+    'the mouse vertical-movement branch must gate reorder the same way');
+});
+
+/* ---- UAT batch 3 item 6: ONE tap-to-hear wiring for both chip sizes -------
+ * The small .chordChips row and the large sheet .chordOnly chips are the same
+ * control at two sizes. Before this, only the small row had a handler and it
+ * was written INLINE in renderPractice - so wiring the large chips meant
+ * copying the pointerdown-immediacy contract (S-CHORDCHIP-LAG) to a second
+ * site, where it would drift. These pin the extraction, not the copy.
+ * ----------------------------------------------------------------------- */
+test('chord taps go through ONE shared wiring, used by both the compact row and the sheet chips', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/function wireChordTaps\(root, selector\)/.test(src), 'the shared wiring exists as a named function');
+  assert.ok(/wireChordTaps\(el\.practiceBody, '\.chordChips \.c'\)/.test(src), 'the compact chip row is wired through it');
+  assert.ok(/wireChordTaps\(el\.practiceBody, '\.sheet \.chordOnly \.bar'\)/.test(src), 'the large sheet chips are wired through it too');
+  // The immediacy contract must live in exactly ONE place - a second copy is
+  // the drift this extraction exists to prevent.
+  assert.strictEqual((src.match(/packPlayChord\(elc\.dataset\.c\)/g) || []).length, 2,
+    'the two packPlayChord calls (pointerdown + click echo-guard) belong to the single shared wiring - a third or fourth means a handler was copied');
+});
+
+test('the pointerdown immediacy + echo guard survive the extraction', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var body = src.slice(src.indexOf('function wireChordTaps'), src.indexOf('function wireChordTaps') + 1400);
+  assert.ok(/addEventListener\('pointerdown'/.test(body), 'pointerdown is what beats the ~300ms mobile click delay (S-CHORDCHIP-LAG)');
+  assert.ok(/e\.button > 0 \|\| e\.isPrimary === false/.test(body), 'a right-click or a second multitouch finger must not sound a chord');
+  assert.ok(/Date\.now\(\) - lastPtr < 600/.test(body), 'the follow-up click for the same tap must not replay the chord');
+  assert.ok(/if \(!elc\.dataset\.c\) return;/.test(body), 'a chip with no canonical token has nothing to play - skip it rather than play undefined');
+});
+
+test('Stage chord chips are disabled, not silently inert - no lying affordance on the perform surface', function () {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  assert.ok(/function inertStageChords\(\)/.test(src), 'Stage neutralizes the shared renderer\'s buttons explicitly');
+  assert.ok(/b\.disabled = true;/.test(src), 'disabled is the honest signal: unclickable AND out of the tab order');
+  // The fit-to-width loop re-renders the sheet, so EVERY render site must
+  // re-apply it - one missed site ships tappable-looking dead buttons on stage.
+  assert.strictEqual((src.match(/inertStageChords\(\);/g) || []).length, 2,
+    'both pSheet.innerHTML render sites re-apply it (the fit loop replaces the DOM)');
+  // Count only the sites that render THROUGH renderSheet (the ones that can emit
+  // chips). The third pSheet.innerHTML site is the "No chord chart" empty state -
+  // it has no .bar to neutralize, so including it would make this tripwire lie.
+  assert.strictEqual((src.match(/pSheet\.innerHTML = '<div class="pInner">' \+ renderSheet/g) || []).length, 2,
+    'if a third renderSheet-backed stage render site appears, it needs the same call - this count is the tripwire');
 });
 
 run();

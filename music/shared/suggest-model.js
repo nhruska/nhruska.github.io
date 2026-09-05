@@ -115,24 +115,40 @@
     return suggestions;
   }
   // MODAL INTERCHANGE core - shared so BOTH the explicit-key path (mount()'s
-  // convertToMode) and the keyless mode-change
-  // handler share ONE mapping. PURE: no songKey mutation, no DOM - maps each chord's
-  // ROOT against `targetMode`'s steps (offset from tonicRoot) to find its scale degree,
-  // then re-qualifies to that degree's quality, re-basing any 7th-type extension that
-  // survives the quality flip (major degree keeps maj7-ness, else collapses to a
-  // dominant/minor 7; a dim degree keeps the bare dim triad). A chord whose root is NOT
-  // a degree of the target mode (chromatic/borrowed) is left UNCHANGED (best-effort
-  // rule, decision D3) - round-trip is not perfect for those chords (accepted).
-  // `sourceMode` feeds the W2 blues-aware rules below (Major/Minor/Mixo/Dorian <->
-  // Blues): converting INTO Blues collapses any palette-degree root to a dominant
-  // 7th (baseQual === '7', regardless of the original extension); converting OUT
-  // OF Blues (fromBlues guard) only re-qualifies a chord whose root sits on the
-  // BLUES PALETTE (offsets 0/5/7 from tonicRoot - NOT "any target-mode
-  // degree") - anything else (a user-added secondary like A7 over a
-  // C blues) is left unchanged, and a bare dominant
-  // 7th surviving from a palette root is treated as a plain triad before target
-  // re-qualification (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7
-  // keeps its own extension-class survival (not stripped).
+  // convertToMode) and the keyless mode-change handler share ONE mapping. PURE:
+  // no songKey mutation, no DOM. For a 7-step <-> 7-step interchange (Major /
+  // Minor / Mixolydian / Dorian, either direction) each chord is mapped by its
+  // SOURCE-mode scale-DEGREE INDEX, not by literal pitch offset: find the
+  // chord root's degree index in `sourceMode`'s steps, then re-root it to the
+  // SAME index of `targetMode`'s steps and re-qualify to that degree's
+  // quality (F-MODEFLIP-DEGREES, PR #342 - operator UAT). Before this fix, a
+  // chord was re-qualified by looking its OFFSET up directly in the TARGET
+  // mode's steps, which left a chord whose pitch legitimately MOVES between
+  // modes (e.g. the vi of C major, offset 9) stranded on its old pitch - C
+  // major's I-V-vi-IV (C G Am F) flipped to minor used to read Cm Gm Am Fm
+  // (Am untouched) instead of the correct i-v-VI-iv (Cm Gm G# Fm). A 7th-type
+  // extension still re-bases onto the quality flip the same as before (major
+  // degree keeps maj7-ness, else collapses to a dominant/minor 7; a dim degree
+  // keeps the bare dim triad). A chord root that is genuinely NOT a degree of
+  // the SOURCE mode (chromatic/borrowed there) is left UNCHANGED (decision D3,
+  // narrowed to source-chromaticity only) - round-trip is not perfect for
+  // those chords (accepted).
+  // `sourceMode` also feeds the W2 blues-aware rules below (Major/Minor/Mixo/
+  // Dorian <-> Blues, either side): these keep the PRIOR offset-based logic
+  // byte-for-byte (the blues palette's I/IV/V sit at the same absolute
+  // offsets - 0/5/7 - in every diatonic mode, so no degree remap is needed,
+  // and Blues' own 3-entry palette has no meaningful degree INDEX to map by
+  // anyway). Converting INTO Blues collapses any palette-degree root to a
+  // dominant 7th (baseQual === '7', regardless of the original extension);
+  // converting OUT OF Blues (fromBlues guard) only re-qualifies a chord whose
+  // root sits on the BLUES PALETTE (offsets 0/5/7 from tonicRoot - NOT "any
+  // target-mode degree") - anything else (a user-added secondary like A7 over
+  // a C blues) is left unchanged, and a bare dominant 7th surviving from a
+  // palette root is treated as a plain triad before target re-qualification
+  // (C7 -> C in Major, -> Cm in Minor); a surviving m7/maj7 keeps its own
+  // extension-class survival (not stripped). An unresolvable/absent
+  // `sourceMode` (not one of the four 7-step modes) also falls back to this
+  // root-frozen legacy path - there is nothing to index against.
   function convertProgressionQualities(chords, targetMode, tonicRoot, sourceMode) {
     // Canonicalize targetMode the SAME way sourceMode already is below (canonMode) -
     // callers outside the in-app UI (saved/custom items, the bridge payload) carry
@@ -145,6 +161,14 @@
     if (tonicPc == null) return chords.slice();
     var steps = m.steps, quals = m.quals;
     var fromBlues = canonMode(sourceMode) === 'Blues';
+    // DEGREE-INDEX MAP: only when BOTH sides are 7-step diatonic modes (Major/
+    // Minor/Mixolydian/Dorian) - see the header comment above. `sm` resolves the
+    // SOURCE mode the same way `m` resolved the target; Blues on either side, or
+    // an unresolvable sourceMode, leaves this null and the loop below falls back
+    // to the prior root-frozen, target-offset-membership logic untouched.
+    var sm = MODES[canonMode(sourceMode)];
+    var srcSteps = (!fromBlues && tm !== 'Blues' && sm && sm.steps.length === 7 && steps.length === 7)
+      ? sm.steps : null;
     return chords.map(function (c) {
       var p = splitChord(c);
       if (!p) return c;
@@ -157,8 +181,21 @@
       // any degree the TARGET mode happens to have there. A user-added secondary
       // (A7 over a C blues) is not palette material; leave it fully unchanged.
       if (fromBlues && offset !== 0 && offset !== 5 && offset !== 7) return c;
-      var i = steps.indexOf(offset);
-      if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
+      var i, newRootPc;
+      if (srcSteps) {
+        // Degree-index path: find the root's degree in the SOURCE mode, then
+        // re-root to the SAME degree of the target mode (the pitch can move).
+        i = srcSteps.indexOf(offset);
+        if (i < 0) return c; // chromatic in the SOURCE mode -> leave it (D3)
+        newRootPc = (tonicPc + steps[i]) % 12;
+      } else {
+        // Legacy path (Blues involved, or an unresolvable sourceMode): root
+        // stays frozen, membership is checked against the TARGET mode's steps,
+        // exactly as before this fix.
+        i = steps.indexOf(offset);
+        if (i < 0) return c; // chromatic root with no degree at this offset -> leave it
+        newRootPc = rpc;
+      }
       var baseQual = quals[i]; // "" major triad, "m" minor, "dim" diminished, "7" blues dominant
       // Detect a trailing 7th-type extension on the ORIGINAL chord ("7","maj7","m7").
       var ext = "";
@@ -187,7 +224,11 @@
         // (the usual major-degree 7th in these jam styles).
         suffix = (ext === "maj7-like") ? "maj7" : "7";
       }
-      return p.root + suffix;
+      // Degree-index path re-roots to a canonical-sharp name (the pitch may have
+      // moved, e.g. C's vi -> Ab/G#; chord tokens stay canonical-sharp per repo
+      // law - only display respells). Legacy/root-frozen path preserves the
+      // ORIGINAL root spelling exactly as before this fix (byte-identical).
+      return (srcSteps ? ROOTS[newRootPc] : p.root) + suffix;
     });
   }
   // The canon — famous progressions, by 0-indexed major-scale degree. All diatonic

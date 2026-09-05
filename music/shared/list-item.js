@@ -185,8 +185,17 @@
     var kl = keyLabel(item);
     var cells = metaCells(item);
 
+    // S-SETLIST-GESTURES (operator UAT 2026-09-03): a set row is the ROW-
+    // GESTURE surface - press-and-hold anywhere on it lifts to reorder, a
+    // horizontal swipe (either direction) reveals delete (wireSetlistDrag,
+    // songbook.js). `.swipeable` wraps the row's real look in `.li-inner`
+    // (songbook.css) so that wrapper - not the outer `.listItem` - is what
+    // translates during a swipe, leaving the danger underlay (`.li-swipe-bg`)
+    // fixed in place to be revealed as content slides off it.
+    var swipeable = seg === 'set';
+
     var root = (global.document).createElement('div');
-    root.className = 'listItem' + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '')
+    root.className = 'listItem' + (swipeable ? ' swipeable' : '') + (opts.inSet ? ' inSet' : '') + (item.custom ? ' isMine' : '')
       // PLAYER-FEEL initial state; live updates arrive as a class sweep from the
       // caller's music:nowplaying listener (songbook.js refreshNowPlaying).
       + (opts.nowPlaying ? ' isPlaying' : '') + (opts.nowPlaying && opts.nowPaused ? ' isPaused' : '');
@@ -234,19 +243,27 @@
     // lives in the leading chip now; `act` still names whether the row is
     // playable (the callers key body-tap behavior off the same predicate).
 
-    // Trailing affordances. A set row is ALWAYS reorderable + removable now
-    // (operator UAT: no Edit round-trip, drag anytime). Reorder is a dedicated
-    // grip (drag from the grip; a body tap still plays - the grip carries no tap
-    // action, so it never opens the song). Remove is the arm-to-delete handle -
-    // its red-arm IS the mis-tap guard, so both can live on the resting rail
-    // without the old one-thumb-minefield risk. The up/dn arrows retired: drag
-    // replaces them. Round 5: the grip STACKS UNDER the position chip in a
-    // narrow left rail (operator: "reorg the drag icon below the track
-    // number") so the horizontal budget goes to the title; only the arm-red x
-    // stays trailing.
+    // Trailing affordances. A set row is ALWAYS reorderable + removable, now
+    // via ROW GESTURES (S-SETLIST-GESTURES, operator UAT 2026-09-03):
+    // press-and-hold the row to reorder, swipe either direction to delete -
+    // no dedicated grip or two-tap arm-x sits on the resting rail any more.
+    // Gestures alone fail WCAG 2.5.1 (no pointer-gesture-only interaction
+    // without a single-pointer/keyboard equivalent) - a11y-coach + ux-coach
+    // consulted (SME dynamic summoning): the up/dn/remove controls STILL
+    // render (same handlers as before - onUp/onDn swap adjacent setlist
+    // entries, onRemove routes through the SAME arm-then-confirm removeFromSet
+    // + undo path every other .li-rm uses), just visually quiet at rest
+    // (.li-a11yctrl, songbook.css - the "skip link" reveal-on-focus pattern:
+    // present in the tab order and the SR tree always, invisible to a sighted
+    // pointer user who never needs them because they have the gesture).
     var ctrl = '';
     if (seg === 'set') {
-      ctrl = btn('li-rm', '&#215;', 'rm', ' title="Remove from set"');
+      ctrl = btn('li-up li-a11yctrl', '&#9650;', 'up',
+          ' title="Move up in setlist" aria-label="Move ' + esc(item.title) + ' up in setlist"' + (opts.first ? ' disabled' : ''))
+        + btn('li-dn li-a11yctrl', '&#9660;', 'dn',
+          ' title="Move down in setlist" aria-label="Move ' + esc(item.title) + ' down in setlist"' + (opts.last ? ' disabled' : ''))
+        + btn('li-rm li-a11yctrl', '&#215;', 'rm',
+          ' title="Remove from set" aria-label="Remove ' + esc(item.title) + ' from set"');
     } else if (seg !== 'set' && opts.onAdd) {
       ctrl = btn('li-add', opts.inSet ? '&#10003;' : '+', 'add', opts.inSet ? ' title="In set"' : ' title="Add to set"');
     } else if (seg !== 'set' && opts.addBlockedReason) {
@@ -259,16 +276,12 @@
     }
     var editBtn = opts.onEdit ? btn('li-edit', '&#9998;', 'edit', ' title="Edit details"') : '';
 
-    // Set rows lead with a RAIL (position chip stacked over the drag grip -
-    // one narrow column); library rows keep the bare chip. The grip is
-    // drag-only, full rail width, and grows with the row (flex-fill in CSS).
-    var lead = (seg === 'set')
-      ? '<div class="li-rail">' + num
-        + '<button class="li-grip" type="button" aria-label="Drag to reorder" title="Drag to reorder">&#8942;&#8942;</button>'
-        + '</div>'
-      : num;
+    // The grip retired with S-SETLIST-GESTURES - the row itself lifts now, so
+    // every segment (set included) leads with the bare chip and reclaims the
+    // column the old rail spent on the grip.
+    var lead = num;
 
-    root.innerHTML = lead
+    var innerHtml = lead
       + '<div class="li-body">'
       + '<div class="li-row1"><span class="li-title">' + esc(item.title) + '</span>'
       + '<span class="li-tags">' + capoHtml + tagHtml + '</span>'
@@ -278,6 +291,19 @@
       + '<div class="li-meta">' + metaHtml + '</div>'
       + '</div>'
       + editBtn + ctrl;
+
+    // Swipeable rows wrap the real content in `.li-inner` (the part that
+    // translates - songbook.css) over a `.li-swipe-bg` danger underlay that
+    // stays put, revealed as `.li-inner` slides off it. Both delete glyphs
+    // are always in the DOM; only the one on the uncovered side is visible
+    // at any given drag position (plain z-order, no per-frame JS needed).
+    root.innerHTML = swipeable
+      ? '<div class="li-swipe-bg" aria-hidden="true">'
+        + '<span class="li-swipe-ico li-swipe-ico-l">&#215;</span>'
+        + '<span class="li-swipe-ico li-swipe-ico-r">&#215;</span>'
+        + '</div>'
+        + '<div class="li-inner">' + innerHtml + '</div>'
+      : innerHtml;
 
     // Movement-cancelled taps everywhere (scroll-grab safety). Buttons live outside
     // .li-body so they don't bubble to the body activate.

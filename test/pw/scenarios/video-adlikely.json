@@ -1,0 +1,108 @@
+{
+  "name": "video-adlikely",
+  "note": "EXPECTED RED pending an operator call (S-FIRSTSESSION-TAP-BLOCKED, 2026-09-03). This scenario's first assert pins 'a fresh device shows the video VISIBLE on a MINI player' as `vidopen` - the THEATER card. That card is position:fixed at top:58, 245px tall, z-96: placement sized for an OPEN sheet. On a mini player it pinned an iframe over the top ~300px of EVERY tab, so after any row-tap play the library, Compose and Tune silently ate taps there (measured: elementFromPoint over a Compose progression pick returned IFRAME). tracks.js now demotes a theater to the PIP dock when the player minimizes - which is what setVid's own stash comment always said minimize does, and the only resolution that keeps the video visible AND skippable AND off the page. The asserts here were NOT bent to agree: re-authoring this choreography changes a contract the operator owns, so it waits for his call. If he prefers the theater to stay, revert the one _setVid('pip', true) line in minimizeStudio and this goes green again. --- ROUND 17 (operator UAT 2026-09-02, verbatim: \"can we detect not playing anything -> playing (first load or idle time) and show the yt video - most likely to have ads. not between every song tho\"). A YouTube pre-roll fires when a listening SESSION starts - a fresh embed after the app loads or after a real gap - not on each queue advance. So an AD-LIKELY open (nothing was playing AND first-play-this-load, or the last stop was over VID_IDLE_MS ago) SHOWS the video, and every other open CARRIES the state the user left it in. Round 16 still stands underneath: the app never HIDES the video on its own, and an explicit park is remembered (music.vidPref.v1, additive). Red-first: against the pre-round-16 build step 3 fails (every open was hardcoded setVid('hid')); the mid-session carry asserts are what round 17 adds on top.",
+  "url": "/music/play/",
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=library]"
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "evalAssert",
+      "label": "FRESH DEVICE (no stored preference) -> the video opens VISIBLE, so the ad Skip surface is already on screen",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&!p.classList.contains('vidhid');})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "and nothing has been written to the preference yet - restoring a default must not masquerade as a user choice",
+      "js": "(function(){return localStorage.getItem('music.vidPref.v1')===null;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "PARKING IS A USER ACT -> it is remembered ('hid'), and the player wears the parked class",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&localStorage.getItem('music.vidPref.v1')==='hid';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player .bt-st-minix"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "evalAssert",
+      "label": "THE NEXT OPEN HONORS IT - parked stays parked with no re-tap (round 15's quiet state, now owned by the user instead of hardcoded)",
+      "js": "(function(){var p=document.querySelector('.bt-player');var m=document.querySelector('.bt-st-media');return p.classList.contains('vidhid')&&!p.classList.contains('vidopen')&&!!m&&m.classList.contains('hid');})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "SHOWING IT AGAIN IS ALSO REMEMBERED - the preference flips back to theater, so the pendulum swings both ways",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&localStorage.getItem('music.vidPref.v1')==='theater';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "park it again mid-session (a user act, so it is remembered)",
+      "js": "(function(){return document.querySelector('.bt-player').classList.contains('vidhid')&&localStorage.getItem('music.vidPref.v1')==='hid';})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player [data-npnext]"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "ROUND 17 - QUEUE ADVANCE WHILE PLAYING IS MID-SESSION: the next song CARRIES the parked state - the video must not jump up between songs (ads are unlikely here, and a jumping video is the friction this rule exists to avoid)",
+      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&!p.classList.contains('vidopen');})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "remembered-visible"
+    }
+  ]
+}

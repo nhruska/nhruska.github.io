@@ -68,7 +68,7 @@ var ukePack = CPA.buildAdapter(UKE);
 /* ---------- extraction/wiring guard: the module is actually wired up ---------- */
 test('play/index.html still script-tags chord-pack-adapter.js and calls its buildAdapter', function () {
   var html = fs.readFileSync(path.join(__dirname, '..', 'music', 'play', 'index.html'), 'utf8');
-  assert.ok(/<script src="\.\.\/shared\/chord-pack-adapter\.js"><\/script>/.test(html),
+  assert.ok(/<script src="\.\.\/shared\/chord-pack-adapter\.js(?:\?v=[^"]*)?"><\/script>/.test(html),
     'play/index.html no longer <script>-tags shared/chord-pack-adapter.js');
   assert.ok(/window\.ChordPackAdapter\.buildAdapter\(profile\)/.test(html),
     'play/index.html no longer calls window.ChordPackAdapter.buildAdapter(profile)');

@@ -27,6 +27,14 @@
 .rf-seq{resize:vertical;min-height:44px;font-family:'Space Mono',monospace;}
 .rf-actions{display:flex;gap:10px;margin-top:18px;}
 .rf-actions .btn{flex:1;}
+/* Arm-to-delete: first tap fills solid danger red (mirrors list-item.js
+ * .li-rm.armed / .prog .rm.armed), held for the DEL_ARM_MS auto-disarm
+ * window; second tap on the SAME armed button performs the delete. Applies
+ * to both the plain Delete (.btn.danger) and the fork Revert (.btn.ghost)
+ * buttons - the softer ghost rest style is deliberate (see repertoire-
+ * form.js), but once armed the next tap is the same irreversible action
+ * either way, so it shares the one danger-red armed signal. */
+.rf-actions [data-delete].armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
 /* YouTube-prefill suggest row: same visual bucket as .rf-note
  * (bg-2/line/radius 8), extended with an Apply/Dismiss action row. */
 .rf-yt-suggest{font-size:.8rem;color:var(--txt-dim);background:var(--bg-2);border:1px solid var(--line);

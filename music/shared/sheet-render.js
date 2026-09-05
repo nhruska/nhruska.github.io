@@ -151,7 +151,16 @@
       if (sect && sect !== last) { out.push('<div class="sect">' + escHTML(sect) + '</div>'); last = sect; }
       var re = /\[([^\]]+)\]/g, m, cs = [];
       while ((m = re.exec(line))) cs.push(tpose(m[1], st));
-      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) { return '<span class="bar">' + escHTML(map ? map(c) : c) + '</span>'; }).join(' ') + '</div>');
+      // UAT batch 3 item 6 ("large chord chips on song details view - make them
+      // clickable like all others"): a real <button> carrying the CANONICAL,
+      // already-transposed token in data-c, labelled with the key-aware display
+      // name - the exact contract .chordChips .c uses, so one delegated wiring
+      // (wireChordTaps in songbook.js) serves both chip sizes. <button> also buys
+      // native keyboard focus + Enter/Space with no extra keydown handler.
+      if (cs.length) out.push('<div class="chordOnly">' + cs.map(function (c) {
+        var lbl = escHTML(map ? map(c) : c);
+        return '<button type="button" class="bar" data-c="' + escHTML(c) + '" aria-label="Play ' + lbl + '">' + lbl + '</button>';
+      }).join(' ') + '</div>');
     });
     return out.join('');
   }

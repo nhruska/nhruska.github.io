@@ -348,12 +348,12 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    tappable target (explains via toast). */
 .listItem .li-add.ghost{border-style:dashed;color:var(--txt-dim);opacity:.6;}
 .listItem.inSet .li-add{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
-/* Edit-mode reorder/remove targets - only rendered in edit-set mode, so they no
- * longer sit always-hot on the scroll rail. NOTE: li-up/li-dn are 40x32, below
- * the 44px floor; growing them would grow .li-ctrl's stacked height past
- * li-body's content height and shift the row, so they stay at 40x32 (tracked as
- * a known gap). */
-.listItem .li-ctrl{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+/* li-up/li-dn: the setlist reorder a11y fallback (S-SETLIST-GESTURES, below -
+ * .li-a11yctrl keeps them out of the sighted-pointer view since press-and-hold
+ * covers that case). .li-ctrl (the old edit-mode stacked-column wrapper) is
+ * unused now - these render as flat siblings. NOTE: 40x32, below the 44px
+ * floor - a pre-existing gap this mission did not introduce or grow (tracked
+ * separately; the buttons are keyboard-reachable, not a new tap surface). */
 .listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
@@ -366,25 +366,56 @@ body.studioopen .tabbar{position:relative;z-index:55;}
  * at rest, red only when ARMED by a first tap (1.6s auto-disarm, gate lives in
  * list-item.js), second tap removes. Red on an inline handle reads as
  * already-armed, so red-at-rest belongs only to labeled destructive BUTTONS
- * (.btn.danger), never an inline handle at rest. */
+ * (.btn.danger), never an inline handle at rest. S-SETLIST-GESTURES layers
+ * .li-a11yctrl on TOP of this (below) - the arm grammar is unchanged, only
+ * reachable by keyboard/SR now that the swipe covers the pointer case. */
 .listItem .li-rm.armed{background:var(--bad);border-color:var(--bad);color:var(--on-danger);}
-/* Set-row left RAIL (round 5, operator: "reorg the drag icon below the track
-   number"): the position chip stacks OVER the drag grip in one narrow column,
-   so the row spends ONE 44px-wide slot on the left instead of chip left +
-   grip right - the freed width goes to the title. */
-.listItem .li-rail{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;align-self:stretch;}
-.listItem .li-rail .li-lead{align-self:stretch;}
-/* Drag-to-reorder grip (set rows). Drag-only handle: touch-action:none so the
-   browser doesn't claim the touch for scrolling, letting the pointer-drag lift.
-   The two vertical-ellipsis glyphs tuck together into a 6-dot grip. In the
-   rail it FILLS the remaining row height (flex:1) - a taller row buys a
-   bigger drag target; min-height 36 is the floor a drag handle (press-and-
-   hold, more forgiving than a tap) can live with, full 44 width kept. */
-.listItem .li-grip{flex:1 1 auto;border:0;background:transparent;color:var(--txt-dim);font-size:1rem;letter-spacing:-4px;
-  cursor:grab;min-width:44px;min-height:36px;display:flex;align-items:center;justify-content:center;
-  touch-action:none;-webkit-user-select:none;user-select:none;}
-.listItem .li-grip:active{cursor:grabbing;color:var(--txt-soft);}
 .listItem .li-edit{flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--txt-dim);border-radius:8px;cursor:pointer;font-size:.95rem;align-self:center;}
+/* S-SETLIST-GESTURES a11y fallback (WCAG 2.5.1 - a pointer-gesture-only
+ * action needs a non-gesture equivalent): li-up/li-dn/li-rm stay in the DOM,
+ * the tab order, and the SR tree for every set row, but are visually
+ * QUIET at rest - the same "skip link" reveal-on-focus trick as a page's
+ * accessible skip-nav link. A sighted mouse/touch user, who has the gesture,
+ * never sees them; Tab (or a screen reader's own navigation, which does not
+ * care about the visual state) reaches them exactly as before. */
+/* min-width/min-height:0 is load-bearing, not decoration: .li-rm's OWN rule
+ * sets min-width/min-height:44px for its normal tap-target floor, and
+ * min-* always wins over a SMALLER width/height regardless of which rule
+ * the cascade picks for that property - without the override here the box
+ * still rendered (and painted) at 44x44 through the clip, peeking out from
+ * under .li-inner's edge (caught by the setlist-gestures pw scenario). */
+.listItem .li-a11yctrl{position:absolute;width:1px;height:1px;min-width:0;min-height:0;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+/* On focus: restore each control's OWN real size (not a shared guess). CSS
+ * `revert` looks like the right tool here but is NOT - it skips every other
+ * AUTHOR rule (li-up/li-dn's 40x32, li-rm's 44px floor) straight to the
+ * user-agent default, landing on the button's bare shrink-to-fit content
+ * width (~13px, caught by the setlist-gestures pw scenario) instead of
+ * either control's real size. Naming each size explicitly is the fix. */
+.listItem .li-up.li-a11yctrl:focus,.listItem .li-dn.li-a11yctrl:focus{position:static;width:40px;height:32px;min-width:0;min-height:0;margin:0;overflow:visible;clip:auto;white-space:normal;}
+.listItem .li-rm.li-a11yctrl:focus{position:static;width:auto;height:auto;min-width:44px;min-height:44px;margin:0;overflow:visible;clip:auto;white-space:normal;}
+/* S-SETLIST-GESTURES swipe shell (operator UAT 2026-09-03, "like outlook and
+ * Gmail mobile"): .li-inner carries the row's real look (background/border/
+ * padding, moved down from .listItem) and is the piece that TRANSLATES; the
+ * now-transparent .listItem is just its positioning frame, so .li-swipe-bg
+ * (a same-size danger underlay, painted first = behind in DOM order) stays
+ * fixed and is revealed as .li-inner slides off it - the underlay is never
+ * itself part of the moving layer. touch-action:pan-y lets the browser keep
+ * native (fast, uncontested) vertical list-scrolling; only X-axis pointer
+ * movement is left for wireSetlistDrag's own directional lock to claim. */
+.listItem.swipeable{background:transparent;border:0;padding:0;overflow:hidden;}
+/* flex:1 1 auto is load-bearing: .li-inner is the outer .listItem's (still
+ * display:flex, row axis) ONE in-flow flex item - without an explicit grow
+ * it hugs its own content width instead of filling the row, leaving the
+ * .li-swipe-bg underlay peeking out along the trailing edge even at rest
+ * (caught by the setlist-gestures pw scenario's own screenshots). */
+.listItem.swipeable .li-inner{display:flex;flex:1 1 auto;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:inherit;padding:13px 14px;position:relative;touch-action:pan-y;transform:translateX(var(--swipe-x,0px));}
+.listItem.swipeable.swipe-anim .li-inner{transition:transform .18s ease-out;}
+/* .listItem.dragging{opacity:.45} (above) still fades a lifted set row whole
+ * - opacity on the (transparent) shell composites its children too, so the
+ * reorder-lift fade needs no swipeable-specific override. */
+.listItem .li-swipe-bg{position:absolute;inset:0;border-radius:var(--r-card);background:var(--bad);display:flex;align-items:center;justify-content:space-between;padding:0 22px;}
+.listItem .li-swipe-ico{font-size:1.3rem;font-weight:700;color:var(--on-danger);opacity:.55;transform:scale(.85);transition:opacity .12s,transform .12s;}
+.listItem.swipeable.swipe-commit .li-swipe-ico{opacity:1;transform:scale(1.05);}
 /* Timed toast+action undo banner - shared skin for the setlist item-remove undo
  * (showSetUndoBanner) and the Library delete-undo (showDeleteUndoBanner), both
  * toggled via the DOM hidden attribute from JS. */
@@ -412,8 +443,6 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    bare neutral arrow was too weak). Resolution: arrow glyph, accent-FILLED so it
    reads as the likeliest next tap without stealing title width. flex:0 0 auto so
    it holds its 44px and the title (min-width:0) keeps the rest. */
-.detailHead .backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
-.detailHead .backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .detailHead .ti{flex:1;min-width:0;}
 /* Title sized to breathe next to the arrow-only Back + the two header buttons
    (1.42->1.24rem), AND clamped to 2 lines with an ellipsis (operator UAT: even
@@ -440,6 +469,10 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    apart from the neutral navigation items. */
 .moreItemDanger{color:var(--bad);}
 .moreItemDanger:active{background:var(--bad);color:var(--on-danger);}
+/* Arm-to-delete (S-DELCONFIRM-ARM): first tap fills solid red, matching
+   li-rm.armed / setDelete.armed - the same "armed" signal wherever a delete
+   lives. No native confirm popup; a second tap while armed performs the action. */
+.moreItemDanger.armed{background:var(--bad);color:var(--on-danger);}
 /* Key-actions row (Full screen + Solo) kept VISIBLE under the view toggle
    (operator UAT: these are primary, not overflow). Full-width split so both are
    easy thumb targets. */
@@ -452,6 +485,15 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .iconBtn{width:44px;height:44px;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:var(--r-btn-sm);cursor:pointer;font-size:1.25rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);flex:0 0 auto;transition:transform .08s,background .15s,color .15s,border-color .15s;}
 .iconBtn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 .iconBtn.setBtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* BACK - the app-wide leave-this-screen primitive (UAT batch 3 item 4: "same
+   back button SSOT behavior and location"). It is NOT scoped to .detailHead any
+   more: the song view (#backLib) and the Practice Studio's sheet topbar
+   (.bt-st-back) compose the SAME class, so the arrow that leaves a screen wears
+   one look everywhere - accent-filled, top-left, 44px. Declared AFTER .iconBtn
+   and at .iconBtn.backArrowBtn specificity so the accent fill wins over the base
+   surface-2 fill regardless of which stylesheet loads later. */
+.iconBtn.backArrowBtn{background:var(--accent-deep);border-color:var(--accent-dim);color:var(--accent-ink);font-size:1.4rem;font-weight:800;}
+.iconBtn.backArrowBtn:active{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
 /* The scale-audition play/stop toggle - ONE primitive, composed by both the
    Studio scale panel (tracks.js) and the Compose key preview (songbook.js).
    Base = .iconBtn (44x44 icon button); the sticky on/playing state reuses the
@@ -510,11 +552,9 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .songsSeg button.on .segCount{background:var(--on-accent);color:var(--accent-ink);}
 .segCount[hidden]{display:none;}
 /* An in-setlist row renders its set affordances in the ALL view too - that is
-   how membership stays visible without switching. But NOT the reorder grip:
-   the All list is searched and sorted, so a drag there would reorder against
-   an order that is not on screen. Reorder belongs where the order IS the
-   content. Position + remove stay; the grip is suppressed here only. */
-#songsList .li-grip{display:none;}
+   how membership stays visible without switching. Reorder still belongs only
+   where the order IS the content (segment:'library' here never renders the
+   .swipeable row-gesture shell - list-item.js gates it on segment:'set'). */
 /* ---- collapsed search+filter control (operator UAT 2026-07-26) -----------
  * The search row and two chip strips cost 177px of a 915px screen. They
  * collapse into ONE 44px bar; the bar REPORTS the active search/filter, so
@@ -607,7 +647,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .chordOnly{font-size:1.28rem;font-weight:700;line-height:1.75;}
 /* Compact bordered chord tile (--r-btn-sm), same bucket as .chordChips .c;
    .campfireSheet .chordOnly .bar inherits this radius (no override of its own). */
-.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);}
+.chordOnly .bar{display:inline-block;border:1px solid var(--line-strong);border-radius:var(--r-btn-sm);padding:6px 11px;margin:3px;background:var(--surface-2);color:var(--accent-ink);
+  font:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s,color .15s;}
+/* Same press feedback as .chordChips .c - one tap-to-hear grammar for every
+   chord chip in the app (UAT batch 3 item 6). */
+.chordOnly .bar:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 /* A full-width action button in the song-view .actions row (e.g. "Delete
    progression") composes .btn with .full instead of an inline flex-basis hack. */
@@ -1070,16 +1114,30 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .suggChip .scName{font-family:'Space Mono',monospace;font-weight:700;font-size:.92rem;color:var(--accent-ink);}
 .suggChip .scRn{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:var(--txt-dim);letter-spacing:.04em;}
 .suggChip.complete{border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent),0 4px 12px rgba(94,234,212,.18);}
+/* S-SUGG-DIFFERENTIATE: the ranked "Suggested Chords" row carries a small
+   recommended-marker dot (top-right) so the recommendation reads apart from
+   the browse palette by SHAPE too, not color alone - a shape-blind reader
+   still sees it. .complete (above) already wins visually when both apply. */
+.suggChip.sugg-reco{position:relative;}
+.suggChip.sugg-reco::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.suggChip.sugg-reco.complete::after{background:var(--accent-ink);}
 /* Advanced guidance level: the Compose palettes render the SAME suggChip token in
    a dense auto-fill grid (.ccChips = the in-key lead's wrapper; .chordGrid.ccMode
    = #buildGrid re-tracked while chips are on). width:100% + min-width:0 mirrors
    the .prog fill-row/grid6 carve-out so chips fill their track instead of
    centering at 58px. The 56px track floor keeps ~6 columns at a 412px viewport.
-   min-height comes from .suggChip (48px >= the 44px tap floor). */
-.ccChips{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;touch-action:pan-y;}
-.chordGrid.ccMode{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));}
+   min-height comes from .suggChip (48px >= the 44px tap floor).
+   S-SUGG-DIFFERENTIATE: this is the browse palette (chord-collapse.js's
+   .ccChip), so it stays QUIET/neutral instead of sharing the ranked row's
+   accent-deep/accent-ink tint - the recommended chips (sugg-reco, above) are
+   the only ones that read "recommended". Active state still flashes toward
+   accent-ink (matches .progPick's tap feedback) so a tap here still confirms. */
 .ccChips .suggChip,
-.chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;}
+.chordGrid.ccMode .suggChip{width:100%;min-width:0;padding:7px 6px;background:var(--surface-2);border-color:var(--line-strong);}
+.ccChips .suggChip .scName,
+.chordGrid.ccMode .suggChip .scName{color:var(--txt);}
+.ccChips .suggChip:active,
+.chordGrid.ccMode .suggChip:active{background:var(--surface-2);border-color:var(--accent-ink);}
 .progPicks{margin-top:14px;}
 .progPickRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;touch-action:pan-x;}
 .progPickRow::-webkit-scrollbar{display:none;}
@@ -1710,24 +1768,44 @@ footer{display:none;}
    (sheets/dialogs) with a single scroller; Compose stays flattened (no accordions)
    for screen scrollers. Declared here (not a page style) for the same app-wide-SSOT
    reason as .helpIcon above. */
-.accSec{border-top:1px solid var(--line-strong);}
-.accSec:first-of-type{border-top:0;}
+/* UAT batch 4 ("accordion items need individual distinction... not clear it's
+   accordions... space very small between?"): the sections used to be flush rows
+   separated by a hairline, which is the visual grammar of a LIST, not of a set of
+   independently openable panels - so nothing said "these open". Each section is
+   its own card with real space between: the mobile settings convention (grouped
+   cards, iOS/Material both), where the gap is what says "separate thing". */
+.accSec{background:var(--surface-2);border:1px solid var(--line-strong);
+  border-radius:var(--r-card);margin-bottom:10px;overflow:hidden;}
+.accSec:last-of-type{margin-bottom:2px;}
 /* Header treatment: section titles must READ as tappable headings, not plain text
    rows - heavier + larger than body text with an EXPLICIT expand affordance: an
    accent-ink chevron (readable-on-surface interactive ink in BOTH themes) that
    rotates open, plus press feedback. Fixed here at the primitive, never per
    instance. */
-.accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;
-  padding:14px 0;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:800;
+.accBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;
+  padding:14px;background:none;border:0;color:var(--txt);font-family:inherit;font-weight:800;
   font-size:1.08rem;letter-spacing:.01em;text-align:left;cursor:pointer;transition:transform .08s;}
+/* Open state: a hairline between the header and its body, the standard cue that
+   this card is the expanded one. Keyed off the button's own aria-expanded rather
+   than the section, so it needs no :has() and cannot disagree with the a11y
+   state that drives it. */
+.accBtn[aria-expanded="true"]{border-bottom:1px solid var(--line);}
 /* The section header must OUTRANK its inner .setLbl labels (Appearance > Theme is
    a hierarchy), so the primitive steps up to 800/1.08rem. Fixed here at the
    primitive: every accordion consumer gets the same heading weight. */
-.accBtn::after{content:'\25BE';color:var(--accent-ink);font-size:.95em;font-weight:700;line-height:1;
-  transition:transform .15s;}
-.accBtn[aria-expanded="true"]::after{transform:rotate(180deg);}
+/* UAT batch 4 ("accordion expand handle not mobile std"): was a filled triangle
+   glyph (U+25BE) at ~0.95em - the shape a desktop <select> uses, and small enough
+   to read as decoration. A stroke CHEVRON is the mobile disclosure standard
+   (Material expand_more / the iOS grouped-list chevron). Drawn from two borders
+   rather than a font glyph so the stroke weight is ours at every DPI and it never
+   depends on a glyph the device may not have. The 45deg box is optically low, so
+   the box is nudged up; the open state rotates through the top, not the bottom. */
+.accBtn::after{content:'';flex:0 0 auto;width:11px;height:11px;margin:-4px 2px 0 0;
+  border-right:2px solid var(--accent-ink);border-bottom:2px solid var(--accent-ink);
+  transform:rotate(45deg);transform-origin:center;transition:transform .18s;}
+.accBtn[aria-expanded="true"]::after{transform:rotate(-135deg);margin:4px 2px 0 0;}
 .accBtn:active{transform:scale(.99);} /* the .listItem press language, not the no-scale close family */
-.accBody{padding:2px 0 16px;}
+.accBody{padding:12px 14px 16px;}
 /* An author display rule on the SAME element defeats [hidden] - .accBody carries
    no display rule today, but this guard keeps the collapse honest if one is ever
    added. */
@@ -1892,38 +1970,82 @@ footer{display:none;}
 .setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
   display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
-/* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive). .setRow
-   composes the shared .listItem card family as a <button> data row (Backup/Restore):
-   explicit color because button text does not inherit (music/CLAUDE.md gotcha),
-   full-width + left-aligned so it reads as a list row, not an action button. It also
-   needs an explicit dark surface + border + padding: a <button> with no background
-   falls back to the UA default (light grey), which on the dark theme renders as a
-   washed-out white bar with near-invisible --txt text. */
-.setRow{width:100%;text-align:left;font-family:inherit;font-size:inherit;color:var(--txt);margin-top:10px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;min-height:44px;}
-.setRow:active{background:var(--accent-deep);border-color:var(--accent-dim);}
-/* Settings ACTION rows (Back up, Restore, the Skills import/export rows -
-   button.listItem.setRow) read as CTAs via the accent border - one rule for the
-   whole action-row class, never per instance. Plain display rows and the segmented
-   controls keep the neutral line. */
-#settingsBody button.listItem.setRow{border-color:var(--accent-ink);}
-#settingsBody button.listItem.setRow:active{background:var(--accent-deep);}
-.setRow .li-title{display:block;}
-.setRow .li-artist{display:block;}
+/* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive); every
+   "do a thing" row inside one is .setAction, below. The retired .setRow carried a
+   real gotcha worth keeping: a <button> with no background falls back to the UA
+   light grey, which on the dark theme renders as a washed-out bar with
+   near-invisible text - so an action row must always set its own surface, border
+   and color explicitly (button text inherits neither font nor color). */
+
+/* ACTION ROW - the ONE primitive for "do a thing" inside a settings-style panel
+   (UAT batch 5: "too cluttered w text. simplicity FTW. UI standard layout? for
+   export etc buttons, min prose"). Before this, six rows doing the same job wore
+   FOUR different looks - a bordered .setRow card with a stacked description, an
+   .aboutLink with an icon and a wrapping sentence, a pair of .btn.ghost, and a
+   raw URL as body text.
+
+   The rule, per component-conventions.md: ONE ROW = ONE ACTION. Leading icon
+   slot, a verb-first label on ONE line, and an optional trailing affordance.
+   Descriptions do NOT go on the row - a group gets at most one caption above it.
+   The label is nowrap+ellipsis on purpose: a label that would truncate is too
+   long and must be shortened at the source, not wrapped to buy itself a second
+   line. .saMeta is the ONE sanctioned trailing extra, and only for live STATE
+   (a last-backup timestamp), never for description. */
+.setAction{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin-top:8px;
+  padding:0 12px;background:var(--surface-2);border:1px solid var(--line-strong);
+  border-radius:var(--r-btn-sm);color:var(--txt);font-family:inherit;font-size:.92rem;
+  font-weight:600;text-align:left;cursor:pointer;text-decoration:none;
+  transition:transform .08s,background .15s,border-color .15s;}
+.setAction:active{transform:scale(.99);background:var(--accent-deep);border-color:var(--accent-dim);}
+.setAction:focus-visible{outline:2px solid var(--accent-dim);outline-offset:2px;}
+/* The label takes the slack; nowrap+ellipsis is the guard that keeps a row one line. */
+.setAction .saLbl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Live state only (last backup / last restore) - never a description. */
+.setAction .saMeta{flex:0 0 auto;font-size:.72rem;font-weight:600;color:var(--txt-dim);}
+/* Leading icon + trailing affordance glyph both hold their size. */
+.setAction svg{flex:0 0 auto;}
+.setAction .saGo{flex:0 0 auto;color:var(--accent-ink);font-weight:700;}
+/* An action row that LEAVES the app takes the external-link ink (the Links
+   convention), so "opens a doc in a new tab" still reads differently from
+   "does something here" without needing a sentence to say so. */
+.setAction.saExt{color:var(--brass);}
+.setAction.saExt .saGo{color:var(--brass);}
+
+/* DISCLOSURE - "for those interested" content that must never become a step
+   (UAT batch 6: "the agent interactions and instructions and prompts should be
+   visible and viewable so they know what we're doing with their system IF THEY
+   SHOULD CHOOSE"). A <details> whose summary composes the same .setAction row,
+   so the app has one row look whether the row acts or reveals. The marker is
+   replaced by the accordion's own chevron for the same reason: one disclosure
+   language app-wide, not a native triangle beside our drawn chevrons. */
+.agentDisclose{margin-top:8px;}
+.agentDisclose > summary{list-style:none;cursor:pointer;}
+.agentDisclose > summary::-webkit-details-marker{display:none;}
+.agentDisclose > summary::after{content:'';flex:0 0 auto;width:11px;height:11px;margin:-4px 2px 0 0;
+  border-right:2px solid var(--accent-ink);border-bottom:2px solid var(--accent-ink);
+  transform:rotate(45deg);transform-origin:center;transition:transform .18s;}
+.agentDisclose[open] > summary::after{transform:rotate(-135deg);margin:4px 2px 0 0;}
+/* The revealed rows sit slightly inset so they read as belonging to the summary
+   rather than as peers of Export/Import above it. */
+.agentDisclose > :not(summary){margin-left:10px;}
+.agentDisclose .setHint{margin:10px 0 6px 10px;}
 /* About section link rows: external-link ink (--brass, the Links convention) +
    inline-SVG icon taking currentColor; 44px touch floor. */
-.aboutLink{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--brass);
-  text-decoration:underline;text-underline-offset:2px;font-size:.85rem;font-weight:600;}
-.aboutLink svg{flex:0 0 auto;}
-.aboutStamp{margin:10px 0 0;}
 /* AI Agent section (round 16): the copy buttons ride one row under the live
    doc links; the URI hint beneath them shows WHERE the docs live (SSOT -
    resolved from location at boot, so previews and localhost tell their own
    truth). Reuses .btn.ghost + .setHint - no new visual language. */
-.agentCopyRow{display:flex;gap:11px;flex-wrap:wrap;margin:4px 0 10px;}
-.agentCopyRow .btn{min-height:44px;}
 #agentUriHint{word-break:break-all;margin-bottom:4px;}
-.setLbl{font-weight:600;margin-bottom:11px;}
-.setHint + .setLbl{margin-top:16px;} /* second label inside one accordion body (Theme -> Accent) */
+/* UAT batch 4 ("settings text too similar to sections"): .setLbl sat at 600 /
+   ~1rem against an .accBtn at 800 / 1.08rem - a step too small to read as a
+   hierarchy, so "Theme" looked like a peer of "Appearance". It takes the app's
+   existing caption convention instead (the .rf-lbl / .bt-st-urled-lbl / .progLbl
+   family: small uppercase micro-caps in --txt-dim), which cannot be confused with
+   a heading at any size. Safe to uppercase here - these are setting names, never
+   chord or note labels, which must never be case-folded (note-spelling rule). */
+.setLbl{font-weight:700;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--txt-dim);margin-bottom:9px;}
+.accBody .setLbl:not(:first-child){margin-top:18px;}
 .setHint{color:var(--ink-faint);font-size:.82rem;line-height:1.45;margin:0 0 13px;}
 .themeRow{display:flex;gap:11px;flex-wrap:wrap;}
 /* Visual preview under the Fretboard-diagrams and Chord-charts toggles. Both

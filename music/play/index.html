@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0d0f12">
 <title>Music</title>
 <!-- Theme-resolution helpers, shared by this boot script, the Settings script, and the unit test. -->
-<script src="../shared/theme.js"></script>
+<script src="../shared/theme.js?v=music-v342-15"></script>
 <!-- Versioned localStorage boot migration runner (shared/storage-migrate.js).
      Loaded first - before backup.js/songbook.js and every other shared/*.js
      consumer, and before the pre-paint read just below - so its self-run at
      load time completes before anything else reads persisted state. -->
-<script src="../shared/storage-migrate.js"></script>
+<script src="../shared/storage-migrate.js?v=music-v342-15"></script>
 <script>
 /* Set theme + accent hue before first paint to avoid a flash. The full accent
    derivation runs in the Settings script below; the CSS light fallbacks
@@ -35,9 +35,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Music">
 <!-- Shared songbook styles (theme + all components). -->
-<link rel="stylesheet" href="../shared/songbook.css">
-<link rel="stylesheet" href="../shared/tracks.css">
-<link rel="stylesheet" href="../shared/repertoire-form.css">
+<link rel="stylesheet" href="../shared/songbook.css?v=music-v342-15">
+<link rel="stylesheet" href="../shared/tracks.css?v=music-v342-15">
+<link rel="stylesheet" href="../shared/repertoire-form.css?v=music-v342-15">
 </head>
 <body>
 <div class="app">
@@ -341,7 +341,7 @@
             <div class="prefEx" data-m="charts"></div>
             <div class="prefEx" data-m="chips"></div>
           </div>
-          <p class="setHint">Full charts while you're learning shapes, or compact chord names once you know them. Follows your guidance level until you pick one here.</p>
+          <p class="setHint">Full charts while you learn the shapes, compact names once you know them. Follows your guidance level until you pick.</p>
           <!-- The standard Settings setter pair, .setLbl + .themeSeg segmented
                control, mirroring Theme / Fretboard diagrams above. Storage:
                music.guidanceLevel.v1. -->
@@ -355,7 +355,6 @@
         <div class="accBody" id="accBodyAppearance" role="region" aria-labelledby="accBtnAppearance" hidden>
           <div class="setLbl">Theme</div>
           <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme"></div>
-          <p class="setHint">Auto follows your device's light/dark setting. Light and Dark stay put.</p>
           <div class="setLbl">Accent color</div>
           <div class="themeRow" id="accentSwatches" role="radiogroup" aria-label="Accent color"></div>
         </div>
@@ -363,21 +362,15 @@
       <section class="accSec" data-acc="backup">
         <button class="accBtn" id="accBtnBackup" type="button" aria-expanded="false" aria-controls="accBodyBackup">Backup &amp; Restore</button>
         <div class="accBody" id="accBodyBackup" role="region" aria-labelledby="accBtnBackup" hidden>
-          <p class="setHint">Everything below lives only on this device. Back up saves it to a file. Drop that file in Drive or Files. On a new phone, Restore reads the file and brings everything across. Restore adds to and overwrites these items. It never deletes anything already here.</p>
+          <p class="setHint">Everything lives only on this device. Restore adds and overwrites - it never deletes.</p>
           <div class="setSummary" id="dataSummary" aria-live="polite"></div>
-          <button class="listItem setRow" id="btnBackup" type="button">
-            <span class="li-body">
-              <span class="li-title">Back up</span>
-              <span class="li-artist">Save everything on this device to a file.</span>
-              <span class="li-meta" id="lastBackupMeta">Last backup: never</span>
-            </span>
+          <button class="setAction" id="btnBackup" type="button">
+            <span class="saLbl">Back up</span>
+            <span class="saMeta" id="lastBackupMeta">never</span>
           </button>
-          <button class="listItem setRow" id="btnRestore" type="button">
-            <span class="li-body">
-              <span class="li-title">Restore</span>
-              <span class="li-artist">Read a backup file and bring everything across.</span>
-              <span class="li-meta" id="lastRestoreMeta">Last restore: never</span>
-            </span>
+          <button class="setAction" id="btnRestore" type="button">
+            <span class="saLbl">Restore</span>
+            <span class="saMeta" id="lastRestoreMeta">never</span>
           </button>
           <input type="file" id="restoreFile" accept="application/json,.json" hidden>
         </div>
@@ -391,26 +384,37 @@
            The Skills panel self-injects ABOVE this section (songbook.js
            anchors on data-acc="agent") so the agent family reads together,
            with About last. Copy buttons are wired beside the accordion JS. -->
-      <section class="accSec" data-acc="agent">
-        <button class="accBtn" id="accBtnAgent" type="button" aria-expanded="false" aria-controls="accBodyAgent">AI Agent</button>
-        <div class="accBody" id="accBodyAgent" role="region" aria-labelledby="accBtnAgent" hidden>
-          <p class="setHint">This app publishes live, machine-readable docs about itself. Point any AI agent (Claude, ChatGPT, a coding agent) at them and it can read your exported skills, coach your practice, and hand back one-tap jam links and setup files.</p>
-          <p class="setHint">How it works, plainly: agents only READ these docs - nothing they propose touches your data until you import a file through Skills or tap Save on a jam link. Everything lives at public URLs on this app, so what an agent sees is exactly what you see below.</p>
-          <a class="aboutLink" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
+      <!-- MERGED INTO SKILLS (operator UAT batch 6: "can't we merge skills and
+           agent accordion? A skilled export includes everything").
+           This is no longer its own accordion section - it is a plain block that
+           renderSkillsPanel() ADOPTS into the Skills pane on every render. Why a
+           plain div and not an .accSec: Accordion.init() collects .accSec at init
+           time, so a section removed afterwards would leave a stale entry pointing
+           at a detached node. Keeping it outside that scan sidesteps the ordering
+           problem entirely, and every id survives the move so wireAgentSection()
+           below binds unchanged.
+           The default path is now Export and nothing else. The docs stay reachable
+           for anyone who wants them ("the agent interactions and instructions and
+           prompts should be visible and viewable... if they should choose") but as
+           a DISCLOSURE, never a step - the zip already carries AGENTS.md, so
+           reading them is optional by construction. -->
+      <div id="agentBlock" hidden>
+        <details class="agentDisclose">
+          <summary class="setAction agentDiscloseHead"><span class="saLbl">What the agent is told</span></summary>
+          <p class="setHint">The export already contains these - you never need to open them. They are here so you can see exactly what your AI is handed.</p>
+          <a class="setAction saExt" id="agentReadmeLink" href="../agent/AGENTS.md" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
-            <span>Agent instructions (AGENTS.md) - the exact doc agents read</span>
+            <span class="saLbl">Open AGENTS.md</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <a class="aboutLink" id="agentCapsLink" href="../agent/capabilities.json" target="_blank" rel="noopener">
+          <a class="setAction saExt" id="agentCapsLink" href="../agent/capabilities.json" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4.72 3.22a.75.75 0 0 1 1.06 1.06L2.06 8l3.72 3.72a.75.75 0 1 1-1.06 1.06L.47 8.53a.75.75 0 0 1 0-1.06Zm6.56 0a.75.75 0 1 0-1.06 1.06L13.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06Z"/></svg>
-            <span>Capabilities (capabilities.json) - what the app can do, as data</span>
+            <span class="saLbl">Open capabilities.json</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <div class="agentCopyRow">
-            <button class="btn ghost" id="agentCopyLinks" type="button">Copy doc links</button>
-            <button class="btn ghost" id="agentCopyPrompt" type="button">Copy starter prompt</button>
-          </div>
-          <p class="setHint" id="agentUriHint"></p>
-        </div>
-      </section>
+          <button class="setAction" id="agentCopyLinks" type="button"><span class="saLbl">Copy doc links</span></button>
+        </details>
+      </div>
       <!-- About: attribution + open-source funnel. Icons are INLINE SVGs (GitHub
            mark + octicons; fill=currentColor so they take the link ink) - this
            is an offline-capable PWA, no external asset fetches. Links use the
@@ -419,22 +423,22 @@
         <button class="accBtn" id="accBtnAbout" type="button" aria-expanded="false" aria-controls="accBodyAbout">About</button>
         <div class="accBody" id="accBodyAbout" role="region" aria-labelledby="accBtnAbout" hidden>
           <p class="setHint">Built by Nikolaus Hruska. Free and open source.</p>
-          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
+          <a class="setAction saExt" href="https://github.com/nhruska/nhruska.github.io" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-            <span>View the source on GitHub</span>
+            <span class="saLbl">View the source</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <a class="aboutLink" href="../../docs/artifacts/thought-ware-development/gateway.html" target="_blank" rel="noopener">
+          <a class="setAction saExt" href="../../docs/artifacts/thought-ware-development/gateway.html" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M2.5 1.75a.25.25 0 0 1 .25-.25h5.5c.966 0 1.75.784 1.75 1.75v11.25a.25.25 0 0 1-.4.2l-1.55-1.16a1 1 0 0 0-1.2 0l-1.55 1.16a.25.25 0 0 1-.4-.2V3.25a.25.25 0 0 0-.25-.25h-2Z"/></svg>
-            <span>How this app is built - User-Centric Development</span>
+            <span class="saLbl">How this app is built - User-Centric Development</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <a class="aboutLink" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
+          <a class="setAction saExt" href="https://github.com/nhruska/nhruska.github.io/issues" target="_blank" rel="noopener">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
-            <span>Report an issue or suggest an improvement</span>
+            <span class="saLbl">Report an issue</span>
+            <span class="saGo" aria-hidden="true">&#8599;</span>
           </a>
-          <button class="listItem setRow" id="replayTourBtn" type="button">
-            <span class="li-title">Replay the intro tour</span>
-            <span class="li-artist">The welcome intro, any time</span>
-          </button>
+          <button class="setAction" id="replayTourBtn" type="button"><span class="saLbl">Replay the intro tour</span></button>
           <!-- The build stamp lives ONCE, in the settings footer (quick-glance
                home) - don't repeat it here. -->
         </div>
@@ -453,116 +457,116 @@
 <!-- esc.js: the ONE HTML-escape util - loads first since
      list-item.js/notables.js/repertoire-form.js/songbook.js/diagram.js/
      tracks.js all delegate to it. -->
-<script src="../shared/esc.js"></script>
+<script src="../shared/esc.js?v=music-v342-15"></script>
 <!-- toast.js: the shared per-host timer-isolation primitive both showToast()
      and showComposeToast() in songbook.js delegate to. Loads early, alongside
      esc.js, since any consumer could show a toast. -->
-<script src="../shared/toast.js"></script>
+<script src="../shared/toast.js?v=music-v342-15"></script>
 <!-- build-stamp.js: the authored-at-change-time version + freshness stamp the
      Settings meta line renders (VERSION mirrors sw.js CACHE, guard-locked by
      scripts/check-cache-bump.sh). Dependency-free; also loaded by
      play/triad-inversions.html. -->
-<script src="../shared/build-stamp.js"></script>
+<script src="../shared/build-stamp.js?v=music-v342-15"></script>
 <!-- accordion.js: the exclusive disclosure group primitive (one open section
      at a time), consumed by the Settings sheet sections below. Dependency-free. -->
-<script src="../shared/accordion.js"></script>
-<script src="../shared/nav-history.js"></script>
-<script src="../shared/queue.js"></script>
-<script src="../shared/circle.js"></script>
-<script src="../shared/key-explorer.js"></script>
-<script src="../shared/list-item.js"></script>
-<script src="../shared/scroll-hint.js"></script>
-<script src="../shared/notables.js"></script>
+<script src="../shared/accordion.js?v=music-v342-15"></script>
+<script src="../shared/nav-history.js?v=music-v342-15"></script>
+<script src="../shared/queue.js?v=music-v342-15"></script>
+<script src="../shared/circle.js?v=music-v342-15"></script>
+<script src="../shared/key-explorer.js?v=music-v342-15"></script>
+<script src="../shared/list-item.js?v=music-v342-15"></script>
+<script src="../shared/scroll-hint.js?v=music-v342-15"></script>
+<script src="../shared/notables.js?v=music-v342-15"></script>
 <!-- guidance-level.js: the beginner|intermediate|advanced experience level
      (music.guidanceLevel.v1) - loaded right after notables.js, which grades
      claims against it (see notables.js's LEVELS table). -->
-<script src="../shared/guidance-level.js"></script>
-<script src="../shared/callouts.js"></script>
+<script src="../shared/guidance-level.js?v=music-v342-15"></script>
+<script src="../shared/callouts.js?v=music-v342-15"></script>
 <!-- chord-collapse.js: advanced-level compact chord chips for the Compose
      palettes - reads guidance-level.js (above), consumed lazily by songbook.js
      (window.ChordCollapse, optional lookup). -->
-<script src="../shared/chord-collapse.js"></script>
-<script src="../shared/repertoire.js"></script>
-<script src="../shared/song-templates.js"></script>
-<script src="../shared/competency.js"></script>
+<script src="../shared/chord-collapse.js?v=music-v342-15"></script>
+<script src="../shared/repertoire.js?v=music-v342-15"></script>
+<script src="../shared/song-templates.js?v=music-v342-15"></script>
+<script src="../shared/competency.js?v=music-v342-15"></script>
 <!-- skill-md.js: SKILL.md render/parse + store-only zip writer - the Skills
      panel's open-skills-format export/import (consumes competency.js's
      exportProfile output). -->
-<script src="../shared/skill-md.js"></script>
+<script src="../shared/skill-md.js?v=music-v342-15"></script>
 <!-- agent-readme.js: the bundled AGENTS.md text for self-describing skills
      exports (spec section 5A) - songbook.js's downloadBundle appends it to
      the zip when present (guarded, defensive-reader law). -->
-<script src="../shared/agent-readme.js"></script>
+<script src="../shared/agent-readme.js?v=music-v342-15"></script>
 <!-- capabilities.js: the app capability manifest (SSOT for
      music/agent/capabilities.json) - songbook.js's downloadBundle appends it
      to the zip when present (guarded, defensive-reader law). -->
-<script src="../shared/capabilities.js"></script>
+<script src="../shared/capabilities.js?v=music-v342-15"></script>
 <!-- jam-link.js: pure parser for the `?jam=` agent-interaction deep link
      (spec section 4b) - no DOM, no storage. Consumed by the boot script's
      start() below (after tracksCtl/songbookCtl/pack exist): the parsed setup
      becomes an ephemeral track (TracksModel.jamTrackFromSetup) and opens the
      existing Practice Studio (S15 re-home) - Save hands off to
      repertoire-form.js exactly like any other track's Edit tap. -->
-<script src="../shared/jam-link.js"></script>
+<script src="../shared/jam-link.js?v=music-v342-15"></script>
 <!-- setup-doc.js: pure parser for music-setup/v1 batch setup docs (spec A8) -
      the Skills file picker dispatches on the JSON schema string; entries land
      as prefills through the existing forms, never direct storage writes. -->
-<script src="../shared/setup-doc.js"></script>
-<script src="../shared/zip-store.js"></script>
-<script src="../shared/repertoire-form.js"></script>
+<script src="../shared/setup-doc.js?v=music-v342-15"></script>
+<script src="../shared/zip-store.js?v=music-v342-15"></script>
+<script src="../shared/repertoire-form.js?v=music-v342-15"></script>
 <!-- yt-info.js: keyless YouTube oEmbed lookup + title field-hint parsing,
      consumed by repertoire-form.js's Video URL suggest row. Resolves
      Tracks.parseYouTubeId/Circle.spellRoot at CALL time (both load later in this
      file), so its position here is only "near its consumer", not a hard
      dependency order. -->
-<script src="../shared/yt-info.js"></script>
+<script src="../shared/yt-info.js?v=music-v342-15"></script>
 <!-- playlist-import.js: keyless "import your playlist" (M-PLAYLIST-IMPORT) -
      iframe enumeration + noembed titles + the import key ladder, consumed by
      repertoire-form.js's import panel. Resolves YtInfo/Circle/PlaylistImport
      consumers at CALL time, so position is only "near its consumer". -->
-<script src="../shared/playlist-import.js"></script>
+<script src="../shared/playlist-import.js?v=music-v342-15"></script>
 <!-- solo-guide.js: SoloGuide (per-scale mentor cards + framing) - loads before
      songbook.js AND tracks.js so both the Studio and the Compose solo chips can
      call it. -->
-<script src="../shared/solo-guide.js"></script>
-<script src="../shared/theory.js"></script>
-<script src="../shared/suggest-model.js"></script>
-<script src="../shared/sheet-render.js"></script>
-<script src="../shared/song-model.js"></script>
-<script src="../shared/songbook.js"></script>
-<script src="../shared/tuner.js"></script>
+<script src="../shared/solo-guide.js?v=music-v342-15"></script>
+<script src="../shared/theory.js?v=music-v342-15"></script>
+<script src="../shared/suggest-model.js?v=music-v342-15"></script>
+<script src="../shared/sheet-render.js?v=music-v342-15"></script>
+<script src="../shared/song-model.js?v=music-v342-15"></script>
+<script src="../shared/songbook.js?v=music-v342-15"></script>
+<script src="../shared/tuner.js?v=music-v342-15"></script>
 <!-- shape-classify.js: curated shape classifier (family/rootString/inversion/
      barreFret per voicing). Loaded before diagram.js. Dependency-free (no
      circle.js coupling) - see the module header for why. -->
-<script src="../shared/shape-classify.js"></script>
+<script src="../shared/shape-classify.js?v=music-v342-15"></script>
 <!-- diagram-pref.js: the dots|patterns preference + the decision of what label
      (if any) 'patterns' mode shows - the ONE place that knows both "the pref key
      is music.diagram.pref.v1" and "ask ShapeClassify for a label." Loaded after
      shape-classify.js (consumes it), before diagram.js (which stays agnostic of
      both - see its own header). -->
-<script src="../shared/diagram-pref.js"></script>
-<script src="../shared/diagram.js"></script>
+<script src="../shared/diagram-pref.js?v=music-v342-15"></script>
+<script src="../shared/diagram.js?v=music-v342-15"></script>
 <!-- legend.js: the Legend primitive (dot-swatch + label rows) - loads after
      diagram.js (the fretboard-dot renderer whose kx-* classes it mirrors),
      before tracks.js's openStudio calls Legend.render(). -->
-<script src="../shared/legend.js"></script>
-<script src="../shared/audio.js"></script>
+<script src="../shared/legend.js?v=music-v342-15"></script>
+<script src="../shared/audio.js?v=music-v342-15"></script>
 <!-- sound.js: zero-dependency scale/mode audition (Sound.playScale) - loads
      after audio.js (the other shared audio primitive), before
      tracks.js/songbook.js's toggle wiring calls it. -->
-<script src="../shared/sound.js"></script>
+<script src="../shared/sound.js?v=music-v342-15"></script>
 <!-- jam-queries.js: curated genre x feel jam-discovery query data - loads
      before tracks.js so the Studio's "Find a jam" panel can call it. -->
-<script src="../shared/jam-queries.js"></script>
-<script src="../shared/tracks-model.js"></script>
-<script src="../shared/studio-theory.js"></script>
-<script src="../shared/tracks.js"></script>
-<script src="../shared/candidates.js"></script>
+<script src="../shared/jam-queries.js?v=music-v342-15"></script>
+<script src="../shared/tracks-model.js?v=music-v342-15"></script>
+<script src="../shared/studio-theory.js?v=music-v342-15"></script>
+<script src="../shared/tracks.js?v=music-v342-15"></script>
+<script src="../shared/candidates.js?v=music-v342-15"></script>
 <!-- chord-pack-adapter.js + sugg.js: the chord-pack adapter + the
      chord-suggestion map, extracted into shared modules so they're testable
      (not inline in the bootstrap script below). -->
-<script src="../shared/chord-pack-adapter.js"></script>
-<script src="../shared/sugg.js"></script>
+<script src="../shared/chord-pack-adapter.js?v=music-v342-15"></script>
+<script src="../shared/sugg.js?v=music-v342-15"></script>
 <!-- Versatile bootstrap: load profiles, build a chord-pack adapter from the active
      profile (pure data) + the shared Diagram/ChordAudio/Tuner, then mount. -->
 <script>
@@ -1140,7 +1144,7 @@
 </script>
 <!-- Schema/versioned backup+restore engine (shared/backup.js). Loaded before
      the inline Settings script so runMigrations() can run at boot. -->
-<script src="../shared/backup.js"></script>
+<script src="../shared/backup.js?v=music-v342-15"></script>
 <!-- Settings: accent colour + whole-songbook backup/restore + which offline
      build is running. The accent chooser re-skins the --accent family live
      (tuner red/amber/green status colours are left alone). Backup/Restore move
@@ -1227,10 +1231,10 @@
   // The Backup/Restore rows show a full locale date+time via BuildStamp.fmt()
   // (the ONE datetime formatter, so the rows and the footer stamp always read
   // the same way).
-  function lastRunText(prefix, iso) {
-    if (!iso) return prefix + ': never';
+  function lastRunText(iso) {
+    if (!iso) return 'never';
     var when = window.BuildStamp ? BuildStamp.fmt(iso) : '';
-    return prefix + ': ' + (when || String(iso).slice(0, 10)); // date-only fallback beats lying 'never'
+    return when || String(iso).slice(0, 10); // date-only fallback beats lying 'never'
   }
   function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -1500,8 +1504,6 @@
       var capsA = document.getElementById('agentCapsLink');
       if (!readmeA || !capsA) return;
       var readmeUrl = readmeA.href, capsUrl = capsA.href; // absolutized by the browser
-      var hint = document.getElementById('agentUriHint');
-      if (hint) hint.textContent = 'Live at: ' + readmeUrl;
       function copy(text, okMsg) {
         if (!(navigator.clipboard && navigator.clipboard.writeText)) {
           if (window.Toast) Toast.show('Copy needs https - long-press a link instead'); return;
@@ -1515,12 +1517,6 @@
       var copyLinks = document.getElementById('agentCopyLinks');
       if (copyLinks) copyLinks.onclick = function () {
         copy(readmeUrl + '\n' + capsUrl, 'Doc links copied');
-      };
-      var copyPrompt = document.getElementById('agentCopyPrompt');
-      if (copyPrompt) copyPrompt.onclick = function () {
-        copy('Read ' + readmeUrl + ' and ' + capsUrl + ' - they describe a music practice app I use. '
-          + 'Then help me practice: you can read my exported skills, suggest what to work on, and give me '
-          + 'one-tap jam links in the deep-link format AGENTS.md documents.', 'Starter prompt copied');
       };
     })();
 
@@ -1543,12 +1539,12 @@
     function renderLastBackup() {
       var el = document.getElementById('lastBackupMeta'); if (!el) return;
       var iso = null; try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (e) {}
-      el.textContent = lastRunText('Last backup', iso);
+      el.textContent = lastRunText(iso);
     }
     function renderLastRestore() {
       var el = document.getElementById('lastRestoreMeta'); if (!el) return;
       var iso = null; try { iso = localStorage.getItem(LAST_RESTORE_KEY); } catch (e) {}
-      el.textContent = lastRunText('Last restore', iso);
+      el.textContent = lastRunText(iso);
     }
     // Live "what's on THIS device" summary, so the counts are visible before a
     // backup (and the origin/empty-storage case is obvious at a glance).

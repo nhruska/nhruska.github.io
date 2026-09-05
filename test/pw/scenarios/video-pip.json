@@ -1,6 +1,6 @@
 {
   "name": "video-pip",
-  "note": "Rounds 9-15 (operator UAT 2026-08-10/13). The governing purpose (round 15, verbatim): 'My purpose is to be able to skip when needed and not show the video any other time.' So: EVERY open starts PARKED (audio-first, the bar title wears the video cue); the bar's LEFT zone toggles parked<->THEATER one tap each way (theater is where taps reach the embed - Skip lives there); the theater's bottom handle DISMISSES to parked with no intermediate docked step; the small docked PIP is OPT-IN via the theater strip's corner dock chip only. ONE element, the iframe never remounts (audio never dies). Plus: continuous playerState sync (the field rides every infoDelivery tick - pausing inside the embed must flip the bar within a second, missed onStateChange deltas notwithstanding), scrub with touch-action:none (without it the browser reclaims the touch for panning and kills the drag a few px in), and refocus honesty. Native requestPictureInPicture is unreachable for a cross-origin YT iframe - overlays by design.",
+  "note": "EXPECTED RED pending an operator call (S-FIRSTSESSION-TAP-BLOCKED, 2026-09-03). This scenario's first assert pins 'a fresh device shows the video VISIBLE on a MINI player' as `vidopen` - the THEATER card. That card is position:fixed at top:58, 245px tall, z-96: placement sized for an OPEN sheet. On a mini player it pinned an iframe over the top ~300px of EVERY tab, so after any row-tap play the library, Compose and Tune silently ate taps there (measured: elementFromPoint over a Compose progression pick returned IFRAME). tracks.js now demotes a theater to the PIP dock when the player minimizes - which is what setVid's own stash comment always said minimize does, and the only resolution that keeps the video visible AND skippable AND off the page. The asserts here were NOT bent to agree: re-authoring this choreography changes a contract the operator owns, so it waits for his call. If he prefers the theater to stay, revert the one _setVid('pip', true) line in minimizeStudio and this goes green again. --- Rounds 9-16 (operator UAT 2026-08-10/13, 2026-09-02). ROUND 16 IS THE GOVERNING LAW (verbatim: \"don't auto hide yt video. I keep having to open it to skip after ads\"): THE APP NEVER HIDES THE VIDEO ON ITS OWN. A fresh open shows the video (theater) so YouTube's Skip Ads is reachable with no tap; there is no auto-minimize timer and no countdown at all. Round 15's intent (\"not show the video any other time\") survives as a REMEMBERED CHOICE - park it once and every later open is parked (music.vidPref.v1, additive), until you show it again. Why the reversal: twice an automatic hide trapped the operator inside an ad - a 7s wall-clock collapse (2026-07-31, mitigated to a 15s playback-anchored window), then round 15's open-PARKED default, which silently undid that mitigation. The ad boundary is undetectable cross-origin, so no timer can be tuned safely around it. Unchanged from rounds 9-15: the bar's LEFT zone toggles parked<->THEATER one tap each way (theater is where taps reach the embed - Skip lives there); the theater's bottom handle DISMISSES to parked with no intermediate docked step; the small docked PIP is OPT-IN via the theater strip's corner dock chip only. ONE element, the iframe never remounts (audio never dies). Plus: continuous playerState sync (the field rides every infoDelivery tick - pausing inside the embed must flip the bar within a second, missed onStateChange deltas notwithstanding), scrub with touch-action:none (without it the browser reclaims the touch for panning and kills the drag a few px in), and refocus honesty. Native requestPictureInPicture is unreachable for a cross-origin YT iframe - overlays by design.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -17,8 +17,25 @@
     },
     {
       "action": "evalAssert",
-      "label": "ROW-TAP PLAY -> PARKED by default: audio-first, media zero-size but iframe mounted (fingerprinted), player wears .vidhid, the title wears the cue, and NO video chrome is visible (no PIP, no handles)",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(r.width<2&&r.height<2))return false;var f=m.querySelector('iframe');if(!f)return false;window.__pipFrame=f;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid')||p.classList.contains('vidopen'))return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;if(!cue||cue==='none')return false;var hidden=['[data-piphide]','[data-thmax]','[data-thmin]','[data-thdock]'].every(function(s){var e=document.querySelector(s);return !e||e.getBoundingClientRect().height===0;});return hidden;})()"
+      "label": "ROUND 16 - ROW-TAP PLAY on a FRESH device opens the video VISIBLE (theater): no stored preference, so the ad's Skip button is on screen without a tap. Supersedes round 15's always-PARKED open, which is what put every pre-roll behind a manual open.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('hid')||m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>200&&r.height>100))return false;var f=m.querySelector('iframe');if(!f)return false;window.__pipFrame=f;return getComputedStyle(m).position==='fixed';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "visible-on-play"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "PARK (theater down-arrow) -> the quiet state round 15 asked for is still one tap away: media zero-size but the SAME iframe mounted (audio alive), player wears .vidhid, the title wears the cue, and NO video chrome is visible (no PIP, no handles)",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(r.width<2&&r.height<2))return false;var f=m.querySelector('iframe');if(!f)return false;if(f!==window.__pipFrame)return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid')||p.classList.contains('vidopen'))return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;if(!cue||cue==='none')return false;var hidden=['[data-piphide]','[data-thmax]','[data-thmin]','[data-thdock]'].every(function(s){var e=document.querySelector(s);return !e||e.getBoundingClientRect().height===0;});return hidden;})()"
     },
     {
       "action": "screenshot",

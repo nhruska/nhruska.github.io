@@ -1,0 +1,53 @@
+{
+  "name": "settings-skills-merged",
+  "note": "UAT batch 6 ('can't we merge skills and agent accordion? A skilled export includes everything... users shouldn't have to copy prompts, paste them back and forward'). RED-FIRST vs main: Settings had a separate AI Agent accordion whose 'Export agent bundle' called the IDENTICAL downloadBundle as the Skills section's 'Export all skills' (songbook.js:6897 and :6932) - one zip, two names, two sections - beside a 'Copy starter prompt' button whose existence was the tell that the bundle was not self-describing. Now: one accordion, one export, and the docs demoted to a closed disclosure. Seeds real evidence through Competency.recordEvidence so the export row (gated on hasData) actually renders - a fresh device shows Import only, which would let a naive assert pass while proving nothing.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "action": "goto", "path": "/music/play/" },
+    { "action": "wait", "ms": 1200 },
+    { "action": "evalAssert",
+      "label": "seed one real evidence record through the app's own API so the export row is reachable",
+      "js": "(function(){var C=window.Competency;if(!C)return false;var fw=C.FRAMEWORKS[0];var c=(C.getProfile(fw.id).competencies||[])[0];if(!c)return false;C.recordEvidence(fw.id,c.id,{at:new Date().toISOString()});return C.hasData()===true;})()" },
+    { "action": "tap", "selector": "#settingsBtn" },
+    { "action": "waitFor", "selector": "#settingsBody .accSec" },
+    { "action": "wait", "ms": 400 },
+
+    { "action": "evalAssert",
+      "label": "there is no separate AI Agent accordion any more - the whole job lives in one section",
+      "js": "(function(){var t=[].slice.call(document.querySelectorAll('#settingsBody .accSec .accBtn')).map(function(b){return b.textContent.trim();});return t.indexOf('AI Agent')<0&&t.indexOf('Skills')>=0;})()" },
+    { "action": "evalAssert",
+      "label": "and the retired section left no orphan behind - no .accSec carries data-acc=agent",
+      "js": "document.querySelectorAll('#settingsBody .accSec[data-acc=\"agent\"]').length === 0" },
+
+    { "action": "tap", "selector": "#accBtnSkills" },
+    { "action": "waitFor", "selector": "#accBodySkills .setAction" },
+    { "action": "wait", "ms": 500 },
+    { "action": "evalAssert",
+      "label": "the agent block is ADOPTED into the Skills pane (it is re-appended on every render - an adoption done once at mount is wiped by the pane clear, which is exactly the bug this catches)",
+      "js": "(function(){var a=document.getElementById('agentBlock'),p=document.getElementById('accBodySkills');return !!a&&!!p&&p.contains(a)&&a.hidden===false;})()" },
+    { "action": "evalAssert",
+      "label": "ONE export in the whole sheet, named for what it produces rather than our internals",
+      "js": "(function(){var lbls=[].slice.call(document.querySelectorAll('#settingsBody .setAction .saLbl')).map(function(e){return e.textContent.trim();});var exports=lbls.filter(function(t){return /export/i.test(t);});return exports.length===1&&exports[0]==='Export for my AI';})()" },
+    { "action": "evalAssert",
+      "label": "the copy-a-prompt step is gone entirely - not relocated. Its existence was the tell that the zip did not describe itself",
+      "js": "!document.getElementById('agentCopyPrompt') && document.body.textContent.indexOf('starter prompt') < 0" },
+
+    { "action": "evalAssert",
+      "label": "the docs are a DISCLOSURE, not a step: closed by default, so the shortest path is Export and nothing else",
+      "js": "(function(){var d=document.querySelector('.agentDisclose');return !!d&&d.open===false;})()" },
+    { "action": "screenshot", "name": "ssm-01-merged-closed" },
+
+    { "action": "tap", "selector": ".agentDiscloseHead" },
+    { "action": "wait", "ms": 400 },
+    { "action": "evalAssert",
+      "label": "opening it still reveals everything a curious user wants - nothing was removed, only demoted",
+      "js": "(function(){var d=document.querySelector('.agentDisclose');if(!d||!d.open)return false;var l=[].slice.call(d.querySelectorAll('.setAction .saLbl')).map(function(e){return e.textContent.trim();});return l.indexOf('Open AGENTS.md')>=0&&l.indexOf('Open capabilities.json')>=0&&l.indexOf('Copy doc links')>=0;})()" },
+    { "action": "evalAssert",
+      "label": "the disclosure summary composes the same action-row primitive as the rows it reveals",
+      "js": "(function(){var s=document.querySelector('.agentDiscloseHead');return !!s&&s.classList.contains('setAction')&&s.offsetHeight>=44;})()" },
+    { "action": "evalAssert",
+      "label": "no horizontal overflow at 412 with the merged section",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth" },
+    { "action": "screenshot", "name": "ssm-02-disclosure-open" }
+  ]
+}

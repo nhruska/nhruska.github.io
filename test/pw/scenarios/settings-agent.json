@@ -1,28 +1,46 @@
 {
   "name": "settings-agent",
-  "note": "Round 16 (operator: 'add short description/details in the settings menu on new accordion slot AI Agent - with link to details... SSOT for users - points agent apps at URL/uri that's live on the app - transparent to users on how it works'). The section explains the agent surface in plain words, links the LIVE artifacts (AGENTS.md + capabilities.json) resolved from the serving origin, and offers copy buttons for handing the URIs to an agent chat. The SSOT proof is REAL: the scenario fetches the live static AGENTS.md and asserts it byte-equals window.AgentReadme.text() - the one renderer that also feeds the skills-export bundle - and that capabilities.json parses with its schema id. Section order: the Skills panel self-injects ABOVE the agent section (the agent family reads together), About stays last.",
+  "note": "UAT batch 6 repoint: the AI Agent accordion is MERGED into Skills, so this walks Skills -> the 'What the agent is told' disclosure instead of its own section. Every claim it made survives the move - the two live-doc URLs must still resolve to THIS serving origin (preview, localhost and the live site each telling their own truth) and the copy action must still be wired above the tap floor. Repointed rather than deleted: the surface moved, the contract did not. Round 16 (operator: 'add short description/details in the settings menu on new accordion slot AI Agent - with link to details... SSOT for users - points agent apps at URL/uri that's live on the app - transparent to users on how it works'). The section explains the agent surface in plain words, links the LIVE artifacts (AGENTS.md + capabilities.json) resolved from the serving origin, and offers copy buttons for handing the URIs to an agent chat. The SSOT proof is REAL: the scenario fetches the live static AGENTS.md and asserts it byte-equals window.AgentReadme.text() - the one renderer that also feeds the skills-export bundle - and that capabilities.json parses with its schema id. Section order: the Skills panel self-injects ABOVE the agent section (the agent family reads together), About stays last.",
   "viewport": {
     "width": 412,
     "height": 915
   },
   "steps": [
     {
+      "action": "evalAssert",
+      "label": "seed one real evidence record through the app's own API so the export row is reachable (it is gated on hasData; without this the assert below would pass on an absent row)",
+      "js": "(function(){var C=window.Competency;if(!C)return false;var fw=C.FRAMEWORKS[0];var c=(C.getProfile(fw.id).competencies||[])[0];if(!c)return false;C.recordEvidence(fw.id,c.id,{at:new Date().toISOString()});return C.hasData()===true;})()"
+    },
+    {
       "action": "tap",
       "selector": "#settingsBtn"
     },
     {
       "action": "waitFor",
-      "selector": "#accBtnAgent",
+      "selector": "#accBtnSkills",
       "timeoutMs": 8000
     },
     {
       "action": "evalAssert",
-      "label": "section ORDER: Skills injects above AI Agent so the agent family reads together, About last",
-      "js": "(function(){var order=Array.prototype.map.call(document.querySelectorAll('#settingsBody .accSec'),function(s){return s.getAttribute('data-acc');});return order.join(',')==='prefs,appearance,backup,skills,agent,about';})()"
+      "label": "section ORDER after the merge: the agent section is GONE - its content lives inside Skills - so the sheet is prefs, appearance, backup, skills, about, with About still last",
+      "js": "(function(){var order=Array.prototype.map.call(document.querySelectorAll('#settingsBody .accSec'),function(s){return s.getAttribute('data-acc');});return order.join(',')==='prefs,appearance,backup,skills,about';})()"
     },
     {
       "action": "tap",
-      "selector": "#accBtnAgent"
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".agentDiscloseHead",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": ".agentDiscloseHead"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "wait",
@@ -30,13 +48,13 @@
     },
     {
       "action": "evalAssert",
-      "label": "round 18: the section LEADS with the one-tap bundle export (agent instructions + skills + latest data in one zip - the operator's single conversation starter), wired to the same downloadBundle as the Skills row",
-      "js": "(function(){var row=document.getElementById('agentBundleRow');if(!row)return false;var r=row.getBoundingClientRect();if(!(r.height>=44))return false;if(typeof row.onclick!=='function')return false;var t=row.querySelector('.li-title');if(!t||t.textContent.indexOf('Export agent bundle')<0)return false;var rd=document.getElementById('agentReadmeLink');return !!rd&&r.top<rd.getBoundingClientRect().top;})()"
+      "label": "round 18's claim SURVIVES the merge: one export still hands over agent instructions + skills + the user's latest data as a single conversation starter. What is gone is the DUPLICATE - 'Export agent bundle' and 'Export all skills' called the identical downloadBundle under two names in two sections. This now pins the survivor: exactly one export row in the whole sheet, wired, above the doc links it replaces the need to read",
+      "js": "(function(){var rows=[].slice.call(document.querySelectorAll('#settingsBody .setAction'));var ex=rows.filter(function(e){var l=e.querySelector('.saLbl');return l&&/export/i.test(l.textContent);});if(ex.length!==1)return false;var row=ex[0];if(row.querySelector('.saLbl').textContent.trim()!=='Export for my AI')return false;if(typeof row.onclick!=='function')return false;if(row.offsetHeight<44)return false;var rd=document.getElementById('agentReadmeLink');return !!rd&&row.getBoundingClientRect().top<rd.getBoundingClientRect().top;})()"
     },
     {
       "action": "evalAssert",
-      "label": "the section is transparent and SSOT-shaped: two plain-words hints, both live-doc links resolved to THIS serving origin (/music/agent/...), the URI hint showing the live address, and both copy buttons wired at 44px",
-      "js": "(function(){var body=document.getElementById('accBodyAgent');if(!body||body.hidden)return false;var hints=body.querySelectorAll('.setHint');if(hints.length<3)return false;if(!(hints[0].textContent.length>60&&hints[1].textContent.length>60))return false;var rd=document.getElementById('agentReadmeLink'),cp=document.getElementById('agentCapsLink');if(!rd||!cp)return false;var o=location.origin;if(rd.href!==o+'/music/agent/AGENTS.md')return false;if(cp.href!==o+'/music/agent/capabilities.json')return false;var hint=document.getElementById('agentUriHint');if(!hint||hint.textContent.indexOf(rd.href)<0)return false;var b1=document.getElementById('agentCopyLinks'),b2=document.getElementById('agentCopyPrompt');if(!b1||!b2)return false;if(typeof b1.onclick!=='function'||typeof b2.onclick!=='function')return false;var r1=b1.getBoundingClientRect(),r2=b2.getBoundingClientRect();return r1.height>=44&&r2.height>=44;})()"
+      "label": "the merged disclosure is SSOT-shaped and minimal: exactly ONE caption, no URL as body text, both live-doc links still resolved to THIS serving origin (so preview, localhost and the live site each tell their own truth - the claim this scenario exists for), the copy action wired above the tap floor, and the starter-prompt button GONE rather than relocated",
+      "js": "(function(){var d=document.querySelector('.agentDisclose');if(!d)return false;if(d.querySelectorAll('.setHint').length!==1)return false;if(d.textContent.indexOf('Live at:')>=0)return false;var rd=document.getElementById('agentReadmeLink'),cp=document.getElementById('agentCapsLink');if(!rd||!cp)return false;var o=location.origin;if(rd.href!==o+'/music/agent/AGENTS.md')return false;if(cp.href!==o+'/music/agent/capabilities.json')return false;var b1=document.getElementById('agentCopyLinks');if(!b1||typeof b1.onclick!=='function'||b1.offsetHeight<44)return false;return !document.getElementById('agentCopyPrompt');})()"
     },
     {
       "action": "evalAssert",
