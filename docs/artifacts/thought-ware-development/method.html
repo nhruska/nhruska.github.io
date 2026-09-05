@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Method - Thought-Ware Development - Nik Hruska</title>
+<title>The Method - User-Centric Development - Nik Hruska</title>
+<meta name="description" content="User-Centric Development (working name: Thought-Ware Development) - the full method: who does which job, SDD, the wiki as intermediate language, and the state machine in detail.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
 <style>
 :root{
@@ -36,25 +37,25 @@ h2{font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:1.05rem
   color:var(--accent-ink); text-transform:uppercase; letter-spacing:.05em;}
 p{margin:.7em 0;}
 .callout{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent-ink);
-  border-radius:6px; padding:14px 16px; margin:1.2em 0; font-family:-apple-system,Segoe UI,sans-serif;
+  border-radius:6px; padding:14px 16px; margin:1.2em 0; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;
   font-size:.95rem;}
-.loop{display:flex; flex-wrap:wrap; gap:8px; margin:1em 0; font-family:-apple-system,Segoe UI,sans-serif;
+.loop{display:flex; flex-wrap:wrap; gap:8px; margin:1em 0; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;
   font-size:.85rem;}
 .loop .step{background:var(--surface-2); border:1px solid var(--line); border-radius:20px;
   padding:6px 14px; white-space:nowrap;}
 .loop .arrow{color:var(--txt-dim); align-self:center;}
 .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1em 0;}
-table{width:100%; border-collapse:collapse; font-family:-apple-system,Segoe UI,sans-serif; font-size:.88rem;}
+table{width:100%; border-collapse:collapse; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.88rem;}
 th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
 th{background:var(--surface-2); color:var(--txt-dim); font-weight:600; text-transform:uppercase; font-size:.72rem;}
 code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-family:'Space Mono','SF Mono',Menlo,monospace; font-size:.85em;}
 pre{background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:12px 14px;
   overflow-x:auto; font-family:'Space Mono','SF Mono',Menlo,monospace; font-size:.82rem;}
-.status{display:inline-block; font-family:-apple-system,Segoe UI,sans-serif; font-size:.72rem;
+.status{display:inline-block; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif; font-size:.72rem;
   letter-spacing:.06em; text-transform:uppercase; color:var(--accent-ink); border:1px solid var(--accent-ink);
   border-radius:4px; padding:2px 8px; margin-bottom:1em;}
 .footer{margin-top:2.5em; padding-top:1em; border-top:1px solid var(--line);
-  color:var(--txt-dim); font-size:.82rem; font-family:-apple-system,Segoe UI,sans-serif;}
+  color:var(--txt-dim); font-size:.82rem; font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;}
 a{color:var(--accent-ink);}
 .theme-toggle{margin-left:12px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--txt);
   border-radius:8px; padding:4px 10px; font-size:.72rem; cursor:pointer; font-family:inherit;}
@@ -88,7 +89,7 @@ a{color:var(--accent-ink);}
   </div>
 </header>
 
-<p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:-apple-system,Segoe UI,sans-serif;font-size:.85rem;"><a href="gateway.html">&larr; Thought-Ware Development</a></p>
+<p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:.85rem;"><a href="gateway.html">&larr; User-Centric Development</a></p>
 <h1>The Method, in Full</h1>
 <p class="tagline">Steering agentic AI development with a wiki that makes business rules
 deterministic - proven on a real app, against real users, with a music theory engine as the judge.</p>
@@ -235,7 +236,7 @@ ever has to be argued for at company scale.</p>
 
 <div class="footer">Nik Hruska - personal engineering practice. The nh-pages music app
 is the proof case; this page describes the method, not the app. Part of the
-<a href="gateway.html">Thought-Ware Development</a> pack - start there for
+<a href="gateway.html">User-Centric Development</a> pack - start there for
 the short version.</div>
 
 </div>
