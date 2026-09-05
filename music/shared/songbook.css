@@ -2080,7 +2080,7 @@ footer{display:none;}
 .setBtns{display:flex;gap:10px;}
 .setBtns .btn{flex:1;}
 .setMeta{color:var(--ink-faint);font-size:.78rem;margin-top:10px;text-align:center;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  line-height:1.4;}
 
 /* =====================================================================
  * `hidden` means hidden - the last word in this stylesheet.
