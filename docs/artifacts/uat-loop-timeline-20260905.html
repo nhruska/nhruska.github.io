@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The UAT Loop - as it actually ran</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MiA0OCIgZmlsbD0ibm9uZSIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsbGVkYnk9InBzLWxvZ28tdGl0bGUiPgogIDx0aXRsZSBpZD0icHMtbG9nby10aXRsZSI+UHJvYmxlbSBTb2x1dGlvbnMgbG9nbzwvdGl0bGU+CiAgPCEtLSBUaHJlZSBkaXNjcmV0ZSBwaWVjZXMgZnJvbSB0aGUgb2ZmaWNpYWwgUFMgaG9zdGVkIGxvZ28uIFRyYW5zcGFyZW50IGdhcHMKICAgICAgIGJldHdlZW4gc2hhcGVzIHJlbmRlciB0aHJvdWdoIG9uIGFueSBiYWNrZ3JvdW5kLiBQYXRocyB0YWtlbiB2ZXJiYXRpbQogICAgICAgZnJvbSB0aGUgaG9zdGVkIHdvcmRtYXJrIFNWRyBhdCBwcm9ibGVtc29sdXRpb25zLmdpdGh1Yi5pbyAvIGludGVybmFsCiAgICAgICBzdGF0aWMgc2l0ZSAodHJpbW1lZCBvZiB0aGUgd29yZG1hcmsgdGV4dCwgdmlld0JveCB0aWdodGVuZWQgdG8gdGhlCiAgICAgICBiYWRnZSkuIC0tPgoKICA8IS0tIE1pZGRsZSBmb290YmFsbCAtIGJyYW5kLXRlcnRpYXJ5IC0tPgogIDxwYXRoIGQ9Ik0zMS4zMTIgOS43MTcyOUMyNi40NjIzIDEyLjkyMTcgMjMuNDg4OCAxOC4zOTg5IDIzLjQ4ODggMjQuMjQ3MkMyMy40ODg4IDMwLjA5NTUgMjYuNDYyMyAzNS41NzE3IDMxLjMxMiAzOC43NzcxQzM2LjE2MTggMzUuNTcyNyAzOS4xMzYyIDMwLjA5NTUgMzkuMTM2MiAyNC4yNDcyQzM5LjEzNjIgMTguMzk5OCAzNi4xNjI3IDEyLjkyMTcgMzEuMzEyIDkuNzE3MjlaIiBmaWxsPSIjMjA3NUJDIi8+CgogIDwhLS0gUmlnaHQgbW9vbiAtIGJyYW5kLWRhcmstYmx1ZSAtLT4KICA8cGF0aCBkPSJNNDAuODI2MyA1LjEzMzc5QzM4LjA2MjcgNS4xMzM3OSAzNS40Mzg4IDUuNzI3NjYgMzMuMDY3NiA2Ljc4NTk4QzM4LjkzNDggMTAuNjEyOCA0Mi41NDIgMTcuMjAxNiA0Mi41NDIgMjQuMjQ3MkM0Mi41NDIgMzEuMjkyOCAzOC45MzU4IDM3Ljg4MjUgMzMuMDY3NiA0MS43MDkzQzM1LjQzODggNDIuNzY4NiAzOC4wNjI3IDQzLjM2MTUgNDAuODI2MyA0My4zNjE1QzUxLjM2MzcgNDMuMzYxNSA1OS45MDYxIDM0LjgwNDYgNTkuOTA2MSAyNC4yNDcyQzU5LjkwNTEgMTMuNjkwNyA1MS4zNjI3IDUuMTMzNzkgNDAuODI2MyA1LjEzMzc5WiIgZmlsbD0iIzEwNTQ4MCIvPgoKICA8IS0tIExlZnQgbW9vbiAtIGJyYW5kLXNlY29uZGFyeSBza3kgLS0+CiAgPHBhdGggZD0iTTIwLjAzMDggMjQuMjQ2MkMyMC4wMzA4IDE3LjIwMDYgMjMuNjM3OSAxMC42MTI4IDI5LjUwNTEgNi43ODUwMkMyNy4xMzM5IDUuNzI2NzEgMjQuNTEgNS4xMzM3OSAyMS43NDY1IDUuMTMzNzlDMTEuMjA5MSA1LjEzMzc5IDIuNjY3NiAxMy42OTA3IDIuNjY3NiAyNC4yNDcyQzIuNjY3NiAzNC44MDQ2IDExLjIwOTEgNDMuMzYxNSAyMS43NDY1IDQzLjM2MTVDMjQuNTEgNDMuMzYxNSAyNy4xMzM5IDQyLjc2NzcgMjkuNTA1MSA0MS43MDkzQzIzLjYzNyAzNy44ODE1IDIwLjAzMDggMzEuMjkxOCAyMC4wMzA4IDI0LjI0NjJaIiBmaWxsPSIjMjlBQUUxIi8+Cjwvc3ZnPgo=">
+<style>
+:root{--brand-primary:#29AAE1;--brand-secondary:#2075BC;--brand-tertiary:#105480;--brand-radius:10px;
+--bg:#FFFFFF;--bg2:#F1F4F8;--card:#FFFFFF;--txt:#16202C;--dim:#44536A;
+--acc:#0F5E93;--accg:rgba(41,170,225,.16);--warn:#8A5A00;--line:#C7D3E0;--ok:#0E7A52;--hot:#B3261E}
+@media (prefers-color-scheme: dark){:root{
+--bg:#141926;--bg2:#1B2232;--card:#222B3D;--txt:#EDF2F8;--dim:#AAB7C6;
+--acc:#6FC9F0;--accg:rgba(111,201,240,.22);--warn:#FFC14D;--line:#3D4B61;--ok:#4ADE9E;--hot:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:0 0 32px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);max-width:880px}
+a{color:var(--acc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-weight:600}
+.brand-header{border-bottom:2px solid var(--brand-primary);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg)}
+.brand-logo{width:30px;height:24px;flex:0 0 auto}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--txt);white-space:nowrap}
+.wordmark .light{font-weight:300;opacity:.9}.wordmark .sol{font-weight:800;font-style:italic;color:var(--brand-primary)}
+.wrap{padding:0 16px}
+h1{font-size:1.35rem;margin:14px 0 2px;line-height:1.3}
+.sub{color:var(--dim);font-size:.85rem;margin:2px 0 14px}
+h2{font-size:1.05rem;font-weight:800;margin:0 0 10px;color:var(--txt)}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:800;color:#fff;white-space:nowrap}
+.pl-you{background:#B7791F}.pl-agent{background:#22845C}.pl-adv{background:#8A3FBF}.pl-ship{background:var(--brand-secondary)}.pl-next{background:#5A6B7E}
+/* the spine */
+.stage{display:flex;gap:12px;align-items:stretch;margin:14px 0 0}
+.spine{flex:0 0 26px;position:relative;padding:6px 0}
+.spine::before{content:"";position:absolute;left:12px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.spine button{display:block;width:26px;height:26px;min-height:26px;padding:0;margin:0 0 6px;border:0;background:none;cursor:pointer;position:relative}
+.spine button::after{content:"";position:absolute;left:8px;top:9px;width:10px;height:10px;border-radius:50%;background:var(--line);border:2px solid var(--bg);transition:background .15s,transform .15s}
+.spine button[aria-current="true"]::after{background:var(--brand-primary);transform:scale(1.5)}
+.spine button.done::after{background:var(--acc)}
+.panelwrap{flex:1 1 auto;min-width:0}
+.panel{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand-primary);border-radius:var(--brand-radius);padding:15px 16px;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+.meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+.tag{font-weight:800;color:var(--brand-primary);font-size:.95rem}
+.when{color:var(--dim);font-size:.78rem;font-weight:600}
+.quote{border-left:3px solid var(--warn);background:var(--bg2);padding:10px 12px;margin:10px 0;border-radius:0 8px 8px 0;font-style:italic;line-height:1.55}
+.qnote{display:block;font-style:normal;font-size:.78rem;color:var(--dim);margin-top:6px}
+.body{font-size:.96rem;line-height:1.6;margin:10px 0}
+.glory{border-left:3px solid var(--ok);background:var(--accg);padding:10px 12px;margin:12px 0 0;border-radius:0 8px 8px 0;font-weight:600;line-height:1.55}
+.cites{margin:11px 0 0;font-size:.8rem;color:var(--dim);line-height:1.7}
+.nav{display:flex;gap:9px;align-items:center;margin:14px 0 0;flex-wrap:wrap}
+.btn{font:inherit;font-size:.9rem;font-weight:700;min-height:44px;padding:11px 17px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--txt);cursor:pointer}
+.btn:hover{border-color:var(--brand-primary)}
+.btn[disabled]{opacity:.42;cursor:not-allowed}
+.btn.pri{background:var(--brand-secondary);border-color:var(--brand-secondary);color:#fff}
+.count{color:var(--dim);font-size:.82rem;font-weight:700;margin-left:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55}
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:10px 0;line-height:1.5}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:700;background:var(--bg2)}
+.wrapx{overflow-x:auto}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--brand-radius);padding:11px 6px;text-align:center}
+.chip .n{font-size:1.5rem;font-weight:800;color:var(--brand-primary);line-height:1}
+.chip .l{font-size:.72rem;font-weight:600;color:var(--dim);margin-top:4px;line-height:1.35}
+.foot{margin-top:26px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--line);padding:14px 2px 0;line-height:1.6}
+code{font-family:'SFMono-Regular',Consolas,monospace;font-size:.88em}
+</style></head><body>
+<header class="brand-header"><svg class="brand-logo" viewBox="0 0 631 510" xmlns="http://www.w3.org/2000/svg" aria-label="Problem Solutions"><path fill="#2075BC" d="M329.6,102.1c-51.05,33.67-82.35,91.22-82.35,152.67c0,61.45,31.3,118.99,82.35,152.67c51.05-33.67,82.36-91.22,82.36-152.67C411.96,193.33,380.66,135.77,329.6,102.1z"/><path fill="#105480" d="M429.75,53.94c-29.09,0-56.71,6.24-81.67,17.36c61.76,40.21,99.73,109.44,99.73,183.47c0,74.03-37.96,143.27-99.73,183.48c24.96,11.13,52.58,17.36,81.67,17.36c110.92,0,200.84-89.91,200.84-200.84C630.58,143.85,540.66,53.94,429.75,53.94z"/><path fill="#29AAE1" d="M210.85,254.76c0-74.03,37.97-143.25,99.73-183.47C285.62,60.17,258,53.94,228.91,53.94c-110.92,0-200.83,89.91-200.83,200.83c0,110.93,89.91,200.84,200.83,200.84c29.09,0,56.71-6.24,81.67-17.36C248.81,398.03,210.85,328.79,210.85,254.76z"/></svg><span class="wordmark"><span class="light">PROBLEM</span> <span class="sol">SOLUTIONS</span></span></header>
+<div class="wrap">
+<h1>The UAT loop, as it actually ran</h1>
+<div class="sub">Nine highlights from the Music app's first shared walkthrough - the story
+behind the <a href="case-study-music-app.html#evidence">Evidence rail</a>. 2026-07-04 to 07-05.</div>
+
+<div class="card">The Evidence rail in the case study is a table. It proves these things
+happened and it is the right shape for a skeptic with a checklist. It is the wrong shape for
+the story, so this is the story: one beat at a time, in the order it happened, with the line
+of the walkthrough each one came from.</div>
+
+<div class="stage" id="stage">
+<nav class="spine" aria-label="Timeline steps"><button type="button" aria-label="Go to step 1 of 11" aria-current="true"></button><button type="button" aria-label="Go to step 2 of 11"></button><button type="button" aria-label="Go to step 3 of 11"></button><button type="button" aria-label="Go to step 4 of 11"></button><button type="button" aria-label="Go to step 5 of 11"></button><button type="button" aria-label="Go to step 6 of 11"></button><button type="button" aria-label="Go to step 7 of 11"></button><button type="button" aria-label="Go to step 8 of 11"></button><button type="button" aria-label="Go to step 9 of 11"></button><button type="button" aria-label="Go to step 10 of 11"></button><button type="button" aria-label="Go to step 11 of 11"></button></nav>
+<div class="panelwrap">
+<section class="panel" data-step="0" aria-label="Opening"><div class="meta"><span class="tag">The run</span><span class="when">2026-07-04 to 2026-07-05</span></div><h2>Twenty-four findings in about thirty hours</h2><div class="body">The first walkthrough of the Music app shared with other people. The operator tested on his phone and sent what he saw - short bursts, screenshots, one of them with a typo in it. Twenty-four findings landed, numbered U1 to U24.</div><div class="body">What makes this worth telling is not that they were fixed. It is what happened to them afterward.</div><div class="glory">Nine of the twenty-four, in order. Every quote is the operator, verbatim.</div></section>
+<section class="panel" data-step="1" aria-label="U1" hidden><div class="meta"><span class="tag">U1</span><span class="pill pl-you">operator</span><span class="when">2026-07-04</span></div><h2>The one they did not fix</h2><div class="quote">"the built-in songbook doesn&#x27;t deliver for true play/perform"<span class="qnote">typed &quot;play/pedom&quot; on a phone, read as play/perform</span></div><div class="body">Nothing shipped. The finding was routed to a vision interview as a product-direction item, with four probe questions written before anyone touched code: what happened in the moment, which app or paper workflow the user reaches for instead, whether the unit is a song sheet or a progression, and how hands-free it has to be.</div><div class="glory">A loop that patches everything cannot tell a bug from a wrong product. This one stopped.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U1 in the walkthrough</a></div></section>
+<section class="panel" data-step="2" aria-label="U8" hidden><div class="meta"><span class="tag">U8</span><span class="pill pl-ship">shipped</span><span class="when">2026-07-04</span></div><h2>Shipped, gated, measured</h2><div class="quote">"when count chords over width, convert to existing smaller chord icon without chart. wrap chords to keep in view without scroll horiz."</div><div class="body">Width-measured threshold, flex-wrap, no horizontal scroll. Shipped the same day as S-PROG-WRAP, and the gate was a number rather than a look: composeTop measured 379px of the 915px budget with the twelve-bar loaded.</div><div class="glory">Nine words of phone-speak became a measured acceptance condition.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U8 in the walkthrough</a> - <a href="https://github.com/nhruska/nhruska.github.io/pull/141">PR #141</a></div></section>
+<section class="panel" data-step="3" aria-label="U8b" hidden><div class="meta"><span class="tag">U8b</span><span class="pill pl-you">operator</span><span class="when">2026-07-04</span></div><h2>The screenshot that reopened it</h2><div class="quote">"make 6 per row so no 3rd row wrap. degrade at 8, 10...? keep 3 and 4 chord songs to fill box... keep logical count per row"<span class="qnote">a follow-up screenshot at 11 chords, hours after U8 shipped</span></div><div class="body">The root cause was named rather than worked around: the shipped threshold was width-only, and flex-wrap has no concept of a logical count per row, so eleven chords broke as an uneven 5 + 5 + 1 with a mostly-empty third row. The replacement is count-driven - full diagram cards at 1-4, one compact row at 5-6, and a fixed six-column grid at 7-12, so twelve is exactly two rows of six and a third orphan row cannot happen.</div><div class="glory">A second finding on the same feature bought a better model, not a bigger patch.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U8b in the walkthrough</a></div></section>
+<section class="panel" data-step="4" aria-label="U9" hidden><div class="meta"><span class="tag">U9</span><span class="pill pl-agent">diagnosis</span><span class="when">2026-07-04</span></div><h2>The bug nobody was hunting</h2><div class="quote">"The added to setlist toast confirmation never disappears - navigated to my setlist and it&#x27;s still showing."</div><div class="body">The cause was two lines apart in the same closure: <code>var toastTimer</code> declared twice, once around line 1454 and again around 2441. Hoisting makes them one variable, so the two toast systems were clobbering each other's hide timer. It had been there all along - new traffic from a truthful-toast change is what finally made it visible.</div><div class="glory">The fix was extraction into a shared primitive, not a patch on the symptom. UAT found a latent defect no test was looking for.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U9 in the walkthrough</a></div></section>
+<section class="panel" data-step="5" aria-label="U10" hidden><div class="meta"><span class="tag">U10</span><span class="pill pl-adv">became a rule</span><span class="when">2026-07-04</span></div><h2>The finding that became a law</h2><div class="quote">"I like the guidance... but it camouflaged with the highlight rows. Make a prim and enforce consistency - for each element in each view in the whole app so I don&#x27;t have to type that again."</div><div class="body">Guidance was wearing selection's clothes: the educational banner and the in-setlist row highlight shared one pale accent surface. The fix went to the primitive - notables get their own surface token, app-wide. But the last clause is the part that outlived the bug. It was encoded as THE ELEMENT CONSISTENCY LAW in the repo's working notes and the SSOT registry, and consistency findings now route to primitives by law.</div><div class="glory">He said it once. The system remembers it instead of him. This is the whole point of the loop, in one finding.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U10 in the walkthrough</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/CLAUDE.md">music/CLAUDE.md</a></div></section>
+<section class="panel" data-step="6" aria-label="U18" hidden><div class="meta"><span class="tag">U18</span><span class="pill pl-next">direction</span><span class="when">2026-07-04</span></div><h2>A north star fell out of a test session</h2><div class="quote">"I put that bonus on all our users so they can compound the time it took us... skip the empty-library phase and move immediately on their journey."</div><div class="body">Not a defect. Mid-walkthrough, the operator specified a product strategy: curate a playlist across the mode and scale matrix, bake it into the shipped catalog, and let every new user start with a ready jam library instead of an empty one.</div><div class="glory">A UAT session is supposed to find bugs. This one produced the roadmap.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U18 in the walkthrough</a></div></section>
+<section class="panel" data-step="7" aria-label="U22" hidden><div class="meta"><span class="tag">U22</span><span class="pill pl-agent">diagnosis</span><span class="when">2026-07-05</span></div><h2>He offered an easy out. The loop declined it.</h2><div class="quote">"using next/previous through the songs of the set, we&#x27;re losing something for the current song and getting an unexpected message. Could be data specific to me but..."</div><div class="body">It was not his data. Deleting a library item leaves its id behind in any setlist that held it, queue navigation resolves the ghost to nothing, and the perform pane falls through to the library empty state while the counter still counts the missing song. A dangling reference is a class, so the fix went in at three levels: the delete flow heals the references, navigation skips unresolvable entries with a calm notice, and load-time pruning catches whatever already rotted.</div><div class="glory">The operator hedged. The diagnosis did not.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U22 in the walkthrough</a></div></section>
+<section class="panel" data-step="8" aria-label="U23" hidden><div class="meta"><span class="tag">U23</span><span class="pill pl-adv">became a rule</span><span class="when">2026-07-05</span></div><h2>A teaching moment became a principle</h2><div class="quote">"The guidance says this scale works because F major and its relative minor are the same notes - but doesn&#x27;t say WHAT the minor key is. Valuable insight... a message on the continuum of your journey, available at point of need."</div><div class="body">The copy named a relationship and left the reader to compute the instance. The fix interpolates the concrete name from the key already in hand. The principle went into the design conventions: name the instance, not just the relationship - the concrete name is the point-of-need teaching.</div><div class="glory">One sentence of guidance copy, and the rule behind it now applies to every sentence of guidance copy.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U23 in the walkthrough</a></div></section>
+<section class="panel" data-step="9" aria-label="U24" hidden><div class="meta"><span class="tag">U24</span><span class="pill pl-ship">shipped</span><span class="when">2026-07-05</span></div><h2>It ends with a test</h2><div class="quote">"delete song from setlist leaves confirmation container empty. was saved quickly."</div><div class="body">A lifecycle seam between two pull requests that merged hours apart - one owning toast host semantics, the other a setlist undo banner - left the host rendered with nothing in it. The repair unifies the path onto the toast-plus-action primitive. What matters more is what ships beside it: a regression test asserting that no visible-empty-host state exists after any toast lifecycle completes, on every host and every path.</div><div class="glory">The last finding of the run closes its own class behind it.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">U24 in the walkthrough</a></div></section>
+<section class="panel" data-step="10" aria-label="The payoff" hidden><div class="meta"><span class="tag">The payoff</span></div><h2>What the run left behind</h2><div class="chips"><div class="chip"><div class="n">24</div><div class="l">findings</div></div><div class="chip"><div class="n">10</div><div class="l">left something durable</div></div><div class="chip"><div class="n">14</div><div class="l">were fixes, and stayed fixes</div></div></div><div class="body">Ten of the twenty-four ended as something reusable rather than a repair. Named individually, because a claim like that is only worth anything if you can check it:</div><div class="wrapx"><table><tbody><tr><td><strong>U7</strong></td><td>A modal standard for the whole app</td></tr><tr><td><strong>U9</strong></td><td>shared/toast.js primitive, plus the UI-primitives wiki page</td></tr><tr><td><strong>U10</strong></td><td>THE ELEMENT CONSISTENCY LAW</td></tr><tr><td><strong>U16</strong></td><td>A legend primitive - one component, per the Consistency Law</td></tr><tr><td><strong>U19</strong></td><td>A feedback-surface audit and a codified taxonomy</td></tr><tr><td><strong>U20</strong></td><td>A theme-tracking palette system derived from the accent hue</td></tr><tr><td><strong>U21</strong></td><td>A layout invariant - null-label cards reserve the slot</td></tr><tr><td><strong>U22</strong></td><td>A three-level fix for the whole dangling-reference class</td></tr><tr><td><strong>U23</strong></td><td>The name-the-instance principle</td></tr><tr><td><strong>U24</strong></td><td>A regression test that forecloses the class</td></tr></tbody></table></div><div class="body">The other fourteen were fixes and stayed fixes, which is the honest half of the number. A loop where every finding becomes a law is a loop that stops shipping. The skill is telling which is which - U1 got a vision interview, U2 got a wider button.</div><div class="glory">The operator typed "so I don't have to type that again" one time, on a phone, at U10. He has not had to type it again.</div><div class="cites"><a href="https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/uat-walkthrough-20260704.md">The full walkthrough, U1 to U24</a> - <a href="https://github.com/nhruska/nhruska.github.io/blob/main/music/engineering-wiki/decisions.md">decisions registry</a></div></section>
+<div class="nav">
+<button class="btn" id="prev" type="button">Back</button>
+<button class="btn pri" id="next" type="button">Next</button>
+<span class="count" id="pos">1 / 11</span>
+</div>
+</div>
+</div>
+
+<div class="foot">Source: the UAT walkthrough captured live on 2026-07-04 and 07-05, verbatim
+essence per finding. Quotes are the operator's own words as recorded there - typos and all,
+because the typos are the point: this is what real capture looks like.
+<a href="https://github.com/nhruska/nhruska.github.io">Repo</a> - <a href="https://nhruska.github.io/music/play/">the app</a> -
+<a href="case-study-music-app.html">the full case study</a>.</div>
+</div>
+
+<script>
+(function(){
+ var n=11, i=0;
+ var panels=[].slice.call(document.querySelectorAll('[data-step]'));
+ var dots=[].slice.call(document.querySelectorAll('.spine button'));
+ function go(k){
+  i=Math.max(0,Math.min(n-1,k));
+  panels.forEach(function(p,j){p.hidden=(j!==i)});
+  dots.forEach(function(d,j){
+   d.setAttribute('aria-current', j===i ? 'true':'false');
+   d.classList.toggle('done', j<i);
+  });
+  document.getElementById('pos').textContent=(i+1)+' / '+n;
+  document.getElementById('prev').disabled=(i===0);
+  var nx=document.getElementById('next');
+  nx.disabled=(i===n-1);
+  nx.textContent = i===n-2 ? 'The payoff' : 'Next';
+  if(k!==0){var s=document.getElementById('stage');
+   if(s && s.getBoundingClientRect().top<0) s.scrollIntoView({block:'start'});}
+ }
+ document.getElementById('prev').addEventListener('click',function(){go(i-1)});
+ document.getElementById('next').addEventListener('click',function(){go(i+1)});
+ dots.forEach(function(d,j){d.addEventListener('click',function(){go(j)})});
+ document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'){go(i+1)} else if(e.key==='ArrowLeft'){go(i-1)}
+ });
+ go(0);
+})();
+</script>
+</body></html>
