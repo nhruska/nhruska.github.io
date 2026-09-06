@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T12:49:03Z",
+  "generatedAt": "2026-09-06T12:55:34Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-05T06:38:30Z",
-    "sha": "00f78d5768fed18e6a6f6749be48551f7d924ad3",
-    "subject": "feat(artifact-pack): add SDD deep-dive page (personas, friction, hallucination, priority)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/00f78d5768fed18e6a6f6749be48551f7d924ad3"
+    "date": "2026-09-06T02:41:12Z",
+    "sha": "6833aba1f67e1c96c279c692e02109a5dec7b4cb",
+    "subject": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (#343)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/6833aba1f67e1c96c279c692e02109a5dec7b4cb"
   },
   "commits": [
+    {
+      "date": "2026-09-06T02:41:12Z",
+      "sha": "6833aba1f67e1c96c279c692e02109a5dec7b4cb",
+      "subject": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (#343)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/6833aba1f67e1c96c279c692e02109a5dec7b4cb"
+    },
+    {
+      "date": "2026-09-05T12:49:08Z",
+      "sha": "127c795c3ed5773df68f94427bac8d39307b54b8",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/127c795c3ed5773df68f94427bac8d39307b54b8"
+    },
     {
       "date": "2026-09-05T06:38:30Z",
       "sha": "00f78d5768fed18e6a6f6749be48551f7d924ad3",
@@ -78,18 +90,6 @@
       "sha": "9fecbd6e2460804b773df6912c39b9997901da7e",
       "subject": "fix(pwa): bump CACHE/build-stamp - my own last commit touched a CORE file without it",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/9fecbd6e2460804b773df6912c39b9997901da7e"
-    },
-    {
-      "date": "2026-09-05T05:08:48Z",
-      "sha": "af9fcc2886da4b6fb723a45b95c9f2e974d69669",
-      "subject": "docs(artifacts): rebrand to User-Centric Development, link it from the app's Settings",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/af9fcc2886da4b6fb723a45b95c9f2e974d69669"
-    },
-    {
-      "date": "2026-09-05T05:01:24Z",
-      "sha": "631c42610b4b7471eaec3265872ca0427d1207eb",
-      "subject": "docs(artifacts): match the pack's theme to the repo's actual SSOT, not an invented palette",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/631c42610b4b7471eaec3265872ca0427d1207eb"
     }
   ],
   "openPRs": [
@@ -106,43 +106,26 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33952840092/job/101270692849"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34009961889/job/101423931219"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33952840079/job/101270692718"
-        }
-      ]
-    },
-    {
-      "number": 343,
-      "title": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail",
-      "branch": "claude/uat-loop-timeline",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/343",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33939004634/job/101232541641"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33939004623/job/101232541646"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34009961872/job/101423931095"
         }
       ]
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-09-05T02:24:57Z",
+      "mergedAt": "2026-09-06T02:41:12Z",
+      "number": 343,
+      "title": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/343"
+    },
     {
       "createdAt": "2026-09-01T03:34:41Z",
       "mergedAt": "2026-09-05T05:35:44Z",
@@ -240,30 +223,23 @@
       "number": 328,
       "title": "Player-feel UAT rounds 3-8: jams-first landing, tour ends in a jam, row anatomy, stage zoom + icon standard, studio IA",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/328"
-    },
-    {
-      "createdAt": "2026-08-09T15:51:37Z",
-      "mergedAt": "2026-08-09T17:11:28Z",
-      "number": 327,
-      "title": "Variety fill: 12 curated gap tracks across keys, genres, and tempo",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/327"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-05T12:48:58Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/33967108861",
+    "runStartedAt": "2026-09-06T12:55:28Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34034540785",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 2,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 1.79,
+    "typical_merge_hours": 3.5,
     "weekly": null
   },
   "deploy": {
