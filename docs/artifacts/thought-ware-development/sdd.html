@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulation-Driven Development, in Depth - User-Centric Development - Nik Hruska</title>
-<meta name="description" content="User-Centric Development (working name: Thought-Ware Development) - the SDD deep-dive: personas as deterministic app states, friction profiles as the real input, hallucination as a permissible upstream feature, and persona priority as a Product Owner call that moves.">
+<meta name="description" content="Simulation-Driven Development deep-dive: persona fixtures as reproducible application states, evidence-bearing friction records, bounded agent generation, and governed product priority.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
 <style>
 :root{
@@ -86,13 +86,13 @@ a{color:var(--accent-ink);}
 
 <p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:.85rem;"><a href="method.html">&larr; The Method</a> &middot; <a href="gateway.html">User-Centric Development</a></p>
 <h1>Simulation-Driven Development, in Depth</h1>
-<p class="tagline">Personas as deterministic app states, friction profiles as the real
-input, hallucination as a permissible upstream feature, and persona priority as a
-Product Owner call that moves over time.</p>
+<p class="tagline">Persona fixtures as reproducible app states, friction records as the
+evidence-bearing input, bounded candidate generation, and product priority that moves
+as evidence changes.</p>
 
 <div class="wrap">
 
-<span class="status">Candidate for global promotion - pilot in progress</span>
+<span class="status">Operational component in one product - controlled evaluation proposed; independent replication later</span>
 
 <h2>A persona is a state, not a character</h2>
 <p>The tempting shortcut is asking the model to roleplay a user - "pretend you're a
@@ -101,8 +101,9 @@ not a checkable fact, and it's a different opinion every time you ask. SDD (the
 running skill calls it USDD - User-Simulation-Driven Development) rejects that
 shortcut entirely: a persona here is <code>music.guidanceLevel.v1</code> plus an
 answered-ask notable, seeded into localStorage <strong>before</strong> the scenario
-runner taps a single button. The runner then drives the same taps a real user of
-that level would make and asserts what that user must - or must not - see.</p>
+runner taps a single button. The runner then drives the declared flow and asserts what
+the application must - or must not - show for that fixture. This simulates supported
+state; it does not reproduce or replace a real human participant.</p>
 <div class="tbl-wrap">
 <table>
 <tr><th>Persona level</th><th>Seeded state</th><th>What diverges (notables)</th></tr>
@@ -111,17 +112,16 @@ that level would make and asserts what that user must - or must not - see.</p>
 <tr><td>Advanced</td><td><code>level=advanced</code>, ask answered</td><td>whynote, scaletip</td></tr>
 </table>
 </div>
-<p>Same taps, seeded state swapped, opposite assertions - both provably green. That's
-the whole trick: "run any app user on any task" becomes a replayable claim instead of
-an improvised performance, because the persona is data the runner seeds, not a
-character the model stays in.</p>
+<p>Same taps, seeded state swapped, opposite assertions - both replayable. The bounded
+claim is that explicitly modeled persona states can be tested against supported flows,
+because the persona is data the runner seeds, not a character the model stays in.</p>
 
 <h2>Friction profiles are the real input</h2>
 <p>A friction profile is not a backlog someone invented at a whiteboard. It's built
 the same way every time: take a persona, list what actually went wrong for them in a
 real session, and cite the evidence - an operator quote, a scenario screenshot, a
 code trace - next to each one. Anything without evidence doesn't count as friction
-yet, it's a guess.</p>
+yet; it remains a labeled hypothesis.</p>
 <div class="tbl-wrap">
 <table>
 <tr><th>Persona</th><th>#</th><th>Friction</th><th>Evidence</th></tr>
