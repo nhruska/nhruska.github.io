@@ -33,7 +33,7 @@ Kernel (circle.js, unit-tested in test/key-spelling.test.js incl. the 12 profess
 
 **Keyless/chromatic contexts stay canonical-sharp** (music-theory-coach verdict: sharp is acceptable where no key function is asserted): the tuner, the All-browse palette (its A# tile stays A# until it lands in a keyed progression), pack data, and every stored token. Flat INPUT still normalizes for identity (norm(), circle.js F2S). [STABLE]
 
-## Retired: canonical-sharp-everywhere (FORK-4, regime A) [STABLE]
+## Retired: canonical-sharp-everywhere (FORK-4, regime A) [RETIRED 2026-07-10 -> D-KEY-STORE-PREF]
 
 Until 2026-07-10 ONE sharp spelling per pitch class rendered everywhere (the FORK-4 pilot decision). Its costs (letters repeating in scale listings, A# where charts say Bb, numeral/name self-contradiction - "bVII" labeled over "A#") were accepted to avoid the old two-spellings-on-one-screen bug. Regime B removes those costs while KEEPING the single-identity guarantee via the token/display split. The legacy `spell()`/`spellScale()`/`soloScale()` remain in circle.js for the keyless contexts and identity math. [STABLE]
 

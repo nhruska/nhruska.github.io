@@ -194,18 +194,15 @@ test('theory canon matrix size: 12 roots x 4 modes x 21 checks = 1008', function
     'vanished from SHARP_NAME/MODE_STEPS, silently narrowing this canon)');
 });
 
-/* ---------- S-BLUES canon: solo-scale (pentatonic/blues) name literals -----
- * REGIME-A (now, [TRACKS-#98]): Circle.soloScale() spells every note through
- * the SAME canonical-sharp spell() the rest of this module uses (FORK-4) - one
- * provider, one seam (see circle.js's SOLO_SCALES block comment). So the blue
- * note (blues' formula[3], a flat 5th) renders SHARP-spelled here (e.g. A
- * blues = A C D D# E G - the b5 is D#, not Eb) rather than key-aware-
- * flattened. That is REGIME-A policy, not a bug: Regime B (S-BLUES-B, queued
- * on #98) will swap in a key-aware spelling once spellScaleKeyAware/keyLabel
- * land. 12 roots x 3 solo scales x literal name array below, hand-computed
- * against the sharp pitch-class table (not read from circle.js's own ROOTS
- * array), so a regression that breaks BOTH the app and a copy-pasted
- * expectation in lockstep can't slip through. -------------------------- */
+/* ---------- S-BLUES canon: canonical token-provider name literals ----------
+ * Circle.soloScale() is the legacy/keyless canonical-sharp provider used for
+ * stable internal identities. Stated-key DISPLAY uses soloScaleInKey(), whose
+ * key-aware behavior is guarded in key-spelling.test.js. This test deliberately
+ * locks the token provider instead: the blue-note token remains D# in A blues
+ * here even though the displayed b5 is Eb. The literal table is hand-computed
+ * against the sharp pitch-class table (not read from circle.js's own ROOTS),
+ * so a regression that breaks both implementation and a derived expectation in
+ * lockstep cannot slip through. ----------------------------------------- */
 var SOLO_SCALE_CANON = {
   C:  { pentMajor: 'C D E G A',       pentMinor: 'C D# F G A#',    blues: 'C D# F F# G A#' },
   'C#': { pentMajor: 'C# D# F G# A#', pentMinor: 'C# E F# G# B',   blues: 'C# E F# G G# B' },
