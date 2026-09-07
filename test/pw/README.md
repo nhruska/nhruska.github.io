@@ -24,8 +24,10 @@ python3 test/pw/run-scenario.py --all        # every scenario, SEQUENTIALLY
 - **USDD personas**: a scenario's `"persona"` field ("beginner" | "intermediate"
   | "advanced") seeds the guidance-level state pre-load, so level-gated UI is
   assertable per simulated user - the red-first loop is the
-  [usdd skill](../../.claude/skills/usdd/SKILL.md). Persona coverage: 2 of 8
-  flows have persona variants (grow this - CE2).
+  [usdd skill](../../.claude/skills/usdd/SKILL.md). The committed goalpost-persona
+  registry currently has 7 named persona fixtures and 11 `persona-*.json`
+  scenarios. Treat this as a dated inventory, not a coverage percentage: coverage
+  requires a declared denominator of supported flows.
 
 | Scenario | Proves |
 |---|---|

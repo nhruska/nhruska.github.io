@@ -12,7 +12,7 @@ One registry of load-bearing decisions, their rationale, and owning pages. If a 
 
 | ID | Decision | Ruling (one line) | Owning page |
 |---|---|---|---|
-| FORK-4 | Canonical-sharp spelling app-wide `[TRACKS-#98]` | ONE sharp table; flat input normalizes; flats never render | [theory-engine/note-spelling.md](theory-engine/note-spelling.md) |
+| FORK-4 | **RETIRED 2026-07-10 by D-KEY-STORE-PREF** - canonical-sharp display app-wide | Historical pilot policy; canonical tokens remain, but stated-key display is key-aware | [theory-engine/note-spelling.md](theory-engine/note-spelling.md) |
 | SHARP-TIE | Enharmonic ties render sharp | Deterministic PRODUCT POLICY (professor-classified policy-not-bug), not conservatory practice | note-spelling |
 | ROMAN-HYBRID | Mode-local numerals in-key; chromatic labels for borrowed | Same chord relabels bVII <-> VII on mode toggle, by design; harmonic-minor V cased by the chord | [theory-engine/harmonization.md](theory-engine/harmonization.md) |
 | D1 | Transpose == song key | One songKey; transposing moves the key; picking a key transposes the progression | [systems/compose-key-system.md](systems/compose-key-system.md) |
@@ -46,7 +46,7 @@ One registry of load-bearing decisions, their rationale, and owning pages. If a 
 | HOME-KEY | Canvas suggestions anchor to the FIRST-section home key + minor keys realize in-key (operator 2026-07-20) | `songHomeKey()` derives the established key from the first (key-establishing) section, not the muddy whole-song concat; pinned on canvas entry so chip + new-section + suggestions agree. `templateSuggestions` realizes MINOR keys against their RELATIVE MAJOR (A minor -> C) so major-roman families land in the key's own pitch set (was F#m out-of-key). Roman labels stay the family's major roman - a follow-up nuance | [systems/compose-key-system.md](systems/compose-key-system.md) |
 | SETLIST-DRAG-AUTOSCROLL | A lifted setlist drag edge-auto-scrolls #setBody so off-screen rows are reachable (operator UAT 2026-07-20 'can't drag from 10 to anything less than 7') | `wireSetlistDrag` runs an rAF loop while the finger holds within 48px of #setBody's top/bottom - the ONLY scroll rail - scrolling up to 16px/frame (ramped by proximity) and re-painting the drop marker as rows slide in; cancelled on cleanup. Native scroll is blocked mid-drag, so without this the drop target could only be a row already in the viewport | [ux-philosophy/component-conventions.md](ux-philosophy/component-conventions.md) |
 | SOLO-BOUNDARY | 5/6-note SOLO scales never harmonize (amended by D-BLUES-KEY, W2) | Pentatonics are solo-layer only, no triad palette, unconditionally; the blues SOLO scale (6-note, fretboard/degrees) stays solo-layer too - Blues' harmonizing counterpart is the SEPARATE 3-degree BLUES_KEY model, deliberately kept apart from this scale | [theory-engine/solo-scales.md](theory-engine/solo-scales.md) |
-| BLUE-NOTE-A | Regime-A blue note spells sharp (`A blues = A C D D# E G`) `[TRACKS-#98]` | FORK-4 one-table consistency beats notation convention until #98; flips to Eb at S-BLUES-B via the one-provider seam | solo-scales |
+| BLUE-NOTE-A | **RETIRED 2026-07-10 by S-BLUES-B** - regime-A blue note spelled sharp (`A blues = A C D D# E G`) | Historical FORK-4 behavior; active key-aware display spells the b5 as Eb | solo-scales |
 | D-KEYLESS | Keyless progressions stay keyless through mode change AND transpose | Supersedes codex #90 V1's first-chord-fallback per operator input I4; a mode change while keyless re-qualifies via the shared pure fn but never resurrects a root, and the fly-out stays open; also fixes the F12 dead-mode-chip (re-tapping the current mode with no root re-renders instead of no-op-ing) | [systems/compose-key-system.md](systems/compose-key-system.md) |
 | D-FRETS-4STR | 4-string necks default to a 12-fret Studio window, not 7 | `pack.meta.strings <= 4` (uke/mandolin/mandola) - a 7-fret window covers less musical value per fret at 4 strings; banjo(5) and guitars keep 7 | [systems/practice-studio.md](systems/practice-studio.md) |
 | D-BLUES-KEY | Blues is a separate 3-degree harmonizing key model (I7/IV7/V7), not a diatonic mode | `songbook.js MODES.Blues` (steps [0,5,7], quals all `'7'`) + `Circle.BLUES_KEY`/`bluesKey(root)`; palette-minimalism in-key rule (plain triad or dominant 7th only, no ii/dim/maj7/subs); never auto-inferred; `completions()` top-guarded to `[]`; convertProgressionQualities' Blues<->diatonic directions gated on the professor-fold amendment (dom-7-strip applies only to a root ON the blues palette, offsets {0,5,7} from the SOURCE tonic - not any target-mode degree, so a non-palette root like a user-added A7 survives unchanged) | [theory-engine/harmonization.md](theory-engine/harmonization.md) |
@@ -79,7 +79,7 @@ One registry of load-bearing decisions, their rationale, and owning pages. If a 
 | A5 | Double-fire prevented by single-slot arbitration + simultaneous-claim tests |
 | A6 | Undo persistence explicit: session-only (resolved by A3) |
 | A7 | Fold gate: Compose fixed-top bottom edge +-2px at 412x915, verified before/after combined merges |
-| A8 | Wave-2 #98 seam named: spellKeyAware/spellScaleKeyAware/keyLabel ONLY; absent -> BLOCKED-not-improvised `[TRACKS-#98]` |
+| A8 | **FULFILLED/RETIRED 2026-07-10** - the planned #98 seam was superseded by the shipped preferredTonicName/scaleInKey/diatonicInKey/soloScaleInKey/noteInKey API |
 | A9 | JIT copy = static templates interpolating already-rendered labels; zero new theory derivation |
 | A10 | SW CACHE bump in the same commit as any CORE change; parallel conflicts resolve max+1 |
 | A11 | localStorage test isolation via the shared reset helper |
@@ -91,10 +91,10 @@ Source: [docs/plans/ux-sprint-1-20260703.md](../../docs/plans/ux-sprint-1-202607
 
 | ID | Ruling |
 |---|---|
-| M3-CHOICE-A | Zero M3 slices in sprint 1 (council-unanimous, operator-approved); M3 = sprint-2 primary, fresh session, post-#98, 5A/5B pre-answered |
-| WAVE-2-DEFER | S-TONES / S-ROMAN+S-KEYPOLICY / S-GOLDEN-B deferred-with-reason on #98; resume on merge event `[TRACKS-#98]` |
+| M3-CHOICE-A | **FULFILLED/HISTORICAL** - zero M3 slices in sprint 1; the later merged-repertoire work is documented in the data model |
+| WAVE-2-DEFER | **FULFILLED/RETIRED 2026-07-10** - key-aware spelling and golden traps shipped through PR #199 |
 | S-BLUES | Pentatonic major/minor + blues BUILT this mission (I1), solo layer only, per the [IA seam contract](../../docs/plans/wiki-ia-20260704.md) |
-| S-BLUES-B | Key-aware pentatonic/blues spelling QUEUED on #98 (provider swap only) `[TRACKS-#98]` |
+| S-BLUES-B | **SHIPPED 2026-07-10** - key-aware pentatonic/blues display via soloScaleInKey; b5 spells by degree |
 | S-DIAGRAM-PREF | Step 0 (shape classifier, see D-SHAPE-CLASSIFY) SHIPPED 2026-07-05; steps 1-2 (Notables prompt + 'patterns' render, see D-DIAGRAM-PREF) SHIPPED 2026-07-06. Spec home [ux-philosophy/expertise-adaptive-display.md](ux-philosophy/expertise-adaptive-display.md) |
 | DECOM | Legacy docs absorbed into this wiki then stubbed/deleted per the IA disposition table (grep-before-DELETE) |
 | P5-FOLD | P5 seasoned-player adversarial pass on PR #118 (2026-07-05), folded pre-merge into the same PR | Two changes: (1) ghost dots for out-of-scale chord tones - see D-TARGET amendment; (2) rewrote most SoloGuide card blocks toward chord-relative ("target the CURRENT chord") advice + fixed the pentMajor relative-minor-pent distance (three frets, not two) - supersedes section-8B wherever both touched the same block (dorian.hangOn, pentMinor.startEnd, blues.resolveTo) |
