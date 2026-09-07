@@ -3,6 +3,8 @@
 ## Identity
 
 - ID:
+- Version:
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Goalpost:
 - Scenario and version:
 - Candidate revision:
@@ -16,6 +18,8 @@
 - Graders and versions:
 - Agent/model configuration, if applicable:
 - Trial and seed policy:
+- Evaluation-plan version and freeze timestamp:
+- Blinding and independence determination:
 
 ## Per-trial results
 
@@ -26,11 +30,13 @@
 ## Aggregate
 
 - Final gate state:
+- Underlying findings retained when precedence was applied:
 - Aggregation rule:
 - Pass rate and uncertainty:
+- Numerator, denominator, unit, and observation window for every rate:
+- Assigned/completed/accepted/independently-successful/blocked/missing counts:
 - Human attention minutes:
 - Rework:
 - Deviations and missing evidence:
 - Known limitations:
 - Independent review:
-

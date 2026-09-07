@@ -17,6 +17,8 @@
 - Risk created or accepted:
 - Compensating controls:
 - Products, releases, and users affected:
+- Conformance profiles made nonconforming by this exception:
+- Lower profile, if any, still fully satisfied:
 
 ## Closure
 

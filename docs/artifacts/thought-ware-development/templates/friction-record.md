@@ -3,7 +3,7 @@
 ## Identity
 
 - ID:
-- Status: `PROPOSED | ACTIVE | SUPERSEDED | RETIRED | REJECTED`
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Created:
 - Recorder:
 - Product or system:
@@ -12,6 +12,7 @@
 ## Observation
 
 - Actor classification: `operator | external participant | support report | telemetry | agent hypothesis`
+- Evidence status: `OBSERVED | AUTHORIZED | HYPOTHESIS`
 - Context and initial state:
 - Verbatim observation or system event:
 - Evidence links:
@@ -35,4 +36,3 @@
 - Decision: `investigate | accept | defer | reject | supersede`
 - Rationale:
 - Superseded by:
-

@@ -4,7 +4,7 @@
 
 - ID:
 - Version:
-- Status: `PROPOSED | ACTIVE | SUPERSEDED | RETIRED`
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Goalpost:
 - Primary class: `persona | capability | domain-rule | accessibility | security-privacy | data-migration | resilience | performance | human-judgment`
 - Secondary classes:
@@ -40,4 +40,3 @@
 - Known limitations:
 - Execution cadence: `per-change | nightly | pre-release | on-demand`
 - Evidence retention location:
-

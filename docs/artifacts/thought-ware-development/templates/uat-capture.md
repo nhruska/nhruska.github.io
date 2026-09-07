@@ -3,6 +3,8 @@
 ## Identity
 
 - ID:
+- Version:
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Related goalpost or release:
 - Date:
 - Facilitator:
@@ -31,4 +33,3 @@
 - New Friction Record:
 - Decision and owner:
 - Follow-up verification:
-

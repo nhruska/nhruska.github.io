@@ -3,6 +3,8 @@
 ## Identity
 
 - ID:
+- Version:
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Goalpost:
 - Scenario and version:
 - Captured:
@@ -26,4 +28,3 @@
 - Did a corruption or control case behave as expected?
 - Independent reviewer:
 - Exception, if a valid prior production failure substitutes for this run:
-

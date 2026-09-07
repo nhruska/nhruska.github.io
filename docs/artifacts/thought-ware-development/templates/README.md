@@ -15,6 +15,7 @@ Use stable identifiers with a project prefix and sequence, for example:
 - `MUSIC-ER-20260906-01` - evaluation result
 - `MUSIC-DR-0024` - decision record
 - `MUSIC-EB-20260906-01` - evidence bundle
+- `MUSIC-CA-20260906-01` - conformance assessment
 
 ## Required relationships
 
@@ -23,6 +24,10 @@ Use stable identifiers with a project prefix and sequence, for example:
 UAT, decision, exception, and retirement records attach to the relevant identifiers.
 Every record declares lifecycle status. A superseded record remains available and
 points to its replacement.
+
+An approved exception records accepted risk but does not satisfy the waived
+requirement. The affected scope reports `NONCONFORMING` for any profile that requires
+that clause.
 
 ## Templates
 
@@ -35,5 +40,5 @@ points to its replacement.
 - [UAT Capture](uat-capture.md)
 - [Decision Record](decision-record.md)
 - [Release Evidence Bundle](release-evidence-bundle.md)
+- [Conformance Assessment](conformance-assessment.md)
 - [Exception or Retirement Record](exception-retirement-record.md)
-

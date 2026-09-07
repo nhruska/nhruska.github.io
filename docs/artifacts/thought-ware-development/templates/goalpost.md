@@ -3,7 +3,7 @@
 ## Identity
 
 - ID:
-- Status: `PROPOSED | ACTIVE | SUPERSEDED | RETIRED | REJECTED`
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Friction records:
 - Authority records:
 - Owner:
@@ -16,7 +16,8 @@
 - Observable acceptable outcome:
 - Observable unacceptable outcomes:
 - Exclusions and non-goals:
-- Risk and severity:
+- Risk tier, rubric version, and rationale:
+- Failure severity and escalation conditions:
 - Supported environments:
 
 ## Evaluation design
@@ -26,6 +27,6 @@
 - Required trial count:
 - Human judgment rubric, if applicable:
 - Promotion role: `advisory | required | technically enforced`
+- Evaluation-plan freeze point:
 - Supersedes:
 - Replaced by:
-

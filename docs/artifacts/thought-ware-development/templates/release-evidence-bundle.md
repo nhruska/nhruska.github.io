@@ -3,10 +3,14 @@
 ## Identity
 
 - Bundle ID:
+- Version:
+- Status: `PROPOSED | ACTIVE | DEPRECATED | SUPERSEDED | RETIRED | REJECTED`
 - Candidate revision:
 - Created:
 - Release approver:
 - Method version and conformance profile:
+- Conformance scope and requirement-matrix result:
+- Change Unit and risk tier:
 
 ## Traceability
 
@@ -44,5 +48,6 @@
 - Evidence manifest and hashes:
 - Summary reconciled with underlying records:
 - Independent reviewer:
+- Reviewer conflicts and independence determination:
+- Tamper-evident preservation mechanism:
 - Approval decision and timestamp:
-

@@ -1,8 +1,9 @@
 # Thought-Ware Development Method Specification v0.1
 
-Status: proposed experimental specification  
-Date: 2026-09-06  
-Maturity: operational single-product method; controlled replication not yet completed  
+Status: proposed experimental specification
+Date: 2026-09-06
+Draft revision: 0.1.1 (normative-review corrections, 2026-09-07)
+Maturity: operational single-product method; controlled evaluation and independent replication not yet completed
 Public name: unresolved; see `naming-review-20260906.md`
 
 ## 1. Purpose
@@ -26,6 +27,22 @@ method improves software outcomes.
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and
 **MAY** are normative requirements. A conforming implementation MUST document every
 intentional deviation from a MUST requirement as a time-bounded exception.
+
+Unless a clause explicitly states that it is research-only or Recorded-only, a MUST
+requirement applies to the `Controlled`, `Evaluated`, and `Replicated` profiles. The
+`Recorded` profile is a bounded adoption profile governed only by its explicit
+requirements in Section 13; it MUST NOT be represented as full operational
+conformance.
+
+An exception documents and authorizes risk; it does not make an unsatisfied
+requirement satisfied. A scope with an active exception to a profile requirement MUST
+report `NONCONFORMING` for that profile and MAY claim a lower profile only when all of
+that profile's requirements are satisfied. Research reports MUST include all active
+exceptions and MUST NOT silently exclude nonconforming units.
+
+Normative requirements apply only to the declared conformance scope. A conformance
+claim MUST identify the product or workflow, change or release boundary, method
+version, profile, assessment date, and evidence bundle.
 
 ## 3. Scope
 
@@ -61,6 +78,9 @@ correct.
 | Gate | Policy that maps valid evidence to a release state. |
 | Exception | Authorized, time-bounded deviation from a normative requirement. |
 | Supersession | Explicit replacement of a rule, decision, scenario, or result by another identified artifact. |
+| Change Unit | The smallest change or release boundary for which one conformance and gate decision is made. |
+| Risk Tier | A project-defined ordinal classification assigned before evaluation and used to select required controls. |
+| Independent | Free from authorship of the candidate and from unilateral ability to change the candidate, oracle, goalpost, grader, or reported outcome during evaluation. |
 
 ## 5. Governing principles
 
@@ -72,20 +92,24 @@ NOT be treated as proof.
 
 ### 5.2 Authority precedes automation
 
-Every active business or domain rule MUST identify an authority source and accountable
-owner. When sources conflict or authority is absent, evaluation MUST return `BLOCKED`
-or `UNVERIFIED`, never `PASS`.
+Every active business or domain rule applicable to the Change Unit MUST identify an
+authority source and accountable owner. When sources conflict or authority is absent,
+evaluation MUST return `BLOCKED` or `UNVERIFIED`, never `PASS`.
 
 ### 5.3 Acceptance is independent of implementation
 
 The implementation under evaluation MUST NOT silently redefine its own acceptance
 criteria. Any change to an active oracle, goalpost, fixture, or grader in the same
-change set MUST receive explicit review from an authorized party independent of the
-implementation decision.
+change unit MUST be approved before confirmatory evaluation by an authorized party
+independent of candidate implementation. After evaluation starts, such a change
+invalidates the affected confirmatory result unless handled as a disclosed protocol
+amendment and reevaluated.
 
-Organizationally separate people are preferred. Where staffing prevents separation,
-the same person MAY perform multiple roles only when the evidence records the role
-transition and an independent later review is required before a high-risk release.
+For low- and medium-risk operational work, one human MAY perform multiple roles only
+when the evidence records each role transition and a second qualified reviewer
+independently approves the gate. High-risk work MUST use separate accountable humans
+for implementation and final approval. A model, model vendor, or separate agent
+session does not establish organizational independence.
 
 ### 5.4 Gates fail closed
 
@@ -138,11 +162,27 @@ Role names describe functions, not job titles. Agents MAY assist any role but MU
 be represented as holding human accountability or professional credentials they do
 not possess.
 
+### 6.1 Risk classification and role conflicts
+
+Before scenario construction, the Product authority MUST assign the Change Unit a
+risk tier using a versioned project rubric and record the rationale. The rubric MUST
+define at least low, medium, and high tiers, escalation conditions, and the controls
+required by each tier. A change MUST be high risk when failure could plausibly cause
+material safety, security, privacy, legal, financial, accessibility, irreversible-data,
+or critical-operations harm unless a stricter governing framework applies.
+
+Every accountable reviewer MUST disclose authorship, reporting-line, financial, and
+other material conflicts that could influence the gate. A conflict does not always
+disqualify a reviewer, but an unresolved conflict MUST prevent that reviewer from
+being the sole independent approver.
+
 ## 7. Artifact lifecycle
 
 ### 7.1 Observe
 
-- A material issue MUST begin with a Friction Record.
+- Work proposed as a response to material observed friction MUST begin with a Friction
+  Record. “Material” means capable of changing priority, acceptance, release risk, or
+  an intended user or system outcome under the project's declared rubric.
 - The record MUST separate verbatim observation from interpretation.
 - Inferred friction MAY enter discovery but MUST be labeled `HYPOTHESIS` until observed
   or authorized.
@@ -189,9 +229,12 @@ not possess.
 ### 7.7 Evaluate
 
 - Required graders MUST execute in the declared environment.
+- The evaluation plan, aggregation rule, thresholds, and required evidence MUST be
+  frozen before the candidate result is inspected.
 - Stochastic outcomes MUST use the preregistered number of independent trials.
 - Evaluators MUST preserve per-trial results, not only aggregates.
-- Negative controls and corruption tests SHOULD be used for high-risk gates.
+- Negative controls and corruption tests MUST be used for high-risk gates and SHOULD
+  be used for other gates.
 
 ### 7.8 Conduct UAT
 
@@ -260,12 +303,29 @@ Every evaluated goalpost MUST end in exactly one state:
 
 `SUPERSEDED` and `RETIRED` are lifecycle states for artifacts, not evaluation outcomes.
 
+When more than one condition applies to a goalpost, the evaluator MUST retain every
+underlying finding and assign the final state using this precedence:
+
+1. `FAIL` when any valid required observation violates a threshold;
+2. `INVALID_EVIDENCE` when no valid failure is established and required evidence is
+   stale, corrupt, mismatched, or procedurally invalid;
+3. `BLOCKED` when no failure or invalid evidence is established and an external
+   authority, dependency, permission, or decision prevents evaluation;
+4. `UNVERIFIED` when evaluation was possible but required coverage or observation is
+   insufficient;
+5. `PASS` only when every required threshold and evidence obligation is satisfied.
+
+An aggregate release gate MUST use the same precedence across required goalposts and
+MUST expose component states rather than reporting only the aggregate.
+
 ## 11. Evidence Bundle minimum
 
 An Evidence Bundle MUST include:
 
 - bundle identifier and timestamp;
+- method version, conformance scope, profile, and conformance result;
 - candidate revision;
+- Change Unit and risk tier with rationale;
 - friction, authority, goalpost, and scenario identifiers;
 - pre-change revision and Red Proof;
 - environment and dependency versions;
@@ -273,9 +333,11 @@ An Evidence Bundle MUST include:
 - every required trial outcome;
 - logs, screenshots, traces, or other referenced artifacts;
 - deviations, missing evidence, and exceptions;
+- reviewer conflicts and independence determination;
 - unresolved risks;
 - approver and decision;
-- rollback and monitoring plan.
+- rollback and monitoring plan;
+- evidence-manifest hashes or an equivalent tamper-evident preservation mechanism.
 
 An evidence summary MUST be mechanically derived from, or reconciled against, the
 underlying records. Summary counts MUST NOT be maintained independently without a
@@ -291,28 +353,46 @@ Every governed artifact MUST declare one lifecycle state:
 - `SUPERSEDED`
 - `RETIRED`
 - `REJECTED`
+- `EXPIRED` (exceptions only)
 
 Active records MUST identify their effective date or version. Superseded records MUST
 identify their replacement. Generated documentation MUST identify its sources and MUST
 be regenerated or fail a drift check when those sources change.
 
+`DEPRECATED` means still applicable during a declared transition; `SUPERSEDED` means
+replaced and no longer authoritative; `RETIRED` means intentionally removed without
+an active replacement; and `REJECTED` means never activated. Only `ACTIVE`, and
+`DEPRECATED` within its declared transition window, MAY supply current authority.
+Lifecycle transitions MUST identify the approver, effective time, reason, and any
+replacement. Historical records MUST remain immutable or version-addressed.
+
 ## 13. Conformance profiles
 
-| Profile | Required evidence |
+| Profile | Required evidence and permitted claim |
 |---|---|
-| Recorded | Required artifacts and traceability exist. |
-| Controlled | Recorded plus independent acceptance control, fail-closed states, Red Proof, and enforced promotion policy. |
+| Recorded | Friction, authority, goalpost, scenario, evaluation, and decision artifacts identify their versions, lifecycle states, relationships, known missing evidence, and accountable owners. The scope may claim only “Recorded adoption.” |
+| Controlled | Recorded plus every applicable operational MUST in this specification, independent acceptance control, fail-closed states, Red Proof, and evidence that the promotion policy was enforced. This is the minimum full-method conformance profile. |
 | Evaluated | Controlled plus preregistered comparison with a credible baseline. |
-| Replicated | Evaluated plus reproduction by a team independent of the method's authors. |
+| Replicated | Evaluated plus a new execution of the frozen study by a team independent of the method's authors. |
 
-A project MUST state the exact profile achieved. It MUST NOT use `Evaluated` or
-`Replicated` based only on internal case-study evidence.
+A project MUST state the exact profile achieved and publish a requirement-by-
+requirement conformance matrix. Self-attestation MAY establish `Recorded`, but the
+word “conforming” without qualification MUST mean `Controlled` or higher.
+`Controlled` requires an independent reviewer and evidence that promotion controls
+were actually enforced for the declared scope. `Evaluated` requires a frozen,
+preregistered comparison and an analysis that includes every randomized unit.
+`Replicated` requires a new execution by a team independent of the method's authors,
+not merely computational reproduction of the original analysis.
+
+A project MUST NOT use `Evaluated` or `Replicated` based only on internal case-study
+evidence. A profile is not inherited by an entire organization or product from one
+conforming Change Unit.
 
 ## 14. Method evaluation metrics
 
 Claims about method effectiveness SHOULD prioritize:
 
-- false-pass rate;
+- unacceptable-completion incidence and false pass among declared completions;
 - escaped acceptance defects, including severity;
 - independently judged task success;
 - evaluator agreement;
@@ -326,6 +406,12 @@ Claims about method effectiveness SHOULD prioritize:
 
 Commit counts, pull-request counts, scenario counts, and model-token counts MAY describe
 activity but MUST NOT be presented as quality or user-impact evidence.
+
+Every reported rate MUST publish its numerator, denominator, unit of analysis,
+observation window, missing-data treatment, and uncertainty interval. A method
+evaluation MUST report both unacceptable-completion incidence and independently
+verified task success so that a workflow cannot appear safer merely by completing or
+accepting fewer tasks.
 
 ## 15. Explicit non-claims
 
@@ -350,17 +436,26 @@ Conformance to v0.1 does not establish that:
   analyzed separately from preregistered hypotheses.
 - Method revisions SHOULD include migration guidance for active templates and gates.
 
+### 16.1 Draft revision record
+
+- 0.1.0 (2026-09-06): initial proposed specification.
+- 0.1.1 (2026-09-07): clarified exception semantics, conformance scope, independence,
+  risk classification, frozen evaluation criteria, gate-state precedence, evidence
+  integrity, lifecycle authority, profile assessment, and non-gameable rate reporting.
+
 ## 17. References
 
 - ACM SIGSOFT, [Empirical Standards for Software Engineering Research](https://www2.sigsoft.org/EmpiricalStandards/)
 - ACM, [Artifact Review and Badging](https://www.acm.org/publications/policies/artifact-review-and-badging-current)
 - NIST, [Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf)
 - Anthropic, [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
-- Open Science Community, [Preregistration guidance](https://guide.opens.science/preregistration.html)
+- Center for Open Science, [Preregistration](https://www.cos.io/initiatives/prereg)
 
 ## Appendix A. Conformance checklist
 
 - [ ] Method version is identified and frozen for the evaluation period.
+- [ ] Conformance scope, profile, assessor, and requirement matrix are identified.
+- [ ] Risk tier and role conflicts are recorded before evaluation.
 - [ ] Every active rule has authority, owner, scope, status, and version.
 - [ ] Friction evidence is separated from interpretation.
 - [ ] Goalposts are observable and implementation-neutral.
@@ -371,4 +466,5 @@ Conformance to v0.1 does not establish that:
 - [ ] UAT evidence classes are reported accurately.
 - [ ] Evidence Bundle reconstructs the gate decision.
 - [ ] Exceptions expire and superseded records identify replacements.
+- [ ] Every rate exposes its numerator, denominator, unit, window, and missing data.
 - [ ] Claims stay within the evaluated population and task classes.

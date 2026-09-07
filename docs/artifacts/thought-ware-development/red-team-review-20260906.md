@@ -112,7 +112,8 @@ Expected review dimensions:
 
 ## Required next evidence
 
-- Freeze and preregister `specification-v0.1.md` and `experiment-1-protocol.md`.
+- Freeze and preregister `specification-v0.1.md` and
+  `experiment-1-controlled-evaluation-protocol.md`.
 - Name independent research and domain authorities.
 - Calibrate measures, then determine sample size by power analysis.
 - Compare against a credible agentic-development baseline.
@@ -127,3 +128,10 @@ Expected review dimensions:
 - NIST, [AI Risk Management Framework: Generative AI Profile](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf)
 - Anthropic, [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 
+## Follow-up review
+
+The clause-level normative review on 2026-09-07 identified additional ambiguities in
+exception semantics, risk classification, role independence, gate-state precedence,
+outcome denominators, allocation concealment, attrition, and the misuse of
+“replication” for the first controlled study. Those issues are resolved in draft
+revision 0.1.1 and recorded in `normative-review-20260907.md`.
