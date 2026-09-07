@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T12:55:34Z",
+  "generatedAt": "2026-09-07T15:06:05Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-06T02:41:12Z",
-    "sha": "6833aba1f67e1c96c279c692e02109a5dec7b4cb",
-    "subject": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (#343)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/6833aba1f67e1c96c279c692e02109a5dec7b4cb"
+    "date": "2026-09-06T12:55:42Z",
+    "sha": "5e41dd4885c97ec8bb5224d6b21d490367eae471",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/5e41dd4885c97ec8bb5224d6b21d490367eae471"
   },
   "commits": [
+    {
+      "date": "2026-09-06T12:55:42Z",
+      "sha": "5e41dd4885c97ec8bb5224d6b21d490367eae471",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e41dd4885c97ec8bb5224d6b21d490367eae471"
+    },
     {
       "date": "2026-09-06T02:41:12Z",
       "sha": "6833aba1f67e1c96c279c692e02109a5dec7b4cb",
@@ -84,15 +90,81 @@
       "sha": "f997b2b3543341db951aeab23bc1116325fd1430",
       "subject": "ci(tests): wire check-cache-bump.sh into CI - it existed but nothing ever ran it automatically",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/f997b2b3543341db951aeab23bc1116325fd1430"
-    },
-    {
-      "date": "2026-09-05T05:18:09Z",
-      "sha": "9fecbd6e2460804b773df6912c39b9997901da7e",
-      "subject": "fix(pwa): bump CACHE/build-stamp - my own last commit touched a CORE file without it",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9fecbd6e2460804b773df6912c39b9997901da7e"
     }
   ],
   "openPRs": [
+    {
+      "number": 347,
+      "title": "docs: enforce engineering-wiki lifecycle integrity",
+      "branch": "propose/engineering-wiki-lifecycle",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/347",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087415436/job/101634005642"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087415434/job/101634005501"
+        }
+      ]
+    },
+    {
+      "number": 346,
+      "title": "docs: calibrate Thought-Ware public claims",
+      "branch": "propose/public-claims-calibration",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/346",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087367837/job/101633874794"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087367838/job/101633873047"
+        }
+      ]
+    },
+    {
+      "number": 345,
+      "title": "docs: propose Thought-Ware Development method v0.1",
+      "branch": "propose/methodology-v0.1",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/345",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313969/job/101633721097"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313962/job/101633721235"
+        }
+      ]
+    },
     {
       "number": 344,
       "title": "Re-author the two video scenarios to the shipped PIP contract",
@@ -106,14 +178,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34009961889/job/101423931219"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34043814869/job/101515178281"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34009961872/job/101423931095"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34043814871/job/101515178344"
         }
       ]
     }
@@ -229,9 +301,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-06T12:55:28Z",
+    "runStartedAt": "2026-09-07T15:06:00Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34034540785",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34136509160",
     "headBranch": "main"
   },
   "velocity": {
