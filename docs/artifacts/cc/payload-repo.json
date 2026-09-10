@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T13:46:40Z",
+  "generatedAt": "2026-09-10T13:40:24Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-08T13:42:10Z",
-    "sha": "c3225232a5bb25722ca8c4329483883fac40bca2",
+    "date": "2026-09-09T13:46:47Z",
+    "sha": "81f3b737fb89dfb2ed2c259077e8421cd617716f",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/c3225232a5bb25722ca8c4329483883fac40bca2"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/81f3b737fb89dfb2ed2c259077e8421cd617716f"
   },
   "commits": [
+    {
+      "date": "2026-09-09T13:46:47Z",
+      "sha": "81f3b737fb89dfb2ed2c259077e8421cd617716f",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/81f3b737fb89dfb2ed2c259077e8421cd617716f"
+    },
     {
       "date": "2026-09-08T13:42:10Z",
       "sha": "c3225232a5bb25722ca8c4329483883fac40bca2",
@@ -84,12 +90,6 @@
       "sha": "1c5b590976714f9d03f79a9b1c00f4de6ee26071",
       "subject": "fix(assets): run stamp-asset-versions.py - CI caught the exact mistake its own gate exists for",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/1c5b590976714f9d03f79a9b1c00f4de6ee26071"
-    },
-    {
-      "date": "2026-09-05T05:56:59Z",
-      "sha": "7c58ebc580bb20d2737504b46f550d5f8ccd7eb2",
-      "subject": "fix(settings): the new About link truncated to \"User-Ce...\" - shortened to fit the row's real width",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/7c58ebc580bb20d2737504b46f550d5f8ccd7eb2"
     }
   ],
   "openPRs": [
@@ -301,9 +301,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-09T13:46:32Z",
-    "durationSeconds": 5,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34359248653",
+    "runStartedAt": "2026-09-10T13:40:16Z",
+    "durationSeconds": 6,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34484091205",
     "headBranch": "main"
   },
   "velocity": {
