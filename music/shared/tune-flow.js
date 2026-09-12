@@ -35,6 +35,14 @@
  *   - landed holds for celebrateMs (the read is frozen on the landing
  *     value), then advances to the next undone string in order (wrapping),
  *     or 'done' when every string has landed.
+ *   - the HOLD ACCUMULATES: voiced in-zone time adds up across brief dips
+ *     (a pluck decaying, a flat-side wobble of < wobbleCents); only a pause
+ *     longer than gapMs, a sharp read, or a real departure resets it.
+ *   - the RATCHET: the peg is the controller. A read moving UP shows at
+ *     once; a read going flatter must persist dropFrames frames by
+ *     dropCents before the needle drops (flat side only).
+ *   - set(partial) updates any DEFAULTS key live (the tuning lab sliders);
+ *     params() returns the current values.
  *   - ALL time comes from the nowMs argument. No Date.now, no timers.
  *   - state() returns a fresh plain object every call.
  *
@@ -46,17 +54,22 @@
   'use strict';
 
   var DEFAULTS = {
-    holdMs: 600,        // sustained in-zone time before a string counts as landed
+    holdMs: 450,        // VOICED in-zone time that must ACCUMULATE before a string lands
     celebrateMs: 700,   // how long 'landed' shows before auto-advance
-    inTuneCents: 2,     // |cents| <= this is "in the zone" for arrival
+    inTuneCents: 2.5,   // |cents| <= this is "in the zone" for arrival
+    wobbleCents: 2,     // out of the zone by less than this PAUSES the hold instead of resetting it
     sharpCents: 3,      // >= this reads 'sharp' (overshoot - back off, come up)
     flatCents: -4,      // <= this reads 'flat' (keep coming up - the good direction)
-    gapMs: 150          // an unvoiced gap longer than this breaks an arrival
+    gapMs: 700,         // a pause (unvoiced, or a small wobble) longer than this resets the hold
+    medianFrames: 5,    // shorter than tuner.js's 8: guided mode tracks a moving peg
+    honeK: 0.07,        // EMA coefficient when honing (|cents| <= 5)
+    midK: 0.16,         // ... closing in (5 < |cents| <= 15)
+    farK: 0.35,         // ... far off (fast attack)
+    dropCents: 1.5,     // RATCHET: a flatter read must fall by at least this ...
+    dropFrames: 6       // ... for this many consecutive frames before the needle drops (0 = off)
   };
-  var MEDIAN_FRAMES = 5;   // shorter than tuner.js's 8: guided mode tracks a moving peg
   var GLITCH_CENTS = 40;   // a frame this far from the running median is a blip
   var GLITCH_ADOPT = 4;    // ... unless this many consecutive blips agree
-
   function median(arr) {
     var s = arr.slice().sort(function (a, b) { return a - b; }), m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
@@ -74,10 +87,10 @@
   // EMA coefficient by distance from target (mirrors tuner.js micLoop):
   // far off -> track quickly (fast attack); closing in -> moderate;
   // honing (<= 5 c) -> heavy damping so the read sits dead still.
-  function emaK(acents) {
-    if (acents > 15) return 0.35;
-    if (acents > 5) return 0.16;
-    return 0.07;
+  function emaK(acents, o) {
+    if (acents > 15) return o.farK;
+    if (acents > 5) return o.midK;
+    return o.honeK;
   }
 
   function create(opts) {
@@ -91,18 +104,24 @@
     var progress = strings.map(function () { return false; });
     var listeners = {};
 
-    // smoothing state
-    var window = [], glitchRun = [], ema = null, raw = null;
+    // smoothing state. `ema` tracks the signal; `shown` is what the user sees -
+    // the RATCHET: the peg is the controller, so a read that goes UP (toward
+    // the post) shows at once, a read that goes FLATTER must persist for
+    // dropFrames frames by dropCents before the needle follows it down.
+    var window = [], glitchRun = [], ema = null, shown = null, dropRun = 0, raw = null;
     // timing state (all in the caller's nowMs)
-    var arrivedAt = null, lastVoicedAt = null, landedAt = null, lastNow = null;
+    var holdAcc = 0, lastInZoneAt = null, lastVoicedAt = null, landedAt = null, lastNow = null;
 
     function emit(name, payload) {
       var fns = (listeners[name] || []).slice();
       for (var i = 0; i < fns.length; i++) fns[i](payload, state());
     }
 
-    function resetSmoothing() { window = []; glitchRun = []; ema = null; raw = null; }
-    function clearTimers() { arrivedAt = null; lastVoicedAt = null; landedAt = null; }
+    function resetSmoothing() { window = []; glitchRun = []; ema = null; shown = null; dropRun = 0; raw = null; }
+    function clearTimers() { holdAcc = 0; lastInZoneAt = null; lastVoicedAt = null; landedAt = null; }
+    // live parameter update (the tuning lab sliders) - only known keys, never strings
+    function set(partial) { for (var k in partial) if (k in DEFAULTS && partial[k] != null && isFinite(partial[k])) o[k] = +partial[k]; return o; }
+    function params() { var c = {}; for (var k in o) c[k] = o[k]; return c; }
 
     // Push one voiced frame through median + glitch gate + EMA. Returns the
     // new smoothed cents.
@@ -115,24 +134,27 @@
           if (glitchRun.length && Math.abs(cents - glitchRun[glitchRun.length - 1]) > GLITCH_CENTS) glitchRun = [];
           glitchRun.push(cents);
           if (glitchRun.length >= GLITCH_ADOPT) { window = [cents]; glitchRun = []; }
-          else return ema;
+          else return shown;
         } else {
           glitchRun = [];
-          window.push(cents); if (window.length > MEDIAN_FRAMES) window.shift();
+          window.push(cents); while (window.length > o.medianFrames) window.shift();
         }
       } else {
         window = [cents];
       }
       var med = median(window);
       if (ema === null) ema = med;                    // first voiced frame snaps
-      else ema += (med - ema) * emaK(Math.abs(med));
-      return ema;
+      else ema += (med - ema) * emaK(Math.abs(med), o);
+      // the ratchet (flat side only - on the sharp side a drop is the way home)
+      if (shown === null || o.dropFrames <= 0 || shown >= o.sharpCents || ema >= shown - o.dropCents) { shown = ema; dropRun = 0; }
+      else if (++dropRun >= o.dropFrames) { shown = ema; dropRun = 0; }
+      return shown;
     }
 
     function holdProgress() {
       if (phase === 'landed') return 1;
-      if (phase !== 'arriving' || arrivedAt === null || lastNow === null) return 0;
-      return Math.max(0, Math.min(1, (lastNow - arrivedAt) / o.holdMs));
+      if (phase !== 'arriving') return 0;
+      return Math.max(0, Math.min(1, holdAcc / o.holdMs));
     }
 
     function state() {
@@ -140,9 +162,9 @@
         phase: phase,
         index: index,
         target: target,
-        cents: ema,
+        cents: shown,
         rawCents: raw,
-        hint: hintFor(ema, o),
+        hint: hintFor(shown, o),
         progress: progress.slice(),
         holdProgress: holdProgress(),
         landedAt: phase === 'landed' ? landedAt : null
@@ -219,19 +241,25 @@
         raw = cents;
         lastVoicedAt = nowMs;
         var sm = smooth(cents);
-        var inZone = Math.abs(sm) <= o.inTuneCents;
-        if (phase === 'approach') {
-          if (inZone) { phase = 'arriving'; arrivedAt = nowMs; }
-        } else if (phase === 'arriving') {
-          if (!inZone) {
-            phase = 'approach'; arrivedAt = null;      // drifted out - re-approach
-          } else if (nowMs - arrivedAt >= o.holdMs) {
+        var a = Math.abs(sm), inZone = a <= o.inTuneCents;
+        // a small flat-side wobble just outside the zone PAUSES the hold; a
+        // sharp read or a real departure resets it
+        var wobble = !inZone && sm < 0 && a <= o.inTuneCents + o.wobbleCents;
+        if (inZone) {
+          if (lastInZoneAt !== null && nowMs - lastInZoneAt <= o.gapMs) holdAcc += nowMs - lastInZoneAt;
+          lastInZoneAt = nowMs;
+          phase = 'arriving';
+          if (holdAcc >= o.holdMs) {
             phase = 'landed'; landedAt = nowMs; progress[index] = true;
             emit('landed', { index: index, target: target, nowMs: nowMs });
           }
+        } else if (wobble) {
+          if (lastInZoneAt !== null && nowMs - lastInZoneAt > o.gapMs) { phase = 'approach'; holdAcc = 0; lastInZoneAt = null; }
+        } else {
+          phase = 'approach'; holdAcc = 0; lastInZoneAt = null;   // drifted out / overshot - re-approach
         }
-      } else if (phase === 'arriving' && lastVoicedAt !== null && nowMs - lastVoicedAt > o.gapMs) {
-        phase = 'approach'; arrivedAt = null;          // the string died out - not sustained
+      } else if (phase === 'arriving' && lastInZoneAt !== null && nowMs - lastInZoneAt > o.gapMs) {
+        phase = 'approach'; holdAcc = 0; lastInZoneAt = null;      // the string died out - not sustained
       }
       return state();
     }
@@ -245,10 +273,10 @@
       };
     }
 
-    return { start: start, feed: feed, retarget: retarget, stop: stop, state: state, on: on };
+    return { start: start, feed: feed, retarget: retarget, stop: stop, state: state, on: on, set: set, params: params };
   }
 
-  var TuneFlow = { create: create };
+  var TuneFlow = { create: create, DEFAULTS: DEFAULTS };
   global.TuneFlow = TuneFlow;
   if (typeof module !== 'undefined' && module.exports) module.exports = TuneFlow;
 

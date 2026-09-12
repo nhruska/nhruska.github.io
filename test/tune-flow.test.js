@@ -16,8 +16,15 @@ var GUITAR = [
 ];
 var FRAME = 16; // ms between detector frames (~60fps)
 
+// The mechanics tests below pin the ORIGINAL contract values explicitly (a
+// 600 ms hold, a 150 ms gap, no wobble slack, ratchet off) so they stay
+// valid contract tests as the shipped defaults get tuned on the instrument
+// (the defaults themselves are asserted in their own test at the bottom).
+var STRICT = { holdMs: 600, gapMs: 150, inTuneCents: 2, wobbleCents: 0, dropFrames: 0 };
 function make(strings, opts) {
-  var o = opts || {}; o.strings = strings || GUITAR;
+  var o = {}; for (var k in STRICT) o[k] = STRICT[k];
+  if (opts) for (var j in opts) o[j] = opts[j];
+  o.strings = strings || GUITAR;
   return TuneFlow.create(o);
 }
 // Feed `n` frames at `cents` starting at clock `t`; returns the clock after the last frame.
@@ -335,6 +342,67 @@ test('on() returns an unsubscribe that stops further calls; handlers get the sta
 });
 
 // defaults + stop()
+// ---- UAT batch 1 (operator, 2026-09-12): the landing was too strict for a real
+// pluck, and the needle must feel like the peg drives it UP. ----
+test('hold ACCUMULATES across an unvoiced dip shorter than gapMs (a pluck decaying and re-plucked)', function () {
+  var flow = make(GUITAR, { holdMs: 400, gapMs: 700 });
+  flow.start();
+  var t = feedFor(flow, 0, 250, 0);              // 250 ms in the zone
+  t = feedFor(flow, null, 400, t);               // string dies for 400 ms (< gapMs)
+  assert.strictEqual(flow.state().phase, 'arriving', 'a short dip keeps the arrival');
+  t = feedFor(flow, 0, 200, t);                  // 250 + 200 >= 400 -> lands
+  assert.strictEqual(flow.state().phase, 'landed', 'the two voiced stretches add up');
+});
+test('a small flat-side wobble just outside the zone PAUSES the hold instead of resetting it', function () {
+  // instant smoothing so the fed value IS the shown value (the wobble must actually leave the zone)
+  var flow = make(GUITAR, { holdMs: 400, inTuneCents: 2, wobbleCents: 2, gapMs: 700, medianFrames: 1, honeK: 1, midK: 1, farK: 1 });
+  flow.start();
+  var t = feedFor(flow, 0, 250, 0);
+  var before = flow.state().holdProgress;
+  t = feedFor(flow, -3.5, 200, t);               // -3.5 is outside 2 but inside 2+2
+  assert.strictEqual(flow.state().phase, 'arriving');
+  assert.ok(Math.abs(flow.state().holdProgress - before) < 0.05, 'progress neither grew nor reset during the wobble');
+  t = feedFor(flow, 0, 200, t);
+  assert.strictEqual(flow.state().phase, 'landed');
+});
+test('a sharp read while arriving still resets the hold (overshoot is never progress)', function () {
+  var flow = make(GUITAR, { holdMs: 400, wobbleCents: 2 });
+  flow.start();
+  var t = feedFor(flow, 0, 250, 0);
+  t = feedFor(flow, 6, 200, t);
+  assert.strictEqual(flow.state().phase, 'approach');
+  assert.strictEqual(flow.state().holdProgress, 0);
+});
+test('RATCHET: a flatter read must persist dropFrames frames before the needle drops; an upward read shows at once', function () {
+  var flow = make(GUITAR, { dropCents: 1.5, dropFrames: 6, medianFrames: 1, honeK: 1, midK: 1, farK: 1 });
+  flow.start();
+  var t = frames(flow, -10, 3, 0);
+  assert.strictEqual(flow.state().cents, -10);
+  t = frames(flow, -6, 1, t);                     // up: instant
+  assert.strictEqual(flow.state().cents, -6, 'moving toward the post shows immediately');
+  t = frames(flow, -9, 5, t);                     // flatter for 5 frames: held
+  assert.strictEqual(flow.state().cents, -6, 'five flatter frames do not move the needle down');
+  t = frames(flow, -9, 1, t);                     // sixth: drops
+  assert.strictEqual(flow.state().cents, -9, 'the sixth consecutive flatter frame does');
+  t = frames(flow, -8, 1, t);                     // a small drop within dropCents follows at once
+  assert.strictEqual(flow.state().cents, -8);
+});
+test('RATCHET is off on the sharp side: coming back down from overshoot shows at once', function () {
+  var flow = make(GUITAR, { dropCents: 1.5, dropFrames: 6, medianFrames: 1, honeK: 1, midK: 1, farK: 1 });
+  flow.start();
+  var t = frames(flow, 8, 3, 0);
+  t = frames(flow, 3.5, 1, t);
+  assert.strictEqual(flow.state().cents, 3.5, 'from sharp, a drop toward the post is the way home');
+});
+test('set() updates parameters live and params() reads them back; unknown keys are ignored', function () {
+  var flow = make(GUITAR, { holdMs: 600 });
+  flow.set({ holdMs: 200, bogus: 1, strings: null });
+  assert.strictEqual(flow.params().holdMs, 200);
+  assert.strictEqual(flow.params().bogus, undefined);
+  flow.start();
+  feedFor(flow, 0, 260, 0);
+  assert.strictEqual(flow.state().phase, 'landed', 'the new holdMs applied to the running flow');
+});
 test('create() applies the documented defaults and requires strings', function () {
   assert.throws(function () { TuneFlow.create({}); });
   var flow = make(GUITAR, { holdMs: 200 });

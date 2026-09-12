@@ -272,6 +272,82 @@
    * cancellation) and the pixels. No note identification anywhere on this
    * path - the read is cents-from-THIS-string, nothing else. */
   var TONE_KEY = 'music.tuner.tone.v1';           // '0' = tone off; absent/anything else = on (default ON)
+  var PARAMS_KEY = 'music.tuner.params.v1';       // the tuning lab's slider values (JSON), absent = defaults
+  // Mic-side knobs (the flow's own knobs live in TuneFlow.DEFAULTS). The lab
+  // panel (?tunerlab=1) exposes both sets as sliders so the feel can be tuned
+  // ON THE INSTRUMENT and reported back as one line.
+  var MIC_DEFAULTS = { clarityAcquire: 0.9, clarityHold: 0.72 };
+  var mic = { clarityAcquire: 0.9, clarityHold: 0.72 };
+  var LAB = [ // key, label, min, max, step, owner ('flow' | 'mic')
+    ['holdMs', 'hold to land (ms)', 100, 1500, 50, 'flow'],
+    ['inTuneCents', 'in-tune zone (+/- cents)', 0.5, 6, 0.5, 'flow'],
+    ['wobbleCents', 'wobble slack (cents)', 0, 5, 0.5, 'flow'],
+    ['gapMs', 'pause before reset (ms)', 100, 2000, 50, 'flow'],
+    ['dropFrames', 'ratchet frames', 0, 20, 1, 'flow'],
+    ['dropCents', 'ratchet margin (cents)', 0, 5, 0.25, 'flow'],
+    ['medianFrames', 'median frames', 1, 12, 1, 'flow'],
+    ['honeK', 'needle damping near post (k)', 0.02, 0.5, 0.01, 'flow'],
+    ['midK', 'needle damping mid (k)', 0.05, 0.6, 0.01, 'flow'],
+    ['farK', 'needle damping far (k)', 0.1, 1, 0.05, 'flow'],
+    ['celebrateMs', 'celebrate before next (ms)', 200, 2000, 50, 'flow'],
+    ['clarityAcquire', 'mic clarity to acquire', 0.5, 0.99, 0.01, 'mic'],
+    ['clarityHold', 'mic clarity to hold', 0.3, 0.95, 0.01, 'mic']
+  ];
+  function loadParams() { try { var j = JSON.parse(localStorage.getItem(PARAMS_KEY) || 'null'); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } }
+  function saveParams(p) { try { localStorage.setItem(PARAMS_KEY, JSON.stringify(p)); } catch (e) { } }
+  function applyParams(p) {
+    if (flow) flow.set(p);
+    for (var k in MIC_DEFAULTS) if (p[k] != null && isFinite(p[k])) mic[k] = +p[k];
+  }
+  function labRequested() { try { return /[?&]tunerlab=1/.test(location.search) || localStorage.getItem('music.tuner.lab.v1') === '1'; } catch (e) { return false; } }
+  function currentParams() {
+    var out = {}, fp = flow ? flow.params() : (global.TuneFlow ? global.TuneFlow.DEFAULTS : {});
+    LAB.forEach(function (r) { out[r[0]] = r[5] === 'flow' ? fp[r[0]] : mic[r[0]]; });
+    return out;
+  }
+  function paramsLine() {
+    var p = currentParams(), parts = [];
+    LAB.forEach(function (r) { if (p[r[0]] != null) parts.push(r[0] + '=' + p[r[0]]); });
+    return parts.join(' ');
+  }
+  function renderLabReadout() {
+    var o = el('labLine'); if (o) o.textContent = paramsLine();
+  }
+  function buildLab(box) {
+    var lab = document.createElement('details'); lab.className = 'tunerLab'; lab.id = 'tunerLab';
+    var html = '<summary>Tuning lab - drag, play, report the line below</summary>';
+    html += '<div class="labLive" id="labLive">-</div>';
+    LAB.forEach(function (r) {
+      html += '<label class="labRow"><span class="labLbl">' + r[1] + '</span><input type="range" data-key="' + r[0] + '" min="' + r[2] + '" max="' + r[3] + '" step="' + r[4] + '"><span class="labVal" id="labVal-' + r[0] + '"></span></label>';
+    });
+    html += '<div class="labLine" id="labLine"></div><div class="actions micActions"><button class="btn ghost" id="labReset">Reset to defaults</button></div>';
+    lab.innerHTML = html;
+    box.appendChild(lab);
+    var stored = loadParams(), p = currentParams();
+    lab.querySelectorAll('input[type=range]').forEach(function (inp) {
+      var k = inp.getAttribute('data-key');
+      var v = stored[k] != null ? stored[k] : p[k];
+      inp.value = v; var vv = el('labVal-' + k); if (vv) vv.textContent = v;
+      inp.oninput = function () {
+        var s2 = loadParams(); s2[k] = +inp.value; saveParams(s2); applyParams(s2);
+        var vv2 = el('labVal-' + k); if (vv2) vv2.textContent = inp.value;
+        renderLabReadout();
+      };
+    });
+    el('labReset').onclick = function () {
+      try { localStorage.removeItem(PARAMS_KEY); } catch (e) { }
+      if (flow) flow.set(global.TuneFlow.DEFAULTS);
+      for (var k in MIC_DEFAULTS) mic[k] = MIC_DEFAULTS[k];
+      var p2 = currentParams();
+      lab.querySelectorAll('input[type=range]').forEach(function (inp) { var kk = inp.getAttribute('data-key'); inp.value = p2[kk]; var vv = el('labVal-' + kk); if (vv) vv.textContent = p2[kk]; });
+      renderLabReadout();
+    };
+    renderLabReadout();
+  }
+  function renderLabLive(st, res) {
+    var o = el('labLive'); if (!o) return;
+    o.textContent = 'phase ' + st.phase + '  raw ' + (st.rawCents == null ? '-' : st.rawCents.toFixed(1)) + 'c  shown ' + (st.cents == null ? '-' : st.cents.toFixed(1)) + 'c  hold ' + Math.round((st.holdProgress || 0) * 100) + '%' + (res ? '  clarity ' + res.clarity.toFixed(2) : '');
+  }
   var mode = 'guided', flow = null, simActive = false, quietFrames = 0, reading = false;
   var lastCentsTxt = '', lastNoteTxt = '', prevPhase = '';
   function toneOn() { try { return localStorage.getItem(TONE_KEY) !== '0'; } catch (e) { return true; } }
@@ -293,6 +369,7 @@
     if (flow) return flow;
     if (!global.TuneFlow) return null;
     flow = global.TuneFlow.create({ strings: STRINGS });
+    applyParams(loadParams());
     flow.on('retarget', function (ev) {
       // the target's own tone drones while you tune it (cancelled out of the
       // mic path by cancelDrone) - swap it with the target
@@ -341,10 +418,11 @@
     }
     prevPhase = phase;
   }
-  function applyFrame(cents, nowMs) {
+  function applyFrame(cents, nowMs, res) {
     if (!flow) return null;
     var st = flow.feed(cents, nowMs);
     renderGuided(st);
+    renderLabLive(st, res);
     return st;
   }
   function guidedLoop() {
@@ -359,10 +437,10 @@
       var res = detectPitchNear(src, micAC.sampleRate, f);
       // clarity hysteresis: acquire at 0.9, hold through dips to 0.72; ~0.3s of
       // nothing releases (a brief dropout is not "the string stopped")
-      var voiced = res.freq > 0 && res.clarity > (reading ? 0.72 : 0.9);
+      var voiced = res.freq > 0 && res.clarity > (reading ? mic.clarityHold : mic.clarityAcquire);
       if (voiced) { reading = true; quietFrames = 0; }
       else if (++quietFrames > 18) reading = false;
-      applyFrame(voiced ? 1200 * Math.log2(res.freq / f) : null, performance.now());
+      applyFrame(voiced ? 1200 * Math.log2(res.freq / f) : null, performance.now(), res);
     }
     micRAF = requestAnimationFrame(guidedLoop);
   }
@@ -577,6 +655,15 @@
     el('micToggle').onclick = micToggle;
     el('toneToggle').onclick = toggleTone;
     renderToneBtn();
+    // the lab hangs BELOW the string row, outside the one-screen card, and
+    // lets the Tune tab scroll while it is present (a power tool, not the
+    // everyday layout)
+    if (labRequested() && global.TuneFlow) {
+      try { localStorage.setItem('music.tuner.lab.v1', '1'); } catch (e) { }
+      var wrap = box.closest ? box.closest('.tunerWrap') : null, screen = document.getElementById('s-tune');
+      if (screen) screen.classList.add('labOn');
+      buildLab(wrap || box);
+    }
     document.querySelectorAll('.micModes .chip').forEach(function (b) { b.onclick = function () { setMode(b.getAttribute('data-mode')); }; });
   }
 

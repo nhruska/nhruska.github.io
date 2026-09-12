@@ -42,9 +42,16 @@ landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 - **Approach from flat is the designed path** (operator model: nobody tunes
   down - slack settles flat). Hints: `flat` <= -4 c, `sharp` >= +3 c, else
   `near`. Sharp is overshoot: normal, never an advance.
-- **Arrival must be sustained and voiced.** Leaving the +/-2 c zone, or an
-  unvoiced gap > 150 ms, resets the hold. `holdProgress` (0..1) drives the
-  bar under the post.
+- **Arrival ACCUMULATES.** Voiced in-zone time (|cents| <= 2.5 c) adds up to
+  `holdMs` (450) across brief dips - a pluck decaying, a flat-side wobble
+  of < 2 c outside the zone pauses the hold; only a pause longer than
+  `gapMs` (700), a sharp read, or a real departure resets it. `holdProgress`
+  (0..1) drives the bar under the post. (UAT batch 1: the first cut reset on
+  every 150 ms clarity dip and a real pluck could never land.)
+- **The ratchet - the peg is the controller.** A read moving UP shows at
+  once; a flatter read must persist `dropFrames` (6) frames by `dropCents`
+  (1.5) before the needle drops. Flat side only: from overshoot, a drop is
+  the way home and shows immediately.
 - **Smoothing lives in the flow, not the UI**: 5-frame median, distance-keyed
   EMA (0.35 / 0.16 / 0.07), 40 c glitch rejection adopted after 4 agreeing
   frames. Retarget resets it (first voiced frame snaps).
@@ -64,6 +71,7 @@ landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 | `#toneToggle` | drone on/off, remembered in `music.tuner.tone.v1` (default ON) |
 | `.micModes` chips | Guided (default) / Any string (the legacy free-recognition mode, needle + meter) |
 | `Tuner._sim` | `{ start(), feed(cents|null, nowMs), state() }` - test hook that drives the SAME flow + render path without a mic (`test/pw/scenarios/tune-guided.json`) |
+| `?tunerlab=1` | URL flag (sticky via `music.tuner.lab.v1`): a "Tuning lab" disclosure below the string row with a slider per feel knob (`TuneFlow.DEFAULTS` + the mic clarity thresholds), live phase/raw/shown/hold/clarity readout, and a one-line `key=value` report string. Values persist in `music.tuner.params.v1` and apply live via `flow.set()`; Reset clears them. The operator tunes the feel on the instrument and reports the line |
 | `?tunerdemo=1` | URL flag: a scripted approach-from-flat per string fed through `Tuner._sim`, so a branch preview animates the whole loop on any phone with no mic - the demo handle for [branch prototypes](../workflows/branch-prototypes.md) |
 
 Fixed contracts: status colours stay red/amber/green (never accent-themed);
