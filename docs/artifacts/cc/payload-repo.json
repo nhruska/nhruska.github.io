@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T13:38:54Z",
+  "generatedAt": "2026-09-12T12:55:24Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-10T13:40:34Z",
-    "sha": "02b4691c770cb36cac9f2fe2fcca629209d45a8d",
+    "date": "2026-09-11T13:39:04Z",
+    "sha": "3075419130be03808433a5b42f170d1aed9b5c8a",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/02b4691c770cb36cac9f2fe2fcca629209d45a8d"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/3075419130be03808433a5b42f170d1aed9b5c8a"
   },
   "commits": [
+    {
+      "date": "2026-09-11T13:39:04Z",
+      "sha": "3075419130be03808433a5b42f170d1aed9b5c8a",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/3075419130be03808433a5b42f170d1aed9b5c8a"
+    },
     {
       "date": "2026-09-10T13:40:34Z",
       "sha": "02b4691c770cb36cac9f2fe2fcca629209d45a8d",
@@ -84,15 +90,33 @@
       "sha": "86dd9545b74b3c4280dd943497651f03d55d9a0b",
       "subject": "fix(settings): let the build-stamp footer wrap instead of truncating",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/86dd9545b74b3c4280dd943497651f03d55d9a0b"
-    },
-    {
-      "date": "2026-09-05T06:08:23Z",
-      "sha": "b864469559ebc250e596f6ec6b8f395b5b995e22",
-      "subject": "fix(cache): real version bump (v347) instead of arguing with the guard",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/b864469559ebc250e596f6ec6b8f395b5b995e22"
     }
   ],
   "openPRs": [
+    {
+      "number": 348,
+      "title": "feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab",
+      "branch": "claude/music-tuner-enhancements-8bny49",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/348",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34676797037/job/103507969543"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34676797017/job/103507969377"
+        }
+      ]
+    },
     {
       "number": 347,
       "title": "docs: enforce engineering-wiki lifecycle integrity",
@@ -301,9 +325,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-11T13:38:46Z",
-    "durationSeconds": 5,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34605494530",
+    "runStartedAt": "2026-09-12T12:55:19Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34694993254",
     "headBranch": "main"
   },
   "velocity": {
