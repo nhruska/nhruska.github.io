@@ -74,7 +74,7 @@ app's sine+triangle mix):
 
 That is exactly the operator's observation: quiet drone fine, loud drone
 "pegs to tuned". Fix measured: subtract the KNOWN drone (least-squares
-projection at f0, 3f0, 5f0 - we generate it, so its frequency and shape are
+projection at f0 and 5f0 - we generate it, so its frequency and shape are
 exact) before detection. With cancellation, drone at 4x the string reads
 -27.4 / -12.6 / -6.3 c for the three rows above, and within 1 c at equal
 level. The beats the operator likes hearing are untouched - the ear hears

@@ -113,19 +113,24 @@ test('out-of-window: a D string (+500c) fed with target A returns -1', function 
   assert.strictEqual(r.freq, -1, 'read ' + fmt(r, 110) + ' - should have been out of window');
   assert.strictEqual(r.clarity, 0);
 });
-// PINNED LIMITATION (measured, not a target): a G string (+998c from A) is far
-// outside the FREQUENCY window, but autocorrelation peaks at every multiple of
-// its period, and 2 periods of G (lag ~450) land INSIDE the -500..+300c LAG
-// window, so the locked interface ("strongest key maximum whose lag lies in
-// the window") returns G's sub-octave (~98Hz, -200c) rather than -1. The
-// same holds for any tone +700..+1500c above the target. The guided flow
-// tunes ONE named string at a time, so a wrong-string read is out of its
-// path; this test exists so the limitation is visible, not discovered again.
-test('out-of-window LIMITATION pinned: a G string fed with target A reads G\'s sub-octave (~-200c), not -1', function () {
-  var r = T.detectPitchNear(synth(196), SR, 110);
-  assert.ok(r.freq > 0, 'reads nothing - the sub-octave alias is gone; update this pin AND the design doc');
-  assert.ok(Math.abs(cents(r.freq, 98) ) < 2, 'read ' + fmt(r, 110) + ' - expected the 98Hz sub-octave of G');
+// Sub-harmonic guard: a G string (+998c from A) is far outside the window, but
+// TWO of its periods (~450 samples) land inside A's lag window, so without a
+// guard the detector reads G's sub-octave (~98Hz, -200c) - a wrong-string
+// pluck would show as a huge flat. The guard sees the comparable peak near
+// half that lag and reports nothing instead.
+test('out-of-window: a G string fed with target A returns -1 (sub-harmonic guard, not a -200c read)', function () {
+  var r = T.detectPitchNear(synth(196.00), SR, 110);
+  assert.strictEqual(r.freq, -1, 'read ' + fmt(r, 110) + ' - the sub-octave alias leaked through');
 });
+test('sub-harmonic guard: a high E (4-5 periods per low-E period) fed with target low E returns -1', function () {
+  var r = T.detectPitchNear(synth(329.63), SR, 82.41);
+  assert.strictEqual(r.freq, -1, 'read ' + fmt(r, 82.41) + ' - a wrong-string octave leaked through');
+});
+test('sub-harmonic guard does not eat a real target note with a dominant 2nd harmonic', function () {
+  var r = T.detectPitchNear(synth(82.41, { harmonics: [0.25, 1.0, 0.5, 0.3, 0.15] }), SR, 82.41);
+  assert.ok(r.freq > 0 && Math.abs(cents(r.freq, 82.41)) < 3, 'read ' + fmt(r, 82.41));
+});
+
 
 // ---- 6. silence and near-silence: prefer no reading over a wrong one ----
 test('silence (all zeros) returns freq -1, clarity 0', function () {

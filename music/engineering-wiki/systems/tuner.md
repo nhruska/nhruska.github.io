@@ -25,8 +25,8 @@
 | Octave errors | possible in principle; guarded by the first-peak rule | impossible by construction - both octaves fall outside the window |
 | Gotcha | feeding it a NARROW band returns -1 on a fundamental-heavy tone (its first-negative-crossing gate can start inside the fundamental's own lobe). Pinned in `test/tuner-near.test.js` | none known |
 
-`cancelDrone(buf, sr, f0)` subtracts the least-squares projection at f0, 3f0,
-5f0 (the drone is sine + triangle) and returns a new buffer. Why it exists:
+`cancelDrone(buf, sr, f0)` subtracts the least-squares projection at f0 and
+5f0 (the drone is sine + triangle; 3f0 is deliberately left alone - the string's own 3rd lives there, and stripping it leaves an even-only residual the sub-harmonic guard rejects) and returns a new buffer. Why it exists:
 the speaker drone enters the mic and pulls the autocorrelation toward
 itself - at 4x the string a -8 c string read -2.8 c (GREEN). With
 cancellation it reads -6.3 c. Beats stay audible to the ear; the detector

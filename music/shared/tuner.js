@@ -156,6 +156,29 @@
       }
     }
     if (!best) return { freq: -1, clarity: 0 };
+    // Sub-harmonic guard: a note well ABOVE the target (a G plucked while the
+    // target is A) has a peak at TWICE its period that lands inside the window
+    // and would read as a huge flat. Its true period sits near half the chosen
+    // lag - if a comparable key maximum lives there, this is someone else's
+    // sub-octave: report nothing (prefer no reading over a wrong reading). A
+    // real target note has no comparable peak at T/2 unless the 2nd harmonic
+    // alone carries the tone, which no plucked string does (measured: a
+    // 0.25:1 fundamental:2nd low E keeps nsdf(T/2) near 0.5).
+    // (checked at lag/2 .. lag/5 - a high E against target low E lands on 4T
+    // and 5T of its own period - computed directly at those few lags, below
+    // the scanned range)
+    function nsdfAt(L) {
+      if (L < 2 || L > n - 2) return 0;
+      var ac = 0, m = 0;
+      for (var q = 0; q < n - L; q++) { var a1 = buf[q], b1 = buf[q + L]; ac += a1 * b1; m += a1 * a1 + b1 * b1; }
+      return m > 0 ? (2 * ac / m) : 0;
+    }
+    for (var d = 2; d <= 5; d++) {
+      var sub = Math.round(best.lag / d), hm = 0;
+      if (sub < 4) break;
+      for (var o = -2; o <= 2; o++) { var v2 = (sub + o >= minLag && sub + o <= maxLag) ? nsdf[sub + o] : nsdfAt(sub + o); if (v2 > hm) hm = v2; }
+      if (hm >= 0.9 * best.val) return { freq: -1, clarity: 0 };
+    }
     // parabolic interpolation around the chosen lag (neighbours outside the
     // scanned range read as 0 - the scratch buffer may hold a previous frame)
     var L = best.lag, y1 = L - 1 >= minLag ? nsdf[L - 1] : 0, y2 = nsdf[L], y3 = L + 1 <= maxLag ? nsdf[L + 1] : 0;
@@ -172,12 +195,17 @@
    * under a loud drone reads "in tune" (measured: -8 c reads -2.8 c at 4x).
    * We GENERATE the drone (sine + triangle at f0, startDrone), so its
    * frequency and shape are exact: subtract the least-squares projection of
-   * the buffer onto sin/cos at f0, 3f0, 5f0 (the triangle's odd harmonics).
+   * the buffer onto sin/cos at f0 and 5f0 - NOT 3f0: the string's own 3rd
+   * harmonic sits there too, and removing it leaves an even-harmonics-only
+   * residual that is periodic at T/2, which the sub-harmonic guard in
+   * detectPitchNear then rejects as someone else's sub-octave (measured:
+   * every in-tune read went to -1). The drone's 3rd (1/9 of its triangle)
+   * costs under 1 c at a 4x drone; the 5th is cheap to remove and harmless.
    * The ear still hears the beats in the room; the detector hears the string. */
   function cancelDrone(buf, sr, f0) {
     var n = buf.length, out = new Float32Array(n), i, k;
     for (i = 0; i < n; i++) out[i] = buf[i];
-    var HARM = [1, 3, 5];
+    var HARM = [1, 5];
     for (k = 0; k < HARM.length; k++) {
       var w = 2 * Math.PI * f0 * HARM[k] / sr, ss = 0, sc = 0, cc = 0, xs = 0, xc = 0;
       for (i = 0; i < n; i++) { var s = Math.sin(w * i), c = Math.cos(w * i); ss += s * s; sc += s * c; cc += c * c; xs += out[i] * s; xc += out[i] * c; }
@@ -188,14 +216,8 @@
     return out;
   }
 
-  /* ---------- mic auto-tuner (secure-context only) ----------
-   * Smoothing chain that turns the raw per-frame estimate into a steady
-   * read: clarity gate -> median of recent frames -> note-name hysteresis
-   * -> eased needle, holding the last good value through brief dropouts. */
-  var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null, needleEMA = 50;
-  var freqHist = [], lockedString = null, switchFrames = 0, quietFrames = 0, micBand = { fmin: 60, fmax: 1320 };
-  var inTuneHold = 0, reading = false, lastCentsTxt = '', glitchFrames = 0, prevShown = null;
-  var strobePhase = 0, wasLocked = false, prevHint = '';
+  /* ---------- mic plumbing shared by both modes (secure-context only) ---------- */
+  var STRINGS = [], micOn = false, micStream = null, micAC = null, micAnalyser = null, micBuf = null, micRAF = null;
   function nearestString(freq, strings) {
     var best = strings[0], bd = 1e9;
     for (var i = 0; i < strings.length; i++) { var d = Math.abs(1200 * Math.log2(freq / strings[i].f)); if (d < bd) { bd = d; best = strings[i]; } }
@@ -241,8 +263,111 @@
     if (cents <= -4) return 'flat';
     return 'near';
   }
-  function micToggle() {
-    if (micOn) { micStop(); return; }
+  /* ---------- GUIDED TUNE (default mode, S-TUNER-GOAL-FLOW 2026-09-12) ----------
+   * The operator's own workflow made deterministic: Start -> lowest string ->
+   * approach from flat along the runway -> sustained arrival -> landed ->
+   * auto-advance -> ... -> done. The decision "where are we in the loop"
+   * lives in TuneFlow (tune-flow.js, pure + Node-tested); THIS block owns the
+   * audio (detectPitchNear on the KNOWN target, the drone and its
+   * cancellation) and the pixels. No note identification anywhere on this
+   * path - the read is cents-from-THIS-string, nothing else. */
+  var TONE_KEY = 'music.tuner.tone.v1';           // '0' = tone off; absent/anything else = on (default ON)
+  var mode = 'guided', flow = null, simActive = false, quietFrames = 0, reading = false;
+  var lastCentsTxt = '', lastNoteTxt = '', prevPhase = '';
+  function toneOn() { try { return localStorage.getItem(TONE_KEY) !== '0'; } catch (e) { return true; } }
+  function setToneOn(on) { try { localStorage.setItem(TONE_KEY, on ? '1' : '0'); } catch (e) { } }
+  // Runway position (0..100%) from cents: the POST sits at 60%. The long flat
+  // stretch (0..60%) is the designed approach path; the short right stretch
+  // is overshoot. Same zoom as needlePos near the target (+/-10c fills most of
+  // each side) so the last cents are visible moves.
+  var POST_PCT = 60;
+  function runwayPos(cents) {
+    var c = Math.max(-50, Math.min(50, cents)), a = Math.abs(c);
+    var off = a <= 10 ? (a / 10) * 40 : 40 + ((a - 10) / 40) * 10;   // 0..50
+    var pos = c < 0 ? POST_PCT - off * (POST_PCT / 50) : POST_PCT + off * ((100 - POST_PCT) / 50);
+    return Math.max(3, Math.min(97, pos));
+  }
+  function el(id) { return document.getElementById(id); }
+  function guidedActive() { return !!flow && (micOn || simActive) && mode === 'guided'; }
+  function ensureFlow() {
+    if (flow) return flow;
+    if (!global.TuneFlow) return null;
+    flow = global.TuneFlow.create({ strings: STRINGS });
+    flow.on('retarget', function (ev) {
+      // the target's own tone drones while you tune it (cancelled out of the
+      // mic path by cancelDrone) - swap it with the target
+      if (toneOn() && (micOn || simActive) && !simActive) { stopDrone(); startDrone(ev.target.f, ev.index); }
+      reading = false; quietFrames = 0;
+    });
+    flow.on('landed', function () {
+      // the ONE haptic: a single pulse when a string lands (operator: the
+      // off-note buzz was a liability with the phone lying on the guitar)
+      if (typeof navigator !== 'undefined' && navigator.vibrate) { try { navigator.vibrate(30); } catch (e) { } }
+    });
+    flow.on('done', function () { finishGuided(); });
+    return flow;
+  }
+  function renderGuided(st) {
+    var noteEl = el('micNote'), centsEl = el('micCents'), rw = el('micRunway'), puck = el('micPuck'), hold = el('micHold');
+    if (!noteEl || !centsEl || !rw || !puck) return;
+    var t = st.target, phase = st.phase, txt, note;
+    if (phase === 'idle') { note = t ? t.n : '·'; txt = 'tap Start - the tuner walks every string, low to high'; }
+    else if (phase === 'done') { note = '✓'; txt = 'all ' + STRINGS.length + ' strings in tune'; }
+    else if (phase === 'landed') { note = t.n; txt = '✓ ' + t.n + ' in tune' + (st.progress.every(function (d) { return d; }) ? '' : ' - next string coming up'); }
+    else if (st.cents == null) { note = t.n; txt = 'play the ' + t.l; }
+    else {
+      note = t.n;
+      var c = Math.round(st.cents);
+      if (st.hint === 'sharp') txt = '+' + c + '¢  ▼ sharp - back off, then come up';
+      else if (phase === 'arriving') txt = (c > 0 ? '+' : '') + c + '¢  hold it...';
+      else if (st.hint === 'near') txt = (c > 0 ? '+' : '') + c + '¢  almost - ease it up';
+      else txt = c + '¢  ▲ keep tuning up';
+    }
+    if (note !== lastNoteTxt) { noteEl.textContent = note; lastNoteTxt = note; }
+    if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
+    noteEl.classList.toggle('intune', phase === 'landed' || phase === 'done');
+    rw.classList.toggle('waiting', phase !== 'landed' && phase !== 'done' && st.cents == null);
+    rw.classList.toggle('arriving', phase === 'arriving');
+    rw.classList.toggle('landed', phase === 'landed' || phase === 'done');
+    rw.classList.toggle('sharp', phase !== 'landed' && phase !== 'done' && st.hint === 'sharp');
+    if (phase === 'landed' || phase === 'done') puck.style.left = POST_PCT + '%';
+    else if (st.cents != null) puck.style.left = runwayPos(st.cents).toFixed(1) + '%';
+    else if (phase === 'idle' || prevPhase !== phase) puck.style.left = '6%';
+    if (hold) hold.style.width = (Math.max(0, Math.min(1, st.holdProgress || 0)) * 14).toFixed(1) + '%';
+    var btns = document.querySelectorAll('#tStrings .tStr');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('done', !!st.progress[i]);
+      btns[i].classList.toggle('cur', i === st.index && phase !== 'idle' && phase !== 'done');
+    }
+    prevPhase = phase;
+  }
+  function applyFrame(cents, nowMs) {
+    if (!flow) return null;
+    var st = flow.feed(cents, nowMs);
+    renderGuided(st);
+    return st;
+  }
+  function guidedLoop() {
+    if (!micOn || mode !== 'guided' || !flow) return;
+    micAnalyser.getFloatTimeDomainData(micBuf);
+    var st = flow.state(), f = st.target ? st.target.f : 0;
+    if (f > 0 && st.phase !== 'done') {
+      // the drone we play is subtracted from what we hear BEFORE detection -
+      // otherwise a loud tone pulls the read toward "in tune" (measured: a
+      // -8c string read -2.8c under a 4x drone; see tools/tuner-lab.js E3)
+      var src = droneIdx >= 0 ? cancelDrone(micBuf, micAC.sampleRate, f) : micBuf;
+      var res = detectPitchNear(src, micAC.sampleRate, f);
+      // clarity hysteresis: acquire at 0.9, hold through dips to 0.72; ~0.3s of
+      // nothing releases (a brief dropout is not "the string stopped")
+      var voiced = res.freq > 0 && res.clarity > (reading ? 0.72 : 0.9);
+      if (voiced) { reading = true; quietFrames = 0; }
+      else if (++quietFrames > 18) reading = false;
+      applyFrame(voiced ? 1200 * Math.log2(res.freq / f) : null, performance.now());
+    }
+    micRAF = requestAnimationFrame(guidedLoop);
+  }
+  function startGuided() {
+    if (!ensureFlow()) { var c0 = el('micCents'); if (c0) c0.textContent = 'guided tuning failed to load - use the tones below'; return; }
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
       .then(function (stream) {
         micStream = stream;
@@ -251,44 +376,76 @@
         micAnalyser = micAC.createAnalyser();
         micAnalyser.fftSize = 4096;          // ~93ms @44.1k: enough low-string wavelengths to lock on
         micBuf = new Float32Array(micAnalyser.fftSize);
-        micBand = bandLimits(STRINGS);
         src.connect(micAnalyser);
         micOn = true;
-        var t = document.getElementById('micToggle'); if (t) t.textContent = 'Stop mic';
-        micLoop();
+        var t = el('micToggle'); if (t) t.textContent = 'Stop';
+        flow.start(0);                       // fires 'retarget' -> drone + render
+        renderGuided(flow.state());
+        guidedLoop();
       })
-      .catch(function () { var c = document.getElementById('micCents'); if (c) c.textContent = 'Mic permission denied.'; });
+      .catch(function () { var c = el('micCents'); if (c) c.textContent = 'Mic permission denied.'; });
   }
-  function micStop() {
+  function releaseMic() {
     micOn = false;
     if (micRAF) cancelAnimationFrame(micRAF);
     if (micStream) { micStream.getTracks().forEach(function (t) { t.stop(); }); micStream = null; }
     if (micAC) { micAC.close(); micAC = null; }
-    var t = document.getElementById('micToggle'); if (t) t.textContent = 'Start mic';
-    var nn = document.getElementById('micNote'); if (nn) { nn.textContent = '·'; nn.classList.remove('intune'); }
-    var cc = document.getElementById('micCents'); if (cc) cc.textContent = 'mic stopped';
+  }
+  function finishGuided() {
+    // every string landed: mic + tone off (battery, privacy); Start again restarts
+    releaseMic(); stopDrone(); simActive = false;
+    var t = el('micToggle'); if (t) t.textContent = 'Start again';
+    if (flow) renderGuided(flow.state());
+  }
+  function stopGuided() {
+    releaseMic(); stopDrone(); simActive = false;
+    if (flow) { flow.stop(); renderGuided(flow.state()); }
+    var t = el('micToggle'); if (t) t.textContent = 'Start';
+  }
+
+  /* ---------- FREE mode ("Any string" chip - the legacy auto-recognition) ----------
+   * Identify whichever string is sounding, then show cents against it. Kept
+   * reachable, not default (operator: never used it). Smoothing chain:
+   * clarity gate -> median -> note-name hysteresis -> eased needle, holding
+   * the last good value through brief dropouts. No haptics on this path. */
+  var needleEMA = 50, freqHist = [], lockedString = null, switchFrames = 0, micBand = { fmin: 60, fmax: 1320 };
+  var inTuneHold = 0, glitchFrames = 0, prevShown = null, freeTxt = '';
+  function startFree() {
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+      .then(function (stream) {
+        micStream = stream;
+        micAC = new (window.AudioContext || window.webkitAudioContext)();
+        var src = micAC.createMediaStreamSource(micStream);
+        micAnalyser = micAC.createAnalyser();
+        micAnalyser.fftSize = 4096;
+        micBuf = new Float32Array(micAnalyser.fftSize);
+        micBand = bandLimits(STRINGS);
+        src.connect(micAnalyser);
+        micOn = true;
+        var t = el('micToggle'); if (t) t.textContent = 'Stop mic';
+        freeLoop();
+      })
+      .catch(function () { var c = el('micCents'); if (c) c.textContent = 'Mic permission denied.'; });
+  }
+  function stopFree() {
+    releaseMic();
+    var t = el('micToggle'); if (t) t.textContent = 'Start mic';
+    var nn = el('micNote'); if (nn) { nn.textContent = '·'; nn.classList.remove('intune'); }
+    var cc = el('micCents'); if (cc) cc.textContent = 'mic stopped';
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
-    inTuneHold = 0; reading = false; lastCentsTxt = ''; glitchFrames = 0; prevShown = null;
-    strobePhase = 0; wasLocked = false; prevHint = '';
-    var st = document.getElementById('micStrobe'); if (st) { st.classList.remove('locked'); st.classList.remove('sharp'); }
-    var nd = document.getElementById('micNeedle');
+    inTuneHold = 0; reading = false; freeTxt = ''; glitchFrames = 0; prevShown = null;
+    var nd = el('micNeedle');
     if (nd) { nd.style.left = '50%'; nd.style.background = 'var(--bad)'; if (nd.parentNode) { nd.parentNode.classList.remove('locked'); nd.parentNode.classList.remove('sharp'); } }
   }
-  function micLoop() {
-    if (!micOn) return;
+  function freeLoop() {
+    if (!micOn || mode !== 'free') return;
     micAnalyser.getFloatTimeDomainData(micBuf);
     var res = detectPitch(micBuf, micAC.sampleRate, micBand.fmin, micBand.fmax);
-    var noteEl = document.getElementById('micNote'), centsEl = document.getElementById('micCents'), needle = document.getElementById('micNeedle');
-    if (!noteEl || !centsEl || !needle) { micRAF = requestAnimationFrame(micLoop); return; }
-    var meter = needle.parentNode, strobe = document.getElementById('micStrobe'), strobeInner = document.getElementById('micStrobeInner');
-    // Clarity hysteresis: acquire a string at 0.9, then HOLD it through brief dips
-    // (down to 0.72) so the note/cents don't flicker out while a string sustains.
+    var noteEl = el('micNote'), centsEl = el('micCents'), needle = el('micNeedle');
+    if (!noteEl || !centsEl || !needle) { micRAF = requestAnimationFrame(freeLoop); return; }
+    var meter = needle.parentNode;
     if (res.freq > 0 && res.clarity > (reading ? 0.72 : 0.9)) {
       reading = true; quietFrames = 0;
-      // Reject a single glitch frame so it can't yank the needle; if the deviation
-      // PERSISTS (~4 frames) it's a real new note, so adopt it. Otherwise the
-      // longer median buffer keeps the read steady — the needle tracks the same
-      // smoothed value as the cents number you trust.
       var refFreq = freqHist.length ? median(freqHist) : 0;
       if (isOutlier(res.freq, refFreq, 40)) {
         if (++glitchFrames >= 4) { freqHist = [res.freq]; glitchFrames = 0; }
@@ -298,11 +455,6 @@
       }
       var freq = median(freqHist);
       var tgt = nearest(freq);
-      // Note-name hysteresis: don't flip the displayed string on a transient, and
-      // don't thrash when a note sits near the midpoint between two strings. Require
-      // the candidate to be CLEARLY closer (SWITCH_MARGIN cents) for SWITCH_FRAMES
-      // consecutive frames. Raise to steady a flickering name, lower if a genuinely
-      // new string is slow to appear.
       var SWITCH_FRAMES = 5, SWITCH_MARGIN = 20;
       if (lockedString === null) { lockedString = tgt; switchFrames = 0; }
       else if (tgt !== lockedString) {
@@ -314,87 +466,100 @@
       else { switchFrames = 0; }
       var shown = lockedString;
       var cents = Math.round(1200 * Math.log2(freq / shown.f)), hint = tuneHint(cents);
-      // Tight, asymmetric LOCK for tuning UP from flat: latch only at ±1¢; the
-      // instant it goes sharp (overshoot) drop the lock so you SEE it; a brief
-      // flat-side hold rides out wobble while the string seats.
       if (hint === 'near') inTuneHold = 8; else if (hint === 'sharp') inTuneHold = 0; else if (inTuneHold > 0) inTuneHold--;
       var locked = inTuneHold > 0;
-      // Zoomed needle, driven by the same smoothed value as the cents readout.
-      // ASYMMETRIC smoothing — fast ATTACK, slow RELEASE, split by distance-to-target:
-      // a new string or a big error catches up FAST, honing the last few cents damps
-      // HEAVY so the needle sits dead still. Raise the honing k if it feels laggy near
-      // centre, lower it if it jitters.
       var target = needlePos(cents), acents = Math.abs(cents), k;
-      if (shown !== prevShown) k = 0.5;        // new string   — snap to it
-      else if (acents > 15) k = 0.35;          // far off      — track quickly (fast attack)
-      else if (acents > 5) k = 0.16;           // closing in   — moderate
-      else k = 0.07;                           // honing (<5¢) — heavy damping, no jitter (slow release)
+      if (shown !== prevShown) k = 0.5;
+      else if (acents > 15) k = 0.35;
+      else if (acents > 5) k = 0.16;
+      else k = 0.07;
       prevShown = shown;
       needleEMA += (target - needleEMA) * k; needle.style.left = needleEMA.toFixed(1) + '%';
-      // Colour the workflow: green = there; amber = flat, keep coming UP (the good
-      // direction); red = sharp, you overshot — drop below and re-approach.
       needle.style.background = locked ? 'var(--good)' : (hint === 'sharp' ? 'var(--bad)' : 'var(--warn)');
       noteEl.textContent = shown.n;
       noteEl.classList.toggle('intune', locked);
       if (meter) { meter.classList.toggle('locked', locked); meter.classList.toggle('sharp', !locked && hint === 'sharp'); }
-      // Steady text: repaint only on change. ✓ when locked; flat -> keep coming up;
-      // sharp -> you overshot, drop below and come back up.
       var txt = locked ? '✓ in tune'
         : (hint === 'sharp' ? '+' + cents + '¢  ▼ sharp - drop & come up' : cents + '¢  ▲ keep tuning up');
-      if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
-      // STROBE: stripes drift ∝ cents (flat ← / sharp →), FREEZE when locked — the
-      // classic "stands still = in tune" read that beats chasing a needle.
-      if (strobe && strobeInner) {
-        strobe.classList.toggle('locked', locked);
-        strobe.classList.toggle('sharp', !locked && hint === 'sharp');
-        if (!locked) { strobePhase = ((strobePhase + cents * 0.5) % 20 + 20) % 20; strobeInner.style.transform = 'translateX(' + (-strobePhase) + 'px)'; }
-      }
-      // Haptics (Android): a tick the instant you LOCK, a buzz the instant you go
-      // SHARP — feedback you feel without watching the screen.
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        if (locked && !wasLocked) navigator.vibrate(25);
-        else if (hint === 'sharp' && prevHint !== 'sharp') navigator.vibrate([12, 30, 12]);
-      }
-      wasLocked = locked; prevHint = hint;
+      if (txt !== freeTxt) { centsEl.textContent = txt; freeTxt = txt; }
     } else if (++quietFrames > 18) {
-      // Sustained silence (~0.3s): release, clear history, drift gently to centre.
       reading = false; freqHist = []; lockedString = null; switchFrames = 0; inTuneHold = 0; glitchFrames = 0; prevShown = null;
       needleEMA += (50 - needleEMA) * 0.05; needle.style.left = needleEMA.toFixed(1) + '%';
       needle.style.background = 'var(--bad)';
       noteEl.classList.remove('intune'); if (meter) { meter.classList.remove('locked'); meter.classList.remove('sharp'); }
-      if (strobe) { strobe.classList.remove('locked'); strobe.classList.remove('sharp'); }
-      wasLocked = false; prevHint = '';
-      if (lastCentsTxt !== '…') { centsEl.textContent = 'listening… play a string'; lastCentsTxt = '…'; }
+      if (freeTxt !== '…') { centsEl.textContent = 'listening… play a string'; freeTxt = '…'; }
     }
-    // brief dropouts (quietFrames <= 18): hold the last good reading, no flicker.
-    micRAF = requestAnimationFrame(micLoop);
+    micRAF = requestAnimationFrame(freeLoop);
+  }
+
+  /* ---------- shared controls ---------- */
+  function micToggle() {
+    if (mode === 'guided') {
+      if (micOn) { stopGuided(); return; }
+      if (flow && flow.state().phase === 'done') { /* Start again: flow.start() resets progress */ }
+      startGuided();
+    } else {
+      if (micOn) { stopFree(); return; }
+      startFree();
+    }
+  }
+  function micStop() { if (mode === 'guided') stopGuided(); else stopFree(); }
+  function setMode(next) {
+    if (next === mode) return;
+    micStop();
+    mode = next;
+    var g = el('micRunway'), m = el('micMeter'), tone = el('toneToggle'), t = el('micToggle');
+    if (g) g.style.display = mode === 'guided' ? '' : 'none';
+    if (m) m.style.display = mode === 'free' ? '' : 'none';
+    if (tone) tone.style.display = mode === 'guided' ? '' : 'none';
+    if (t) t.textContent = mode === 'guided' ? 'Start' : 'Start mic';
+    var cc = el('micCents'); if (cc) cc.textContent = mode === 'guided' ? 'tap Start - the tuner walks every string, low to high' : 'tap Start mic, then play any string';
+    lastCentsTxt = ''; lastNoteTxt = '';
+    var nn = el('micNote'); if (nn) nn.textContent = '·';
+    document.querySelectorAll('.micModes .chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === mode); });
+    document.querySelectorAll('#tStrings .tStr').forEach(function (b) { b.classList.remove('cur'); b.classList.remove('done'); });
+  }
+  function renderToneBtn() { var b = el('toneToggle'); if (b) { b.textContent = toneOn() ? 'Tone on' : 'Tone off'; b.classList.toggle('on', toneOn()); } }
+  function toggleTone() {
+    var on = !toneOn(); setToneOn(on); renderToneBtn();
+    if (guidedActive() && flow.state().target) { if (on) { stopDrone(); startDrone(flow.state().target.f, flow.state().index); } else stopDrone(); }
   }
   function buildMic(box) {
     if (!box) return;
     var secure = window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
     if (!secure) {
-      box.innerHTML = '<div class="micMsg"><b>The live needle needs a microphone</b>, which the browser only allows over <b>https</b>. Opened as a local file the mic is blocked - use the reference tones below to tune by ear, or open this page over https (it is live on GitHub Pages) to unlock the needle.</div>';
+      box.innerHTML = '<div class="micMsg"><b>The tuner needs a microphone</b>, which the browser only allows over <b>https</b>. Opened as a local file the mic is blocked - use the reference tones below to tune by ear, or open this page over https (it is live on GitHub Pages) to unlock it.</div>';
       return;
     }
-    box.innerHTML = '<div class="micNote" id="micNote">·</div><div class="micCents" id="micCents">tap Start, then play a string</div>'
-      + '<div class="micMeter"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
-      + '<div class="strobe" id="micStrobe"><div class="strobeInner" id="micStrobeInner"></div><div class="strobeLbl">stands still = in tune · drifts ◀ flat · sharp ▶</div></div>'
-      // Primary CTA on the Tune tab: .btn.red (the app's canonical accent-fill
-      // primary, same as Setlist "Start performance" + the form Save) so the
-      // one action a user is here to take reads consistently across tabs.
-      + '<div class="actions"><button class="btn red" id="micToggle">Start mic</button></div>';
-    document.getElementById('micToggle').onclick = micToggle;
+    box.innerHTML = '<div class="chips micModes"><button class="chip on" data-mode="guided">Guided</button><button class="chip" data-mode="free">Any string</button></div>'
+      + '<div class="micNote" id="micNote">·</div><div class="micCents" id="micCents">tap Start - the tuner walks every string, low to high</div>'
+      // the runway: approach from the flat side toward the post at 60%
+      + '<div class="runway waiting" id="micRunway"><div class="rwTrack"></div><div class="rwPost" id="micPost"></div><div class="rwHold" id="micHold"></div><div class="rwPuck" id="micPuck" style="left:6%"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
+      // the legacy needle meter (free mode only)
+      + '<div class="micMeter" id="micMeter" style="display:none"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
+      // Primary CTA: .btn.red (the app's canonical accent-fill primary); the
+      // tone toggle rides beside it as a ghost
+      + '<div class="actions micActions"><button class="btn red" id="micToggle">Start</button><button class="btn ghost" id="toneToggle">Tone on</button></div>';
+    el('micToggle').onclick = micToggle;
+    el('toneToggle').onclick = toggleTone;
+    renderToneBtn();
+    document.querySelectorAll('.micModes .chip').forEach(function (b) { b.onclick = function () { setMode(b.getAttribute('data-mode')); }; });
   }
 
-  /* ---------- reference-tone string buttons ---------- */
-  function buildStrings(el) {
-    if (!el) return;
-    el.innerHTML = '';
+  /* ---------- string buttons: the progress row (guided) / reference tones (idle) ---------- */
+  function buildStrings(elx) {
+    if (!elx) return;
+    elx.innerHTML = '';
     STRINGS.forEach(function (s, i) {
       var b = document.createElement('button'); b.className = 'tStr';
       b.innerHTML = '<span class="n">' + s.n + '</span><span class="l">' + s.l + '</span><span class="hz">' + s.f.toFixed(0) + ' Hz</span>';
-      b.onclick = function () { toggleDrone(s.f, i, b); };
-      el.appendChild(b);
+      b.onclick = function () {
+        // while guided tuning runs a tap RETARGETS the loop (the buttons still
+        // accept your input); otherwise it is the reference tone it always was
+        if (guidedActive() && flow.state().phase !== 'done') { flow.retarget(i); renderGuided(flow.state()); }
+        else toggleDrone(s.f, i, b);
+      };
+      elx.appendChild(b);
     });
   }
 
@@ -406,11 +571,20 @@
     mount: function (opts) {
       opts = opts || {};
       STRINGS = opts.strings || [];
+      flow = null; mode = 'guided'; simActive = false;
       buildMic(opts.micBoxEl || document.getElementById('micBox'));
       buildStrings(opts.stringsEl || document.getElementById('tStrings'));
     },
     // silence mic + reference drones (call when leaving the Tune tab)
-    stop: function () { stopDrone(); micStop(); }
+    stop: function () { stopDrone(); micStop(); },
+    // Test hook (test/pw/scenarios/tune-guided.json): drives the SAME flow +
+    // render path without a microphone - the mic only ever supplies cents
+    // frames, so everything from cents to pixels under test is production code.
+    _sim: {
+      start: function () { if (mode !== 'guided') setMode('guided'); releaseMic(); if (!ensureFlow()) return null; simActive = true; flow.start(0); renderGuided(flow.state()); var t = el('micToggle'); if (t) t.textContent = 'Stop'; return flow.state(); },
+      feed: function (cents, nowMs) { return applyFrame(cents, nowMs); },
+      state: function () { return flow ? flow.state() : null; }
+    }
   };
 
   // expose the pure DSP for Node unit tests (no DOM/mic needed)
@@ -421,6 +595,7 @@
     module.exports.nearestString = nearestString;
     module.exports.bandLimits = bandLimits;
     module.exports.needlePos = needlePos;
+    module.exports.runwayPos = runwayPos;
     module.exports.isOutlier = isOutlier;
     module.exports.tuneHint = tuneHint;
     module.exports.median = median;
