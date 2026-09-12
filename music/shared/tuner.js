@@ -492,6 +492,40 @@
     micRAF = requestAnimationFrame(freeLoop);
   }
 
+  /* ---------- demo mode (?tunerdemo=1): feel the loop with no mic ----------
+   * A scripted approach-from-flat per string, fed through Tuner._sim, so a
+   * githack branch preview shows the whole guided loop animating on any
+   * phone before the mic is even granted. This is how runway/feel VARIANTS
+   * get compared on the device (see engineering-wiki/workflows/
+   * branch-prototypes.md) - the demo drives the production flow + render
+   * path, only the cents frames are synthetic. */
+  var demoRAF = null, demoT0 = 0, demoSeed = 0;
+  function demoFrame() {
+    if (!simActive || !flow) { demoRAF = null; return; }
+    var st = flow.state();
+    if (st.phase === 'done') { demoRAF = null; return; }
+    var now = performance.now(), el0 = (now - demoT0) / 1000;   // seconds since this string's retarget
+    // 0-0.6s: silence (you reach for the peg); 0.6-3.0s: climb -38c -> 0 with a
+    // peg-turn wobble; then settle inside the zone with a little hand tremor
+    var cents = null;
+    if (el0 > 0.6) {
+      var k = Math.min(1, (el0 - 0.6) / 2.4);
+      var climb = -38 * (1 - k) * (1 - k);                       // ease-out: fast at first, honing at the end
+      var wobble = Math.sin(el0 * 7 + demoSeed) * 1.6 * (1 - k) + Math.sin(el0 * 13) * 0.6;
+      cents = climb + wobble;
+    }
+    applyFrame(cents, now);
+    demoRAF = requestAnimationFrame(demoFrame);
+  }
+  function startDemo() {
+    if (!global.Tuner || !global.Tuner._sim) return;
+    global.Tuner._sim.start();
+    demoT0 = performance.now(); demoSeed = 0;
+    flow.on('retarget', function () { demoT0 = performance.now(); demoSeed += 1.7; });
+    if (!demoRAF) demoRAF = requestAnimationFrame(demoFrame);
+  }
+  function demoRequested() { try { return /[?&]tunerdemo=1/.test(location.search); } catch (e) { return false; } }
+
   /* ---------- shared controls ---------- */
   function micToggle() {
     if (mode === 'guided') {
@@ -574,6 +608,12 @@
       flow = null; mode = 'guided'; simActive = false;
       buildMic(opts.micBoxEl || document.getElementById('micBox'));
       buildStrings(opts.stringsEl || document.getElementById('tStrings'));
+      // ?tunerdemo=1: run the scripted loop once the Tune tab is on screen
+      if (demoRequested() && global.TuneFlow) {
+        var kick = function (ev) { if (ev && ev.detail && ev.detail.tab !== 'tune') return; window.removeEventListener('music:tab-shown', kick); setTimeout(startDemo, 500); };
+        var tuneScreen = document.getElementById('s-tune');
+        if (tuneScreen && tuneScreen.offsetParent !== null) setTimeout(startDemo, 500); else window.addEventListener('music:tab-shown', kick);
+      }
     },
     // silence mic + reference drones (call when leaving the Tune tab)
     stop: function () { stopDrone(); micStop(); },

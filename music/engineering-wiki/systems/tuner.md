@@ -64,6 +64,7 @@ landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 | `#toneToggle` | drone on/off, remembered in `music.tuner.tone.v1` (default ON) |
 | `.micModes` chips | Guided (default) / Any string (the legacy free-recognition mode, needle + meter) |
 | `Tuner._sim` | `{ start(), feed(cents|null, nowMs), state() }` - test hook that drives the SAME flow + render path without a mic (`test/pw/scenarios/tune-guided.json`) |
+| `?tunerdemo=1` | URL flag: a scripted approach-from-flat per string fed through `Tuner._sim`, so a branch preview animates the whole loop on any phone with no mic - the demo handle for [branch prototypes](../workflows/branch-prototypes.md) |
 
 Fixed contracts: status colours stay red/amber/green (never accent-themed);
 prefer no reading over a wrong reading; haptics = ONE 30 ms pulse on landed,

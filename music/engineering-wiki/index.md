@@ -48,6 +48,7 @@
 | [testing.md](workflows/testing.md) | Suite map; run-all; canon; localStorage reset helper; what green gates |
 | [data-curation.md](workflows/data-curation.md) | /song flow; songs.json editing rules; track curation; phone->laptop merge |
 | [roadmap-missions.md](workflows/roadmap-missions.md) | Tutor phases; mission/sprint record; wave-2 deferrals; backlog register |
+| [branch-prototypes.md](workflows/branch-prototypes.md) | Feel-variant loop: one branch per variant, `?tunerdemo=1`-style demo flags, githack links as the deliverable, pick by thumb, delete the rest |
 | [render-verification-traps.md](workflows/render-verification-traps.md) | How a render check lies: zero-box rects, display-vs-box, sticky binding the wrong scrollport, selectors that never match; the width x font-scale matrix rationale; prove-the-gate-red discipline |
 
 ## Routing table - "which page owns X"
@@ -58,6 +59,7 @@
 | Add/modify a scale | theory-engine/solo-scales.md (+ theory-verification for canon) |
 | Roman numeral looks wrong | theory-engine/harmonization.md |
 | Tuner reads wrong / the drone fools the needle / guided loop order | systems/tuner.md |
+| Compare two or three FEELS of a feature on the phone | workflows/branch-prototypes.md |
 | A destructive control / undo | ux-philosophy/interaction-safety.md |
 | One-shot hint/banner | ux-philosophy/interaction-safety.md (notables) |
 | A toast / transient feedback / which UI primitive to use | ux-philosophy/ui-primitives.md |
