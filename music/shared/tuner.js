@@ -272,81 +272,94 @@
    * cancellation) and the pixels. No note identification anywhere on this
    * path - the read is cents-from-THIS-string, nothing else. */
   var TONE_KEY = 'music.tuner.tone.v1';           // '0' = tone off; absent/anything else = on (default ON)
-  var PARAMS_KEY = 'music.tuner.params.v1';       // the tuning lab's slider values (JSON), absent = defaults
-  // Mic-side knobs (the flow's own knobs live in TuneFlow.DEFAULTS). The lab
-  // panel (?tunerlab=1) exposes both sets as sliders so the feel can be tuned
-  // ON THE INSTRUMENT and reported back as one line.
+  var PARAMS_KEY = 'music.tuner.lab.v2';         // the tuning lab's four macro sliders (0..100 each), absent = defaults
+  // Mic-side knobs (the flow's own knobs live in TuneFlow.DEFAULTS).
   var MIC_DEFAULTS = { clarityAcquire: 0.9, clarityHold: 0.72 };
   var mic = { clarityAcquire: 0.9, clarityHold: 0.72 };
-  var LAB = [ // key, label, min, max, step, owner ('flow' | 'mic')
-    ['holdMs', 'hold to land (ms)', 100, 1500, 50, 'flow'],
-    ['inTuneCents', 'in-tune zone (+/- cents)', 0.5, 6, 0.5, 'flow'],
-    ['wobbleCents', 'wobble slack (cents)', 0, 5, 0.5, 'flow'],
-    ['gapMs', 'pause before reset (ms)', 100, 2000, 50, 'flow'],
-    ['dropFrames', 'ratchet frames', 0, 20, 1, 'flow'],
-    ['dropCents', 'ratchet margin (cents)', 0, 5, 0.25, 'flow'],
-    ['medianFrames', 'median frames', 1, 12, 1, 'flow'],
-    ['honeK', 'needle damping near post (k)', 0.02, 0.5, 0.01, 'flow'],
-    ['midK', 'needle damping mid (k)', 0.05, 0.6, 0.01, 'flow'],
-    ['farK', 'needle damping far (k)', 0.1, 1, 0.05, 'flow'],
-    ['celebrateMs', 'celebrate before next (ms)', 200, 2000, 50, 'flow'],
-    ['clarityAcquire', 'mic clarity to acquire', 0.5, 0.99, 0.01, 'mic'],
-    ['clarityHold', 'mic clarity to hold', 0.3, 0.95, 0.01, 'mic']
+  // The tuning lab (?tunerlab=1): FOUR plain sliders, each from "too cold" to
+  // "too hot" with today's defaults at the middle, so the operator finds his
+  // Goldilocks by feel and reports four numbers. Each macro drives several
+  // real parameters through a cold/default/hot triple (piecewise-linear, so
+  // 50 = exactly the shipped default).
+  var MACROS = [
+    { key: 'land', label: 'Landing', cold: 'lands easily', hot: 'lands strictly',
+      params: { holdMs: [120, 450, 1200], inTuneCents: [4, 2.5, 1.5], wobbleCents: [3, 2, 0.5] } },
+    { key: 'needle', label: 'Needle', cold: 'twitchy', hot: 'calm',
+      params: { medianFrames: [1, 5, 9], honeK: [0.5, 0.07, 0.015], midK: [0.7, 0.16, 0.04], farK: [1, 0.35, 0.1] } },
+    { key: 'ratchet', label: 'Ratchet', cold: 'follows every dip', hot: 'only climbs',
+      params: { dropFrames: [0, 6, 20], dropCents: [0, 1.5, 4] } },
+    { key: 'ear', label: 'Ear', cold: 'picky', hot: 'forgiving',
+      params: { clarityAcquire: [0.95, 0.9, 0.6], clarityHold: [0.85, 0.72, 0.4], gapMs: [300, 700, 1500] } }
   ];
-  function loadParams() { try { var j = JSON.parse(localStorage.getItem(PARAMS_KEY) || 'null'); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } }
-  function saveParams(p) { try { localStorage.setItem(PARAMS_KEY, JSON.stringify(p)); } catch (e) { } }
-  function applyParams(p) {
-    if (flow) flow.set(p);
-    for (var k in MIC_DEFAULTS) if (p[k] != null && isFinite(p[k])) mic[k] = +p[k];
-  }
-  function labRequested() { try { return /[?&]tunerlab=1/.test(location.search) || localStorage.getItem('music.tuner.lab.v1') === '1'; } catch (e) { return false; } }
-  function currentParams() {
-    var out = {}, fp = flow ? flow.params() : (global.TuneFlow ? global.TuneFlow.DEFAULTS : {});
-    LAB.forEach(function (r) { out[r[0]] = r[5] === 'flow' ? fp[r[0]] : mic[r[0]]; });
+  function lerp3(tri, t) { t = Math.max(0, Math.min(1, t)); return t < 0.5 ? tri[0] + (tri[1] - tri[0]) * (t * 2) : tri[1] + (tri[2] - tri[1]) * ((t - 0.5) * 2); }
+  function loadMacros() { try { var j = JSON.parse(localStorage.getItem(PARAMS_KEY) || 'null'); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } }
+  function saveMacros(m) { try { localStorage.setItem(PARAMS_KEY, JSON.stringify(m)); } catch (e) { } }
+  function macroValue(m, key) { var v = m[key]; return (v == null || !isFinite(v)) ? 50 : Math.max(0, Math.min(100, +v)); }
+  function deriveParams(m) {
+    var out = {};
+    MACROS.forEach(function (mac) {
+      var t = macroValue(m, mac.key) / 100;
+      for (var k in mac.params) { var v = lerp3(mac.params[k], t); out[k] = (k === 'medianFrames' || k === 'dropFrames') ? Math.round(v) : Math.round(v * 1000) / 1000; }
+    });
     return out;
   }
+  function applyMacros(m) {
+    var p = deriveParams(m);
+    if (flow) flow.set(p);
+    for (var k in MIC_DEFAULTS) if (p[k] != null) mic[k] = p[k];
+    return p;
+  }
+  function labRequested() { try { return /[?&]tunerlab=1/.test(location.search) || localStorage.getItem('music.tuner.lab.v1') === '1'; } catch (e) { return false; } }
   function paramsLine() {
-    var p = currentParams(), parts = [];
-    LAB.forEach(function (r) { if (p[r[0]] != null) parts.push(r[0] + '=' + p[r[0]]); });
-    return parts.join(' ');
+    var m = loadMacros(), parts = [];
+    MACROS.forEach(function (mac) { parts.push(mac.key + '=' + macroValue(m, mac.key)); });
+    var p = deriveParams(m), dp = [];
+    for (var k in p) dp.push(k + '=' + p[k]);
+    return parts.join(' ') + '\n' + dp.join(' ');
   }
-  function renderLabReadout() {
-    var o = el('labLine'); if (o) o.textContent = paramsLine();
-  }
+  function renderLabReadout() { var o = el('labLine'); if (o) o.textContent = paramsLine(); }
+  function fmtS(ms) { return (Math.max(0, ms) / 1000).toFixed(2) + 's'; }
   function buildLab(box) {
-    var lab = document.createElement('details'); lab.className = 'tunerLab'; lab.id = 'tunerLab';
-    var html = '<summary>Tuning lab - drag, play, report the line below</summary>';
-    html += '<div class="labLive" id="labLive">-</div>';
-    LAB.forEach(function (r) {
-      html += '<label class="labRow"><span class="labLbl">' + r[1] + '</span><input type="range" data-key="' + r[0] + '" min="' + r[2] + '" max="' + r[3] + '" step="' + r[4] + '"><span class="labVal" id="labVal-' + r[0] + '"></span></label>';
+    var lab = document.createElement('div'); lab.className = 'tunerLab'; lab.id = 'tunerLab';
+    var html = '<div class="labLive" id="labLive">-</div><div class="labTry" id="labTry">last pluck: -</div>';
+    MACROS.forEach(function (mac) {
+      html += '<div class="labRow"><div class="labHead"><span class="labLbl">' + mac.label + '</span><span class="labVal" id="labVal-' + mac.key + '"></span></div>'
+        + '<input type="range" data-key="' + mac.key + '" min="0" max="100" step="1" aria-label="' + mac.label + '">'
+        + '<div class="labEnds"><span>' + mac.cold + '</span><span>' + mac.hot + '</span></div></div>';
     });
-    html += '<div class="labLine" id="labLine"></div><div class="actions micActions"><button class="btn ghost" id="labReset">Reset to defaults</button></div>';
+    html += '<div class="labLine" id="labLine"></div><div class="actions micActions"><button class="btn ghost" id="labReset">Back to defaults</button></div>';
     lab.innerHTML = html;
     box.appendChild(lab);
-    var stored = loadParams(), p = currentParams();
+    var m = loadMacros();
     lab.querySelectorAll('input[type=range]').forEach(function (inp) {
       var k = inp.getAttribute('data-key');
-      var v = stored[k] != null ? stored[k] : p[k];
-      inp.value = v; var vv = el('labVal-' + k); if (vv) vv.textContent = v;
+      inp.value = macroValue(m, k); var vv = el('labVal-' + k); if (vv) vv.textContent = inp.value;
       inp.oninput = function () {
-        var s2 = loadParams(); s2[k] = +inp.value; saveParams(s2); applyParams(s2);
+        var m2 = loadMacros(); m2[k] = +inp.value; saveMacros(m2); applyMacros(m2);
         var vv2 = el('labVal-' + k); if (vv2) vv2.textContent = inp.value;
         renderLabReadout();
       };
     });
     el('labReset').onclick = function () {
       try { localStorage.removeItem(PARAMS_KEY); } catch (e) { }
-      if (flow) flow.set(global.TuneFlow.DEFAULTS);
-      for (var k in MIC_DEFAULTS) mic[k] = MIC_DEFAULTS[k];
-      var p2 = currentParams();
-      lab.querySelectorAll('input[type=range]').forEach(function (inp) { var kk = inp.getAttribute('data-key'); inp.value = p2[kk]; var vv = el('labVal-' + kk); if (vv) vv.textContent = p2[kk]; });
+      applyMacros({});
+      lab.querySelectorAll('input[type=range]').forEach(function (inp) { inp.value = 50; var vv = el('labVal-' + inp.getAttribute('data-key')); if (vv) vv.textContent = '50'; });
       renderLabReadout();
     };
     renderLabReadout();
   }
   function renderLabLive(st, res) {
-    var o = el('labLive'); if (!o) return;
-    o.textContent = 'phase ' + st.phase + '  raw ' + (st.rawCents == null ? '-' : st.rawCents.toFixed(1)) + 'c  shown ' + (st.cents == null ? '-' : st.cents.toFixed(1)) + 'c  hold ' + Math.round((st.holdProgress || 0) * 100) + '%' + (res ? '  clarity ' + res.clarity.toFixed(2) : '');
+    var o = el('labLive'), tr = el('labTry'); if (!o) return;
+    var need = flow ? flow.params().holdMs : 450;
+    o.textContent = 'now: ' + (st.cents == null ? 'nothing heard' : (st.cents > 0 ? '+' : '') + st.cents.toFixed(1) + '\u00a2')
+      + (res ? '  hearing ' + Math.round(res.clarity * 100) + '%' : '')
+      + '  in zone ' + fmtS((st.holdProgress || 0) * need) + ' of ' + fmtS(need);
+    if (tr) {
+      if (st.phase === 'landed' || st.phase === 'done') tr.textContent = 'last pluck: landed';
+      else if (st.lastReset) tr.textContent = 'last pluck: held ' + fmtS(st.bestHoldMs || 0) + ' of ' + fmtS(need) + ', then ' + st.lastReset + (st.resets > 1 ? ' (' + st.resets + ' tries)' : '');
+      else if ((st.bestHoldMs || 0) > 0) tr.textContent = 'this pluck: held ' + fmtS(st.bestHoldMs) + ' of ' + fmtS(need) + ' so far';
+      else tr.textContent = 'last pluck: -';
+    }
   }
   var mode = 'guided', flow = null, simActive = false, quietFrames = 0, reading = false;
   var lastCentsTxt = '', lastNoteTxt = '', prevPhase = '';
@@ -369,7 +382,7 @@
     if (flow) return flow;
     if (!global.TuneFlow) return null;
     flow = global.TuneFlow.create({ strings: STRINGS });
-    applyParams(loadParams());
+    applyMacros(loadMacros());
     flow.on('retarget', function (ev) {
       // the target's own tone drones while you tune it (cancelled out of the
       // mic path by cancelDrone) - swap it with the target
@@ -655,16 +668,18 @@
     el('micToggle').onclick = micToggle;
     el('toneToggle').onclick = toggleTone;
     renderToneBtn();
-    // the lab hangs BELOW the string row, outside the one-screen card, and
-    // lets the Tune tab scroll while it is present (a power tool, not the
-    // everyday layout)
+    // the lab sits right under the runway (the sliders and the puck on one
+    // screen - you pluck and drag at the same time); the Tune tab scrolls while
+    // it is present. A power tool, not the everyday layout.
     if (labRequested() && global.TuneFlow) {
       try { localStorage.setItem('music.tuner.lab.v1', '1'); } catch (e) { }
-      var wrap = box.closest ? box.closest('.tunerWrap') : null, screen = document.getElementById('s-tune');
+      var screen = document.getElementById('s-tune');
       if (screen) screen.classList.add('labOn');
-      buildLab(wrap || box);
+      var rw = el('micRunway'), acts = box.querySelector('.micActions');
+      var holder = document.createElement('div'); holder.id = 'labSlot';
+      if (rw && acts) box.insertBefore(holder, acts); else box.appendChild(holder);
+      buildLab(holder);
     }
-    document.querySelectorAll('.micModes .chip').forEach(function (b) { b.onclick = function () { setMode(b.getAttribute('data-mode')); }; });
   }
 
   /* ---------- string buttons: the progress row (guided) / reference tones (idle) ---------- */

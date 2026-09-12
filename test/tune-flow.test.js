@@ -403,6 +403,24 @@ test('set() updates parameters live and params() reads them back; unknown keys a
   feedFor(flow, 0, 260, 0);
   assert.strictEqual(flow.state().phase, 'landed', 'the new holdMs applied to the running flow');
 });
+test('diagnostics: bestHoldMs, resets and lastReset explain a failed landing', function () {
+  var flow = make(GUITAR, { holdMs: 400, gapMs: 300, medianFrames: 1, honeK: 1, midK: 1, farK: 1 });
+  flow.start();
+  var t = feedFor(flow, 0, 250, 0);
+  t = feedFor(flow, null, 400, t);                // longer than gapMs: the pluck died
+  var st = flow.state();
+  assert.strictEqual(st.phase, 'approach');
+  assert.strictEqual(st.lastReset, 'sound died');
+  assert.strictEqual(st.resets, 1);
+  assert.ok(st.bestHoldMs >= 200 && st.bestHoldMs < 400, 'best hold ' + st.bestHoldMs);
+  t = feedFor(flow, 0, 100, t);
+  t = feedFor(flow, 8, 50, t);
+  assert.strictEqual(flow.state().lastReset, 'went sharp');
+  assert.strictEqual(flow.state().resets, 2);
+  flow.retarget(1);
+  assert.strictEqual(flow.state().resets, 0, 'retarget clears the attempt diagnostics');
+  assert.strictEqual(flow.state().lastReset, null);
+});
 test('create() applies the documented defaults and requires strings', function () {
   assert.throws(function () { TuneFlow.create({}); });
   var flow = make(GUITAR, { holdMs: 200 });

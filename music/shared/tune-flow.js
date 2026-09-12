@@ -41,6 +41,9 @@
  *   - the RATCHET: the peg is the controller. A read moving UP shows at
  *     once; a read going flatter must persist dropFrames frames by
  *     dropCents before the needle drops (flat side only).
+ *   - state() also carries per-attempt diagnostics: bestHoldMs (the longest
+ *     hold reached since the last retarget), resets and lastReset ('sound
+ *     died' | 'went sharp' | 'dropped flat' | 'wobbled too long').
  *   - set(partial) updates any DEFAULTS key live (the tuning lab sliders);
  *     params() returns the current values.
  *   - ALL time comes from the nowMs argument. No Date.now, no timers.
@@ -111,6 +114,9 @@
     var window = [], glitchRun = [], ema = null, shown = null, dropRun = 0, raw = null;
     // timing state (all in the caller's nowMs)
     var holdAcc = 0, lastInZoneAt = null, lastVoicedAt = null, landedAt = null, lastNow = null;
+    // per-attempt diagnostics (the tuning lab's 'last pluck' line): the best hold
+    // reached since the last retarget, how many times it was reset, and why
+    var bestHold = 0, resets = 0, lastReset = null;
 
     function emit(name, payload) {
       var fns = (listeners[name] || []).slice();
@@ -118,7 +124,8 @@
     }
 
     function resetSmoothing() { window = []; glitchRun = []; ema = null; shown = null; dropRun = 0; raw = null; }
-    function clearTimers() { holdAcc = 0; lastInZoneAt = null; lastVoicedAt = null; landedAt = null; }
+    function clearTimers() { holdAcc = 0; lastInZoneAt = null; lastVoicedAt = null; landedAt = null; bestHold = 0; resets = 0; lastReset = null; }
+    function resetHold(why) { if (holdAcc > 0 || phase === 'arriving') { resets++; lastReset = why; } phase = 'approach'; holdAcc = 0; lastInZoneAt = null; }
     // live parameter update (the tuning lab sliders) - only known keys, never strings
     function set(partial) { for (var k in partial) if (k in DEFAULTS && partial[k] != null && isFinite(partial[k])) o[k] = +partial[k]; return o; }
     function params() { var c = {}; for (var k in o) c[k] = o[k]; return c; }
@@ -167,7 +174,10 @@
         hint: hintFor(shown, o),
         progress: progress.slice(),
         holdProgress: holdProgress(),
-        landedAt: phase === 'landed' ? landedAt : null
+        landedAt: phase === 'landed' ? landedAt : null,
+        bestHoldMs: bestHold,
+        resets: resets,
+        lastReset: lastReset
       };
     }
 
@@ -248,18 +258,19 @@
         if (inZone) {
           if (lastInZoneAt !== null && nowMs - lastInZoneAt <= o.gapMs) holdAcc += nowMs - lastInZoneAt;
           lastInZoneAt = nowMs;
+          if (holdAcc > bestHold) bestHold = holdAcc;
           phase = 'arriving';
           if (holdAcc >= o.holdMs) {
             phase = 'landed'; landedAt = nowMs; progress[index] = true;
             emit('landed', { index: index, target: target, nowMs: nowMs });
           }
         } else if (wobble) {
-          if (lastInZoneAt !== null && nowMs - lastInZoneAt > o.gapMs) { phase = 'approach'; holdAcc = 0; lastInZoneAt = null; }
+          if (lastInZoneAt !== null && nowMs - lastInZoneAt > o.gapMs) resetHold('wobbled too long');
         } else {
-          phase = 'approach'; holdAcc = 0; lastInZoneAt = null;   // drifted out / overshot - re-approach
+          resetHold(sm > 0 ? 'went sharp' : 'dropped flat');   // drifted out / overshot - re-approach
         }
       } else if (phase === 'arriving' && lastInZoneAt !== null && nowMs - lastInZoneAt > o.gapMs) {
-        phase = 'approach'; holdAcc = 0; lastInZoneAt = null;      // the string died out - not sustained
+        resetHold('sound died');                               // the string died out - not sustained
       }
       return state();
     }
