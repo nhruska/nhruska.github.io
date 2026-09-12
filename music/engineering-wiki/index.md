@@ -37,6 +37,7 @@
 | [practice-studio.md](systems/practice-studio.md) | The Studio overlay: solo panel, position walk, buildWhy circle, curation loop, Compose bridge |
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
 | [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
+| [tuner.md](systems/tuner.md) | Guided Tune loop (TuneFlow), the two detectors (free vs known-target), drone cancellation, the runway/progress-row UI contract, the `Tuner._sim` test hook |
 | [theme-tokens.md](systems/theme-tokens.md) | Light/dark token values + the `music.theme.v1` boot mechanism; the copy-don't-invent rule for any surface outside `music/` (artifact packs, case studies) |
 
 ## workflows/ - how we work on it
@@ -56,6 +57,7 @@
 | Why does F major show A#? | theory-engine/note-spelling.md |
 | Add/modify a scale | theory-engine/solo-scales.md (+ theory-verification for canon) |
 | Roman numeral looks wrong | theory-engine/harmonization.md |
+| Tuner reads wrong / the drone fools the needle / guided loop order | systems/tuner.md |
 | A destructive control / undo | ux-philosophy/interaction-safety.md |
 | One-shot hint/banner | ux-philosophy/interaction-safety.md (notables) |
 | A toast / transient feedback / which UI primitive to use | ux-philosophy/ui-primitives.md |

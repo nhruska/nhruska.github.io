@@ -112,6 +112,82 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
+  /* ---------- guided-mode detection: cents from a KNOWN string ----------
+   * detectPitchNear(buf, sr, fTarget) -> { freq, clarity }
+   * The guided flow already knows which string is being tuned, so there is
+   * nothing to identify: NSDF over lags [T/2.5 .. 1.4T] (T = sr / fTarget),
+   * so the lag-0 lobe and its first negative crossing are inside the scan,
+   * then pick the STRONGEST key maximum whose lag sits inside the window
+   * [T*2^(-300/1200) .. T*2^(+500/1200)] - i.e. a frequency within -500..+300
+   * cents of the string. Both octaves fall OUTSIDE that window by
+   * construction, so no first-peak rule and no note naming are needed.
+   * Why not detectPitch with a narrow band: its key-maxima scan skips
+   * everything before the first negative zero-crossing, and a narrow band can
+   * START inside the fundamental's own positive lobe, returning -1 on a clean
+   * fundamental-heavy tone (measured in tools/tuner-lab.js E1).
+   * freq -1 / clarity 0 when below the RMS floor or no peak lands in the window. */
+  function detectPitchNear(buf, sr, fTarget) {
+    var n = buf.length, i, lag, rms = 0;
+    for (i = 0; i < n; i++) rms += buf[i] * buf[i];
+    if (Math.sqrt(rms / n) < 0.01) return { freq: -1, clarity: 0 };   // same floor as detectPitch
+    var T0 = sr / fTarget;
+    var minLag = Math.max(2, Math.floor(T0 / 2.5)), maxLag = Math.min(n - 2, Math.ceil(T0 * 1.4));
+    if (maxLag <= minLag) return { freq: -1, clarity: 0 };
+    var loLag = T0 * Math.pow(2, -300 / 1200), hiLag = T0 * Math.pow(2, 500 / 1200);
+    if (!nsdfBuf || nsdfBuf.length < maxLag + 2) nsdfBuf = new Float64Array(maxLag + 2);
+    var nsdf = nsdfBuf;
+    for (lag = minLag; lag <= maxLag; lag++) {
+      var ac = 0, m = 0;
+      for (i = 0; i < n - lag; i++) { var a = buf[i], b = buf[i + lag]; ac += a * b; m += a * a + b * b; }
+      nsdf[lag] = m > 0 ? (2 * ac / m) : 0;
+    }
+    // key maxima: the top of every positive lobe (the lag-0 lobe included - the
+    // window test below is what rejects it), strongest in-window wins
+    var best = null, curMax = -1, curLag = -1, positive = false;
+    for (lag = minLag; lag <= maxLag; lag++) {
+      var v = nsdf[lag];
+      if (!positive) { if (v > 0) { positive = true; curMax = v; curLag = lag; } }
+      else {
+        if (v > curMax) { curMax = v; curLag = lag; }
+        if (v <= 0 || lag === maxLag) {
+          if (curLag >= loLag && curLag <= hiLag && (!best || curMax > best.val)) best = { lag: curLag, val: curMax };
+          positive = false; curMax = -1;
+        }
+      }
+    }
+    if (!best) return { freq: -1, clarity: 0 };
+    // parabolic interpolation around the chosen lag (neighbours outside the
+    // scanned range read as 0 - the scratch buffer may hold a previous frame)
+    var L = best.lag, y1 = L - 1 >= minLag ? nsdf[L - 1] : 0, y2 = nsdf[L], y3 = L + 1 <= maxLag ? nsdf[L + 1] : 0;
+    var den = y1 - 2 * y2 + y3;
+    if (den) L = L + 0.5 * (y1 - y3) / den;
+    return { freq: sr / L, clarity: Math.max(0, Math.min(1, best.val)) };
+  }
+
+  /* ---------- drone cancellation ----------
+   * cancelDrone(buf, sr, f0) -> NEW Float32Array; input never mutated.
+   * The reference tone plays through the speaker while the mic listens, so
+   * the drone lands INSIDE the detector: the autocorrelation of two close
+   * tones peaks between them, pulled toward the louder one - a flat string
+   * under a loud drone reads "in tune" (measured: -8 c reads -2.8 c at 4x).
+   * We GENERATE the drone (sine + triangle at f0, startDrone), so its
+   * frequency and shape are exact: subtract the least-squares projection of
+   * the buffer onto sin/cos at f0, 3f0, 5f0 (the triangle's odd harmonics).
+   * The ear still hears the beats in the room; the detector hears the string. */
+  function cancelDrone(buf, sr, f0) {
+    var n = buf.length, out = new Float32Array(n), i, k;
+    for (i = 0; i < n; i++) out[i] = buf[i];
+    var HARM = [1, 3, 5];
+    for (k = 0; k < HARM.length; k++) {
+      var w = 2 * Math.PI * f0 * HARM[k] / sr, ss = 0, sc = 0, cc = 0, xs = 0, xc = 0;
+      for (i = 0; i < n; i++) { var s = Math.sin(w * i), c = Math.cos(w * i); ss += s * s; sc += s * c; cc += c * c; xs += out[i] * s; xc += out[i] * c; }
+      var det = ss * cc - sc * sc; if (!det) continue;
+      var A = (xs * cc - xc * sc) / det, B = (xc * ss - xs * sc) / det;
+      for (i = 0; i < n; i++) out[i] -= A * Math.sin(w * i) + B * Math.cos(w * i);
+    }
+    return out;
+  }
+
   /* ---------- mic auto-tuner (secure-context only) ----------
    * Smoothing chain that turns the raw per-frame estimate into a steady
    * read: clarity gate -> median of recent frames -> note-name hysteresis
@@ -340,6 +416,8 @@
   // expose the pure DSP for Node unit tests (no DOM/mic needed)
   if (typeof module !== 'undefined' && module.exports) {
     module.exports.detectPitch = detectPitch;
+    module.exports.detectPitchNear = detectPitchNear;
+    module.exports.cancelDrone = cancelDrone;
     module.exports.nearestString = nearestString;
     module.exports.bandLimits = bandLimits;
     module.exports.needlePos = needlePos;

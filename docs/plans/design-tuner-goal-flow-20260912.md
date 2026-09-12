@@ -4,8 +4,8 @@
 > summary below) + root cause measured against the real detector + a design
 > the operator can approve in one digit + the atomic build plan. Numbers
 > quoted here come from `node tools/tuner-lab.js` - re-run it before trusting
-> them. Status: **DESIGN, awaiting operator answers** (interview queue at the
-> bottom, every question carries an assumed answer so the build can start).
+> them. Status: **BUILDING** - operator answered Q1-Q4 in-session 2026-09-12 (all four on the
+> recommended option); Q5-Q6 build on their assumed answers.
 
 [Queue row](QUEUE.md) | [tuner.js](../../music/shared/tuner.js) | [lab](../../tools/tuner-lab.js)
 
@@ -168,14 +168,14 @@ Start  ->  target = lowest string (drone on, mic on)
 
 ## 5. Interview queue (async - answer any subset; unanswered rows build on the assumed answer)
 
-| # | Question | Assumed answer | Basis |
+| # | Question | Answer | Basis |
 |---|---|---|---|
-| Q1 | Drone ON by default in guided mode? | Yes, moderate level, "Tone" toggle remembered | F5: he tunes to the beats |
-| Q2 | Haptic: single pulse on goal-hit, or none at all? | Goal-hit only, one 30 ms pulse | F4 verbatim: "possibly when the goal is hit" |
-| Q3 | Visual: evolve the needle into a runway-to-goal-post and DROP the strobe strip, or keep both? | Runway, strobe cut | F6 "make the needle feel right"; one-screen rule; he never mentioned the strobe |
-| Q4 | Keep free auto-ID as a secondary "any string" chip, or retire it? | Keep as a non-default chip this round; retire next round if unused | Cheap to keep; F1 says he never uses it, so it must not be the default |
-| Q5 | Landing feel: hold ~600 ms to lock, ~700 ms celebrate, then advance - or snappier? | 600 / 700 | Deterministic, testable; tune by feel in UAT |
-| Q6 | String order: always the profile's low-to-high, including drop tunings? | Yes | F7 "begins on lowest string" |
+| Q1 | Drone ON by default in guided mode? | **ANSWERED: on by default**, moderate level, "Tone" toggle remembered | F5: he tunes to the beats |
+| Q2 | Haptic: single pulse on goal-hit, or none at all? | **ANSWERED: goal-hit only**, one 30 ms pulse | F4 verbatim: "possibly when the goal is hit" |
+| Q3 | Visual: evolve the needle into a runway-to-goal-post and DROP the strobe strip, or keep both? | **ANSWERED: runway, strobe cut** | F6 "make the needle feel right"; one-screen rule; he never mentioned the strobe |
+| Q4 | Keep free auto-ID as a secondary "any string" chip, or retire it? | **ANSWERED: keep as a non-default chip** this round; retire next round if unused | Cheap to keep; F1 says he never uses it, so it must not be the default |
+| Q5 | Landing feel: hold ~600 ms to lock, ~700 ms celebrate, then advance - or snappier? | Assumed: 600 / 700 | Deterministic, testable; tune by feel in UAT |
+| Q6 | String order: always the profile's low-to-high, including drop tunings? | Assumed: yes | F7 "begins on lowest string" |
 
 ## 6. Atomic build plan (parallel-safe)
 

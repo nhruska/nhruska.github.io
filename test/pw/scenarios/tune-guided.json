@@ -1,0 +1,32 @@
+{
+  "name": "tune-guided",
+  "note": "S-TUNER-GOAL-FLOW (operator friction 2026-09-12): the Tune tab runs a deterministic GUIDED loop - Start targets the lowest string, the runway reads the approach from the flat side, arrival must be SUSTAINED (holdMs) before the string lands, the landed string wears a check on the progress row, the flow auto-advances to the next string, and tapping a string button retargets. Headless Chromium has no microphone, so the scenario drives the SAME TuneFlow + render path through Tuner._sim (start/feed/state) - the mic only supplies cents frames; everything from cents to pixels is the production code. RED on main: the hook, the runway and the guided loop do not exist there.",
+  "viewport": { "width": 412, "height": 915 },
+  "steps": [
+    { "goto": "/music/play/index.html?p=guitar-standard" },
+    { "wait": 900 },
+    { "tap": ".tabbar [data-tab=tune]" },
+    { "waitFor": "#micToggle" },
+    { "evalAssert": { "js": "!!(window.Tuner && window.Tuner._sim && window.TuneFlow)", "label": "guided sim hook + TuneFlow present" } },
+    { "evalAssert": { "js": "(function(){ window.Tuner._sim.start(); var s = window.Tuner._sim.state(); return s.phase === 'approach' && s.index === 0; })()", "label": "Start targets the lowest string in approach" } },
+    { "assertVisible": "#micRunway" },
+    { "assertVisible": "#micPost" },
+    { "assertHidden": "#micStrobe" },
+    { "assertText": { "selector": "#micNote", "contains": "E" } },
+    { "evalAssert": { "js": "document.querySelector('#tStrings .tStr').classList.contains('cur')", "label": "first string button is lit as the current target" } },
+    { "evalAssert": { "js": "(function(){ var S = window.Tuner._sim, t = 0; for (var i = 0; i < 20; i++) { S.feed(-30 + i, t); t += 16; } var s = S.state(); return s.phase === 'approach' && s.hint === 'flat'; })()", "label": "flat frames keep the flow in approach with a flat hint" } },
+    { "evalAssert": { "js": "(function(){ var p = document.getElementById('micPuck').getBoundingClientRect(), q = document.getElementById('micPost').getBoundingClientRect(); return p.left + p.width / 2 < q.left; })()", "label": "puck sits on the flat side of the post" } },
+    { "evalAssert": { "js": "(function(){ var S = window.Tuner._sim, t = 1000; for (var i = 0; i < 19; i++) { S.feed(0, t); t += 16; } var s = S.state(); return s.phase === 'arriving' && !s.progress[0]; })()", "label": "300 ms in the zone is arriving, not landed" } },
+    { "evalAssert": { "js": "(function(){ var S = window.Tuner._sim, t = 1310; for (var i = 0; i < 25; i++) { S.feed(0, t); t += 16; } var s = S.state(); return s.phase === 'landed' && s.progress[0] === true; })()", "label": "sustained arrival lands the string" } },
+    { "evalAssert": { "js": "document.getElementById('micRunway').classList.contains('landed') && document.querySelector('#tStrings .tStr').classList.contains('done')", "label": "runway lit + first string checked" } },
+    { "screenshot": "landed-low-e" },
+    { "evalAssert": { "js": "(function(){ var S = window.Tuner._sim, t = 1800; for (var i = 0; i < 40; i++) { S.feed(null, t); t += 16; } var s = S.state(); return s.phase === 'approach' && s.index === 1; })()", "label": "after the celebration the flow advances to the A string" } },
+    { "assertText": { "selector": "#micNote", "contains": "A" } },
+    { "evalAssert": { "js": "document.querySelectorAll('#tStrings .tStr')[1].classList.contains('cur') && document.querySelectorAll('#tStrings .tStr')[0].classList.contains('done')", "label": "progress row: A lit, E checked" } },
+    { "tap": "#tStrings .tStr:nth-child(4)" },
+    { "evalAssert": { "js": "(function(){ var s = window.Tuner._sim.state(); return s.index === 3 && s.phase === 'approach'; })()", "label": "tapping a string button retargets" } },
+    { "assertText": { "selector": "#micNote", "contains": "G" } },
+    { "evalAssert": { "js": "(function(){ var S = window.Tuner._sim, t = 3000; for (var i = 0; i < 20; i++) { S.feed(12, t); t += 16; } return document.getElementById('micRunway').classList.contains('sharp'); })()", "label": "overshoot reads sharp on the runway" } },
+    { "screenshot": "sharp-g" }
+  ]
+}
