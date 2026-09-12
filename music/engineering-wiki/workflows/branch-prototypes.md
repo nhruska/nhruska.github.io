@@ -31,12 +31,14 @@
    runs the whole guided loop through `Tuner._sim`, so the runway animates
    before the mic is even granted. A variant that needs a real instrument to
    compare is a variant nobody compares.
-4. **Push, do not open PRs for variants.** Each branch's githack URL is the
-   deliverable:
-   `https://raw.githack.com/nhruska/nhruska.github.io/<branch>/music/play/?p=guitar-standard&tunerdemo=1`.
-   Post the 2-3 links in ONE message with one line each on what differs.
-   The PR-preview workflow only fires on PRs, which is right - variants are
-   not PRs.
+4. **Push, do not open PRs for variants.** Each variant's COMMIT-pinned
+   githack URL is the deliverable:
+   `https://raw.githack.com/nhruska/nhruska.github.io/<full-sha>/music/play/?p=guitar-standard&tunerdemo=1`.
+   Commit, not branch: the branch path is CDN-cached and can show the
+   previous push for minutes, which is exactly the wrong failure when three
+   variants are being compared side by side. Post the 2-3 links in ONE
+   message with one line each on what differs. The PR-preview workflow
+   only fires on PRs, which is right - variants are not PRs.
 5. **Cache-bump every variant** (`music-v<PR#>-<n>`, stamp pair, restamp).
    The service worker and the CDN key on version; two variants under one
    version show the operator the FIRST one twice, and the comparison is void.
