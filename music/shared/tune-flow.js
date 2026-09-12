@@ -52,6 +52,7 @@
  * Events (handler gets the payload, then flow.state()):
  *   'retarget' { index, target }      'landed' { index, target, nowMs }
  *   'advance'  { index, target }      'done'   { nowMs }
+ *   'stay'     { index, target }      (autoAdvance false: back to approach on the same string)
  * ===================================================================== */
 (function (global) {
   'use strict';
@@ -69,7 +70,8 @@
     midK: 0.16,         // ... closing in (5 < |cents| <= 15)
     farK: 0.35,         // ... far off (fast attack)
     dropCents: 1.5,     // RATCHET: a flatter read must fall by at least this ...
-    dropFrames: 6       // ... for this many consecutive frames before the needle drops (0 = off)
+    dropFrames: 6,      // ... for this many consecutive frames before the needle drops (0 = off)
+    autoAdvance: true   // false = stay on the landed string (the lab's experiment mode): celebrate, then approach it again
   };
   var GLITCH_CENTS = 40;   // a frame this far from the running median is a blip
   var GLITCH_ADOPT = 4;    // ... unless this many consecutive blips agree
@@ -127,7 +129,7 @@
     function clearTimers() { holdAcc = 0; lastInZoneAt = null; lastVoicedAt = null; landedAt = null; bestHold = 0; resets = 0; lastReset = null; }
     function resetHold(why) { if (holdAcc > 0 || phase === 'arriving') { resets++; lastReset = why; } phase = 'approach'; holdAcc = 0; lastInZoneAt = null; }
     // live parameter update (the tuning lab sliders) - only known keys, never strings
-    function set(partial) { for (var k in partial) if (k in DEFAULTS && partial[k] != null && isFinite(partial[k])) o[k] = +partial[k]; return o; }
+    function set(partial) { for (var k in partial) { if (!(k in DEFAULTS) || partial[k] == null) continue; if (k === 'autoAdvance') o[k] = !!partial[k]; else if (isFinite(partial[k])) o[k] = +partial[k]; } return o; }
     function params() { var c = {}; for (var k in o) c[k] = o[k]; return c; }
 
     // Push one voiced frame through median + glitch gate + EMA. Returns the
@@ -233,6 +235,13 @@
         // Celebration: the read is frozen on the landing value; frames only
         // move the clock. After celebrateMs, advance or finish.
         if (nowMs - landedAt >= o.celebrateMs) {
+          if (!o.autoAdvance) {
+            // experiment mode: the string counts as landed, but the loop STAYS
+            // on it - tune down, try again with different settings
+            phase = 'approach'; clearTimers();
+            emit('stay', { index: index, target: target });
+            return state();
+          }
           var nx = nextUndone(index);
           if (nx < 0) {
             phase = 'done';

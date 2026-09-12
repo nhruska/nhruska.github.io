@@ -25,6 +25,18 @@
 | Octave errors | possible in principle; guarded by the first-peak rule | impossible by construction - both octaves fall outside the window |
 | Gotcha | feeding it a NARROW band returns -1 on a fundamental-heavy tone (its first-negative-crossing gate can start inside the fundamental's own lobe). Pinned in `test/tuner-near.test.js` | none known |
 
+**The tone is not the string (voice gate).** Through a phone speaker the
+reference tone comes back with harmonics the cancellation leaves behind, and
+that leftover is periodic at exactly the target - it reads as a perfectly
+in-tune string and the loop walked every string with no guitar in the room
+(operator UAT). `voiceGate` in tuner.js therefore requires, while the tone
+plays, that the cancelled signal be at least 3x louder than the quietest
+cancelled frame heard since the last retarget or tone change (the tone's
+own floor, forgetting 0.2 % per frame so a long held note cannot poison it).
+With the tone off the floor is 0 and only the clarity hysteresis decides.
+Pinned in `test/tuner-gate.test.js`; the lab's live line shows the ratio
+(`loud 4.2x tone`).
+
 `cancelDrone(buf, sr, f0)` subtracts the least-squares projection at f0 and
 5f0 (the drone is sine + triangle; 3f0 is deliberately left alone - the string's own 3rd lives there, and stripping it leaves an even-only residual the sub-harmonic guard rejects) and returns a new buffer. Why it exists:
 the speaker drone enters the mic and pulls the autocorrelation toward
@@ -58,6 +70,10 @@ landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 - **Retarget** from any phase but done: string-button tap, or the flow's own
   advance. Advance goes to the next NOT-yet-landed string, wrapping.
 - **Done** stops the mic and the drone (battery, privacy).
+- **`autoAdvance: false`** (the lab's experiment mode, its checkbox unticked
+  by default there): a landed string celebrates, emits `stay`, and goes back
+  to approach on the SAME string - tune down, change a slider, try again.
+  Outside the lab the loop always advances.
 
 ## UI contract (tuner.js guided mode)
 
@@ -68,7 +84,7 @@ landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 | `#micHold` | hold-progress bar under the post |
 | `#tStrings .tStr` | the PROGRESS row: `.cur` = current target (lit, droning), `.done` = landed (green check). Tap = retarget while guided; tap = toggle a reference tone while idle |
 | `#micToggle` | Start / Stop (Start again after done) |
-| `#toneToggle` | drone on/off, remembered in `music.tuner.tone.v1` (default ON) |
+| `#toneToggle` | drone on/off as a STATE (`Tone: on` with accent ink and `.on`, `Tone: off` plain), remembered in `music.tuner.tone.v1` (default ON) |
 | `.micModes` chips | Guided (default) / Any string (the legacy free-recognition mode, needle + meter) |
 | `Tuner._sim` | `{ start(), feed(cents|null, nowMs), state() }` - test hook that drives the SAME flow + render path without a mic (`test/pw/scenarios/tune-guided.json`) |
 | `?tunerlab=1` | URL flag (sticky via `music.tuner.lab.v1`): the Tuning lab, four plain sliders right under the runway - Landing (lands easily <-> strictly), Needle (twitchy <-> calm), Ratchet (follows every dip <-> only climbs), Ear (picky <-> forgiving) - each 0..100 with the shipped default at 50, driving the real knobs through cold/default/hot triples (`MACROS` in tuner.js). Live line (`now: -3.2c  hearing 94%  in zone 0.12s of 0.45s`), a `last pluck: held 0.31s of 0.45s, then sound died` line from the flow's diagnostics, and a two-line report string (macros, then derived `key=value`). Persisted in `music.tuner.lab.v2`, applied live via `flow.set()`; Back to defaults clears. The mode chips hide while the lab is on |

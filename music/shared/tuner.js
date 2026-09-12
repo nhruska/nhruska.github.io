@@ -187,6 +187,26 @@
     return { freq: sr / L, clarity: Math.max(0, Math.min(1, best.val)) };
   }
 
+  /* ---------- voice gate: is this frame the STRING, or just our own tone? ----------
+   * The reference tone comes back through the phone speaker with harmonics
+   * the cancellation does not remove (speaker + mic nonlinearity), and that
+   * leftover is periodic at exactly the target - it reads as a perfectly
+   * in-tune string and the loop walks itself with no guitar in the room
+   * (operator UAT). So while the tone plays, a frame counts as voiced only
+   * when the cancelled signal is clearly LOUDER than the tone's own leftover:
+   * the caller tracks the quietest cancelled RMS it has heard (the floor,
+   * slowly forgetting so a long held note cannot poison it) and the string
+   * must beat it by `mult`. With the tone off the floor is 0 and only the
+   * clarity hysteresis decides. Pure so Node can pin it. */
+  var DRONE_FLOOR_MULT = 3, DRONE_FLOOR_FORGET = 1.002;
+  function voiceGate(res, rms, reading, floor, clarityAcquire, clarityHold, mult) {
+    if (!res || !(res.freq > 0)) return false;
+    if (!(res.clarity > (reading ? clarityHold : clarityAcquire))) return false;
+    if (floor > 0 && isFinite(floor) && !(rms > (mult || DRONE_FLOOR_MULT) * floor)) return false;
+    return true;
+  }
+  function rmsOf(buf) { var t = 0; for (var i = 0; i < buf.length; i++) t += buf[i] * buf[i]; return Math.sqrt(t / buf.length); }
+
   /* ---------- drone cancellation ----------
    * cancelDrone(buf, sr, f0) -> NEW Float32Array; input never mutated.
    * The reference tone plays through the speaker while the mic listens, so
@@ -305,6 +325,9 @@
   }
   function applyMacros(m) {
     var p = deriveParams(m);
+    // in the lab the loop STAYS on the string unless the box is ticked (the
+    // experiment mode the operator asked for); outside the lab it always advances
+    if (labRequested()) p.autoAdvance = !!m.advance;
     if (flow) flow.set(p);
     for (var k in MIC_DEFAULTS) if (p[k] != null) mic[k] = p[k];
     return p;
@@ -313,6 +336,7 @@
   function paramsLine() {
     var m = loadMacros(), parts = [];
     MACROS.forEach(function (mac) { parts.push(mac.key + '=' + macroValue(m, mac.key)); });
+    parts.push('advance=' + (m.advance ? 1 : 0));
     var p = deriveParams(m), dp = [];
     for (var k in p) dp.push(k + '=' + p[k]);
     return parts.join(' ') + '\n' + dp.join(' ');
@@ -327,6 +351,7 @@
         + '<input type="range" data-key="' + mac.key + '" min="0" max="100" step="1" aria-label="' + mac.label + '">'
         + '<div class="labEnds"><span>' + mac.cold + '</span><span>' + mac.hot + '</span></div></div>';
     });
+    html += '<label class="labStay"><input type="checkbox" id="labAdvance"> Auto-advance to the next string (off = stay on this string and try again)</label>';
     html += '<div class="labLine" id="labLine"></div><div class="actions micActions"><button class="btn ghost" id="labReset">Back to defaults</button></div>';
     lab.innerHTML = html;
     box.appendChild(lab);
@@ -340,6 +365,9 @@
         renderLabReadout();
       };
     });
+    var adv = el('labAdvance');
+    adv.checked = !!m.advance;
+    adv.onchange = function () { var m3 = loadMacros(); m3.advance = adv.checked ? 1 : 0; saveMacros(m3); applyMacros(m3); renderLabReadout(); };
     el('labReset').onclick = function () {
       try { localStorage.removeItem(PARAMS_KEY); } catch (e) { }
       applyMacros({});
@@ -352,7 +380,8 @@
     var o = el('labLive'), tr = el('labTry'); if (!o) return;
     var need = flow ? flow.params().holdMs : 450;
     o.textContent = 'now: ' + (st.cents == null ? 'nothing heard' : (st.cents > 0 ? '+' : '') + st.cents.toFixed(1) + '\u00a2')
-      + (res ? '  hearing ' + Math.round(res.clarity * 100) + '%' : '')
+      + (res ? '  clear ' + Math.round(res.clarity * 100) + '%' : '')
+      + (res && droneFloor > 0 && isFinite(droneFloor) ? '  loud ' + (lastRms / droneFloor).toFixed(1) + 'x tone' : '')
       + '  in zone ' + fmtS((st.holdProgress || 0) * need) + ' of ' + fmtS(need);
     if (tr) {
       if (st.phase === 'landed' || st.phase === 'done') tr.textContent = 'last pluck: landed';
@@ -362,6 +391,7 @@
     }
   }
   var mode = 'guided', flow = null, simActive = false, quietFrames = 0, reading = false;
+  var droneFloor = Infinity, lastRms = 0;   // see voiceGate
   var lastCentsTxt = '', lastNoteTxt = '', prevPhase = '';
   function toneOn() { try { return localStorage.getItem(TONE_KEY) !== '0'; } catch (e) { return true; } }
   function setToneOn(on) { try { localStorage.setItem(TONE_KEY, on ? '1' : '0'); } catch (e) { } }
@@ -387,13 +417,14 @@
       // the target's own tone drones while you tune it (cancelled out of the
       // mic path by cancelDrone) - swap it with the target
       if (toneOn() && (micOn || simActive) && !simActive) { stopDrone(); startDrone(ev.target.f, ev.index); }
-      reading = false; quietFrames = 0;
+      reading = false; quietFrames = 0; droneFloor = Infinity;
     });
     flow.on('landed', function () {
       // the ONE haptic: a single pulse when a string lands (operator: the
       // off-note buzz was a liability with the phone lying on the guitar)
       if (typeof navigator !== 'undefined' && navigator.vibrate) { try { navigator.vibrate(30); } catch (e) { } }
     });
+    flow.on('stay', function () { reading = false; quietFrames = 0; });
     flow.on('done', function () { finishGuided(); });
     return flow;
   }
@@ -403,7 +434,7 @@
     var t = st.target, phase = st.phase, txt, note;
     if (phase === 'idle') { note = t ? t.n : '·'; txt = 'tap Start - the tuner walks every string, low to high'; }
     else if (phase === 'done') { note = '✓'; txt = 'all ' + STRINGS.length + ' strings in tune'; }
-    else if (phase === 'landed') { note = t.n; txt = '✓ ' + t.n + ' in tune' + (st.progress.every(function (d) { return d; }) ? '' : ' - next string coming up'); }
+    else if (phase === 'landed') { note = t.n; txt = '✓ ' + t.n + ' in tune' + (flow && flow.params().autoAdvance === false ? ' - staying here: tune down, try again' : (st.progress.every(function (d) { return d; }) ? '' : ' - next string coming up')); }
     else if (st.cents == null) { note = t.n; txt = 'play the ' + t.l; }
     else {
       note = t.n;
@@ -446,11 +477,17 @@
       // the drone we play is subtracted from what we hear BEFORE detection -
       // otherwise a loud tone pulls the read toward "in tune" (measured: a
       // -8c string read -2.8c under a 4x drone; see tools/tuner-lab.js E3)
-      var src = droneIdx >= 0 ? cancelDrone(micBuf, micAC.sampleRate, f) : micBuf;
+      var toneOnNow = droneIdx >= 0;
+      var src = toneOnNow ? cancelDrone(micBuf, micAC.sampleRate, f) : micBuf;
       var res = detectPitchNear(src, micAC.sampleRate, f);
+      var rms = rmsOf(src);
+      // the tone's leftover floor: the quietest cancelled frame heard since the
+      // last retarget / tone change, forgetting slowly (see voiceGate)
+      if (toneOnNow) droneFloor = Math.min(droneFloor * DRONE_FLOOR_FORGET, rms); else droneFloor = 0;
+      lastRms = rms;
       // clarity hysteresis: acquire at 0.9, hold through dips to 0.72; ~0.3s of
       // nothing releases (a brief dropout is not "the string stopped")
-      var voiced = res.freq > 0 && res.clarity > (reading ? mic.clarityHold : mic.clarityAcquire);
+      var voiced = voiceGate(res, rms, reading, droneFloor, mic.clarityAcquire, mic.clarityHold, DRONE_FLOOR_MULT);
       if (voiced) { reading = true; quietFrames = 0; }
       else if (++quietFrames > 18) reading = false;
       applyFrame(voiced ? 1200 * Math.log2(res.freq / f) : null, performance.now(), res);
@@ -644,9 +681,10 @@
     document.querySelectorAll('.micModes .chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === mode); });
     document.querySelectorAll('#tStrings .tStr').forEach(function (b) { b.classList.remove('cur'); b.classList.remove('done'); });
   }
-  function renderToneBtn() { var b = el('toneToggle'); if (b) { b.textContent = toneOn() ? 'Tone on' : 'Tone off'; b.classList.toggle('on', toneOn()); } }
+  function renderToneBtn() { var b = el('toneToggle'); if (b) { b.textContent = toneOn() ? 'Tone: on' : 'Tone: off'; b.classList.toggle('on', toneOn()); b.setAttribute('aria-pressed', toneOn() ? 'true' : 'false'); } }
   function toggleTone() {
     var on = !toneOn(); setToneOn(on); renderToneBtn();
+    droneFloor = Infinity;
     if (guidedActive() && flow.state().target) { if (on) { stopDrone(); startDrone(flow.state().target.f, flow.state().index); } else stopDrone(); }
   }
   function buildMic(box) {
@@ -664,7 +702,7 @@
       + '<div class="micMeter" id="micMeter" style="display:none"><div class="scale"></div><div class="tgt"></div><div class="center"></div><div class="needle" id="micNeedle" style="left:50%;transition:background 120ms linear"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
       // Primary CTA: .btn.red (the app's canonical accent-fill primary); the
       // tone toggle rides beside it as a ghost
-      + '<div class="actions micActions"><button class="btn red" id="micToggle">Start</button><button class="btn ghost" id="toneToggle">Tone on</button></div>';
+      + '<div class="actions micActions"><button class="btn red" id="micToggle">Start</button><button class="btn ghost" id="toneToggle">Tone: on</button></div>';
     el('micToggle').onclick = micToggle;
     el('toneToggle').onclick = toggleTone;
     renderToneBtn();
@@ -734,6 +772,8 @@
     module.exports.detectPitch = detectPitch;
     module.exports.detectPitchNear = detectPitchNear;
     module.exports.cancelDrone = cancelDrone;
+    module.exports.voiceGate = voiceGate;
+    module.exports.rmsOf = rmsOf;
     module.exports.nearestString = nearestString;
     module.exports.bandLimits = bandLimits;
     module.exports.needlePos = needlePos;

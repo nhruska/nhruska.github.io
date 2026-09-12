@@ -421,6 +421,23 @@ test('diagnostics: bestHoldMs, resets and lastReset explain a failed landing', f
   assert.strictEqual(flow.state().resets, 0, 'retarget clears the attempt diagnostics');
   assert.strictEqual(flow.state().lastReset, null);
 });
+test('autoAdvance false: a landed string stays the target - celebrate, then approach it again (the lab experiment mode)', function () {
+  var flow = make(GUITAR, { holdMs: 200, celebrateMs: 300, autoAdvance: false });
+  var log = recorder(flow); flow.on('stay', function (p) { log.push('stay:' + p.index); });
+  flow.start();
+  var t = feedFor(flow, 0, 260, 0);
+  assert.strictEqual(flow.state().phase, 'landed');
+  t = feedFor(flow, null, 400, t);
+  var st = flow.state();
+  assert.strictEqual(st.phase, 'approach');
+  assert.strictEqual(st.index, 0, 'still on string 0');
+  assert.strictEqual(st.progress[0], true, 'it still counts as landed once');
+  assert.strictEqual(count(log, 'advance'), 0);
+  assert.strictEqual(count(log, 'stay'), 1);
+  flow.set({ autoAdvance: true });
+  t = feedFor(flow, 0, 260, t); t = feedFor(flow, null, 400, t);
+  assert.strictEqual(flow.state().index, 1, 'set() flips it live: the next landing advances');
+});
 test('create() applies the documented defaults and requires strings', function () {
   assert.throws(function () { TuneFlow.create({}); });
   var flow = make(GUITAR, { holdMs: 200 });

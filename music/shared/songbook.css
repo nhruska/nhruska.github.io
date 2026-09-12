@@ -819,6 +819,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .labVal{font-family:'Space Mono',monospace;color:var(--txt-soft);font-size:.7rem;}
 .labRow input[type=range]{display:block;width:100%;min-height:30px;margin:0;accent-color:var(--accent);}
 .labEnds{display:flex;justify-content:space-between;font-size:.6rem;color:var(--txt-dim);margin-top:-2px;}
+/* The Tone toggle is a STATE, not an action: accent ink + border when on so
+   'Tone: on' can never be read as 'tap to turn the tone on'. */
+.micActions .btn.ghost.on{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-deep);}
+.labStay{display:flex;gap:8px;align-items:flex-start;font-size:.72rem;color:var(--txt-soft);margin:6px 0 2px;line-height:1.35;}
+.labStay input{margin-top:2px;width:18px;height:18px;accent-color:var(--accent);flex:0 0 auto;}
 .micModes{display:flex;gap:6px;margin:0 0 6px;}
 .micActions{display:flex;gap:8px;}
 .micActions .btn{flex:1 1 auto;}
