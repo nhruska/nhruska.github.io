@@ -41,6 +41,11 @@
   var SCHEMA = 'musician-profile/v1';
   var CONTRACT_ID = 'minimum-participation/v1';
   var STORAGE_KEY = 'music.profile.v1';
+  // Per-DEVICE id, minted once, excluded from backup (device-local stamp, same
+  // class as music.lastBackup.v1): the app's progression evidence is scoped by
+  // device so two devices' exports coexist in the lifelong document instead of
+  // the last exporter silently destroying the other's record.
+  var DEVICE_KEY = 'music.device.v1';
   var APP_ID = 'app:music';
   var APP_URL = 'https://nhruska.github.io/music/play/';
   var CAPABILITIES_URL = 'https://nhruska.github.io/music/agent/capabilities.json';
@@ -108,6 +113,20 @@
     return null;
   }
 
+  // The stable id of THIS device (minted on first use; tests pass `opts.device`).
+  function deviceId(store, opts) {
+    if (opts && opts.device) return String(opts.device);
+    store = store || defaultStore();
+    if (!store) return 'anon';
+    try {
+      var v = store.getItem(DEVICE_KEY);
+      if (v) return v;
+      v = 'dv_' + uuid().slice(0, 8);
+      store.setItem(DEVICE_KEY, v);
+      return v;
+    } catch (e) { return 'anon'; }
+  }
+
   function competencyId(frameworkId, compId) { return String(frameworkId) + '/' + String(compId); }
   function branchFor(frameworkId) { return BRANCHES[frameworkId] ? BRANCHES[frameworkId].slice() : ['craft', String(frameworkId)]; }
 
@@ -136,6 +155,7 @@
   function validate(obj) {
     if (!isObj(obj)) return { ok: false, reason: 'not a profile' };
     if (obj.schema !== SCHEMA) return { ok: false, reason: 'unrecognized profile format' };
+    if (obj.id != null && typeof obj.id !== 'string') return { ok: false, reason: 'id must be a string' };
     var lists = ['participants', 'provenance', 'competencies', 'assessments', 'evidence', 'goals', 'preferences'];
     for (var i = 0; i < lists.length; i++) {
       if (obj[lists[i]] != null && !Array.isArray(obj[lists[i]])) return { ok: false, reason: lists[i] + ' must be a list' };
@@ -227,7 +247,7 @@
   }
   function pushProvenance(doc, entry, index) {
     if (!entry) return;
-    if (entry.source === APP_ID && ROUTINE_ACTIONS[entry.action]) {
+    if (entry.source === APP_ID && ROUTINE_ACTIONS[entry.action] && !entry.note) {
       for (var j = 0; j < doc.provenance.length; j++) {
         var p = doc.provenance[j];
         if (p && p.source === APP_ID && p.action === entry.action && !p.note) {
@@ -316,7 +336,9 @@
   // - evidence: ONE app-progression record per framework that has any
   //   evidence, modality COMPOSE (the app observes composing; it has never
   //   heard the musician play - even the "*-repertoire" counters are compose
-  //   evidence). Deterministic ids so a re-export UPDATES its own record.
+  //   evidence). Deterministic PER-DEVICE ids (`ev:app:music:<device>:
+  //   progression:<framework>`, `at` = export time) so a re-export from THIS
+  //   device replaces its own record and another device's record survives.
   // - assessments: the ONE self-report the app holds (guidance level),
   //   branch-level, band-3, modality unspecified. Nothing derived from counters.
   function compose(doc, inputs) {
@@ -325,6 +347,7 @@
     var d = normalize(doc || blank({ now: now }));
     var frameworks = arr(inputs.frameworks);
     var progression = isObj(inputs.progression) ? inputs.progression : {};
+    var device = inputs.device ? String(inputs.device) : 'anon';
 
     upsertById(d.participants, {
       id: APP_ID, name: 'Music app', version: inputs.version || null,
@@ -349,9 +372,10 @@
       var counters = p.competencies.filter(function (c) { return c && (c.evidence_count || 0) > 0; });
       if (!counters.length) return; // nothing observed -> no record (absence stays absent)
       replaceById(d.evidence, {
-        id: 'ev:' + APP_ID + ':progression:' + fwId,
-        at: p.updated || now,
+        id: 'ev:' + APP_ID + ':' + device + ':progression:' + fwId,
+        at: now,
         source: APP_ID,
+        device: device,
         kind: 'app-progression',
         modality: 'compose',
         competencies: counters.map(function (c) { return competencyId(fwId, c.id); }),
@@ -383,11 +407,25 @@
     return d;
   }
 
+  // "Nothing of the PERSON's in here": only the app's own participant entry
+  // and the taxonomy. Such a document is never exported or persisted - an
+  // empty device must not ship a bundle or flip the panel's first-start lead.
+  function isEmpty(doc) {
+    var d = normalize(doc);
+    if (d.assessments.length || d.evidence.length || d.goals.length || d.preferences.length || d.plan) return false;
+    if (d.participants.some(function (p) { return p && p.id !== APP_ID; })) return false;
+    if (Object.keys(d.extensions).length) return false;
+    return !Object.keys(d).some(function (k) { return KNOWN_KEYS.indexOf(k) < 0; });
+  }
+
   // Export: compose what we know into the stored profile, persist, return
-  // pretty JSON (the zip's profile.json). Null only when storage AND inputs
-  // are both absent (nothing to say).
+  // pretty JSON (the zip's profile.json). Null - and nothing persisted - when
+  // the document would carry nothing of the person's (see isEmpty).
   function exportJson(store, inputs) {
-    var d = compose(load(store, inputs && inputs.now ? { now: inputs.now } : undefined), inputs);
+    inputs = inputs || {};
+    if (!inputs.device) inputs.device = deviceId(store, inputs);
+    var d = compose(load(store, inputs.now ? { now: inputs.now } : undefined), inputs);
+    if (isEmpty(d)) return null;
     save(store, d);
     return JSON.stringify(d, null, 2);
   }
@@ -403,7 +441,11 @@
     if (!v.ok) return v;
     // A device with no stored profile ADOPTS the imported musician id (it is
     // the same person's document arriving); only a stored profile keeps its own.
+    // A hand-back with NO id is addressed to the local profile - it takes the
+    // local id rather than having a random one minted for it (which would leave
+    // a fabricated "merged into" provenance row on every such import).
     var local = loadStored(store) || blank({ id: parsed.id, now: opts && opts.now });
+    if (!parsed.id) { parsed = clone(parsed); parsed.id = local.id; }
     var before = { assessments: local.assessments.length, evidence: local.evidence.length, goals: local.goals.length };
     var merged = merge(local, parsed);
     pushProvenance(merged, { source: APP_ID, at: (opts && opts.now) || nowIso(), action: 'import' });
@@ -420,35 +462,21 @@
     };
   }
 
-  // The app's OWN progression counters as carried in a profile, re-shaped as
-  // skill-competency-profile/v1 docs - a READ-ONLY view for readers and tests.
-  // The app never re-ingests these on import: `kind` and `source` are plain
-  // strings any participant can write, so absorbing the numbers would let an
-  // edited hand-back raise the Skills bars for competencies nothing observed -
-  // the exact seam this document exists to guard. Device-to-device transfer
-  // of the counters is the backup envelope's job (byte-faithful restore).
-  function progressionDocs(doc) {
-    var out = [];
-    arr(doc && doc.evidence).forEach(function (e) {
-      if (!e || e.kind !== 'app-progression' || e.source !== APP_ID || !isObj(e.data)) return;
-      if (!e.data.skill || !Array.isArray(e.data.competencies)) return;
-      out.push({
-        schema: e.data.schema || 'skill-competency-profile/v1', skill: e.data.skill, discipline: 'music',
-        updated: e.data.updated || e.at, provenance: [],
-        competencies: e.data.competencies.map(function (c) { return clone(c); })
-      });
-    });
-    return out;
-  }
+  // NOTE: the app never re-ingests its own progression counters from a
+  // profile - `kind` and `source` are plain strings any participant can write,
+  // so absorbing the numbers would let an edited hand-back raise the Skills
+  // bars for competencies nothing observed (the exact seam this document
+  // guards). Device-to-device transfer of the counters is the backup
+  // envelope's job (byte-faithful restore).
 
   var API = {
-    SCHEMA: SCHEMA, CONTRACT_ID: CONTRACT_ID, STORAGE_KEY: STORAGE_KEY, APP_ID: APP_ID,
+    SCHEMA: SCHEMA, CONTRACT_ID: CONTRACT_ID, STORAGE_KEY: STORAGE_KEY, DEVICE_KEY: DEVICE_KEY, APP_ID: APP_ID,
     APP_URL: APP_URL, CAPABILITIES_URL: CAPABILITIES_URL,
     CONTRACT: CONTRACT, UNDERSTANDS: UNDERSTANDS, METHODS: METHODS, MODALITIES: MODALITIES, BRANCHES: BRANCHES,
     // pure
     competencyId: competencyId, branchFor: branchFor, blank: blank, validate: validate, normalize: normalize,
-    merge: merge, compose: compose, status: status, latestAssessment: latestAssessment, progressionDocs: progressionDocs,
-    newId: newId,
+    merge: merge, compose: compose, status: status, latestAssessment: latestAssessment, isEmpty: isEmpty,
+    newId: newId, deviceId: deviceId,
     // storage-backed
     load: load, loadStored: loadStored, save: save, hasData: hasData,
     exportJson: exportJson, importJson: importJson

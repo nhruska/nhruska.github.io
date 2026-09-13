@@ -6912,7 +6912,7 @@
         // "Has data" = the app's own counters OR an imported musician profile:
         // a device that only ever received a coach's profile.json must still
         // be able to export the person-owned document.
-        var has = C.hasData() || !!(global.MusicianProfile && typeof global.MusicianProfile.hasData === 'function' && global.MusicianProfile.hasData());
+        var has = C.hasData() || !!mprof; // mprof: the stored profile already parsed above
         // First-start lead: no data yet -> import affordance first (never a modal).
         var importRow = document.createElement('button');
         // UAT batch 5: the .setAction primitive - one row, one action, no prose.
@@ -6947,7 +6947,11 @@
             var cn = document.createElement('span'); cn.className = 'compName'; cn.textContent = c.name;
             var bar = document.createElement('div'); bar.className = 'compBar';
             bar.setAttribute('role', 'img');
-            bar.setAttribute('aria-label', c.name + ': level ' + (c.level || 0) + ' of a ' + c.target + ' target');
+            // The spoken label must agree with the visible text: an unobserved
+            // row is "not yet observed", never "level 0 of a 80 target".
+            bar.setAttribute('aria-label', (c.evidence_count || c.level)
+              ? c.name + ': level ' + (c.level || 0) + ' of a ' + c.target + ' target'
+              : c.name + ': not yet observed');
             var fill = document.createElement('div'); fill.className = 'compBarFill';
             fill.style.width = Math.max(0, Math.min(100, c.level || 0)) + '%';
             bar.appendChild(fill);

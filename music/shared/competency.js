@@ -230,12 +230,7 @@
   // are preserved untouched (additive tolerance - a newer profile version can
   // carry competencies this build hasn't shipped yet). Preferences union by id
   // (sum evidence, keep the latest statement). Provenance concatenates.
-  // `opts.counters === 'max'` (M-MUSICIAN-PROFILE): the imported doc is the
-  // app's OWN counters seen at another time (a profile.json round trip, another
-  // device) - take the MAX evidence_count instead of summing, since they are
-  // not independent observations. Default stays 'sum' for agent hand-backs.
-  function mergeInto(local, imported, opts) {
-    var maxCounters = !!(opts && opts.counters === 'max');
+  function mergeInto(local, imported) {
     var merged = clone(local);
     var byId = {};
     merged.competencies.forEach(function (c) { byId[c.id] = c; });
@@ -243,8 +238,7 @@
       var lc = byId[ic.id];
       if (lc) {
         lc.level = Math.max(clampInt(lc.level, 0, 100), clampInt(ic.level, 0, 100));
-        var icCount = (typeof ic.evidence_count === 'number' && ic.evidence_count > 0) ? ic.evidence_count : 0;
-        lc.evidence_count = maxCounters ? Math.max(lc.evidence_count || 0, icCount) : (lc.evidence_count || 0) + icCount;
+        lc.evidence_count = (lc.evidence_count || 0) + (typeof ic.evidence_count === 'number' && ic.evidence_count > 0 ? ic.evidence_count : 0);
         lc.last_evidence = laterIso(lc.last_evidence, ic.last_evidence);
       } else {
         // Unknown id: preserve it untouched so a round-trip never drops data.
@@ -295,7 +289,7 @@
     return null;
   }
 
-  function importProfile(json, store, opts) {
+  function importProfile(json, store) {
     var parsed;
     if (typeof json === 'string') {
       try { parsed = JSON.parse(json); } catch (e) { return { ok: false, reason: 'not valid JSON' }; }
@@ -309,7 +303,7 @@
     if (!Array.isArray(parsed.competencies)) return { ok: false, reason: 'no competencies in profile' };
     var map = load(store);
     var local = map[skillId] || blankProfile(skillId);
-    map[skillId] = mergeInto(local, parsed, opts);
+    map[skillId] = mergeInto(local, parsed);
     save(store, map);
     return { ok: true, skill: skillId };
   }

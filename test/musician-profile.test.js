@@ -129,8 +129,8 @@ test('the app\'s progression counters ride as evidence (kind app-progression, mo
   var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T1 });
   assert.strictEqual(d.assessments.length, 0, 'counters must not become a proficiency claim');
   assert.strictEqual(d.evidence.length, 2);
-  var uke = d.evidence.filter(function (e) { return e.id === 'ev:app:music:progression:ukulele'; })[0];
-  assert.ok(uke, 'deterministic evidence id per framework');
+  var uke = d.evidence.filter(function (e) { return e.id === 'ev:app:music:anon:progression:ukulele'; })[0];
+  assert.ok(uke, 'deterministic per-device evidence id per framework');
   assert.strictEqual(uke.kind, 'app-progression');
   assert.strictEqual(uke.modality, 'compose', '...was earned by COMPOSING in the app - the app never heard anyone play');
   assert.deepStrictEqual(uke.competencies, ['ukulele/uke-repertoire']);
@@ -145,26 +145,64 @@ test('a re-export UPDATES the app\'s own progression record instead of appending
   C.recordEvidence('guitar', 'gtr-open-chords', null, s);
   var later = C.load(s); later.guitar.updated = T2;
   d = MP.compose(d, { frameworks: C.FRAMEWORKS, progression: later, now: T2 });
-  var gtr = d.evidence.filter(function (e) { return e.id === 'ev:app:music:progression:guitar'; });
+  var gtr = d.evidence.filter(function (e) { return e.id === 'ev:app:music:anon:progression:guitar'; });
   assert.strictEqual(gtr.length, 1);
   assert.strictEqual(gtr[0].data.competencies[0].evidence_count, 2);
 });
-test('progressionDocs() hands the app\'s counters back as v1 docs, and competency.js absorbs them with MAX semantics (a round trip never doubles a counter)', function () {
+test('the app\'s progression evidence is scoped PER DEVICE: two devices\' records coexist in the lifelong document, and each device replaces only its own', function () {
+  var phone = FakeStore(), laptop = FakeStore();
+  for (var i = 0; i < 3; i++) C.recordEvidence('ukulele', 'uke-open-chords', null, phone);
+  var out = MP.exportJson(phone, { frameworks: C.FRAMEWORKS, progression: C.load(phone), device: 'phone', now: T0 });
+  MP.importJson(out, laptop, { now: T1 });
+  C.recordEvidence('ukulele', 'uke-strum-patterns', null, laptop);
+  var out2 = JSON.parse(MP.exportJson(laptop, { frameworks: C.FRAMEWORKS, progression: C.load(laptop), device: 'laptop', now: T2 }));
+  var ids = out2.evidence.map(function (e) { return e.id; }).sort();
+  assert.deepStrictEqual(ids, ['ev:app:music:laptop:progression:ukulele', 'ev:app:music:phone:progression:ukulele']);
+  var phoneRec = out2.evidence.filter(function (e) { return e.device === 'phone'; })[0];
+  assert.strictEqual(phoneRec.data.competencies[0].evidence_count, 3, 'the phone\'s record survived the laptop export untouched');
+  // back on the phone: both records still there, the phone's own record refreshed
+  MP.importJson(JSON.stringify(out2), phone, { now: T2 });
+  C.recordEvidence('ukulele', 'uke-open-chords', null, phone);
+  var out3 = JSON.parse(MP.exportJson(phone, { frameworks: C.FRAMEWORKS, progression: C.load(phone), device: 'phone', now: '2026-09-13T13:00:00.000Z' }));
+  assert.strictEqual(out3.evidence.length, 2);
+  assert.strictEqual(out3.evidence.filter(function (e) { return e.device === 'phone'; })[0].data.competencies[0].evidence_count, 4);
+  assert.strictEqual(out3.evidence.filter(function (e) { return e.device === 'laptop'; })[0].data.competencies[0].evidence_count, 1);
+});
+test('the device id is minted once per device (music.device.v1) and is NOT backed up - a restore never makes one device impersonate another', function () {
   var s = FakeStore();
-  for (var i = 0; i < 3; i++) C.recordEvidence('ukulele', 'uke-open-chords', null, s);
-  var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T1 });
-  var docs = MP.progressionDocs(d);
-  assert.strictEqual(docs.length, 1);
-  assert.strictEqual(docs[0].schema, C.SCHEMA);
-  assert.strictEqual(docs[0].skill, 'ukulele');
-  var res = C.importProfile(docs[0], s, { counters: 'max' });
-  assert.strictEqual(res.ok, true);
-  var after = C.getProfile('ukulele', s).competencies.filter(function (c) { return c.id === 'uke-open-chords'; })[0];
-  assert.strictEqual(after.evidence_count, 3, 'max, not 3+3');
-  // and a FRESH device adopts them
-  var fresh = FakeStore();
-  C.importProfile(docs[0], fresh, { counters: 'max' });
-  assert.strictEqual(C.getProfile('ukulele', fresh).competencies.filter(function (c) { return c.id === 'uke-open-chords'; })[0].evidence_count, 3);
+  var a = MP.deviceId(s), b = MP.deviceId(s);
+  assert.ok(/^dv_/.test(a) && a === b);
+  assert.strictEqual(s.getItem(MP.DEVICE_KEY), a);
+  var Backup = require('../music/shared/backup.js');
+  assert.strictEqual(Backup.owned(MP.DEVICE_KEY), false);
+});
+test('exportJson returns null and persists NOTHING when the document would carry nothing of the person\'s (an empty device never ships a bundle or flips the first-start lead)', function () {
+  var s = FakeStore();
+  assert.strictEqual(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: {}, selfReport: null, now: T0 }), null);
+  assert.strictEqual(MP.loadStored(s), null);
+  assert.strictEqual(MP.hasData(s), false);
+  // one self-report is enough to be worth carrying
+  assert.ok(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: {}, selfReport: 'beginner', now: T0 }));
+  assert.strictEqual(MP.hasData(s), true);
+});
+test('a hand-back with NO id is addressed to the local profile - no random id is minted and no fabricated "merged into" provenance row appears', function () {
+  var s = FakeStore();
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', now: T0 });
+  var localId = MP.loadStored(s).id;
+  var hand = { schema: MP.SCHEMA, updated: T1, goals: [{ id: 'g1', statement: 'x', status: 'active', updated: T1 }] };
+  assert.strictEqual(MP.importJson(hand, s, { now: T1 }).ok, true);
+  assert.strictEqual(MP.importJson(hand, s, { now: T2 }).ok, true);
+  var d = MP.loadStored(s);
+  assert.strictEqual(d.id, localId);
+  assert.strictEqual(d.provenance.filter(function (p) { return p.action === 'merge'; }).length, 0);
+  assert.strictEqual(MP.importJson({ schema: MP.SCHEMA, id: 42 }, s).ok, false, 'a non-string id is rejected');
+});
+test('an incoming routine app stamp that carries a note is NOT folded into the note-less row (its note survives)', function () {
+  var local = MP.blank({ id: 'mp_t', now: T0 });
+  local.provenance.push({ source: 'app:music', at: T0, action: 'export' });
+  var m = MP.merge(local, { schema: MP.SCHEMA, id: 'mp_t', updated: T1, provenance: [{ source: 'app:music', at: T1, action: 'export', note: 'device: phone' }] });
+  assert.strictEqual(m.provenance.length, 2);
+  assert.ok(m.provenance.some(function (p) { return p.note === 'device: phone'; }));
 });
 test('the participant entry declares the app, what it understands, and its deep links (capabilities stay app-side)', function () {
   var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, version: 'music-v0', now: T0 });
@@ -183,7 +221,7 @@ function coachDoc() {
     participants: [{ id: 'agent:claude', name: 'Claude coach', understands: ['assessments', 'goals', 'plan'], last_seen: T2 }],
     provenance: [{ source: 'agent:claude', at: T2, action: 'assess' }],
     competencies: [{ id: 'ukulele/uke-open-chords', name: 'Open chords', desc: 'RENAMED BY COACH', branch: ['x'], source: 'agent:claude' }],
-    assessments: [{ id: 'as:claude:1', competency: 'ukulele/uke-open-chords', value: 40, scale: '0-100', target: 90, method: 'coach', modality: 'perform', at: T2, source: 'agent:claude', evidence: ['ev:app:music:progression:ukulele'], note: 'heard a clean C-F-G loop on a shared recording; musician confirmed' }],
+    assessments: [{ id: 'as:claude:1', competency: 'ukulele/uke-open-chords', value: 40, scale: '0-100', target: 90, method: 'coach', modality: 'perform', at: T2, source: 'agent:claude', evidence: ['ev:app:music:anon:progression:ukulele'], note: 'heard a clean C-F-G loop on a shared recording; musician confirmed' }],
     evidence: [{ id: 'ev:claude:rec1', at: T2, source: 'agent:claude', kind: 'recording', modality: 'perform', competencies: ['ukulele/uke-open-chords'], data: { duration_s: 42 } }],
     goals: [{ id: 'goal:1', statement: 'Play Riptide start to finish at a campfire', competencies: ['ukulele/uke-repertoire'], status: 'active', created: T2, updated: T2, source: 'human' }],
     plan: { updated: T2, steward: 'agent:claude', items: [{ id: 'plan:1', statement: 'Am-G-C-F loop at 70bpm, 5 min', competencies: ['stringed-instrument/transitions'], goal: 'goal:1', status: 'todo', updated: T2 }] },
@@ -308,10 +346,10 @@ test('a tie on `updated` goes to the INCOMING document for unknown keys and exte
   assert.strictEqual(m['x-notes'], 2);
 });
 test('the app keeps ONE export and ONE import provenance stamp (latest `at`); other participants\' rows stay append-only and deduped', function () {
-  var s = FakeStore();
-  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T0 });
-  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T1 });
-  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T2 });
+  var s = FakeStore(); // a self-report makes the doc worth carrying (an empty doc is never persisted)
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', now: T0 });
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', now: T1 });
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', now: T2 });
   var d = MP.loadStored(s);
   var exports = d.provenance.filter(function (p) { return p.source === 'app:music' && p.action === 'export'; });
   assert.strictEqual(exports.length, 1);
