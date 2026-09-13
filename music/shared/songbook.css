@@ -774,23 +774,59 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .micMeter.locked{animation:lockPulse .34s ease;}
 .micMeter.sharp{box-shadow:0 0 0 2px var(--bad) inset;border-radius:8px;}
 @keyframes lockPulse{0%{transform:scale(1)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
-/* strobe: the classic "stands still = in tune" display. Stripes drift left
-   when flat / right when sharp (speed ∝ how far off), freeze + glow green when
-   locked. Far easier to land than chasing a needle. */
-.strobe{position:relative;height:30px;margin:10px 2px 4px;border-radius:8px;overflow:hidden;
-  border:1px solid var(--line);background:var(--bg-2);}
-.strobeInner{position:absolute;top:0;bottom:0;left:-40px;right:-40px;will-change:transform;
-  background:repeating-linear-gradient(90deg,var(--txt-soft) 0 10px,transparent 10px 20px);opacity:.45;}
-.strobe.sharp .strobeInner{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,transparent 10px 20px);opacity:.7;}
-.strobe.locked{border-color:var(--good);box-shadow:0 0 14px rgba(94,234,212,.45);}
-.strobe.locked .strobeInner{background:repeating-linear-gradient(90deg,var(--good) 0 10px,transparent 10px 20px);opacity:.9;}
-/* the caption sits ON TOP of the moving stripe pattern - a dark backdrop band
-   keeps it legible in stopped/drifting/locked states alike without touching
-   the stripe/status colours themselves (those stay fixed per the tuner-trust
-   rule; only the label's own readability changes here). */
-.strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
-  letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
-  padding:3px 4px 2px;background:var(--label-scrim);}
+/* Guided Tune runway (S-TUNER-GOAL-FLOW, 2026-09-12): the approach-from-flat
+   instrument. Flat is the long left stretch, the goal POST sits at 60%, the
+   short right stretch is overshoot (sharp). The puck travels toward the post
+   as the peg tightens; a sustained arrival fills the hold bar under the post,
+   then the post lights and the puck snaps in. Status colours FIXED (tuner
+   trust rule): amber = coming up, green = there, red = overshot. */
+.runway{position:relative;height:72px;margin:10px 2px 6px;}
+.runway .rwTrack{position:absolute;top:30px;left:0;right:0;height:4px;border-radius:2px;opacity:.5;
+  background:linear-gradient(90deg,var(--warn) 0%,var(--warn) 50%,var(--good) 58%,var(--good) 62%,var(--bad) 72%,var(--bad) 100%);}
+.runway .rwPost{position:absolute;top:6px;left:60%;width:12px;height:50px;transform:translateX(-50%);border-radius:6px;background:var(--good);opacity:.22;transition:opacity .2s,box-shadow .2s;pointer-events:none;}
+.runway.arriving .rwPost{opacity:.55;}
+.runway.landed .rwPost{opacity:1;box-shadow:0 0 22px 4px rgba(94,234,212,.6);animation:lockPulse .34s ease;}
+.runway .rwHold{position:absolute;bottom:0;left:60%;height:3px;width:0;transform:translateX(-50%);border-radius:2px;background:var(--good);transition:width .1s linear;}
+/* motion is eased in JS (tune-flow.js smoothing) - keep CSS off `left` so the two don't fight + trail */
+.runway .rwPuck{position:absolute;top:12px;left:0;width:16px;height:40px;border-radius:8px;background:var(--warn);transform:translateX(-50%);will-change:left;transition:background .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.runway.sharp .rwPuck{background:var(--bad);}
+.runway.landed .rwPuck{background:var(--good);box-shadow:0 0 14px rgba(94,234,212,.7);}
+.runway .fl,.runway .sh{position:absolute;top:52px;font-size:.66rem;line-height:1.2;color:var(--txt-dim);font-weight:600;}
+.runway .fl{left:0;}.runway .sh{right:0;}
+.runway.waiting .rwPuck{opacity:.35;}
+/* Guided-mode string row = the progress row: the current target is lit (same
+   look as a droning reference tone - it IS droning), a landed string wears a
+   green check. Still tappable: a tap retargets the flow. */
+.tStr.cur{background:var(--accent-deep);border-color:var(--accent-ink);box-shadow:0 0 24px rgba(94,234,212,.22);}
+.tStr.done .n{color:var(--good);}
+.tStr.done .hz::before{content:"\2713 ";color:var(--good);}
+/* Tuning lab (?tunerlab=1): four plain sliders right under the runway, cold
+   to hot with the shipped default at 50, so the puck and the knobs share one
+   screen. The Tune tab scrolls while the lab is present (a power tool, not
+   the everyday layout). The live + last-pluck lines are the report-back
+   handles (screenshot them). */
+#s-tune.labOn{height:auto;overflow-y:auto;}
+#s-tune.labOn .tunerWrap{height:auto;}
+#s-tune.labOn .tCard{flex:0 0 auto;overflow:visible;}
+#s-tune.labOn .micModes{display:none;}
+.tunerLab{margin:2px 0 10px;padding:6px 8px 4px;border:1px dashed var(--line-strong);border-radius:12px;font-size:.78rem;}
+.labLive,.labTry{font-family:'Space Mono',monospace;font-size:.64rem;color:var(--txt);line-height:1.5;}
+.labTry{color:var(--txt-soft);margin-bottom:4px;}
+.labLine{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);margin:6px 0 2px;white-space:pre-wrap;word-break:break-word;line-height:1.4;user-select:all;-webkit-user-select:all;}
+.labRow{padding:3px 0 1px;}
+.labHead{display:flex;justify-content:space-between;align-items:baseline;}
+.labLbl{color:var(--txt);font-weight:600;font-size:.8rem;}
+.labVal{font-family:'Space Mono',monospace;color:var(--txt-soft);font-size:.7rem;}
+.labRow input[type=range]{display:block;width:100%;min-height:30px;margin:0;accent-color:var(--accent);}
+.labEnds{display:flex;justify-content:space-between;font-size:.6rem;color:var(--txt-dim);margin-top:-2px;}
+/* The Tone toggle is a STATE, not an action: accent ink + border when on so
+   'Tone: on' can never be read as 'tap to turn the tone on'. */
+.micActions .btn.ghost.on{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-deep);}
+.labStay{display:flex;gap:8px;align-items:flex-start;font-size:.72rem;color:var(--txt-soft);margin:6px 0 2px;line-height:1.35;}
+.labStay input{margin-top:2px;width:18px;height:18px;accent-color:var(--accent);flex:0 0 auto;}
+.micModes{display:flex;gap:6px;margin:0 0 6px;}
+.micActions{display:flex;gap:8px;}
+.micActions .btn{flex:1 1 auto;}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
