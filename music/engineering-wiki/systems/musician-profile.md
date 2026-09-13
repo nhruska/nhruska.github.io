@@ -102,8 +102,12 @@ namespace (`bass/walking-lines`, `flamenco/rasgueado`, `songwriting/prosody`)
 with `id` (`<namespace>/<competency>`, kebab-case, stable), `name`, `desc`,
 `branch` and `source`. `merge` unions competencies by id and keeps the LOCAL
 definition for an id it already has; `compose` never overwrites a definition
-another participant wrote. `summary()` places every competency by its branch,
-so an instrument the app never shipped still gets a row in the panel. Proven
+another participant wrote. `summary()` places every competency by its
+`branch[0]` (musicianship / instrument / craft) and groups it by its id
+NAMESPACE - never by a deeper branch element, which a coach may use for
+anything (a real hand-back wrote `["instrument","strings","transferable"]` for
+a `stringed-instrument/*` id) - so an instrument the app never shipped still
+gets exactly one row in the panel, under its own name. Proven
 by `test/profile-roundtrip.test.js` (a hypothetical songwriting app,
 "LyricLab") and `test/profile-baseline-case.test.js` (bass, piano, kalimba,
 mandolin from a coach).
@@ -157,10 +161,15 @@ plan answers "what should I work on next?" - and stays distinct from
 assessment (a plan item is never a level):
 
 ```
-plan: { updated, steward, focus?: string,
+plan: { updated, steward, focus?: string | [string | { intent | statement, ... }],
         items: [{ id, kind: focus|activity|edge, statement, competencies[],
                   goal?, status: todo|doing|done, deep_link?, updated }] }
 ```
+
+`focus` is read leniently (a string, or a list of strings / objects carrying
+`intent` or `statement` - the shape a real coach wrote before the item form
+existed); whatever the app does not understand in `plan` is preserved
+byte-identical and the whole object still wins by `updated`.
 
 `kind: "edge"` is a coach-identified learning edge - the next useful thing,
 not yet an activity. `deep_link` is an app URL the coach copied from
@@ -213,7 +222,7 @@ writer. Progressive disclosure, top to bottom, answering the three questions:
 
 | Block | Answers | Source |
 |---|---|---|
-| Headline (`#profileHeadline`, `.profileLine`) | What kind of musician am I? | `MusicianProfile.headline(summary)`: "Musicianship: advanced - 11 of 11 assessed" / "Ukulele: beginner - 1 observed in the app" / "Mandolin: not yet assessed". A band for musicianship is the value most assessments agree on (strings only); an instrument line is its branch claim, else the band its assessed mechanics agree on, else the split; app observations are appended |
+| Headline (`#profileHeadline`, `.profileLine`) | What kind of musician am I? | `MusicianProfile.headline(summary)`: "Musicianship: advanced - 11 of 11 assessed" / "Ukulele: beginner - 1 observed in the app" / "Mandolin: not yet assessed". A band for musicianship is the value most assessments agree on (strings only). An instrument line (`groupLine`, shared with the row meta so the two never disagree): the band its assessed mechanics agree on (the more SPECIFIC claims lead), qualified by the split when only some are assessed, with a coarser branch-level claim that disagrees still shown ("advanced - 4 of 9 assessed - self-reported beginner"); a branch claim alone when nothing beneath is assessed; else "not yet assessed"; app observations appended |
 | Goals / Focus / Next (`#skillsGoals`, `#skillsFocus`) | What am I developing, what should I do next? | goals, `plan.focus`, open plan items - an item with an app deep link is a `.setAction.planLink` row (44px floor), an edge reads "Next edge:", others are quiet `.skillPref` lines |
 | Musicianship row | the transferable competencies by area (`.compArea` subheads) | `summary().musicianship` - status text per row, no bars (nothing to score) |
 | Instrument rows | the app's frameworks (bars + counters + Export) first, then every instrument only the profile knows (bass, piano, kalimba...) | `summary().instruments`; a row's meta is its branch claim, else "N of M assessed", else "N observed", else "not yet assessed" |

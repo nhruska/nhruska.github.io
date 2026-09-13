@@ -6929,18 +6929,18 @@
         // link is text (never a foreign tappable link from a hand-back).
         var goals = sm ? sm.goals.filter(function (g) { return g.status !== 'parked'; }) : [];
         var planItems = sm ? sm.planItems : [];
-        var focus = sm ? sm.focus : '';
-        if (goals.length || planItems.length || focus) {
+        var focus = sm ? sm.focus : [];
+        if (goals.length || planItems.length || focus.length) {
           var gp = document.createElement('div'); gp.className = 'skillGoals'; gp.id = 'skillsGoals';
           goals.forEach(function (g) {
             var l = document.createElement('p'); l.className = 'skillPref';
             l.textContent = 'Goal: ' + g.statement + (g.status === 'met' ? ' - met' : '');
             gp.appendChild(l);
           });
-          if (focus) {
-            var f = document.createElement('p'); f.className = 'skillPref'; f.id = 'skillsFocus';
-            f.textContent = 'Focus: ' + focus; gp.appendChild(f);
-          }
+          focus.forEach(function (t, i) {
+            var f = document.createElement('p'); f.className = 'skillPref'; if (i === 0) f.id = 'skillsFocus';
+            f.textContent = 'Focus: ' + t; gp.appendChild(f);
+          });
           planItems.forEach(function (i) {
             var link = (MPm && typeof MPm.appLink === 'function') ? MPm.appLink(i.deep_link) : null;
             var prefix = (i.kind === 'edge' ? 'Next edge: ' : 'Next: ');
@@ -7005,8 +7005,12 @@
           var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = g.name;
           var meta = document.createElement('span'); meta.className = 'skillMeta';
           var total = g.competencies.length;
-          meta.textContent = g.assessment ? (g.brief || MPm.briefValue(g.assessment))
-            : (g.assessed ? g.assessed + ' of ' + total + ' assessed' : (g.observed ? g.observed + ' observed' : 'not yet assessed'));
+          // Same rule as the headline (MusicianProfile.groupLine) so the row
+          // never contradicts the line above it; the Musicianship group has no
+          // branch claim and reads its split.
+          meta.textContent = (opts.areas || !MPm || typeof MPm.groupLine !== 'function')
+            ? (g.assessed ? g.assessed + ' of ' + total + ' assessed' : (g.observed ? g.observed + ' observed' : 'not yet assessed'))
+            : MPm.groupLine(g);
           head.appendChild(nm); head.appendChild(meta);
           var detail = document.createElement('div'); detail.className = 'skillDetail'; detail.hidden = true;
           head.onclick = function () {

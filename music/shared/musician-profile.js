@@ -369,12 +369,17 @@
         var area = br[1] || 'general';
         put('musicianship', area, AREA_NAMES[area] || titleCase(area), entry);
       } else if (br[0] === 'instrument') {
-        var key = br[2] || ns;
-        var fw = fwById[key];
-        put('instruments', key, fw ? fw.name : (key === 'strings' ? 'Stringed instrument' : titleCase(key)), entry);
+        // Group by NAMESPACE, never by a branch element: the branch decides the
+        // bucket, the id prefix decides the row. A coach's third branch element
+        // is not reliably an instrument (a real hand-back wrote
+        // `["instrument","strings","transferable"]` / `..."harmony"` /
+        // `..."melody"` for stringed-instrument/* ids, which would otherwise
+        // render as three phantom instruments).
+        var fw = fwById[ns];
+        put('instruments', ns, fw ? fw.name : titleCase(ns), entry);
       } else if (br[0] === 'craft') {
-        var ck = br[1] || ns, cfw = fwById[ck];
-        put('crafts', ck, cfw ? cfw.name : titleCase(ck), entry);
+        var cfw = fwById[ns];
+        put('crafts', ns, cfw ? cfw.name : titleCase(ns), entry);
       } else {
         put('other', ns, (fwById[ns] && fwById[ns].name) || titleCase(ns), entry);
       }
@@ -396,7 +401,13 @@
       return ia - ib;
     });
     var ms = list(groups.musicianship), msAssessed = ms.reduce(function (n, g) { return n + g.assessed; }, 0);
-    var focus = (d.plan && typeof d.plan.focus === 'string') ? d.plan.focus : '';
+    // plan.focus: a string, or a list of strings / { intent | statement }
+    // objects (read what you understand - a real coach wrote the list form).
+    var rawFocus = d.plan ? d.plan.focus : null, focus = [];
+    (Array.isArray(rawFocus) ? rawFocus : (rawFocus ? [rawFocus] : [])).forEach(function (f) {
+      if (typeof f === 'string' && f.trim()) focus.push(f.trim());
+      else if (isObj(f) && (f.intent || f.statement)) focus.push(String(f.intent || f.statement));
+    });
     var open = arr(d.plan && d.plan.items).filter(function (i) { return i && i.statement && i.status !== 'done'; });
     return {
       musicianship: ms, instruments: instruments, crafts: list(groups.crafts), other: list(groups.other),
@@ -427,21 +438,28 @@
     } else {
       lines.push('Musicianship: not yet assessed');
     }
-    sm.instruments.forEach(function (g) {
+    sm.instruments.forEach(function (g) { lines.push(g.name + ': ' + groupLine(g)); });
+    return lines;
+  }
+  // ONE rule for an instrument's glance text, shared by the headline and the
+  // panel's row meta so the two never disagree.
+  function groupLine(g) {
       var s;
-      if (g.assessment) s = briefValue(g.assessment);
-      else if (g.assessed) {
-        // No branch-level claim: the band its assessed competencies agree on
-        // (string values only), qualified when only some are assessed.
+      if (g.assessed) {
+        // Assessed competencies beneath the instrument are the more SPECIFIC
+        // claims, so their consensus (string values only) leads, qualified
+        // when only some are assessed. A coarser branch-level claim that
+        // disagrees is still shown - never hidden, never allowed to outrank
+        // (a one-tap "beginner" over four advanced strings claims).
         var v = {}; g.competencies.forEach(function (c) { if (c.assessment && typeof c.assessment.value === 'string') v[c.assessment.value] = (v[c.assessment.value] || 0) + 1; });
         var top = Object.keys(v).sort(function (a, b) { return v[b] - v[a]; })[0];
         var split = g.assessed + ' of ' + g.competencies.length + ' assessed';
         s = top ? (g.assessed === g.competencies.length ? top : top + ' - ' + split) : split;
-      } else s = 'not yet assessed';
+        if (g.assessment && briefValue(g.assessment) !== top) s += ' - ' + (METHOD_WORDS[g.assessment.method] || 'claimed') + ' ' + briefValue(g.assessment);
+      } else if (g.assessment) s = briefValue(g.assessment);
+      else s = 'not yet assessed';
       if (g.observed) s += ' - ' + g.observed + ' observed in the app';
-      lines.push(g.name + ': ' + s);
-    });
-    return lines;
+      return s;
   }
 
   // ---- upsert helpers (by id; same id -> later stamp wins) ----
@@ -770,7 +788,7 @@
     competencyId: competencyId, branchFor: branchFor, blank: blank, validate: validate, normalize: normalize,
     merge: merge, compose: compose, status: status, latestAssessment: latestAssessment, isEmpty: isEmpty,
     history: history, latestMap: latestMap, describe: describe, describeAssessment: describeAssessment, briefValue: briefValue,
-    summary: summary, headline: headline, appLink: appLink, taxonomySize: taxonomySize,
+    summary: summary, headline: headline, groupLine: groupLine, appLink: appLink, taxonomySize: taxonomySize,
     collapseRoutine: collapseRoutine, newId: newId, deviceId: deviceId,
     // storage-backed
     load: load, loadStored: loadStored, save: save, hasData: hasData,

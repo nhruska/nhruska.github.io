@@ -119,7 +119,7 @@ test('AFTER the coach hand-back: advanced transferable musicianship coexists wit
   var clip = d.evidence.filter(function (e) { return e.id === 'ev:' + COACH + ':clip1'; })[0];
   assert.strictEqual(clip.kind, 'artifact'); assert.strictEqual(clip.data.analyzed, false);
   // the plan is distinct from the assessment, and only app links are renderable
-  assert.strictEqual(sm.focus, 'Ukulele mechanics under the musicianship you already have');
+  assert.deepStrictEqual(sm.focus, ['Ukulele mechanics under the musicianship you already have']);
   assert.strictEqual(sm.planItems.length, 3);
   assert.ok(sm.planItems.every(function (i) { return !i.deep_link || MP.appLink(i.deep_link); }));
   assert.strictEqual(MP.status(d, 'stringed-instrument/triad-inversions').assessment.value, 'advanced');

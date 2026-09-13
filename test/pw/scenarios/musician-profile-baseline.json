@@ -79,7 +79,7 @@
     {
       "action": "evalAssert",
       "label": "AFTER the coach: advanced transferable musicianship coexists with a new-to-ukulele claim; bass/guitar advanced; mandolin named but unassessed - the musician is NEVER a beginner because ukulele telemetry is sparse",
-      "js": "(function(){var L=[].slice.call(document.querySelectorAll('#profileHeadline .profileLine')).map(function(e){return e.textContent.trim();});return L[0]==='Musicianship: advanced - 11 of 11 assessed'&&L.indexOf('Bass: advanced')>=0&&L.indexOf('Guitar: advanced')>=0&&L.indexOf('Stringed instrument: advanced')>=0&&L[1]==='Stringed instrument: advanced'&&L.indexOf('Mandolin: not yet assessed')>=0&&L.indexOf('Ukulele: beginner - 1 observed in the app')>=0&&L.filter(function(t){return /beginner/.test(t);}).length===1;})()"
+      "js": "(function(){var L=[].slice.call(document.querySelectorAll('#profileHeadline .profileLine')).map(function(e){return e.textContent.trim();});return L[0]==='Musicianship: advanced - 11 of 11 assessed'&&L.indexOf('Bass: advanced')>=0&&L.indexOf('Guitar: advanced')>=0&&L[1]==='Stringed instrument: advanced - 3 of 9 assessed'&&L.indexOf('Mandolin: not yet assessed')>=0&&L.indexOf('Ukulele: beginner - 1 observed in the app')>=0&&L.filter(function(t){return /beginner/.test(t);}).length===1;})()"
     },
     {
       "action": "evalAssert",
@@ -89,12 +89,12 @@
     {
       "action": "evalAssert",
       "label": "the ukulele MECHANICS stay 'not yet observed' beside the one observed counter - the branch-level beginner claim never trickles down into the rows",
-      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"ukulele\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='beginner'&&m.filter(function(t){return t==='not yet observed';}).length===4&&m.some(function(t){return /9\u00d7/.test(t);})&&!m.some(function(t){return /^0 \\//.test(t);})&&r.querySelectorAll('.compBar').length===1;})()"
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"ukulele\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='beginner - 1 observed in the app'&&m.filter(function(t){return t==='not yet observed';}).length===4&&m.some(function(t){return /9\u00d7/.test(t);})&&!m.some(function(t){return /^0 \\//.test(t);})&&r.querySelectorAll('.compBar').length===1;})()"
     },
     {
       "action": "evalAssert",
       "label": "an instrument the app never shipped renders FROM the profile: Bass with its two coach-named competencies, advanced",
-      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"bass\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='2 of 2 assessed'&&m.length===2&&m.every(function(t){return /^advanced - from a guided interview/.test(t);})&&r.querySelectorAll('.skillExport').length===0;})()"
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"bass\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='advanced'&&m.length===2&&m.every(function(t){return /^advanced - from a guided interview/.test(t);})&&r.querySelectorAll('.skillExport').length===0;})()"
     },
     {
       "action": "evalAssert",

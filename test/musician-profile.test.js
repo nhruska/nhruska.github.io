@@ -428,7 +428,7 @@ test('VNEXT: the learning plan is distinct from assessment - focus + items with 
     { id: 'pl:3', kind: 'activity', statement: 'done thing', competencies: [], status: 'done', updated: T1 }
   ] };
   var sm = MP.summary(d, C.FRAMEWORKS, {});
-  assert.strictEqual(sm.focus, 'Triads up the neck on ukulele');
+  assert.deepStrictEqual(sm.focus, ['Triads up the neck on ukulele']);
   assert.strictEqual(sm.planItems.length, 2, 'done items are not open');
   assert.strictEqual(MP.status(d, 'stringed-instrument/triad-inversions').status, 'unassessed', 'a plan item is never an assessment');
 });
@@ -488,7 +488,9 @@ test('VNEXT: an unknown competency under an unknown namespace survives compose +
   assert.deepStrictEqual(c, hand.competencies[0]);
   assert.strictEqual(MP.describe(d, 'flamenco/rasgueado'), 'developing - observed, medium confidence, Sep 13');
   var sm = MP.summary(d, C.FRAMEWORKS, {});
-  assert.ok(sm.instruments.some(function (g) { return g.name === 'Guitar' && g.competencies.some(function (x) { return x.id === 'flamenco/rasgueado'; }); }), 'placed under Guitar by its branch');
+  var fl = sm.instruments.filter(function (g) { return g.id === 'flamenco'; })[0];
+  assert.ok(fl && fl.name === 'Flamenco' && fl.competencies[0].id === 'flamenco/rasgueado', 'an instrument bucket row per NAMESPACE (the branch picks the bucket, the id prefix picks the row)');
+  assert.strictEqual(fl.branch, undefined);
 });
 
 
@@ -544,6 +546,40 @@ test('VOLLEY 3 #7: history() is deterministic on equal stamps (newest first, tie
   assert.deepStrictEqual(ids, ['as:m', 'as:a', 'as:z', 'as:bad']);
   d.assessments.reverse();
   assert.deepStrictEqual(MP.history(d, 'x').map(function (a) { return a.id; }), ids, 'input order never changes the result');
+});
+
+
+test('REAL HAND-BACK SHAPES (ChatGPT, 2026-09-13): stringed-instrument/* ids with non-instrument branch tails group under Stringed instrument by NAMESPACE, never as phantom instruments; a plan.focus LIST of {intent} objects renders as focus lines; an instrument headline lets the specific assessed mechanics outrank a coarse beginner tap while still showing it', function () {
+  var s = FakeStore();
+  C.recordEvidence('ukulele', 'uke-repertoire', null, s);
+  var hand = { schema: MP.SCHEMA, updated: T2,
+    competencies: [
+      { id: 'stringed-instrument/movable-fretboard-fluency', name: 'Movable fretboard fluency', desc: '', branch: ['instrument', 'strings', 'transferable'], source: 'agent:chatgpt' },
+      { id: 'stringed-instrument/triad-inversions', name: 'Triad inversions', desc: '', branch: ['instrument', 'strings', 'harmony'], source: 'agent:chatgpt' },
+      { id: 'stringed-instrument/scale-shape-navigation', name: 'Scale-shape navigation', desc: '', branch: ['instrument', 'strings', 'melody'], source: 'agent:chatgpt' },
+      { id: 'musicianship/tonal-orientation', name: 'Tonal orientation', desc: '', branch: ['musicianship', 'ear', 'improvisation'], source: 'agent:chatgpt' }
+    ],
+    assessments: ['movable-fretboard-fluency', 'triad-inversions', 'scale-shape-navigation'].map(function (c) {
+      return { id: 'as:chatgpt:' + c, competency: 'stringed-instrument/' + c, value: 'advanced', scale: 'qualitative-3', confidence: 'high', method: 'self-report', modality: 'perform', at: T2, source: 'agent:chatgpt', evidence: [] };
+    }),
+    goals: [{ id: 'goal:1', statement: 'Expand ukulele extended-chord vocabulary', owner: 'musician', at: T2, source: 'agent:chatgpt', status: 'active' }],
+    plan: { id: 'plan:1', updated: T2, source: 'agent:chatgpt', status: 'active',
+      focus: [{ competencies: ['ukulele/uke-open-chords'], intent: 'Extend chord vocabulary into sevenths.', origin: 'musician_goal' }, { competencies: [], intent: 'Deepen chord-tone targeting.', origin: 'coach_recommendation' }] } };
+  assert.strictEqual(MP.importJson(hand, s, { now: T2 }).ok, true);
+  var view = MP.compose(MP.load(s), { frameworks: C.FRAMEWORKS, progression: C.load(s), selfReport: 'beginner', selfReportAt: T0, now: T2, device: 'dv_a' });
+  var sm = MP.summary(view, C.FRAMEWORKS, C.load(s));
+  assert.deepStrictEqual(sm.instruments.map(function (g) { return g.id; }), ['stringed-instrument', 'ukulele', 'guitar'], 'no phantom Transferable/Harmony/Melody instruments');
+  var strings = sm.instruments[0];
+  assert.strictEqual(strings.competencies.length, 9); assert.strictEqual(strings.assessed, 3);
+  assert.strictEqual(strings.assessment.value, 'beginner', 'the tap is still the branch claim');
+  var lines = MP.headline(sm);
+  assert.ok(lines.indexOf('Stringed instrument: advanced - 3 of 9 assessed - self-reported beginner') >= 0, lines.join(' | '));
+  assert.strictEqual(sm.musicianship.filter(function (g) { return g.name === 'Ear'; })[0].assessed, 0, 'a 3-deep musicianship branch still groups by its area');
+  assert.deepStrictEqual(sm.focus, ['Extend chord vocabulary into sevenths.', 'Deepen chord-tone targeting.']);
+  assert.strictEqual(sm.goals.length, 1);
+  var out = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T2, device: 'dv_a' }));
+  assert.deepStrictEqual(out.plan, hand.plan, 'a plan shape the app only partly understands is preserved byte-identical');
+  assert.deepStrictEqual(out.goals, hand.goals);
 });
 
 run();
