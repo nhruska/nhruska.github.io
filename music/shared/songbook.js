@@ -7005,7 +7005,7 @@
           var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = g.name;
           var meta = document.createElement('span'); meta.className = 'skillMeta';
           var total = g.competencies.length;
-          meta.textContent = g.assessment ? String(g.assessment.value)
+          meta.textContent = g.assessment ? (g.brief || MPm.briefValue(g.assessment))
             : (g.assessed ? g.assessed + ' of ' + total + ' assessed' : (g.observed ? g.observed + ' observed' : 'not yet assessed'));
           head.appendChild(nm); head.appendChild(meta);
           var detail = document.createElement('div'); detail.className = 'skillDetail'; detail.hidden = true;
@@ -7014,6 +7014,16 @@
             detail.hidden = !open;
             head.setAttribute('aria-expanded', open ? 'true' : 'false');
           };
+          // A branch-level claim (the app's own self-report, a coach's "guitar:
+          // advanced") is the first row of the detail, in the FULL describe()
+          // form - value, method, confidence, date - so the glance line above
+          // never has to carry it.
+          if (g.assessment && g.status) {
+            var ov = document.createElement('div'); ov.className = 'compRow';
+            var on = document.createElement('span'); on.className = 'compName'; on.textContent = 'Overall';
+            var om = document.createElement('span'); om.className = 'compMeta'; om.textContent = g.status;
+            ov.appendChild(on); ov.appendChild(om); detail.appendChild(ov);
+          }
           if (opts.areas) {
             // Musicianship: sub-grouped by area (ear / harmony / ...), each a
             // quiet subhead over its competency rows.
@@ -7057,7 +7067,7 @@
           // Instruments: the app's frameworks (with bars + Export) first, then
           // any instrument only the profile knows (bass, piano...).
           sm.instruments.forEach(function (g) {
-            var fwId = fwIds[g.id] ? g.id : (g.id === 'strings' ? 'stringed-instrument' : null);
+            var fwId = fwIds[g.id] ? g.id : null; // group keys ARE framework ids
             pane.appendChild(groupRow(g, { frameworkId: fwId }));
           });
           sm.crafts.forEach(function (g) { pane.appendChild(groupRow(g, { frameworkId: fwIds[g.id] ? g.id : null })); });
@@ -7089,8 +7099,9 @@
               + (e.data && e.data.analyzed === false ? ' · attached, not analyzed' : '');
             body.appendChild(l);
           });
+          var latestBy = sm.latest || MPm.latestMap(view); // one pass, not one scan per record
           view.assessments.forEach(function (a) {
-            var latest = MPm.latestAssessment(view, a.competency);
+            var latest = latestBy[a.competency];
             if (!latest || latest.id === a.id) return; // current ones are in the rows above
             var l = document.createElement('p'); l.className = 'skillPref';
             var when = fmtDate(a.at);

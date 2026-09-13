@@ -467,8 +467,11 @@ test('VNEXT: compose() retires this app\'s OWN legacy device-less progression re
   MP.save(s, legacy);
   var d = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T2, device: 'dv_a' }));
   var app = d.evidence.filter(function (e) { return e.source === 'app:music'; });
-  assert.strictEqual(app.length, 1, 'one per-device record replaces the legacy pair');
-  assert.strictEqual(app[0].id, 'ev:app:music:dv_a:progression:music-composition');
+  assert.strictEqual(app.length, 2, 'the framework THIS device re-emits is retired; the other legacy ladder is MIGRATED, never deleted');
+  assert.ok(app.some(function (e) { return e.id === 'ev:app:music:dv_a:progression:music-composition' && e.device === 'dv_a'; }));
+  var legacyUke = app.filter(function (e) { return e.id === 'ev:app:music:legacy:progression:ukulele'; })[0];
+  assert.ok(legacyUke && legacyUke.device === 'legacy' && legacyUke.competencies[0] === 'ukulele/uke-repertoire', 'another device\'s ukulele counters survive under the synthetic legacy device');
+  assert.ok(!d.evidence.some(function (e) { return e.id === 'ev:app:music:progression:ukulele' || e.id === 'ev:app:music:progression:music-composition'; }), 'no device-less app record remains');
   assert.ok(d.evidence.some(function (e) { return e.id === 'ev:coach:1'; }), 'the coach\'s record survives');
   var exports = d.provenance.filter(function (p) { return p.source === 'app:music' && p.action === 'export'; });
   assert.strictEqual(exports.length, 1); assert.strictEqual(exports[0].at, T2);
@@ -486,6 +489,61 @@ test('VNEXT: an unknown competency under an unknown namespace survives compose +
   assert.strictEqual(MP.describe(d, 'flamenco/rasgueado'), 'developing - observed, medium confidence, Sep 13');
   var sm = MP.summary(d, C.FRAMEWORKS, {});
   assert.ok(sm.instruments.some(function (g) { return g.name === 'Guitar' && g.competencies.some(function (x) { return x.id === 'flamenco/rasgueado'; }); }), 'placed under Guitar by its branch');
+});
+
+
+/* ---------- volley 3 fixes ---------- */
+test('VOLLEY 3 #1: a self-report whose tap date is UNKNOWN (pre-VNext device) is never stamped `now` over another participant\'s dated claim on the branch - the coach\'s claim stands; with no competing claim it is written once, says its date is unknown, and a re-export keeps that record untouched', function () {
+  var s = FakeStore();
+  var hand = { schema: MP.SCHEMA, updated: T1, assessments: [{ id: 'as:coach:1', competency: 'stringed-instrument', value: 'advanced', scale: 'band-3', method: 'interview', modality: 'perform', confidence: 'high', at: T1, source: 'agent:coach', evidence: [] }] };
+  assert.strictEqual(MP.importJson(hand, s, { now: T1 }).ok, true);
+  var d = MP.compose(MP.load(s), { frameworks: C.FRAMEWORKS, selfReport: 'beginner', selfReportAt: null, now: T2, device: 'dv_a' });
+  assert.strictEqual(MP.describe(d, 'stringed-instrument'), 'advanced - from a guided interview, high confidence, Sep 13');
+  assert.ok(!d.assessments.some(function (a) { return a.id === 'as:app:music:self-report'; }), 'an undated tap is not written over a dated claim');
+  // a DATED tap older than the coach's claim IS written, and loses on date as it should
+  d = MP.compose(MP.load(s), { frameworks: C.FRAMEWORKS, selfReport: 'beginner', selfReportAt: T0, now: T2, device: 'dv_a' });
+  assert.strictEqual(d.assessments.filter(function (a) { return a.id === 'as:app:music:self-report'; })[0].at, T0);
+  assert.strictEqual(MP.status(d, 'stringed-instrument').assessment.id, 'as:coach:1');
+  // no competing claim: the undated tap is written at first export and flagged
+  var s2 = FakeStore();
+  MP.exportJson(s2, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', selfReportAt: null, now: T0, device: 'dv_a' });
+  var rec = MP.loadStored(s2).assessments.filter(function (a) { return a.id === 'as:app:music:self-report'; })[0];
+  assert.strictEqual(rec.at, T0); assert.ok(/Tap date unknown/.test(rec.note));
+  MP.exportJson(s2, { frameworks: C.FRAMEWORKS, selfReport: 'beginner', selfReportAt: null, now: T2, device: 'dv_a' });
+  assert.strictEqual(MP.loadStored(s2).assessments.filter(function (a) { return a.id === 'as:app:music:self-report'; })[0].at, T0, 'a re-export never re-stamps the record');
+});
+test('VOLLEY 3 #3: a branch-level claim never renders as a naked number - briefValue() carries the scale, and the headline uses it', function () {
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  d.competencies.push({ id: 'guitar/x', name: 'X', desc: '', branch: ['instrument', 'strings', 'guitar'], source: 'agent:c' });
+  d.assessments.push({ id: 'as:c:g', competency: 'guitar', value: 40, scale: '0-100', method: 'coach', modality: 'perform', at: T1, source: 'agent:c', evidence: [] });
+  var sm = MP.summary(d, C.FRAMEWORKS, {});
+  var g = sm.instruments.filter(function (x) { return x.id === 'guitar'; })[0];
+  assert.strictEqual(g.brief, '40 of 100');
+  assert.strictEqual(g.status, '40 of 100 - coach-assessed, Sep 13');
+  assert.ok(MP.headline(sm).indexOf('Guitar: 40 of 100') >= 0);
+  assert.strictEqual(MP.briefValue({ value: 'advanced' }), 'advanced');
+  assert.strictEqual(MP.briefValue({ value: 3, scale: 'band-5' }), '3 (band-5)');
+});
+test('VOLLEY 3 #4/#5: latestMap() is one pass and agrees with latestAssessment() for every competency; summary() exposes it', function () {
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  ['a', 'b', 'a', 'c', 'b'].forEach(function (cid, i) {
+    d.assessments.push({ id: 'as:' + i, competency: 'ns/' + cid, value: i, scale: '0-100', method: 'coach', modality: 'perform', at: [T0, T1, T2, T1, T0][i], source: 'agent:c', evidence: [] });
+  });
+  var m = MP.latestMap(d);
+  ['ns/a', 'ns/b', 'ns/c'].forEach(function (id) { assert.strictEqual(m[id].id, MP.latestAssessment(d, id).id); });
+  assert.strictEqual(m['ns/a'].id, 'as:2'); assert.strictEqual(m['ns/b'].id, 'as:1');
+  assert.deepStrictEqual(Object.keys(MP.summary(d, C.FRAMEWORKS, {}).latest).sort(), ['ns/a', 'ns/b', 'ns/c']);
+});
+test('VOLLEY 3 #7: history() is deterministic on equal stamps (newest first, ties by id) - a consistent comparator', function () {
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  d.assessments.push({ id: 'as:z', competency: 'x', value: 1, at: T1, source: 's' });
+  d.assessments.push({ id: 'as:a', competency: 'x', value: 2, at: T1, source: 's' });
+  d.assessments.push({ id: 'as:m', competency: 'x', value: 3, at: T2, source: 's' });
+  d.assessments.push({ id: 'as:bad', competency: 'x', value: 4, at: 'garbage', source: 's' });
+  var ids = MP.history(d, 'x').map(function (a) { return a.id; });
+  assert.deepStrictEqual(ids, ['as:m', 'as:a', 'as:z', 'as:bad']);
+  d.assessments.reverse();
+  assert.deepStrictEqual(MP.history(d, 'x').map(function (a) { return a.id; }), ids, 'input order never changes the result');
 });
 
 run();

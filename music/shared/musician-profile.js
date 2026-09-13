@@ -272,7 +272,24 @@
   // rewritten by anyone.)
   function history(doc, competency) {
     return arr(doc && doc.assessments).filter(function (a) { return a && a.competency === competency; })
-      .sort(function (a, b) { return later(a.at, b.at) ? -1 : 1; });
+      .sort(function (a, b) {
+        // Consistent comparator: newer first, equal stamps tie (0), then id order.
+        var ta = Date.parse(String(a.at || '')), tb = Date.parse(String(b.at || ''));
+        if (isNaN(ta)) ta = -Infinity; if (isNaN(tb)) tb = -Infinity;
+        if (ta !== tb) return tb - ta;
+        return String(a.id || '') < String(b.id || '') ? -1 : (String(a.id || '') > String(b.id || '') ? 1 : 0);
+      });
+  }
+  // ONE pass over the assessments: competency -> its latest record. summary()
+  // and the panel's history view read this map instead of rescanning the
+  // list per competency (quadratic as coaches append history).
+  function latestMap(doc) {
+    var m = {};
+    arr(doc && doc.assessments).forEach(function (a) {
+      if (!a || !a.competency) return;
+      if (!m[a.competency] || later(a.at, m[a.competency].at)) m[a.competency] = a;
+    });
+    return m;
   }
   function shortDate(iso) {
     var t = Date.parse(String(iso || ''));
@@ -286,8 +303,16 @@
   //   "advanced - self-reported, high confidence, Sep 13"
   //   "40 of 100 - coach-assessed, Sep 13"
   //   "not yet assessed"
-  function describe(doc, competency) {
-    var a = latestAssessment(doc, competency);
+  function describe(doc, competency) { return describeAssessment(latestAssessment(doc, competency)); }
+  // The short form for a glance line (headline, a group's meta): the band
+  // word as-is, a number WITH its scale ("40 of 100") - never a naked number.
+  function briefValue(a) {
+    if (!a) return 'not yet assessed';
+    if (typeof a.value === 'number' && a.scale && /^0-(\d+)$/.test(String(a.scale))) return a.value + ' of ' + String(a.scale).slice(2);
+    if (typeof a.value === 'number') return a.value + (a.scale ? ' (' + a.scale + ')' : '');
+    return (a.value === null || a.value === undefined) ? 'assessed' : String(a.value);
+  }
+  function describeAssessment(a) {
     if (!a) return 'not yet assessed';
     var v = (a.value === null || a.value === undefined) ? '' : String(a.value);
     if (typeof a.value === 'number' && a.scale && /^0-(\d+)$/.test(String(a.scale))) v = a.value + ' of ' + String(a.scale).slice(2);
@@ -323,6 +348,7 @@
         if (c && c.id) counters[competencyId(fwId, c.id)] = c;
       });
     });
+    var latest = latestMap(d);
     var groups = { musicianship: {}, instruments: {}, crafts: {}, other: {} };
     function titleCase(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' '); }
     function put(bucket, key, label, entry) {
@@ -334,11 +360,11 @@
     }
     d.competencies.forEach(function (c) {
       if (!c || !c.id) return;
-      var a = latestAssessment(d, c.id);
+      var a = latest[c.id] || null;
       var ns = String(c.id).split('/')[0];
       var br = arr(c.branch);
       var entry = { id: c.id, name: c.name || c.id, desc: c.desc || '', branch: br.slice(),
-        assessment: a || null, status: describe(d, c.id), counter: counters[c.id] || null };
+        assessment: a, status: describeAssessment(a), counter: counters[c.id] || null };
       if (br[0] === 'musicianship' || ns === 'musicianship') {
         var area = br[1] || 'general';
         put('musicianship', area, AREA_NAMES[area] || titleCase(area), entry);
@@ -357,8 +383,8 @@
     // e.g. the app's own `stringed-instrument` self-report) attach to the group.
     Object.keys(groups.instruments).forEach(function (k) {
       var g = groups.instruments[k];
-      var lvl = latestAssessment(d, k) || (k === 'strings' ? latestAssessment(d, 'stringed-instrument') : null);
-      if (lvl) { g.assessment = lvl; g.status = describe(d, lvl.competency); }
+      var lvl = latest[k] || null; // group keys ARE framework/namespace ids
+      if (lvl) { g.assessment = lvl; g.status = describeAssessment(lvl); g.brief = briefValue(lvl); }
     });
     function list(o) { return Object.keys(o).map(function (k) { return o[k]; }); }
     // Instruments: the app's own frameworks first (in FRAMEWORKS order, the
@@ -377,7 +403,8 @@
       musicianshipAssessed: msAssessed,
       goals: d.goals.filter(function (g) { return g && g.statement; }),
       focus: focus, planItems: open,
-      evidence: d.evidence.slice()
+      evidence: d.evidence.slice(),
+      latest: latest
     };
   }
 
@@ -402,7 +429,7 @@
     }
     sm.instruments.forEach(function (g) {
       var s;
-      if (g.assessment) s = String(g.assessment.value);
+      if (g.assessment) s = briefValue(g.assessment);
       else if (g.assessed) {
         // No branch-level claim: the band its assessed competencies agree on
         // (string values only), qualified when only some are assessed.
@@ -593,15 +620,27 @@
       compById[c.id] = true;
     });
 
-    // Retire this app's OWN legacy records: builds before the per-device ids
-    // wrote `ev:app:music:progression:<fw>` with no `device`. They are the
-    // app's records (it is the authority on them - replaceById doctrine), the
-    // exporting device re-emits the same counters below, and leaving them
-    // would show one ladder twice. Nothing another participant wrote is touched.
-    d.evidence = d.evidence.filter(function (e) {
-      return !(e && e.source === APP_ID && e.kind === 'app-progression' && !e.device
-        && /^ev:app:music:progression:/.test(String(e.id || '')));
+    // This app's OWN legacy records: builds before the per-device ids wrote
+    // `ev:app:music:progression:<fw>` with no `device`. A framework THIS
+    // device re-emits below is retired (one ladder, not two); any other
+    // legacy record - counters some OTHER device authored - is never deleted:
+    // it moves to the per-device shape under the synthetic device `legacy`
+    // so it keeps living beside every real device's record.
+    var reEmits = {};
+    Object.keys(progression).forEach(function (fwId) {
+      var p = progression[fwId];
+      if (p && Array.isArray(p.competencies) && p.competencies.some(function (c) { return c && (c.evidence_count || 0) > 0; })) reEmits[fwId] = true;
     });
+    var kept = [];
+    d.evidence.forEach(function (e) {
+      var m = e && e.source === APP_ID && e.kind === 'app-progression' && !e.device
+        && /^ev:app:music:progression:(.+)$/.exec(String(e.id || ''));
+      if (!m) { kept.push(e); return; }
+      if (reEmits[m[1]]) return; // superseded by this device's own record below
+      var moved = clone(e); moved.id = 'ev:' + APP_ID + ':legacy:progression:' + m[1]; moved.device = 'legacy';
+      replaceById(kept, moved);
+    });
+    d.evidence = kept;
 
     Object.keys(progression).forEach(function (fwId) {
       var p = progression[fwId];
@@ -627,18 +666,26 @@
     });
 
     if (inputs.selfReport) {
-      var existing = null;
-      d.assessments.forEach(function (a) { if (a && a.id === 'as:' + APP_ID + ':self-report') existing = a; });
-      if (!existing || existing.value !== inputs.selfReport) {
-        replaceById(d.assessments, {
-          id: 'as:' + APP_ID + ':self-report', competency: 'stringed-instrument',
+      var existing = null, selfId = 'as:' + APP_ID + ':self-report';
+      d.assessments.forEach(function (a) { if (a && a.id === selfId) existing = a; });
+      // `at` = when the musician TAPPED (GuidanceLevel.at()), never when this
+      // export ran - a claim is dated by when it was made, so a coach's later
+      // interview claim on the same branch correctly supersedes it. A tap from
+      // a build that did not record its date has an UNKNOWN date: it may not be
+      // stamped `now` (that would let an old tap outrank every dated claim), so
+      // it is written only while no other participant has claimed the branch,
+      // and it says so. Once written, a re-export with the same answer keeps
+      // the record - and its date - untouched.
+      var competing = d.assessments.some(function (a) { return a && a.competency === 'stringed-instrument' && a.id !== selfId; });
+      if ((!existing || existing.value !== inputs.selfReport) && (inputs.selfReportAt || !competing)) {
+        var rec = {
+          id: selfId, competency: 'stringed-instrument',
           value: inputs.selfReport, scale: 'band-3', method: 'self-report', modality: 'unspecified',
-          // `at` = when the musician TAPPED (GuidanceLevel.at()), not when this
-          // export ran - a claim is dated by when it was made, so a coach's later
-          // interview claim on the same branch correctly supersedes it.
           at: inputs.selfReportAt || now, source: APP_ID, evidence: [],
           note: 'The musician\'s own answer to the app\'s one-time experience-level ask (beginner | intermediate | advanced).'
-        });
+        };
+        if (!inputs.selfReportAt) rec.note += ' Tap date unknown (recorded by an older build) - stamped at first export.';
+        replaceById(d.assessments, rec);
       }
     }
 
@@ -722,7 +769,8 @@
     // pure
     competencyId: competencyId, branchFor: branchFor, blank: blank, validate: validate, normalize: normalize,
     merge: merge, compose: compose, status: status, latestAssessment: latestAssessment, isEmpty: isEmpty,
-    history: history, describe: describe, summary: summary, headline: headline, appLink: appLink, taxonomySize: taxonomySize,
+    history: history, latestMap: latestMap, describe: describe, describeAssessment: describeAssessment, briefValue: briefValue,
+    summary: summary, headline: headline, appLink: appLink, taxonomySize: taxonomySize,
     collapseRoutine: collapseRoutine, newId: newId, deviceId: deviceId,
     // storage-backed
     load: load, loadStored: loadStored, save: save, hasData: hasData,
