@@ -1,0 +1,112 @@
+{
+  "name": "musician-profile-import",
+  "proves": "M-MUSICIAN-PROFILE: the Skills panel says 'not yet observed' for a competency the app never saw (unassessed is explicit, never '0 / 80'); a coach's profile.json hand-back imports through the REAL file picker (schema dispatch), the goal + plan render as quiet read-only lines, the coach's records + an unknown top-level key are preserved in storage, the fresh device adopts the musician id, and the app's next export carries the coach's records alongside its own compose-modality evidence with no level for what it never observed",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "seed one real compose evidence record through the app's own API (one framework has counters, the rest have none)",
+      "js": "(function(){var C=window.Competency;if(!C)return false;C.recordEvidence('music-composition','comp-progressions',null);return C.hasData()===true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#settingsBody .accSec"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#accBodySkills .skillRow"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#accBodySkills .skillRow:nth-child(2) .skillHead"
+    },
+    {
+      "action": "wait",
+      "ms": 200
+    },
+    {
+      "action": "evalAssert",
+      "label": "UNASSESSED IS EXPLICIT: a competency the app never observed reads 'not yet observed', and no row reads as a 0-score",
+      "js": "(function(){var m=[].slice.call(document.querySelectorAll('#accBodySkills .compMeta')).map(function(e){return e.textContent.trim();});return m.length>0&&m.some(function(t){return t==='not yet observed';})&&!m.some(function(t){return /^0 \\/ /.test(t);});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no goal/plan lines before any coach has written any",
+      "js": "!document.getElementById('skillsGoals')"
+    },
+    {
+      "action": "screenshot",
+      "name": "mp-01-before-import"
+    },
+    {
+      "action": "uploadText",
+      "selector": "#skillsImportFile",
+      "name": "profile.json",
+      "text": "{\"schema\": \"musician-profile/v1\", \"id\": \"mp_scenario\", \"updated\": \"2026-09-13T12:00:00.000Z\", \"participants\": [{\"id\": \"agent:claude\", \"name\": \"Claude coach\", \"understands\": [\"assessments\", \"goals\", \"plan\"], \"last_seen\": \"2026-09-13T12:00:00.000Z\"}], \"provenance\": [{\"source\": \"agent:claude\", \"at\": \"2026-09-13T12:00:00.000Z\", \"action\": \"assess\"}], \"assessments\": [{\"id\": \"as:claude:1\", \"competency\": \"ukulele/uke-open-chords\", \"value\": 40, \"scale\": \"0-100\", \"target\": 90, \"method\": \"coach\", \"modality\": \"perform\", \"at\": \"2026-09-13T12:00:00.000Z\", \"source\": \"agent:claude\", \"evidence\": [\"ev:claude:rec1\"], \"note\": \"heard a clean C-F-G loop; musician confirmed\"}], \"evidence\": [{\"id\": \"ev:claude:rec1\", \"at\": \"2026-09-13T12:00:00.000Z\", \"source\": \"agent:claude\", \"kind\": \"recording\", \"modality\": \"perform\", \"competencies\": [\"ukulele/uke-open-chords\"], \"data\": {\"duration_s\": 42}}], \"goals\": [{\"id\": \"goal:1\", \"statement\": \"Play Riptide start to finish at a campfire\", \"competencies\": [\"ukulele/uke-repertoire\"], \"status\": \"active\", \"created\": \"2026-09-13T12:00:00.000Z\", \"updated\": \"2026-09-13T12:00:00.000Z\", \"source\": \"human\"}], \"plan\": {\"updated\": \"2026-09-13T12:00:00.000Z\", \"steward\": \"agent:claude\", \"items\": [{\"id\": \"plan:1\", \"statement\": \"Am-G-C-F loop at 70bpm, 5 min a day\", \"competencies\": [\"stringed-instrument/transitions\"], \"goal\": \"goal:1\", \"status\": \"todo\", \"updated\": \"2026-09-13T12:00:00.000Z\"}]}, \"extensions\": {\"x-claude\": {\"session\": \"abc\"}}, \"x-future-section\": {\"anything\": true}}"
+    },
+    {
+      "action": "wait",
+      "ms": 700
+    },
+    {
+      "action": "evalAssert",
+      "label": "the hand-back landed in music.profile.v1: the fresh device ADOPTED the musician id, the coach's assessment/evidence/goal/plan/extension AND an unknown top-level key are all preserved",
+      "js": "(function(){try{var p=JSON.parse(localStorage.getItem('music.profile.v1'));return p.id==='mp_scenario'&&p.assessments.length===1&&p.assessments[0].source==='agent:claude'&&p.evidence.some(function(e){return e.id==='ev:claude:rec1';})&&p.goals.length===1&&p.plan&&p.plan.items.length===1&&p.extensions['x-claude'].session==='abc'&&p['x-future-section'].anything===true&&p.provenance.some(function(x){return x.action==='import';});}catch(e){return false;}})()"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#skillsGoals"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the goal and the coach's plan item render as quiet read-only lines in the Skills pane",
+      "js": "(function(){var g=document.getElementById('skillsGoals');if(!g)return false;var t=g.textContent;return t.indexOf('Goal: Play Riptide')>=0&&t.indexOf('Plan: Am-G-C-F loop')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the app's OWN progression counters were not touched by a coach hand-back that carried none (max semantics, nothing invented)",
+      "js": "(function(){var C=window.Competency;var p=C.getProfile('music-composition');var c=p.competencies.filter(function(x){return x.id==='comp-progressions';})[0];return c.evidence_count===1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mp-02-after-import"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the next export (what downloadBundle writes as profile.json) carries the coach's records untouched, the app as a participant with deep links, its compose-modality evidence, and NO level for the 24 taxonomy entries nothing assessed (25 competencies, exactly one coach-assessed plus the self-report if answered)",
+      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var j=MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:(window.GuidanceLevel&&GuidanceLevel.get())||null,version:(window.BuildStamp&&BuildStamp.VERSION)||null});var d=JSON.parse(j);var app=d.participants.filter(function(p){return p.id==='app:music';})[0];var ev=d.evidence.filter(function(e){return e.id==='ev:app:music:progression:music-composition';})[0];var coach=d.assessments.filter(function(a){return a.id==='as:claude:1';})[0];var self=d.assessments.filter(function(a){return a.method==='self-report';});return !!app&&/^https:/.test(app.url)&&/^https:/.test(app.capabilities_url)&&!!ev&&ev.modality==='compose'&&!!coach&&coach.value===40&&d.competencies.length===25&&(d.assessments.length===1+self.length)&&d['x-future-section'].anything===true&&d.contract.id==='minimum-participation/v1';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no horizontal overflow at 412 with goal/plan lines present",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth"
+    }
+  ]
+}

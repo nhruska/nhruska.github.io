@@ -11,7 +11,10 @@
  * byte-for-byte (asserted by test/agent-manifest.test.js, same law as
  * agent-readme.js <-> music/agent/AGENTS.md).
  *
- * Interchange schema strings ('skill-competency-profile/v1') are literals
+ * `deep_link` is the LIVE URL that reaches a capability (the app has no
+ * #tab routing - location.hash picks the instrument - so links stay honest:
+ * the app itself plus the real ?p= / ?jam= grammars). Interchange schema
+ * strings ('skill-competency-profile/v1', 'musician-profile/v1') are literals
  * here by the dependency-free discipline; test/agent-manifest.test.js pins
  * every occurrence against Competency.SCHEMA so a drift fails the suite.
  *
@@ -29,6 +32,7 @@
       capabilities: [
         {
           id: 'tuner',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Tuner',
           desc: 'Mic autocorrelation pitch detection with reference tones, per fretted-instrument profile. Purely computational - no persisted state.',
           surfaces: ['play/#tune'],
@@ -37,6 +41,7 @@
         },
         {
           id: 'jam',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Jam',
           desc: "Practice a chord progression against the app's own audio-engine backing (strum/tone playback) at a set tempo.",
           surfaces: ['play/#jam'],
@@ -45,6 +50,7 @@
         },
         {
           id: 'compose',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Compose',
           desc: 'Build and save custom chord progressions per key/mode; saved progressions join the practice setlist.',
           surfaces: ['play/#compose'],
@@ -53,6 +59,7 @@
         },
         {
           id: 'repertoire',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Repertoire',
           desc: 'Curate the songbook - saved songs and setlists across the catalog and the backing-track curation queue.',
           surfaces: ['play/#library'],
@@ -61,6 +68,7 @@
         },
         {
           id: 'backing-tracks',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Backing tracks',
           desc: 'Studio view linking YouTube backing tracks to songs; custom scales/tracks for solo practice.',
           surfaces: ['play/#library (Studio)'],
@@ -69,6 +77,7 @@
         },
         {
           id: 'competency-tracking',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Competency tracking',
           desc: 'Per-skill mastery levels that grow from app use, evidence-tracked against the published frameworks (stringed-instrument, ukulele, guitar, music-composition, lyric-writing).',
           surfaces: ['Settings -> Skills'],
@@ -77,6 +86,7 @@
         },
         {
           id: 'backup-restore',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Backup and restore',
           desc: 'Whole-songbook export/import as one portable JSON envelope - a byte-faithful snapshot of every owned key, schema-versioned and migrated on restore.',
           surfaces: ['Settings -> Backup'],
@@ -85,6 +95,7 @@
         },
         {
           id: 'jam-deep-link',
+          deep_link: 'https://nhruska.github.io/music/play/?jam=Am,F,C,G&key=Am&name=Axis%20loop',
           name: 'Jam deep link',
           desc: 'A URL that stands up an ephemeral jam (progression + key + optional YouTube backing) for the user to play, then optionally Save through the existing repertoire/progression forms. Nothing writes storage on load.',
           surfaces: ['play/?jam=...&key=...&yt=...&name=...'],
@@ -92,9 +103,19 @@
           interchange: 'url-params: jam,key,yt,name'
         },
         {
+          id: 'musician-profile',
+          deep_link: 'https://nhruska.github.io/music/play/',
+          name: 'Musician profile',
+          desc: 'The PERSON-owned musician-profile/v1 document (profile.json in the bundle): the competency taxonomy with instrument branches, dated assessments that name their method + modality, evidence with provenance, goals and a coach-stewarded plan. Unassessed is explicit; the app writes its progression as compose-modality EVIDENCE, never as a level. Carries the minimum participation contract inside (read what you understand, preserve what you do not, add what you legitimately know) - AGENTS.md is optional.',
+          surfaces: ['Settings -> Skills'],
+          data_keys: ['music.profile.v1'],
+          interchange: 'musician-profile/v1'
+        },
+        {
           id: 'skills-export-import',
+          deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Skills export/import',
-          desc: 'Per-skill or whole-bundle SKILL.md export (with AGENTS.md, capabilities.json, and the backup envelope bundled at the zip root) and file-picker import - the round-trip surface for handing a skill to another AI tool and back.',
+          desc: 'Per-skill or whole-bundle SKILL.md export (with README.md, AGENTS.md, capabilities.json, profile.json and the backup envelope bundled at the zip root) and file-picker import (SKILL.md, profile.json, or a setup doc, dispatched by schema) - the round-trip surface for handing a musician profile to another AI tool or app and back.',
           surfaces: ['Settings -> Skills'],
           data_keys: ['music.competency.v1'],
           interchange: 'skill-competency-profile/v1'

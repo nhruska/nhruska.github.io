@@ -43,6 +43,10 @@ in scenarios):
   dragReorder {from, to, side?}        - pointer-drag from one element onto the
                                          before/after side of another (S-PROG-REORDER)
   screenshot {name}                    - PNG to test/pw/evidence/<scenario>/<name>.png
+  uploadText {selector, name, text, mimeType?}
+                                       - hand an in-memory file to an <input type=file>
+                                         (fires its real change handler - the import
+                                         picker's dispatch path, not an API shortcut)
 
 Top-level scenario keys (beside "steps"): "firstRun" (opt out of the runner's
 welcomeDone seed - tour scenarios), "persona" + "dismissNotables" (guidance-level
@@ -315,6 +319,11 @@ def run(scenario_path, base_url=None):
                             raise AssertionError(step.get('label', step['js']))
                     elif act == 'screenshot':
                         page.screenshot(path=os.path.join(evdir, step['name'] + '.png'))
+                    elif act == 'uploadText':
+                        page.set_input_files(step['selector'], {
+                            'name': step['name'],
+                            'mimeType': step.get('mimeType', 'application/json'),
+                            'buffer': step['text'].encode('utf-8')})
                     else:
                         raise AssertionError('unknown action %r' % act)
                 except Exception as e:  # collect, snapshot, and stop - later steps depend on earlier

@@ -24,6 +24,8 @@
   'use strict';
 
   var COMPETENCY_SCHEMA = 'skill-competency-profile/v1';
+  var PROFILE_SCHEMA = 'musician-profile/v1';
+  var CONTRACT_ID = 'minimum-participation/v1';
   var BACKUP_APP = 'music';
   var FENCE_TAG = '```'; // deliberately untagged - see header note
 
@@ -37,6 +39,11 @@
     L.push('');
     L.push('## What these files are');
     L.push('');
+    L.push('- **`profile.json`** (this bundle) - the PERSON\'s `' + PROFILE_SCHEMA + '` document: the');
+    L.push('  musician, not the app. It carries its own contract (`' + CONTRACT_ID + '`), so');
+    L.push('  this file is OPTIONAL reading - a participant that never opens AGENTS.md still');
+    L.push('  knows the rules. See "The musician profile" below. This is the preferred');
+    L.push('  hand-back: edit profile.json, return it, the user imports it.');
     L.push('- **`<skill-id>/SKILL.md`** (this bundle) - one open-skills-format file per');
     L.push('  skill. The human-readable table is presentation; the fenced ' + COMPETENCY_SCHEMA);
     L.push('  block under "## Profile data" is the exact interchange doc - read/write THAT,');
@@ -57,6 +64,44 @@
     L.push('    competencies:[{id, name, desc, level, target, evidence_count, last_evidence}],');
     L.push('    preferences?:[{id, statement, evidence_count, last_evidence}] }');
     L.push('  ' + FENCE_TAG);
+    L.push('');
+    L.push('## The musician profile (profile.json)');
+    L.push('');
+    L.push('Three rules, carried inside the document as `contract.rules`:');
+    L.push('');
+    L.push('1. **Read what you understand.** Sections: `competencies` (the taxonomy, ids');
+    L.push('   `<framework>/<competency>`, each with a `branch` path such as');
+    L.push('   `["instrument","strings","ukulele"]`), `assessments`, `evidence`, `goals`,');
+    L.push('   `plan`, `preferences`, `participants`, `provenance`, `extensions`.');
+    L.push('2. **Preserve what you do not understand** - byte-identical, including top-level');
+    L.push('   keys and competency ids you have never seen. Never drop, never rewrite.');
+    L.push('3. **Add what you legitimately know** - as an `evidence` record, or as an');
+    L.push('   `assessment` that names its `method` (self-report | observed | coach |');
+    L.push('   inferred) and its `modality` (perform | compose | write | listen | tune |');
+    L.push('   theory | unspecified). Never a level you did not observe.');
+    L.push('');
+    L.push('Competencies are SEPARATE from assessments. A competency with no assessment is');
+    L.push('**unassessed** - never beginner, never 0. The app never emits a level for');
+    L.push('absence, and neither may you.');
+    L.push('');
+    L.push('**Do not overclaim modality.** The app\'s own records are `kind: "app-progression"`');
+    L.push('evidence with `modality: "compose"` - it watched the musician assemble songs and');
+    L.push('save progressions; it has never heard them play. Those counters (the v1 doc');
+    L.push('inside `data`) are evidence of doing, not a proficiency number. Do not convert');
+    L.push('them into an assessment without the human confirming what they mean.');
+    L.push('');
+    L.push('**You are the steward.** Read `goals` first. You own `plan` (later `updated`');
+    L.push('wins whole) and the assessments you author. Propose an assessment only with');
+    L.push('evidence you can cite (`evidence` ids, or the conversation - then add an');
+    L.push('evidence record for it). When meaning is ambiguous, or the change is important');
+    L.push('(a level going down, a new goal, a branch change), ASK THE HUMAN in the');
+    L.push('conversation before writing it. Every record you add carries your own `id`');
+    L.push('(`as:<tool>:...`, `ev:<tool>:...`), `source: "agent:<your-tool-name>"` and `at`.');
+    L.push('Merge on import is a UNION by id - the same id with a later `at`/`updated`');
+    L.push('replaces its older self; another participant\'s record is never rewritten.');
+    L.push('Append your participant entry (`id`, `name`, `understands`, `last_seen`) and a');
+    L.push('provenance entry. Unknown top-level keys and `extensions["x-<you>"]` are yours to');
+    L.push('add and are preserved by every participant.');
     L.push('');
     L.push('## What you MAY do');
     L.push('');
@@ -85,6 +130,9 @@
     L.push('  the track; the app never invents one either.');
     L.push('- Never pre-respell chord names - chord tokens stay canonical-sharp; display');
     L.push('  respelling is the app\'s job.');
+    L.push('- Never emit an assessment for a competency you did not observe, and never turn');
+    L.push('  the app\'s compose-modality progression evidence into a level claim on your own.');
+    L.push('- Never delete or rewrite another participant\'s records or keys in profile.json.');
     L.push('');
     L.push('## Rules for a proposed profile doc');
     L.push('');
@@ -98,9 +146,11 @@
     L.push('');
     L.push('## Hand-back procedure');
     L.push('');
-    L.push('Save your proposed doc as `<skill-id>/SKILL.md` (render it in the same shape as');
-    L.push('the file you read - frontmatter + table + the fenced JSON block) and tell the');
-    L.push('user: import it from Settings -> Skills in the app, on any device, offline.');
+    L.push('Preferred: hand back `profile.json` (the same file, with your records added -');
+    L.push('nothing removed). Alternative for a single skill: save your proposed doc as');
+    L.push('`<skill-id>/SKILL.md` (render it in the same shape as the file you read -');
+    L.push('frontmatter + table + the fenced JSON block). Either way, tell the user: import');
+    L.push('it from Settings -> Skills in the app, on any device, offline.');
     L.push('');
     L.push('The SAME hand-back covers all three update cases - there is no separate');
     L.push('procedure for any of them:');
@@ -145,8 +195,11 @@
     L.push('');
     L.push('## What is here');
     L.push('');
-    L.push('- `AGENTS.md` - how to read these files and what to hand back');
-    L.push('- `capabilities.json` - what the app can do, as data');
+    L.push('- `profile.json` - the musician\'s own profile (`' + PROFILE_SCHEMA + '`): competencies,');
+    L.push('  assessments, evidence, goals, plan. It carries its own three-rule contract, so');
+    L.push('  it is enough on its own. Preferred hand-back.');
+    L.push('- `AGENTS.md` - how to read these files and what to hand back (optional detail)');
+    L.push('- `capabilities.json` - what the app can do, as data, with a deep link each');
     L.push('- `<skill-id>/SKILL.md` - one file per skill. The fenced ' + COMPETENCY_SCHEMA);
     L.push('  block under "## Profile data" is the interchange doc - read and write THAT,');
     L.push('  never the human-readable table above it.');
@@ -156,9 +209,10 @@
     L.push('');
     L.push('## What to hand back');
     L.push('');
-    L.push('An updated `<skill-id>/SKILL.md` in the same shape you received. The user imports');
-    L.push('it from the app\'s Settings, offline, on any device. See "Hand-back procedure" in');
-    L.push('`AGENTS.md` for the three cases this covers.');
+    L.push('`profile.json` with your records added and nothing removed - or, for a single');
+    L.push('skill, an updated `<skill-id>/SKILL.md` in the same shape you received. The user');
+    L.push('imports it from the app\'s Settings, offline, on any device. See "Hand-back');
+    L.push('procedure" in `AGENTS.md` for the three cases this covers.');
     L.push('');
     L.push('## Privacy');
     L.push('');
@@ -169,6 +223,8 @@
 
   var API = {
     COMPETENCY_SCHEMA: COMPETENCY_SCHEMA,
+    PROFILE_SCHEMA: PROFILE_SCHEMA,
+    CONTRACT_ID: CONTRACT_ID,
     BACKUP_APP: BACKUP_APP,
     text: text,
     readme: readme

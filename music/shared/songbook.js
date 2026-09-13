@@ -6708,6 +6708,35 @@
         showToast(bits.join(' - '));
         openSetupEntry(first);
       }
+      // M-MUSICIAN-PROFILE: the same picker also accepts a profile.json
+      // (`musician-profile/v1`, the person-owned document the bundle now
+      // ships). Same schema-peek dispatch as the setup doc - never by file
+      // name. Import MERGES under the participation contract (known sections
+      // by id, unknown keys preserved), then absorbs the app's OWN progression
+      // counters from the profile with MAX semantics (another device's copy of
+      // the same counters, never summed as independent evidence).
+      function looksLikeProfileDoc(text) {
+        try {
+          var obj = JSON.parse(text);
+          return !!(obj && typeof obj === 'object' && global.MusicianProfile && obj.schema === global.MusicianProfile.SCHEMA);
+        } catch (e) { return false; }
+      }
+      function applyProfileFile(text) {
+        var MP = global.MusicianProfile, res;
+        try { res = MP.importJson(text); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+        if (!res || !res.ok) {
+          showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true);
+          return;
+        }
+        try {
+          MP.progressionDocs(res.profile).forEach(function (d) { C.importProfile(d, undefined, { counters: 'max' }); });
+        } catch (e) { /* counters are a courtesy - the profile itself already landed */ }
+        var a = res.added || {}, parts = [];
+        if (a.assessments) parts.push(a.assessments + ' assessment' + (a.assessments === 1 ? '' : 's'));
+        if (a.goals) parts.push(a.goals + ' goal' + (a.goals === 1 ? '' : 's'));
+        if (a.evidence) parts.push(a.evidence + ' evidence record' + (a.evidence === 1 ? '' : 's'));
+        showToast('Imported your musician profile' + (parts.length ? ' - ' + parts.join(', ') : ''));
+      }
       fileInput.onchange = function () {
         var f = fileInput.files && fileInput.files[0];
         if (!f) return;
@@ -6715,6 +6744,12 @@
         rdr.onload = function () {
           var text = String(rdr.result);
           var isMd = /\.md$/i.test(f.name || '');
+          if (!isMd && looksLikeProfileDoc(text)) {
+            applyProfileFile(text);
+            fileInput.value = '';
+            renderSkillsPanel();
+            return;
+          }
           if (!isMd && looksLikeSetupDoc(text)) {
             applySetupDocFile(text);
             fileInput.value = '';
@@ -6802,6 +6837,23 @@
         if (global.Capabilities && typeof global.Capabilities.json === 'function') {
           files.push({ path: 'capabilities.json', text: global.Capabilities.json() });
         }
+        // profile.json (M-MUSICIAN-PROFILE): the PERSON-owned musician-profile/v1
+        // document - the taxonomy, the app's progression as EVIDENCE (modality
+        // compose, never a level claim), the one self-report the app holds,
+        // goals + plan a coach stewards, and every record other participants
+        // wrote (preserved verbatim). Self-describing: it carries the
+        // participation contract inside, so AGENTS.md stays optional. Guarded
+        // like the rest (musician-profile.js not wired on an older build).
+        if (global.MusicianProfile && typeof global.MusicianProfile.exportJson === 'function') {
+          try {
+            var pj = global.MusicianProfile.exportJson(undefined, {
+              frameworks: C.FRAMEWORKS, progression: C.load(),
+              selfReport: (global.GuidanceLevel && typeof global.GuidanceLevel.get === 'function') ? global.GuidanceLevel.get() : null,
+              version: (global.BuildStamp && global.BuildStamp.VERSION) || null
+            });
+            if (pj) files.push({ path: 'profile.json', text: pj });
+          } catch (e) { /* storage blocked - ship without the profile */ }
+        }
         // Round 18 (operator friction: "I had to export my skills in a
         // separate zip after I started the coaching conversation... a single
         // export I can start a new conversation with"): the FULL backup
@@ -6828,8 +6880,31 @@
       function renderSkillsPanel() {
         pane.textContent = '';
         var hint = document.createElement('p'); hint.className = 'setHint';
-        hint.textContent = 'Your musician profile - what you can play, so Claude or ChatGPT can coach you at your level. Stays on this device - export it to carry it across.';
+        hint.textContent = 'Your musician profile - what the app has seen you do, so Claude or ChatGPT can coach you at your level. Stays on this device - export it to carry it across.';
         pane.appendChild(hint);
+
+        // M-MUSICIAN-PROFILE: goals + the coach-stewarded plan, read from the
+        // stored profile (a coach writes them via profile.json import; the app
+        // preserves and shows them). Quiet read-only lines - the coach owns
+        // the plan, the app never edits it. Absent when nothing is there.
+        var MPm = global.MusicianProfile;
+        var mprof = (MPm && typeof MPm.loadStored === 'function') ? MPm.loadStored() : null;
+        var goals = (mprof && Array.isArray(mprof.goals)) ? mprof.goals.filter(function (g) { return g && g.statement && g.status !== 'parked'; }) : [];
+        var planItems = (mprof && mprof.plan && Array.isArray(mprof.plan.items)) ? mprof.plan.items.filter(function (i) { return i && i.statement && i.status !== 'done'; }) : [];
+        if (goals.length || planItems.length) {
+          var gp = document.createElement('div'); gp.className = 'skillGoals'; gp.id = 'skillsGoals';
+          goals.forEach(function (g) {
+            var l = document.createElement('p'); l.className = 'skillPref';
+            l.textContent = 'Goal: ' + g.statement + (g.status === 'met' ? ' - met' : '');
+            gp.appendChild(l);
+          });
+          planItems.forEach(function (i) {
+            var l = document.createElement('p'); l.className = 'skillPref';
+            l.textContent = 'Plan: ' + i.statement + (i.status === 'doing' ? ' - in progress' : '');
+            gp.appendChild(l);
+          });
+          pane.appendChild(gp);
+        }
 
         var has = C.hasData();
         // First-start lead: no data yet -> import affordance first (never a modal).
@@ -6872,7 +6947,11 @@
             bar.appendChild(fill);
             var cm = document.createElement('span'); cm.className = 'compMeta';
             var when = fmtDate(c.last_evidence);
-            cm.textContent = (c.level || 0) + ' / ' + c.target + (c.evidence_count ? ' · ' + c.evidence_count + '×' : '') + (when ? ' · ' + when : '');
+            // Unassessed is EXPLICIT, not "0 / 80": a competency the app has
+            // never observed says so, instead of reading as a beginner score.
+            cm.textContent = c.evidence_count
+              ? (c.level || 0) + ' / ' + c.target + ' · ' + c.evidence_count + '×' + (when ? ' · ' + when : '')
+              : 'not yet observed';
             cr.appendChild(cn); cr.appendChild(bar); cr.appendChild(cm);
             detail.appendChild(cr);
           });
