@@ -1,0 +1,124 @@
+{
+  "name": "musician-profile-baseline",
+  "proves": "M-MUSICIAN-PROFILE-VNEXT acceptance fixture - the REAL baseline case from the coaching experiment (28 years of bass, guitar since 9, piano, kalimba, new to ukulele, advanced self-reported improvisational musicianship). Settings > Musician profile answers 'what kind of musician am I' from the profile: BEFORE the coach the headline reads 'Musicianship: not yet assessed' (never beginner, never 0) with the ukulele counters riding as observations; the coach's hand-back (the shared fixture, uploaded through the REAL file picker) lands and the headline reads advanced musicianship - 11 of 11 assessed - beside developing/unassessed ukulele mechanics, instruments the app never shipped (bass, piano, kalimba) render from the profile, mandolin stays 'not yet assessed', the focus + plan render with app-origin deep links as tappable rows, the evidence disclosure shows 'attached, not analyzed' and the superseded self-report as history, and the next export carries everything back out",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "seed the device: nine compose observations on ukulele repertoire + the beginner tap the musician made in the one-time ask BEFORE the coaching session (its stamp is backdated to the morning - a claim is dated by when it was made)",
+      "js": "(function(){var C=window.Competency;if(!C||!window.GuidanceLevel)return false;for(var i=0;i<9;i++)C.recordEvidence('ukulele','uke-repertoire',null);GuidanceLevel.set('beginner');if(GuidanceLevel.AT_KEY)localStorage.setItem(GuidanceLevel.AT_KEY,'2026-09-13T10:00:00.000Z');return C.hasData()===true&&GuidanceLevel.get()==='beginner';})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#settingsBody .accSec"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "the section is named for what it is - Musician profile - and keeps its ids",
+      "js": "document.getElementById('accBtnSkills').textContent.trim()==='Musician profile'"
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#accBodySkills .skillRow"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "BEFORE the coach: the headline says 'not yet assessed' for musicianship and for the ukulele (its counter rides as an observation, never a score); the ONE beginner line is the branch-level tap the musician made",
+      "js": "(function(){var h=document.getElementById('profileHeadline');if(!h)return false;var L=[].slice.call(h.querySelectorAll('.profileLine')).map(function(e){return e.textContent.trim();});return L[0]==='Musicianship: not yet assessed'&&L.indexOf('Ukulele: not yet assessed - 1 observed in the app')>=0&&L.indexOf('Stringed instrument: beginner')>=0&&!L.some(function(t){return /\\b0\\b/.test(t);});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the Musicianship row exists, reads not yet assessed, and has NO bars - there is nothing to score",
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"musicianship\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='not yet assessed'&&m.length===11&&m.every(function(t){return t==='not yet assessed';})&&r.querySelectorAll('.compBar').length===0&&r.querySelectorAll('.compArea').length===5;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mpb-01-before-coach"
+    },
+    {
+      "action": "uploadText",
+      "selector": "#skillsImportFile",
+      "name": "profile.json",
+      "textFile": "test/fixtures/musician-profile-baseline-handback.json"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "waitFor",
+      "selector": "#skillsFocus"
+    },
+    {
+      "action": "evalAssert",
+      "label": "AFTER the coach: advanced transferable musicianship coexists with a new-to-ukulele claim; bass/guitar advanced; mandolin named but unassessed - the musician is NEVER a beginner because ukulele telemetry is sparse",
+      "js": "(function(){var L=[].slice.call(document.querySelectorAll('#profileHeadline .profileLine')).map(function(e){return e.textContent.trim();});return L[0]==='Musicianship: advanced - 11 of 11 assessed'&&L.indexOf('Bass: advanced')>=0&&L.indexOf('Guitar: advanced')>=0&&L.indexOf('Stringed instrument: advanced')>=0&&L[1]==='Stringed instrument: advanced'&&L.indexOf('Mandolin: not yet assessed')>=0&&L.indexOf('Ukulele: beginner - 1 observed in the app')>=0&&L.filter(function(t){return /beginner/.test(t);}).length===1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "inside Musicianship every row states value, method (from a guided interview) and confidence - self-report is never promoted to observed, and nothing reads 0",
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"musicianship\"]');r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='11 of 11 assessed'&&m.length===11&&m.every(function(t){return /^advanced - from a guided interview, (high|medium) confidence/.test(t);});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the ukulele MECHANICS stay 'not yet observed' beside the one observed counter - the branch-level beginner claim never trickles down into the rows",
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"ukulele\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='beginner'&&m.filter(function(t){return t==='not yet observed';}).length===4&&m.some(function(t){return /9\u00d7/.test(t);})&&!m.some(function(t){return /^0 \\//.test(t);})&&r.querySelectorAll('.compBar').length===1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "an instrument the app never shipped renders FROM the profile: Bass with its two coach-named competencies, advanced",
+      "js": "(function(){var r=document.querySelector('#accBodySkills .skillRow[data-skill=\"bass\"]');if(!r)return false;r.querySelector('.skillHead').click();var m=[].slice.call(r.querySelectorAll('.compMeta')).map(function(e){return e.textContent.trim();});return r.querySelector('.skillMeta').textContent.trim()==='2 of 2 assessed'&&m.length===2&&m.every(function(t){return /^advanced - from a guided interview/.test(t);})&&r.querySelectorAll('.skillExport').length===0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "goal, focus and the plan render: app-origin deep links become tappable action rows (44px floor), the learning edge stays a quiet line, and no foreign link is ever rendered",
+      "js": "(function(){var g=document.getElementById('skillsGoals');if(!g)return false;var t=g.textContent;var links=[].slice.call(g.querySelectorAll('a.setAction.planLink'));return t.indexOf('Goal: Bring the improvising')>=0&&document.getElementById('skillsFocus').textContent.indexOf('Focus: Ukulele mechanics')===0&&links.length===2&&links.every(function(a){return a.getAttribute('href').indexOf('https://nhruska.github.io/music/play/')===0&&a.offsetHeight>=44;})&&t.indexOf('Next edge: Chunking')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the evidence disclosure is closed by default and, opened, shows the interview record, the attached-NOT-analyzed clip, and the superseded beginner tap as history",
+      "js": "(function(){var d=document.getElementById('profileHistory');if(!d||d.open)return false;d.open=true;var t=d.textContent;return /interview/.test(t)&&/attached, not analyzed/.test(t)&&/stringed-instrument: beginner \\(self-report, superseded\\)/.test(t);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no horizontal overflow at 412 with every group rendered",
+      "js": "document.documentElement.scrollWidth <= window.innerWidth"
+    },
+    {
+      "action": "screenshot",
+      "name": "mpb-02-after-coach"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the NEXT export carries the coach's 21 assessments + the app's self-report, every coach competency, the interview + artifact evidence, the plan with its focus - and the app's own record stays compose-modality evidence",
+      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var d=JSON.parse(MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:GuidanceLevel.get(),version:BuildStamp.VERSION}));var app=d.evidence.filter(function(e){return e.source==='app:music';});return d.assessments.length===22&&d.competencies.length===MP.taxonomySize(C.FRAMEWORKS)+5&&d.evidence.length===3&&app.length===1&&app[0].modality==='compose'&&d.plan.focus==='Ukulele mechanics under the musicianship you already have'&&d.extensions['x-music-coach'].interviewVersion===1;})()"
+    }
+  ]
+}

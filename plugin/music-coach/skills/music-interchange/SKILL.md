@@ -14,12 +14,13 @@ code, a network call, or a server. Full contract: `music/agent/AGENTS.md`
 
 | File | Shape | Read it for |
 |---|---|---|
-| `profile.json` (the bundle) | `musician-profile/v1` - the PERSON's document: `competencies` (taxonomy, ids `<framework>/<competency>`, `branch` paths), `assessments` (dated claims naming `method` + `modality`), `evidence` (sourced, with modality), `goals`, `plan` (coach-stewarded), `preferences`, `participants`, `provenance`, `extensions` + unknown keys. Carries its own `contract` (`minimum-participation/v1`) | The musician's state across every app that touched the document. **Read `goals` first.** A competency with NO assessment is UNASSESSED - never beginner, never 0. The app's own `kind: "app-progression"` evidence is `modality: "compose"` (it watched composing, never playing) - evidence of doing, not a level |
+| `profile.json` (the bundle) | `musician-profile/v1` - the PERSON's document: `competencies` (taxonomy, ids `<namespace>/<competency>`, `branch` paths - global `musicianship/*` (ear, harmony, improvisation, rhythm, transfer) modelled APART from instrument mechanics), `assessments` (dated claims naming `method` + `modality` + `confidence`), `evidence` (sourced, with `kind` + modality), `goals`, `plan` (coach-stewarded: `focus` + items with `kind` focus/activity/edge and an optional app `deep_link`), `preferences`, `participants`, `provenance`, `extensions` + unknown keys. Carries its own `contract` (`minimum-participation/v1`) | The musician's state across every app that touched the document. **Read ALL of it first, then `goals` and `plan`.** A competency with NO assessment is UNASSESSED - never beginner, never 0; sparse evidence means sparse evidence. The app's own `kind: "app-progression"` evidence is `modality: "compose"` (it watched composing, never playing) - evidence of doing, not a level |
 | `music-songbook-<date>.json` (backup envelope) | `{ app:"music", schema, exportedAt, data:{key:rawString} }` | The FULL profile - repertoire, setlists, progressions, preferences, skill progress. `data` values are raw strings - `JSON.parse` each key you need. Owned key prefixes: `songbook.` `roadcase-` `bt.` `music.` `tri.` |
 | `<skill-id>/SKILL.md` (skills bundle) | Open-skills-format file; the fenced ```` ```json ```` block under "## Profile data" is the exact `skill-competency-profile/v1` doc - the table above it is presentation only | One skill's competency + preferences |
-| `skill-competency-profile/v1` (embedded doc) | `{ schema, skill, discipline:"music", updated, provenance:[{source,at}], competencies:[{id,name,desc,level,target,evidence_count,last_evidence}], preferences?:[{id,statement,evidence_count,last_evidence}] }` | Levels vs targets (gaps), evidence recency (staleness), taste statements |
+| `skill-competency-profile/v1` (embedded doc) | `{ schema, skill, discipline:"music", updated, provenance:[{source,at}], competencies:[{id,name,desc,level:0-100\|null,target,evidence_count,last_evidence}], preferences?:[{id,statement,evidence_count,last_evidence}] }` | The app's own counters: evidence recency (staleness), taste statements. `level: null` (or a legacy `0` with `evidence_count: 0`) = UNASSESSED - never a gap of `target - 0`, never beginner |
 
-Evaluate gaps as `target - level` per competency. Staleness is computed
+Evaluate a gap as `target - level` ONLY for a competency with a real `level`
+(an observed row); an unassessed row has no gap, it has no data. Staleness is computed
 against the envelope's own `exportedAt` (the only clock the export carries):
 `last_evidence` null = never evidenced; within 7 days of `exportedAt` = fresh;
 within 30 = aging; older = stale. Repertoire size per instrument lives at
@@ -34,25 +35,63 @@ is the byte-faithful whole-app snapshot).
 Three rules, carried inside the document: **read what you understand, preserve
 what you don't (byte-identical, keys you have never seen included), add what
 you legitimately know** - as evidence, or an assessment naming its `method`
-(self-report | observed | coach | inferred) and `modality` (perform | compose |
-write | listen | tune | theory | unspecified). Never a level you did not observe.
+(self-report | interview | observed | coach | inferred), `modality` (perform |
+compose | write | listen | tune | theory | unspecified) and `confidence` (high |
+medium | low - the smallest useful qualification; a conversational
+self-assessment is `value: "advanced", confidence: "medium"`, never an 87/100).
+Never a level you did not observe.
 
-**You are the steward** of `plan` and of the assessments you author, with
-`goals` in mind. Propose an assessment only with evidence you can cite; when
-meaning is ambiguous or the change is important (a level going down, a new goal,
-a branch change) ask the human in the conversation BEFORE writing it. Every
-record you add carries your own `id` (`as:<tool>:...`, `ev:<tool>:...`),
-`source: "agent:<your-tool-name>"` and `at`; append a `participants` entry and a
-`provenance` entry. Import is a union by id - a later `at`/`updated` replaces
-its older self, another participant's record is never rewritten; on a tie the
-newer document wins, so set the top-level `updated` when you finish. The app's
-own `app-progression` records are read-only to you - the app never re-ingests
-its counters from a profile, so editing those numbers changes nothing; write an
-assessment instead. Never turn the app's compose-modality counters into a
-proficiency number on your own.
+**Competency, assessment, evidence are three things.** A competency says what
+can be developed (impersonal, never a level). An assessment says what is
+currently known about THIS musician for one competency. Evidence says why -
+`kind` (app-progression | app-observed | interview | self-report |
+coach-observed | artifact | artifact-analysis | imported, open) + modality.
+Observation is not proficiency. **"Audio attached" is not "audio analyzed"**: a
+file you did not analyze is `kind: "artifact"`, `data.analyzed: false`, and
+grounds nothing about performing.
+
+**Global musicianship is not instrument proficiency.** A person can be an
+advanced musician, an experienced bassist, a new ukulele player and unassessed on
+mandolin at once - never collapse those. `musicianship/*` is the transferable
+floor; a bare namespace as an assessment subject (`"guitar"`) is a branch-level
+claim. The vocabulary is OPEN: add any competency you legitimately discover
+(`bass/walking-lines`, `flamenco/rasgueado`) with `id`, `name`, `desc`,
+`branch`, `source` - every participant preserves it.
+
+**You are the coach and the steward** of `plan` and of the assessments you
+author, with `goals` in mind. On startup read the entire profile, separate
+musicianship from instrument, read goals + plan + `capabilities.json`, and never
+infer beginner from missing evidence. When baseline confidence is poor, run the
+adaptive guided interview (one discriminating question at a time, from existing
+evidence, narrative allowed, self-report kept distinct from observed, stop at
+diminishing value). Coach music-making first (`hear -> choose -> play -> notice
+-> adjust`), bring theory in only when it improves what the musician can hear,
+predict, perform, compose or understand, and manage the profile continuously -
+add evidence, supersede an assessment with a NEW dated record (history stays),
+propose competencies, name learning edges, update the plan - explaining each
+change in plain language. When meaning is ambiguous or the change is important
+(a level going down, a new goal, a branch change) ask the human BEFORE writing
+it. Every record you add carries your own `id` (`as:<tool>:...`,
+`ev:<tool>:...`, `pl:<tool>:...`), `source: "agent:<your-tool-name>"` and `at`;
+append a `participants` entry and a `provenance` entry. Import is a union by id
+- a later `at`/`updated` replaces its older self, another participant's record
+is never rewritten; on a tie the newer document wins, so set the top-level
+`updated` when you finish. The app's own `app-progression` records are
+read-only to you - editing those numbers changes nothing; write an assessment
+instead. Never turn compose-modality counters into a proficiency number on your
+own.
+
+**The learning plan** is distinct from assessment: `plan: { updated, steward,
+focus?, items[{ id, kind: focus|activity|edge, statement, competencies[],
+goal?, status: todo|doing|done, deep_link?, updated }] }`. Say "this is the
+next useful thing to practice"; when `capabilities.json` has a matching
+capability, put its configured `deep_link` on the item (the app renders only
+links into itself as tappable rows). `capabilities.json` describes the app, not
+the person.
 
 **Preferred hand-back:** `profile.json` with your records added and nothing
-removed. The user imports it from Settings -> Skills (same picker as SKILL.md).
+removed. The user imports it from Settings -> Musician profile (same picker as
+SKILL.md).
 
 ## Proposing a per-skill update (the legacy write seam, still accepted)
 
@@ -66,7 +105,8 @@ author a `skill-competency-profile/v1` doc:
    `last_evidence` to the ISO 8601 time of the evidence - the app writes
    ONLY timestamps there (competency.js `recordEvidence`), never prose.
    Human-readable reasons go in `preferences[]` statements or your
-   accompanying report, not in `last_evidence`.
+   accompanying report, not in `last_evidence`. Leave a never-observed row at
+   `level: null` - never write a 0 for absence.
 3. Unknown competency ids may ride along (additive-tolerant); the app grades
    only ids its shipped frameworks know.
 4. `preferences[]` is the additive slot for taste statements you learn.
@@ -75,7 +115,7 @@ author a `skill-competency-profile/v1` doc:
 
 Save the proposed doc as `<skill-id>/SKILL.md` in the same shape as the file
 you read (frontmatter + table + the fenced JSON block); tell the user to
-import it from Settings -> Skills in the app, on any device, offline.
+import it from Settings -> Musician profile in the app, on any device, offline.
 
 ## Emitting a jam deep link
 
@@ -98,17 +138,24 @@ stale cached build degrades to opening normally, never an error.
 Never: fabricate or hand back a modified backup envelope for restore; rewrite
 or delete an existing `provenance` entry (append only); bump a competency
 `level` without an evidence delta; emit an assessment for a competency you did
-not observe; delete or rewrite another participant's records or keys in
-profile.json; invent a YouTube id/key for a suggested track; pre-respell chord
-tokens (display respelling is the app's job); or publish/upload/commit a user's
-exported files anywhere - they are personal data, keep them on-device/local.
+not observe or were not told about; promote a self-report to `observed`; claim a
+modality you did not have (attached is not analyzed); characterize a musician as
+a beginner because evidence is sparse; delete or rewrite another participant's
+records or keys in profile.json; invent a YouTube id/key for a suggested track;
+pre-respell chord tokens (display respelling is the app's job); or
+publish/upload/commit a user's exported files anywhere - they are personal
+data, keep them on-device/local.
 
 ## Self-check before acting
 
 1. Reading the fenced JSON block, or guessing from the presentation table?
-   For profile.json: did you read `goals` first, and treat absence as unassessed?
+   For profile.json: did you read ALL of it, then `goals` + `plan`, keep
+   musicianship apart from instrument, and treat absence as unassessed?
 2. Does the proposed doc append provenance and evidence, never rewrite either?
-   Does every assessment you added name its method AND modality, with evidence cited?
+   Does every assessment you added name its method, modality AND confidence,
+   with evidence cited - and is nothing self-reported labelled observed?
+2b. Was the baseline confident enough, or did you run the guided interview?
+   Did you explain every profile change in plain language?
 3. Does the jam link use canonical-sharp tokens and a keyless `yt` value?
 4. Is there a stated source for every level change and every suggested key?
 

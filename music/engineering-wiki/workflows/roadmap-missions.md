@@ -45,7 +45,9 @@ S-TONES (spelled chord tones), S-ROMAN + S-KEYPOLICY (roman-style setting + tie-
 | li-up/dn 40x32 | pre-existing sub-floor reorder buttons (documented, out of prior scope) |
 | HSR Lens | full hammer/slide/rotate overlay ([instrument-profiles](../systems/instrument-profiles.md)) |
 | Phase 5 | song-form coaching |
-| M-MUSICIAN-PROFILE consume side | The adaptive-depth plan ([docs/plans/competency-adaptive-depth-20260721.md](../../../docs/plans/competency-adaptive-depth-20260721.md)) should read the profile's `assessments` (method + modality aware), not the raw counters - see [systems/musician-profile.md](../systems/musician-profile.md) "Future direction" |
+| M-MUSICIAN-PROFILE consume side | The adaptive-depth plan ([docs/plans/competency-adaptive-depth-20260721.md](../../../docs/plans/competency-adaptive-depth-20260721.md)) should read the profile's `assessments` (method + modality + confidence aware), not the raw counters - see [systems/musician-profile.md](../systems/musician-profile.md) "Future direction" |
+| M-MUSICIAN-PROFILE in-app interview | The guided baseline interview lives in the coach conversation today; an in-app form of it (one question at a time, writing `method: interview` assessments with confidence) is possible once the review surface below exists |
+| Lifelong learning profile (beyond music) | The same document shape composing across roles a person defines (engineer, leader, parent, researcher) as sibling branches, a user-controlled canonical store, apps on working slices - documented in [systems/musician-profile.md](../systems/musician-profile.md) "Future direction", deliberately not built |
 | M-MUSICIAN-PROFILE review surface | In-app queue where a coach's proposed assessment waits for the human's confirmation (today the human-in-the-loop step lives in the coach conversation) |
 | Canonical profile store | A person-owned store (own repo / synced folder / service) holding `profile.json` as SSOT with apps as participants - possible, deliberately not built; music proves the person-owned lifelong learner model first |
 

@@ -49,8 +49,11 @@
     lines.push('');
     lines.push('| Competency | Level | Target | Evidence | Last evidence |');
     lines.push('|---|---|---|---|---|');
+    // A never-observed row reads "unassessed" - the table is presentation, and
+    // "Level 0" is exactly the beginner misreading the profile model forbids.
     comps.forEach(function (c) {
-      lines.push('| ' + mdCell(c.name || c.id) + ' | ' + num(c.level) + ' | ' + num(c.target)
+      var unassessed = (c.level === null || c.level === undefined) || (!(c.level > 0) && !(c.evidence_count > 0));
+      lines.push('| ' + mdCell(c.name || c.id) + ' | ' + (unassessed ? 'unassessed' : num(c.level)) + ' | ' + num(c.target)
         + ' | ' + num(c.evidence_count) + ' | ' + mdCell(c.last_evidence || '-') + ' |');
     });
     if (Array.isArray(doc.preferences) && doc.preferences.length) {

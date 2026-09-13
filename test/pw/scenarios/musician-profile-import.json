@@ -45,7 +45,7 @@
     },
     {
       "action": "tap",
-      "selector": "#accBodySkills .skillRow:nth-child(2) .skillHead"
+      "selector": "#accBodySkills .skillRow[data-skill=\"ukulele\"] .skillHead"
     },
     {
       "action": "wait",
@@ -86,8 +86,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "the goal and the coach's plan item render as quiet read-only lines in the Skills pane",
-      "js": "(function(){var g=document.getElementById('skillsGoals');if(!g)return false;var t=g.textContent;return t.indexOf('Goal: Play Riptide')>=0&&t.indexOf('Plan: Am-G-C-F loop')>=0;})()"
+      "label": "the goal and the coach's plan item render as quiet read-only lines in the Musician profile pane (a plan item reads 'Next:')",
+      "js": "(function(){var g=document.getElementById('skillsGoals');if(!g)return false;var t=g.textContent;return t.indexOf('Goal: Play Riptide')>=0&&t.indexOf('Next: Am-G-C-F loop')>=0;})()"
     },
     {
       "action": "evalAssert",
@@ -101,7 +101,7 @@
     {
       "action": "evalAssert",
       "label": "the next export (what downloadBundle writes as profile.json) carries the coach's records untouched, the app as a participant with deep links, its compose-modality evidence, and NO level for the 24 taxonomy entries nothing assessed (every framework competency present exactly once, exactly one coach-assessed plus the self-report if answered)",
-      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var j=MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:(window.GuidanceLevel&&GuidanceLevel.get())||null,version:(window.BuildStamp&&BuildStamp.VERSION)||null});var d=JSON.parse(j);var app=d.participants.filter(function(p){return p.id==='app:music';})[0];var ev=d.evidence.filter(function(e){return e.kind==='app-progression'&&e.source==='app:music'&&e.data&&e.data.skill==='music-composition';})[0];var coach=d.assessments.filter(function(a){return a.id==='as:claude:1';})[0];var self=d.assessments.filter(function(a){return a.method==='self-report';});return !!app&&/^https:/.test(app.url)&&/^https:/.test(app.capabilities_url)&&!!ev&&ev.modality==='compose'&&!!coach&&coach.value===40&&d.competencies.length===C.FRAMEWORKS.reduce(function(n,fw){return n+fw.competencies.length;},0)&&(d.assessments.length===1+self.length)&&d['x-future-section'].anything===true&&d.contract.id==='minimum-participation/v1';})()"
+      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var j=MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:(window.GuidanceLevel&&GuidanceLevel.get())||null,version:(window.BuildStamp&&BuildStamp.VERSION)||null});var d=JSON.parse(j);var app=d.participants.filter(function(p){return p.id==='app:music';})[0];var ev=d.evidence.filter(function(e){return e.kind==='app-progression'&&e.source==='app:music'&&e.data&&e.data.skill==='music-composition';})[0];var coach=d.assessments.filter(function(a){return a.id==='as:claude:1';})[0];var self=d.assessments.filter(function(a){return a.method==='self-report';});return !!app&&/^https:/.test(app.url)&&/^https:/.test(app.capabilities_url)&&!!ev&&ev.modality==='compose'&&!!coach&&coach.value===40&&d.competencies.length===MP.taxonomySize(C.FRAMEWORKS)&&(d.assessments.length===1+self.length)&&d['x-future-section'].anything===true&&d.contract.id==='minimum-participation/v1';})()"
     },
     {
       "action": "uploadText",

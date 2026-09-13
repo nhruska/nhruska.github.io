@@ -33,7 +33,7 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
-var TAXONOMY_SIZE = C.FRAMEWORKS.reduce(function (n, fw) { return n + fw.competencies.length; }, 0);
+var TAXONOMY_SIZE = MP.taxonomySize(C.FRAMEWORKS); // frameworks + the profile-native floor (musicianship + transferable strings)
 var T0 = '2026-09-13T10:00:00.000Z', T1 = '2026-09-13T11:00:00.000Z', T2 = '2026-09-13T12:00:00.000Z';
 
 /* ---------- the document ---------- */
@@ -323,7 +323,9 @@ test('importJson rejects the wrong schema, malformed JSON, non-objects and misty
   assert.strictEqual(MP.loadStored(s), null, 'nothing written on rejection');
 });
 test('vocabularies: methods + modalities are the published sets and never include a proficiency-from-counters method', function () {
-  assert.deepStrictEqual(MP.METHODS, ['self-report', 'observed', 'coach', 'inferred']);
+  assert.deepStrictEqual(MP.METHODS, ['self-report', 'interview', 'observed', 'coach', 'inferred']);
+  assert.deepStrictEqual(MP.CONFIDENCE, ['high', 'medium', 'low']);
+  assert.ok(MP.EVIDENCE_KINDS.indexOf('artifact') >= 0 && MP.EVIDENCE_KINDS.indexOf('artifact-analysis') >= 0, '"attached" and "analyzed" are two kinds');
   assert.ok(MP.MODALITIES.indexOf('compose') >= 0 && MP.MODALITIES.indexOf('perform') >= 0 && MP.MODALITIES.indexOf('unspecified') >= 0);
 });
 
@@ -359,6 +361,131 @@ test('the app keeps ONE export and ONE import provenance stamp (latest `at`); ot
   d = MP.loadStored(s);
   assert.strictEqual(d.provenance.filter(function (p) { return p.source === 'agent:x'; }).length, 2, 'exact duplicates dropped, distinct rows kept');
   assert.strictEqual(d.provenance.filter(function (p) { return p.action === 'import'; }).length, 1);
+});
+
+/* ---------- VNEXT: global musicianship apart from instrument proficiency ---------- */
+test('VNEXT: the taxonomy floor names global musicianship APART from instrument mechanics - musicianship/* under a musicianship branch, transferable strings competencies under instrument/strings, none of them observed by the app', function () {
+  var ids = MP.CORE_TAXONOMY.map(function (c) { return c.id; });
+  ['musicianship/tonal-orientation', 'musicianship/functional-harmony', 'musicianship/ear-instrument-mapping',
+   'musicianship/harmony-aware-improvisation', 'musicianship/modal-fluency', 'musicianship/phrase-development',
+   'musicianship/tension-release', 'musicianship/improvisational-architecture', 'musicianship/rhythmic-feel',
+   'musicianship/expressive-resolution', 'musicianship/cross-instrument-transfer',
+   'stringed-instrument/movable-fretboard-fluency', 'stringed-instrument/triad-inversions',
+   'stringed-instrument/scale-shape-navigation', 'stringed-instrument/chord-scale-overlay'].forEach(function (id) {
+    assert.ok(ids.indexOf(id) >= 0, 'floor missing ' + id);
+  });
+  MP.CORE_TAXONOMY.forEach(function (c) {
+    assert.ok(c.name && c.desc && Array.isArray(c.branch) && c.branch.length >= 2, c.id + ' needs name/desc/branch');
+    assert.strictEqual(c.branch[0], /^musicianship\//.test(c.id) ? 'musicianship' : 'instrument');
+    assert.ok(!('level' in c) && !('value' in c), 'a competency definition never carries personal proficiency');
+  });
+  var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, progression: {}, now: T0, device: 'dv_a' });
+  ids.forEach(function (id) {
+    assert.ok(d.competencies.some(function (c) { return c.id === id && c.source === 'app:music'; }), id + ' not composed');
+    assert.strictEqual(MP.status(d, id).status, 'unassessed');
+  });
+  assert.strictEqual(d.evidence.length, 0, 'the app observes none of the floor');
+});
+test('VNEXT: a competency another participant already defined under a floor id keeps THEIR definition (rule 2) - the floor never overwrites', function () {
+  var local = MP.blank({ id: 'mp_t', now: T0 });
+  local.competencies.push({ id: 'musicianship/rhythmic-feel', name: 'Groove', desc: 'A coach\'s own wording.', branch: ['musicianship', 'rhythm'], source: 'agent:x' });
+  var d = MP.compose(local, { frameworks: C.FRAMEWORKS, now: T1, device: 'dv_a' });
+  var rows = d.competencies.filter(function (c) { return c.id === 'musicianship/rhythmic-feel'; });
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].name, 'Groove'); assert.strictEqual(rows[0].source, 'agent:x');
+});
+test('VNEXT: an assessment carries an optional confidence (high|medium|low); describe() says the value, the method, the confidence and the date - never a number for a band, never anything for absence', function () {
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  d.assessments.push({ id: 'as:x:1', competency: 'musicianship/tonal-orientation', value: 'advanced', scale: 'band-3', method: 'self-report', modality: 'perform', confidence: 'high', at: T1, source: 'agent:x', evidence: [] });
+  d.assessments.push({ id: 'as:x:2', competency: 'ukulele/uke-open-chords', value: 40, scale: '0-100', method: 'coach', modality: 'perform', at: T1, source: 'agent:x', evidence: [] });
+  assert.strictEqual(MP.describe(d, 'musicianship/tonal-orientation'), 'advanced - self-reported, high confidence, Sep 13');
+  assert.strictEqual(MP.describe(d, 'ukulele/uke-open-chords'), '40 of 100 - coach-assessed, Sep 13');
+  assert.strictEqual(MP.describe(d, 'ukulele/uke-chunking'), 'not yet assessed');
+  assert.ok(!/beginner|\b0\b/.test(MP.describe(d, 'ukulele/uke-chunking')));
+  var v = MP.validate(d); assert.strictEqual(v.ok, true, 'confidence is tolerated by the open contract');
+});
+test('VNEXT: a superseded assessment is HISTORY, not deleted - status() answers now, history() answers how we got here, latest first', function () {
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  d.assessments.push({ id: 'as:app:music:self-report', competency: 'stringed-instrument', value: 'beginner', scale: 'band-3', method: 'self-report', modality: 'unspecified', at: T0, source: 'app:music', evidence: [] });
+  d.assessments.push({ id: 'as:coach:1', competency: 'stringed-instrument', value: 'advanced', scale: 'band-3', method: 'interview', modality: 'perform', confidence: 'medium', at: T2, source: 'agent:coach', evidence: [] });
+  assert.strictEqual(MP.status(d, 'stringed-instrument').assessment.value, 'advanced');
+  var h = MP.history(d, 'stringed-instrument');
+  assert.strictEqual(h.length, 2); assert.strictEqual(h[0].id, 'as:coach:1'); assert.strictEqual(h[1].value, 'beginner');
+  var m = MP.merge(d, { schema: MP.SCHEMA, id: 'mp_t', updated: T2 });
+  assert.strictEqual(m.assessments.length, 2, 'a merge never drops the older record');
+});
+test('VNEXT: the learning plan is distinct from assessment - focus + items with a kind (focus|activity|edge) and an optional app deep link; appLink() renders ONLY this app\'s own URLs', function () {
+  assert.deepStrictEqual(MP.PLAN_KINDS, ['focus', 'activity', 'edge']);
+  assert.strictEqual(MP.appLink('https://nhruska.github.io/music/play/triad-inversions.html'), 'https://nhruska.github.io/music/play/triad-inversions.html');
+  assert.strictEqual(MP.appLink('https://nhruska.github.io/music/play/?jam=Am,F,C,G&key=Am'), 'https://nhruska.github.io/music/play/?jam=Am,F,C,G&key=Am');
+  assert.strictEqual(MP.appLink('https://evil.example/nhruska.github.io/music/play/'), null);
+  assert.strictEqual(MP.appLink('javascript:alert(1)'), null);
+  assert.strictEqual(MP.appLink(null), null);
+  var d = MP.blank({ id: 'mp_t', now: T0 });
+  d.plan = { updated: T1, steward: 'agent:coach', focus: 'Triads up the neck on ukulele', items: [
+    { id: 'pl:1', kind: 'activity', statement: 'Walk C-F-G as first-inversion triads', competencies: ['stringed-instrument/triad-inversions'], status: 'doing', deep_link: 'https://nhruska.github.io/music/play/triad-inversions.html', updated: T1 },
+    { id: 'pl:2', kind: 'edge', statement: 'Chunking on the offbeat', competencies: ['ukulele/uke-chunking'], status: 'todo', updated: T1 },
+    { id: 'pl:3', kind: 'activity', statement: 'done thing', competencies: [], status: 'done', updated: T1 }
+  ] };
+  var sm = MP.summary(d, C.FRAMEWORKS, {});
+  assert.strictEqual(sm.focus, 'Triads up the neck on ukulele');
+  assert.strictEqual(sm.planItems.length, 2, 'done items are not open');
+  assert.strictEqual(MP.status(d, 'stringed-instrument/triad-inversions').status, 'unassessed', 'a plan item is never an assessment');
+});
+test('VNEXT: summary() groups the taxonomy the way a musician thinks - musicianship by area, instruments (incl. ones the app never shipped, from a coach\'s ids), crafts - with assessed/unassessed counts and app counters beside instrument rows', function () {
+  var s = FakeStore();
+  C.recordEvidence('ukulele', 'uke-repertoire', null, s);
+  var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T0, device: 'dv_a' });
+  d.competencies.push({ id: 'bass/groove-pocket', name: 'Groove pocket', desc: 'Lock with the drums.', branch: ['instrument', 'strings', 'bass'], source: 'agent:coach' });
+  d.assessments.push({ id: 'as:c:1', competency: 'bass/groove-pocket', value: 'advanced', scale: 'band-3', method: 'self-report', modality: 'perform', confidence: 'high', at: T1, source: 'agent:coach', evidence: [] });
+  d.assessments.push({ id: 'as:c:2', competency: 'musicianship/functional-harmony', value: 'advanced', scale: 'band-3', method: 'interview', modality: 'theory', confidence: 'medium', at: T1, source: 'agent:coach', evidence: [] });
+  var sm = MP.summary(d, C.FRAMEWORKS, C.load(s));
+  var areas = sm.musicianship.map(function (g) { return g.name; });
+  assert.deepStrictEqual(areas, ['Ear', 'Harmony', 'Improvisation', 'Rhythm and feel', 'Transfer']);
+  assert.strictEqual(sm.musicianshipAssessed, 1);
+  var harmony = sm.musicianship.filter(function (g) { return g.name === 'Harmony'; })[0];
+  assert.strictEqual(harmony.assessed, 1); assert.strictEqual(harmony.unassessed, 1);
+  var names = sm.instruments.map(function (g) { return g.name; });
+  assert.ok(names.indexOf('Ukulele') >= 0 && names.indexOf('Guitar') >= 0 && names.indexOf('Stringed instrument') >= 0);
+  var bass = sm.instruments.filter(function (g) { return g.name === 'Bass'; })[0];
+  assert.ok(bass, 'an instrument the app never shipped is visible');
+  assert.strictEqual(bass.assessed, 1); assert.strictEqual(bass.competencies[0].status, 'advanced - self-reported, high confidence, Sep 13');
+  var uke = sm.instruments.filter(function (g) { return g.name === 'Ukulele'; })[0];
+  assert.strictEqual(uke.observed, 1, 'the app\'s own counter rides beside the row');
+  assert.strictEqual(uke.assessed, 0, 'an app counter is NOT an assessment');
+  assert.ok(uke.competencies.every(function (c) { return c.status === 'not yet assessed'; }));
+  assert.deepStrictEqual(sm.crafts.map(function (g) { return g.name; }), ['Composition', 'Lyrics']);
+});
+test('VNEXT: compose() retires this app\'s OWN legacy device-less progression records (pre-per-device builds) and folds every duplicate routine stamp - another participant\'s records are untouched', function () {
+  var s = FakeStore();
+  C.recordEvidence('music-composition', 'comp-progressions', null, s);
+  var legacy = MP.blank({ id: 'mp_t', now: T0 });
+  legacy.evidence.push({ id: 'ev:app:music:progression:music-composition', at: T0, source: 'app:music', kind: 'app-progression', modality: 'compose', competencies: ['music-composition/comp-progressions'], data: { skill: 'music-composition', competencies: [] } });
+  legacy.evidence.push({ id: 'ev:app:music:progression:ukulele', at: T0, source: 'app:music', kind: 'app-progression', modality: 'compose', competencies: ['ukulele/uke-repertoire'], data: { skill: 'ukulele', competencies: [] } });
+  legacy.evidence.push({ id: 'ev:coach:1', at: T0, source: 'agent:coach', kind: 'coach-observed', modality: 'perform', competencies: ['ukulele/uke-repertoire'], data: {} });
+  legacy.provenance = [{ source: 'app:music', at: T0, action: 'export' }, { source: 'app:music', at: T1, action: 'export' }, { source: 'app:music', at: T0, action: 'export' }, { source: 'agent:coach', at: T1, action: 'assess' }];
+  MP.save(s, legacy);
+  var d = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T2, device: 'dv_a' }));
+  var app = d.evidence.filter(function (e) { return e.source === 'app:music'; });
+  assert.strictEqual(app.length, 1, 'one per-device record replaces the legacy pair');
+  assert.strictEqual(app[0].id, 'ev:app:music:dv_a:progression:music-composition');
+  assert.ok(d.evidence.some(function (e) { return e.id === 'ev:coach:1'; }), 'the coach\'s record survives');
+  var exports = d.provenance.filter(function (p) { return p.source === 'app:music' && p.action === 'export'; });
+  assert.strictEqual(exports.length, 1); assert.strictEqual(exports[0].at, T2);
+  assert.ok(d.provenance.some(function (p) { return p.source === 'agent:coach'; }));
+});
+test('VNEXT: an unknown competency under an unknown namespace survives compose + merge + export untouched (open vocabulary, never a closed taxonomy)', function () {
+  var s = FakeStore();
+  var hand = { schema: MP.SCHEMA, id: 'mp_t', updated: T1,
+    competencies: [{ id: 'flamenco/rasgueado', name: 'Rasgueado', desc: 'Right-hand strumming technique.', branch: ['instrument', 'strings', 'guitar', 'flamenco'], source: 'app:flamenco-studio', 'x-video': 'abc' }],
+    assessments: [{ id: 'as:fs:1', competency: 'flamenco/rasgueado', value: 'developing', scale: 'band-4', method: 'observed', modality: 'perform', confidence: 'medium', at: T1, source: 'app:flamenco-studio', evidence: [] }] };
+  assert.strictEqual(MP.importJson(hand, s, { now: T1 }).ok, true);
+  var d = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T2, device: 'dv_a' }));
+  var c = d.competencies.filter(function (x) { return x.id === 'flamenco/rasgueado'; })[0];
+  assert.deepStrictEqual(c, hand.competencies[0]);
+  assert.strictEqual(MP.describe(d, 'flamenco/rasgueado'), 'developing - observed, medium confidence, Sep 13');
+  var sm = MP.summary(d, C.FRAMEWORKS, {});
+  assert.ok(sm.instruments.some(function (g) { return g.name === 'Guitar' && g.competencies.some(function (x) { return x.id === 'flamenco/rasgueado'; }); }), 'placed under Guitar by its branch');
 });
 
 run();

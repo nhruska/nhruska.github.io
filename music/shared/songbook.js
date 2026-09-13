@@ -6616,7 +6616,10 @@
       var btn = document.createElement('button');
       btn.className = 'accBtn'; btn.id = 'accBtnSkills'; btn.type = 'button';
       btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'accBodySkills');
-      btn.textContent = 'Skills';
+      // M-MUSICIAN-PROFILE-VNEXT: the user-facing abstraction is the musician
+      // profile, not a list of "Skills" - the ids stay (every scenario + the
+      // accordion registry key on them), only the word changes.
+      btn.textContent = 'Musician profile';
       var pane = document.createElement('div');
       pane.className = 'accBody skillsPanel'; pane.id = 'accBodySkills';
       pane.setAttribute('role', 'region'); pane.setAttribute('aria-labelledby', 'accBtnSkills');
@@ -6845,6 +6848,7 @@
             var pj = global.MusicianProfile.exportJson(undefined, {
               frameworks: C.FRAMEWORKS, progression: C.load(),
               selfReport: (global.GuidanceLevel && typeof global.GuidanceLevel.get === 'function') ? global.GuidanceLevel.get() : null,
+              selfReportAt: (global.GuidanceLevel && typeof global.GuidanceLevel.at === 'function') ? global.GuidanceLevel.at() : null,
               version: (global.BuildStamp && global.BuildStamp.VERSION) || null
             });
             if (pj) files.push({ path: 'profile.json', text: pj });
@@ -6883,28 +6887,73 @@
       function renderSkillsPanel() {
         pane.textContent = '';
         var hint = document.createElement('p'); hint.className = 'setHint';
-        hint.textContent = 'Your musician profile - what the app has seen you do, so Claude or ChatGPT can coach you at your level. Stays on this device - export it to carry it across.';
+        hint.textContent = 'Your musician profile - what kind of musician you are, what you are developing, and what to do next. The app adds what it has seen you do; a coach adds the rest. Stays on this device - export it to carry it across.';
         pane.appendChild(hint);
 
-        // M-MUSICIAN-PROFILE: goals + the coach-stewarded plan, read from the
-        // stored profile (a coach writes them via profile.json import; the app
-        // preserves and shows them). Quiet read-only lines - the coach owns
-        // the plan, the app never edits it. Absent when nothing is there.
+        // M-MUSICIAN-PROFILE-VNEXT: the panel renders FROM the profile (the
+        // person's document), with the app's own counters riding beside the
+        // instrument rows as evidence. `view` is composed in memory - the
+        // stored profile (or a blank) plus the taxonomy the app contributes -
+        // and never persisted here; export is the only writer.
         var MPm = global.MusicianProfile;
         var mprof = (MPm && typeof MPm.loadStored === 'function') ? MPm.loadStored() : null;
-        var goals = (mprof && Array.isArray(mprof.goals)) ? mprof.goals.filter(function (g) { return g && g.statement && g.status !== 'parked'; }) : [];
-        var planItems = (mprof && mprof.plan && Array.isArray(mprof.plan.items)) ? mprof.plan.items.filter(function (i) { return i && i.statement && i.status !== 'done'; }) : [];
-        if (goals.length || planItems.length) {
+        var progression = C.load();
+        var sm = null, lines = [], view = null;
+        if (MPm && typeof MPm.summary === 'function') {
+          try {
+            view = MPm.compose(mprof || MPm.blank(), {
+              frameworks: C.FRAMEWORKS, progression: progression,
+              selfReport: (global.GuidanceLevel && typeof global.GuidanceLevel.get === 'function') ? global.GuidanceLevel.get() : null,
+              selfReportAt: (global.GuidanceLevel && typeof global.GuidanceLevel.at === 'function') ? global.GuidanceLevel.at() : null,
+              device: MPm.deviceId()
+            });
+            sm = MPm.summary(view, C.FRAMEWORKS, progression);
+            lines = MPm.headline(sm);
+          } catch (e) { sm = null; lines = []; }
+        }
+
+        // 1. What kind of musician am I? - the headline, one short line per
+        // group. "not yet assessed" is the honest answer on a fresh device.
+        if (lines.length) {
+          var head = document.createElement('div'); head.className = 'profileHead'; head.id = 'profileHeadline';
+          lines.forEach(function (t) {
+            var l = document.createElement('p'); l.className = 'profileLine'; l.textContent = t; head.appendChild(l);
+          });
+          pane.appendChild(head);
+        }
+
+        // 2. What am I developing / what should I do next? - goals, the
+        // coach's current focus, and the open plan items. The coach owns the
+        // plan; the app shows it. A plan item that carries a deep link INTO
+        // THIS APP renders as the tappable action-row primitive; any other
+        // link is text (never a foreign tappable link from a hand-back).
+        var goals = sm ? sm.goals.filter(function (g) { return g.status !== 'parked'; }) : [];
+        var planItems = sm ? sm.planItems : [];
+        var focus = sm ? sm.focus : '';
+        if (goals.length || planItems.length || focus) {
           var gp = document.createElement('div'); gp.className = 'skillGoals'; gp.id = 'skillsGoals';
           goals.forEach(function (g) {
             var l = document.createElement('p'); l.className = 'skillPref';
             l.textContent = 'Goal: ' + g.statement + (g.status === 'met' ? ' - met' : '');
             gp.appendChild(l);
           });
+          if (focus) {
+            var f = document.createElement('p'); f.className = 'skillPref'; f.id = 'skillsFocus';
+            f.textContent = 'Focus: ' + focus; gp.appendChild(f);
+          }
           planItems.forEach(function (i) {
-            var l = document.createElement('p'); l.className = 'skillPref';
-            l.textContent = 'Plan: ' + i.statement + (i.status === 'doing' ? ' - in progress' : '');
-            gp.appendChild(l);
+            var link = (MPm && typeof MPm.appLink === 'function') ? MPm.appLink(i.deep_link) : null;
+            var prefix = (i.kind === 'edge' ? 'Next edge: ' : 'Next: ');
+            if (link) {
+              var a = document.createElement('a'); a.className = 'setAction planLink'; a.href = link;
+              var lbl = document.createElement('span'); lbl.className = 'saLbl'; lbl.textContent = prefix + i.statement;
+              var go = document.createElement('span'); go.className = 'saGo'; go.setAttribute('aria-hidden', 'true'); go.textContent = '>';
+              a.appendChild(lbl); a.appendChild(go); gp.appendChild(a);
+            } else {
+              var l2 = document.createElement('p'); l2.className = 'skillPref';
+              l2.textContent = prefix + i.statement + (i.status === 'doing' ? ' - in progress' : '');
+              gp.appendChild(l2);
+            }
           });
           pane.appendChild(gp);
         }
@@ -6912,28 +6961,52 @@
         // "Has data" = the app's own counters OR an imported musician profile:
         // a device that only ever received a coach's profile.json must still
         // be able to export the person-owned document.
-        var has = C.hasData() || !!mprof; // mprof: the stored profile already parsed above
-        // First-start lead: no data yet -> import affordance first (never a modal).
+        var has = C.hasData() || !!mprof;
         var importRow = document.createElement('button');
-        // UAT batch 5: the .setAction primitive - one row, one action, no prose.
-        // The old stacked description ("Merge a profile file from another
-        // device.") said what the verb already says.
         importRow.className = 'setAction skillsImportRow'; importRow.type = 'button';
         var it = document.createElement('span'); it.className = 'saLbl'; it.textContent = 'Import a profile';
         importRow.appendChild(it);
         importRow.onclick = function () { fileInput.click(); };
         if (!has) pane.appendChild(importRow); // lead with import when empty
 
-        // One expandable row per skill.
-        C.FRAMEWORKS.forEach(function (fw) {
-          var prof = C.getProfile(fw.id);
+        // One row per competency: the app's own counter (bar + number) when it
+        // observed anything, the latest profile assessment when one exists,
+        // "not yet observed" when neither. UNASSESSED is explicit - never a
+        // bar at 0 read as a score. Rows without a counter (musicianship, an
+        // instrument the app does not model) have no bar at all.
+        function compRowEl(c) {
+          var cr = document.createElement('div'); cr.className = 'compRow';
+          var cn = document.createElement('span'); cn.className = 'compName'; cn.textContent = c.name;
+          cr.appendChild(cn);
+          var k = c.counter, observed = !!(k && ((k.evidence_count || 0) > 0 || (k.level || 0) > 0));
+          var counterText = '';
+          if (observed) {
+            var when = fmtDate(k.last_evidence);
+            counterText = (k.level || 0) + ' / ' + k.target + (k.evidence_count ? ' · ' + k.evidence_count + '×' : '') + (when ? ' · ' + when : '');
+            var bar = document.createElement('div'); bar.className = 'compBar'; bar.setAttribute('role', 'img');
+            bar.setAttribute('aria-label', c.name + ': level ' + (k.level || 0) + ' of a ' + k.target + ' target');
+            var fill = document.createElement('div'); fill.className = 'compBarFill';
+            fill.style.width = Math.max(0, Math.min(100, k.level || 0)) + '%';
+            bar.appendChild(fill); cr.appendChild(bar);
+          }
+          var cm = document.createElement('span'); cm.className = 'compMeta';
+          var status = c.assessment ? c.status : null;
+          cm.textContent = status ? (counterText ? status + ' · ' + counterText : status)
+            : (counterText || (k ? 'not yet observed' : 'not yet assessed'));
+          cr.appendChild(cm);
+          return cr;
+        }
+        function groupRow(g, opts) {
+          opts = opts || {};
           var row = document.createElement('div'); row.className = 'skillRow';
+          row.setAttribute('data-skill', g.id);
           var head = document.createElement('button'); head.className = 'skillHead'; head.type = 'button';
           head.setAttribute('aria-expanded', 'false');
-          var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = fw.name;
-          var ev = (prof.competencies || []).reduce(function (n, c) { return n + (c.evidence_count || 0); }, 0);
+          var nm = document.createElement('span'); nm.className = 'skillName'; nm.textContent = g.name;
           var meta = document.createElement('span'); meta.className = 'skillMeta';
-          meta.textContent = ev > 0 ? (ev + ' session' + (ev === 1 ? '' : 's')) : 'no evidence yet';
+          var total = g.competencies.length;
+          meta.textContent = g.assessment ? String(g.assessment.value)
+            : (g.assessed ? g.assessed + ' of ' + total + ' assessed' : (g.observed ? g.observed + ' observed' : 'not yet assessed'));
           head.appendChild(nm); head.appendChild(meta);
           var detail = document.createElement('div'); detail.className = 'skillDetail'; detail.hidden = true;
           head.onclick = function () {
@@ -6941,55 +7014,95 @@
             detail.hidden = !open;
             head.setAttribute('aria-expanded', open ? 'true' : 'false');
           };
-
-          (prof.competencies || []).forEach(function (c) {
-            var cr = document.createElement('div'); cr.className = 'compRow';
-            var cn = document.createElement('span'); cn.className = 'compName'; cn.textContent = c.name;
-            var bar = document.createElement('div'); bar.className = 'compBar';
-            bar.setAttribute('role', 'img');
-            // The spoken label must agree with the visible text: an unobserved
-            // row is "not yet observed", never "level 0 of a 80 target".
-            bar.setAttribute('aria-label', (c.evidence_count || c.level)
-              ? c.name + ': level ' + (c.level || 0) + ' of a ' + c.target + ' target'
-              : c.name + ': not yet observed');
-            var fill = document.createElement('div'); fill.className = 'compBarFill';
-            fill.style.width = Math.max(0, Math.min(100, c.level || 0)) + '%';
-            bar.appendChild(fill);
-            var cm = document.createElement('span'); cm.className = 'compMeta';
-            var when = fmtDate(c.last_evidence);
-            // Unassessed is EXPLICIT, not "0 / 80": a competency the app has
-            // never observed says so, instead of reading as a beginner score.
-            // A SKILL.md hand-back may set a level with no evidence count
-            // (AGENTS.md case 3, a corrected fresh install) - that row has a
-            // number and must show it, not contradict its own bar.
-            cm.textContent = (c.evidence_count || c.level)
-              ? (c.level || 0) + ' / ' + c.target + (c.evidence_count ? ' · ' + c.evidence_count + '×' : '') + (when ? ' · ' + when : '')
-              : 'not yet observed';
-            cr.appendChild(cn); cr.appendChild(bar); cr.appendChild(cm);
-            detail.appendChild(cr);
-          });
-
+          if (opts.areas) {
+            // Musicianship: sub-grouped by area (ear / harmony / ...), each a
+            // quiet subhead over its competency rows.
+            opts.areas.forEach(function (area) {
+              var ah = document.createElement('p'); ah.className = 'compArea'; ah.textContent = area.name;
+              detail.appendChild(ah);
+              area.competencies.forEach(function (c) { detail.appendChild(compRowEl(c)); });
+            });
+          } else {
+            g.competencies.forEach(function (c) { detail.appendChild(compRowEl(c)); });
+          }
           // Preferences (operator addendum): quiet read-only lines when present.
-          if (Array.isArray(prof.preferences) && prof.preferences.length) {
-            prof.preferences.forEach(function (p) {
+          var fwProf = opts.frameworkId ? C.getProfile(opts.frameworkId) : null;
+          if (fwProf && Array.isArray(fwProf.preferences) && fwProf.preferences.length) {
+            fwProf.preferences.forEach(function (p) {
               var pr = document.createElement('p'); pr.className = 'skillPref';
               var n = p.evidence_count || 0;
               pr.textContent = 'Style: ' + (p.statement || '') + (n ? ' - ' + n + ' session' + (n === 1 ? '' : 's') : '');
               detail.appendChild(pr);
             });
           }
+          if (opts.frameworkId) {
+            var actRow = document.createElement('div'); actRow.className = 'skillActs';
+            var exp = document.createElement('button'); exp.className = 'btn ghost skillExport'; exp.type = 'button';
+            exp.textContent = 'Export ' + g.name;
+            exp.onclick = function () { downloadProfile(opts.frameworkId); };
+            actRow.appendChild(exp); detail.appendChild(actRow);
+          }
+          row.appendChild(head); row.appendChild(detail);
+          return row;
+        }
+        var fwIds = {}; C.FRAMEWORKS.forEach(function (fw) { fwIds[fw.id] = true; });
+        if (sm) {
+          // Musicianship (global, transferable) - ONE row, areas inside.
+          var msTotal = sm.musicianship.reduce(function (n, g) { return n + g.competencies.length; }, 0);
+          if (msTotal) {
+            var msGroup = { id: 'musicianship', name: 'Musicianship', assessed: sm.musicianshipAssessed, observed: 0, assessment: null,
+              competencies: [].concat.apply([], sm.musicianship.map(function (g) { return g.competencies; })) };
+            pane.appendChild(groupRow(msGroup, { areas: sm.musicianship }));
+          }
+          // Instruments: the app's frameworks (with bars + Export) first, then
+          // any instrument only the profile knows (bass, piano...).
+          sm.instruments.forEach(function (g) {
+            var fwId = fwIds[g.id] ? g.id : (g.id === 'strings' ? 'stringed-instrument' : null);
+            pane.appendChild(groupRow(g, { frameworkId: fwId }));
+          });
+          sm.crafts.forEach(function (g) { pane.appendChild(groupRow(g, { frameworkId: fwIds[g.id] ? g.id : null })); });
+          sm.other.forEach(function (g) { pane.appendChild(groupRow(g, {})); });
+        } else {
+          // musician-profile.js not wired (older cached build): the plain
+          // per-framework rows from the app's own counters.
+          C.FRAMEWORKS.forEach(function (fw) {
+            var prof = C.getProfile(fw.id);
+            var g = { id: fw.id, name: fw.name, assessed: 0, observed: 0, assessment: null,
+              competencies: (prof.competencies || []).map(function (c) { return { id: c.id, name: c.name, assessment: null, status: '', counter: c }; }) };
+            pane.appendChild(groupRow(g, { frameworkId: fw.id }));
+          });
+        }
 
-          var actRow = document.createElement('div'); actRow.className = 'skillActs';
-          var exp = document.createElement('button'); exp.className = 'btn ghost skillExport'; exp.type = 'button';
-          exp.textContent = 'Export ' + fw.name;
-          exp.onclick = function () { downloadProfile(fw.id); };
-          actRow.appendChild(exp); detail.appendChild(actRow);
-
-          row.appendChild(head); row.appendChild(detail); pane.appendChild(row);
-        });
+        // 3. Evidence and history - the detail view, closed by default (the
+        // disclosure primitive the agent docs already use). Lists every
+        // evidence record and every superseded assessment the profile holds.
+        if (sm && view && (sm.evidence.length || view.assessments.length)) {
+          var det = document.createElement('details'); det.className = 'agentDisclose'; det.id = 'profileHistory';
+          var sum = document.createElement('summary'); sum.className = 'setAction agentDiscloseHead';
+          var sl = document.createElement('span'); sl.className = 'saLbl'; sl.textContent = 'Evidence and history';
+          sum.appendChild(sl); det.appendChild(sum);
+          var body = document.createElement('div'); body.className = 'agentDiscloseBody';
+          sm.evidence.forEach(function (e) {
+            var l = document.createElement('p'); l.className = 'skillPref';
+            var when = fmtDate(e.at);
+            l.textContent = (when ? when + ' · ' : '') + (e.kind || 'evidence') + (e.modality ? ' · ' + e.modality : '') + (e.source ? ' · ' + e.source : '')
+              + (e.data && e.data.analyzed === false ? ' · attached, not analyzed' : '');
+            body.appendChild(l);
+          });
+          view.assessments.forEach(function (a) {
+            var latest = MPm.latestAssessment(view, a.competency);
+            if (!latest || latest.id === a.id) return; // current ones are in the rows above
+            var l = document.createElement('p'); l.className = 'skillPref';
+            var when = fmtDate(a.at);
+            l.textContent = (when ? when + ' · ' : '') + a.competency + ': ' + String(a.value) + ' (' + (a.method || 'assessed') + ', superseded)';
+            body.appendChild(l);
+          });
+          det.appendChild(body);
+          pane.appendChild(det);
+        }
 
         // S-SKILLS-PORTABLE: whole-bundle export - every skill as
-        // <skill-id>/SKILL.md in one zip (only when there is data to carry).
+        // <skill-id>/SKILL.md + profile.json in one zip (only when there is data to carry).
         if (has) {
           var exportAllRow = document.createElement('button');
           exportAllRow.className = 'setAction skillsExportAllRow'; exportAllRow.type = 'button';

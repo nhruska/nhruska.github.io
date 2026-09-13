@@ -15,10 +15,13 @@
  *   competencies[]  the taxonomy - stable ids `<framework>/<competency>`,
  *                   each with a branch path (["instrument","strings","ukulele"])
  *   assessments[]   dated claims about ONE competency: value + scale +
- *                   method (self-report|observed|coach|inferred) + modality
+ *                   method (self-report|interview|observed|coach|inferred) +
+ *                   modality + optional confidence (high|medium|low)
  *   evidence[]      what happened, sourced, with modality; assessments cite it
  *   goals[]         what the musician wants; the coach reads these first
- *   plan            the coach-stewarded practice plan (later `updated` wins)
+ *   plan            the coach-stewarded learning plan: focus + items (kind
+ *                   focus|activity|edge, optional app deep_link); later
+ *                   `updated` wins whole
  *   preferences[]   taste statements (competency.js shape, unchanged)
  *   participants[]  every app/agent that touched the doc + what it understands
  *   provenance[]    append-only trail
@@ -64,8 +67,23 @@
 
   // The sections THIS app reads (declared on its participant entry).
   var UNDERSTANDS = ['competencies', 'assessments', 'evidence', 'goals', 'plan', 'preferences'];
-  var METHODS = ['self-report', 'observed', 'coach', 'inferred'];
+  // How a claim was made. `interview` = a guided baseline interview (the
+  // coach asked, the musician answered - still the musician's word).
+  var METHODS = ['self-report', 'interview', 'observed', 'coach', 'inferred'];
   var MODALITIES = ['perform', 'compose', 'write', 'listen', 'tune', 'theory', 'unspecified'];
+  // Qualification of an assessment - the smallest useful representation. A
+  // conversational self-assessment is `value: "advanced", confidence: "medium"`,
+  // never an 87/100 the schema would happily accept.
+  var CONFIDENCE = ['high', 'medium', 'low'];
+  // SUGGESTED evidence kinds (open vocabulary - a participant may write any
+  // string). OBSERVATION != PROFICIENCY: every kind is a fact about what
+  // happened, the coach interprets it. `artifact` = a file was attached;
+  // `artifact-analysis` = a participant actually analyzed it - two claims.
+  var EVIDENCE_KINDS = ['app-progression', 'app-observed', 'interview', 'self-report',
+    'coach-observed', 'artifact', 'artifact-analysis', 'imported'];
+  // What a plan item IS: the current focus, a concrete activity, or a
+  // coach-identified learning edge (the next useful thing, not yet an activity).
+  var PLAN_KINDS = ['focus', 'activity', 'edge'];
   // Top-level keys this module knows how to merge; everything else is
   // "unknown" and preserved by the contract's second rule.
   var KNOWN_KEYS = ['schema', 'contract', 'id', 'updated', 'participants', 'provenance',
@@ -80,6 +98,36 @@
     'music-composition': ['craft', 'music-composition'],
     'lyric-writing': ['craft', 'lyric-writing']
   };
+
+  // ---- the profile-native taxonomy FLOOR ----
+  // Global musicianship is modelled APART from instrument proficiency: a
+  // person can be an advanced musician, an experienced bassist and a brand-new
+  // ukulele player at once, and a reader must never collapse those into one
+  // level. These competencies are what the app KNOWS BY NAME so a coach and the
+  // panel share ids - the app observes NONE of them (no counters, no SKILL.md;
+  // they live only here). A floor, not a ceiling: any participant may add
+  // competencies under any namespace (`flamenco/rasgueado`, `songwriting/
+  // prosody`) and the contract's second rule carries them through every
+  // participant that has never heard of them.
+  var CORE_TAXONOMY = [
+    { id: 'musicianship/tonal-orientation', name: 'Tonal orientation', desc: 'Find and orient to a tonal center in unfamiliar music in real time.', branch: ['musicianship', 'ear'] },
+    { id: 'musicianship/ear-instrument-mapping', name: 'Ear-to-instrument mapping', desc: 'Translate internally heard or sung musical ideas onto an instrument.', branch: ['musicianship', 'ear'] },
+    { id: 'musicianship/functional-harmony', name: 'Functional harmony', desc: 'Understand, hear and use harmonic function such as I, IV, V, vi.', branch: ['musicianship', 'harmony'] },
+    { id: 'musicianship/modal-fluency', name: 'Modal fluency', desc: 'Perform and improvise appropriately within modal contexts.', branch: ['musicianship', 'harmony'] },
+    { id: 'musicianship/harmony-aware-improvisation', name: 'Harmony-aware improvisation', desc: 'Respond to harmonic movement and target relevant tones while improvising.', branch: ['musicianship', 'improvisation'] },
+    { id: 'musicianship/phrase-development', name: 'Phrase development', desc: 'Repeat, vary, transform and develop motifs.', branch: ['musicianship', 'improvisation'] },
+    { id: 'musicianship/tension-release', name: 'Tension and release', desc: 'Create and resolve melodic and harmonic tension intentionally.', branch: ['musicianship', 'improvisation'] },
+    { id: 'musicianship/improvisational-architecture', name: 'Improvisational architecture', desc: 'Develop a coherent improvisational arc over short and long durations.', branch: ['musicianship', 'improvisation'] },
+    { id: 'musicianship/expressive-resolution', name: 'Expressive resolution', desc: 'Resolve outside notes intentionally through movement, bends, slides and the like.', branch: ['musicianship', 'improvisation'] },
+    { id: 'musicianship/rhythmic-feel', name: 'Rhythmic feel', desc: 'Maintain pulse and intentionally manipulate rhythmic placement and feel.', branch: ['musicianship', 'rhythm'] },
+    { id: 'musicianship/cross-instrument-transfer', name: 'Cross-instrument transfer', desc: 'Transfer musical mental models among instruments.', branch: ['musicianship', 'transfer'] },
+    { id: 'stringed-instrument/movable-fretboard-fluency', name: 'Movable fretboard fluency', desc: 'Move freely across fretboard positions.', branch: ['instrument', 'strings'] },
+    { id: 'stringed-instrument/triad-inversions', name: 'Triad inversions', desc: 'Use root, first and second inversion shapes up the neck.', branch: ['instrument', 'strings'] },
+    { id: 'stringed-instrument/scale-shape-navigation', name: 'Scale shape navigation', desc: 'Navigate scale shapes and connect them across positions.', branch: ['instrument', 'strings'] },
+    { id: 'stringed-instrument/chord-scale-overlay', name: 'Chord-scale overlay', desc: 'Map chord and triad shapes onto soloing shapes.', branch: ['instrument', 'strings'] }
+  ];
+  // Plain-English names for the branch areas the panel groups by.
+  var AREA_NAMES = { ear: 'Ear', harmony: 'Harmony', improvisation: 'Improvisation', rhythm: 'Rhythm and feel', transfer: 'Transfer', composition: 'Composition' };
 
   function nowIso() { return new Date().toISOString(); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -217,6 +265,158 @@
     return a ? { status: 'assessed', assessment: a } : { status: 'unassessed' };
   }
 
+  // Every assessment ever made about ONE competency, latest first. A superseded
+  // assessment is HISTORY, never deleted: status() answers "now", history()
+  // answers "how did we get here". (A participant replacing its own record by
+  // id is that participant's choice; another participant's record is never
+  // rewritten by anyone.)
+  function history(doc, competency) {
+    return arr(doc && doc.assessments).filter(function (a) { return a && a.competency === competency; })
+      .sort(function (a, b) { return later(a.at, b.at) ? -1 : 1; });
+  }
+  function shortDate(iso) {
+    var t = Date.parse(String(iso || ''));
+    if (isNaN(t)) return '';
+    var d = new Date(t), M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return M[d.getUTCMonth()] + ' ' + d.getUTCDate();
+  }
+  var METHOD_WORDS = { 'self-report': 'self-reported', 'interview': 'from a guided interview', 'observed': 'observed', 'coach': 'coach-assessed', 'inferred': 'inferred' };
+  // One plain-English line for a competency's CURRENT state - what the panel
+  // and a coach say out loud. Never a number for absence.
+  //   "advanced - self-reported, high confidence, Sep 13"
+  //   "40 of 100 - coach-assessed, Sep 13"
+  //   "not yet assessed"
+  function describe(doc, competency) {
+    var a = latestAssessment(doc, competency);
+    if (!a) return 'not yet assessed';
+    var v = (a.value === null || a.value === undefined) ? '' : String(a.value);
+    if (typeof a.value === 'number' && a.scale && /^0-(\d+)$/.test(String(a.scale))) v = a.value + ' of ' + String(a.scale).slice(2);
+    var bits = [];
+    if (METHOD_WORDS[a.method]) bits.push(METHOD_WORDS[a.method]); else if (a.method) bits.push(String(a.method));
+    if (a.confidence) bits.push(String(a.confidence) + ' confidence');
+    var when = shortDate(a.at); if (when) bits.push(when);
+    return (v || 'assessed') + (bits.length ? ' - ' + bits.join(', ') : '');
+  }
+  // A deep link is rendered by the panel ONLY when it points into this app -
+  // a hand-back is a file anyone could have written, and a foreign tappable
+  // link from it is exactly what interaction-safety forbids.
+  function appLink(url) {
+    if (typeof url !== 'string') return null;
+    return url.indexOf(APP_URL.replace(/play\/$/, '')) === 0 ? url : null;
+  }
+
+  // ---- the panel's data: the taxonomy grouped the way a musician thinks ----
+  // musicianship (by area) / instruments (by framework or branch) / crafts /
+  // other (anything with a branch this app cannot place). Every competency the
+  // document names lands in exactly one group - including ids the app has never
+  // shipped (a coach's `bass/groove-pocket` shows under "Bass"), so a musician's
+  // 28 years on an instrument the app does not model are visible, not lost.
+  // `progression` (Competency.load()) lets instrument rows also say what the
+  // app itself has observed. Pure: no DOM, no storage.
+  function summary(doc, frameworks, progression) {
+    var d = normalize(doc || blank());
+    frameworks = arr(frameworks); progression = isObj(progression) ? progression : {};
+    var fwById = {}; frameworks.forEach(function (fw) { fwById[fw.id] = fw; });
+    var counters = {};
+    Object.keys(progression).forEach(function (fwId) {
+      arr(progression[fwId] && progression[fwId].competencies).forEach(function (c) {
+        if (c && c.id) counters[competencyId(fwId, c.id)] = c;
+      });
+    });
+    var groups = { musicianship: {}, instruments: {}, crafts: {}, other: {} };
+    function titleCase(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' '); }
+    function put(bucket, key, label, entry) {
+      if (!groups[bucket][key]) groups[bucket][key] = { id: key, name: label, competencies: [], assessed: 0, unassessed: 0, observed: 0 };
+      var g = groups[bucket][key];
+      g.competencies.push(entry);
+      if (entry.assessment) g.assessed++; else g.unassessed++;
+      if (entry.counter && (entry.counter.evidence_count || 0) > 0) g.observed++;
+    }
+    d.competencies.forEach(function (c) {
+      if (!c || !c.id) return;
+      var a = latestAssessment(d, c.id);
+      var ns = String(c.id).split('/')[0];
+      var br = arr(c.branch);
+      var entry = { id: c.id, name: c.name || c.id, desc: c.desc || '', branch: br.slice(),
+        assessment: a || null, status: describe(d, c.id), counter: counters[c.id] || null };
+      if (br[0] === 'musicianship' || ns === 'musicianship') {
+        var area = br[1] || 'general';
+        put('musicianship', area, AREA_NAMES[area] || titleCase(area), entry);
+      } else if (br[0] === 'instrument') {
+        var key = br[2] || ns;
+        var fw = fwById[key];
+        put('instruments', key, fw ? fw.name : (key === 'strings' ? 'Stringed instrument' : titleCase(key)), entry);
+      } else if (br[0] === 'craft') {
+        var ck = br[1] || ns, cfw = fwById[ck];
+        put('crafts', ck, cfw ? cfw.name : titleCase(ck), entry);
+      } else {
+        put('other', ns, (fwById[ns] && fwById[ns].name) || titleCase(ns), entry);
+      }
+    });
+    // Branch-level claims (an assessment whose subject is a framework/branch id,
+    // e.g. the app's own `stringed-instrument` self-report) attach to the group.
+    Object.keys(groups.instruments).forEach(function (k) {
+      var g = groups.instruments[k];
+      var lvl = latestAssessment(d, k) || (k === 'strings' ? latestAssessment(d, 'stringed-instrument') : null);
+      if (lvl) { g.assessment = lvl; g.status = describe(d, lvl.competency); }
+    });
+    function list(o) { return Object.keys(o).map(function (k) { return o[k]; }); }
+    // Instruments: the app's own frameworks first (in FRAMEWORKS order, the
+    // strings fundamentals ahead of the instruments under them), then every
+    // instrument only the profile knows, in the order the document names them.
+    var fwOrder = {}; frameworks.forEach(function (fw, i) { fwOrder[fw.id] = i; });
+    var instruments = list(groups.instruments).sort(function (a, b) {
+      var ia = a.id in fwOrder ? fwOrder[a.id] : 1e9, ib = b.id in fwOrder ? fwOrder[b.id] : 1e9;
+      return ia - ib;
+    });
+    var ms = list(groups.musicianship), msAssessed = ms.reduce(function (n, g) { return n + g.assessed; }, 0);
+    var focus = (d.plan && typeof d.plan.focus === 'string') ? d.plan.focus : '';
+    var open = arr(d.plan && d.plan.items).filter(function (i) { return i && i.statement && i.status !== 'done'; });
+    return {
+      musicianship: ms, instruments: instruments, crafts: list(groups.crafts), other: list(groups.other),
+      musicianshipAssessed: msAssessed,
+      goals: d.goals.filter(function (g) { return g && g.statement; }),
+      focus: focus, planItems: open,
+      evidence: d.evidence.slice()
+    };
+  }
+
+  // The panel's headline - "what kind of musician am I?" in a few short
+  // lines, from summary(). A band answer for musicianship is the value most
+  // of its assessments agree on (strings only - a coach's 0-100 numbers are
+  // never averaged into a word); an instrument line is its branch-level claim
+  // when one exists, else its assessed/unassessed split, plus what the app
+  // itself has observed. Absence stays "not yet assessed" everywhere.
+  function headline(sm) {
+    var lines = [];
+    var msTotal = sm.musicianship.reduce(function (n, g) { return n + g.competencies.length; }, 0);
+    if (sm.musicianshipAssessed > 0) {
+      var votes = {};
+      sm.musicianship.forEach(function (g) { g.competencies.forEach(function (c) {
+        if (c.assessment && typeof c.assessment.value === 'string') votes[c.assessment.value] = (votes[c.assessment.value] || 0) + 1;
+      }); });
+      var best = Object.keys(votes).sort(function (a, b) { return votes[b] - votes[a]; })[0];
+      lines.push('Musicianship: ' + (best ? best + ' - ' : '') + sm.musicianshipAssessed + ' of ' + msTotal + ' assessed');
+    } else {
+      lines.push('Musicianship: not yet assessed');
+    }
+    sm.instruments.forEach(function (g) {
+      var s;
+      if (g.assessment) s = String(g.assessment.value);
+      else if (g.assessed) {
+        // No branch-level claim: the band its assessed competencies agree on
+        // (string values only), qualified when only some are assessed.
+        var v = {}; g.competencies.forEach(function (c) { if (c.assessment && typeof c.assessment.value === 'string') v[c.assessment.value] = (v[c.assessment.value] || 0) + 1; });
+        var top = Object.keys(v).sort(function (a, b) { return v[b] - v[a]; })[0];
+        var split = g.assessed + ' of ' + g.competencies.length + ' assessed';
+        s = top ? (g.assessed === g.competencies.length ? top : top + ' - ' + split) : split;
+      } else s = 'not yet assessed';
+      if (g.observed) s += ' - ' + g.observed + ' observed in the app';
+      lines.push(g.name + ': ' + s);
+    });
+    return lines;
+  }
+
   // ---- upsert helpers (by id; same id -> later stamp wins) ----
   function upsertById(list, item, stampKey) {
     for (var i = 0; i < list.length; i++) {
@@ -245,9 +445,27 @@
     list.push(item);
     return list;
   }
+  // Fold every note-less routine app stamp of one action into ONE row with the
+  // latest `at`. Earlier builds appended a row per export; the first collapse
+  // only ever folded into the first match, so a lifelong document could carry
+  // three `export` rows (observed on the operator's own export). Idempotent.
+  function collapseRoutine(doc) {
+    var keep = [], seen = {};
+    arr(doc.provenance).forEach(function (p) {
+      if (!p) return;
+      if (p.source === APP_ID && ROUTINE_ACTIONS[p.action] && !p.note) {
+        if (seen[p.action]) { if (later(p.at, seen[p.action].at)) seen[p.action].at = p.at; return; }
+        seen[p.action] = p;
+      }
+      keep.push(p);
+    });
+    doc.provenance = keep;
+    return doc;
+  }
   function pushProvenance(doc, entry, index) {
     if (!entry) return;
     if (entry.source === APP_ID && ROUTINE_ACTIONS[entry.action] && !entry.note) {
+      collapseRoutine(doc);
       for (var j = 0; j < doc.provenance.length; j++) {
         var p = doc.provenance[j];
         if (p && p.source === APP_ID && p.action === entry.action && !p.note) {
@@ -330,7 +548,8 @@
 
   // ---- what the Music app LEGITIMATELY knows, written into a profile ----
   // inputs: { frameworks: Competency.FRAMEWORKS, progression: Competency.load(store),
-  //           selfReport: GuidanceLevel.get() | null, version: build stamp, now }
+  //           selfReport: GuidanceLevel.get() | null, selfReportAt: GuidanceLevel.at() | null,
+  //           version: build stamp, now, device }
   // - participants: this app, with the sections it understands + deep links
   // - competencies: the taxonomy, namespaced + branched, source app:music
   // - evidence: ONE app-progression record per framework that has any
@@ -365,6 +584,24 @@
         compById[id] = true;
       });
     });
+    // The profile-native floor (global musicianship + transferable strings
+    // competencies): names the app knows, never observes. An id another
+    // participant already wrote keeps THEIR record (rule 2).
+    CORE_TAXONOMY.forEach(function (c) {
+      if (compById[c.id]) return;
+      d.competencies.push({ id: c.id, name: c.name, desc: c.desc, branch: c.branch.slice(), source: APP_ID });
+      compById[c.id] = true;
+    });
+
+    // Retire this app's OWN legacy records: builds before the per-device ids
+    // wrote `ev:app:music:progression:<fw>` with no `device`. They are the
+    // app's records (it is the authority on them - replaceById doctrine), the
+    // exporting device re-emits the same counters below, and leaving them
+    // would show one ladder twice. Nothing another participant wrote is touched.
+    d.evidence = d.evidence.filter(function (e) {
+      return !(e && e.source === APP_ID && e.kind === 'app-progression' && !e.device
+        && /^ev:app:music:progression:/.test(String(e.id || '')));
+    });
 
     Object.keys(progression).forEach(function (fwId) {
       var p = progression[fwId];
@@ -396,7 +633,10 @@
         replaceById(d.assessments, {
           id: 'as:' + APP_ID + ':self-report', competency: 'stringed-instrument',
           value: inputs.selfReport, scale: 'band-3', method: 'self-report', modality: 'unspecified',
-          at: now, source: APP_ID, evidence: [],
+          // `at` = when the musician TAPPED (GuidanceLevel.at()), not when this
+          // export ran - a claim is dated by when it was made, so a coach's later
+          // interview claim on the same branch correctly supersedes it.
+          at: inputs.selfReportAt || now, source: APP_ID, evidence: [],
           note: 'The musician\'s own answer to the app\'s one-time experience-level ask (beginner | intermediate | advanced).'
         });
       }
@@ -405,6 +645,10 @@
     pushProvenance(d, { source: APP_ID, at: now, action: 'export' });
     d.updated = now;
     return d;
+  }
+  // The taxonomy the app itself contributes on export (frameworks + the floor).
+  function taxonomySize(frameworks) {
+    return arr(frameworks).reduce(function (n, fw) { return n + arr(fw.competencies).length; }, 0) + CORE_TAXONOMY.length;
   }
 
   // "Nothing of the PERSON's in here": only the app's own participant entry
@@ -473,10 +717,13 @@
     SCHEMA: SCHEMA, CONTRACT_ID: CONTRACT_ID, STORAGE_KEY: STORAGE_KEY, DEVICE_KEY: DEVICE_KEY, APP_ID: APP_ID,
     APP_URL: APP_URL, CAPABILITIES_URL: CAPABILITIES_URL,
     CONTRACT: CONTRACT, UNDERSTANDS: UNDERSTANDS, METHODS: METHODS, MODALITIES: MODALITIES, BRANCHES: BRANCHES,
+    CONFIDENCE: CONFIDENCE, EVIDENCE_KINDS: EVIDENCE_KINDS, PLAN_KINDS: PLAN_KINDS,
+    CORE_TAXONOMY: CORE_TAXONOMY, AREA_NAMES: AREA_NAMES,
     // pure
     competencyId: competencyId, branchFor: branchFor, blank: blank, validate: validate, normalize: normalize,
     merge: merge, compose: compose, status: status, latestAssessment: latestAssessment, isEmpty: isEmpty,
-    newId: newId, deviceId: deviceId,
+    history: history, describe: describe, summary: summary, headline: headline, appLink: appLink, taxonomySize: taxonomySize,
+    collapseRoutine: collapseRoutine, newId: newId, deviceId: deviceId,
     // storage-backed
     load: load, loadStored: loadStored, save: save, hasData: hasData,
     exportJson: exportJson, importJson: importJson

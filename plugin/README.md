@@ -32,7 +32,7 @@ coaches for.
 
 | Piece | Purpose |
 |---|---|
-| `skills/music-interchange/SKILL.md` | The operating manual for the contract - how to read an export (profile.json first), the minimum participation contract + steward role for the person-owned `musician-profile/v1`, how to propose a profile update, how to emit a jam link. Every other piece here composes with it rather than restating its rules. |
+| `skills/music-interchange/SKILL.md` | The operating manual for the contract - how to read an export (profile.json first, all of it), the minimum participation contract + the coach/steward role for the person-owned `musician-profile/v1` (global musicianship apart from instrument proficiency, unassessed never beginner, competency vs assessment vs evidence with confidence, the adaptive guided interview, the learning plan), how to propose a profile update, how to emit a jam link. Every other piece here composes with it rather than restating its rules. |
 | `skills/music-theory-coach/SKILL.md` | Theory-correct defaults (scale/mode/chord choices) - copied from the app's own coach bench. |
 | `skills/pedagogy-coach/SKILL.md` | Learning-design rules (one-thing-at-a-time, spacing, recall-first) - copied from the app's own coach bench. |
 | `skills/songwriting-coach/SKILL.md` | Proven progression families per genre/section, lyric-craft rules - copied byte-for-byte from the app's own coach bench (no links needed adjusting). |
@@ -55,7 +55,7 @@ any reason other than a documented link swap.
 
 ## Demo script
 
-Export your Music app profile (Settings -> Skills -> Export, and optionally
+Export your Music app profile (Settings -> Musician profile -> Export for my AI, and optionally
 Settings -> Backup -> Export) to a local folder. Point a Claude Code session
 with this plugin installed at that folder and say:
 

@@ -43,7 +43,7 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
-var TAXONOMY_SIZE = C.FRAMEWORKS.reduce(function (n, fw) { return n + fw.competencies.length; }, 0);
+var TAXONOMY_SIZE = MP.taxonomySize(C.FRAMEWORKS);
 var T0 = '2026-09-13T10:00:00.000Z', T1 = '2026-09-13T11:00:00.000Z', T2 = '2026-09-13T12:00:00.000Z', T3 = '2026-09-13T13:00:00.000Z';
 
 /* ---------- LyricLab: a minimal participant written against the contract only ---------- */

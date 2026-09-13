@@ -1850,6 +1850,14 @@ footer{display:none;}
 .compBarFill{height:100%;background:var(--accent);border-radius:6px 0 0 6px;transition:width .3s ease;}
 .compMeta{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
 .skillPref{margin-top:8px;font-size:.8rem;color:var(--txt-soft);line-height:1.4;}
+/* M-MUSICIAN-PROFILE-VNEXT: the headline ("what kind of musician am I?") - one
+   short line per group, read before any row is opened; and the area subhead
+   inside the Musicianship row (Ear / Harmony / ...). Both compose the existing
+   type scale; neither is a new control. */
+.profileHead{margin-top:10px;}
+.profileLine{margin:0 0 4px;font-size:.88rem;font-weight:700;color:var(--txt);line-height:1.35;}
+.compArea{margin:10px 0 0;font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--txt-dim);}
+.skillGoals .planLink{margin-top:6px;}
 .skillActs{margin-top:12px;display:flex;}
 .skillExport{flex:0 0 auto;min-height:44px;}
 

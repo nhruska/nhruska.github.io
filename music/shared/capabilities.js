@@ -79,8 +79,8 @@
           id: 'competency-tracking',
           deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Competency tracking',
-          desc: 'Per-skill mastery levels that grow from app use, evidence-tracked against the published frameworks (stringed-instrument, ukulele, guitar, music-composition, lyric-writing).',
-          surfaces: ['Settings -> Skills'],
+          desc: 'Per-skill progression counters that grow from app use (evidence_count + a 0-100 ladder toward a target) against the published frameworks (stringed-instrument, ukulele, guitar, music-composition, lyric-writing). The app OBSERVES composing; these counters are evidence of doing, never a proficiency claim - a never-observed competency exports as level null (unassessed).',
+          surfaces: ['Settings -> Musician profile'],
           data_keys: ['music.competency.v1'],
           interchange: 'skill-competency-profile/v1'
         },
@@ -106,17 +106,26 @@
           id: 'musician-profile',
           deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Musician profile',
-          desc: 'The PERSON-owned musician-profile/v1 document (profile.json in the bundle): the competency taxonomy with instrument branches, dated assessments that name their method + modality, evidence with provenance, goals and a coach-stewarded plan. Unassessed is explicit; the app writes its progression as compose-modality EVIDENCE, never as a level. Carries the minimum participation contract inside (read what you understand, preserve what you do not, add what you legitimately know) - AGENTS.md is optional.',
-          surfaces: ['Settings -> Skills'],
+          desc: 'The PERSON-owned musician-profile/v1 document (profile.json in the bundle): the competency taxonomy - global musicianship (musicianship/*: ear, harmony, improvisation, rhythm, transfer) modelled APART from instrument proficiency (instrument branches) - plus dated assessments that name their method, modality and confidence, evidence with provenance (kind + modality), goals and a coach-stewarded learning plan (focus + items with app deep links). The vocabulary is open: any participant may add competency ids and they survive every round trip. Unassessed is explicit; the app writes its progression as compose-modality EVIDENCE, never as a level. Carries the minimum participation contract inside (read what you understand, preserve what you do not, add what you legitimately know) - AGENTS.md is optional.',
+          surfaces: ['Settings -> Musician profile'],
           data_keys: ['music.profile.v1'],
           interchange: 'musician-profile/v1'
+        },
+        {
+          id: 'triad-inversions',
+          deep_link: 'https://nhruska.github.io/music/play/triad-inversions.html',
+          name: 'Triad inversions',
+          desc: 'A standalone practice page: root, first and second inversion triad shapes up the neck. A concrete deep link for a learning-plan item on stringed-instrument/triad-inversions.',
+          surfaces: ['play/triad-inversions.html'],
+          data_keys: [],
+          interchange: null
         },
         {
           id: 'skills-export-import',
           deep_link: 'https://nhruska.github.io/music/play/',
           name: 'Skills export/import',
           desc: 'Per-skill or whole-bundle SKILL.md export (with README.md, AGENTS.md, capabilities.json, profile.json and the backup envelope bundled at the zip root) and file-picker import (SKILL.md, profile.json, or a setup doc, dispatched by schema) - the round-trip surface for handing a musician profile to another AI tool or app and back.',
-          surfaces: ['Settings -> Skills'],
+          surfaces: ['Settings -> Musician profile'],
           data_keys: ['music.competency.v1'],
           interchange: 'skill-competency-profile/v1'
         }
