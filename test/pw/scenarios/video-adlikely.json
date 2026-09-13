@@ -1,6 +1,6 @@
 {
   "name": "video-adlikely",
-  "note": "EXPECTED RED pending an operator call (S-FIRSTSESSION-TAP-BLOCKED, 2026-09-03). This scenario's first assert pins 'a fresh device shows the video VISIBLE on a MINI player' as `vidopen` - the THEATER card. That card is position:fixed at top:58, 245px tall, z-96: placement sized for an OPEN sheet. On a mini player it pinned an iframe over the top ~300px of EVERY tab, so after any row-tap play the library, Compose and Tune silently ate taps there (measured: elementFromPoint over a Compose progression pick returned IFRAME). tracks.js now demotes a theater to the PIP dock when the player minimizes - which is what setVid's own stash comment always said minimize does, and the only resolution that keeps the video visible AND skippable AND off the page. The asserts here were NOT bent to agree: re-authoring this choreography changes a contract the operator owns, so it waits for his call. If he prefers the theater to stay, revert the one _setVid('pip', true) line in minimizeStudio and this goes green again. --- ROUND 17 (operator UAT 2026-09-02, verbatim: \"can we detect not playing anything -> playing (first load or idle time) and show the yt video - most likely to have ads. not between every song tho\"). A YouTube pre-roll fires when a listening SESSION starts - a fresh embed after the app loads or after a real gap - not on each queue advance. So an AD-LIKELY open (nothing was playing AND first-play-this-load, or the last stop was over VID_IDLE_MS ago) SHOWS the video, and every other open CARRIES the state the user left it in. Round 16 still stands underneath: the app never HIDES the video on its own, and an explicit park is remembered (music.vidPref.v1, additive). Red-first: against the pre-round-16 build step 3 fails (every open was hardcoded setVid('hid')); the mid-session carry asserts are what round 17 adds on top.",
+  "note": "ROUND 18 CONTRACT (S-FIRSTSESSION-TAP-BLOCKED, resolved 2026-09-05 - PR #342 merged). This scenario owns the REMEMBERED PREFERENCE (music.vidPref.v1), not the video's visible FORM - video-pip.json owns the form. It previously asserted a fresh device opens the video as `vidopen` (the THEATER card). That is no longer the fresh-play form on a MINI player: minimizeStudio() now demotes a theater to the corner PIP dock, because the theater is placed for an OPEN sheet (fixed top:58, 245px, z-96) and on a mini player it pinned the iframe over the top ~300px of EVERY tab, eating taps on the library, Compose and Tune. The assert below was re-authored to the claim it was always really making - ROUND 16's law, that the app never hides the video on its own, so the ad Skip surface is reachable without hunting - stated independently of WHICH visible form (corner PIP on a mini player, theater in the open sheet). Every other assert here is about the preference pendulum and is unchanged: parking is a user act and is remembered, the next open honors it, showing it again flips it back, and a queue advance mid-session carries the parked state. ",
   "url": "/music/play/",
   "steps": [
     {
@@ -18,8 +18,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "FRESH DEVICE (no stored preference) -> the video opens VISIBLE, so the ad Skip surface is already on screen",
-      "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidopen')&&!p.classList.contains('vidhid');})()"
+      "label": "ROUND 16's LAW ON A FRESH DEVICE (no stored preference) -> the video is VISIBLE, so the ad Skip surface is reachable without hunting. Asserted by VISIBILITY, not by a form class: a mini player shows the corner PIP, the open sheet shows the theater - the law is that the app never hides it on its own, not that it picks one particular card.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(r.width>100&&r.height>80))return false;var f=m.querySelector('iframe');return !!f&&/\\/embed\\//.test(f.src);})()"
     },
     {
       "action": "evalAssert",
@@ -28,7 +28,7 @@
     },
     {
       "action": "tap",
-      "selector": "[data-thmin]"
+      "selector": "[data-piphide]"
     },
     {
       "action": "wait",
