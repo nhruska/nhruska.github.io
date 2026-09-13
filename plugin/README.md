@@ -32,7 +32,7 @@ coaches for.
 
 | Piece | Purpose |
 |---|---|
-| `skills/music-interchange/SKILL.md` | The operating manual for the contract - how to read an export, how to propose a profile update, how to emit a jam link. Every other piece here composes with it rather than restating its rules. |
+| `skills/music-interchange/SKILL.md` | The operating manual for the contract - how to read an export (profile.json first), the minimum participation contract + steward role for the person-owned `musician-profile/v1`, how to propose a profile update, how to emit a jam link. Every other piece here composes with it rather than restating its rules. |
 | `skills/music-theory-coach/SKILL.md` | Theory-correct defaults (scale/mode/chord choices) - copied from the app's own coach bench. |
 | `skills/pedagogy-coach/SKILL.md` | Learning-design rules (one-thing-at-a-time, spacing, recall-first) - copied from the app's own coach bench. |
 | `skills/songwriting-coach/SKILL.md` | Proven progression families per genre/section, lyric-craft rules - copied byte-for-byte from the app's own coach bench (no links needed adjusting). |

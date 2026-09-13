@@ -24,6 +24,13 @@ owns.
 Honor `preferences[]` from the profile doc (e.g. a stated instrument, a
 disliked drill style, a genre lean) - state which preferences shaped the plan.
 
+When `profile.json` is present, build the plan against its `goals` (they come
+first) and write it INTO the profile's `plan` (`updated`, `steward:
+"agent:<your-tool-name>"`, `items[]` each with `id`, `statement`,
+`competencies`, `goal`, `status: "todo"`), hand back profile.json with nothing
+removed - you are the steward of that section. Ask the human before parking or
+replacing a goal.
+
 Output: a numbered plan (3-5 items) - each item names the ONE new thing, the
 mastered background it builds on, and how it will be marked done. If a plan
 item would work well as a jam-over-progression session, hand it to

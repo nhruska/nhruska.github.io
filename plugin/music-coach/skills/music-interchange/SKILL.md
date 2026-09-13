@@ -14,6 +14,7 @@ code, a network call, or a server. Full contract: `music/agent/AGENTS.md`
 
 | File | Shape | Read it for |
 |---|---|---|
+| `profile.json` (the bundle) | `musician-profile/v1` - the PERSON's document: `competencies` (taxonomy, ids `<framework>/<competency>`, `branch` paths), `assessments` (dated claims naming `method` + `modality`), `evidence` (sourced, with modality), `goals`, `plan` (coach-stewarded), `preferences`, `participants`, `provenance`, `extensions` + unknown keys. Carries its own `contract` (`minimum-participation/v1`) | The musician's state across every app that touched the document. **Read `goals` first.** A competency with NO assessment is UNASSESSED - never beginner, never 0. The app's own `kind: "app-progression"` evidence is `modality: "compose"` (it watched composing, never playing) - evidence of doing, not a level |
 | `music-songbook-<date>.json` (backup envelope) | `{ app:"music", schema, exportedAt, data:{key:rawString} }` | The FULL profile - repertoire, setlists, progressions, preferences, skill progress. `data` values are raw strings - `JSON.parse` each key you need. Owned key prefixes: `songbook.` `roadcase-` `bt.` `music.` `tri.` |
 | `<skill-id>/SKILL.md` (skills bundle) | Open-skills-format file; the fenced ```` ```json ```` block under "## Profile data" is the exact `skill-competency-profile/v1` doc - the table above it is presentation only | One skill's competency + preferences |
 | `skill-competency-profile/v1` (embedded doc) | `{ schema, skill, discipline:"music", updated, provenance:[{source,at}], competencies:[{id,name,desc,level,target,evidence_count,last_evidence}], preferences?:[{id,statement,evidence_count,last_evidence}] }` | Levels vs targets (gaps), evidence recency (staleness), taste statements |
@@ -28,11 +29,32 @@ When the envelope and a skills-bundle SKILL.md both carry the same skill's
 doc, the one with the newer `updated` wins; on a tie, the envelope wins (it
 is the byte-faithful whole-app snapshot).
 
-## Proposing a profile update (the ONLY write seam)
+## The participation contract (profile.json)
+
+Three rules, carried inside the document: **read what you understand, preserve
+what you don't (byte-identical, keys you have never seen included), add what
+you legitimately know** - as evidence, or an assessment naming its `method`
+(self-report | observed | coach | inferred) and `modality` (perform | compose |
+write | listen | tune | theory | unspecified). Never a level you did not observe.
+
+**You are the steward** of `plan` and of the assessments you author, with
+`goals` in mind. Propose an assessment only with evidence you can cite; when
+meaning is ambiguous or the change is important (a level going down, a new goal,
+a branch change) ask the human in the conversation BEFORE writing it. Every
+record you add carries your own `id` (`as:<tool>:...`, `ev:<tool>:...`),
+`source: "agent:<your-tool-name>"` and `at`; append a `participants` entry and a
+`provenance` entry. Import is a union by id - a later `at`/`updated` replaces
+its older self, another participant's record is never rewritten. Never turn the
+app's compose-modality counters into a proficiency number on your own.
+
+**Preferred hand-back:** `profile.json` with your records added and nothing
+removed. The user imports it from Settings -> Skills (same picker as SKILL.md).
+
+## Proposing a per-skill update (the legacy write seam, still accepted)
 
 Never write localStorage, never hand back a modified backup envelope (restore
-is byte-faithful and would bypass validation). Edit or author a
-`skill-competency-profile/v1` doc instead:
+is byte-faithful and would bypass validation). For a single skill, edit or
+author a `skill-competency-profile/v1` doc:
 
 1. Append a provenance entry `{ source: "agent:<your-tool-name>", at: "<ISO>" }`
    - never rewrite or delete an existing entry.
@@ -71,15 +93,18 @@ stale cached build degrades to opening normally, never an error.
 
 Never: fabricate or hand back a modified backup envelope for restore; rewrite
 or delete an existing `provenance` entry (append only); bump a competency
-`level` without an evidence delta; invent a YouTube id/key for a suggested
-track; pre-respell chord tokens (display respelling is the app's job); or
-publish/upload/commit a user's exported files anywhere - they are personal
-data, keep them on-device/local.
+`level` without an evidence delta; emit an assessment for a competency you did
+not observe; delete or rewrite another participant's records or keys in
+profile.json; invent a YouTube id/key for a suggested track; pre-respell chord
+tokens (display respelling is the app's job); or publish/upload/commit a user's
+exported files anywhere - they are personal data, keep them on-device/local.
 
 ## Self-check before acting
 
 1. Reading the fenced JSON block, or guessing from the presentation table?
+   For profile.json: did you read `goals` first, and treat absence as unassessed?
 2. Does the proposed doc append provenance and evidence, never rewrite either?
+   Does every assessment you added name its method AND modality, with evidence cited?
 3. Does the jam link use canonical-sharp tokens and a keyless `yt` value?
 4. Is there a stated source for every level change and every suggested key?
 

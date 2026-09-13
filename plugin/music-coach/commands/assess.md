@@ -9,7 +9,13 @@ Apply the `music-interchange` skill's "Reading an export" rules before doing
 anything else - it defines the file shapes and where the real data lives (the
 fenced JSON block, not the presentation table).
 
-Produce, per skill found:
+If `profile.json` is present, lead with it: list `goals`, then per competency
+the LATEST assessment (value, scale, method, modality, source, at) or
+**unassessed** - never a number for absence - and the evidence that backs it.
+Note the modality of every record: the app's own `app-progression` evidence is
+`compose`, so it says nothing about performing.
+
+Then, per skill found in the SKILL.md / envelope docs:
 
 1. **Gap table** - each competency: `level`, `target`, gap (`target - level`),
    `evidence_count`, `last_evidence`. Sort worst-gap first.

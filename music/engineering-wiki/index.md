@@ -37,6 +37,7 @@
 | [practice-studio.md](systems/practice-studio.md) | The Studio overlay: solo panel, position walk, buildWhy circle, curation loop, Compose bridge |
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
 | [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
+| [musician-profile.md](systems/musician-profile.md) | The person-owned `musician-profile/v1` (profile.json) + the minimum participation contract; competencies vs assessments (unassessed explicit); progression as compose-modality EVIDENCE; instrument branches, stable ids, provenance; coach as steward of goals + plan; bundle/import seam; future direction |
 | [theme-tokens.md](systems/theme-tokens.md) | Light/dark token values + the `music.theme.v1` boot mechanism; the copy-don't-invent rule for any surface outside `music/` (artifact packs, case studies) |
 
 ## workflows/ - how we work on it
@@ -63,6 +64,8 @@
 | Studio / solo panel / backing tracks | systems/practice-studio.md |
 | Key picker / transpose behavior | systems/compose-key-system.md |
 | localStorage / backup / migration | systems/data-model.md |
+| Skills panel / profile.json / the agent bundle / AGENTS.md / capabilities.json / what a coach may write | systems/musician-profile.md |
+| "Is this competency a beginner or unassessed?" / a level for something the app never observed | systems/musician-profile.md |
 | SW cache / offline | systems/offline-pwa.md |
 | A render check passed but it still looks wrong | workflows/render-verification-traps.md |
 | Chord tiles overlapping / diagram spilling past its cell | systems/layout-tokens.md |
