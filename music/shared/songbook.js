@@ -6643,13 +6643,14 @@
       fileInput.type = 'file'; fileInput.id = 'skillsImportFile';
       fileInput.accept = 'application/json,.json,text/markdown,.md'; fileInput.hidden = true;
       sec.appendChild(fileInput);
-      // Cheap schema peek - never throws, false on anything that isn't a
-      // music-setup/v1 object (malformed JSON, a profile doc, garbage).
-      function looksLikeSetupDoc(text) {
+      // ONE schema peek for the whole picker - never throws; returns the
+      // parsed object (or null on malformed JSON / a non-object) so the
+      // dispatch below reads `.schema` once instead of re-parsing per shape.
+      function peekJson(text) {
         try {
           var obj = JSON.parse(text);
-          return !!(obj && typeof obj === 'object' && global.SetupDoc && obj.schema === global.SetupDoc.SCHEMA);
-        } catch (e) { return false; }
+          return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : null;
+        } catch (e) { return null; }
       }
       // Canonical-sharp the tonic for the Key <select> (its option VALUES are
       // canonical-sharp tokens - see repertoire-form.js rootOptionsHtml). A
@@ -6710,27 +6711,21 @@
       }
       // M-MUSICIAN-PROFILE: the same picker also accepts a profile.json
       // (`musician-profile/v1`, the person-owned document the bundle now
-      // ships). Same schema-peek dispatch as the setup doc - never by file
-      // name. Import MERGES under the participation contract (known sections
-      // by id, unknown keys preserved), then absorbs the app's OWN progression
-      // counters from the profile with MAX semantics (another device's copy of
-      // the same counters, never summed as independent evidence).
-      function looksLikeProfileDoc(text) {
-        try {
-          var obj = JSON.parse(text);
-          return !!(obj && typeof obj === 'object' && global.MusicianProfile && obj.schema === global.MusicianProfile.SCHEMA);
-        } catch (e) { return false; }
-      }
-      function applyProfileFile(text) {
+      // ships). Same schema dispatch as the setup doc - never by file name.
+      // Import MERGES under the participation contract (known sections by
+      // id, unknown keys preserved). It deliberately does NOT feed the app's
+      // own progression counters back from the profile: those records are
+      // readable by every participant and their numbers are plain data, so
+      // re-ingesting them would let an edited hand-back move the Skills bars
+      // for competencies nothing observed. Counters travel between devices
+      // in the backup envelope (byte-faithful restore), never through here.
+      function applyProfileDoc(obj) {
         var MP = global.MusicianProfile, res;
-        try { res = MP.importJson(text); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
+        try { res = MP.importJson(obj); } catch (e) { res = { ok: false, reason: 'could not read file' }; }
         if (!res || !res.ok) {
           showToast((res && res.reason) ? ("Couldn't import - " + res.reason) : "Couldn't import that file", true);
           return;
         }
-        try {
-          MP.progressionDocs(res.profile).forEach(function (d) { C.importProfile(d, undefined, { counters: 'max' }); });
-        } catch (e) { /* counters are a courtesy - the profile itself already landed */ }
         var a = res.added || {}, parts = [];
         if (a.assessments) parts.push(a.assessments + ' assessment' + (a.assessments === 1 ? '' : 's'));
         if (a.goals) parts.push(a.goals + ' goal' + (a.goals === 1 ? '' : 's'));
@@ -6744,13 +6739,15 @@
         rdr.onload = function () {
           var text = String(rdr.result);
           var isMd = /\.md$/i.test(f.name || '');
-          if (!isMd && looksLikeProfileDoc(text)) {
-            applyProfileFile(text);
+          var peeked = isMd ? null : peekJson(text);
+          var schema = peeked ? peeked.schema : null;
+          if (schema && global.MusicianProfile && schema === global.MusicianProfile.SCHEMA) {
+            applyProfileDoc(peeked);
             fileInput.value = '';
             renderSkillsPanel();
             return;
           }
-          if (!isMd && looksLikeSetupDoc(text)) {
+          if (schema && global.SetupDoc && schema === global.SetupDoc.SCHEMA) {
             applySetupDocFile(text);
             fileInput.value = '';
             return;
@@ -6811,8 +6808,7 @@
           var md = json ? global.SkillMd.render(json) : null;
           if (md) files.push({ path: global.SkillMd.bundlePath(fw.id), text: md });
         });
-        if (!files.length) { showToast("Nothing to export yet", true); return; }
-        var skillCount = files.length;
+        var skillCount = files.length; // SKILL.md files only; profile.json + docs come next
         // AGENTS.md: self-describing agent instructions bundled at the zip root
         // (S13 A1) so a user-side coding agent handed only this folder can
         // orient with zero app code. Guarded (agent-readme.js not wired yet on
@@ -6853,6 +6849,13 @@
             });
             if (pj) files.push({ path: 'profile.json', text: pj });
           } catch (e) { /* storage blocked - ship without the profile */ }
+        }
+        // Nothing of the PERSON's in the zip (no skill has evidence AND no
+        // profile) -> nothing to export. A device holding only an imported
+        // profile.json still exports it - the lifelong document must never be
+        // trapped behind the app's own compose counters.
+        if (!files.some(function (f) { return f.path === 'profile.json' || /\/SKILL\.md$/.test(f.path); })) {
+          showToast("Nothing to export yet", true); return;
         }
         // Round 18 (operator friction: "I had to export my skills in a
         // separate zip after I started the coaching conversation... a single
@@ -6906,7 +6909,10 @@
           pane.appendChild(gp);
         }
 
-        var has = C.hasData();
+        // "Has data" = the app's own counters OR an imported musician profile:
+        // a device that only ever received a coach's profile.json must still
+        // be able to export the person-owned document.
+        var has = C.hasData() || !!(global.MusicianProfile && typeof global.MusicianProfile.hasData === 'function' && global.MusicianProfile.hasData());
         // First-start lead: no data yet -> import affordance first (never a modal).
         var importRow = document.createElement('button');
         // UAT batch 5: the .setAction primitive - one row, one action, no prose.
@@ -6949,8 +6955,11 @@
             var when = fmtDate(c.last_evidence);
             // Unassessed is EXPLICIT, not "0 / 80": a competency the app has
             // never observed says so, instead of reading as a beginner score.
-            cm.textContent = c.evidence_count
-              ? (c.level || 0) + ' / ' + c.target + ' · ' + c.evidence_count + '×' + (when ? ' · ' + when : '')
+            // A SKILL.md hand-back may set a level with no evidence count
+            // (AGENTS.md case 3, a corrected fresh install) - that row has a
+            // number and must show it, not contradict its own bar.
+            cm.textContent = (c.evidence_count || c.level)
+              ? (c.level || 0) + ' / ' + c.target + (c.evidence_count ? ' · ' + c.evidence_count + '×' : '') + (when ? ' · ' + when : '')
               : 'not yet observed';
             cr.appendChild(cn); cr.appendChild(bar); cr.appendChild(cm);
             detail.appendChild(cr);

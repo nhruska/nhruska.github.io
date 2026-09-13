@@ -44,8 +44,12 @@ a branch change) ask the human in the conversation BEFORE writing it. Every
 record you add carries your own `id` (`as:<tool>:...`, `ev:<tool>:...`),
 `source: "agent:<your-tool-name>"` and `at`; append a `participants` entry and a
 `provenance` entry. Import is a union by id - a later `at`/`updated` replaces
-its older self, another participant's record is never rewritten. Never turn the
-app's compose-modality counters into a proficiency number on your own.
+its older self, another participant's record is never rewritten; on a tie the
+newer document wins, so set the top-level `updated` when you finish. The app's
+own `app-progression` records are read-only to you - the app never re-ingests
+its counters from a profile, so editing those numbers changes nothing; write an
+assessment instead. Never turn the app's compose-modality counters into a
+proficiency number on your own.
 
 **Preferred hand-back:** `profile.json` with your records added and nothing
 removed. The user imports it from Settings -> Skills (same picker as SKILL.md).

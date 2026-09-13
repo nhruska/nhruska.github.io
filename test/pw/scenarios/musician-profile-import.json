@@ -1,6 +1,6 @@
 {
   "name": "musician-profile-import",
-  "proves": "M-MUSICIAN-PROFILE: the Skills panel says 'not yet observed' for a competency the app never saw (unassessed is explicit, never '0 / 80'); a coach's profile.json hand-back imports through the REAL file picker (schema dispatch), the goal + plan render as quiet read-only lines, the coach's records + an unknown top-level key are preserved in storage, the fresh device adopts the musician id, and the app's next export carries the coach's records alongside its own compose-modality evidence with no level for what it never observed",
+  "proves": "M-MUSICIAN-PROFILE: the Skills panel says 'not yet observed' for a competency the app never saw (unassessed is explicit, never '0 / 80'); a coach's profile.json hand-back imports through the REAL file picker (schema dispatch), the goal + plan render as quiet read-only lines, the coach's records + an unknown top-level key are preserved in storage, the fresh device adopts the musician id, and the app's next export carries the coach's records alongside its own compose-modality evidence with no level for what it never observed; a tampered hand-back that edits the app's own progression numbers moves nothing in the app",
   "viewport": {
     "width": 412,
     "height": 915
@@ -100,8 +100,23 @@
     },
     {
       "action": "evalAssert",
-      "label": "the next export (what downloadBundle writes as profile.json) carries the coach's records untouched, the app as a participant with deep links, its compose-modality evidence, and NO level for the 24 taxonomy entries nothing assessed (25 competencies, exactly one coach-assessed plus the self-report if answered)",
-      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var j=MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:(window.GuidanceLevel&&GuidanceLevel.get())||null,version:(window.BuildStamp&&BuildStamp.VERSION)||null});var d=JSON.parse(j);var app=d.participants.filter(function(p){return p.id==='app:music';})[0];var ev=d.evidence.filter(function(e){return e.id==='ev:app:music:progression:music-composition';})[0];var coach=d.assessments.filter(function(a){return a.id==='as:claude:1';})[0];var self=d.assessments.filter(function(a){return a.method==='self-report';});return !!app&&/^https:/.test(app.url)&&/^https:/.test(app.capabilities_url)&&!!ev&&ev.modality==='compose'&&!!coach&&coach.value===40&&d.competencies.length===25&&(d.assessments.length===1+self.length)&&d['x-future-section'].anything===true&&d.contract.id==='minimum-participation/v1';})()"
+      "label": "the next export (what downloadBundle writes as profile.json) carries the coach's records untouched, the app as a participant with deep links, its compose-modality evidence, and NO level for the 24 taxonomy entries nothing assessed (every framework competency present exactly once, exactly one coach-assessed plus the self-report if answered)",
+      "js": "(function(){var MP=window.MusicianProfile,C=window.Competency;var j=MP.exportJson(undefined,{frameworks:C.FRAMEWORKS,progression:C.load(),selfReport:(window.GuidanceLevel&&GuidanceLevel.get())||null,version:(window.BuildStamp&&BuildStamp.VERSION)||null});var d=JSON.parse(j);var app=d.participants.filter(function(p){return p.id==='app:music';})[0];var ev=d.evidence.filter(function(e){return e.id==='ev:app:music:progression:music-composition';})[0];var coach=d.assessments.filter(function(a){return a.id==='as:claude:1';})[0];var self=d.assessments.filter(function(a){return a.method==='self-report';});return !!app&&/^https:/.test(app.url)&&/^https:/.test(app.capabilities_url)&&!!ev&&ev.modality==='compose'&&!!coach&&coach.value===40&&d.competencies.length===C.FRAMEWORKS.reduce(function(n,fw){return n+fw.competencies.length;},0)&&(d.assessments.length===1+self.length)&&d['x-future-section'].anything===true&&d.contract.id==='minimum-participation/v1';})()"
+    },
+    {
+      "action": "uploadText",
+      "selector": "#skillsImportFile",
+      "name": "profile.json",
+      "text": "{\"schema\": \"musician-profile/v1\", \"id\": \"mp_scenario\", \"updated\": \"2026-09-13T15:00:00.000Z\", \"evidence\": [{\"id\": \"ev:app:music:progression:music-composition\", \"at\": \"2026-09-13T15:00:00.000Z\", \"source\": \"app:music\", \"kind\": \"app-progression\", \"modality\": \"compose\", \"competencies\": [\"music-composition/comp-progressions\"], \"data\": {\"schema\": \"skill-competency-profile/v1\", \"skill\": \"music-composition\", \"updated\": \"2026-09-13T15:00:00.000Z\", \"competencies\": [{\"id\": \"comp-progressions\", \"level\": 95, \"target\": 80, \"evidence_count\": 500, \"last_evidence\": \"2026-09-13T15:00:00.000Z\"}]}}]}"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "VOLLEY 1 #1: a hand-back that edits the numbers inside the app's own progression record moves NOTHING - the Skills counter stays at the 1 real observation (the app never re-ingests its counters from a profile)",
+      "js": "(function(){var C=window.Competency;var c=C.getProfile('music-composition').competencies.filter(function(x){return x.id==='comp-progressions';})[0];var meta=[].slice.call(document.querySelectorAll('#accBodySkills .compMeta')).map(function(e){return e.textContent;});return c.evidence_count===1&&c.level<95&&!meta.some(function(t){return /^95 /.test(t);});})()"
     },
     {
       "action": "evalAssert",

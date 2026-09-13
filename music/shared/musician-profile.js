@@ -80,7 +80,18 @@
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function isObj(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
   function arr(a) { return Array.isArray(a) ? a : []; }
-  function later(a, b) { return String(a || '') >= String(b || ''); } // ISO strings compare lexically
+  // "Is stamp a at-or-after stamp b?" ISO stamps are PARSED, never compared
+  // as strings: a participant may write a UTC offset (`+02:00`) or a
+  // second-precision `Z` stamp, and a lexical compare orders both wrongly
+  // against the app's millisecond `Z` stamps. Unparseable stamps fall back
+  // to string order so a garbage stamp still merges deterministically.
+  function later(a, b) {
+    var ta = Date.parse(String(a || '')), tb = Date.parse(String(b || ''));
+    if (!isNaN(ta) && !isNaN(tb)) return ta >= tb;
+    if (isNaN(ta) && !isNaN(tb)) return false;   // a missing/garbage stamp never beats a real one
+    if (!isNaN(ta) && isNaN(tb)) return true;
+    return String(a || '') >= String(b || '');
+  }
 
   function uuid() {
     try {
@@ -197,9 +208,41 @@
     list.push(item);
     return list;
   }
-  function pushProvenance(doc, entry) {
-    var key = JSON.stringify(entry);
-    for (var i = 0; i < doc.provenance.length; i++) if (JSON.stringify(doc.provenance[i]) === key) return;
+  // Provenance is append-only for OTHER participants' rows. The app's own
+  // routine stamps (`export` / `import`) are kept as ONE row per action with
+  // the latest `at` - a musician who exports after every session would
+  // otherwise carry hundreds of identical rows in every profile.json.
+  var ROUTINE_ACTIONS = { 'export': true, 'import': true };
+  function provenanceKey(e) { return JSON.stringify([e && e.source, e && e.at, e && e.action, e && e.note]); }
+  // The app is the AUTHORITY on its own records (its progression evidence,
+  // its self-report): on export they are replaced outright, never
+  // stamp-compared - a hand-back that edited one of them (or carried a
+  // future `at`) must not survive the next export.
+  function replaceById(list, item) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === item.id) { list[i] = item; return list; }
+    }
+    list.push(item);
+    return list;
+  }
+  function pushProvenance(doc, entry, index) {
+    if (!entry) return;
+    if (entry.source === APP_ID && ROUTINE_ACTIONS[entry.action]) {
+      for (var j = 0; j < doc.provenance.length; j++) {
+        var p = doc.provenance[j];
+        if (p && p.source === APP_ID && p.action === entry.action && !p.note) {
+          if (later(entry.at, p.at)) p.at = entry.at;
+          return;
+        }
+      }
+    }
+    var key = provenanceKey(entry);
+    if (index) {
+      if (index[key]) return;
+      index[key] = true;
+    } else {
+      for (var i = 0; i < doc.provenance.length; i++) if (provenanceKey(doc.provenance[i]) === key) return;
+    }
     doc.provenance.push(entry);
   }
 
@@ -208,16 +251,23 @@
   // preserved (incoming's copy taken only when incoming is the newer doc).
   function merge(local, incoming) {
     var L = normalize(local), I = normalize(incoming);
-    var incomingNewer = later(I.updated, L.updated) && I.updated !== L.updated;
+    // Ties go to the INCOMING document - the same rule same-id records use
+    // (upsertById's >=), so a coach's second-round edit to its own extension
+    // is never dropped for leaving `updated` untouched.
+    var incomingNewer = later(I.updated, L.updated);
     var M = clone(L);
 
-    if (!L.id && I.id) M.id = I.id;
-    if (L.id && I.id && L.id !== I.id) {
+    // Musician-id adoption is the STORAGE seam's job (importJson: a device
+    // with no stored profile adopts the imported id). By the time two docs
+    // reach merge() both carry an id, so a mismatch is only ever recorded.
+    if (L.id !== I.id) {
       pushProvenance(M, { source: APP_ID, at: I.updated || L.updated, action: 'merge', note: 'imported profile id ' + I.id + ' merged into ' + L.id });
     }
 
     I.participants.forEach(function (p) { if (p && p.id) upsertById(M.participants, clone(p), 'last_seen'); });
-    I.provenance.forEach(function (p) { if (p) pushProvenance(M, clone(p)); });
+    var provIndex = {};
+    M.provenance.forEach(function (p) { provIndex[provenanceKey(p)] = true; });
+    I.provenance.forEach(function (p) { if (p) pushProvenance(M, clone(p), provIndex); });
 
     var compById = {};
     M.competencies.forEach(function (c) { if (c && c.id) compById[c.id] = c; });
@@ -298,7 +348,7 @@
       if (!p || !Array.isArray(p.competencies)) return;
       var counters = p.competencies.filter(function (c) { return c && (c.evidence_count || 0) > 0; });
       if (!counters.length) return; // nothing observed -> no record (absence stays absent)
-      upsertById(d.evidence, {
+      replaceById(d.evidence, {
         id: 'ev:' + APP_ID + ':progression:' + fwId,
         at: p.updated || now,
         source: APP_ID,
@@ -312,19 +362,19 @@
           })
         },
         note: 'The app\'s own progression ladder (level 0-100 toward a per-competency target), grown from composing in the app. Evidence of doing, not a proficiency claim.'
-      }, 'at');
+      });
     });
 
     if (inputs.selfReport) {
       var existing = null;
       d.assessments.forEach(function (a) { if (a && a.id === 'as:' + APP_ID + ':self-report') existing = a; });
       if (!existing || existing.value !== inputs.selfReport) {
-        upsertById(d.assessments, {
+        replaceById(d.assessments, {
           id: 'as:' + APP_ID + ':self-report', competency: 'stringed-instrument',
           value: inputs.selfReport, scale: 'band-3', method: 'self-report', modality: 'unspecified',
           at: now, source: APP_ID, evidence: [],
           note: 'The musician\'s own answer to the app\'s one-time experience-level ask (beginner | intermediate | advanced).'
-        }, 'at');
+        });
       }
     }
 
@@ -370,10 +420,13 @@
     };
   }
 
-  // The app's OWN progression counters carried in a profile (from another
-  // device, or a round trip), as skill-competency-profile/v1 docs competency.js
-  // can absorb with MAX semantics (same counters seen at different times -
-  // never summed as if they were independent observations).
+  // The app's OWN progression counters as carried in a profile, re-shaped as
+  // skill-competency-profile/v1 docs - a READ-ONLY view for readers and tests.
+  // The app never re-ingests these on import: `kind` and `source` are plain
+  // strings any participant can write, so absorbing the numbers would let an
+  // edited hand-back raise the Skills bars for competencies nothing observed -
+  // the exact seam this document exists to guard. Device-to-device transfer
+  // of the counters is the backup envelope's job (byte-faithful restore).
   function progressionDocs(doc) {
     var out = [];
     arr(doc && doc.evidence).forEach(function (e) {

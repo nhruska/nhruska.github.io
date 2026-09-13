@@ -33,6 +33,7 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
+var TAXONOMY_SIZE = C.FRAMEWORKS.reduce(function (n, fw) { return n + fw.competencies.length; }, 0);
 var T0 = '2026-09-13T10:00:00.000Z', T1 = '2026-09-13T11:00:00.000Z', T2 = '2026-09-13T12:00:00.000Z';
 
 /* ---------- the document ---------- */
@@ -82,7 +83,7 @@ test('instrument branches: ukulele and guitar sit under strings; crafts are thei
 /* ---------- competencies vs assessments: unassessed is explicit ---------- */
 test('compose() writes the taxonomy but NO assessment for a musician nothing assessed - every competency reads unassessed, never 0', function () {
   var d = MP.compose(MP.blank({ id: 'mp_t', now: T0 }), { frameworks: C.FRAMEWORKS, progression: {}, selfReport: null, now: T0 });
-  assert.strictEqual(d.competencies.length, 25);
+  assert.strictEqual(d.competencies.length, TAXONOMY_SIZE);
   assert.strictEqual(d.assessments.length, 0);
   assert.strictEqual(d.evidence.length, 0);
   assert.deepStrictEqual(MP.status(d, 'ukulele/uke-open-chords'), { status: 'unassessed' });
@@ -196,7 +197,7 @@ test('merge: known sections union by id; a known competency keeps the LOCAL name
   var comp = m.competencies.filter(function (c) { return c.id === 'ukulele/uke-open-chords'; })[0];
   assert.strictEqual(comp.desc, 'The core open shapes under the fingers.');
   assert.deepStrictEqual(comp.branch, ['instrument', 'strings', 'ukulele']);
-  assert.strictEqual(m.competencies.length, 25, 'no duplicate for a known id');
+  assert.strictEqual(m.competencies.length, TAXONOMY_SIZE, 'no duplicate for a known id');
   assert.strictEqual(m.assessments.length, 1);
   assert.strictEqual(MP.status(m, 'ukulele/uke-open-chords').assessment.method, 'coach');
   assert.strictEqual(m.evidence.length, 1);
@@ -286,6 +287,40 @@ test('importJson rejects the wrong schema, malformed JSON, non-objects and misty
 test('vocabularies: methods + modalities are the published sets and never include a proficiency-from-counters method', function () {
   assert.deepStrictEqual(MP.METHODS, ['self-report', 'observed', 'coach', 'inferred']);
   assert.ok(MP.MODALITIES.indexOf('compose') >= 0 && MP.MODALITIES.indexOf('perform') >= 0 && MP.MODALITIES.indexOf('unspecified') >= 0);
+});
+
+/* ---------- volley 1 fixes ---------- */
+test('stamps are PARSED, not string-compared: a UTC-offset stamp and a second-precision Z stamp order correctly against millisecond Z stamps', function () {
+  var local = MP.blank({ id: 'mp_t', now: '2026-09-13T13:30:00.000Z' });
+  local.plan = { updated: '2026-09-13T13:30:00.000Z', steward: 'a', items: [] };
+  var staleWithOffset = { schema: MP.SCHEMA, id: 'mp_t', updated: '2026-09-13T14:00:00+02:00', plan: { updated: '2026-09-13T14:00:00+02:00', steward: 'b', items: [] } }; // = 12:00Z, OLDER
+  assert.strictEqual(MP.merge(local, staleWithOffset).plan.steward, 'a', 'an older offset stamp must not win by string order');
+  var newerSecondPrecision = { schema: MP.SCHEMA, id: 'mp_t', updated: '2026-09-13T13:31:00Z', plan: { updated: '2026-09-13T13:31:00Z', steward: 'c', items: [] } };
+  assert.strictEqual(MP.merge(local, newerSecondPrecision).plan.steward, 'c');
+  var garbage = { schema: MP.SCHEMA, id: 'mp_t', updated: 'yesterday', plan: { updated: 'yesterday', steward: 'd', items: [] } };
+  assert.strictEqual(MP.merge(local, garbage).plan.steward, 'a', 'a garbage stamp never beats a real one');
+});
+test('a tie on `updated` goes to the INCOMING document for unknown keys and extensions - a coach\'s second-round edit is never dropped for leaving `updated` alone', function () {
+  var local = MP.blank({ id: 'mp_t', now: T1 }); local.extensions['x-claude'] = { session: 'abc' }; local['x-notes'] = 1;
+  var second = { schema: MP.SCHEMA, id: 'mp_t', updated: T1, extensions: { 'x-claude': { session: 'def' } }, 'x-notes': 2 };
+  var m = MP.merge(local, second);
+  assert.strictEqual(m.extensions['x-claude'].session, 'def');
+  assert.strictEqual(m['x-notes'], 2);
+});
+test('the app keeps ONE export and ONE import provenance stamp (latest `at`); other participants\' rows stay append-only and deduped', function () {
+  var s = FakeStore();
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T0 });
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T1 });
+  MP.exportJson(s, { frameworks: C.FRAMEWORKS, now: T2 });
+  var d = MP.loadStored(s);
+  var exports = d.provenance.filter(function (p) { return p.source === 'app:music' && p.action === 'export'; });
+  assert.strictEqual(exports.length, 1);
+  assert.strictEqual(exports[0].at, T2);
+  var hand = { schema: MP.SCHEMA, id: d.id, updated: T2, provenance: [{ source: 'agent:x', at: T1, action: 'assess' }, { source: 'agent:x', at: T1, action: 'assess' }, { source: 'agent:x', at: T2, action: 'assess' }] };
+  MP.importJson(hand, s, { now: T2 }); MP.importJson(hand, s, { now: T2 });
+  d = MP.loadStored(s);
+  assert.strictEqual(d.provenance.filter(function (p) { return p.source === 'agent:x'; }).length, 2, 'exact duplicates dropped, distinct rows kept');
+  assert.strictEqual(d.provenance.filter(function (p) { return p.action === 'import'; }).length, 1);
 });
 
 run();

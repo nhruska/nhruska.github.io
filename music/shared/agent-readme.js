@@ -100,8 +100,12 @@
     L.push('Merge on import is a UNION by id - the same id with a later `at`/`updated`');
     L.push('replaces its older self; another participant\'s record is never rewritten.');
     L.push('Append your participant entry (`id`, `name`, `understands`, `last_seen`) and a');
-    L.push('provenance entry. Unknown top-level keys and `extensions["x-<you>"]` are yours to');
-    L.push('add and are preserved by every participant.');
+    L.push('provenance entry, and set the top-level `updated` to when you finished (ISO 8601,');
+    L.push('UTC `Z` preferred - stamps are parsed, so an offset also works). Unknown top-level');
+    L.push('keys and `extensions["x-<you>"]` are yours to add and are preserved by every');
+    L.push('participant; on a tie the newer document wins. The app\'s own `app-progression`');
+    L.push('records are READ-ONLY to you: the app never re-ingests its counters from a');
+    L.push('profile, so editing those numbers changes nothing - write an assessment instead.');
     L.push('');
     L.push('## What you MAY do');
     L.push('');

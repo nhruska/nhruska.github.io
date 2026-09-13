@@ -67,8 +67,12 @@ conversation before writing it. Every record you add carries your own `id`
 Merge on import is a UNION by id - the same id with a later `at`/`updated`
 replaces its older self; another participant's record is never rewritten.
 Append your participant entry (`id`, `name`, `understands`, `last_seen`) and a
-provenance entry. Unknown top-level keys and `extensions["x-<you>"]` are yours to
-add and are preserved by every participant.
+provenance entry, and set the top-level `updated` to when you finished (ISO 8601,
+UTC `Z` preferred - stamps are parsed, so an offset also works). Unknown top-level
+keys and `extensions["x-<you>"]` are yours to add and are preserved by every
+participant; on a tie the newer document wins. The app's own `app-progression`
+records are READ-ONLY to you: the app never re-ingests its counters from a
+profile, so editing those numbers changes nothing - write an assessment instead.
 
 ## What you MAY do
 

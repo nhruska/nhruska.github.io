@@ -29,10 +29,15 @@ optional reading for a participant. Source of truth for the rules as code:
 The seam: at export, `MusicianProfile.compose()` writes what the app
 LEGITIMATELY knows into the profile. The app's counters ride as **evidence**
 (`kind: "app-progression"`, one record per framework with any evidence,
-`modality: "compose"`), never as an assessment. On import,
-`progressionDocs()` hands the app's own counters back to `competency.js` with
-**MAX** semantics (`importProfile(doc, store, { counters: 'max' })`) - the same
-counters seen at another time are never summed as independent observations.
+`modality: "compose"`), never as an assessment. On import the app does **not**
+re-ingest those counters from the profile: `kind` and `source` are plain
+strings any participant can write, so absorbing the numbers would let an
+edited hand-back move the Skills bars for competencies nothing observed - the
+exact seam this document guards. `progressionDocs()` is a read-only view for
+readers and tests; device-to-device transfer of the counters is the backup
+envelope's job (byte-faithful restore). `competency.js` keeps
+`importProfile(doc, store, { counters: 'max' })` for a caller that knowingly
+merges its own counters (a pure API, no app path uses it).
 
 ## Competencies vs assessments - unassessed is explicit
 
@@ -66,16 +71,16 @@ evidence in the profile. A coach that only read chord charts must not claim
 | `schema` | `"musician-profile/v1"` | fixed |
 | `contract` | `{ id: "minimum-participation/v1", rules[3], unassessed }` | fixed, self-describing |
 | `id` | `mp_<uuid>`, minted once per device | local wins; a device with no stored profile ADOPTS the imported id; a mismatch is recorded in provenance, never rejected |
-| `updated` | ISO | later wins |
+| `updated` | ISO 8601 (parsed with `Date.parse`, never string-compared - offsets and second precision order correctly) | later wins; a tie goes to the incoming document |
 | `participants[]` | `{ id, name, version, url, capabilities_url, understands[], last_seen }` | union by id, later `last_seen` |
-| `provenance[]` | `{ source, at, action }` | concat, append-only, exact duplicates dropped |
+| `provenance[]` | `{ source, at, action }` | concat, append-only for other participants, exact duplicates dropped; the app keeps ONE `export` and ONE `import` stamp with the latest `at` |
 | `competencies[]` | `{ id: "<framework>/<competency>", name, desc, branch[], source }` | union by id; a known id keeps the LOCAL name/desc/branch; unknown ids preserved verbatim |
 | `assessments[]` | `{ id, competency, value, scale, target?, method, modality, at, source, evidence[], note? }` | union by id; same id -> later `at` wins |
 | `evidence[]` | `{ id, at, source, kind, modality, competencies[], data, note? }` | union by id; same id -> later `at` wins |
 | `goals[]` | `{ id, statement, competencies[], status: active\|met\|parked, created, updated, source }` | union by id, later `updated` |
 | `plan` | `{ updated, steward, items[{ id, statement, competencies[], goal?, status: todo\|doing\|done, updated }] }` | the later `updated` wins WHOLE (the steward owns it) |
 | `preferences[]` | competency.js shape | union by id, sum evidence, later statement |
-| `extensions{}` + any unknown top-level key | anything | preserved; both sides carry the same unknown key -> the newer document wins |
+| `extensions{}` + any unknown top-level key | anything | preserved; both sides carry the same unknown key -> the newer document wins, ties to the incoming one |
 
 **Stable ids.** Competency ids reuse the existing framework + competency ids
 verbatim (the portable contract since M-COMPETENCY), namespaced
@@ -109,7 +114,7 @@ them.
 |---|---|
 | Storage | `music.profile.v1` - additive under the owned `music.` prefix, so `backup.js` snapshots/restores it with no `SCHEMA_VERSION` bump. Defensive reader (corrupt -> fresh blank). Registered in [data-model.md](data-model.md) |
 | Export | `downloadBundle()` (songbook.js) writes `profile.json` at the zip root via `MusicianProfile.exportJson(store, { frameworks, progression, selfReport, version })` beside README.md, AGENTS.md, capabilities.json, `<skill>/SKILL.md` and the backup envelope. Export also persists the composed profile |
-| Import | The Skills picker dispatches on `.schema` (never file name): `musician-profile/v1` -> `MusicianProfile.importJson` then `progressionDocs` -> `Competency.importProfile(..., { counters: 'max' })`; `music-setup/v1` -> setup doc; `.md` -> `SkillMd.parse` -> `Competency.importProfile` |
+| Import | The Skills picker parses once (`peekJson`) and dispatches on `.schema` (never file name): `musician-profile/v1` -> `MusicianProfile.importJson` (no counter re-ingest, see above); `music-setup/v1` -> setup doc; `.md` -> `SkillMd.parse` -> `Competency.importProfile`. Export (`Export for my AI`) is available when the app has counters OR a stored profile - an imported document is never trapped on a device |
 | Capabilities | Stay app-side in `capabilities.js` / `music/agent/capabilities.json`, each with an https `deep_link` into the live app (the app has no `#tab` routing - `location.hash` selects the instrument - so links stay honest: the app plus the real `?p=` / `?jam=` grammars). The profile's participant entry points at `capabilities_url` |
 | AGENTS.md | Optional for a participant. Bundled and served; documents the profile section, the steward role and the modality rule (`agent-readme.js`, byte-gated) |
 

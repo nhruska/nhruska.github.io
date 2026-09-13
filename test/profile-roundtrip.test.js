@@ -43,6 +43,7 @@ function run() {
   process.exit(failed ? 1 : 0);
 }
 
+var TAXONOMY_SIZE = C.FRAMEWORKS.reduce(function (n, fw) { return n + fw.competencies.length; }, 0);
 var T0 = '2026-09-13T10:00:00.000Z', T1 = '2026-09-13T11:00:00.000Z', T2 = '2026-09-13T12:00:00.000Z', T3 = '2026-09-13T13:00:00.000Z';
 
 /* ---------- LyricLab: a minimal participant written against the contract only ---------- */
@@ -146,8 +147,11 @@ test('round trip: Music app -> LyricLab -> Music app -> LyricLab loses nothing o
   assert.strictEqual(uke2.data.competencies.length, 2, 'day-2 composing is visible to LyricLab as updated evidence');
   assert.strictEqual(uke2.modality, 'compose', 'still honest about modality');
   // Provenance tells the whole story, append-only.
+  // The app keeps ONE export and ONE import stamp (latest `at`); every other
+  // participant's row is append-only - so the trail stays readable for life.
   var trail = d2.provenance.map(function (p) { return p.source + ':' + p.action; });
-  assert.deepStrictEqual(trail, ['app:music:export', 'app:lyriclab:assess', 'app:music:import', 'app:music:export']);
+  assert.deepStrictEqual(trail, ['app:music:export', 'app:lyriclab:assess', 'app:music:import']);
+  assert.strictEqual(d2.provenance[0].at, T3, 'the export stamp carries the LATEST export time');
   // Nothing LyricLab did turned into a proficiency number for something it did not observe.
   assert.strictEqual(MP.status(d2, 'ukulele/uke-open-chords').status, 'unassessed');
 });
@@ -167,8 +171,31 @@ test('a participant that strips what it does not understand is DETECTABLE: the m
   var stored = MP.loadStored(s);
   assert.strictEqual(stored.evidence.length, 1, 'the app\'s evidence survived a lossy hand-back');
   assert.strictEqual(stored.assessments.length, 1);
-  assert.strictEqual(stored.competencies.length, 25);
+  assert.strictEqual(stored.competencies.length, TAXONOMY_SIZE);
   assert.ok(stored.participants.some(function (p) { return p.id === 'app:lossy'; }));
+});
+
+test('a hand-back that EDITS the numbers inside the app\'s own progression evidence changes nothing the app believes: the record is preserved as data, but the app never re-ingests its counters from a profile', function () {
+  var s = FakeStore();
+  C.recordEvidence('ukulele', 'uke-open-chords', null, s);
+  var out = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T0 }));
+  var tampered = JSON.parse(JSON.stringify(out));
+  tampered.updated = T1;
+  tampered.evidence[0].at = T1;
+  tampered.evidence[0].data.competencies[0].level = 95;
+  tampered.evidence[0].data.competencies[0].evidence_count = 500;
+  assert.strictEqual(MP.importJson(tampered, s, { now: T2 }).ok, true);
+  // The profile's copy of the record is whatever the newer document says (rule 2: preserve),
+  var stored = MP.loadStored(s);
+  assert.strictEqual(stored.evidence[0].data.competencies[0].level, 95);
+  // ...but the app's own counters are untouched - the import path never feeds them
+  // (songbook.js applyProfileDoc; progressionDocs is a read-only view for readers).
+  var own = C.getProfile('ukulele', s).competencies.filter(function (c) { return c.id === 'uke-open-chords'; })[0];
+  assert.strictEqual(own.evidence_count, 1);
+  assert.ok(own.level < 95);
+  // and the NEXT export overwrites the tampered copy with the app's real counters (deterministic id, later `at`).
+  var again = JSON.parse(MP.exportJson(s, { frameworks: C.FRAMEWORKS, progression: C.load(s), now: T3 }));
+  assert.strictEqual(again.evidence.filter(function (e) { return e.id === 'ev:app:music:progression:ukulele'; })[0].data.competencies[0].evidence_count, 1);
 });
 
 run();
