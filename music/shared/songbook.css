@@ -697,6 +697,14 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .libSet{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
 .setHead{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
 #setBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:auto;}
+/* #setBody is BOTH the flex column that stacks the rows (the .songs rule above)
+   AND the scroll container. A set row is .listItem.swipeable, whose overflow:hidden
+   resolves its automatic min-height to 0, and flex shrinking runs BEFORE overflow -
+   so without this the rows squash to fit the viewport and there is never anything
+   to scroll (25 songs rendered as 25 hairlines). Rows keep their content height;
+   the container overflows and scrolls. The All view never showed it because there
+   .songs stacks and .libSongs (its parent) scrolls. Gate: setlist-scroll.json. */
+#setBody>*{flex-shrink:0;}
 #setBody::-webkit-scrollbar{width:0;}
 .setHead .ti{margin-right:auto;}  /* push Edit + Clear to the right */
 .setHead .ti p{font-size:.82rem;font-weight:700;color:var(--txt-soft);}
