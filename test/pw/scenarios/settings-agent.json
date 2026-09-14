@@ -31,12 +31,12 @@
     },
     {
       "action": "waitFor",
-      "selector": ".agentDiscloseHead",
+      "selector": "#agentBlock .agentDiscloseHead",
       "timeoutMs": 8000
     },
     {
       "action": "tap",
-      "selector": ".agentDiscloseHead"
+      "selector": "#agentBlock .agentDiscloseHead"
     },
     {
       "action": "wait",
@@ -54,7 +54,7 @@
     {
       "action": "evalAssert",
       "label": "the merged disclosure is SSOT-shaped and minimal: exactly ONE caption, no URL as body text, both live-doc links still resolved to THIS serving origin (so preview, localhost and the live site each tell their own truth - the claim this scenario exists for), the copy action wired above the tap floor, and the starter-prompt button GONE rather than relocated",
-      "js": "(function(){var d=document.querySelector('.agentDisclose');if(!d)return false;if(d.querySelectorAll('.setHint').length!==1)return false;if(d.textContent.indexOf('Live at:')>=0)return false;var rd=document.getElementById('agentReadmeLink'),cp=document.getElementById('agentCapsLink');if(!rd||!cp)return false;var o=location.origin;if(rd.href!==o+'/music/agent/AGENTS.md')return false;if(cp.href!==o+'/music/agent/capabilities.json')return false;var b1=document.getElementById('agentCopyLinks');if(!b1||typeof b1.onclick!=='function'||b1.offsetHeight<44)return false;return !document.getElementById('agentCopyPrompt');})()"
+      "js": "(function(){var d=document.querySelector('#agentBlock .agentDisclose');if(!d)return false;if(d.querySelectorAll('.setHint').length!==1)return false;if(d.textContent.indexOf('Live at:')>=0)return false;var rd=document.getElementById('agentReadmeLink'),cp=document.getElementById('agentCapsLink');if(!rd||!cp)return false;var o=location.origin;if(rd.href!==o+'/music/agent/AGENTS.md')return false;if(cp.href!==o+'/music/agent/capabilities.json')return false;var b1=document.getElementById('agentCopyLinks');if(!b1||typeof b1.onclick!=='function'||b1.offsetHeight<44)return false;return !document.getElementById('agentCopyPrompt');})()"
     },
     {
       "action": "evalAssert",

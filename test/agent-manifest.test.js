@@ -27,6 +27,7 @@ var Backup = require('../music/shared/backup.js');
 var Competency = require('../music/shared/competency.js');
 var AgentReadme = require('../music/shared/agent-readme.js');
 var Capabilities = require('../music/shared/capabilities.js');
+var MusicianProfile = require('../music/shared/musician-profile.js');
 
 var CAPS_PATH = path.join(__dirname, '..', 'music', 'agent', 'capabilities.json');
 var AGENTS_MD_PATH = path.join(__dirname, '..', 'music', 'agent', 'AGENTS.md');
@@ -73,7 +74,7 @@ test('every listed data_key is OWNED by backup.js (real prefix coverage, no drif
 test('the expected capability ids are all present (no silent drop from the enumerated set)', function () {
   var ids = caps.capabilities.map(function (c) { return c.id; });
   ['tuner', 'jam', 'compose', 'repertoire', 'backing-tracks', 'competency-tracking',
-    'backup-restore', 'jam-deep-link', 'skills-export-import'].forEach(function (id) {
+    'backup-restore', 'jam-deep-link', 'musician-profile', 'skills-export-import'].forEach(function (id) {
     assert.ok(ids.indexOf(id) >= 0, 'missing capability: ' + id);
   });
 });
@@ -194,6 +195,75 @@ test('the bundle writes README.md alongside AGENTS.md', function () {
     require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/path: 'README\.md', text: global\.AgentReadme\.readme\(\)/.test(src),
     'downloadBundle must write README.md from the ONE source, never a hand-authored copy');
+});
+
+/* ---- M-MUSICIAN-PROFILE: capabilities stay APP-SIDE with a deep link each;
+ * the person-owned profile is a capability of its own; the bundle ships it. */
+test('every capability carries an https deep_link into the live app (capabilities stay app-side, linkable)', function () {
+  caps.capabilities.forEach(function (c) {
+    assert.ok(/^https:\/\/nhruska\.github\.io\/music\/play\//.test(String(c.deep_link || '')), c.id + ': missing or non-app deep_link');
+  });
+});
+test('the musician-profile capability names the real MusicianProfile.SCHEMA + STORAGE_KEY (no drifting copies)', function () {
+  var mp = caps.capabilities.filter(function (c) { return c.id === 'musician-profile'; })[0];
+  assert.ok(mp, 'musician-profile capability missing');
+  assert.strictEqual(mp.interchange, MusicianProfile.SCHEMA);
+  assert.deepStrictEqual(mp.data_keys, [MusicianProfile.STORAGE_KEY]);
+  assert.strictEqual(MusicianProfile.CAPABILITIES_URL, 'https://nhruska.github.io/music/agent/capabilities.json',
+    'the profile participant entry must point at the served manifest');
+});
+test('downloadBundle ships profile.json at the zip root (guarded on window.MusicianProfile)', function () {
+  var src = fs.readFileSync(path.join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
+  var i = src.indexOf('function downloadBundle');
+  var body = src.slice(i, src.indexOf('\n      }', i));
+  assert.ok(/global\.MusicianProfile/.test(body), 'the bundle must write the profile (guarded)');
+  assert.ok(/'profile\.json'/.test(body), 'the profile must land at the AGENTS.md-documented name: profile.json');
+});
+test('AGENTS.md documents profile.json, the contract id, the three rules, unassessed, modality and the steward role', function () {
+  var t = AgentReadme.text();
+  assert.ok(t.indexOf(MusicianProfile.SCHEMA) >= 0, 'names the real profile schema string');
+  assert.ok(t.indexOf(MusicianProfile.CONTRACT_ID) >= 0, 'names the real contract id');
+  assert.strictEqual(AgentReadme.PROFILE_SCHEMA, MusicianProfile.SCHEMA);
+  assert.strictEqual(AgentReadme.CONTRACT_ID, MusicianProfile.CONTRACT_ID);
+  ['Read what you understand', 'Preserve what you do not understand', 'Add what you legitimately know'].forEach(function (r) {
+    assert.ok(t.indexOf(r) >= 0, 'missing contract rule: ' + r);
+  });
+  assert.ok(/unassessed/.test(t) && /never beginner/.test(t), 'states that absence is unassessed, never beginner');
+  assert.ok(/overclaim modality/.test(t) && /modality: "compose"/.test(t), 'states the app\'s own modality honestly');
+  assert.ok(/You are the steward/.test(t) && /ASK THE HUMAN/.test(t), 'states the steward role + the human-in-the-loop rule');
+  assert.ok(/profile\.json/.test(AgentReadme.readme()), 'README.md names profile.json');
+});
+
+
+/* ---------- M-MUSICIAN-PROFILE-VNEXT: the exported coach contract ---------- */
+test('VNEXT: AGENTS.md carries the coach contract - startup read, the adaptive guided interview, music-making-first coaching, continuous profile management, and the plan shape', function () {
+  var t = AgentReadme.text();
+  ['read the ENTIRE profile', 'guided interview', 'one question at a time', 'DISCRIMINATING', 'music making first',
+   'hear -> choose -> play -> notice', 'Manage the profile continuously', 'learning edge', 'plain language',
+   'kind: "focus"|"activity"|"edge"', 'deep_link', 'describes', 'THE APP, never the person'].forEach(function (needle) {
+    assert.ok(t.indexOf(needle) >= 0, 'AGENTS.md is missing: ' + needle);
+  });
+});
+test('VNEXT: AGENTS.md separates global musicianship from instrument proficiency, keeps the vocabulary open, and states unassessed + confidence + attached-is-not-analyzed', function () {
+  var t = AgentReadme.text();
+  ['musicianship/*', 'Never collapse these into one level', 'The vocabulary is open', 'flamenco/rasgueado',
+   'confidence` = high | medium | low', 'Do not invent precision', 'artifact-analysis', 'analyzed: false',
+   '"Audio attached" and "audio', 'level: null', 'Never characterize a musician as a beginner'].forEach(function (needle) {
+    assert.ok(t.indexOf(needle) >= 0, 'AGENTS.md is missing: ' + needle);
+  });
+  MusicianProfile.CORE_TAXONOMY.forEach(function (c) {
+    if (/^musicianship\//.test(c.id)) assert.ok(t.indexOf(c.id.split('/')[1]) >= 0, 'AGENTS.md does not name ' + c.id);
+  });
+  assert.ok(t.indexOf('Settings -> Skills') === -1, 'the surface is Settings -> Musician profile now');
+});
+test('VNEXT: the triad-inversions capability deep-links to a page that exists, so a plan item can carry a REAL app link', function () {
+  var caps = Capabilities.data().capabilities;
+  var ti = caps.filter(function (c) { return c.id === 'triad-inversions'; })[0];
+  assert.ok(ti, 'triad-inversions capability missing');
+  assert.strictEqual(ti.deep_link, 'https://nhruska.github.io/music/play/triad-inversions.html');
+  assert.ok(fs.existsSync(path.join(__dirname, '..', 'music', 'play', 'triad-inversions.html')));
+  assert.strictEqual(MusicianProfile.appLink(ti.deep_link), ti.deep_link);
+  caps.forEach(function (c) { assert.ok(c.surfaces.indexOf('Settings -> Skills') === -1, c.id + ' still names the old surface'); });
 });
 
 run();

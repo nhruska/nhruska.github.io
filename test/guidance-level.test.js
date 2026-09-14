@@ -82,4 +82,17 @@ test('set() with a bogus value never clobbers an existing valid level', function
   assert.strictEqual(GuidanceLevel.get(), 'advanced');
 });
 
+
+test('VNEXT: set() also records WHEN the level was tapped (music.guidanceLevel.at.v1) and at() reads it back; absent or corrupt reads null', function () {
+  resetLocalStorage();
+  var GL = GuidanceLevel;
+  assert.strictEqual(GL.at(), null);
+  GL.set('advanced');
+  assert.ok(!isNaN(Date.parse(GL.at())));
+  assert.strictEqual(GL.AT_KEY, 'music.guidanceLevel.at.v1');
+  resetLocalStorage({ 'music.guidanceLevel.at.v1': 'yesterday' });
+  assert.strictEqual(GL.at(), null);
+  GL.set('nope'); assert.strictEqual(GL.at(), null, 'a rejected value stamps nothing');
+});
+
 run();
