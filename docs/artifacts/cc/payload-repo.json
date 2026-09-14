@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T13:49:48Z",
+  "generatedAt": "2026-09-14T15:55:41Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-13T08:58:42Z",
-    "sha": "b73d67f8d52f649504e423edba0225b64c772966",
-    "subject": "docs: propose Thought-Ware Development method v0.1 (#345)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/b73d67f8d52f649504e423edba0225b64c772966"
+    "date": "2026-09-13T13:49:55Z",
+    "sha": "f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283"
   },
   "commits": [
+    {
+      "date": "2026-09-13T13:49:55Z",
+      "sha": "f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283"
+    },
     {
       "date": "2026-09-13T08:58:42Z",
       "sha": "b73d67f8d52f649504e423edba0225b64c772966",
@@ -84,18 +90,12 @@
       "sha": "127c795c3ed5773df68f94427bac8d39307b54b8",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/127c795c3ed5773df68f94427bac8d39307b54b8"
-    },
-    {
-      "date": "2026-09-05T06:38:30Z",
-      "sha": "00f78d5768fed18e6a6f6749be48551f7d924ad3",
-      "subject": "feat(artifact-pack): add SDD deep-dive page (personas, friction, hallucination, priority)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/00f78d5768fed18e6a6f6749be48551f7d924ad3"
     }
   ],
   "openPRs": [
     {
       "number": 351,
-      "title": "feat(profile): portable lifelong Musician Profile - minimum participation contract, unassessed explicit, progression as evidence (review-only)",
+      "title": "feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only",
       "branch": "claude/musician-profile-interop-qdt7lh",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/351",
       "draft": true,
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34754533721/job/103716564605"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381152/job/103788906331"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34754533716/job/103716564651"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381132/job/103788906231"
         }
       ]
     },
@@ -325,14 +325,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-13T13:49:41Z",
+    "runStartedAt": "2026-09-14T15:55:36Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34760923119",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34865345727",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 3,
+    "merged_count": 2,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 3.5,
