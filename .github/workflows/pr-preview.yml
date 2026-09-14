@@ -87,7 +87,7 @@ jobs:
               '',
               '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
-              `**Branch preview** [music/play](${baseBranch}/music/play/) (tracks latest push - the default) · **Commit** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (isolated per-commit testing; EXPIRES after merge) · **Source** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
+              `**This push** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (commit-pinned - the UAT link, never cache-stale; EXPIRES after merge) · **Branch** [music/play](${baseBranch}/music/play/) (latest eventually - githack's CDN can lag a push by minutes) · **Source** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

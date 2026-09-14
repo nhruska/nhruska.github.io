@@ -41,16 +41,16 @@ When a change needs review or phone-testing, **surface a githack preview link** 
 
 | Form | URL shape | When |
 |---|---|---|
-| **Branch (DEFAULT)** | `https://raw.githack.com/nhruska/nhruska.github.io/<branch>/music/play/` | **Always, by default.** Stays current as you push more commits to the branch, so the reviewer keeps testing the latest. Slashed branch names (`claude/music-...`) DO resolve on githack — verified; the old "use the SHA, slashes break the path" note is retired. |
-| **Commit (SHA)** | `https://raw.githack.com/nhruska/nhruska.github.io/<full-sha>/music/play/` | ONLY for testing a specific feature/commit **in isolation** (frozen), OR when other commits already on the branch would conflict with or confuse this test. |
+| **Commit (SHA) - the per-push UAT link (DEFAULT since 2026-09-12)** | `https://raw.githack.com/nhruska/nhruska.github.io/<full-sha>/music/play/` | **Every push the operator is asked to test gets its commit link, labeled with the build version** (`v348-5`). The path changes with every push, so githack has nothing cached to serve stale, and the link names exactly the build under test - the stamp in Settings must match it. Expires after merge. |
+| **Branch** | `https://raw.githack.com/nhruska/nhruska.github.io/<branch>/music/play/` | The PR-preview bot's evergreen comment only. githack serves the branch path from its CDN cache and refreshes on its own clock: measured 2026-09-12, a pull-to-refresh 12 minutes after a push still showed the previous build (v348-4 for a v348-5 push). Fine as a "latest, eventually" bookmark, wrong as the link for "test THIS push". Slashed branch names (`claude/music-...`) DO resolve on githack. |
 
 Rules of thumb:
-- **Default to the branch link.** Only reach for the commit-pinned link when isolation is the point.
+- **Default to the commit link for anything the operator is asked to test now**; the branch link is the bot's bookmark, never the handle for a specific push.
 - Always **curl-verify** the link is `200` before handing it over, and make it a live tappable markdown link (per the global tappable-links discipline). When the user is on their phone, also send it via the telegram surface.
 - `.github/workflows/pr-preview.yml` posts these automatically on every PR (per-instrument tuning links + labelled Commit / Branch / Deployed links). The per-instrument links default to the **branch** form; the **Commit** labelled link is there for isolated testing.
 - **Merged work:** link the DEPLOYED GitHub Pages URL (https://nhruska.github.io/music/play/) - never a githack link. Commit-pinned githack URLs 404 after merge (branch deleted - commit garbage-collected); branch-level githack URLs die with the branch too.
-- **Open PR:** the branch-level githack link is the default tap target (tracks every push during the PR's life).
-- **Commit-pinned githack links** are for isolated per-commit testing ONLY, always labeled "(expires after merge)" - NEVER send one to Telegram or put one in a CTA/footer as the primary link.
+- **Open PR:** each push's UAT message carries that push's commit link + version; the branch-level link lives in the bot comment for "whatever is latest".
+- **Commit-pinned githack links** expire after merge - label them so, and never put one in a durable place (a wiki page, a QUEUE row, a session file). A chat message or a PR push comment is the right home; they are per-push by nature.
 - **The app's "must be served over http(s)" boot banner** also fires on a dead-commit 404 (any manifest fetch failure) - if a preview link shows it, suspect an expired commit link first, not a serving-scheme problem.
 
 ## CI
