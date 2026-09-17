@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T14:14:25Z",
+  "generatedAt": "2026-09-17T14:20:14Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-15T14:21:56Z",
-    "sha": "f529a08a399bb4b844ab79b3ee61c0f173bb3f16",
+    "date": "2026-09-16T14:14:35Z",
+    "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/f529a08a399bb4b844ab79b3ee61c0f173bb3f16"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/5fb114d0a550185a5417e958ce117954ec1e8624"
   },
   "commits": [
+    {
+      "date": "2026-09-16T14:14:35Z",
+      "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5fb114d0a550185a5417e958ce117954ec1e8624"
+    },
     {
       "date": "2026-09-15T14:21:56Z",
       "sha": "f529a08a399bb4b844ab79b3ee61c0f173bb3f16",
@@ -84,15 +90,33 @@
       "sha": "d156f9ba82b170b2b68f3d3b6321d5bfe4a20331",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/d156f9ba82b170b2b68f3d3b6321d5bfe4a20331"
-    },
-    {
-      "date": "2026-09-06T12:55:42Z",
-      "sha": "5e41dd4885c97ec8bb5224d6b21d490367eae471",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e41dd4885c97ec8bb5224d6b21d490367eae471"
     }
   ],
   "openPRs": [
+    {
+      "number": 352,
+      "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
+      "branch": "claude/round19-theater-scrim-tuner-dock",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/352",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35186563096/job/105089784487"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35186563100/job/105089784461"
+        }
+      ]
+    },
     {
       "number": 351,
       "title": "feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only",
@@ -325,9 +349,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-16T14:14:20Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35107149043",
+    "runStartedAt": "2026-09-17T14:20:07Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35232860649",
     "headBranch": "main"
   },
   "velocity": {
