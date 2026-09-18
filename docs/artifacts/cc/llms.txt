@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-09-17T14:20:14Z
+Generated: 2026-09-18T13:40:16Z
 Status: ok
 
 ## NOW
@@ -21,6 +21,7 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #353 - fix(setlist): stop rows flex-shrinking below content height on overflow (2026-09-17) - https://github.com/nhruska/nhruska.github.io/pull/353
 - #345 - docs: propose Thought-Ware Development method v0.1 (2026-09-13) - https://github.com/nhruska/nhruska.github.io/pull/345
 - #344 - Re-author the two video scenarios to the shipped PIP contract (2026-09-13) - https://github.com/nhruska/nhruska.github.io/pull/344
 - #343 - docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (2026-09-06) - https://github.com/nhruska/nhruska.github.io/pull/343
@@ -28,7 +29,6 @@ Status: ok
 - #341 - Bundle capabilities.json into the agent-bundle export (2026-08-21) - https://github.com/nhruska/nhruska.github.io/pull/341
 - #339 - Round 18: one export, one conversation starter - the agent bundle carries your data too (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/339
 - #338 - Round 17: settings stamp says what you have - vv bug fixed, mismatch line leads with the action (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/338
-- #337 - Round 16: "AI Agent" settings section - the user-facing window onto the live agent surface (2026-08-19) - https://github.com/nhruska/nhruska.github.io/pull/337
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
