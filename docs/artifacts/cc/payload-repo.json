@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T14:20:14Z",
+  "generatedAt": "2026-09-18T13:40:16Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-16T14:14:35Z",
-    "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/5fb114d0a550185a5417e958ce117954ec1e8624"
+    "date": "2026-09-17T23:23:15Z",
+    "sha": "4e1db973a514f548bf466cd24b9916e2f1141c8d",
+    "subject": "fix(setlist): stop rows flex-shrinking below content height on overflow (#353)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/4e1db973a514f548bf466cd24b9916e2f1141c8d"
   },
   "commits": [
+    {
+      "date": "2026-09-17T23:23:15Z",
+      "sha": "4e1db973a514f548bf466cd24b9916e2f1141c8d",
+      "subject": "fix(setlist): stop rows flex-shrinking below content height on overflow (#353)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4e1db973a514f548bf466cd24b9916e2f1141c8d"
+    },
+    {
+      "date": "2026-09-17T14:20:26Z",
+      "sha": "fadbf95490bd87e080a7479abe01d749d7f7ed56",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fadbf95490bd87e080a7479abe01d749d7f7ed56"
+    },
     {
       "date": "2026-09-16T14:14:35Z",
       "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
@@ -78,18 +90,6 @@
       "sha": "81f3b737fb89dfb2ed2c259077e8421cd617716f",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/81f3b737fb89dfb2ed2c259077e8421cd617716f"
-    },
-    {
-      "date": "2026-09-08T13:42:10Z",
-      "sha": "c3225232a5bb25722ca8c4329483883fac40bca2",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c3225232a5bb25722ca8c4329483883fac40bca2"
-    },
-    {
-      "date": "2026-09-07T15:06:12Z",
-      "sha": "d156f9ba82b170b2b68f3d3b6321d5bfe4a20331",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d156f9ba82b170b2b68f3d3b6321d5bfe4a20331"
     }
   ],
   "openPRs": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35186563096/job/105089784487"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35292985097/job/105439626884"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35186563100/job/105089784461"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35292985091/job/105439626697"
         }
       ]
     },
@@ -240,6 +240,13 @@
   ],
   "recentMerges": [
     {
+      "createdAt": "2026-09-17T23:11:45Z",
+      "mergedAt": "2026-09-17T23:23:15Z",
+      "number": 353,
+      "title": "fix(setlist): stop rows flex-shrinking below content height on overflow",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/353"
+    },
+    {
       "createdAt": "2026-09-06T15:01:39Z",
       "mergedAt": "2026-09-13T08:58:43Z",
       "number": 345,
@@ -336,30 +343,23 @@
       "number": 331,
       "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
-    },
-    {
-      "createdAt": "2026-08-13T21:34:02Z",
-      "mergedAt": "2026-08-18T19:26:32Z",
-      "number": 330,
-      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/330"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-17T14:20:07Z",
+    "runStartedAt": "2026-09-18T13:40:09Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35232860649",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35351558577",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 2,
+    "merged_count": 3,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 3.5,
+    "typical_merge_hours": 1.79,
     "weekly": null
   },
   "deploy": {
@@ -369,8 +369,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v348",
-    "localCacheVersion": "music-v348",
+    "liveCacheVersion": "music-v353-2",
+    "localCacheVersion": "music-v353-2",
     "cacheMatch": true
   },
   "missions": [
